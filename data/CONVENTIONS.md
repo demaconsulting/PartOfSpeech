@@ -88,6 +88,48 @@ The convention of the open corpus (UD-like): contractions are split (`do` + `n't
 whole. MASC (Penn Treebank tokenization) follows it already. The data is **not** rejoined (the spike for the earlier
 WordSense tagger rejoined clitics; do not). A tokenizer for this library must emit this convention.
 
+### Tokenizer Rules
+
+The `Tokenizer` of the library (`src/DemaConsulting.PartOfSpeech/Tokenization/Tokenizer.cs`) implements the rules below.
+They were derived from the open corpus, where the `# text` line holds the original sentence next to the gold tokens, and
+the test suite requires that at least 99.8 percent of the 14,980 open-corpus sentences are tokenized exactly like their
+gold tokens (the measured value is 99.907 percent). Rules are applied to each white-space delimited chunk of the text
+(any `char.IsWhiteSpace` character separates chunks). Tokens are slices of the source, so characters are never changed.
+
+| Rule | Behavior | Examples |
+| --- | --- | --- |
+| Chunks | Tokens never contain white space; surrogate pairs stay whole | `a<TAB>b` gives `a` `b` |
+| Leading punctuation | `( [ { <`, `"`, `` ` ``, `$`, `£`, `€`, guillemets and typographic quotes are tokens | `"Hi` `$700` |
+| Leading apostrophe | Split off, unless it begins `'s 'm 're 've 'll 'd 'em 'tis 'twas` | `'Tis` stays whole |
+| Trailing punctuation | `, ; : ! ? ) ] } " ' % >`, `` ` `` and typographic quotes are tokens, repeatedly | `73%` `hens'` |
+| Periods | A period stays attached to a known abbreviation, a dotted acronym and a single initial | `Mr.` `U.S.` `p.m.` `J.` |
+| Sentence-final period | Split from the last chunk of the text and from `I`; a quoted letter keeps it | `home.` `I.` `"a."` |
+| Dot runs | A run that is a whole chunk is one token per dot; three dots after a word are one token | `...` `Wait` `...` |
+| Four dots | A period followed by an ellipsis token | `men....` gives `men` `.` `...` |
+| Inner dots | An ellipsis inside a word, or in front of it, stays attached | `as...as` `...a` |
+| Dashes | `--` runs and U+2013, U+2014, U+2015 and U+2026 are tokens of their own, also inside a chunk | `forest--at` |
+| Hyphen | A single hyphen stays inside the word | `well-known` `COVID-19` `-ing` |
+| Negations | `n't` is split off a stem of letters; `ca`, `wo`, `sha`, `ai` and `can` + `not` are irregular | `do` `n't` |
+| Clitics | `'s 'm 're 've 'll 'd` are split off a stem of letters and apostrophes; case is kept | `John` `'s` `CA` `N'T` |
+| Apostrophe forms | U+0027, U+2018, U+2019, U+201B and U+02BC all count as an apostrophe; the token keeps its character | `don’t` |
+| Whole words | A stem with digits or periods, and words such as `o'clock`, `gonna`, `D'Artagnan`, stay whole | `1900's` |
+| Compounds | Slash and ampersand words, numbers, times, ordinals and decades stay whole | `and/or` `R&D` `7:00` |
+| Standalone symbols | A chunk that is only `/`, `&`, `+`, `*` or `-` is a token | `/` |
+| Addresses | URLs (`http://`, `https://`, `www.`) and e-mail addresses are single tokens, without trailing punctuation | `a@b.com` |
+
+Abbreviations that keep their period (not at the end of the text): the titles `Mr Mrs Ms Dr St Jr Sr No Prof Capt Gen
+Col Sgt Lt Rev Hon Mt Ft Gov Sen Rep Pres Cmdr Adm Maj Cpl Pvt Supt Messrs` when capitalized, and `etc Inc Co Corp Ltd vs v
+e.g i.e ft` in any case. The corpus has no URL tokens and no typographic characters, so the rules for addresses and for
+typographic punctuation are design decisions that only fixtures test. The corpus keeps `£9` and `£70` and U+2015 inside
+words whole, which the rules split like `$` and the other dashes, and `no.` at the end of a sentence keeps its period,
+which the rules split because it is a common sentence end; these are the documented residue of the 99.9 percent.
+
+Sentence boundaries (`SentenceSplitter`): a sentence ends after `.`, `!`, `?`, `...` or the ellipsis character, and the
+quotes and brackets that touch it, when the next token starts with an upper-case letter, a digit or an opening quote or
+bracket, or the text ends. A dotted acronym ends a sentence only before a typical sentence starter. Titles and initials
+never end a sentence. An ellipsis before a lower-case word does not end a sentence. A blank line (two line breaks)
+always ends a sentence and a single line break does not.
+
 ## Mapping Tables
 
 ### Open Corpus

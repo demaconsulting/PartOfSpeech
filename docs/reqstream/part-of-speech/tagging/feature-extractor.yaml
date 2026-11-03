@@ -1,0 +1,98 @@
+---
+# Software Unit Requirements for FeatureExtractor
+#
+# The FeatureExtractor unit is the single definition of the features that the perceptron scores. The decoder uses it now
+# and the trainer of a later release will use it unchanged.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: Tagging Requirements
+        sections:
+          - title: FeatureExtractor Requirements
+            requirements:
+              - id: PartOfSpeech-Tagging-FeatureExtractor-FeatureSet
+                title: >-
+                  Every token shall be described by 22 feature templates: a bias, the word, the lower-cased word, its
+                  shape, its prefixes and suffixes of one to four characters when the token is long enough, the initial
+                  flag, the two neighbors on each side, the pair of the nearest neighbors and the previous tags; and
+                  only the features that depend on tags shall change when the tag history changes.
+                justification: |
+                  The weights of a model are only meaningful for the exact feature set they were trained with, so the
+                  set is a fixed, versioned definition.
+                tests:
+                  - FeatureExtractor_Extract_EmitsTwentyTwoTemplates
+                  - FeatureExtractor_Extract_ShortToken_OmitsLongPrefixesAndSuffixes
+                  - FeatureExtractor_Extract_TagHistory_ChangesOnlyTagFeatures
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-Shape
+                title: >-
+                  The shape of a token shall record whether it starts with an upper-case letter, is all upper case,
+                  has a
+                  digit, a hyphen or an apostrophe, or has no letter and no digit.
+                justification: |
+                  Capitalization and character classes carry most of what the model knows about names, numbers and
+                  symbols that it has never seen.
+                tests:
+                  - FeatureExtractor_Shape_FollowsSpikeBits
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-Initial
+                title: >-
+                  The initial flag shall mark the first token that contains a letter or a digit, so that a leading quote
+                  or bracket does not hide the first word of a sentence.
+                justification: |
+                  Sentence-initial capitalization is not evidence of a name; the first word must be recognized even when
+                  punctuation comes before it.
+                tests:
+                  - FeatureExtractor_Extract_InitialFlag_SkipsLeadingPunctuation
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-Context
+                title: >-
+                  The neighbors of a token at the start or the end of a sentence shall be fixed boundary markers.
+                justification: |
+                  The first and last words need context features too, and the markers keep them distinct from any real
+                  word.
+                tests:
+                  - FeatureExtractor_Extract_Neighbors_UseSentinelsAtBoundaries
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-Fold
+                title: >-
+                  Before features are computed, typographic quotes, dashes and the ellipsis shall be mapped to their
+                  ASCII forms and non-ASCII text shall be normalized, so that the same word gives the same features
+                  however it is written.
+                justification: |
+                  The training data is ASCII-normalized while real text is not; without the mapping "don’t" and the
+                  curly quotes would be unseen tokens.
+                tests:
+                  - FeatureExtractor_Extract_Fold_MapsTypographicQuotesAndDashes
+                  - FeatureExtractor_Extract_Fold_NfcNormalizesNonAscii
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-ReferenceEquivalence
+                title: >-
+                  The buckets of the features shall equal the buckets that the plain, string-based definition of the
+                  features gives for a sample of corpus sentences.
+                justification: |
+                  The fast extraction must implement the definition exactly, or models would be trained on one feature
+                  set and used with another.
+                tests:
+                  - FeatureExtractor_Extract_MatchesReferenceStringHashing
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-Buckets
+                title: >-
+                  Every bucket shall lie inside the bucket space of the model and shall be the same for the same
+                  feature on every run, and features that depend on letter case shall give different buckets for
+                  different case.
+                justification: |
+                  A bucket outside the model cannot be scored, a bucket that changes between runs cannot match trained
+                  weights, and case-blind features would lose the capitalization evidence.
+                tests:
+                  - FeatureExtractor_Buckets_AreInRangeAndStable
+                  - FeatureExtractor_Hash_IsCaseSensitiveWhereTemplatesAre
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-NoAllocation
+                title: Extracting the features of a sentence shall not allocate memory once the extractor has been used.
+                justification: |
+                  Extraction runs for every token; allocation there would add garbage collection to every request and
+                  lower throughput.
+                tests:
+                  - FeatureExtractor_Extract_DoesNotAllocateAfterWarmUp

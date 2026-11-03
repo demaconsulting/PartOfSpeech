@@ -1,7 +1,7 @@
 # Introduction
 
-This document provides the verification design for the Part Of Speech, a .NET library
-demonstrating best practices for DEMA Consulting DotNet Libraries.
+This document provides the verification design for the Part Of Speech, a .NET library for part-of-speech tagging of
+English text with the 17 Universal POS tags.
 
 ## Purpose
 
@@ -23,11 +23,15 @@ This document is intended for:
 This document covers the verification design for the Part Of Speech system and its
 constituent software items, specifically:
 
-- **PartOfSpeech (System)** — The complete .NET library template system
-- **Demo (Unit)** — Demonstration greeting class providing example functionality
+- **PartOfSpeech (System)** — The complete .NET part-of-speech tagging library
+- **Upos (Unit)** — The tag vocabulary, its text forms and sets of tags
+- **Tokenization (Subsystem)** — with the **Tokenizer** and **SentenceSplitter** units
+- **ModelStorage (Subsystem)** — with the **BinaryFormat**, **Lexicon**, **PerceptronModel** and **EmbeddedModel** units
+- **Tagging (Subsystem)** — with the **FeatureExtractor**, **TagDecoder**, **TokenConstraint** and **Tagger** units
 
 The following OTS items are also covered:
 
+- **ApiMark** — API reference generation tool
 - **BuildMark** — build-notes documentation tool
 - **FileAssert** — document assertion tool
 - **Pandoc** — Markdown-to-HTML conversion tool
@@ -58,8 +62,12 @@ trees. In-house items have artifacts in these parallel locations:
 - Design docs: `docs/design/{system}/.../{item}.md` (kebab-case)
 - Verification design: `docs/verification/{system}/.../{item}.md` (kebab-case)
 - Source code: `src/{System}/.../{Item}.cs` (PascalCase for C#)
-- Tests: `test/{System}.Tests/.../{Item}Tests.cs` (PascalCase for C#)
-
+- Tests: `test/{System}.Tests/.../{Item}Tests.cs` (PascalCase for C#); subsystem tests are named after the subsystem
+  (`Tokenization/TokenizationTests.cs`) and the system tests are `PartOfSpeechTests.cs` and `PartOfSpeechDataTests.cs`
+- Test infrastructure (not software items): `test/{System}.Tests/TestSupport/` builds the tiny and synthetic models that
+  the tests use; the throughput, thread-safety, allocation and tiny-model methods are described in the system, subsystem
+  and unit verification documents
+- SysML2 model: `docs/sysml2/model/{system}/.../{item}.sysml` (kebab-case)
 OTS items have parallel artifacts in:
 
 - Requirements: `docs/reqstream/ots/{ots-name}.yaml` (kebab-case)

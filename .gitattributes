@@ -12,6 +12,9 @@
 /data/lexicon/lexicon.tsv linguist-generated=true -diff
 /data/eval/gold-v2/*.tsv linguist-generated=true -diff
 
+# The compiled lexicon is binary: never normalize its line endings or diff it as text.
+/src/DemaConsulting.PartOfSpeech/Resources/*.bin binary
+
 # Windows batch files require CRLF line endings to function correctly.
 *.bat text eol=crlf
 *.cmd text eol=crlf

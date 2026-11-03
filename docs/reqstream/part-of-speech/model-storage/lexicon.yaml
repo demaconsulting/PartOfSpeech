@@ -1,0 +1,75 @@
+---
+# Software Unit Requirements for Lexicon
+#
+# The Lexicon unit reads, writes and searches the compiled word lexicon and applies the token-shape rules.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: ModelStorage Requirements
+        sections:
+          - title: Lexicon Requirements
+            requirements:
+              - id: PartOfSpeech-ModelStorage-Lexicon-Lookup
+                title: >-
+                  A lookup shall return the tags of every spelling of a lexicon, including the first and the last
+                  spelling of every block and non-ASCII spellings, and shall report a spelling that is absent, or longer
+                  than any spelling of the lexicon, as not found.
+                justification: |
+                  A lookup that missed a spelling would lift the restriction for a known word, and one that invented a
+                  match would restrict a word wrongly.
+                tests:
+                  - Lexicon_TryGetTags_FindsEverySpellingOfSmallLexicon
+                  - Lexicon_TryGetTags_FirstAndLastOfEveryBlock
+                  - Lexicon_TryGetTags_AbsentSpellings_ReturnFalse
+                  - Lexicon_TryGetTags_NonAsciiSpelling_IsFound
+                  - Lexicon_TryGetTags_LongerThanMaxSpelling_ReturnsFalse
+
+              - id: PartOfSpeech-ModelStorage-Lexicon-Writer
+                title: >-
+                  The lexicon table shall be compiled only if its rows are unique, sorted by the bytes of their UTF-8
+                  spellings and valid, and the compiled lexicon shall have the spelling and entry counts that the table
+                  header states, with the same content whether it is stored compressed or not.
+                justification: |
+                  The compiled form is searched by binary search, which is only correct for sorted unique rows; a table
+                  that breaks the rules must fail at compile time, not at lookup time.
+                tests:
+                  - LexiconWriter_FromTsv_RejectsUnsortedDuplicateOrInvalid
+                  - LexiconWriter_FromTsv_CountsMatchHeaderComment
+                  - LexiconWriter_Write_UncompressedAndCompressed_DecodeEqual
+
+              - id: PartOfSpeech-ModelStorage-Lexicon-Validation
+                title: >-
+                  A lexicon file shall be refused when its checksum fails, it is truncated, its tag count is not 17,
+                  its structure is inconsistent, its compressed region holds bytes after the Deflate data or it
+                  declares a size above the format limit.
+                justification: |
+                  A damaged lexicon must fail when it is loaded, not return wrong tags later.
+                tests:
+                  - Lexicon_Load_CorruptChecksum_Throws
+                  - Lexicon_Load_Truncated_Throws
+                  - Lexicon_Load_TagCountMismatch_Throws
+                  - Lexicon_Load_InvalidStructureWithValidChecksum_Throws
+                  - Lexicon_Load_OversizedVarintWithValidChecksum_Throws
+                  - Lexicon_Load_DeflateTrailingBytesInStoredRegion_Throws
+                  - Lexicon_Load_PayloadLengthAboveMaximum_Throws
+
+              - id: PartOfSpeech-ModelStorage-Lexicon-AllowedTags
+                title: >-
+                  The tags allowed for a token shall be all 17 tags for a spelling that is not in the lexicon, and for a
+                  known spelling its lexicon tags extended by PUNCT, SYM and X when the token has no letter or digit, by
+                  NUM, SYM, X, NOUN, PROPN and ADJ when it has a digit, and by PROPN and X when it starts with an
+                  upper-case letter; for the development set these tags shall include the gold tag of at least 99.9
+                  percent of the tokens that are not disputed.
+                justification: |
+                  These are the token-shape rules of the lexicon data: the lexicon lists the tags of words, and names,
+                  numbers and symbols need the tags of their shape. Measured on the development set, the rules must
+                  rarely exclude the right tag.
+                tests:
+                  - Lexicon_AllowedTags_UnknownWord_AllowsAllSeventeen
+                  - Lexicon_AllowedTags_KnownWord_AllowsLexiconTags
+                  - Lexicon_AllowedTags_NoLetterOrDigit_AddsPunctSymX
+                  - Lexicon_AllowedTags_Digit_AddsNumSymXNounPropnAdj
+                  - Lexicon_AllowedTags_FirstUpper_AddsPropnX
+                  - Lexicon_AllowedTags_MatchesDataFilesRuleForEveryLexiconSpelling
+                  - Lexicon_AllowedTags_Dev_MeetsCoverageThreshold

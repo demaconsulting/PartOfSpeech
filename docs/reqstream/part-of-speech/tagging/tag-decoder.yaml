@@ -1,0 +1,96 @@
+---
+# Software Unit Requirements for TagDecoder
+#
+# The TagDecoder unit chooses the tags of a sentence from the scores of the weights, the lexicon and the constraints.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: Tagging Requirements
+        sections:
+          - title: TagDecoder Requirements
+            requirements:
+              - id: PartOfSpeech-Tagging-TagDecoder-Greedy
+                title: >-
+                  Tokens shall be tagged from left to right, each with the highest-scoring allowed tag given the two
+                  tags chosen before it, and when two tags score the same the tag that comes first in the tag order
+                  shall
+                  win.
+                justification: |
+                  A fixed order and a fixed tie-break make the result a function of the input alone, independent of the
+                  platform, and the history gives the model its context.
+                tests:
+                  - TagDecoder_Decode_UsesPreviousTagsAsHistory
+                  - TagDecoder_Decode_TieBreaksToLowestTag
+
+              - id: PartOfSpeech-Tagging-TagDecoder-Restriction
+                title: >-
+                  Only the tags that the lexicon and the token-shape rules allow shall be candidates for a known word,
+                  and all 17 tags shall be candidates for an unknown word.
+                justification: |
+                  This is the restriction of the lexicon at decode time; it must be exactly the rule of the data
+                  documentation.
+                tests:
+                  - TagDecoder_Decode_Restricts_ToLexiconTags
+                  - TagDecoder_Decode_UnknownWord_ConsidersAllTags
+                  - TagDecoder_Decode_ShapeRules_ExtendAllowedSet
+                  - TagDecoder_Decode_AllowedSet_MatchesDataFilesRules
+
+              - id: PartOfSpeech-Tagging-TagDecoder-Confidence
+                title: >-
+                  The confidence of a tag shall be its probability among the candidates, computed with a softmax at the
+                  temperature of the model; the alternatives shall be the other candidates ranked by probability and
+                  limited to the number requested, and a token with a single candidate shall have confidence 1.
+                justification: |
+                  Callers read the confidence as a probability, so it must be calibrated with the stored temperature,
+                  and
+                  a single possible tag is certain by construction.
+                tests:
+                  - TagDecoder_Decode_Confidence_IsSoftmaxAtTemperature
+                  - TagDecoder_Decode_Temperature_SharpensAndFlattens
+                  - TagDecoder_Decode_Alternatives_AreSortedAndLimited
+                  - TagDecoder_Decode_SingleAllowedTag_HasConfidenceOne
+
+              - id: PartOfSpeech-Tagging-TagDecoder-Constraints
+                title: >-
+                  A constraint shall restrict the candidates of its token to its allowed tags, shall win when its
+                  allowed
+                  tags and the lexicon tags have none in common, shall add its boosts and penalties to the scores before
+                  the choice, and shall change the history that the next tokens see.
+                justification: |
+                  A constraint comes from the caller, who knows the text better than a dictionary, and its effect must
+                  be exactly what the caller asked for.
+                tests:
+                  - TagDecoder_Decode_Constraint_Only_Intersects
+                  - TagDecoder_Decode_Constraint_DisjointFromLexicon_ConstraintWins
+                  - TagDecoder_Decode_Constraint_Boost_And_Penalty
+                  - TagDecoder_Decode_Constraint_PropagatesToNextToken
+                  - TagDecoder_Decode_ReentrantConstraintList_DoesNotCorruptResult
+
+              - id: PartOfSpeech-Tagging-TagDecoder-Throughput
+                title: >-
+                  The decoder shall tag more than 50,000 tokens per second on one thread with a model of realistic size.
+                justification: |
+                  The decoder is the hot path of the library; the bound is the unit-level proof of the system throughput
+                  requirement with a model that has the size of a trained one.
+                tests:
+                  - TagDecoder_Decode_SyntheticModel_ExceedsFiftyThousandTokensPerSecond
+
+              - id: PartOfSpeech-Tagging-TagDecoder-NoAllocation
+                title: >-
+                  Decoding a sentence shall allocate only the memory of its results, in an amount proportional to the
+                  number of tokens.
+                justification: |
+                  Scratch memory that is allocated per sentence adds garbage collection to every request; only the
+                  result
+                  that the caller keeps needs new memory.
+                tests:
+                  - TagDecoder_Decode_DoesNotAllocateInHotPath
+                  - Lexicon_AllowedTags_KnownTokenShapes_DoNotAllocate
+
+              - id: PartOfSpeech-Tagging-TagDecoder-EmptyInput
+                title: A sentence without tokens shall give an empty result.
+                justification: |
+                  An empty sentence is valid input and must not fail.
+                tests:
+                  - TagDecoder_Decode_EmptySentence_ReturnsEmpty

@@ -3,113 +3,166 @@
 #
 # These requirements describe the externally visible behavior of the library
 # from the perspective of its consumers, without specifying implementation details.
+# Each library requirement is decomposed into the subsystem and unit requirements under
+# docs/reqstream/part-of-speech/ (Upos, Tokenization, ModelStorage and Tagging).
 
 sections:
   - title: Library API
     requirements:
-      - id: PartOfSpeech-Lib-Greeting
-        title: The library shall generate a greeting string when given a name.
+      - id: PartOfSpeech-Lib-TagText
+        title: >-
+          The library shall split English text into sentences and tokens and assign each token one of the 17 Universal
+          POS tags.
         tags: [system]
         justification: |
-          Provides a simple demonstration of library functionality following
-          .NET library best practices for DEMA Consulting libraries.
+          This is the purpose of the library: callers hand over running text and learn the part of speech of every word,
+          in a tag set that is shared with other tools.
         children:
-          - PartOfSpeech-Demo-Greeting
+          - PartOfSpeech-Upos-SeventeenTags
+          - PartOfSpeech-Upos-TagStrings
+          - PartOfSpeech-Tokenization-TextToSentences
+          - PartOfSpeech-Tokenization-MatchesCorpusConvention
+          - PartOfSpeech-Tokenization-SentenceBoundaries
+          - PartOfSpeech-Tagging-EndToEnd
+          - PartOfSpeech-Tagging-TagHistory
         tests:
-          - PartOfSpeech_SystemIntegration_DefaultConstruction_ReturnsExpectedGreeting
-          - PartOfSpeech_SystemCustomization_CustomPrefix_ReturnsExpectedGreeting
+          - PartOfSpeech_Tagging_Text_TagsEveryTokenWithEmbeddedLexicon
+          - PartOfSpeech_Tagging_Text_MultipleSentences_AreSplitAndTagged
 
-      - id: PartOfSpeech-Lib-GreetingFormat
-        title: The library shall return a greeting string in the format "{prefix}, {name}!".
+      - id: PartOfSpeech-Lib-Offsets
+        title: Every sentence and every token of a result shall carry character offsets into the original string.
         tags: [system]
         justification: |
-          The format is the core observable contract of the library: callers depend on this
-          specific structure in documentation examples and integration code.
+          Callers highlight, replace or link the words of their own text, which needs the position of each token in that
+          text and not only its spelling.
         children:
-          - PartOfSpeech-Demo-Greeting
+          - PartOfSpeech-Tokenization-TextToSentences
+          - PartOfSpeech-Tagging-EndToEnd
         tests:
-          - PartOfSpeech_SystemIntegration_DefaultConstruction_ReturnsExpectedGreeting
-          - PartOfSpeech_SystemCustomization_CustomPrefix_ReturnsExpectedGreeting
+          - PartOfSpeech_Tagging_Text_OffsetsIndexTheOriginalString
 
-      - id: PartOfSpeech-Lib-DefaultPrefix
-        title: The library shall use "Hello" as the default greeting prefix.
+      - id: PartOfSpeech-Lib-PreTokenized
+        title: The library shall tag sentences that the caller has already split into tokens.
         tags: [system]
         justification: |
-          Callers constructing the library without a prefix argument need a predictable default
-          greeting to rely on in documentation and examples.
+          Callers that own a tokenizer, or that tag the output of another tool, must be able to keep their own token
+          boundaries.
         children:
-          - PartOfSpeech-Demo-DefaultPrefix
+          - PartOfSpeech-Tokenization-TextToSentences
+          - PartOfSpeech-Tagging-EndToEnd
         tests:
-          - PartOfSpeech_SystemIntegration_DefaultConstruction_ReturnsExpectedGreeting
+          - PartOfSpeech_Tagging_Tokens_AreTaggedAsGiven
 
-      - id: PartOfSpeech-Lib-CustomPrefix
-        title: The library shall support a customizable greeting prefix.
+      - id: PartOfSpeech-Lib-Confidence
+        title: >-
+          Each tag of a result shall carry a confidence between 0 and 1 and the ranked alternative tags with their
+          probabilities.
         tags: [system]
         justification: |
-          Consumers may need to produce greetings with a prefix other than the
-          default, so the library must allow the prefix to be specified at
-          construction time.
+          A tag without a measure of certainty cannot be used to decide whether to trust it, ask a person or try another
+          reading; the alternatives show what the competing readings were.
         children:
-          - PartOfSpeech-Demo-AcceptCustomPrefix
-          - PartOfSpeech-Demo-Prefix
+          - PartOfSpeech-Tagging-RankedAlternatives
         tests:
-          - PartOfSpeech_SystemCustomization_CustomPrefix_ReturnsExpectedGreeting
+          - PartOfSpeech_Tagging_Confidence_ProbabilitiesSumToOneAndAreOrdered
 
-      - id: PartOfSpeech-Lib-Prefix
-        title: The library shall expose the configured greeting prefix via a read-only property.
+      - id: PartOfSpeech-Lib-LexiconRestriction
+        title: >-
+          A word that the lexicon knows shall receive only a tag that the lexicon and the token-shape rules allow for
+          it, and a word that the lexicon does not know shall be able to receive any of the 17 tags.
         tags: [system]
         justification: |
-          Callers may need to inspect the prefix configured at construction time without
-          re-specifying it or relying on the greeting output format to infer it.
+          The lexicon records which tags a word can carry in real text. Restricting a known word to them removes tag
+          errors that no reading of the word supports, and leaving an unknown word unrestricted lets names and new words
+          still be tagged.
         children:
-          - PartOfSpeech-Demo-Prefix
+          - PartOfSpeech-Tagging-LexiconRestriction
         tests:
-          - PartOfSpeech_SystemIntegration_CustomPrefix_ExposesPrefix
+          - PartOfSpeech_Tagging_KnownWord_StaysWithinAllowedTags
+          - PartOfSpeech_Tagging_UnknownWord_MayTakeAnyTag
 
-      - id: PartOfSpeech-Lib-ValidationNull-DemoMethod
-        title: The library shall reject a null name argument to DemoMethod with ArgumentNullException.
+      - id: PartOfSpeech-Lib-Constraints
+        title: >-
+          A caller shall be able to constrain the tag of an individual token, either by an allowed set of tags or by
+          adding a preference to or removing a preference from the score of a tag.
         tags: [system]
         justification: |
-          Passing null to DemoMethod is a programming error. Throwing ArgumentNullException
-          immediately surfaces the mistake to callers and prevents obscure failures deeper in
-          the call stack.
+          Callers often know something that the model does not, for example from a glossary or from markup, and must be
+          able to inject it without retraining; a soft preference lets the model still disagree when it is certain.
         children:
-          - PartOfSpeech-Demo-ValidationNull-DemoMethod
+          - PartOfSpeech-Upos-SetOperations
+          - PartOfSpeech-Tagging-Constraints
         tests:
-          - PartOfSpeech_SystemValidation_DemoMethodNullInput_ThrowsArgumentNullException
+          - PartOfSpeech_Tagging_Constraint_AllowedSetForcesTag
+          - PartOfSpeech_Tagging_Constraint_BoostShiftsCloseDecision
 
-      - id: PartOfSpeech-Lib-ValidationNull-Constructor
-        title: The library shall reject a null prefix argument to the constructor with ArgumentNullException.
+      - id: PartOfSpeech-Lib-LoadModel
+        title: >-
+          The library shall load a weights file from a stream and shall reject a file that is damaged, is not a weights
+          file or comes from a different format or feature version.
         tags: [system]
         justification: |
-          Passing null to the constructor is a programming error. Throwing ArgumentNullException
-          immediately surfaces the mistake and prevents invalid instances from being created.
+          Weights are data that callers supply or replace. A damaged or incompatible file must fail loudly when it is
+          loaded instead of silently producing wrong tags.
         children:
-          - PartOfSpeech-Demo-ValidationNull-Constructor
+          - PartOfSpeech-ModelStorage-VersionedFormats
+          - PartOfSpeech-ModelStorage-TinyModelRoundTrip
+          - PartOfSpeech-ModelStorage-LazyThreadSafeLoading
         tests:
-          - PartOfSpeech_SystemValidation_ConstructorNullPrefix_ThrowsArgumentNullException
+          - PartOfSpeech_Model_LoadFromStream_TagsText
+          - PartOfSpeech_Model_InvalidWeights_ThrowInvalidDataException
 
-      - id: PartOfSpeech-Lib-ValidationEmpty-DemoMethod
-        title: The library shall reject an empty-string name argument to DemoMethod with ArgumentException.
+      - id: PartOfSpeech-Lib-DefaultModelUnavailable
+        title: >-
+          While the package contains no trained model, reading the default tagger shall throw an
+          InvalidOperationException whose message says that no model is available.
         tags: [system]
         justification: |
-          Passing an empty string to DemoMethod is a programming error. Throwing ArgumentException
-          immediately surfaces the mistake and prevents malformed output such as "Hello, !".
+          A placeholder model would produce tags that users might trust. Failing with a clear message until a trained
+          model ships tells callers exactly what to do (load weights) and cannot be mistaken for a result. This
+          requirement is replaced when the trained model is embedded.
         children:
-          - PartOfSpeech-Demo-ValidationEmpty-DemoMethod
+          - PartOfSpeech-Tagging-Tagger-Default
+          - PartOfSpeech-ModelStorage-EmbeddedModel-Weights
         tests:
-          - PartOfSpeech_SystemValidation_DemoMethodEmptyInput_ThrowsArgumentException
+          - PartOfSpeech_Default_NoEmbeddedModel_ThrowsInvalidOperationException
 
-      - id: PartOfSpeech-Lib-ValidationEmpty-Constructor
-        title: The library shall reject an empty-string prefix argument to the constructor with ArgumentException.
+      - id: PartOfSpeech-Lib-ThreadSafe
+        title: >-
+          One tagger shall be usable from many threads at the same time and shall give the same results as when it is
+          used from one thread.
         tags: [system]
         justification: |
-          Passing an empty string to the constructor is a programming error. Throwing ArgumentException
-          immediately surfaces the mistake and prevents malformed output such as ", World!".
+          Services tag requests in parallel and share one loaded model, so concurrent use must be safe and must not
+          change results.
         children:
-          - PartOfSpeech-Demo-ValidationEmpty-Constructor
+          - PartOfSpeech-Tagging-Determinism
+          - PartOfSpeech-Tagging-Tagger-ThreadSafe
         tests:
-          - PartOfSpeech_SystemValidation_ConstructorEmptyPrefix_ThrowsArgumentException
+          - PartOfSpeech_Concurrency_ParallelTagging_MatchesSequential
+
+      - id: PartOfSpeech-Lib-Throughput
+        title: Tagging pre-tokenized text shall exceed 50,000 tokens per second on one thread.
+        tags: [system, performance]
+        justification: |
+          Callers tag large collections of text; a tagger that is orders of magnitude slower than this bound would make
+          that impractical. The bound is far below the measured speed so that a loaded build machine does not make the
+          test fail.
+        children:
+          - PartOfSpeech-Tagging-TagDecoder-Throughput
+          - PartOfSpeech-Tagging-TagDecoder-NoAllocation
+          - PartOfSpeech-Tagging-FeatureExtractor-NoAllocation
+        tests:
+          - PartOfSpeech_Performance_SingleThread_ExceedsFiftyThousandTokensPerSecond
+
+      - id: PartOfSpeech-Lib-NoRuntimeDependencies
+        title: The package shall have no runtime package dependency.
+        tags: [system]
+        justification: |
+          Consumers include build tools and plug-ins that cannot resolve extra packages, and every dependency adds a
+          version conflict risk; the library therefore uses only the base class library.
+        tests:
+          - PartOfSpeech_Packaging_ProjectFile_HasNoRuntimePackageReferences
 
   - title: Data and Licensing
     requirements:
@@ -355,3 +408,33 @@ sections:
           come from different builds.
         tests:
           - PartOfSpeech_Lexicon_Format_HeaderCountsMatchRows
+
+      - id: PartOfSpeech-Data-EmbeddedLexiconCurrent
+        title: >-
+          The lexicon that is embedded in the package shall encode exactly the spellings and tags of the lexicon
+          table.
+        tags: [system]
+        justification: |
+          The tagger restricts known words with the embedded lexicon, not with the table. A committed binary that no
+          longer matches the table would silently apply stale restrictions, so the package must provably carry the
+          current data.
+        children:
+          - PartOfSpeech-ModelStorage-LexiconCompiled
+        tests:
+          - PartOfSpeech_Lexicon_Embedded_EncodesLexiconTsv
+
+  - title: API Documentation
+    requirements:
+      - id: PartOfSpeech-Lib-ApiDocsPackaged
+        title: >-
+          The NuGet package shall contain the generated Markdown API reference of the public API, including its
+          namespace overview and documented examples.
+        tags: [system]
+        justification: |
+          Consumers, and the coding agents that work for them, learn the API from the package itself rather than from
+          the repository. The reference is generated from the XML documentation comments during the build, which fails
+          if a public member is undocumented; the documented examples are compiled by the test suite so that they cannot
+          go stale; and the generated reference is packed under api/ so that it travels with every copy of the library.
+        tests:
+          - ApiMark_ApiDocsPackaged
+          - PartOfSpeech_XmlDocExamples_Compile

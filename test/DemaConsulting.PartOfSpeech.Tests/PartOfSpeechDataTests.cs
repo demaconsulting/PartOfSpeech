@@ -823,6 +823,34 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
+    ///     Proves that the lexicon that is embedded in the assembly encodes exactly the spellings and tags of <c>data/lexicon/lexicon.tsv</c>.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Lexicon_Embedded_EncodesLexiconTsv()
+    {
+        // Arrange: the table as the data tests read it, and the lexicon that the library loads from its embedded resource
+        var table = DataFiles.ReadLexicon(DataFiles.Data("lexicon/lexicon.tsv"));
+        var embedded = EmbeddedModel.Lexicon;
+        var scratch = new byte[embedded.ScratchSize];
+        var problems = new List<string>();
+
+        // Act: look every spelling of the table up in the embedded lexicon and compare the tags
+        foreach (var row in table)
+        {
+            var key = row.Key.ToCharArray();
+            if (!embedded.TryGetTags(key, 0, key.Length, scratch, out var tags) || !tags.Select(t => t.ToTagString()).SequenceEqual(row.Value))
+            {
+                problems.Add(row.Key);
+            }
+        }
+
+        // Assert: nothing is missing or different, and the embedded lexicon has no extra spelling
+        Assert.Empty(problems.Take(ShownProblems));
+        Assert.Equal(table.Count, embedded.SpellingCount);
+        Assert.Equal(table.Values.Sum(tags => tags.Length), embedded.EntryCount);
+    }
+
+    /// <summary>
     ///     Collapses every run of white space to one space.
     /// </summary>
     private static string Collapse(string text) => Regex.Replace(text, @"\s+", " ");

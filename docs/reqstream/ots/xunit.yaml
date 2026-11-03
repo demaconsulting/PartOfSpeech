@@ -17,15 +17,14 @@ sections:
               test method.
             tags: [ots]
             tests:
-              - Demo_DemoMethod_DefaultPrefix_ReturnsGreeting
-              - Demo_DemoMethod_CustomPrefix_ReturnsGreeting
-              - Demo_DemoMethod_NullInput_ThrowsArgumentNullException
-              - Demo_DemoMethod_EmptyInput_ThrowsArgumentException
-              - Demo_Constructor_NullPrefix_ThrowsArgumentNullException
-              - Demo_Constructor_EmptyPrefix_ThrowsArgumentException
-              - Demo_DefaultPrefix_Read_IsHello
-              - Demo_Prefix_WithCustomConstruction_ReturnsCustomPrefix
-              - Demo_DefaultConstructor_WithNoArgs_SetsDefaultPrefix
+              - Upos_Values_AreSeventeenInAlphabeticalOrder
+              - Upos_ToTagString_RoundTripsAllTags
+              - Upos_TryParse_UnknownText_ReturnsFalse
+              - UposSet_AddRemove_BehaveAsSet
+              - UposSet_All_ContainsSeventeen
+              - Tokenizer_Tokenize_Punctuation_IsSeparated
+              - Lexicon_TryGetTags_AbsentSpellings_ReturnFalse
+              - BinaryFormat_Fnv1a_MatchesKnownVectors
           - id: PartOfSpeech-OTS-xUnit-Report
             title: xUnit shall record test results in TRX output files.
             justification: |
@@ -35,12 +34,11 @@ sections:
               correctly.
             tags: [ots]
             tests:
-              - Demo_DemoMethod_DefaultPrefix_ReturnsGreeting
-              - Demo_DemoMethod_CustomPrefix_ReturnsGreeting
-              - Demo_DemoMethod_NullInput_ThrowsArgumentNullException
-              - Demo_DemoMethod_EmptyInput_ThrowsArgumentException
-              - Demo_Constructor_NullPrefix_ThrowsArgumentNullException
-              - Demo_Constructor_EmptyPrefix_ThrowsArgumentException
-              - Demo_DefaultPrefix_Read_IsHello
-              - Demo_Prefix_WithCustomConstruction_ReturnsCustomPrefix
-              - Demo_DefaultConstructor_WithNoArgs_SetsDefaultPrefix
+              - Upos_Values_AreSeventeenInAlphabeticalOrder
+              - Upos_ToTagString_RoundTripsAllTags
+              - Upos_TryParse_UnknownText_ReturnsFalse
+              - UposSet_AddRemove_BehaveAsSet
+              - UposSet_All_ContainsSeventeen
+              - Tokenizer_Tokenize_Punctuation_IsSeparated
+              - Lexicon_TryGetTags_AbsentSpellings_ReturnFalse
+              - BinaryFormat_Fnv1a_MatchesKnownVectors

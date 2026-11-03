@@ -1,7 +1,7 @@
 # Introduction
 
-This document provides the detailed design for the Part Of Speech, a .NET library
-demonstrating best practices for DEMA Consulting DotNet Libraries.
+This document provides the detailed design for the Part Of Speech, a .NET library for part-of-speech tagging of
+English text with the 17 Universal POS tags.
 
 ## Purpose
 
@@ -24,13 +24,27 @@ This document is intended for:
 This document covers the detailed design of the Part Of Speech system and its constituent
 software items, specifically:
 
-- **PartOfSpeech (System)** — The complete .NET library template system
-- **Demo (Unit)** — Demonstration greeting class providing example functionality
-- **Data assets (not software items)** — Training corpora, evaluation sets, the lexicon and the third-party notice,
-  covered at system level together with the build-time tools that produce them
+- **PartOfSpeech (System)** — The complete .NET part-of-speech tagging library
+- **Upos (Unit)** — The tag vocabulary, its text forms and sets of tags
+- **Tokenization (Subsystem)** — Splits text into sentences and tokens in the convention of the training data
+  - **Tokenizer (Unit)** — Word-level tokenization and creation of sentences from given tokens
+  - **SentenceSplitter (Unit)** — Groups tokens into sentences
+- **ModelStorage (Subsystem)** — The weights and lexicon binary formats and the embedded lexicon
+  - **BinaryFormat (Unit)** — Primitives that both formats share
+  - **Lexicon (Unit)** — Reads, searches and writes the compiled lexicon and applies the token-shape rules
+  - **PerceptronModel (Unit)** — Reads, writes and scores with the perceptron weights
+  - **EmbeddedModel (Unit)** — Lazy, thread-safe access to the data embedded in the package
+- **Tagging (Subsystem)** — Assigns tags with confidences, alternatives and constraints
+  - **FeatureExtractor (Unit)** — The single definition of the hashed features
+  - **TagDecoder (Unit)** — The greedy decoder with lexicon restriction and softmax confidence
+  - **TokenConstraint (Unit)** — The caller's restriction or preference for the tag of one token
+  - **Tagger (Unit)** — The public entry point, its options and the result types
+- **Data assets and tools (not software items)** — Training corpora, evaluation sets, the lexicon and the third-party
+  notice, covered at system level together with the build-time tools that produce and compile them
 
 The following OTS items are also covered:
 
+- **ApiMark** — API reference generation tool
 - **BuildMark** — build-notes documentation tool
 - **FileAssert** — document assertion tool
 - **Pandoc** — Markdown-to-HTML conversion tool
@@ -62,31 +76,65 @@ diagram or the prose below.
 
 ![Software Structure](SoftwareStructureView.svg)
 
-This template demonstrates a minimal system structure with no subsystems — it contains only the
-`Demo` unit directly under the system level. In more complex implementations, subsystems would
-organize related units and provide architectural boundaries with well-defined interfaces and
-responsibilities.
+The system has one unit directly under it (`Upos`, the tag vocabulary that every part uses) and three subsystems:
+`Tokenization` (text to sentences and tokens), `ModelStorage` (the binary formats of the weights and the lexicon and the
+embedded lexicon) and `Tagging` (features, decoding, constraints and the public `Tagger`). The dependencies between
+them have no unit-level call cycle, but the subsystem graph is not acyclic: `Tagging` uses `Tokenization`, `ModelStorage`
+and `Upos`; `ModelStorage` uses `Upos` and, for one constant (`EmbeddedModel` reads `FeatureExtractor.FeatureSetVersion`),
+`Tagging`; `Tokenization` uses nothing else. Each unit is one class or a few tightly coupled files, as listed
+in the folder layout below.
 
 ## Folder Layout
 
 The source code folder structure mirrors the software structure organization, with file paths
-and descriptions as follows:
+and descriptions as follows. All public types are in the single namespace `DemaConsulting.PartOfSpeech`; the folders
+are not namespaces.
 
 ```text
 src/DemaConsulting.PartOfSpeech/
-└── Demo.cs                     — Demonstration greeting class implementing template functionality
+├── Upos.cs                     — The 17 tags (enumeration)
+├── UposExtensions.cs           — Tag names and the tag count
+├── UposSet.cs                  — Immutable set of tags
+├── NamespaceDoc.cs             — API reference text of the namespace (not a software item)
+├── Tokenization/
+│   ├── Tokenizer.cs            — Word rules and pre-tokenized input
+│   ├── Token.cs                — Token value type
+│   ├── Sentence.cs             — Sentence result type
+│   └── SentenceSplitter.cs     — Sentence boundary rules
+├── ModelStorage/
+│   ├── BinaryFormat.cs         — Shared primitives of both formats
+│   ├── Lexicon.cs              — Lexicon reader, search and token-shape rules
+│   ├── LexiconWriter.cs        — Lexicon table parser and compiler (build-time and tests)
+│   ├── PerceptronModel.cs      — Weights reader and scoring
+│   ├── PerceptronModelWriter.cs — Weights writer (tests now, trainer later)
+│   └── EmbeddedModel.cs        — Lazy access to the embedded resources
+├── Tagging/
+│   ├── FeatureExtractor.cs     — The hashed feature definition
+│   ├── DecoderWorkspace.cs     — Per-thread scratch memory of the decoder
+│   ├── ScoreSlice.cs           — Read-only list over the alternatives array
+│   ├── TagDecoder.cs           — Greedy decoder
+│   ├── TokenConstraint.cs      — Per-token constraint value
+│   ├── Tagger.cs               — Public entry point
+│   ├── TaggerOptions.cs        — Options
+│   ├── TaggedSentence.cs       — Result type
+│   ├── TaggedToken.cs          — Result type
+│   └── TagScore.cs             — Result type
+└── Resources/
+    └── lexicon.bin             — Compiled lexicon (generated by tools/LexiconCompiler, committed, embedded)
 ```
 
-This flat folder structure reflects the single-unit nature of this template system. As the system
-grows with additional subsystems and units, the folder structure will expand to mirror the
-software architecture with subsystem-specific folders containing their respective units.
+`DecoderWorkspace.cs` and `ScoreSlice.cs` are internal helpers of the decoder and belong to the `TagDecoder` unit.
+`Token.cs` and `Sentence.cs` belong to the `Tokenizer` unit; `LexiconWriter.cs` to `Lexicon`;
+`PerceptronModelWriter.cs` to `PerceptronModel`; and `TaggerOptions.cs`, `TaggedSentence.cs`, `TaggedToken.cs` and
+`TagScore.cs` to `Tagger`.
 
-Two further top-level folders hold files that are not software items and are therefore not part of the software
+Further top-level folders hold files that are not software items and are therefore not part of the software
 structure:
 
 ```text
 data/                           — Training corpora, evaluation sets, lexicon, checksum manifest and leakage report
 tools/data/                     — Build-time Python tools and their tests that produce and check the data
+tools/LexiconCompiler/          — Build-time C# tool that compiles the lexicon table into Resources/lexicon.bin
 THIRD-PARTY-NOTICES.md          — Third-party attribution and license notices, packed in the NuGet package
 ```
 
@@ -118,7 +166,15 @@ requirements are in the _Data and Licensing_ section of `docs/reqstream/{system}
 tools have developer unit tests in `tools/data/tests/`, which are not requirements evidence. The Python files of the
 tools and their tests are reviewed in two review-sets of `.reviewmark.yaml`: `PartOfSpeech-DataConversion` (the tools
 that import and convert data and build the lexicon) and `PartOfSpeech-DataChecks` (the tools that check, record and
-verify it); the system design and the system requirements are their context.
+verify it); the system design and the system requirements are their context. The C# tool `tools/LexiconCompiler` has
+its own review-set, `PartOfSpeech-LexiconCompiler`; it has no requirements of its own because its result is proven by
+the system requirement `PartOfSpeech-Data-EmbeddedLexiconCurrent`.
+
+Test files follow the same tree as the sources: the subsystem tests are `Tokenization/TokenizationTests.cs`,
+`ModelStorage/ModelStorageTests.cs` and `Tagging/TaggingTests.cs`, the unit tests are named `{Unit}Tests.cs` in the
+folder of their subsystem (`UposTests.cs` for the unit directly under the system), and the system tests are
+`PartOfSpeechTests.cs` and `PartOfSpeechDataTests.cs`. The helpers `TestSupport/TinyModels.cs`, `TinyTrainer.cs` and
+`SyntheticModel.cs` build small and synthetic models for the tests and belong to the `Tagging` review-set.
 
 ## References
 

@@ -1,0 +1,68 @@
+---
+# Software Unit Requirements for SentenceSplitter
+#
+# The SentenceSplitter unit groups the tokens of a text into sentences.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: Tokenization Requirements
+        sections:
+          - title: SentenceSplitter Requirements
+            requirements:
+              - id: PartOfSpeech-Tokenization-SentenceSplitter-TerminalPunctuation
+                title: >-
+                  A sentence shall end after a period, a question mark, an exclamation mark or an ellipsis when the next
+                  token starts with an upper-case letter, a digit or an opening quote or bracket.
+                justification: |
+                  Terminal punctuation followed by a new sentence start is the ordinary end of a sentence in English
+                  text.
+                tests:
+                  - SentenceSplitter_Split_PeriodQuestionExclamation_EndSentences
+
+              - id: PartOfSpeech-Tokenization-SentenceSplitter-ClosingQuotes
+                title: >-
+                  A closing quote or bracket that touches the terminal punctuation shall stay with the sentence that it
+                  closes.
+                justification: |
+                  A quotation that ends a sentence ("Stop.") belongs to that sentence; moving its closing quote to the
+                  next sentence would corrupt both.
+                tests:
+                  - SentenceSplitter_Split_ClosingQuoteStaysWithSentence
+
+              - id: PartOfSpeech-Tokenization-SentenceSplitter-Abbreviations
+                title: >-
+                  A title or abbreviation that is always followed by a name or a number shall not end a sentence, and
+                  an abbreviation that is the last token of the text shall end it.
+                justification: |
+                  "Dr. Smith" is one sentence start while a text that ends with "etc." ends there; confusing them
+                  splits sentences at titles.
+                tests:
+                  - SentenceSplitter_Split_AbbreviationDoesNotEndSentence
+                  - SentenceSplitter_Split_FinalAbbreviationEndsSentence
+
+              - id: PartOfSpeech-Tokenization-SentenceSplitter-LowerCaseContinuation
+                title: >-
+                  Terminal punctuation followed by a lower-case word, and an ellipsis followed by a lower-case word,
+                  shall not end a sentence.
+                justification: |
+                  A lower-case word cannot start a sentence in ordinary text, so the sentence goes on.
+                tests:
+                  - SentenceSplitter_Split_NoSplitBeforeLowerCase
+                  - SentenceSplitter_Split_EllipsisBeforeLowerCaseContinues
+
+              - id: PartOfSpeech-Tokenization-SentenceSplitter-Paragraphs
+                title: >-
+                  A blank line shall always end a sentence, and a single line break shall not.
+                justification: |
+                  Paragraphs and headings end without punctuation, while hard-wrapped lines continue the same sentence.
+                tests:
+                  - SentenceSplitter_Split_BlankLineEndsSentence
+                  - SentenceSplitter_Split_SingleLineBreakDoesNotEndSentence
+
+              - id: PartOfSpeech-Tokenization-SentenceSplitter-NoTerminator
+                title: A text without terminal punctuation shall be one sentence.
+                justification: |
+                  Headings, labels and fragments have no punctuation but are still text to tag; no token may be dropped.
+                tests:
+                  - SentenceSplitter_Split_TextWithoutTerminator_IsOneSentence

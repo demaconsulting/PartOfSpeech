@@ -43,8 +43,9 @@ body:
       placeholder: |
         ```csharp
         // Example usage
-        var demo = new Demo("Greetings");
-        var result = demo.DemoMethod("User");
+        using var weights = File.OpenRead("model.posw");
+        var tagger = Tagger.Load(weights);
+        var sentence = tagger.Tag("The cat sat on the mat.")[0];
         ```
       render: csharp
 

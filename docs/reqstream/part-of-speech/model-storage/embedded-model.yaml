@@ -1,0 +1,40 @@
+---
+# Software Unit Requirements for EmbeddedModel
+#
+# The EmbeddedModel unit gives access to the lexicon and, in a later release, the weights that are embedded in the
+# package.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: ModelStorage Requirements
+        sections:
+          - title: EmbeddedModel Requirements
+            requirements:
+              - id: PartOfSpeech-ModelStorage-EmbeddedModel-Lexicon
+                title: >-
+                  The package shall contain a lexicon that loads, and every access shall return the same loaded lexicon.
+                justification: |
+                  The embedded lexicon is what the default restriction of known words is made of; loading it again for
+                  every access would waste time and memory.
+                tests:
+                  - EmbeddedModel_Lexicon_IsPresentAndLoads
+                  - EmbeddedModel_Lexicon_SecondAccess_ReturnsSameInstance
+
+              - id: PartOfSpeech-ModelStorage-EmbeddedModel-Weights
+                title: >-
+                  A package that contains no weights shall report that no weights are available instead of failing; this
+                  requirement is replaced when a trained model is embedded.
+                justification: |
+                  Until a model ships, callers must be able to find out that none is embedded, and the library must say
+                  so clearly.
+                tests:
+                  - EmbeddedModel_Weights_NoResource_ReturnsNull
+
+              - id: PartOfSpeech-ModelStorage-EmbeddedModel-ThreadSafe
+                title: Threads that access the embedded lexicon at the same time shall receive the same instance.
+                justification: |
+                  Services tag in parallel from the first request on; two loaded copies would waste memory and could
+                  differ if loading ever failed once.
+                tests:
+                  - EmbeddedModel_Lexicon_ParallelAccess_ReturnsSingleInstance

@@ -1,0 +1,46 @@
+---
+# Software Unit Requirements for Upos
+#
+# Upos is a unit directly under the system: the 17 Universal POS tags, their text forms and sets of tags.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: Upos Requirements
+        requirements:
+          - id: PartOfSpeech-Upos-SeventeenTags
+            title: The tag vocabulary shall consist of exactly the 17 Universal POS tags, in alphabetical order.
+            justification: |
+              The data, the lexicon and the weights are labeled with the 17 Universal POS tags in this order, so the
+              vocabulary of the library must be the same set in the same order for tag numbers to mean the same thing
+              everywhere.
+            tests:
+              - Upos_Values_AreSeventeenInAlphabeticalOrder
+
+          - id: PartOfSpeech-Upos-TagStrings
+            title: >-
+              Each tag shall convert to its Universal POS name and back, and text that is not a Universal POS name shall
+              be refused.
+            justification: |
+              Callers print, store and compare tags by their standard names; an unknown name must be reported rather
+              than
+              mapped to a tag by guesswork, and a number that is not a tag must not produce a name.
+            tests:
+              - Upos_ToTagString_RoundTripsAllTags
+              - Upos_TryParse_UnknownText_ReturnsFalse
+              - Upos_ToTagString_UndefinedValue_Throws
+
+          - id: PartOfSpeech-Upos-SetOperations
+            title: >-
+              A set of tags shall support membership, adding, removing, union, intersection and comparison by content,
+              and shall list its tags in ascending order.
+            justification: |
+              Lexicon entries, allowed tags and constraints are sets of tags; callers build and combine them and expect
+              ordinary set behavior with a stable, readable order.
+            tests:
+              - UposSet_AddRemove_BehaveAsSet
+              - UposSet_UnionIntersect_ComputeSetResults
+              - UposSet_All_ContainsSeventeen
+              - UposSet_Equality_IsByContent
+              - UposSet_Enumeration_IsAscending
+              - UposSet_ToString_ListsTags

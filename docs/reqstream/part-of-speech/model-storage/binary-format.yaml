@@ -1,0 +1,72 @@
+---
+# Software Unit Requirements for BinaryFormat
+#
+# The BinaryFormat unit holds the primitives that both file formats share.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: ModelStorage Requirements
+        sections:
+          - title: BinaryFormat Requirements
+            requirements:
+              - id: PartOfSpeech-ModelStorage-BinaryFormat-LittleEndianPrimitives
+                title: >-
+                  Integers and single-precision numbers shall be read and written in little-endian byte order on every
+                  platform.
+                justification: |
+                  A file written on one machine must read the same on every other; the byte order of the format cannot
+                  depend on the processor.
+                tests:
+                  - BinaryFormat_ReadWrite_LittleEndianPrimitives_RoundTrip
+
+              - id: PartOfSpeech-ModelStorage-BinaryFormat-Varints
+                title: >-
+                  A variable-length integer shall round-trip over its whole range, and an over-long or truncated one
+                  shall be refused.
+                justification: |
+                  The formats store gaps and lengths as variable-length integers; a reader that ran past the end of its
+                  data or accepted an over-long value would misread the rest of the file.
+                tests:
+                  - BinaryFormat_Varint_RoundTripsBoundaryValues
+                  - BinaryFormat_Varint_OverlongOrTruncated_Throws
+
+              - id: PartOfSpeech-ModelStorage-BinaryFormat-Checksum
+                title: The checksum of a payload shall equal the published FNV-1a 32-bit value for that payload.
+                justification: |
+                  A checksum that follows the published algorithm can be recomputed by any other tool that reads or
+                  writes the files.
+                tests:
+                  - BinaryFormat_Fnv1a_MatchesKnownVectors
+
+              - id: PartOfSpeech-ModelStorage-BinaryFormat-Header
+                title: >-
+                  A header shall be refused when its magic is wrong, its version is not supported or the file is shorter
+                  than the header, and the error shall say which.
+                justification: |
+                  Each kind of defect has a different remedy for the caller, so each must be reported as itself and
+                  before any other field is trusted.
+                tests:
+                  - BinaryFormat_ReadHeader_BadMagic_Throws
+                  - BinaryFormat_ReadHeader_UnsupportedVersion_Throws
+                  - BinaryFormat_ReadHeader_Truncated_Throws
+
+              - id: PartOfSpeech-ModelStorage-BinaryFormat-Compression
+                title: >-
+                  A payload shall be stored compressed with Deflate and shall be restored byte for byte, and a stored
+                  region that holds anything besides the Deflate data, such as bytes after its end, shall be refused.
+                justification: |
+                  Compression keeps the package small; any loss would corrupt the data the tagger relies on. Bytes that
+                  the decoder never uses are not covered by the payload checksum, so a region that holds them would
+                  pass unnoticed unless the reader checks for them.
+                tests:
+                  - BinaryFormat_Deflate_RoundTrips
+                  - BinaryFormat_Decompress_TrailingBytesInStoredRegion_Throws
+
+              - id: PartOfSpeech-ModelStorage-BinaryFormat-PopCount
+                title: The number of set bits of a 64-bit word shall be counted correctly on every target framework.
+                justification: |
+                  The weights are found by counting occupied buckets, so a wrong count would address the wrong weights;
+                  the library supports target frameworks with and without a hardware instruction for it.
+                tests:
+                  - BinaryFormat_PopCount_MatchesReference

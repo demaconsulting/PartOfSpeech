@@ -1,0 +1,64 @@
+---
+# Software Unit Requirements for PerceptronModel
+#
+# The PerceptronModel unit reads, writes and scores with the weights of the averaged perceptron.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: ModelStorage Requirements
+        sections:
+          - title: PerceptronModel Requirements
+            requirements:
+              - id: PartOfSpeech-ModelStorage-PerceptronModel-RoundTrip
+                title: >-
+                  A weights file shall load with the weights that the writer was given, with the same result whether the
+                  file is stored compressed or not.
+                justification: |
+                  Training produces weights through the writer, and the tagger uses what the reader returns; the two
+                  must agree exactly.
+                tests:
+                  - PerceptronModel_Load_RoundTripsWriterOutput
+                  - PerceptronModel_Load_Compressed_And_Uncompressed_Equal
+
+              - id: PartOfSpeech-ModelStorage-PerceptronModel-ScoreLookup
+                title: >-
+                  The weights of a feature bucket shall be added to the scores of their tags, a bucket without weights
+                  shall add nothing, and the first and the last bucket of the model shall be found.
+                justification: |
+                  This is the one operation the tagger performs for every feature of every token; a wrong or missed
+                  weight changes tags, and the ends of the bucket range are where indexing errors occur.
+                tests:
+                  - PerceptronModel_AddScores_SumsRowWeights
+                  - PerceptronModel_AddScores_EmptyBucket_AddsNothing
+                  - PerceptronModel_AddScores_FirstAndLastBucket_AreFound
+
+              - id: PartOfSpeech-ModelStorage-PerceptronModel-Validation
+                title: >-
+                  A weights file shall be refused when its magic, version, feature set or reserved bytes are wrong, its
+                  temperature or scale is not finite and positive, its checksum fails, it is truncated or has trailing
+                  bytes, its buckets or tags are not in ascending order, or it declares a payload above the format
+                  limit.
+                justification: |
+                  Weights from another feature set, or damaged weights, would produce plausible but wrong tags; every
+                  defect must be refused when the file is loaded.
+                tests:
+                  - PerceptronModel_Load_BadMagic_Throws
+                  - PerceptronModel_Load_UnsupportedVersion_Throws
+                  - PerceptronModel_Load_FeatureSetMismatch_Throws
+                  - PerceptronModel_Load_InvalidTemperatureOrScale_Throws
+                  - PerceptronModel_Load_ChecksumMismatch_Throws
+                  - PerceptronModel_Load_TruncatedOrTrailingBytes_Throws
+                  - PerceptronModel_Load_UnsortedTagsOrBuckets_Throws
+                  - PerceptronModel_Load_ReservedNotZero_Throws
+                  - PerceptronModel_Load_PayloadLengthAboveMaximum_Throws
+                  - PerceptronModelWriter_Compile_InvalidRows_Throw
+
+              - id: PartOfSpeech-ModelStorage-PerceptronModel-Temperature
+                title: The calibration temperature stored in a weights file shall be available to the tagger.
+                justification: |
+                  Confidences are only calibrated with the temperature that was fitted for the weights, so it must
+                  travel
+                  with them.
+                tests:
+                  - PerceptronModel_Temperature_IsReadFromHeader

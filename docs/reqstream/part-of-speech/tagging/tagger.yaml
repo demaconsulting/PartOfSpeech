@@ -1,0 +1,103 @@
+---
+# Software Unit Requirements for Tagger
+#
+# The Tagger unit is the public entry point: it loads models, tags text, sentences and token lists, and returns the
+# results.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: Tagging Requirements
+        sections:
+          - title: Tagger Requirements
+            requirements:
+              - id: PartOfSpeech-Tagging-Tagger-TagText
+                title: >-
+                  A text shall be tagged as one result per sentence, each with one tagged token per token, in text
+                  order.
+                justification: |
+                  This is the main use of the library.
+                tests:
+                  - Tagger_Tag_Text_ReturnsTaggedSentences
+
+              - id: PartOfSpeech-Tagging-Tagger-TagTokens
+                title: >-
+                  A list of tokens shall be tagged as one sentence with one tag per token, and an empty list shall give
+                  an empty sentence.
+                justification: |
+                  Callers that bring their own tokens use this entry point, and an empty list is valid input.
+                tests:
+                  - Tagger_Tag_Tokens_ReturnsTags
+                  - Tagger_Tag_Tokens_EmptyTokens_ReturnsEmptySentence
+
+              - id: PartOfSpeech-Tagging-Tagger-ResultsCarryOffsets
+                title: >-
+                  The text of every tagged token shall equal the original text at the offset and length of the token.
+                justification: |
+                  Callers use the offsets to find the token in their own text.
+                tests:
+                  - Tagger_Tag_Text_TokenTextMatchesOffsets
+
+              - id: PartOfSpeech-Tagging-Tagger-Load
+                title: >-
+                  A tagger shall be created from a weights stream, with the embedded lexicon or with a lexicon stream,
+                  and
+                  a null stream or options that are out of range shall be refused.
+                justification: |
+                  Callers choose their own weights and may bring a lexicon of their own; bad arguments are programming
+                  errors to report at creation time.
+                tests:
+                  - Tagger_Load_NullStreams_Throw
+                  - Tagger_Load_InvalidOptions_Throw
+                  - Tagger_Load_CustomLexicon_IsUsed
+
+              - id: PartOfSpeech-Tagging-Tagger-Default
+                title: >-
+                  While the package contains no weights, reading the default tagger shall throw an
+                  InvalidOperationException whose message says that no model is available and that weights can be
+                  loaded; this requirement is replaced when a trained model is embedded.
+                justification: |
+                  A clear failure is safer than a placeholder model whose tags could be trusted.
+                tests:
+                  - Tagger_Default_NoEmbeddedWeights_ThrowsWithClearMessage
+
+              - id: PartOfSpeech-Tagging-Tagger-ThreadSafe
+                title: >-
+                  Tagging in parallel from many threads shall give the same results as tagging in sequence, and the
+                  results shall not change after they are returned.
+                justification: |
+                  Services share one tagger between requests and hand its results to other threads.
+                tests:
+                  - Tagger_Tag_Parallel_MatchesSequential
+                  - Tagger_Tag_ResultsAreImmutable
+
+              - id: PartOfSpeech-Tagging-Tagger-InputValidation
+                title: >-
+                  A null text, sentence or token list shall be refused with an ArgumentNullException, and a constraint
+                  list whose length differs from the number of tokens shall be refused with an ArgumentException.
+                justification: |
+                  These are programming errors, and a constraint list that does not line up with the tokens would apply
+                  constraints to the wrong words.
+                tests:
+                  - Tagger_Tag_NullArguments_Throw
+                  - Tagger_Tag_ConstraintLengthMismatch_Throws
+
+              - id: PartOfSpeech-Tagging-Tagger-Options
+                title: >-
+                  The number of alternatives that a result carries per token shall not exceed the maximum that the
+                  options give.
+                justification: |
+                  Callers that need only the best tag should not pay for a list of alternatives, and callers that want
+                  many must be able to ask.
+                tests:
+                  - Tagger_Options_MaxAlternativesLimitsAlternatives
+
+              - id: PartOfSpeech-Tagging-Tagger-Alternatives
+                title: >-
+                  The alternatives of a token shall not contain its tag, and their probabilities together with the
+                  confidence shall not exceed one.
+                justification: |
+                  Callers add up and compare the probabilities, so they must describe separate, non-overlapping
+                  readings.
+                tests:
+                  - Tagger_Tag_Alternatives_ExcludeBestAndSumWithConfidence
