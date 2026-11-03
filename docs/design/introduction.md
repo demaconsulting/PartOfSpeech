@@ -26,6 +26,8 @@ software items, specifically:
 
 - **PartOfSpeech (System)** — The complete .NET library template system
 - **Demo (Unit)** — Demonstration greeting class providing example functionality
+- **Data assets (not software items)** — Training corpora, evaluation sets, the lexicon and the third-party notice,
+  covered at system level together with the build-time tools that produce them
 
 The following OTS items are also covered:
 
@@ -79,6 +81,15 @@ This flat folder structure reflects the single-unit nature of this template syst
 grows with additional subsystems and units, the folder structure will expand to mirror the
 software architecture with subsystem-specific folders containing their respective units.
 
+Two further top-level folders hold files that are not software items and are therefore not part of the software
+structure:
+
+```text
+data/                           — Training corpora, evaluation sets, lexicon, checksum manifest and leakage report
+tools/data/                     — Build-time Python tools and their tests that produce and check the data
+THIRD-PARTY-NOTICES.md          — Third-party attribution and license notices, packed in the NuGet package
+```
+
 ## Document Conventions
 
 Throughout this document:
@@ -100,6 +111,11 @@ Each software item has corresponding artifacts in parallel directory trees:
 - Tests: `test/{System}.Tests/.../{Item}Tests.cs` (PascalCase for C#)
 - SysML2 model: `docs/sysml2/model/{system}/.../{item}.sysml` (kebab-case)
 - Review-sets: defined in `.reviewmark.yaml`
+
+The data assets are not software items and have no parallel design or verification files. Their system-level
+requirements are in the _Data and Licensing_ section of `docs/reqstream/{system}.yaml`, their tests are in
+`test/{System}.Tests/{System}DataTests.cs`, and the data folders carry their own `README.md` files. The build-time
+tools have developer unit tests in `tools/data/tests/`, which are not requirements evidence.
 
 ## References
 

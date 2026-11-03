@@ -56,6 +56,32 @@ Generated documentation includes:
 - **Requirements Justifications**: Detailed requirement rationale
 - **Trace Matrix**: Requirements to test traceability
 
+## Data
+
+The repository holds the open training data, the evaluation data and a part-of-speech lexicon for the 17 Universal POS
+tags in the [data folder][link-data]. Every data source is recorded with its origin, license and how it was produced, and
+the files are verified against checksums. The library does not use the data at run time yet.
+
+## Credits and Licenses
+
+PartOfSpeech is MIT licensed. The data below is open, and its attribution and license notices are in
+[THIRD-PARTY-NOTICES.md][link-notices], which is also packed in the NuGet package.
+
+- **MASC**: the Manually Annotated Sub-Corpus of the Open American National Corpus
+  ([CC BY 3.0 US][link-cc-by-3]). Its Penn Treebank parts of speech were converted to Universal POS tags.
+- **Open English WordNet** ([CC BY 4.0][link-cc-by-4]), which carries the Princeton WordNet notice. Its word forms
+  were reduced to a lexicon that maps a spelling to the Universal POS tags it may carry.
+- **The open part-of-speech corpus** of the [WordSense][link-wordsense] project: the annotations and the selection are
+  CC0 1.0, and the sentences are public domain in the United States or come from the Tatoeba CC0 export. The same holds
+  for the silver data (Tatoeba and Project Gutenberg text) and the evaluation sets.
+- **UD English-EWT** (CC BY-SA 4.0) is used for **evaluation only**. It is not distributed, nothing is trained on it,
+  and the repository ignores its files.
+
+No CC BY-SA or NonCommercial data is committed to this repository or included in the package. Language models wrote the
+tags of the open corpus and of the silver data, and no human has reviewed them. In the owner's position, GitHub claims
+no ownership of model outputs, so the repository owner holds the rights in them and dedicates them to the public domain
+under CC0 1.0. That is the owner's position, not legal advice or a warranty.
+
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md][link-contributing] for development setup, coding
@@ -88,3 +114,8 @@ By contributing to this project, you agree that your contributions will be licen
 [link-nuget]: https://www.nuget.org/packages/PartOfSpeech
 [link-continuous-compliance]: https://github.com/demaconsulting/ContinuousCompliance
 [link-contributing]: https://github.com/demaconsulting/PartOfSpeech/blob/main/CONTRIBUTING.md
+[link-data]: https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md
+[link-notices]: https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md
+[link-wordsense]: https://github.com/demaconsulting/WordSense
+[link-cc-by-3]: https://creativecommons.org/licenses/by/3.0/us/
+[link-cc-by-4]: https://creativecommons.org/licenses/by/4.0/

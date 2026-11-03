@@ -1,0 +1,6 @@
+# SHA-256 of the UD English-EWT files (evaluation only, CC BY-SA 4.0; fetched into the git-ignored cache, never committed).
+# Pinned to UD_English-EWT commit 4a4d77f599ea53cc405f85d0cec4b2f14f81d42b (the same files and hashes WordSense pins).
+# Columns: file name <TAB> SHA-256
+en_ewt-ud-dev.conllu	39239e0a60db3ae68f4b7036189f11b6692741d10ff8240dd91f74f2760d90f8
+en_ewt-ud-test.conllu	fa024f43dc5da3c5ac02563bc9bd0e974f46cbb1560823976a8f342a37dc494a
+en_ewt-ud-train.conllu	d68e06122a702464c613076523d56740f047e5bbe89dd90ec32737e04d952143

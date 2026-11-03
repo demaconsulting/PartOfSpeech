@@ -1,0 +1,24 @@
+# Checksums of the committed data files (tools/data/make_manifest.py); Markdown files are not listed
+# columns = path (relative to data/), bytes, sha256, lines, sentences
+eval/gold-v2/dev.tsv	606762	ffb2f3afd3460523656f5528a66094bad507982b15eb2b4a9341cdb78ff117f5	2025	-
+eval/gold-v2/sources.tsv	886502	0f5e84194e64459393dfea7c466c1d7efb4e8f43603f10480b2aa29dd1d36d21	1443	-
+eval/gold-v2/test.tsv	922745	11b4a38e2cb1154d063d503b289c4a40ae1ba0c7009b92bf4a069a4dc3317cfb	3047	-
+eval/shapes/probe.tsv	58492	5d1ebe3a7fd64c20aeb1388c95c2fff2d97792f9761375bed8b52740e0d89105	561	-
+eval/ste-challenge/test.tsv	11859	0cc8b11077f5a669af3f504f2aee3e1ee2e58c65135035eef28e4271d3a72fb3	272	32
+leakage-report.tsv	1098	c3b5bcb34c041b531b32178cb7a06f8c455e5d611af0a07d6b1e9dc6d3edfd11	24	-
+lexicon/closed-class.tsv	9435	73b7edf3fcaec5af21b5722a83b279ee78e66cb6e3cd2b71a4e625336dc945ca	331	-
+lexicon/coverage.tsv	9178	3f9cccdbf1a9f708c6704ba22615bf7a31b5cb36ac1cf45edbc38c6fa16e8efd	287	-
+lexicon/lexicon.tsv	4452772	3cab01502a9079333911ce2952fd2c897e9caa9248383f58c5a86d8dff48c437	262668	-
+lexicon/overrides.tsv	447	e383d2c536c813e47c21b1082684a43988ba0473dcfeba1326b4afb6fd2e328d	0	-
+lexicon/sweep.tsv	666	ad4bb67d90e0831f724a4550010f5fdfccef17b90ef946329a13c1ffcc1e4004	9	-
+masc/excluded-documents.tsv	501	02e86fab8b734e97f14a07c473f60f7ea54970f9a99868dc010814f01d85c6c5	5	-
+masc/mapping-audit.tsv	3655	c5dc3e5db64be826a269ff0cfebc42fe9c9093ad23c1e83ee2ff34326cfc2ebc	129	-
+masc/masc.tsv	11600897	88c9dfa6fb71cc4cea513147e8b1f5426935b0771c9d6a213ba1a764dc8ffe0c	386837	22933
+open/LICENSE	7048	a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499	-	-
+open/dev.tsv	783361	9adcf80505f4c9e0bd61a6e20b08a6ff1a5c65e8b58c0c97f146d40f437d0068	26232	1489
+open/sources.tsv	2460322	44a6407cbaea6c98779224767d3402163c4816ad2dc6ceff774bb7adf0d5d217	5312	-
+open/test.tsv	786238	f69485b4a35c46dfffb6b16033ba0ca69504c460d7b5ffdf0bdf5b616bc567ac	26185	1501
+open/train.tsv	6273395	e0b13fb96bd4df308d9654aa350d4eca33f382ecfbe5dd0579364ad78c5ad443	209224	11990
+silver/excluded-documents.tsv	83844	408d844d1ad6b2c5cfc851032a18bf626ded605e1f72fc1ca5fdfa474b25ccd0	1867	-
+silver/silver.tsv	7461327	aa612489d87ec8cddbdd0d1b1032dcfa352f9f4e75beb15ec9443ed2cfc1b85b	242710	13973
+silver/sources.tsv	899133	388e38e0b1f969d0337619dd9d3881cab29def9081e1f95f606274e9dd286ea4	5067	-

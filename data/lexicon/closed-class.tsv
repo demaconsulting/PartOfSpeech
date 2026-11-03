@@ -1,0 +1,337 @@
+# Closed-class and function-word entries of the lexicon (project-authored from general knowledge of English; facts, no third-party data).
+# License: CC0-1.0 (this file); it follows the conventions of data/CONVENTIONS.md (determiner, pronoun, auxiliary,
+# adposition, conjunction and particle decisions of the open corpus guideline).
+# Columns: spelling (lower case) <TAB> UPOS tags (space separated) <TAB> mode <TAB> note
+# mode: exact = these tags replace whatever the dictionary tables (OEWN forms) say for the spelling (training-corpus attestation
+#       is still added afterwards); add = these tags are added to the dictionary tags (the word has open-class uses too).
+a	DET	exact	article
+an	DET	exact	article
+the	DET	exact	article
+this	ADV DET PRON	exact	demonstrative ("this big")
+that	ADV DET PRON SCONJ	exact	demonstrative, relative pronoun, complementizer
+these	DET PRON	exact	demonstrative
+those	DET PRON	exact	demonstrative
+some	ADV DET PRON	exact	"some 20 people", "some of them"
+any	ADV DET PRON	exact	"any better"
+no	ADV DET INTJ	exact	"no better", "no" as a reply
+every	DET	exact	closed determiner list
+each	ADV DET PRON	exact	"each of us", "five dollars each"
+all	ADV DET PRON	exact	"all alone", "all of them"
+both	CCONJ DET PRON	exact	"both ... and"
+either	ADV CCONJ DET PRON	exact	"either ... or"
+neither	ADV CCONJ DET PRON	exact	"neither ... nor"
+another	DET PRON	exact	closed determiner list
+which	DET PRON	exact	interrogative and relative
+what	ADV DET INTJ PRON	exact	interrogative and relative
+whose	DET PRON	exact	interrogative and relative
+whatever	ADV DET PRON	exact
+whichever	DET PRON	exact
+my	DET	exact	possessive determiner (corpus convention)
+your	DET	exact	possessive determiner
+his	DET PRON	exact	possessive determiner or independent possessive
+her	DET PRON	exact	possessive determiner or object pronoun
+its	DET	exact	possessive determiner
+our	DET	exact	possessive determiner
+their	DET	exact	possessive determiner
+thy	DET	exact	archaic possessive determiner
+thine	DET PRON	exact	archaic possessive
+mine	PRON	add	independent possessive
+yours	PRON	exact	independent possessive
+hers	PRON	exact	independent possessive
+ours	PRON	exact	independent possessive
+theirs	PRON	exact	independent possessive
+i	PRON	exact	personal pronoun
+me	PRON	exact	personal pronoun
+you	PRON	exact	personal pronoun
+he	PRON	exact	personal pronoun
+him	PRON	exact	personal pronoun
+she	PRON	exact	personal pronoun
+it	PRON	exact	personal pronoun
+we	PRON	exact	personal pronoun
+us	PRON	exact	personal pronoun
+they	PRON	exact	personal pronoun
+them	PRON	exact	personal pronoun
+thou	PRON	exact	archaic personal pronoun
+thee	PRON	exact	archaic personal pronoun
+ye	PRON	exact	archaic personal pronoun
+'em	PRON	exact	informal them
+y'all	PRON	exact
+myself	PRON	exact	reflexive
+yourself	PRON	exact	reflexive
+himself	PRON	exact	reflexive
+herself	PRON	exact	reflexive
+itself	PRON	exact	reflexive
+oneself	PRON	exact	reflexive
+ourselves	PRON	exact	reflexive
+yourselves	PRON	exact	reflexive
+themselves	PRON	exact	reflexive
+themself	PRON	exact	reflexive
+who	PRON	exact	interrogative and relative
+whom	PRON	exact	interrogative and relative
+whoever	PRON	exact
+whomever	PRON	exact
+someone	PRON	exact	indefinite
+anyone	PRON	exact	indefinite
+everyone	PRON	exact	indefinite
+somebody	PRON	exact	indefinite
+anybody	PRON	exact	indefinite
+everybody	PRON	exact	indefinite
+nobody	PRON	exact	indefinite
+something	ADV PRON	exact	indefinite ("something like")
+anything	ADV PRON	exact	indefinite
+everything	PRON	exact	indefinite
+nothing	ADV NOUN PRON	exact	indefinite ("nothing like"; "a mere nothing")
+none	ADV PRON	exact	"none the wiser"
+others	NOUN PRON	add	"the others"
+one	NOUN NUM PRON	add	number or pronoun
+ones	NOUN PRON	add
+there	ADV INTJ PRON	add	existential, locative
+here	ADV INTJ	add
+be	AUX VERB	add	auxiliary and main verb
+am	AUX VERB	add
+is	AUX VERB	add
+are	AUX VERB	add
+was	AUX VERB	add
+were	AUX VERB	add
+been	AUX VERB	add
+being	AUX NOUN VERB	add
+have	AUX VERB	add
+has	AUX VERB	add
+had	AUX VERB	add
+having	AUX NOUN VERB	add
+do	AUX VERB	add
+does	AUX VERB	add
+did	AUX VERB	add
+doing	AUX NOUN VERB	add
+done	ADJ AUX VERB	add
+can	AUX VERB	add
+could	AUX	exact	modal
+may	AUX VERB	add
+might	AUX VERB	add
+shall	AUX	exact	modal
+should	AUX	exact	modal
+will	AUX VERB	add
+would	AUX	exact	modal
+must	AUX VERB	add
+ought	AUX VERB	add
+need	AUX VERB	add
+dare	AUX VERB	add
+used	ADJ AUX VERB	add	"used to"
+ca	AUX	exact	stem of can't
+wo	AUX	exact	stem of won't
+sha	AUX	exact	stem of shan't
+ai	AUX VERB	exact	stem of ain't
+hath	AUX VERB	exact	archaic have
+hast	AUX VERB	exact	archaic have
+doth	AUX VERB	exact	archaic do
+dost	AUX VERB	exact	archaic do
+didst	AUX VERB	exact	archaic do
+art	AUX NOUN VERB	add	archaic be
+wast	AUX VERB	exact	archaic be
+wert	AUX VERB	exact	archaic be
+wilt	AUX VERB	add	archaic will
+shalt	AUX	exact	archaic shall
+canst	AUX	exact	archaic can
+couldst	AUX	exact	archaic could
+wouldst	AUX	exact	archaic would
+shouldst	AUX	exact	archaic should
+'s	AUX PART PRON VERB	exact	possessive, is, has, us (let's)
+'re	AUX VERB	exact	are
+'m	AUX VERB	exact	am
+'ve	AUX VERB	exact	have
+'ll	AUX	exact	will
+'d	AUX VERB	exact	had or would
+n't	PART	exact	negation
+not	PART	exact	negation
+to	ADP ADV PART	exact	infinitive marker, preposition
+'	PART PUNCT	exact	plural possessive or quotation mark
+of	ADP	exact
+in	ADJ ADP ADV NOUN	add
+on	ADJ ADP ADV	add
+at	ADP	exact
+by	ADP ADV	add
+for	ADP CCONJ SCONJ	exact	"for" between clauses is CCONJ
+with	ADP ADV	add
+from	ADP	exact
+into	ADP	exact
+onto	ADP	exact
+upon	ADP	exact
+over	ADJ ADP ADV NOUN	add
+under	ADJ ADP ADV	add
+about	ADJ ADP ADV	add
+above	ADJ ADP ADV NOUN	add
+across	ADP ADV	add
+after	ADJ ADP ADV SCONJ	add
+against	ADP	exact
+along	ADP ADV	add
+among	ADP	exact
+amongst	ADP	exact
+around	ADP ADV	add
+as	ADP ADV SCONJ	exact
+before	ADP ADV SCONJ	exact
+behind	ADP ADV NOUN	add
+below	ADP ADV	add
+beneath	ADP ADV	add
+beside	ADP ADV	add
+besides	ADP ADV	add
+between	ADP ADV	add
+beyond	ADP ADV NOUN	add
+during	ADP	exact
+except	ADP SCONJ VERB	add
+inside	ADJ ADP ADV NOUN	add
+outside	ADJ ADP ADV NOUN	add
+near	ADJ ADP ADV VERB	add
+off	ADJ ADP ADV	add
+out	ADJ ADP ADV VERB	add
+past	ADJ ADP ADV NOUN	add
+since	ADP ADV SCONJ	exact
+through	ADJ ADP ADV	add
+throughout	ADP ADV	add
+till	ADP SCONJ VERB	add
+until	ADP SCONJ	exact
+toward	ADP	exact
+towards	ADP	exact
+unlike	ADJ ADP	add
+via	ADP	exact
+within	ADP ADV	add
+without	ADP ADV	add
+per	ADP	exact
+than	ADP SCONJ	exact
+like	ADJ ADP ADV NOUN SCONJ VERB	add
+despite	ADP	exact
+concerning	ADP VERB	add
+regarding	ADP VERB	add
+including	ADP VERB	add
+according	ADJ ADP VERB	add	"according to"
+following	ADJ ADP NOUN VERB	add
+given	ADJ ADP VERB	add
+amid	ADP	exact
+alongside	ADP ADV	add
+aboard	ADP ADV	add
+atop	ADP	exact
+minus	ADP	add
+versus	ADP	exact
+up	ADJ ADP ADV NOUN VERB	add
+down	ADJ ADP ADV NOUN VERB	add
+round	ADJ ADP ADV NOUN VERB	add
+opposite	ADJ ADP ADV NOUN	add
+and	CCONJ	exact
+or	CCONJ	exact
+but	ADP ADV CCONJ	exact	"everyone but Tom", "all but"
+nor	CCONJ	exact
+yet	ADV CCONJ	exact
+plus	ADJ ADP CCONJ NOUN	add
+&	CCONJ SYM	exact
+so	ADJ ADV CCONJ INTJ SCONJ	add
+if	NOUN SCONJ	add
+because	SCONJ	exact
+although	SCONJ	exact
+though	ADV SCONJ	exact
+while	NOUN SCONJ VERB	add
+whereas	SCONJ	exact
+unless	SCONJ	exact
+whether	SCONJ	exact
+once	ADV SCONJ	add
+lest	SCONJ	exact
+whilst	SCONJ	exact
+albeit	SCONJ	exact
+whenever	ADV SCONJ	exact
+wherever	ADV SCONJ	exact
+when	ADV SCONJ	exact
+where	ADV NOUN SCONJ	exact
+why	ADV INTJ NOUN	exact
+how	ADV NOUN SCONJ	exact
+whence	ADV	exact
+whither	ADV	exact
+wherein	ADV	exact
+whereby	ADV	exact
+very	ADJ ADV	add
+too	ADV	exact
+also	ADV	exact
+never	ADV	exact
+always	ADV	exact
+ever	ADV	exact
+yes	ADV INTJ NOUN	add
+please	ADV INTJ VERB	add
+hello	INTJ NOUN	add
+hi	INTJ	add
+hey	INTJ	add
+oh	INTJ	exact
+ah	INTJ	exact
+ok	ADJ ADV INTJ	add
+okay	ADJ ADV INTJ	add
+thanks	INTJ NOUN VERB	add
+thank	INTJ NOUN VERB	add
+sorry	ADJ INTJ	add
+wow	INTJ	add
+well	ADJ ADV INTJ NOUN VERB	add
+alas	INTJ	exact
+indeed	ADV INTJ	add
+amen	INTJ NOUN	add
+goodbye	INTJ NOUN	add
+bye	INTJ NOUN	add
+hmm	INTJ	exact
+uh	INTJ	exact
+um	INTJ	exact
+zero	NOUN NUM	add	number words
+two	NOUN NUM	add
+three	NOUN NUM	add
+four	NOUN NUM	add
+five	NOUN NUM	add
+six	NOUN NUM	add
+seven	NOUN NUM	add
+eight	NOUN NUM	add
+nine	NOUN NUM	add
+ten	NOUN NUM	add
+eleven	NOUN NUM	add
+twelve	NOUN NUM	add
+thirteen	NOUN NUM	add
+fourteen	NOUN NUM	add
+fifteen	NOUN NUM	add
+sixteen	NOUN NUM	add
+seventeen	NOUN NUM	add
+eighteen	NOUN NUM	add
+nineteen	NOUN NUM	add
+twenty	NOUN NUM	add
+thirty	NOUN NUM	add
+forty	NOUN NUM	add
+fifty	NOUN NUM	add
+sixty	NOUN NUM	add
+seventy	NOUN NUM	add
+eighty	NOUN NUM	add
+ninety	NOUN NUM	add
+hundred	NOUN NUM	add
+thousand	NOUN NUM	add
+million	NOUN NUM	add
+billion	NOUN NUM	add
+trillion	NOUN NUM	add
+dozen	NOUN NUM	add
+first	ADJ ADV NOUN	add	ordinals are ADJ ("First, mix the flour" is ADV)
+second	ADJ ADV NOUN VERB	add
+third	ADJ ADV NOUN	add
+fourth	ADJ ADV NOUN	add
+fifth	ADJ ADV NOUN	add
+sixth	ADJ ADV NOUN	add
+seventh	ADJ ADV NOUN	add
+eighth	ADJ ADV NOUN	add
+ninth	ADJ ADV NOUN	add
+tenth	ADJ ADV NOUN	add
+last	ADJ ADV NOUN VERB	add
+next	ADJ ADP ADV NOUN	add
+many	ADJ PRON	add	quantity words are ADJ before a noun (guideline 4.13)
+much	ADJ ADV PRON	add
+few	ADJ PRON	add
+fewer	ADJ PRON	add
+several	ADJ PRON	add
+enough	ADJ ADV INTJ PRON	add
+more	ADJ ADV PRON	add
+most	ADJ ADV PRON	add
+less	ADJ ADV PRON	add
+least	ADJ ADV NOUN PRON	add
+little	ADJ ADV NOUN PRON	add
+such	ADJ ADV PRON	add
+other	ADJ PRON	add
+half	ADJ ADV DET NOUN PRON	add
+plenty	ADV NOUN PRON	add
+lots	ADV NOUN PRON	add
+whole	ADJ ADV NOUN	add

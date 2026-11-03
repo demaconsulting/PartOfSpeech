@@ -12,6 +12,7 @@ This user guide covers:
 - Installation of the library
 - Basic usage and examples
 - API reference
+- Data and license credits
 
 # Continuous Compliance
 
@@ -171,6 +172,33 @@ catch (ArgumentNullException ex)
     Console.WriteLine("Name cannot be null");
 }
 ```
+
+# Data and Licenses
+
+The library is MIT licensed. The repository also holds open data for the 17 Universal POS tags: training corpora, a
+part-of-speech lexicon and evaluation sets, described in the
+[data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md). The library does not use the data
+at run time yet. The attribution and license notices of the third-party data are in
+[THIRD-PARTY-NOTICES.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md), which is also
+packed at the root of the NuGet package.
+
+## Credits
+
+- **MASC**, the Manually Annotated Sub-Corpus of the Open American National Corpus, is licensed CC BY 3.0 US
+  (<https://creativecommons.org/licenses/by/3.0/us/>). Its Penn Treebank parts of speech were converted to Universal POS
+  tags.
+- **Open English WordNet** is licensed CC BY 4.0 (<https://creativecommons.org/licenses/by/4.0/>) and carries the
+  Princeton WordNet notice. Its word forms were reduced to a lexicon of spellings and the Universal POS tags they may
+  carry.
+- **The open part-of-speech corpus** of the WordSense project (<https://github.com/demaconsulting/WordSense>): the
+  annotations and the selection are CC0 1.0, and the sentences are public domain in the United States or come from the
+  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text) and the evaluation sets follow the same terms.
+
+## Evaluation-Only Data
+
+The UD English-EWT treebank (CC BY-SA 4.0) is used for evaluation only. It is not distributed, nothing is trained on it,
+and the repository ignores its files. No CC BY-SA or NonCommercial data is committed to the repository or included in the
+package.
 
 # References
 

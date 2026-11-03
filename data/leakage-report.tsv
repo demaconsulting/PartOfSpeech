@@ -1,0 +1,27 @@
+# Leakage report (tools/data/check_leakage.py); rules in data/README.md section Leakage check
+# UD English-EWT checked in this run: yes (counts only; nothing from UD is stored)
+# columns = training_set, evaluation_set, evaluation_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, short_exact_duplicates
+open-train	open-dev	1489	0	0	2	0
+open-train	open-test	1501	0	0	4	0
+open-train	ste-challenge	32	0	0	0	0
+open-train	gold-v2	5072	0	0	7	0
+open-train	shapes-probe	560	0	0	0	0
+open-train	ud-ewt-dev	2001	0	0	0	0
+open-train	ud-ewt-test	2077	0	0	0	0
+open-train	ud-ewt-train	12544	0	0	0	0
+masc	open-dev	1489	0	0	0	0
+masc	open-test	1501	0	0	0	0
+masc	ste-challenge	32	0	0	0	0
+masc	gold-v2	5072	0	0	0	1
+masc	shapes-probe	560	0	0	0	0
+masc	ud-ewt-dev	2001	0	0	0	33
+masc	ud-ewt-test	2077	0	0	0	55
+masc	ud-ewt-train	12544	0	0	0	208
+silver	open-dev	1489	0	0	0	0
+silver	open-test	1501	0	0	0	0
+silver	ste-challenge	32	0	0	0	0
+silver	gold-v2	5072	0	0	1	0
+silver	shapes-probe	560	0	0	0	0
+silver	ud-ewt-dev	2001	0	0	0	1
+silver	ud-ewt-test	2077	0	0	0	0
+silver	ud-ewt-train	12544	0	0	0	3
