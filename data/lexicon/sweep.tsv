@@ -1,0 +1,11 @@
+# K sweep (written by tools/data/check_lexicon.py --sweep): coverage on open train and open dev only (test is never used)
+# columns: open_train_k, masc_k, spellings, tags_per_spelling, train_all_pct, train_nondisputed_pct, dev_all_pct, dev_nondisputed_pct
+0	0	258278	1.290	99.597	99.772	99.714	99.834
+1	0	261266	1.292	99.869	100.000	99.798	99.882
+2	0	258871	1.291	99.776	99.911	99.790	99.878
+3	0	258568	1.291	99.746	99.884	99.790	99.878
+1	1	266231	1.295	99.879	100.000	99.844	99.909
+1	2	262667	1.294	99.878	100.000	99.848	99.913
+1	3	262028	1.293	99.874	100.000	99.844	99.909
+1	5	261662	1.293	99.870	100.000	99.828	99.901
+2	2	260395	1.293	99.789	99.913	99.836	99.905

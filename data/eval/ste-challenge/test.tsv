@@ -1,0 +1,470 @@
+# corpus = DemaConsulting.PartOfSpeech simplified-technical-English challenge set (UPOS projection)
+# license = CC0-1.0 (project-written sentences dedicated to the public domain by the project owner)
+# columns = form, upos, status
+# status = unanimous | disputed | unchecked
+# origin = WordSense commit 6530de1928baf30f9a14446a54bfb5dd5f67b41c, corpus/open/targeted/data/test.tsv, sha256 3f551971491dfa494d2d2a65dd0370fd2a92825ad42a471c428ea9e9c8650d45
+# use = evaluation only; report separately, never merge into a headline number
+
+# sent_id = wordsense-ste-probe-s1
+# source_id = wordsense-ste-probe
+# text = Mount the Theta Arm to the Gantry Robot.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Mount	VERB	unanimous
+the	DET	unanimous
+Theta	NOUN	unanimous
+Arm	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+Gantry	NOUN	unanimous
+Robot	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s2
+# source_id = wordsense-ste-probe
+# text = Install the seal (P/N 4471-20) in the Hydraulic Pump Assembly.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Install	VERB	unanimous
+the	DET	unanimous
+seal	NOUN	unanimous
+(	PUNCT	unanimous
+P	NOUN	unanimous
+/	PUNCT	unanimous
+N	NOUN	unanimous
+4471-20	NUM	unanimous
+)	PUNCT	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Hydraulic	ADJ	unanimous
+Pump	NOUN	unanimous
+Assembly	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s3
+# source_id = wordsense-ste-probe
+# text = Remove the Main Control Panel from the frame.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Remove	VERB	unanimous
+the	DET	unanimous
+Main	ADJ	unanimous
+Control	NOUN	unanimous
+Panel	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+frame	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s4
+# source_id = wordsense-ste-probe
+# text = Check the oil level.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Check	VERB	unanimous
+the	DET	unanimous
+oil	NOUN	unanimous
+level	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s5
+# source_id = wordsense-ste-probe
+# text = Torque the bolts to 25 N·m.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Torque	VERB	unanimous
+the	DET	unanimous
+bolts	NOUN	unanimous
+to	ADP	unanimous
+25	NUM	unanimous
+N	NOUN	unanimous
+·	SYM	unanimous
+m	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s6
+# source_id = wordsense-ste-probe
+# text = Clean the surface with a dry cloth.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Clean	VERB	unanimous
+the	DET	unanimous
+surface	NOUN	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+dry	ADJ	unanimous
+cloth	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s7
+# source_id = wordsense-ste-probe
+# text = Lift the Z-Axis Carriage with a hoist.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Lift	VERB	unanimous
+the	DET	unanimous
+Z-Axis	NOUN	unanimous
+Carriage	NOUN	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+hoist	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s8
+# source_id = wordsense-ste-probe
+# text = Turn the knob clockwise until it stops.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Turn	VERB	unanimous
+the	DET	unanimous
+knob	NOUN	unanimous
+clockwise	ADV	unanimous
+until	SCONJ	unanimous
+it	PRON	unanimous
+stops	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s9
+# source_id = wordsense-ste-probe
+# text = Set the pressure to 3000 psi.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Set	VERB	unanimous
+the	DET	unanimous
+pressure	NOUN	unanimous
+to	ADP	unanimous
+3000	NUM	unanimous
+psi	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s10
+# source_id = wordsense-ste-probe
+# text = Lock the Theta Arm in position.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Lock	VERB	unanimous
+the	DET	unanimous
+Theta	NOUN	unanimous
+Arm	NOUN	unanimous
+in	ADP	unanimous
+position	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s11
+# source_id = wordsense-ste-probe
+# text = Support the load with a jack.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Support	VERB	unanimous
+the	DET	unanimous
+load	NOUN	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+jack	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s12
+# source_id = wordsense-ste-probe
+# text = Position the bearing in the housing.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Position	VERB	unanimous
+the	DET	unanimous
+bearing	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+housing	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s13
+# source_id = wordsense-ste-probe
+# text = Attach the cable to the Gantry Robot.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Attach	VERB	unanimous
+the	DET	unanimous
+cable	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+Gantry	NOUN	unanimous
+Robot	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s14
+# source_id = wordsense-ste-probe
+# text = Record the readings in the log.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Record	VERB	unanimous
+the	DET	unanimous
+readings	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+log	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s15
+# source_id = wordsense-ste-probe
+# text = Do not touch the hot surface.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Do	AUX	unanimous
+not	PART	unanimous
+touch	VERB	unanimous
+the	DET	unanimous
+hot	ADJ	unanimous
+surface	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s16
+# source_id = wordsense-ste-probe
+# text = WARNING: Do not operate the motor without the guard.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+WARNING	NOUN	unanimous
+:	PUNCT	unanimous
+Do	AUX	unanimous
+not	PART	unanimous
+operate	VERB	unanimous
+the	DET	unanimous
+motor	NOUN	unanimous
+without	ADP	unanimous
+the	DET	unanimous
+guard	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s17
+# source_id = wordsense-ste-probe
+# text = Make sure that the valve is closed.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Make	VERB	unanimous
+sure	ADJ	unanimous
+that	SCONJ	unanimous
+the	DET	unanimous
+valve	NOUN	unanimous
+is	VERB	unanimous
+closed	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s18
+# source_id = wordsense-ste-probe
+# text = Make sure that the arm does not touch the frame.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Make	VERB	unanimous
+sure	ADJ	unanimous
+that	SCONJ	unanimous
+the	DET	unanimous
+arm	NOUN	unanimous
+does	AUX	unanimous
+not	PART	unanimous
+touch	VERB	unanimous
+the	DET	unanimous
+frame	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s19
+# source_id = wordsense-ste-probe
+# text = If the indicator light comes on, stop the motor.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+If	SCONJ	unanimous
+the	DET	unanimous
+indicator	NOUN	unanimous
+light	NOUN	unanimous
+comes	VERB	unanimous
+on	ADV	unanimous
+,	PUNCT	unanimous
+stop	VERB	unanimous
+the	DET	unanimous
+motor	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s20
+# source_id = wordsense-ste-probe
+# text = Flush the system with clean fluid.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Flush	VERB	unanimous
+the	DET	unanimous
+system	NOUN	unanimous
+with	ADP	unanimous
+clean	ADJ	unanimous
+fluid	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s21
+# source_id = wordsense-ste-probe
+# text = Bleed the air from the brake line.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Bleed	VERB	unanimous
+the	DET	unanimous
+air	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+brake	NOUN	unanimous
+line	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s22
+# source_id = wordsense-ste-probe
+# text = Tap the housing lightly to seat the bearing.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Tap	VERB	unanimous
+the	DET	unanimous
+housing	NOUN	unanimous
+lightly	ADV	unanimous
+to	PART	unanimous
+seat	VERB	unanimous
+the	DET	unanimous
+bearing	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s23
+# source_id = wordsense-ste-probe
+# text = Run the pump for 5 minutes.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Run	VERB	unanimous
+the	DET	unanimous
+pump	NOUN	unanimous
+for	ADP	unanimous
+5	NUM	unanimous
+minutes	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s24
+# source_id = wordsense-ste-probe
+# text = Connect the lead to the terminal.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Connect	VERB	unanimous
+the	DET	unanimous
+lead	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+terminal	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s25
+# source_id = wordsense-ste-probe
+# text = Do not use a damaged seal.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Do	AUX	unanimous
+not	PART	unanimous
+use	VERB	unanimous
+a	DET	unanimous
+damaged	ADJ	unanimous
+seal	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s26
+# source_id = wordsense-ste-probe
+# text = Tighten the nut by hand, then torque it to 12 N·m.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Tighten	VERB	unanimous
+the	DET	unanimous
+nut	NOUN	unanimous
+by	ADP	unanimous
+hand	NOUN	unanimous
+,	PUNCT	unanimous
+then	ADV	unanimous
+torque	VERB	unanimous
+it	PRON	unanimous
+to	ADP	unanimous
+12	NUM	unanimous
+N	NOUN	unanimous
+·	SYM	unanimous
+m	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s27
+# source_id = wordsense-ste-probe
+# text = Apply grease to the mount.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Apply	VERB	unanimous
+grease	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+mount	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s28
+# source_id = wordsense-ste-probe
+# text = Remove the mount from the Theta Arm.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Remove	VERB	unanimous
+the	DET	unanimous
+mount	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+Theta	NOUN	unanimous
+Arm	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s29
+# source_id = wordsense-ste-probe
+# text = Check that the seal is not cracked.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Check	VERB	unanimous
+that	SCONJ	unanimous
+the	DET	unanimous
+seal	NOUN	unanimous
+is	VERB	unanimous
+not	PART	unanimous
+cracked	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s30
+# source_id = wordsense-ste-probe
+# text = Set the Hydraulic Pump Assembly to the OFF position.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Set	VERB	unanimous
+the	DET	unanimous
+Hydraulic	ADJ	unanimous
+Pump	NOUN	unanimous
+Assembly	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+OFF	ADJ	unanimous
+position	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s31
+# source_id = wordsense-ste-probe
+# text = Mount the robot arm and slide it home.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Mount	VERB	unanimous
+the	DET	unanimous
+robot	NOUN	unanimous
+arm	NOUN	unanimous
+and	CCONJ	unanimous
+slide	VERB	unanimous
+it	PRON	unanimous
+home	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = wordsense-ste-probe-s32
+# source_id = wordsense-ste-probe
+# text = Mount the wild horse and ride it home.
+# selection = genre=technical-instructions
+# query = written:ste-probe
+Mount	VERB	unanimous
+the	DET	unanimous
+wild	ADJ	unanimous
+horse	NOUN	unanimous
+and	CCONJ	unanimous
+ride	VERB	unanimous
+it	PRON	unanimous
+home	ADV	unanimous
+.	PUNCT	unanimous

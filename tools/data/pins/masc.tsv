@@ -1,0 +1,3 @@
+# SHA-256 of the MASC Penn Treebank archive (Open American National Corpus, CC BY 3.0 US), release 2026-09-25.
+# Columns: file name <TAB> SHA-256 <TAB> download URL
+penn-treebank.tgz	65ae26e4106cc576ad1291cf86a44048db7ff76fffa052658c45e8b1bb9f6230	https://github.com/nancyide/anc-website/releases/download/datasets-2026-09-25/penn-treebank.tgz

@@ -2,6 +2,16 @@
 # This ensures consistent SHA256 fingerprints for reviewmark across all platforms.
 * text=auto eol=lf
 
+# Large generated data files: keep pull request diffs readable (the files stay LF text; checksums depend on it).
+/data/open/train.tsv linguist-generated=true -diff
+/data/open/dev.tsv linguist-generated=true -diff
+/data/open/test.tsv linguist-generated=true -diff
+/data/open/sources.tsv linguist-generated=true -diff
+/data/masc/*.tsv linguist-generated=true -diff
+/data/silver/*.tsv linguist-generated=true -diff
+/data/lexicon/lexicon.tsv linguist-generated=true -diff
+/data/eval/gold-v2/*.tsv linguist-generated=true -diff
+
 # Windows batch files require CRLF line endings to function correctly.
 *.bat text eol=crlf
 *.cmd text eol=crlf

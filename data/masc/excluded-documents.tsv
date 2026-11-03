@@ -1,0 +1,8 @@
+# MASC documents left out of masc.tsv because a sentence of the document (key of 25 or more characters) is also in an evaluation set
+# (open dev/test, gold v2, shape probe, STE challenge set, UD English-EWT when fetched; only ids, never text)
+# columns = document_id, evaluation_set, matching_sentences
+masc:written/email/enron/175814	ud-ewt-dev	1
+masc:written/email/enron/49059	ud-ewt-train	3
+masc:written/email/enron/54261	ud-ewt-train	3
+masc:written/email/enron/54262	ud-ewt-train	4
+masc:written/email/enron/54263	ud-ewt-train	4

@@ -1,0 +1,6 @@
+# Silver sentences left out of silver.tsv because the sentence equals a sentence of an evaluation set and its key
+# (lower-case alphanumerics) is shorter than 25 characters; longer matches exclude the whole document
+# (excluded-documents.tsv). Only sentence ids, never text. Sentences of excluded documents are not listed.
+# columns = sentence_id, evaluation_set
+silver-12780	ud-ewt-dev
+silver-9190	ud-ewt-train

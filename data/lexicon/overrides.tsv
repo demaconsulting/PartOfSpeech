@@ -1,0 +1,4 @@
+# Evidenced corrections to the lexicon (read by tools/data/build_lexicon.py after closed-class.tsv).
+# Columns: spelling (lower case) <TAB> UPOS tags (space separated) <TAB> mode (exact | add) <TAB> evidence (required)
+# The evidence must be a dictionary or grammar fact about the word, never only a miss on dev or test data.
+# This build needs no overrides: the dictionary tables, closed-class.tsv and corpus attestation reach the coverage gate.

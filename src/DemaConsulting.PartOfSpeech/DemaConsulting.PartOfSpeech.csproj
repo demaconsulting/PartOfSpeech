@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
 
     <!-- NuGet Package Configuration -->
-    <PackageId>PartOfSpeech</PackageId>
+    <PackageId>DemaConsulting.PartOfSpeech</PackageId>
     <Version>0.0.0</Version>
     <Authors>DEMA Consulting</Authors>
     <Company>DEMA Consulting</Company>
@@ -77,6 +77,7 @@
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     <None Include="..\..\Icon.png" Pack="true" PackagePath="\" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
