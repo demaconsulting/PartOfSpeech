@@ -10,7 +10,8 @@ The unit is verified by unit tests in `Tagging/FeatureExtractorTests.cs`. The fa
 central test compares both paths over thousands of corpus tokens with varying tag histories and both extreme bucket
 space sizes (18 and 24 bits). Single behaviors (shape bits, the initial flag, the boundary markers, the fold) are checked
 by asserting which buckets are produced for small hand-picked tokens. The allocation test uses
-`GC.GetAllocatedBytesForCurrentThread` after a warm-up pass, which exists on .NET 8 and later; it is compiled only there.
+`GC.GetAllocatedBytesForCurrentThread` through `TestSupport/AllocationMeter.cs` (a thorough warm-up, then the minimum
+over 10 batches of 100 rounds), which exists on .NET 8 and later; it is compiled only there.
 Nothing is mocked.
 
 #### Test Environment

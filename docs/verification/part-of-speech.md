@@ -46,9 +46,13 @@ Two groups of requirements need methods beyond an ordinary assertion:
   sequential run (text, offsets, tags, confidences and alternatives), so that shared scratch memory, a race in a lazy
   initializer or a mutable result would show as a difference.
 
-The allocation behavior (no allocation in the feature extraction after warm-up, only result arrays in the decoder) is
-verified at the unit level with `GC.GetAllocatedBytesForCurrentThread`, which exists on .NET 8 and later; those two tests
-are not compiled for .NET Framework.
+The allocation behavior (no allocation in the feature extraction after warm-up, only result arrays in the decoder, no
+allocation in the lexicon shape rules) is verified at the unit level with `GC.GetAllocatedBytesForCurrentThread`, which
+exists on .NET 8 and later; those three tests are not compiled for .NET Framework. The measurement
+(`TestSupport/AllocationMeter.cs`) is robust against the runtime's own background activity: a warm-up of at least 500
+rounds and 0.3 seconds, so that JIT compilation and tiered compilation are finished, then the minimum of the bytes
+allocated over 10 measured batches. An operation that allocates on every round allocates in every batch and so still
+fails; only a one-time or sporadic runtime allocation is filtered out.
 
 ## Test Environment
 

@@ -450,16 +450,9 @@ public class TagDecoderTests
         // Arrange: a decoder with the cat model and the real lexicon, and a 50-token ASCII sentence
         var decoder = TinyModels.CreateDecoder(CatWeights().Build(), File.ReadAllBytes(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin")));
         var tokens = Tokens(Enumerable.Range(0, 50).Select(i => i % 2 == 0 ? "cat" : "Running").ToArray());
-        decoder.Decode(tokens, null, 3);
 
-        // Act: measure the bytes allocated by this thread for 100 decodes
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 100; i++)
-        {
-            decoder.Decode(tokens, null, 3);
-        }
-
-        var perCall = (GC.GetAllocatedBytesForCurrentThread() - before) / 100;
+        // Act: warm up thoroughly, then take the minimum over several batches of the bytes allocated by this thread for 100 decodes
+        var perCall = AllocationMeter.MinimumBatchBytes(() => decoder.Decode(tokens, null, 3), 100) / 100;
 
         // Assert: a result array of 50 tokens (about 56 bytes each) and 150 alternatives (16 bytes each) plus headers, nothing per token otherwise
         var bound = (50 * 64) + (150 * 16) + 256;

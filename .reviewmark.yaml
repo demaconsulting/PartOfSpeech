@@ -259,6 +259,7 @@ reviews:
       - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/TinyTrainer.cs"     # tiny trainer of the tests
       - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/SyntheticModel.cs"  # synthetic model of the throughput
       - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/ThroughputMeter.cs"  # best-of-N throughput method
+      - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/AllocationMeter.cs"  # minimum-of-N allocation method
 
   # PartOfSpeech-Tagging-FeatureExtractor Review (one per unit)
   - id: PartOfSpeech-Tagging-FeatureExtractor

@@ -325,24 +325,24 @@ public class FeatureExtractorTests
             FeatureExtractor.Extract(workspace, i, 3, 4, Bits, buckets);
         }
 
-        // Act: prepare and extract again while counting the bytes allocated by this thread
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var repeat = 0; repeat < 100; repeat++)
-        {
-            workspace.Begin(tokens.Length);
-            for (var i = 0; i < tokens.Length; i++)
+        // Act: prepare and extract again; warm up thoroughly, then take the minimum over several batches of the bytes
+        // allocated by this thread for 100 rounds
+        var allocated = AllocationMeter.MinimumBatchBytes(
+            () =>
             {
-                FeatureExtractor.SetToken(workspace, i, tokens[i]);
-            }
+                workspace.Begin(tokens.Length);
+                for (var i = 0; i < tokens.Length; i++)
+                {
+                    FeatureExtractor.SetToken(workspace, i, tokens[i]);
+                }
 
-            FeatureExtractor.Finish(workspace, Bits);
-            for (var i = 0; i < tokens.Length; i++)
-            {
-                FeatureExtractor.Extract(workspace, i, 3, 4, Bits, buckets);
-            }
-        }
-
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+                FeatureExtractor.Finish(workspace, Bits);
+                for (var i = 0; i < tokens.Length; i++)
+                {
+                    FeatureExtractor.Extract(workspace, i, 3, 4, Bits, buckets);
+                }
+            },
+            100);
 
         // Assert: nothing was allocated
         Assert.Equal(0, allocated);

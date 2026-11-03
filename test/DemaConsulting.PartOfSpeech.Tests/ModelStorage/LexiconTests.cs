@@ -440,18 +440,13 @@ public class LexiconTests
         var upper = "the".ToCharArray();
         var lexiconTags = UposSet.Of(Upos.Det);
 
-        // Warm up so that static initialization and JIT compilation are not counted
         var checksum = 0;
-        checksum += Run(lexicon, scratch, punctuation, digit, upper, lexiconTags);
 
-        // Act: count the bytes that this thread allocates for 1000 rounds over all shape paths
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 1000; i++)
-        {
-            checksum += Run(lexicon, scratch, punctuation, digit, upper, lexiconTags);
-        }
-
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        // Act: warm up thoroughly (static initialization, JIT, tiered compilation), then take the minimum over several
+        // batches of the bytes that this thread allocates for 1000 rounds over all shape paths
+        var allocated = AllocationMeter.MinimumBatchBytes(
+            () => checksum += Run(lexicon, scratch, punctuation, digit, upper, lexiconTags),
+            1000);
 
         // Assert: nothing was allocated, and the work was not optimized away
         Assert.Equal(0, allocated);

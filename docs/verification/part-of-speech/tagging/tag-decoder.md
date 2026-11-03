@@ -23,7 +23,9 @@ test. Nothing is mocked. Four methods deserve a description:
   0.25 seconds. The test class is in the xUnit collection `Throughput` (`DisableParallelization = true`), so that it
   runs alone in its test host after the parallel test classes. The gate is 50,000 tokens per second and the measured rate
   (written to the test output) is several hundred thousand.
-- **Allocation.** On .NET 8 and later, `GC.GetAllocatedBytesForCurrentThread` is read before and after 100 decodes of a
+- **Allocation.** On .NET 8 and later, the noise-robust method of `TestSupport/AllocationMeter.cs` (warm-up of at least
+  500 decodes and 0.3 seconds, then the minimum over 10 batches) reads `GC.GetAllocatedBytesForCurrentThread` before and
+  after 100 decodes of a
   50-token sentence with 3 alternatives per token, and the bytes per call must not exceed
   `50 * 64 + 150 * 16 + 256` (the result array of tokens, the flat array of alternatives and a small allowance), so
   any per-sentence scratch allocation would fail the test.
