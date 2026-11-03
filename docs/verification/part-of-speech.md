@@ -31,16 +31,21 @@ Two groups of requirements need methods beyond an ordinary assertion:
   (150,000 occupied buckets in a bucket space of 2^21, random weights from a seeded generator, with the occupied
   buckets taken from the features of the first 4,000 sentences of the open training set so that the lookups hit as in
   production), loads it with the real embedded lexicon, and tags the pre-tokenized sentences of the open development set
-  on one thread. The measurement (`TestSupport/ThroughputMeter.cs`) is noise-robust: two warm-up runs over all
-  sentences, then seven timed passes with `Stopwatch`, each pass repeating the run over all sentences until at least
-  0.25 seconds have elapsed, and the best rate of the seven passes is taken (the best pass is the one least disturbed by
-  other processes, so contention can slow a pass but cannot make a fast implementation fail, while a slow
-  implementation is slow in every pass). The test class is in the xUnit collection `Throughput`, defined with
-  `DisableParallelization = true`, so that it runs alone in its test host, after the parallel test classes have finished.
-  The test hosts of the different target frameworks are separate processes that `dotnet test` may run at the same
-  time; xUnit cannot serialize them, and the best-of-seven method is the protection against that. The gate is
-  50,000 tokens per second; the measured rate is far higher (see Measured Results), so that load on a build machine
-  cannot make the test flaky. The same method at the unit level is in _TagDecoder Verification_.
+  on one thread. The measurement (`TestSupport/ThroughputMeter.cs`) is capability-based and noise-robust: a warm-up of
+  at least two runs over all sentences and 0.5 seconds (so that tiered compilation is finished), then timed windows
+  with `Stopwatch`, each window repeating the run over all sentences until at least 0.25 seconds have elapsed. The
+  first window whose rate exceeds the gate ends the measurement and proves the capability. A window below the gate may
+  have been slowed by other processes, so the meter sleeps for 200 milliseconds, which lets the contention clear, and
+  takes the next window; it gives up only when 30 seconds of windows are used up or 60 windows were taken, and then
+  the best rate of all windows is compared with the gate. One fast window is enough to pass, because CPU time stolen
+  by other processes can only slow a window and cannot make it faster, while a slow implementation is slow in every
+  window and fails. The test class is in the xUnit collection `Throughput`, defined with
+  `DisableParallelization = true`, so that it runs alone in its test host, after the parallel test classes have
+  finished. The test hosts of the different target frameworks are separate processes that `dotnet test` may run at the
+  same time; xUnit cannot serialize them, and the retry with backoff is the protection against that, also on a runner
+  with few cores. The gate is 50,000 tokens per second; the measured rate is far higher (see Measured Results). The
+  best rate and the number of windows are written to the test output. The same method at the unit level is in
+  _TagDecoder Verification_.
 - **Thread safety** (`PartOfSpeech-Lib-ThreadSafe`). One tagger is shared by 8 tasks that each tag the fixture texts
   (and a text with non-ASCII characters) 200 times in different orders; every result is compared with the result of a
   sequential run (text, offsets, tags, confidences and alternatives), so that shared scratch memory, a race in a lazy
@@ -91,7 +96,7 @@ data and licensing tests read repository files only; they simulate nothing and u
 ## Measured Results
 
 Recorded from the development of this release (Release configuration, one thread, 26,232 tokens of the open development
-set, synthetic model of 150,000 rows in 2^21 buckets, real embedded lexicon, best of seven passes after a warm-up); they
+set, synthetic model of 150,000 rows in 2^21 buckets, real embedded lexicon, best window after a warm-up); they
 are information for reviewers, not acceptance values:
 
 - `Tagger.Tag(IReadOnlyList<string>)`: about 350,000 to 760,000 tokens per second.

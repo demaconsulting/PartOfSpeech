@@ -18,11 +18,14 @@ test. Nothing is mocked. Four methods deserve a description:
 - **Throughput.** A synthetic weights file of 150,000 rows in 2^21 buckets (`TestSupport/SyntheticModel.cs`, random
   weights from a seeded generator, with the occupied buckets taken from the features of real sentences) is loaded with
   the real embedded lexicon; the real development sentences are decoded on one thread by
-  `Tagging/TagDecoderThroughputTests.cs`, using the noise-robust method of `TestSupport/ThroughputMeter.cs`: two warm-up
-  runs, then the best of seven timed passes with `Stopwatch`, each pass repeating the run over all sentences for at least
-  0.25 seconds. The test class is in the xUnit collection `Throughput` (`DisableParallelization = true`), so that it
-  runs alone in its test host after the parallel test classes. The gate is 50,000 tokens per second and the measured rate
-  (written to the test output) is several hundred thousand.
+  `Tagging/TagDecoderThroughputTests.cs`, using the capability-based method of `TestSupport/ThroughputMeter.cs`: a
+  warm-up of at least two runs and 0.5 seconds, then timed windows with `Stopwatch`, each window repeating the run
+  over all sentences for at least 0.25 seconds. The first window above the gate ends the measurement and passes; after
+  a window below the gate (possibly slowed by other processes) the meter sleeps for 200 milliseconds and takes another
+  window, until 30 seconds or 60 windows are used up, and then the best rate is compared with the gate. The test class
+  is in the xUnit collection `Throughput` (`DisableParallelization = true`), so that it runs alone in its test host
+  after the parallel test classes. The gate is 50,000 tokens per second; the best measured rate (written to the test
+  output together with the number of windows) is several hundred thousand, usually in the first window.
 - **Allocation.** On .NET 8 and later, the noise-robust method of `TestSupport/AllocationMeter.cs` (warm-up of at least
   500 decodes and 0.3 seconds, then the minimum over 10 batches) reads `GC.GetAllocatedBytesForCurrentThread` before and
   after 100 decodes of a
