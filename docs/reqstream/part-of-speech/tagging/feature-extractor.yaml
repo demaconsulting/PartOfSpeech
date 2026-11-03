@@ -67,6 +67,17 @@ sections:
                   - FeatureExtractor_Extract_Fold_MapsTypographicQuotesAndDashes
                   - FeatureExtractor_Extract_Fold_NfcNormalizesNonAscii
 
+              - id: PartOfSpeech-Tagging-FeatureExtractor-MalformedText
+                title: >-
+                  A token that is not well-formed UTF-16 shall not make feature extraction fail: each unpaired
+                  surrogate shall count as U+FFFD for the features, a valid surrogate pair shall be kept, and the rest
+                  of the token shall be normalized as usual.
+                justification: |
+                  String normalization throws for an unpaired surrogate, but tagging must work for every string; the
+                  replacement affects the features only and is deterministic.
+                tests:
+                  - FeatureExtractor_Extract_Fold_UnpairedSurrogate_UsesReplacementCharacter
+
               - id: PartOfSpeech-Tagging-FeatureExtractor-ReferenceEquivalence
                 title: >-
                   The buckets of the features shall equal the buckets that the plain, string-based definition of the

@@ -45,9 +45,9 @@ result types: `Tagger.cs`, `TaggerOptions.cs`, `TaggedSentence.cs`, `TaggedToken
 - Creation: `ArgumentNullException` for a null stream; `ArgumentOutOfRangeException` when `MaxAlternatives` is outside 0
   to 16; `InvalidDataException` (from the readers) for a damaged file or one of another format or feature set version.
 - Tagging: `ArgumentNullException` for a null text, sentence or token list; `ArgumentException` for an invalid token (from
-  `CreateSentence`) or a constraint list whose length differs from the token count (from the decoder). No valid text makes
-  tagging fail; a token with an unpaired surrogate (not valid UTF-16) makes the NFC normalization in `FeatureExtractor`
-  throw `ArgumentException` (a known limitation, documented in the API reference).
+  `CreateSentence`) or a constraint list whose length differs from the token count (from the decoder). No text makes
+  tagging fail: a token with an unpaired surrogate (not valid UTF-16) is handled by `FeatureExtractor`, which counts it
+  as U+FFFD for the features only, so the tokens, their text and offsets are those of the input.
 - All of these are propagated to the caller; nothing is caught.
 
 #### Dependencies

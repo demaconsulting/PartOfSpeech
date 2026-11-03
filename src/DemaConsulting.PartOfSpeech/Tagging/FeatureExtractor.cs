@@ -1,4 +1,4 @@
-// cspell:ignore EBCA
+// cspell:ignore EBCA FFFD
 using System.Text;
 
 namespace DemaConsulting.PartOfSpeech;
@@ -216,7 +216,8 @@ internal static class FeatureExtractor
     /// </summary>
     /// <remarks>
     ///     Call <see cref="DecoderWorkspace.Begin"/> first, then this method for tokens <c>0..n-1</c> in order, then
-    ///     <see cref="Finish"/>. Only tokens with non-ASCII characters allocate (for the NFC normalization).
+    ///     <see cref="Finish"/>. Only tokens with non-ASCII characters allocate (for the NFC normalization). A token
+    ///     that is not well-formed UTF-16 does not fail: each unpaired surrogate counts as U+FFFD, for the features only.
     /// </remarks>
     /// <param name="workspace">The workspace.</param>
     /// <param name="index">The index of the token.</param>
@@ -229,7 +230,7 @@ internal static class FeatureExtractor
         {
             if (text[i] >= 0x80)
             {
-                source = text.Normalize(NormalizationForm.FormC);
+                source = NormalizeNonAscii(text);
                 break;
             }
         }
@@ -390,11 +391,11 @@ internal static class FeatureExtractor
     ///     both agree.
     /// </remarks>
     /// <param name="token">The token as written.</param>
-    /// <returns>The NFC-normalized token with typographic quotes, dashes and ellipsis mapped to ASCII.</returns>
+    /// <returns>The NFC-normalized token with typographic quotes, dashes and ellipsis mapped to ASCII; an unpaired surrogate becomes U+FFFD.</returns>
     public static string Fold(string token)
     {
         var builder = new StringBuilder(token.Length);
-        foreach (var c in token.Normalize(NormalizationForm.FormC))
+        foreach (var c in NormalizeNonAscii(token))
         {
             switch (c)
             {
@@ -424,6 +425,63 @@ internal static class FeatureExtractor
         }
 
         return builder.ToString();
+    }
+
+    /// <summary>
+    ///     Normalizes a token to NFC without ever failing, even for text that is not well-formed UTF-16.
+    /// </summary>
+    /// <remarks>
+    ///     <see cref="string.Normalize(NormalizationForm)"/> throws <see cref="ArgumentException"/> for an unpaired
+    ///     surrogate, so each one is replaced by U+FFFD first (for the features only; the caller's text is never
+    ///     changed). A well-formed token is not copied. Should a runtime still reject the text (for example, on
+    ///     .NET Framework with other invalid code points), the text with the replacements is used without
+    ///     normalization. The result depends only on the text, so it is deterministic.
+    /// </remarks>
+    /// <param name="text">The token as written.</param>
+    /// <returns>The normalized, well-formed text.</returns>
+    private static string NormalizeNonAscii(string text)
+    {
+        var clean = ReplaceUnpairedSurrogates(text);
+        try
+        {
+            return clean.Normalize(NormalizationForm.FormC);
+        }
+        catch (ArgumentException)
+        {
+            return clean;
+        }
+    }
+
+    /// <summary>
+    ///     Replaces every unpaired surrogate by U+FFFD; a valid surrogate pair is kept.
+    /// </summary>
+    /// <param name="text">The text.</param>
+    /// <returns><paramref name="text"/> itself when it is well-formed, otherwise a corrected copy.</returns>
+    private static string ReplaceUnpairedSurrogates(string text)
+    {
+        char[]? copy = null;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (!char.IsSurrogate(c))
+            {
+                continue;
+            }
+
+            // A high surrogate is valid when a low one follows it, and a low surrogate when a high one precedes it
+            var paired = char.IsHighSurrogate(c)
+                ? i + 1 < text.Length && char.IsLowSurrogate(text[i + 1])
+                : i > 0 && char.IsHighSurrogate(text[i - 1]);
+            if (paired)
+            {
+                continue;
+            }
+
+            copy ??= text.ToCharArray();
+            copy[i] = '\uFFFD';
+        }
+
+        return copy is null ? text : new string(copy);
     }
 
     /// <summary>

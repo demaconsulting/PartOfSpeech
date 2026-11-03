@@ -229,9 +229,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <see cref="InvalidDataException"/> when the tagger is created; a stream that cannot be read throws the exception
 ///     of the stream (for example <see cref="NotSupportedException"/> or <see cref="ObjectDisposedException"/>). Reading
 ///     <see cref="Tagger.Default"/> throws <see cref="InvalidOperationException"/> while no model is embedded.
-///     Tokenizing never fails for a non-null string. Tagging does not depend on the content of the text either, with one
-///     exception: a text that contains an unpaired surrogate (which is not valid UTF-16) makes the tagger throw
-///     <see cref="ArgumentException"/> from the Unicode normalization that it applies for the lexicon lookup.
+///     Tokenizing never fails for a non-null string. Tagging does not depend on the content of the text either: no text
+///     makes it fail, including a text with an unpaired surrogate (which is not valid UTF-16); such a character is
+///     treated like U+FFFD for the features of its token only, and the token text and offsets stay those of the input.
 ///     </para>
 ///     <para>
 ///     ## Quick start

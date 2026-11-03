@@ -35,6 +35,9 @@ or the shape bits differ, or extraction allocates after warm-up.
 - **Context**: `FeatureExtractor_Extract_Neighbors_UseSentinelsAtBoundaries`.
 - **Fold**: `FeatureExtractor_Extract_Fold_MapsTypographicQuotesAndDashes` and
   `FeatureExtractor_Extract_Fold_NfcNormalizesNonAscii` (decomposed and composed spellings give the same features).
+- **Malformed text**: `FeatureExtractor_Extract_Fold_UnpairedSurrogate_UsesReplacementCharacter` (a lone high, a lone
+  low and a reversed pair give the features of the same token with U+FFFD, the rest is still normalized, a valid pair is
+  kept, and the fast path equals the reference).
 - **Reference equivalence**: `FeatureExtractor_Extract_MatchesReferenceStringHashing`.
 - **Buckets**: `FeatureExtractor_Buckets_AreInRangeAndStable` and `FeatureExtractor_Hash_IsCaseSensitiveWhereTemplatesAre`.
 - **No allocation**: `FeatureExtractor_Extract_DoesNotAllocateAfterWarmUp` (zero bytes after the workspace has grown;

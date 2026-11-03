@@ -1,3 +1,4 @@
+// cspell:ignore FFFD
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -197,6 +198,30 @@ public class FeatureExtractorTests
         Assert.Equal("caf\u00E9", folded);
         Assert.Equal(b, a);
         Assert.Equal(FeatureExtractor.ReferenceBuckets(decomposed, 0, "-S-", "-S2-", Bits), a);
+    }
+
+    /// <summary>
+    ///     Proves that an unpaired surrogate counts as U+FFFD for the features without failing, that a valid pair is kept and that the rest of the token is still normalized.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_Fold_UnpairedSurrogate_UsesReplacementCharacter()
+    {
+        // Arrange: lone high, lone low and reversed-pair tokens, their replacement twins, and a valid pair
+        var malformed = new[] { "a\uD800b", "\uDC00x", "ca\uDE00\uD83Dt", "e\u0301\uDC00", "\U0001F600" };
+        var replaced = new[] { "a\uFFFDb", "\uFFFDx", "ca\uFFFD\uFFFDt", "e\u0301\uFFFD", "\U0001F600" };
+
+        // Act: fold and extract without an exception
+        var folded = malformed.Select(FeatureExtractor.Fold).ToList();
+        var foldedBuckets = Enumerable.Range(0, malformed.Length).Select(i => Extract(malformed, i)).ToList();
+        var replacedBuckets = Enumerable.Range(0, replaced.Length).Select(i => Extract(replaced, i)).ToList();
+
+        // Assert: folded as the replacement twins (NFC still applied), equal features, equal to the reference
+        Assert.Equal(new[] { "a\uFFFDb", "\uFFFDx", "ca\uFFFD\uFFFDt", "\u00E9\uFFFD", "\U0001F600" }, folded);
+        for (var i = 0; i < malformed.Length; i++)
+        {
+            Assert.Equal(replacedBuckets[i], foldedBuckets[i]);
+            Assert.Equal(FeatureExtractor.ReferenceBuckets(malformed, i, "-S-", "-S2-", Bits), foldedBuckets[i]);
+        }
     }
 
     /// <summary>

@@ -82,6 +82,19 @@ sections:
                   - Tagger_Tag_NullArguments_Throw
                   - Tagger_Tag_ConstraintLengthMismatch_Throws
 
+              - id: PartOfSpeech-Tagging-Tagger-AnyText
+                title: >-
+                  Tagging shall not fail for any text or token string, including text with an unpaired surrogate (which
+                  is not valid UTF-16), and the text, offsets and lengths of the tagged tokens shall stay those of the
+                  input.
+                justification: |
+                  Services tag text from outside; a request must never fail because of its characters, and callers
+                  highlight the text with the offsets.
+                tests:
+                  - Tagger_Tag_Text_UnpairedSurrogate_DoesNotThrow
+                  - Tagger_Tag_Tokens_UnpairedSurrogate_DoesNotThrow
+                  - Tagger_Tag_Text_ValidSurrogatePair_RoundTrips
+
               - id: PartOfSpeech-Tagging-Tagger-Options
                 title: >-
                   The number of alternatives that a result carries per token shall not exceed the maximum that the

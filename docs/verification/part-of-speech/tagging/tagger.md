@@ -38,5 +38,9 @@ invariants (excludes the tag, sorted, limited, sums with the confidence to at mo
   `Tagger_Tag_ResultsAreImmutable` (results and options cannot be modified through the interfaces they expose).
 - **Input validation**: `Tagger_Tag_NullArguments_Throw` (every overload) and
   `Tagger_Tag_ConstraintLengthMismatch_Throws` (one constraint per token).
+- **Any text**: `Tagger_Tag_Text_UnpairedSurrogate_DoesNotThrow` and `Tagger_Tag_Tokens_UnpairedSurrogate_DoesNotThrow`
+  (a lone high surrogate, a lone low surrogate and a reversed pair inside a word: no exception, token text and offsets
+  round-trip, the result is the same on a second call) and `Tagger_Tag_Text_ValidSurrogatePair_RoundTrips` (an emoji
+  stays one token with the right offsets).
 - **Options**: `Tagger_Options_MaxAlternativesLimitsAlternatives`.
 - **Alternatives**: `Tagger_Tag_Alternatives_ExcludeBestAndSumWithConfidence`.

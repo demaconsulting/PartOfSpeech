@@ -55,11 +55,15 @@ tag-independent buckets), which the decoder keeps per thread.
 #### Error Handling
 
 The fast path validates nothing: its inputs come from the decoder, which has validated them, and it cannot fail for
-any valid string. `SetToken` normalizes a token that contains a non-ASCII character with `string.Normalize`, which
-throws `ArgumentException` for a string with an unpaired surrogate (not valid UTF-16); the exception propagates to the
-caller of the tagger (a known limitation, documented in the API reference).
+any string. `string.Normalize` throws `ArgumentException` for an unpaired surrogate (not valid UTF-16), so `SetToken`
+and `Fold` first replace each unpaired surrogate by U+FFFD (`NormalizeNonAscii`) and only then normalize a token that
+contains a non-ASCII character; a valid surrogate pair is kept. This is a robustness rule without a deviation: it
+changes the features only (two different unpaired surrogates give the same features), never the text, token text or
+offsets of the caller, it costs nothing for pure ASCII tokens (no extra scan, no copy) and only a read-only scan for a
+well-formed non-ASCII token, and it is deterministic. Should a runtime still reject a text (for example another invalid
+code point on .NET Framework), the `ArgumentException` of `Normalize` is caught and the token is used un-normalized.
 `ReferenceBucket` throws `ArgumentException` for a tag spelling that is neither a tag nor a start marker.
-Nothing is caught.
+Nothing else is caught.
 
 #### Dependencies
 

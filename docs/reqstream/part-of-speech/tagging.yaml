@@ -24,6 +24,7 @@ sections:
               - PartOfSpeech-Tagging-Tagger-ResultsCarryOffsets
               - PartOfSpeech-Tagging-Tagger-Load
               - PartOfSpeech-Tagging-Tagger-InputValidation
+              - PartOfSpeech-Tagging-Tagger-AnyText
               - PartOfSpeech-Tagging-Tagger-Options
               - PartOfSpeech-Tagging-TagDecoder-EmptyInput
               - PartOfSpeech-Tagging-FeatureExtractor-FeatureSet
@@ -31,6 +32,7 @@ sections:
               - PartOfSpeech-Tagging-FeatureExtractor-Initial
               - PartOfSpeech-Tagging-FeatureExtractor-Context
               - PartOfSpeech-Tagging-FeatureExtractor-Fold
+              - PartOfSpeech-Tagging-FeatureExtractor-MalformedText
               - PartOfSpeech-Tagging-FeatureExtractor-ReferenceEquivalence
               - PartOfSpeech-Tagging-FeatureExtractor-Buckets
             tests:

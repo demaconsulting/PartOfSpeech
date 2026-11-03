@@ -100,6 +100,92 @@ public class TaggerTests
     }
 
     /// <summary>
+    ///     Builds a sentence text with an unpaired surrogate (which is not valid UTF-16) at the given place.
+    /// </summary>
+    /// <param name="kind"><c>High</c> (lone high surrogate at the end of a word), <c>Low</c> (lone low surrogate at the start of a word) or <c>Mid</c> (a reversed pair inside a word).</param>
+    private static string MalformedText(string kind) => kind switch
+    {
+        "High" => "The cat\uD83D sat on the mat.",
+        "Low" => "The \uDE00cat sat on the mat.",
+        _ => "The ca\uDE00\uD83Dt sat on the mat."
+    };
+
+    /// <summary>
+    ///     Proves that text with an unpaired surrogate is tagged without an exception and the tokens still index the text.
+    /// </summary>
+    [Theory]
+    [InlineData("High")]
+    [InlineData("Low")]
+    [InlineData("Mid")]
+    public void Tagger_Tag_Text_UnpairedSurrogate_DoesNotThrow(string kind)
+    {
+        // Arrange: a tagger and a text that is not well-formed UTF-16
+        var tagger = Create();
+        var text = MalformedText(kind);
+
+        // Act: tag it twice
+        var sentences = tagger.Tag(text);
+        var again = tagger.Tag(text);
+
+        // Assert: tokens exist, keep the surrogate and index the original text, and the result is deterministic
+        var tokens = sentences.SelectMany(s => s.Tokens).ToList();
+        Assert.NotEmpty(tokens);
+        Assert.Contains(tokens, t => t.Text.Any(char.IsSurrogate));
+        Assert.All(tokens, t => Assert.Equal(t.Text, text.Substring(t.Start, t.Length)));
+        Assert.Equal(
+            tokens.Select(t => (t.Text, t.Start, t.Tag, t.Confidence)),
+            again.SelectMany(s => s.Tokens).Select(t => (t.Text, t.Start, t.Tag, t.Confidence)));
+    }
+
+    /// <summary>
+    ///     Proves that tokens with an unpaired surrogate are tagged without an exception and keep their text.
+    /// </summary>
+    [Theory]
+    [InlineData("High")]
+    [InlineData("Low")]
+    [InlineData("Mid")]
+    public void Tagger_Tag_Tokens_UnpairedSurrogate_DoesNotThrow(string kind)
+    {
+        // Arrange: the whitespace-separated pieces of the malformed text as tokens
+        var tagger = Create();
+        var tokens = MalformedText(kind).Split(' ');
+
+        // Act: tag them twice
+        var sentence = tagger.Tag(tokens);
+        var again = tagger.Tag(tokens);
+
+        // Assert: the tokens are unchanged, index the joined text, and the result is deterministic
+        Assert.Equal(tokens, sentence.Tokens.Select(t => t.Text));
+        Assert.Equal(string.Join(" ", tokens), sentence.Text);
+        Assert.All(sentence.Tokens, t => Assert.Equal(t.Text, sentence.Text.Substring(t.Start, t.Length)));
+        Assert.Equal(
+            sentence.Tokens.Select(t => (t.Tag, t.Confidence)),
+            again.Tokens.Select(t => (t.Tag, t.Confidence)));
+    }
+
+    /// <summary>
+    ///     Proves that a valid surrogate pair (an emoji) is still tagged as one piece of text and indexed correctly.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_Text_ValidSurrogatePair_RoundTrips()
+    {
+        // Arrange: emoji as tokens of their own and inside a word
+        var tagger = Create();
+        const string text = "The cat \U0001F600 sat on the \U0001F431mat.";
+
+        // Act: tag it as text and as tokens
+        var sentences = tagger.Tag(text);
+        var sentence = tagger.Tag(new[] { "The", "cat", "\U0001F600", "sat" });
+
+        // Assert: the emoji survives whole and offsets index the text
+        var tokens = sentences.SelectMany(s => s.Tokens).ToList();
+        Assert.Contains(tokens, t => t.Text == "\U0001F600");
+        Assert.All(tokens, t => Assert.Equal(t.Text, text.Substring(t.Start, t.Length)));
+        Assert.Equal("\U0001F600", sentence.Tokens[2].Text);
+        Assert.Equal(2, sentence.Tokens[2].Length);
+    }
+
+    /// <summary>
     ///     Proves that null streams are rejected by both overloads.
     /// </summary>
     [Fact]

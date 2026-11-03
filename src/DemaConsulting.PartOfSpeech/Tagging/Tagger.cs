@@ -197,7 +197,6 @@ public sealed class Tagger
     /// <param name="text">The text.</param>
     /// <returns>The tagged sentences in text order; empty for a text without tokens.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="text"/> is <c>null</c>.</exception>
-    /// <exception cref="ArgumentException"><paramref name="text"/> contains an unpaired surrogate, which is not valid UTF-16.</exception>
     /// <example>
     ///     Tag a text with two sentences and read each token, its confidence and its alternatives:
     ///     <code>
@@ -242,7 +241,7 @@ public sealed class Tagger
     /// <param name="constraints">One constraint per token, in token order, or <c>null</c> for none; use <see cref="TokenConstraint.None"/> for a token that the model decides alone.</param>
     /// <returns>The tagged sentence.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="sentence"/> is <c>null</c>.</exception>
-    /// <exception cref="ArgumentException"><paramref name="constraints"/> does not have one element per token, or a token contains an unpaired surrogate, which is not valid UTF-16.</exception>
+    /// <exception cref="ArgumentException"><paramref name="constraints"/> does not have one element per token.</exception>
     /// <example>
     ///     Force a technical name from a glossary to be a noun wherever it occurs in a sentence (a hard constraint), and
     ///     leave the other tokens to the model:
@@ -285,7 +284,7 @@ public sealed class Tagger
     /// <param name="constraints">One constraint per token, in token order, or <c>null</c> for none.</param>
     /// <returns>The tagged sentence; its text is the tokens joined by single spaces.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="tokens"/> is <c>null</c>.</exception>
-    /// <exception cref="ArgumentException">A token is <c>null</c>, empty or contains white space or an unpaired surrogate (which is not valid UTF-16), or <paramref name="constraints"/> does not have one element per token.</exception>
+    /// <exception cref="ArgumentException">A token is <c>null</c>, empty or contains white space, or <paramref name="constraints"/> does not have one element per token.</exception>
     /// <example>
     ///     Tag tokens that another component already produced. Punctuation and the contraction are separate tokens, and
     ///     nothing is lower-cased or otherwise changed:
