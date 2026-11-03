@@ -1,11 +1,11 @@
 ---
-title: Template DotNet Library Software Design Document
+title: Part Of Speech Software Design Document
 subtitle: A .NET Reference Implementation for Libraries
 author: DEMA Consulting
-description: Detailed design document for the Template DotNet Library
+description: Detailed design document for the Part Of Speech
 lang: en-US
 keywords:
-  - Template DotNet Library
+  - Part Of Speech
   - .NET
   - Library
   - Design

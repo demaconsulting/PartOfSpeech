@@ -1,6 +1,6 @@
-using TemplateDotNetLibrary;
+using PartOfSpeech;
 
-namespace DemaConsulting.TemplateDotNetLibrary.Tests;
+namespace DemaConsulting.PartOfSpeech.Tests;
 
 /// <summary>
 ///     Unit tests for the Demo class.

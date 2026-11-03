@@ -1,5 +1,5 @@
 ---
-# Software System Requirements for Template DotNet Library
+# Software System Requirements for Part Of Speech
 #
 # These requirements describe the externally visible behavior of the library
 # from the perspective of its consumers, without specifying implementation details.
@@ -7,42 +7,42 @@
 sections:
   - title: Library API
     requirements:
-      - id: Template-Lib-Greeting
+      - id: PartOfSpeech-Lib-Greeting
         title: The library shall generate a greeting string when given a name.
         tags: [system]
         justification: |
           Provides a simple demonstration of library functionality following
           .NET library best practices for DEMA Consulting libraries.
         children:
-          - Template-Demo-Greeting
+          - PartOfSpeech-Demo-Greeting
         tests:
-          - TemplateDotNetLibrary_SystemIntegration_DefaultConstruction_ReturnsExpectedGreeting
-          - TemplateDotNetLibrary_SystemCustomization_CustomPrefix_ReturnsExpectedGreeting
+          - PartOfSpeech_SystemIntegration_DefaultConstruction_ReturnsExpectedGreeting
+          - PartOfSpeech_SystemCustomization_CustomPrefix_ReturnsExpectedGreeting
 
-      - id: Template-Lib-GreetingFormat
+      - id: PartOfSpeech-Lib-GreetingFormat
         title: The library shall return a greeting string in the format "{prefix}, {name}!".
         tags: [system]
         justification: |
           The format is the core observable contract of the library: callers depend on this
           specific structure in documentation examples and integration code.
         children:
-          - Template-Demo-Greeting
+          - PartOfSpeech-Demo-Greeting
         tests:
-          - TemplateDotNetLibrary_SystemIntegration_DefaultConstruction_ReturnsExpectedGreeting
-          - TemplateDotNetLibrary_SystemCustomization_CustomPrefix_ReturnsExpectedGreeting
+          - PartOfSpeech_SystemIntegration_DefaultConstruction_ReturnsExpectedGreeting
+          - PartOfSpeech_SystemCustomization_CustomPrefix_ReturnsExpectedGreeting
 
-      - id: Template-Lib-DefaultPrefix
+      - id: PartOfSpeech-Lib-DefaultPrefix
         title: The library shall use "Hello" as the default greeting prefix.
         tags: [system]
         justification: |
           Callers constructing the library without a prefix argument need a predictable default
           greeting to rely on in documentation and examples.
         children:
-          - Template-Demo-DefaultPrefix
+          - PartOfSpeech-Demo-DefaultPrefix
         tests:
-          - TemplateDotNetLibrary_SystemIntegration_DefaultConstruction_ReturnsExpectedGreeting
+          - PartOfSpeech_SystemIntegration_DefaultConstruction_ReturnsExpectedGreeting
 
-      - id: Template-Lib-CustomPrefix
+      - id: PartOfSpeech-Lib-CustomPrefix
         title: The library shall support a customizable greeting prefix.
         tags: [system]
         justification: |
@@ -50,23 +50,23 @@ sections:
           default, so the library must allow the prefix to be specified at
           construction time.
         children:
-          - Template-Demo-AcceptCustomPrefix
-          - Template-Demo-Prefix
+          - PartOfSpeech-Demo-AcceptCustomPrefix
+          - PartOfSpeech-Demo-Prefix
         tests:
-          - TemplateDotNetLibrary_SystemCustomization_CustomPrefix_ReturnsExpectedGreeting
+          - PartOfSpeech_SystemCustomization_CustomPrefix_ReturnsExpectedGreeting
 
-      - id: Template-Lib-Prefix
+      - id: PartOfSpeech-Lib-Prefix
         title: The library shall expose the configured greeting prefix via a read-only property.
         tags: [system]
         justification: |
           Callers may need to inspect the prefix configured at construction time without
           re-specifying it or relying on the greeting output format to infer it.
         children:
-          - Template-Demo-Prefix
+          - PartOfSpeech-Demo-Prefix
         tests:
-          - TemplateDotNetLibrary_SystemIntegration_CustomPrefix_ExposesPrefix
+          - PartOfSpeech_SystemIntegration_CustomPrefix_ExposesPrefix
 
-      - id: Template-Lib-ValidationNull-DemoMethod
+      - id: PartOfSpeech-Lib-ValidationNull-DemoMethod
         title: The library shall reject a null name argument to DemoMethod with ArgumentNullException.
         tags: [system]
         justification: |
@@ -74,39 +74,39 @@ sections:
           immediately surfaces the mistake to callers and prevents obscure failures deeper in
           the call stack.
         children:
-          - Template-Demo-ValidationNull-DemoMethod
+          - PartOfSpeech-Demo-ValidationNull-DemoMethod
         tests:
-          - TemplateDotNetLibrary_SystemValidation_DemoMethodNullInput_ThrowsArgumentNullException
+          - PartOfSpeech_SystemValidation_DemoMethodNullInput_ThrowsArgumentNullException
 
-      - id: Template-Lib-ValidationNull-Constructor
+      - id: PartOfSpeech-Lib-ValidationNull-Constructor
         title: The library shall reject a null prefix argument to the constructor with ArgumentNullException.
         tags: [system]
         justification: |
           Passing null to the constructor is a programming error. Throwing ArgumentNullException
           immediately surfaces the mistake and prevents invalid instances from being created.
         children:
-          - Template-Demo-ValidationNull-Constructor
+          - PartOfSpeech-Demo-ValidationNull-Constructor
         tests:
-          - TemplateDotNetLibrary_SystemValidation_ConstructorNullPrefix_ThrowsArgumentNullException
+          - PartOfSpeech_SystemValidation_ConstructorNullPrefix_ThrowsArgumentNullException
 
-      - id: Template-Lib-ValidationEmpty-DemoMethod
+      - id: PartOfSpeech-Lib-ValidationEmpty-DemoMethod
         title: The library shall reject an empty-string name argument to DemoMethod with ArgumentException.
         tags: [system]
         justification: |
           Passing an empty string to DemoMethod is a programming error. Throwing ArgumentException
           immediately surfaces the mistake and prevents malformed output such as "Hello, !".
         children:
-          - Template-Demo-ValidationEmpty-DemoMethod
+          - PartOfSpeech-Demo-ValidationEmpty-DemoMethod
         tests:
-          - TemplateDotNetLibrary_SystemValidation_DemoMethodEmptyInput_ThrowsArgumentException
+          - PartOfSpeech_SystemValidation_DemoMethodEmptyInput_ThrowsArgumentException
 
-      - id: Template-Lib-ValidationEmpty-Constructor
+      - id: PartOfSpeech-Lib-ValidationEmpty-Constructor
         title: The library shall reject an empty-string prefix argument to the constructor with ArgumentException.
         tags: [system]
         justification: |
           Passing an empty string to the constructor is a programming error. Throwing ArgumentException
           immediately surfaces the mistake and prevents malformed output such as ", World!".
         children:
-          - Template-Demo-ValidationEmpty-Constructor
+          - PartOfSpeech-Demo-ValidationEmpty-Constructor
         tests:
-          - TemplateDotNetLibrary_SystemValidation_ConstructorEmptyPrefix_ThrowsArgumentException
+          - PartOfSpeech_SystemValidation_ConstructorEmptyPrefix_ThrowsArgumentException

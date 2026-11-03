@@ -1,11 +1,11 @@
 ---
-title: Template DotNet Library Code Quality Report
+title: Part Of Speech Code Quality Report
 subtitle: Code Quality Analysis Report
 author: DEMA Consulting
-description: Code Quality Analysis Report for Template DotNet Library
+description: Code Quality Analysis Report for Part Of Speech
 lang: en-US
 keywords:
-  - Template DotNet Library
+  - Part Of Speech
   - Code Quality
   - Analysis
   - .NET

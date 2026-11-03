@@ -1,11 +1,11 @@
 ---
-title: Template DotNet Library Requirements
-subtitle: Requirements Specification for the Template DotNet Library
+title: Part Of Speech Requirements
+subtitle: Requirements Specification for the Part Of Speech
 author: DEMA Consulting
-description: Requirements Specification for the Template DotNet Library
+description: Requirements Specification for the Part Of Speech
 lang: en-US
 keywords:
-  - Template DotNet Library
+  - Part Of Speech
   - Requirements
   - Specification
   - .NET

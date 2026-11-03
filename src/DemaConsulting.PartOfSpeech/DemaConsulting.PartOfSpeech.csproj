@@ -7,20 +7,20 @@
     <Nullable>enable</Nullable>
 
     <!-- NuGet Package Configuration -->
-    <PackageId>TemplateDotNetLibrary</PackageId>
+    <PackageId>PartOfSpeech</PackageId>
     <Version>0.0.0</Version>
     <Authors>DEMA Consulting</Authors>
     <Company>DEMA Consulting</Company>
-    <Description>Template project for DEMA Consulting DotNet Libraries</Description>
+    <Description>Part-of-speech library for .NET from DEMA Consulting</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/demaconsulting/TemplateDotNetLibrary</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/demaconsulting/TemplateDotNetLibrary</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/demaconsulting/PartOfSpeech</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/demaconsulting/PartOfSpeech</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Icon.png</PackageIcon>
-    <PackageTags>template;dotnet-library</PackageTags>
+    <PackageTags>part-of-speech;nlp;dotnet-library</PackageTags>
     <Copyright>Copyright DEMA Consulting</Copyright>
-    <Title>Template DotNet Library</Title>
-    <Product>TemplateDotNetLibrary</Product>
+    <Title>Part Of Speech</Title>
+    <Product>PartOfSpeech</Product>
 
     <!-- Symbol Package Configuration -->
     <IncludeSymbols>true</IncludeSymbols>
@@ -71,7 +71,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="DemaConsulting.TemplateDotNetLibrary.Tests" />
+    <InternalsVisibleTo Include="DemaConsulting.PartOfSpeech.Tests" />
   </ItemGroup>
 
   <ItemGroup>

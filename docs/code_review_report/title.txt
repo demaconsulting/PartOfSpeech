@@ -1,11 +1,11 @@
 ---
-title: Template DotNet Library Review Report
-subtitle: File Review Report for the Template DotNet Library
+title: Part Of Speech Review Report
+subtitle: File Review Report for the Part Of Speech
 author: DEMA Consulting
-description: File Review Report for the Template DotNet Library
+description: File Review Report for the Part Of Speech
 lang: en-US
 keywords:
-  - Template DotNet Library
+  - Part Of Speech
   - Review Report
   - File Reviews
   - .NET
