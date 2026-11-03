@@ -7,8 +7,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <para>
 ///         The rules are deliberately simple and deterministic: a sentence ends after terminal punctuation (and the
 ///         quotes and brackets that close with it) when the next token starts like a sentence (an upper-case letter, a
-///         digit or an opening quote or bracket) or the text ends; abbreviations, initials and ellipses followed by
-///         lower-case text do not end a sentence; a blank line always does. They are tuned to the open corpus, where
+///         digit or an opening quote or bracket) or the text ends; titles, initials and ellipses followed by
+///         lower-case text do not end a sentence, whereas a dotted acronym or another abbreviation can end one before a
+///         suitable follower (see <c>EndsAfterAbbreviation</c>); a blank line always does. They are tuned to the open corpus, where
 ///         the benchmark joins consecutive sentences of a document and measures how many boundaries are recovered.
 ///     </para>
 ///     <para>

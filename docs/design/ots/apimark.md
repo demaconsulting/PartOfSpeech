@@ -25,11 +25,18 @@ the code it describes.
   description provided"). The library has a single public namespace, `DemaConsulting.PartOfSpeech`
   (the folders `Tokenization`, `Tagging` and `ModelStorage` only organize the source files), so there is
   one carrier. Its documentation covers the package and target frameworks, the types and how they fit
-  together, the terminology (UPOS, lexicon, weights, confidence, alternatives, constraint), the
-  default model that throws until a later release, offsets, thread safety and errors. The carrier
+  together, the terminology (UPOS, lexicon, weights, averaged perceptron, greedy, raw score, temperature,
+  softmax, confidence, alternatives, constraint), the explanation of confidence and alternatives, the tokenization
+  conventions, offsets and pre-tokenized input, the default model that throws until a later release, the loading
+  cost, thread safety and the general error rules, each as a section of the namespace page. The sections are
+  Markdown headings written into the remarks (ApiMark passes raw Markdown through, so the headings become
+  anchors; ApiMark drops the bold and emphasis elements and renders a cross-reference to a namespace as plain
+  text), and the other pages link to them with relative Markdown links, because a cross-reference cannot address a
+  namespace section and the see-also element is not rendered on member pages. The carrier
   and the example-compile test are in the OTS-ApiMark review set because they are ApiMark's inputs
-  and evidence. FileAssert asserts the terminology on the namespace page, and the fenced example
-  blocks and the documented thread safety and exceptions on the `Tagger`, `Tagger.Tag` and
+  and evidence. FileAssert asserts the terminology and the section headings on the namespace page, and the fenced
+  example blocks, the documented thread safety and exceptions, the link to the confidence section and the
+  tokenization rules on the `Tagger`, `Tagger.Tag`, `Tagger.Load`, `TaggedToken.Confidence`, `Tokenizer` and
   `TokenConstraint` pages. References to repository documents in XML docs use absolute GitHub URLs,
   because the packaged API reference has no access to repository files.
 

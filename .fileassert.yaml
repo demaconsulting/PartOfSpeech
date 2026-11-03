@@ -37,7 +37,7 @@ tests:
           - contains: "Tagger.Load"
 
   - name: ApiMark_TerminologyDocumented
-    description: "The shared terminology of the namespace documentation survives into the generated API reference"
+    description: "The shared terminology and explanations of the namespace documentation survive into the API reference"
     tags: [api-docs]
     files:
       - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech.md"
@@ -47,9 +47,17 @@ tests:
           - contains: "confidence"
           - contains: "lexicon"
           - contains: "constraint"
+          - contains: "greedy"
+          - contains: "temperature"
+          - contains: "## Terminology"
+          - contains: "## Confidence and alternatives"
+          - contains: "## Tokenization conventions"
+          - contains: "## Offsets and pre-tokenized input"
+          - contains: "## Default model and loading cost"
+          - contains: "## Errors"
 
   - name: ApiMark_EntryPointDocumented
-    description: "The tagger entry point is documented with thread safety, exceptions and an example"
+    description: "The tagger entry point is documented with thread safety, exceptions, examples and explanation links"
     tags: [api-docs]
     files:
       - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/Tagger.md"
@@ -62,6 +70,21 @@ tests:
         text:
           - contains: "ArgumentNullException"
           - contains: "```csharp"
+          - contains: "TokenConstraint.Only(Upos.Noun)"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/Tagger/Load.md"
+        count: 1
+        text:
+          - contains: "may be disposed"
+          - contains: "InvalidDataException"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/TaggedToken/Confidence.md"
+        count: 1
+        text:
+          - contains: "DemaConsulting.PartOfSpeech.md#confidence-and-alternatives"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/Tokenizer.md"
+        count: 1
+        text:
+          - contains: "n't"
+          - contains: "CONVENTIONS.md"
       - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/TokenConstraint.md"
         count: 1
         text:

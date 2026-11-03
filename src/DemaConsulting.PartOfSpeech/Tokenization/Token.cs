@@ -61,13 +61,24 @@ public readonly struct Token : IEquatable<Token>
     /// <returns><c>true</c> if the tokens are not equal.</returns>
     public static bool operator !=(Token left, Token right) => !left.Equals(right);
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Determines whether this token has the same text and offset as another token.
+    /// </summary>
+    /// <param name="other">The token to compare with.</param>
+    /// <returns><c>true</c> if the offsets are equal and the texts are equal (ordinal comparison).</returns>
     public bool Equals(Token other) => Start == other.Start && string.Equals(Text, other.Text, StringComparison.Ordinal);
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Determines whether this token is equal to an object.
+    /// </summary>
+    /// <param name="obj">The object to compare with.</param>
+    /// <returns><c>true</c> if <paramref name="obj"/> is a <see cref="Token"/> with the same text and offset.</returns>
     public override bool Equals(object? obj) => obj is Token other && Equals(other);
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Gets a hash code for the token.
+    /// </summary>
+    /// <returns>A hash code of the text and the offset; equal tokens have equal hash codes.</returns>
     public override int GetHashCode() => unchecked((((Text?.GetHashCode() ?? 0) * 397) ^ Start));
 
     /// <summary>

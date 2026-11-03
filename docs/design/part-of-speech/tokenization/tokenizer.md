@@ -50,9 +50,10 @@ The word rules, as implemented (the rule table in `data/CONVENTIONS.md` is the n
 1. Leading brackets, quotes, `` ` ``, `$`, `£` and `€` are separate tokens; a leading apostrophe stays attached when it
    begins `'s 'm 're 've 'll 'd 'em 'tis 'twas`.
 2. Trailing `, ; : ! ? ) ] } " ' % >`, the backtick and the typographic quotes are separate tokens, repeatedly.
-3. A single trailing period stays attached to a title or abbreviation of the two sets (not at the end of the text), to
-   a dotted acronym (`U.S.`, `p.m.`), and to a single letter other than `I` (`J.`) unless it is the last chunk or a
-   closing quote or bracket follows (`"a."` keeps it, `"I."` keeps it); otherwise it is a separate token.
+3. A single trailing period stays attached to a dotted acronym (`U.S.`, `p.m.`, also at the end of the text), to a title
+   or abbreviation of the two sets (not at the end of the text), and to a single letter other than `I` (`J.`) unless
+   it is in the last chunk; a closing quote or bracket after the period keeps it for any single letter (`"a."`, `"I."`).
+   Otherwise the period is a separate token (`by J.` gives `by J .`).
 4. A run of periods: a run that is the whole chunk is one token per period; a run of three after a word is one `...`
    token; a run of four is `.` followed by `...`; a longer run is one token.
 5. A URL (`http://`, `https://`, `www.`) or an e-mail address is one token.

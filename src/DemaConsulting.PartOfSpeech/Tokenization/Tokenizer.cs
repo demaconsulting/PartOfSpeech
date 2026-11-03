@@ -5,26 +5,122 @@ namespace DemaConsulting.PartOfSpeech;
 /// </summary>
 /// <remarks>
 ///     <para>
-///         The tagger was trained on text tokenized in a UD-like convention (the "Tokenization Convention" of
-///         https://github.com/demaconsulting/PartOfSpeech/blob/main/data/CONVENTIONS.md): contractions are split
-///         (<c>do</c> + <c>n't</c>, <c>John</c> + <c>'s</c>), punctuation is
-///         separate, hyphenated compounds stay whole. A tagger fed with another tokenization would see unseen
-///         tokens, so this tokenizer reproduces that convention exactly; the rules are listed in the convention
-///         document and verified against all open-corpus sentences by the test suite.
+///         The tagger was trained on text tokenized in a UD-like convention: contractions are split
+///         (<c>does</c> + <c>n't</c>, <c>John</c> + <c>'s</c>), punctuation is separate, hyphenated compounds stay
+///         whole. A tagger fed with another tokenization would see unseen tokens, so this tokenizer reproduces that
+///         convention; the rules are verified against all open-corpus sentences by the test suite. The complete
+///         normative rules are in https://github.com/demaconsulting/PartOfSpeech/blob/main/data/CONVENTIONS.md in the
+///         repository; this page is the compact version.
 ///     </para>
 ///     <para>
-///         The tokenizer never changes characters: tokens are slices of the source string and carry their offsets.
-///         It is a set of static, stateless methods and is safe for concurrent use.
+///         ## Conventions
+///     </para>
+///     <para>
+///         The text is first cut at white space: every Unicode white-space character (space, tab, no-break space, CR
+///         and LF, so also CRLF line ends) separates chunks, and a token never contains white space. Each chunk is then
+///         split by these rules; every example is the real output of the tokenizer, with the tokens separated by
+///         spaces.
+///     </para>
+///     <list type="table">
+///     <listheader>
+///     <term>Rule</term>
+///     <description>Text becomes tokens</description>
+///     </listheader>
+///     <item>
+///     <term>Negation contractions: <c>n't</c> is split off; <c>ca</c>, <c>wo</c>, <c>sha</c>, <c>ai</c> are the stems of the irregular forms; <c>cannot</c> is two tokens</term>
+///     <description><c>doesn't</c> gives <c>does n't</c>; <c>can't</c> gives <c>ca n't</c>; <c>won't</c> gives <c>wo n't</c>; <c>cannot</c> gives <c>can not</c></description>
+///     </item>
+///     <item>
+///     <term>Clitics <c>'s 're 've 'll 'd 'm</c> are split off a stem of letters. The possessive <c>'s</c> and the contracted <c>is</c> look the same and both are split</term>
+///     <description><c>I've</c> gives <c>I 've</c>; <c>John's</c> gives <c>John 's</c>; <c>We're</c> gives <c>We 're</c></description>
+///     </item>
+///     <item>
+///     <term>A plural possessive apostrophe and other trailing quote characters are tokens of their own</term>
+///     <description><c>dogs'</c> gives <c>dogs '</c></description>
+///     </item>
+///     <item>
+///     <term>Hyphens inside a word stay (compounds, numbered names); a double hyphen and the dash characters en dash, em dash and horizontal bar are tokens of their own</term>
+///     <description><c>well-known</c>, <c>COVID-19</c>, <c>co-op</c> stay whole; <c>forest--at</c> gives <c>forest -- at</c>; an em dash (U+2014) between two words without spaces gives the word, the dash and the word as three tokens</description>
+///     </item>
+///     <item>
+///     <term>Punctuation at the start or end of a chunk is split off, one token per character: <c>( [ { &lt;</c> and quotes and currency signs in front; <c>, ; : ! ? ) ] } &gt; %</c> and quotes behind. Punctuation inside a chunk is not split</term>
+///     <description><c>"Hi,"</c> gives <c>" Hi , "</c>; <c>(quietly).</c> gives <c>( quietly ) .</c>; <c>$700</c> gives <c>$ 700</c>; <c>73%</c> gives <c>73 %</c>; <c>Hello,world</c> stays one token</description>
+///     </item>
+///     <item>
+///     <term>Numbers with inner punctuation, times, and words with a slash or an ampersand stay whole</term>
+///     <description><c>3.5</c>, <c>1,000</c>, <c>7:00</c>, <c>and/or</c>, <c>R&amp;D</c>, <c>o'clock</c></description>
+///     </item>
+///     <item>
+///     <term>A single final period stays attached to a dotted acronym (letters separated by periods), to a known abbreviation (titles such as <c>Dr.</c> only with a capital letter; <c>etc.</c>, <c>Inc.</c> and the like in any case) and to a single-letter initial; any other final period is split off. Abbreviations and initials lose the period when their chunk is the last one of the text, and the pronoun <c>I</c> never keeps it (unless a closing quote follows the period)</term>
+///     <description><c>Dr.</c>, <c>Mr.</c>, <c>U.S.</c>, <c>p.m.</c>, <c>etc.</c> and the initial in <c>J. Smith</c> stay whole; <c>home.</c> gives <c>home .</c>; at the end of the text <c>pens, etc.</c> gives <c>pens , etc .</c> and <c>by J.</c> gives <c>by J .</c>, but the dotted acronym in <c>in the U.S.</c> stays whole; <c>He said I.</c> gives <c>He said I .</c></description>
+///     </item>
+///     <item>
+///     <term>Ellipsis: three periods after a word are one token, and so is the ellipsis character</term>
+///     <description><c>Wait...</c> gives <c>Wait ...</c></description>
+///     </item>
+///     <item>
+///     <term>Web and e-mail addresses are one token each, without the punctuation that follows them</term>
+///     <description><c>www.example.com.</c> gives <c>www.example.com .</c>; <c>me@x.org</c> stays whole</description>
+///     </item>
+///     <item>
+///     <term>Typographic characters: the curly apostrophes and quotes (U+2018, U+2019, U+201B, U+02BC, U+201C, U+201D) count like the ASCII ones, and the token keeps the character that it had</term>
+///     <description>The text <c>don</c>, U+2019, <c>t</c> gives the tokens <c>do</c> and <c>n’t</c> (the second one keeps the curly apostrophe U+2019, it is not changed to <c>n't</c>); a quotation in U+201C and U+201D gives the two quote marks as separate tokens</description>
+///     </item>
+///     </list>
+///     <para>
+///         ## Sentences, offsets and normalization
+///     </para>
+///     <para>
+///         A sentence ends after <c>.</c>, <c>!</c>, <c>?</c>, <c>...</c> or the ellipsis character (and the quotes and
+///         brackets that touch it) when the next token starts with an upper-case letter, a digit or an opening quote or
+///         bracket, or when the text ends. An ellipsis before a lower-case word does not end a sentence, a single line
+///         break (LF or CRLF) does not, and a blank line (two line breaks) always does. For example
+///         <c>He left home. She stayed.</c> is two sentences, and <c>Title</c>, a blank line and <c>Body text.</c> are
+///         two sentences even though the title has no period.
+///     </para>
+///     <para>
+///         A token that keeps its period (see the table) is handled by its own rules. Titles and similar words
+///         (<c>Mr.</c>, <c>Mrs.</c>, <c>Dr.</c>, <c>Prof.</c>, <c>St.</c>, <c>No.</c>, <c>vs.</c>, <c>e.g.</c>,
+///         <c>i.e.</c>, <c>Gen.</c>, <c>Col.</c>, <c>Rev.</c> and similar titles) never end a sentence: <c>Dr. Smith left.</c> is one sentence.
+///         An initial such as <c>J.</c> does not end a sentence either, except that a quoted initial that is followed by
+///         an upper-case word does (<c>He said "I." Then he left.</c> is two sentences). A dotted acronym such as
+///         <c>U.S.</c> ends a sentence only before one of a fixed list of common sentence-starting words (<c>The</c>,
+///         <c>He</c>, <c>In</c>, <c>But</c> and similar): <c>the U.S. He left</c> is two sentences, <c>the U.S. Army</c>
+///         is one. Any other abbreviation (<c>etc.</c>, <c>Inc.</c>, <c>Co.</c>) ends a sentence before a word that
+///         starts with an upper-case letter, so <c>pens, etc. The end</c> is two sentences but <c>pens, etc. and more</c>
+///         and <c>pens, etc. 5 more</c> are one. The lists are tuned to the open corpus and are not complete, so
+///         rare abbreviations can be split wrongly.
+///     </para>
+///     <para>
+///         The tokenizer never changes characters: tokens are slices of the source string, and the offset of each
+///         token (<see cref="Token.Start"/>) indexes the whole source string, including line breaks that lie inside a
+///         sentence, so <c>text.Substring(token.Start, token.Length)</c> is always the token text. There is no Unicode
+///         normalization and no case folding in the tokenizer: a decomposed <c>e</c> plus combining accent stays the
+///         two characters that it was. The tagger itself folds each token for its lexicon lookup and features
+///         (Unicode NFC, curly quotes to straight quotes, dashes to two hyphens, the ellipsis character to three
+///         periods), but that is internal; the tokens that you get back are as written.
+///     </para>
+///     <para>
+///         It is a set of static, stateless methods and is safe for concurrent use. To tag tokens that another
+///         component produced, use <see cref="CreateSentence(IReadOnlyList{string})"/>.
 ///     </para>
 /// </remarks>
 /// <example>
-///     Split a text into sentences and tokens without tagging it:
+///     Split a text into sentences and tokens without tagging it. The line break inside the text is ordinary white
+///     space (a single one does not end a sentence), and the offsets index the whole text:
 ///     <code>
-///     string text = "Dr. Smith doesn't smoke. She's well-known.";
+///     string text = "Dr. Smith doesn't smoke.\r\nShe's well-known.";
 ///
 ///     foreach (Sentence sentence in Tokenizer.Tokenize(text))
 ///     {
+///         // First sentence: Dr. | Smith | does | n't | smoke | .    Second: She | 's | well-known | .
 ///         Console.WriteLine(string.Join(" | ", sentence.Tokens.Select(token => token.Text)));
+///
+///         foreach (Token token in sentence.Tokens)
+///         {
+///             // Always true: the offset is a position in the whole text, here also after the line break
+///             Console.WriteLine(text.Substring(token.Start, token.Length) == token.Text);
+///         }
 ///     }
 ///     </code>
 /// </example>
@@ -51,12 +147,16 @@ public static class Tokenizer
     ///     Splits a text into sentences, each with its tokens.
     /// </summary>
     /// <remarks>
-    ///     Sentence boundaries follow terminal punctuation, abbreviation and capitalization rules and blank lines
-    ///     (see https://github.com/demaconsulting/PartOfSpeech/blob/main/data/CONVENTIONS.md). A text without any token yields an empty list. Offsets index
-    ///     <paramref name="text"/>.
+    ///     White space (any Unicode white-space character, including CR and LF) only separates chunks; each chunk is then
+    ///     split at contractions, leading and trailing punctuation, dashes and final periods by the rules in the
+    ///     remarks of <see cref="Tokenizer"/>, so <c>doesn't</c> gives <c>does</c> and <c>n't</c> and
+    ///     <c>"Hi,"</c> gives four tokens. Sentence boundaries follow terminal punctuation, abbreviations,
+    ///     capitalization and blank lines (also described there); a single line break does not end a sentence. A text
+    ///     without any token yields an empty list. The offsets index <paramref name="text"/> and the characters are
+    ///     never changed.
     /// </remarks>
-    /// <param name="text">The text; any white space separates tokens.</param>
-    /// <returns>The sentences in text order.</returns>
+    /// <param name="text">The text to split; it may contain any number of sentences and line breaks.</param>
+    /// <returns>The sentences in text order; empty when the text has no token.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="text"/> is <c>null</c>.</exception>
     public static IReadOnlyList<Sentence> Tokenize(string text)
     {
@@ -69,19 +169,25 @@ public static class Tokenizer
     ///     Creates a sentence from tokens that the caller already produced.
     /// </summary>
     /// <remarks>
-    ///     The tokens are joined with single spaces into the sentence text, which then is the source string of the
-    ///     token offsets (<see cref="Sentence.Start"/> is 0). Use this to tag text that was tokenized by another
+    ///     The tokens are validated but not changed or split: punctuation marks and clitics such as <c>n't</c> must
+    ///     already be tokens of their own (<c>Hello,</c> stays one token), and capitalization and spelling are kept as
+    ///     given. The tokens are joined with single spaces into the sentence text (<see cref="Sentence.Text"/>), which
+    ///     then is the source string of the token offsets (<see cref="Sentence.Start"/> is 0), so the offsets index
+    ///     the joined text and not the text that the tokens came from. Use this to tag text that was tokenized by another
     ///     component; the tokens must follow the convention of <see cref="Tokenizer"/> for best accuracy.
     /// </remarks>
     /// <param name="tokens">The tokens; none may be <c>null</c>, empty or contain white space.</param>
-    /// <returns>The sentence.</returns>
+    /// <returns>The sentence; an empty list of tokens gives an empty sentence.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="tokens"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException">A token is <c>null</c>, empty or contains white space.</exception>
     /// <example>
-    ///     Create a sentence from tokens that another component produced and tag it:
+    ///     Create a sentence from tokens that another component produced. The punctuation is supplied as tokens, the
+    ///     capital letters are kept, and the offsets refer to the joined text:
     ///     <code>
-    ///     Sentence sentence = Tokenizer.CreateSentence(new[] { "Hello", ",", "world", "!" });
-    ///     Console.WriteLine(sentence.Text);   // Hello , world !
+    ///     Sentence sentence = Tokenizer.CreateSentence(new[] { "Hello", ",", "World", "!" });
+    ///
+    ///     Console.WriteLine(sentence.Text);   // Hello , World !
+    ///     Console.WriteLine(string.Join(" ", sentence.Tokens));   // Hello@0 ,@6 World@8 !@14
     ///     TaggedSentence tagged = tagger.Tag(sentence);
     ///     </code>
     /// </example>

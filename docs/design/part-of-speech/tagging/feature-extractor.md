@@ -55,7 +55,10 @@ tag-independent buckets), which the decoder keeps per thread.
 #### Error Handling
 
 The fast path validates nothing: its inputs come from the decoder, which has validated them, and it cannot fail for
-any string. `ReferenceBucket` throws `ArgumentException` for a tag spelling that is neither a tag nor a start marker.
+any valid string. `SetToken` normalizes a token that contains a non-ASCII character with `string.Normalize`, which
+throws `ArgumentException` for a string with an unpaired surrogate (not valid UTF-16); the exception propagates to the
+caller of the tagger (a known limitation, documented in the API reference).
+`ReferenceBucket` throws `ArgumentException` for a tag spelling that is neither a tag nor a start marker.
 Nothing is caught.
 
 #### Dependencies

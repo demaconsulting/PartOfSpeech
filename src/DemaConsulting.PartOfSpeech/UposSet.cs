@@ -147,13 +147,24 @@ public readonly struct UposSet : IEquatable<UposSet>, IEnumerable<Upos>
     /// <returns>The tags that are in both sets.</returns>
     public UposSet Intersect(UposSet other) => new(_mask & other._mask);
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Determines whether this set contains the same tags as another set.
+    /// </summary>
+    /// <param name="other">The set to compare with.</param>
+    /// <returns><c>true</c> if both sets contain exactly the same tags.</returns>
     public bool Equals(UposSet other) => _mask == other._mask;
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Determines whether this set is equal to an object.
+    /// </summary>
+    /// <param name="obj">The object to compare with.</param>
+    /// <returns><c>true</c> if <paramref name="obj"/> is a <see cref="UposSet"/> with the same tags.</returns>
     public override bool Equals(object? obj) => obj is UposSet other && Equals(other);
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Gets a hash code for the set.
+    /// </summary>
+    /// <returns>A hash code of the members; equal sets have equal hash codes.</returns>
     public override int GetHashCode() => _mask;
 
     /// <summary>

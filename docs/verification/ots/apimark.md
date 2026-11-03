@@ -46,7 +46,10 @@ still hide examples rendered as prose or dropped remarks.
 **Scenario**: The terminology of the `NamespaceDoc` carrier is generated.
 
 **Expected**: The namespace page `DemaConsulting.PartOfSpeech.md` contains the terms "UPOS",
-"confidence", "lexicon" and "constraint".
+"confidence", "lexicon", "constraint", "greedy" and "temperature" and the section headings
+"Terminology", "Confidence and alternatives", "Tokenization conventions", "Offsets and pre-tokenized
+input", "Default model and loading cost" and "Errors" (the headings prove that the Markdown headings
+written in the carrier's remarks are rendered, which the other pages rely on as link anchors).
 
 **Requirement coverage**: `PartOfSpeech-OTS-ApiMark-RenderExamples`.
 
@@ -55,8 +58,12 @@ still hide examples rendered as prose or dropped remarks.
 **Scenario**: The main entry points are documented and their pages are generated.
 
 **Expected**: The `Tagger` page states the thread safety and the `InvalidDataException`, the
-`Tagger.Tag` member page states `ArgumentNullException` and contains a fenced `csharp` example, and
-the `TokenConstraint` page (the constraint hook) contains a fenced `csharp` example.
+`Tagger.Tag` member page states `ArgumentNullException` and contains a fenced `csharp` example with
+the glossary constraint (`TokenConstraint.Only(Upos.Noun)`), the `Tagger.Load` member page states
+that the stream may be disposed and the `InvalidDataException`, the `TaggedToken.Confidence` page
+links to the "Confidence and alternatives" section of the namespace page, the `Tokenizer` page
+contains the tokenization rules (`n't`) and the link to `CONVENTIONS.md`, and the `TokenConstraint`
+page (the constraint hook) contains a fenced `csharp` example.
 
 **What this proves**: only that the pages were generated from their documentation. It does not by
 itself prove enforcement. Enforcement is proven by the build failing when a public member lacks an

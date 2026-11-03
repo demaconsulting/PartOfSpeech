@@ -16,7 +16,10 @@ namespace DemaConsulting.PartOfSpeech;
 ///         what the lexicon allows; if that is empty the constraint wins (a glossary is authoritative over a
 ///         dictionary). Soft adjustments are in raw score units, i.e. they are divided by the model temperature in the
 ///         softmax like the model's own scores. The tag that is chosen enters the history of the following tokens like
-///         any other decision, so a constraint also influences its neighbors.
+///         any other decision, so a constraint also influences its neighbors. The effect on the confidence and the
+///         alternatives is explained in
+///         [Confidence and alternatives](../DemaConsulting.PartOfSpeech.md#confidence-and-alternatives); raw score and
+///         temperature are defined in [Terminology](../DemaConsulting.PartOfSpeech.md#terminology).
 ///     </para>
 ///     <para>
 ///         The struct is immutable (the adjustment table is copied whenever it changes) and therefore thread-safe.
@@ -122,6 +125,7 @@ public readonly struct TokenConstraint : IEquatable<TokenConstraint>
     /// <returns>The constraint.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="allowed"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException"><paramref name="allowed"/> is empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">A tag in <paramref name="allowed"/> is not one of the 17 defined values.</exception>
     public static TokenConstraint Only(params Upos[] allowed) => Only(UposSet.Of(allowed));
 
     /// <summary>
@@ -202,7 +206,11 @@ public readonly struct TokenConstraint : IEquatable<TokenConstraint>
     /// <returns>The adjustment; zero when the constraint has none for the tag.</returns>
     internal double AdjustmentOf(int tag) => _adjustments == null ? 0 : _adjustments[tag];
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Determines whether this constraint restricts and adjusts exactly like another constraint.
+    /// </summary>
+    /// <param name="other">The constraint to compare with.</param>
+    /// <returns><c>true</c> if the allowed tags are equal and the score adjustment of every tag is equal.</returns>
     public bool Equals(TokenConstraint other)
     {
         if (Allowed != other.Allowed)
@@ -222,10 +230,17 @@ public readonly struct TokenConstraint : IEquatable<TokenConstraint>
         return true;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Determines whether this constraint is equal to an object.
+    /// </summary>
+    /// <param name="obj">The object to compare with.</param>
+    /// <returns><c>true</c> if <paramref name="obj"/> is a <see cref="TokenConstraint"/> that restricts and adjusts identically.</returns>
     public override bool Equals(object? obj) => obj is TokenConstraint other && Equals(other);
 
-    /// <inheritdoc />
+    /// <summary>
+    ///     Gets a hash code for the constraint.
+    /// </summary>
+    /// <returns>A hash code of the allowed tags and the score adjustments; equal constraints have equal hash codes.</returns>
     public override int GetHashCode()
     {
         var hash = Allowed.Mask;

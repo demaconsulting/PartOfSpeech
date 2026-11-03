@@ -1,14 +1,18 @@
 namespace DemaConsulting.PartOfSpeech;
 
 /// <summary>
-///     A token with its predicted tag, a calibrated confidence and ranked alternatives.
+///     A token with its predicted tag, a confidence and ranked alternatives.
 /// </summary>
 /// <remarks>
 ///     <para>
 ///         <see cref="Confidence"/> is the probability of <see cref="Tag"/> among the tags that were allowed for the
-///         token, calibrated by the model temperature. When the lexicon and the shape rules leave only one tag, the
-///         confidence is 1.0 whatever the model thinks: it measures the choice between the allowed tags, so read it on
-///         tokens that had several.
+///         token, computed with a softmax at the model temperature. When the lexicon and the shape rules leave only one
+///         tag, the confidence is 1.0 whatever the model thinks: it measures the choice between the allowed tags, so
+///         read it on tokens that had several. The full explanation, including when the confidence and the
+///         alternatives add up to 1 and why this reference gives no threshold, is in
+///         [Confidence and alternatives](../DemaConsulting.PartOfSpeech.md#confidence-and-alternatives); the words
+///         softmax, temperature and raw score are defined in
+///         [Terminology](../DemaConsulting.PartOfSpeech.md#terminology).
 ///     </para>
 ///     <para>
 ///         The struct is immutable. The alternatives are a view of one array that the tagger allocated per sentence;
@@ -95,13 +99,34 @@ public readonly struct TaggedToken
     public Upos Tag { get; }
 
     /// <summary>
-    ///     Gets the probability of <see cref="Tag"/> among the allowed tags, calibrated by the model temperature.
+    ///     Gets the probability of <see cref="Tag"/> among the allowed tags, from 0 to 1.
     /// </summary>
+    /// <remarks>
+    ///     It is a softmax over the tags that the lexicon, the shape rules and any constraint allowed for the token, at
+    ///     the temperature of the model; it is exactly 1.0 when only one tag was allowed. Together with the
+    ///     probabilities in <see cref="Alternatives"/> it adds up to 1 only when
+    ///     <see cref="TaggerOptions.MaxAlternatives"/> did not cut any alternative off. This reference recommends no
+    ///     threshold: what confidence is low enough to double-check a token is the choice of your application. See
+    ///     [Confidence and alternatives](../../DemaConsulting.PartOfSpeech.md#confidence-and-alternatives) for the
+    ///     details and [Terminology](../../DemaConsulting.PartOfSpeech.md#terminology) for the words used.
+    /// </remarks>
+    /// <seealso cref="Alternatives"/>
+    /// <seealso cref="TagScore"/>
     public double Confidence { get; }
 
     /// <summary>
     ///     Gets the other allowed tags in descending probability, at most <see cref="TaggerOptions.MaxAlternatives"/>.
     /// </summary>
+    /// <remarks>
+    ///     The list never contains <see cref="Tag"/> itself. It has the smaller of
+    ///     <see cref="TaggerOptions.MaxAlternatives"/> and the number of allowed tags minus one entries, so it is
+    ///     complete (and <see cref="Confidence"/> plus all probabilities add up to 1) only when
+    ///     <see cref="TaggerOptions.MaxAlternatives"/> is large enough; it is empty when only one tag was allowed or when
+    ///     no alternatives were requested. See
+    ///     [Confidence and alternatives](../../DemaConsulting.PartOfSpeech.md#confidence-and-alternatives).
+    /// </remarks>
+    /// <seealso cref="Confidence"/>
+    /// <seealso cref="TagScore"/>
     /// <value>Empty when only one tag was allowed or no alternatives were requested.</value>
     public IReadOnlyList<TagScore> Alternatives =>
         _scores == null ? new ScoreSlice(NoScores, 0, 0) : new ScoreSlice(_scores, _scoreOffset, _scoreCount);
