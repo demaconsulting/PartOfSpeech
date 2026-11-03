@@ -71,6 +71,23 @@ internal sealed class DataTable
     public IReadOnlyList<string[]> Rows { get; }
 
     /// <summary>
+    ///     Gets the value of one column in a row.
+    /// </summary>
+    /// <param name="row">A row of <see cref="Rows"/>.</param>
+    /// <param name="name">The column name.</param>
+    /// <returns>The value of the column.</returns>
+    public string Cell(string[] row, string name)
+    {
+        var index = Array.IndexOf(Columns, name);
+        if (index < 0)
+        {
+            throw new InvalidDataException($"Column '{name}' is missing; the columns are: {string.Join(", ", Columns)}");
+        }
+
+        return row[index];
+    }
+
+    /// <summary>
     ///     Gets the values of one column.
     /// </summary>
     /// <param name="name">The column name.</param>
@@ -92,11 +109,6 @@ internal sealed class DataTable
 /// </summary>
 internal static class DataFiles
 {
-    /// <summary>
-    ///     The minimum length of a sentence key that the leakage rule compares.
-    /// </summary>
-    public const int MinimumKeyLength = 25;
-
     /// <summary>
     ///     The 17 Universal POS tags.
     /// </summary>
@@ -189,10 +201,12 @@ internal static class DataFiles
     }
 
     /// <summary>
-    ///     Reads a tab-separated table whose columns come from a <c># columns =</c> comment or from the first line.
+    ///     Reads a tab-separated table whose columns come from a <c># columns =</c> comment (names separated by spaces,
+    ///     optionally with a trailing comma) or from the first line.
     /// </summary>
     /// <param name="path">The full path of the file.</param>
     /// <returns>The table.</returns>
+    /// <exception cref="InvalidDataException">A row has a different number of cells than the table has columns.</exception>
     public static DataTable ReadTable(string path)
     {
         string[]? columns = null;
@@ -201,7 +215,7 @@ internal static class DataFiles
         {
             if (line.StartsWith("# columns = ", StringComparison.Ordinal))
             {
-                columns = line.Substring("# columns = ".Length).Split(' ');
+                columns = line.Substring("# columns = ".Length).Split(' ').Select(name => name.TrimEnd(',')).ToArray();
             }
             else if (line.Length > 0 && line[0] != '#')
             {
@@ -209,6 +223,10 @@ internal static class DataFiles
                 if (columns == null)
                 {
                     columns = cells;
+                }
+                else if (cells.Length != columns.Length)
+                {
+                    throw new InvalidDataException($"{path}: a row has {cells.Length} cells, but the table has {columns.Length} columns");
                 }
                 else
                 {

@@ -33,7 +33,7 @@ This library provides:
 Install the library using the .NET CLI:
 
 ```bash
-dotnet add package PartOfSpeech
+dotnet add package DemaConsulting.PartOfSpeech
 ```
 
 ## Usage
@@ -101,7 +101,7 @@ By contributing to this project, you agree that your contributions will be licen
 [badge-build]: https://img.shields.io/github/actions/workflow/status/demaconsulting/PartOfSpeech/build_on_push.yaml?style=plastic
 [badge-quality]: https://sonarcloud.io/api/project_badges/measure?project=demaconsulting_PartOfSpeech&metric=alert_status
 [badge-security]: https://sonarcloud.io/api/project_badges/measure?project=demaconsulting_PartOfSpeech&metric=security_rating
-[badge-nuget]: https://img.shields.io/nuget/v/PartOfSpeech?style=plastic
+[badge-nuget]: https://img.shields.io/nuget/v/DemaConsulting.PartOfSpeech?style=plastic
 
 <!-- Link References -->
 [link-forks]: https://github.com/demaconsulting/PartOfSpeech/network/members
@@ -111,7 +111,7 @@ By contributing to this project, you agree that your contributions will be licen
 [link-build]: https://github.com/demaconsulting/PartOfSpeech/actions/workflows/build_on_push.yaml
 [link-quality]: https://sonarcloud.io/dashboard?id=demaconsulting_PartOfSpeech
 [link-security]: https://sonarcloud.io/dashboard?id=demaconsulting_PartOfSpeech
-[link-nuget]: https://www.nuget.org/packages/PartOfSpeech
+[link-nuget]: https://www.nuget.org/packages/DemaConsulting.PartOfSpeech
 [link-continuous-compliance]: https://github.com/demaconsulting/ContinuousCompliance
 [link-contributing]: https://github.com/demaconsulting/PartOfSpeech/blob/main/CONTRIBUTING.md
 [link-data]: https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md

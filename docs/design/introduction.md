@@ -115,7 +115,10 @@ Each software item has corresponding artifacts in parallel directory trees:
 The data assets are not software items and have no parallel design or verification files. Their system-level
 requirements are in the _Data and Licensing_ section of `docs/reqstream/{system}.yaml`, their tests are in
 `test/{System}.Tests/{System}DataTests.cs`, and the data folders carry their own `README.md` files. The build-time
-tools have developer unit tests in `tools/data/tests/`, which are not requirements evidence.
+tools have developer unit tests in `tools/data/tests/`, which are not requirements evidence. The Python files of the
+tools and their tests are reviewed in two review-sets of `.reviewmark.yaml`: `PartOfSpeech-DataConversion` (the tools
+that import and convert data and build the lexicon) and `PartOfSpeech-DataChecks` (the tools that check, record and
+verify it); the system design and the system requirements are their context.
 
 ## References
 

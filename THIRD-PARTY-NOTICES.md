@@ -28,9 +28,9 @@ Part-of-speech training data in `data/masc/` and the lexicon in `data/lexicon/` 
   Resources and Evaluation (LREC 2008), <https://aclanthology.org/L08-1105/>
 - **Changes:** the work was adapted by DEMA Consulting. The Penn Treebank part-of-speech tags and tree positions of every
   token were converted to Universal POS (UPOS) tags; the empty-category traces were removed, quotation marks and dashes
-  were normalized, the sentences were reduced to those of 3 to 70 tokens, and the spoken genre and a few documents that
-  overlap evaluation data were left out. The converted data is not the original MASC data. The authors of MASC do not
-  endorse this project or the converted data. The full statement is `data/masc/ATTRIBUTION.md`.
+  were normalized, the sentences were reduced to those of 3 to 70 tokens, and the spoken genre and a few documents and
+  sentences that overlap evaluation data were left out. The converted data is not the original MASC data. The authors of
+  MASC do not endorse this project or the converted data. The full statement is `data/masc/ATTRIBUTION.md`.
 
 ## Open English WordNet
 

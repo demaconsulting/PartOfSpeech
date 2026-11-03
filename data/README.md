@@ -13,15 +13,15 @@ the library at run time yet; later phases embed compact binary forms generated f
 | Folder | What | Sentences | Tokens | Size | License |
 | --- | --- | ---: | ---: | ---: | --- |
 | [open/](open/README.md) | open corpus, train/dev/test, UPOS | 14,980 | 261,641 | 10.3 MB | CC0-1.0 annotations; PD/CC0 sentences |
-| [masc/](masc/README.md) | MASC written genres, Penn trees mapped to UPOS | 22,933 | 386,837 | 11.6 MB | CC-BY-3.0-US |
-| [silver/](silver/README.md) | BERT silver: Tatoeba and Gutenberg text, model labels mapped to UPOS | 13,973 | 242,710 | 8.5 MB | CC0-1.0 labels; CC0/PD sentences |
+| [masc/](masc/README.md) | MASC written genres, Penn trees mapped to UPOS | 22,829 | 386,445 | 11.6 MB | CC-BY-3.0-US |
+| [silver/](silver/README.md) | BERT silver: Tatoeba and Gutenberg text, model labels mapped to UPOS | 13,971 | 242,699 | 8.5 MB | CC0-1.0 labels; CC0/PD sentences |
 | [eval/shapes/](eval/shapes/README.md) | noun/verb shape probe (evaluation) | 560 | | 0.06 MB | CC0-1.0 |
 | [eval/gold-v2/](eval/gold-v2/README.md) | single-target gold tokens (evaluation) | 5,072 | | 2.4 MB | CC0-1.0 labels; PD sentences |
 | [eval/ste-challenge/](eval/ste-challenge/README.md) | simplified-technical-English challenge set (evaluation) | 32 | 272 | 0.01 MB | CC0-1.0 |
 | [eval/ud-ewt/](eval/ud-ewt/README.md) | UD English-EWT: fetch documentation only, **no data** | | | | CC BY-SA 4.0, never committed |
 | [lexicon/](lexicon/README.md) | spelling to UPOS tags lexicon, closed-class list, coverage report | | | 4.5 MB | CC-BY-4.0 and CC-BY-3.0-US (attribution), others |
 
-The training corpora (open train, MASC, silver) hold 209,224 + 386,837 + 242,710 tokens (silver: 232,318 labeled, 10,392
+The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
 masked). Total size of `data/`: 37.4 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
 WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.md` at the repository root.
 
@@ -50,7 +50,7 @@ python tools/data/import_open.py   --source-dir <WordSense checkout at the pinne
 python tools/data/import_eval.py   --source-dir <WordSense checkout at the pinned commit>   # eval/
 python tools/data/fetch_ud_ewt.py fetch                                                     # cache for the leakage filter
 python tools/data/import_masc.py   [--archive penn-treebank.tgz]                            # masc/
-python tools/data/build_lexicon.py [--wordsense-dir <checkout>]                             # lexicon/lexicon.tsv
+python tools/data/build_lexicon.py [--wordsense-dir <checkout>]                             # lexicon/lexicon.tsv (attests tags from masc/)
 python tools/data/check_lexicon.py                                                          # lexicon/coverage.tsv, COVERAGE.md
 python tools/data/import_silver.py derive                                                   # silver/silver.tsv
 python tools/data/check_leakage.py --write-report                                           # leakage-report.tsv
@@ -70,25 +70,32 @@ train, dev and test when the git-ignored cache is present.
 1. **Documents:** the source ids of a training set are disjoint from the document ids of every evaluation set (open
    `source_id`, gold v2 `doc_id`). Gutenberg books are `gutenberg-<number>` and Tatoeba sentences `tatoeba-<number>` in
    every file, so one canonical id exists per document.
-2. **Sentences:** key = the lower-case alphanumerics of the sentence; keys of at least 25 characters are compared and no
-   training key may equal an evaluation key. Shorter exact duplicates (`Thank you.`) legitimately recur and are only counted.
+2. **Sentences:** key = the lower-case alphanumerics of the sentence; every key is compared, whatever its length, and no
+   training key may equal an evaluation key. There is no exemption for short sentences: `Thank you.` and `What should
+   I do ?` count like any other sentence. The remedy depends on the length of the key. A match of 25 or more
+   characters shows that two corpora share source text, so the whole training document is excluded. A shorter match is a
+   sentence that recurs in unrelated texts, so only that sentence is dropped from the training data (the sentences of a
+   treebank file or of a book are independent; a Tatoeba document is a single sentence); the dropped sentence ids
+   are listed in `dropped-sentences.tsv` of the training folder. The evaluation sets are never changed.
 3. **Near duplicates** (reported, not gated): an evaluation sentence of at least 10 words whose word 6-grams are at least 80
    percent contained in the training 6-grams of a set.
 
 **Result** (`python tools/data/check_leakage.py`; the committed `leakage-report.tsv` has every pair; UD English-EWT was
 fetched and included in this run): **0 document overlaps and 0 exact sentence overlaps** for every pair of training and
-evaluation set. Informational: 2, 4 and 7 near-duplicate sentences of open dev, open test and gold v2 against open train,
-and 1 gold v2 sentence against silver; all are agency boilerplate or repeated phrases (`Please let us know if these
-examples and explanations have helped you, Ali.`, standard NWS and USGS announcement sentences) and not shared documents.
-Short exact duplicates against UD English-EWT (MASC email 33 dev, 55 test, 208 train; silver 1 dev, 3 train) are generic
-short sentences.
+evaluation set, short sentences included. Informational: 2, 4 and 7 near-duplicate sentences of open dev, open test and
+gold v2 against open train, and 1 gold v2 sentence against silver; all are agency boilerplate or repeated phrases
+(`Please let us know if these examples and explanations have helped you, Ali.`, standard NWS and USGS announcement
+sentences) and not shared documents.
 
 **Removals** (training side only; evaluation sets are never changed): MASC 5 documents (4 email documents overlap UD
-English-EWT train, 1 UD English-EWT dev), listed in `masc/excluded-documents.tsv`; silver 27 Tatoeba sentences whose id is
-the id of an open dev or test sentence (found by the document rule; their short texts escape the 25-character key), listed
-in `silver/excluded-documents.tsv`, plus the 1,840 documents the selection run of the earlier experiment removed against
-the WordSense evaluation sets (informational). The open corpus is split by document hash, so open train has no overlap with
-open dev and test by construction (confirmed).
+English-EWT train, 1 UD English-EWT dev), listed in `masc/excluded-documents.tsv`, and 104 short sentences (2 to 19 key
+characters, such as `Thank you .`; 36 equal to a UD English-EWT dev sentence, 36 test, 31 train, and 1 gold v2 sentence,
+`What should I do ?`), listed in `masc/dropped-sentences.tsv` (392 tokens); silver 27 Tatoeba sentences whose id is
+the id of an open dev or test sentence (found by the document rule), listed in `silver/excluded-documents.tsv`, 2 short
+Gutenberg sentences equal to UD English-EWT dev and train sentences (11 tokens), listed in `silver/dropped-sentences.tsv`,
+plus the 1,840 documents the selection run of the earlier
+experiment removed against the WordSense evaluation sets (informational). The open corpus is split by document hash, so
+open train has no overlap with open dev and test by construction (confirmed; short sentences included).
 
 **Limitations:** paraphrases and partial overlaps are not detected; Tatoeba near-duplicates can sit in different open splits
 by design; the UD check applies only when the cache is present, so a run without it reports `UD English-EWT checked: no`.

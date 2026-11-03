@@ -9,7 +9,11 @@ Evaluation sets whose sentences and documents no training file may contain:
   ud-ewt-dev, ud-ewt-test, ud-ewt-train   tools/data/cache/ud-ewt/*.conllu, only when the git-ignored cache is present
                                           (never committed; only the match result is reported)
 
-Keys are lower-case alphanumerics of the sentence text, compared only when at least 25 characters long.
+Keys are the lower-case alphanumerics of the sentence text. Every key is compared, whatever its length: no training
+sentence may equal an evaluation sentence ("Thank you." included). What the importers do about a match depends on the
+length of the key (DOCUMENT_KEY_LENGTH): a long match means the two corpora share source text, so the whole training
+document is excluded; a short match is a sentence that merely recurs in unrelated texts, so only that sentence is
+dropped from its training document. Either way the evaluation data is never touched.
 """
 import csv
 import os
@@ -19,6 +23,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 
 csv.field_size_limit(1 << 24)
+
+# A matching sentence key of at least this many alphanumeric characters excludes its whole training document;
+# a shorter one drops only the sentence.
+DOCUMENT_KEY_LENGTH = 25
 
 
 def _tsv_rows(path):
@@ -102,13 +110,24 @@ def evaluation_sets(include_ud=True):
 
 
 def evaluation_keys(include_ud=True):
-    """({key: label}, {document id: label}) over all evaluation sets."""
+    """({key: label}, {document id: label}) over all evaluation sets (keys of every length, never the empty key)."""
     keys, documents = {}, {}
     for label, items in evaluation_sets(include_ud).items():
         for doc, text in items:
-            k = common.usable_key(text)
-            if k is not None and k not in keys:
+            k = common.key(text)
+            if k and k not in keys:
                 keys[k] = label
             if not label.startswith("ud-ewt"):
                 documents.setdefault(doc, label)
     return keys, documents
+
+
+def match(text, keys):
+    """(evaluation set, scope) when a training sentence equals an evaluation sentence, else None.
+
+    scope is "document" for a key of DOCUMENT_KEY_LENGTH characters or more and "sentence" for a shorter one.
+    """
+    k = common.key(text)
+    if not k or k not in keys:
+        return None
+    return keys[k], ("document" if len(k) >= DOCUMENT_KEY_LENGTH else "sentence")

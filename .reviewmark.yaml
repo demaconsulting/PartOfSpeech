@@ -15,10 +15,14 @@ needs-review:
   - "docs/verification/**/*.md"  # Verification documentation files
   - "docs/user_guide/**/*.md"    # User guide documentation
   - "docs/sysml2/**/*.sysml"     # SysML2 architecture model
+  - "tools/data/**/*.py"         # Build-time Python tools of the data assets, and their tests
+  - "tools/data/README.md"       # Documentation of the data tools
   - "!**/obj/**"                  # Exclude build output
   - "!**/bin/**"                  # Exclude build output
   - "!node_modules/**"           # Exclude npm dependencies
   - "!**/.venv/**"                # Exclude Python virtual environment
+  - "!tools/data/cache/**"       # Exclude the git-ignored download cache of the data tools
+  - "!**/__pycache__/**"         # Exclude compiled Python files
 
 # Evidence source: review data and index.json are located in the 'reviews' branch
 # of this repository, accessed through the GitHub public HTTPS raw content access.
@@ -117,6 +121,43 @@ reviews:
       - "docs/verification/part-of-speech/demo.md"               # unit verification
       - "src/DemaConsulting.PartOfSpeech/Demo.cs"                  # unit source
       - "test/DemaConsulting.PartOfSpeech.Tests/DemoTests.cs"      # unit tests
+
+  # PartOfSpeech-DataConversion Review (build-time tools that import and convert the data and build the lexicon)
+  - id: PartOfSpeech-DataConversion
+    title: Review that PartOfSpeech Data Conversion Tools Implement the Documented Conventions
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "data/CONVENTIONS.md"
+    paths:
+      - "tools/data/README.md"                                      # tools documentation
+      - "tools/data/common.py"                                      # shared helpers, tokenization, lexicon rules
+      - "tools/data/leakage.py"                                     # evaluation universe and leakage rule
+      - "tools/data/import_open.py"                                 # open corpus import
+      - "tools/data/import_eval.py"                                 # evaluation set import
+      - "tools/data/import_masc.py"                                 # MASC conversion to UPOS
+      - "tools/data/import_silver.py"                               # silver data derivation
+      - "tools/data/fetch_ud_ewt.py"                                # UD English-EWT fetch (cache only)
+      - "tools/data/build_lexicon.py"                               # lexicon build
+      - "tools/data/tests/test_common.py"                           # tests of the shared helpers
+      - "tools/data/tests/test_masc.py"                             # tests of the MASC mapping
+      - "tools/data/tests/test_silver_lexicon.py"                   # tests of the silver derivation and lexicon rules
+
+  # PartOfSpeech-DataChecks Review (build-time tools that check, record and verify the data)
+  - id: PartOfSpeech-DataChecks
+    title: Review that PartOfSpeech Data Checks Enforce the Data Requirements
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "tools/data/common.py"
+      - "tools/data/leakage.py"
+    paths:
+      - "tools/data/check_leakage.py"                               # leakage check and report
+      - "tools/data/check_lexicon.py"                               # lexicon coverage gate
+      - "tools/data/check_licenses.py"                              # license and restricted-file scan
+      - "tools/data/make_manifest.py"                               # checksum manifest
+      - "tools/data/normalize_eol.py"                               # line-ending normalization
+      - "tools/data/tests/test_committed_data.py"                   # sanity checks of the committed data
 
   # OTS-BuildMark Review (one per OTS item)
   - id: OTS-BuildMark

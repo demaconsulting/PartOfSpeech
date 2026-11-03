@@ -6,7 +6,7 @@ License: CC-BY-4.0
 
 License: CC-BY-3.0-US
 
-A lexicon that maps a lower-case spelling to the UPOS tags the spelling may carry: 262,668 spellings, 339,881
+A lexicon that maps a lower-case spelling to the UPOS tags the spelling may carry: 262,667 spellings, 339,880
 spelling-tag entries (1.294 tags per spelling), 4.2 MiB as TSV. A tagger uses it to restrict the tags it considers for
 a known word. It is built reproducibly from open dictionary tables, a short list of closed-class words and the tags
 attested in the training corpora. The files carry attribution obligations (CC BY 4.0 for the Open English WordNet
@@ -64,9 +64,9 @@ The thresholds were chosen on the development split from the sweep below (train 
 | 0 | 0 | 258,278 | 1.290 | 99.714 | 99.834 |
 | 1 | 0 | 261,266 | 1.292 | 99.798 | 99.882 |
 | 2 | 0 | 258,871 | 1.291 | 99.790 | 99.878 |
-| 1 | 1 | 266,232 | 1.295 | 99.844 | 99.909 |
-| **1** | **2** | **262,668** | **1.294** | **99.848** | **99.913** |
-| 1 | 3 | 262,029 | 1.293 | 99.844 | 99.909 |
+| 1 | 1 | 266,231 | 1.295 | 99.844 | 99.909 |
+| **1** | **2** | **262,667** | **1.294** | **99.848** | **99.913** |
+| 1 | 3 | 262,028 | 1.293 | 99.844 | 99.909 |
 | 1 | 5 | 261,662 | 1.293 | 99.828 | 99.901 |
 
 Rules alone (K = 0, M = 0) reach 99.714 percent on dev (99.834 on non-disputed tokens); attestation is what lifts the
@@ -95,7 +95,7 @@ open train and open dev are covered (`python tools/data/check_lexicon.py` exits 
 | open train | 209,224 | 99.878 | 201,775 | 99.9995 | 1,566 |
 | open dev | 26,232 | 99.848 | 25,365 | **99.913** | 593 |
 | open test | 26,185 | 99.729 | 25,278 | 99.881 | 554 |
-| masc | 386,837 | 99.853 | 386,837 | 99.853 | 9,074 |
+| masc | 386,445 | 99.853 | 386,445 | 99.853 | 9,074 |
 
 - **Train is covered by construction** (every non-disputed training tag is added to the lexicon) except one token:
   `1st` as an adverb, which the digit rule does not cover. Dev is the gate, but the attestation thresholds were tuned on it, so test is the only unbiased report. The all-token

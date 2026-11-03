@@ -7,12 +7,15 @@ Input: the MASC Penn Treebank syntax archive released by the Open American Natio
 downloaded into the git-ignored cache. The archive is read in place (no extraction); resource-fork files
 (`._*`) and the spoken genre are skipped.
 
-Output (deterministic): data/masc/masc.tsv, data/masc/excluded-documents.tsv, data/masc/mapping-audit.tsv
+Output (deterministic): data/masc/masc.tsv, data/masc/excluded-documents.tsv, data/masc/dropped-sentences.tsv,
+data/masc/mapping-audit.tsv, data/masc/sources.tsv (one row per document that contributes a sentence: genre, license, counts)
 
 The tag mapping is the new UPOS function `ptb_to_upos` below (normative table: data/CONVENTIONS.md). It reuses
 the spike's tree walker idea but fixes its root handling, keeps the clitics split (corpus tokenization) and
-emits the 17 UPOS tags. Documents that share a sentence with an evaluation set (see leakage.py) are excluded
-whole, and their ids are listed in excluded-documents.tsv (never any evaluation text).
+emits the 17 UPOS tags. Leakage rule (leakage.py): a sentence whose normalized key equals an evaluation sentence key of
+at least 25 characters excludes its whole document (listed in excluded-documents.tsv); a shorter equal sentence
+("Thank you.", "What should I do ?") is dropped alone (listed in dropped-sentences.tsv), because every sentence of a
+treebank file is independent and a short sentence recurs in unrelated texts. Only ids are listed, never evaluation text.
 """
 import argparse
 import collections
@@ -27,6 +30,7 @@ import leakage
 
 ARCHIVE_URL = "https://github.com/nancyide/anc-website/releases/download/datasets-2026-09-25/penn-treebank.tgz"
 MIN_TOKENS, MAX_TOKENS = 3, 70
+MASC_LICENSE = "CC BY 3.0 US"
 
 BE = {"be", "am", "is", "are", "was", "were", "been", "being", "'s", "'m", "'re", "ai"}
 HAVE = {"have", "has", "had", "having", "'ve", "'d"}
@@ -308,13 +312,14 @@ def main():
     path = archive_path(args.archive)
     keys, _ = leakage.evaluation_keys(include_ud=True)
     ud_present = bool(leakage.ud_sets())
-    sentences, excluded = [], {}
+    sentences, excluded, dropped = [], {}, []
     confusion = collections.Counter()
     genre_tokens = collections.Counter()
+    genres = {}
     for document, genre, text in read_documents(path):
         if genre in args.exclude_genre:
             continue
-        doc_sentences, hit = [], {}
+        doc_sentences, hit, short = [], {}, []
         for number, tree in enumerate(parse_trees(text)):
             converted = convert_tree(tree)
             if converted is None:
@@ -323,17 +328,23 @@ def main():
             if not MIN_TOKENS <= len(forms) <= MAX_TOKENS:
                 continue
             sentence_text = " ".join(forms)
-            k = common.usable_key(sentence_text)
-            if k is not None and k in keys:
-                hit[keys[k]] = hit.get(keys[k], 0) + 1
+            sentence_id = "%s#%d" % (document, number)
+            found = leakage.match(sentence_text, keys)
+            if found is not None and found[1] == "document":
+                hit[found[0]] = hit.get(found[0], 0) + 1
+            elif found is not None:
+                short.append((sentence_id, found[0]))  # a short sentence that recurs: only the sentence is dropped
+                continue
             doc_sentences.append({
-                "sent_id": "%s#%d" % (document, number), "source_id": document, "text": sentence_text,
+                "sent_id": sentence_id, "source_id": document, "text": sentence_text,
                 "extra": ["# genre = " + genre],
                 "rows": [[f, t, "ptb", p] for f, t, p in zip(forms, tags, penn)]})
         if hit:
             excluded[document] = hit
             continue
+        dropped.extend(short)
         for sentence in doc_sentences:
+            genres[document] = genre
             for row in sentence["rows"]:
                 confusion[(row[3], row[1])] += 1
             genre_tokens[genre] += len(sentence["rows"])
@@ -347,19 +358,43 @@ def main():
         "# origin = penn-treebank.tgz, sha256 %s (MASC release 2026-09-25)" % common.sha256_file(path),
     ]
     common.write_corpus(os.path.join(common.DATA, "masc", "masc.tsv"), header, sentences)
-    excl_lines = ["# MASC documents left out of masc.tsv because a sentence of the document is also in an evaluation set",
+    excl_lines = ["# MASC documents left out of masc.tsv because a sentence of the document (key of 25 or more characters) is also in an evaluation set",
                   "# (open dev/test, gold v2, shape probe, STE challenge set, UD English-EWT when fetched; only ids, never text)",
                   "# columns = document_id, evaluation_set, matching_sentences"]
     for document in sorted(excluded):
         for label in sorted(excluded[document]):
             excl_lines.append("%s\t%s\t%d" % (document, label, excluded[document][label]))
     common.write_text(os.path.join(common.DATA, "masc", "excluded-documents.tsv"), excl_lines)
+    drop_lines = ["# MASC sentences left out of masc.tsv because the sentence equals a sentence of an evaluation set and its key",
+                  "# (lower-case alphanumerics) is shorter than 25 characters; longer matches exclude the whole document",
+                  "# (excluded-documents.tsv). Only sentence ids, never text. Sentences of excluded documents are not listed.",
+                  "# columns = sentence_id, evaluation_set"]
+    drop_lines += ["%s\t%s" % item for item in dropped]
+    common.write_text(os.path.join(common.DATA, "masc", "dropped-sentences.tsv"), drop_lines)
+    write_sources(sentences, genres)
     write_audit(confusion, sentences)
     tokens = sum(len(s["rows"]) for s in sentences)
     print("documents kept:", len({s["source_id"] for s in sentences}), "excluded:", len(excluded),
           "(UD cache present: %s)" % ud_present)
+    print("short sentences dropped:", len(dropped))
     print("sentences:", len(sentences), "tokens:", tokens)
     print("tokens by genre:", dict(sorted(genre_tokens.items())))
+
+
+def write_sources(sentences, genres):
+    """data/masc/sources.tsv: one row per document that contributes at least one sentence to masc.tsv."""
+    counts = collections.OrderedDict()
+    for sentence in sentences:
+        entry = counts.setdefault(sentence["source_id"], [0, 0])
+        entry[0] += 1
+        entry[1] += len(sentence["rows"])
+    lines = ["# Sources of masc.tsv: one row per MASC document that contributes at least one sentence (written by tools/data/import_masc.py)",
+             "# columns = source_id, genre, license_basis, sentences, tokens",
+             "# license_basis = the license of the whole corpus (Creative Commons Attribution 3.0 United States, see ATTRIBUTION.md);"
+             " sentences and tokens are the counts in masc.tsv"]
+    for document in sorted(counts):
+        lines.append("%s\t%s\t%s\t%d\t%d" % (document, genres[document], MASC_LICENSE, counts[document][0], counts[document][1]))
+    common.write_text(os.path.join(common.DATA, "masc", "sources.tsv"), lines)
 
 
 def write_audit(confusion, sentences):

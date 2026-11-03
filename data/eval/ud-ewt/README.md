@@ -29,6 +29,6 @@ python tools/data/fetch_ud_ewt.py map                        # write the convent
 
 - **Evaluation:** score a tagger on the mapped `dev` (choose settings) and `test` (report) tables.
 - **Leakage:** `tools/data/check_leakage.py` adds the sentence keys of the train, dev and test files to the evaluation
-  universe when the cache is present, and `import_masc.py` and `import_silver.py` drop any training document that shares
-  a sentence with them (only the document ids are recorded).
+  universe when the cache is present, and `import_masc.py` and `import_silver.py` drop any training document (long
+  matches) or sentence (short matches) that equals a sentence of them (only document and sentence ids are recorded).
 - **Not used for:** training, lexicon building, tuning of rules on its test split, or any committed file.

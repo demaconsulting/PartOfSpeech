@@ -4,7 +4,7 @@
 summary	open/train	209224	208968	99.878	201775	201774	100.000	1566
 summary	open/dev	26232	26192	99.848	25365	25343	99.913	593
 summary	open/test	26185	26114	99.729	25278	25248	99.881	554
-summary	masc/masc	386837	386269	99.853	386837	386269	99.853	9074
+summary	masc/masc	386445	385877	99.853	386445	385877	99.853	9074
 miss	open/train	remember	NOUN	7	0
 miss	open/train	with	NOUN	7	0
 miss	open/train	would	NOUN	7	0

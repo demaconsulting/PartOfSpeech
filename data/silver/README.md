@@ -14,10 +14,10 @@ label, so each rule can be tuned or removed in phase 3.
 | Family | Sentences | Tokens | Documents | License basis |
 | --- | ---: | ---: | ---: | --- |
 | Tatoeba | 4,973 | 54,862 | 4,973 (one per sentence) | CC0 1.0: every sentence is in the official Tatoeba CC0 export |
-| Project Gutenberg | 9,000 | 187,848 | 94 books | public domain in the United States; only the body text is used |
-| **Total** | **13,973** | **242,710** | **5,067** | |
+| Project Gutenberg | 8,998 | 187,837 | 94 books | public domain in the United States; only the body text is used |
+| **Total** | **13,971** | **242,699** | **5,067** | |
 
-Status of the tokens: 232,318 `silver` (a UPOS tag derived from the model label) and 10,392 `masked` (no training
+Status of the tokens: 232,307 `silver` (a UPOS tag derived from the model label) and 10,392 `masked` (no training
 signal; the tag is `_`). Tokens are counted after the contraction split of the corpus tokenization.
 
 - **Sentences:** CC0 (Tatoeba) or public domain in the United States (Gutenberg) per `sources.tsv`. The Gutenberg
@@ -40,6 +40,7 @@ signal; the tag is `_`). Tokens are counted after the contraction split of the c
 | `silver.tsv` | the sentences in the shared corpus format: `form`, `upos`, `status`, `source_tag`; `# text` is the tokens joined by single spaces |
 | `sources.tsv` | one row per document: id, family, title, author, URL, license basis, sentences |
 | `excluded-documents.tsv` | documents left out because of overlap with evaluation sets or the open training split (ids only) |
+| `dropped-sentences.tsv` | the 2 short sentences (key shorter than 25 characters) left out because the sentence equals an evaluation sentence (ids only) |
 
 ## How It Was Produced
 
@@ -60,10 +61,13 @@ signal; the tag is `_`). Tokens are counted after the contraction split of the c
    table in [../CONVENTIONS.md](../CONVENTIONS.md); `python tools/data/import_silver.py derive` recomputes `upos` and
    `status` from `source_tag` and the lexicon (deterministic, bit-identical); `verify` checks the file against the rules.
    `verify-sources` (needs network, optional) checks the Tatoeba ids against the CC0 export and the Gutenberg landing pages.
-4. **Leakage:** documents that share a sentence or a document id with an evaluation set (open dev and test, gold v2, the
-   shape probe, the STE challenge set, UD English-EWT) were removed: 27 Tatoeba sentences have the id of an open dev or test
-   sentence (short sentences that the 25-character key cannot compare). No silver sentence equals an open training
-   sentence. See `excluded-documents.tsv` and the Leakage section of [../README.md](../README.md).
+4. **Leakage:** no silver sentence equals a sentence of an evaluation set (open dev and test, gold v2, the shape probe, the
+   STE challenge set, UD English-EWT), whatever its length, and no silver document id is an evaluation document id. A
+   document that shares a sentence of 25 or more key characters or a document id with an evaluation set was removed: 27
+   Tatoeba sentences have the id of an open dev or test sentence. A shorter equal sentence is dropped alone (the sentences of
+   a book are independent): 2 Gutenberg sentences equal to a UD English-EWT sentence, 11 tokens
+   (`dropped-sentences.tsv`). No silver sentence equals an open training sentence. See `excluded-documents.tsv` and the
+   Leakage section of [../README.md](../README.md).
 
 ## Caveats
 

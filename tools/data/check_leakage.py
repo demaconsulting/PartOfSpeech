@@ -10,14 +10,15 @@ from UD is ever committed or written to the report except counts).
 Rules (the same two rules the C# test applies):
   1. documents: the source ids of a training set are disjoint from the document ids of every evaluation set
      (open dev/test source_id, gold v2 doc_id, STE source_id);
-  2. sentences: key = lower-case alphanumerics of the sentence; keys of at least 25 characters are compared and no
-     training key may equal an evaluation key. Shorter exact duplicates (for example "Thank you.") legitimately recur
-     and are only counted.
+  2. sentences: key = lower-case alphanumerics of the sentence; no training key may equal an evaluation key, of any
+     length (a short sentence such as "Thank you." is an exact sentence as well; the importers drop it from the
+     training data, see leakage.py).
 Near duplicates are reported, not gated: an evaluation sentence of at least 10 words whose word 6-grams are at least 80%
 contained in the training word 6-grams of a set. Exit code 1 on any document or sentence overlap.
 
 Data removal, not evaluation removal, is the remedy: the importers (import_masc.py, import_silver.py) drop training
-documents that overlap an evaluation set and list them in their excluded-documents.tsv.
+documents (long matches) or sentences (short matches) that overlap an evaluation set and list them in their
+excluded-documents.tsv and dropped-sentences.tsv.
 """
 import argparse
 import os
@@ -64,25 +65,21 @@ def check(include_ud):
                 eval_docs.setdefault(label, set()).add(doc)
     for train_label, train_items in trains.items():
         train_docs = {doc for doc, _ in train_items}
-        train_keys = {common.key(text) for _, text in train_items}
+        train_keys = {common.key(text) for _, text in train_items} - {""}
         train_shingles = set()
         for _, text in train_items:
             train_shingles |= shingles(text)
         for eval_label, eval_items in evals.items():
             doc_overlap = len(train_docs & eval_docs.get(eval_label, set()))
-            exact = short = near = 0
+            exact = near = 0
             for _, text in eval_items:
-                k = common.key(text)
-                if k in train_keys:
-                    if len(k) >= common.MIN_KEY_LENGTH:
-                        exact += 1
-                    else:
-                        short += 1
+                if common.key(text) in train_keys:
+                    exact += 1
                 sh = shingles(text)
                 if len(words(text)) >= NEAR_MIN_WORDS and sh and len(sh & train_shingles) / len(sh) >= NEAR_THRESHOLD:
                     near += 1
             failures += doc_overlap + exact
-            rows.append((train_label, eval_label, len(eval_items), doc_overlap, exact, near, short))
+            rows.append((train_label, eval_label, len(eval_items), doc_overlap, exact, near))
     return rows, failures, bool(leakage.ud_sets()) if include_ud else False
 
 
@@ -94,7 +91,7 @@ def main():
     rows, failures, ud_checked = check(not args.no_ud)
     lines = ["# Leakage report (tools/data/check_leakage.py); rules in data/README.md section Leakage check",
              "# UD English-EWT checked in this run: %s (counts only; nothing from UD is stored)" % ("yes" if ud_checked else "no"),
-             "# columns = training_set, evaluation_set, evaluation_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, short_exact_duplicates"]
+             "# columns = training_set, evaluation_set, evaluation_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences"]
     for row in rows:
         lines.append("\t".join(str(c) for c in row))
     for line in lines[1:2] + [""] + lines[3:]:

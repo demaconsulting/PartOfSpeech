@@ -8,6 +8,11 @@
 `export-spike` is a ONE-OFF step that reads the committed per-token labels of the perceptron spike (silver text plus the
 per-token class and class probability of the BertBaseCased model, WordSense commit 6530de19, model file SHA-256 dcc10a64...),
 which cannot be reproduced without WordSense and its model; everything after it (`derive`, `verify`) is deterministic.
+Leakage rule (leakage.py): a sentence whose normalized key equals an evaluation sentence key of at least 25 characters, or a
+document whose id is an evaluation document id, excludes the whole document (excluded-documents.tsv); a shorter equal
+sentence ("Thank you.") is dropped alone (dropped-sentences.tsv): the sentences of a book are independent, and a
+Tatoeba document is one sentence anyway. Order of regeneration: import_masc.py, build_lexicon.py (attests tags from MASC),
+then export-spike (the capitalized-noun rule reads the lexicon).
 --spike-dir is the spike folder that holds data/silver/chunks/silver{0..3}.tok, out/dump/Bsilver{0..3}.tsv and
 data/silver/{gutenberg-books.json,silver-text-stats.json}. FAA text is never committed: --include-faa writes the
 git-ignored data/silver/silver-faa.tsv for local experiments and leaves silver.tsv alone (FAA text is excluded until the
@@ -193,11 +198,12 @@ def doc_name(doc):
 def export_spike(spike_dir, include_faa):
     lexicon = common.read_lexicon(os.path.join(common.DATA, "lexicon", "lexicon.tsv"))
     keys, doc_ids = leakage.evaluation_keys(include_ud=True)
-    train_keys = {common.usable_key(s["text"]) for s in common.read_corpus(os.path.join(common.DATA, "open", "train.tsv"))[1]}
-    train_keys.discard(None)
+    train_keys = {common.key(s["text"]) for s in common.read_corpus(os.path.join(common.DATA, "open", "train.tsv"))[1]}
+    train_keys = {k for k in train_keys if len(k) >= leakage.DOCUMENT_KEY_LENGTH}
     kept, faa = [], []
     removed = collections.defaultdict(collections.Counter)    # documents dropped whole (evaluation overlap)
     duplicates = collections.defaultdict(collections.Counter)  # sentences dropped alone (duplicate of open train)
+    short = []                                                  # (sentence id, set, document) dropped alone (short evaluation duplicate)
     for chunk in range(4):
         sentences = read_tok(os.path.join(spike_dir, "data", "silver", "chunks", "silver%d.tok" % chunk))
         dump = read_dump(os.path.join(spike_dir, "out", "dump", "Bsilver%d.tsv" % chunk))
@@ -214,12 +220,15 @@ def export_spike(spike_dir, include_faa):
             if name.startswith("faa-"):
                 faa.append(sentence)
                 continue
-            k = common.usable_key(sentence["text"])
+            found = leakage.match(sentence["text"], keys)
+            k = common.key(sentence["text"])
             if name in doc_ids:
                 removed[name]["document-id:" + doc_ids[name]] += 1
-            elif k is not None and k in keys:
-                removed[name][keys[k]] += 1
-            elif k is not None and k in train_keys:
+            elif found is not None and found[1] == "document":
+                removed[name][found[0]] += 1
+            elif found is not None:
+                short.append((sid, found[0], name))
+            elif k in train_keys:
                 duplicates[name]["open-train"] += 1
             else:
                 kept.append(sentence)
@@ -227,13 +236,13 @@ def export_spike(spike_dir, include_faa):
             raise ValueError("dump has more tokens than the token file")
     final = [s for s in kept if s["source_id"] not in removed]
     write_silver(os.path.join(common.DATA, "silver", "silver.tsv"), final, lexicon)
-    write_sources(spike_dir, final, removed, duplicates)
+    write_sources(spike_dir, final, removed, duplicates, [(sid, label) for sid, label, name in short if name not in removed])
     if include_faa:
         write_silver(os.path.join(common.DATA, "silver", "silver-faa.tsv"), faa, lexicon)
     print("sentences: %d, documents: %d, tokens: %d; documents removed by this run's leakage check: %d; "
-          "sentences dropped as open-train duplicates: %d"
+          "sentences dropped as open-train duplicates: %d; short sentences dropped as evaluation duplicates: %d"
           % (len(final), len({s["source_id"] for s in final}), sum(len(s["rows"]) for s in final), len(removed),
-             sum(sum(c.values()) for c in duplicates.values())))
+             sum(sum(c.values()) for c in duplicates.values()), len([1 for _, _, n in short if n not in removed])))
 
 
 def write_silver(path, sentences, lexicon):
@@ -249,7 +258,7 @@ def clean(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
-def write_sources(spike_dir, sentences, removed, duplicates):
+def write_sources(spike_dir, sentences, removed, duplicates, dropped):
     counts = collections.Counter(s["source_id"] for s in sentences)
     books = {"gutenberg-" + b["id"]: b for b in json.load(open(os.path.join(spike_dir, "data", "silver", "gutenberg-books.json"), encoding="utf-8"))}
     lines = ["# Sources of silver.tsv: one row per document (Tatoeba sentence or Project Gutenberg book)",
@@ -283,6 +292,12 @@ def write_sources(spike_dir, sentences, removed, duplicates):
         if name not in removed:
             excl.append("%s\topen-train\t%d\tthis-repository-sentences-only" % (name, duplicates[name]["open-train"]))
     common.write_text(os.path.join(common.DATA, "silver", "excluded-documents.tsv"), excl)
+    drop = ["# Silver sentences left out of silver.tsv because the sentence equals a sentence of an evaluation set and its key",
+            "# (lower-case alphanumerics) is shorter than 25 characters; longer matches exclude the whole document",
+            "# (excluded-documents.tsv). Only sentence ids, never text. Sentences of excluded documents are not listed.",
+            "# columns = sentence_id, evaluation_set"]
+    drop += ["%s\t%s" % item for item in dropped]
+    common.write_text(os.path.join(common.DATA, "silver", "dropped-sentences.tsv"), drop)
 
 
 # ---------------------------------------------------------------- derive / verify

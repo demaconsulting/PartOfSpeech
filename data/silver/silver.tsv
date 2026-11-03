@@ -172689,16 +172689,6 @@ the	DET	silver	D:100
 Idiot	_	masked	N:100
 .	PUNCT	silver	-
 
-# sent_id = silver-12780
-# source_id = gutenberg-76220
-# text = ' I do n't know .
-'	PUNCT	silver	-
-I	PRON	silver	R:100
-do	AUX	silver	A:100@s
-n't	PART	silver	A:100@c
-know	VERB	silver	V:100
-.	PUNCT	silver	-
-
 # sent_id = silver-4119
 # source_id = tatoeba-11112866
 # text = As soon as he wakes up , he gets up .
@@ -173235,15 +173225,6 @@ wicked	ADJ	silver	J:100
 matrimony	NOUN	silver	N:100
 here	ADV	silver	B:99
 .	PUNCT	silver	-
-
-# sent_id = silver-9190
-# source_id = gutenberg-49728
-# text = And who are you ?
-And	CCONJ	silver	C:100
-who	PRON	silver	R:100
-are	VERB	silver	V:100
-you	PRON	silver	R:100
-?	PUNCT	silver	-
 
 # sent_id = silver-10585
 # source_id = gutenberg-22207
@@ -298606,4 +298587,3 @@ read	VERB	silver	V:100
 for	ADP	silver	P:100
 fun	NOUN	silver	N:100
 ?	PUNCT	silver	-
-

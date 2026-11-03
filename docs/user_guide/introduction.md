@@ -34,7 +34,7 @@ compliance evidence is generated automatically on every CI run.
 Install the library using the .NET CLI:
 
 ```bash
-dotnet add package PartOfSpeech
+dotnet add package DemaConsulting.PartOfSpeech
 ```
 
 # Usage

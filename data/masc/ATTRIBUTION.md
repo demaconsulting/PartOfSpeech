@@ -24,7 +24,7 @@ The work was adapted by DEMA Consulting for the PartOfSpeech project:
   rules in [../CONVENTIONS.md](../CONVENTIONS.md);
 - the empty-category traces were removed, the quotation marks and dashes were normalized, and the sentences were reduced
   to those of 3 to 70 tokens;
-- the spoken genre and five documents that overlap evaluation data were left out;
+- the spoken genre, five documents and 104 short sentences that overlap evaluation data were left out;
 - the sentences are kept as their tokens joined by single spaces, each token with the derived tag and the original
   Penn tag; the texts themselves are MASC's.
 

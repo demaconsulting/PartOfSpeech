@@ -26,9 +26,6 @@ UPOS = ("ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM", "PART
         "SCONJ", "SYM", "VERB", "X")
 UPOS_SET = frozenset(UPOS)
 
-# Minimum length (alphanumeric characters) of a sentence key that the leakage check compares.
-MIN_KEY_LENGTH = 25
-
 
 def rel(path):
     """Repository-relative path with forward slashes."""
@@ -118,14 +115,12 @@ def wordsense_file(relpath, source_dir, sha256):
 # ---------------------------------------------------------------- sentence keys (leakage check)
 
 def key(text):
-    """Lower-case alphanumerics of a text: the normalized form that sentences are compared in."""
+    """Lower-case alphanumerics of a text: the normalized form that sentences are compared in.
+
+    Every key is compared, whatever its length; only a text without any letter or digit has an empty key, which
+    is never a match (see leakage.py).
+    """
     return "".join(ch for ch in nfc(text).lower() if ch.isalnum())
-
-
-def usable_key(text):
-    """The key if it is long enough to be compared, else None (short sentences legitimately recur)."""
-    k = key(text)
-    return k if len(k) >= MIN_KEY_LENGTH else None
 
 
 # ---------------------------------------------------------------- corpus block format
@@ -175,6 +170,8 @@ def write_corpus(path, header, sentences):
         for row in sentence["rows"]:
             lines.append("\t".join(row))
         lines.append("")
+    if lines[-1] == "":
+        lines.pop()  # blocks are separated by one blank line; the file ends with the last token row and one LF
     write_text(path, lines)
 
 

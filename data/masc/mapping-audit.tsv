@@ -3,20 +3,20 @@
 # section disagree: kind, word, masc_upos, open_train_majority_upos, tokens, open_majority_share, open_tokens
 #   the 30 most frequent words whose masc.tsv tag differs from the majority tag in open/train.tsv
 #   (words with at least 5 open-train tokens and a majority share of at least 0.7)
-confusion	"	PUNCT	5794
+confusion	"	PUNCT	5703
 confusion	#	SYM	11
 confusion	$	SYM	420
 confusion	'	PUNCT	9
-confusion	''	PUNCT	750
-confusion	,	PUNCT	19791
+confusion	''	PUNCT	749
+confusion	,	PUNCT	19785
 confusion	,	SYM	7
 confusion	-LRB-	PUNCT	203
 confusion	-LSB-	PUNCT	37
 confusion	-RRB-	PUNCT	204
 confusion	-RSB-	PUNCT	37
-confusion	.	PUNCT	20910
+confusion	.	PUNCT	20810
 confusion	.	SYM	10
-confusion	:	PUNCT	3346
+confusion	:	PUNCT	3345
 confusion	ADD	X	901
 confusion	ADJP	X	4
 confusion	ADVP	X	1
@@ -26,34 +26,34 @@ confusion	CC	SYM	3
 confusion	CD	NUM	5541
 confusion	DT	ADV	12
 confusion	DT	DET	30305
-confusion	DT	PRON	1827
+confusion	DT	PRON	1824
 confusion	EX	PRON	559
 confusion	FW	X	884
 confusion	GW	X	52
 confusion	HVS	X	1
 confusion	HYPH	PUNCT	1605
-confusion	IN	ADP	34751
+confusion	IN	ADP	34747
 confusion	IN	SCONJ	4496
 confusion	IN	SYM	10
-confusion	JJ	ADJ	23078
+confusion	JJ	ADJ	23068
 confusion	JJ	NUM	1
 confusion	JJ	SYM	1
 confusion	JJR	ADJ	1002
 confusion	JJS	ADJ	421
 confusion	LS	X	461
-confusion	MD	AUX	4637
-confusion	NFP	PUNCT	155
+confusion	MD	AUX	4632
+confusion	NFP	PUNCT	152
 confusion	NFP	SYM	16
 confusion	NML	X	1
 confusion	NN	ADV	231
-confusion	NN	NOUN	52121
+confusion	NN	NOUN	52114
 confusion	NN	NUM	662
 confusion	NN	PRON	1091
 confusion	NN	SYM	180
 confusion	NNP	NUM	24
-confusion	NNP	PROPN	21752
+confusion	NNP	PROPN	21739
 confusion	NNPS	PROPN	631
-confusion	NNS	NOUN	18659
+confusion	NNS	NOUN	18651
 confusion	NNS	NUM	1
 confusion	NNS	PRON	95
 confusion	NNS	SYM	9
@@ -61,50 +61,50 @@ confusion	NP	X	2
 confusion	PDT	DET	294
 confusion	POS	PART	1703
 confusion	PP	X	1
-confusion	PRP	PRON	18779
-confusion	PRP$	DET	6157
+confusion	PRP	PRON	18744
+confusion	PRP$	DET	6156
 confusion	PRT	X	1
 confusion	QP	X	1
-confusion	RB	ADV	14034
-confusion	RB	PART	2618
+confusion	RB	ADV	14023
+confusion	RB	PART	2615
 confusion	RBR	ADV	717
 confusion	RBS	ADV	285
 confusion	RP	ADV	2127
 confusion	SBAR	X	1
-confusion	SYM	SYM	518
+confusion	SYM	SYM	517
 confusion	TO	ADP	551
 confusion	TO	PART	5428
-confusion	UH	INTJ	1494
+confusion	UH	INTJ	1455
 confusion	VB	AUX	1002
-confusion	VB	VERB	13391
+confusion	VB	VERB	13383
 confusion	VBD	AUX	2149
-confusion	VBD	VERB	10039
+confusion	VBD	VERB	10037
 confusion	VBG	ADJ	706
 confusion	VBG	ADP	191
 confusion	VBG	AUX	130
-confusion	VBG	VERB	5943
+confusion	VBG	VERB	5941
 confusion	VBN	ADJ	1165
 confusion	VBN	ADP	22
 confusion	VBN	AUX	307
-confusion	VBN	VERB	6205
-confusion	VBP	AUX	2099
-confusion	VBP	VERB	5758
+confusion	VBN	VERB	6203
+confusion	VBP	AUX	2093
+confusion	VBP	VERB	5737
 confusion	VBZ	AUX	1601
 confusion	VBZ	SYM	7
-confusion	VBZ	VERB	6962
+confusion	VBZ	VERB	6960
 confusion	WDT	DET	117
 confusion	WDT	PRON	1175
 confusion	WHNP	X	1
 confusion	WHPP	X	1
-confusion	WP	PRON	1929
+confusion	WP	PRON	1925
 confusion	WP$	DET	53
-confusion	WRB	ADV	1123
+confusion	WRB	ADV	1120
 confusion	WRB	SCONJ	717
 confusion	XX	X	106
 confusion	``	PUNCT	243
 disagree	is	AUX	VERB	819	0.79	2553
 disagree	this	PRON	DET	656	0.74	1002
-disagree	do	VERB	AUX	393	0.71	541
+disagree	do	VERB	AUX	392	0.71	541
 disagree	her	PRON	DET	270	0.73	438
 disagree	out	ADP	ADV	208	0.99	265
 disagree	on	ADV	ADP	205	0.94	1080
@@ -113,10 +113,10 @@ disagree	new	PROPN	ADJ	170	0.77	235
 disagree	there	ADV	PRON	160	0.78	431
 disagree	will	PROPN	AUX	155	0.98	524
 disagree	over	ADV	ADP	133	0.79	250
-disagree	no	INTJ	DET	126	0.78	294
 disagree	so	CCONJ	ADV	123	0.93	417
 disagree	after	SCONJ	ADP	119	0.80	203
 disagree	like	VERB	ADP	119	0.76	311
+disagree	no	INTJ	DET	118	0.78	294
 disagree	did	VERB	AUX	109	0.89	206
 disagree	where	SCONJ	ADV	103	0.88	187
 disagree	service	NOUN	PROPN	102	0.75	79

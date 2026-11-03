@@ -6,15 +6,32 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import common
+import leakage
 
 
 class KeyTests(unittest.TestCase):
     def test_key_keeps_lowercase_alphanumerics_only(self):
         self.assertEqual(common.key("Don't  PANIC, 42!"), "dontpanic42")
 
-    def test_usable_key_ignores_short_sentences(self):
-        self.assertIsNone(common.usable_key("Thank you."))
-        self.assertIsNotNone(common.usable_key("The quick brown fox jumps over the lazy dog."))
+    def test_empty_key_for_text_without_letters_or_digits(self):
+        self.assertEqual(common.key("... !?"), "")
+
+    def test_short_sentences_keep_their_key(self):
+        self.assertEqual(common.key("Thank you."), "thankyou")
+
+
+class LeakageMatchTests(unittest.TestCase):
+    KEYS = {"thankyou": "gold-v2", "thequickbrownfoxjumpsoverthelazydog": "open-dev"}
+
+    def test_short_exact_sentence_matches_at_sentence_scope(self):
+        self.assertEqual(leakage.match("Thank you.", self.KEYS), ("gold-v2", "sentence"))
+
+    def test_long_exact_sentence_matches_at_document_scope(self):
+        self.assertEqual(leakage.match("The quick brown fox jumps over the lazy dog.", self.KEYS), ("open-dev", "document"))
+
+    def test_other_sentences_and_symbol_only_text_do_not_match(self):
+        self.assertIsNone(leakage.match("Thank you very much.", self.KEYS))
+        self.assertIsNone(leakage.match("...", {"": "open-dev"}))
 
 
 class CliticTests(unittest.TestCase):
@@ -75,6 +92,7 @@ class FileFormatTests(unittest.TestCase):
             self.assertNotIn(b"\r", payload)
             self.assertFalse(payload.startswith(b"\xef\xbb\xbf"))
             self.assertTrue(payload.endswith(b"\n"))
+            self.assertFalse(payload.endswith(b"\n\n"))  # no blank line at the end of the file
             header, back = common.read_corpus(path)
         self.assertEqual(header, ["# corpus = test"])
         self.assertEqual(back[0]["rows"], sentences[0]["rows"])

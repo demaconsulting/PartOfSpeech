@@ -76,7 +76,8 @@ each item's dedicated design document for details:
 
 The following third-party data sets are used to build the data assets. They are data, not software, so they are not OTS
 items and have no OTS design document. Their attribution and license notices are in `THIRD-PARTY-NOTICES.md`, and each
-source is recorded with its origin, license and production recipe in the `README.md` of its folder under `data/`:
+source is recorded with its origin, license and production recipe in the `README.md` of its folder under `data/`, and every
+source document of the corpora in a per-document `sources.tsv` (for MASC: genre, the corpus-wide license and the counts):
 
 - **MASC** (CC BY 3.0 US): Penn Treebank trees converted to Universal POS tags for training data
 - **Open English WordNet** (CC BY 4.0, carrying the Princeton WordNet notice): word forms reduced to the lexicon
@@ -87,7 +88,8 @@ source is recorded with its origin, license and production recipe in the `README
 - **UD English-EWT** (CC BY-SA 4.0): evaluation only, fetched on demand and never committed
 
 The build-time tools are Python scripts that use only the Python standard library. They are run by developers and are
-not part of the build, the tests or the package.
+not part of the build, the tests or the package. Their files and tests are covered by review-sets (see _Design
+Introduction_, Companion Artifact Structure).
 
 ## Risk Control Measures
 
@@ -98,8 +100,11 @@ The data assets are protected by two release gates, which the data tests of the 
 
 - **License gate**: only CC0, CC BY, public-domain and project-licensed data is committed. Share-alike,
   non-commercial and no-derivatives data, UD English-EWT and CoNLL-U files are rejected.
-- **Isolation gate**: no training document and no training sentence of 25 or more letters and digits appears in an
-  evaluation set, so that measured accuracy is not inflated by training data.
+- **Isolation gate**: no training document and no training sentence, of any length, appears in an evaluation set, so that
+  measured accuracy is not inflated by training data. The data tools enforce it on the training side: a long match
+  (a key of 25 or more letters and digits) shows shared source text and excludes the whole training document; a
+  shorter exact match is a sentence that recurs in unrelated texts and is dropped alone. The evaluation sets are never
+  changed.
 
 ## Data Flow
 
@@ -123,7 +128,7 @@ The data assets are protected by two release gates, which the data tests of the 
 1. **Sources**: the open corpus, MASC, Tatoeba and Project Gutenberg text and the dictionary tables are read from
    pinned inputs whose SHA-256 values are recorded
 2. **Import**: the tools convert every source to the shared corpus format with the 17 Universal POS tags, remove
-   training documents that overlap evaluation data, and write sorted UTF-8 files with LF line endings
+   training documents or sentences that overlap evaluation data, and write sorted UTF-8 files with LF line endings
 3. **Lexicon**: the tools build the spelling-to-tags lexicon from the dictionary tables and the tags attested in the
    training corpora, then measure its coverage of the open training and development sets
 4. **Checks**: the tools write the leakage report and the checksum manifest

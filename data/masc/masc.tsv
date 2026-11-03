@@ -2282,17 +2282,6 @@ the	DET	ptb	DT
 USA	PROPN	ptb	NNP
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/blog/Anti-Terrorist#23
-# source_id = masc:written/blog/Anti-Terrorist
-# text = May God help us all .
-# genre = blog
-May	AUX	ptb	MD
-God	PROPN	ptb	NNP
-help	VERB	ptb	VB
-us	PRON	ptb	PRP
-all	PRON	ptb	DT
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/blog/Anti-Terrorist#24
 # source_id = masc:written/blog/Anti-Terrorist
 # text = WHAT IS TERRORISM ?
@@ -2908,46 +2897,6 @@ our	DET	ptb	PRP$
 website	NOUN	ptb	NN
 =>	SYM	ptb	SYM
 http:$$$$www.loveallpeople.org$$defeatingterrorism.html	X	ptb	ADD
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/blog/Anti-Terrorist#52
-# source_id = masc:written/blog/Anti-Terrorist
-# text = Blessings to you .
-# genre = blog
-Blessings	NOUN	ptb	NNS
-to	ADP	ptb	IN
-you	PRON	ptb	PRP
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/blog/Anti-Terrorist#53
-# source_id = masc:written/blog/Anti-Terrorist
-# text = May God help us all .
-# genre = blog
-May	AUX	ptb	MD
-God	PROPN	ptb	NNP
-help	VERB	ptb	VB
-us	PRON	ptb	PRP
-all	ADV	ptb	RB
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/blog/Anti-Terrorist#54
-# source_id = masc:written/blog/Anti-Terrorist
-# text = Blessings to you .
-# genre = blog
-Blessings	NOUN	ptb	NNS
-to	ADP	ptb	IN
-you	PRON	ptb	PRP
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/blog/Anti-Terrorist#55
-# source_id = masc:written/blog/Anti-Terrorist
-# text = May God help us all .
-# genre = blog
-May	AUX	ptb	MD
-God	PROPN	ptb	NNP
-help	VERB	ptb	VB
-us	PRON	ptb	PRP
-all	ADV	ptb	RB
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/blog/Anti-Terrorist#56
@@ -15394,14 +15343,6 @@ at	ADV	ptb	RB
 worst	ADV	ptb	RB
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/blog/How_soon-Fans#6
-# source_id = masc:written/blog/How_soon-Fans
-# text = What happened ?
-# genre = blog
-What	PRON	ptb	WP
-happened	VERB	ptb	VBD
-?	PUNCT	ptb	.
-
 # sent_id = masc:written/blog/How_soon-Fans#7
 # source_id = masc:written/blog/How_soon-Fans
 # text = Was n't having thousands of fans supposed to be a good thing ?
@@ -19447,14 +19388,6 @@ as	ADP	ptb	IN
 too	ADV	ptb	RB
 many	ADJ	ptb	JJ
 flowers	NOUN	ptb	NNS
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/blog/Seedbombing#95
-# source_id = masc:written/blog/Seedbombing
-# text = Well done .
-# genre = blog
-Well	ADV	ptb	RB
-done	VERB	ptb	VBN
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/blog/Seedbombing#96
@@ -43381,17 +43314,6 @@ Pass	NOUN	ptb	NN
 :	PUNCT	ptb	:
 blayers	NOUN	ptb	NN
 
-# sent_id = masc:written/email/enron/176581#19
-# source_id = masc:written/email/enron/176581
-# text = Thank you for your time .
-# genre = email
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-for	ADP	ptb	IN
-your	DET	ptb	PRP$
-time	NOUN	ptb	NN
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/email/enron/176581#20
 # source_id = masc:written/email/enron/176581
 # text = Steve Knight SC Regional Sales Manager Business Layers , Inc .
@@ -45069,14 +44991,6 @@ me	PRON	ptb	PRP
 know	VERB	ptb	VB
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/email/enron/52998#17
-# source_id = masc:written/email/enron/52998
-# text = Thanks again .
-# genre = email
-Thanks	NOUN	ptb	NNS
-again	ADV	ptb	RB
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/email/enron/52998#18
 # source_id = masc:written/email/enron/52998
 # text = I look forward to talking to you and your colleagues .
@@ -45241,14 +45155,6 @@ please	INTJ	ptb	UH
 let	VERB	ptb	VB
 me	PRON	ptb	PRP
 know	VERB	ptb	VB
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/email/enron/52999#9
-# source_id = masc:written/email/enron/52999
-# text = Thanks again .
-# genre = email
-Thanks	NOUN	ptb	NNS
-again	ADV	ptb	RB
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/email/enron/52999#10
@@ -45682,14 +45588,6 @@ strictly	ADV	ptb	RB
 prohibited	VERB	ptb	VBN
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/email/enron/53536#35
-# source_id = masc:written/email/enron/53536
-# text = Thank you .
-# genre = email
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/email/enron/53555#2
 # source_id = masc:written/email/enron/53555
 # text = Subject : FW : Issues with Exotica Library
@@ -45779,14 +45677,6 @@ tonight	ADV	ptb	RB
 as	ADV	ptb	RB
 well	ADV	ptb	RB
 .	PUNCT	ptb	.
-
-# sent_id = masc:written/email/enron/53555#12
-# source_id = masc:written/email/enron/53555
-# text = -------------------------- vince kaminski
-# genre = email
---------------------------	PUNCT	ptb	NFP
-vince	PROPN	ptb	NNP
-kaminski	PROPN	ptb	NNP
 
 # sent_id = masc:written/email/enron/54536#2
 # source_id = masc:written/email/enron/54536
@@ -46860,15 +46750,6 @@ email	VERB	ptb	VB
 kevinscott@onlinemailbox.net	X	ptb	ADD
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/email/enron/8885#23
-# source_id = masc:written/email/enron/8885
-# text = Thank you again .
-# genre = email
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-again	ADV	ptb	RB
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/email/enron/8885#24
 # source_id = masc:written/email/enron/8885
 # text = Sincerely , Kevin
@@ -47703,14 +47584,6 @@ powerful	ADJ	ptb	JJ
 adversary	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/email/enron/9159#25
-# source_id = masc:written/email/enron/9159
-# text = Thank You .
-# genre = email
-Thank	VERB	ptb	VBP
-You	PRON	ptb	PRP
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/email/enron/9191#2
 # source_id = masc:written/email/enron/9191
 # text = Subject : Public Policy Contacts for California
@@ -48167,14 +48040,6 @@ her	PRON	ptb	PRP
 today	ADV	ptb	NN
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/email/enron/enron-thread-159550#22
-# source_id = masc:written/email/enron/enron-thread-159550
-# text = Thanks , Kim
-# genre = email
-Thanks	NOUN	ptb	NNS
-,	PUNCT	ptb	,
-Kim	PROPN	ptb	NNP
-
 # sent_id = masc:written/email/enron/enron-thread-159550#23
 # source_id = masc:written/email/enron/enron-thread-159550
 # text = ----- Original Message -----
@@ -48474,14 +48339,6 @@ make	VERB	ptb	VB
 the	DET	ptb	DT
 payment	NOUN	ptb	NN
 ?	PUNCT	ptb	.
-
-# sent_id = masc:written/email/enron/enron-thread-159550#42
-# source_id = masc:written/email/enron/enron-thread-159550
-# text = Thanks , Kim
-# genre = email
-Thanks	NOUN	ptb	NNS
-,	PUNCT	ptb	,
-Kim	PROPN	ptb	NNP
 
 # sent_id = masc:written/email/enron/enron-thread-159550#43
 # source_id = masc:written/email/enron/enron-thread-159550
@@ -60972,14 +60829,6 @@ a	DET	ptb	DT
 review	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/email/spam/114448#7
-# source_id = masc:written/email/spam/114448
-# text = Thank you .
-# genre = email
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/email/spam/114448#8
 # source_id = masc:written/email/spam/114448
 # text = Monica Foster Ascot Media Group , Inc .
@@ -62087,14 +61936,6 @@ August	PROPN	ptb	NNP
 26	NUM	ptb	CD
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/email/spam/219122#7
-# source_id = masc:written/email/spam/219122
-# text = Thank you .
-# genre = email
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/email/spam/219122#8
 # source_id = masc:written/email/spam/219122
 # text = Cheryl Feik Ryan Van Ness Feldman , P.C .
@@ -62218,14 +62059,6 @@ email	NOUN	ptb	NN
 or	CCONJ	ptb	CC
 by	ADP	ptb	IN
 telephone	NOUN	ptb	NN
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/email/spam/219122#14
-# source_id = masc:written/email/spam/219122
-# text = Thank you .
-# genre = email
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/email/spam/219123#2
@@ -62453,14 +62286,6 @@ email	NOUN	ptb	NN
 or	CCONJ	ptb	CC
 by	ADP	ptb	IN
 telephone	NOUN	ptb	NN
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/email/spam/219123#21
-# source_id = masc:written/email/spam/219123
-# text = Thank you .
-# genre = email
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/email/spam/219257#2
@@ -63473,14 +63298,6 @@ be	AUX	ptb	VB
 appreciated	VERB	ptb	VBN
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/email/spam/Cartoonist_services#14
-# source_id = masc:written/email/spam/Cartoonist_services
-# text = Thank you !
-# genre = email
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-!	PUNCT	ptb	.
-
 # sent_id = masc:written/email/spam/Cartoonist_services#15
 # source_id = masc:written/email/spam/Cartoonist_services
 # text = Sincerely , Dan Rosandich cartoonist
@@ -64169,15 +63986,6 @@ OCCUPATION	NOUN	ptb	NN
 :	PUNCT	ptb	:
 __________________	SYM	ptb	SYM
 
-# sent_id = masc:written/email/spam/FBI_urgent#29
-# source_id = masc:written/email/spam/FBI_urgent
-# text = TELEPHONE NUMBER : _____________________
-# genre = email
-TELEPHONE	NOUN	ptb	NN
-NUMBER	NOUN	ptb	NN
-:	PUNCT	ptb	:
-_____________________	SYM	ptb	SYM
-
 # sent_id = masc:written/email/spam/FBI_urgent#30
 # source_id = masc:written/email/spam/FBI_urgent
 # text = EMAIL ADDRESS : _____________________
@@ -64436,14 +64244,6 @@ talents	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 brain	NOUN	ptb	NN
 knowledge	NOUN	ptb	NN
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/email/spam/Fastest_Reader#9
-# source_id = masc:written/email/spam/Fastest_Reader
-# text = Thank you .
-# genre = email
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/email/spam/Fastest_Reader#10
@@ -72293,15 +72093,6 @@ you	PRON	ptb	PRP
 in	ADV	ptb	RP
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/email/spam/ucb31#32
-# source_id = masc:written/email/spam/ucb31
-# text = That 's it .
-# genre = email
-That	PRON	ptb	DT
-'s	VERB	ptb	VBZ
-it	PRON	ptb	PRP
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/email/spam/ucb31#33
 # source_id = masc:written/email/spam/ucb31
 # text = Follow along with the audio conference handouts provided in advance .
@@ -73887,15 +73678,6 @@ me	PRON	ptb	PRP
 Hope	VERB	ptb	VBP
 not	PART	ptb	RB
 !	PUNCT	ptb	.
-
-# sent_id = masc:written/email/spam/ucb46#8
-# source_id = masc:written/email/spam/ucb46
-# text = How are you ?
-# genre = email
-How	ADV	ptb	WRB
-are	VERB	ptb	VBP
-you	PRON	ptb	PRP
-?	PUNCT	ptb	.
 
 # sent_id = masc:written/email/spam/ucb46#10
 # source_id = masc:written/email/spam/ucb46
@@ -76748,14 +76530,6 @@ just	ADV	ptb	RB
 now	ADV	ptb	RB
 ...	PUNCT	ptb	.
 
-# sent_id = masc:written/email/w3c/lists-003-2121270#9
-# source_id = masc:written/email/w3c/lists-003-2121270
-# text = -- Mark --
-# genre = email
---	PUNCT	ptb	NFP
-Mark	PROPN	ptb	NNP
---	PUNCT	ptb	.
-
 # sent_id = masc:written/email/w3c/lists-003-2125109#2
 # source_id = masc:written/email/w3c/lists-003-2125109
 # text = subject = " Re : CHARSET considerations "
@@ -76993,24 +76767,6 @@ or	CCONJ	ptb	CC
 similar	ADJ	ptb	JJ
 bogons	NOUN	ptb	NNS
 ...	PUNCT	ptb	.
-
-# sent_id = masc:written/email/w3c/lists-003-2129640#7
-# source_id = masc:written/email/w3c/lists-003-2129640
-# text = What do you think ?
-# genre = email
-What	PRON	ptb	WP
-do	AUX	ptb	VBP
-you	PRON	ptb	PRP
-think	VERB	ptb	VB
-?	PUNCT	ptb	.
-
-# sent_id = masc:written/email/w3c/lists-003-2129640#8
-# source_id = masc:written/email/w3c/lists-003-2129640
-# text = -- Mark --
-# genre = email
---	PUNCT	ptb	NFP
-Mark	PROPN	ptb	NNP
---	PUNCT	ptb	.
 
 # sent_id = masc:written/email/w3c/lists-003-2133315#2
 # source_id = masc:written/email/w3c/lists-003-2133315
@@ -77947,14 +77703,6 @@ to	ADP	ptb	IN
 pine	PROPN	ptb	NNP
 -	PUNCT	ptb	HYPH
 info	NOUN	ptb	NN
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/email/w3c/lists-003-2152883#11
-# source_id = masc:written/email/w3c/lists-003-2152883
-# text = Thank you .
-# genre = email
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/email/w3c/lists-003-2152883#12
@@ -80931,15 +80679,6 @@ for	ADP	ptb	IN
 \	SYM	ptb	SYM
 over	ADP	ptb	IN
 !	SYM	ptb	SYM
-
-# sent_id = masc:written/email/w3c/lists-046-11493928#88
-# source_id = masc:written/email/w3c/lists-046-11493928
-# text = That 's it .
-# genre = email
-That	PRON	ptb	DT
-'s	VERB	ptb	VBZ
-it	PRON	ptb	PRP
-.	PUNCT	ptb	.
 
 # sent_id = masc:written/email/w3c/lists-046-11493928#89
 # source_id = masc:written/email/w3c/lists-046-11493928
@@ -113663,15 +113402,6 @@ Sequels	NOUN	ptb	NNS
 :	PUNCT	ptb	:
 none	PRON	ptb	NN
 
-# sent_id = masc:written/ficlets/1399#86
-# source_id = masc:written/ficlets/1399
-# text = " Hey . "
-# genre = ficlets
-"	PUNCT	ptb	"
-Hey	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/ficlets/1399#87
 # source_id = masc:written/ficlets/1399
 # text = A girl , sixteen years old , with masses of bright red hair and big gray eyes opened the door .
@@ -118130,24 +117860,6 @@ blind	ADJ	ptb	JJ
 ?	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/ficlets/1399#411
-# source_id = masc:written/ficlets/1399
-# text = " Yes . "
-# genre = ficlets
-"	PUNCT	ptb	"
-Yes	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/ficlets/1399#412
-# source_id = masc:written/ficlets/1399
-# text = " Oh . "
-# genre = ficlets
-"	PUNCT	ptb	"
-Oh	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/ficlets/1399#413
 # source_id = masc:written/ficlets/1399
 # text = ' Oh ' seemed to be his response to many things .
@@ -118959,15 +118671,6 @@ it	PRON	ptb	PRP
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/ficlets/1399#471
-# source_id = masc:written/ficlets/1399
-# text = " Oh . "
-# genre = ficlets
-"	PUNCT	ptb	"
-Oh	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/ficlets/1399#472
 # source_id = masc:written/ficlets/1399
 # text = I stopped tapping the wall .
@@ -119064,15 +118767,6 @@ know	VERB	ptb	VBP
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/ficlets/1399#478
-# source_id = masc:written/ficlets/1399
-# text = " Not really .
-# genre = ficlets
-"	PUNCT	ptb	"
-Not	PART	ptb	RB
-really	ADV	ptb	RB
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/ficlets/1399#479
 # source_id = masc:written/ficlets/1399
 # text = Things are going to be different for me , but nothing bad . "
@@ -119091,15 +118785,6 @@ nothing	PRON	ptb	NN
 bad	ADJ	ptb	JJ
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
-
-# sent_id = masc:written/ficlets/1399#480
-# source_id = masc:written/ficlets/1399
-# text = " Yeah . "
-# genre = ficlets
-"	PUNCT	ptb	"
-Yeah	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	''
 
 # sent_id = masc:written/ficlets/1399#481
 # source_id = masc:written/ficlets/1399
@@ -127271,14 +126956,6 @@ said	VERB	ptb	VBD
 immediately	ADV	ptb	RB
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/ficlets/1400#422
-# source_id = masc:written/ficlets/1400
-# text = " No ?
-# genre = ficlets
-"	PUNCT	ptb	"
-No	INTJ	ptb	UH
-?	PUNCT	ptb	.
-
 # sent_id = masc:written/ficlets/1400#423
 # source_id = masc:written/ficlets/1400
 # text = Why not ? " ? he asked , concerned .
@@ -128231,14 +127908,6 @@ little	ADJ	ptb	JJ
 blue	NOUN	ptb	NN
 cap	NOUN	ptb	NN
 .	PUNCT	ptb	.
-
-# sent_id = masc:written/ficlets/1400#494
-# source_id = masc:written/ficlets/1400
-# text = " Huh ?
-# genre = ficlets
-"	PUNCT	ptb	"
-Huh	INTJ	ptb	UH
-?	PUNCT	ptb	.
 
 # sent_id = masc:written/ficlets/1400#495
 # source_id = masc:written/ficlets/1400
@@ -133032,15 +132701,6 @@ good	ADJ	ptb	JJ
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/ficlets/1401#190
-# source_id = masc:written/ficlets/1401
-# text = " Yep . "
-# genre = ficlets
-"	PUNCT	ptb	"
-Yep	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/ficlets/1401#191
 # source_id = masc:written/ficlets/1401
 # text = They stood there staring at each other RSQUOs feet , while Lucy , dancing around like a monkey who RSQUOs feet were on fire and eyes did n't wuite fit , stood in the background going crazy .
@@ -133552,14 +133212,6 @@ Sequels	NOUN	ptb	NNS
 :	PUNCT	ptb	:
 45810	NUM	ptb	CD
 
-# sent_id = masc:written/ficlets/1401#228
-# source_id = masc:written/ficlets/1401
-# text = " Really ?
-# genre = ficlets
-"	PUNCT	ptb	"
-Really	ADV	ptb	RB
-?	PUNCT	ptb	.
-
 # sent_id = masc:written/ficlets/1401#229
 # source_id = masc:written/ficlets/1401
 # text = I did n't think anything was quite as important as flying monkeys , " they both laughed .
@@ -133905,15 +133557,6 @@ not	PART	ptb	RB
 Again	ADV	ptb	RB
 silence	NOUN	ptb	NN
 .	PUNCT	ptb	.
-
-# sent_id = masc:written/ficlets/1401#253
-# source_id = masc:written/ficlets/1401
-# text = " Kyle ... "
-# genre = ficlets
-"	PUNCT	ptb	"
-Kyle	PROPN	ptb	NNP
-...	PUNCT	ptb	.
-"	PUNCT	ptb	"
 
 # sent_id = masc:written/ficlets/1401#254
 # source_id = masc:written/ficlets/1401
@@ -138270,14 +137913,6 @@ Craiggory	PROPN	ptb	NNP
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/ficlets/1401#601
-# source_id = masc:written/ficlets/1401
-# text = " Great !
-# genre = ficlets
-"	PUNCT	ptb	"
-Great	ADJ	ptb	JJ
-!	PUNCT	ptb	.
-
 # sent_id = masc:written/ficlets/1401#603
 # source_id = masc:written/ficlets/1401
 # text = I walked with Aydan to Geography ....
@@ -138369,14 +138004,6 @@ I	PRON	ptb	PRP
 just	ADV	ptb	RB
 ...	PUNCT	ptb	.
 "	PUNCT	ptb	"
-
-# sent_id = masc:written/ficlets/1401#615
-# source_id = masc:written/ficlets/1401
-# text = " Kyle .
-# genre = ficlets
-"	PUNCT	ptb	"
-Kyle	PROPN	ptb	NNP
-.	PUNCT	ptb	.
 
 # sent_id = masc:written/ficlets/1401#616
 # source_id = masc:written/ficlets/1401
@@ -140118,15 +139745,6 @@ spoke	VERB	ptb	VBD
 out	ADV	ptb	RP
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/ficlets/1402#90
-# source_id = masc:written/ficlets/1402
-# text = " Hello . "
-# genre = ficlets
-"	PUNCT	ptb	"
-Hello	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/ficlets/1402#91
 # source_id = masc:written/ficlets/1402
 # text = He spun around and exhaled in relief .
@@ -140180,15 +139798,6 @@ n't	PART	ptb	RB
 tell	VERB	ptb	VB
 you	PRON	ptb	PRP
 .	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/ficlets/1402#95
-# source_id = masc:written/ficlets/1402
-# text = " Why ? "
-# genre = ficlets
-"	PUNCT	ptb	"
-Why	ADV	ptb	WRB
-?	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
 # sent_id = masc:written/ficlets/1402#96
@@ -145310,16 +144919,6 @@ voice	NOUN	ptb	NN
 said	VERB	ptb	VBD
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/ficlets/1402#533
-# source_id = masc:written/ficlets/1402
-# text = " Oh . " ?
-# genre = ficlets
-"	PUNCT	ptb	"
-Oh	INTJ	ptb	UH
-.	PUNCT	ptb	,
-"	PUNCT	ptb	"
-?	PUNCT	ptb	.
-
 # sent_id = masc:written/ficlets/1402#534
 # source_id = masc:written/ficlets/1402
 # text = I scratched the pillowcase , making a soft sound to help distract myself .
@@ -145451,14 +145050,6 @@ hungry	ADJ	ptb	JJ
 .	PUNCT	ptb	,
 "	PUNCT	ptb	"
 ?	PUNCT	ptb	.
-
-# sent_id = masc:written/ficlets/1402#544
-# source_id = masc:written/ficlets/1402
-# text = " Oh .
-# genre = ficlets
-"	PUNCT	ptb	"
-Oh	INTJ	ptb	UH
-.	PUNCT	ptb	.
 
 # sent_id = masc:written/ficlets/1402#545
 # source_id = masc:written/ficlets/1402
@@ -145700,16 +145291,6 @@ he	PRON	ptb	PRP
 asked	VERB	ptb	VBD
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/ficlets/1402#564
-# source_id = masc:written/ficlets/1402
-# text = " No . " ?
-# genre = ficlets
-"	PUNCT	ptb	"
-No	INTJ	ptb	UH
-.	PUNCT	ptb	,
-"	PUNCT	ptb	"
-?	PUNCT	ptb	.
-
 # sent_id = masc:written/ficlets/1402#565
 # source_id = masc:written/ficlets/1402
 # text = I had no idea what he was even doing .
@@ -145741,14 +145322,6 @@ Now	ADV	ptb	RB
 ?	PUNCT	ptb	,
 "	PUNCT	ptb	"
 ?	PUNCT	ptb	.
-
-# sent_id = masc:written/ficlets/1402#568
-# source_id = masc:written/ficlets/1402
-# text = " No .
-# genre = ficlets
-"	PUNCT	ptb	"
-No	INTJ	ptb	UH
-.	PUNCT	ptb	.
 
 # sent_id = masc:written/ficlets/1402#569
 # source_id = masc:written/ficlets/1402
@@ -145985,16 +145558,6 @@ I	PRON	ptb	PRP
 'm	VERB	ptb	VBP
 sorry	ADJ	ptb	JJ
 .	PUNCT	ptb	,
-"	PUNCT	ptb	"
-?	PUNCT	ptb	.
-
-# sent_id = masc:written/ficlets/1402#586
-# source_id = masc:written/ficlets/1402
-# text = " Sorry ? " ?
-# genre = ficlets
-"	PUNCT	ptb	"
-Sorry	INTJ	ptb	UH
-?	PUNCT	ptb	,
 "	PUNCT	ptb	"
 ?	PUNCT	ptb	.
 
@@ -156448,15 +156011,6 @@ I	PRON	ptb	PRP
 frowned	VERB	ptb	VBD
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/ficlets/1403#552
-# source_id = masc:written/ficlets/1403
-# text = " Hey . "
-# genre = ficlets
-"	PUNCT	ptb	"
-Hey	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/ficlets/1403#553
 # source_id = masc:written/ficlets/1403
 # text = She looked over at me , surprised .
@@ -156491,15 +156045,6 @@ Bella	PROPN	ptb	NNP
 I	PRON	ptb	PRP
 smirked	VERB	ptb	VBD
 .	PUNCT	ptb	.
-
-# sent_id = masc:written/ficlets/1403#556
-# source_id = masc:written/ficlets/1403
-# text = Are you ready ?
-# genre = ficlets
-Are	VERB	ptb	VBP
-you	PRON	ptb	PRP
-ready	ADJ	ptb	JJ
-?	PUNCT	ptb	.
 
 # sent_id = masc:written/ficlets/1403#560
 # source_id = masc:written/ficlets/1403
@@ -156937,14 +156482,6 @@ hat	NOUN	ptb	NN
 ?	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/ficlets/1403#606
-# source_id = masc:written/ficlets/1403
-# text = " Yeah .
-# genre = ficlets
-"	PUNCT	ptb	"
-Yeah	INTJ	ptb	UH
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/ficlets/1403#607
 # source_id = masc:written/ficlets/1403
 # text = Did she wander down here by accident ?
@@ -157017,15 +156554,6 @@ she	PRON	ptb	PRP
 sticks	VERB	ptb	VBZ
 out	ADV	ptb	RP
 ?	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/ficlets/1403#613
-# source_id = masc:written/ficlets/1403
-# text = " Probably . "
-# genre = ficlets
-"	PUNCT	ptb	"
-Probably	ADV	ptb	RB
-.	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
 # sent_id = masc:written/ficlets/1403#614
@@ -163087,15 +162615,6 @@ go	VERB	ptb	VBP
 man	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/fiction/Nathans_Bylichka#226
-# source_id = masc:written/fiction/Nathans_Bylichka
-# text = Good luck ! "
-# genre = fiction
-Good	ADJ	ptb	JJ
-luck	NOUN	ptb	NN
-!	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/fiction/Nathans_Bylichka#227
 # source_id = masc:written/fiction/Nathans_Bylichka
 # text = " Thanks , Dvorov .
@@ -163790,14 +163309,6 @@ seven	NUM	ptb	CD
 arms	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/Nathans_Bylichka#256
-# source_id = masc:written/fiction/Nathans_Bylichka
-# text = " Thanks .
-# genre = fiction
-"	PUNCT	ptb	"
-Thanks	NOUN	ptb	NNS
-.	PUNCT	ptb	.
 
 # sent_id = masc:written/fiction/Nathans_Bylichka#257
 # source_id = masc:written/fiction/Nathans_Bylichka
@@ -164889,16 +164400,6 @@ it	PRON	ptb	PRP
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/fiction/Nathans_Bylichka#310
-# source_id = masc:written/fiction/Nathans_Bylichka
-# text = " Thank you . "
-# genre = fiction
-"	PUNCT	ptb	"
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/fiction/Nathans_Bylichka#311
 # source_id = masc:written/fiction/Nathans_Bylichka
 # text = Nepthys bowed slightly and we walked behind the cart .
@@ -165206,17 +164707,6 @@ they	PRON	ptb	PRP
 are	VERB	ptb	VBP
 ?	PUNCT	ptb	.
 "	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/Nathans_Bylichka#329
-# source_id = masc:written/fiction/Nathans_Bylichka
-# text = " I do n?t know .
-# genre = fiction
-"	PUNCT	ptb	"
-I	PRON	ptb	PRP
-do	AUX	ptb	VBP
-n?t	ADV	ptb	RB
-know	VERB	ptb	VB
-.	PUNCT	ptb	.
 
 # sent_id = masc:written/fiction/Nathans_Bylichka#330
 # source_id = masc:written/fiction/Nathans_Bylichka
@@ -168535,16 +168025,6 @@ of	ADP	ptb	IN
 us	PRON	ptb	PRP
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/Nathans_Bylichka#495
-# source_id = masc:written/fiction/Nathans_Bylichka
-# text = " Are you kidding ?
-# genre = fiction
-"	PUNCT	ptb	"
-Are	AUX	ptb	VBP
-you	PRON	ptb	PRP
-kidding	VERB	ptb	VBG
-?	PUNCT	ptb	.
 
 # sent_id = masc:written/fiction/Nathans_Bylichka#496
 # source_id = masc:written/fiction/Nathans_Bylichka
@@ -173137,15 +172617,6 @@ floor	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 man	NOUN	ptb	NN
 .	PUNCT	ptb	.
-
-# sent_id = masc:written/fiction/Nathans_Bylichka#734
-# source_id = masc:written/fiction/Nathans_Bylichka
-# text = Good luck . "
-# genre = fiction
-Good	ADJ	ptb	JJ
-luck	NOUN	ptb	NN
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
 
 # sent_id = masc:written/fiction/Nathans_Bylichka#735
 # source_id = masc:written/fiction/Nathans_Bylichka
@@ -183051,14 +182522,6 @@ go	VERB	ptb	VB
 inside	ADV	ptb	RB
 !	PUNCT	ptb	.
 
-# sent_id = masc:written/fiction/cable_spool_fort#84
-# source_id = masc:written/fiction/cable_spool_fort
-# text = Roy ! "
-# genre = fiction
-Roy	PROPN	ptb	NNP
-!	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/fiction/cable_spool_fort#85
 # source_id = masc:written/fiction/cable_spool_fort
 # text = He sprinted for the corner of the building around which Roy had disappeared .
@@ -183184,15 +182647,6 @@ he	PRON	ptb	PRP
 could	AUX	ptb	MD
 fly	VERB	ptb	VB
 .	PUNCT	ptb	.
-
-# sent_id = masc:written/fiction/cable_spool_fort#91
-# source_id = masc:written/fiction/cable_spool_fort
-# text = " Roy ! "
-# genre = fiction
-"	PUNCT	ptb	"
-Roy	PROPN	ptb	NNP
-!	PUNCT	ptb	.
-"	PUNCT	ptb	"
 
 # sent_id = masc:written/fiction/cable_spool_fort#92
 # source_id = masc:written/fiction/cable_spool_fort
@@ -183504,15 +182958,6 @@ around	ADP	ptb	IN
 the	DET	ptb	DT
 eyes	NOUN	ptb	NNS
 .	PUNCT	ptb	.
-
-# sent_id = masc:written/fiction/cable_spool_fort#105
-# source_id = masc:written/fiction/cable_spool_fort
-# text = " Yeah . "
-# genre = fiction
-"	PUNCT	ptb	"
-Yeah	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
 
 # sent_id = masc:written/fiction/cable_spool_fort#106
 # source_id = masc:written/fiction/cable_spool_fort
@@ -184986,15 +184431,6 @@ she	PRON	ptb	PRP
 smiling	VERB	ptb	VBG
 too	ADV	ptb	RB
 .	PUNCT	ptb	.
-
-# sent_id = masc:written/fiction/captured_moments#71
-# source_id = masc:written/fiction/captured_moments
-# text = " No . "
-# genre = fiction
-"	PUNCT	ptb	"
-No	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
 
 # sent_id = masc:written/fiction/captured_moments#72
 # source_id = masc:written/fiction/captured_moments
@@ -187439,15 +186875,6 @@ hill	NOUN	ptb	NN
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/fiction/captured_moments#203
-# source_id = masc:written/fiction/captured_moments
-# text = " Oh . "
-# genre = fiction
-"	PUNCT	ptb	"
-Oh	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/fiction/captured_moments#204
 # source_id = masc:written/fiction/captured_moments
 # text = " You do n't know who he is ? "
@@ -188051,15 +187478,6 @@ time	NOUN	ptb	NN
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/fiction/captured_moments#244
-# source_id = masc:written/fiction/captured_moments
-# text = " Oh . "
-# genre = fiction
-"	PUNCT	ptb	"
-Oh	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/fiction/captured_moments#245
 # source_id = masc:written/fiction/captured_moments
 # text = " The critics liked it . "
@@ -188105,23 +187523,6 @@ Emil	PROPN	ptb	NNP
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/fiction/captured_moments#248
-# source_id = masc:written/fiction/captured_moments
-# text = " No ? "
-# genre = fiction
-"	PUNCT	ptb	"
-No	INTJ	ptb	UH
-?	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/captured_moments#249
-# source_id = masc:written/fiction/captured_moments
-# text = " No .
-# genre = fiction
-"	PUNCT	ptb	"
-No	INTJ	ptb	UH
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/fiction/captured_moments#250
 # source_id = masc:written/fiction/captured_moments
 # text = We lunched together .
@@ -188138,15 +187539,6 @@ together	ADV	ptb	RB
 He	PRON	ptb	PRP
 's	VERB	ptb	VBZ
 nice	ADJ	ptb	JJ
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/captured_moments#252
-# source_id = masc:written/fiction/captured_moments
-# text = " Oh . "
-# genre = fiction
-"	PUNCT	ptb	"
-Oh	INTJ	ptb	UH
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
@@ -188270,23 +187662,6 @@ you	PRON	ptb	PRP
 ?	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/fiction/captured_moments#262
-# source_id = masc:written/fiction/captured_moments
-# text = " No . "
-# genre = fiction
-"	PUNCT	ptb	"
-No	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/captured_moments#263
-# source_id = masc:written/fiction/captured_moments
-# text = " Good .
-# genre = fiction
-"	PUNCT	ptb	"
-Good	ADJ	ptb	JJ
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/fiction/captured_moments#264
 # source_id = masc:written/fiction/captured_moments
 # text = I invited him to dinner tomorrow . "
@@ -188298,15 +187673,6 @@ to	ADP	ptb	IN
 dinner	NOUN	ptb	NN
 tomorrow	NOUN	ptb	NN
 .	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/captured_moments#265
-# source_id = masc:written/fiction/captured_moments
-# text = " Oh ? "
-# genre = fiction
-"	PUNCT	ptb	"
-Oh	INTJ	ptb	UH
-?	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
 # sent_id = masc:written/fiction/captured_moments#266
@@ -188363,15 +187729,6 @@ years	NOUN	ptb	NNS
 # genre = fiction
 "	PUNCT	ptb	"
 Nardo	PROPN	ptb	NNP
-?	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/captured_moments#270
-# source_id = masc:written/fiction/captured_moments
-# text = " Yes ? "
-# genre = fiction
-"	PUNCT	ptb	"
-Yes	INTJ	ptb	UH
 ?	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
@@ -188595,15 +187952,6 @@ sorry	ADJ	ptb	JJ
 # text = Truly . "
 # genre = fiction
 Truly	ADV	ptb	RB
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/captured_moments#285
-# source_id = masc:written/fiction/captured_moments
-# text = " Oh . "
-# genre = fiction
-"	PUNCT	ptb	"
-Oh	INTJ	ptb	UH
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
@@ -188986,15 +188334,6 @@ Emil	PROPN	ptb	NNP
 ?	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/fiction/captured_moments#313
-# source_id = masc:written/fiction/captured_moments
-# text = " Yes . "
-# genre = fiction
-"	PUNCT	ptb	"
-Yes	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/fiction/captured_moments#314
 # source_id = masc:written/fiction/captured_moments
 # text = " I am jealous .
@@ -189212,14 +188551,6 @@ Malaquez	PROPN	ptb	NNP
 ?	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/fiction/captured_moments#328
-# source_id = masc:written/fiction/captured_moments
-# text = " Please .
-# genre = fiction
-"	PUNCT	ptb	"
-Please	INTJ	ptb	UH
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/fiction/captured_moments#329
 # source_id = masc:written/fiction/captured_moments
 # text = Call me Emil .
@@ -189339,16 +188670,6 @@ genius	NOUN	ptb	NN
 Do	AUX	ptb	VB
 come	VERB	ptb	VB
 in	ADV	ptb	RP
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/captured_moments#339
-# source_id = masc:written/fiction/captured_moments
-# text = " Thank you . "
-# genre = fiction
-"	PUNCT	ptb	"
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
@@ -190114,14 +189435,6 @@ I	PRON	ptb	PRP
 was	VERB	ptb	VBD
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/fiction/captured_moments#387
-# source_id = masc:written/fiction/captured_moments
-# text = " Good .
-# genre = fiction
-"	PUNCT	ptb	"
-Good	ADJ	ptb	JJ
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/fiction/captured_moments#388
 # source_id = masc:written/fiction/captured_moments
 # text = My last show -- " " -- was glorious ! " Tasha said .
@@ -190179,15 +189492,6 @@ begins	VERB	ptb	VBZ
 to	PART	ptb	TO
 fail	VERB	ptb	VB
 .	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/captured_moments#391
-# source_id = masc:written/fiction/captured_moments
-# text = " Oh ? "
-# genre = fiction
-"	PUNCT	ptb	"
-Oh	INTJ	ptb	UH
-?	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
 # sent_id = masc:written/fiction/captured_moments#392
@@ -190382,15 +189686,6 @@ Oh	INTJ	ptb	UH
 ?	PUNCT	ptb	,
 Oh	INTJ	ptb	UH
 !	PUNCT	ptb	.
-
-# sent_id = masc:written/fiction/captured_moments#407
-# source_id = masc:written/fiction/captured_moments
-# text = Thank you ! "
-# genre = fiction
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-!	PUNCT	ptb	.
-"	PUNCT	ptb	"
 
 # sent_id = masc:written/fiction/captured_moments#408
 # source_id = masc:written/fiction/captured_moments
@@ -191223,15 +190518,6 @@ then	ADV	ptb	RB
 nodded	VERB	ptb	VBD
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/fiction/captured_moments#448
-# source_id = masc:written/fiction/captured_moments
-# text = " Yes . "
-# genre = fiction
-"	PUNCT	ptb	"
-Yes	INTJ	ptb	UH
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/fiction/captured_moments#449
 # source_id = masc:written/fiction/captured_moments
 # text = " May I see her ? "
@@ -191295,15 +190581,6 @@ her	PRON	ptb	PRP
 "	PUNCT	ptb	"
 I	PRON	ptb	PRP
 --	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
-# sent_id = masc:written/fiction/captured_moments#455
-# source_id = masc:written/fiction/captured_moments
-# text = " Please . "
-# genre = fiction
-"	PUNCT	ptb	"
-Please	INTJ	ptb	UH
-.	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
 # sent_id = masc:written/fiction/captured_moments#456
@@ -193679,22 +192956,6 @@ talk	NOUN	ptb	NN
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
 
-# sent_id = masc:written/fiction/easy_money#38
-# source_id = masc:written/fiction/easy_money
-# text = " Right .
-# genre = fiction
-"	PUNCT	ptb	"
-Right	ADJ	ptb	JJ
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/fiction/easy_money#40
-# source_id = masc:written/fiction/easy_money
-# text = Sorry . "
-# genre = fiction
-Sorry	ADJ	ptb	JJ
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/fiction/easy_money#41
 # source_id = masc:written/fiction/easy_money
 # text = Charles looked out the window at the passing traffic push through dirty slush for awhile .
@@ -195586,14 +194847,6 @@ please	VERB	ptb	VB
 him	PRON	ptb	PRP
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/fiction/easy_money#130
-# source_id = masc:written/fiction/easy_money
-# text = " Yes .
-# genre = fiction
-"	PUNCT	ptb	"
-Yes	INTJ	ptb	UH
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/fiction/easy_money#131
 # source_id = masc:written/fiction/easy_money
 # text = They help in remembering steps in a ritual or ceremonial gestures .
@@ -196065,16 +195318,6 @@ shrugged	VERB	ptb	VBD
 "	PUNCT	ptb	"
 A	DET	ptb	DT
 place	NOUN	ptb	NN
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/fiction/easy_money#154
-# source_id = masc:written/fiction/easy_money
-# text = I do n't know .
-# genre = fiction
-I	PRON	ptb	PRP
-do	AUX	ptb	VBP
-n't	PART	ptb	RB
-know	VERB	ptb	VB
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/fiction/easy_money#155
@@ -205484,15 +204727,6 @@ it	PRON	ptb	PRP
 I	PRON	ptb	PRP
 sighed	VERB	ptb	VBD
 .	PUNCT	ptb	.
-
-# sent_id = masc:written/fiction/hotel-california#437
-# source_id = masc:written/fiction/hotel-california
-# text = " Sorry . "
-# genre = fiction
-"	PUNCT	ptb	"
-Sorry	ADJ	ptb	JJ
-.	PUNCT	ptb	.
-"	PUNCT	ptb	"
 
 # sent_id = masc:written/fiction/hotel-california#438
 # source_id = masc:written/fiction/hotel-california
@@ -243566,16 +242800,6 @@ has	AUX	ptb	VBZ
 died	VERB	ptb	VBN
 !	PUNCT	ptb	.
 
-# sent_id = masc:written/jokes/jokes10#106
-# source_id = masc:written/jokes/jokes10
-# text = What should I do ?
-# genre = jokes
-What	PRON	ptb	WP
-should	AUX	ptb	MD
-I	PRON	ptb	PRP
-do	VERB	ptb	VB
-?	PUNCT	ptb	.
-
 # sent_id = masc:written/jokes/jokes10#107
 # source_id = masc:written/jokes/jokes10
 # text = Captain : Shut it down !
@@ -267024,15 +266248,6 @@ it	PRON	ptb	PRP
 said	VERB	ptb	VBD
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/jokes/jokes4#162
-# source_id = masc:written/jokes/jokes4
-# text = " Yes ? "
-# genre = jokes
-"	PUNCT	ptb	"
-Yes	INTJ	ptb	UH
-?	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/jokes/jokes4#163
 # source_id = masc:written/jokes/jokes4
 # text = " You know . "
@@ -271313,14 +270528,6 @@ the	DET	ptb	DT
 wagon	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/jokes/jokes6#39
-# source_id = masc:written/jokes/jokes6
-# text = Amazing ! "
-# genre = jokes
-Amazing	ADJ	ptb	JJ
-!	PUNCT	ptb	.
-"	PUNCT	ptb	"
-
 # sent_id = masc:written/jokes/jokes6#40
 # source_id = masc:written/jokes/jokes6
 # text = The Indian looks up again and says , " Ran over me a half a hour ago . "
@@ -273600,14 +272807,6 @@ of	ADP	ptb	IN
 water	NOUN	ptb	NN
 ?	PUNCT	ptb	.
 "	PUNCT	ptb	"
-
-# sent_id = masc:written/jokes/jokes7#48
-# source_id = masc:written/jokes/jokes7
-# text = " No .
-# genre = jokes
-"	PUNCT	ptb	"
-No	INTJ	ptb	UH
-.	PUNCT	ptb	.
 
 # sent_id = masc:written/jokes/jokes7#49
 # source_id = masc:written/jokes/jokes7
@@ -318998,14 +318197,6 @@ next	ADJ	ptb	JJ
 days	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/letters/philanthropic-fundraising/119CWL041#16
-# source_id = masc:written/letters/philanthropic-fundraising/119CWL041
-# text = Thank you .
-# genre = letters
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/letters/philanthropic-fundraising/119CWL041#17
 # source_id = masc:written/letters/philanthropic-fundraising/119CWL041
 # text = Sincerely , Richard H. Gilbert , Jr. Past Board Member YMCA of Greater Indianapolis
@@ -322338,14 +321529,6 @@ your	DET	ptb	PRP$
 membership	NOUN	ptb	NN
 gift	NOUN	ptb	NN
 .	PUNCT	ptb	.
-
-# sent_id = masc:written/letters/solicitation-brochures/NWF1#44
-# source_id = masc:written/letters/solicitation-brochures/NWF1
-# text = Thank you !
-# genre = letters
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-!	PUNCT	ptb	.
 
 # sent_id = masc:written/letters/solicitation-brochures/alumnifund1#1
 # source_id = masc:written/letters/solicitation-brochures/alumnifund1
@@ -327605,14 +326788,6 @@ deductible	ADJ	ptb	JJ
 gift	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/letters/solicitation-brochures/audubon1#49
-# source_id = masc:written/letters/solicitation-brochures/audubon1
-# text = Thank you .
-# genre = letters
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/letters/solicitation-brochures/audubon1#50
 # source_id = masc:written/letters/solicitation-brochures/audubon1
 # text = Very truly yours , John Flicker President
@@ -331975,15 +331150,6 @@ and	CCONJ	ptb	CC
 name	NOUN	ptb	NN
 labels	NOUN	ptb	NNS
 enclosed	VERB	ptb	VBN
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/letters/solicitation-brochures/hsus4#29
-# source_id = masc:written/letters/solicitation-brochures/hsus4
-# text = Thanks in advance .
-# genre = letters
-Thanks	NOUN	ptb	NNS
-in	ADP	ptb	IN
-advance	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/letters/solicitation-brochures/hsus4#30
@@ -336478,14 +335644,6 @@ important	ADJ	ptb	JJ
 WWF	PROPN	ptb	NNP
 annual	ADJ	ptb	JJ
 membership	NOUN	ptb	NN
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/letters/solicitation-brochures/wwf12#29
-# source_id = masc:written/letters/solicitation-brochures/wwf12
-# text = Thank you .
-# genre = letters
-Thank	VERB	ptb	VBP
-you	PRON	ptb	PRP
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/letters/solicitation-brochures/wwf12#30
@@ -343592,16 +342750,6 @@ Oh	INTJ	ptb	UH
 Ellie	PROPN	ptb	NNP
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/movie-script/JurassicParkIV-Scene_5#173
-# source_id = masc:written/movie-script/JurassicParkIV-Scene_5
-# text = How are you doing ?
-# genre = movie-script
-How	ADV	ptb	WRB
-are	AUX	ptb	VBP
-you	PRON	ptb	PRP
-doing	VERB	ptb	VBG
-?	PUNCT	ptb	.
-
 # sent_id = masc:written/movie-script/JurassicParkIV-Scene_5#174
 # source_id = masc:written/movie-script/JurassicParkIV-Scene_5
 # text = What have you found out ?
@@ -343862,14 +343010,6 @@ GRANT	PROPN	ptb	NNP
 Thanks	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 Ellie	PROPN	ptb	NNP
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/movie-script/JurassicParkIV-Scene_5#189
-# source_id = masc:written/movie-script/JurassicParkIV-Scene_5
-# text = I will .
-# genre = movie-script
-I	PRON	ptb	PRP
-will	AUX	ptb	MD
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/movie-script/JurassicParkIV-Scene_5#190
@@ -356274,15 +355414,6 @@ easy	ADJ	ptb	JJ
 boy	NOUN	ptb	NN
 !	PUNCT	ptb	.
 
-# sent_id = masc:written/movie-script/pirates#1282
-# source_id = masc:written/movie-script/pirates
-# text = Ha ha ha !
-# genre = movie-script
-Ha	INTJ	ptb	UH
-ha	INTJ	ptb	UH
-ha	INTJ	ptb	UH
-!	PUNCT	ptb	.
-
 # sent_id = masc:written/movie-script/pirates#1283
 # source_id = masc:written/movie-script/pirates
 # text = WILL TURNER : I do n't need your help !
@@ -359190,14 +358321,6 @@ Cary	PROPN	ptb	NNP
 chickens	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/movie-script/pirates#1544
-# source_id = masc:written/movie-script/pirates
-# text = What happened ?
-# genre = movie-script
-What	PRON	ptb	WP
-happened	VERB	ptb	VBD
-?	PUNCT	ptb	.
-
 # sent_id = masc:written/movie-script/pirates#1545
 # source_id = masc:written/movie-script/pirates
 # text = QUARTERMASTER : Must 've hit a reef .
@@ -361444,14 +360567,6 @@ ELIZABETH	PROPN	ptb	NNP
 SWANN	PROPN	ptb	NNP
 :	PUNCT	ptb	:
 Oh	INTJ	ptb	UH
-!	PUNCT	ptb	.
-
-# sent_id = masc:written/movie-script/pirates#1777
-# source_id = masc:written/movie-script/pirates
-# text = Oh ... !
-# genre = movie-script
-Oh	INTJ	ptb	UH
-...	PUNCT	ptb	,
 !	PUNCT	ptb	.
 
 # sent_id = masc:written/movie-script/pirates#1778
@@ -385313,17 +384428,6 @@ seafood	NOUN	ptb	NN
 restaurant	NOUN	ptb	NN
 in	ADP	ptb	IN
 Manhattan	PROPN	ptb	NNP
-.	PUNCT	ptb	.
-
-# sent_id = masc:written/newspaper/nyt/NYTnewswire7#57
-# source_id = masc:written/newspaper/nyt/NYTnewswire7
-# text = " I do n't know .
-# genre = newspaper
-"	PUNCT	ptb	"
-I	PRON	ptb	PRP
-do	AUX	ptb	VBP
-n't	PART	ptb	RB
-know	VERB	ptb	VB
 .	PUNCT	ptb	.
 
 # sent_id = masc:written/newspaper/nyt/NYTnewswire7#58
@@ -453770,14 +452874,6 @@ or	CCONJ	ptb	CC
 February	PROPN	ptb	NNP
 .	PUNCT	ptb	.
 
-# sent_id = masc:written/travel-guides/WhatToHongKong#16
-# source_id = masc:written/travel-guides/WhatToHongKong
-# text = Buyer Beware .
-# genre = travel-guides
-Buyer	NOUN	ptb	NN
-Beware	VERB	ptb	VBP
-.	PUNCT	ptb	.
-
 # sent_id = masc:written/travel-guides/WhatToHongKong#17
 # source_id = masc:written/travel-guides/WhatToHongKong
 # text = Be aware that name brands , including electronics , are sometimes fakes , glass may be sold as jade , and that antique you bought may have been made last night .
@@ -489231,14 +488327,6 @@ dr	X	ptb	XX
 ..	PUNCT	ptb	,
 http:$$$$tinyurl.com$$c5xngt	X	ptb	ADD
 
-# sent_id = masc:written/twitter/tweets2#178
-# source_id = masc:written/twitter/tweets2
-# text = well done !
-# genre = twitter
-well	ADV	ptb	RB
-done	VERB	ptb	VBN
-!	PUNCT	ptb	.
-
 # sent_id = masc:written/twitter/tweets2#179
 # source_id = masc:written/twitter/tweets2
 # text = Birdhouse : The CMS For Twitter You Do n't Need ? But Watch The Video http:$$$$bit.ly$$3UR794
@@ -501506,4 +500594,3 @@ out	ADV	ptb	RP
 for	ADP	ptb	IN
 it	PRON	ptb	PRP
 ?	PUNCT	ptb	.
-

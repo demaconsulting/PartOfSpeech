@@ -8,7 +8,8 @@ namespace DemaConsulting.PartOfSpeech.Tests;
 /// <summary>
 ///     System-level tests of the committed data and licensing artifacts: the third-party notice and its packaging, the
 ///     licenses and provenance of the data, the Universal POS tags, the separation of training and evaluation data, and
-///     the lexicon. The tests read the files of the working copy and need no network.
+///     the lexicon. The tests read the files of the working copy and need no network. Each test proves one obligation
+///     of one requirement; a test that finds no file or no row fails instead of passing on nothing.
 /// </summary>
 public class PartOfSpeechDataTests
 {
@@ -16,6 +17,11 @@ public class PartOfSpeechDataTests
     ///     The number of problems that an assertion shows, so that a broken file does not flood the test output.
     /// </summary>
     private const int ShownProblems = 20;
+
+    /// <summary>
+    ///     The license class that the MASC source table records for every document: the license of the whole corpus.
+    /// </summary>
+    private const string MascLicenseBasis = "CC BY 3.0 US";
 
     /// <summary>
     ///     The training corpora, relative to the data folder.
@@ -39,17 +45,47 @@ public class PartOfSpeechDataTests
     };
 
     /// <summary>
-    ///     The tables that record the license basis of every source document, relative to the data folder.
+    ///     The tables that record the origin and license basis of every source document, relative to the data folder,
+    ///     with the name of the column that holds the document id.
     /// </summary>
-    private static readonly string[] SourceTables =
+    private static readonly (string Table, string IdColumn)[] SourceTables =
     {
-        "open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv"
+        ("open/sources.tsv", "source_id"), ("eval/gold-v2/sources.tsv", "doc_id"), ("silver/sources.tsv", "source_id")
+    };
+
+    /// <summary>
+    ///     The statements that every data README makes, per folder: the headings and bold fields that record where the
+    ///     data comes from, under which license, and how it was produced. The folder of UD English-EWT holds no data; its
+    ///     README records where the treebank is fetched from and under which license it stays out of the repository.
+    /// </summary>
+    private static readonly Dictionary<string, string[]> ReadmeStatements = new(StringComparer.Ordinal)
+    {
+        ["open"] = new[] { "## License and Provenance", "**Source:**", "**How produced:**", "`sources.tsv`" },
+        ["masc"] = new[] { "## Source", "**Corpus:**", "**Input file:**", "**How produced:**", "`sources.tsv`" },
+        ["silver"] = new[] { "## Content and License", "## How It Was Produced", "`sources.tsv`" },
+        ["eval/shapes"] = new[]
+        {
+            "## Source and Provenance", "**Source:**", "**How produced (by the WordSense project):**", "**License:**"
+        },
+        ["eval/gold-v2"] = new[] { "## Source and Provenance", "**Source:**", "**Labels:**", "**Sentences:**", "`sources.tsv`" },
+        ["eval/ste-challenge"] = new[] { "## Source and Provenance", "**Source:**", "**Sentences:**", "**Tags:**" },
+        ["lexicon"] = new[] { "## Sources", "## How It Is Built" },
+        ["eval/ud-ewt"] = new[] { "## Fetch and Map", "**Source:**", "CC BY-SA 4.0" }
     };
 
     /// <summary>
     ///     The license identifiers that a data folder may declare.
     /// </summary>
     private static readonly string[] AllowedLicenses = { "CC0-1.0", "CC-BY-3.0-US", "CC-BY-4.0", "Public-Domain", "MIT" };
+
+    /// <summary>
+    ///     The beginnings of the license basis of a source document: the license classes that a source table may record.
+    /// </summary>
+    private static readonly string[] AllowedLicenseBases =
+    {
+        "Tatoeba sentence licensed CC0 1.0", "CC0-1.0", "US federal government work", "US public domain",
+        "Written by the project"
+    };
 
     /// <summary>
     ///     The coarse classes of the single-target evaluation sets.
@@ -66,6 +102,21 @@ public class PartOfSpeechDataTests
     private static readonly Regex LicenseLine = new(@"^License: (\S+)\s*$", RegexOptions.Multiline | RegexOptions.CultureInvariant);
 
     /// <summary>
+    ///     A pinned identifier of an input: a Git commit (40 hexadecimal digits) or a SHA-256 (64 hexadecimal digits).
+    /// </summary>
+    private static readonly Regex PinnedIdentifier = new(@"\b(?:[0-9a-f]{40}|[0-9a-f]{64})\b", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    ///     A reference to a script of the data tools, as the READMEs give it in the command that produces the data.
+    /// </summary>
+    private static readonly Regex ScriptReference = new(@"tools/data/([a-z_]+)\.py", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    ///     The id of a MASC document: written genre and file path.
+    /// </summary>
+    private static readonly Regex MascDocument = new(@"^masc:written/([a-z-]+)/\S+$", RegexOptions.CultureInvariant);
+
+    /// <summary>
     ///     Text that must not appear in the license basis of any source document.
     /// </summary>
     private static readonly Regex RestrictedLicenseText = new(
@@ -73,22 +124,21 @@ public class PartOfSpeechDataTests
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     /// <summary>
-    ///     A path of a restricted corpus: SemCor, the Brown corpus or the English Web Treebank.
+    ///     A path of a SemCor or Brown corpus file.
     /// </summary>
-    private static readonly Regex RestrictedCorpusPath = new("semcor|brown|ewt", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex RestrictedCorpusPath = new("semcor|brown", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     /// <summary>
-    ///     Proves that the third-party notice attributes MASC and Open English WordNet with title, creator, source link,
-    ///     license link and the statement of conversion, and reproduces the Princeton WordNet license.
+    ///     Proves that the third-party notice attributes MASC with its title, creators, source link, license link and
+    ///     citation.
     /// </summary>
     [Fact]
-    public void PartOfSpeech_ThirdPartyNotices_Content_AttributesMascAndOpenEnglishWordNet()
+    public void PartOfSpeech_ThirdPartyNotices_Masc_IsAttributed()
     {
-        // Arrange: read the notice with whitespace collapsed, so that line wrapping does not matter
-        var notices = Collapse(File.ReadAllText(DataFiles.Repository("THIRD-PARTY-NOTICES.md")));
+        // Arrange: the MASC section of the notice and the elements that an attribution must have
+        var section = NoticeSection("## The Manually Annotated Sub-Corpus (MASC)");
         var required = new[]
         {
-            // MASC: title, creator, source link, license link, citation, conversion
             "The Manually Annotated Sub-Corpus (MASC)",
             "Nancy Ide",
             "Collin Baker",
@@ -97,25 +147,80 @@ public class PartOfSpeechDataTests
             "https://anc.org/data/masc/",
             "Creative Commons Attribution 3.0 United States",
             "https://creativecommons.org/licenses/by/3.0/us/",
-            "https://aclanthology.org/L08-1105/",
-            "converted to Universal POS (UPOS) tags",
-            // Open English WordNet: title, creator, source link, license link, conversion
+            "https://aclanthology.org/L08-1105/"
+        };
+
+        // Act: find the elements that the section lacks
+        var missing = MissingFragments(section, required);
+
+        // Assert: nothing is missing
+        Assert.Empty(missing);
+    }
+
+    /// <summary>
+    ///     Proves that the third-party notice attributes Open English WordNet with its title, creator, source links and
+    ///     license link.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ThirdPartyNotices_OpenEnglishWordNet_IsAttributed()
+    {
+        // Arrange: the Open English WordNet section of the notice and the elements that an attribution must have
+        var section = NoticeSection("## Open English WordNet");
+        var required = new[]
+        {
             "Open English WordNet 2025 Edition",
             "John P. McCrae",
             "https://en-word.net",
             "https://github.com/globalwordnet/english-wordnet",
             "Creative Commons Attribution 4.0 International",
-            "https://creativecommons.org/licenses/by/4.0/",
-            "maps a lower-case spelling to the UPOS tags it may carry",
-            // Princeton WordNet license
+            "https://creativecommons.org/licenses/by/4.0/"
+        };
+
+        // Act: find the elements that the section lacks
+        var missing = MissingFragments(section, required);
+
+        // Assert: nothing is missing
+        Assert.Empty(missing);
+    }
+
+    /// <summary>
+    ///     Proves that the third-party notice states that the MASC data and the Open English WordNet data were converted
+    ///     by this project.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ThirdPartyNotices_Changes_AreStated()
+    {
+        // Arrange: the statement of change that each of the two sections must make
+        var mascSection = NoticeSection("## The Manually Annotated Sub-Corpus (MASC)");
+        var wordNetSection = NoticeSection("## Open English WordNet");
+
+        // Act: find the statements that the sections lack
+        var missing = MissingFragments(mascSection, new[] { "converted to Universal POS (UPOS) tags" })
+            .Concat(MissingFragments(wordNetSection, new[] { "maps a lower-case spelling to the UPOS tags it may carry" }))
+            .ToList();
+
+        // Assert: both conversions are stated
+        Assert.Empty(missing);
+    }
+
+    /// <summary>
+    ///     Proves that the third-party notice reproduces the Princeton WordNet license that Open English WordNet carries.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ThirdPartyNotices_PrincetonLicense_IsReproduced()
+    {
+        // Arrange: the Princeton WordNet section of the notice and the parts of the license that must be reproduced
+        var section = NoticeSection("### Princeton WordNet");
+        var required = new[]
+        {
             "WordNet 3.1 Copyright 2011 by Princeton University. All rights reserved.",
             "THIS SOFTWARE AND DATABASE IS PROVIDED \"AS IS\" AND PRINCETON UNIVERSITY MAKES NO REPRESENTATIONS",
             "Title to copyright in this software, database and any associated documentation shall at all times remain " +
             "with Princeton University"
         };
 
-        // Act: find the required elements that the notice lacks
-        var missing = required.Where(fragment => notices.IndexOf(Collapse(fragment), StringComparison.Ordinal) < 0);
+        // Act: find the parts that the section lacks
+        var missing = MissingFragments(section, required);
 
         // Assert: nothing is missing
         Assert.Empty(missing);
@@ -145,128 +250,258 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
-    ///     Proves that every data folder declares an allowed license and that no source document is recorded under a
-    ///     share-alike, non-commercial or other restricted license.
+    ///     Proves that every data folder declares a license and that the license is one of the allowed set.
     /// </summary>
     [Fact]
-    public void PartOfSpeech_DataLicensing_Folders_DeclareAllowedLicensesOnly()
+    public void PartOfSpeech_DataLicensing_Folders_DeclareAllowedLicenses()
     {
-        // Arrange: collect the problems of the license declarations and of the source tables
+        // Arrange: collect the problems of the license declarations
         var problems = new List<string>();
 
-        // Act: check every data README and every source table
+        // Act: check the README of every data folder
         foreach (var folder in LicensedFolders)
         {
             problems.AddRange(LicenseProblems(folder));
         }
 
-        foreach (var table in SourceTables)
-        {
-            problems.AddRange(RestrictedTextProblems(table));
-        }
-
-        // Assert: no problem was found
+        // Assert: every folder was checked and no problem was found
+        Assert.Equal(7, LicensedFolders.Length);
         Assert.Empty(problems);
     }
 
     /// <summary>
-    ///     Proves that no UD English-EWT, SemCor or Brown corpus file and no CoNLL-U file is committed.
+    ///     Proves that no source document is recorded under a share-alike, non-commercial, no-derivatives, Wikipedia or
+    ///     CC BY license.
     /// </summary>
     [Fact]
-    public void PartOfSpeech_DataLicensing_Tree_ContainsNoRestrictedCorpusFiles()
+    public void PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense()
+    {
+        // Arrange: read the license basis of every source document
+        var rows = 0;
+        var problems = new List<string>();
+
+        // Act: find the license bases that name a restricted license
+        foreach (var (table, idColumn) in SourceTables)
+        {
+            var data = DataFiles.ReadTable(DataFiles.Data(table));
+            rows += data.Rows.Count;
+            problems.AddRange(data.Rows
+                .Where(row => RestrictedLicenseText.IsMatch(data.Cell(row, "license_basis")))
+                .Select(row => $"data/{table}: restricted license for {data.Cell(row, idColumn)}"));
+        }
+
+        // Assert: the tables are not empty and no document has a restricted license
+        Assert.True(rows > 10000);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that no UD English-EWT file is committed: no CoNLL-U file anywhere, no path below the data folder that
+    ///     names the treebank, and nothing but the documentation in its folder.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataLicensing_UdEwt_IsNotCommitted()
     {
         // Arrange: list the files of the repository, without dependencies, build output and the git-ignored download cache
         var files = DataFiles.EnumerateFiles(DataFiles.RepositoryRoot, IsIgnoredFolder).ToList();
+        var paths = files.Select(DataFiles.RelativePath).ToList();
 
-        // Act: find CoNLL-U files anywhere and restricted corpus names below the data folder
-        var problems = files
-            .Where(file => file.EndsWith(".conllu", StringComparison.OrdinalIgnoreCase))
-            .Select(file => "CoNLL-U file: " + DataFiles.RelativePath(file))
-            .Concat(files
-                .Select(DataFiles.RelativePath)
+        // Act: find CoNLL-U files anywhere and treebank names below the data folder
+        var problems = paths
+            .Where(path => path.EndsWith(".conllu", StringComparison.OrdinalIgnoreCase))
+            .Select(path => "CoNLL-U file: " + path)
+            .Concat(paths
                 .Where(path => path.StartsWith("data/", StringComparison.Ordinal) && path != "data/eval/ud-ewt/README.md")
-                .Where(path => RestrictedCorpusPath.IsMatch(path))
-                .Select(path => "restricted corpus name: " + path))
+                .Where(path => path.IndexOf("ewt", StringComparison.OrdinalIgnoreCase) >= 0)
+                .Select(path => "treebank name: " + path))
             .ToList();
 
-        // Assert: nothing restricted is committed, and the UD English-EWT folder holds only its documentation
+        // Assert: the repository was listed, nothing of the treebank is committed, and its folder holds only its README
+        Assert.Contains("data/README.md", paths);
         Assert.Empty(problems);
         Assert.Equal(
             new[] { "data/eval/ud-ewt/README.md" },
-            files.Select(DataFiles.RelativePath).Where(path => path.StartsWith("data/eval/ud-ewt/", StringComparison.Ordinal)));
+            paths.Where(path => path.StartsWith("data/eval/ud-ewt/", StringComparison.Ordinal)));
     }
 
     /// <summary>
-    ///     Proves that every data folder has a README with a license declaration and a record of its source, and that the
-    ///     sources of the corpora are listed.
+    ///     Proves that no SemCor or Brown corpus file is committed.
     /// </summary>
     [Fact]
-    public void PartOfSpeech_DataProvenance_Folders_HaveReadmeLicenseAndSource()
+    public void PartOfSpeech_DataLicensing_RestrictedCorpora_AreNotCommitted()
+    {
+        // Arrange: list the files below the data folder
+        var paths = DataFiles.EnumerateFiles(DataFiles.Data(string.Empty).TrimEnd('/', '\\'), IsIgnoredFolder)
+            .Select(DataFiles.RelativePath)
+            .ToList();
+
+        // Act: find the paths that name SemCor or the Brown corpus
+        var problems = paths.Where(path => RestrictedCorpusPath.IsMatch(path)).ToList();
+
+        // Assert: the data folder was listed and no restricted corpus is committed
+        Assert.Contains("data/MANIFEST.tsv", paths);
+        Assert.Empty(problems);
+    }
+
+    /// <summary>
+    ///     Proves that the README of every data folder records the source of the data, its license and how it was
+    ///     produced: the statements of the folder, a pinned input identifier, and a script of the data tools that exists.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataProvenance_Readmes_RecordSourceAndProduction()
     {
         // Arrange: collect the problems
         var problems = new List<string>();
 
-        // Act: check the README of every data folder and the source tables
-        foreach (var folder in LicensedFolders)
+        // Act: check the README of every data folder
+        foreach (var entry in ReadmeStatements)
         {
-            var readme = DataFiles.Data(folder + "/README.md");
+            var readme = DataFiles.Data(entry.Key + "/README.md");
             if (!File.Exists(readme))
             {
-                problems.Add("missing README: data/" + folder);
+                problems.Add("missing README: data/" + entry.Key);
                 continue;
             }
 
             var text = File.ReadAllText(readme);
-            if (!LicenseLine.IsMatch(text))
+            problems.AddRange(entry.Value
+                .Where(statement => text.IndexOf(statement, StringComparison.Ordinal) < 0)
+                .Select(statement => $"data/{entry.Key}: README lacks '{statement}'"));
+            if (!PinnedIdentifier.IsMatch(text))
             {
-                problems.Add("no license line: data/" + folder);
+                problems.Add($"data/{entry.Key}: README names no pinned commit or SHA-256");
             }
 
-            if (text.IndexOf("Source", StringComparison.Ordinal) < 0 && text.IndexOf("Produced", StringComparison.Ordinal) < 0)
+            var scripts = ScriptReference.Matches(text).Cast<Match>().Select(match => match.Groups[1].Value).Distinct().ToList();
+            if (scripts.Count == 0)
             {
-                problems.Add("no record of the source: data/" + folder);
+                problems.Add($"data/{entry.Key}: README names no script that produces the data");
             }
+
+            problems.AddRange(scripts
+                .Where(script => !File.Exists(DataFiles.Repository("tools/data/" + script + ".py")))
+                .Select(script => $"data/{entry.Key}: README names a missing script {script}.py"));
         }
 
-        problems.AddRange(SourceTables.Where(table => !File.Exists(DataFiles.Data(table))).Select(table => "missing: data/" + table));
-        problems.AddRange(new[] { "README.md", "CONVENTIONS.md" }.Where(name => !File.Exists(DataFiles.Data(name))).Select(name => "missing: data/" + name));
+        problems.AddRange(new[] { "README.md", "CONVENTIONS.md" }
+            .Where(name => !File.Exists(DataFiles.Data(name)))
+            .Select(name => "missing: data/" + name));
 
-        // Assert: no problem was found
+        // Assert: every folder was checked and no problem was found
+        Assert.Equal(8, ReadmeStatements.Count);
         Assert.Empty(problems);
     }
 
     /// <summary>
-    ///     Proves that the checksum manifest lists exactly the committed data files and that each file has the recorded
-    ///     size and SHA-256.
+    ///     Proves that every source document of the open corpus, the evaluation sets and the silver and MASC training data
+    ///     appears in the source list of its folder (and that every MASC source row has sentences in <c>masc.tsv</c>).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataProvenance_Sources_ListEveryDocument()
+    {
+        // Arrange: the documents of the data and the documents that the source tables list
+        var openListed = SourceIds("open/sources.tsv", "source_id");
+        var goldListed = SourceIds("eval/gold-v2/sources.tsv", "doc_id");
+        var silverListed = SourceIds("silver/sources.tsv", "source_id");
+        var openDocuments = new[] { "open/train.tsv", "open/dev.tsv", "open/test.tsv", "eval/ste-challenge/test.tsv" }
+            .SelectMany(corpus => DataFiles.ReadCorpus(DataFiles.Data(corpus)).Select(sentence => sentence.SourceId))
+            .ToList();
+        var goldDocuments = new[] { "dev.tsv", "test.tsv" }
+            .SelectMany(name => DataFiles.ReadTable(DataFiles.Data("eval/gold-v2/" + name)).Column("doc_id"))
+            .ToList();
+        var silverDocuments = DataFiles.ReadCorpus(DataFiles.Data("silver/silver.tsv")).Select(sentence => sentence.SourceId).ToList();
+        var mascDocuments = DataFiles.ReadCorpus(DataFiles.Data("masc/masc.tsv")).Select(sentence => sentence.SourceId).Distinct().ToList();
+        var mascListed = SourceIds("masc/sources.tsv", "source_id");
+
+        // Act: find the documents that no source list names
+        var problems = MissingDocuments("open", openDocuments, openListed)
+            .Concat(MissingDocuments("eval/gold-v2", goldDocuments, goldListed))
+            .Concat(MissingDocuments("silver", silverDocuments, silverListed))
+            .Concat(MissingDocuments("masc", mascDocuments, mascListed))
+            .Concat(mascListed.Except(mascDocuments).Select(document => "masc: listed but not in masc.tsv: " + document))
+            .ToList();
+
+        // Assert: the data and the lists are not empty and every document is listed
+        Assert.True(openDocuments.Distinct().Count() > 5000);
+        Assert.True(goldDocuments.Distinct().Count() > 1000);
+        Assert.True(silverDocuments.Distinct().Count() > 5000);
+        Assert.True(mascDocuments.Count > 300);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that every row of the source tables names a license class of the allowed set, a well-formed URL (empty
+    ///     only for the document that the project wrote itself), and a positive sentence count; for MASC, the corpus-wide
+    ///     CC BY 3.0 US class and counts that equal those of <c>masc.tsv</c>.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl()
+    {
+        // Arrange: read the source tables
+        var problems = new List<string>();
+        var rows = 0;
+
+        // Act: check the license class, the URLs and the sentence count of every row; MASC records one license for the
+        // whole corpus, so its table is checked for that class and for counts that match masc.tsv
+        foreach (var (table, idColumn) in SourceTables)
+        {
+            var data = DataFiles.ReadTable(DataFiles.Data(table));
+            rows += data.Rows.Count;
+            foreach (var row in data.Rows)
+            {
+                problems.AddRange(SourceRowProblems(table, data, row, idColumn));
+            }
+        }
+
+        rows += DataFiles.ReadTable(DataFiles.Data("masc/sources.tsv")).Rows.Count;
+        problems.AddRange(MascSourceProblems());
+        // Assert: the tables are not empty and every row is valid
+        Assert.True(rows > 10000);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the checksum manifest lists exactly the committed data files (Markdown files and the manifest
+    ///     itself excluded).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataProvenance_Manifest_ListsExactlyTheCommittedFiles()
+    {
+        // Arrange: read the manifest and list the data files it covers
+        var manifest = ReadManifest();
+        var onDisk = ManifestedFilesOnDisk();
+
+        // Act: compare the file lists
+        var problems = onDisk.Except(manifest.Select(row => row[0])).Select(path => "not in the manifest: " + path)
+            .Concat(manifest.Select(row => row[0]).Except(onDisk).Select(path => "missing file: " + path))
+            .ToList();
+
+        // Assert: the manifest is not empty and complete
+        Assert.True(manifest.Count > 20);
+        Assert.Empty(problems);
+    }
+
+    /// <summary>
+    ///     Proves that each committed data file has the size and the SHA-256 that the checksum manifest records.
     /// </summary>
     [Fact]
     public void PartOfSpeech_DataProvenance_Manifest_ChecksumsMatchCommittedFiles()
     {
         // Arrange: read the manifest (path, bytes, sha256, lines, sentences) and list the data files it covers
-        var manifest = File.ReadLines(DataFiles.Data("MANIFEST.tsv"))
-            .Where(line => line.Length > 0 && !DataFiles.IsComment(line))
-            .Select(line => line.Split('\t'))
-            .ToList();
-        var dataRoot = DataFiles.Data(string.Empty).TrimEnd('/', '\\');
-        var onDisk = DataFiles.EnumerateFiles(dataRoot, _ => false)
-            .Select(file => DataFiles.RelativePath(file).Substring("data/".Length))
-            .Where(path => path != "MANIFEST.tsv" && !path.EndsWith(".md", StringComparison.Ordinal) && path != "silver/silver-faa.tsv")
-            .ToList();
+        var manifest = ReadManifest();
+        var onDisk = ManifestedFilesOnDisk();
 
-        // Act: compare the file list, the sizes and the hashes
-        var problems = onDisk.Except(manifest.Select(row => row[0])).Select(path => "not in the manifest: " + path)
-            .Concat(manifest.Select(row => row[0]).Except(onDisk).Select(path => "missing file: " + path))
-            .Concat(manifest.Where(row => onDisk.Contains(row[0])).SelectMany(ChecksumProblems))
-            .ToList();
+        // Act: compare the sizes and the hashes of the files that exist
+        var problems = manifest.Where(row => onDisk.Contains(row[0])).SelectMany(ChecksumProblems).ToList();
 
-        // Assert: the manifest is complete and every file matches
-        Assert.NotEmpty(manifest);
+        // Assert: the manifest is not empty and every file matches
+        Assert.True(manifest.Count > 20);
         Assert.Empty(problems);
     }
 
     /// <summary>
     ///     Proves that the training corpora and the token-level evaluation corpora use only the 17 Universal POS tags
-    ///     (the placeholder only for masked tokens) and that every sentence is the concatenation of its tokens.
+    ///     (the placeholder only for masked tokens).
     /// </summary>
     [Fact]
     public void PartOfSpeech_TrainingData_Corpora_UseOnlySeventeenUposTags()
@@ -275,13 +510,43 @@ public class PartOfSpeechDataTests
         var problems = new List<string>();
         var sentences = 0;
 
-        // Act: check every token of every sentence
+        // Act: check the tag of every token of every sentence
         foreach (var corpus in TrainingCorpora.Concat(EvaluationCorpora))
         {
             foreach (var sentence in DataFiles.ReadCorpus(DataFiles.Data(corpus)))
             {
                 sentences++;
-                problems.AddRange(TokenProblems(corpus, sentence));
+                problems.AddRange(TagProblems(corpus, sentence));
+            }
+        }
+
+        // Assert: the corpora are not empty and no problem was found
+        Assert.True(sentences > 1000);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that in the training corpora and the token-level evaluation corpora the tokens of every sentence
+    ///     concatenate to its text.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_TrainingData_Corpora_TokensRejoinToSentenceText()
+    {
+        // Arrange: the corpora and a place for the problems
+        var problems = new List<string>();
+        var sentences = 0;
+
+        // Act: compare the tokens of every sentence with its text
+        foreach (var corpus in TrainingCorpora.Concat(EvaluationCorpora))
+        {
+            foreach (var sentence in DataFiles.ReadCorpus(DataFiles.Data(corpus)))
+            {
+                sentences++;
+                var rejoined = string.Concat(sentence.Tokens.Select(token => token[0]));
+                if (rejoined != sentence.Text.Replace(" ", string.Empty))
+                {
+                    problems.Add($"{corpus}: {sentence.SentenceId}: tokens do not rejoin to the text");
+                }
             }
         }
 
@@ -312,36 +577,63 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
-    ///     Proves that no training document and no training sentence of at least 25 letters and digits appears in an
-    ///     evaluation set.
+    ///     Proves that no training document is also an evaluation document: the source ids of the training corpora are
+    ///     disjoint from the document ids of the evaluation sets.
     /// </summary>
     [Fact]
-    public void PartOfSpeech_Leakage_TrainingVersusEvaluation_NoSharedDocumentOrSentence()
+    public void PartOfSpeech_Leakage_Documents_TrainingAndEvaluationAreDisjoint()
     {
-        // Arrange: the documents and sentence keys of all evaluation sets
+        // Arrange: the document ids of all evaluation sets
         var evaluation = EvaluationItems();
         var documents = new HashSet<string>(evaluation.Select(item => item.Document), StringComparer.Ordinal);
+
+        // Act: compare the document of every training sentence with the evaluation documents
+        var problems = new List<string>();
+        var sentences = 0;
+        foreach (var corpus in TrainingCorpora)
+        {
+            foreach (var sentence in DataFiles.ReadCorpus(DataFiles.Data(corpus)))
+            {
+                sentences++;
+                if (documents.Contains(sentence.SourceId))
+                {
+                    problems.Add($"{corpus}: document {sentence.SourceId} is also an evaluation document");
+                }
+            }
+        }
+
+        // Assert: the sets are not empty and nothing is shared
+        Assert.True(documents.Count > 2000);
+        Assert.True(sentences > 10000);
+        Assert.Empty(problems.Distinct().Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that no training sentence, of any length, is also an evaluation sentence: the sentence keys (lower-case
+    ///     letters and digits) of the training corpora are disjoint from those of the evaluation sets.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Leakage_Sentences_TrainingAndEvaluationAreDisjoint()
+    {
+        // Arrange: the sentence keys of all evaluation sets (a text without a letter or digit has no key)
         var keys = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var item in evaluation)
+        foreach (var item in EvaluationItems())
         {
             var key = DataFiles.SentenceKey(item.Text);
-            if (key.Length >= DataFiles.MinimumKeyLength)
+            if (key.Length > 0)
             {
                 keys[key] = item.Set;
             }
         }
 
-        // Act: compare every training sentence with the evaluation sets
+        // Act: compare every training sentence with the evaluation sentences
         var problems = new List<string>();
+        var sentences = 0;
         foreach (var corpus in TrainingCorpora)
         {
             foreach (var sentence in DataFiles.ReadCorpus(DataFiles.Data(corpus)))
             {
-                if (documents.Contains(sentence.SourceId))
-                {
-                    problems.Add($"{corpus}: document {sentence.SourceId} is also an evaluation document");
-                }
-
+                sentences++;
                 if (keys.TryGetValue(DataFiles.SentenceKey(sentence.Text), out var set))
                 {
                     problems.Add($"{corpus}: sentence {sentence.SentenceId} is also in {set}");
@@ -349,36 +641,40 @@ public class PartOfSpeechDataTests
             }
         }
 
-        // Assert: the evaluation sets are not empty and nothing is shared
-        Assert.True(evaluation.Count > 5000);
+        // Assert: the sets are not empty and nothing is shared
         Assert.True(keys.Count > 5000);
+        Assert.True(sentences > 10000);
         Assert.Empty(problems.Take(ShownProblems));
     }
 
     /// <summary>
-    ///     Proves that the sentence key of the leakage rule keeps only the lower-case letters and digits of a sentence.
+    ///     Proves that the sentence key of the leakage rule keeps only the lower-case letters and digits of a sentence, so
+    ///     that a short sentence has a key as well.
     /// </summary>
     [Fact]
     public void PartOfSpeech_Leakage_SentenceKey_KeepsLowerCaseLettersAndDigits()
     {
-        // Arrange: a sentence with capitals, punctuation, spaces and digits
+        // Arrange: a sentence with capitals, punctuation, spaces and digits, and a short sentence
         const string sentence = "X, Y! 4 2.";
+        const string shortSentence = "Thank you.";
 
-        // Act: compute the key
+        // Act: compute the keys
         var key = DataFiles.SentenceKey(sentence);
+        var shortKey = DataFiles.SentenceKey(shortSentence);
 
         // Assert: only the lower-case letters and digits remain
         Assert.Equal("xy42", key);
+        Assert.Equal("thankyou", shortKey);
     }
 
     /// <summary>
-    ///     Proves that the committed leakage report records no document overlap and no exact sentence overlap for any
-    ///     pair of training and evaluation set.
+    ///     Proves that the committed leakage report covers every training set against every evaluation set (UD English-EWT
+    ///     included) and records no document overlap and no exact sentence overlap for any pair.
     /// </summary>
     [Fact]
     public void PartOfSpeech_Leakage_Report_RecordsNoOverlaps()
     {
-        // Arrange: read the report (training set, evaluation set, sentences, document overlaps, exact overlaps, ...)
+        // Arrange: read the report (training set, evaluation set, sentences, document overlaps, exact overlaps, near duplicates)
         var rows = File.ReadLines(DataFiles.Data("leakage-report.tsv"))
             .Where(line => line.Length > 0 && !DataFiles.IsComment(line))
             .Select(line => line.Split('\t'))
@@ -388,69 +684,72 @@ public class PartOfSpeechDataTests
         var overlaps = rows.Where(row => row[3] != "0" || row[4] != "0").Select(row => row[0] + " vs " + row[1]).ToList();
         var trainingSets = rows.Select(row => row[0]).Distinct().OrderBy(name => name, StringComparer.Ordinal).ToList();
 
-        // Assert: every training set is reported against every committed evaluation set, and no pair overlaps
+        // Assert: every training set is reported against every evaluation set, and no pair overlaps
         Assert.Equal(new[] { "masc", "open-train", "silver" }, trainingSets);
         foreach (var training in trainingSets)
         {
             var evaluationSets = rows.Where(row => row[0] == training).Select(row => row[1]).Distinct(StringComparer.Ordinal);
-            var missingSets = new[] { "gold-v2", "open-dev", "open-test", "shapes-probe", "ste-challenge" }.Except(evaluationSets);
-            Assert.Empty(missingSets);
+            var expected = new[]
+            {
+                "gold-v2", "open-dev", "open-test", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train"
+            };
+            Assert.Empty(expected.Except(evaluationSets));
         }
-        Assert.All(rows, row => Assert.Equal(7, row.Length));
+
+        Assert.All(rows, row => Assert.Equal(6, row.Length));
         Assert.Empty(overlaps);
     }
 
     /// <summary>
     ///     Proves that the lexicon allows the gold tag for at least 99.9 percent of the non-disputed tokens of the open
-    ///     training and development sets.
+    ///     training set.
     /// </summary>
     [Fact]
-    public void PartOfSpeech_Lexicon_Coverage_TrainAndDev_MeetsThreshold()
+    public void PartOfSpeech_Lexicon_Coverage_Train_MeetsThreshold()
     {
         // Arrange: read the lexicon
         var lexicon = DataFiles.ReadLexicon(DataFiles.Data("lexicon/lexicon.tsv"));
 
-        foreach (var corpus in new[] { "open/train.tsv", "open/dev.tsv" })
-        {
-            // Act: count the non-disputed tokens whose gold tag the lexicon allows
-            long tokens = 0;
-            long covered = 0;
-            foreach (var token in DataFiles.ReadCorpus(DataFiles.Data(corpus)).SelectMany(sentence => sentence.Tokens))
-            {
-                if (token[2] == "disputed")
-                {
-                    continue;
-                }
+        // Act: count the non-disputed tokens whose gold tag the lexicon allows
+        var (tokens, covered) = MeasureCoverage("open/train.tsv", lexicon);
 
-                tokens++;
-                if (DataFiles.IsTagAllowed(token[0], token[1], lexicon))
-                {
-                    covered++;
-                }
-            }
-
-            // Assert: the coverage is at least 99.9 percent
-            Assert.True(tokens > 20000, corpus);
-            Assert.True(covered * 1000 >= tokens * 999, $"{corpus}: {covered} of {tokens} tokens are covered");
-        }
+        // Assert: the coverage is at least 99.9 percent
+        Assert.True(tokens > 100000, "open/train.tsv");
+        Assert.True(covered * 1000 >= tokens * 999, $"open/train.tsv: {covered} of {tokens} tokens are covered");
     }
 
     /// <summary>
-    ///     Proves that the lexicon rows are sorted by UTF-8 bytes, unique and valid, and that the counts in its header are
-    ///     correct.
+    ///     Proves that the lexicon allows the gold tag for at least 99.9 percent of the non-disputed tokens of the open
+    ///     development set.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Lexicon_Coverage_Dev_MeetsThreshold()
+    {
+        // Arrange: read the lexicon
+        var lexicon = DataFiles.ReadLexicon(DataFiles.Data("lexicon/lexicon.tsv"));
+
+        // Act: count the non-disputed tokens whose gold tag the lexicon allows
+        var (tokens, covered) = MeasureCoverage("open/dev.tsv", lexicon);
+
+        // Assert: the coverage is at least 99.9 percent
+        Assert.True(tokens > 20000, "open/dev.tsv");
+        Assert.True(covered * 1000 >= tokens * 999, $"open/dev.tsv: {covered} of {tokens} tokens are covered");
+    }
+
+    /// <summary>
+    ///     Proves that the lexicon rows are valid (a spelling and alphabetical Universal POS tags), sorted by UTF-8 bytes
+    ///     and unique.
     /// </summary>
     [Fact]
     public void PartOfSpeech_Lexicon_Format_RowsAreSortedUniqueAndValid()
     {
-        // Arrange: the lexicon lines and a place for the problems
-        var lines = File.ReadLines(DataFiles.Data("lexicon/lexicon.tsv")).ToList();
+        // Arrange: the lexicon rows and a place for the problems
+        var rows = LexiconRows();
         var problems = new List<string>();
         string? previous = null;
-        var spellings = 0;
-        var entries = 0;
 
         // Act: check every row
-        foreach (var line in lines.Where(line => line.Length > 0 && !DataFiles.IsComment(line)))
+        foreach (var line in rows)
         {
             var cells = line.Split('\t');
             var tags = cells.Length == 2 ? cells[1].Split(' ') : Array.Empty<string>();
@@ -465,14 +764,29 @@ public class PartOfSpeechDataTests
             }
 
             previous = cells[0];
-            spellings++;
-            entries += tags.Length;
         }
 
+        // Assert: the lexicon is not empty and every row is valid
+        Assert.True(rows.Count > 200000);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the counts of spellings and tag entries in the header of the lexicon are the counts of its rows.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Lexicon_Format_HeaderCountsMatchRows()
+    {
+        // Arrange: the lexicon rows and the counts that the header states
+        var lines = File.ReadLines(DataFiles.Data("lexicon/lexicon.tsv")).ToList();
+        var rows = LexiconRows();
         var header = Regex.Match(string.Join("\n", lines.Where(DataFiles.IsComment)), @"spellings=(\d+), tag entries=(\d+)");
 
-        // Assert: the rows are valid and the header counts match
-        Assert.Empty(problems.Take(ShownProblems));
+        // Act: count the spellings and the tag entries of the rows
+        var spellings = rows.Count;
+        var entries = rows.Sum(line => line.Substring(line.IndexOf('\t') + 1).Split(' ').Length);
+
+        // Assert: the header states the counts of the rows
         Assert.True(header.Success);
         Assert.Equal(spellings, int.Parse(header.Groups[1].Value, CultureInfo.InvariantCulture));
         Assert.Equal(entries, int.Parse(header.Groups[2].Value, CultureInfo.InvariantCulture));
@@ -514,6 +828,27 @@ public class PartOfSpeechDataTests
     private static string Collapse(string text) => Regex.Replace(text, @"\s+", " ");
 
     /// <summary>
+    ///     Gets one section of the third-party notice, from its heading to the next heading of the same level, with white
+    ///     space collapsed so that line wrapping does not matter.
+    /// </summary>
+    /// <param name="heading">The Markdown heading line, for example <c>## Open English WordNet</c>.</param>
+    private static string NoticeSection(string heading)
+    {
+        var text = File.ReadAllText(DataFiles.Repository("THIRD-PARTY-NOTICES.md")).Replace("\r\n", "\n");
+        var start = text.IndexOf("\n" + heading + "\n", StringComparison.Ordinal);
+        Assert.True(start >= 0, "THIRD-PARTY-NOTICES.md has no section " + heading);
+        var level = heading.IndexOf(' ');
+        var next = Regex.Match(text.Substring(start + 1), @"\n#{1," + level.ToString(CultureInfo.InvariantCulture) + "} ");
+        return Collapse(next.Success ? text.Substring(start, next.Index + 1) : text.Substring(start));
+    }
+
+    /// <summary>
+    ///     Finds the required fragments that a text lacks, ignoring differences in white space.
+    /// </summary>
+    private static List<string> MissingFragments(string text, IEnumerable<string> required) =>
+        required.Where(fragment => text.IndexOf(Collapse(fragment), StringComparison.Ordinal) < 0).ToList();
+
+    /// <summary>
     ///     Determines whether a folder is left out of the search for restricted files: repository metadata, dependencies,
     ///     build output and the git-ignored download cache of the data tools.
     /// </summary>
@@ -544,19 +879,121 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
-    ///     Finds the rows of a source table that mention a restricted license.
+    ///     Reads the document ids of a source table.
     /// </summary>
-    private static IEnumerable<string> RestrictedTextProblems(string table)
+    private static HashSet<string> SourceIds(string table, string idColumn) =>
+        new(DataFiles.ReadTable(DataFiles.Data(table)).Column(idColumn), StringComparer.Ordinal);
+
+    /// <summary>
+    ///     Finds the documents of a data set that its source list does not name.
+    /// </summary>
+    private static IEnumerable<string> MissingDocuments(string label, IEnumerable<string> documents, HashSet<string> listed) =>
+        documents.Distinct().Where(document => !listed.Contains(document)).Select(document => $"{label}: not in the source list: {document}");
+
+    /// <summary>
+    ///     Finds the problems of the MASC source table: the id and genre of every row, the license class, and the
+    ///     sentence and token counts, which must equal the counts of the document in <c>masc.tsv</c> (and so sum to the
+    ///     totals of the file).
+    /// </summary>
+    private static IEnumerable<string> MascSourceProblems()
     {
-        var path = DataFiles.Data(table);
-        if (!File.Exists(path))
+        var counts = DataFiles.ReadCorpus(DataFiles.Data("masc/masc.tsv"))
+            .GroupBy(sentence => sentence.SourceId)
+            .ToDictionary(group => group.Key, group => (Sentences: group.Count(), Tokens: group.Sum(sentence => sentence.Tokens.Count)), StringComparer.Ordinal);
+        var data = DataFiles.ReadTable(DataFiles.Data("masc/sources.tsv"));
+        var sentenceTotal = 0;
+        var tokenTotal = 0;
+        foreach (var row in data.Rows)
         {
-            return new[] { "missing: data/" + table };
+            var id = data.Cell(row, "source_id");
+            var match = MascDocument.Match(id);
+            if (!match.Success || match.Groups[1].Value != data.Cell(row, "genre"))
+            {
+                yield return $"data/masc/sources.tsv: {id}: the id is malformed or does not match the genre '{data.Cell(row, "genre")}'";
+            }
+
+            if (data.Cell(row, "license_basis") != MascLicenseBasis)
+            {
+                yield return $"data/masc/sources.tsv: {id}: license class is not {MascLicenseBasis}";
+            }
+
+            var sentences = int.TryParse(data.Cell(row, "sentences"), NumberStyles.None, CultureInfo.InvariantCulture, out var s) ? s : 0;
+            var tokens = int.TryParse(data.Cell(row, "tokens"), NumberStyles.None, CultureInfo.InvariantCulture, out var t) ? t : 0;
+            if (sentences <= 0 || tokens <= 0)
+            {
+                yield return $"data/masc/sources.tsv: {id}: the sentence or token count is not a positive number";
+            }
+
+            if (!counts.TryGetValue(id, out var actual) || actual.Sentences != sentences || actual.Tokens != tokens)
+            {
+                yield return $"data/masc/sources.tsv: {id}: the counts differ from masc.tsv";
+            }
+
+            sentenceTotal += sentences;
+            tokenTotal += tokens;
         }
 
-        return File.ReadLines(path)
-            .Where(line => line.Length > 0 && line[0] != '#' && RestrictedLicenseText.IsMatch(line))
-            .Select(line => $"data/{table}: restricted license text in row: {line.Substring(0, Math.Min(80, line.Length))}");
+        if (sentenceTotal != counts.Values.Sum(count => count.Sentences) || tokenTotal != counts.Values.Sum(count => count.Tokens))
+        {
+            yield return "data/masc/sources.tsv: the counts do not sum to the totals of masc.tsv";
+        }
+    }
+
+    /// <summary>
+    ///     Finds the problems of one row of a source table.
+    /// </summary>
+    private static IEnumerable<string> SourceRowProblems(string table, DataTable data, string[] row, string idColumn)
+    {
+        var id = data.Cell(row, idColumn);
+        var license = data.Cell(row, "license_basis");
+        if (!AllowedLicenseBases.Any(basis => license.StartsWith(basis, StringComparison.Ordinal)))
+        {
+            yield return $"data/{table}: {id}: license class is not allowed: {license.Substring(0, Math.Min(60, license.Length))}";
+        }
+
+        var url = data.Cell(row, "url");
+        if (url.Length == 0 ? data.Cell(row, "family") != "project-written" : !IsWellFormedUrl(url))
+        {
+            yield return $"data/{table}: {id}: url is empty or malformed: '{url}'";
+        }
+
+        if (Array.IndexOf(data.Columns, "terms_url") >= 0 && !IsWellFormedUrl(data.Cell(row, "terms_url")))
+        {
+            yield return $"data/{table}: {id}: terms_url is empty or malformed";
+        }
+
+        if (!int.TryParse(data.Cell(row, "sentences"), NumberStyles.None, CultureInfo.InvariantCulture, out var sentences) || sentences <= 0)
+        {
+            yield return $"data/{table}: {id}: the sentence count is not a positive number";
+        }
+    }
+
+    /// <summary>
+    ///     Determines whether a text is an absolute HTTPS URL without white space.
+    /// </summary>
+    private static bool IsWellFormedUrl(string text) =>
+        Uri.TryCreate(text, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps && !text.Any(char.IsWhiteSpace);
+
+    /// <summary>
+    ///     Reads the rows of the checksum manifest: path, bytes, SHA-256, lines and sentences.
+    /// </summary>
+    private static List<string[]> ReadManifest() =>
+        File.ReadLines(DataFiles.Data("MANIFEST.tsv"))
+            .Where(line => line.Length > 0 && !DataFiles.IsComment(line))
+            .Select(line => line.Split('\t'))
+            .ToList();
+
+    /// <summary>
+    ///     Lists the data files that the manifest covers, relative to the data folder: all files except Markdown files,
+    ///     the manifest itself and the git-ignored local FAA file.
+    /// </summary>
+    private static List<string> ManifestedFilesOnDisk()
+    {
+        var dataRoot = DataFiles.Data(string.Empty).TrimEnd('/', '\\');
+        return DataFiles.EnumerateFiles(dataRoot, _ => false)
+            .Select(file => DataFiles.RelativePath(file).Substring("data/".Length))
+            .Where(path => path != "MANIFEST.tsv" && !path.EndsWith(".md", StringComparison.Ordinal) && path != "silver/silver-faa.tsv")
+            .ToList();
     }
 
     /// <summary>
@@ -577,9 +1014,9 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
-    ///     Finds the problems of the tokens of one sentence of a token-level corpus.
+    ///     Finds the tokens of one sentence of a token-level corpus that do not carry a Universal POS tag.
     /// </summary>
-    private static IEnumerable<string> TokenProblems(string corpus, CorpusSentence sentence)
+    private static IEnumerable<string> TagProblems(string corpus, CorpusSentence sentence)
     {
         foreach (var token in sentence.Tokens)
         {
@@ -590,13 +1027,37 @@ public class PartOfSpeechDataTests
                 yield return $"{corpus}: {sentence.SentenceId}: invalid token row '{string.Join("|", token)}'";
             }
         }
-
-        var rejoined = string.Concat(sentence.Tokens.Select(token => token[0]));
-        if (rejoined != sentence.Text.Replace(" ", string.Empty))
-        {
-            yield return $"{corpus}: {sentence.SentenceId}: tokens do not rejoin to the text";
-        }
     }
+
+    /// <summary>
+    ///     Counts the non-disputed tokens of a corpus and those whose gold tag the lexicon allows.
+    /// </summary>
+    private static (long Tokens, long Covered) MeasureCoverage(string corpus, IReadOnlyDictionary<string, string[]> lexicon)
+    {
+        long tokens = 0;
+        long covered = 0;
+        foreach (var token in DataFiles.ReadCorpus(DataFiles.Data(corpus)).SelectMany(sentence => sentence.Tokens))
+        {
+            if (token[2] == "disputed")
+            {
+                continue;
+            }
+
+            tokens++;
+            if (DataFiles.IsTagAllowed(token[0], token[1], lexicon))
+            {
+                covered++;
+            }
+        }
+
+        return (tokens, covered);
+    }
+
+    /// <summary>
+    ///     Reads the rows of the lexicon (every line that is not empty and not a comment).
+    /// </summary>
+    private static List<string> LexiconRows() =>
+        File.ReadLines(DataFiles.Data("lexicon/lexicon.tsv")).Where(line => line.Length > 0 && !DataFiles.IsComment(line)).ToList();
 
     /// <summary>
     ///     Reads the sets, documents and sentences of all evaluation sets.

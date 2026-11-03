@@ -23,20 +23,22 @@ attribution and the statement of changes are in [ATTRIBUTION.md](ATTRIBUTION.md)
   skips the macOS resource-fork files (`._*`) and the spoken genre, maps every pre-terminal of every tree to UPOS with
   the table in [../CONVENTIONS.md](../CONVENTIONS.md) (a new function, `ptb_to_upos`; the tree walker is an adaptation
   of the one used for the earlier WordSense experiments, and the clitics stay split), keeps sentences of 3 to 70 tokens
-  and writes the files below. The re-run is bit-identical.
+  and writes the files below (including the source inventory `sources.tsv`). The re-run is bit-identical.
 
 ## Files
 
 | File | Content |
 | --- | --- |
-| `masc.tsv` | 22,933 sentences, 386,837 tokens, 370 documents of 15 written genres, in the shared corpus format; column 4 is the Penn tag; a `# genre = ...` comment per sentence |
-| `excluded-documents.tsv` | the 5 documents left out because a sentence of the document is also in an evaluation set (ids only) |
+| `masc.tsv` | 22,829 sentences, 386,445 tokens, 370 documents of 15 written genres, in the shared corpus format; column 4 is the Penn tag; a `# genre = ...` comment per sentence |
+| `excluded-documents.tsv` | the 5 documents left out because a sentence of the document (25 or more key characters) is also in an evaluation set (ids only) |
+| `dropped-sentences.tsv` | the 104 short sentences (key shorter than 25 characters) left out because the sentence equals an evaluation sentence (ids only) |
+| `sources.tsv` | one row per document that contributes at least one sentence to `masc.tsv` (370 rows): document id, genre, license class (`CC BY 3.0 US`), sentence and token counts |
 | `mapping-audit.tsv` | Penn tag by UPOS counts and the 30 most frequent disagreements with the open training split |
 | `ATTRIBUTION.md` | CC BY 3.0 US attribution, license link and statement of changes |
 
-Tokens by genre: blog 28,593; email 36,796; essays 23,229; ficlets 31,068; fiction 37,285; govt-docs 23,732;
-jokes 30,455; journal 22,243; letters 25,413; movie-script 18,354; newspaper 29,469; non-fiction 22,014;
-technical 10,466; travel-guides 23,896; twitter 23,824. The spoken genre (about 51,000 tokens of transcripts with
+Tokens by genre: blog 28,561; email 36,717; essays 23,229; ficlets 30,977; fiction 37,156; govt-docs 23,732;
+jokes 30,440; journal 22,243; letters 25,397; movie-script 18,336; newspaper 29,463; non-fiction 22,014;
+technical 10,466; travel-guides 23,893; twitter 23,821. The spoken genre (about 51,000 tokens of transcripts with
 disfluencies) is not used.
 
 ## Caveat: How the Part-of-Speech Layer Was Validated
@@ -61,17 +63,22 @@ before keeping MASC in the final training mix. Source tags are kept in column 4 
 
 ## Genres and License Basis
 
+The corpus carries one license for all its documents, so the per-document table `sources.tsv` records the same class
+(`CC BY 3.0 US`) for every row; its value is the inventory: a document that is not listed there cannot be in `masc.tsv`
+(the unit tests and `tools/data/check_licenses.py` enforce this, and that the row counts equal the counts of `masc.tsv`).
 Only the written genres are used. The license statement of the corpus (CC BY 3.0 US) covers all of MASC; no genre is
 excluded for licensing reasons, and no Wikipedia, share-alike or non-commercial file name appears in the data. From the
 file names, the technical genre consists of open-access journal articles (`journal.pbio.*`, `pmed.*`, `1468-*`, `1471-*`;
 we did not check the article licenses one by one); the newspaper genre (53 documents, file names `nyt/*` and `apw_eng/*`,
-29,469 tokens, 7.6 percent of the tokens) rests on the ANC's statement alone. If the project owner prefers to rely on more
+29,463 tokens, 7.6 percent of the tokens) rests on the ANC's statement alone. If the project owner prefers to rely on more
 than that statement, re-run the import with `--exclude-genre newspaper`.
 
 ## Leakage
 
-Documents that share a sentence (at least 25 alphanumeric characters, compared case-insensitively) with an evaluation set
-were removed whole: open dev and test, gold v2, the shape probe, the STE challenge set, and UD English-EWT train, dev and
-test (fetched into the git-ignored cache; only counts and MASC ids are recorded). Five email documents were removed
-(`excluded-documents.tsv`): one overlapping UD English-EWT dev and four overlapping UD English-EWT train. MASC and
-UD English-EWT share Enron email text.
+No MASC sentence equals a sentence of an evaluation set, whatever its length (comparison of the lower-case alphanumerics):
+open dev and test, gold v2, the shape probe, the STE challenge set, and UD English-EWT train, dev and test (fetched into
+the git-ignored cache; only counts and MASC ids are recorded). A match of at least 25 key characters means shared source
+text, so the whole document was removed: five email documents (`excluded-documents.tsv`), one overlapping UD English-EWT
+dev and four overlapping UD English-EWT train. MASC and UD English-EWT share Enron email text. A shorter match is a
+sentence that recurs in unrelated texts (`Thank you .`, `What should I do ?`), so only that sentence was dropped:
+104 sentences with 392 tokens (`dropped-sentences.tsv`), each sentence of a treebank file being independent of the others.

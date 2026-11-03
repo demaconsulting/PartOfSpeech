@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
 
     <!-- NuGet Package Configuration -->
-    <PackageId>PartOfSpeech</PackageId>
+    <PackageId>DemaConsulting.PartOfSpeech</PackageId>
     <Version>0.0.0</Version>
     <Authors>DEMA Consulting</Authors>
     <Company>DEMA Consulting</Company>

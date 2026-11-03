@@ -113,18 +113,49 @@ sections:
 
   - title: Data and Licensing
     requirements:
-      - id: PartOfSpeech-Licensing-ThirdPartyNotices
+      - id: PartOfSpeech-Licensing-NoticeAttributesMasc
         title: >-
-          The package shall include a third-party notice that attributes the MASC corpus and the Open English WordNet
-          (title, creator, source link, license link, and the fact that the data was converted) and reproduces the
-          Princeton WordNet license.
+          The package shall include a third-party notice that attributes the MASC corpus with its title, creators,
+          source link, license link and citation.
         tags: [system]
         justification: |
-          The Creative Commons Attribution licenses of MASC and Open English WordNet, and the Princeton WordNet license
-          that Open English WordNet carries, require attribution, a link to the license, an indication of changes, and
-          the license notice itself to accompany every copy of the data or of a work derived from it.
+          The Creative Commons Attribution 3.0 United States license of MASC requires attribution to its creators, a
+          link to the license and an indication of the source to accompany every copy of the data or of a work derived
+          from it.
         tests:
-          - PartOfSpeech_ThirdPartyNotices_Content_AttributesMascAndOpenEnglishWordNet
+          - PartOfSpeech_ThirdPartyNotices_Masc_IsAttributed
+
+      - id: PartOfSpeech-Licensing-NoticeAttributesOewn
+        title: >-
+          The package shall include a third-party notice that attributes Open English WordNet with its title, creator,
+          source links and license link.
+        tags: [system]
+        justification: |
+          The Creative Commons Attribution 4.0 International license of Open English WordNet requires attribution to its
+          creators, a link to the license and an indication of the source to accompany every copy of the data or of a
+          work derived from it.
+        tests:
+          - PartOfSpeech_ThirdPartyNotices_OpenEnglishWordNet_IsAttributed
+
+      - id: PartOfSpeech-Licensing-NoticeStatesChanges
+        title: >-
+          The third-party notice shall state that the MASC data and the Open English WordNet data were converted by this
+          project.
+        tags: [system]
+        justification: |
+          Both Creative Commons Attribution licenses require an indication of whether the licensed material was
+          modified, and the converted data is not the original data.
+        tests:
+          - PartOfSpeech_ThirdPartyNotices_Changes_AreStated
+
+      - id: PartOfSpeech-Licensing-NoticePrincetonLicense
+        title: The third-party notice shall reproduce the Princeton WordNet license.
+        tags: [system]
+        justification: |
+          Open English WordNet carries the Princeton WordNet license, which requires its copyright notice, license text
+          and disclaimer to appear in all copies of the database and of its derivatives.
+        tests:
+          - PartOfSpeech_ThirdPartyNotices_PrincetonLicense_IsReproduced
 
       - id: PartOfSpeech-Licensing-NoticePackaged
         title: The third-party notice shall be packed at the root of the NuGet package.
@@ -135,62 +166,192 @@ sections:
         tests:
           - PartOfSpeech_ThirdPartyNotices_Packaging_NoticeIsPackedAtPackageRoot
 
+      - id: PartOfSpeech-Licensing-FoldersDeclareLicense
+        title: >-
+          Each data folder shall declare a license that is CC0, CC BY, public domain or the project license.
+        tags: [system]
+        justification: |
+          The library and its data are distributed under permissive terms. A folder without a declared license, or with
+          one outside this set, would leave its users without a clear grant of rights.
+        tests:
+          - PartOfSpeech_DataLicensing_Folders_DeclareAllowedLicenses
+
       - id: PartOfSpeech-Licensing-OpenLicensesOnly
         title: >-
-          The repository shall contain training and evaluation data only under CC0, CC BY, public-domain or project
-          licenses, with no share-alike or non-commercial data, and UD English-EWT shall not be committed.
+          No source document of the training and evaluation data shall be recorded under a share-alike,
+          non-commercial or no-derivatives license.
         tags: [system]
         justification: |
-          The library and its data are distributed under permissive terms. Share-alike, non-commercial and
-          no-derivatives data would impose conditions on the library and its users that the project does not accept, and
-          UD English-EWT (CC BY-SA 4.0) is used for evaluation only.
+          Share-alike, non-commercial and no-derivatives data would impose conditions on the library and its users that
+          the project does not accept.
         tests:
-          - PartOfSpeech_DataLicensing_Folders_DeclareAllowedLicensesOnly
-          - PartOfSpeech_DataLicensing_Tree_ContainsNoRestrictedCorpusFiles
+          - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
 
-      - id: PartOfSpeech-Data-Provenance
-        title: >-
-          Each training and evaluation data source shall be committed with a record of its origin, license, and how it
-          was produced, and its files shall match recorded checksums.
+      - id: PartOfSpeech-Licensing-UdEwtNotCommitted
+        title: The repository shall not contain any UD English-EWT data.
         tags: [system]
         justification: |
-          Reviewers and consumers must be able to establish where each data set came from, under which license, and
-          that the committed files are the files that were produced and reviewed, so that results are reproducible and
-          silent changes are detected.
+          UD English-EWT is licensed CC BY-SA 4.0, a share-alike license, so it is used for evaluation only and is
+          fetched on demand instead of being redistributed.
         tests:
-          - PartOfSpeech_DataProvenance_Folders_HaveReadmeLicenseAndSource
+          - PartOfSpeech_DataLicensing_UdEwt_IsNotCommitted
+
+      - id: PartOfSpeech-Licensing-RestrictedCorporaNotCommitted
+        title: The repository shall not contain any SemCor or Brown corpus data.
+        tags: [system]
+        justification: |
+          SemCor and the Brown corpus are available only under restricted or fair-use-only terms that do not allow
+          redistribution with the library.
+        tests:
+          - PartOfSpeech_DataLicensing_RestrictedCorpora_AreNotCommitted
+
+      - id: PartOfSpeech-Data-ReadmeRecordsProvenance
+        title: >-
+          Each data folder shall have a README that records the source of the data, its license, the pinned input and
+          the script that produced it.
+        tags: [system]
+        justification: |
+          Reviewers and consumers must be able to establish where each data set came from, under which license, and how
+          it was produced, so that results are reproducible.
+        tests:
+          - PartOfSpeech_DataProvenance_Readmes_RecordSourceAndProduction
+
+      - id: PartOfSpeech-Data-SourcesListDocuments
+        title: >-
+          Every source document of the training and evaluation data shall appear in the source list of its data folder.
+        tags: [system]
+        justification: |
+          A document that no source list names has no recorded origin or license basis, so its use cannot be justified.
+        tests:
+          - PartOfSpeech_DataProvenance_Sources_ListEveryDocument
+
+      - id: PartOfSpeech-Data-SourceRowsRecordLicense
+        title: >-
+          Every row of a source list shall record an allowed license class and a positive sentence count and, except in
+          the list of MASC, a well-formed URL.
+        tags: [system]
+        justification: |
+          A source row is the evidence for the license of a document; an unknown license class or a link that cannot be
+          followed leaves that evidence unusable. MASC is one corpus with one license, so its list records that license
+          and the counts of each document, which must equal the counts of the corpus file.
+        tests:
+          - PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl
+
+      - id: PartOfSpeech-Data-ManifestComplete
+        title: The checksum manifest shall list exactly the committed data files.
+        tags: [system]
+        justification: |
+          A data file that the manifest does not list can change without notice, and a listed file that is missing
+          shows that the manifest is out of date.
+        tests:
+          - PartOfSpeech_DataProvenance_Manifest_ListsExactlyTheCommittedFiles
+
+      - id: PartOfSpeech-Data-ChecksumsMatch
+        title: Each committed data file shall match the size and SHA-256 recorded in the checksum manifest.
+        tags: [system]
+        justification: |
+          Reviewers must be able to establish that the committed files are the files that were produced and reviewed, so
+          that silent changes are detected.
+        tests:
           - PartOfSpeech_DataProvenance_Manifest_ChecksumsMatchCommittedFiles
 
       - id: PartOfSpeech-Data-UniversalTags
-        title: >-
-          Every committed token-level corpus shall be labeled with the 17 Universal POS tags only, and every committed
-          single-target evaluation set shall be labeled with the coarse classes that the Universal POS tags map to.
+        title: Every committed token-level corpus shall be labeled with the 17 Universal POS tags only.
         tags: [system]
         justification: |
           The library tags text with the 17 Universal POS tags. Training and evaluation data in any other tag set would
           require undocumented conversion and would make accuracy measurements incomparable.
         tests:
           - PartOfSpeech_TrainingData_Corpora_UseOnlySeventeenUposTags
-          - PartOfSpeech_EvaluationData_SingleTargetSets_UseOnlyDocumentedClasses
 
-      - id: PartOfSpeech-Data-EvaluationIsolation
-        title: No training document or sentence shall appear in any committed evaluation set.
+      - id: PartOfSpeech-Data-TokensRejoinSentence
+        title: >-
+          The tokens of every sentence of each committed token-level corpus shall concatenate, ignoring spaces, to the
+          text of the sentence.
         tags: [system]
         justification: |
-          Accuracy measured on sentences or documents that the tagger was trained on overstates its quality, so the
-          evaluation sets must be disjoint from the training data.
+          The token rows are the training and evaluation signal and the sentence text is the record of the source. A
+          token that was dropped, split differently or altered would silently mislabel the data or change what the
+          tagger is measured on, so the two must agree for every sentence.
         tests:
-          - PartOfSpeech_Leakage_TrainingVersusEvaluation_NoSharedDocumentOrSentence
+          - PartOfSpeech_TrainingData_Corpora_TokensRejoinToSentenceText
+
+      - id: PartOfSpeech-Data-CoarseClasses
+        title: >-
+          Every committed single-target evaluation set shall be labeled with the documented coarse classes only.
+        tags: [system]
+        justification: |
+          The single-target sets label one word per sentence with a coarse class that the Universal POS tags map to. A
+          label outside the documented classes could not be compared with the tagger output.
+        tests:
+          - PartOfSpeech_EvaluationData_SingleTargetSets_UseOnlyDocumentedClasses
+
+      - id: PartOfSpeech-Data-NoSharedDocument
+        title: No training document shall be an evaluation document.
+        tags: [system]
+        justification: |
+          Accuracy measured on documents that the tagger was trained on overstates its quality, so the evaluation sets
+          must be disjoint from the training data by document.
+        tests:
+          - PartOfSpeech_Leakage_Documents_TrainingAndEvaluationAreDisjoint
+
+      - id: PartOfSpeech-Data-NoSharedSentence
+        title: No training sentence, of any length, shall appear in any committed evaluation set.
+        tags: [system]
+        justification: |
+          Accuracy measured on sentences that the tagger was trained on overstates its quality, and a short sentence is
+          as much an exact duplicate as a long one, so the evaluation sets must be disjoint from the training data by
+          sentence.
+        tests:
+          - PartOfSpeech_Leakage_Sentences_TrainingAndEvaluationAreDisjoint
+
+      - id: PartOfSpeech-Data-LeakageReportClean
+        title: >-
+          The committed leakage report shall show no document overlap and no exact sentence overlap between any training
+          set and any evaluation set, UD English-EWT included.
+        tags: [system]
+        justification: |
+          UD English-EWT is not committed, so the committed report is the evidence that the training data was checked
+          against it; the report must show that no overlap remains.
+        tests:
           - PartOfSpeech_Leakage_Report_RecordsNoOverlaps
 
-      - id: PartOfSpeech-Data-LexiconCoverage
+      - id: PartOfSpeech-Data-LexiconTrainCoverage
         title: >-
-          The lexicon shall allow the gold tag for at least 99.9% of the non-disputed tokens of the training and
-          development sets.
+          The lexicon shall allow the gold tag for at least 99.9% of the non-disputed tokens of the training set.
         tags: [system]
         justification: |
           The lexicon restricts the tags that the tagger considers for a known word. A restriction that excludes the
           correct tag more than once in a thousand tokens would cap the accuracy of the tagger below its target.
         tests:
-          - PartOfSpeech_Lexicon_Coverage_TrainAndDev_MeetsThreshold
+          - PartOfSpeech_Lexicon_Coverage_Train_MeetsThreshold
+
+      - id: PartOfSpeech-Data-LexiconDevCoverage
+        title: >-
+          The lexicon shall allow the gold tag for at least 99.9% of the non-disputed tokens of the development set.
+        tags: [system]
+        justification: |
+          Coverage of the training set is reached by construction; coverage of the development set shows that the
+          lexicon also allows the correct tag for words that it was not built from.
+        tests:
+          - PartOfSpeech_Lexicon_Coverage_Dev_MeetsThreshold
+
+      - id: PartOfSpeech-Data-LexiconWellFormed
+        title: >-
+          The lexicon shall consist of unique rows, sorted by the bytes of their UTF-8 encoding, that each pair a
+          spelling with alphabetical Universal POS tags.
+        tags: [system]
+        justification: |
+          Consumers load the lexicon as a table of unique spellings in a fixed order; an unsorted or duplicated row or
+          an invalid tag would give wrong results for the affected spelling.
+        tests:
           - PartOfSpeech_Lexicon_Format_RowsAreSortedUniqueAndValid
+
+      - id: PartOfSpeech-Data-LexiconHeaderCounts
+        title: The header of the lexicon shall state the number of spellings and of tag entries that its rows contain.
+        tags: [system]
+        justification: |
+          Readers check the counts in the header against the rows to detect a truncated file or a header and rows that
+          come from different builds.
+        tests:
+          - PartOfSpeech_Lexicon_Format_HeaderCountsMatchRows

@@ -13,8 +13,10 @@ integrated system is exercised as it would be used by a real caller.
 System tests reside in `PartOfSpeechTests.cs` within the
 `DemaConsulting.PartOfSpeech.Tests` project. The data and licensing tests reside in `PartOfSpeechDataTests.cs` in the
 same project, with the helper `DataFiles.cs`; they read the committed data files, the project file and the third-party
-notice, and assert on their content, format and checksums. The Python tools that produce the data have developer unit
-tests in `tools/data/tests/`, which are not requirements evidence.
+notice, and assert on their content, format and checksums; each test proves one obligation of one requirement, and a test
+that finds a file missing or a table empty fails instead of passing on nothing. The Python tools that produce the data
+have developer unit tests in `tools/data/tests/`, which are not requirements evidence; they are reviewed with the
+tools in the data tools review sets (see the Companion Artifact Structure of the design introduction).
 
 ## Test Environment
 
@@ -94,13 +96,33 @@ Verifies that the `Prefix` property exposes the prefix supplied at construction 
 a `Demo` instance with a custom prefix and reads the `Prefix` property. Confirms the system's
 public API correctly surfaces the configured prefix to callers.
 
-### Licensing: Third-Party Notice Attributes MASC and Open English WordNet
+### Licensing: Notice Attributes MASC
 
-**Test**: `PartOfSpeech_ThirdPartyNotices_Content_AttributesMascAndOpenEnglishWordNet`
+**Test**: `PartOfSpeech_ThirdPartyNotices_Masc_IsAttributed`
 
-Reads `THIRD-PARTY-NOTICES.md` with white space collapsed and asserts that it contains, for MASC and for Open English
-WordNet, the title, the creators, the source link, the license name and link, and the statement that the data was
-converted, and that it reproduces the Princeton WordNet license (copyright line, disclaimer and title clause).
+Reads the MASC section of `THIRD-PARTY-NOTICES.md` with white space collapsed and asserts that it contains the title,
+the creators, the source link, the name and link of the license and the citation of the corpus.
+
+### Licensing: Notice Attributes Open English WordNet
+
+**Test**: `PartOfSpeech_ThirdPartyNotices_OpenEnglishWordNet_IsAttributed`
+
+Reads the Open English WordNet section of the notice and asserts that it contains the title, the creator, the two
+source links and the name and link of the license.
+
+### Licensing: Notice States the Conversion
+
+**Test**: `PartOfSpeech_ThirdPartyNotices_Changes_AreStated`
+
+Asserts that the MASC section states that the tags were converted to Universal POS tags and that the Open English
+WordNet section states that the lexicon maps a spelling to the tags it may carry.
+
+### Licensing: Notice Reproduces the Princeton WordNet License
+
+**Test**: `PartOfSpeech_ThirdPartyNotices_PrincetonLicense_IsReproduced`
+
+Reads the Princeton WordNet section of the notice and asserts that it contains the copyright line, the disclaimer and the
+title clause of the license.
 
 ### Licensing: Notice Is Packed at the Package Root
 
@@ -109,59 +131,148 @@ converted, and that it reproduces the Princeton WordNet license (copyright line,
 Loads the library project file and asserts that exactly one item includes `THIRD-PARTY-NOTICES.md`, that the file
 exists, and that the item has `Pack` set to true and a package path that is the package root.
 
-### Licensing: Only Open Licenses Are Used
+### Licensing: Every Data Folder Declares an Allowed License
 
-**Tests**: `PartOfSpeech_DataLicensing_Folders_DeclareAllowedLicensesOnly`,
-`PartOfSpeech_DataLicensing_Tree_ContainsNoRestrictedCorpusFiles`
+**Test**: `PartOfSpeech_DataLicensing_Folders_DeclareAllowedLicenses`
 
-The first test asserts that the `README.md` of every data folder declares a license that is in the allowed set (CC0
-1.0, CC BY 3.0 US, CC BY 4.0, public domain, MIT) and that no row of the source tables names a share-alike,
-non-commercial, no-derivatives, Wikipedia or CC BY license. The second test walks the repository (without dependencies,
-build output and the git-ignored download cache) and asserts that no CoNLL-U file exists, that no path below `data/`
-names SemCor, the Brown corpus or the English Web Treebank, and that the UD English-EWT folder holds only its
+Asserts that the `README.md` of each of the seven data folders exists, declares a license, and that every license it
+declares is in the allowed set (CC0 1.0, CC BY 3.0 US, CC BY 4.0, public domain, MIT).
+
+### Licensing: No Source Has a Restricted License
+
+**Test**: `PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense`
+
+Reads the license basis of every row of the source tables of the open corpus, gold v2 and the silver data and asserts
+that none names a share-alike, non-commercial, no-derivatives, Wikipedia or CC BY license; it fails if the tables are
+empty.
+
+### Licensing: UD English-EWT Is Not Committed
+
+**Test**: `PartOfSpeech_DataLicensing_UdEwt_IsNotCommitted`
+
+Walks the repository (without dependencies, build output and the git-ignored download cache) and asserts that no
+CoNLL-U file exists, that no path below `data/` names the treebank, and that the UD English-EWT folder holds only its
 documentation.
 
-### Provenance: Sources Are Recorded and Checksums Match
+### Licensing: SemCor and Brown Are Not Committed
 
-**Tests**: `PartOfSpeech_DataProvenance_Folders_HaveReadmeLicenseAndSource`,
-`PartOfSpeech_DataProvenance_Manifest_ChecksumsMatchCommittedFiles`
+**Test**: `PartOfSpeech_DataLicensing_RestrictedCorpora_AreNotCommitted`
 
-The first test asserts that every data folder has a `README.md` with a license line and a record of the source, and that
-the source tables of the open corpus, gold v2 and silver data exist. The second test reads `data/MANIFEST.tsv` and
-asserts that it lists exactly the committed data files (Markdown files and the manifest itself excluded) and that the
-size and SHA-256 of every file match.
+Walks the data folder and asserts that no path names SemCor or the Brown corpus.
+
+### Provenance: READMEs Record Source and Production
+
+**Test**: `PartOfSpeech_DataProvenance_Readmes_RecordSourceAndProduction`
+
+For each of the eight data folders (the folder of UD English-EWT included) asserts that the `README.md` makes the
+statements that the folder's own README is structured around (for example the headings and fields for source,
+license basis, how produced, labels and sentences), that it names a pinned commit or SHA-256, and that every script of
+the data tools that it names exists. The central `data/README.md` and `data/CONVENTIONS.md` must exist.
+
+### Provenance: Every Document Is Listed in a Source List
+
+**Test**: `PartOfSpeech_DataProvenance_Sources_ListEveryDocument`
+
+Asserts that every document id of the open train, dev and test splits and of the challenge set appears in
+`open/sources.tsv`, every document of gold v2 in its `sources.tsv`, every document of the silver data in
+`silver/sources.tsv`, and every MASC document in `masc/sources.tsv` (and that every row of that list has sentences in
+`masc.tsv`). It fails when a data set or a list is empty.
+
+### Provenance: Source Rows Record License and URL
+
+**Test**: `PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl`
+
+Reads the three source tables and asserts, for every row, that the license basis begins with an allowed license class,
+that the URL (and the terms URL where the table has one) is an absolute HTTPS URL without white space (an empty URL is
+accepted only for the document that the project wrote), and that the sentence count is a positive number. For the MASC
+table (one license for the whole corpus, no URL) it asserts that the id is a written-genre document of the listed genre,
+that the license class is `CC BY 3.0 US`, that the sentence and token counts are positive and equal the counts of the
+document in `masc.tsv`, and that the counts sum to the totals of the file.
+
+### Provenance: The Manifest Lists Exactly the Data Files
+
+**Test**: `PartOfSpeech_DataProvenance_Manifest_ListsExactlyTheCommittedFiles`
+
+Reads `data/MANIFEST.tsv` and asserts that it lists exactly the committed data files (Markdown files and the manifest
+itself excluded): no file is missing from the manifest and no listed file is missing from the folder.
+
+### Provenance: Checksums Match
+
+**Test**: `PartOfSpeech_DataProvenance_Manifest_ChecksumsMatchCommittedFiles`
+
+Asserts that the size and the SHA-256 of every file that the manifest lists match the recorded values.
 
 ### Data: Only Universal POS Tags Are Used
 
-**Tests**: `PartOfSpeech_TrainingData_Corpora_UseOnlySeventeenUposTags`,
-`PartOfSpeech_EvaluationData_SingleTargetSets_UseOnlyDocumentedClasses`
+**Test**: `PartOfSpeech_TrainingData_Corpora_UseOnlySeventeenUposTags`
 
-The first test reads the training corpora and the token-level evaluation corpora and asserts that every token carries one
-of the 17 Universal POS tags (the placeholder is allowed only for masked tokens) and that the tokens of every sentence
-concatenate to its text. The second test asserts that every target of gold v2 and of the shape probe has one of the
-documented coarse classes.
+Reads the training corpora and the token-level evaluation corpora and asserts that every token carries one of the 17
+Universal POS tags (the placeholder is allowed only for masked tokens).
 
-### Data: Training and Evaluation Data Are Isolated
+### Data: Tokens Rejoin to the Sentence Text
 
-**Tests**: `PartOfSpeech_Leakage_TrainingVersusEvaluation_NoSharedDocumentOrSentence`,
-`PartOfSpeech_Leakage_Report_RecordsNoOverlaps`
+**Test**: `PartOfSpeech_TrainingData_Corpora_TokensRejoinToSentenceText`
 
-The first test collects the documents and sentence keys (lower-case letters and digits, at least 25 characters) of all
-evaluation sets and asserts that no training document and no training sentence matches. The second test asserts that the
-committed leakage report covers every training set and records zero document and zero exact sentence overlaps. The test
-`PartOfSpeech_Leakage_SentenceKey_KeepsLowerCaseLettersAndDigits` checks the sentence key on a fixture; it supports the
-isolation test and is not linked to a requirement.
+Reads the training corpora and the token-level evaluation corpora and asserts that, for every sentence, the tokens
+concatenated without spaces equal the sentence text without spaces; it fails if the corpora are empty.
 
-### Data: Lexicon Coverage Meets the Gate
+### Data: Single-Target Sets Use the Documented Classes
 
-**Tests**: `PartOfSpeech_Lexicon_Coverage_TrainAndDev_MeetsThreshold`,
-`PartOfSpeech_Lexicon_Format_RowsAreSortedUniqueAndValid`
+**Test**: `PartOfSpeech_EvaluationData_SingleTargetSets_UseOnlyDocumentedClasses`
 
-The first test reads the lexicon and asserts that, for the non-disputed tokens of the open training and development sets,
-the lexicon and the token-shape rules allow the gold tag for at least 99.9 percent of the tokens. The second test
-asserts that the lexicon rows are sorted by UTF-8 bytes, unique and valid, and that the counts in its header are
-correct. The test `PartOfSpeech_Lexicon_TokenShapeRules_AllowTagsByShape` checks the token-shape rules on a small
-fixture; it supports the coverage test and is not linked to a requirement.
+Asserts that every target of gold v2 and of the shape probe has one of the eleven documented coarse classes.
+
+### Data: No Document Is Shared
+
+**Test**: `PartOfSpeech_Leakage_Documents_TrainingAndEvaluationAreDisjoint`
+
+Collects the document ids of all evaluation sets (open dev and test, gold v2, the shape probe and the challenge set) and
+asserts that no training sentence of the open, MASC or silver corpus comes from one of them.
+
+### Data: No Sentence Is Shared
+
+**Test**: `PartOfSpeech_Leakage_Sentences_TrainingAndEvaluationAreDisjoint`
+
+Collects the sentence keys (lower-case letters and digits; a text without any has no key) of all evaluation sets and
+asserts that no training sentence has one of them, whatever the length of the key: a short sentence such as "Thank you."
+is compared like a long one. The test `PartOfSpeech_Leakage_SentenceKey_KeepsLowerCaseLettersAndDigits` checks the
+sentence key on fixtures, a short sentence included; it supports the sentence test and is not linked to a requirement.
+
+### Data: The Leakage Report Shows No Overlap
+
+**Test**: `PartOfSpeech_Leakage_Report_RecordsNoOverlaps`
+
+Reads the committed leakage report and asserts that it covers every training set against every committed evaluation set
+and the three UD English-EWT files, that every row has the six columns, and that no row records a document overlap or an
+exact sentence overlap.
+
+### Data: Lexicon Covers the Training Set
+
+**Test**: `PartOfSpeech_Lexicon_Coverage_Train_MeetsThreshold`
+
+Reads the lexicon and asserts that, for the non-disputed tokens of the open training set, the lexicon and the token-shape
+rules allow the gold tag for at least 99.9 percent of the tokens. The test
+`PartOfSpeech_Lexicon_TokenShapeRules_AllowTagsByShape` checks the token-shape rules on a small fixture; it supports the
+coverage tests and is not linked to a requirement.
+
+### Data: Lexicon Covers the Development Set
+
+**Test**: `PartOfSpeech_Lexicon_Coverage_Dev_MeetsThreshold`
+
+The same measurement for the non-disputed tokens of the open development set.
+
+### Data: Lexicon Rows Are Well Formed
+
+**Test**: `PartOfSpeech_Lexicon_Format_RowsAreSortedUniqueAndValid`
+
+Asserts that every lexicon row is a spelling with alphabetical Universal POS tags, that the rows are sorted by the bytes
+of their UTF-8 encoding and that no spelling occurs twice; it fails if the lexicon is empty.
+
+### Data: Lexicon Header Counts Match
+
+**Test**: `PartOfSpeech_Lexicon_Format_HeaderCountsMatchRows`
+
+Asserts that the counts of spellings and tag entries stated in the header of the lexicon are the counts of its rows.
 
 ## Acceptance Criteria
 
