@@ -31,12 +31,12 @@ public class TagDecoderThroughputTests
                 }
             },
             tokenCount,
-            ThroughputMeter.GateTokensPerSecond,
+            ThroughputMeter.Gate,
             out var windows);
 
-        // Assert: above the gate (the best measured rate is reported in the test output)
-        TestContext.Current.SendDiagnosticMessage($"Decoder throughput: best {rate:N0} tokens/s over {tokenCount} tokens ({sentences.Count} sentences), {windows} timed window(s).");
-        Assert.True(rate > ThroughputMeter.GateTokensPerSecond, $"best of {windows} windows: {rate:N0} tokens per second");
+        // Assert: above the gate, which is 50,000 tokens per second unless the library is instrumented for coverage (the best measured rate is reported in the test output)
+        TestContext.Current.SendDiagnosticMessage($"Decoder throughput: best {rate:N0} tokens/s over {tokenCount} tokens ({sentences.Count} sentences), {windows} timed window(s), instrumented: {(ThroughputMeter.IsInstrumented ? "yes" : "no")}, gate {ThroughputMeter.Gate:N0}.");
+        Assert.True(rate > ThroughputMeter.Gate, ThroughputMeter.Describe(rate, windows));
     }
 
     /// <summary>

@@ -44,8 +44,20 @@ Two groups of requirements need methods beyond an ordinary assertion:
   finished. The test hosts of the different target frameworks are separate processes that `dotnet test` may run at the
   same time; xUnit cannot serialize them, and the retry with backoff is the protection against that, also on a runner
   with few cores. The gate is 50,000 tokens per second; the measured rate is far higher (see Measured Results). The
-  best rate and the number of windows are written to the test output. The same method at the unit level is in
-  _TagDecoder Verification_.
+  best rate and the number of windows are written to the test output.
+
+  **Where the 50,000 figure is proven.** The 50,000 gate is enforced in every run in which the library is not
+  instrumented: `build.ps1` and any local `dotnet test`. The CI pipeline runs the tests with code coverage
+  (`--coverlet`), and coverlet rewrites the library to count the execution of every line, which slows the hot loops by a
+  factor of 20 or more (a run on the CI runner measured 49,000 tokens per second with coverage, against several hundred
+  thousand without). In an instrumented run the 50,000 gate cannot be proven, so the meter detects the instrumentation
+  (the library assembly contains coverlet's tracker type, `Coverlet.Core.Instrumentation.Tracker`, or the environment
+  variable `CORECLR_ENABLE_PROFILING` or `COR_ENABLE_PROFILING` is `1`) and applies a relaxed gate of 5,000 tokens per
+  second instead: one tenth of the requirement and about five times below the slowest instrumented rate measured (23,800
+  tokens per second), so that the test still proves that the loop is sane and fails for a loop that is an order of
+  magnitude too slow or broken. The relaxed gate is not evidence of the requirement; the evidence of the requirement is
+  the non-instrumented run. A failing assertion states the rate, whether the run was instrumented and which gate applied.
+  The same method at the unit level is in _TagDecoder Verification_.
 - **Thread safety** (`PartOfSpeech-Lib-ThreadSafe`). One tagger is shared by 8 tasks that each tag the fixture texts
   (and a text with non-ASCII characters) 200 times in different orders; every result is compared with the result of a
   sequential run (text, offsets, tags, confidences and alternatives), so that shared scratch memory, a race in a lazy
@@ -64,7 +76,9 @@ fails; only a one-time or sporadic runtime allocation is filtered out.
 - **Framework**: xUnit v3 running under the .NET SDK, on the target frameworks `net8.0`, `net9.0`, `net10.0` and
   `net481` (which stands for `netstandard2.0`)
 - **Configuration**: the throughput tests are meaningful in Release configuration, which `build.ps1` and the CI pipeline
-  use; in Debug the gate may fail on a slow machine
+  use; in Debug the gate may fail on a slow machine. The 50,000 tokens per second gate applies to runs without code
+  coverage (`build.ps1`); the CI pipeline runs with coverage and the tests then apply the relaxed gate of 5,000 tokens
+  per second (see the Throughput method above)
 - **Execution**: `dotnet test` invoked by `build.ps1` and the CI pipeline
 - **Dependencies**: No external services, databases, or network access required
 - **Isolation**: Each test method creates its own tagger and models; the embedded lexicon is a shared, immutable,
@@ -84,7 +98,7 @@ The system passes when every system test passes on every platform and target fra
 subsystem tests of all software items pass, and the ReqStream trace matrix shows every requirement covered by a passing
 test. A system test fails if any observable result differs from the expected one: a wrong or missing tag, a wrong offset,
 an exception of another type than specified, a result that differs between a sequential and a parallel run, or a
-throughput of 50,000 tokens per second or less.
+throughput of 50,000 tokens per second or less (5,000 tokens per second or less in a run with code coverage).
 
 ## External Interface Simulation
 
@@ -103,6 +117,9 @@ are information for reviewers, not acceptance values:
 - `TagDecoder.Decode`: about 410,000 to 900,000 tokens per second.
 - The values vary with the framework and with other test classes running in parallel; the lowest observed value is seven
   times the gate. Both throughput tests write their measured rate to the test output.
+- With code coverage (`dotnet test --coverlet`, as in CI), the same tests measured 24,000 to 64,000 tokens per second
+  on the development machine and 49,000 tokens per second on the CI runner (Linux, .NET 8 and .NET 9); this is why an
+  instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
 - The embedded lexicon is 641,418 bytes; the package is about 3.2 MB because the resource is embedded once per target

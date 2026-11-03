@@ -24,8 +24,12 @@ test. Nothing is mocked. Four methods deserve a description:
   a window below the gate (possibly slowed by other processes) the meter sleeps for 200 milliseconds and takes another
   window, until 30 seconds or 60 windows are used up, and then the best rate is compared with the gate. The test class
   is in the xUnit collection `Throughput` (`DisableParallelization = true`), so that it runs alone in its test host
-  after the parallel test classes. The gate is 50,000 tokens per second; the best measured rate (written to the test
-  output together with the number of windows) is several hundred thousand, usually in the first window.
+  after the parallel test classes. The gate is 50,000 tokens per second in every run without code coverage (`build.ps1`),
+  where the best measured rate (written to the test output together with the number of windows) is several hundred
+  thousand, usually in the first window. In a run with code coverage, as in CI, coverlet's instrumentation slows the
+  decoder by a factor of 20 or more (24,000 to 64,000 tokens per second measured), so the meter detects it (see
+  _System Verification_, Throughput) and applies a relaxed gate of 5,000 tokens per second; that run proves that the
+  decoder is sane, not the 50,000 requirement, which only the non-instrumented run proves.
 - **Allocation.** On .NET 8 and later, the noise-robust method of `TestSupport/AllocationMeter.cs` (warm-up of at least
   500 decodes and 0.3 seconds, then the minimum over 10 batches) reads `GC.GetAllocatedBytesForCurrentThread` before and
   after 100 decodes of a
@@ -44,7 +48,7 @@ configuration. The allocation test is not compiled for `net481`.
 All tests pass. A test fails when a tag outside the candidates is chosen, a tie is not resolved to the lowest tag, a
 confidence differs from the softmax by more than the tolerance, an alternative list is unsorted, too long or does not
 sum with the confidence to one, a constraint does not have the specified effect, the throughput is 50,000 tokens per
-second or less, or the allocation bound is exceeded.
+second or less (5,000 or less in a run with code coverage), or the allocation bound is exceeded.
 
 #### Test Scenarios
 

@@ -94,7 +94,8 @@ words:
   - WNDB
   - venv
   - pycache
-
+  # Runtime environment variable of the throughput tests that detect a profiler (CORECLR_ENABLE_PROFILING)
+  - CORECLR
 # Exclude common build artifacts, dependencies, and vendored third-party code
 ignorePaths:
   - "**/.git/**"

@@ -184,7 +184,9 @@ averaged perceptron, and writes the `POSW` file with `PerceptronModelWriter`; th
 - **Determinism**: the same input gives the same tags on every platform; scores are exact integers up to the choice of
   the tag
 - **Performance**: more than 50,000 tokens per second on one thread, with no allocation in the feature extraction and
-  only the result arrays per sentence in the decoder
+  only the result arrays per sentence in the decoder. The throughput is enforced in runs without code coverage; coverage
+  instrumentation slows the hot loops too much to prove it, so a run with coverage (CI) applies a relaxed gate (see the
+  verification document)
 - **Package size**: the lexicon resource is about 0.64 MB and is embedded once per target framework, so the package is
   about 3.2 MB; the trained weights of a later release are expected to add about 1 MB per target framework
 - **Open licenses only**: No share-alike, non-commercial or no-derivatives data; attribution notices for every

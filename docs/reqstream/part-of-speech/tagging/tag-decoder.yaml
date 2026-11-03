@@ -72,7 +72,9 @@ sections:
                   The decoder shall tag more than 50,000 tokens per second on one thread with a model of realistic size.
                 justification: |
                   The decoder is the hot path of the library; the bound is the unit-level proof of the system throughput
-                  requirement with a model that has the size of a trained one.
+                  requirement with a model that has the size of a trained one. The bound is enforced in runs without
+                  code coverage and relaxed to 5,000 tokens per second in a run with code coverage (see the
+                  verification document).
                 tests:
                   - TagDecoder_Decode_SyntheticModel_ExceedsFiftyThousandTokensPerSecond
 

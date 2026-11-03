@@ -147,7 +147,10 @@ sections:
         justification: |
           Callers tag large collections of text; a tagger that is orders of magnitude slower than this bound would make
           that impractical. The bound is far below the measured speed so that a loaded build machine does not make the
-          test fail.
+          test fail. The bound is enforced in runs without code coverage; in a run with code coverage (the CI
+          pipeline), whose instrumentation slows the hot loops by a factor of 20 or more, the tests apply a relaxed
+          bound of 5,000 tokens per second, and the verification document states that only the run without coverage
+          proves the 50,000 figure.
         children:
           - PartOfSpeech-Tagging-TagDecoder-Throughput
           - PartOfSpeech-Tagging-TagDecoder-NoAllocation

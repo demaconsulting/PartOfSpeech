@@ -32,11 +32,11 @@ public class PartOfSpeechThroughputTests
                 }
             },
             tokenCount,
-            ThroughputMeter.GateTokensPerSecond,
+            ThroughputMeter.Gate,
             out var windows);
 
-        // Assert: the gate is 50,000 tokens per second (several hundred thousand are expected); the best measured rate goes to the output
-        TestContext.Current.SendDiagnosticMessage($"Tagger throughput (pre-tokenized, one thread): best {rate:N0} tokens/s over {tokenCount} tokens, {windows} timed window(s).");
-        Assert.True(rate > ThroughputMeter.GateTokensPerSecond, $"best of {windows} windows: {rate:N0} tokens per second");
+        // Assert: the gate is 50,000 tokens per second (several hundred thousand are expected) unless the library is instrumented for coverage
+        TestContext.Current.SendDiagnosticMessage($"Tagger throughput (pre-tokenized, one thread): best {rate:N0} tokens/s over {tokenCount} tokens, {windows} timed window(s), instrumented: {(ThroughputMeter.IsInstrumented ? "yes" : "no")}, gate {ThroughputMeter.Gate:N0}.");
+        Assert.True(rate > ThroughputMeter.Gate, ThroughputMeter.Describe(rate, windows));
     }
 }
