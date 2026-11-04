@@ -131,6 +131,46 @@ public class PerceptronModelTests
     }
 
     /// <summary>
+    ///     Proves that the uncompressed image of a compressed file equals the file written uncompressed, so a staleness check can compare images.
+    /// </summary>
+    [Fact]
+    public void PerceptronModel_ToUncompressedImage_CompressedAndPlain_SameImageAsPlainFile()
+    {
+        // Arrange: the same model written plain, compressed and compressed with a large payload
+        var plain = SmallFile(false);
+        var packed = SmallFile(true);
+        var large = LargeCompressedFile();
+
+        // Act
+        var fromPacked = PerceptronModel.ToUncompressedImage(packed);
+        var fromPlain = PerceptronModel.ToUncompressedImage(plain);
+        var fromLarge = PerceptronModel.ToUncompressedImage(large);
+
+        // Assert: the image is the plain file itself, loads, and is also the plain form of the large file
+        Assert.Equal(plain, fromPacked);
+        Assert.Equal(plain, fromPlain);
+        Assert.Equal(0, BinaryFormat.ReadUInt16(fromLarge, 6) & BinaryFormat.FlagDeflate);
+        Assert.Equal(3000, PerceptronModel.Load(fromLarge, FeatureSet).RowCount);
+    }
+
+    /// <summary>
+    ///     Proves that an invalid file or a file of another feature set has no image.
+    /// </summary>
+    [Fact]
+    public void PerceptronModel_ToUncompressedImage_InvalidFile_Throws()
+    {
+        // Arrange: a damaged copy and a file of another feature set
+        var damaged = SmallFile(false);
+        damaged[damaged.Length - 3] ^= 0x55;
+        var otherSet = PerceptronModelWriter.Compile(18, 1f, 1f, FeatureSet + 1, SmallRows(), false);
+
+        // Act / Assert
+        Assert.Throws<InvalidDataException>(() => PerceptronModel.ToUncompressedImage(damaged));
+        Assert.Throws<InvalidDataException>(() => PerceptronModel.ToUncompressedImage(otherSet));
+        Assert.Throws<ArgumentNullException>(() => PerceptronModel.ToUncompressedImage(null!));
+    }
+
+    /// <summary>
     ///     Proves that the weights of a row are added to the matching tags and accumulate over buckets.
     /// </summary>
     [Fact]

@@ -96,6 +96,12 @@ words:
   - pycache
   # Runtime environment variable of the throughput tests that detect a profiler (CORECLR_ENABLE_PROFILING)
   - CORECLR
+  # Terms of the trainer tool: per-mille sampling shares, bijective mixing of the random generator, memberwise copies
+  - permille
+  - subsampling
+  - bijective
+  - memberwise
+  - treebanks
 # Exclude common build artifacts, dependencies, and vendored third-party code
 ignorePaths:
   - "**/.git/**"
