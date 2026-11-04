@@ -1008,6 +1008,39 @@ and a fixture test pins the documented sizes; nothing else changed (model, confi
 points are untouched) and the tripwire was not treated as a model defect because no held-out label, prediction or metric
 had been produced. The 25,086 in the protocol text above is left as written for the record.
 
+### Outcome of the held-out run (one run, results committed as produced)
+
+`evaluate` ran once (BelowNormal, one process, the treebank from a cache outside the repository, the per-token records in a
+folder outside the repository) and wrote `docs/evaluation/test-results.md` and `.json`, which were committed unchanged. The
+run printed that three stop conditions of the protocol fired. Work stopped there: nothing was tuned, fixed or re-run, and
+the results file was not deleted. What fired, with the reading of each:
+
+- **`shape-probe`: 48 harmful errors at 0.45, more than 28 (5% of the 560 rows).** This is the stop condition about the
+  model's behavior and it stands: 48 of 548 answered noun-verb decisions (86.3 per 1,000 decisions), concentrated in the
+  shapes `n-compound-head` (16), `n-subject-initial` (12), `v-imperative-initial` (12) and `n-measure` (6). It is reported as
+  a model limit, not tuned.
+- **`gold-v2-test-to-not`: gold outside the decoder's candidates for 50.00% (4 of 8 targets).** The set is the eight `to` and
+  `not` targets that are a documented convention difference and are reported separately from the headline row (as on
+  development). The protocol text applies the 1% limit to every held-out set; this view differs by construction. Whether the
+  rule should apply to this view is a decision for the protocol owner; it was not changed after seeing the result.
+- **`ud-test-raw`: gold outside the decoder's candidates for 1.68% (421 of 25,094 words).** The raw view is the treebank's
+  tags before the four convention rules of `data/CONVENTIONS.md` (the mapping changes 1,070 words); the library does not
+  produce these tags by design. The primary, mapped view is at 0.56% (140 words), under the limit. The same remark applies:
+  not changed after seeing the result.
+
+All other stop conditions held: open test accuracy 96.10% against 96.07% on development; the harmful rates per 1,000
+answered on open test at the strict (4.1) and balanced (9.3) points are below twice the pooled development rates (3.9 and
+9.9); open test ECE 0.28%; open test gold outside the candidates 0.27%.
+
+**Known defect of the report writer (not corrected, not re-run).** The header of the table "Noun-verb confusion" in
+`test-results.md` names its cells in the order noun, verb, other, but `EvalTally.Confusion` stores them as the chosen tag
+other (0), noun (1), verb (2) after each gold tag (`(gold - 1) * 3 + chosen`). The numbers are correct; only the six
+column labels are wrong. The true order is: gold noun answered other, noun, verb; gold verb answered other, noun, verb
+(the open-test row `59 | 2,379 | 32 | 45 | 59 | 1,839` is read as noun as other 59, noun as noun 2,379, noun as verb 32, verb as
+other 45, verb as noun 59, verb as verb 1,839, whose swaps 32 + 59 equal the 91 harmful errors of that row). Correcting the
+labels changes no figure; whether to fix the writer and re-run once (the protocol allows a re-run for a defect of the
+evaluation code) or to document the reading is a decision for the protocol owner.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
