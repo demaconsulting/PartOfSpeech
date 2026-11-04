@@ -892,6 +892,7 @@ public class PartOfSpeechDataTests
         Assert.Equal(ConfigValue(config, "imageSha256"), hash);
         Assert.Equal(int.Parse(ConfigValue(config, "hashBits"), CultureInfo.InvariantCulture), model.HashBits);
         Assert.Equal(1f / int.Parse(ConfigValue(config, "quantScale"), CultureInfo.InvariantCulture), model.Scale);
+        Assert.Equal((float)double.Parse(ConfigValue(config, "temperature"), CultureInfo.InvariantCulture), model.Temperature);
     }
 
     /// <summary>
