@@ -5,8 +5,9 @@ Part Of Speech repository.
 
 ## Overview
 
-The Part Of Speech itself has zero runtime NuGet dependencies — the `Demo` unit is
-implemented exclusively against the .NET Base Class Library. All OTS items listed below are
+The Part Of Speech itself has zero runtime NuGet dependencies — the whole library (`Upos`, `Tokenization`,
+`ModelStorage` and `Tagging`) is implemented exclusively against the .NET Base Class Library. All OTS items listed below
+are
 build-time and quality-pipeline tools, not runtime library dependencies. Each OTS item provides one
 stage of the documentation, requirements-traceability, testing, and quality-reporting pipeline
 invoked by `build.ps1`, `lint.ps1`, and the `.github/workflows/build.yaml` CI workflow. None of
@@ -16,6 +17,7 @@ these tools are linked into, or shipped with, the compiled NuGet package.
 
 | OTS Item    | Purpose                                                              |
 |-------------|----------------------------------------------------------------------|
+| ApiMark     | Generates the Markdown API reference from the XML doc comments       |
 | BuildMark   | Generates build-notes documentation from GitHub Actions metadata     |
 | FileAssert  | Validates generated documents (HTML/PDF) against acceptance criteria |
 | Pandoc      | Converts Markdown documentation to HTML                              |

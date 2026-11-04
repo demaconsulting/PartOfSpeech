@@ -6,8 +6,22 @@ input-files:
   - docs/verification/title.txt
   - docs/verification/introduction.md
   - docs/verification/part-of-speech.md
-  - docs/verification/part-of-speech/demo.md
+  - docs/verification/part-of-speech/upos.md
+  - docs/verification/part-of-speech/tokenization.md
+  - docs/verification/part-of-speech/tokenization/tokenizer.md
+  - docs/verification/part-of-speech/tokenization/sentence-splitter.md
+  - docs/verification/part-of-speech/model-storage.md
+  - docs/verification/part-of-speech/model-storage/binary-format.md
+  - docs/verification/part-of-speech/model-storage/lexicon.md
+  - docs/verification/part-of-speech/model-storage/perceptron-model.md
+  - docs/verification/part-of-speech/model-storage/embedded-model.md
+  - docs/verification/part-of-speech/tagging.md
+  - docs/verification/part-of-speech/tagging/feature-extractor.md
+  - docs/verification/part-of-speech/tagging/tag-decoder.md
+  - docs/verification/part-of-speech/tagging/token-constraint.md
+  - docs/verification/part-of-speech/tagging/tagger.md
   - docs/verification/ots.md
+  - docs/verification/ots/apimark.md
   - docs/verification/ots/buildmark.md
   - docs/verification/ots/fileassert.md
   - docs/verification/ots/pandoc.md

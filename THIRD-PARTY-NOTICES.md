@@ -4,7 +4,9 @@ PartOfSpeech is Copyright (c) DEMA Consulting and is licensed under the MIT Lice
 data of this project build on the third-party works below. Their attribution and license notices are reproduced here, and
 this file is packed at the root of the NuGet package so that the notices travel with every copy of the package. The
 data and the files derived from it are kept in the `data/` folder of the repository; compiled forms of them may be
-embedded in the package.
+embedded in the package. The package embeds a compiled form of the lexicon `data/lexicon/lexicon.tsv` (derived from Open
+English WordNet and the Moby Part-of-Speech List, with tags attested in MASC and the open corpus) as the binary resource
+that restricts the tags of known words.
 
 No Creative Commons Attribution-ShareAlike (CC BY-SA), NonCommercial or NoDerivatives material is part of this
 repository or package. The one CC BY-SA corpus that the project evaluates against is described in the last section and

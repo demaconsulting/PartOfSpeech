@@ -1,0 +1,63 @@
+---
+# Software Subsystem Requirements for Tokenization
+#
+# Tokenization turns English text into sentences and tokens in the convention of the training data.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: Tokenization Requirements
+        requirements:
+          - id: PartOfSpeech-Tokenization-TextToSentences
+            title: >-
+              The subsystem shall split a text into sentences and each sentence into tokens that are slices of the
+              original text with their offsets, and shall also accept tokens that a caller has already produced.
+            justification: |
+              The tagger works on sentences of tokens, and callers need to find each token in their own text; callers
+              that tokenize themselves must be able to skip the splitting.
+            children:
+              - PartOfSpeech-Tokenization-Tokenizer-OffsetsIndexSource
+              - PartOfSpeech-Tokenization-Tokenizer-PreTokenizedInput
+              - PartOfSpeech-Tokenization-Tokenizer-InputValidation
+              - PartOfSpeech-Tokenization-SentenceSplitter-NoTerminator
+            tests:
+              - Tokenization_Text_SplitsIntoSentencesAndTokens
+
+          - id: PartOfSpeech-Tokenization-MatchesCorpusConvention
+            title: >-
+              The tokens of a text shall follow the tokenization convention of the training data, so that at least
+              99.8 percent of the sentences of the open corpus are tokenized exactly like their gold tokens, and the
+              tokens of every sentence shall carry offsets that find them again in the original text.
+            justification: |
+              The tagger learned from text tokenized in one convention (split contractions, separate punctuation,
+              whole hyphenated words). Text tokenized in another convention would show it tokens it never saw and
+              lower its accuracy, so the convention is measured on the one corpus that has both raw text and tokens.
+            children:
+              - PartOfSpeech-Tokenization-Tokenizer-PunctuationSeparated
+              - PartOfSpeech-Tokenization-Tokenizer-ContractionsSplit
+              - PartOfSpeech-Tokenization-Tokenizer-CompoundsWhole
+              - PartOfSpeech-Tokenization-Tokenizer-AbbreviationsKeepPeriod
+              - PartOfSpeech-Tokenization-Tokenizer-Ellipsis
+              - PartOfSpeech-Tokenization-Tokenizer-UrlsAndEmail
+              - PartOfSpeech-Tokenization-Tokenizer-TypographicPunctuation
+            tests:
+              - Tokenization_OpenCorpus_ReproducesGoldTokenization
+              - Tokenization_OpenCorpus_OffsetsRoundTrip
+
+          - id: PartOfSpeech-Tokenization-SentenceBoundaries
+            title: >-
+              When consecutive sentences of a document are joined, the subsystem shall find at least 98.5 percent of
+              the boundaries that follow terminal punctuation and at least 98.5 percent of the boundaries that it
+              reports shall be correct.
+            justification: |
+              Callers tag whole texts, so a missed boundary tags two sentences as one and a false boundary cuts a
+              sentence in two; both change the tags. The measure joins the sentences of the open corpus, where the true
+              boundaries are known.
+            children:
+              - PartOfSpeech-Tokenization-SentenceSplitter-TerminalPunctuation
+              - PartOfSpeech-Tokenization-SentenceSplitter-ClosingQuotes
+              - PartOfSpeech-Tokenization-SentenceSplitter-Abbreviations
+              - PartOfSpeech-Tokenization-SentenceSplitter-LowerCaseContinuation
+              - PartOfSpeech-Tokenization-SentenceSplitter-Paragraphs
+            tests:
+              - Tokenization_JoinedDocuments_RecoverSentenceBoundaries

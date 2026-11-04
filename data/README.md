@@ -5,8 +5,10 @@
 Training data, evaluation data and the lexicon of `DemaConsulting.PartOfSpeech`: a part-of-speech tagger for .NET with the
 17 Universal POS tags. Everything here is open data with its license, provenance and production recipe recorded. The scripts
 that produce and check it are in [`tools/data/`](../tools/data/README.md); the tag set, the annotation conventions, the file
-formats and every mapping table are in [CONVENTIONS.md](CONVENTIONS.md) (normative). Nothing in this folder is consumed by
-the library at run time yet; later phases embed compact binary forms generated from it.
+formats and every mapping table are in [CONVENTIONS.md](CONVENTIONS.md) (normative). At run time the library uses only the
+lexicon, which is embedded in the package in a compact binary form generated from `lexicon/lexicon.tsv` (see
+[lexicon/README.md](lexicon/README.md), "Embedded Form"); the corpora and the evaluation sets are not shipped, and a
+later phase trains the tagger weights from them.
 
 ## Contents
 
@@ -102,6 +104,9 @@ by design; the UD check applies only when the cache is present, so a run without
 
 ## Downstream Notes
 
-- The tokenizer of phase 2 must emit the corpus tokenization (clitics split: `do` + `n't`, `John` + `'s`).
-- The lexicon is 4.5 MB of text; do not embed it raw in the package without compressing or front-coding it.
+- The tokenizer of the library emits the corpus tokenization (clitics split: `do` + `n't`, `John` + `'s`); its rules are
+  in the "Tokenizer Rules" section of [CONVENTIONS.md](CONVENTIONS.md) and the test suite checks them against the open
+  corpus.
+- The lexicon is 4.5 MB of text; the package embeds a front-coded, Deflate-compressed binary form of about 0.64 MB
+  instead (`src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`, built by `tools/LexiconCompiler`).
 - Data statistics above describe the committed files; `MANIFEST.tsv` is the authority.

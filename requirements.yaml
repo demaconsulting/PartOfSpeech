@@ -9,7 +9,20 @@ root-tags: [system, quality]
 includes:
   - docs/reqstream/quality.yaml
   - docs/reqstream/part-of-speech.yaml
-  - docs/reqstream/part-of-speech/demo.yaml
+  - docs/reqstream/part-of-speech/upos.yaml
+  - docs/reqstream/part-of-speech/tokenization.yaml
+  - docs/reqstream/part-of-speech/tokenization/tokenizer.yaml
+  - docs/reqstream/part-of-speech/tokenization/sentence-splitter.yaml
+  - docs/reqstream/part-of-speech/model-storage.yaml
+  - docs/reqstream/part-of-speech/model-storage/binary-format.yaml
+  - docs/reqstream/part-of-speech/model-storage/lexicon.yaml
+  - docs/reqstream/part-of-speech/model-storage/perceptron-model.yaml
+  - docs/reqstream/part-of-speech/model-storage/embedded-model.yaml
+  - docs/reqstream/part-of-speech/tagging.yaml
+  - docs/reqstream/part-of-speech/tagging/feature-extractor.yaml
+  - docs/reqstream/part-of-speech/tagging/tag-decoder.yaml
+  - docs/reqstream/part-of-speech/tagging/token-constraint.yaml
+  - docs/reqstream/part-of-speech/tagging/tagger.yaml
   - docs/reqstream/part-of-speech/platform-requirements.yaml
   - docs/reqstream/ots/xunit.yaml
   - docs/reqstream/ots/reqstream.yaml
@@ -22,3 +35,4 @@ includes:
   - docs/reqstream/ots/pandoc.yaml
   - docs/reqstream/ots/weasyprint.yaml
   - docs/reqstream/ots/fileassert.yaml
+  - docs/reqstream/ots/apimark.yaml

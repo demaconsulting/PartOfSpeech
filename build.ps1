@@ -20,6 +20,16 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # [PROJECT-SPECIFIC] Add additional build steps here.
 
+Write-Host "Checking the compiled lexicon..."
+dotnet run --no-build --configuration Release --project tools/LexiconCompiler -- --check
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+Write-Host "Asserting the generated API documentation..."
+dotnet tool restore
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+dotnet fileassert api-docs
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 Write-Host "Running unit tests..."
 dotnet test --configuration Release --report-trx
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

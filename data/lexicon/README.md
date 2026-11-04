@@ -82,8 +82,32 @@ A spelling that is not in `lexicon.tsv` is unknown. The tags allowed for a token
 4. a token that contains a digit also allows NUM, SYM, X, NOUN, PROPN and ADJ;
 5. a token whose first character is an upper-case letter also allows PROPN and X.
 
-`tools/data/common.py` (`allowed_tags`) implements them; the phase 2 decoder and the C# data tests must implement them
-identically. The comparison is by `lower()` of the token (Python) and ordinal lower-casing in C#.
+`tools/data/common.py` (`allowed_tags`) implements them; the C# decoder (`Lexicon.AllowedTags` in the library) and the C#
+data tests implement them identically. The comparison is by `lower()` of the token (Python) and ordinal lower-casing in C#.
+
+## Embedded Form
+
+The package does not contain `lexicon.tsv`; it embeds a compiled binary form, `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`
+(format `POSL`, version 2, little endian, raw Deflate payload; the header checksum covers the stored bytes and the reader
+requires the Deflate stream to be complete). It is 641,418 bytes for the committed lexicon (262,667
+spellings, 339,880 entries, 230 distinct tag masks) against 4,452,746 bytes of TSV. The spellings are stored sorted by
+UTF-8 bytes in blocks of 16: the first spelling of a block whole and the others front-coded against their predecessor,
+each with the index of its tag mask in a palette. A lookup is exact (no hash collisions), searches the block heads by
+binary search and scans one block; it allocates nothing. The assembly contains the resource once per target framework,
+so the NuGet package is about 3.2 MB. The byte layout is specified in the design document of the `Lexicon` unit
+(`docs/design/part-of-speech/model-storage/lexicon.md`).
+
+The binary is generated and committed, so that a clean checkout builds with nothing to run:
+
+- Regenerate it after any change of `lexicon.tsv`: `dotnet run --project tools/LexiconCompiler`
+  (options `--input` and `--output` select other files).
+- Check that it is current: `dotnet run --project tools/LexiconCompiler -- --check`. `build.ps1` runs this step, and a
+  unit test makes the same comparison, so a stale binary fails the build and the tests. The check compares the
+  uncompressed payloads because the Deflate bytes depend on the runtime.
+- The compiler refuses a table that breaks a format rule (unsorted or duplicate spellings, a space in a spelling, an
+  unknown or unordered tag) and a header whose counts do not match the rows, and names the line.
+
+The C# decoder applies the Token-Shape Rules above to the tags that it reads from the embedded lexicon.
 
 ## Coverage
 

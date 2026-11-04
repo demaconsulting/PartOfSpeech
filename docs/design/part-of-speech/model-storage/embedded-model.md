@@ -1,0 +1,48 @@
+### EmbeddedModel
+
+![ModelStorage Structure](ModelStorageView.svg)
+
+#### Purpose
+
+`EmbeddedModel` gives the library access to the data that is embedded in the assembly: the lexicon now and, in a later
+release, the trained weights. It loads each resource at most once, when it is first needed, and is safe for concurrent
+use. It is an internal static class.
+
+#### Data Model
+
+- `LexiconResourceName` (`DemaConsulting.PartOfSpeech.Resources.lexicon.bin`) and `WeightsResourceName`
+  (`DemaConsulting.PartOfSpeech.Resources.weights.bin`): the logical names of the resources. The project file assigns
+  them with `LogicalName`, so they do not depend on the root namespace or on the folder.
+- `Lazy<Lexicon>` and `Lazy<PerceptronModel?>`, both with `LazyThreadSafetyMode.ExecutionAndPublication`: one load,
+  one instance, also under concurrent first access. A load that throws is remembered and rethrown on every access.
+- The lexicon resource is generated from `data/lexicon/lexicon.tsv` by `tools/LexiconCompiler` and committed as
+  `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`; no weights resource exists in this release.
+
+#### Key Methods
+
+- **`Lexicon`** (property): returns the embedded lexicon, loading it on the first access with `Lexicon.Load`.
+- **`Weights`** (property): returns the embedded weights loaded with `PerceptronModel.Load` and the feature set version
+  of `FeatureExtractor`, or `null` when the assembly has no weights resource (this release).
+- **`OpenResource(string name)`** (internal): opens a manifest resource of the assembly; `null` when it does not exist.
+  The tests use it to compare the embedded bytes with the committed file.
+
+Postcondition of both properties: repeated calls return the same object.
+
+#### Error Handling
+
+A missing lexicon resource throws `InvalidOperationException` (the package is broken and nothing can be tagged
+correctly); a corrupt resource throws `InvalidDataException` from the reader. A missing weights resource is not an
+error: it is `null`, and `Tagger.Default` turns that into an `InvalidOperationException` with a message that tells the
+caller to load weights. Exceptions are not caught here.
+
+#### Dependencies
+
+- **Lexicon** and **PerceptronModel** (same subsystem) to read the resources.
+- **FeatureExtractor** (Tagging) for the constant `FeatureSetVersion` only. This is the one dependency from
+  ModelStorage to Tagging; it is a constant and creates no call cycle.
+- Base class library (`Lazy<T>`, manifest resources).
+
+#### Callers
+
+- **Tagger** (`Lexicon` for `Load(Stream, ...)` and `Default`, `Weights` for `Default`).
+- The test suite.

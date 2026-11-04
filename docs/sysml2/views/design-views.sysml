@@ -11,4 +11,16 @@ package PartOfSpeech {
     view PartOfSpeechView {
         expose PartOfSpeechSystem;
     }
+
+    view TokenizationView {
+        expose Tokenization;
+    }
+
+    view ModelStorageView {
+        expose ModelStorage;
+    }
+
+    view TaggingView {
+        expose Tagging;
+    }
 }

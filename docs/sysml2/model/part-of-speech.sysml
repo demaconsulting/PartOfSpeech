@@ -1,10 +1,11 @@
 package PartOfSpeech {
     doc
     /*
-     * PartOfSpeech is a .NET library for part-of-speech analysis of text, built on a template that demonstrates
-     * DEMA Consulting best practices for structuring, documenting, and testing a DotNet library. The repository also
-     * holds open data for the 17 Universal POS tags (training corpora, evaluation sets and a lexicon) and the
-     * third-party notice; these data assets are files, not software items, and are not modeled here.
+     * PartOfSpeech is a .NET library for part-of-speech analysis of English text: it splits text into sentences and
+     * tokens and tags every token with one of the 17 Universal POS tags, with a calibrated confidence, ranked
+     * alternatives and optional per-token constraints. The repository also holds open data for the 17 Universal POS
+     * tags (training corpora, evaluation sets and a lexicon that is compiled into the package) and the third-party
+     * notice; these data assets are files, not software items, and are not modeled here.
      */
 
     part def PartOfSpeechSystem {
@@ -15,6 +16,9 @@ package PartOfSpeech {
         comment verificationRef /* Verification: docs/verification/part-of-speech.md */
         comment reqRef /* Requirements: docs/reqstream/part-of-speech.yaml */
 
-        part demo : Demo;
+        part upos : Upos;
+        part tokenization : Tokenization;
+        part modelStorage : ModelStorage;
+        part tagging : Tagging;
     }
 }

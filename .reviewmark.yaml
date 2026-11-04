@@ -19,6 +19,7 @@ needs-review:
   - "tools/data/README.md"       # Documentation of the data tools
   - "!**/obj/**"                  # Exclude build output
   - "!**/bin/**"                  # Exclude build output
+  - "!**/generated/**"            # Exclude generated documentation (API reference)
   - "!node_modules/**"           # Exclude npm dependencies
   - "!**/.venv/**"                # Exclude Python virtual environment
   - "!tools/data/cache/**"       # Exclude the git-ignored download cache of the data tools
@@ -73,6 +74,7 @@ reviews:
       - "docs/verification/introduction.md"                                    # verification introduction
       - "docs/verification/part-of-speech.md"                        # system verification
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechTests.cs"  # integration tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechThroughputTests.cs"  # throughput test
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechDataTests.cs"  # data and licensing tests
       - "test/DemaConsulting.PartOfSpeech.Tests/DataFiles.cs"          # data file helpers of the data tests
 
@@ -109,18 +111,232 @@ reviews:
       - "requirements.yaml"                                                 # root requirements file
       - "docs/reqstream/**/*.yaml"                                          # all requirements files
 
-  # PartOfSpeech-Demo Review (one per unit)
-  - id: PartOfSpeech-Demo
-    title: Review that PartOfSpeech Demo Implementation is Correct
+  # PartOfSpeech-Upos Review (one per unit directly under the system)
+  - id: PartOfSpeech-Upos
+    title: Review that PartOfSpeech Upos Implementation is Correct
     context:
       - "docs/design/part-of-speech.md"
       - "docs/reqstream/part-of-speech.yaml"
     paths:
-      - "docs/reqstream/part-of-speech/demo.yaml"                 # unit requirements
-      - "docs/design/part-of-speech/demo.md"                     # unit design
-      - "docs/verification/part-of-speech/demo.md"               # unit verification
-      - "src/DemaConsulting.PartOfSpeech/Demo.cs"                  # unit source
-      - "test/DemaConsulting.PartOfSpeech.Tests/DemoTests.cs"      # unit tests
+      - "docs/reqstream/part-of-speech/upos.yaml"                    # unit requirements
+      - "docs/design/part-of-speech/upos.md"                         # unit design
+      - "docs/verification/part-of-speech/upos.md"                   # unit verification
+      - "src/DemaConsulting.PartOfSpeech/Upos.cs"                    # unit source
+      - "src/DemaConsulting.PartOfSpeech/UposExtensions.cs"          # unit source
+      - "src/DemaConsulting.PartOfSpeech/UposSet.cs"                 # unit source
+      - "test/DemaConsulting.PartOfSpeech.Tests/UposTests.cs"        # unit tests
+
+  # PartOfSpeech-Tokenization Review (one per subsystem)
+  - id: PartOfSpeech-Tokenization
+    title: Review that PartOfSpeech Tokenization Satisfies Subsystem Requirements
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/tokenization.yaml"            # subsystem requirements
+      - "docs/design/part-of-speech/tokenization.md"                 # subsystem design
+      - "docs/verification/part-of-speech/tokenization.md"           # subsystem verification
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tokenization/TokenizationTests.cs"  # subsystem tests
+
+  # PartOfSpeech-Tokenization-Tokenizer Review (one per unit)
+  - id: PartOfSpeech-Tokenization-Tokenizer
+    title: Review that PartOfSpeech Tokenization Tokenizer Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/tokenization.md"
+      - "docs/reqstream/part-of-speech/tokenization.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/tokenization/tokenizer.yaml"  # unit requirements
+      - "docs/design/part-of-speech/tokenization/tokenizer.md"       # unit design
+      - "docs/verification/part-of-speech/tokenization/tokenizer.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/Tokenization/Tokenizer.cs"  # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tokenization/Token.cs"      # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tokenization/Sentence.cs"   # unit source
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tokenization/TokenizerTests.cs"  # unit tests
+
+  # PartOfSpeech-Tokenization-SentenceSplitter Review (one per unit)
+  - id: PartOfSpeech-Tokenization-SentenceSplitter
+    title: Review that PartOfSpeech Tokenization SentenceSplitter Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/tokenization.md"
+      - "docs/reqstream/part-of-speech/tokenization.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/tokenization/sentence-splitter.yaml"  # unit requirements
+      - "docs/design/part-of-speech/tokenization/sentence-splitter.md"       # unit design
+      - "docs/verification/part-of-speech/tokenization/sentence-splitter.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/Tokenization/SentenceSplitter.cs"   # unit source
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tokenization/SentenceSplitterTests.cs"  # unit tests
+
+  # PartOfSpeech-ModelStorage Review (one per subsystem)
+  - id: PartOfSpeech-ModelStorage
+    title: Review that PartOfSpeech ModelStorage Satisfies Subsystem Requirements
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/model-storage.yaml"           # subsystem requirements
+      - "docs/design/part-of-speech/model-storage.md"                # subsystem design
+      - "docs/verification/part-of-speech/model-storage.md"          # subsystem verification
+      - "test/DemaConsulting.PartOfSpeech.Tests/ModelStorage/ModelStorageTests.cs"  # subsystem tests
+
+  # PartOfSpeech-ModelStorage-BinaryFormat Review (one per unit)
+  - id: PartOfSpeech-ModelStorage-BinaryFormat
+    title: Review that PartOfSpeech ModelStorage BinaryFormat Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/model-storage.md"
+      - "docs/reqstream/part-of-speech/model-storage.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/model-storage/binary-format.yaml"  # unit requirements
+      - "docs/design/part-of-speech/model-storage/binary-format.md"       # unit design
+      - "docs/verification/part-of-speech/model-storage/binary-format.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/ModelStorage/BinaryFormat.cs"    # unit source
+      - "test/DemaConsulting.PartOfSpeech.Tests/ModelStorage/BinaryFormatTests.cs"  # unit tests
+
+  # PartOfSpeech-ModelStorage-Lexicon Review (one per unit)
+  - id: PartOfSpeech-ModelStorage-Lexicon
+    title: Review that PartOfSpeech ModelStorage Lexicon Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/model-storage.md"
+      - "docs/reqstream/part-of-speech/model-storage.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/model-storage/lexicon.yaml"  # unit requirements
+      - "docs/design/part-of-speech/model-storage/lexicon.md"       # unit design
+      - "docs/verification/part-of-speech/model-storage/lexicon.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/ModelStorage/Lexicon.cs"   # unit source
+      - "src/DemaConsulting.PartOfSpeech/ModelStorage/LexiconWriter.cs"  # unit source (table parser and compiler)
+      - "test/DemaConsulting.PartOfSpeech.Tests/ModelStorage/LexiconTests.cs"  # unit tests
+
+  # PartOfSpeech-ModelStorage-PerceptronModel Review (one per unit)
+  - id: PartOfSpeech-ModelStorage-PerceptronModel
+    title: Review that PartOfSpeech ModelStorage PerceptronModel Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/model-storage.md"
+      - "docs/reqstream/part-of-speech/model-storage.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/model-storage/perceptron-model.yaml"  # unit requirements
+      - "docs/design/part-of-speech/model-storage/perceptron-model.md"       # unit design
+      - "docs/verification/part-of-speech/model-storage/perceptron-model.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/ModelStorage/PerceptronModel.cs"    # unit source
+      - "src/DemaConsulting.PartOfSpeech/ModelStorage/PerceptronModelWriter.cs"  # unit source (weights writer)
+      - "test/DemaConsulting.PartOfSpeech.Tests/ModelStorage/PerceptronModelTests.cs"  # unit tests
+
+  # PartOfSpeech-ModelStorage-EmbeddedModel Review (one per unit)
+  - id: PartOfSpeech-ModelStorage-EmbeddedModel
+    title: Review that PartOfSpeech ModelStorage EmbeddedModel Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/model-storage.md"
+      - "docs/reqstream/part-of-speech/model-storage.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/model-storage/embedded-model.yaml"  # unit requirements
+      - "docs/design/part-of-speech/model-storage/embedded-model.md"       # unit design
+      - "docs/verification/part-of-speech/model-storage/embedded-model.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/ModelStorage/EmbeddedModel.cs"    # unit source
+      - "test/DemaConsulting.PartOfSpeech.Tests/ModelStorage/EmbeddedModelTests.cs"  # unit tests
+
+  # PartOfSpeech-Tagging Review (one per subsystem)
+  - id: PartOfSpeech-Tagging
+    title: Review that PartOfSpeech Tagging Satisfies Subsystem Requirements
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/tagging.yaml"                 # subsystem requirements
+      - "docs/design/part-of-speech/tagging.md"                      # subsystem design
+      - "docs/verification/part-of-speech/tagging.md"                # subsystem verification
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/TaggingTests.cs"  # subsystem tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/TinyModels.cs"      # tiny model builder of the tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/TinyTrainer.cs"     # tiny trainer of the tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/SyntheticModel.cs"  # synthetic model of the throughput
+      - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/ThroughputMeter.cs"  # best-of-N throughput method
+      - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/AllocationMeter.cs"  # minimum-of-N allocation method
+
+  # PartOfSpeech-Tagging-FeatureExtractor Review (one per unit)
+  - id: PartOfSpeech-Tagging-FeatureExtractor
+    title: Review that PartOfSpeech Tagging FeatureExtractor Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/tagging.md"
+      - "docs/reqstream/part-of-speech/tagging.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/tagging/feature-extractor.yaml"  # unit requirements
+      - "docs/design/part-of-speech/tagging/feature-extractor.md"       # unit design
+      - "docs/verification/part-of-speech/tagging/feature-extractor.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/Tagging/FeatureExtractor.cs"   # unit source
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/FeatureExtractorTests.cs"  # unit tests
+
+  # PartOfSpeech-Tagging-TagDecoder Review (one per unit)
+  - id: PartOfSpeech-Tagging-TagDecoder
+    title: Review that PartOfSpeech Tagging TagDecoder Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/tagging.md"
+      - "docs/reqstream/part-of-speech/tagging.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/tagging/tag-decoder.yaml"  # unit requirements
+      - "docs/design/part-of-speech/tagging/tag-decoder.md"       # unit design
+      - "docs/verification/part-of-speech/tagging/tag-decoder.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/Tagging/TagDecoder.cs"   # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/DecoderWorkspace.cs"  # unit source (scratch memory)
+      - "src/DemaConsulting.PartOfSpeech/Tagging/ScoreSlice.cs"   # unit source (alternatives list)
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/TagDecoderTests.cs"  # unit tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/TagDecoderThroughputTests.cs"  # throughput test
+
+  # PartOfSpeech-Tagging-TokenConstraint Review (one per unit)
+  - id: PartOfSpeech-Tagging-TokenConstraint
+    title: Review that PartOfSpeech Tagging TokenConstraint Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/tagging.md"
+      - "docs/reqstream/part-of-speech/tagging.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/tagging/token-constraint.yaml"  # unit requirements
+      - "docs/design/part-of-speech/tagging/token-constraint.md"       # unit design
+      - "docs/verification/part-of-speech/tagging/token-constraint.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/Tagging/TokenConstraint.cs"   # unit source
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/TokenConstraintTests.cs"  # unit tests
+
+  # PartOfSpeech-Tagging-Tagger Review (one per unit)
+  - id: PartOfSpeech-Tagging-Tagger
+    title: Review that PartOfSpeech Tagging Tagger Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/tagging.md"
+      - "docs/reqstream/part-of-speech/tagging.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/tagging/tagger.yaml"  # unit requirements
+      - "docs/design/part-of-speech/tagging/tagger.md"       # unit design
+      - "docs/verification/part-of-speech/tagging/tagger.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/Tagging/Tagger.cs"          # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/TaggerOptions.cs"   # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/TaggedSentence.cs"  # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/TaggedToken.cs"     # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/TagScore.cs"        # unit source
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/TaggerTests.cs"  # unit tests
+
+  # PartOfSpeech-LexiconCompiler Review (build-time tool that compiles the lexicon table into the embedded binary)
+  - id: PartOfSpeech-LexiconCompiler
+    title: Review that PartOfSpeech LexiconCompiler Compiles the Lexicon Correctly
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/model-storage/lexicon.md"
+    paths:
+      - "tools/LexiconCompiler/Program.cs"                           # tool source
 
   # PartOfSpeech-DataConversion Review (build-time tools that import and convert the data and build the lexicon)
   - id: PartOfSpeech-DataConversion
@@ -158,6 +374,17 @@ reviews:
       - "tools/data/make_manifest.py"                               # checksum manifest
       - "tools/data/normalize_eol.py"                               # line-ending normalization
       - "tools/data/tests/test_committed_data.py"                   # sanity checks of the committed data
+
+  # OTS-ApiMark Review (one per OTS item)
+  - id: OTS-ApiMark
+    title: Review that ApiMark Provides Required Functionality
+    paths:
+      - "docs/reqstream/ots/apimark.yaml"                                  # OTS requirements
+      - "docs/design/ots/apimark.md"                                       # OTS integration design
+      - "docs/verification/ots/apimark.md"                                 # OTS verification
+      - "src/DemaConsulting.PartOfSpeech/NamespaceDoc.cs"                  # API reference text of the namespace
+      - "test/DemaConsulting.PartOfSpeech.Tests/XmlDocExampleTests.cs"     # documented examples compile
+      - "test/DemaConsulting.PartOfSpeech.Tests/XmlDocExampleVerifier.cs"  # compiles the documented examples
 
   # OTS-BuildMark Review (one per OTS item)
   - id: OTS-BuildMark

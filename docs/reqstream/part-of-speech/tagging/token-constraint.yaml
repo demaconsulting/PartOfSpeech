@@ -1,0 +1,62 @@
+---
+# Software Unit Requirements for TokenConstraint
+#
+# The TokenConstraint unit is the value that a caller passes to restrict or steer the tag of one token.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: Tagging Requirements
+        sections:
+          - title: TokenConstraint Requirements
+            requirements:
+              - id: PartOfSpeech-Tagging-TokenConstraint-Factories
+                title: >-
+                  A constraint with an allowed set shall be refused when the set is empty, and a boost or penalty shall
+                  be refused when its amount is not a finite number greater than zero.
+                justification: |
+                  An empty allowed set could not be satisfied, and a zero, negative or non-finite amount would
+                  silently do
+                  nothing or poison the probabilities; both are programming errors to report at once.
+                tests:
+                  - TokenConstraint_Only_EmptySet_Throws
+                  - TokenConstraint_Prefer_NonFiniteOrNonPositive_Throws
+
+              - id: PartOfSpeech-Tagging-TokenConstraint-None
+                title: The default value of a constraint shall be the constraint that changes nothing.
+                justification: |
+                  Callers fill an array of constraints and set only some of them, so an unset entry must be neutral.
+                tests:
+                  - TokenConstraint_Default_IsNone
+
+              - id: PartOfSpeech-Tagging-TokenConstraint-Combine
+                title: >-
+                  Combining two constraints shall intersect their allowed sets and add their boosts and penalties,
+                  shall be refused when the allowed sets have no tag in common or when the sum of the adjustments of a
+                  tag is not a finite number, and shall give the constraint that changes nothing when the adjustments
+                  cancel out.
+                justification: |
+                  A caller may have several reasons to constrain one token; a combination that contradicts itself
+                  must be
+                  reported, not guessed. A sum that overflows would turn the probabilities into NaN, and a result that
+                  adjusts nothing must not be reported as a constraint.
+                tests:
+                  - TokenConstraint_And_IntersectsAndSumsBoosts
+                  - TokenConstraint_And_CancelingAdjustments_EqualsNone
+                  - TokenConstraint_And_NonFiniteSum_Throws
+
+              - id: PartOfSpeech-Tagging-TokenConstraint-Immutability
+                title: A constraint shall not change when the values that were used to create it change.
+                justification: |
+                  Constraints are shared between threads and calls; a constraint that could change after creation would
+                  make results depend on timing.
+                tests:
+                  - TokenConstraint_Boosts_AreCopied
+
+              - id: PartOfSpeech-Tagging-TokenConstraint-Equality
+                title: Two constraints shall be equal when they allow the same tags and adjust the scores the same way.
+                justification: |
+                  Callers compare and cache constraints by content.
+                tests:
+                  - TokenConstraint_Equals_ByContent
+                  - TokenConstraint_And_CancelingAdjustments_EqualsNone

@@ -14,6 +14,7 @@ language: en
 
 # Project-specific technical terms and tool names
 words:
+  - apimark
   - buildmark
   - DEMA
   - Dema
@@ -34,6 +35,17 @@ words:
   - WeasyPrint
   - weasyprint
   - netstandard
+  - mscorlib
+  # Model file formats and scoring terms of the tagger API documentation (POSW weights file, POSL lexicon file)
+  - POSW
+  - POSL
+  - softmax
+  # Binary format and C# terms of the design documents (LEB128 variable-length integers, a keyword, quote characters)
+  - varint
+  - varints
+  - stackalloc
+  - guillemets
+  - Artagnan
   - yamlfix
   # Part-of-speech and corpus terms (Universal POS tags, Penn Treebank tags, corpus and dictionary names)
   - ADJP
@@ -82,7 +94,8 @@ words:
   - WNDB
   - venv
   - pycache
-
+  # Runtime environment variable of the throughput tests that detect a profiler (CORECLR_ENABLE_PROFILING)
+  - CORECLR
 # Exclude common build artifacts, dependencies, and vendored third-party code
 ignorePaths:
   - "**/.git/**"

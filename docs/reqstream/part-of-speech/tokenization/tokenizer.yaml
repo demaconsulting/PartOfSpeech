@@ -1,0 +1,130 @@
+---
+# Software Unit Requirements for Tokenizer
+#
+# The Tokenizer unit splits text into tokens in the convention of the training data (data/CONVENTIONS.md).
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: Tokenization Requirements
+        sections:
+          - title: Tokenizer Requirements
+            requirements:
+              - id: PartOfSpeech-Tokenization-Tokenizer-OffsetsIndexSource
+                title: >-
+                  Every token shall be exactly the characters of the original text at its offset, tokens shall be in
+                  order and shall not overlap, no token shall contain white space, and characters shall never be changed
+                  or dropped other than white space.
+                justification: |
+                  Callers locate tokens in their own text by offset; a token that differs from its source, or an offset
+                  that is off by one after a tab, a line break or a surrogate pair, would break highlighting and
+                  replacement.
+                tests:
+                  - Tokenizer_Tokenize_Offsets_IndexOriginalText
+                  - Tokenizer_Tokenize_AdversarialWhiteSpace_KeepsOffsets
+                  - Tokenizer_Tokenize_SurrogatePairs_StayWhole
+
+              - id: PartOfSpeech-Tokenization-Tokenizer-PunctuationSeparated
+                title: >-
+                  Opening and closing quotes and brackets, sentence punctuation, the percent sign and currency symbols
+                  shall be separate tokens, however many of them touch a word.
+                justification: |
+                  In the training data punctuation is always a token of its own; a word with a comma or a quote attached
+                  would be a different, unseen token.
+                tests:
+                  - Tokenizer_Tokenize_Punctuation_IsSeparated
+                  - Tokenizer_Tokenize_LeadingCurrencySymbol_IsSeparated
+                  - Tokenizer_Tokenize_Percent_IsSeparated
+
+              - id: PartOfSpeech-Tokenization-Tokenizer-ContractionsSplit
+                title: >-
+                  Negative contractions and the clitics 's, 'm, 're, 've, 'll and 'd shall be split from their stem with
+                  the letter case kept, the irregular forms of the training data shall be split as it splits them, and
+                  words that the training data keeps whole, such as o'clock, shall stay whole.
+                justification: |
+                  The training data splits "don't" into "do" and "n't" and "John's" into "John" and "'s"; the tagger
+                  knows these parts, not the joined forms.
+                tests:
+                  - Tokenizer_Tokenize_NotContractions_AreSplit
+                  - Tokenizer_Tokenize_IrregularContractions_AreSplit
+                  - Tokenizer_Tokenize_Clitics_AreSplit
+                  - Tokenizer_Tokenize_CaseIsPreserved
+                  - Tokenizer_Tokenize_TypographicApostrophe_IsSplitButKept
+                  - Tokenizer_Tokenize_WholeWordExceptions_StayWhole
+
+              - id: PartOfSpeech-Tokenization-Tokenizer-CompoundsWhole
+                title: >-
+                  Hyphenated compounds, words with a slash or an ampersand, numbers and times shall stay whole, and a
+                  double hyphen shall be a token of its own.
+                justification: |
+                  The training data keeps "well-known", "and/or", "1,000" and "7:00" as one token and separates a dash;
+                  splitting them would create tokens the tagger has no evidence for.
+                tests:
+                  - Tokenizer_Tokenize_HyphenatedCompounds_StayWhole
+                  - Tokenizer_Tokenize_DoubleHyphen_IsSeparate
+                  - Tokenizer_Tokenize_SlashAndAmpersandWords_StayWhole
+                  - Tokenizer_Tokenize_NumbersAndTimes_StayWhole
+
+              - id: PartOfSpeech-Tokenization-Tokenizer-AbbreviationsKeepPeriod
+                title: >-
+                  A period shall stay attached to a known abbreviation, a dotted acronym and a single initial, but shall
+                  be separated from the last word of a text and from the pronoun I.
+                justification: |
+                  "Mr." and "U.S." are single tokens in the training data while the period of a sentence end is not; the
+                  two must be told apart or abbreviations and sentence ends are both tagged wrong.
+                tests:
+                  - Tokenizer_Tokenize_Abbreviations_KeepPeriod
+                  - Tokenizer_Tokenize_InitialsAndAcronyms_KeepPeriod
+                  - Tokenizer_Tokenize_SentenceFinalI_SplitsPeriod
+
+              - id: PartOfSpeech-Tokenization-Tokenizer-Ellipsis
+                title: >-
+                  A trailing ellipsis shall be a separate token, and an ellipsis between two words of one chunk shall
+                  leave the chunk whole.
+                justification: |
+                  The training data separates a trailing "..." but keeps "as...as" whole; both occur in running text.
+                tests:
+                  - Tokenizer_Tokenize_TrailingEllipsis_IsSeparate
+                  - Tokenizer_Tokenize_InnerEllipsis_StaysWhole
+
+              - id: PartOfSpeech-Tokenization-Tokenizer-UrlsAndEmail
+                title: >-
+                  A web address or an e-mail address shall be one token, without the sentence punctuation that follows
+                  it.
+                justification: |
+                  An address split at its dots and slashes would be a string of meaningless tokens; the corpora that
+                  contain addresses keep them whole.
+                tests:
+                  - Tokenizer_Tokenize_UrlsAndEmail_StayWhole
+
+              - id: PartOfSpeech-Tokenization-Tokenizer-TypographicPunctuation
+                title: >-
+                  Typographic quotes, dashes and the ellipsis character shall be separate tokens that keep their
+                  original characters.
+                justification: |
+                  Real text from word processors and the web uses these characters, while the training data is
+                  ASCII-only; they must be recognized as punctuation without being rewritten.
+                tests:
+                  - Tokenizer_Tokenize_TypographicQuotesAndDashes_AreSeparate
+
+              - id: PartOfSpeech-Tokenization-Tokenizer-PreTokenizedInput
+                title: >-
+                  A sentence shall be created from tokens that a caller supplies, with offsets into the tokens joined
+                  by single spaces, and a null token, an empty token or a token with white space shall be refused.
+                justification: |
+                  Callers that tokenize themselves still need the same sentence type with valid offsets; a token with
+                  white space would break the one-token-per-chunk rule the offsets rely on.
+                tests:
+                  - Tokenizer_CreateSentence_JoinsTokensWithSpaces
+                  - Tokenizer_CreateSentence_InvalidTokens_Throw
+
+              - id: PartOfSpeech-Tokenization-Tokenizer-InputValidation
+                title: >-
+                  A null text shall be refused with an ArgumentNullException, and an empty text or a text of white space
+                  only shall give no sentences.
+                justification: |
+                  A null text is a programming error to report at once; an empty text is valid input with nothing to
+                  tag.
+                tests:
+                  - Tokenizer_Tokenize_NullText_ThrowsArgumentNullException
+                  - Tokenizer_Tokenize_EmptyOrWhiteSpace_ReturnsNoSentences

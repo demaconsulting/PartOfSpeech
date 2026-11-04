@@ -1,0 +1,73 @@
+---
+# Software Subsystem Requirements for ModelStorage
+#
+# ModelStorage holds the two binary formats (weights and lexicon), their readers and writers, and the lexicon that is
+# embedded in the package.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: ModelStorage Requirements
+        requirements:
+          - id: PartOfSpeech-ModelStorage-VersionedFormats
+            title: >-
+              The weights file and the lexicon file shall each start with an identifying magic and a format version, and
+              a reader shall refuse a file with another magic, another version, a wrong length or a failing checksum.
+            justification: |
+              Weights and lexicon are data that outlive a build. A reader that accepted a file of another kind or
+              version, or a damaged one, would produce wrong tags without any sign of the cause.
+            children:
+              - PartOfSpeech-ModelStorage-BinaryFormat-LittleEndianPrimitives
+              - PartOfSpeech-ModelStorage-BinaryFormat-Varints
+              - PartOfSpeech-ModelStorage-BinaryFormat-Checksum
+              - PartOfSpeech-ModelStorage-BinaryFormat-Header
+              - PartOfSpeech-ModelStorage-BinaryFormat-Compression
+              - PartOfSpeech-ModelStorage-BinaryFormat-PopCount
+              - PartOfSpeech-ModelStorage-Lexicon-Validation
+              - PartOfSpeech-ModelStorage-PerceptronModel-Validation
+            tests:
+              - ModelStorage_Formats_StartWithMagicAndVersion
+
+          - id: PartOfSpeech-ModelStorage-LexiconCompiled
+            title: >-
+              The lexicon that is embedded in the package shall hold exactly the spellings and tags of the lexicon
+              table, a lookup shall find every spelling of the table with its tags, and a spelling that is not in the
+              table shall not be found.
+            justification: |
+              The tagger restricts known words with the embedded lexicon. It must be the table the project reviewed,
+              compiled without loss, and the compiled form must not invent spellings.
+            children:
+              - PartOfSpeech-ModelStorage-Lexicon-Lookup
+              - PartOfSpeech-ModelStorage-Lexicon-Writer
+              - PartOfSpeech-ModelStorage-Lexicon-AllowedTags
+              - PartOfSpeech-ModelStorage-EmbeddedModel-Lexicon
+            tests:
+              - ModelStorage_EmbeddedLexicon_EncodesLexiconTsv
+              - ModelStorage_EmbeddedLexicon_EveryTsvSpellingRoundTrips
+
+          - id: PartOfSpeech-ModelStorage-LazyThreadSafeLoading
+            title: >-
+              The embedded data shall be loaded when it is first needed, and threads that need it at the same time shall
+              share one loaded copy.
+            justification: |
+              Loading the lexicon costs time and memory that programs which never tag should not pay, and a service that
+              starts many threads must not load it once per thread.
+            children:
+              - PartOfSpeech-ModelStorage-EmbeddedModel-ThreadSafe
+              - PartOfSpeech-ModelStorage-EmbeddedModel-Weights
+            tests:
+              - ModelStorage_EmbeddedLexicon_ParallelFirstAccess_LoadsOnce
+
+          - id: PartOfSpeech-ModelStorage-TinyModelRoundTrip
+            title: >-
+              A weights file and a lexicon file that were written by the writers shall load from streams with the same
+              weights, header values and spellings.
+            justification: |
+              The writers are what produces the weights of a later release; a file that does not read back as written
+              would make every trained model wrong.
+            children:
+              - PartOfSpeech-ModelStorage-PerceptronModel-RoundTrip
+              - PartOfSpeech-ModelStorage-PerceptronModel-ScoreLookup
+              - PartOfSpeech-ModelStorage-PerceptronModel-Temperature
+            tests:
+              - ModelStorage_WeightsWriterAndReader_RoundTrip

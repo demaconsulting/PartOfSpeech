@@ -1,0 +1,106 @@
+---
+# Software Subsystem Requirements for Tagging
+#
+# Tagging turns tokens into tagged tokens: it extracts the features, scores them with the weights, restricts the
+# candidates with the lexicon and the constraints, and reports tags with confidences and alternatives.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: Tagging Requirements
+        requirements:
+          - id: PartOfSpeech-Tagging-EndToEnd
+            title: >-
+              Given a lexicon and a weights file, the subsystem shall tag every token of a text or of a sentence of
+              given tokens, so that a model trained on sentences tags those sentences correctly, and every result shall
+              carry the offsets of its tokens.
+            justification: |
+              This is the job of the subsystem. A model that cannot reproduce the sentences it was trained on, on
+              separable
+              data, shows an error in the features, the scoring or the decoding.
+            children:
+              - PartOfSpeech-Tagging-Tagger-TagText
+              - PartOfSpeech-Tagging-Tagger-TagTokens
+              - PartOfSpeech-Tagging-Tagger-ResultsCarryOffsets
+              - PartOfSpeech-Tagging-Tagger-Load
+              - PartOfSpeech-Tagging-Tagger-InputValidation
+              - PartOfSpeech-Tagging-Tagger-AnyText
+              - PartOfSpeech-Tagging-Tagger-Options
+              - PartOfSpeech-Tagging-TagDecoder-EmptyInput
+              - PartOfSpeech-Tagging-FeatureExtractor-FeatureSet
+              - PartOfSpeech-Tagging-FeatureExtractor-Shape
+              - PartOfSpeech-Tagging-FeatureExtractor-Initial
+              - PartOfSpeech-Tagging-FeatureExtractor-Context
+              - PartOfSpeech-Tagging-FeatureExtractor-Fold
+              - PartOfSpeech-Tagging-FeatureExtractor-MalformedText
+              - PartOfSpeech-Tagging-FeatureExtractor-ReferenceEquivalence
+              - PartOfSpeech-Tagging-FeatureExtractor-Buckets
+            tests:
+              - Tagging_TinyTrainedModel_TagsTrainingSentences
+
+          - id: PartOfSpeech-Tagging-LexiconRestriction
+            title: >-
+              The tags that are considered for a token shall be exactly the tags that the lexicon and the token-shape
+              rules allow for it, even for a sentence that the model never saw.
+            justification: |
+              The restriction is what removes tag errors that no reading of a known word supports; it must hold for
+              every input, not only for sentences that look like the training data.
+            children:
+              - PartOfSpeech-Tagging-TagDecoder-Restriction
+            tests:
+              - Tagging_TinyTrainedModel_LexiconRestrictionHolds
+
+          - id: PartOfSpeech-Tagging-TagHistory
+            title: >-
+              The tag of a token shall depend on the tags chosen for the tokens before it, so that the same word is
+              tagged differently in different contexts.
+            justification: |
+              Context decides the part of speech of an ambiguous word: the same spelling is a noun after "a" and a verb
+              after "will".
+            children:
+              - PartOfSpeech-Tagging-TagDecoder-Greedy
+            tests:
+              - Tagging_Context_PrecedingTags_ChangeTagOfAmbiguousWord
+
+          - id: PartOfSpeech-Tagging-Constraints
+            title: >-
+              A constraint on one token shall change its tag as requested and, through the tag history, the tags of the
+              tokens that follow it, and tokens without a constraint shall be tagged as if there were none.
+            justification: |
+              A caller who forces one word to be a verb expects the sentence around it to be read accordingly, and
+              expects the other words to be unaffected by the constraint itself.
+            children:
+              - PartOfSpeech-Tagging-TokenConstraint-Factories
+              - PartOfSpeech-Tagging-TokenConstraint-None
+              - PartOfSpeech-Tagging-TokenConstraint-Combine
+              - PartOfSpeech-Tagging-TokenConstraint-Immutability
+              - PartOfSpeech-Tagging-TokenConstraint-Equality
+              - PartOfSpeech-Tagging-TagDecoder-Constraints
+            tests:
+              - Tagging_Constraints_FirstTokenOnly_ChangesNextTokenTag
+
+          - id: PartOfSpeech-Tagging-RankedAlternatives
+            title: >-
+              Every token shall be reported with its confidence and with the other tags that were considered, ranked by
+              probability.
+            justification: |
+              Callers decide whether to trust a tag from its confidence and look at the competing tags when it is low.
+            children:
+              - PartOfSpeech-Tagging-TagDecoder-Confidence
+              - PartOfSpeech-Tagging-Tagger-Alternatives
+            tests:
+              - Tagging_TinyTrainedModel_LexiconRestrictionHolds
+              - Tagging_Context_PrecedingTags_ChangeTagOfAmbiguousWord
+              - Tagging_Tag_SameInput_ProducesSameOutput
+
+          - id: PartOfSpeech-Tagging-Determinism
+            title: >-
+              The same input shall give the same tags, confidences and alternatives each time, from the same tagger and
+              from another tagger that was loaded from the same files.
+            justification: |
+              Results that depend on timing or on the instance cannot be tested, cached or compared between runs; the
+              concurrent use of one tagger is covered by the requirement of its unit.
+            children:
+              - PartOfSpeech-Tagging-Tagger-ThreadSafe
+            tests:
+              - Tagging_Tag_SameInput_ProducesSameOutput

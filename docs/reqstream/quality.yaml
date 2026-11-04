@@ -106,3 +106,31 @@ sections:
         children:
           - PartOfSpeech-OTS-SysML2Tools-Lint
           - PartOfSpeech-OTS-SysML2Tools-Render
+
+      - id: Quality-ApiReferenceGeneration
+        title: The repository shall rely on ApiMark to generate API reference documentation for the shipped package.
+        tags: [quality]
+        justification: |
+          The API reference that an agent consuming PartOfSpeech reads is generated from XML doc
+          comments by ApiMark during the build, and ApiMark also enforces that every public
+          member carries a documentation summary, so the reference is complete rather than
+          merely present. This grouping requirement links those OTS requirements to the
+          quality root so they participate in orphan detection without being falsely
+          reported as disconnected from library functionality.
+        children:
+          - PartOfSpeech-OTS-ApiMark-Generate
+          - PartOfSpeech-OTS-ApiMark-RenderExamples
+          - PartOfSpeech-OTS-ApiMark-EnforceDocs
+
+      - id: Quality-ApiExamplesCompile
+        title: >-
+          Every example documented on the shipped package's public API shall compile against
+          the package's real API.
+        tags: [quality]
+        justification: |
+          The documented examples are instructions that a coding agent follows to use the library,
+          so an example that does not compile is a confident instruction that fails only after
+          the reader has acted on it. The test project extracts every example from the shipped
+          XML documentation file and compiles it with Roslyn against the real compiled API.
+        tests:
+          - PartOfSpeech_XmlDocExamples_Compile

@@ -182,6 +182,12 @@ jobs:
           --configuration Release
           --property:Version=${{ inputs.version }}
 
+      - name: Assert API documentation
+        run: >
+          dotnet fileassert
+          --results artifacts/fileassert-api-docs-${{ matrix.os }}.trx
+          api-docs
+
       - name: Test
         run: >
           dotnet test
@@ -209,6 +215,13 @@ jobs:
           --no-restore
           --configuration Release
           --property:PackageVersion=${{ inputs.version }}
+
+      # The package must carry the generated API reference (api/ inside the .nupkg).
+      - name: Assert package contents
+        run: >
+          dotnet fileassert
+          --results artifacts/fileassert-package-docs-${{ matrix.os }}.trx
+          package-docs
 
       # === UPLOAD ARTIFACTS ===
       # This section uploads all generated artifacts for use by downstream jobs.

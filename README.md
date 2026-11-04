@@ -9,15 +9,26 @@
 [![Security][badge-security]][link-security]
 [![NuGet][badge-nuget]][link-nuget]
 
-DEMA Consulting .NET library for part-of-speech analysis of text.
+.NET library for part-of-speech tagging of English text, with calibrated confidences.
 
 ## Features
 
 This library provides:
 
-- **Simple Library Structure**: Demo class with example methods
+- **Tokenizer and Sentence Splitter**: English text becomes sentences and tokens in the convention of the training data,
+  with character offsets into your original string
+- **Part-of-Speech Tagger**: an averaged-perceptron tagger over the 17 Universal POS tags (ADJ, ADP, ADV, AUX, CCONJ,
+  DET, INTJ, NOUN, NUM, PART, PRON, PROPN, PUNCT, SCONJ, SYM, VERB, X)
+- **Lexicon-Restricted Decoding**: a known word can only receive tags that a compiled word lexicon allows; an unknown
+  word may take any tag
+- **Confidences and Alternatives**: every tag comes with a calibrated probability and the ranked competing tags
+- **Constraints**: restrict or steer the tag of individual tokens, for example from a glossary
+- **Pre-Tokenized Input**: tag tokens that you already have
+- **No Dependencies, No Downloads**: the library uses only the base class library and embeds its lexicon; it is fast
+  (hundreds of thousands of tokens per second on one thread) and thread-safe
 - **Multi-Platform Support**: Builds and runs on Windows, Linux, and macOS
 - **Multi-Runtime Support**: Targets .NET Standard 2.0, .NET 8, 9, and 10
+- **API Reference in the Package**: a generated Markdown reference of the public API is packed with the library
 - **xUnit v3**: Modern unit testing with xUnit framework version 3
 - **Comprehensive CI/CD**: GitHub Actions workflows with quality checks and builds
 - **Linting Enforcement**: markdownlint, cspell, and yamllint enforced on every CI run
@@ -39,11 +50,25 @@ dotnet add package DemaConsulting.PartOfSpeech
 ## Usage
 
 ```csharp
-using PartOfSpeech;
+using DemaConsulting.PartOfSpeech;
 
-var demo = new Demo();
-var result = demo.DemoMethod("World"); // result = "Hello, World!"
+using var weights = File.OpenRead("model.posw");
+var tagger = Tagger.Load(weights);
+
+foreach (TaggedSentence sentence in tagger.Tag("The cat sat on the mat. It didn't move."))
+{
+    foreach (TaggedToken token in sentence.Tokens)
+    {
+        Console.WriteLine($"{token.Text} {token.Tag.ToTagString()} {token.Confidence:0.00}");
+    }
+}
 ```
+
+**The trained model is not included yet.** This release contains the tokenizer, the tagger, the compiled lexicon and
+the file formats; the trained weights arrive in a later release. Until then `Tagger.Default` throws an
+`InvalidOperationException` and you load a weights file with `Tagger.Load` as shown. The
+[user guide][link-user-guide] explains how to read confidences and alternatives, how to constrain tags, and the
+tokenization conventions.
 
 ## Documentation
 
@@ -60,7 +85,8 @@ Generated documentation includes:
 
 The repository holds the open training data, the evaluation data and a part-of-speech lexicon for the 17 Universal POS
 tags in the [data folder][link-data]. Every data source is recorded with its origin, license and how it was produced, and
-the files are verified against checksums. The library does not use the data at run time yet.
+the files are verified against checksums. At run time the library uses only the lexicon: `tools/LexiconCompiler` compiles
+it into a binary file that is embedded in the assembly. The corpora and the evaluation sets are not shipped.
 
 ## Credits and Licenses
 
@@ -115,6 +141,7 @@ By contributing to this project, you agree that your contributions will be licen
 [link-continuous-compliance]: https://github.com/demaconsulting/ContinuousCompliance
 [link-contributing]: https://github.com/demaconsulting/PartOfSpeech/blob/main/CONTRIBUTING.md
 [link-data]: https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md
+[link-user-guide]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/user_guide/introduction.md
 [link-notices]: https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md
 [link-wordsense]: https://github.com/demaconsulting/WordSense
 [link-cc-by-3]: https://creativecommons.org/licenses/by/3.0/us/
