@@ -4,7 +4,7 @@
 # These requirements describe the externally visible behavior of the library
 # from the perspective of its consumers, without specifying implementation details.
 # Each library requirement is decomposed into the subsystem and unit requirements under
-# docs/reqstream/part-of-speech/ (Upos, Tokenization, ModelStorage and Tagging).
+# docs/reqstream/part-of-speech/ (Upos, Tokenization, ModelStorage, Tagging and ModelTrainer).
 
 sections:
   - title: Library API
@@ -112,20 +112,20 @@ sections:
           - PartOfSpeech_Model_LoadFromStream_TagsText
           - PartOfSpeech_Model_InvalidWeights_ThrowInvalidDataException
 
-      - id: PartOfSpeech-Lib-DefaultModelUnavailable
+      - id: PartOfSpeech-Lib-DefaultModel
         title: >-
-          While the package contains no trained model, reading the default tagger shall throw an
-          InvalidOperationException whose message says that no model is available.
+          The library shall provide a default tagger that uses the trained model and the lexicon embedded in the
+          package, tags text without any file, and is shared by all callers.
         tags: [system]
         justification: |
-          A placeholder model would produce tags that users might trust. Failing with a clear message until a trained
-          model ships tells callers exactly what to do (load weights) and cannot be mistaken for a result. This
-          requirement is replaced when the trained model is embedded.
+          Most callers want tags without sourcing and loading a model file; the package therefore ships a trained model,
+          and one shared instance avoids loading it again and again. The model is the one that the build proves current
+          (see the embedded model requirements below).
         children:
           - PartOfSpeech-Tagging-Tagger-Default
           - PartOfSpeech-ModelStorage-EmbeddedModel-Weights
         tests:
-          - PartOfSpeech_Default_NoEmbeddedModel_ThrowsInvalidOperationException
+          - PartOfSpeech_Default_EmbeddedModel_TagsTextWithoutFile
 
       - id: PartOfSpeech-Lib-ThreadSafe
         title: >-
@@ -221,6 +221,37 @@ sections:
           package itself for the license obligations to travel with every copy that is redistributed.
         tests:
           - PartOfSpeech_ThirdPartyNotices_Packaging_NoticeIsPackedAtPackageRoot
+
+      - id: PartOfSpeech-Licensing-NoticeCoversWeights
+        title: >-
+          The third-party notice shall state that the embedded weights were learned from the converted MASC data and
+          the other training corpora, and shall name the trainer, its settings and its run log.
+        tags: [system]
+        justification: |
+          The trained weights are derived in part from MASC, whose Creative Commons Attribution 3.0 United States
+          license requires attribution and an indication of changes for the work and for what is derived from it, so the
+          notice that travels with the package must say that the weights are covered and where they come from.
+        tests:
+          - PartOfSpeech_ThirdPartyNotices_Weights_AreCovered
+
+      - id: PartOfSpeech-Licensing-PackageLicenseFile
+        title: >-
+          The package shall name a combined license file instead of a license expression; the file shall start with the
+          SPDX expression of the package, contain the MIT license text for the code, cover the embedded lexicon and
+          weights with their Creative Commons licenses, point to the third-party notice, and be packed at the package
+          root.
+        tags: [system]
+        justification: |
+          The package embeds data under CC BY 4.0 (the lexicon) and CC BY 3.0 US (the weights and the lexicon tags),
+          next to the MIT code. nuget.org accepts only license expressions of licenses that the Open Source Initiative
+          or the Free Software Foundation approve, and CC BY 3.0 US is neither (checked against the SPDX license list
+          data), so the expression "MIT AND CC-BY-4.0 AND CC-BY-3.0-US" would be rejected and plain "MIT" would
+          under-declare the embedded data. A package has either a license expression or a license file, so the file
+          names all licenses and keeps the SPDX expression on its first line for scanners.
+        tests:
+          - PartOfSpeech_PackageLicense_ProjectFile_NamesLicenseFileAtPackageRoot
+          - PartOfSpeech_PackageLicense_File_CoversCodeAndEmbeddedData
+          - Package_LicenseFilesPackaged
 
       - id: PartOfSpeech-Licensing-FoldersDeclareLicense
         title: >-
@@ -425,6 +456,49 @@ sections:
           - PartOfSpeech-ModelStorage-LexiconCompiled
         tests:
           - PartOfSpeech_Lexicon_Embedded_EncodesLexiconTsv
+
+  - title: Embedded Model
+    requirements:
+      - id: PartOfSpeech-Model-EmbeddedWeightsCurrent
+        title: >-
+          The weights that are embedded in the package shall be the model that the committed training configuration
+          describes: the same file as the committed one, with the recorded hash bits, scale, temperature and SHA-256 of
+          the uncompressed image.
+        tags: [system]
+        justification: |
+          The default tagger scores with the embedded weights. A binary that was edited or retrained without its
+          configuration, or a configuration that no longer matches the binary, would ship a model that nobody reviewed
+          and whose origin cannot be shown, so the normal test run compares the embedded file with the configuration.
+          The build also retrains the model from the committed data (train --check) and compares it with the committed
+          one, which the trainer requirements below make a reliable comparison; that build step is supplementary
+          evidence.
+        children:
+          - PartOfSpeech-ModelTrainer-Deterministic
+          - PartOfSpeech-ModelTrainer-SharedDefinitions
+          - PartOfSpeech-ModelTrainer-ExactQuantization
+          - PartOfSpeech-ModelTrainer-CheckDetectsStaleWeights
+        tests:
+          - PartOfSpeech_Model_EmbeddedWeights_MatchTrainingConfig
+
+      - id: PartOfSpeech-Model-TrainedFromCommittedData
+        title: >-
+          The embedded weights shall be trained only from training corpora that are committed in the repository and
+          whose licenses are allowed, and every choice that influenced the model shall be made on development data
+          only, never on a held-out test or challenge set.
+        tags: [system]
+        justification: |
+          The reported accuracy of the model is only honest if nothing about the model was tuned on the data that
+          measures it, and the license obligations of the package depend on knowing exactly which corpora the weights
+          come from. The trainer refuses held-out data by construction, and the configuration names its corpora.
+        children:
+          - PartOfSpeech-ModelTrainer-DevOnlySelection
+          - PartOfSpeech-ModelTrainer-CorpusRules
+          - PartOfSpeech-ModelTrainer-Configuration
+          - PartOfSpeech-ModelTrainer-TrainingSettings
+          - PartOfSpeech-ModelTrainer-DevMetrics
+          - PartOfSpeech-ModelTrainer-GlossaryExperiment
+        tests:
+          - PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora
 
   - title: API Documentation
     requirements:

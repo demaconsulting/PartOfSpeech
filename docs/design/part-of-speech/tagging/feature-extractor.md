@@ -5,8 +5,9 @@
 #### Purpose
 
 `FeatureExtractor` is the single definition of the features that the perceptron scores: it turns the tokens of a
-sentence and the two previous tags into hashed feature buckets. Decoding uses it now and the trainer of a later release
-reuses it unchanged, because a model is only valid for the exact feature set it was trained with. It is an internal
+sentence and the two previous tags into hashed feature buckets. Decoding and the trainer both use it unchanged (the
+trainer therefore trains for exactly the features that the decoder scores), because a model is only valid for the exact
+feature set it was trained with. It is an internal
 static class (with the internal enumeration `FeatureKind`) and has no state of its own.
 
 #### Data Model
@@ -75,4 +76,4 @@ Nothing else is caught.
 
 - **TagDecoder** (`SetToken`, `Finish`, `Extract`, constants) and **EmbeddedModel** and **Tagger**
   (`FeatureSetVersion`).
-- The test suite and, in a later release, the trainer.
+- The test suite and the trainer.

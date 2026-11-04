@@ -25,6 +25,10 @@ the kinds listed below) is accepted.
 #### Test Scenarios
 
 - **Round trip**: `PerceptronModel_Load_RoundTripsWriterOutput` and `PerceptronModel_Load_Compressed_And_Uncompressed_Equal`.
+- **Uncompressed image**: `PerceptronModel_ToUncompressedImage_CompressedAndPlain_SameImageAsPlainFile` (the image of
+  the compressed and of the plain form of the same weights is the plain file) and
+  `PerceptronModel_ToUncompressedImage_InvalidFile_Throws` (a damaged file or one of another feature set is refused, so
+  that an invalid file is never taken for a current one).
 - **Score lookup**: `PerceptronModel_AddScores_SumsRowWeights` (weights of a row go to the matching tags and accumulate
   over buckets), `PerceptronModel_AddScores_EmptyBucket_AddsNothing` and
   `PerceptronModel_AddScores_FirstAndLastBucket_AreFound`.

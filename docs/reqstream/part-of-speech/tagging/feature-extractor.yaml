@@ -1,8 +1,8 @@
 ---
 # Software Unit Requirements for FeatureExtractor
 #
-# The FeatureExtractor unit is the single definition of the features that the perceptron scores. The decoder uses it now
-# and the trainer of a later release will use it unchanged.
+# The FeatureExtractor unit is the single definition of the features that the perceptron scores. The decoder and the
+# trainer both use it unchanged.
 
 sections:
   - title: PartOfSpeech Requirements

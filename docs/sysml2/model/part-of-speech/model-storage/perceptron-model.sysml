@@ -1,6 +1,6 @@
 package PartOfSpeech {
     part def PerceptronModel {
-        doc /* Reads, validates and scores with the averaged-perceptron weights of the weights file, and writes them. */
+        doc /* Reads, validates and scores with the averaged-perceptron weights of the weights file, writes them, and gives their deterministic uncompressed image. */
 
         comment sourceRef /* Source: src/DemaConsulting.PartOfSpeech/ModelStorage/PerceptronModel.cs, src/DemaConsulting.PartOfSpeech/ModelStorage/PerceptronModelWriter.cs */
         comment testRef /* Test: test/DemaConsulting.PartOfSpeech.Tests/ModelStorage/PerceptronModelTests.cs */

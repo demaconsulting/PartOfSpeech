@@ -9,16 +9,20 @@ This document describes the system-level verification strategy for the Part Of S
 The Part Of Speech system is verified through system-level integration tests that exercise the library as a whole from
 the perspective of a consumer. The tests use only the public API: they create a tagger from a weights stream, tag text,
 sentences and token lists, and assert on the observable results, without relying on knowledge of internal
-implementation details. No mocking or stubbing is used at the system level. Because the trained model of a later release
-does not exist yet, the tests load **tiny models**: small weights files that a test builds in memory with hand-set
-weights (or that a 40-sentence deterministic trainer produces), together with the real embedded lexicon. The tiny
-models are test infrastructure in `TestSupport/` (`TinyModels.cs`, `TinyTrainer.cs`); they use the same feature
-extractor and the same weights writer that the trainer of a later release will use, so the tests also prove that those
-can be reused unchanged.
+implementation details. No mocking or stubbing is used at the system level. Most tests load **tiny models**: small
+weights files that a test builds in memory with hand-set weights (or that a 40-sentence deterministic trainer
+produces), together with the real embedded lexicon, so that they do not depend on the quality of the shipped model.
+The tiny models are test infrastructure in `TestSupport/` (`TinyModels.cs`, `TinyTrainer.cs`); they use the same
+feature extractor and the same weights writer that the trainer uses, so the tests also prove that those can be reused
+unchanged. The tests of the default tagger and of the embedded weights use the real shipped model, but only for
+properties that do not depend on its accuracy: that it loads, that it is one shared instance, and that it gives the
+unmistakable tags of a few hand-written sentences (these sentences were written once and not tuned; the accuracy of the
+model is measured by the evaluation of the trainer and of a later release, never by these tests).
 
 System tests reside in `PartOfSpeechTests.cs` within the `DemaConsulting.PartOfSpeech.Tests` project. The data and
 licensing tests reside in `PartOfSpeechDataTests.cs` in the same project, with the helper `DataFiles.cs`; they read the
-committed data files, the project file and the third-party notice, and assert on their content, format and checksums;
+committed data files, the project file, the package license, the third-party notice and the training configuration, and
+assert on their content, format and checksums;
 each test proves one obligation of one requirement, and a test that finds a file missing or a table empty fails instead
 of passing on nothing. The Python tools that produce the data have developer unit tests in `tools/data/tests/`, which are
 not requirements evidence; they are reviewed with the tools in the data tools review sets (see the Companion Artifact
@@ -83,8 +87,10 @@ fails; only a one-time or sporadic runtime allocation is filtered out.
 - **Dependencies**: No external services, databases, or network access required
 - **Isolation**: Each test method creates its own tagger and models; the embedded lexicon is a shared, immutable,
   lazily loaded resource. No test changes shared state
-- **Files**: The data and licensing tests and the embedded-lexicon test read `data/`, `THIRD-PARTY-NOTICES.md`, the
-  library project file and `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin` from the working copy. They find the
+- **Files**: The data and licensing tests, the embedded-lexicon test and the embedded-weights test read `data/`,
+  `PACKAGE-LICENSE.md`, `LICENSE`, `THIRD-PARTY-NOTICES.md`, the library project file,
+  `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` and
+  `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin` and `weights.bin` from the working copy. They find the
   repository root by walking up from the test binaries to the solution file, so they run from any checkout location.
   The checkout uses LF line endings (`.gitattributes`), which the checksums depend on. No network access is needed;
   the UD English-EWT treebank is not required.
@@ -122,8 +128,9 @@ are information for reviewers, not acceptance values:
   instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
-- The embedded lexicon is 641,418 bytes; the package is about 3.2 MB because the resource is embedded once per target
-  framework.
+- The embedded weights are 492,971 bytes (1,111,898 uncompressed) and the embedded lexicon 641,418 bytes (1,635,344
+  uncompressed); the package is 5,298,150 bytes because both resources are embedded once per target framework (and the
+  package also holds the API reference).
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
   consecutive sentences: recall 100.00 percent and precision 99.95 percent (the splitter lists were tuned while looking
   at these documents, so these two values are optimistic).
@@ -196,12 +203,37 @@ The second asserts that a file of another kind, a truncated file, a file of anot
 the version), a file with a changed byte (checksum) and an empty stream each throw `InvalidDataException` from
 `Tagger.Load`.
 
-### Default Model Unavailable
+### Default Model
 
-**Test**: `PartOfSpeech_Default_NoEmbeddedModel_ThrowsInvalidOperationException`
+**Test**: `PartOfSpeech_Default_EmbeddedModel_TagsTextWithoutFile`
 
-Reads `Tagger.Default` and asserts an `InvalidOperationException` whose message says that there is no trained model and
-names `Tagger.Load`. This test is replaced in the release that embeds the model.
+Reads `Tagger.Default`, tags "The cat sat on the mat. She bought two red books." and asserts the unmistakable tags of the
+two sentences (DET NOUN VERB ADP DET NOUN PUNCT and PRON VERB NUM ADJ NOUN PUNCT), that every read returns the same
+instance, and that eight threads that read the property and tag the same text 20 times each get the same result as the
+sequential run. The unit tests of `Tagger.Default` (same instance, parallel first access, four more simple sentences)
+and of `EmbeddedModel.Weights` are described in _Tagger Verification_ and _EmbeddedModel Verification_.
+
+### Embedded Weights Are Current
+
+**Test**: `PartOfSpeech_Model_EmbeddedWeights_MatchTrainingConfig` (in `PartOfSpeechDataTests.cs`)
+
+Reads the embedded weights resource and the committed `weights.bin` and asserts that they are the same bytes, loads the
+model, and compares its hash bits, scale and temperature with `training.json` and the SHA-256 of its uncompressed image
+with `imageSha256` (the values are read from the JSON text with a regular expression, because the JSON API is not part of
+.NET Framework). This is cheap and runs in every test run on every framework. The complete proof that the configuration
+and the committed corpora produce exactly this model is the retraining check `train --check`, which `build.ps1` and
+the CI build run after the build (about 15 seconds; on Windows, Linux and macOS, so a deviation between the operating
+systems would fail one of the jobs); its logic is verified by the `ModelTrainer` unit tests (see _ModelTrainer
+Verification_). The check is supplementary evidence of the requirement, since a build step is not a test.
+
+### Weights Come From Committed, Allowed Corpora
+
+**Test**: `PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora` (in `PartOfSpeechDataTests.cs`)
+
+Reads the corpus paths of `training.json` and asserts for each that it is one of the three training corpora, that the file
+is committed, that it is not a restricted corpus, that its data folder declares an allowed license, and that the section
+of the third-party notice on the embedded weights names MASC, its license, the open corpus and the silver corpus. That
+nothing was selected on held-out data is verified by the guard tests of the `ModelTrainer` unit.
 
 ### Thread Safety
 
@@ -220,7 +252,7 @@ Method described under Verification Approach; the measured rate is written to th
 **Test**: `PartOfSpeech_Packaging_ProjectFile_HasNoRuntimePackageReferences`
 
 Reads the library project file and asserts that every package reference is a private asset (the ApiMark build
-reference), so that none flows to consumers, and that the lexicon is an embedded resource.
+reference), so that none flows to consumers, and that the lexicon and the weights are embedded resources.
 
 ### Embedded Lexicon Is Current
 
@@ -238,6 +270,22 @@ committed binary with a fresh compilation.
 
 The FileAssert assertions on the built package and the compile test of the documented examples are described in
 _ApiMark Verification_.
+
+### Package License
+
+**Tests**: `PartOfSpeech_PackageLicense_ProjectFile_NamesLicenseFileAtPackageRoot`,
+`PartOfSpeech_PackageLicense_File_CoversCodeAndEmbeddedData`, `PartOfSpeech_ThirdPartyNotices_Weights_AreCovered` and the
+FileAssert test `Package_LicenseFilesPackaged`
+
+The first asserts that the project file names `PACKAGE-LICENSE.md` as the license file, has no license expression (a
+package has one or the other), packs the existing file at the package root. The second asserts that the file starts
+with the SPDX expression `MIT AND CC-BY-4.0 AND CC-BY-3.0-US`, contains the MIT text of the repository `LICENSE` file,
+names the two embedded files with their Creative Commons licenses and links, and points to the notice. The third
+asserts that the
+notice covers the weights (the MASC section and the section on the embedded weights). The FileAssert test opens the
+built package after `dotnet pack` and asserts that `PACKAGE-LICENSE.md` and `THIRD-PARTY-NOTICES.md` are at the root with
+their key statements and that the nuspec names the license file (`<license type="file">`), which proves the packed result
+and not just the project file. The reasons for a license file instead of an expression are in the requirement.
 
 ### Data and Licensing
 

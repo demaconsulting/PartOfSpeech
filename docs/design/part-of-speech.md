@@ -8,14 +8,18 @@ This document provides the system-level design for the Part Of Speech.
 
 The Part Of Speech is a .NET library that splits English text into sentences and tokens and tags every token with one
 of the 17 Universal POS tags, with a calibrated confidence, ranked alternatives and optional per-token constraints. It
-has zero runtime package dependencies and ships as one NuGet package. The system consists of one unit and three
+has zero runtime package dependencies and ships as one NuGet package. The system consists of two units and three
 subsystems:
 
 - **Upos** (unit): the tag vocabulary, its text forms and sets of tags; see _Upos Design_.
+- **ModelTrainer** (unit): the build-time tool that trains the embedded weights from the committed corpora with the
+  library's own feature extractor, lexicon restriction and weights writer, selects every setting on development data
+  only, and checks that the committed weights are current; it is not shipped and not part of the runtime; see
+  _ModelTrainer Design_.
 - **Tokenization** (subsystem): the tokenizer and the sentence splitter, which follow the tokenization convention of the
   training data; see _Tokenization Design_.
 - **ModelStorage** (subsystem): the binary formats of the weights (`POSW`) and the lexicon (`POSL`), their readers and
-  writers, and the lexicon that is embedded in the package; see _ModelStorage Design_.
+  writers, and the lexicon and the weights that are embedded in the package; see _ModelStorage Design_.
 - **Tagging** (subsystem): the feature extractor, the greedy decoder, the token constraints and the public `Tagger`;
   see _Tagging Design_.
 
@@ -23,27 +27,39 @@ Relationships (the unit-level call graph has no cycle): `Tagger` uses `Tokenizer
 `TokenConstraint`; `TagDecoder`
 uses `FeatureExtractor`, `PerceptronModel`, `Lexicon` and `UposSet`; `FeatureExtractor` uses `Upos`; `Lexicon` and
 `PerceptronModel` use `BinaryFormat` and `UposSet`; `EmbeddedModel` uses `Lexicon`, `PerceptronModel` and the constant
-`FeatureExtractor.FeatureSetVersion`; `Tokenizer` uses `SentenceSplitter`.
+`FeatureExtractor.FeatureSetVersion`; `Tokenizer` uses `SentenceSplitter`; and `ModelTrainer` uses `FeatureExtractor`,
+`Lexicon`, `PerceptronModel`, `PerceptronModelWriter`, `BinaryFormat` and `Upos` to train, and `Tagger`, `TagDecoder`
+and `TokenConstraint` to score a weights file and to run the glossary experiment through the real decoder, while nothing
+in the library uses `ModelTrainer`.
 
 All public types live in the one namespace `DemaConsulting.PartOfSpeech`; the folders `Tokenization`, `ModelStorage` and
-`Tagging` mirror the subsystems but are not namespaces. The `ModelStorage` classes are internal and are visible to the
-test project, to the tool `tools/LexiconCompiler` and to the trainer of a later release through `InternalsVisibleTo`.
+`Tagging` mirror the subsystems but are not namespaces. The `ModelStorage` and most `Tagging` classes are internal and are
+visible to the test project, to the tool `tools/LexiconCompiler` and to the trainer through `InternalsVisibleTo`.
 
 ### Data Assets
 
 The repository also holds data assets: training corpora, evaluation sets and the lexicon. They are files, not software
 items, so they have no unit design, and the system requirements in the _Data and Licensing_ section of the system
-requirements cover them. Only one of them is consumed at run time: the lexicon, which `tools/LexiconCompiler` compiles
-into the binary resource `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin` that the package embeds.
+requirements cover them. Two compiled forms are consumed at run time: the lexicon, which `tools/LexiconCompiler` compiles
+into the binary resource `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin` that the package embeds, and the
+weights, which the unit `ModelTrainer` trains into `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, which the
+package embeds as well (the _Embedded Model_ system requirements cover it).
 
 - **Training corpora**: sentences labeled with the 17 Universal POS tags, from three sources: the open corpus, MASC and
-  a silver corpus whose labels were written by a model and mapped by documented rules
+  a silver corpus whose labels were written by a model and mapped by documented rules; the weights are trained from all
+  three
 - **Evaluation sets**: a split of the open corpus, a single-target gold set, a probe of difficult noun and verb shapes
-  and a challenge set; the UD English-EWT treebank is evaluation-only and is fetched on demand, never stored
+  and a challenge set; the UD English-EWT treebank is evaluation-only and is fetched on demand, never stored. Only the
+  two development splits were used to select the model; the other sets are evaluated once, in a later phase
 - **Lexicon**: a table that maps a lower-case spelling to the Universal POS tags it may carry, with a coverage report;
   compiled into the embedded `POSL` file
+- **Weights**: the trained `POSW` file, 492,971 bytes compressed and 1,111,898 bytes uncompressed, with the training
+  configuration `training.json` (which records the SHA-256 of the uncompressed image) and the run log `RUN-LOG.md` next
+  to the trainer
 - **Checks**: the checksum manifest and the leakage report
-- **Third-party notice**: `THIRD-PARTY-NOTICES.md`, packed in the NuGet package
+- **Package license and third-party notice**: `PACKAGE-LICENSE.md` (the license of the package: the MIT code and the
+  CC BY data) and `THIRD-PARTY-NOTICES.md` (attribution and change statements, also for the weights), both packed at
+  the package root
 - **Build-time tools**: the Python scripts that import, check and regenerate the data, and the C# tool
   `tools/LexiconCompiler` that compiles the lexicon; they are not shipped and are not part of the runtime
 
@@ -52,8 +68,8 @@ into the binary resource `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`
 The system exposes the following public API to external consumers (all in the namespace `DemaConsulting.PartOfSpeech`):
 
 - **Tagger**: `Tagger.Load(Stream weights, TaggerOptions?)` and `Tagger.Load(Stream weights, Stream lexicon,
-  TaggerOptions?)` create a tagger; `Tagger.Default` returns the tagger with the embedded model and currently always
-  throws `InvalidOperationException` because the package embeds no trained model yet; `Tag(string)`,
+  TaggerOptions?)` create a tagger; `Tagger.Default` returns the one shared tagger that uses the embedded weights and
+  lexicon (created on first use, thread-safe, no file needed); `Tag(string)`,
   `Tag(Sentence, constraints)` and `Tag(IReadOnlyList<string>, constraints)` tag text, a sentence or tokens.
 - **Tokenizer**: `Tokenize(string)` returns sentences with tokens; `CreateSentence(IReadOnlyList<string>)` builds a
   sentence from tokens.
@@ -65,15 +81,19 @@ The system exposes the following public API to external consumers (all in the na
 | --- | --- | --- | --- |
 | `Tagger.Load(Stream, ...)` | Inbound | `POSW` weights file | Valid file of a supported version |
 | `Tagger.Load(Stream, Stream, ...)` | Inbound | `POSW` and `POSL` files | Both valid; streams read to the end |
-| `Tagger.Default` | Outbound | `Tagger` instance | Throws until a model is embedded |
+| `Tagger.Default` | Outbound | `Tagger` instance | Created on first use from the embedded data; one shared instance |
 | `Tagger.Tag(...)`, `Tokenizer.*` | Inbound/Outbound | `string` or tokens in, results out | Arguments not null |
 | `TokenConstraint` | Inbound | Value passed with the tokens | One per token, same count |
 | Embedded lexicon resource | Internal | `POSL` file in the assembly | Matches `data/lexicon/lexicon.tsv` |
+| Embedded weights resource | Internal | `POSW` file in the assembly | Matches `training.json` and its image hash |
+| `PACKAGE-LICENSE.md` | Outbound | Markdown file at the package root | Named by the nuspec; starts with the SPDX line |
 | `THIRD-PARTY-NOTICES.md` | Outbound | Markdown file at the package root | Present in every package |
 | NuGet package `api/` folder | Outbound | Markdown API reference | Generated by ApiMark at build |
 
-The binary formats are interfaces too. The weights file is the interface to the trainer of a later release and to
-callers who train their own models; both formats are specified byte by byte in _ModelStorage Design_.
+The binary formats are interfaces too. The weights file is the interface between the trainer and the library (the trainer
+writes it with `PerceptronModelWriter`, the tagger reads it with `PerceptronModel`) and to callers who train their own
+models; both formats are specified byte by byte in _ModelStorage Design_. The Trainer's command line (_ModelTrainer
+Design_) is an interface of the build only.
 
 ## Dependencies
 
@@ -101,7 +121,8 @@ items and have no OTS design document. Their attribution and license notices are
 source is recorded with its origin, license and production recipe in the `README.md` of its folder under `data/`, and every
 source document of the corpora in a per-document `sources.tsv` (for MASC: genre, the corpus-wide license and the counts):
 
-- **MASC** (CC BY 3.0 US): Penn Treebank trees converted to Universal POS tags for training data
+- **MASC** (CC BY 3.0 US): Penn Treebank trees converted to Universal POS tags for training data; the lexicon tags and
+  the weights are derived in part from them
 - **Open English WordNet** (CC BY 4.0, carrying the Princeton WordNet notice): word forms reduced to the lexicon
 - **Moby Part-of-Speech List** (public domain): word forms of the lexicon
 - **Open part-of-speech corpus of the WordSense project** (CC0 1.0 annotations; public-domain or CC0 sentences): the
@@ -111,8 +132,9 @@ source document of the corpora in a per-document `sources.tsv` (for MASC: genre,
 
 The build-time data tools are Python scripts that use only the Python standard library. They are run by developers and
 are not part of the build, the tests or the package. The lexicon compiler is a small C# console program that references
-the library; `build.ps1` runs it with `--check` so that a stale embedded lexicon fails the build. Their files and tests
-are covered by review-sets (see _Design Introduction_, Companion Artifact Structure).
+the library; `build.ps1` runs it with `--check` so that a stale embedded lexicon fails the build. The trainer is the
+unit `ModelTrainer`; `build.ps1` and the CI build run `train --check` so that stale embedded weights fail the build.
+The files and tests of the tools are covered by review-sets (see _Design Introduction_, Companion Artifact Structure).
 
 ## Risk Control Measures
 
@@ -127,13 +149,21 @@ integrity of what the library ships:
   of its stored bytes, and a reader refuses anything that does not match (including a Deflate stream that is cut off or
   has trailing bytes), so a damaged or incompatible file fails when it is
   loaded and never yields wrong tags.
-- **Embedded data check**: a unit test and the `--check` step of the build fail when the embedded lexicon does not encode
-  `data/lexicon/lexicon.tsv`.
+- **Embedded data checks**: a unit test and the `--check` step of the build fail when the embedded lexicon does not
+  encode `data/lexicon/lexicon.tsv`; a unit test fails when the embedded weights differ from the committed file or from
+  the header values and the SHA-256 of the uncompressed image that `training.json` records, and the `train --check` step
+  of the build and of the CI build (on all three operating systems) retrains the model from the committed corpora and
+  fails when the result is not identical to the committed weights.
+- **Development-only selection**: the trainer has no code path that reads a held-out evaluation set, so no setting of the
+  model was chosen on the data that will measure it (see _ModelTrainer Design_).
 
 The data assets are protected by two release gates, which the data tests of the system verify:
 
 - **License gate**: only CC0, CC BY, public-domain and project-licensed data is committed. Share-alike,
-  non-commercial and no-derivatives data, UD English-EWT and CoNLL-U files are rejected.
+  non-commercial and no-derivatives data, UD English-EWT and CoNLL-U files are rejected. The package license
+  `PACKAGE-LICENSE.md` names every license that covers part of the package, because nuget.org accepts only license
+  expressions of licenses that the OSI or the FSF approve and `CC-BY-3.0-US` (MASC, which the weights and the lexicon
+  tags derive from) is neither.
 - **Isolation gate**: no training document and no training sentence, of any length, appears in an evaluation set, so that
   measured accuracy is not inflated by training data. The data tools enforce it on the training side: a long match
   (a key of 25 or more letters and digits) shows shared source text and excludes the whole training document; a
@@ -167,12 +197,20 @@ The data assets are protected by two release gates, which the data tests of the 
    training corpora, then measure its coverage of the open training and development sets
 4. **Compilation**: `tools/LexiconCompiler` compiles the lexicon table into `Resources/lexicon.bin`, which is committed
    and embedded in the assembly
-5. **Checks**: the tools write the leakage report and the checksum manifest
-6. **Notices**: `THIRD-PARTY-NOTICES.md` carries the attributions of the sources, and the NuGet package includes it
+5. **Training**: the unit `ModelTrainer` reads the three training corpora named in `training.json`, extracts features with
+   the same `FeatureExtractor`, restricts the tags with the same lexicon code, trains an averaged perceptron in integer
+   arithmetic, quantizes and prunes the weights and writes the `POSW` file with `PerceptronModelWriter`; the file is
+   committed as `Resources/weights.bin` and embedded, and `training.json` records the SHA-256 of its uncompressed image.
+   Every setting was selected on the development sets only (the run log is `RUN-LOG.md` next to the trainer); `train
+   --check` retrains and compares in the build
+6. **Checks**: the tools write the leakage report and the checksum manifest
+7. **Notices**: `THIRD-PARTY-NOTICES.md` carries the attributions of the sources (the weights included), and
+   `PACKAGE-LICENSE.md` is the license of the package; the NuGet package includes both
 
-**Later releases**: a trainer (phase 3) reads the corpora, extracts features with the same `FeatureExtractor`, trains an
-averaged perceptron, and writes the `POSW` file with `PerceptronModelWriter`; the file is then embedded as
-`Resources/weights.bin` and `Tagger.Default` starts to work. The tagging design records the contract.
+**Glossary support**: soft constraints (`TokenConstraint.Prefer`) add a boost to the raw score. The trainer measured, on
+development data only, whether a trained "glossary says X" feature would do better, and rejected it (it cost 0.17
+accuracy points and did not beat a calibrated boost), so the feature set stays at version 1 and the calibration of the
+boosts is later work that starts from the measured curve in `RUN-LOG.md` (see _ModelTrainer Design_).
 
 ## Design Constraints
 
@@ -188,10 +226,11 @@ averaged perceptron, and writes the `POSW` file with `PerceptronModelWriter`; th
   only the result arrays per sentence in the decoder. The throughput is enforced in runs without code coverage; coverage
   instrumentation slows the hot loops too much to prove it, so a run with coverage (CI) applies a relaxed gate (see the
   verification document)
-- **Package size**: the lexicon resource is about 0.64 MB and is embedded once per target framework, so the package is
-  about 3.2 MB; the trained weights of a later release are expected to add about 1 MB per target framework
+- **Package size**: the lexicon resource is 641,418 bytes and the weights resource 492,971 bytes (both already
+  compressed), embedded once per target framework, so the four assemblies are about 1.2 to 1.5 MB each and the package
+  (with the API reference and the XML documentation files) is 5,298,150 bytes (about 5.3 MB)
 - **Open licenses only**: No share-alike, non-commercial or no-derivatives data; attribution notices for every
-  attribution-licensed source travel with the package
+  attribution-licensed source travel with the package, and the package license file covers the embedded data
 - **Data format**: Data files are tab-separated text (UTF-8, no byte order mark, LF line endings), so that their
   checksums are stable on every platform
 - **Language**: Documentation and tag conventions use US English
@@ -221,15 +260,15 @@ count on .NET 6 and later) are guarded by conditional compilation and have a por
 
 ### Integration Patterns
 
-- **NuGet Packaging**: Standard .NET library packaging and distribution, with the third-party notice at the package root
-  and the Markdown API reference under `api/`
+- **NuGet Packaging**: Standard .NET library packaging and distribution, with the package license and the third-party
+  notice at the package root and the Markdown API reference under `api/`
 - **CI/CD Integration**: Automated build, test, and quality validation
 - **Requirements Traceability**: All features linked to passing tests
 - **Review Management**: Systematic file review using ReviewMark patterns
 
-### Spike Deviations and Phase 3 Contract
+### Spike Deviations and the Contract with the Trainer
 
 The decoder is derived from an averaged-perceptron spike. The deviations from it (hash, integer scoring, folding, the
-17-tag set, the extra pair features) and the contract with the later trainer (feature set version, writer, byte
-layouts, temperature and scale) are recorded in _Tagging Design_ and _ModelStorage Design_ so that the trainer can be
-built without reading the decoder source.
+17-tag set, the extra pair features) and the contract with the trainer (feature set version, writer, byte
+layouts, temperature and scale) are recorded in _Tagging Design_ and _ModelStorage Design_, and the trainer's side of
+the contract is in _ModelTrainer Design_.

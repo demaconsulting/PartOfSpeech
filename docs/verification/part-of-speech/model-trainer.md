@@ -1,0 +1,94 @@
+## ModelTrainer Verification
+
+This document describes the unit-level verification strategy for the `ModelTrainer` unit (the tool project
+`tools/DemaConsulting.PartOfSpeech.Trainer`: its training engine, its evaluation and its check logic).
+
+### Verification Approach
+
+The unit is verified by unit tests in `ModelTrainer/ModelTrainerTests.cs`. The engine files of the tool (everything under
+`Training/` and `Evaluation/` and `RunLog.cs`) use only the base class library and are compiled into the test project by
+source links, so the tests run the real trainer code on every target framework of the test project, including .NET
+Framework; only `Program.cs` (the console) is not linked, and `ConfigFile.cs` (System.Text.Json, which .NET Framework does
+not have in the box) is linked and tested on .NET 8 and later. Nothing is mocked. The tests use four kinds of method:
+
+- **Small real runs.** The trainer is run for real on 300 sentences of the open training corpus (three epochs, 18
+  hash bits, the smallest bucket space the format allows), which takes a fraction of a second. Two runs with the same
+  inputs must give the same uncompressed image, another seed another image, and the SHA-256 of the image of a reference
+  run (once without and once with the lexicon restriction) is pinned in the test as a cross-platform golden value: it is
+  the same on Windows, Linux and macOS and on every target framework, which is the evidence of the determinism contract
+  of the design. If the extractor, the lexicon or the open training corpus changes, the pinned values must be updated; a
+  failing test prints the actual hash.
+- **Parity with the runtime.** The trainer's predictor is compared token by token with the real `TagDecoder` for the same
+  quantized weights, once restricted with the embedded lexicon and once unrestricted with unknown words, so that the
+  trainer cannot train for conditions that the tagger does not have.
+- **Oracles and fixtures.** The integer averaging and quantization is compared with a `decimal` oracle on random update
+  sequences and on hand-made ties and clamps; the corpus reader, the masks, the development-set parser, the metrics and
+  the bootstrap are checked against small fixtures with known answers; the pseudo-random generator is checked against its
+  published reference sequence.
+- **Guards by scanning.** The rule that no trainer source other than the guard names a held-out data set is verified by
+  reading the C# files of the tool and asserting that none of them contains the names.
+
+The development evaluations and the training of the shipped model are not unit tests (they would take much longer and
+depend on the data): the shipped weights are verified at system level (the embedded weights match `training.json`, the
+configuration names only committed training corpora) and by the build step `train --check`, which retrains the model from
+the committed corpora and compares it with the committed file on all three operating systems. That step is supplementary
+evidence, since a build step is not a test; the tests prove that the comparison logic is right.
+
+### Test Environment
+
+No setup beyond the standard test runner. The tests read the committed corpus `data/open/train.tsv` and the embedded
+lexicon (the small runs), the committed `training.json` (on .NET 8 and later) and the C# sources of the tool (the guard
+scan) from the working copy through `DataFiles.cs`, which finds the repository root. No network and no other tool is
+needed.
+
+### Acceptance Criteria
+
+All tests pass on every target framework. A test fails when two runs with the same inputs differ, a run with another seed
+does not differ, the image of a reference run differs from its pinned hash, the trainer's tags differ from the decoder's,
+a quantized weight differs from the oracle, a masked token changes a weight or is not counted as a step, a setting has no
+effect, a held-out or development file is admitted as a source (or a held-out file is admitted for evaluation), a source
+names a held-out set, the check takes a perturbed, missing or damaged file for a current one or rejects the compressed form
+of the current file, the configuration is accepted with a misspelled member or an out-of-range value, a metric or a
+bootstrap interval differs from the known answer, or the glossary experiment's decoder differs from the plain predictor.
+
+### Test Scenarios
+
+- **Deterministic training**: `ModelTrainer_Train_SameInputs_ByteIdenticalImage`,
+  `ModelTrainer_Train_DifferentSeed_DifferentImage`, `ModelTrainer_Train_SmallUnrestrictedRun_MatchesGoldenHash` and
+  `ModelTrainer_Train_SmallRestrictedRun_MatchesGoldenHash` (the golden values), and the generator tests
+  `DeterministicRandom_NextUInt64_SeedZero_ReferenceSequence`,
+  `DeterministicRandom_Shuffle_Permutation_ReproducibleAndSeedDependent` and
+  `DeterministicRandom_NextInt_NonPositiveBound_Throws`.
+- **Shared definitions**: `ModelTrainer_Predict_RestrictedWithLexicon_MatchesTagDecoder` and
+  `ModelTrainer_Predict_Unrestricted_MatchesTagDecoderWithUnknownWords`.
+- **Exact quantization**: `AveragedPerceptron_Quantize_RandomUpdates_MatchesDecimalOracle`,
+  `AveragedPerceptron_Quantize_TiesAndClamp_RoundAwayFromZeroAndClamp` (a tie is rounded away from zero, large values are
+  clamped to the 16-bit range without -32768), `AveragedPerceptron_Quantize_PruneThreshold_DropsSmallWeights`,
+  `ModelTrainer_Build_SmallRun_LoadsWithTheQuantizedWeights` (the written file loads with the quantized weights) and
+  `ModelBuilder_WithTemperature_ReplacesOnlyTheTemperature` (the weights are untouched and a temperature that is not
+  finite and positive is refused).
+- **Corpus rules**: `ModelTrainer_Train_MaskedToken_NoUpdateButStepAndHistory`,
+  `CorpusReader_Parse_MaskingRules_MarkTokensWithoutSignal` (masked tokens, `disputed` tokens when configured and silver
+  tokens below the probability threshold), `CorpusReader_Parse_LimitAndSample_AreDeterministic`,
+  `CorpusReader_Parse_UnknownTag_ThrowsWithLine` and `CorpusReader_LoadSources_Weight_RepeatsSentences`.
+- **Training settings take effect**: `ModelTrainer_Train_MinCount_ShrinksTheModel` and
+  `ModelTrainer_Train_RestrictionAndHistoryModes_ChangeTheImage`.
+- **Development-only selection**: `DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused` (a theory over the held-out
+  files, a training file and a dotted detour), `DataGuard_EnsureDevelopmentFile_DevelopmentFile_Admitted`,
+  `DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused` (also in other spellings of the path),
+  `DataGuard_EnsureTrainable_TrainingCorpus_Admitted`, `DataGuard_EnsureDevelopmentHeader_NoDevSplitHeader_Throws` and
+  `ModelTrainer_Sources_NoHeldOutPathLiterals`.
+- **The check**: `ModelBuilder_Check_CommittedFile_DetectsStaleMissingAndInvalid` (the compressed committed form of the
+  fresh image is current, another seed or another temperature is stale, no file is missing, bytes that are no weights file
+  are invalid).
+- **Configuration**: `ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical` (on .NET 8 and later: three existing
+  corpora, and rewriting the file gives the same text) and `ConfigFile_Parse_UnknownMemberOrBadRange_Throws`.
+- **Development metrics**: `DevSets_ParseGoldDev_Fixture_ReadsTargetsAndMapsClasses`,
+  `Metrics_Compute_KnownOutcomes_ExpectedNumbers`, `Metrics_Judge_TinyTagger_CorrectAndNounVerbError`,
+  `Bootstrap_Compare_IdenticalLists_ZeroDifferenceTied`, `Bootstrap_Compare_BetterList_PositiveDifferenceExcludesZero`,
+  `DevEvaluator_EvaluateOpen_FixtureSentences_OneOutcomePerToken` and `RunLog_Row_Summary_HasOneCellPerHeaderColumn`.
+- **Glossary experiment**: `GlossaryTraining_Draw_NoWrongHints_HintsAreGoldAndReproducible`,
+  `GlossaryTraining_Draw_AllHintsWrong_HintIsAnotherAllowedTag`, `ModelTrainer_Train_GlossaryHints_ChangeTheImage` (and
+  the plain run keeps its pinned hash, which is the golden test),
+  `GlossaryFeatures_Append_InBucketSpaceAndDependOnHintAndHistory`, `HintedPredictor_NoHints_MatchesQuantizedPredictor`
+  and `HintedPredictor_HardHintAndHugeBoost_FollowTheHint`.

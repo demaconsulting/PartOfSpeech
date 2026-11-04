@@ -10,6 +10,7 @@ includes:
   - docs/reqstream/quality.yaml
   - docs/reqstream/part-of-speech.yaml
   - docs/reqstream/part-of-speech/upos.yaml
+  - docs/reqstream/part-of-speech/model-trainer.yaml
   - docs/reqstream/part-of-speech/tokenization.yaml
   - docs/reqstream/part-of-speech/tokenization/tokenizer.yaml
   - docs/reqstream/part-of-speech/tokenization/sentence-splitter.yaml

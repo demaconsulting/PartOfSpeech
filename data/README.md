@@ -6,9 +6,12 @@ Training data, evaluation data and the lexicon of `DemaConsulting.PartOfSpeech`:
 17 Universal POS tags. Everything here is open data with its license, provenance and production recipe recorded. The scripts
 that produce and check it are in [`tools/data/`](../tools/data/README.md); the tag set, the annotation conventions, the file
 formats and every mapping table are in [CONVENTIONS.md](CONVENTIONS.md) (normative). At run time the library uses only the
-lexicon, which is embedded in the package in a compact binary form generated from `lexicon/lexicon.tsv` (see
-[lexicon/README.md](lexicon/README.md), "Embedded Form"); the corpora and the evaluation sets are not shipped, and a
-later phase trains the tagger weights from them.
+lexicon and the trained weights, which are embedded in the package in compact binary forms: the lexicon is generated from
+`lexicon/lexicon.tsv` (see [lexicon/README.md](lexicon/README.md), "Embedded Form"), and the weights
+(`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 492,971 bytes compressed, 1,111,898 bytes uncompressed) are
+trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC and silver
+corpora with settings that were selected on the two development sets only (the run log is
+[RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not shipped.
 
 ## Contents
 

@@ -10,7 +10,8 @@ models. A **tiny trained model** is produced by `TestSupport/TinyTrainer.cs`: ab
 tagged by a deterministic averaged perceptron (the algorithm of the spike: left to right, unrestricted greedy decoding
 with the previous predicted tags as history, +1 for the gold tag and -1 for the guess on a mistake, weights averaged
 over all steps, a fixed-seed shuffle). It uses only `FeatureExtractor` and `PerceptronModelWriter`, which is also the
-proof that the trainer of a later release can reuse the extractor and the writer unchanged. A lexicon of the fixture
+proof that the trainer can reuse the extractor and the writer unchanged (the real trainer does, and its parity tests are
+in _ModelTrainer Verification_). A lexicon of the fixture
 words is compiled by `LexiconWriter`. **Hand-set tiny models** (`TestSupport/TinyModels.cs`, class `WeightsBuilder`)
 say "the lower-case word `a` adds 5 to DET" through `FeatureExtractor.ReferenceBucket`, so a test controls every score
 without knowing a hash. Nothing is mocked; every unit is real.

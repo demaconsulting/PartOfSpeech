@@ -5,7 +5,8 @@
 `DemaConsulting.PartOfSpeech.Trainer` is the build-time tool that trains the averaged-perceptron weights of the tagger
 (`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`) from the committed corpora, with the same
 feature extractor, lexicon restriction and weights writer that the runtime uses. It is not part of the NuGet package.
-This file describes how to run it; the algorithm is in `docs/design/part-of-speech/model-trainer.md`.
+This file describes how to run it; the algorithm is in `docs/design/part-of-speech/model-trainer.md`, and the unit's
+requirements are in `docs/reqstream/part-of-speech/model-trainer.yaml`.
 
 ## Commands
 
@@ -67,11 +68,24 @@ Every setting is selected on the two development sets (`data/open/dev.tsv`, `dat
 has no code path that reads any other evaluation file: evaluation accepts exactly those two paths, and training refuses
 held-out and development files (`Evaluation/DevSets.cs`, tested).
 
+## Current model
+
+`training.json` selects: sources open (x2), MASC and silver (labeled tokens with probability of at least 80%); restriction
+mode `history` with predicted history; 6 epochs; 19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8;
+temperature 6.727. The file `weights.bin` has 119,632 rows and 290,862 weights, is 1,111,898 bytes uncompressed and
+492,971 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check` takes about 15 seconds and runs
+in `build.ps1` and in the CI build on all three operating systems. The glossary decision (boost only, no trained
+feature) and every experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and
+`docs/verification/part-of-speech/model-trainer.md` the verification. To change the model: edit `training.json` (or run
+experiments with the overrides), run `train --update-config`, then `train --check`, run the tests, and note the change in
+`RUN-LOG.md`; the committed corpora, the lexicon and the extractor are inputs, so changing any of them also requires a new
+training run and new pinned hashes in the tests.
+
 ## Machine limits
 
 Training is single-threaded. Peak memory is about 0.5 GB at `hashBits` 21 and 1 GB at 22 (two dense tables of
-`2^hashBits * 17` cells); do not use 23 or 24. On a shared machine run it at below-normal priority with a restricted
-processor affinity, one process at a time.
+`2^hashBits * 17` cells; the shipped model uses 19 bits and needs about 0.2 to 0.6 GB); do not use 23 or 24. On a shared
+machine run it at below-normal priority with a restricted processor affinity, one process at a time.
 
 ## Run log
 

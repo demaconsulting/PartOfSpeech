@@ -1,8 +1,7 @@
 ---
 # Software Unit Requirements for EmbeddedModel
 #
-# The EmbeddedModel unit gives access to the lexicon and, in a later release, the weights that are embedded in the
-# package.
+# The EmbeddedModel unit gives access to the lexicon and the weights that are embedded in the package.
 
 sections:
   - title: PartOfSpeech Requirements
@@ -23,18 +22,23 @@ sections:
 
               - id: PartOfSpeech-ModelStorage-EmbeddedModel-Weights
                 title: >-
-                  A package that contains no weights shall report that no weights are available instead of failing; this
-                  requirement is replaced when a trained model is embedded.
+                  The package shall contain trained weights that load as a model of the feature set of the library, and
+                  every access shall return the same loaded model.
                 justification: |
-                  Until a model ships, callers must be able to find out that none is embedded, and the library must say
-                  so clearly.
+                  The embedded weights are what the default tagger scores with; weights that are missing or built for
+                  another feature set would make the default tagger fail or give wrong tags, and loading them again for
+                  every access would waste time and memory.
                 tests:
-                  - EmbeddedModel_Weights_NoResource_ReturnsNull
+                  - EmbeddedModel_Weights_IsPresentAndLoads
+                  - EmbeddedModel_Weights_SecondAccess_ReturnsSameInstance
 
               - id: PartOfSpeech-ModelStorage-EmbeddedModel-ThreadSafe
-                title: Threads that access the embedded lexicon at the same time shall receive the same instance.
+                title: >-
+                  Threads that access the embedded lexicon or the embedded weights at the same time shall receive the
+                  same instance.
                 justification: |
                   Services tag in parallel from the first request on; two loaded copies would waste memory and could
                   differ if loading ever failed once.
                 tests:
                   - EmbeddedModel_Lexicon_ParallelAccess_ReturnsSingleInstance
+                  - EmbeddedModel_Weights_ParallelAccess_ReturnsSingleInstance

@@ -8,8 +8,11 @@
 needs-review:
   - "README.md"                   # Root README file
   - "THIRD-PARTY-NOTICES.md"      # Third-party attribution and license notices (packed in the NuGet package)
+  - "PACKAGE-LICENSE.md"          # License of the NuGet package: MIT code and CC BY data (packed in the package)
   - "requirements.yaml"           # Root requirements file
   - "**/*.cs"                     # All C# source and test files
+  - "tools/DemaConsulting.PartOfSpeech.Trainer/**/*.md"    # Trainer documentation and run log
+  - "tools/DemaConsulting.PartOfSpeech.Trainer/training.json"  # The selected training configuration
   - "docs/reqstream/**/*.yaml"    # Requirements files
   - "docs/design/**/*.md"         # Design documentation files
   - "docs/verification/**/*.md"  # Verification documentation files
@@ -48,6 +51,7 @@ reviews:
     paths:
       - "README.md"                                                 # project readme
       - "THIRD-PARTY-NOTICES.md"                                    # third-party attribution and license notices
+      - "PACKAGE-LICENSE.md"                                        # license of the NuGet package
       - "docs/user_guide/**/*.md"                                   # user guide
 
   # Decomposition Review (only one per repository)
@@ -125,6 +129,26 @@ reviews:
       - "src/DemaConsulting.PartOfSpeech/UposExtensions.cs"          # unit source
       - "src/DemaConsulting.PartOfSpeech/UposSet.cs"                 # unit source
       - "test/DemaConsulting.PartOfSpeech.Tests/UposTests.cs"        # unit tests
+
+  # PartOfSpeech-ModelTrainer Review (one per unit directly under the system)
+  - id: PartOfSpeech-ModelTrainer
+    title: Review that PartOfSpeech ModelTrainer Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/model-trainer.yaml"           # unit requirements
+      - "docs/design/part-of-speech/model-trainer.md"                # unit design
+      - "docs/verification/part-of-speech/model-trainer.md"          # unit verification
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/Program.cs"       # unit source (command line)
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/ConfigFile.cs"    # unit source (configuration file)
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/RunLog.cs"        # unit source (run log rows)
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/Training/**/*.cs"    # unit source (training engine)
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/Evaluation/**/*.cs"  # unit source (development-only evaluation)
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/training.json"    # the selected configuration
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/README.md"        # how to run the tool
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md"       # pre-registered rule, run log and decisions
+      - "test/DemaConsulting.PartOfSpeech.Tests/ModelTrainer/ModelTrainerTests.cs"  # unit tests
 
   # PartOfSpeech-Tokenization Review (one per subsystem)
   - id: PartOfSpeech-Tokenization

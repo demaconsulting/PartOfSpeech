@@ -351,8 +351,8 @@ plan prescribes one M1 training).
 
 ## Final configuration and results (freeze)
 
-Frozen in `training.json` by `train --update-config`; the weights file is `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`
-(not yet embedded in the library, that is the next step).
+Frozen in `training.json` by `train --update-config`; the weights file is `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`,
+which the library embeds as the assembly resource `DemaConsulting.PartOfSpeech.Resources.weights.bin` (`Tagger.Default`).
 
 | Setting | Value |
 | --- | --- |

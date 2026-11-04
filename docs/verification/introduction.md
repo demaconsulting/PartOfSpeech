@@ -25,6 +25,7 @@ constituent software items, specifically:
 
 - **PartOfSpeech (System)** — The complete .NET part-of-speech tagging library
 - **Upos (Unit)** — The tag vocabulary, its text forms and sets of tags
+- **ModelTrainer (Unit)** — The build-time tool that trains the embedded weights and checks that they are current
 - **Tokenization (Subsystem)** — with the **Tokenizer** and **SentenceSplitter** units
 - **ModelStorage (Subsystem)** — with the **BinaryFormat**, **Lexicon**, **PerceptronModel** and **EmbeddedModel** units
 - **Tagging (Subsystem)** — with the **FeatureExtractor**, **TagDecoder**, **TokenConstraint** and **Tagger** units
@@ -61,7 +62,8 @@ trees. In-house items have artifacts in these parallel locations:
 - Requirements: `docs/reqstream/{system}/.../{item}.yaml` (kebab-case)
 - Design docs: `docs/design/{system}/.../{item}.md` (kebab-case)
 - Verification design: `docs/verification/{system}/.../{item}.md` (kebab-case)
-- Source code: `src/{System}/.../{Item}.cs` (PascalCase for C#)
+- Source code: `src/{System}/.../{Item}.cs` (PascalCase for C#); the source of the unit `ModelTrainer` is the tool
+  project `tools/DemaConsulting.PartOfSpeech.Trainer/`, whose engine files are compiled into the test project
 - Tests: `test/{System}.Tests/.../{Item}Tests.cs` (PascalCase for C#); subsystem tests are named after the subsystem
   (`Tokenization/TokenizationTests.cs`) and the system tests are `PartOfSpeechTests.cs` and `PartOfSpeechDataTests.cs`
 - Test infrastructure (not software items): `test/{System}.Tests/TestSupport/` builds the tiny and synthetic models that

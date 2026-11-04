@@ -24,8 +24,9 @@ This library provides:
 - **Confidences and Alternatives**: every tag comes with a calibrated probability and the ranked competing tags
 - **Constraints**: restrict or steer the tag of individual tokens, for example from a glossary
 - **Pre-Tokenized Input**: tag tokens that you already have
-- **No Dependencies, No Downloads**: the library uses only the base class library and embeds its lexicon; it is fast
-  (hundreds of thousands of tokens per second on one thread) and thread-safe
+- **No Dependencies, No Downloads**: the library uses only the base class library and embeds its lexicon and its trained
+  weights (about 1.1 MB, 0.48 MB compressed); it is fast (hundreds of thousands of tokens per second on one thread)
+  and thread-safe
 - **Multi-Platform Support**: Builds and runs on Windows, Linux, and macOS
 - **Multi-Runtime Support**: Targets .NET Standard 2.0, .NET 8, 9, and 10
 - **API Reference in the Package**: a generated Markdown reference of the public API is packed with the library
@@ -52,10 +53,7 @@ dotnet add package DemaConsulting.PartOfSpeech
 ```csharp
 using DemaConsulting.PartOfSpeech;
 
-using var weights = File.OpenRead("model.posw");
-var tagger = Tagger.Load(weights);
-
-foreach (TaggedSentence sentence in tagger.Tag("The cat sat on the mat. It didn't move."))
+foreach (TaggedSentence sentence in Tagger.Default.Tag("The cat sat on the mat. It didn't move."))
 {
     foreach (TaggedToken token in sentence.Tokens)
     {
@@ -64,9 +62,11 @@ foreach (TaggedSentence sentence in tagger.Tag("The cat sat on the mat. It didn'
 }
 ```
 
-**The trained model is not included yet.** This release contains the tokenizer, the tagger, the compiled lexicon and
-the file formats; the trained weights arrive in a later release. Until then `Tagger.Default` throws an
-`InvalidOperationException` and you load a weights file with `Tagger.Load` as shown. The
+`Tagger.Default` is a shared, thread-safe tagger that uses the trained model and the lexicon that are embedded in the
+package, so it needs no file and no download. The first read inflates and validates the embedded files once (the weights
+are 492,971 bytes compressed and 1,111,898 bytes uncompressed, the lexicon 641,418 bytes compressed). To use other
+weights, create a tagger with `Tagger.Load(stream)`. The model was selected on development data only; its accuracy is
+measured separately, and this release recommends no confidence threshold until that measurement is published. The
 [user guide][link-user-guide] explains how to read confidences and alternatives, how to constrain tags, and the
 tokenization conventions.
 
@@ -85,16 +85,23 @@ Generated documentation includes:
 
 The repository holds the open training data, the evaluation data and a part-of-speech lexicon for the 17 Universal POS
 tags in the [data folder][link-data]. Every data source is recorded with its origin, license and how it was produced, and
-the files are verified against checksums. At run time the library uses only the lexicon: `tools/LexiconCompiler` compiles
-it into a binary file that is embedded in the assembly. The corpora and the evaluation sets are not shipped.
+the files are verified against checksums. At run time the library uses only the lexicon and the trained weights:
+`tools/LexiconCompiler` compiles the lexicon into a binary file, and `tools/DemaConsulting.PartOfSpeech.Trainer` trains
+the weights from the open corpus, MASC and the silver corpus (the tool, its settings and its run log are in the
+repository, and `train --check` verifies that the embedded weights are exactly what the committed data produces). Both
+binary files are embedded in the assembly. The corpora and the evaluation sets are not shipped.
 
 ## Credits and Licenses
 
-PartOfSpeech is MIT licensed. The data below is open, and its attribution and license notices are in
-[THIRD-PARTY-NOTICES.md][link-notices], which is also packed in the NuGet package.
+PartOfSpeech is MIT licensed. The package also embeds a lexicon and trained weights that are derived from third-party
+data, so the license of the package is the file [PACKAGE-LICENSE.md][link-package-license] (it starts with the SPDX
+expression `MIT AND CC-BY-4.0 AND CC-BY-3.0-US`; nuget.org accepts only expressions of OSI or FSF approved licenses, and
+CC BY 3.0 US is neither). The attribution and license notices of the third-party data are in
+[THIRD-PARTY-NOTICES.md][link-notices]. Both files are packed at the root of the NuGet package.
 
 - **MASC**: the Manually Annotated Sub-Corpus of the Open American National Corpus
-  ([CC BY 3.0 US][link-cc-by-3]). Its Penn Treebank parts of speech were converted to Universal POS tags.
+  ([CC BY 3.0 US][link-cc-by-3]). Its Penn Treebank parts of speech were converted to Universal POS tags; the lexicon
+  and the trained weights were derived in part from the converted data.
 - **Open English WordNet** ([CC BY 4.0][link-cc-by-4]), which carries the Princeton WordNet notice. Its word forms
   were reduced to a lexicon that maps a spelling to the Universal POS tags it may carry.
 - **The open part-of-speech corpus** of the [WordSense][link-wordsense] project: the annotations and the selection are
@@ -115,7 +122,8 @@ standards, and the pull request process.
 
 ## License
 
-Copyright (c) DEMA Consulting. Licensed under the MIT License. See [LICENSE][link-license] for details.
+Copyright (c) DEMA Consulting. The code is licensed under the MIT License. See [LICENSE][link-license] for details; the
+license of the NuGet package, which also covers the embedded data, is [PACKAGE-LICENSE.md][link-package-license].
 
 By contributing to this project, you agree that your contributions will be licensed under the MIT License.
 
@@ -143,6 +151,7 @@ By contributing to this project, you agree that your contributions will be licen
 [link-data]: https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md
 [link-user-guide]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/user_guide/introduction.md
 [link-notices]: https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md
+[link-package-license]: https://github.com/demaconsulting/PartOfSpeech/blob/main/PACKAGE-LICENSE.md
 [link-wordsense]: https://github.com/demaconsulting/WordSense
 [link-cc-by-3]: https://creativecommons.org/licenses/by/3.0/us/
 [link-cc-by-4]: https://creativecommons.org/licenses/by/4.0/
