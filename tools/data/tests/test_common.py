@@ -80,6 +80,41 @@ class ShapeRuleTests(unittest.TestCase):
             self.assertFalse(common.is_number(token), token)
 
 
+class StatusFlagTests(unittest.TestCase):
+    def test_plain_status_has_no_flags(self):
+        for status in common.STATUS_BASES:
+            self.assertEqual(common.parse_status(status), (status, ()))
+            self.assertEqual(common.base_status(status), status)
+
+    def test_flags_follow_the_status_in_canonical_order(self):
+        self.assertEqual(common.parse_status("unanimous+mentioned"), ("unanimous", ("mentioned",)))
+        self.assertEqual(common.parse_status("disputed+foreign+mentioned"), ("disputed", ("foreign", "mentioned")))
+        self.assertEqual(common.base_status("disputed+foreign+mentioned"), "disputed")
+
+    def test_format_status_orders_and_roundtrips(self):
+        self.assertEqual(common.format_status("silver"), "silver")
+        self.assertEqual(common.format_status("unchecked", ("mentioned", "foreign")), "unchecked+foreign+mentioned")
+        self.assertEqual(common.parse_status(common.format_status("ptb", ("mentioned",))), ("ptb", ("mentioned",)))
+
+    def test_malformed_cells_are_refused(self):
+        for cell in ("", "bogus", "unanimous+", "unanimous+shouted", "unanimous+mentioned+mentioned",
+                     "unanimous+mentioned+foreign", "+mentioned", "mentioned"):
+            with self.assertRaises(ValueError, msg=cell):
+                common.parse_status(cell)
+        with self.assertRaises(ValueError):
+            common.format_status("unanimous", ("mentioned", "mentioned"))
+
+    def test_flagged_rows_roundtrip_through_the_corpus_files(self):
+        sentences = [{"sent_id": "a-1", "source_id": "a", "text": "Sierra is a Spanish word",
+                      "rows": [["Sierra", "NOUN", "unanimous+foreign+mentioned"], ["is", "VERB", "unanimous"],
+                               ["a", "DET", "unanimous"], ["Spanish", "PROPN", "unchecked"], ["word", "NOUN", "unanimous"]]}]
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, "c.tsv")
+            common.write_corpus(path, ["# corpus = test"], sentences)
+            back = common.read_corpus(path)[1]
+        self.assertEqual(back[0]["rows"], sentences[0]["rows"])
+
+
 class FileFormatTests(unittest.TestCase):
     def test_corpus_roundtrip_is_lf_without_bom(self):
         sentences = [{"sent_id": "a-1", "source_id": "a", "text": "Hi #1", "extra": ["# genre = x"],

@@ -159,6 +159,45 @@ def read_corpus(path):
     return header, sentences
 
 
+# ---------------------------------------------------------------- corpus status cell: status and flags
+
+# The status cell of a token row is `status` or `status+flag+flag`: one status of the file's vocabulary, then the
+# flags, each after a plus sign, in alphabetical order. A cell without a plus sign (every committed file today) has no
+# flags. Flags are token-level facts about the word and never change the tag (see data/CONVENTIONS.md, "Mentioned Words").
+STATUS_BASES = ("unanimous", "disputed", "unchecked", "ptb", "silver", "masked")
+STATUS_FLAGS = ("foreign", "mentioned")  # canonical order
+
+
+def parse_status(cell):
+    """Split a status cell `status[+flag...]` into (status, flags tuple); the flags come back in canonical order.
+
+    Raises ValueError for an unknown status, an unknown flag, a duplicate flag or flags out of canonical order, so
+    that a file has exactly one spelling of every status cell.
+    """
+    base, *flags = cell.split("+")
+    if base not in STATUS_BASES:
+        raise ValueError("unknown status " + repr(cell))
+    for flag in flags:
+        if flag not in STATUS_FLAGS:
+            raise ValueError("unknown status flag " + repr(flag) + " in " + repr(cell))
+    if flags != sorted(set(flags), key=STATUS_FLAGS.index):
+        raise ValueError("status flags must be unique and in the order " + "+".join(STATUS_FLAGS) + ": " + repr(cell))
+    return base, tuple(flags)
+
+
+def base_status(cell):
+    """The status of a status cell without its flags (`disputed+mentioned` gives `disputed`)."""
+    return cell.partition("+")[0]
+
+
+def format_status(base, flags=()):
+    """The status cell of a status and its flags (flags are put in canonical order, duplicates are an error)."""
+    ordered = sorted(flags, key=STATUS_FLAGS.index)
+    if len(set(ordered)) != len(ordered):
+        raise ValueError("duplicate status flag in " + repr(flags))
+    return "+".join([base] + ordered)
+
+
 def write_corpus(path, header, sentences):
     """Write the shared corpus format; sentences are dicts with sent_id, source_id, text and rows."""
     lines = list(header) + [""]

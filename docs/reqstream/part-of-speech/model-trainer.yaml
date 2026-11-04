@@ -65,19 +65,26 @@ sections:
 
           - id: PartOfSpeech-ModelTrainer-CorpusRules
             title: >-
-              The trainer shall read the corpus format of the data folder and refuse an unknown tag, shall give tokens
+              The trainer shall read the corpus format of the data folder (including the optional status flags) and
+              refuse an unknown tag or an unknown status flag, shall keep the flags of every token without changing its
+              tag or its masking, shall give tokens
               without a training signal (masked tokens and, when configured, disputed tokens and low-probability silver
               tokens) no update but still count them as steps and put them in the tag history, and shall repeat the
               sentences of a source as many times as its weight says and limit or subsample a source deterministically.
             justification: |
               The model must be trained on exactly the data that the configuration describes, and a masked token is
               still decoded at run time, so it takes part in the history. A misread corpus would silently change the
-              weights and their provenance.
+              weights and their provenance. The status flags (`mentioned`, `foreign`) are facts about a word; reading
+              them must not change which tokens train and with which tag.
             tests:
               - ModelTrainer_Train_MaskedToken_NoUpdateButStepAndHistory
               - CorpusReader_Parse_MaskingRules_MarkTokensWithoutSignal
               - CorpusReader_Parse_LimitAndSample_AreDeterministic
               - CorpusReader_Parse_UnknownTag_ThrowsWithLine
+              - CorpusReader_Parse_StatusFlags_AreKeptAndDoNotChangeTagsOrMasking
+              - CorpusReader_Parse_NoStatusFlags_GivesNoFlags
+              - CorpusReader_Parse_InvalidStatusFlags_ThrowsWithLine
+              - CorpusStatus_TryParse_SplitsStatusAndFlags
               - CorpusReader_LoadSources_Weight_RepeatsSentences
 
           - id: PartOfSpeech-ModelTrainer-TrainingSettings

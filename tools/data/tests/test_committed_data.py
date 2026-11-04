@@ -19,7 +19,8 @@ class CommittedDataTests(unittest.TestCase):
             path = os.path.join(common.DATA, *parts)
             for sentence in common.read_corpus(path)[1]:
                 for row in sentence["rows"]:
-                    self.assertTrue(row[1] in common.UPOS_SET or (row[1] == "_" and row[2] == "masked"), (parts, sentence["sent_id"]))
+                    self.assertTrue(row[1] in common.UPOS_SET or (row[1] == "_" and common.base_status(row[2]) == "masked"), (parts, sentence["sent_id"]))
+                    common.parse_status(row[2])  # a known status, known flags in canonical order
                 self.assertEqual("".join(r[0] for r in sentence["rows"]), sentence["text"].replace(" ", ""), sentence["sent_id"])
 
     def test_manifest_matches_the_files(self):

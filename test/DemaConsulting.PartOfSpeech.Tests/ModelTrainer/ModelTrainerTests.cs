@@ -465,6 +465,99 @@ public class ModelTrainerTests
     }
 
     /// <summary>
+    ///     Validates that status flags (<c>+mentioned</c>, <c>+foreign</c>) are read and kept, and that they change neither the tag nor the masking.
+    /// </summary>
+    [Fact]
+    public void CorpusReader_Parse_StatusFlags_AreKeptAndDoNotChangeTagsOrMasking()
+    {
+        // Arrange: flagged rows of an open-style file (three cells) and of a silver-style file (a source tag)
+        var lines = new[]
+        {
+            "# sent_id = s1",
+            "# source_id = d1",
+            "using\tVERB\tunanimous",
+            "the\tDET\tunanimous",
+            "verb\tNOUN\tunanimous+mentioned",
+            "snowball\tVERB\tdisputed+mentioned",
+            "Sierra\tNOUN\tunchecked+foreign+mentioned",
+            "word\tNOUN\tsilver+foreign\tN:99",
+            "x\t_\tmasked+mentioned\t?",
+        };
+
+        // Act: default masking (disputed tokens masked) and then keeping the disputed tokens
+        var plain = Parse(new SourceConfig { Name = "t" }, lines);
+        var kept = Parse(new SourceConfig { Name = "t", MaskDisputed = false }, lines);
+
+        // Assert: flags are kept per token, the tags are the plain tags, and masking looks at the status only
+        var flags = new[]
+        {
+            TokenMarks.None, TokenMarks.None, TokenMarks.Mentioned, TokenMarks.Mentioned,
+            TokenMarks.Foreign | TokenMarks.Mentioned, TokenMarks.Foreign, TokenMarks.Mentioned,
+        };
+        Assert.Equal(flags, plain[0].Marks);
+        Assert.Equal(flags, kept[0].Marks);
+        Assert.Equal(
+            new sbyte[] { (sbyte)Upos.Verb, (sbyte)Upos.Det, (sbyte)Upos.Noun, -1, (sbyte)Upos.Noun, (sbyte)Upos.Noun, -1 },
+            plain[0].Gold);
+        Assert.Equal((sbyte)Upos.Verb, kept[0].Gold[3]);
+    }
+
+    /// <summary>
+    ///     Validates that a corpus row without flags has no flags on any token, so that the committed files stay valid.
+    /// </summary>
+    [Fact]
+    public void CorpusReader_Parse_NoStatusFlags_GivesNoFlags()
+    {
+        // Arrange / Act
+        var sentences = Parse(new SourceConfig { Name = "t" }, "# sent_id = s1", "a\tDET\tunanimous", "b\tNOUN\tdisputed");
+
+        // Assert
+        Assert.Equal(new[] { TokenMarks.None, TokenMarks.None }, sentences[0].Marks);
+    }
+
+    /// <summary>
+    ///     Validates that an unknown, repeated or out-of-order status flag is reported with its line number.
+    /// </summary>
+    /// <param name="status">The status cell.</param>
+    [Theory]
+    [InlineData("unanimous+shouted")]
+    [InlineData("unanimous+mentioned+mentioned")]
+    [InlineData("unanimous+mentioned+foreign")]
+    [InlineData("unanimous+")]
+    public void CorpusReader_Parse_InvalidStatusFlags_ThrowsWithLine(string status)
+    {
+        // Arrange / Act
+        var ex = Assert.Throws<InvalidDataException>(() => Parse(new SourceConfig { Name = "t" }, "# sent_id = s1", "a\tNOUN\t" + status));
+
+        // Assert
+        Assert.Contains("line 2", ex.Message);
+        Assert.Contains(status, ex.Message);
+    }
+
+    /// <summary>
+    ///     Validates the status cell helpers: the base status without its flags and the canonical flag order.
+    /// </summary>
+    [Fact]
+    public void CorpusStatus_TryParse_SplitsStatusAndFlags()
+    {
+        // Arrange / Act
+        var plain = CorpusStatus.TryParse("disputed", out var plainStatus, out var plainFlags);
+        var both = CorpusStatus.TryParse("silver+foreign+mentioned", out var bothStatus, out var bothFlags);
+        var swapped = CorpusStatus.TryParse("silver+mentioned+foreign", out _, out _);
+
+        // Assert
+        Assert.True(plain);
+        Assert.Equal("disputed", plainStatus);
+        Assert.Equal(TokenMarks.None, plainFlags);
+        Assert.True(both);
+        Assert.Equal("silver", bothStatus);
+        Assert.Equal(TokenMarks.Foreign | TokenMarks.Mentioned, bothFlags);
+        Assert.False(swapped);
+        Assert.Equal("disputed", CorpusStatus.BaseStatus("disputed+mentioned"));
+        Assert.Equal("masked", CorpusStatus.BaseStatus("masked"));
+    }
+
+    /// <summary>
     ///     Validates that the source weight repeats the sentences of the source within an epoch.
     /// </summary>
     [Fact]

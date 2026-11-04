@@ -30,7 +30,10 @@ target framework, including .NET Framework.
   the committed selected configuration in canonical form, so that rewriting it makes no changes. The selected values are
   in _Selection of the Shipped Model_ below.
 - **`TrainingSentence`** (`Training/CorpusReader.cs`): the tokens of a sentence, the gold tag of every token or "no
-  signal" (a masked token), and the id of the sentence.
+  signal" (a masked token), the marks of every token and the id of the sentence. The marks (`TokenMarks`: `Foreign`,
+  `Mentioned`) come from the status cell of a corpus row, `status[+flag...]` (`CorpusStatus`, same file); the reader
+  masks by the status only and never lets a flag change a tag, a mask or a count, and the trainer does not use the
+  flags yet.
 - **`AveragedPerceptron`** (`Training/AveragedPerceptron.cs`): the dense tables of the weights `W` (`int`) and of the
   time-weighted update sums `U` (`long`), each `2^hashBits * 17` cells, the step counter `T` and the number of
   mistakes.

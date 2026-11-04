@@ -7,6 +7,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import build_lexicon
 import common
+import import_open
 import import_silver as silver
 
 LEXICON = {"tom": frozenset({"NOUN"}), "paris": frozenset({"PROPN"}), "dog": frozenset({"NOUN"})}
@@ -60,6 +61,54 @@ class SilverDerivationTests(unittest.TestCase):
             for word in ("The", "dog", "and", "so", "Paris"):
                 result = silver.derive_sentence(["x", word], ["-", letter + ":90"], LEXICON)[1]
                 self.assertTrue(result[0] == "_" or result[0] in common.UPOS_SET)
+
+
+class FlagPreservationTests(unittest.TestCase):
+    """The importers and the lexicon tools accept status flags (`+mentioned`, `+foreign`) and keep them."""
+
+    def test_derive_keeps_the_flags_and_recomputes_the_status(self):
+        sentences = [{"sent_id": "s-1", "source_id": "s", "text": "the verb Sierra Tom .",
+                      "rows": [["the", "_", "silver", "D:99"], ["verb", "_", "silver", "N:99"],
+                               ["Sierra", "_", "silver+foreign+mentioned", "N:99"],
+                               ["Tom", "_", "silver+mentioned", "N:99"], [".", "_", "silver", "-"]]}]
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, "silver.tsv")
+            silver.write_silver(path, sentences, LEXICON)
+            rows = common.read_corpus(path)[1][0]["rows"]
+        self.assertEqual([r[1] for r in rows], ["DET", "NOUN", "PROPN", "_", "PUNCT"])
+        self.assertEqual([r[2] for r in rows], ["silver", "silver", "silver+foreign+mentioned", "masked+mentioned", "silver"])
+
+    def test_open_import_accepts_flagged_consensus_values(self):
+        lines = ["# sent_id = s1", "# source_id = d1", "# text = the verb snowball"]
+        for index, (form, upos, status) in enumerate((("the", "DET", "unanimous"), ("verb", "NOUN", "unchecked+mentioned"),
+                                                      ("snowball", "VERB", "disputed+mentioned"))):
+            lines.append("\t".join((str(index + 1), form, form, upos, upos, "_", status)))
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, "open.tsv")
+            common.write_text(path, ["# corpus = test", ""] + lines)
+            rows = import_open.read_projected(path)[0]["rows"]
+        self.assertEqual([r[2] for r in rows], ["unanimous", "unchecked+mentioned", "disputed+mentioned"])
+
+    def test_open_import_refuses_a_bad_flag_or_status(self):
+        for status in ("unanimous+shouted", "unanimous+mentioned+foreign", "silver", "mentioned"):
+            lines = ["# corpus = test", "", "# sent_id = s1", "# source_id = d1", "# text = a",
+                     "\t".join(("1", "a", "a", "DET", "DET", "_", status))]
+            with tempfile.TemporaryDirectory() as folder:
+                path = os.path.join(folder, "open.tsv")
+                common.write_text(path, lines)
+                with self.assertRaises(ValueError, msg=status):
+                    import_open.read_projected(path)
+
+    def test_lexicon_attestation_ignores_flags_when_deciding_disputed_and_masked(self):
+        rows = [("snowball", "VERB", "disputed+mentioned"), ("snowball", "VERB", "unanimous+mentioned"),
+                ("snowball", "VERB", "unanimous"), ("it", "_", "masked+mentioned")]
+        lines = ["# corpus = test", "", "# sent_id = s1", "# source_id = d1", "# text = x"]
+        lines += ["%s\t%s\t%s" % row for row in rows]
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, "c.tsv")
+            common.write_text(path, lines)
+            self.assertEqual(build_lexicon.attested(path, 1, skip_disputed=True), {("snowball", "VERB"): 2})
+            self.assertEqual(build_lexicon.attested(path, 1, skip_disputed=False), {("snowball", "VERB"): 3})
 
 
 class LexiconBuildTests(unittest.TestCase):

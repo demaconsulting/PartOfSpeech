@@ -36,7 +36,7 @@ def measure(lexicon, path):
     stats = {"a_tokens": 0, "a_covered": 0, "n_tokens": 0, "n_covered": 0, "unknown": 0}
     misses = collections.defaultdict(lambda: [0, 0])  # (spelling, gold) -> [all, non-disputed]
     for form, upos, status in tokens_of(path):
-        disputed = status == "disputed"
+        disputed = common.base_status(status) == "disputed"
         covered = upos in common.allowed_tags(form, lexicon)
         if form.lower() not in lexicon:
             stats["unknown"] += 1
