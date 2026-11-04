@@ -955,6 +955,28 @@ public class HeldOutEvaluationTests
     }
 
     /// <summary>
+    ///     Validates that the committed selection artifact passes the gate for the frozen embedded model and the committed
+    ///     development files. Only the committed selection file and the embedded model are read; no held-out file is opened.
+    /// </summary>
+    [Fact]
+    public void OperatingPointsFile_Load_CommittedSelection_PassesGateForFrozenModel()
+    {
+        // Arrange
+        var root = DataFiles.RepositoryRoot;
+        var modelSha = ModelBuilder.Sha256Hex(PerceptronModel.ToUncompressedImage(OperatingPointsFile.ReadEmbeddedWeights()));
+        var config = ConfigFile.Load(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/training.json"));
+        var path = DataFiles.Repository("docs/evaluation/operating-points.json");
+
+        // Act
+        var selection = OperatingPointsFile.Load(path, OperatingPointsFile.Expect(root, modelSha, config.ImageSha256));
+
+        // Assert: valid for the frozen model, and the selection hash is the hash of the committed bytes
+        Assert.Equal(ModelBuilder.Sha256Hex(File.ReadAllBytes(path)), selection.SelectionSha256);
+        Assert.Equal(modelSha, selection.Data.ModelImageSha256);
+        Assert.Equal(OperatingPointRule.Id, selection.Data.RuleId);
+    }
+
+    /// <summary>
     ///     Validates that the results file round-trips in canonical form.
     /// </summary>
     [Fact]
