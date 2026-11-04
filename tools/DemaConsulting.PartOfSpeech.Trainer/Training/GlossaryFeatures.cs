@@ -70,9 +70,9 @@ internal static class GlossaryFeatures
 /// </summary>
 /// <remarks>
 ///     <para>
-///         A token is eligible when it has a gold tag and the lexicon (with the shape rules, for the lower-cased token)
-///         allows at least two tags, one of them the gold tag, which is the same eligibility as the type-level glossaries
-///         of the evaluation. An eligible token gets a hint with probability <see cref="HintPercent"/>; the hint is the
+///         A token is eligible when it has a gold tag and the lexicon with the shape rules allows at least two tags, one
+///         of them the gold tag. The allowed tags are computed for the token as written, exactly as the runtime decoder
+///         does (<see cref="TagSelection.AllowedMask"/>), so a capitalized token also allows PROPN and X. An eligible token gets a hint with probability <see cref="HintPercent"/>; the hint is the
 ///         gold tag, or with probability <see cref="WrongPercent"/> another allowed tag. The draws come from the
 ///         caller's <see cref="DeterministicRandom"/>, so a run is reproducible.
 ///     </para>
@@ -91,6 +91,11 @@ internal sealed class GlossaryTraining
     ///     The allowed-tag mask of every token of the sentences seen so far (0 for a token that cannot get a hint).
     /// </summary>
     private readonly Dictionary<TrainingSentence, int[]> _eligible = new();
+
+    /// <summary>
+    ///     The scratch workspace that prepares a sentence for the same candidate computation as the decoder.
+    /// </summary>
+    private readonly DecoderWorkspace _workspace = new();
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="GlossaryTraining"/> class.
@@ -134,12 +139,14 @@ internal sealed class GlossaryTraining
     {
         if (!_eligible.TryGetValue(sentence, out var masks))
         {
+            // The candidates are those of the runtime decoder for the token as written: capitalization adds PROPN and X
+            FeatureExtractor.Prepare(_workspace, sentence.Tokens, PerceptronModel.MinHashBits);
             masks = new int[sentence.Tokens.Length];
             for (var i = 0; i < masks.Length; i++)
             {
                 var gold = sentence.Gold[i];
-                var allowed = Lexicon.AllowedTags(sentence.Tokens[i].ToLowerInvariant(), _lexicon);
-                masks[i] = gold >= 0 && allowed.Count >= 2 && allowed.Contains((Upos)gold) ? allowed.Mask : 0;
+                var allowed = TagSelection.AllowedMask(_workspace, i, _lexicon);
+                masks[i] = gold >= 0 && BitCount(allowed) >= 2 && (allowed & (1 << gold)) != 0 ? allowed : 0;
             }
 
             _eligible[sentence] = masks;
@@ -152,6 +159,22 @@ internal sealed class GlossaryTraining
         }
 
         return hints;
+    }
+
+    /// <summary>
+    ///     Counts the tags of a mask.
+    /// </summary>
+    /// <param name="mask">The mask.</param>
+    /// <returns>The number of set bits.</returns>
+    private static int BitCount(int mask)
+    {
+        var count = 0;
+        for (; mask != 0; mask &= mask - 1)
+        {
+            count++;
+        }
+
+        return count;
     }
 
     /// <summary>

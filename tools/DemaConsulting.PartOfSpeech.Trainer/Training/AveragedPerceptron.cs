@@ -15,7 +15,9 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///         <c>U</c> is <c>long</c> (a 32-bit sum could overflow with millions of steps and hundreds of thousands of
 ///         updates), and the quantized weight is <c>RoundHalfAwayFromZero(S * (W * T - U) / T)</c> evaluated exactly
 ///         in <c>long</c> with <c>S</c> a power of two, clamped to 16-bit range without -32768. No floating-point
-///         value enters the weights, which is what makes the written file reproducible byte for byte.
+///         value enters the weights, which is what makes the written file reproducible byte for byte. The updates, the
+///         sums and the quantization use checked arithmetic: a run whose sums do not fit 64 bits fails with a clear
+///         exception instead of writing wrong weights.
 ///     </para>
 ///     <para>
 ///         The class is not thread-safe; one trainer uses it from one thread. The tables are dense
@@ -33,6 +35,12 @@ internal sealed class AveragedPerceptron
     ///     The number of tags, which is the row length.
     /// </summary>
     private const int Tags = UposExtensions.Count;
+
+    /// <summary>
+    ///     The message of the exception that reports an exhausted integer range.
+    /// </summary>
+    private const string OverflowMessage =
+        "The exact integer arithmetic of the averaged perceptron exceeded its range: epochs * repeats * tokens * scale is too large. Reduce the epochs, the source weights, the corpus size or the quantization scale.";
 
     /// <summary>
     ///     The current weights of every bucket and tag.
@@ -108,16 +116,28 @@ internal sealed class AveragedPerceptron
     /// <param name="count">The number of buckets to use.</param>
     /// <param name="gold">The gold tag ordinal.</param>
     /// <param name="guess">The guessed tag ordinal; different from <paramref name="gold"/>.</param>
+    /// <exception cref="InvalidOperationException">A weight or an update sum exceeded its integer range.</exception>
     public void Update(int[] buckets, int count, int gold, int guess)
     {
-        var step = Steps;
-        for (var k = 0; k < count; k++)
+        // Checked arithmetic keeps an overflow from silently corrupting the weights; the cost is one flag test per add
+        try
         {
-            var offset = buckets[k] * Tags;
-            _weights[offset + gold]++;
-            _totals[offset + gold] += step;
-            _weights[offset + guess]--;
-            _totals[offset + guess] -= step;
+            var step = Steps;
+            for (var k = 0; k < count; k++)
+            {
+                var offset = buckets[k] * Tags;
+                checked
+                {
+                    _weights[offset + gold]++;
+                    _totals[offset + gold] += step;
+                    _weights[offset + guess]--;
+                    _totals[offset + guess] -= step;
+                }
+            }
+        }
+        catch (OverflowException ex)
+        {
+            throw new InvalidOperationException(OverflowMessage, ex);
         }
 
         Mistakes++;
@@ -177,15 +197,27 @@ internal sealed class AveragedPerceptron
     /// <param name="steps">The number of steps <c>T</c>; positive.</param>
     /// <param name="quantScale">The factor <c>S</c>.</param>
     /// <returns>The quantized weight from -32767 to 32767.</returns>
+    /// <exception cref="InvalidOperationException">The exact integer arithmetic does not fit 64 bits (too many steps or too large a scale).</exception>
     public static int Quantize(int weight, long total, long steps, int quantScale)
     {
-        // numerator / steps is S times the averaged weight; all products fit 64 bits for any realistic corpus
-        var numerator = quantScale * (((long)weight * steps) - total);
-        var magnitude = Math.Abs(numerator);
+        // numerator / steps is S times the averaged weight; the products are checked, so that a run that is too long
+        // for the 64-bit sums fails with a clear message instead of writing wrong weights
+        try
+        {
+            checked
+            {
+                var numerator = quantScale * (((long)weight * steps) - total);
+                var magnitude = Math.Abs(numerator);
 
-        // Round half away from zero: floor(magnitude / steps + 1/2)
-        var rounded = ((2 * magnitude) + steps) / (2 * steps);
-        var clamped = (int)Math.Min(rounded, MaxQuantized);
-        return numerator < 0 ? -clamped : clamped;
+                // Round half away from zero: floor(magnitude / steps + 1/2)
+                var rounded = ((2 * magnitude) + steps) / (2 * steps);
+                var clamped = (int)Math.Min(rounded, MaxQuantized);
+                return numerator < 0 ? -clamped : clamped;
+            }
+        }
+        catch (OverflowException ex)
+        {
+            throw new InvalidOperationException(OverflowMessage, ex);
+        }
     }
 }

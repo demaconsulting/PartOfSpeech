@@ -67,8 +67,9 @@ SHA-256 of the image with a pinned value on every target framework.
 ## Development data only
 
 Every setting is selected on the two development sets (`data/open/dev.tsv`, `data/eval/gold-v2/dev.tsv`). The tool
-has no code path that reads any other evaluation file: evaluation accepts exactly those two paths, and training refuses
-held-out and development files (`Evaluation/DevSets.cs`, tested).
+has no code path that reads any other evaluation file: evaluation accepts exactly those two paths, and training accepts
+only files below the repository's `data` folder (after the path is made absolute and links are resolved) and refuses
+held-out and development files there (`Evaluation/DevSets.cs`, tested).
 
 ## Current model
 

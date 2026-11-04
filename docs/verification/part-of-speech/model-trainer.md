@@ -50,7 +50,8 @@ needed.
 All tests pass on every target framework. A test fails when two runs with the same inputs differ, a run with another seed
 does not differ, the image of a reference run differs from its pinned hash, the trainer's tags differ from the decoder's,
 a quantized weight differs from the oracle, a masked token changes a weight or is not counted as a step, a setting has no
-effect, a held-out or development file is admitted as a source (or a held-out file is admitted for evaluation), a source
+effect, a held-out or development file is admitted as a source (also through a rooted path, a detour or a link) or a
+held-out file is admitted for evaluation, a source
 names a held-out set, an experiment without an output file is admitted, the check takes a perturbed, missing or damaged
 file for a current one or rejects the compressed form of the current file, the configuration is accepted with a
 misspelled member or an out-of-range value, a metric or a bootstrap interval differs from the known answer, or the
@@ -68,7 +69,10 @@ glossary experiment's decoder differs from the plain predictor.
   `ModelTrainer_Predict_Unrestricted_MatchesTagDecoderWithUnknownWords`.
 - **Exact quantization**: `AveragedPerceptron_Quantize_RandomUpdates_MatchesDecimalOracle`,
   `AveragedPerceptron_Quantize_TiesAndClamp_RoundAwayFromZeroAndClamp` (a tie is rounded away from zero, large values are
-  clamped to the 16-bit range without -32768), `AveragedPerceptron_Quantize_PruneThreshold_DropsSmallWeights`,
+  clamped to the 16-bit range without -32768), `AveragedPerceptron_Quantize_RangeExceeded_ThrowsClearException` and
+  `AveragedPerceptron_Update_SumsExceedRange_ThrowsClearException` (a sum or a product that does not fit 64 bits, and a
+  weight that does not fit `int`, are refused with a clear exception; the second test pushes a cell to the top of its
+  range through reflection, since a real run cannot get there), `AveragedPerceptron_Quantize_PruneThreshold_DropsSmallWeights`,
   `ModelTrainer_Build_SmallRun_LoadsWithTheQuantizedWeights` (the written file loads with the quantized weights) and
   `ModelBuilder_WithTemperature_ReplacesOnlyTheTemperature` (the weights are untouched and a temperature that is not
   finite and positive is refused).
@@ -81,7 +85,14 @@ glossary experiment's decoder differs from the plain predictor.
 - **Development-only selection**: `DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused` (a theory over the held-out
   files, a training file and a dotted detour), `DataGuard_EnsureDevelopmentFile_DevelopmentFile_Admitted`,
   `DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused` (also in other spellings of the path),
-  `DataGuard_EnsureTrainable_TrainingCorpus_Admitted`, `DataGuard_EnsureDevelopmentHeader_NoDevSplitHeader_Throws` and
+  `DataGuard_EnsureTrainable_TrainingCorpus_Admitted`, `DataGuard_EnsureTrainable_PathOutsideDataRoot_Refused` (a dotted
+  detour or a path outside the `data` folder), `CorpusReader_LoadSources_RootedPathOutsideData_Refused` (a rooted source
+  path, which `Path.Combine` lets replace the repository root),
+  `DataGuard_EnsureTrainable_LinkToHeldOutOrOutsideData_Refused` (in a temporary fake repository: directory links to a
+  held-out folder and to a folder outside the data root, made with symbolic links or, on Windows when those need a
+  privilege, with junctions, and file links where symbolic links can be created; the test is skipped only where no link
+  can be made at all and on .NET Framework, which does not resolve links),
+  `DataGuard_EnsureDevelopmentHeader_NoDevSplitHeader_Throws` and
   `ModelTrainer_Sources_NoHeldOutPathLiterals`.
 - **Command-line safety**: `OutputGuard_EnsureExplicitOutput_ExperimentWithoutOutput_Throws` (a theory: no output and an
   empty output) and `OutputGuard_EnsureExplicitOutput_ExperimentWithOutputOrDefaultRun_Admitted`.
@@ -91,11 +102,15 @@ glossary experiment's decoder differs from the plain predictor.
 - **Configuration**: `ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical` (on .NET 8 and later: three existing
   corpora, and rewriting the file gives the same text) and `ConfigFile_Parse_UnknownMemberOrBadRange_Throws`.
 - **Development metrics**: `DevSets_ParseGoldDev_Fixture_ReadsTargetsAndMapsClasses`,
+  `DevSets_ParseGoldDev_InvalidTarget_Throws` (a negative, non-numeric or out-of-sentence target index),
   `Metrics_Compute_KnownOutcomes_ExpectedNumbers`, `Metrics_Judge_TinyTagger_CorrectAndNounVerbError`,
   `Bootstrap_Compare_IdenticalLists_ZeroDifferenceTied`, `Bootstrap_Compare_BetterList_PositiveDifferenceExcludesZero`,
   `DevEvaluator_EvaluateOpen_FixtureSentences_OneOutcomePerToken` and `RunLog_Row_Summary_HasOneCellPerHeaderColumn`.
 - **Glossary experiment**: `GlossaryTraining_Draw_NoWrongHints_HintsAreGoldAndReproducible`,
-  `GlossaryTraining_Draw_AllHintsWrong_HintIsAnotherAllowedTag`, `ModelTrainer_Train_GlossaryHints_ChangeTheImage` (and
+  `GlossaryTraining_Draw_AllHintsWrong_HintIsAnotherAllowedTag`,
+  `GlossaryTraining_Draw_CapitalizedToken_UsesShapeCandidatesOfTheOriginalToken` and
+  `GlossaryTraining_Draw_CorpusSample_EligibilityMatchesRuntimeMask` (eligibility uses the runtime candidate mask of the
+  token as written), `ModelTrainer_Train_GlossaryHints_ChangeTheImage` (and
   the plain run keeps its pinned hash, which is the golden test),
   `GlossaryFeatures_Append_InBucketSpaceAndDependOnHintAndHistory`, `HintedPredictor_NoHints_MatchesQuantizedPredictor`
   and `HintedPredictor_HardHintAndHugeBoost_FollowTheHint`.

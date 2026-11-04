@@ -298,7 +298,7 @@ on M0 is printed first; the no-glossary comparison M1 against M0 is also repeate
 The experiment's decoder equals the real decoder on M0: 0 tag mismatches over 26,232 tokens without a glossary and 0 with
 `Prefer(2 x temperature)` on a 30% glossary. M0 is the model of the selected configuration (T = 6.727); M1 is the same
 configuration trained with simulated hints (30% of the lexicon-ambiguous tokens, 10% of the hints wrong, fresh draws per
-epoch), 112,100 rows, fitted T = 6.727. Boost b is in units of the temperature (log-odds). "Covered" = tokens of
+epoch), 111,046 rows, fitted T = 6.874. Boost b is in units of the temperature (log-odds). "Covered" = tokens of
 glossary types; right/wrong = whether the entry is the gold tag; "neighbors" = uncovered tokens of sentences with a
 covered token. Accuracies in percent (n of tokens in the column header of the scenario: 30% coverage, r = 10%: 3,135
 covered-right, 1,719 covered-wrong, 21,236 neighbors; 30% coverage, r = 0: 4,564 / 27 / 19,853).
@@ -313,12 +313,12 @@ covered-right, 1,719 covered-wrong, 21,236 neighbors; 30% coverage, r = 0: 4,564
 | M0 + Prefer 8 | 100.00 | 96.08 | 100.00 | 10.12 | 95.31 | 90.28 | 115 | 87.90 | 114 |
 | M0 + Prefer 16 | 100.00 | 96.08 | 100.00 | 0.06 | 95.30 | 89.62 | 132 | 86.83 | 152 |
 | M0 + Only (hard) | 100.00 | 96.08 | 100.00 | 0.00 | 95.30 | 89.61 | 91 (see note) | 86.83 | 96 |
-| M1, no glossary | 99.52 | 95.90 | 98.88 | 99.53 | 95.17 | 95.90 | 99 | 95.90 | 99 |
-| M1 + glossary features | 99.96 | 95.95 | 99.90 | 99.01 | 95.17 | 95.99 | 96 | 95.92 | 98 |
+| M1, no glossary | 99.54 | 95.85 | 99.11 | 99.48 | 95.08 | 95.85 | 111 | 95.85 | 111 |
+| M1 + glossary features | 99.96 | 95.89 | 99.81 | 99.13 | 95.09 | 95.92 | 105 | 95.85 | 107 |
 
 With 100% coverage and r = 10%: M0 + Prefer 2 covered-right 99.87 and covered-wrong 92.78 (no glossary: 99.48 / 95.91),
-overall 96.14 against 96.07, harmful 90 against 94; Prefer 4: 99.97 / 86.53, overall 95.97; M1 features 99.96 / 90.95,
-overall 96.01, neighbors 92.98 (M0: 93.18).
+overall 96.14 against 96.07, harmful 90 against 94; Prefer 4: 99.97 / 86.53, overall 95.97; M1 features 99.90 / 90.52,
+overall 95.91, neighbors 92.87 (M0: 93.18).
 
 Decision rule, evaluated by the tool:
 
@@ -326,17 +326,27 @@ Decision rule, evaluated by the tool:
   of the glossary are already tagged correctly 99.6% of the time. Every boost reaches 95% of that, so the rule picks the
   smallest, b\* = 0.5 (loss on wrong entries at r = 10%: 0.12 points against 99.59 for the hard constraint, so the clause
   holds). The rule is degenerate here (the benefit to measure is tiny); the curve above is the informative result.
-- (a) M1 without a glossary against M0 without a glossary: accuracy **-0.172 [-0.304, -0.024]** points (needs >= -0.05),
-  harmful per 1k +1.12 [-1.16, +3.49]: **FAIL**. Confirmed through the real decoder with `compare` (M1 minus M0, pooled
-  accuracy -0.170 [-0.308, -0.035], open dev -0.172 [-0.304, -0.024], gold dev -0.149 [-0.637, +0.304]).
-- (b) M1 with the glossary against M0 + b\*: covered accuracy +0.185 [-0.110, +0.539] (needs +0.5 with the interval above 0),
-  neighbors -0.170 [-0.325, -0.005] (needs +0.2): **FAIL**.
-- (c) harmful per 1k, M1 minus M0 + b\* at r = 10%: +0.67 [-1.73, +3.32] (96 against 93): PASS.
+- (a) M1 without a glossary against M0 without a glossary: accuracy **-0.221 [-0.373, -0.082]** points (needs >= -0.05),
+  harmful per 1k +3.79 [+1.03, +6.84] (significantly higher): **FAIL**. Confirmed through the real decoder with `compare`
+  (M1 minus M0, pooled accuracy -0.216 [-0.347, -0.086], open dev -0.221 [-0.373, -0.082], gold dev -0.149 [-0.493, +0.197]).
+- (b) M1 with the glossary against M0 + b\*: covered accuracy +0.165 [-0.057, +0.399] (needs +0.5 with the interval above 0),
+  neighbors -0.250 [-0.411, -0.088] (needs +0.2): **FAIL**.
+- (c) harmful per 1k, M1 minus M0 + b\* at r = 10%: +2.68 [-0.24, +5.81] (105 against 93): PASS.
 
 **Decision: boost only. The trained glossary feature is not adopted; the library's feature set (`FeatureSetVersion` 1),
 `FeatureExtractor`, `TagDecoder`, `DecoderWorkspace` and the golden hashes are unchanged.** The feature costs
-0.17 points of ordinary accuracy and buys nothing that a boost does not (M1 reaches 99.90% on covered-right tokens at
-r = 10%, M0 + Prefer 2 99.74%, with no gain on wrong entries (99.01 against 99.07) and a loss on neighbors).
+0.22 points of ordinary accuracy and buys nothing that a boost does not (M1 reaches 99.81% on covered-right tokens at
+r = 10%, M0 + Prefer 2 99.74%, with no gain on wrong entries (99.13 against 99.07) and a loss on neighbors).
+
+**Correction (code review of the experiment).** The first run of this experiment decided which training tokens were
+eligible for a hint from the lower-cased token, which dropped the PROPN and X candidates that a capitalized token has at
+run time. The eligibility now uses the same candidate mask as the decoder (`TagSelection.AllowedMask`, computed for the
+token as written), and the experiment and the probe were re-run with the pre-registered thresholds unchanged. M0 and every
+`Prefer` row are unaffected (they do not use the glossary-trained model; the probe output is identical). Only the M1 rows
+moved: 111,046 rows instead of 112,100, fitted T = 6.874 instead of 6.727; accuracy cost of the feature without a glossary
+0.22 points instead of 0.17 (harmful +3.79 per 1k, now significantly above 0, instead of +1.12); (b) covered accuracy
++0.165 instead of +0.185, neighbors -0.250 instead of -0.170; (c) +2.68 instead of +0.67 per 1k (still not significant).
+Every verdict is the same (a: FAIL, b: FAIL, c: PASS), so the decision stands: boost only, feature set unchanged.
 
 Phase 4 starting point (calibrate on dev): boosts up to about 2 x temperature (a log-odds shift of 2, about 6.5 raw score
 units at T = 6.727) give nearly the full benefit on right entries (99.1 -> 99.7%) and lose at most 0.5 points on wrong
@@ -469,5 +479,5 @@ Every row is one run, scored on open dev and gold v2 dev only, at the run's own 
 | E6 scale 64 prune 64 | sources=open:2,masc:1,silver:1 epochs=6 hashBits=19 minCount=1 prune=64 S=64 T=6.727 restriction=History history=Predicted seed=20260101 | 96.04 | 95.24 | 93 | 20.7 | 95.09 | 11 | 20.4 | 0.1324 | 0.30 | 121814 | 298792 | 1113 | 607 | 13.6 |
 | E6 scale 4 prune 4 | sources=open:2,masc:1,silver:1 epochs=6 hashBits=19 minCount=1 prune=4 S=4 T=6.727 restriction=History history=Predicted seed=20260101 | 96.01 | 95.20 | 98 | 21.9 | 95.09 | 11 | 21.4 | 0.1330 | 0.23 | 116928 | 281604 | 1053 | 425 | 14.8 |
 | E7 final-candidate (S=8 prune 8 h19 6ep, T fitted) | sources=open:2,masc:1,silver:1 epochs=6 hashBits=19 minCount=1 prune=8 S=8 T=6.727 restriction=History history=Predicted seed=20260101 | 96.07 | 95.28 | 94 | 21.0 | 95.34 | 9 | 20.2 | 0.1328 | 0.35 | 119632 | 290862 | 1086 | 481 | 7.2 |
-| E8 M1 (glossary features, hints unused) | eval g_m1.bin | 95.90 | 95.03 | 99 | 22.1 | 95.19 | 10 | 21.4 | 0.1334 | 0.29 | 112100 | 268221 | 1005 | - | 0.0 |
+| E8 M1 (glossary features, hints unused) | eval g_m1.bin | 95.85 | 94.94 | 111 | 24.8 | 95.19 | 9 | 23.6 | 0.1339 | 0.35 | 111046 | 266201 | 997 | - | 0.0 |
 | F final (frozen config, T=6.727) | sources=open:2,masc:1,silver:1 epochs=6 hashBits=19 minCount=1 prune=8 S=8 T=6.727 restriction=History history=Predicted seed=20260101 | 96.07 | 95.28 | 94 | 21.0 | 95.34 | 9 | 20.2 | 0.1328 | 0.35 | 119632 | 290862 | 1086 | 481 | 7.8 |

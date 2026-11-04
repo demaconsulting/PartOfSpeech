@@ -34,7 +34,8 @@ target framework, including .NET Framework.
 - **`DeterministicRandom`** (`Training/DeterministicRandom.cs`): SplitMix64 with a Fisher-Yates shuffle; the sequence for
   seed 0 is pinned by a test.
 - **`DataGuard`** (`Evaluation/DevSets.cs`): the allow-list of the two development files and the deny-list for training
-  sources.
+  sources, which works on the canonical path (absolute, with symbolic links and junctions resolved on .NET 6 and later)
+  and requires a training source to lie below the `data` folder of the repository.
 - **Metrics** (`Evaluation/Metrics.cs`): per-token outcomes, accuracy, accuracy on lexicon-ambiguous tokens, harmful
   errors (gold NOUN answered VERB or gold VERB answered NOUN with confidence at least 0.45, counted per 1,000
   noun-verb decisions), negative log-likelihood and expected calibration error (15 equal-width bins), and the paired
@@ -59,7 +60,9 @@ target framework, including .NET Framework.
   integer is `RoundHalfAwayFromZero(S * (W * T - U) / T)`, evaluated exactly in `long` arithmetic with `S` the
   quantization factor (a power of two), clamped to the 16-bit range without -32768; a weight whose magnitude is at or
   below the prune threshold is dropped, and a row whose weights are all zero is dropped. No floating-point value enters
-  the weights.
+  the weights. The updates, the sums and the quantization are `checked`, so a run too large for the 64-bit sums fails
+  with a clear exception instead of wrapping around; the check costs one flag test per addition and does not change any
+  weight of a run that fits (`train --check` still reproduces the committed image).
 - **Minimum count**: when `MinCount` is above 1 a feature takes part in training only if it occurs often enough in the
   training signal.
 - **Building the file** (`ModelBuilder`): the rows go to `PerceptronModelWriter.Compile` (which orders the buckets) with
@@ -102,8 +105,12 @@ failing `train --check` or golden test in the CI job of that system.
 Every setting of the shipped model was selected on `data/open/dev.tsv` and `data/eval/gold-v2/dev.tsv` only. The rule
 is code, not convention: evaluation accepts exactly those two paths (compared as full paths, so a relative spelling or a
 dotted detour cannot slip past), a file at a development path must announce a development split in its header, and
-training sources are checked against a deny-list that refuses held-out sets, evaluation folders and also the
-development files (training on them would invalidate the selection). The held-out names (the open and gold test
+training sources must lie below the `data` folder of the repository and are checked against a deny-list that refuses
+held-out sets, evaluation folders and also the development files (training on them would invalidate the selection).
+The training check works on the canonical path: it is made absolute (a rooted source path or a `..` detour that leaves
+the data folder is refused) and symbolic links and junctions are resolved with
+`FileSystemInfo.ResolveLinkTarget` (a safe-looking name that points at held-out data is refused); on .NET Framework,
+which only compiles this file for the tests, links are not resolved. The held-out names (the open and gold test
 splits, the shape probe, the challenge set and the external treebank) are spelled in `DevSets.cs` only, and a test scans
 every other trainer source for them, so there is no code path that opens such a file. The held-out sets are evaluated
 once, later. The selection protocol was written into `RUN-LOG.md` before the first experiment: the primary criterion is
@@ -140,9 +147,12 @@ These are development figures; they say nothing about held-out data.
 The later glossary mode (`TokenConstraint.Prefer`) needs to know whether the model should learn how far to trust a
 glossary. The question was answered by an experiment on development data with thresholds fixed beforehand: a model M1
 with trained "glossary says X" features (trained with simulated hints on 30% of the lexicon-ambiguous tokens, 10% of
-them wrong) against the shipped model M0 with a score boost on type-level simulated glossaries. M1 lost 0.17 accuracy
+them wrong) against the shipped model M0 with a score boost on type-level simulated glossaries. M1 lost 0.22 accuracy
 points without a glossary (the rule allows 0.05) and did not beat the boost on covered tokens or on the neighbors of
-covered tokens. **Decision: boost only.** The feature set stays at version 1 and the library's extractor and decoder are
+covered tokens. (The eligibility of a training token for a hint uses the allowed tags of the token as written, the same
+mask as the runtime decoder, so a capitalized token also allows PROPN and X; a first run that lower-cased the token was
+corrected and repeated, with the same decision.) **Decision: boost only.** The feature set stays at version 1 and the
+library's extractor and decoder are
 unchanged. The measured boost curve is the starting point for calibrating the boosts: up to about two temperatures
 (a log-odds shift of 2) give most of the benefit of right entries and cost at most 0.5 points on wrong entries at 10%
 wrong; four temperatures start to raise harmful errors; eight or more behave like a hard constraint. The experiment code
@@ -155,9 +165,13 @@ reproduced.
 Invalid configuration (an unknown member, an out-of-range value, no source, a source with weight above 16, a corpus
 line with an unknown tag) throws `InvalidDataException` with the setting or the file and line, and the command line
 turns it into exit code 2 with the message. A held-out or development file given as a training source, and an
-evaluation input that is not a development file, throw `InvalidOperationException` before any file is opened. A weights
+evaluation input that is not a development file, throw `InvalidOperationException` before any file is opened (so does a
+training source that lies outside the `data` folder after resolution, and a link cycle). A gold development row with a
+negative, non-numeric or out-of-sentence target index throws `InvalidDataException`. A weights
 file that is not valid for this build (damaged, or built for another feature set) makes the check report `Invalid`. A
-stale or missing committed file is reported with exit code 1 and the command that regenerates it. Nothing is caught
+stale or missing committed file is reported with exit code 1 and the command that regenerates it. An integer sum of the
+averaging that exceeds its range (`checked` arithmetic, practically unreachable: the product of epochs, repeats, tokens
+and scale would have to exceed 2^63) throws `InvalidOperationException` with that formula in the message. Nothing is caught
 inside the engine; `Program.cs` is the only place that maps exceptions to exit codes.
 
 ### Dependencies

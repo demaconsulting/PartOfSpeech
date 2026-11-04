@@ -1,4 +1,4 @@
-// cspell:ignore DCDAFUL
+// cspell:ignore DCDAFUL mklink
 using DemaConsulting.PartOfSpeech.Trainer;
 
 namespace DemaConsulting.PartOfSpeech.Tests.ModelTrainer;
@@ -616,8 +616,9 @@ public class ModelTrainerTests
     public void DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused(string path)
     {
         // Arrange / Act / Assert
-        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureTrainable(path));
-        Assert.Throws<InvalidOperationException>(() => CorpusReader.ReadFile(path, new SourceConfig { Name = "t" }));
+        var full = Path.Combine(DataFiles.RepositoryRoot, path);
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureTrainable(DataFiles.RepositoryRoot, full));
+        Assert.Throws<InvalidOperationException>(() => CorpusReader.ReadFile(DataFiles.RepositoryRoot, full, new SourceConfig { Name = "t" }));
     }
 
     /// <summary>
@@ -630,11 +631,173 @@ public class ModelTrainerTests
     public void DataGuard_EnsureTrainable_TrainingCorpus_Admitted(string path)
     {
         // Arrange / Act
-        var exception = Record.Exception(() => DataGuard.EnsureTrainable(path));
+        var exception = Record.Exception(() => DataGuard.EnsureTrainable(DataFiles.RepositoryRoot, DataFiles.Repository(path)));
 
         // Assert: no exception
         Assert.Null(exception);
     }
+
+    /// <summary>
+    ///     Validates that a rooted path, a dotted detour out of the data folder and a path outside the data folder are refused.
+    /// </summary>
+    [Theory]
+    [InlineData("data/../README.md")]
+    [InlineData("data/open/../../src/anything.tsv")]
+    [InlineData("data/../data/open/../eval/gold-v2/train.tsv")]
+    [InlineData("data")]
+    [InlineData("train.tsv")]
+    public void DataGuard_EnsureTrainable_PathOutsideDataRoot_Refused(string relativePath)
+    {
+        // Arrange
+        var full = DataFiles.Repository(relativePath);
+
+        // Act / Assert
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureTrainable(DataFiles.RepositoryRoot, full));
+    }
+
+    /// <summary>
+    ///     Validates that a rooted source path, which <c>Path.Combine</c> lets replace the repository root, is refused when it leads outside the data folder.
+    /// </summary>
+    [Fact]
+    public void CorpusReader_LoadSources_RootedPathOutsideData_Refused()
+    {
+        // Arrange: a rooted path that is not below the data folder of the repository
+        var rooted = Path.Combine(Path.GetTempPath(), "other-corpus.tsv");
+        var config = new TrainingConfig { Sources = { new SourceConfig { Name = "rooted", Path = rooted.Replace('\\', '/') } } };
+
+        // Act / Assert
+        Assert.Throws<InvalidOperationException>(() => CorpusReader.LoadSources(DataFiles.RepositoryRoot, config));
+    }
+
+    /// <summary>
+    ///     Validates that a link inside the data folder cannot point a safe-looking path at held-out data or at a place
+    ///     outside the data folder. Directory links are symbolic links, or junctions on Windows when symbolic links need a
+    ///     privilege that is not held; the file links need symbolic links and are checked only where they can be created.
+    /// </summary>
+    [Fact]
+    public void DataGuard_EnsureTrainable_LinkToHeldOutOrOutsideData_Refused()
+    {
+#if NET6_0_OR_GREATER
+        // Arrange: a fake repository with a training file, a held-out folder and an outside folder
+        var repo = Path.Combine(Path.GetTempPath(), "pos-guard-" + Guid.NewGuid().ToString("N"));
+        var open = Path.Combine(repo, "data", "open");
+        try
+        {
+            var heldOut = Path.Combine(repo, "data", "eval", "gold-v2");
+            var outside = Path.Combine(repo, "elsewhere");
+            Directory.CreateDirectory(open);
+            Directory.CreateDirectory(heldOut);
+            Directory.CreateDirectory(outside);
+            File.WriteAllText(Path.Combine(open, "train.tsv"), "# fixture");
+            File.WriteAllText(Path.Combine(heldOut, "secret.tsv"), "# fixture");
+            File.WriteAllText(Path.Combine(outside, "other.tsv"), "# fixture");
+            if (!TryCreateDirectoryLink(Path.Combine(open, "folder"), heldOut) || !TryCreateDirectoryLink(Path.Combine(open, "away"), outside))
+            {
+                Assert.Skip("Neither symbolic links nor junctions can be created here.");
+            }
+
+            // Act / Assert: the directory links lead to refused places although the written paths look like training files
+            Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureTrainable(repo, Path.Combine(open, "folder", "secret.tsv")));
+            Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureTrainable(repo, Path.Combine(open, "away", "other.tsv")));
+
+            // File links, where the system allows them: held-out and outside targets are refused, a link to a training file is admitted
+            if (TryCreateFileLink(Path.Combine(open, "innocent.tsv"), Path.Combine(heldOut, "secret.tsv"))
+                && TryCreateFileLink(Path.Combine(open, "outside-file.tsv"), Path.Combine(outside, "other.tsv"))
+                && TryCreateFileLink(Path.Combine(open, "same-folder.tsv"), Path.Combine(open, "train.tsv")))
+            {
+                Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureTrainable(repo, Path.Combine(open, "innocent.tsv")));
+                Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureTrainable(repo, Path.Combine(open, "outside-file.tsv")));
+                DataGuard.EnsureTrainable(repo, Path.Combine(open, "same-folder.tsv"));
+            }
+
+            DataGuard.EnsureTrainable(repo, Path.Combine(open, "train.tsv"));
+        }
+        finally
+        {
+            // Remove the directory links first: a recursive delete must not follow them into the targets
+            foreach (var link in new[] { Path.Combine(open, "folder"), Path.Combine(open, "away") })
+            {
+                if (Directory.Exists(link))
+                {
+                    Directory.Delete(link, false);
+                }
+            }
+
+            if (Directory.Exists(repo))
+            {
+                Directory.Delete(repo, true);
+            }
+        }
+#else
+        // Links are resolved only on .NET 6 and later, which is where the trainer runs
+        Assert.Skip("Link resolution needs .NET 6 or later.");
+#endif
+    }
+
+#if NET6_0_OR_GREATER
+    /// <summary>
+    ///     Creates a symbolic link to a file when the system allows it.
+    /// </summary>
+    /// <param name="link">The path of the link.</param>
+    /// <param name="target">The file it points to.</param>
+    /// <returns><c>true</c> when the link was created.</returns>
+    private static bool TryCreateFileLink(string link, string target)
+    {
+        try
+        {
+            File.CreateSymbolicLink(link, target);
+            return true;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or PlatformNotSupportedException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     Creates a symbolic link to a directory, or on Windows a junction (which needs no privilege) when that fails.
+    /// </summary>
+    /// <param name="link">The path of the link.</param>
+    /// <param name="target">The directory it points to.</param>
+    /// <returns><c>true</c> when the link was created.</returns>
+    private static bool TryCreateDirectoryLink(string link, string target)
+    {
+        try
+        {
+            Directory.CreateSymbolicLink(link, target);
+            return true;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or PlatformNotSupportedException)
+        {
+            return OperatingSystem.IsWindows() && TryCreateJunction(link, target);
+        }
+    }
+
+    /// <summary>
+    ///     Creates a directory junction with the command shell.
+    /// </summary>
+    /// <param name="link">The path of the junction.</param>
+    /// <param name="target">The directory it points to.</param>
+    /// <returns><c>true</c> when the junction was created.</returns>
+    private static bool TryCreateJunction(string link, string target)
+    {
+        var start = new System.Diagnostics.ProcessStartInfo("cmd.exe") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true };
+        start.ArgumentList.Add("/c");
+        start.ArgumentList.Add("mklink");
+        start.ArgumentList.Add("/J");
+        start.ArgumentList.Add(link);
+        start.ArgumentList.Add(target);
+        using var process = System.Diagnostics.Process.Start(start);
+        if (process == null)
+        {
+            return false;
+        }
+
+        process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        return process.ExitCode == 0;
+    }
+#endif
 
     /// <summary>
     ///     Validates that an experiment without an output file is refused, so that it cannot overwrite the shipped weights.
@@ -700,6 +863,71 @@ public class ModelTrainerTests
                 Assert.False(text.Contains(name), $"{Path.GetFileName(file)} mentions '{name}'");
             }
         }
+    }
+
+    /// <summary>
+    ///     Validates that a negative, non-numeric or too large target index of a gold row is refused at parse time with a clear error.
+    /// </summary>
+    [Theory]
+    [InlineData("-1", "outside its sentence")]
+    [InlineData("-7", "outside its sentence")]
+    [InlineData("4", "outside its sentence")]
+    [InlineData("x", "not an integer")]
+    public void DevSets_ParseGoldDev_InvalidTarget_Throws(string target, string message)
+    {
+        // Arrange
+        var lines = new[]
+        {
+            "# columns = id doc_id pos target sentence",
+            "d-1\tdoc-a\tNoun\t" + target + "\tThe big dog barks",
+        };
+
+        // Act
+        var exception = Assert.Throws<InvalidDataException>(() => DevSets.ParseGoldDev(lines, "fixture"));
+
+        // Assert
+        Assert.Contains(message, exception.Message);
+        Assert.Contains("d-1", exception.Message);
+    }
+
+    /// <summary>
+    ///     Validates that the quantization reports an exhausted 64-bit range with a clear exception instead of wrapping around.
+    /// </summary>
+    [Fact]
+    public void AveragedPerceptron_Quantize_RangeExceeded_ThrowsClearException()
+    {
+        // Arrange / Act / Assert: scale * (weight * steps - total) does not fit 64 bits
+        Assert.Throws<InvalidOperationException>(() => AveragedPerceptron.Quantize(int.MaxValue, 0, long.MaxValue / 2, 16));
+
+        // 2 * magnitude does not fit 64 bits although the numerator does
+        var exception = Assert.Throws<InvalidOperationException>(() => AveragedPerceptron.Quantize(0, -(long.MaxValue / 2) - 1, 1, 1));
+        Assert.Contains("epochs * repeats * tokens * scale", exception.Message);
+
+        // Realistic sizes still work
+        Assert.Equal(16, AveragedPerceptron.Quantize(1, 0, 1_000_000_000, 16));
+    }
+
+    /// <summary>
+    ///     Validates that an update that would overflow a weight or an update sum is refused instead of wrapping around.
+    /// </summary>
+    [Fact]
+    public void AveragedPerceptron_Update_SumsExceedRange_ThrowsClearException()
+    {
+        // Arrange: put the sum of one cell at the top of the range, and a weight at the top of its range
+        var perceptron = new AveragedPerceptron(HashBits);
+        var totals = (long[])typeof(AveragedPerceptron).GetField("_totals", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(perceptron)!;
+        var weights = (int[])typeof(AveragedPerceptron).GetField("_weights", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(perceptron)!;
+        perceptron.BeginStep();
+        totals[(3 * 17) + 2] = long.MaxValue;
+        weights[(4 * 17) + 5] = int.MaxValue;
+
+        // Act / Assert: the sum of bucket 3 and the weight of bucket 4 overflow
+        Assert.Throws<InvalidOperationException>(() => perceptron.Update(new[] { 3 }, 1, 2, 7));
+        Assert.Throws<InvalidOperationException>(() => perceptron.Update(new[] { 4 }, 1, 5, 7));
+
+        // A normal update still works and counts
+        perceptron.Update(new[] { 9 }, 1, 1, 2);
+        Assert.Equal(1, perceptron.Mistakes);
     }
 
     /// <summary>
@@ -899,7 +1127,7 @@ public class ModelTrainerTests
 
                 hintCount++;
                 Assert.Equal((int)sentence.Gold[i], hints[i]);
-                Assert.True(DemaConsulting.PartOfSpeech.Lexicon.AllowedTags(sentence.Tokens[i].ToLowerInvariant(), lexicon).Count >= 2);
+                Assert.True(DemaConsulting.PartOfSpeech.Lexicon.AllowedTags(sentence.Tokens[i], lexicon).Count >= 2);
             }
         }
 
@@ -927,12 +1155,64 @@ public class ModelTrainerTests
                 {
                     wrong++;
                     Assert.NotEqual((int)sentence.Gold[i], hints[i]);
-                    Assert.True(DemaConsulting.PartOfSpeech.Lexicon.AllowedTags(sentence.Tokens[i].ToLowerInvariant(), lexicon).Contains((Upos)hints[i]));
+                    Assert.True(DemaConsulting.PartOfSpeech.Lexicon.AllowedTags(sentence.Tokens[i], lexicon).Contains((Upos)hints[i]));
                 }
             }
         }
 
         Assert.True(wrong > 100);
+    }
+
+    /// <summary>
+    ///     Validates that the eligibility of a token uses the token as written, as the runtime decoder does: a capitalized
+    ///     token also allows PROPN and X, so a single-tag word becomes ambiguous (and eligible) only when it is capitalized.
+    /// </summary>
+    [Fact]
+    public void GlossaryTraining_Draw_CapitalizedToken_UsesShapeCandidatesOfTheOriginalToken()
+    {
+        // Arrange: pick a function word with exactly one lexicon tag; capitalized, it also allows PROPN and X
+        var lexicon = EmbeddedModel.Lexicon;
+        var word = new[] { "of", "because", "whereas", "although", "nevertheless", "moreover", "thereby", "hence", "albeit", "unto", "amongst" }
+            .FirstOrDefault(w => DemaConsulting.PartOfSpeech.Lexicon.AllowedTags(w, lexicon).Count == 1);
+        Assert.NotNull(word);
+        var only = (sbyte)DemaConsulting.PartOfSpeech.Lexicon.AllowedTags(word, lexicon).Single();
+        var capitalized = new TrainingSentence("s1", "x", new[] { char.ToUpperInvariant(word[0]) + word.Substring(1) }, new[] { (sbyte)Upos.Propn });
+        var lower = new TrainingSentence("s2", "x", new[] { word }, new[] { only });
+        var training = new GlossaryTraining(lexicon, 100, 0, 5);
+
+        // Act
+        var capitalizedHints = training.Draw(capitalized, new DeterministicRandom(1));
+        var lowerHints = training.Draw(lower, new DeterministicRandom(1));
+
+        // Assert: the capitalized PROPN token gets its gold hint; the unambiguous lower-case token gets none
+        Assert.Equal((int)Upos.Propn, capitalizedHints[0]);
+        Assert.Equal(-1, lowerHints[0]);
+    }
+
+    /// <summary>
+    ///     Validates that the glossary eligibility agrees with the runtime candidate mask for every token of a corpus sample.
+    /// </summary>
+    [Fact]
+    public void GlossaryTraining_Draw_CorpusSample_EligibilityMatchesRuntimeMask()
+    {
+        // Arrange
+        var lexicon = EmbeddedModel.Lexicon;
+        var training = new GlossaryTraining(lexicon, 100, 0, 5);
+        var workspace = new DecoderWorkspace();
+
+        // Act / Assert: a hint exists exactly where the runtime mask has two or more tags including the gold tag
+        foreach (var sentence in SmallCorpus().Distinct().Take(60))
+        {
+            var hints = training.Draw(sentence, new DeterministicRandom(2));
+            FeatureExtractor.Prepare(workspace, sentence.Tokens, HashBits);
+            for (var i = 0; i < hints.Length; i++)
+            {
+                var mask = TagSelection.AllowedMask(workspace, i, lexicon);
+                var gold = sentence.Gold[i];
+                var eligible = gold >= 0 && Enumerable.Range(0, 17).Count(t => (mask & (1 << t)) != 0) >= 2 && (mask & (1 << gold)) != 0;
+                Assert.Equal(eligible, hints[i] >= 0);
+            }
+        }
     }
 
     /// <summary>

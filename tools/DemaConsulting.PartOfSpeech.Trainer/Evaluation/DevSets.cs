@@ -96,14 +96,65 @@ internal static class DataGuard
     }
 
     /// <summary>
-    ///     Checks that a path may be a training source: it must be neither a held-out set nor a development file.
+    ///     Checks that a path may be a training source: it must lie inside the <c>data</c> folder of the repository
+    ///     once links are resolved, and it must be neither a held-out set nor a development file.
     /// </summary>
-    /// <param name="path">The path of the corpus.</param>
-    /// <exception cref="InvalidOperationException">The path names a held-out set, an evaluation folder or a development file.</exception>
-    public static void EnsureTrainable(string path)
+    /// <remarks>
+    ///     <para>
+    ///         The check works on the canonical path: the path is made absolute (so <c>..</c> detours and rooted paths
+    ///         are visible) and symbolic links and junctions are resolved where the runtime supports it, so that a
+    ///         safe-looking name cannot point at held-out data. The path must be inside the data root both as written
+    ///         and after link resolution; the file name and folder names are then checked below the data root, for both
+    ///         spellings.
+    ///     </para>
+    ///     <para>
+    ///         On .NET Framework (the test project compiles this file for it too) links are not resolved; the trainer
+    ///         itself runs on a current .NET.
+    ///     </para>
+    /// </remarks>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="path">The path of the corpus, absolute or relative to the working directory.</param>
+    /// <exception cref="InvalidOperationException">The path escapes the data root, names a held-out set, an evaluation folder or a development file, or goes through too many links.</exception>
+    public static void EnsureTrainable(string repositoryRoot, string path)
     {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
         ArgumentNullException.ThrowIfNull(path);
-        var segments = path.Replace('\\', '/').Split('/');
+
+        var dataRoot = Path.Combine(repositoryRoot, "data");
+        var written = RelativeTo(Path.GetFullPath(dataRoot), Path.GetFullPath(path));
+        var resolved = RelativeTo(Canonicalize(dataRoot), Canonicalize(path));
+        if (written == null || resolved == null)
+        {
+            throw new InvalidOperationException($"'{path}' is outside the data folder of the repository and cannot be used for training.");
+        }
+
+        if (IsRefused(written) || IsRefused(resolved))
+        {
+            throw new InvalidOperationException($"'{path}' is an evaluation or development file and cannot be used for training.");
+        }
+    }
+
+    /// <summary>
+    ///     Computes a path below a folder.
+    /// </summary>
+    /// <param name="root">The full path of the folder.</param>
+    /// <param name="full">The full path to test.</param>
+    /// <returns>The part of <paramref name="full"/> below <paramref name="root"/>, or <c>null</c> when it is not strictly below it.</returns>
+    private static string? RelativeTo(string root, string full)
+    {
+        var prefix = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var comparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        return full.Length > prefix.Length && full.StartsWith(prefix, comparison) ? full.Substring(prefix.Length) : null;
+    }
+
+    /// <summary>
+    ///     Tells whether a path below the data folder names a refused file or lies below a refused folder.
+    /// </summary>
+    /// <param name="relative">The path below the data folder.</param>
+    /// <returns><c>true</c> when the path is refused.</returns>
+    private static bool IsRefused(string relative)
+    {
+        var segments = relative.Replace('\\', '/').Split('/');
         var name = segments[segments.Length - 1];
         var refused = Array.Exists(RefusedFileNames, f => string.Equals(f, name, StringComparison.OrdinalIgnoreCase));
         for (var i = 0; i < segments.Length - 1 && !refused; i++)
@@ -111,11 +162,61 @@ internal static class DataGuard
             refused = Array.Exists(RefusedFolderNames, f => string.Equals(f, segments[i], StringComparison.OrdinalIgnoreCase));
         }
 
-        if (refused)
-        {
-            throw new InvalidOperationException($"'{path}' is an evaluation or development file and cannot be used for training.");
-        }
+        return refused;
     }
+
+    /// <summary>
+    ///     Makes a path absolute and resolves every symbolic link or junction on it (where the runtime supports links).
+    /// </summary>
+    /// <param name="path">The path.</param>
+    /// <returns>The canonical full path; the path need not exist.</returns>
+    /// <exception cref="InvalidOperationException">More than 40 links were followed (a link cycle).</exception>
+    private static string Canonicalize(string path)
+    {
+        var full = Path.GetFullPath(path);
+#if NET6_0_OR_GREATER
+        const int MaxLinks = 40;
+        var links = 0;
+        var root = Path.GetPathRoot(full)!;
+        var pending = new Queue<string>(Segments(full, root));
+        var current = root;
+        while (pending.Count > 0)
+        {
+            current = Path.Combine(current, pending.Dequeue());
+            FileSystemInfo info = Directory.Exists(current) ? new DirectoryInfo(current) : new FileInfo(current);
+            if (info.LinkTarget == null)
+            {
+                continue;
+            }
+
+            if (++links > MaxLinks)
+            {
+                throw new InvalidOperationException($"'{path}' goes through too many links.");
+            }
+
+            // Continue below the final target, whose own parents may contain links again
+            var target = Path.GetFullPath(info.ResolveLinkTarget(true)?.FullName ?? Path.Combine(Path.GetDirectoryName(current) ?? root, info.LinkTarget));
+            root = Path.GetPathRoot(target)!;
+            pending = new Queue<string>(Segments(target, root).Concat(pending.ToArray()));
+            current = root;
+        }
+
+        return current;
+#else
+        return full;
+#endif
+    }
+
+#if NET6_0_OR_GREATER
+    /// <summary>
+    ///     Splits a full path below its root into its folder and file names.
+    /// </summary>
+    /// <param name="full">The full path.</param>
+    /// <param name="root">The root of the path.</param>
+    /// <returns>The names in order.</returns>
+    private static string[] Segments(string full, string root) =>
+        full.Substring(root.Length).Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+#endif
 }
 
 /// <summary>
@@ -264,7 +365,7 @@ internal static class DevSets
     /// <param name="lines">The lines.</param>
     /// <param name="origin">The origin for error messages.</param>
     /// <returns>The targets in file order.</returns>
-    /// <exception cref="InvalidDataException">A required column is missing, a row is malformed or the target index is outside the sentence.</exception>
+    /// <exception cref="InvalidDataException">A required column is missing, a row is malformed or the target index is negative or outside the sentence.</exception>
     public static List<GoldTarget> ParseGoldDev(IEnumerable<string> lines, string origin)
     {
         ArgumentNullException.ThrowIfNull(lines);
@@ -295,9 +396,15 @@ internal static class DevSets
             }
 
             var tokens = Cell(cells, columns, "sentence", origin).Split(' ');
-            if (!int.TryParse(Cell(cells, columns, "target", origin), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var target) || target >= tokens.Length)
+            var targetText = Cell(cells, columns, "target", origin);
+            if (!int.TryParse(targetText, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var target))
             {
-                throw new InvalidDataException($"{origin}: the target of row {Cell(cells, columns, "id", origin)} is outside its sentence.");
+                throw new InvalidDataException($"{origin}: the target of row {Cell(cells, columns, "id", origin)} is not an integer.");
+            }
+
+            if (target < 0 || target >= tokens.Length)
+            {
+                throw new InvalidDataException($"{origin}: the target of row {Cell(cells, columns, "id", origin)} is outside its sentence (index {target} of {tokens.Length} tokens; it must not be negative).");
             }
 
             result.Add(new GoldTarget(

@@ -74,14 +74,15 @@ internal static class CorpusReader
     /// <summary>
     ///     Reads a corpus file.
     /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root; the file must lie below its <c>data</c> folder.</param>
     /// <param name="path">The full path of the file; it must not be a held-out evaluation set.</param>
     /// <param name="source">The masking and sampling settings of the source.</param>
     /// <returns>The sentences in file order, limited by the sampling settings.</returns>
-    /// <exception cref="InvalidOperationException"><paramref name="path"/> names a held-out evaluation set.</exception>
+    /// <exception cref="InvalidOperationException"><paramref name="path"/> names a held-out evaluation set or lies outside the data folder.</exception>
     /// <exception cref="InvalidDataException">The file does not follow the corpus format.</exception>
-    public static List<TrainingSentence> ReadFile(string path, SourceConfig source)
+    public static List<TrainingSentence> ReadFile(string repositoryRoot, string path, SourceConfig source)
     {
-        DataGuard.EnsureTrainable(path);
+        DataGuard.EnsureTrainable(repositoryRoot, path);
         return Parse(File.ReadLines(path, Encoding.UTF8), source, path);
     }
 
@@ -106,7 +107,7 @@ internal static class CorpusReader
         foreach (var source in config.Sources.Where(s => s.Weight > 0))
         {
             var path = Path.Combine(repositoryRoot, source.Path.Replace('/', Path.DirectorySeparatorChar));
-            var sentences = ReadFile(path, source);
+            var sentences = ReadFile(repositoryRoot, path, source);
             for (var repeat = 0; repeat < source.Weight; repeat++)
             {
                 result.AddRange(sentences);

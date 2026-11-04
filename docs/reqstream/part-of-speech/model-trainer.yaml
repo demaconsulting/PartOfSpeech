@@ -45,15 +45,19 @@ sections:
           - id: PartOfSpeech-ModelTrainer-ExactQuantization
             title: >-
               The averaged weights shall be computed and quantized in exact integer arithmetic (equal to a decimal
-              oracle, with ties rounded away from zero and values clamped to the 16-bit range), small weights shall be
+              oracle, with ties rounded away from zero and values clamped to the 16-bit range), a run whose integer sums
+              do not fit their range shall fail with a clear error instead of wrapping around, small weights shall be
               dropped by the pruning threshold, and the resulting file shall load with the quantized weights.
             justification: |
               Floating-point averaging would make the weights depend on the platform and would make the committed file
-              impossible to reproduce. Exact integers give the same weights everywhere, and the loader of the library
-              proves that the written file holds what the quantization produced.
+              impossible to reproduce. Exact integers give the same weights everywhere, but an unnoticed overflow of the
+              64-bit sums would silently corrupt them, so the arithmetic is checked. The loader of the library proves
+              that the written file holds what the quantization produced.
             tests:
               - AveragedPerceptron_Quantize_RandomUpdates_MatchesDecimalOracle
               - AveragedPerceptron_Quantize_TiesAndClamp_RoundAwayFromZeroAndClamp
+              - AveragedPerceptron_Quantize_RangeExceeded_ThrowsClearException
+              - AveragedPerceptron_Update_SumsExceedRange_ThrowsClearException
               - AveragedPerceptron_Quantize_PruneThreshold_DropsSmallWeights
               - ModelTrainer_Build_SmallRun_LoadsWithTheQuantizedWeights
               - ModelBuilder_WithTemperature_ReplacesOnlyTheTemperature
@@ -88,18 +92,24 @@ sections:
           - id: PartOfSpeech-ModelTrainer-DevOnlySelection
             title: >-
               Evaluation shall read only the two development files (also when the path is spelled with a detour), a
-              file that does not announce a development split shall be refused, training shall refuse held-out sets,
-              evaluation folders and development files, and no other source of the trainer shall name a held-out set.
+              file that does not announce a development split shall be refused, training shall accept only files below
+              the data folder of the repository (after the path is made absolute and symbolic links and junctions are
+              resolved) and refuse held-out sets, evaluation folders and development files there, and no other source of
+              the trainer shall name a held-out set.
             justification: |
               The accuracy that is reported later is only honest if nothing in the model was tuned on the data that
               measures it. A rule in a document is easy to forget, so the rule is code: there is no path through the
               trainer that opens a held-out file, and tests prove the allow-list, the deny-list and the absence of other
-              references.
+              references. The deny-list works on the canonical path, because a rooted path, a dotted detour or a link
+              could otherwise point a safe-looking name at held-out data.
             tests:
               - DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused
               - DataGuard_EnsureDevelopmentFile_DevelopmentFile_Admitted
               - DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused
               - DataGuard_EnsureTrainable_TrainingCorpus_Admitted
+              - DataGuard_EnsureTrainable_PathOutsideDataRoot_Refused
+              - CorpusReader_LoadSources_RootedPathOutsideData_Refused
+              - DataGuard_EnsureTrainable_LinkToHeldOutOrOutsideData_Refused
               - DataGuard_EnsureDevelopmentHeader_NoDevSplitHeader_Throws
               - ModelTrainer_Sources_NoHeldOutPathLiterals
 
@@ -141,15 +151,16 @@ sections:
           - id: PartOfSpeech-ModelTrainer-DevMetrics
             title: >-
               The evaluation shall score a tagger on the development sets with accuracy, harmful noun-verb errors,
-              log-likelihood and calibration error, shall read the gold development targets with the class mapping, and
-              shall compare two models with a paired bootstrap by document that reports a tie when the interval contains
-              zero.
+              log-likelihood and calibration error, shall read the gold development targets with the class mapping (a
+              negative or out-of-sentence target index is an error), and shall compare two models with a paired
+              bootstrap by document that reports a tie when the interval contains zero.
             justification: |
               The settings of the model are selected by these numbers, so the numbers must be right: the metrics are
               checked against hand-computed outcomes, and the bootstrap against lists with a known difference and with
               none. The run log rows must have one cell for each column of their table.
             tests:
               - DevSets_ParseGoldDev_Fixture_ReadsTargetsAndMapsClasses
+              - DevSets_ParseGoldDev_InvalidTarget_Throws
               - Metrics_Compute_KnownOutcomes_ExpectedNumbers
               - Metrics_Judge_TinyTagger_CorrectAndNounVerbError
               - Bootstrap_Compare_IdenticalLists_ZeroDifferenceTied
@@ -160,15 +171,20 @@ sections:
           - id: PartOfSpeech-ModelTrainer-GlossaryExperiment
             title: >-
               The dev-only glossary experiment shall draw simulated glossary hints reproducibly (gold hints, or another
-              allowed tag for wrong ones), shall change the trained model only when hints are used, and its decoder
-              shall equal the plain predictor without hints and shall follow a hard or a very large hint.
+              allowed tag for wrong ones), with the allowed tags of a token computed for the token as written exactly as
+              the runtime decoder does (capitalization included), shall change the trained model only when hints are
+              used, and its decoder shall equal the plain predictor without hints and shall follow a hard or a very
+              large hint.
             justification: |
               The decision between a trained glossary feature and a score boost rests on this experiment, so the
               experiment must be reproducible, must not disturb the shipped feature set (the plain run keeps its pinned
-              hash), and its decoder must agree with the real one before the comparison means anything.
+              hash), must judge eligibility with the same candidates that the tagger has, and its decoder must agree
+              with the real one before the comparison means anything.
             tests:
               - GlossaryTraining_Draw_NoWrongHints_HintsAreGoldAndReproducible
               - GlossaryTraining_Draw_AllHintsWrong_HintIsAnotherAllowedTag
+              - GlossaryTraining_Draw_CapitalizedToken_UsesShapeCandidatesOfTheOriginalToken
+              - GlossaryTraining_Draw_CorpusSample_EligibilityMatchesRuntimeMask
               - ModelTrainer_Train_GlossaryHints_ChangeTheImage
               - GlossaryFeatures_Append_InBucketSpaceAndDependOnHintAndHistory
               - HintedPredictor_NoHints_MatchesQuantizedPredictor
