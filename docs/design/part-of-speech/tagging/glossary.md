@@ -17,12 +17,15 @@ not to a tagger. The unit consists of `Glossary`, `GlossaryBuilder`, `GlossaryEn
 - **`GlossaryEntry`** (immutable): `Term` and the `Tokens` of the term as the tokenizer splits it in running text (the
   term is tokenized followed by a sentinel word that is dropped, so a final period of an abbreviation is kept as it is
   in the middle of a text; the form at the end of a text is kept as well when it differs); `Tags` (a non-empty
-  `UposSet` for the head word); `Definition`; `HeadIndex` (the last token by default); `CaseSensitive`, `Mode` and
+  `UposSet` for the head word); `Definition`; `HeadIndex` (chosen when the entry is created: the first token of a phrasal
+  verb with a listed particle word, otherwise the last token, unless `WithHead` set it); `CaseSensitive`, `Mode` and
   `Inflect` (each `null` for the glossary default); the listed `Variants` with their tokens; and the optional explicit
   tags of non-head tokens (`GetTokenTags`). Every `With...` method returns a new entry.
-- **`GlossaryOptions`**: `CaseSensitive` (default false), `Mode` (`Hard` by default), `SoftStrength` (in units of the
-  model temperature; finite and greater than zero; the default is the constant `DefaultSoftStrength`, whose choice is
-  documented in section E9 of the trainer's `RUN-LOG.md`) and `Inflect` (default true). A glossary keeps a validated copy.
+- **`GlossaryOptions`**: `CaseSensitive` (default false), `Mode` (`Hard` by default: the entries are trusted
+  completely, so a wrong entry forces a wrong tag, which fits a curated list; soft mode is for a list that is not
+  curated or may be wrong, and the measured cost is in section E9 of the trainer's `RUN-LOG.md`), `SoftStrength` (in
+  units of the model temperature; finite and greater than zero; the default is the constant `DefaultSoftStrength`,
+  whose choice is documented in the same section) and `Inflect` (default true). A glossary keeps a validated copy.
 - **`GlossaryBuilder`**: a list of entries that implements `IEnumerable<GlossaryEntry>` so that it works with a
   collection initializer; it is not thread-safe, and `Build` takes a snapshot.
 - **`Glossary`**: the array of entries in the order added (exposed as a read-only view), the options copy and the
@@ -51,9 +54,22 @@ tokens under the same effective case rule; the index and the compiled constraint
 
 - **Entry construction and `With...`**: validates the term (not null, at least one token with a letter or a digit), the
   tags, the head and token indexes, the mode and the variants (each variant must give the same number of tokens as
-  the term). `WithHead` moves the head word; a phrasal verb entry such as `shut down` should use `WithHead(0)`, because
-  its head is the first word, the verb tags belong to it and its inflected forms (`shuts`, `shutting`) are the forms of
-  the first word.
+  the term). The head word is chosen here, once, so that it is the same in every glossary and tagger: `DefaultHead` takes
+  the first token when the tags include `VERB`, the term has at least two tokens and every token after the first is a word
+  of a small closed, ordinal particle list (`about`, `across`, `ahead`, `along`, `apart`, `around`, `aside`, `away`,
+  `back`, `by`, `down`, `forth`, `forward`, `in`, `off`, `on`, `onto`, `out`, `over`, `through`, `together`, `up`, `upon`,
+  `within`) that the lexicon confirms (the allowed set of `Lexicon.AllowedTags` for the folded, lower-cased token contains
+  at least one of `ADP`, `ADV` and `PART`; its other tags do not matter), and the last token otherwise. So `shut down`,
+  `carry out` and `set up` have the head on the first token, and `bleed valve`, `take care`, `make sense` and
+  `shut down valve` on the last. The list is a set of candidates and the lexicon confirms it, so a word is a particle only
+  where the data agree; the list holds no word that is mainly a noun. The lexicon is the one embedded in the library
+  (`EmbeddedModel.Lexicon`): a glossary belongs to no tagger and its index needs the head before any tagger is known,
+  because the head decides which word is inflected and which token is constrained. The embedded lexicon is immutable and
+  loaded once under a lock, the particle set is never changed, and the lookup shares no scratch memory, so the result is
+  deterministic and thread-safe; an entry that needs no lookup (one token, no verb tag) never loads the lexicon. A tagger
+  that was created from its own lexicon file does not change the head. `WithHead` sets the head explicitly and overrides
+  the default in both directions, also with the last token; a phrasal verb with a particle outside the list needs it.
+  The head word receives the verb tags, and its inflected forms (`shuts`, `shutting`) are the forms of that word.
 - **`Glossary.Create(entries, options)`** (and `GlossaryBuilder.Build`): copies and validates the options, copies the
   entries, rejects `null` items and duplicates (the identity of an entry is its lower-case tokens, or its exact tokens
   when it is case-sensitive, under the effective case rule), collects the forms and builds the index. The forms of an
@@ -81,7 +97,7 @@ tokens under the same effective case rule; the index and the compiled constraint
   limited to adposition, adverb and particle (hard) or boosted for them (soft); every other non-head token (such as `it`
   in `take it apart`) is left to the model. The last rule is the one switch `NonNominalRule`, set on development data (see
   section E9 of the trainer's `RUN-LOG.md`) for the measured shape only: two-token phrasal verbs whose head is the first
-  token. The boost is clamped to a large finite value so that a huge strength cannot overflow.
+  token (inferred or set with `WithHead`). The boost is clamped to a large finite value so that a huge strength cannot overflow.
 - **`GlossaryConstraints.Build(matches, tokenCount, constraints)`**: fills a constraint array of the sentence from the
   matches (shared structs, so nothing is allocated per token) and merges the caller's list token by token: no glossary
   constraint leaves the caller's, no caller constraint leaves the glossary's, two constraints are combined with `And`,
@@ -111,6 +127,8 @@ exception of `And` inside the merge of constraints, which is turned into "the ca
 - **Tokenizer** (`Tokenizer.TokenizeWords` for terms and the sentence tokens), **Sentence** and **Token** from Tokenization.
 - **FeatureExtractor** (`Fold`, for tokens with unusual characters) and **TokenConstraint** (`Only`, `Prefer`,
   `Penalize`, `And`).
+- **Lexicon** and **EmbeddedModel** (`Lexicon.AllowedTags` on the embedded lexicon, to confirm the particle words of the
+  default head of a phrasal verb).
 - **Upos** and **UposSet**.
 - **Tagger**, **TagDecoder**, **TaggedToken** and **TaggedSentence** carry the integration: the tagger compiles the
   constraints for the temperature of its decoder, the decoder applies them unchanged, and the result types hold the

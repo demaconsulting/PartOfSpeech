@@ -501,7 +501,9 @@ within 0.1 points of the best are tied and the **smallest** of them wins. If non
 grid is the default and the result says so. Hard mode is reported as the reference and stays the default mode of
 `GlossaryOptions` (a curated glossary is trusted); the rule decides only the strength of soft mode. The chosen number is
 written once, in the decision of the results section, and the constant `GlossaryOptions.DefaultSoftStrength` must be a
-member of the evaluated grid (a test checks it).
+member of the evaluated grid (a test checks it). *(Rule change after the first run, 2026-11-04: this rule is kept as written
+and its original decision stays in the results; the default strength now follows the rule in "Rule change after the first
+run" at the end of the E9 results. The sentence above about where the number is written holds for that subsection.)*
 
 **Pre-registered bar for scenario G** (the default of the non-head rule of non-nominal terms, now `None`): primary scenario
 G at 100% coverage, **covered-token accuracy** (head and second token of the matches). R1 or R2 replaces `None` only if,
@@ -764,14 +766,15 @@ Soft strength rule, scenario AB at 30% coverage (accuracy changes in points, swa
 | 3 | +0.12 | -2.01 | -0.05 | 98.45 | yes |
 | 4 | +0.07 | -0.22 | -0.10 | 98.57 | yes |
 
-**Decision (soft strength): 4.** All six strengths are admissible; the highest covered-token accuracy at r = 0 is the
+**Original decision of the first run (soft strength): 4. Superseded by the rule change after the first run, below.** All six
+strengths are admissible; the highest covered-token accuracy at r = 0 is the
 grid maximum, and the next strength (3) is 0.12 points below it, outside the 0.1 tie. `GlossaryOptions.DefaultSoftStrength`
-is set to this value (this is the one place where the number is stated; other documents link here). The default mode stays
-**hard**. Observations that are **not** part of the rule and did not change it: 4 is the edge of the grid, so the rule cannot
+was set to this value after the first run; the current value is stated in the rule-change subsection below. The default mode stays
+**hard**. Observations that were **not** part of the rule and did not change it at the time: 4 is the edge of the grid, so the rule cannot
 say whether more would be better; with a wrong share of 30% at 100% coverage a strength of 4 costs accuracy and adds
 confident swaps (the AB 100% table: -0.43 points and +4.24 swaps per 1,000, intervals excluding 0), which strengths up to 2 do
 not; at the primary scenario's own 30% coverage the margin of 4 over 3 is small (covered accuracy at r = 0: 0.12 points). A user
-who doubts the glossary's quality can set a lower `SoftStrength`.
+who doubts the glossary's quality can set a lower `SoftStrength`. (These observations are what the rule change below acts on.)
 
 **Decision (non-head rule): the bar is met by R1**, so the non-nominal default changes from `None` to the particles-only rule
 (`GlossaryConstraints.NonNominalRule` is now `ParticlesOnly`). At coverage 100% against R0 the covered-token accuracy changes by
@@ -783,7 +786,9 @@ the rule: the data are two-token phrasal verbs (gold VERB followed by ADP, ADV o
 replaced: it applies only to an entry whose tags contain VERB, whose term has exactly two tokens and whose head is the first
 token (the second token is then the non-head token), and every other non-head token of a non-noun term (such as `it` in
 `take it apart`) is left to the model, because other shapes (adjective phrases, longer verb phrases, a verb term with
-the head last) were not measured; `WithTokenTags` overrides it per token.
+the head last) were not measured; `WithTokenTags` overrides it per token. The head of a verb entry is the first token by default
+when every later token is in a closed particle list that the lexicon confirms (`shut down` and `carry out` are inferred, `take care`
+keeps the last token) and `WithHead` overrides it; that choice of head is a design decision and was not measured here.
 
 Limits of this evaluation (as stated in advance): in-sample glossaries on one LLM-labeled split and the small gold v2 set; type-level
 matching, so the terms apply to every occurrence; punctuation types and `dr.`/`mr.` were not representable (parity paragraph);
@@ -799,8 +804,8 @@ measured under the wider rule. Every figure above that does not involve a wrong
 entry of a non-nominal term is unchanged (all r = 0 cells, scenario B, E, C, D, and the right-entry rows), because the
 adopted rule only touches the non-head tokens of entries whose tags are not NOUN or PROPN, and in A and AB only the wrong
 entries (a VERB, ADJ or other-noun-kind tag) are such entries. Those cells move a little, mostly for the worse (the second
-token of a wrong compound entry is now pushed towards a particle). The pre-registered strength rule gives the **same
-decision** (all six strengths admissible, 4 chosen); its table changes only in the r = 30% column. The G comparison against
+token of a wrong compound entry is now pushed towards a particle). The original pre-registered strength rule gives the **same
+decision** as in the first run (all six strengths admissible, 4 chosen; superseded by the rule change below); its table changes only in the r = 30% column. The G comparison against
 R0 now compares R1 with itself, so it is not repeated.
 
 | Strength (AB, 30%) | accuracy r=10 | swaps r=10 | accuracy r=30 | covered r=0 | admissible |
@@ -819,6 +824,46 @@ against no glossary): AB at 30% coverage, hard: -1.41 [-1.65, -1.17] at r = 10% 
 with a hard glossary and wrong entries lose accuracy (A at 100% coverage: 88.60 at r = 10% and 77.01 at r = 30%), soft strength 4
 keeps most of it (93.83 and 92.90). The history pattern (F) is unchanged apart from the tokens of the wrong compound entries
 (A at r = 10%, hard: -2 tokens at +1).
+
+#### Rule change after the first run (2026-11-04): the default soft strength is 2
+
+This subsection records a change that was made **after** the first run and after the original decision above. The
+pre-registered rule, the first-run tables and the original decision (4) are left as they were written; nothing was re-run and
+the grid was not extended.
+
+**Reason (objective mismatch).** The pre-registered rule chose the strength with the highest covered-token accuracy when
+every entry is right (r = 0), among strengths that were admissible at 30% coverage. Soft mode exists for glossaries that are
+not curated and may be wrong (a curated glossary uses hard mode), so an objective that is measured on right entries only rewards
+the property that hurts when entries are wrong. The observations of the original decision already pointed there: with 30%
+wrong entries at 100% coverage the largest strengths cost accuracy and add confident swaps.
+
+**New rule.** The default is the largest strength of the grid {0.5, 1, 1.5, 2, 3, 4} for which, in scenario AB at 100% coverage
+with 30% wrong entries, (i) the change of the overall accuracy against no glossary is not worse than zero (the upper bound of
+the paired 95% interval is at least 0) and (ii) the confident swaps per 1,000 do not rise (the point change is at most 0).
+
+**Application to the existing "AB, coverage 100%" tables** (first run; r = 30% columns):
+
+| Strength | overall accuracy change r=30 | swaps change r=30 | (i) interval upper >= 0 | (ii) swaps <= 0 | passes |
+| --- | ---: | ---: | --- | --- | --- |
+| 0.5 | +0.04 [+0.01, +0.08] | -0.67 | yes | yes | yes |
+| 1 | +0.11 [+0.05, +0.17] | -1.78 | yes | yes | yes |
+| 1.5 | +0.11 [+0.05, +0.17] | -2.01 | yes | yes | yes |
+| 2 | +0.08 [0.00, +0.15] | -2.45 | yes | yes | yes |
+| 3 | -0.10 [-0.22, +0.01] | +0.45 | yes | no | no |
+| 4 | -0.43 [-0.55, -0.30] | +4.24 | no | no | no |
+
+Strength 4 fails the overall-accuracy condition (upper bound -0.30) and the swap condition; strength 3 passes the accuracy
+condition only because its interval just reaches 0, and fails the swap condition (+0.45); strength 2 passes both. **Decision
+(soft strength, current): 2.** `GlossaryOptions.DefaultSoftStrength` is set to this value (this and the constant are the only
+places where the number is written; other documents link here), and it is a member of the evaluated grid (a test checks it).
+The default mode stays **hard**, as in the original decision. The consistency re-run above printed the changed AB 100% cells of
+hard and of soft 4 only (soft 4 still fails: -0.50 [-0.63, -0.37] and +4.46 swaps); the rule change was applied to the
+first-run table as decided, not to a new run. The limits of the evaluation stated above (in-sample, simulated glossaries,
+development data) apply to this choice too, and a point rule on one scenario remains a point rule.
+
+What hard mode costs when entries are wrong is in the same tables (the hard rows of "AB, coverage 100%" and of scenario E):
+hard mode trusts the entries completely, so a wrong entry forces a wrong tag. That is the intended behavior for a curated
+glossary and the reason soft mode exists for a glossary that is not curated.
 
 ## Run table
 

@@ -466,13 +466,16 @@ internal static partial class GlossaryEvaluation
         index == 0 ? "hard" : "soft " + StrengthGrid[index - 1].ToString("0.#", CultureInfo.InvariantCulture);
 
     /// <summary>
-    ///     Applies the pre-registered rule for the soft strength.
+    ///     Applies the original pre-registered rule for the soft strength (the rule of the first run).
     /// </summary>
     /// <remarks>
     ///     A strength is admissible if the accuracy difference at r = 10% is at least 0, the swap difference at r = 10% is
     ///     at most 0 and the accuracy difference at r = 30% is at least <c>-0.5</c>. Among the admissible strengths the
     ///     one with the highest covered-token accuracy at r = 0 wins; strengths within 0.1 points of the best are tied and
-    ///     the smallest wins. If none is admissible the smallest strength of the candidates is chosen.
+    ///     the smallest wins. If none is admissible the smallest strength of the candidates is chosen. The default of
+    ///     <see cref="GlossaryOptions.DefaultSoftStrength"/> follows the rule that replaced this one after the first run
+    ///     (section E9 of <c>RUN-LOG.md</c>, "Rule change after the first run"); this method is kept so that the first
+    ///     run stays reproducible, and it does not decide the default.
     /// </remarks>
     /// <param name="candidates">The figures of every strength.</param>
     /// <param name="admissible">Receives whether at least one strength was admissible.</param>

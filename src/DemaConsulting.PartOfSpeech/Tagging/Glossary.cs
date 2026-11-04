@@ -65,12 +65,17 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </para>
 ///     <para>
 ///         <strong>What a match does:</strong> in <see cref="GlossaryMode.Hard"/> mode (the default) the head word of the
-///         term can only take the tags of the entry; in <see cref="GlossaryMode.Soft"/> mode those tags get a boost of
+///         term can only take the tags of the entry. Hard mode trusts the entries completely, so a wrong entry forces a
+///         wrong tag; it fits curated lists such as the ASD-STE100 technical names and verbs. Soft mode is for lists that are not curated or
+///         may be wrong: in <see cref="GlossaryMode.Soft"/> mode those tags get a boost of
 ///         <see cref="GlossaryOptions.SoftStrength"/> times the model temperature, so the model can still disagree when it
-///         is sure. The other words of a noun term (<c>bleed</c> in <c>bleed valve</c>) can no longer be a verb or an
+///         is sure. The measured cost of a wrong entry in each mode is in section E9 of
+///         <c>tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md</c>. The other words of a noun term (<c>bleed</c> in
+///         <c>bleed valve</c>) can no longer be a verb or an
 ///         auxiliary in hard mode, and are penalized for these tags in soft mode; the second word of a two-word verb term
-///         (the particle of the phrasal verb <c>shut down</c>, whose head is the first word: use
-///         <see cref="GlossaryEntry.WithHead(int)"/> with 0) is limited to adposition, adverb and particle in hard mode and
+///         whose head is the first word (the particle of a phrasal verb such as <c>shut down</c>; see
+///         <see cref="GlossaryEntry"/> for how the head is chosen and <see cref="GlossaryEntry.WithHead(int)"/> for
+///         setting it) is limited to adposition, adverb and particle in hard mode and
 ///         boosted for these tags in soft mode, and every other word (for example <c>it</c> in <c>take it apart</c>) is
 ///         left to the model, unless you set their tags with
 ///         <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/>. A hard

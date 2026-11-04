@@ -99,15 +99,16 @@ sections:
       - id: PartOfSpeech-Lib-Glossary
         title: >-
           A caller shall be able to hand the tagger a glossary of single-word and multiword terms with the tags that
-          the head word of each term may take, in hard mode (the head word takes only those tags) or soft mode (those
+          the head word of each term may take, in hard mode (the default: the head word takes only those tags, so a
+          wrong entry forces a wrong tag) or soft mode (those
           tags are preferred and the model can still disagree), and the tagger shall apply it to every occurrence of
           the terms in the text.
         tags: [system]
         justification: |
           In technical text the costly error is a confident wrong tag on a domain term, and the glossary of the domain
           already knows the right answer; a caller must be able to state it once, without retraining, and choose
-          between certainty (a curated glossary) and a safeguard against wrong entries (a glossary of unknown
-          quality).
+          between certainty (a curated glossary) and a safeguard against wrong entries (a glossary that is not
+          curated or may be wrong).
         children:
           - PartOfSpeech-Tagging-Glossary
         tests:

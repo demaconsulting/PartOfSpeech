@@ -5,9 +5,11 @@ namespace DemaConsulting.PartOfSpeech;
 /// </summary>
 /// <remarks>
 ///     The mode is chosen per glossary with <see cref="GlossaryOptions.Mode"/> and may be overridden per entry with
-///     <see cref="GlossaryEntry.WithMode(GlossaryMode)"/>. A curated glossary is normally used in <see cref="Hard"/>
-///     mode; <see cref="Soft"/> mode is the safer choice for a glossary of unknown quality because the model can still
-///     disagree when it is sure.
+///     <see cref="GlossaryEntry.WithMode(GlossaryMode)"/>. Hard mode, the default, trusts the entries completely: a
+///     wrong entry forces a wrong tag. It fits curated lists, such as the technical names and verbs of ASD-STE100.
+///     <see cref="Soft"/> mode is for lists that are not curated or may be wrong, because the model can still disagree when it
+///     is sure. The measured cost of a wrong entry in each mode is in section E9 of
+///     <c>tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md</c>.
 /// </remarks>
 public enum GlossaryMode
 {
@@ -37,7 +39,6 @@ public enum GlossaryMode
 ///     {
 ///         CaseSensitive = true,
 ///         Mode = GlossaryMode.Soft,
-///         SoftStrength = 2.0,
 ///     };
 ///     Glossary glossary = Glossary.Create(new[] { new GlossaryEntry("LRU", Upos.Noun) }, options);
 ///     </code>
@@ -48,12 +49,13 @@ public sealed class GlossaryOptions
     ///     The default of <see cref="SoftStrength"/>, in units of the model temperature.
     /// </summary>
     /// <remarks>
-    ///     The value was chosen on development data with a pre-registered rule (simulated glossaries with 0, 10 and 30
-    ///     percent wrong entries; the rule and the measured effect of every strength are in section E9 of
-    ///     <c>tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md</c>). It is the strength of the soft mode that you get
-    ///     when you do not set <see cref="SoftStrength"/>; a stronger value trusts the glossary more.
+    ///     The value is the largest strength of the evaluation grid that does not worsen the overall accuracy and does
+    ///     not raise the confident errors when 30 percent of the entries are wrong. It was chosen on development data
+    ///     with a rule that was applied after the first run; the rule, the reason for the change and the measured effect
+    ///     of every strength are in section E9 of <c>tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md</c>. A
+    ///     stronger value trusts the glossary more.
     /// </remarks>
-    public const double DefaultSoftStrength = 4.0;
+    public const double DefaultSoftStrength = 2.0;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="GlossaryOptions"/> class with the default settings
@@ -79,6 +81,11 @@ public sealed class GlossaryOptions
     /// <summary>
     ///     Gets the mode of every entry that does not say otherwise.
     /// </summary>
+    /// <remarks>
+    ///     Hard mode trusts the entries completely: a wrong entry forces a wrong tag. It fits curated lists such as the
+    ///     ASD-STE100 technical names and verbs. Use soft mode for lists that are not curated or may be wrong. The measured
+    ///     cost is in section E9 of <c>tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md</c>.
+    /// </remarks>
     /// <value>The default is <see cref="GlossaryMode.Hard"/>. Another value than <see cref="GlossaryMode.Hard"/> and <see cref="GlossaryMode.Soft"/> is rejected with an <see cref="ArgumentOutOfRangeException"/> when the glossary is created.</value>
     public GlossaryMode Mode { get; init; }
 

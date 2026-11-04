@@ -159,8 +159,10 @@ unchanged. The measured boost curve was the starting point for calibrating the b
 (a log-odds shift of 2) give most of the benefit of right entries and cost at most 0.5 points on wrong entries at 10%
 wrong; larger boosts cost more on wrong entries, and eight or more behave like a hard constraint. This curve is not the
 final word on the default: the strength that the library ships as `GlossaryOptions.DefaultSoftStrength` was chosen
-later, by a rule that was fixed beforehand, in the evaluation of the real glossary (see _Glossary Evaluation_ and
-section E9 of `RUN-LOG.md`), where the cost of that choice on wrong entries is also recorded. The experiment code
+later, in the evaluation of the real glossary (see _Glossary Evaluation_ and
+section E9 of `RUN-LOG.md`), first by a rule that was fixed beforehand and then, after the first run, by a
+replacement rule whose reason is recorded as a dated change; the cost of that choice on wrong entries is also recorded
+there. The experiment code
 (`glossary-probe`, `glossary-experiment`, `GlossaryFeatures`, and the optional `glossary` parameter of the trainer, which
 is `null` for the shipped model and does not change its pinned hash) stays in the tool so that the decision can be
 reproduced.
@@ -191,10 +193,12 @@ not repeat any measured figure.
   path gives the tags of the hand-built constraint path of the phase 3 probe, and an invariant check proves that the tokens
   before the first match of a sentence are unchanged.
 - **Decision rules**, implemented as functions of the result tables (`ChooseSoftStrength`, `ChooseNonHeadRule`) and
-  tested on synthetic tables: the default soft strength is chosen among the admissible strengths of one pre-registered
-  scenario, and the particle rule for the second word of a two-word verb term with the head first was adopted because its
-  bar was met; the shipped scope of that rule is the measured shape (two-token verb terms, head first), and other shapes
-  were not measured.
+  tested on synthetic tables: `ChooseSoftStrength` is the original rule of the first run (the strength is chosen among the
+  admissible strengths of one pre-registered scenario) and stays so that the first run is reproducible; the default
+  strength that the library ships follows the replacement rule that `RUN-LOG.md` records after the first run, which is
+  applied to the printed tables and has no function in the tool. The particle rule for the second word of a two-word verb
+  term with the head first was adopted because its bar was met; the shipped scope of that rule is the measured shape
+  (two-token verb terms, head first), and other shapes were not measured.
 
 ### Error Handling
 

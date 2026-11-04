@@ -169,12 +169,12 @@ public class TokenConstraintTests
 
         // Act: combine the cases that stay finite
         var differentTags = large.And(largeVerb);
-        var cancelled = large.And(largePenalty);
+        var canceled = large.And(largePenalty);
 
         // Assert: a single large value and independent tags are finite; overflowing in either direction is refused
         Assert.Equal(double.MaxValue, large.AdjustmentOf((int)Upos.Noun));
         Assert.Equal(double.MaxValue, differentTags.AdjustmentOf((int)Upos.Verb));
-        Assert.True(cancelled.IsNone);
+        Assert.True(canceled.IsNone);
         Assert.Throws<ArgumentException>(() => large.And(large));
         Assert.Throws<ArgumentException>(() => largePenalty.And(largePenalty));
         Assert.Throws<ArgumentException>(() => large.And(TokenConstraint.Prefer(Upos.Noun, double.MaxValue)).And(TokenConstraint.None));

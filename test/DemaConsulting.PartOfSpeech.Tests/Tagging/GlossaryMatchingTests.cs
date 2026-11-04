@@ -437,12 +437,36 @@ public class GlossaryMatchingTests
     [Fact]
     public void Glossary_FindMatches_HeadWordMovedByWithHead_IsTheOneInflected()
     {
-        // Arrange: a phrasal verb whose head is the first word
-        var glossary = Glossary.Create(new[] { new GlossaryEntry("shut down", Upos.Verb).WithHead(0) });
+        // Arrange: a verb term whose head is moved to the first word, although the last word is the default
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("take care", Upos.Verb).WithHead(0) });
 
-        // Act / Assert: "shuts down" matches, "shut downs" does not
-        Assert.Equal("shuts down", Found(glossary, "it shuts down now"));
-        Assert.Equal(string.Empty, Found(glossary, "it shut downs now"));
+        // Act / Assert: "takes care" matches, "take cares" does not
+        Assert.Equal("takes care", Found(glossary, "it takes care now"));
+        Assert.Equal(string.Empty, Found(glossary, "it take cares now"));
+    }
+
+    /// <summary>
+    ///     Proves that an inferred head is the head that matches report and inflect, and that an explicit head overrides it.
+    /// </summary>
+    [Fact]
+    public void Glossary_FindMatches_InferredPhrasalHead_IsReportedAndInflected()
+    {
+        // Arrange: a phrasal verb with a listed particle word without WithHead, and the same entry with the head set to the last word
+        var inferred = Glossary.Create(new[] { new GlossaryEntry("shut down", Upos.Verb) });
+        var explicitLast = Glossary.Create(new[] { new GlossaryEntry("shut down", Upos.Verb).WithHead(1) });
+
+        // Act: find "shuts down" in "it shuts down now" (the match starts at token 1)
+        var inferredMatch = Assert.Single(inferred.FindMatches(S("it shuts down now")));
+        var explicitMatch = Assert.Single(explicitLast.FindMatches(S("it shut down now")));
+
+        // Assert: the first word is the head and is the inflected one; with the explicit last head the match reports the last word
+        Assert.Equal("shuts down", inferredMatch.Text);
+        Assert.Equal(1, inferredMatch.HeadToken);
+        Assert.True(inferredMatch.IsVariant);
+        Assert.Equal("shut down", explicitMatch.Text);
+        Assert.Equal(2, explicitMatch.HeadToken);
+        Assert.Equal("shut down", Found(inferred, "it shut down now"));
+        Assert.Equal("shutting down", Found(inferred, "it is shutting down now"));
     }
 
     /// <summary>
@@ -799,12 +823,12 @@ public class GlossaryMatchingTests
             return target;
         }
 
-        var verbHeadFirst = Compile(new GlossaryEntry("shut down", Upos.Verb).WithHead(0));
-        var verbHeadLast = Compile(new GlossaryEntry("shut down", Upos.Verb));
-        var verbOrNoun = Compile(new GlossaryEntry("shut down", UposSet.Of(Upos.Verb, Upos.Noun)).WithHead(0));
+        var verbHeadFirst = Compile(new GlossaryEntry("shut down", Upos.Verb));
+        var verbHeadLast = Compile(new GlossaryEntry("shut down", Upos.Verb).WithHead(1));
+        var verbOrNoun = Compile(new GlossaryEntry("shut down", UposSet.Of(Upos.Verb, Upos.Noun)));
         var adjectiveHeadLast = Compile(new GlossaryEntry("shut down", Upos.Adj));
         var adjectiveHeadFirst = Compile(new GlossaryEntry("shut down", Upos.Adj).WithHead(0));
-        var explicitTags = Compile(new GlossaryEntry("shut down", Upos.Verb).WithHead(0).WithTokenTags(1, UposSet.Of(Upos.Adv)));
+        var explicitTags = Compile(new GlossaryEntry("shut down", Upos.Verb).WithTokenTags(1, UposSet.Of(Upos.Adv)));
 
         // Assert: only the second token of a two-token verb term with the head first gets the rule; an explicit tag set still wins
         Assert.Equal(particles, verbHeadFirst[1]);
@@ -813,6 +837,36 @@ public class GlossaryMatchingTests
         Assert.True(adjectiveHeadLast[0].IsNone);
         Assert.True(adjectiveHeadFirst[1].IsNone);
         Assert.Equal(TokenConstraint.Only(Upos.Adv), explicitTags[1]);
+    }
+
+    /// <summary>
+    ///     Proves that the particle rule applies to a two-token verb term whose head was inferred, and not when an explicit head says the last token.
+    /// </summary>
+    [Fact]
+    public void GlossaryConstraints_Compile_InferredPhrasalHead_GetsParticleRule()
+    {
+        // Arrange: the particle constraint; compile the non-head constraints through a glossary (hard mode)
+        var particles = TokenConstraint.Only(Upos.Adp, Upos.Adv, Upos.Part);
+        TokenConstraint[] Compile(GlossaryEntry entry)
+        {
+            var glossary = Glossary.Create(new[] { entry });
+            var compiled = GlossaryConstraints.Compile(glossary, 1.0);
+            var target = new TokenConstraint[entry.Tokens.Count];
+            compiled.Apply(glossary.FindMatches(S(entry.Term))[0], target);
+            return target;
+        }
+
+        // Act: the inferred head, the explicit last head, the explicit first head on a term that is not inferred, and a noun compound
+        var inferred = Compile(new GlossaryEntry("shut down", Upos.Verb));
+        var explicitLast = Compile(new GlossaryEntry("shut down", Upos.Verb).WithHead(1));
+        var explicitFirst = Compile(new GlossaryEntry("take care", Upos.Verb).WithHead(0));
+        var compound = Compile(new GlossaryEntry("bleed valve", Upos.Noun));
+
+        // Assert: the second token is limited to particles when the head is the first token, by inference or by WithHead; a last head leaves the first token alone
+        Assert.Equal(particles, inferred[1]);
+        Assert.True(explicitLast[0].IsNone);
+        Assert.Equal(particles, explicitFirst[1]);
+        Assert.NotEqual(particles, compound[0]);
     }
 
     /// <summary>
@@ -858,9 +912,9 @@ public class GlossaryMatchingTests
         var tagger = CreateTagger();
         var tokens = Words("shut down .");
 
-        // Act: an adjective term with the head last, and a verb term with the default (last) head
+        // Act: an adjective term with the head last, and a verb term with an explicit last head
         var adjectiveTerm = tagger.Tag(tokens, Glossary.Create(new[] { new GlossaryEntry("shut down", Upos.Adj) }));
-        var verbTermHeadLast = tagger.Tag(tokens, Glossary.Create(new[] { new GlossaryEntry("shut down", Upos.Verb) }));
+        var verbTermHeadLast = tagger.Tag(tokens, Glossary.Create(new[] { new GlossaryEntry("shut down", Upos.Verb).WithHead(1) }));
 
         // Assert: the first word is not constrained and keeps the model's tag; only the head is constrained
         Assert.Equal(Upos.Adj, adjectiveTerm.Tokens[0].Tag);
@@ -989,7 +1043,7 @@ public class GlossaryMatchingTests
     {
         // Arrange: "shut" is an adjective and "down" an adposition for the model; the entry says VERB with the head on "shut"
         var tagger = CreateTagger();
-        var glossary = Glossary.Create(new[] { new GlossaryEntry("shut down", Upos.Verb).WithHead(0) });
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("shut down", Upos.Verb) });
         var tokens = Words("shut down .");
 
         // Act: tag with and without the glossary
@@ -1006,6 +1060,63 @@ public class GlossaryMatchingTests
         Assert.Equal(Upos.Adv, Assert.Single(tagged.Tokens[1].Alternatives).Tag);
         Assert.False(tagged.Tokens[1].IsGlossaryHead);
         Assert.NotNull(tagged.Tokens[1].GlossaryMatch);
+    }
+
+    /// <summary>
+    ///     Proves that the inferred phrasal verbs <c>shut down</c> and <c>carry out</c> need no WithHead: the head word is the first token, a verb with certainty, also when inflected (<c>shuts down</c>, <c>shutting down</c>), and the particle is limited to particle tags; an explicit last head keeps the last token, and a verb term with a noun as last word (<c>take care</c>) keeps the last token without WithHead.
+    /// </summary>
+    [Fact]
+    public void Tagger_TagWithGlossary_InferredPhrasalHead_VerbHeadAndParticleLimited()
+    {
+        // Arrange: the entries have no WithHead; "shut" and "down" are in the tiny lexicon as ADJ/VERB and ADV/ADP/NOUN, "carry" and "out" are unknown there
+        var tagger = CreateTagger();
+        var particles = UposSet.Of(Upos.Adp, Upos.Adv, Upos.Part);
+        var shutDown = Glossary.Create(new[] { new GlossaryEntry("shut down", Upos.Verb) });
+
+        // Act: tag the base form, two inflected forms, a second phrasal verb, an explicit last head and a verb term with a noun
+        var inferred = tagger.Tag(Words("shut down ."), shutDown);
+        var shuts = tagger.Tag(Words("it shuts down ."), shutDown);
+        var shutting = tagger.Tag(Words("it is shutting down ."), shutDown);
+        var carryOut = tagger.Tag(Words("carry out ."), Glossary.Create(new[] { new GlossaryEntry("carry out", Upos.Verb) }));
+        var explicitLast = tagger.Tag(Words("shut down ."), Glossary.Create(new[] { new GlossaryEntry("shut down", Upos.Verb).WithHead(1) }));
+        var takeCare = tagger.Tag(Words("take care ."), Glossary.Create(new[] { new GlossaryEntry("take care", Upos.Verb) }));
+
+        // Assert: the first token is the head, a verb with confidence exactly 1.0; the second token is limited to particle tags and is not the head
+        Assert.Equal(0, Assert.Single(inferred.GlossaryMatches).HeadToken);
+        Assert.Equal(Upos.Verb, inferred.Tokens[0].Tag);
+        Assert.Equal(1.0, inferred.Tokens[0].Confidence);
+        Assert.Empty(inferred.Tokens[0].Alternatives);
+        Assert.True(inferred.Tokens[0].IsGlossaryHead);
+        Assert.True(inferred.Tokens[1].IsConstrained);
+        Assert.False(inferred.Tokens[1].IsGlossaryHead);
+        Assert.True(particles.Contains(inferred.Tokens[1].Tag));
+        Assert.All(inferred.Tokens[1].Alternatives, alternative => Assert.True(particles.Contains(alternative.Tag)));
+
+        // Assert: the inflected forms have the first token as head ("shuts" is a verb with certainty, "shutting" a participle that may also be an adjective or noun), and "down" stays limited
+        Assert.Equal(1, Assert.Single(shuts.GlossaryMatches).HeadToken);
+        Assert.Equal(Upos.Verb, shuts.Tokens[1].Tag);
+        Assert.Equal(1.0, shuts.Tokens[1].Confidence);
+        Assert.True(shuts.Tokens[1].IsGlossaryHead);
+        Assert.True(particles.Contains(shuts.Tokens[2].Tag));
+        Assert.Equal(2, Assert.Single(shutting.GlossaryMatches).HeadToken);
+        Assert.True(UposSet.Of(Upos.Verb, Upos.Adj, Upos.Noun).Contains(shutting.Tokens[2].Tag));
+        Assert.True(shutting.Tokens[2].IsGlossaryHead);
+        Assert.True(particles.Contains(shutting.Tokens[3].Tag));
+
+        // Assert: "carry out" has the head first and its particle limited even though the tiny lexicon does not know the words
+        Assert.Equal(0, Assert.Single(carryOut.GlossaryMatches).HeadToken);
+        Assert.Equal(Upos.Verb, carryOut.Tokens[0].Tag);
+        Assert.True(particles.Contains(carryOut.Tokens[1].Tag));
+
+        // Assert: the explicit last head makes the second token the verb and leaves the first one to the model
+        Assert.Equal(1, Assert.Single(explicitLast.GlossaryMatches).HeadToken);
+        Assert.Equal(Upos.Verb, explicitLast.Tokens[1].Tag);
+        Assert.True(explicitLast.Tokens[1].IsGlossaryHead);
+        Assert.False(explicitLast.Tokens[0].IsConstrained);
+
+        // Assert: "care" is not a particle word, so the last token is the head
+        Assert.Equal(1, Assert.Single(takeCare.GlossaryMatches).HeadToken);
+        Assert.Equal(Upos.Verb, takeCare.Tokens[1].Tag);
     }
 
     /// <summary>

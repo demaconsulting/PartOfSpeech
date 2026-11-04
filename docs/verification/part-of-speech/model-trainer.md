@@ -122,7 +122,8 @@ differently from the pre-registered text.
   when present, and is empty otherwise), `GlossaryEvaluation_StrengthGrid_ContainsTheDefaultSoftStrength` (the library
   constant is a member of the evaluated grid, which is sorted),
   `GlossaryEvaluation_ChooseSoftStrength_PicksSmallestWithinTolerance` and
-  `GlossaryEvaluation_ChooseSoftStrength_ConditionsAndNoneAdmissible` (the pre-registered strength rule on synthetic
+  `GlossaryEvaluation_ChooseSoftStrength_ConditionsAndNoneAdmissible` (the original pre-registered strength rule, the rule
+  of the first run, on synthetic
   tables: the boundary of each admissibility condition, the tie tolerance, the smallest tied strength, and the smallest
   of the grid when none is admissible), `GlossaryEvaluation_ChooseNonHeadRule_BarNeedsGainIntervalAndNoLoss` (the bar of
   scenario G: a gain of the required size whose interval excludes zero and no loss at 10% wrong entries; the larger gain

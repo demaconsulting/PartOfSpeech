@@ -262,13 +262,14 @@ foreach (TaggedToken token in sentence.Tokens)
 }
 ```
 
-Hard mode is right for a glossary that you curated: every right entry helps and nothing disagrees. **A wrong entry costs
-accuracy in hard mode**, because the glossary overrules the model, also where the model was right; the more wrong
-entries, the more tokens are tagged wrongly with full confidence. Soft mode exists for glossaries of unknown quality (for
-example a list that was extracted automatically): the model keeps its tag when it is clearly sure, so a wrong entry
-costs much less. `GlossaryEntry.WithMode` sets the mode of one entry, and `GlossaryOptions.SoftStrength` the strength
-(greater than zero; the default is `GlossaryOptions.DefaultSoftStrength`). The simulated glossaries on development data
-that decided the default and the measured cost of wrong entries are in section E9 of the
+Hard mode (the default) trusts the entries completely: **a wrong entry forces a wrong tag**, because the glossary
+overrules the model, also where the model was right, and the tag is given with full confidence. That fits a curated list,
+such as the technical names and verbs of ASD-STE100: every right entry helps and nothing disagrees. Soft mode is for a
+list that is not curated or may be wrong (for example one that was extracted automatically): the model keeps its tag
+when it is clearly sure, so a wrong entry costs much less. `GlossaryEntry.WithMode` sets the mode of one entry, and
+`GlossaryOptions.SoftStrength` the strength (greater than zero; the default is `GlossaryOptions.DefaultSoftStrength`).
+The simulated glossaries on development data, the rule that chose the default strength and the measured cost of wrong
+entries in each mode are in section E9 of the
 [run log](https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md).
 
 ### Reading the results
@@ -310,13 +311,21 @@ with the tags that fit the form:
   `n't`), so give such a term a head with `WithHead`. Punctuation inside a word (`3.5`, `R&D`, `and/or`) behaves as in text.
   A term never matches across two sentences, and a pre-tokenized token with punctuation stuck to it (`valve.`) does not
   match `valve`.
-- **The head word.** The head word is the last word of the term, which is right for noun compounds. A phrasal verb such
-  as `shut down` has its head on the first word, so write `new GlossaryEntry("shut down", Upos.Verb).WithHead(0)`: the
-  verb tags then go to `shut`; `shuts` and `shutting` match as forms of the verb, and the particle `down` is
+- **The head word.** The head word is the last word of the term, which is right for noun compounds (`bleed valve`),
+  except for a phrasal verb: when the entry's tags include `VERB`, the term has at least two words, and every word after
+  the first is one of a small closed list of particle words that the lexicon of the library also allows as adposition,
+  adverb or particle, the head is the first word. The list is `about`, `across`, `ahead`, `along`, `apart`, `around`,
+  `aside`, `away`, `back`, `by`, `down`, `forth`, `forward`, `in`, `off`, `on`, `onto`, `out`, `over`, `through`,
+  `together`, `up`, `upon` and `within`. So `shut down`, `carry out`, `set up` and `switch off` are inferred with the head
+  on the first word, while `take care`, `make sense` and `shut down valve` keep the last word. `WithHead` always
+  overrides the default, in both directions, also `WithHead` with the last word, and a phrasal verb with a particle outside
+  the list needs it. The verb tags then go to the head word
+  (`shut`); `shuts` and `shutting` match as forms of the verb, and the particle `down` is
   limited to adposition, adverb and particle. That limit applies only to a verb term of exactly two words whose head is
   the first word; every other word of a term that is not a noun term (for example `it` in `take it apart`, the words in
   front of the head, and the words of an adjective phrase) is left to the model, and `WithTokenTags` sets the tags of one
-  word explicitly.
+  word explicitly. The inference looks the words up in the lexicon that is embedded in the library, also when your
+  tagger was loaded with its own lexicon file; `GlossaryEntry.HeadIndex` tells which word was chosen.
 - **Duplicates.** Two entries for the same tokens under the same case rule are refused; merge their tags into one entry.
 - **Wrong entries.** See the hard and soft modes above. A hard entry with a wrong tag is tagged wrongly everywhere it
   occurs, with confidence 1.0.
@@ -475,10 +484,13 @@ One term; immutable. Every `With...` method returns a changed copy.
 
 - `GlossaryEntry(string term, Upos tag, string? definition = null)` and
   `GlossaryEntry(string term, UposSet tags, string? definition = null)`.
-- `string Term`, `IReadOnlyList<string> Tokens`, `UposSet Tags`, `string? Definition`, `int HeadIndex` (the last token by
-  default), `bool? CaseSensitive`, `GlossaryMode? Mode`, `bool? Inflect` (`null`: the glossary default),
+- `string Term`, `IReadOnlyList<string> Tokens`, `UposSet Tags`, `string? Definition`, `int HeadIndex` (the first token
+  of a phrasal verb with a listed particle word, otherwise the last token, unless `WithHead` set it),
+  `bool? CaseSensitive`,
+  `GlossaryMode? Mode`, `bool? Inflect` (`null`: the glossary default),
   `IReadOnlyList<string> Variants`, `UposSet? GetTokenTags(int tokenIndex)`.
-- `WithDefinition(string?)`, `WithHead(int tokenIndex)` (use `WithHead(0)` for a phrasal verb), `WithCaseSensitive(bool)`,
+- `WithDefinition(string?)`, `WithHead(int tokenIndex)` (overrides the inferred head, in both directions),
+  `WithCaseSensitive(bool)`,
   `WithMode(GlossaryMode)`, `WithInflection(bool)`, `WithVariants(params string[])` and
   `WithTokenTags(int tokenIndex, UposSet tags)`.
 
@@ -490,7 +502,8 @@ One term; immutable. Every `With...` method returns a changed copy.
 
 ## GlossaryMode
 
-`Hard` (the head word takes only the tags of the entry) and `Soft` (the tags get a preference; the model can disagree).
+`Hard` (the default; the head word takes only the tags of the entry, so a wrong entry forces a wrong tag; for curated
+lists) and `Soft` (the tags get a preference; the model can disagree; for lists that are not curated or may be wrong).
 
 ## GlossaryMatch
 

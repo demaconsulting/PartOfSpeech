@@ -30,7 +30,7 @@ constraint changes when its source changes, or equal constraints are reported as
   rejects disjoint sets), `TokenConstraint_And_CancelingAdjustments_EqualsNone` (a boost and a penalty that cancel
   combine to a constraint that `IsNone`, equals `None` with the same hash code and formats as `None`) and
   `TokenConstraint_And_NonFiniteSum_Throws` (two boosts of `double.MaxValue` on one tag overflow and are rejected; the
-  same value on different tags, a single factory call and a cancelling pair are accepted).
+  same value on different tags, a single factory call and a canceling pair are accepted).
 - **Immutability**: `TokenConstraint_Boosts_AreCopied` (combining creates new adjustment storage, so earlier constraints
   never change).
 - **Equality**: `TokenConstraint_Equals_ByContent` (equality is by content and equal constraints have equal hash codes)

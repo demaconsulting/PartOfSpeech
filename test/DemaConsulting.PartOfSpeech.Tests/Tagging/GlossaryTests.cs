@@ -1,4 +1,4 @@
-// cspell:ignore bleeded buzzes dyeing toeing seed's runned LRUs wishes churches stopped plugged permited Inflectable
+// cspell:ignore bleeded buzzes dyeing toeing seed's runned LRUs wishes churches stopped plugged permited Inflectable zzqxv
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -125,6 +125,154 @@ public class GlossaryTests
     }
 
     /// <summary>
+    ///     Proves that a verb term whose later words are all listed particle words that the lexicon confirms gets the first token as head, whatever the letter case, and with every extra tag that includes VERB.
+    /// </summary>
+    [Theory]
+    [InlineData("shut down", 0)]
+    [InlineData("Shut Down", 0)]
+    [InlineData("carry out", 0)]
+    [InlineData("set up", 0)]
+    [InlineData("switch off", 0)]
+    [InlineData("go across", 0)]
+    [InlineData("walk forth across", 0)]
+    public void GlossaryEntry_HeadIndex_PhrasalVerbWithParticleWords_IsFirstToken(string term, int expected)
+    {
+        // Arrange / Act: verb entries, and a noun-or-verb entry for the same term
+        var verb = new GlossaryEntry(term, Upos.Verb);
+        var nounOrVerb = new GlossaryEntry(term, UposSet.Of(Upos.Noun, Upos.Verb));
+
+        // Assert: every word after the first is a listed particle word that the lexicon confirms, so the head is the first word
+        Assert.Equal(expected, verb.HeadIndex);
+        Assert.Equal(expected, nounOrVerb.HeadIndex);
+    }
+
+    /// <summary>
+    ///     Proves that every word of the documented closed particle list is confirmed by the embedded lexicon, so that each one makes a verb term a phrasal verb.
+    /// </summary>
+    [Fact]
+    public void GlossaryEntry_HeadIndex_EveryListedParticleWord_IsConfirmedByTheLexicon()
+    {
+        // Arrange: the documented list
+        var particles = new[]
+        {
+            "about", "across", "ahead", "along", "apart", "around", "aside", "away", "back", "by", "down", "forth",
+            "forward", "in", "off", "on", "onto", "out", "over", "through", "together", "up", "upon", "within",
+        };
+
+        // Act / Assert: a verb term that ends in the word has the first token as head
+        foreach (var particle in particles)
+        {
+            Assert.True(new GlossaryEntry("go " + particle, Upos.Verb).HeadIndex == 0, particle);
+        }
+    }
+
+    /// <summary>
+    ///     Proves that a verb term keeps the last token as head when one later word is not in the closed particle list (such as a noun) or is not in the lexicon, and that an explicit head still moves it.
+    /// </summary>
+    [Theory]
+    [InlineData("take care")]
+    [InlineData("make sense")]
+    [InlineData("go home")]
+    [InlineData("take it apart")]
+    [InlineData("shut down valve")]
+    [InlineData("turn around valve")]
+    [InlineData("go around zzqxv")]
+    public void GlossaryEntry_HeadIndex_VerbTermWithAnotherLaterWord_IsLastToken(string term)
+    {
+        // Arrange / Act: a verb entry whose later words are not all listed particle words
+        var entry = new GlossaryEntry(term, Upos.Verb);
+
+        // Assert: the last token; WithHead(0) still moves it
+        Assert.Equal(entry.Tokens.Count - 1, entry.HeadIndex);
+        Assert.Equal(0, entry.WithHead(0).HeadIndex);
+    }
+
+    /// <summary>
+    ///     Proves that the inference needs the tag VERB and at least two tokens: noun compounds, terms without a verb tag and single words keep the last token.
+    /// </summary>
+    [Theory]
+    [InlineData("bleed valve", Upos.Noun)]
+    [InlineData("torque wrench", Upos.Noun)]
+    [InlineData("shut down", Upos.Noun)]
+    [InlineData("shut down", Upos.Adj)]
+    [InlineData("shut down", Upos.Adv)]
+    [InlineData("shut", Upos.Verb)]
+    [InlineData("down", Upos.Verb)]
+    [InlineData("around", Upos.Noun)]
+    public void GlossaryEntry_HeadIndex_NoVerbTagOrSingleToken_IsLastToken(string term, Upos tag)
+    {
+        // Arrange / Act: create the entry
+        var entry = new GlossaryEntry(term, tag);
+
+        // Assert: the last token
+        Assert.Equal(entry.Tokens.Count - 1, entry.HeadIndex);
+    }
+
+    /// <summary>
+    ///     Proves that a noun-or-verb entry follows the same particle rule: the compound <c>bleed valve</c> keeps the last token because <c>valve</c> is not a particle word, while <c>shut down</c> takes the first.
+    /// </summary>
+    [Fact]
+    public void GlossaryEntry_HeadIndex_NounOrVerbTags_FollowTheParticleRule()
+    {
+        // Arrange / Act: the same tags for a compound and a phrasal verb
+        var tags = UposSet.Of(Upos.Noun, Upos.Verb);
+        var compound = new GlossaryEntry("bleed valve", tags);
+        var phrasal = new GlossaryEntry("shut down", tags);
+
+        // Assert: only the particle word moves the head
+        Assert.Equal(1, compound.HeadIndex);
+        Assert.Equal(0, phrasal.HeadIndex);
+    }
+
+    /// <summary>
+    ///     Proves that an explicit head overrides the inferred head in both directions, also when it names the last token, and that later settings keep it.
+    /// </summary>
+    [Fact]
+    public void GlossaryEntry_WithHead_OverridesInferredHeadBothWays()
+    {
+        // Arrange: an entry whose head is inferred as the first token, and one whose head is the last token
+        var phrasal = new GlossaryEntry("shut down", Upos.Verb);
+        var compound = new GlossaryEntry("bleed valve", Upos.Noun);
+
+        // Act: override both ways, then apply other settings
+        var phrasalLast = phrasal.WithHead(1);
+        var phrasalFirst = phrasal.WithHead(0);
+        var compoundFirst = compound.WithHead(0);
+        var compoundLast = compound.WithHead(1);
+
+        // Assert: the explicit head wins, also WithHead(last) against the inference; other settings keep whichever head the entry has
+        Assert.Equal(0, phrasal.HeadIndex);
+        Assert.Equal(1, phrasalLast.HeadIndex);
+        Assert.Equal(0, phrasalFirst.HeadIndex);
+        Assert.Equal(0, compoundFirst.HeadIndex);
+        Assert.Equal(1, compoundLast.HeadIndex);
+        Assert.Equal(1, phrasalLast.WithMode(GlossaryMode.Soft).WithInflection(false).WithDefinition("d").WithCaseSensitive(true).HeadIndex);
+        Assert.Equal(0, phrasal.WithMode(GlossaryMode.Soft).WithVariants("shuts down").WithDefinition("d").HeadIndex);
+    }
+
+    /// <summary>
+    ///     Proves that the inferred head is the same when entries are created on several threads at once.
+    /// </summary>
+    [Fact]
+    public void GlossaryEntry_HeadIndex_Inference_IsDeterministicAcrossThreads()
+    {
+        // Arrange: the results of many creations on a few threads
+        var heads = new int[256];
+
+        // Act: create entries in parallel; the first use of the embedded lexicon may happen on any of the threads
+        Parallel.For(0, heads.Length, new ParallelOptions { MaxDegreeOfParallelism = 4 }, i =>
+        {
+            heads[i] = new GlossaryEntry(i % 2 == 0 ? "shut down" : "take care", Upos.Verb).HeadIndex;
+        });
+
+        // Assert: the verb with the particle word has the first token, the other the last, every time
+        for (var i = 0; i < heads.Length; i++)
+        {
+            Assert.Equal(i % 2 == 0 ? 0 : 1, heads[i]);
+        }
+    }
+
+    /// <summary>
     ///     Proves that a head outside the tokens is rejected.
     /// </summary>
     [Theory]
@@ -134,7 +282,7 @@ public class GlossaryTests
     public void GlossaryEntry_WithHead_OutOfRange_ThrowsArgumentOutOfRangeException(int head)
     {
         // Arrange: a two-token entry
-        var entry = new GlossaryEntry("shut down", Upos.Verb);
+        var entry = new GlossaryEntry("take care", Upos.Verb);
 
         // Act / Assert: the index must be 0 or 1
         Assert.Throws<ArgumentOutOfRangeException>(() => entry.WithHead(head));
@@ -147,7 +295,7 @@ public class GlossaryTests
     public void GlossaryEntry_WithHead_ValidIndex_ReturnsNewEntryAndLeavesOriginal()
     {
         // Arrange: a two-token entry
-        var original = new GlossaryEntry("shut down", Upos.Verb, "Stop a system.");
+        var original = new GlossaryEntry("take care", Upos.Verb, "Be careful.");
 
         // Act: move the head to the first word
         var changed = original.WithHead(0);
@@ -327,7 +475,7 @@ public class GlossaryTests
     public void GlossaryEntry_GetTokenTags_TokenBecomesHead_ReturnsNull()
     {
         // Arrange: an override for the first token, then the first token becomes the head
-        var entry = new GlossaryEntry("shut down", Upos.Verb).WithTokenTags(0, UposSet.Of(Upos.Adj));
+        var entry = new GlossaryEntry("take care", Upos.Verb).WithTokenTags(0, UposSet.Of(Upos.Adj));
 
         // Act: move the head to the first token
         var moved = entry.WithHead(0);

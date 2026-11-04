@@ -249,18 +249,22 @@ namespace DemaConsulting.PartOfSpeech;
 ///     (<see cref="GlossaryEntry.WithCaseSensitive(bool)"/>): the entry <c>IT</c> then leaves the pronoun <c>it</c> alone.
 ///     </description></item>
 ///     <item><description>
-///     **Modes.** In <see cref="GlossaryMode.Hard"/> mode (the default) the head word can only take the tags of the entry. In
-///     <see cref="GlossaryMode.Soft"/> mode the tags get a preference of <see cref="GlossaryOptions.SoftStrength"/> times the
-///     model temperature, so the model can still disagree when it is sure; use it for a glossary of unknown quality. A wrong
-///     entry costs accuracy in hard mode, which is why soft mode exists; the measured cost and the effect of the strength are
+///     **Modes.** In <see cref="GlossaryMode.Hard"/> mode (the default) the head word can only take the tags of the entry.
+///     Hard mode trusts the entries completely, so a wrong entry forces a wrong tag; it fits curated lists such as the
+///     ASD-STE100 technical names and verbs. <see cref="GlossaryMode.Soft"/> mode is for lists that are not curated or may be wrong: the
+///     tags get a preference of <see cref="GlossaryOptions.SoftStrength"/> times the model temperature, so the model can still
+///     disagree when it is sure. The measured cost of a wrong entry in each mode and the effect of the strength are
 ///     in section E9 of https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md
 ///     (simulated glossaries on development data).
 ///     </description></item>
 ///     <item><description>
 ///     **Other words of a term.** The other words of a noun term (<c>bleed</c> in <c>bleed valve</c>) can no longer be a verb or an
-///     auxiliary. The second word of a two-word verb term whose head is the first word is limited to adposition, adverb and
-///     particle, which suits a phrasal verb: give <c>shut down</c> the head <c>WithHead(0)</c> (see <see cref="GlossaryEntry.WithHead(int)"/>), because
-///     its head is the first word. Every other word (for example <c>it</c> in <c>take it apart</c>) is left to the model, and
+///     auxiliary. The head of a term is its last word, except for a phrasal verb (a verb term whose later words all belong to a
+///     small closed list of particle words that the lexicon allows as adposition, adverb or particle, such as <c>shut down</c> and
+///     <c>carry out</c>): its head is the first word, and the second word of such a two-word
+///     verb term is limited to adposition, adverb and particle. <see cref="GlossaryEntry"/> lists the particle words;
+///     <see cref="GlossaryEntry.WithHead(int)"/> overrides the head in both directions. Every other word (for example <c>it</c> in
+///     <c>take it apart</c>) is left to the model, and
 ///     <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/> sets the tags of one word explicitly.
 ///     </description></item>
 ///     <item><description>

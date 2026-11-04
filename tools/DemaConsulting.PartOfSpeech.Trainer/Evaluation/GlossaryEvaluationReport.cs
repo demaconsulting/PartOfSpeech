@@ -1115,7 +1115,7 @@ internal static partial class GlossaryEvaluation
         lines.Add(string.Empty);
         lines.Add(string.Format(
             CultureInfo.InvariantCulture,
-            "**Decision (soft strength)**: {0}; chosen strength {1}; the constant GlossaryOptions.DefaultSoftStrength is {2} and {3} in the grid.",
+            "**Decision (soft strength)**: {0}; chosen strength {1}; the constant GlossaryOptions.DefaultSoftStrength is {2} and {3} in the grid. This is the original rule of the first run; the default follows the rule change after the first run (RUN-LOG E9).",
             admissible ? "at least one strength is admissible" : "no strength is admissible, so the smallest of the grid applies",
             chosen.ToString("0.#", CultureInfo.InvariantCulture),
             GlossaryOptions.DefaultSoftStrength.ToString("0.#", CultureInfo.InvariantCulture),

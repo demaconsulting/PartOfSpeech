@@ -90,6 +90,10 @@ foreach (GlossaryMatch match in sentence.GlossaryMatches)
 }
 ```
 
+The default is hard mode: the entries are trusted completely, so a wrong entry forces a wrong tag. That fits a curated
+list such as the ASD-STE100 technical names and verbs; use soft mode for a list that is not curated or may be wrong.
+The measured cost is in section E9 of the [trainer run log][link-run-log].
+
 ## Documentation
 
 Generated documentation includes:
@@ -170,6 +174,7 @@ By contributing to this project, you agree that your contributions will be licen
 [link-contributing]: https://github.com/demaconsulting/PartOfSpeech/blob/main/CONTRIBUTING.md
 [link-data]: https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md
 [link-user-guide]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/user_guide/introduction.md
+[link-run-log]: https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md
 [link-notices]: https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md
 [link-package-license]: https://github.com/demaconsulting/PartOfSpeech/blob/main/PACKAGE-LICENSE.md
 [link-wordsense]: https://github.com/demaconsulting/WordSense

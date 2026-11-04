@@ -8,9 +8,18 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <para>
 ///         An entry says "when the words of this term occur in a sentence, the head word of the term has one of these
 ///         tags". The term may be a single word (<c>torque</c>) or several words (<c>bleed valve</c>); the head word
-///         is the last word unless <see cref="WithHead(int)"/> says otherwise: a phrasal verb entry such as
-///         <c>shut down</c> should use <c>WithHead(0)</c>, because its head is the first word. The other words of a term are not given the entry's tags, but they are kept
-///         from being read as verbs when the entry is a noun (see <see cref="Glossary"/>).
+///         is the last word, except for a phrasal verb: when the tags include <see cref="Upos.Verb"/>, the term has
+///         at least two words and every word after the first is one of a small closed list of particle words (<c>about</c>,
+///         <c>across</c>, <c>ahead</c>, <c>along</c>, <c>apart</c>, <c>around</c>, <c>aside</c>, <c>away</c>,
+///         <c>back</c>, <c>by</c>, <c>down</c>, <c>forth</c>, <c>forward</c>, <c>in</c>, <c>off</c>, <c>on</c>,
+///         <c>onto</c>, <c>out</c>, <c>over</c>, <c>through</c>, <c>together</c>, <c>up</c>, <c>upon</c>,
+///         <c>within</c>) that the lexicon of the library also allows as adposition, adverb or particle, the head word
+///         is the first word. So <c>shut down</c>, <c>carry out</c> and <c>set up</c> have the head <c>shut</c>,
+///         <c>carry</c> and <c>set</c>, while <c>bleed valve</c>, <c>take care</c> and <c>shut down valve</c> keep the
+///         last word. <see cref="WithHead(int)"/> overrides the default in both directions. The other words of a term
+///         are not
+///         given the entry's tags, but they are kept from being read as verbs when the entry is a noun (see
+///         <see cref="Glossary"/>).
 ///     </para>
 ///     <para>
 ///         The term is split into tokens by the same tokenizer that splits the text, so that the tokens of a term and
@@ -37,11 +46,13 @@ namespace DemaConsulting.PartOfSpeech;
 ///     var acronym = new GlossaryEntry("LRU", Upos.Noun).WithCaseSensitive(true);
 ///     var bleed = new GlossaryEntry("bleed", UposSet.Of(Upos.Verb, Upos.Noun))
 ///         .WithVariants("bled");
-///     var shutDown = new GlossaryEntry("shut down", Upos.Verb).WithHead(0);
+///     var shutDown = new GlossaryEntry("shut down", Upos.Verb);
+///     var takeCare = new GlossaryEntry("take care", Upos.Verb);
 ///
 ///     Console.WriteLine(string.Join(" | ", valve.Tokens));   // bleed | valve
 ///     Console.WriteLine(valve.HeadIndex);                     // 1
-///     Console.WriteLine(shutDown.HeadIndex);                  // 0
+///     Console.WriteLine(shutDown.HeadIndex);                  // 0 (inferred: down is a listed particle word)
+///     Console.WriteLine(takeCare.HeadIndex);                  // 1 (care is not a particle word)
 ///     </code>
 /// </example>
 public sealed class GlossaryEntry
@@ -126,7 +137,7 @@ public sealed class GlossaryEntry
         Term = term;
         Tags = tags;
         Definition = definition;
-        HeadIndex = _tokens.Length - 1;
+        HeadIndex = DefaultHead(_tokens, tags);
         _variants = new string[0];
         _variantView = Array.AsReadOnly(_variants);
         _variantTokens = new string[0][];
@@ -211,7 +222,12 @@ public sealed class GlossaryEntry
     /// <summary>
     ///     Gets the index in <see cref="Tokens"/> of the head word, the token that receives the tags of the entry.
     /// </summary>
-    /// <value>The last token unless <see cref="WithHead(int)"/> changed it.</value>
+    /// <remarks>
+    ///     The head is chosen when the entry is created and never changes except through <see cref="WithHead(int)"/>,
+    ///     so it is the same in every glossary and every tagger that uses the entry. See the remarks of
+    ///     <see cref="GlossaryEntry"/> for the default.
+    /// </remarks>
+    /// <value>The inferred head of the term (the first token of a phrasal verb with a listed particle word, otherwise the last token) unless <see cref="WithHead(int)"/> set it.</value>
     public int HeadIndex { get; }
 
     /// <summary>
@@ -287,11 +303,14 @@ public sealed class GlossaryEntry
     ///     Gets a copy of the entry whose head word is another token of the term.
     /// </summary>
     /// <remarks>
-    ///     The head word receives the tags of the entry and its inflected forms are matched. For a noun compound the
-    ///     last word is the head (the default); a phrasal verb such as <c>shut down</c> must use <c>WithHead(0)</c>,
-    ///     because its head is the first word: with the default head the verb tags would go to the particle, and
-    ///     <c>shut</c> would not be inflected (<c>shuts</c>) but <c>down</c> would. The rule that limits the particle applies
-    ///     only to a two-word verb term whose head is the first word.
+    ///     The head word receives the tags of the entry and its inflected forms are matched. The call overrides the
+    ///     default head in both directions, also <c>WithHead(last)</c>: without a call, the head is the first word of a
+    ///     phrasal verb (the tags include <see cref="Upos.Verb"/>, the term has at least two words, and every word after
+    ///     the first is a word of the closed particle list, see <see cref="GlossaryEntry"/>, that the lexicon allows as
+    ///     adposition, adverb or particle, as for <c>shut down</c>) and the last word of every other term. Use the call
+    ///     for a phrasal verb with a particle that is not in the list, or to keep the last word as the head of a term
+    ///     that the rule takes for a phrasal verb. The rule that limits the particle applies only to a two-word verb
+    ///     term whose head is the first word.
     /// </remarks>
     /// <param name="tokenIndex">The index in <see cref="Tokens"/> of the head word.</param>
     /// <returns>The new entry; this entry is unchanged.</returns>
@@ -393,7 +412,7 @@ public sealed class GlossaryEntry
     ///     <c>it</c> in <c>take it apart</c>) is left to the
     ///     model. Use it to say exactly what a word of the term is, for
     ///     example that <c>up</c> in the phrasal verb <c>set up</c> is an adverb: <c>new GlossaryEntry("set up",
-    ///     Upos.Verb).WithHead(0).WithTokenTags(1, UposSet.Of(Upos.Adv, Upos.Adp))</c>. The tags are applied in the
+    ///     Upos.Verb).WithTokenTags(1, UposSet.Of(Upos.Adv, Upos.Adp))</c>. The tags are applied in the
     ///     mode of the entry. A later call for the same token replaces the earlier one.
     /// </remarks>
     /// <param name="tokenIndex">The index in <see cref="Tokens"/> of a token that is not the head.</param>
@@ -495,6 +514,63 @@ public sealed class GlossaryEntry
         }
 
         return middle;
+    }
+
+    /// <summary>
+    ///     The closed list of particle words that make a verb term a phrasal verb with its head on the first word.
+    /// </summary>
+    /// <remarks>
+    ///     The list is a set of candidates in lower case; a word of it counts only when the lexicon also allows it as
+    ///     adposition, adverb or particle. It is deliberately modest (the words that follow a verb in <c>shut down</c>,
+    ///     <c>carry out</c>, <c>set up</c>, <c>switch off</c>) and has no word that is mainly a noun, so that
+    ///     <c>take care</c> and <c>make sense</c> keep the last word as the head. The set is never changed after the
+    ///     type is initialized, so reading it from several threads is safe.
+    /// </remarks>
+    private static readonly HashSet<string> ParticleWords = new(StringComparer.Ordinal)
+    {
+        "about", "across", "ahead", "along", "apart", "around", "aside", "away", "back", "by", "down", "forth",
+        "forward", "in", "off", "on", "onto", "out", "over", "through", "together", "up", "upon", "within",
+    };
+
+    /// <summary>
+    ///     Chooses the head of a term when no head is set explicitly.
+    /// </summary>
+    /// <remarks>
+    ///     The head is the first token when the tags include <see cref="Upos.Verb"/>, the term has at least two tokens
+    ///     and every token after the first is a particle word of the closed list <see cref="ParticleWords"/> that the
+    ///     lexicon also allows as adposition, adverb or particle (the allowed set, as the tagger computes it, contains
+    ///     at least one of these three tags; other tags of the word do not matter, so <c>down</c> and <c>out</c>
+    ///     qualify); otherwise it is the last
+    ///     token. The lexicon is the one embedded in the library (<see cref="EmbeddedModel.Lexicon"/>), because a
+    ///     glossary does not belong to a tagger and its index needs the head before any tagger is known (the head decides
+    ///     which word is inflected). The embedded lexicon is immutable and loaded once under a lock, and the lookup uses
+    ///     no shared scratch memory, so the result is deterministic and the method is thread-safe. A term that does not
+    ///     need the lexicon (one token, no verb tag) never loads it.
+    /// </remarks>
+    /// <param name="tokens">The tokens of the term.</param>
+    /// <param name="tags">The tags of the entry.</param>
+    /// <returns>The index of the head token.</returns>
+    private static int DefaultHead(string[] tokens, UposSet tags)
+    {
+        var last = tokens.Length - 1;
+        if (last < 1 || !tags.Contains(Upos.Verb))
+        {
+            return last;
+        }
+
+        // The key is the folded, lower-cased token, as the tagger looks it up, so the letter case of the term does not matter
+        var lexicon = EmbeddedModel.Lexicon;
+        var particles = UposSet.Of(Upos.Adp, Upos.Adv, Upos.Part);
+        for (var k = 1; k <= last; k++)
+        {
+            var folded = GlossaryIndex.FoldToString(tokens[k], true);
+            if (!ParticleWords.Contains(folded) || Lexicon.AllowedTags(folded, lexicon).Intersect(particles).IsEmpty)
+            {
+                return last;
+            }
+        }
+
+        return 0;
     }
 
     /// <summary>

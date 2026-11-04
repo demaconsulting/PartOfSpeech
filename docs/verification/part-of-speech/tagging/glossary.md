@@ -17,7 +17,9 @@ glossary does to tags needs a tagger, so the constraint, confidence and result t
 state that the model alone reads `bleed` as a verb by a known margin, that the glossary changes it, and that a soft
 strength of a given size flips a close decision but not a decisive one, without depending on the quality of a trained
 model. One test runs the documented examples against the shipped model, but only for what the constraints guarantee (the
-head tag, the forbidden tags, the unchanged pronoun), never for a prediction of the model.
+head tag, the forbidden tags, the unchanged pronoun), never for a prediction of the model. The default head of a phrasal
+verb is decided by the lexicon that is embedded in the library, not by the lexicon of the tiny tagger, so the tests of the
+head default use words whose embedded-lexicon tags are fixed by the data (`shut down`, `carry out`, `take care`).
 
 Three methods go beyond an ordinary assertion:
 
@@ -52,7 +54,10 @@ option or glossary is accepted, an entry changes when a copy is made, a glossary
 longest term does not win or matches overlap, a term matches across sentences or with a different letter case than its
 rule says, a hash collision gives a wrong match, a tokenization convention is not followed, a generated inflected form
 is wrong or is generated for the wrong word, a hard head word leaves its tags or has a confidence other than 1 with one
-tag, a word in front of the head of a noun term can be a verb, the particle rule applies to another shape of term than a
+tag, a word in front of the head of a noun term can be a verb, the head of an entry is not the first token for a verb
+term whose later words are all listed particle words that the lexicon confirms or is not the last token otherwise, an
+explicit head does not override the inferred
+one, the particle rule applies to another shape of term than a
 two-token verb term with its head first, a
 soft strength does not equal the strength times the temperature, the caller's constraint does not win over a contradicting
 glossary constraint, the tokens before the first match change, a match is not reported on its tokens or sentence, matching
@@ -71,11 +76,30 @@ allocates per token, a parallel result differs from the sequential one, or match
   `GlossaryEntry_WithTokenTags_HeadEmptyOrOutOfRange_Throws` and
   `GlossaryEntry_WithMode_UndefinedMode_ThrowsArgumentOutOfRangeException` (each refuses the invalid input with the
   specified exception).
-- **Entry values**: `GlossaryEntry_HeadIndex_DefaultsToLastToken`,
-  `GlossaryEntry_WithHead_ValidIndex_ReturnsNewEntryAndLeavesOriginal`,
+- **Entry values**: `GlossaryEntry_WithHead_ValidIndex_ReturnsNewEntryAndLeavesOriginal`,
   `GlossaryEntry_With_ReturnsNewEntryAndLeavesOriginal`, `GlossaryEntry_With_Chained_KeepsEarlierSettings`,
   `GlossaryEntry_Definition_IsCarriedUnchanged`, `GlossaryEntry_WithVariants_Valid_ReplacesEarlierVariants`,
   `GlossaryEntry_GetTokenTags_ReturnsOverrideOrNull` and `GlossaryEntry_GetTokenTags_TokenBecomesHead_ReturnsNull`.
+- **Head default**: `GlossaryEntry_HeadIndex_DefaultsToLastToken` (noun compounds and single words),
+  `GlossaryEntry_HeadIndex_PhrasalVerbWithParticleWords_IsFirstToken` (`shut down`, `carry out`, `set up` and
+  `switch off` as verb terms, in any letter case, also with a noun-or-verb tag set and with three tokens),
+  `GlossaryEntry_HeadIndex_EveryListedParticleWord_IsConfirmedByTheLexicon` (every word of the closed list makes a verb
+  term a phrasal verb, so the embedded lexicon confirms each one),
+  `GlossaryEntry_HeadIndex_VerbTermWithAnotherLaterWord_IsLastToken` (`take care`, `make sense`, `go home`,
+  `take it apart`, `shut down valve`, and a term with a later word that is not in the lexicon),
+  `GlossaryEntry_HeadIndex_NoVerbTagOrSingleToken_IsLastToken` (`bleed valve` and `torque wrench` as noun terms,
+  `shut down` without a verb tag, a single verb),
+  `GlossaryEntry_HeadIndex_NounOrVerbTags_FollowTheParticleRule` (`bleed valve` keeps the last token and `shut down`
+  takes the first with the same noun-or-verb tags), `GlossaryEntry_WithHead_OverridesInferredHeadBothWays`
+  (an explicit head wins over the inference in both directions, also `WithHead` with the last token, and other settings
+  keep it), `GlossaryEntry_HeadIndex_Inference_IsDeterministicAcrossThreads` (entries created on four threads, the first
+  use of the embedded lexicon included), `Glossary_FindMatches_InferredPhrasalHead_IsReportedAndInflected` (the head word
+  of the match and the inflected word are the first token, so `shuts down` and `shutting down` match; an explicit last head
+  reports the last token),
+  `GlossaryConstraints_Compile_InferredPhrasalHead_GetsParticleRule` and
+  `Tagger_TagWithGlossary_InferredPhrasalHead_VerbHeadAndParticleLimited` (no `WithHead`: for `shut down` and `carry out`
+  the head is a verb with confidence 1.0, also in `shuts down`, and the particle is limited to particle
+  tags, and the head of `shutting down` is the first token; an explicit last head and `take care` keep the last token).
 - **Builder and options**: `GlossaryBuilder_CollectionInitializer_BuildsEntriesInOrder`,
   `GlossaryBuilder_Add_Chained_CountsAndEnumerates`, `GlossaryBuilder_Add_NullEntry_ThrowsArgumentNullException`,
   `GlossaryBuilder_Build_IsSnapshot` (a later `Add` does not change a built glossary),
@@ -135,8 +159,9 @@ allocates per token, a parallel result differs from the sequential one, or match
   head and a noun term do not; explicit tags still win),
   `GlossaryConstraints_Compile_ThreeTokenVerbTerm_NonHeadTokensAreUnconstrained` (no non-head token of a three-token verb
   term is constrained, whichever token is the head, unless explicit tags say so),
-  `Tagger_TagWithGlossary_VerbTermWithHeadFirst_NonHeadIsLimitedToParticles` (the phrasal verb `shut down` with
-  `WithHead(0)`), `Tagger_TagWithGlossary_ThreeTokenVerbTerm_NonHeadTokensAreLeftToTheModel` (the middle and last words
+  `Tagger_TagWithGlossary_VerbTermWithHeadFirst_NonHeadIsLimitedToParticles` (the phrasal verb `shut down`, whose
+  head is inferred, without `WithHead`; explicit overrides are tested separately),
+  `Tagger_TagWithGlossary_ThreeTokenVerbTerm_NonHeadTokensAreLeftToTheModel` (the middle and last words
   of `shut it down` keep the model's tags and report no constraint) and
   `Tagger_TagWithGlossary_NonVerbTermOrWordBeforeTheHead_IsLeftToTheModel`.
 - **Soft constraints**: `Tagger_TagWithGlossary_SoftMode_FlipsCloseDecisionButNotDecisiveOne`,

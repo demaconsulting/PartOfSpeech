@@ -92,6 +92,7 @@ sections:
             children:
               - PartOfSpeech-Tagging-Glossary-EntryValidation
               - PartOfSpeech-Tagging-Glossary-EntryValues
+              - PartOfSpeech-Tagging-Glossary-HeadDefault
               - PartOfSpeech-Tagging-Glossary-Builder
               - PartOfSpeech-Tagging-Glossary-Duplicates
               - PartOfSpeech-Tagging-Glossary-Immutability

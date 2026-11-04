@@ -35,15 +35,13 @@ sections:
 
               - id: PartOfSpeech-Tagging-Glossary-EntryValues
                 title: >-
-                  An entry shall keep its term, tags and definition as given, shall by default take its last token as
-                  head word, and shall give a changed copy for every setting while leaving the original unchanged.
+                  An entry shall keep its term, tags and definition as given, and shall give a changed copy for every
+                  setting while leaving the original unchanged.
                 justification: |
                   Entries are shared between glossaries and threads and are written as chains of settings; a setting
-                  that changed the original would change every glossary that holds it. A phrasal verb needs another
-                  head word than a noun compound, and the definition is documentation that must come back unchanged
-                  with a match.
+                  that changed the original would change every glossary that holds it. The definition is
+                  documentation that must come back unchanged with a match.
                 tests:
-                  - GlossaryEntry_HeadIndex_DefaultsToLastToken
                   - GlossaryEntry_WithHead_ValidIndex_ReturnsNewEntryAndLeavesOriginal
                   - GlossaryEntry_With_ReturnsNewEntryAndLeavesOriginal
                   - GlossaryEntry_With_Chained_KeepsEarlierSettings
@@ -51,6 +49,33 @@ sections:
                   - GlossaryEntry_WithVariants_Valid_ReplacesEarlierVariants
                   - GlossaryEntry_GetTokenTags_ReturnsOverrideOrNull
                   - GlossaryEntry_GetTokenTags_TokenBecomesHead_ReturnsNull
+
+              - id: PartOfSpeech-Tagging-Glossary-HeadDefault
+                title: >-
+                  An entry shall by default take its last token as head word, except that it shall take its first
+                  token when its tags include VERB, its term has at least two tokens and every token after the first
+                  is a word of a small closed list of particle words that the lexicon of the library allows as
+                  adposition, adverb or particle; an explicit head shall override this default in both directions.
+                justification: |
+                  A noun compound has its head last, but a phrasal verb such as shut down or carry out has its head
+                  first, and a caller should not have to know that. The lexicon alone cannot decide, because it lists
+                  down and out also as noun, adjective or verb, so a closed list of particle words proposes the
+                  candidates and the lexicon confirms them; a verb term whose later word is not in the list, such as
+                  take care or make sense, keeps the head last. The head decides which
+                  word is inflected and constrained, so it must be fixed when the entry is created, the same for
+                  every glossary and tagger, and the caller must be able to say otherwise.
+                tests:
+                  - GlossaryEntry_HeadIndex_DefaultsToLastToken
+                  - GlossaryEntry_HeadIndex_PhrasalVerbWithParticleWords_IsFirstToken
+                  - GlossaryEntry_HeadIndex_EveryListedParticleWord_IsConfirmedByTheLexicon
+                  - GlossaryEntry_HeadIndex_VerbTermWithAnotherLaterWord_IsLastToken
+                  - GlossaryEntry_HeadIndex_NoVerbTagOrSingleToken_IsLastToken
+                  - GlossaryEntry_HeadIndex_NounOrVerbTags_FollowTheParticleRule
+                  - GlossaryEntry_WithHead_OverridesInferredHeadBothWays
+                  - GlossaryEntry_HeadIndex_Inference_IsDeterministicAcrossThreads
+                  - Glossary_FindMatches_InferredPhrasalHead_IsReportedAndInflected
+                  - GlossaryConstraints_Compile_InferredPhrasalHead_GetsParticleRule
+                  - Tagger_TagWithGlossary_InferredPhrasalHead_VerbHeadAndParticleLimited
 
               - id: PartOfSpeech-Tagging-Glossary-Builder
                 title: >-
