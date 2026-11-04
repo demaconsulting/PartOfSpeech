@@ -1,3 +1,4 @@
+// cspell:ignore Contoso
 namespace DemaConsulting.PartOfSpeech;
 
 /// <summary>
@@ -107,6 +108,12 @@ namespace DemaConsulting.PartOfSpeech;
 ///     tag (<see cref="TokenConstraint.Prefer(Upos, double)"/>, <see cref="TokenConstraint.Penalize(Upos, double)"/>).
 ///     A hard constraint that excludes every tag of the lexicon wins over the lexicon, and a chosen tag also influences
 ///     the tags of the following tokens.
+///     </description></item>
+///     <item><description>
+///     The **head** of a glossary entry (<see cref="GlossaryEntry"/>) is the word of its term that takes the tags of the entry.
+///     By default it is the last word of the term (<c>Contoso Hub</c> has the head <c>Hub</c>, <c>bleed valve</c> has
+///     <c>valve</c>); for a phrasal verb it is the first word (<c>shut down</c> has the head <c>shut</c>). The other words of
+///     the term are not given the tags of the entry. The rules are in [Glossary](#glossary) below.
 ///     </description></item>
 ///     </list>
 ///     <para>
@@ -222,12 +229,16 @@ namespace DemaConsulting.PartOfSpeech;
 ///     A <see cref="Glossary"/> is a set of domain terms that you pass to a <c>Tag</c> call, for example the technical
 ///     names of a maintenance manual. A general model reads <c>bleed valve</c> as a verb and a noun because <c>bleed</c> is
 ///     also a verb; the glossary states the answer once and the tagger applies it to every occurrence. You create entries
-///     (<see cref="GlossaryEntry"/>: a term of one or more words, the <see cref="Upos"/> tags that its head word may take,
+///     (<see cref="GlossaryEntry"/>: a term of one or more words, the <see cref="Upos"/> tags that its <em>head</em> word takes,
 ///     and an optional definition), collect them with a <see cref="GlossaryBuilder"/> (or
 ///     <see cref="Glossary.Create(IEnumerable{GlossaryEntry}, GlossaryOptions?)"/>), and pass the glossary to
 ///     <see cref="Tagger.Tag(string, Glossary)"/>, <see cref="Tagger.Tag(Sentence, Glossary, IReadOnlyList{TokenConstraint}?)"/>
 ///     or <see cref="Tagger.Tag(IReadOnlyList{string}, Glossary, IReadOnlyList{TokenConstraint}?)"/>. The glossary belongs to
-///     the call, not to the tagger, so <see cref="Tagger.Default"/> can serve any number of glossaries.
+///     the call, not to the tagger, so <see cref="Tagger.Default"/> can serve any number of glossaries. The head is the word
+///     that takes the tags of the entry: the last word of the term by default (<c>Contoso Hub</c> gives <c>Hub</c>), the first
+///     word of a phrasal verb (<c>shut down</c> gives <c>shut</c>). The quick start at the end of this page is one complete
+///     example; the sections after this list give a comparison of the two modes, a map of the glossary members, the edge
+///     cases and the costs.
 ///     </para>
 ///     <list type="bullet">
 ///     <item><description>
@@ -235,12 +246,16 @@ namespace DemaConsulting.PartOfSpeech;
 ///     matches never overlap (<c>bleed valve</c> beats <c>valve</c>). A term is split into tokens by the tokenizer, like
 ///     the text, so <c>bleed-valve</c> is one token and does not match <c>bleed valve</c>, and a pre-tokenized token with a
 ///     period stuck to it (<c>valve.</c>) does not match <c>valve</c>. <see cref="Glossary.FindMatches(Sentence)"/> finds the
-///     terms without tagging, for example to show their definitions.
+///     terms without tagging, for example to show their definitions. Overlaps, punctuation at the boundary of a term and terms
+///     that are not consecutive are covered in "Glossary edge cases" below.
 ///     </description></item>
 ///     <item><description>
 ///     **Inflection.** A glossary lists lemmas and text has plurals and verb forms, so the regular English forms of the
 ///     <em>head word</em> match too (<c>valves</c>, <c>isolated</c>, <c>isolating</c>), with the tags that fit the form. Irregular
-///     forms (<c>bled</c>) are listed with <see cref="GlossaryEntry.WithVariants(string[])"/>; inflection can be switched off for
+///     forms (<c>bled</c>) are listed with <see cref="GlossaryEntry.WithVariants(string[])"/>, which takes whole-term spellings with
+///     the same number of words; an irregular form that is identical to the lemma (<c>set</c> to <c>set</c>, <c>cut</c> to
+///     <c>cut</c>) needs no variant, because the term itself already matches it, and a variant that repeats the term or another
+///     variant is ignored without an error. Inflection can be switched off for
 ///     the glossary (<see cref="GlossaryOptions.Inflect"/>) or an entry (<see cref="GlossaryEntry.WithInflection(bool)"/>).
 ///     </description></item>
 ///     <item><description>
@@ -249,17 +264,15 @@ namespace DemaConsulting.PartOfSpeech;
 ///     (<see cref="GlossaryEntry.WithCaseSensitive(bool)"/>): the entry <c>IT</c> then leaves the pronoun <c>it</c> alone.
 ///     </description></item>
 ///     <item><description>
-///     **Modes.** In <see cref="GlossaryMode.Hard"/> mode (the default) the head word can only take the tags of the entry.
-///     Hard mode trusts the entries completely, so a wrong entry forces a wrong tag; it fits curated lists such as the
-///     ASD-STE100 technical names and verbs. <see cref="GlossaryMode.Soft"/> mode is for lists that are not curated or may be wrong: the
-///     tags get a preference of <see cref="GlossaryOptions.SoftStrength"/> times the model temperature, so the model can still
-///     disagree when it is sure. The measured cost of a wrong entry in each mode and the effect of the strength are
-///     in section E9 of https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md
-///     (simulated glossaries on development data).
+///     **Modes.** In <see cref="GlossaryMode.Hard"/> mode (the default) the head word can only take the tags of the entry;
+///     <see cref="GlossaryMode.Soft"/> mode only prefers them. The table in "Glossary modes: hard and soft" below compares
+///     the two and says when to use which.
 ///     </description></item>
 ///     <item><description>
 ///     **Other words of a term.** The other words of a noun term (<c>bleed</c> in <c>bleed valve</c>) can no longer be a verb or an
-///     auxiliary. The head of a term is its last word, except for a phrasal verb (a verb term whose later words all belong to a
+///     auxiliary, but they are not given the tags of the entry; for a product name that the model has never seen, such as
+///     <c>Contoso Hub</c>, say what the first word is with <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/>. The head of a
+///     term is its last word, except for a phrasal verb (a verb term whose later words all belong to a
 ///     small closed list of particle words that the lexicon allows as adposition, adverb or particle, such as <c>shut down</c> and
 ///     <c>carry out</c>): its head is the first word, and the second word of such a two-word
 ///     verb term is limited to adposition, adverb and particle. <see cref="GlossaryEntry"/> lists the particle words;
@@ -270,7 +283,13 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <item><description>
 ///     **Constraints.** A glossary is turned into per-token constraints, so a tag that it decides becomes history for the next
 ///     tokens: the neighbors after a match can change, the tokens before the first match never do. Your own constraints, passed
-///     to the same call, are combined with those of the glossary; where the two allow no tag in common, yours win.
+///     as the <c>constraints</c> parameter of the same call, are combined with those of the glossary per token. When you give no
+///     constraint for a token, the constraint of the glossary applies (hard or soft); when the glossary has none for the token,
+///     yours applies; when both exist they are combined with <see cref="TokenConstraint.And(TokenConstraint)"/>. If the allowed
+///     tags of the two have no tag in common (your constraint contradicts a hard entry, for example you allow only <c>VERB</c>
+///     for a head word that the entry limits to <c>NOUN</c>), <strong>your constraint wins</strong> for that token. The reason
+///     is that your constraint is explicit and belongs to one call, while the glossary is the default for all calls. A soft
+///     glossary constraint allows every tag, so it never conflicts with yours.
 ///     </description></item>
 ///     <item><description>
 ///     **Results.** Every token of a match reports it (<see cref="TaggedToken.GlossaryMatch"/>), the head word is flagged
@@ -278,12 +297,168 @@ namespace DemaConsulting.PartOfSpeech;
 ///     (<see cref="TaggedSentence.GlossaryMatches"/>) with the entry, the definition, the tokens and the offsets in the string.
 ///     </description></item>
 ///     <item><description>
-///     **Confidence.** A head word that a hard entry limits to one tag has the confidence exactly 1.0 and no alternatives: there
-///     was no choice, so the value does not say that the model is sure (see
-///     [Confidence and alternatives](#confidence-and-alternatives)). With several tags or in soft mode the confidence is the
-///     softmax over the tags that remain, so a soft preference shows in the number.
+///     **Confidence.** The confidence of a glossary token measures the choice among the tags that are still allowed after the
+///     constraints (the softmax over them, see [Confidence and alternatives](#confidence-and-alternatives)). It is <em>not</em>
+///     evidence that the entry is correct. A head word that a hard entry limits to one tag always has the confidence exactly
+///     1.0 and no alternatives, also when the entry is wrong: there was no choice, so the value does not say that the model is
+///     sure. With several tags or in soft mode the confidence is the softmax over the tags that remain, so a soft preference
+///     shows in the number.
 ///     </description></item>
 ///     </list>
+///     <para>
+///     ## Glossary modes: hard and soft
+///     </para>
+///     <para>
+///     The two modes differ in what they do with the head word of a match, in when to use them, and in what a wrong entry
+///     costs:
+///     </para>
+///     <para>
+///     | | Hard (the default) | Soft |
+///     | --- | --- | --- |
+///     | What it does | Limits the head word to the tags of the entry; the model cannot disagree. | Adds a boost of <see cref="GlossaryOptions.SoftStrength"/> times the model temperature to the tags of the entry; the model can still disagree when it is clearly sure of another tag. |
+///     | When to use it | A curated list that you trust completely, such as the ASD-STE100 technical names and verbs. | A list that is not curated or may contain wrong entries. |
+///     | With wrong entries | A wrong entry forces a wrong tag: hard mode makes confident errors. | The accuracy stays near that of tagging without a glossary, because the model can overrule a wrong entry. |
+///     </para>
+///     <para>
+///     In short: with wrong entries, hard mode makes confident errors, while soft mode stays near no-glossary accuracy. The
+///     full measurements (simulated glossaries on development data, with 0, 10 and 30 percent wrong entries, and the effect of
+///     the strength) are in the trainer run log of the repository, section E9:
+///     https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md
+///     </para>
+///     <para>
+///     ## Glossary navigation
+///     </para>
+///     <para>
+///     Where to find each part of the glossary:
+///     </para>
+///     <list type="table">
+///     <listheader>
+///     <term>Area</term>
+///     <description>Members</description>
+///     </listheader>
+///     <item>
+///     <term>Construction</term>
+///     <description><see cref="GlossaryBuilder"/> (collect entries with a collection initializer or
+///     <see cref="GlossaryBuilder.Add(GlossaryEntry)"/>, then <see cref="GlossaryBuilder.Build"/>);
+///     <see cref="Glossary.Create(IEnumerable{GlossaryEntry}, GlossaryOptions?)"/> (build from a list);
+///     <see cref="GlossaryEntry"/> (one term, its tags and definition, and its settings
+///     <see cref="GlossaryEntry.WithVariants(string[])"/>, <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/>,
+///     <see cref="GlossaryEntry.WithInflection(bool)"/>, <see cref="GlossaryEntry.WithHead(int)"/>,
+///     <see cref="GlossaryEntry.WithCaseSensitive(bool)"/>, <see cref="GlossaryEntry.WithMode(GlossaryMode)"/> and
+///     <see cref="GlossaryEntry.WithDefinition(string?)"/>); <see cref="GlossaryOptions"/> (settings for all entries) with
+///     <see cref="GlossaryMode"/></description>
+///     </item>
+///     <item>
+///     <term>Matching</term>
+///     <description><see cref="Glossary.FindMatches(Sentence)"/> (find the terms of a sentence without tagging) and
+///     <see cref="GlossaryMatch"/> (one occurrence: entry, first token, token count, head token, text and offsets)</description>
+///     </item>
+///     <item>
+///     <term>Tagging</term>
+///     <description><see cref="Tagger.Tag(string, Glossary)"/>,
+///     <see cref="Tagger.Tag(Sentence, Glossary, IReadOnlyList{TokenConstraint}?)"/> and
+///     <see cref="Tagger.Tag(IReadOnlyList{string}, Glossary, IReadOnlyList{TokenConstraint}?)"/></description>
+///     </item>
+///     <item>
+///     <term>Results</term>
+///     <description><see cref="TaggedToken.GlossaryMatch"/> (the match that a token belongs to),
+///     <see cref="TaggedToken.IsGlossaryHead"/> (the head word of the match), <see cref="TaggedToken.IsConstrained"/> and
+///     <see cref="TaggedSentence.GlossaryMatches"/> (all matches of a sentence in text order)</description>
+///     </item>
+///     </list>
+///     <para>
+///     The exceptions of the glossary members, and when they are thrown:
+///     </para>
+///     <list type="bullet">
+///     <item><description>
+///     Creating an entry (<see cref="GlossaryEntry"/> constructors, also through <see cref="GlossaryBuilder.Add(string, Upos, string?)"/>):
+///     <see cref="ArgumentNullException"/> for a <c>null</c> term; <see cref="ArgumentException"/> for a term that is empty or
+///     has no token with a letter or a digit, or for an empty tag set; <see cref="ArgumentOutOfRangeException"/> for a tag that
+///     is not one of the 17 defined values.
+///     </description></item>
+///     <item><description>
+///     Changing an entry: <see cref="GlossaryEntry.WithHead(int)"/>, <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/>
+///     and <see cref="GlossaryEntry.GetTokenTags(int)"/> throw <see cref="ArgumentOutOfRangeException"/> for an index outside the
+///     term; <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/> throws <see cref="ArgumentException"/> for the head token
+///     or an empty tag set; <see cref="GlossaryEntry.WithMode(GlossaryMode)"/> throws <see cref="ArgumentOutOfRangeException"/>
+///     for a mode that is not hard or soft; <see cref="GlossaryEntry.WithVariants(string[])"/> throws
+///     <see cref="ArgumentNullException"/> for a <c>null</c> variant list or item and <see cref="ArgumentException"/> for a
+///     variant that is empty, has no token with a letter or a digit, or has another number of tokens than the term.
+///     </description></item>
+///     <item><description>
+///     Building: the <see cref="GlossaryBuilder"/> constructor and <see cref="Glossary.Create(IEnumerable{GlossaryEntry}, GlossaryOptions?)"/>
+///     throw <see cref="ArgumentOutOfRangeException"/> for options whose mode is not hard or soft or whose
+///     <see cref="GlossaryOptions.SoftStrength"/> is not finite and greater than zero; <see cref="GlossaryBuilder.Add(GlossaryEntry)"/>
+///     and <see cref="Glossary.Create(IEnumerable{GlossaryEntry}, GlossaryOptions?)"/> throw <see cref="ArgumentNullException"/> for a
+///     <c>null</c> entry or list and <see cref="ArgumentException"/> for two entries with the same tokens under the same
+///     effective letter-case rule (merge their tags into one entry); <see cref="GlossaryBuilder.Add(GlossaryEntry)"/> reports the
+///     duplicate at the line that added it.
+///     </description></item>
+///     <item><description>
+///     Matching and tagging: <see cref="Glossary.FindMatches(Sentence)"/> throws <see cref="ArgumentNullException"/> for a
+///     <c>null</c> sentence; the <see cref="Tagger"/> methods that take a glossary throw <see cref="ArgumentNullException"/> for a
+///     <c>null</c> text, sentence, token list or glossary and <see cref="ArgumentException"/> for a token that is empty or
+///     contains white space or for a constraint list whose length differs from the number of tokens. The content of the text
+///     never makes matching or tagging fail.
+///     </description></item>
+///     </list>
+///     <para>
+///     ## Glossary edge cases
+///     </para>
+///     <para>
+///     Situations that often surprise, with what happens and what to do:
+///     </para>
+///     <list type="table">
+///     <listheader>
+///     <term>Situation</term>
+///     <description>What happens and what to do</description>
+///     </listheader>
+///     <item>
+///     <term>Overlapping entries: <c>bleed valve</c> and <c>bleed valve cover</c></term>
+///     <description>The longest term at a position wins and matches never overlap: <c>Remove the bleed valve cover.</c> gives
+///     one match, <c>bleed valve cover</c> (head <c>cover</c>); <c>Close the bleed valve.</c> matches the shorter entry. You do
+///     not have to order the entries.</description>
+///     </item>
+///     <item>
+///     <term>Punctuation at the boundary of a term: <c>(Contoso Hub),</c> or a final period</term>
+///     <description>Punctuation marks are tokens of their own, so they neither prevent a match nor belong to it:
+///     <c>Restart (Contoso Hub), then wait.</c> and <c>Restart the Contoso Hub.</c> both match <c>Contoso Hub</c> (two tokens).
+///     A hyphen inside a word is not punctuation: in <c>the Contoso Hub-based gear</c> the token is <c>Hub-based</c>, which does
+///     not match <c>Hub</c>.</description>
+///     </item>
+///     <item>
+///     <term>A word inside a phrasal verb: <c>shut it down</c></term>
+///     <description>A term matches only consecutive tokens, so the entry <c>shut down</c> does not match <c>shut it down</c>.
+///     Add a second entry, <c>shut it down</c>, with <see cref="GlossaryEntry.WithHead(int)"/> set to the first word.</description>
+///     </item>
+///     <item>
+///     <term>An unknown particle: <c>look after</c></term>
+///     <description>The head of a verb term is its first word only when every later word is in the list of particle words that
+///     <see cref="GlossaryEntry"/> gives. <c>after</c> is not in the list, so the head falls back to the last word, <c>after</c>,
+///     and a hard verb entry would force <c>after</c> to be a verb. Use <c>WithHead(0)</c>: <c>look</c> is then the verb and
+///     <c>after</c> is limited to adposition, adverb and particle.</description>
+///     </item>
+///     <item>
+///     <term>A phrasal verb of three words: <c>look forward to</c>, <c>get back together</c></term>
+///     <description>In <c>look forward to</c>, <c>to</c> is not in the list, so the head falls back to <c>to</c>: use
+///     <c>WithHead(0)</c>. In <c>get back together</c> every later word is in the list, so the head is <c>get</c> without a
+///     call. In both, only the head is constrained: the other words are left to the model (the rule that limits the particle
+///     applies to two-word verb terms), and <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/> sets them if you need to.</description>
+///     </item>
+///     </list>
+///     <para>
+///     ## Glossary costs
+///     </para>
+///     <para>
+///     Building a glossary is linear in the number of entries and takes milliseconds for thousands of entries: measured
+///     once on a developer machine (Release build, one thread, after warm-up), about 5 milliseconds for 1,000 entries and
+///     about 50 milliseconds for 10,000. A tagger compiles the constraints of a glossary once, when the first sentence that
+///     contains a match of it is tagged (a fraction of a millisecond for 1,000 entries and a few milliseconds for 10,000), keeps
+///     them for as long as the glossary object is alive, and reuses them for every later call; a new glossary object, also one
+///     built from the same entries, is compiled again, so build a glossary once and keep it. Matching costs at most the length
+///     of the longest term per token, whatever the size of the glossary. These figures are the only place in this reference
+///     that gives the cost; the other pages refer to this section.
+///     </para>
 ///     <para>
 ///     ## Thread safety
 ///     </para>
@@ -338,5 +513,66 @@ namespace DemaConsulting.PartOfSpeech;
 ///     using var weights = File.OpenRead("model.posw");
 ///     var tagger = Tagger.Load(weights);
 ///     </code>
+///     <para>
+///     ## Glossary quick start
+///     </para>
+///     <para>
+///     One complete example of a glossary with the four kinds of term that cause most questions: a multiword product name
+///     (<c>Contoso Hub</c>, a proper noun whose first word the model has never seen), an acronym whose lower-case spelling is
+///     another word (<c>IT</c> against the pronoun <c>it</c>, so the entry is case-sensitive), a hyphenated verb
+///     (<c>re-sync</c>, which the tokenizer keeps as one token, so <c>re-sync</c> and its forms <c>re-syncs</c>,
+///     <c>re-synced</c> and <c>re-syncing</c> match, while the spelling <c>resync</c> is another word and needs a variant) and
+///     a phrasal verb (<c>shut down</c>, whose head is the first word). The loop then reads what a match reports: the
+///     <see cref="GlossaryMatch.Entry"/>, the span (<see cref="GlossaryMatch.FirstToken"/> and
+///     <see cref="GlossaryMatch.TokenCount"/>), the <see cref="GlossaryMatch.HeadToken"/>, the matched
+///     <see cref="GlossaryMatch.Text"/> as written, and <see cref="TaggedToken.IsGlossaryHead"/> on the tokens of the span.
+///     </para>
+///     <code>
+///     Glossary glossary = new GlossaryBuilder
+///     {
+///         // A product name: the head Hub takes the tag of the entry, and Contoso is set to PROPN as well
+///         new GlossaryEntry("Contoso Hub", Upos.Propn, "The Contoso device manager.")
+///             .WithTokenTags(0, UposSet.Of(Upos.Propn)),
+///
+///         // An acronym: only the capitals match, so the pronoun "it" is left alone
+///         new GlossaryEntry("IT", Upos.Noun, "Information technology.").WithCaseSensitive(true),
+///
+///         // A hyphenated verb is one token; "resync" is another spelling of the same term
+///         new GlossaryEntry("re-sync", Upos.Verb).WithVariants("resync"),
+///
+///         // A phrasal verb: the head is the first word (shut), and down is limited to ADP, ADV or PART
+///         { "shut down", Upos.Verb },
+///     }.Build();
+///
+///     string text = "Ask IT to re-sync the Contoso Hub, then shut down the unit. Ask it to resync.";
+///     foreach (TaggedSentence sentence in tagger.Tag(text, glossary))
+///     {
+///         foreach (GlossaryMatch match in sentence.GlossaryMatches)
+///         {
+///             TaggedToken head = sentence.Tokens[match.HeadToken];
+///             var span = sentence.Tokens.Skip(match.FirstToken).Take(match.TokenCount);
+///
+///             Console.WriteLine($"{match.Entry.Term}: '{match.Text}', {match.TokenCount} token(s), "
+///                 + $"head {head.Text} {head.Tag.ToTagString()} {head.Confidence:0.00}");
+///             Console.WriteLine("    " + string.Join(" ", span.Select(t => t.Text + (t.IsGlossaryHead ? "*" : ""))));
+///         }
+///     }
+///
+///     // IT: 'IT', 1 token(s), head IT NOUN 1.00
+///     //     IT*
+///     // re-sync: 're-sync', 1 token(s), head re-sync VERB 1.00
+///     //     re-sync*
+///     // Contoso Hub: 'Contoso Hub', 2 token(s), head Hub PROPN 1.00
+///     //     Contoso Hub*
+///     // shut down: 'shut down', 2 token(s), head shut VERB 1.00
+///     //     shut* down
+///     // re-sync: 'resync', 1 token(s), head resync VERB 1.00      (the second sentence; "it" is no match)
+///     //     resync*
+///     </code>
+///     <para>
+///     The confidence of every head here is 1.00 because each hard entry leaves one tag: it says that there was no choice, not
+///     that the entries were checked. The word <c>down</c> is limited to adposition, adverb and particle and the model picks
+///     among them; <c>Contoso</c> is a proper noun because of <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/>.
+///     </para>
 /// </example>
 internal static class NamespaceDoc;

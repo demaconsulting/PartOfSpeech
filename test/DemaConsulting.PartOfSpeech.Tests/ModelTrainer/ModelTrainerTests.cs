@@ -1409,10 +1409,80 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates the pre-registered strength rule on a synthetic table: inadmissible strengths are out, strengths within 0.1 points of the best are tied, and the smallest tied strength wins.
+    ///     Validates the rule for the default soft strength on a synthetic table: only the strengths that pass both wrong-entry conditions count, and the largest of them wins.
     /// </summary>
     [Fact]
-    public void GlossaryEvaluation_ChooseSoftStrength_PicksSmallestWithinTolerance()
+    public void GlossaryEvaluation_ChooseSoftStrength_LargestPassingStrengthWins()
+    {
+        // Arrange: 0.5 to 2 pass; 3 fails the swap condition and 4 fails the accuracy interval, although it has the best covered accuracy
+        var candidates = new List<StrengthCandidate>
+        {
+            new() { Strength = 0.5, AccuracyUpperFull30 = 0.08, SwapDifferenceFull30 = -0.67, CoveredAccuracy0 = 98.0 },
+            new() { Strength = 1, AccuracyUpperFull30 = 0.17, SwapDifferenceFull30 = -1.78, CoveredAccuracy0 = 98.1 },
+            new() { Strength = 2, AccuracyUpperFull30 = 0.15, SwapDifferenceFull30 = -2.45, CoveredAccuracy0 = 98.2 },
+            new() { Strength = 3, AccuracyUpperFull30 = 0.01, SwapDifferenceFull30 = 0.45, CoveredAccuracy0 = 98.6 },
+            new() { Strength = 4, AccuracyUpperFull30 = -0.30, SwapDifferenceFull30 = 4.24, CoveredAccuracy0 = 99.5 },
+        };
+
+        // Act
+        var chosen = GlossaryEvaluation.ChooseSoftStrength(candidates, out var passes);
+
+        // Assert: the largest passing strength, not the best covered accuracy
+        Assert.True(passes);
+        Assert.Equal(2, chosen);
+        candidates[3].SwapDifferenceFull30 = 0;
+        Assert.Equal(3, GlossaryEvaluation.ChooseSoftStrength(candidates, out _));
+    }
+
+    /// <summary>
+    ///     Validates each condition of the rule for the default soft strength at its boundary, and that the smallest strength of the grid is chosen when none passes.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_ChooseSoftStrength_ConditionsAndNonePasses()
+    {
+        // Arrange / Act / Assert: the boundaries (an upper bound of exactly 0 and a swap change of exactly 0 pass)
+        Assert.True(GlossaryEvaluation.PassesWrongEntryRule(new StrengthCandidate { AccuracyUpperFull30 = 0, SwapDifferenceFull30 = 0 }));
+        Assert.False(GlossaryEvaluation.PassesWrongEntryRule(new StrengthCandidate { AccuracyUpperFull30 = -0.01, SwapDifferenceFull30 = 0 }));
+        Assert.False(GlossaryEvaluation.PassesWrongEntryRule(new StrengthCandidate { AccuracyUpperFull30 = 0, SwapDifferenceFull30 = 0.01 }));
+
+        // None passes: the smallest strength, whatever its figures
+        var candidates = new[]
+        {
+            new StrengthCandidate { Strength = 2, AccuracyUpperFull30 = -1, SwapDifferenceFull30 = 1 },
+            new StrengthCandidate { Strength = 0.5, AccuracyUpperFull30 = -2, SwapDifferenceFull30 = 3 },
+        };
+        Assert.Equal(0.5, GlossaryEvaluation.ChooseSoftStrength(candidates, out var passes));
+        Assert.False(passes);
+        Assert.Throws<ArgumentException>(() => GlossaryEvaluation.ChooseSoftStrength(Array.Empty<StrengthCandidate>(), out _));
+    }
+
+    /// <summary>
+    ///     Validates that the rule for the default soft strength, applied to the cells recorded in the run log (scenario AB at 100% coverage with 30% wrong entries), gives the shipped default.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_ChooseSoftStrength_RecordedCells_EqualsTheDefaultSoftStrength()
+    {
+        // Arrange: the upper end of the paired interval of the accuracy change and the swap change, as recorded for each strength of the grid
+        var upper = new[] { 0.08, 0.17, 0.17, 0.15, 0.01, -0.30 };
+        var swaps = new[] { -0.67, -1.78, -2.01, -2.45, 0.45, 4.24 };
+        var candidates = GlossaryEvaluation.StrengthGrid
+            .Select((strength, i) => new StrengthCandidate { Strength = strength, AccuracyUpperFull30 = upper[i], SwapDifferenceFull30 = swaps[i] })
+            .ToList();
+
+        // Act
+        var chosen = GlossaryEvaluation.ChooseSoftStrength(candidates, out var passes);
+
+        // Assert: the rule picks the strength that the library ships, and that strength is a member of the grid
+        Assert.True(passes);
+        Assert.Equal(GlossaryOptions.DefaultSoftStrength, chosen);
+        Assert.Contains(chosen, GlossaryEvaluation.StrengthGrid);
+    }
+
+    /// <summary>
+    ///     Validates the original pre-registered strength rule of the first run (kept as the historical decision) on a synthetic table: inadmissible strengths are out, strengths within 0.1 points of the best are tied, and the smallest tied strength wins.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_ChooseFirstRunSoftStrength_PicksSmallestWithinTolerance()
     {
         // Arrange: strength 4 has the best covered accuracy but loses accuracy at r = 10%; 1, 2 and 3 are within 0.1 of the best admissible one
         var candidates = new List<StrengthCandidate>
@@ -1425,20 +1495,20 @@ public class ModelTrainerTests
         };
 
         // Act
-        var chosen = GlossaryEvaluation.ChooseSoftStrength(candidates, out var admissible);
+        var chosen = GlossaryEvaluation.ChooseFirstRunSoftStrength(candidates, out var admissible);
 
         // Assert
         Assert.True(admissible);
         Assert.Equal(1, chosen);
         candidates[3].CoveredAccuracy0 = 98.7;
-        Assert.Equal(3, GlossaryEvaluation.ChooseSoftStrength(candidates, out _));
+        Assert.Equal(3, GlossaryEvaluation.ChooseFirstRunSoftStrength(candidates, out _));
     }
 
     /// <summary>
-    ///     Validates each admissibility condition of the strength rule, and that without an admissible strength the smallest of the grid is chosen.
+    ///     Validates each admissibility condition of the first-run strength rule, and that without an admissible strength the smallest of the grid is chosen.
     /// </summary>
     [Fact]
-    public void GlossaryEvaluation_ChooseSoftStrength_ConditionsAndNoneAdmissible()
+    public void GlossaryEvaluation_ChooseFirstRunSoftStrength_ConditionsAndNoneAdmissible()
     {
         // Arrange / Act / Assert: the boundaries of the three conditions
         Assert.True(GlossaryEvaluation.IsAdmissible(new StrengthCandidate { AccuracyDifference30 = -0.5 }));
@@ -1452,9 +1522,9 @@ public class ModelTrainerTests
             new StrengthCandidate { Strength = 2, SwapDifference10 = 1, CoveredAccuracy0 = 99 },
             new StrengthCandidate { Strength = 0.5, SwapDifference10 = 3, CoveredAccuracy0 = 90 },
         };
-        Assert.Equal(0.5, GlossaryEvaluation.ChooseSoftStrength(candidates, out var admissible));
+        Assert.Equal(0.5, GlossaryEvaluation.ChooseFirstRunSoftStrength(candidates, out var admissible));
         Assert.False(admissible);
-        Assert.Throws<ArgumentException>(() => GlossaryEvaluation.ChooseSoftStrength(Array.Empty<StrengthCandidate>(), out _));
+        Assert.Throws<ArgumentException>(() => GlossaryEvaluation.ChooseFirstRunSoftStrength(Array.Empty<StrengthCandidate>(), out _));
     }
 
     /// <summary>
@@ -1694,6 +1764,7 @@ public class ModelTrainerTests
         Assert.Contains("**D, case sensitivity", text);
         Assert.Contains("**G, phrasal verbs", text);
         Assert.Contains("**Decision (soft strength)**", text);
+        Assert.Contains("**Historical decision (soft strength, rule of the first run)**", text);
         Assert.Contains("**Decision (non-head rule)**", text);
         Assert.Throws<ArgumentOutOfRangeException>(() => GlossaryEvaluation.Run(weights, open, gold, EmbeddedModel.Lexicon, 1, 0));
     }

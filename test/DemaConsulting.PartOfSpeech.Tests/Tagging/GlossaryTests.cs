@@ -1,4 +1,4 @@
-// cspell:ignore bleeded buzzes dyeing toeing seed's runned LRUs wishes churches stopped plugged permited Inflectable zzqxv
+// cspell:ignore bleeded buzzes dyeing toeing seed's runned LRUs wishes churches stopped plugged permited Inflectable zzqxv bleeder
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -432,6 +432,60 @@ public class GlossaryTests
         Assert.Equal(new[] { "bleeds", "bleeding" }, replaced.Variants);
         Assert.Equal(new[] { "bled" }, entry.Variants);
         Assert.Empty(entry.WithVariants().Variants);
+    }
+
+    /// <summary>
+    ///     Proves that a variant that spells the term, and a variant that is listed twice, are ignored without an error, so that the variants list holds each extra spelling once in the order given.
+    /// </summary>
+    [Fact]
+    public void GlossaryEntry_WithVariants_VariantEqualToTermOrDuplicate_IsIgnoredWithoutError()
+    {
+        // Arrange: a one-token verb and a two-token noun
+        var bleed = new GlossaryEntry("bleed", Upos.Verb);
+        var valve = new GlossaryEntry("bleed valve", Upos.Noun);
+
+        // Act: the term itself, a duplicate, a different letter case and an invalid variant after a redundant one
+        var itself = bleed.WithVariants("bleed");
+        var duplicate = bleed.WithVariants("bled", "bled", "bleeds", "bled");
+        var otherCase = bleed.WithVariants("Bleed");
+        var spaced = valve.WithVariants("bleed  valve", "bleeder valve", "bleeder  valve");
+
+        // Assert: nothing is thrown, the redundant spellings are gone, the order of the others is kept
+        Assert.Empty(itself.Variants);
+        Assert.Equal(new[] { "bled", "bleeds" }, duplicate.Variants);
+        Assert.Equal(new[] { "Bleed" }, otherCase.Variants);
+        Assert.Equal(new[] { "bleeder valve" }, spaced.Variants);
+        Assert.Throws<ArgumentException>(() => valve.WithVariants("bleed valve", "bleed-valve"));
+    }
+
+    /// <summary>
+    ///     Proves that a redundant variant changes nothing in matching: the term is reported as the term, a duplicate gives one match, a variant equal to a generated form wins and carries the tags of the entry, and an irregular past tense that equals the lemma (<c>set</c>) needs no variant.
+    /// </summary>
+    [Fact]
+    public void Glossary_FindMatches_RedundantVariantsAndLemmaEqualForms_NeedNoVariant()
+    {
+        // Arrange: entries with redundant variants, a variant that equals a generated form, and set without any variant
+        var glossary = Glossary.Create(new[]
+        {
+            new GlossaryEntry("bleed", UposSet.Of(Upos.Verb, Upos.Noun)).WithVariants("bleed", "bled", "bled", "bleeds"),
+            new GlossaryEntry("set", Upos.Verb),
+        });
+
+        // Act
+        var term = glossary.FindMatches(Tokenizer.Tokenize("They bleed.")[0]);
+        var irregular = glossary.FindMatches(Tokenizer.Tokenize("They bled.")[0]);
+        var generated = glossary.FindMatches(Tokenizer.Tokenize("It bleeds.")[0]);
+        var lemmaForm = glossary.FindMatches(Tokenizer.Tokenize("They set it.")[0]);
+
+        // Assert: the term is not a variant; the listed variant matches once; a variant beats the generated form and has the full tag set of the entry
+        Assert.False(Assert.Single(term).IsVariant);
+        Assert.True(Assert.Single(irregular).IsVariant);
+        Assert.True(Assert.Single(generated).IsVariant);
+        Assert.Equal(UposSet.Of(Upos.Verb, Upos.Noun), generated[0].Entry.Tags);
+
+        // Assert: the past tense of set is set, which the term already matches, as the term and not as a variant
+        Assert.False(Assert.Single(lemmaForm).IsVariant);
+        Assert.Equal("set", lemmaForm[0].Text);
     }
 
     /// <summary>

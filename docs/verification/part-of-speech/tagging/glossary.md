@@ -79,6 +79,10 @@ allocates per token, a parallel result differs from the sequential one, or match
 - **Entry values**: `GlossaryEntry_WithHead_ValidIndex_ReturnsNewEntryAndLeavesOriginal`,
   `GlossaryEntry_With_ReturnsNewEntryAndLeavesOriginal`, `GlossaryEntry_With_Chained_KeepsEarlierSettings`,
   `GlossaryEntry_Definition_IsCarriedUnchanged`, `GlossaryEntry_WithVariants_Valid_ReplacesEarlierVariants`,
+  `GlossaryEntry_WithVariants_VariantEqualToTermOrDuplicate_IsIgnoredWithoutError` (a variant that spells the term, or
+  that is listed twice, is dropped without an error and the list shows each extra spelling once; a variant that differs
+  only in letter case stays; an invalid variant still throws), `GlossaryEntry_MethodExamples_GiveTheDocumentedValues` (the
+  values that the examples of `WithHead`, `WithTokenTags`, `WithInflection` and `WithVariants` print),
   `GlossaryEntry_GetTokenTags_ReturnsOverrideOrNull` and `GlossaryEntry_GetTokenTags_TokenBecomesHead_ReturnsNull`.
 - **Head default**: `GlossaryEntry_HeadIndex_DefaultsToLastToken` (noun compounds and single words),
   `GlossaryEntry_HeadIndex_PhrasalVerbWithParticleWords_IsFirstToken` (`shut down`, `carry out`, `set up` and
@@ -99,7 +103,12 @@ allocates per token, a parallel result differs from the sequential one, or match
   `GlossaryConstraints_Compile_InferredPhrasalHead_GetsParticleRule` and
   `Tagger_TagWithGlossary_InferredPhrasalHead_VerbHeadAndParticleLimited` (no `WithHead`: for `shut down` and `carry out`
   the head is a verb with confidence 1.0, also in `shuts down`, and the particle is limited to particle
-  tags, and the head of `shutting down` is the first token; an explicit last head and `take care` keep the last token).
+  tags, and the head of `shutting down` is the first token; an explicit last head and `take care` keep the last token),
+  `GlossaryEntry_HeadIndex_UnknownParticleAndLongerPhrasalVerbs_FollowTheDocumentedRule` (`look after` and
+  `look forward to` keep the last token until `WithHead(0)` says otherwise, `get back together` takes the first) and
+  `Tagger_TagWithGlossary_PhrasalVerbHeads_ForceOrLeaveTagsAsDocumented` (with the embedded model: the default head of
+  `look after` makes `after` a verb, `WithHead(0)` makes `look` a verb with confidence 1.0 and limits `after`, and the
+  later words of a three-word term are not constrained).
 - **Builder and options**: `GlossaryBuilder_CollectionInitializer_BuildsEntriesInOrder`,
   `GlossaryBuilder_Add_Chained_CountsAndEnumerates`, `GlossaryBuilder_Add_NullEntry_ThrowsArgumentNullException`,
   `GlossaryBuilder_Build_IsSnapshot` (a later `Add` does not change a built glossary),
@@ -124,10 +133,16 @@ allocates per token, a parallel result differs from the sequential one, or match
   `Glossary_FindMatches_LongerWalkWithoutTerm_FallsBackToShorterTerm`,
   `Glossary_FindMatches_TermSplitAcrossSentences_NoMatch`,
   `Glossary_FindMatches_EmptySentenceOrEmptyGlossary_NoMatches`, `Glossary_FindMatches_NullSentence_ThrowsArgumentNullException`
-  and `Glossary_FindMatches_HashCollision_ResolvedByComparison` (every token forced onto one hash value).
+  and `Glossary_FindMatches_HashCollision_ResolvedByComparison` (every token forced onto one hash value);
+  `Glossary_FindMatches_DocumentedEdgeCases_BehaveAsDocumented` (the longest of overlapping entries, punctuation in
+  front of and behind a term, a hyphen that joins the next word, and a term that is not contiguous) and
+  `Glossary_EdgeCaseExample_ReportsTheDocumentedMatchesAndHeads` (the matches and heads that the edge-case example of
+  `Glossary` prints).
 - **Term tokenization**: `GlossaryEntry_Tokens_FollowTokenizer`,
   `GlossaryEntry_EndTokens_TermEndingInKeptPeriod_DiffersAtEndOfText`,
   `Glossary_FindMatches_HyphenatedTermIsOneToken_DoesNotMatchSpaced`,
+  `Glossary_HyphenatedVerb_IsOneTokenAndMatchesItsFormsButNotOtherSpellings` (`re-sync` is one token, its generated forms
+  match, `resync` and `re sync` do not unless listed),
   `Glossary_FindMatches_ContractionInTerm_SplitsLikeTokenizer`,
   `Glossary_FindMatches_AbbreviationPeriod_MidTextAndEndOfText`, `Glossary_FindMatches_CurlyApostropheEqualsStraight`,
   `Glossary_FindMatches_PreTokenizedPunctuationStuckToWord_DoesNotMatch`,
@@ -145,7 +160,9 @@ allocates per token, a parallel result differs from the sequential one, or match
   `Glossary_FindMatches_InflectionSwitches_AreHonored`; forms and variants found and reported in
   `Glossary_FindMatches_InflectedForms_AreFoundAndReportedAsVariants` and `Glossary_FindMatches_ExplicitVariants_AreMatched`;
   and the precedence in `Glossary_FindMatches_TermBeatsVariantBeatsGeneratedForm` and
-  `Glossary_FindMatches_VariantBeatsGeneratedForm_EarlierEntryWinsOtherwise`.
+  `Glossary_FindMatches_VariantBeatsGeneratedForm_EarlierEntryWinsOtherwise`; a variant that repeats the term or another
+  variant changes nothing, and a form that is identical to the lemma (`set`) needs no variant, in
+  `Glossary_FindMatches_RedundantVariantsAndLemmaEqualForms_NeedNoVariant`.
 - **Hard constraints**: `GlossaryConstraints_NonHead_Rules_ProduceDocumentedConstraints` (the constraints of every rule
   in both modes), `Tagger_TagWithGlossary_HardNounTerm_HeadIsNounWithConfidenceOne` (the model alone makes the costly
   error, the glossary corrects it, with confidence exactly 1 and no alternatives),
@@ -171,6 +188,8 @@ allocates per token, a parallel result differs from the sequential one, or match
   and `GlossaryMatch_Mode_IsEntryModeOrGlossaryMode`; the strength validation is in the builder scenario.
 - **Caller constraints**: `GlossaryConstraints_Merge_NoneIntersectionAndContradiction`,
   `Tagger_TagWithGlossary_CallerConstraints_AreMergedAndCallerWinsWhenDisjoint`,
+  `Tagger_TagWithGlossary_CallerConstraintContradictingHardEntry_CallerWins` (the example of the sentence overload: a
+  caller constraint that contradicts a hard entry wins for its token, and the glossary decides without it),
   `Tagger_TagWithGlossary_CallerSoftConstraint_AddsToGlossaryAdjustment` and
   `Tagger_TagWithGlossary_ConstraintListOfWrongLength_ThrowsArgumentException`.
 - **Tagging overloads**: `Tagger_TagWithGlossary_ThreeOverloads_Agree` (text, sentence and token list give the same tags),
@@ -184,11 +203,15 @@ allocates per token, a parallel result differs from the sequential one, or match
 - **Results**: `GlossaryMatch_Properties_DescribeTheMatchedSpan` (first token, token count, head token, offset, length and
   text compared with the source, the entry and its definition),
   `GlossaryMatch_Start_InLaterSentence_IndexesWholeText`, `Tagger_TagWithGlossary_Results_ReportMatchesOnTokensAndSentences`
-  (the match on every token of the span, `IsGlossaryHead` on the head only, `null` outside, the sentence list in text order)
+  (the match on every token of the span, `IsGlossaryHead` on the head only, `null` outside, the sentence list in text order),
+  `Glossary_QuickStart_FindsTheFourKindsOfTermAndReportsTheirHeads` (the quick start of the namespace documentation with
+  the embedded model: the four matches with span, head and certain head tags, the variant, and the pronoun left alone)
   and `Tagger_TagWithGlossary_MatchList_IsReadOnly`.
 - **Confidence**: `Tagger_TagWithGlossary_HardNounTerm_HeadIsNounWithConfidenceOne`,
   `Tagger_TagWithGlossary_HardHeadWithSeveralTags_SoftmaxOverRemainingTags` (the exact softmax, the other tag as the one
-  alternative, and a sum of one) and `Tagger_TagWithGlossary_SoftMode_RaisesConfidenceOfPreferredTag`. A word of a match
+  alternative, and a sum of one), `Tagger_TagWithGlossary_SoftMode_RaisesConfidenceOfPreferredTag` and
+  `Tagger_TagWithGlossary_WrongHardEntry_HeadConfidenceIsStillOne` (a wrong hard entry also gives confidence 1 and no
+  alternatives, so the confidence is no evidence for the entry, while soft mode keeps a choice). A word of a match
   that has no constraint of its own is a member of the match without being constrained: the middle and last words of
   `shut it down` in `Tagger_TagWithGlossary_ThreeTokenVerbTerm_NonHeadTokensAreLeftToTheModel` report the match and no
   constraint, as does the closing period of a term such as `etc.` at the end of a text, so the constrained flag marks the

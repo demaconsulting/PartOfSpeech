@@ -336,7 +336,8 @@ internal sealed class ScenarioResult
 }
 
 /// <summary>
-///     The figures of one soft strength that the pre-registered rule needs.
+///     The figures of one soft strength that the two soft strength rules need: the first-run rule reads the scenario AB at
+///     30% coverage, the rule that decides the default reads the scenario AB at 100% coverage with 30% wrong entries.
 /// </summary>
 internal sealed class StrengthCandidate
 {
@@ -364,6 +365,18 @@ internal sealed class StrengthCandidate
     ///     Gets or sets the accuracy over the covered tokens at r = 0, in percent.
     /// </summary>
     public double CoveredAccuracy0 { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the upper end of the paired 95 percent interval of the overall accuracy difference to the
+    ///     no-glossary run in the scenario AB at 100% coverage with 30% wrong entries, in points (the current rule).
+    /// </summary>
+    public double AccuracyUpperFull30 { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the difference of the confident swaps in the scenario AB at 100% coverage with 30% wrong entries,
+    ///     per 1,000 baseline noun-verb decisions (the current rule).
+    /// </summary>
+    public double SwapDifferenceFull30 { get; set; }
 }
 
 /// <summary>
@@ -402,7 +415,10 @@ internal sealed class RuleCandidate
 ///         compounds), B (single-word technical words, with a parity check against the phase-3 path), C (inflection
 ///         from gold lemmas), D (acronym case sensitivity), E (gold v2 head effect), F (history effect by distance
 ///         after a match) and G (the non-head rule for non-nominal terms), the systems (no glossary, hard, soft at
-///         the strengths of <see cref="StrengthGrid"/>), the metrics and the two pre-registered rules.
+///         the strengths of <see cref="StrengthGrid"/>), the metrics and the two pre-registered rules. The rule for the
+///         soft strength was replaced after the first run by the wrong-entry rule (<see cref="ChooseSoftStrength"/>);
+///         the first-run rule (<see cref="ChooseFirstRunSoftStrength"/>) is still computed and printed as the
+///         historical decision.
 ///     </para>
 ///     <para>
 ///         <strong>Dev data only:</strong> the entry point takes sentences that were loaded through <see cref="DevSets"/>
@@ -466,22 +482,63 @@ internal static partial class GlossaryEvaluation
         index == 0 ? "hard" : "soft " + StrengthGrid[index - 1].ToString("0.#", CultureInfo.InvariantCulture);
 
     /// <summary>
-    ///     Applies the original pre-registered rule for the soft strength (the rule of the first run).
+    ///     Applies the rule for the default soft strength: the largest strength of the grid that passes the wrong-entry
+    ///     conditions (the rule of section E9 of <c>RUN-LOG.md</c>, "Rule change after the first run").
+    /// </summary>
+    /// <remarks>
+    ///     A strength passes (see <see cref="PassesWrongEntryRule"/>) if, in the scenario AB at 100% coverage with 30%
+    ///     wrong entries, the upper end of the paired 95 percent interval of the overall accuracy difference to the
+    ///     no-glossary run is at least 0 and the confident swaps do not rise (the difference is at most 0). The largest
+    ///     passing strength is the default. If none passes, the smallest strength of the candidates is chosen, as
+    ///     the first-run rule did. The default of <see cref="GlossaryOptions.DefaultSoftStrength"/> must equal the
+    ///     result on the recorded cells (a test checks it).
+    /// </remarks>
+    /// <param name="candidates">The figures of every strength.</param>
+    /// <param name="passes">Receives whether at least one strength passed.</param>
+    /// <returns>The chosen strength.</returns>
+    /// <exception cref="ArgumentException">There is no candidate.</exception>
+    public static double ChooseSoftStrength(IReadOnlyList<StrengthCandidate> candidates, out bool passes)
+    {
+        ArgumentNullException.ThrowIfNull(candidates);
+        if (candidates.Count == 0)
+        {
+            throw new ArgumentException("At least one strength is needed.", nameof(candidates));
+        }
+
+        var ok = candidates.Where(PassesWrongEntryRule).ToList();
+        passes = ok.Count > 0;
+        return passes ? ok.Max(c => c.Strength) : candidates.Min(c => c.Strength);
+    }
+
+    /// <summary>
+    ///     Tells whether a strength passes the wrong-entry conditions of the rule for the default soft strength.
+    /// </summary>
+    /// <param name="candidate">The figures of the strength.</param>
+    /// <returns><c>true</c> if the upper end of the accuracy interval is at least 0 and the swap difference is at most 0.</returns>
+    public static bool PassesWrongEntryRule(StrengthCandidate candidate)
+    {
+        ArgumentNullException.ThrowIfNull(candidate);
+        return candidate.AccuracyUpperFull30 >= 0 && candidate.SwapDifferenceFull30 <= 0;
+    }
+
+    /// <summary>
+    ///     Applies the original pre-registered rule for the soft strength (the rule of the first run, historical).
     /// </summary>
     /// <remarks>
     ///     A strength is admissible if the accuracy difference at r = 10% is at least 0, the swap difference at r = 10% is
     ///     at most 0 and the accuracy difference at r = 30% is at least <c>-0.5</c>. Among the admissible strengths the
     ///     one with the highest covered-token accuracy at r = 0 wins; strengths within 0.1 points of the best are tied and
     ///     the smallest wins. If none is admissible the smallest strength of the candidates is chosen. The default of
-    ///     <see cref="GlossaryOptions.DefaultSoftStrength"/> follows the rule that replaced this one after the first run
-    ///     (section E9 of <c>RUN-LOG.md</c>, "Rule change after the first run"); this method is kept so that the first
-    ///     run stays reproducible, and it does not decide the default.
+    ///     <see cref="GlossaryOptions.DefaultSoftStrength"/> follows the rule of <see cref="ChooseSoftStrength"/>, which
+    ///     replaced this one after the first run (section E9 of <c>RUN-LOG.md</c>, "Rule change after the first run");
+    ///     this method is kept, and the command prints its decision as the historical one, so that the first run stays
+    ///     reproducible.
     /// </remarks>
     /// <param name="candidates">The figures of every strength.</param>
     /// <param name="admissible">Receives whether at least one strength was admissible.</param>
     /// <returns>The chosen strength.</returns>
     /// <exception cref="ArgumentException">There is no candidate.</exception>
-    public static double ChooseSoftStrength(IReadOnlyList<StrengthCandidate> candidates, out bool admissible)
+    public static double ChooseFirstRunSoftStrength(IReadOnlyList<StrengthCandidate> candidates, out bool admissible)
     {
         ArgumentNullException.ThrowIfNull(candidates);
         if (candidates.Count == 0)
@@ -502,7 +559,7 @@ internal static partial class GlossaryEvaluation
     }
 
     /// <summary>
-    ///     Tells whether a strength is admissible under the pre-registered rule.
+    ///     Tells whether a strength is admissible under the original pre-registered rule (the first-run rule).
     /// </summary>
     /// <param name="candidate">The figures of the strength.</param>
     /// <returns><c>true</c> if all three conditions hold.</returns>

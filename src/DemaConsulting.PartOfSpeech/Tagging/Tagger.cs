@@ -320,7 +320,12 @@ public sealed class Tagger
     ///     of its entry. How terms are matched, how hard and soft entries work and what happens to the confidence is
     ///     described on <see cref="Glossary"/>; the matches are reported on <see cref="TaggedToken.GlossaryMatch"/> and
     ///     <see cref="TaggedSentence.GlossaryMatches"/>. The glossary is not stored: one tagger can be used with any
-    ///     number of glossaries, and the first use of a glossary with this tagger compiles its constraint tables once.
+    ///     number of glossaries. The first sentence with a match of a glossary compiles its constraint tables for this
+    ///     tagger once; the tagger keeps them for as long as the glossary object is alive and reuses them in later calls,
+    ///     so build a glossary once and keep it. The confidence of a glossary head word is not evidence that the entry is
+    ///     right: a hard entry that leaves one tag gives 1.0 whatever the model thinks. In
+    ///     <see cref="Tag(Sentence, Glossary, IReadOnlyList{TokenConstraint}?)"/> and the other overloads, your own
+    ///     constraints are combined with those of the glossary as described there.
     /// </remarks>
     /// <param name="text">The text.</param>
     /// <param name="glossary">The glossary; <see cref="Glossary.Empty"/> for none.</param>
@@ -368,12 +373,19 @@ public sealed class Tagger
     ///         entry: in hard mode the head word is limited to the tags of the entry, in soft mode they are boosted by the
     ///         strength of the glossary times the temperature of this tagger's model. A hard constraint with one allowed
     ///         tag gives the token the confidence exactly 1.0 and no alternatives; otherwise the confidence is the softmax
-    ///         over the tags that remain. As for every constraint, the tag that is chosen becomes history for the tokens
+    ///         over the tags that remain. This confidence measures the choice among the tags that the constraints still
+    ///         allow; it is not evidence that the entry is correct. As for every constraint, the tag that is chosen becomes history for the tokens
     ///         after it, so the neighbors after a match can change; the tokens before the first match never do.
     ///     </para>
     ///     <para>
-    ///         Your own <paramref name="constraints"/> are combined with those of the glossary per token with
-    ///         <see cref="TokenConstraint.And(TokenConstraint)"/>; when the two allow no tag in common, your constraint wins.
+    ///         <strong>Precedence of your constraints:</strong> your own <paramref name="constraints"/> (one per token) and
+    ///         the constraints of the glossary are combined per token. If you give no constraint for a token
+    ///         (<see cref="TokenConstraint.None"/>), the glossary's constraint applies; if the glossary has none for the
+    ///         token, yours applies; if both exist, they are combined with
+    ///         <see cref="TokenConstraint.And(TokenConstraint)"/>. When the allowed tags of the two are disjoint (your
+    ///         constraint contradicts a hard entry, for example <c>Only(Upos.Verb)</c> on a head word that the entry limits
+    ///         to <c>NOUN</c>), <strong>your constraint wins</strong> for that token: it is explicit and per call, while the
+    ///         glossary is the default for all calls. A sentence without a match is tagged with your constraints alone.
     ///         The parameter is optional and comes last so that an existing call such as <c>Tag(sentence, null)</c> keeps
     ///         choosing <see cref="Tag(Sentence, IReadOnlyList{TokenConstraint}?)"/>.
     ///     </para>
@@ -400,6 +412,18 @@ public sealed class Tagger
     ///     {
     ///         Console.WriteLine($"{match.Text}: head {tagged.Tokens[match.HeadToken].Tag}");
     ///     }
+    ///     </code>
+    ///     When your constraint contradicts a hard entry, yours wins for that token (here the entry says <c>NOUN</c>, the
+    ///     constraint allows only <c>VERB</c>):
+    ///     <code>
+    ///     Glossary glossary = Glossary.Create(new[] { new GlossaryEntry("bleed valve", Upos.Noun) });
+    ///     Sentence sentence = Tokenizer.Tokenize("Close the bleed valve.")[0];
+    ///     var constraints = sentence.Tokens
+    ///         .Select(token => token.Text == "valve" ? TokenConstraint.Only(Upos.Verb) : TokenConstraint.None)
+    ///         .ToArray();
+    ///
+    ///     TaggedSentence tagged = tagger.Tag(sentence, glossary, constraints);
+    ///     Console.WriteLine(tagged.Tokens[3].Tag);   // Verb
     ///     </code>
     /// </example>
     public TaggedSentence Tag(Sentence sentence, Glossary glossary, IReadOnlyList<TokenConstraint>? constraints = null)
@@ -436,7 +460,7 @@ public sealed class Tagger
     ///     The tokens must follow the convention of <see cref="Tokenizer"/> (see
     ///     <see cref="Tag(IReadOnlyList{string}, IReadOnlyList{TokenConstraint}?)"/>): a term is matched token by token, so a
     ///     token with punctuation stuck to it (<c>valve.</c>) does not match <c>valve</c>. Everything else, including the
-    ///     combination with <paramref name="constraints"/>, is described on
+    ///     precedence of <paramref name="constraints"/> over the glossary when the two contradict each other, is described on
     ///     <see cref="Tag(Sentence, Glossary, IReadOnlyList{TokenConstraint}?)"/> and <see cref="Glossary"/>.
     /// </remarks>
     /// <param name="tokens">The tokens; none may be <c>null</c>, empty or contain white space.</param>

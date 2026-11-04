@@ -301,13 +301,16 @@ with the tags that fit the form:
   other tags are not inflected.
 - Irregular forms (`bled`, `leaves`) and the doubling of longer words (`permitted`) are not generated: list them with
   `WithVariants`, which takes whole-term spellings with the same number of tokens. A term as written wins over a listed
-  variant, and a variant over a generated form.
+  variant, and a variant over a generated form. An irregular form that is identical to the lemma (`set`, `cut`) needs no
+  variant, because the term already matches it, and a variant that repeats the term or another variant is ignored without
+  an error.
 - `GlossaryOptions.Inflect` and `GlossaryEntry.WithInflection` switch it off.
 
 ### Caveats
 
 - **Tokenization.** A term is split into tokens like running text. `bleed-valve` is one token and does not match the text
-  `bleed valve` (add both spellings, or one as a variant). A contraction in a term is split (`don't` becomes `do` and
+  `bleed valve` (add both spellings as two entries; a variant cannot help, because it must have the same number of
+  tokens as the term). A contraction in a term is split (`don't` becomes `do` and
   `n't`), so give such a term a head with `WithHead`. Punctuation inside a word (`3.5`, `R&D`, `and/or`) behaves as in text.
   A term never matches across two sentences, and a pre-tokenized token with punctuation stuck to it (`valve.`) does not
   match `valve`.

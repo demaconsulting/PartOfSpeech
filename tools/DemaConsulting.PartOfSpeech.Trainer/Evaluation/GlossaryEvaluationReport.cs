@@ -1086,8 +1086,10 @@ internal static partial class GlossaryEvaluation
     /// <param name="rules">The figures of the alternative non-head rules.</param>
     private static void WriteDecisions(List<string> lines, OpenScenarios scenarios, List<RuleCandidate> rules)
     {
-        // The strength rule on the primary scenario: AB at 30% coverage (r = 0, 10, 30%)
+        // The strength rules read the scenario AB: the first-run rule at 30% coverage (r = 0, 10, 30%), the current rule at
+        // 100% coverage with 30% wrong entries (the results are ordered by coverage, then by the wrong share)
         var ab = scenarios.Results["AB"];
+        var full30 = ab[(CoveragePermille.Length - 1) * WrongPercent.Length + WrongPercent.Length - 1];
         var candidates = new List<StrengthCandidate>();
         for (var s = 1; s <= StrengthGrid.Length; s++)
         {
@@ -1098,10 +1100,33 @@ internal static partial class GlossaryEvaluation
                 SwapDifference10 = ab[1].Cells[s].Swaps.Difference,
                 AccuracyDifference30 = ab[2].Cells[s].Accuracy.Difference,
                 CoveredAccuracy0 = NaNToZero(Acc(ab[0].Systems[s], ab[0].Categories, IsCovered)),
+                AccuracyUpperFull30 = full30.Cells[s].Accuracy.High,
+                SwapDifferenceFull30 = full30.Cells[s].Swaps.Difference,
             });
         }
 
-        var chosen = ChooseSoftStrength(candidates, out var admissible);
+        // The current rule decides the default
+        var chosen = ChooseSoftStrength(candidates, out var passes);
+        var currentRows = candidates.Select((c, i) => new[]
+        {
+            c.Strength.ToString("0.#", CultureInfo.InvariantCulture),
+            Interval(full30.Cells[i + 1].Accuracy),
+            Sign(c.SwapDifferenceFull30),
+            PassesWrongEntryRule(c) ? "yes" : "no",
+        });
+        Table(lines, "Soft strength rule (current, rule change after the first run), scenario AB at 100% coverage with 30% wrong entries: overall accuracy change (points, paired 95% interval), confident swap change (per 1,000), passes", new[] { "Strength", "accuracy change r=30", "swaps change r=30", "passes" }, currentRows);
+        lines.Add(string.Empty);
+        lines.Add(string.Format(
+            CultureInfo.InvariantCulture,
+            "**Decision (soft strength)**: {0}; chosen strength {1} (the largest that passes); the constant GlossaryOptions.DefaultSoftStrength is {2} and {3} in the grid{4}.",
+            passes ? "at least one strength passes" : "no strength passes, so the smallest of the grid applies",
+            chosen.ToString("0.#", CultureInfo.InvariantCulture),
+            GlossaryOptions.DefaultSoftStrength.ToString("0.#", CultureInfo.InvariantCulture),
+            StrengthGrid.Contains(GlossaryOptions.DefaultSoftStrength) ? "is" : "is NOT",
+            Math.Abs(chosen - GlossaryOptions.DefaultSoftStrength) < 1e-9 ? " and equals the chosen strength" : " and DIFFERS from the chosen strength"));
+
+        // The rule of the first run, kept as the historical decision
+        var firstChosen = ChooseFirstRunSoftStrength(candidates, out var admissible);
         var rows = candidates.Select(c => new[]
         {
             c.Strength.ToString("0.#", CultureInfo.InvariantCulture),
@@ -1111,15 +1136,13 @@ internal static partial class GlossaryEvaluation
             Pct(c.CoveredAccuracy0),
             IsAdmissible(c) ? "yes" : "no",
         });
-        Table(lines, "Soft strength rule, scenario AB at 30% coverage: overall accuracy change at r=10% (points), swap change at r=10% (per 1,000), overall accuracy change at r=30% (points), covered-token accuracy at r=0 (%), admissible", new[] { "Strength", "accuracy r=10", "swaps r=10", "accuracy r=30", "covered r=0", "admissible" }, rows);
+        Table(lines, "Soft strength rule of the first run (historical), scenario AB at 30% coverage: overall accuracy change at r=10% (points), swap change at r=10% (per 1,000), overall accuracy change at r=30% (points), covered-token accuracy at r=0 (%), admissible", new[] { "Strength", "accuracy r=10", "swaps r=10", "accuracy r=30", "covered r=0", "admissible" }, rows);
         lines.Add(string.Empty);
         lines.Add(string.Format(
             CultureInfo.InvariantCulture,
-            "**Decision (soft strength)**: {0}; chosen strength {1}; the constant GlossaryOptions.DefaultSoftStrength is {2} and {3} in the grid. This is the original rule of the first run; the default follows the rule change after the first run (RUN-LOG E9).",
+            "**Historical decision (soft strength, rule of the first run)**: {0}; chosen strength {1}. This rule was replaced after the first run and does not decide the default (RUN-LOG E9).",
             admissible ? "at least one strength is admissible" : "no strength is admissible, so the smallest of the grid applies",
-            chosen.ToString("0.#", CultureInfo.InvariantCulture),
-            GlossaryOptions.DefaultSoftStrength.ToString("0.#", CultureInfo.InvariantCulture),
-            StrengthGrid.Contains(GlossaryOptions.DefaultSoftStrength) ? "is" : "is NOT"));
+            firstChosen.ToString("0.#", CultureInfo.InvariantCulture)));
 
         var rule = ChooseNonHeadRule(rules);
         foreach (var candidate in rules)

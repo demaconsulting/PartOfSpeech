@@ -1,3 +1,4 @@
+// cspell:ignore Contoso
 namespace DemaConsulting.PartOfSpeech;
 
 /// <summary>
@@ -7,8 +8,11 @@ namespace DemaConsulting.PartOfSpeech;
 /// <remarks>
 ///     <para>
 ///         An entry says "when the words of this term occur in a sentence, the head word of the term has one of these
-///         tags". The term may be a single word (<c>torque</c>) or several words (<c>bleed valve</c>); the head word
-///         is the last word, except for a phrasal verb: when the tags include <see cref="Upos.Verb"/>, the term has
+///         tags". The <strong>head</strong> is the word of the term that takes the tags of the entry. By default it is
+///         the last word (<c>Contoso Hub</c> has the head <c>Hub</c>, <c>bleed valve</c> has <c>valve</c>); a phrasal
+///         verb has its head on the first word (<c>shut down</c> has the head <c>shut</c>). The term may be a single
+///         word (<c>torque</c>) or several words (<c>bleed valve</c>). The exact rule for the phrasal verb: when the
+///         tags include <see cref="Upos.Verb"/>, the term has
 ///         at least two words and every word after the first is one of a small closed list of particle words (<c>about</c>,
 ///         <c>across</c>, <c>ahead</c>, <c>along</c>, <c>apart</c>, <c>around</c>, <c>aside</c>, <c>away</c>,
 ///         <c>back</c>, <c>by</c>, <c>down</c>, <c>forth</c>, <c>forward</c>, <c>in</c>, <c>off</c>, <c>on</c>,
@@ -16,10 +20,13 @@ namespace DemaConsulting.PartOfSpeech;
 ///         <c>within</c>) that the lexicon of the library also allows as adposition, adverb or particle, the head word
 ///         is the first word. So <c>shut down</c>, <c>carry out</c> and <c>set up</c> have the head <c>shut</c>,
 ///         <c>carry</c> and <c>set</c>, while <c>bleed valve</c>, <c>take care</c> and <c>shut down valve</c> keep the
-///         last word. <see cref="WithHead(int)"/> overrides the default in both directions. The other words of a term
+///         last word, and so do <c>look after</c> (<c>after</c> is not in the list) and <c>look forward to</c>
+///         (<c>to</c> is not in the list): for these, <see cref="WithHead(int)"/> sets the head explicitly and
+///         overrides the default in both directions. The other words of a term
 ///         are not
 ///         given the entry's tags, but they are kept from being read as verbs when the entry is a noun (see
-///         <see cref="Glossary"/>).
+///         <see cref="Glossary"/>), and <see cref="WithTokenTags(int, UposSet)"/> sets their tags explicitly (for the
+///         product name <c>Contoso Hub</c>, <c>Contoso</c> is then a proper noun too).
 ///     </para>
 ///     <para>
 ///         The term is split into tokens by the same tokenizer that splits the text, so that the tokens of a term and
@@ -248,6 +255,10 @@ public sealed class GlossaryEntry
     /// <summary>
     ///     Gets the explicit variant spellings of the whole term that were supplied with <see cref="WithVariants(string[])"/>.
     /// </summary>
+    /// <remarks>
+    ///     A variant that spells the term, or that was listed twice, is not in the list (see
+    ///     <see cref="WithVariants(string[])"/>).
+    /// </remarks>
     /// <value>Empty by default.</value>
     public IReadOnlyList<string> Variants => _variantView;
 
@@ -303,18 +314,30 @@ public sealed class GlossaryEntry
     ///     Gets a copy of the entry whose head word is another token of the term.
     /// </summary>
     /// <remarks>
-    ///     The head word receives the tags of the entry and its inflected forms are matched. The call overrides the
+    ///     In plain words: use it to say which word of the term takes the tags of the entry. The head word receives the
+    ///     tags of the entry and its inflected forms are matched. The call overrides the
     ///     default head in both directions, also <c>WithHead(last)</c>: without a call, the head is the first word of a
     ///     phrasal verb (the tags include <see cref="Upos.Verb"/>, the term has at least two words, and every word after
     ///     the first is a word of the closed particle list, see <see cref="GlossaryEntry"/>, that the lexicon allows as
     ///     adposition, adverb or particle, as for <c>shut down</c>) and the last word of every other term. Use the call
-    ///     for a phrasal verb with a particle that is not in the list, or to keep the last word as the head of a term
+    ///     for a phrasal verb with a particle that is not in the list (<c>look after</c>: without the call, the head is
+    ///     <c>after</c> and a hard entry forces it to be a verb), for a phrasal verb of three words whose last word is
+    ///     not in the list (<c>look forward to</c>), or to keep the last word as the head of a term
     ///     that the rule takes for a phrasal verb. The rule that limits the particle applies only to a two-word verb
-    ///     term whose head is the first word.
+    ///     term whose head is the first word; the other words of a longer term are left to the model, and
+    ///     <see cref="WithTokenTags(int, UposSet)"/> sets them.
     /// </remarks>
     /// <param name="tokenIndex">The index in <see cref="Tokens"/> of the head word.</param>
     /// <returns>The new entry; this entry is unchanged.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tokenIndex"/> is negative or not less than the number of tokens.</exception>
+    /// <example>
+    ///     Make the verb the head of a phrasal verb whose particle is not in the list of particle words:
+    ///     <code>
+    ///     var lookAfter = new GlossaryEntry("look after", Upos.Verb);
+    ///     Console.WriteLine(lookAfter.HeadIndex);                  // 1 (after is the last word)
+    ///     Console.WriteLine(lookAfter.WithHead(0).HeadIndex);      // 0 (look is the head)
+    ///     </code>
+    /// </example>
     public GlossaryEntry WithHead(int tokenIndex)
     {
         if (tokenIndex < 0 || tokenIndex >= _tokens.Length)
@@ -352,67 +375,117 @@ public sealed class GlossaryEntry
     /// <summary>
     ///     Gets a copy of the entry that switches the matching of inflected forms on or off for this entry.
     /// </summary>
+    /// <remarks>
+    ///     In plain words: with inflection on (the default of the glossary), the regular plural and verb forms of the head
+    ///     word match too (<c>valves</c>, <c>isolated</c>); with it off, only the term and its variants match.
+    /// </remarks>
     /// <param name="inflect"><c>true</c> to match the generated forms of the head word, <c>false</c> to match only the term and its variants.</param>
     /// <returns>The new entry; this entry is unchanged.</returns>
+    /// <example>
+    ///     Match only the exact word <c>tap</c>, not its plural:
+    ///     <code>
+    ///     Glossary glossary = Glossary.Create(new[] { new GlossaryEntry("tap", Upos.Noun).WithInflection(false) });
+    ///
+    ///     Console.WriteLine(glossary.FindMatches(Tokenizer.Tokenize("Open the tap.")[0]).Count);    // 1
+    ///     Console.WriteLine(glossary.FindMatches(Tokenizer.Tokenize("Open the taps.")[0]).Count);   // 0
+    ///     </code>
+    /// </example>
     public GlossaryEntry WithInflection(bool inflect) =>
         new(this, HeadIndex, Definition, CaseSensitive, Mode, inflect, _variants, _variantTokens, _variantEndTokens, _tokenTags);
 
     /// <summary>
-    ///     Gets a copy of the entry with explicit variant spellings of the whole term, for irregular forms.
+    ///     Gets a copy of the entry with explicit variant spellings of the whole term, for irregular forms and other names.
     /// </summary>
     /// <remarks>
-    ///     Use variants for forms that the regular inflection rules do not produce (<c>bled</c> for <c>bleed</c>, a
-    ///     British spelling, an alternative name). Each variant is split into tokens like the term and must give the
-    ///     same number of tokens; it carries the full tag set of the entry on its head word. The variants replace any
-    ///     variants that the entry already had. A variant matches with the same case rule as the entry and is reported
-    ///     as a variant (<see cref="GlossaryMatch.IsVariant"/>).
+    ///     <para>
+    ///         In plain words: a variant is another spelling of the whole term that has the same number of words, such as
+    ///         <c>bled</c> for <c>bleed</c> or <c>relief valve</c> for <c>release valve</c>. Use variants for forms that
+    ///         the regular inflection rules do not produce (an irregular past tense, a spelling variant, an alternative
+    ///         name). Each variant is split into tokens like the term and must give the
+    ///         same number of tokens; it carries the full tag set of the entry on its head word. The variants replace any
+    ///         variants that the entry already had. A variant matches with the same case rule as the entry and is reported
+    ///         as a variant (<see cref="GlossaryMatch.IsVariant"/>).
+    ///     </para>
+    ///     <para>
+    ///         <strong>No variant is needed for an irregular form that is identical to the lemma</strong>
+    ///         (<c>set</c>, <c>cut</c>, <c>put</c>: the past tense of <c>set</c> is <c>set</c>): the term itself already
+    ///         matches it. <strong>Redundant variants are ignored without an error</strong>: a variant that spells the
+    ///         term (the same words in the same letter case) and a variant that is listed twice are dropped, so
+    ///         <see cref="Variants"/> contains each extra spelling once, in the order given, and the match of the term is
+    ///         reported as the term, not as a variant. A variant that spells a form that the inflection rules would also
+    ///         generate (<c>bleeds</c>) is kept and wins over the generated form, so it carries the full tag set of the
+    ///         entry instead of the tags derived for the form. A variant that differs from the term only in letter case is
+    ///         kept but adds nothing while the entry is case-insensitive. An invalid variant still throws, also when it would have
+    ///         been redundant.
+    ///     </para>
     /// </remarks>
     /// <param name="variants">The variant spellings of the whole term; none may be <c>null</c> or empty.</param>
     /// <returns>The new entry; this entry is unchanged.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="variants"/> or one of its items is <c>null</c>.</exception>
     /// <exception cref="ArgumentException">A variant is empty, has no token with a letter or a digit, or gives another number of tokens than the term.</exception>
+    /// <example>
+    ///     List an irregular past tense and an alternative name; a variant that repeats the term or an earlier variant is
+    ///     ignored:
+    ///     <code>
+    ///     var bleed = new GlossaryEntry("bleed", Upos.Verb).WithVariants("bled");
+    ///     var again = bleed.WithVariants("bleed", "bled", "bled");
+    ///     Console.WriteLine(string.Join(", ", again.Variants));   // bled
+    ///
+    ///     var valve = new GlossaryEntry("release valve", Upos.Noun).WithVariants("relief valve");
+    ///     Console.WriteLine(valve.Variants.Count);                // 1
+    ///     </code>
+    /// </example>
     public GlossaryEntry WithVariants(params string[] variants)
     {
         ArgumentNullException.ThrowIfNull(variants);
 
-        // Validate and split every variant like the term; an invalid variant must fail here, not inside the matcher
-        var copy = new string[variants.Length];
-        var tokens = new string[variants.Length][];
-        var endTokens = new string[]?[variants.Length];
-        for (var i = 0; i < variants.Length; i++)
+        // Validate and split every variant like the term; an invalid variant must fail here, not inside the matcher.
+        // A variant that spells the term or an earlier variant adds nothing and is dropped (the matcher would ignore it anyway)
+        var copy = new List<string>(variants.Length);
+        var tokens = new List<string[]>(variants.Length);
+        var endTokens = new List<string[]?>(variants.Length);
+        foreach (var variant in variants)
         {
-            var variant = variants[i];
             if (variant == null)
             {
                 throw new ArgumentNullException(nameof(variants), "A variant is null.");
             }
 
-            tokens[i] = TokenizeTerm(variant, nameof(variants), out endTokens[i]);
-            if (tokens[i].Length != _tokens.Length)
+            var split = TokenizeTerm(variant, nameof(variants), out var end);
+            if (split.Length != _tokens.Length)
             {
                 throw new ArgumentException(
-                    $"The variant '{variant}' has {tokens[i].Length} token(s) but the term has {_tokens.Length}.",
+                    $"The variant '{variant}' has {split.Length} token(s) but the term has {_tokens.Length}.",
                     nameof(variants));
             }
 
-            copy[i] = variant;
+            if (split.SequenceEqual(_tokens, StringComparer.Ordinal) || tokens.Any(known => known.SequenceEqual(split, StringComparer.Ordinal)))
+            {
+                continue;
+            }
+
+            copy.Add(variant);
+            tokens.Add(split);
+            endTokens.Add(end);
         }
 
-        return new(this, HeadIndex, Definition, CaseSensitive, Mode, Inflect, copy, tokens, endTokens, _tokenTags);
+        return new(this, HeadIndex, Definition, CaseSensitive, Mode, Inflect, copy.ToArray(), tokens.ToArray(), endTokens.ToArray(), _tokenTags);
     }
 
     /// <summary>
     ///     Gets a copy of the entry with explicit tags for one non-head token of the term.
     /// </summary>
     /// <remarks>
-    ///     Without it a non-head token of a noun term is only kept from being read as a verb or an auxiliary, the
+    ///     In plain words: use it to say what one of the other words of the term is. Without it a non-head token of a noun term is only kept from being read as a verb or an auxiliary, the
     ///     second token of a two-token verb term whose head is the first word (the particle of a phrasal verb, see
     ///     <see cref="WithHead(int)"/>) is limited to adposition, adverb and particle (this rule was chosen on
-    ///     development data, see section E9 of the trainer's <c>RUN-LOG.md</c>), and every other token (for example
+    ///     development data, see section E9 of
+    ///     https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md), and every other token (for example
     ///     <c>it</c> in <c>take it apart</c>) is left to the
     ///     model. Use it to say exactly what a word of the term is, for
     ///     example that <c>up</c> in the phrasal verb <c>set up</c> is an adverb: <c>new GlossaryEntry("set up",
-    ///     Upos.Verb).WithTokenTags(1, UposSet.Of(Upos.Adv, Upos.Adp))</c>. The tags are applied in the
+    ///     Upos.Verb).WithTokenTags(1, UposSet.Of(Upos.Adv, Upos.Adp))</c>, or that the first word of the product name
+    ///     <c>Contoso Hub</c>, which the model has never seen, is a proper noun like the head. The tags are applied in the
     ///     mode of the entry. A later call for the same token replaces the earlier one.
     /// </remarks>
     /// <param name="tokenIndex">The index in <see cref="Tokens"/> of a token that is not the head.</param>
@@ -420,6 +493,17 @@ public sealed class GlossaryEntry
     /// <returns>The new entry; this entry is unchanged.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tokenIndex"/> is negative or not less than the number of tokens.</exception>
     /// <exception cref="ArgumentException"><paramref name="tokenIndex"/> is the head token (use the tags of the entry) or <paramref name="tags"/> is empty.</exception>
+    /// <example>
+    ///     Say that both words of a product name are proper nouns (the head <c>Hub</c> takes the tags of the entry, the
+    ///     other word is set with this method):
+    ///     <code>
+    ///     var hub = new GlossaryEntry("Contoso Hub", Upos.Propn).WithTokenTags(0, UposSet.Of(Upos.Propn));
+    ///
+    ///     Console.WriteLine(hub.HeadIndex);                               // 1
+    ///     Console.WriteLine(hub.GetTokenTags(0)?.Contains(Upos.Propn));   // True
+    ///     Console.WriteLine(hub.GetTokenTags(1) is null);                 // True (the head has the tags of the entry)
+    ///     </code>
+    /// </example>
     public GlossaryEntry WithTokenTags(int tokenIndex, UposSet tags)
     {
         if (tokenIndex < 0 || tokenIndex >= _tokens.Length)

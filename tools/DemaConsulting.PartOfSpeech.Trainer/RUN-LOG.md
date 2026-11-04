@@ -503,7 +503,8 @@ grid is the default and the result says so. Hard mode is reported as the referen
 written once, in the decision of the results section, and the constant `GlossaryOptions.DefaultSoftStrength` must be a
 member of the evaluated grid (a test checks it). *(Rule change after the first run, 2026-11-04: this rule is kept as written
 and its original decision stays in the results; the default strength now follows the rule in "Rule change after the first
-run" at the end of the E9 results. The sentence above about where the number is written holds for that subsection.)*
+run" at the end of the E9 results. The sentence above about where the number is written holds for that subsection. The
+command computes both rules: the current one decides, this one is printed as the historical decision.)*
 
 **Pre-registered bar for scenario G** (the default of the non-head rule of non-nominal terms, now `None`): primary scenario
 G at 100% coverage, **covered-token accuracy** (head and second token of the matches). R1 or R2 replaces `None` only if,
@@ -860,6 +861,17 @@ The default mode stays **hard**, as in the original decision. The consistency re
 hard and of soft 4 only (soft 4 still fails: -0.50 [-0.63, -0.37] and +4.46 swaps); the rule change was applied to the
 first-run table as decided, not to a new run. The limits of the evaluation stated above (in-sample, simulated glossaries,
 development data) apply to this choice too, and a point rule on one scenario remains a point rule.
+
+**Reproducibility (added with the code change that follows this decision).** The command `glossary-eval` now implements the
+new rule (`GlossaryEvaluation.ChooseSoftStrength`): it prints the table above for the scenario AB at 100% coverage with 30%
+wrong entries and a "Decision (soft strength)" line that names the chosen strength, says whether the constant is a member of
+the grid and whether it equals the chosen strength. The first-run rule is still computed from the same run and printed
+afterwards as the "Historical decision (soft strength, rule of the first run)", so the first-run decision (4) stays
+reproducible and is no longer the one that the command presents as the decision. A re-run with the same seed and
+resamples (shipped state: the particles-only rule for two-token phrasal verbs, the head inference of the entries) printed
+the decision 2 and printed the "AB, coverage 30%" and "AB, coverage 100%" tables of overall accuracy change, confident
+swaps and category accuracy equal to the first-run tables of this section; no recorded figure was changed. A test checks the
+rule on the recorded cells and that its outcome is the constant.
 
 What hard mode costs when entries are wrong is in the same tables (the hard rows of "AB, coverage 100%" and of scenario E):
 hard mode trusts the entries completely, so a wrong entry forces a wrong tag. That is the intended behavior for a curated

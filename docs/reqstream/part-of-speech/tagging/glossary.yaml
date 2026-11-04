@@ -36,17 +36,22 @@ sections:
               - id: PartOfSpeech-Tagging-Glossary-EntryValues
                 title: >-
                   An entry shall keep its term, tags and definition as given, and shall give a changed copy for every
-                  setting while leaving the original unchanged.
+                  setting while leaving the original unchanged; a variant that spells the term or repeats an earlier
+                  variant shall be ignored without an error.
                 justification: |
                   Entries are shared between glossaries and threads and are written as chains of settings; a setting
                   that changed the original would change every glossary that holds it. The definition is
-                  documentation that must come back unchanged with a match.
+                  documentation that must come back unchanged with a match. A redundant variant adds nothing to the
+                  matching, and rejecting it would make a list of spellings that is merged from several sources fail
+                  for no useful reason, so it is dropped and the list of variants shows only the extra spellings.
                 tests:
                   - GlossaryEntry_WithHead_ValidIndex_ReturnsNewEntryAndLeavesOriginal
                   - GlossaryEntry_With_ReturnsNewEntryAndLeavesOriginal
                   - GlossaryEntry_With_Chained_KeepsEarlierSettings
                   - GlossaryEntry_Definition_IsCarriedUnchanged
                   - GlossaryEntry_WithVariants_Valid_ReplacesEarlierVariants
+                  - GlossaryEntry_WithVariants_VariantEqualToTermOrDuplicate_IsIgnoredWithoutError
+                  - GlossaryEntry_MethodExamples_GiveTheDocumentedValues
                   - GlossaryEntry_GetTokenTags_ReturnsOverrideOrNull
                   - GlossaryEntry_GetTokenTags_TokenBecomesHead_ReturnsNull
 
@@ -72,10 +77,12 @@ sections:
                   - GlossaryEntry_HeadIndex_NoVerbTagOrSingleToken_IsLastToken
                   - GlossaryEntry_HeadIndex_NounOrVerbTags_FollowTheParticleRule
                   - GlossaryEntry_WithHead_OverridesInferredHeadBothWays
+                  - GlossaryEntry_HeadIndex_UnknownParticleAndLongerPhrasalVerbs_FollowTheDocumentedRule
                   - GlossaryEntry_HeadIndex_Inference_IsDeterministicAcrossThreads
                   - Glossary_FindMatches_InferredPhrasalHead_IsReportedAndInflected
                   - GlossaryConstraints_Compile_InferredPhrasalHead_GetsParticleRule
                   - Tagger_TagWithGlossary_InferredPhrasalHead_VerbHeadAndParticleLimited
+                  - Tagger_TagWithGlossary_PhrasalVerbHeads_ForceOrLeaveTagsAsDocumented
 
               - id: PartOfSpeech-Tagging-Glossary-Builder
                 title: >-
@@ -160,6 +167,8 @@ sections:
                   - Glossary_FindMatches_EmptySentenceOrEmptyGlossary_NoMatches
                   - Glossary_FindMatches_NullSentence_ThrowsArgumentNullException
                   - Glossary_FindMatches_HashCollision_ResolvedByComparison
+                  - Glossary_FindMatches_DocumentedEdgeCases_BehaveAsDocumented
+                  - Glossary_EdgeCaseExample_ReportsTheDocumentedMatchesAndHeads
 
               - id: PartOfSpeech-Tagging-Glossary-TermTokenization
                 title: >-
@@ -174,6 +183,7 @@ sections:
                   - GlossaryEntry_Tokens_FollowTokenizer
                   - GlossaryEntry_EndTokens_TermEndingInKeptPeriod_DiffersAtEndOfText
                   - Glossary_FindMatches_HyphenatedTermIsOneToken_DoesNotMatchSpaced
+                  - Glossary_HyphenatedVerb_IsOneTokenAndMatchesItsFormsButNotOtherSpellings
                   - Glossary_FindMatches_ContractionInTerm_SplitsLikeTokenizer
                   - Glossary_FindMatches_AbbreviationPeriod_MidTextAndEndOfText
                   - Glossary_FindMatches_CurlyApostropheEqualsStraight
@@ -186,11 +196,13 @@ sections:
                   The regular English inflected forms of the head word of an entry shall match as well, with the tags
                   that fit the form, unless inflection is switched off for the glossary or the entry; only the head
                   word shall be inflected, listed variants shall match, and a term shall win over a variant and a
-                  variant over a generated form.
+                  variant over a generated form; an irregular form that is identical to the lemma shall need no
+                  variant.
                 justification: |
                   A glossary lists lemmas while text has plurals and verb forms, so without generated forms a
                   glossary would miss most of its occurrences; irregular forms are listed as variants, and an
-                  explicit statement must always win over a guess.
+                  explicit statement must always win over a guess. The past tense of set is set, which the term
+                  itself already matches, so such a form needs no variant.
                 tests:
                   - GlossaryInflector_Plural_FollowsRegularRules
                   - GlossaryInflector_Past_FollowsRegularRules
@@ -210,6 +222,7 @@ sections:
                   - Glossary_FindMatches_ExplicitVariants_AreMatched
                   - Glossary_FindMatches_TermBeatsVariantBeatsGeneratedForm
                   - Glossary_FindMatches_VariantBeatsGeneratedForm_EarlierEntryWinsOtherwise
+                  - Glossary_FindMatches_RedundantVariantsAndLemmaEqualForms_NeedNoVariant
 
               - id: PartOfSpeech-Tagging-Glossary-HardConstraints
                 title: >-
@@ -267,15 +280,17 @@ sections:
               - id: PartOfSpeech-Tagging-Glossary-CallerConstraints
                 title: >-
                   The constraints that a caller passes together with a glossary shall be combined with those of the
-                  glossary per token, shall win where the two allow no tag in common, and shall be refused when their
-                  number differs from the number of tokens.
+                  glossary per token (the glossary's where the caller gives none, the caller's where the glossary has
+                  none, both combined where both exist), shall win where the two allow no tag in common, and shall be
+                  refused when their number differs from the number of tokens.
                 justification: |
                   A caller may know more about one token than the glossary does, and a call with an explicit constraint
-                  is the more specific statement; a list that does not line up with the tokens would constrain the
-                  wrong words.
+                  is the more specific statement, explicit and per call while the glossary is the default for all
+                  calls; a list that does not line up with the tokens would constrain the wrong words.
                 tests:
                   - GlossaryConstraints_Merge_NoneIntersectionAndContradiction
                   - Tagger_TagWithGlossary_CallerConstraints_AreMergedAndCallerWinsWhenDisjoint
+                  - Tagger_TagWithGlossary_CallerConstraintContradictingHardEntry_CallerWins
                   - Tagger_TagWithGlossary_CallerSoftConstraint_AddsToGlossaryAdjustment
                   - Tagger_TagWithGlossary_ConstraintListOfWrongLength_ThrowsArgumentException
 
@@ -310,6 +325,7 @@ sections:
                   - GlossaryMatch_Properties_DescribeTheMatchedSpan
                   - GlossaryMatch_Start_InLaterSentence_IndexesWholeText
                   - Tagger_TagWithGlossary_Results_ReportMatchesOnTokensAndSentences
+                  - Glossary_QuickStart_FindsTheFourKindsOfTermAndReportsTheirHeads
                   - Tagger_TagWithGlossary_MatchList_IsReadOnly
 
               - id: PartOfSpeech-Tagging-Glossary-Confidence
@@ -319,15 +335,18 @@ sections:
                   tags, and a token shall be reported as constrained when a constraint of the glossary was applied to
                   it, which holds for the head word and for every non-head word that has a constraint, but not for a
                   word of a match that has none (such as the closing period of a term like etc. at the end of a text,
-                  which belongs to the match without being constrained).
+                  which belongs to the match without being constrained). The confidence of a glossary token shall
+                  measure only the choice among the tags that remain, so a wrong hard entry shall also give 1.
                 justification: |
                   Confidence is read as a probability among the tags that were considered; a tag that the glossary
                   fixed was not chosen by the model, so it must say that there was no choice, and a soft preference
-                  must show in the number. Belonging to a match and being constrained are different facts: the first
+                  must show in the number. It is not evidence that the entry is right, which the documentation says
+                  and this requirement pins. Belonging to a match and being constrained are different facts: the first
                   is reported by the match of the token, the second by the constrained flag, so a caller can tell
                   which words the glossary actually decided.
                 tests:
                   - Tagger_TagWithGlossary_HardNounTerm_HeadIsNounWithConfidenceOne
+                  - Tagger_TagWithGlossary_WrongHardEntry_HeadConfidenceIsStillOne
                   - Tagger_TagWithGlossary_HardHeadWithSeveralTags_SoftmaxOverRemainingTags
                   - Tagger_TagWithGlossary_SoftMode_RaisesConfidenceOfPreferredTag
                   - Tagger_TagWithGlossary_ThreeTokenVerbTerm_NonHeadTokensAreLeftToTheModel

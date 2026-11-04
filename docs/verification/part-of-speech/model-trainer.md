@@ -121,9 +121,15 @@ differently from the pre-registered text.
   on the development data): `GoldTarget_Lemma_IsParsedAndOptional` (the lemma column of the gold development set is read
   when present, and is empty otherwise), `GlossaryEvaluation_StrengthGrid_ContainsTheDefaultSoftStrength` (the library
   constant is a member of the evaluated grid, which is sorted),
-  `GlossaryEvaluation_ChooseSoftStrength_PicksSmallestWithinTolerance` and
-  `GlossaryEvaluation_ChooseSoftStrength_ConditionsAndNoneAdmissible` (the original pre-registered strength rule, the rule
-  of the first run, on synthetic
+  `GlossaryEvaluation_ChooseSoftStrength_LargestPassingStrengthWins` and
+  `GlossaryEvaluation_ChooseSoftStrength_ConditionsAndNonePasses` (the rule that fixes the default soft strength, on
+  synthetic tables: the boundary of each of its two conditions, the largest passing strength wins even when a larger one
+  has the better covered accuracy, and the smallest of the grid when none passes),
+  `GlossaryEvaluation_ChooseSoftStrength_RecordedCells_EqualsTheDefaultSoftStrength` (the same rule on the cells recorded
+  in the run log gives the library constant, which is a member of the grid),
+  `GlossaryEvaluation_ChooseFirstRunSoftStrength_PicksSmallestWithinTolerance` and
+  `GlossaryEvaluation_ChooseFirstRunSoftStrength_ConditionsAndNoneAdmissible` (the original pre-registered strength rule,
+  the rule of the first run that the command still prints as the historical decision, on synthetic
   tables: the boundary of each admissibility condition, the tie tolerance, the smallest tied strength, and the smallest
   of the grid when none is admissible), `GlossaryEvaluation_ChooseNonHeadRule_BarNeedsGainIntervalAndNoLoss` (the bar of
   scenario G: a gain of the required size whose interval excludes zero and no loss at 10% wrong entries; the larger gain

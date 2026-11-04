@@ -193,10 +193,13 @@ not repeat any measured figure.
   path gives the tags of the hand-built constraint path of the phase 3 probe, and an invariant check proves that the tokens
   before the first match of a sentence are unchanged.
 - **Decision rules**, implemented as functions of the result tables (`ChooseSoftStrength`, `ChooseNonHeadRule`) and
-  tested on synthetic tables: `ChooseSoftStrength` is the original rule of the first run (the strength is chosen among the
-  admissible strengths of one pre-registered scenario) and stays so that the first run is reproducible; the default
-  strength that the library ships follows the replacement rule that `RUN-LOG.md` records after the first run, which is
-  applied to the printed tables and has no function in the tool. The particle rule for the second word of a two-word verb
+  tested on synthetic tables: `ChooseSoftStrength` is the rule that fixes the default soft strength of the library (the
+  largest strength of the grid whose paired accuracy interval in the scenario AB at full coverage with 30% wrong entries
+  does not lie below zero and whose confident swaps do not rise), which replaced the first-run rule after the first run
+  (`RUN-LOG.md` records the reason as a dated change); a test applies it to the recorded cells and requires the shipped
+  default. The first-run rule (`ChooseFirstRunSoftStrength`, the strength chosen among the admissible strengths of one
+  pre-registered scenario) is kept and printed as the historical decision, so that the first run stays reproducible. The
+  particle rule for the second word of a two-word verb
   term with the head first was adopted because its bar was met; the shipped scope of that rule is the measured shape
   (two-token verb terms, head first), and other shapes were not measured.
 

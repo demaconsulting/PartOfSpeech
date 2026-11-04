@@ -1,3 +1,4 @@
+// cspell:ignore Contoso
 using System.Collections.ObjectModel;
 
 namespace DemaConsulting.PartOfSpeech;
@@ -31,8 +32,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///         matches wins, the search continues after it, and matches never overlap (<c>bleed valve</c> beats <c>valve</c>).
 ///         A term matches when its tokens equal the tokens of the sentence one by one. The term is split by the same
 ///         tokenizer as the text (see <see cref="GlossaryEntry.Tokens"/>), which has consequences: <c>bleed-valve</c>
-///         is one token and does not match the text <c>bleed valve</c> (list both spellings, or use
-///         <see cref="GlossaryEntry.WithVariants(string[])"/>); a contraction in a term is split like in text
+///         is one token and does not match the text <c>bleed valve</c> (add both spellings as two entries; a variant
+///         cannot do it, because a variant must have the same number of tokens as the term); a contraction in a term is split like in text
 ///         (<c>don't</c> gives <c>do</c> and <c>n't</c>), so give such a term a head with
 ///         <see cref="GlossaryEntry.WithHead(int)"/>; punctuation inside a word (<c>3.5</c>, <c>R&amp;D</c>,
 ///         <c>and/or</c>) is handled as in text; a term never matches across two sentences; and tokens that you pass
@@ -60,8 +61,10 @@ namespace DemaConsulting.PartOfSpeech;
 ///         a verb or an adjective (<c>an isolated valve</c>), a present participle a verb, an adjective or a noun. Proper
 ///         nouns and adjectives are not inflected. Irregular forms (<c>bled</c>, <c>leaves</c>) and the doubling of
 ///         longer words (<c>permitted</c>) are not generated; list them with
-///         <see cref="GlossaryEntry.WithVariants(string[])"/>. A term as written always wins over a listed variant, and a
-///         variant over a generated form.
+///         <see cref="GlossaryEntry.WithVariants(string[])"/>. An irregular form that is identical to the lemma
+///         (<c>set</c>, <c>cut</c>, <c>put</c>) needs no variant, because the term itself already matches it. A term as
+///         written always wins over a listed variant, and a
+///         variant over a generated form; a variant that repeats the term or another variant is ignored without an error.
 ///     </para>
 ///     <para>
 ///         <strong>What a match does:</strong> in <see cref="GlossaryMode.Hard"/> mode (the default) the head word of the
@@ -69,8 +72,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///         wrong tag; it fits curated lists such as the ASD-STE100 technical names and verbs. Soft mode is for lists that are not curated or
 ///         may be wrong: in <see cref="GlossaryMode.Soft"/> mode those tags get a boost of
 ///         <see cref="GlossaryOptions.SoftStrength"/> times the model temperature, so the model can still disagree when it
-///         is sure. The measured cost of a wrong entry in each mode is in section E9 of
-///         <c>tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md</c>. The other words of a noun term (<c>bleed</c> in
+///         is sure. With wrong entries, hard mode makes confident errors, while soft mode stays near the accuracy of tagging
+///         without a glossary; the full measurements are in section E9 of
+///         https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md. The other words of a noun term (<c>bleed</c> in
 ///         <c>bleed valve</c>) can no longer be a verb or an
 ///         auxiliary in hard mode, and are penalized for these tags in soft mode; the second word of a two-word verb term
 ///         whose head is the first word (the particle of a phrasal verb such as <c>shut down</c>; see
@@ -78,24 +82,43 @@ namespace DemaConsulting.PartOfSpeech;
 ///         setting it) is limited to adposition, adverb and particle in hard mode and
 ///         boosted for these tags in soft mode, and every other word (for example <c>it</c> in <c>take it apart</c>) is
 ///         left to the model, unless you set their tags with
-///         <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/>. A hard
-///         constraint that leaves one tag gives the token the confidence exactly 1.0 and no alternatives; a hard constraint
-///         with several tags or a soft constraint gives the softmax over the tags that remain, so a soft boost raises the
-///         confidence of a preferred tag. The tagged token reports <see cref="TaggedToken.IsConstrained"/>. The tag that is
+///         <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/>. The tagged token reports
+///         <see cref="TaggedToken.IsConstrained"/>. The tag that is
 ///         chosen becomes history for the tokens after it like any other decision, so the tags of the neighbors after a
 ///         match can change; the tokens before the first match of a sentence never change.
 ///     </para>
 ///     <para>
-///         <strong>Combining with your own constraints:</strong> the tagging methods that take a glossary also take your
-///         per-token constraints. They are combined with the glossary's constraints per token with
-///         <see cref="TokenConstraint.And(TokenConstraint)"/>; if the two allow no tag in common, your constraint wins.
+///         <strong>Confidence:</strong> the confidence of a glossary token measures the choice among the tags that are
+///         still allowed after the constraints (a softmax over those tags, see
+///         [Confidence and alternatives](../DemaConsulting.PartOfSpeech.md#confidence-and-alternatives)). It is <em>not</em>
+///         evidence that the entry is correct: a hard entry that leaves one tag always gives the confidence 1.0 and no
+///         alternatives, also when the entry is wrong, and a head word with several tags or in soft mode gets the softmax
+///         over the tags that remain, where a soft boost raises the confidence of a preferred tag. Do not use the
+///         confidence of a glossary head to judge the glossary.
 ///     </para>
 ///     <para>
-///         <strong>Cost:</strong> building a glossary tokenizes every term and creates its inflected forms once. Matching
+///         <strong>Combining with your own constraints:</strong> the tagging methods that take a glossary also take your
+///         per-token constraints (the <c>constraints</c> parameter, one per token). The two sources are combined per token:
+///         when you give no constraint for a token (<see cref="TokenConstraint.None"/>), the constraint of the glossary
+///         applies, hard or soft; when the glossary has no constraint for the token (it is not part of a match, or the entry
+///         leaves it to the model), yours applies; when both exist they are combined with
+///         <see cref="TokenConstraint.And(TokenConstraint)"/>. If the allowed tags of the two have no tag in common (for
+///         example you allow only <c>VERB</c> for a head word that a hard entry limits to <c>NOUN</c>), your constraint
+///         wins and the glossary constraint is dropped for that token, because your constraint is explicit and per call,
+///         while the glossary is the default for all calls. A soft glossary constraint allows every tag, so it never
+///         conflicts; it adds its boost to your constraint.
+///     </para>
+///     <para>
+///         <strong>Cost:</strong> building a glossary tokenizes every term and creates its inflected forms once, and is
+///         linear in the number of entries (see the section Costs of the namespace documentation for the order of
+///         magnitude). A tagger compiles the constraints of a glossary the first time that a sentence contains a match of
+///         it, keeps them for as long as the glossary object is alive, and reuses them for every later call; a new
+///         glossary object, also one built from the same entries, is compiled again, so create it once and keep it. Matching
 ///         then costs at most the length of the longest term per token, whatever the size of the glossary, and does not
 ///         allocate per token for ordinary text; a token with an unusual Unicode character (anything beyond Latin-1 other than
 ///         the typographic quotes, dashes and the ellipsis) is normalized on a slower path that allocates. Tagging a
-///         sentence with a glossary allocates nothing extra when the sentence has no match; a sentence with matches
+///         sentence with a glossary allocates nothing extra when the sentence has no match, once the per-thread matching
+///         workspace has grown to the sentence length (the first use and longer sentences grow it); a sentence with matches
 ///         allocates one array sized by its token count (one small value per token, no object per token) and a few
 ///         objects per match.
 ///     </para>
@@ -160,6 +183,36 @@ namespace DemaConsulting.PartOfSpeech;
 ///     foreach (TaggedToken token in sentence.Tokens)
 ///     {
 ///         Console.WriteLine($"{token.Text} {token.Tag} {token.Confidence:0.00} {token.IsGlossaryHead}");
+///     }
+///     </code>
+///     Edge cases: overlapping entries (the longest wins), punctuation around a term, and phrasal verbs whose particle is
+///     not in the list of particle words, so that the head has to be set (see
+///     <see cref="GlossaryEntry.WithHead(int)"/>):
+///     <code>
+///     Glossary glossary = Glossary.Create(new[]
+///     {
+///         new GlossaryEntry("bleed valve", Upos.Noun),
+///         new GlossaryEntry("bleed valve cover", Upos.Noun),
+///         new GlossaryEntry("Contoso Hub", Upos.Propn),
+///         new GlossaryEntry("look after", Upos.Verb).WithHead(0),        // after is not a listed particle word
+///         new GlossaryEntry("look forward to", Upos.Verb).WithHead(0),   // to is not a listed particle word
+///     });
+///
+///     string[] texts =
+///     {
+///         "Remove the bleed valve cover.",       // the longest term wins: bleed valve cover, head 4
+///         "Close the bleed valve.",              // bleed valve, head 3
+///         "Restart (Contoso Hub), then wait.",   // brackets and comma are separate tokens: Contoso Hub, head 3
+///         "Restart the Contoso Hub.",            // the final period is a separate token: Contoso Hub, head 3
+///         "Please look after the pump.",         // look after, head 1 (look)
+///         "They look forward to the test.",      // look forward to, head 1 (look)
+///     };
+///     foreach (string text in texts)
+///     {
+///         foreach (GlossaryMatch match in glossary.FindMatches(Tokenizer.Tokenize(text)[0]))
+///         {
+///             Console.WriteLine($"{match.Text} (head {match.HeadToken})");
+///         }
 ///     }
 ///     </code>
 /// </example>

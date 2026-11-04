@@ -1,3 +1,4 @@
+// cspell:ignore Contoso
 namespace DemaConsulting.PartOfSpeech;
 
 /// <summary>
@@ -100,6 +101,11 @@ public sealed class GlossaryMatch
     /// <summary>
     ///     Gets the index in the tokens of the sentence of the head token, the token that received the tags of the entry.
     /// </summary>
+    /// <remarks>
+    ///     The head is the word of the term that takes the tags of the entry: by default the last word (<c>Hub</c> in
+    ///     <c>Contoso Hub</c>), for a phrasal verb the first (<c>shut</c> in <c>shut down</c>); see <see cref="GlossaryEntry"/>.
+    ///     It lies between <see cref="FirstToken"/> and the last token of the match.
+    /// </remarks>
     public int HeadToken { get; }
 
     /// <summary>

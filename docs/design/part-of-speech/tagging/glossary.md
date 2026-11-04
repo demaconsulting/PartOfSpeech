@@ -78,7 +78,12 @@ tokens under the same effective case rule; the index and the compiled constraint
   lower-case `s`), for a verb the third person, the past form and the present participle, with the tags that fit the
   form (a plural is a noun, a past form a verb or an adjective, a present participle a verb, an adjective or a noun);
   proper nouns, adjectives and other tags are not inflected. Irregular forms and the doubling of longer words are not
-  generated; they are listed with `WithVariants`.
+  generated; they are listed with `WithVariants`. An irregular form that is identical to the lemma (`set`, `cut`) needs
+  no variant, because the term itself matches it. `WithVariants` validates every variant like the term and then drops
+  a variant whose tokens equal the tokens of the term and a variant that repeats an earlier one (ordinal comparison of the
+  tokens, so a variant that differs only in letter case stays and is collapsed by the index when the entry is
+  case-insensitive); nothing is thrown for such a redundant variant, and `Variants` lists each extra spelling once in the
+  order given. A variant that spells a generated form is kept and wins over it with the full tag set of the entry.
 - **`GlossaryIndex.Find(tokens, workspace)`**: folds every token once into the workspace (NFC, typographic quotes,
   dashes and the ellipsis mapped to ASCII, plus the lower-case form) and hashes it; then, from the left, walks the trie
   from the current token as deep as the tokens allow and takes the longest spelling whose case rule is satisfied (a
@@ -105,7 +110,9 @@ tokens under the same effective case rule; the index and the compiled constraint
   constraint wins. A caller list of the wrong length throws `ArgumentException`.
 - **`Tagger.Tag(..., glossary, constraints)`** (the three overloads, in unit `Tagger`): find the matches; without a match
   use the plain decoding path; otherwise get the compiled constraints of the glossary from a per-tagger
-  `ConditionalWeakTable`, build the constraint array, decode, and attach the match to every token of its span
+  `ConditionalWeakTable` (keyed by the glossary object, so the tables are compiled by the first sentence with a match,
+  kept while the glossary object is alive and reused by every later call; a new glossary object is compiled again),
+  build the constraint array, decode, and attach the match to every token of its span
   (`TaggedToken.WithGlossaryMatch`) and the list to the sentence. The decoder is not changed by the glossary: its allowed
   tags, adjustments, confidence rules and history already do what the constraints ask. In particular a hard constraint
   with one tag gives confidence exactly 1 and no alternatives, and the tokens before the first match are decoded with
