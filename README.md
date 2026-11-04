@@ -78,27 +78,20 @@ list; use soft mode for a list that may be wrong. The measured cost is in sectio
 ## Accuracy and Confidence
 
 The model was selected on development data only, its confidence thresholds too, and it was then evaluated once on
-held-out data. The headline figures, on the held-out test sets, are:
+held-out data. The tagger is accurate on ordinary running text. Its most costly mistake is a harmful error: a noun
+tagged as a verb, or a verb tagged as a noun. It makes some on every test set and noticeably more on short, technical
+and imperative sentences built to be hard, a limitation that is reported and was not tuned away. The labels of the test
+sets were written by language models, and the results come from one run.
 
-| Measure | Value |
-| --- | ---: |
-| Accuracy on the open test split (17 tags) | 96.1% |
-| Harmful errors per 1,000 noun-verb decisions, no threshold: open test split | 20.6 |
-| Harmful errors per 1,000 noun-verb decisions, no threshold: gold v2 test split | 24.6 |
-| Harmful errors per 1,000 noun-verb decisions, no threshold: shape probe | 86.3 |
-| `strict` threshold 0.95: harmful errors per 1,000 answered decisions, coverage (open test split) | 4.1, 82.3% |
-| `balanced` threshold 0.80: harmful errors per 1,000 answered decisions, coverage (open test split) | 9.3, 92.3% |
-
-A harmful error is a noun tagged as a verb, or a verb tagged as a noun: the mistake that changes the meaning of a
-sentence. The shape probe is 560 short, technical and imperative sentences built to be hard; the model has a real
-weakness there, which is reported and was not tuned away. The labels of these sets were written by language models, and
-the figures come from one run. The [evaluation report][link-evaluation] has every set, the limits of the measurement
-and how to reproduce it.
+See the evaluation report for accuracy, harmful-error rates and recommended thresholds: the [test results][link-test-results]
+have every held-out set and the [confidence thresholds][link-thresholds] have the coverage and harmful-rate tables. The
+[evaluation guide][link-evaluation] explains how to read them.
 
 **Consumers that need a low harmful rate must use a confidence threshold.** Treat a token below the threshold as
-unknown. A rule checker should use `strict`; `balanced` suits consumers that can tolerate more errors or show the result
-to a person. The thresholds apply to the embedded model, and a token with a single allowed tag has confidence 1.0
-without being a decision. The [user guide][link-user-guide] and the packed API reference have the details.
+unknown. A rule checker should use the `strict` threshold; `balanced` suits consumers that can tolerate more errors or
+show the result to a person. The thresholds apply to the embedded model, and a token with a single allowed tag has
+confidence 1.0 without being a decision. The [user guide][link-user-guide] and the packed API reference have the
+details.
 
 ## Documentation
 
@@ -176,6 +169,8 @@ By contributing to this project, you agree that your contributions will be licen
 [link-user-guide]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/user_guide/introduction.md
 [link-run-log]: https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md
 [link-evaluation]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md
+[link-test-results]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/test-results.md
+[link-thresholds]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/confidence-thresholds.md
 [link-notices]: https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md
 [link-package-license]: https://github.com/demaconsulting/PartOfSpeech/blob/main/PACKAGE-LICENSE.md
 [link-wordsense]: https://github.com/demaconsulting/WordSense

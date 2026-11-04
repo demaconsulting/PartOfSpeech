@@ -272,11 +272,10 @@ procedure of the trainer (see _ModelTrainer Verification_), and no test opens a 
 
 **Test**: `PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports`
 
-Reads the figures of `test-results.json` (the accuracy and the harmful-error rate of the open test split, of gold v2 and
-of the shape probe, and the rate, coverage and counts of the strict and the balanced point) and asserts that the rows of
-the headline table of the root `README.md` and the sentences of `docs/evaluation/README.md` that state them contain the
-same figures, formatted as the documents format them. The figures are quoted from the generated reports, never typed
-independently.
+Reads the figures of `test-results.json` (the harmful-error rate of the open test split, of gold v2 and of the shape
+probe, and the rate, coverage and counts of the strict and the balanced point) and asserts that the sentences of
+`docs/evaluation/README.md` that state them contain the same figures, formatted as the documents format them. The
+figures are quoted from the generated reports, never typed independently.
 
 ### Evaluation Record Contains No Treebank Text
 

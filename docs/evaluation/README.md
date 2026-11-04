@@ -191,5 +191,6 @@ deterministic; the new files equal the committed ones except for the throughput 
 ## Consistency Checks
 
 Tests keep the copies of the figures honest. They check that the results name the embedded model and the committed
-selection, that the input hashes equal the data manifest, that the thresholds and figures in the package documentation,
-the user guide and the root README equal these files, and that no treebank sentence or sentence id is in this folder.
+selection, that the input hashes equal the data manifest, that the thresholds and figures in the package documentation
+and the user guide equal these files, and that no treebank sentence or sentence id is in this folder. The root README
+links to the results and states no figure.

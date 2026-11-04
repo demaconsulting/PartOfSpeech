@@ -240,8 +240,9 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   treebank appears only as aggregate figures and tag-level confusion. `docs/evaluation/README.md` is written by hand: it
   explains how to read the two reports, the mapping of the evaluation sets to the library conventions, the limits of the
   measurement and the commands that reproduce it, and states no figure that is not in a generated file (a test
-  compares the few it states). The figures that the package documentation, the user guide and the root `README.md`
-  quote are verified against the committed JSON by the system tests, not by this unit.
+  compares the few it states). The figures that the package documentation and the user guide
+  quote are verified against the committed JSON by the system tests, not by this unit. The root `README.md` states no
+  figure and links to the reports.
 
 ### Selection of the Shipped Model
 

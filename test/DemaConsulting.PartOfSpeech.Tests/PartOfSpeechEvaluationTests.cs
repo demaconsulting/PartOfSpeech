@@ -6,7 +6,7 @@ namespace DemaConsulting.PartOfSpeech.Tests;
 /// <summary>
 ///     System tests of the evaluation record of the embedded model (<c>docs/evaluation</c>) and of the copies of its
 ///     figures in the documentation: the results name the shipped model, the committed selection and the data that they
-///     used, the thresholds and figures of the packed reference, the user guide and the README equal the generated
+///     used, the thresholds and figures of the packed reference and the user guide equal the generated
 ///     files, and no text of the external treebank is committed. The tests read the files of the working copy, parse
 ///     the JSON with regular expressions (the JSON API is not part of .NET Framework) and open no held-out data file.
 /// </summary>
@@ -225,9 +225,9 @@ public class PartOfSpeechEvaluationTests
     }
 
     /// <summary>
-    ///     Proves that the headline figures of the root README and the figures that the explanation of the evaluation
-    ///     record states equal the committed results: the accuracy and the harmful-error rates without a threshold, the
-    ///     two thresholds with their rate and coverage, and the limitation of the shape probe.
+    ///     Proves that the figures that the explanation of the evaluation record states equal the committed results:
+    ///     the harmful-error rates without a threshold, the two thresholds with their rate and coverage, and the
+    ///     limitation of the shape probe.
     /// </summary>
     [Fact]
     public void PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports()
@@ -246,18 +246,9 @@ public class PartOfSpeechEvaluationTests
         var probeReference = ResultPoint(results, "shape-probe", "reference");
         var probeStrict = ResultPoint(results, "shape-probe", "strict");
         var probeBalanced = ResultPoint(results, "shape-probe", "balanced");
-        var readme = ReadText("README.md").Split('\n').ToList();
         var problems = new List<string>();
 
-        // Act: the README states each headline figure in its own row
-        problems.AddRange(Missing("README accuracy", Row(readme, "Accuracy on the open test split"), new[] { Percent(NumberMember(results, "accuracy", open)) }));
-        problems.AddRange(Missing("README open", Row(readme, "no threshold: open test split"), new[] { One(NumberMember(results, "harmfulPer1000", open)) }));
-        problems.AddRange(Missing("README gold", Row(readme, "no threshold: gold v2 test split"), new[] { One(NumberMember(results, "harmfulPer1000", gold)) }));
-        problems.AddRange(Missing("README probe", Row(readme, "no threshold: shape probe"), new[] { One(NumberMember(results, "harmfulPer1000", probe)) }));
-        problems.AddRange(Missing("README strict", Row(readme, "`strict` threshold"), new[] { strict.Threshold, One(strict.TestHarmful), Percent(strict.TestCoverage) }));
-        problems.AddRange(Missing("README balanced", Row(readme, "`balanced` threshold"), new[] { balanced.Threshold, One(balanced.TestHarmful), Percent(balanced.TestCoverage) }));
-
-        // The explanation states the same figures in prose, and the limitation of the shape probe with its counts
+        // Act: the explanation states the same figures in prose, and the limitation of the shape probe with its counts
         var explanation = Collapse(ReadText(EvaluationReadmePath));
         problems.AddRange(Missing("evaluation README", explanation, new[]
         {
@@ -405,20 +396,9 @@ public class PartOfSpeechEvaluationTests
     private static string One(double value) => value.ToString("F1", CultureInfo.InvariantCulture);
 
     /// <summary>
-    ///     Formats a percentage with one decimal place and a percent sign.
-    /// </summary>
-    private static string Percent(double value) => One(value) + "%";
-
-    /// <summary>
     ///     Formats a figure without decimal places.
     /// </summary>
     private static string Whole(double value) => value.ToString("F0", CultureInfo.InvariantCulture);
-
-    /// <summary>
-    ///     Gets the first line that contains a marker, or an empty text.
-    /// </summary>
-    private static string Row(IEnumerable<string> lines, string marker) =>
-        lines.FirstOrDefault(line => line.IndexOf(marker, StringComparison.Ordinal) >= 0) ?? string.Empty;
 
     /// <summary>
     ///     Gets the part of a text from one marker up to the next marker after it.
@@ -552,5 +532,10 @@ public class PartOfSpeechEvaluationTests
         ///     Lists the figures that the row of the user guide states.
         /// </summary>
         public string[] TableFragments() => new[] { Threshold, Percent(TestCoverage), One(TestHarmful) };
+
+        /// <summary>
+        ///     Formats a percentage with one decimal place and a percent sign.
+        /// </summary>
+        private static string Percent(double value) => One(value) + "%";
     }
 }
