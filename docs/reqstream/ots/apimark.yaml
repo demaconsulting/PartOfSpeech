@@ -54,3 +54,4 @@ sections:
             tags: [ots]
             tests:
               - ApiMark_EntryPointDocumented
+              - ApiMark_GlossaryDocumented

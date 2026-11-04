@@ -232,13 +232,15 @@ internal sealed class GoldTarget
     /// <param name="tokens">The tokens of the sentence.</param>
     /// <param name="target">The index of the target token.</param>
     /// <param name="goldClass">The gold class name (Noun, Verb, and so on).</param>
-    public GoldTarget(string id, string documentId, string[] tokens, int target, string goldClass)
+    /// <param name="lemma">The lemma of the target as the table gives it, or an empty string when the table has no lemma column or no lemma.</param>
+    public GoldTarget(string id, string documentId, string[] tokens, int target, string goldClass, string lemma = "")
     {
         Id = id;
         DocumentId = documentId;
         Tokens = tokens;
         Target = target;
         GoldClass = goldClass;
+        Lemma = lemma;
     }
 
     /// <summary>
@@ -265,6 +267,11 @@ internal sealed class GoldTarget
     ///     Gets the gold class of the target.
     /// </summary>
     public string GoldClass { get; }
+
+    /// <summary>
+    ///     Gets the lemma of the target (a user lists lemmas in a glossary); empty when the table gives none.
+    /// </summary>
+    public string Lemma { get; }
 
     /// <summary>
     ///     Gets the target token as written.
@@ -412,10 +419,24 @@ internal static class DevSets
                 Cell(cells, columns, "doc_id", origin),
                 tokens,
                 target,
-                Cell(cells, columns, "pos", origin)));
+                Cell(cells, columns, "pos", origin),
+                OptionalCell(cells, columns, "lemma")));
         }
 
         return result;
+    }
+
+    /// <summary>
+    ///     Gets the value of a named column of a row, or an empty string when the table has no such column or the cell holds the placeholder <c>-</c>.
+    /// </summary>
+    /// <param name="cells">The cells of the row.</param>
+    /// <param name="columns">The column names.</param>
+    /// <param name="name">The column to read.</param>
+    /// <returns>The cell, or an empty string.</returns>
+    private static string OptionalCell(string[] cells, string[] columns, string name)
+    {
+        var index = Array.IndexOf(columns, name);
+        return index >= 0 && cells[index] != "-" ? cells[index] : string.Empty;
     }
 
     /// <summary>

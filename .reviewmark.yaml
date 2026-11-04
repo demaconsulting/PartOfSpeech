@@ -333,6 +333,31 @@ reviews:
       - "src/DemaConsulting.PartOfSpeech/Tagging/TokenConstraint.cs"   # unit source
       - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/TokenConstraintTests.cs"  # unit tests
 
+  # PartOfSpeech-Tagging-Glossary Review (one per unit)
+  - id: PartOfSpeech-Tagging-Glossary
+    title: Review that PartOfSpeech Tagging Glossary Implementation is Correct
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "docs/design/part-of-speech/tagging.md"
+      - "docs/reqstream/part-of-speech/tagging.yaml"
+    paths:
+      - "docs/reqstream/part-of-speech/tagging/glossary.yaml"  # unit requirements
+      - "docs/design/part-of-speech/tagging/glossary.md"       # unit design
+      - "docs/verification/part-of-speech/tagging/glossary.md"  # unit verification
+      - "src/DemaConsulting.PartOfSpeech/Tagging/Glossary.cs"             # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryBuilder.cs"      # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryEntry.cs"        # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryOptions.cs"      # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryMatch.cs"        # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryIndex.cs"        # unit source (matcher)
+      - "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryWorkspace.cs"    # unit source (scratch memory of the matcher)
+      - "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryInflector.cs"    # unit source (inflected forms)
+      - "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryConstraints.cs"  # unit source (constraints of a match)
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryTests.cs"            # unit tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryMatchingTests.cs"    # unit tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryThroughputTests.cs"  # throughput test
+
   # PartOfSpeech-Tagging-Tagger Review (one per unit)
   - id: PartOfSpeech-Tagging-Tagger
     title: Review that PartOfSpeech Tagging Tagger Implementation is Correct

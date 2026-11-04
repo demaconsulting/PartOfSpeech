@@ -20,6 +20,7 @@ input-files:
   - docs/verification/part-of-speech/tagging/feature-extractor.md
   - docs/verification/part-of-speech/tagging/tag-decoder.md
   - docs/verification/part-of-speech/tagging/token-constraint.md
+  - docs/verification/part-of-speech/tagging/glossary.md
   - docs/verification/part-of-speech/tagging/tagger.md
   - docs/verification/ots.md
   - docs/verification/ots/apimark.md

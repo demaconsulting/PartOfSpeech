@@ -20,16 +20,18 @@ subsystems:
   training data; see _Tokenization Design_.
 - **ModelStorage** (subsystem): the binary formats of the weights (`POSW`) and the lexicon (`POSL`), their readers and
   writers, and the lexicon and the weights that are embedded in the package; see _ModelStorage Design_.
-- **Tagging** (subsystem): the feature extractor, the greedy decoder, the token constraints and the public `Tagger`;
-  see _Tagging Design_.
+- **Tagging** (subsystem): the feature extractor, the greedy decoder, the token constraints, the glossary and the public
+  `Tagger`; see _Tagging Design_.
 
-Relationships (the unit-level call graph has no cycle): `Tagger` uses `Tokenizer`, `TagDecoder`, `EmbeddedModel` and
-`TokenConstraint`; `TagDecoder`
+Relationships (the unit-level call graph has no cycle): `Tagger` uses `Tokenizer`, `TagDecoder`, `EmbeddedModel`,
+`TokenConstraint` and `Glossary`; `Glossary` uses `Tokenizer`, `FeatureExtractor`, `TokenConstraint` and `UposSet`;
+`TagDecoder`
 uses `FeatureExtractor`, `PerceptronModel`, `Lexicon` and `UposSet`; `FeatureExtractor` uses `Upos`; `Lexicon` and
 `PerceptronModel` use `BinaryFormat` and `UposSet`; `EmbeddedModel` uses `Lexicon`, `PerceptronModel` and the constant
 `FeatureExtractor.FeatureSetVersion`; `Tokenizer` uses `SentenceSplitter`; and `ModelTrainer` uses `FeatureExtractor`,
 `Lexicon`, `PerceptronModel`, `PerceptronModelWriter`, `BinaryFormat` and `Upos` to train, and `Tagger`, `TagDecoder`
-and `TokenConstraint` to score a weights file and to run the glossary experiment through the real decoder, while nothing
+and `TokenConstraint` to score a weights file and to run the glossary experiment through the real decoder, and `Glossary`
+to run the glossary evaluation through the real tagger, while nothing
 in the library uses `ModelTrainer`.
 
 All public types live in the one namespace `DemaConsulting.PartOfSpeech`; the folders `Tokenization`, `ModelStorage` and
@@ -70,11 +72,15 @@ The system exposes the following public API to external consumers (all in the na
 - **Tagger**: `Tagger.Load(Stream weights, TaggerOptions?)` and `Tagger.Load(Stream weights, Stream lexicon,
   TaggerOptions?)` create a tagger; `Tagger.Default` returns the one shared tagger that uses the embedded weights and
   lexicon (created on first use, thread-safe, no file needed); `Tag(string)`,
-  `Tag(Sentence, constraints)` and `Tag(IReadOnlyList<string>, constraints)` tag text, a sentence or tokens.
+  `Tag(Sentence, constraints)` and `Tag(IReadOnlyList<string>, constraints)` tag text, a sentence or tokens, and the
+  same three with a `Glossary` tag them with the terms of a glossary applied.
 - **Tokenizer**: `Tokenize(string)` returns sentences with tokens; `CreateSentence(IReadOnlyList<string>)` builds a
   sentence from tokens.
-- **Results**: `TaggedSentence`, `TaggedToken`, `TagScore`, `Sentence` and `Token`, all immutable.
+- **Results**: `TaggedSentence`, `TaggedToken`, `TagScore`, `Sentence` and `Token`, all immutable; a tagged token and a
+  tagged sentence also report the glossary matches.
 - **Control**: `TaggerOptions` (`MaxAlternatives`) and `TokenConstraint` (`None`, `Only`, `Prefer`, `Penalize`, `And`).
+- **Glossary**: `Glossary` (`Create`, `Empty`, `FindMatches`), `GlossaryBuilder`, `GlossaryEntry`, `GlossaryOptions`,
+  `GlossaryMode` and `GlossaryMatch`.
 - **Vocabulary**: `Upos`, `UposExtensions` (`ToTagString`, `TryParse`, `Count`) and `UposSet`.
 
 | Interface | Direction | Format | Constraints |
@@ -84,6 +90,7 @@ The system exposes the following public API to external consumers (all in the na
 | `Tagger.Default` | Outbound | `Tagger` instance | Created on first use from the embedded data; one shared instance |
 | `Tagger.Tag(...)`, `Tokenizer.*` | Inbound/Outbound | `string` or tokens in, results out | Arguments not null |
 | `TokenConstraint` | Inbound | Value passed with the tokens | One per token, same count |
+| `Glossary` | Inbound | Immutable set of terms passed with the text | Not null; built from valid entries |
 | Embedded lexicon resource | Internal | `POSL` file in the assembly | Matches `data/lexicon/lexicon.tsv` |
 | Embedded weights resource | Internal | `POSW` file in the assembly | Matches `training.json` and its image hash |
 | `PACKAGE-LICENSE.md` | Outbound | Markdown file at the package root | Named by the nuspec; starts with the SPDX line |
@@ -174,10 +181,13 @@ The data assets are protected by two release gates, which the data tests of the 
 
 **Tagging path** (run time):
 
-1. **Input**: a text, or a list of tokens, and optionally one `TokenConstraint` per token. A weights stream is loaded
+1. **Input**: a text, or a list of tokens, and optionally one `TokenConstraint` per token and a `Glossary`. A weights
+   stream is loaded
    once by `Tagger.Load`: the reader verifies the file and builds the sparse weight rows.
 2. **Tokenization**: `Tokenizer` splits the text into tokens by the convention of the training data and groups them
    into sentences; tokens are slices of the input with offsets. A token list becomes one sentence.
+   With a glossary, the terms are then found in each sentence and turned into constraints, which are merged with those of
+   the caller.
 3. **Features**: for each sentence `FeatureExtractor` folds the tokens (NFC, typographic quotes and dashes mapped to
    ASCII) and computes 22 hashed feature buckets per token; four of them use the two previous tags.
 4. **Scoring**: the decoder sums the integer weights of the buckets for each tag.
@@ -185,7 +195,8 @@ The data assets are protected by two release gates, which the data tests of the 
    constraint narrows them or adds to the scores.
 6. **Decision**: the best candidate becomes the tag and the next token's history; a softmax at the model temperature
    turns the candidate scores into the confidence and the ranked alternatives.
-7. **Output**: immutable `TaggedSentence` objects with `TaggedToken` values that carry the original text and offsets.
+7. **Output**: immutable `TaggedSentence` objects with `TaggedToken` values that carry the original text and offsets, and,
+   with a glossary, the matches that were found.
 
 **Data path** (build time, not part of the runtime):
 
@@ -207,10 +218,13 @@ The data assets are protected by two release gates, which the data tests of the 
 7. **Notices**: `THIRD-PARTY-NOTICES.md` carries the attributions of the sources (the weights included), and
    `PACKAGE-LICENSE.md` is the license of the package; the NuGet package includes both
 
-**Glossary support**: soft constraints (`TokenConstraint.Prefer`) add a boost to the raw score. The trainer measured, on
-development data only, whether a trained "glossary says X" feature would do better, and rejected it (it cost 0.17
-accuracy points and did not beat a calibrated boost), so the feature set stays at version 1 and the calibration of the
-boosts is later work that starts from the measured curve in `RUN-LOG.md` (see _ModelTrainer Design_).
+**Glossary support**: a `Glossary` is an immutable set of domain terms that a caller passes to a `Tag` call. The tagger
+finds the terms and gives their tokens hard (`TokenConstraint.Only`) or soft (`TokenConstraint.Prefer`) constraints, so
+the decoder is unchanged and the feature set stays at version 1: a trained "glossary says X" feature was measured on
+development data only and rejected in favor of score boosts (see _ModelTrainer Design_, _Glossary Decision_). The
+default soft strength and the rule for the other words of a term were chosen on development data with the glossary
+evaluation of the trainer; the protocol and the measured effect, including the cost of wrong entries, are in section E9
+of `RUN-LOG.md` next to the trainer and are not repeated here. See _Glossary Design_ for the data model and algorithms.
 
 ## Design Constraints
 
@@ -223,7 +237,9 @@ boosts is later work that starts from the measured curve in `RUN-LOG.md` (see _M
 - **Determinism**: the same input gives the same tags on every platform; scores are exact integers up to the choice of
   the tag
 - **Performance**: more than 50,000 tokens per second on one thread, with no allocation in the feature extraction and
-  only the result arrays per sentence in the decoder. The throughput is enforced in runs without code coverage; coverage
+  only the result arrays per sentence in the decoder; tagging with a glossary of 10,000 entries keeps the same bound, and
+  finding the terms allocates nothing per token for ordinary text. The throughput is enforced in runs without code
+  coverage; coverage
   instrumentation slows the hot loops too much to prove it, so a run with coverage (CI) applies a relaxed gate (see the
   verification document)
 - **Package size**: the lexicon resource is 641,418 bytes and the weights resource 492,971 bytes (both already

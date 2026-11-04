@@ -1,0 +1,399 @@
+---
+# cspell:ignore Inflectable
+# Software Unit Requirements for Glossary
+#
+# The Glossary unit is the set of domain terms that a caller hands to the tagger: single words and multiword terms with
+# the tags that the head word may take, found in sentences and turned into per-token constraints.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: Tagging Requirements
+        sections:
+          - title: Glossary Requirements
+            requirements:
+              - id: PartOfSpeech-Tagging-Glossary-EntryValidation
+                title: >-
+                  An entry shall be refused when its term is null, empty or has no token with a letter or a digit, when
+                  it has no tags or an undefined tag, when a head, token index, variant or mode is not valid for the
+                  term, or when a variant gives another number of tokens than the term.
+                justification: |
+                  A glossary is curated once and applied to every text; an entry that could never match, or that
+                  names a token that the term does not have, is a programming error that must show when the entry is
+                  created and not as a silent miss while tagging.
+                tests:
+                  - GlossaryEntry_Ctor_NullTerm_ThrowsArgumentNullException
+                  - GlossaryEntry_Ctor_EmptyOrWhiteSpaceTerm_ThrowsArgumentException
+                  - GlossaryEntry_Ctor_TermWithoutLetterOrDigit_ThrowsArgumentException
+                  - GlossaryEntry_Ctor_EmptyTags_ThrowsArgumentException
+                  - GlossaryEntry_Ctor_UndefinedTag_ThrowsArgumentOutOfRangeException
+                  - GlossaryEntry_WithHead_OutOfRange_ThrowsArgumentOutOfRangeException
+                  - GlossaryEntry_WithVariants_WrongTokenCount_ThrowsArgumentException
+                  - GlossaryEntry_WithVariants_NullEmptyOrWithoutWord_Throws
+                  - GlossaryEntry_WithTokenTags_HeadEmptyOrOutOfRange_Throws
+                  - GlossaryEntry_WithMode_UndefinedMode_ThrowsArgumentOutOfRangeException
+
+              - id: PartOfSpeech-Tagging-Glossary-EntryValues
+                title: >-
+                  An entry shall keep its term, tags and definition as given, and shall give a changed copy for every
+                  setting while leaving the original unchanged; a variant that spells the term or repeats an earlier
+                  variant shall be ignored without an error.
+                justification: |
+                  Entries are shared between glossaries and threads and are written as chains of settings; a setting
+                  that changed the original would change every glossary that holds it. The definition is
+                  documentation that must come back unchanged with a match. A redundant variant adds nothing to the
+                  matching, and rejecting it would make a list of spellings that is merged from several sources fail
+                  for no useful reason, so it is dropped and the list of variants shows only the extra spellings.
+                tests:
+                  - GlossaryEntry_WithHead_ValidIndex_ReturnsNewEntryAndLeavesOriginal
+                  - GlossaryEntry_With_ReturnsNewEntryAndLeavesOriginal
+                  - GlossaryEntry_With_Chained_KeepsEarlierSettings
+                  - GlossaryEntry_Definition_IsCarriedUnchanged
+                  - GlossaryEntry_WithVariants_Valid_ReplacesEarlierVariants
+                  - GlossaryEntry_WithVariants_VariantEqualToTermOrDuplicate_IsIgnoredWithoutError
+                  - GlossaryEntry_MethodExamples_GiveTheDocumentedValues
+                  - GlossaryEntry_GetTokenTags_ReturnsOverrideOrNull
+                  - GlossaryEntry_GetTokenTags_TokenBecomesHead_ReturnsNull
+
+              - id: PartOfSpeech-Tagging-Glossary-HeadDefault
+                title: >-
+                  An entry shall by default take its last token as head word, except that it shall take its first
+                  token when its tags include VERB, its term has at least two tokens and every token after the first
+                  is a word of a small closed list of particle words that the lexicon of the library allows as
+                  adposition, adverb or particle; an explicit head shall override this default in both directions.
+                justification: |
+                  A noun compound has its head last, but a phrasal verb such as shut down or carry out has its head
+                  first, and a caller should not have to know that. The lexicon alone cannot decide, because it lists
+                  down and out also as noun, adjective or verb, so a closed list of particle words proposes the
+                  candidates and the lexicon confirms them; a verb term whose later word is not in the list, such as
+                  take care or make sense, keeps the head last. The head decides which
+                  word is inflected and constrained, so it must be fixed when the entry is created, the same for
+                  every glossary and tagger, and the caller must be able to say otherwise.
+                tests:
+                  - GlossaryEntry_HeadIndex_DefaultsToLastToken
+                  - GlossaryEntry_HeadIndex_PhrasalVerbWithParticleWords_IsFirstToken
+                  - GlossaryEntry_HeadIndex_EveryListedParticleWord_IsConfirmedByTheLexicon
+                  - GlossaryEntry_HeadIndex_VerbTermWithAnotherLaterWord_IsLastToken
+                  - GlossaryEntry_HeadIndex_NoVerbTagOrSingleToken_IsLastToken
+                  - GlossaryEntry_HeadIndex_NounOrVerbTags_FollowTheParticleRule
+                  - GlossaryEntry_WithHead_OverridesInferredHeadBothWays
+                  - GlossaryEntry_HeadIndex_UnknownParticleAndLongerPhrasalVerbs_FollowTheDocumentedRule
+                  - GlossaryEntry_HeadIndex_Inference_IsDeterministicAcrossThreads
+                  - Glossary_FindMatches_InferredPhrasalHead_IsReportedAndInflected
+                  - GlossaryConstraints_Compile_InferredPhrasalHead_GetsParticleRule
+                  - Tagger_TagWithGlossary_InferredPhrasalHead_VerbHeadAndParticleLimited
+                  - Tagger_TagWithGlossary_PhrasalVerbHeads_ForceOrLeaveTagsAsDocumented
+
+              - id: PartOfSpeech-Tagging-Glossary-Builder
+                title: >-
+                  A glossary shall be built from entries in the order added, by a builder that can be filled with a
+                  collection initializer, whose built glossaries do not change when the builder is used further, and
+                  whose options are checked when it is created.
+                justification: |
+                  Callers list their terms in code; a glossary that is built from a snapshot can be shared safely
+                  while the list is still being edited, and invalid options must fail early instead of inside the
+                  tagging path.
+                tests:
+                  - GlossaryBuilder_CollectionInitializer_BuildsEntriesInOrder
+                  - GlossaryBuilder_Add_Chained_CountsAndEnumerates
+                  - GlossaryBuilder_Add_NullEntry_ThrowsArgumentNullException
+                  - GlossaryBuilder_Build_IsSnapshot
+                  - GlossaryBuilder_Constructor_InvalidSoftStrength_ThrowsArgumentOutOfRangeException
+                  - GlossaryBuilder_Constructor_UndefinedMode_ThrowsArgumentOutOfRangeException
+                  - GlossaryOptions_Defaults_AreCaseInsensitiveHardInflecting
+                  - GlossaryOptions_DefaultSoftStrength_IsFiniteAndPositive
+                  - Glossary_Create_NullEntriesOrNullItem_ThrowsArgumentNullException
+
+              - id: PartOfSpeech-Tagging-Glossary-Duplicates
+                title: >-
+                  Two entries for the same tokens under the same letter case rule shall be refused, while a
+                  case-sensitive and a case-insensitive entry for the same term shall be allowed.
+                justification: |
+                  Two entries that match the same text would disagree about its tags and the winner would depend on
+                  the order of the list; an acronym and its lower-case homograph, however, legitimately need two
+                  entries.
+                tests:
+                  - GlossaryBuilder_Add_DuplicateSameCase_ThrowsArgumentException
+                  - GlossaryBuilder_Add_CaseSensitiveAndInsensitiveSameTerm_Allowed
+                  - GlossaryBuilder_Add_CaseSensitiveEntries_DuplicateOnlyWhenExactlyEqual
+                  - GlossaryBuilder_Add_GlossaryWideCaseSensitive_DecidesDuplicates
+                  - Glossary_Create_Duplicate_ThrowsArgumentException
+
+              - id: PartOfSpeech-Tagging-Glossary-Immutability
+                title: >-
+                  A glossary shall not change after it was created: its entries and options as read by the caller
+                  cannot be used to change it, a change of the source list or of the options afterwards has no effect,
+                  and the matches that it returns cannot be changed.
+                justification: |
+                  A glossary is shared by every call and every thread; a glossary that could change would make the
+                  tags of a text depend on timing.
+                tests:
+                  - Glossary_Options_ReturnsCopy
+                  - Glossary_Empty_HasNoEntries
+                  - Glossary_Create_SourceChangedAfterwards_DoesNotChangeGlossary
+                  - Glossary_Immutable_EntriesAreReadOnly
+                  - Glossary_FindMatches_ResultList_IsReadOnly
+
+              - id: PartOfSpeech-Tagging-Glossary-CaseHandling
+                title: >-
+                  Terms shall match without regard to letter case by default, and an entry or the glossary shall be
+                  able to require the exact letter case; where a case-sensitive and a case-insensitive entry match the
+                  same words, the case-sensitive one shall win.
+                justification: |
+                  A term at the start of a sentence is capitalized, so case-insensitive matching is the useful
+                  default, but an acronym such as IT must not claim the pronoun it, which needs exact case.
+                tests:
+                  - Glossary_FindMatches_CaseInsensitiveDefault_MatchesAnyCase
+                  - Glossary_FindMatches_CaseSensitiveEntry_ExactCaseOnly
+                  - Glossary_FindMatches_CaseSensitiveWinsOverInsensitiveAtSameLength
+                  - Glossary_FindMatches_GlossaryWideCaseSensitive_CanBeOverriddenPerEntry
+
+              - id: PartOfSpeech-Tagging-Glossary-Matching
+                title: >-
+                  A sentence shall be searched from left to right for the terms of the glossary, the longest term at a
+                  position shall win, matches shall not overlap, a term shall not match across sentences, an empty
+                  sentence or an empty glossary shall have no match, and a null sentence shall be refused.
+                justification: |
+                  The longest term is the most specific statement (bleed valve over valve), and a single reading of
+                  every word keeps the tags of one word from being decided by two entries. Matching must give the same
+                  answer however many entries the glossary has, even when many of them share spellings.
+                tests:
+                  - Glossary_FindMatches_LongestFirst_PrefersLongerTerm
+                  - Glossary_FindMatches_LeftToRight_DoesNotOverlap
+                  - Glossary_FindMatches_AdjacentMatches_AreAllFound
+                  - Glossary_FindMatches_PrefixOfLongerTerm_NoMatchWhenIncomplete
+                  - Glossary_FindMatches_LongerWalkWithoutTerm_FallsBackToShorterTerm
+                  - Glossary_FindMatches_TermSplitAcrossSentences_NoMatch
+                  - Glossary_FindMatches_EmptySentenceOrEmptyGlossary_NoMatches
+                  - Glossary_FindMatches_NullSentence_ThrowsArgumentNullException
+                  - Glossary_FindMatches_HashCollision_ResolvedByComparison
+                  - Glossary_FindMatches_DocumentedEdgeCases_BehaveAsDocumented
+                  - Glossary_EdgeCaseExample_ReportsTheDocumentedMatchesAndHeads
+
+              - id: PartOfSpeech-Tagging-Glossary-TermTokenization
+                title: >-
+                  A term shall be split into tokens by the same rules as running text, so that a hyphenated term is
+                  one token, a contraction is two, a final period of an abbreviation is kept as in text, typographic
+                  apostrophes match their plain forms, tokens with unusual characters match, and a pre-tokenized
+                  token with punctuation attached to a word does not match the word.
+                justification: |
+                  A term can only match text when both are split the same way; the consequences of the tokenizer's
+                  conventions are the contract that the documentation states, and each one needs a proof.
+                tests:
+                  - GlossaryEntry_Tokens_FollowTokenizer
+                  - GlossaryEntry_EndTokens_TermEndingInKeptPeriod_DiffersAtEndOfText
+                  - Glossary_FindMatches_HyphenatedTermIsOneToken_DoesNotMatchSpaced
+                  - Glossary_HyphenatedVerb_IsOneTokenAndMatchesItsFormsButNotOtherSpellings
+                  - Glossary_FindMatches_ContractionInTerm_SplitsLikeTokenizer
+                  - Glossary_FindMatches_AbbreviationPeriod_MidTextAndEndOfText
+                  - Glossary_FindMatches_CurlyApostropheEqualsStraight
+                  - Glossary_FindMatches_PreTokenizedPunctuationStuckToWord_DoesNotMatch
+                  - Glossary_FindMatches_NonAsciiToken_SlowPathMatches
+                  - GlossaryIndex_FoldWithWorkspace_AgreesWithFoldToString
+
+              - id: PartOfSpeech-Tagging-Glossary-Inflection
+                title: >-
+                  The regular English inflected forms of the head word of an entry shall match as well, with the tags
+                  that fit the form, unless inflection is switched off for the glossary or the entry; only the head
+                  word shall be inflected, listed variants shall match, and a term shall win over a variant and a
+                  variant over a generated form; an irregular form that is identical to the lemma shall need no
+                  variant.
+                justification: |
+                  A glossary lists lemmas while text has plurals and verb forms, so without generated forms a
+                  glossary would miss most of its occurrences; irregular forms are listed as variants, and an
+                  explicit statement must always win over a guess. The past tense of set is set, which the term
+                  itself already matches, so such a form needs no variant.
+                tests:
+                  - GlossaryInflector_Plural_FollowsRegularRules
+                  - GlossaryInflector_Past_FollowsRegularRules
+                  - GlossaryInflector_PresentParticiple_FollowsRegularRules
+                  - GlossaryInflector_Inflect_Noun_GivesPluralNoun
+                  - GlossaryInflector_Inflect_Verb_GivesThreeFormsWithDerivedTags
+                  - GlossaryInflector_Inflect_NounAndVerb_UnitesTagsOfEqualSpelling
+                  - GlossaryInflector_Inflect_NounAndProperNoun_PluralHasBothTags
+                  - GlossaryInflector_Inflect_OtherTags_GivesNothing
+                  - GlossaryInflector_Inflect_NotInflectableWord_GivesNothing
+                  - Glossary_Create_MultiwordEntry_InflectsOnlyHeadWord
+                  - Glossary_Create_InflectionSwitches_ControlGeneratedForms
+                  - Glossary_FindMatches_InflectedForms_AreFoundAndReportedAsVariants
+                  - Glossary_FindMatches_OnlyHeadWordIsInflected
+                  - Glossary_FindMatches_HeadWordMovedByWithHead_IsTheOneInflected
+                  - Glossary_FindMatches_InflectionSwitches_AreHonored
+                  - Glossary_FindMatches_ExplicitVariants_AreMatched
+                  - Glossary_FindMatches_TermBeatsVariantBeatsGeneratedForm
+                  - Glossary_FindMatches_VariantBeatsGeneratedForm_EarlierEntryWinsOtherwise
+                  - Glossary_FindMatches_RedundantVariantsAndLemmaEqualForms_NeedNoVariant
+
+              - id: PartOfSpeech-Tagging-Glossary-HardConstraints
+                title: >-
+                  In hard mode the head word of a match shall take only the tags of its entry, also when the lexicon
+                  does not allow them or the word is unknown, the other words of a noun term shall not be verbs or
+                  auxiliaries, and explicit tags of a token of the term shall decide the tags of that token.
+                justification: |
+                  A glossary is more authoritative than a dictionary: the general model reads bleed valve as a verb
+                  and a noun, and the glossary states the answer once for every occurrence. A noun term is not a
+                  clause, so the words in front of its head are not verbs.
+                tests:
+                  - GlossaryConstraints_NonHead_Rules_ProduceDocumentedConstraints
+                  - Tagger_TagWithGlossary_HardNounTerm_HeadIsNounWithConfidenceOne
+                  - Tagger_TagWithGlossary_NonHeadOfNounTerm_IsNeverVerbOrAuxiliary
+                  - Tagger_TagWithGlossary_NonHeadRule_NounRuleAppliesToNounAndProperNounEntriesOnly
+                  - Tagger_TagWithGlossary_WithTokenTags_ForcesTheTokenTags
+                  - Tagger_TagWithGlossary_EntryDisjointFromLexicon_GlossaryWins
+                  - Tagger_TagWithGlossary_UnknownWord_TakesEntryTag
+
+              - id: PartOfSpeech-Tagging-Glossary-NonHeadRule
+                title: >-
+                  The second word of a two-word verb term whose head is the first word shall be limited to
+                  adposition, adverb and particle, and every other non-head word of a term that is not a noun term
+                  shall be left to the model, so that a phrasal verb keeps its particle and neither a pronoun inside a
+                  longer verb term nor an adjective phrase is forced to particle tags.
+                justification: |
+                  The second word of a phrasal verb is a particle, and limiting it to the particle tags improved the
+                  tags on development data; that evidence covers two-word verb terms whose head is the first word,
+                  so no other shape of term is constrained beyond the noun-term rule.
+                tests:
+                  - GlossaryConstraints_NonNominalRule_Default_IsParticlesOnly
+                  - GlossaryConstraints_Compile_ParticleRule_AppliesToTwoTokenVerbTermsWithHeadFirstOnly
+                  - GlossaryConstraints_Compile_ThreeTokenVerbTerm_NonHeadTokensAreUnconstrained
+                  - Tagger_TagWithGlossary_VerbTermWithHeadFirst_NonHeadIsLimitedToParticles
+                  - Tagger_TagWithGlossary_ThreeTokenVerbTerm_NonHeadTokensAreLeftToTheModel
+                  - Tagger_TagWithGlossary_NonVerbTermOrWordBeforeTheHead_IsLeftToTheModel
+
+              - id: PartOfSpeech-Tagging-Glossary-SoftConstraints
+                title: >-
+                  In soft mode the tags of an entry shall get a preference of the configured strength, in units of the
+                  model temperature, so that the model keeps its tag when it is clearly sure and follows the glossary
+                  when it is close; a mode set on an entry shall override the mode of the glossary, and the strength
+                  shall be refused unless it is finite and greater than zero; a valid strength whose boost would
+                  underflow to zero or overflow to infinity shall be limited to a finite positive range instead of
+                  failing at tagging time.
+                justification: |
+                  A glossary of unknown quality can still help without being able to force a wrong tag, and a
+                  strength in units of the temperature means the same shift for every weights file. A validated
+                  option must never make the first tagging call throw.
+                tests:
+                  - Tagger_TagWithGlossary_SoftMode_FlipsCloseDecisionButNotDecisiveOne
+                  - Tagger_TagWithGlossary_SoftMode_AdjustmentEqualsStrengthTimesTemperature
+                  - Tagger_TagWithGlossary_SoftMode_TinyBoost_DoesNotThrowAndChangesNothing
+                  - Tagger_TagWithGlossary_SoftMode_HugeBoost_DoesNotThrowAndIsDecisive
+                  - Tagger_TagWithGlossary_SoftMode_RaisesConfidenceOfPreferredTag
+                  - Tagger_TagWithGlossary_PerEntryMode_OverridesGlossaryMode
+                  - GlossaryMatch_Mode_IsEntryModeOrGlossaryMode
+                  - GlossaryBuilder_Constructor_InvalidSoftStrength_ThrowsArgumentOutOfRangeException
+
+              - id: PartOfSpeech-Tagging-Glossary-CallerConstraints
+                title: >-
+                  The constraints that a caller passes together with a glossary shall be combined with those of the
+                  glossary per token (the glossary's where the caller gives none, the caller's where the glossary has
+                  none, both combined where both exist), shall win where the two allow no tag in common, and shall be
+                  refused when their number differs from the number of tokens.
+                justification: |
+                  A caller may know more about one token than the glossary does, and a call with an explicit constraint
+                  is the more specific statement, explicit and per call while the glossary is the default for all
+                  calls; a list that does not line up with the tokens would constrain the wrong words.
+                tests:
+                  - GlossaryConstraints_Merge_NoneIntersectionAndContradiction
+                  - Tagger_TagWithGlossary_CallerConstraints_AreMergedAndCallerWinsWhenDisjoint
+                  - Tagger_TagWithGlossary_CallerConstraintContradictingHardEntry_CallerWins
+                  - Tagger_TagWithGlossary_CallerSoftConstraint_AddsToGlossaryAdjustment
+                  - Tagger_TagWithGlossary_ConstraintListOfWrongLength_ThrowsArgumentException
+
+              - id: PartOfSpeech-Tagging-Glossary-TaggingOverloads
+                title: >-
+                  Tagging a text, a sentence or a token list with a glossary shall give the same tags for the same
+                  words, existing calls without a glossary shall keep their meaning, and the tokens before the first
+                  match of a sentence shall be tagged as without a glossary, an empty glossary shall give the result of
+                  no glossary, and a null glossary, text, sentence or token list shall be refused.
+                justification: |
+                  The glossary is an addition to the three ways of tagging, not a different tagger; a call that did
+                  not use it must be unaffected, and the tagger decides from left to right without look-ahead, so
+                  nothing in front of the first match can change, and the overloads check their arguments like the
+                  others.
+                tests:
+                  - Tagger_TagWithGlossary_ThreeOverloads_Agree
+                  - Tagger_Tag_NullSecondArgument_StillBindsToConstraintsOverload
+                  - Tagger_TagWithGlossary_TokensBeforeFirstMatch_AreUnchanged
+                  - Glossary_Empty_TagsLikeNoGlossary
+                  - Tagger_TagWithGlossary_NullArguments_ThrowArgumentNullException
+
+              - id: PartOfSpeech-Tagging-Glossary-Results
+                title: >-
+                  Every token of a match shall report its match, the head token shall be flagged, and the sentence
+                  shall list its matches in text order with the entry (including its definition), the tokens, the
+                  offsets and the text of the span as written, the mode and whether an inflected form or a variant was
+                  matched.
+                justification: |
+                  Callers highlight the terms, show their definitions and decide what to do with a term from the
+                  match; the offsets must index the original text like those of the tokens.
+                tests:
+                  - GlossaryMatch_Properties_DescribeTheMatchedSpan
+                  - GlossaryMatch_Start_InLaterSentence_IndexesWholeText
+                  - Tagger_TagWithGlossary_Results_ReportMatchesOnTokensAndSentences
+                  - Glossary_QuickStart_FindsTheFourKindsOfTermAndReportsTheirHeads
+                  - Tagger_TagWithGlossary_MatchList_IsReadOnly
+
+              - id: PartOfSpeech-Tagging-Glossary-Confidence
+                title: >-
+                  A head word that a hard entry limits to one tag shall have confidence exactly 1 and no alternatives,
+                  a head word that has several tags or a soft entry shall have the probability among the remaining
+                  tags, and a token shall be reported as constrained when a constraint of the glossary was applied to
+                  it, which holds for the head word and for every non-head word that has a constraint, but not for a
+                  word of a match that has none (such as the closing period of a term like etc. at the end of a text,
+                  which belongs to the match without being constrained). The confidence of a glossary token shall
+                  measure only the choice among the tags that remain, so a wrong hard entry shall also give 1.
+                justification: |
+                  Confidence is read as a probability among the tags that were considered; a tag that the glossary
+                  fixed was not chosen by the model, so it must say that there was no choice, and a soft preference
+                  must show in the number. It is not evidence that the entry is right, which the documentation says
+                  and this requirement pins. Belonging to a match and being constrained are different facts: the first
+                  is reported by the match of the token, the second by the constrained flag, so a caller can tell
+                  which words the glossary actually decided.
+                tests:
+                  - Tagger_TagWithGlossary_HardNounTerm_HeadIsNounWithConfidenceOne
+                  - Tagger_TagWithGlossary_WrongHardEntry_HeadConfidenceIsStillOne
+                  - Tagger_TagWithGlossary_HardHeadWithSeveralTags_SoftmaxOverRemainingTags
+                  - Tagger_TagWithGlossary_SoftMode_RaisesConfidenceOfPreferredTag
+                  - Tagger_TagWithGlossary_ThreeTokenVerbTerm_NonHeadTokensAreLeftToTheModel
+
+              - id: PartOfSpeech-Tagging-Glossary-ThreadSafe
+                title: >-
+                  One glossary and one tagger shall be usable from many threads at the same time, also when the
+                  threads use a soft glossary for the first time together, and shall give the same results as when
+                  used from one thread.
+                justification: |
+                  Services share one glossary and one tagger between requests, so concurrent use must be safe and must
+                  not change results.
+                tests:
+                  - Glossary_FindMatches_ParallelUse_MatchesSequentialResults
+                  - Glossary_Tag_ParallelUse_MatchesSequentialResults
+                  - Glossary_Tag_SoftFirstUseRace_CompilesCorrectly
+
+              - id: PartOfSpeech-Tagging-Glossary-NoAllocation
+                title: >-
+                  Finding the terms in a sentence of ordinary text shall allocate no memory per token, and tagging with
+                  a glossary shall allocate nothing extra for a sentence without a match and, for a sentence with
+                  matches, only one array sized by the token count and a bounded amount per match, also after the
+                  first use of a soft glossary.
+                justification: |
+                  Matching runs for every token of every text; memory per token object would add garbage collection to
+                  every request, whatever the size of the glossary.
+                tests:
+                  - GlossaryIndex_Find_DoesNotAllocate
+                  - Glossary_Match_SentenceWithoutMatch_DoesNotAllocate
+                  - Tagger_TagWithGlossary_SentenceWithoutMatch_AddsNoAllocation
+                  - Tagger_TagWithGlossary_AllocationPerMatch_IsBoundedForFixedTokenCount
+                  - Tagger_TagWithGlossary_AllocationPerToken_IsOneConstraintSlot
+                  - Tagger_TagWithGlossary_SoftMode_AllocatesLikeHardModeAfterFirstUse
+
+              - id: PartOfSpeech-Tagging-Glossary-Throughput
+                title: >-
+                  Finding the terms of a glossary of 10,000 entries in running text shall exceed ten times the
+                  throughput bound of the tagger on one thread.
+                justification: |
+                  Matching must stay a small part of the cost of tagging however large the glossary is; the bound is
+                  far below the measured speed so that a loaded build machine does not make the test fail, and it is
+                  relaxed in the same way as the throughput bound of the tagger in a run with code coverage (see the
+                  verification document).
+                tests:
+                  - Glossary_FindMatches_TenThousandEntries_ExceedsTenTimesTheTaggingGate

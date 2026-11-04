@@ -117,3 +117,20 @@ sections:
                   readings.
                 tests:
                   - Tagger_Tag_Alternatives_ExcludeBestAndSumWithConfidence
+
+              - id: PartOfSpeech-Tagging-Tagger-Glossary
+                title: >-
+                  A text, a sentence or a token list shall also be taggable with a glossary: a null glossary shall be
+                  refused with an ArgumentNullException, a constraint list whose length differs from the number of
+                  tokens shall be refused with an ArgumentException, an empty glossary shall give the result of tagging
+                  without one, and the matches that were found shall be applied to the tags and attached to the
+                  results.
+                justification: |
+                  The glossary belongs to the call and not to the tagger, so every call that takes one needs the same
+                  argument checks as the other calls, must leave a caller without terms unaffected, and must hand the
+                  matches to the caller together with the tags.
+                tests:
+                  - Tagger_Tag_Glossary_NullArguments_Throw
+                  - Tagger_Tag_Glossary_ConstraintLengthMismatch_Throws
+                  - Tagger_Tag_Glossary_EmptyGlossary_GivesTheResultWithoutGlossary
+                  - Tagger_Tag_Glossary_Match_IsAppliedAndReported

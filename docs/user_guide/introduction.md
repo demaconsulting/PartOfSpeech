@@ -4,7 +4,7 @@
 
 This document is the user guide for the Part Of Speech, a .NET library that splits English text into sentences and
 tokens and tags every token with one of the 17 Universal POS tags, with a confidence, ranked alternatives and optional
-per-token constraints.
+per-token constraints and glossaries of domain terms.
 
 ## Scope
 
@@ -14,6 +14,7 @@ This user guide covers:
 - Tagging text and pre-tokenized sentences, results and offsets
 - Reading confidences and alternatives
 - Constraining the tag of a token
+- Giving the tagger a glossary of domain terms
 - Loading a weights file, and the default model
 - The tokenization conventions of the library
 - API reference
@@ -177,6 +178,166 @@ Console.WriteLine(tagged.Tokens[1].IsConstrained);   // True
 - The list must have exactly one constraint per token, otherwise `ArgumentException` is thrown. `default(TokenConstraint)`
   is `None`.
 
+## Glossary
+
+A `Glossary` is a list of domain terms with the tags that they take. A general model reads `bleed valve` as a verb and a
+noun, because `bleed` is also a verb; a glossary tells the tagger once that the term is a noun, and the tagger applies
+that to every occurrence. Entries are single words or several words, each with the tags of its head word and an optional
+definition. Pass the glossary to a `Tag` call; it belongs to the call, so the shared `Tagger.Default` can serve any number
+of glossaries.
+
+### A list of technical names
+
+```csharp
+Glossary glossary = new GlossaryBuilder
+{
+    { "bleed valve", Upos.Noun, "A valve that releases trapped air." },
+    { "torque wrench", Upos.Noun },
+    { "accumulator", Upos.Noun },
+}.Build();
+
+TaggedSentence sentence = Tagger.Default.Tag("Bleed valves need a torque wrench.", glossary)[0];
+foreach (GlossaryMatch match in sentence.GlossaryMatches)
+{
+    Console.WriteLine($"{match.Text} -> {sentence.Tokens[match.HeadToken].Tag}");
+}
+```
+
+The head word of each term is a noun wherever the term occurs, also in the plural and at the start of a sentence. The
+other words of a noun term (`bleed` here) can no longer be a verb or an auxiliary. `Tag(string, Glossary)`,
+`Tag(Sentence, Glossary, constraints)` and `Tag(IReadOnlyList<string>, Glossary, constraints)` take a glossary; your own
+constraints, if you pass any, are combined with those of the glossary per token, and yours win where the two allow no
+tag in common.
+
+### A multiword compound, a definition and an irregular form
+
+```csharp
+Glossary glossary = Glossary.Create(new[]
+{
+    new GlossaryEntry("bleed valve", Upos.Noun, "A valve that releases trapped air."),
+    new GlossaryEntry("bleed", UposSet.Of(Upos.Verb, Upos.Noun)).WithVariants("bled"),
+});
+
+foreach (GlossaryMatch match in glossary.FindMatches(Tokenizer.Tokenize("Close the bleed valve.")[0]))
+{
+    Console.WriteLine($"{match.Text}: {match.Entry.Definition}");
+}
+```
+
+At each position the longest term wins and matches never overlap, so `bleed valve` beats `bleed`. `FindMatches` finds
+terms without tagging, for example to show definitions. The definition is never used for tagging; it travels with the
+entry to the match.
+
+### Letter case
+
+Terms match in any letter case by default, because a term at the start of a sentence is capitalized. An acronym whose
+lower-case spelling is another word needs a case-sensitive entry:
+
+```csharp
+Glossary glossary = new GlossaryBuilder
+{
+    new GlossaryEntry("IT", Upos.Noun).WithCaseSensitive(true),
+}.Build();
+
+Console.WriteLine(glossary.FindMatches(Tokenizer.Tokenize("Call IT now.")[0]).Count);   // 1
+Console.WriteLine(glossary.FindMatches(Tokenizer.Tokenize("Call it now.")[0]).Count);   // 0
+```
+
+`GlossaryOptions.CaseSensitive` changes the default for the whole glossary and `WithCaseSensitive` overrides it per entry.
+A case-sensitive and a case-insensitive entry for the same term may coexist; where both match, the case-sensitive one wins.
+
+### Hard mode and soft mode
+
+In hard mode (the default) the head word can only take the tags of the entry. In soft mode the tags get a preference of
+`SoftStrength` times the temperature of the model, so the model can still disagree when it is sure:
+
+```csharp
+var options = new GlossaryOptions { Mode = GlossaryMode.Soft };
+Glossary glossary = new GlossaryBuilder(options) { { "torque wrench", Upos.Noun } }.Build();
+
+TaggedSentence sentence = Tagger.Default.Tag(new[] { "Use", "a", "torque", "wrench", "." }, glossary);
+foreach (TaggedToken token in sentence.Tokens)
+{
+    Console.WriteLine($"{token.Text} {token.Tag} {token.Confidence:0.00} {token.IsGlossaryHead}");
+}
+```
+
+Hard mode (the default) trusts the entries completely: **a wrong entry forces a wrong tag**, because the glossary
+overrules the model, also where the model was right, and the tag is given with full confidence. That fits a curated list,
+such as the technical names and verbs of ASD-STE100: every right entry helps and nothing disagrees. Soft mode is for a
+list that is not curated or may be wrong (for example one that was extracted automatically): the model keeps its tag
+when it is clearly sure, so a wrong entry costs much less. `GlossaryEntry.WithMode` sets the mode of one entry, and
+`GlossaryOptions.SoftStrength` the strength (greater than zero; the default is `GlossaryOptions.DefaultSoftStrength`).
+The simulated glossaries on development data, the rule that chose the default strength and the measured cost of wrong
+entries in each mode are in section E9 of the
+[run log](https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md).
+
+### Reading the results
+
+- `TaggedToken.GlossaryMatch` is the match whose span contains the token, or `null`; `TaggedToken.IsGlossaryHead` is true
+  for the head word of its match; `TaggedToken.IsConstrained` is true for every token of a match that the glossary
+  constrained.
+- `TaggedSentence.GlossaryMatches` lists the matches in text order. A `GlossaryMatch` has the `Entry` (and so the
+  definition), `FirstToken`, `TokenCount` and `HeadToken` (indexes into the tokens of the sentence), `Start` and `Length`
+  (offsets into the string that you passed in) and `Text` (the span as written), the effective `Mode`, and `IsVariant`
+  (an inflected form or a listed variant was matched, not the term as written).
+- **Confidence.** A head word that a hard entry limits to one tag has the confidence exactly 1.0 and no alternatives: there
+  was no choice, so the value does not say that the model is sure. An entry with several tags, or soft mode, gives the
+  softmax over the tags that remain, so a soft preference shows in the confidence.
+- The chosen tag becomes the history of the following tokens like any other tag, so the neighbors after a match can change;
+  the tokens before the first match are tagged exactly as without a glossary.
+
+### Inflection
+
+A glossary lists lemmas and text has plurals and verb forms, so the regular English forms of the head word match as well,
+with the tags that fit the form:
+
+- A noun entry matches its plural: `s`, `x`, `z`, `ch` and `sh` take `es` (`box`, `boxes`), a consonant and `y` become `ies`
+  (`battery`, `batteries`), otherwise `s`; an acronym of capitals takes a lower-case `s` (`LRU`, `LRUs`).
+- A verb entry matches the third person (the same rule as the plural), the past form (`isolated`, `carried`, `stopped`
+  for a short word that ends in consonant, vowel, consonant) and the present participle (`isolating`, `carrying`,
+  `stopping`, `tying`). A past form may be a verb or an adjective, a present participle a verb, an adjective or a noun.
+- Only the head word is inflected: `bleed valve` matches `bleed valves`, not `bleeds valve`. Proper nouns, adjectives and
+  other tags are not inflected.
+- Irregular forms (`bled`, `leaves`) and the doubling of longer words (`permitted`) are not generated: list them with
+  `WithVariants`, which takes whole-term spellings with the same number of tokens. A term as written wins over a listed
+  variant, and a variant over a generated form. An irregular form that is identical to the lemma (`set`, `cut`) needs no
+  variant, because the term already matches it, and a variant that repeats the term or another variant is ignored without
+  an error.
+- `GlossaryOptions.Inflect` and `GlossaryEntry.WithInflection` switch it off.
+
+### Caveats
+
+- **Tokenization.** A term is split into tokens like running text. `bleed-valve` is one token and does not match the text
+  `bleed valve` (add both spellings as two entries; a variant cannot help, because it must have the same number of
+  tokens as the term). A contraction in a term is split (`don't` becomes `do` and
+  `n't`), so give such a term a head with `WithHead`. Punctuation inside a word (`3.5`, `R&D`, `and/or`) behaves as in text.
+  A term never matches across two sentences, and a pre-tokenized token with punctuation stuck to it (`valve.`) does not
+  match `valve`.
+- **The head word.** The head word is the last word of the term, which is right for noun compounds (`bleed valve`),
+  except for a phrasal verb: when the entry's tags include `VERB`, the term has at least two words, and every word after
+  the first is one of a small closed list of particle words that the lexicon of the library also allows as adposition,
+  adverb or particle, the head is the first word. The list is `about`, `across`, `ahead`, `along`, `apart`, `around`,
+  `aside`, `away`, `back`, `by`, `down`, `forth`, `forward`, `in`, `off`, `on`, `onto`, `out`, `over`, `through`,
+  `together`, `up`, `upon` and `within`. So `shut down`, `carry out`, `set up` and `switch off` are inferred with the head
+  on the first word, while `take care`, `make sense` and `shut down valve` keep the last word. `WithHead` always
+  overrides the default, in both directions, also `WithHead` with the last word, and a phrasal verb with a particle outside
+  the list needs it. The verb tags then go to the head word
+  (`shut`); `shuts` and `shutting` match as forms of the verb, and the particle `down` is
+  limited to adposition, adverb and particle. That limit applies only to a verb term of exactly two words whose head is
+  the first word; every other word of a term that is not a noun term (for example `it` in `take it apart`, the words in
+  front of the head, and the words of an adjective phrase) is left to the model, and `WithTokenTags` sets the tags of one
+  word explicitly. The inference looks the words up in the lexicon that is embedded in the library, also when your
+  tagger was loaded with its own lexicon file; `GlossaryEntry.HeadIndex` tells which word was chosen.
+- **Duplicates.** Two entries for the same tokens under the same case rule are refused; merge their tags into one entry.
+- **Wrong entries.** See the hard and soft modes above. A hard entry with a wrong tag is tagged wrongly everywhere it
+  occurs, with confidence 1.0.
+- **Cost.** Building a glossary tokenizes every term and creates the inflected forms once. Matching a sentence costs
+  about the length of the longest term per token, whatever the size of the glossary, and does not allocate per token for
+  ordinary text; tagging with a glossary adds no allocation to a sentence without a match, and a sentence with matches
+  adds one array sized by its token count (no object per token) and a few objects per match.
+- **Thread safety.** A glossary and its entries are immutable and safe to share; a `GlossaryBuilder` is not thread-safe.
+
 ## Loading a Weights File
 
 ```csharp
@@ -206,7 +367,8 @@ same thread-safe instance. A read does not fail in a released package; an `Inval
 
 ## Thread Safety
 
-`Tagger`, `Tokenizer`, `TokenConstraint` and all result types are immutable and safe for use from any number of threads
+`Tagger`, `Tokenizer`, `TokenConstraint`, `Glossary`, `GlossaryEntry` and all result types are immutable and safe for use
+from any number of threads
 at the same time. A tagger uses per-thread scratch memory internally, so sharing one tagger between threads is cheap and
 recommended. Tagging more than 50,000 tokens per second on one thread is a tested requirement of the library; typical
 speed on a modern machine is several hundred thousand tokens per second.
@@ -257,6 +419,12 @@ The entry point. Immutable and thread-safe.
   `Tokenizer`.
 - `TaggedSentence Tag(IReadOnlyList<string> tokens, IReadOnlyList<TokenConstraint>? constraints = null)`: tags tokens
   that you provide.
+- `IReadOnlyList<TaggedSentence> Tag(string text, Glossary glossary)`: as `Tag(string)`, with the terms of the glossary
+  applied.
+- `TaggedSentence Tag(Sentence sentence, Glossary glossary, IReadOnlyList<TokenConstraint>? constraints = null)` and
+  `TaggedSentence Tag(IReadOnlyList<string> tokens, Glossary glossary, IReadOnlyList<TokenConstraint>? constraints = null)`:
+  as the overloads without a glossary; your constraints are combined with those of the glossary and win where the two
+  allow no tag in common. A `null` glossary throws `ArgumentNullException` (use `Glossary.Empty` for none).
 
 ## TaggerOptions
 
@@ -266,6 +434,8 @@ The entry point. Immutable and thread-safe.
 
 - `string Text`, `int Start`, `int Length`: the sentence and its place in the source string.
 - `IReadOnlyList<TaggedToken> Tokens`: the tagged tokens in order.
+- `IReadOnlyList<GlossaryMatch> GlossaryMatches`: the glossary terms that were found, in text order; empty without a
+  glossary.
 
 ## TaggedToken
 
@@ -274,6 +444,8 @@ The entry point. Immutable and thread-safe.
 - `double Confidence`: the probability of the tag among the considered tags.
 - `IReadOnlyList<TagScore> Alternatives`: the other considered tags by descending probability; read-only.
 - `bool IsConstrained`: true when a `TokenConstraint` other than `None` applied to the token.
+- `GlossaryMatch? GlossaryMatch`: the match whose span contains the token, or `null`.
+- `bool IsGlossaryHead`: true for the head word of its match.
 
 ## TagScore
 
@@ -288,6 +460,58 @@ The entry point. Immutable and thread-safe.
 - `TokenConstraint And(TokenConstraint other)`: intersects the allowed sets, adds the adjustments; throws when the sets
   are disjoint.
 - Equality by content (`Equals`, `==`, `!=`, `GetHashCode`) and `ToString`.
+
+## Glossary Class
+
+An immutable, thread-safe set of domain terms.
+
+- `static Glossary Empty`: no entries; tagging with it gives the result of tagging without a glossary.
+- `static Glossary Create(IEnumerable<GlossaryEntry> entries, GlossaryOptions? options = null)`: validates and copies
+  the entries and the options; throws `ArgumentNullException` for a `null` list or entry, `ArgumentException` for
+  duplicates and `ArgumentOutOfRangeException` for invalid options.
+- `int Count`, `IReadOnlyList<GlossaryEntry> Entries` (in the order added), `GlossaryOptions Options` (a copy).
+- `IReadOnlyList<GlossaryMatch> FindMatches(Sentence sentence)`: finds the terms without tagging.
+
+## GlossaryBuilder
+
+Collects entries for a collection initializer; not thread-safe.
+
+- `GlossaryBuilder(GlossaryOptions? options = null)`, `int Count`.
+- `GlossaryBuilder Add(GlossaryEntry entry)`, `Add(string term, Upos tag, string? definition = null)` and
+  `Add(string term, UposSet tags, string? definition = null)`.
+- `Glossary Build()`: a snapshot; the builder stays usable. The builder is enumerable.
+
+## GlossaryEntry
+
+One term; immutable. Every `With...` method returns a changed copy.
+
+- `GlossaryEntry(string term, Upos tag, string? definition = null)` and
+  `GlossaryEntry(string term, UposSet tags, string? definition = null)`.
+- `string Term`, `IReadOnlyList<string> Tokens`, `UposSet Tags`, `string? Definition`, `int HeadIndex` (the first token
+  of a phrasal verb with a listed particle word, otherwise the last token, unless `WithHead` set it),
+  `bool? CaseSensitive`,
+  `GlossaryMode? Mode`, `bool? Inflect` (`null`: the glossary default),
+  `IReadOnlyList<string> Variants`, `UposSet? GetTokenTags(int tokenIndex)`.
+- `WithDefinition(string?)`, `WithHead(int tokenIndex)` (overrides the inferred head, in both directions),
+  `WithCaseSensitive(bool)`,
+  `WithMode(GlossaryMode)`, `WithInflection(bool)`, `WithVariants(params string[])` and
+  `WithTokenTags(int tokenIndex, UposSet tags)`.
+
+## GlossaryOptions
+
+- `bool CaseSensitive { get; init; }` (default `false`), `GlossaryMode Mode { get; init; }` (default `Hard`),
+  `double SoftStrength { get; init; }` (in units of the model temperature; finite and greater than zero; default
+  `GlossaryOptions.DefaultSoftStrength`) and `bool Inflect { get; init; }` (default `true`).
+
+## GlossaryMode
+
+`Hard` (the default; the head word takes only the tags of the entry, so a wrong entry forces a wrong tag; for curated
+lists) and `Soft` (the tags get a preference; the model can disagree; for lists that are not curated or may be wrong).
+
+## GlossaryMatch
+
+One found term; immutable. `GlossaryEntry Entry`, `int FirstToken`, `int TokenCount`, `int HeadToken`, `int Start`,
+`int Length`, `string Text`, `GlossaryMode Mode` and `bool IsVariant`.
 
 ## Tokenizer
 

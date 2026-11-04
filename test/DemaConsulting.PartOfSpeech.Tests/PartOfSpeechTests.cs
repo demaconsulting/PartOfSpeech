@@ -5,7 +5,7 @@ namespace DemaConsulting.PartOfSpeech.Tests;
 
 /// <summary>
 ///     System-level tests of the library: the public API from text to tagged tokens with the embedded lexicon, models loaded
-///     from streams, constraints, concurrency, throughput and packaging.
+///     from streams, constraints, glossaries, concurrency, throughput and packaging.
 /// </summary>
 public class PartOfSpeechTests
 {
@@ -218,6 +218,131 @@ public class PartOfSpeechTests
     }
 
     /// <summary>
+    ///     Proves that a hard glossary entry forces the tag of its head word, with certainty, in running text.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Glossary_HardEntry_ForcesHeadTag()
+    {
+        // Arrange: the word cat scores NOUN 3 and VERB 1 (the embedded lexicon allows both), and a glossary that says that cat is a verb
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 3).Word("cat", Upos.Verb, 1).Build();
+        var tagger = TinyModels.CreateTagger(weights);
+        var glossary = new GlossaryBuilder { { "cat", Upos.Verb } }.Build();
+
+        // Act: tag a text without and with the glossary
+        var free = tagger.Tag("The cat sat.")[0].Tokens[1];
+        var forced = tagger.Tag("The Cat sat.", glossary)[0].Tokens[1];
+
+        // Assert: NOUN without the glossary, VERB with it (also when capitalized), certain, constrained and reported as the head of the match
+        Assert.Equal(Upos.Noun, free.Tag);
+        Assert.Equal(Upos.Verb, forced.Tag);
+        Assert.Equal(1.0, forced.Confidence);
+        Assert.True(forced.IsConstrained);
+        Assert.True(forced.IsGlossaryHead);
+    }
+
+    /// <summary>
+    ///     Proves that a soft glossary entry adds a preference that a small strength does not and a large strength does turn into a different tag.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Glossary_SoftEntry_PreferenceShiftsCloseDecision()
+    {
+        // Arrange: the word cat scores NOUN 3 and VERB 1 at temperature 1, and soft glossaries of strength 0.5 and 5 that say VERB
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 3).Word("cat", Upos.Verb, 1).Build(1f);
+        var tagger = TinyModels.CreateTagger(weights);
+        Glossary Soft(double strength) =>
+            new GlossaryBuilder(new GlossaryOptions { Mode = GlossaryMode.Soft, SoftStrength = strength }) { { "cat", Upos.Verb } }.Build();
+
+        // Act: tag with each
+        var free = tagger.Tag(new[] { "cat" }).Tokens[0];
+        var small = tagger.Tag(new[] { "cat" }, Soft(0.5)).Tokens[0];
+        var large = tagger.Tag(new[] { "cat" }, Soft(5)).Tokens[0];
+
+        // Assert: the small preference keeps NOUN with a lower confidence, the large one flips it to VERB; both are constrained, and neither is certain
+        Assert.Equal(Upos.Noun, free.Tag);
+        Assert.Equal(Upos.Noun, small.Tag);
+        Assert.True(small.Confidence < free.Confidence);
+        Assert.Equal(Upos.Verb, large.Tag);
+        Assert.True(small.IsConstrained && large.IsConstrained);
+        Assert.True(large.Confidence < 1.0);
+    }
+
+    /// <summary>
+    ///     Proves that the matches are reported on the tokens and on the sentences of a text, with offsets into the original string and the definitions.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Glossary_Results_ReportMatchesOnTokensAndSentences()
+    {
+        // Arrange: a tagger, a glossary with a definition and a text with two sentences, of which the second has two matches
+        var tagger = EmbeddedLexiconTagger();
+        var glossary = new GlossaryBuilder { { "cat", Upos.Noun, "A small animal." }, { "the mat", Upos.Noun } }.Build();
+        const string text = "A dog barked. The cat sat on the mat.";
+
+        // Act: tag the text
+        var sentences = tagger.Tag(text, glossary);
+
+        // Assert: no match in the first sentence, two in text order in the second, with their offsets in the whole text and their definitions
+        Assert.Equal(2, sentences.Count);
+        Assert.Empty(sentences[0].GlossaryMatches);
+        Assert.Equal(new[] { "cat", "the mat" }, sentences[1].GlossaryMatches.Select(m => m.Text));
+        Assert.All(sentences[1].GlossaryMatches, m => Assert.Equal(m.Text, text.Substring(m.Start, m.Length)));
+        Assert.Equal("A small animal.", sentences[1].GlossaryMatches[0].Entry.Definition);
+        Assert.Null(sentences[1].GlossaryMatches[1].Entry.Definition);
+        var tokens = sentences[1].Tokens;
+        Assert.Same(sentences[1].GlossaryMatches[0], tokens[1].GlossaryMatch);
+        Assert.Same(sentences[1].GlossaryMatches[1], tokens[4].GlossaryMatch);
+        Assert.Same(sentences[1].GlossaryMatches[1], tokens[5].GlossaryMatch);
+        Assert.Equal(new[] { false, true, false, false, false, true, false }, tokens.Select(t => t.IsGlossaryHead));
+        Assert.All(sentences[0].Tokens, t => Assert.Null(t.GlossaryMatch));
+    }
+
+    /// <summary>
+    ///     Proves that the documented examples give the claimed results with the embedded default model: only what the constraints guarantee is asserted.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Glossary_DocumentedExamples_GiveTheClaimedResults()
+    {
+        // Arrange: the technical-name list of the documentation, the acronym example and the soft example
+        var tagger = Tagger.Default;
+        var names = new GlossaryBuilder { { "bleed valve", Upos.Noun }, { "torque wrench", Upos.Noun }, { "accumulator", Upos.Noun } }.Build();
+        var acronym = new GlossaryBuilder { new GlossaryEntry("IT", Upos.Noun).WithCaseSensitive(true) }.Build();
+        var soft = new GlossaryBuilder(new GlossaryOptions { Mode = GlossaryMode.Soft }) { { "torque wrench", Upos.Noun } }.Build();
+
+        // Act: tag the sentences
+        var technical = tagger.Tag("Bleed valves need a torque wrench.", names).Single();
+        var instruction = tagger.Tag("Open the bleed valve. Use a torque wrench.", names);
+        var upper = tagger.Tag("Call IT now.", acronym).Single();
+        var lowerWithGlossary = tagger.Tag("Call it now.", acronym);
+        var lowerWithout = tagger.Tag("Call it now.");
+        var boosted = tagger.Tag(new[] { "Use", "a", "torque", "wrench", "." }, soft);
+
+        // Assert: heads are nouns with certainty (also in the plural and at the start of the sentence), their first word is never a verb
+        Assert.Equal(new[] { "Bleed valves", "torque wrench" }, technical.GlossaryMatches.Select(m => m.Text));
+        Assert.Equal(Upos.Noun, technical.Tokens[1].Tag);
+        Assert.Equal(1.0, technical.Tokens[1].Confidence);
+        Assert.NotEqual(Upos.Verb, technical.Tokens[0].Tag);
+        Assert.NotEqual(Upos.Aux, technical.Tokens[0].Tag);
+        Assert.All(instruction.SelectMany(s => s.GlossaryMatches), m => Assert.Equal(2, m.TokenCount));
+
+        Assert.Equal(2, instruction.Count);
+        Assert.Equal(Upos.Noun, instruction[0].Tokens[3].Tag);
+        Assert.NotEqual(Upos.Verb, instruction[0].Tokens[2].Tag);
+        Assert.Equal(Upos.Noun, instruction[1].Tokens[3].Tag);
+        Assert.NotEqual(Upos.Verb, instruction[1].Tokens[2].Tag);
+
+        // The acronym is a noun; the lower-case pronoun is untouched
+        Assert.Equal(Upos.Noun, upper.Tokens[1].Tag);
+        Assert.True(upper.Tokens[1].IsGlossaryHead);
+        Assert.Empty(lowerWithGlossary.SelectMany(s => s.GlossaryMatches));
+        Assert.Equal(Describe(lowerWithout), Describe(lowerWithGlossary));
+
+        // Soft mode: the head word is constrained, reported as head, with a confidence in (0, 1]
+        var head = boosted.Tokens.Single(t => t.IsGlossaryHead);
+        Assert.Equal("wrench", head.Text);
+        Assert.True(head.IsConstrained);
+        Assert.InRange(head.Confidence, double.Epsilon, 1.0);
+    }
+
+    /// <summary>
     ///     Proves that a weights file can be loaded from a file stream and tags text.
     /// </summary>
     [Fact]
@@ -332,6 +457,41 @@ public class PartOfSpeechTests
 
         // Assert: no difference
         Assert.Equal(0, mismatches);
+    }
+
+    /// <summary>
+    ///     Proves that eight threads sharing one tagger and one glossary, hard and soft, get the same results as a sequential run.
+    /// </summary>
+    [Fact]
+    public async Task PartOfSpeech_Concurrency_GlossaryTagging_MatchesSequential()
+    {
+        // Arrange: one tagger, a hard and a soft glossary and a set of texts; the sequential results are the reference
+        var tagger = EmbeddedLexiconTagger();
+        var hard = new GlossaryBuilder { { "cat", Upos.Verb }, { "the mat", Upos.Noun }, { "reads", Upos.Noun } }.Build();
+        var soft = new GlossaryBuilder(new GlossaryOptions { Mode = GlossaryMode.Soft }) { { "cat", Upos.Verb }, { "book", Upos.Verb } }.Build();
+        var texts = TinyTrainer.Sentences().Select(s => string.Join(" ", s.Tokens)).ToList();
+        string Run(string text, Glossary glossary) =>
+            Describe(tagger.Tag(text, glossary)) + "#" + string.Join(",", tagger.Tag(text, glossary).SelectMany(s => s.GlossaryMatches).Select(m => $"{m.Start}:{m.Text}"));
+        var expected = texts.Select(t => (Run(t, hard), Run(t, soft))).ToList();
+        var mismatches = 0;
+
+        // Act: eight tasks, 100 iterations each, in different orders
+        var tasks = Enumerable.Range(0, 8).Select(task => Task.Run(() =>
+        {
+            for (var iteration = 0; iteration < 100; iteration++)
+            {
+                var index = (iteration + (task * 5)) % texts.Count;
+                if (Run(texts[index], hard) != expected[index].Item1 || Run(texts[index], soft) != expected[index].Item2)
+                {
+                    Interlocked.Increment(ref mismatches);
+                }
+            }
+        }, TestContext.Current.CancellationToken)).ToArray();
+        await Task.WhenAll(tasks);
+
+        // Assert: no difference
+        Assert.Equal(0, mismatches);
+        Assert.Contains(expected, e => e.Item1.IndexOf(':') >= 0);
     }
 
     /// <summary>

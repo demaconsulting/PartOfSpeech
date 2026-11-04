@@ -388,6 +388,96 @@ public class TaggerTests
     }
 
     /// <summary>
+    ///     Proves that the overloads that take a glossary refuse a null glossary, and the null arguments that the other overloads refuse.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_Glossary_NullArguments_Throw()
+    {
+        // Arrange: a tagger and a glossary
+        var tagger = Create();
+        var glossary = Glossary.Empty;
+        var sentence = Tokenizer.CreateSentence(new[] { "The", "cat" });
+
+        // Act / Assert: a null glossary, text, sentence or token list is refused by every overload with a glossary
+        Assert.Throws<ArgumentNullException>(() => tagger.Tag("The cat sat.", null!));
+        Assert.Throws<ArgumentNullException>(() => tagger.Tag(sentence, (Glossary)null!));
+        Assert.Throws<ArgumentNullException>(() => tagger.Tag(new[] { "The", "cat" }, (Glossary)null!));
+        Assert.Throws<ArgumentNullException>(() => tagger.Tag((string)null!, glossary));
+        Assert.Throws<ArgumentNullException>(() => tagger.Tag((Sentence)null!, glossary));
+        Assert.Throws<ArgumentNullException>(() => tagger.Tag((IReadOnlyList<string>)null!, glossary));
+    }
+
+    /// <summary>
+    ///     Proves that the constraint list of an overload with a glossary must have one element per token, like the list of the other overloads.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_Glossary_ConstraintLengthMismatch_Throws()
+    {
+        // Arrange: a tagger and a glossary that matches one of the two tokens
+        var tagger = Create();
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("cat", Upos.Noun) });
+
+        // Act / Assert: one constraint for two tokens is rejected, with and without a match; a list of the right length is accepted
+        Assert.Throws<ArgumentException>(() => tagger.Tag(new[] { "The", "cat" }, glossary, new[] { TokenConstraint.None }));
+        Assert.Throws<ArgumentException>(() => tagger.Tag(Tokenizer.CreateSentence(new[] { "The", "dog" }), glossary, new TokenConstraint[3]));
+        Assert.Equal(2, tagger.Tag(new[] { "The", "cat" }, glossary, new[] { TokenConstraint.None, TokenConstraint.None }).Tokens.Count);
+    }
+
+    /// <summary>
+    ///     Proves that an empty glossary gives exactly the result of tagging without a glossary, for all three overloads.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_Glossary_EmptyGlossary_GivesTheResultWithoutGlossary()
+    {
+        // Arrange: a tagger, a text and the glossary without entries
+        var tagger = Create();
+        const string text = "The cat sat on the mat. She reads a book.";
+        var tokens = new[] { "She", "reads", "a", "book", "." };
+
+        // Act: tag with and without the empty glossary
+        var plainText = tagger.Tag(text);
+        var glossaryText = tagger.Tag(text, Glossary.Empty);
+        var plainTokens = tagger.Tag(tokens);
+        var glossaryTokens = tagger.Tag(tokens, Glossary.Empty);
+        var glossarySentence = tagger.Tag(Tokenizer.CreateSentence(tokens), Glossary.Empty);
+
+        // Assert: the same tags, confidences and alternatives, and no match anywhere
+        Assert.Equal(Describe(plainText), Describe(glossaryText));
+        Assert.Equal(Describe(new[] { plainTokens }), Describe(new[] { glossaryTokens }));
+        Assert.Equal(Describe(new[] { plainTokens }), Describe(new[] { glossarySentence }));
+        Assert.All(glossaryText, s => Assert.Empty(s.GlossaryMatches));
+        Assert.All(glossaryTokens.Tokens, t => Assert.Null(t.GlossaryMatch));
+    }
+
+    /// <summary>
+    ///     Proves that a match of the glossary is applied to the tags and reported on the tokens and on the sentence, for text input.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_Glossary_Match_IsAppliedAndReported()
+    {
+        // Arrange: a tagger and a glossary that says that "mat" is a verb in this domain
+        var tagger = Create();
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("mat", Upos.Verb, "To cover a floor.") });
+        const string text = "The cat sat on the mat. She reads a book.";
+
+        // Act: tag the text
+        var sentences = tagger.Tag(text, glossary);
+
+        // Assert: the first sentence has one match on "mat", certain and reported at the token, the second has none
+        var match = Assert.Single(sentences[0].GlossaryMatches);
+        var token = sentences[0].Tokens[5];
+        Assert.Equal("mat", token.Text);
+        Assert.Equal(Upos.Verb, token.Tag);
+        Assert.Equal(1.0, token.Confidence);
+        Assert.True(token.IsConstrained);
+        Assert.True(token.IsGlossaryHead);
+        Assert.Same(match, token.GlossaryMatch);
+        Assert.Equal("To cover a floor.", match.Entry.Definition);
+        Assert.Equal(text.IndexOf("mat", StringComparison.Ordinal), match.Start);
+        Assert.Empty(sentences[1].GlossaryMatches);
+    }
+
+    /// <summary>
     ///     Proves that the option limits the number of alternatives of every token.
     /// </summary>
     [Fact]

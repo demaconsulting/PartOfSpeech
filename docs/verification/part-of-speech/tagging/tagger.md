@@ -50,4 +50,10 @@ invariants (excludes the tag, sorted, limited, sums with the confidence to at mo
   round-trip, the result is the same on a second call) and `Tagger_Tag_Text_ValidSurrogatePair_RoundTrips` (an emoji
   stays one token with the right offsets).
 - **Options**: `Tagger_Options_MaxAlternativesLimitsAlternatives`.
+- **Glossary overloads**: `Tagger_Tag_Glossary_NullArguments_Throw` (a null glossary, text, sentence or token list is
+  refused by every overload that takes a glossary), `Tagger_Tag_Glossary_ConstraintLengthMismatch_Throws` (with and without
+  a match), `Tagger_Tag_Glossary_EmptyGlossary_GivesTheResultWithoutGlossary` (the three overloads give the tags,
+  confidences and alternatives of the calls without a glossary, and no match) and `Tagger_Tag_Glossary_Match_IsAppliedAndReported`
+  (a hard entry decides the tag of its head word with certainty, and the match is reported on the token and on the
+  sentence with its offset and definition). What a glossary does to the tags is verified in _Glossary Verification_.
 - **Alternatives**: `Tagger_Tag_Alternatives_ExcludeBestAndSumWithConfidence`.

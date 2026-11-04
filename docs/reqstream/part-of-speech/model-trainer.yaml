@@ -189,3 +189,37 @@ sections:
               - GlossaryFeatures_Append_InBucketSpaceAndDependOnHintAndHistory
               - HintedPredictor_NoHints_MatchesQuantizedPredictor
               - HintedPredictor_HardHintAndHugeBoost_FollowTheHint
+
+          - id: PartOfSpeech-ModelTrainer-GlossaryEvaluation
+            title: >-
+              The dev-only glossary evaluation shall read nothing but the two development sets, shall draw its
+              simulated glossaries (compounds, single words, acronyms, wrong entries) reproducibly from a seed, shall
+              give every scored token to exactly one category, shall count confident noun-verb swaps against the
+              no-glossary decision count also when a hard constraint leaves one candidate, shall find no difference
+              before the first match of a sentence, and shall apply its two decision rules exactly as written (the soft
+              strength rule of the run log, which fixes the default strength and whose outcome on the recorded cells is
+              the library constant, a member of the evaluated grid, with the first-run rule kept as the historical
+              decision, and the non-head rule).
+            justification: |
+              The default soft strength and the rule for the non-head tokens of a term are decisions that rest on this
+              evaluation, so it must be reproducible (a re-run must print the shipped default), must not touch
+              held-out data, must measure the harm of a wrong
+              entry honestly (a hard constraint leaves one candidate, which the plain harm metric does not count), and
+              must not drift from the library constant that it justifies.
+            tests:
+              - GoldTarget_Lemma_IsParsedAndOptional
+              - GlossaryEvaluation_StrengthGrid_ContainsTheDefaultSoftStrength
+              - GlossaryEvaluation_ChooseSoftStrength_LargestPassingStrengthWins
+              - GlossaryEvaluation_ChooseSoftStrength_ConditionsAndNonePasses
+              - GlossaryEvaluation_ChooseSoftStrength_RecordedCells_EqualsTheDefaultSoftStrength
+              - GlossaryEvaluation_ChooseFirstRunSoftStrength_PicksSmallestWithinTolerance
+              - GlossaryEvaluation_ChooseFirstRunSoftStrength_ConditionsAndNoneAdmissible
+              - GlossaryEvaluation_ChooseNonHeadRule_BarNeedsGainIntervalAndNoLoss
+              - GlossaryEvaluation_CompoundCandidates_SpansEndInNounAndAreDistinct
+              - GlossaryEvaluation_DrawTerms_DeterministicSeededAndWrongEntriesDiffer
+              - GlossaryEvaluation_ToEntries_UnrepresentableTermsAreSkipped
+              - GlossaryEvaluation_RunSystem_CategoriesPartitionEveryScoredToken
+              - GlossaryEvaluation_RunScenario_ConfidentSwapsFlipsAndBaselineDenominator
+              - GlossaryEvaluation_AcronymEntries_AllCapitalNounsWithLexiconHomograph
+              - GlossaryEvaluation_Run_TinyData_ReportsEveryScenarioDeterministically
+              - GlossaryEvaluation_UsesOnlyDevData_NoPathParameterAndNoFileAccess

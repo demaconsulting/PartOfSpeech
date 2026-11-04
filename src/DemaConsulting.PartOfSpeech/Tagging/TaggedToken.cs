@@ -1,3 +1,4 @@
+// cspell:ignore Contoso
 namespace DemaConsulting.PartOfSpeech;
 
 /// <summary>
@@ -56,6 +57,11 @@ public readonly struct TaggedToken
     private readonly int _scoreCount;
 
     /// <summary>
+    ///     The glossary match that this token belongs to, or <c>null</c>.
+    /// </summary>
+    private readonly GlossaryMatch? _glossaryMatch;
+
+    /// <summary>
     ///     Initializes a new instance of the <see cref="TaggedToken"/> struct.
     /// </summary>
     /// <param name="text">The token text.</param>
@@ -66,7 +72,8 @@ public readonly struct TaggedToken
     /// <param name="scoreOffset">The index of the first alternative of this token in <paramref name="scores"/>.</param>
     /// <param name="scoreCount">The number of alternatives.</param>
     /// <param name="isConstrained">Whether a constraint was applied to the token.</param>
-    internal TaggedToken(string text, int start, Upos tag, double confidence, TagScore[]? scores, int scoreOffset, int scoreCount, bool isConstrained)
+    /// <param name="glossaryMatch">The glossary match that the token belongs to, or <c>null</c>.</param>
+    internal TaggedToken(string text, int start, Upos tag, double confidence, TagScore[]? scores, int scoreOffset, int scoreCount, bool isConstrained, GlossaryMatch? glossaryMatch = null)
     {
         Text = text;
         Start = start;
@@ -76,6 +83,7 @@ public readonly struct TaggedToken
         _scoreOffset = scoreOffset;
         _scoreCount = scoreCount;
         IsConstrained = isConstrained;
+        _glossaryMatch = glossaryMatch;
     }
 
     /// <summary>
@@ -103,7 +111,12 @@ public readonly struct TaggedToken
     /// </summary>
     /// <remarks>
     ///     It is a softmax over the tags that the lexicon, the shape rules and any constraint allowed for the token, at
-    ///     the temperature of the model; it is exactly 1.0 when only one tag was allowed. Together with the
+    ///     the temperature of the model; it is exactly 1.0 when only one tag was allowed (by the lexicon, a hard constraint
+    ///     or a hard glossary entry that leaves one tag). A hard glossary entry with several tags, or a soft entry, gives
+    ///     the softmax over the tags that remain, so a soft boost raises the confidence of a preferred tag. For a glossary
+    ///     token the confidence therefore measures the choice among the tags that the constraints still allow; it is
+    ///     <em>not</em> evidence that the entry is correct, and the confidence of a head word that a hard entry limits to
+    ///     one tag is always 1.0, also when the entry is wrong. Together with the
     ///     probabilities in <see cref="Alternatives"/> it adds up to 1 only when
     ///     <see cref="TaggerOptions.MaxAlternatives"/> did not cut any alternative off. This reference recommends no
     ///     threshold: what confidence is low enough to double-check a token is the choice of your application. See
@@ -134,7 +147,41 @@ public readonly struct TaggedToken
     /// <summary>
     ///     Gets a value that indicates whether a <see cref="TokenConstraint"/> restricted or adjusted this token.
     /// </summary>
+    /// <remarks>
+    ///     It is <c>true</c> for a token that a caller constraint or a glossary constrained, and <c>false</c> for a token
+    ///     whose constraint was <see cref="TokenConstraint.None"/>, also when the token is inside a glossary match (for
+    ///     example the final period of a term such as <c>etc.</c> at the end of a text, which has no constraint).
+    /// </remarks>
     public bool IsConstrained { get; }
+
+    /// <summary>
+    ///     Gets the glossary match that this token belongs to, or <c>null</c> when the token is not part of a match.
+    /// </summary>
+    /// <remarks>
+    ///     Every token of a matched term reports the same match object; <see cref="IsGlossaryHead"/> tells which of them
+    ///     is the head word that received the tags of the entry (the word that takes the entry's tags: by default the last word of the term, the first
+    ///     word of a phrasal verb such as <c>shut down</c>). The match is <c>null</c> for every token of a sentence
+    ///     that was tagged without a glossary. See <see cref="Glossary"/>.
+    /// </remarks>
+    public GlossaryMatch? GlossaryMatch => _glossaryMatch;
+
+    /// <summary>
+    ///     Gets a value that indicates whether this token is the head word of a glossary match.
+    /// </summary>
+    /// <remarks>
+    ///     The head word is the token that received the tags of the glossary entry (the head of <c>Contoso Hub</c> is
+    ///     <c>Hub</c>, the head of <c>shut down</c> is <c>shut</c>). It is <c>false</c> for the other
+    ///     tokens of a matched term and for tokens outside any match.
+    /// </remarks>
+    public bool IsGlossaryHead => _glossaryMatch != null && _glossaryMatch.HeadStart == Start;
+
+    /// <summary>
+    ///     Gets a copy of the token that belongs to a glossary match.
+    /// </summary>
+    /// <param name="match">The match.</param>
+    /// <returns>The copy.</returns>
+    internal TaggedToken WithGlossaryMatch(GlossaryMatch match) =>
+        new(Text, Start, Tag, Confidence, _scores, _scoreOffset, _scoreCount, IsConstrained, match);
 
     /// <summary>
     ///     Formats the token for diagnostics.

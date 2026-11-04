@@ -51,6 +51,12 @@ tests:
           - contains: "temperature"
           - contains: "## Terminology"
           - contains: "## Confidence and alternatives"
+          - contains: "## Glossary"
+          - contains: "## Glossary modes: hard and soft"
+          - contains: "## Glossary navigation"
+          - contains: "## Glossary edge cases"
+          - contains: "## Glossary costs"
+          - contains: "## Glossary quick start"
           - contains: "## Tokenization conventions"
           - contains: "## Offsets and pre-tokenized input"
           - contains: "## Default model and loading cost"
@@ -90,6 +96,48 @@ tests:
         text:
           - contains: "```csharp"
 
+  - name: ApiMark_GlossaryDocumented
+    description: "The glossary types are documented with examples, thread safety and their use with the tagger"
+    tags: [api-docs]
+    files:
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/Glossary.md"
+        count: 1
+        text:
+          - contains: "```csharp"
+          - contains: "Thread safety"
+          - contains: "bleed valve"
+          - contains: "WithHead"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/GlossaryBuilder.md"
+        count: 1
+        text:
+          - contains: "```csharp"
+          - contains: "Thread safety"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/GlossaryBuilder/Add.md"
+        count: 1
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/GlossaryEntry.md"
+        count: 1
+        text:
+          - contains: "```csharp"
+          - contains: "WithHead"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/GlossaryOptions.md"
+        count: 1
+        text:
+          - contains: "```csharp"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/GlossaryMatch.md"
+        count: 1
+        text:
+          - contains: "```csharp"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/GlossaryMode.md"
+        count: 1
+        text:
+          - contains: "Soft"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/Tagger/Tag.md"
+        count: 1
+        text:
+          - contains: "Glossary"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/TaggedToken/Glossary*.md"
+        count: 1
+
   # --- PACKAGE CONTENTS ---
   # The packed .nupkg must carry the generated API reference under api/, so that a consumer
   # receives the documentation with the library. These tests run after 'dotnet pack'.
@@ -108,6 +156,11 @@ tests:
               text:
                 - contains: "DemaConsulting.PartOfSpeech"
             - pattern: "api/DemaConsulting.PartOfSpeech/Tagger.md"
+              min: 1
+              max: 1
+              text:
+                - contains: "```csharp"
+            - pattern: "api/DemaConsulting.PartOfSpeech/Glossary.md"
               min: 1
               max: 1
               text:

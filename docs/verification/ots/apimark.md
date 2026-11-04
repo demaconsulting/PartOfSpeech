@@ -47,7 +47,7 @@ still hide examples rendered as prose or dropped remarks.
 
 **Expected**: The namespace page `DemaConsulting.PartOfSpeech.md` contains the terms "UPOS",
 "confidence", "lexicon", "constraint", "greedy" and "temperature" and the section headings
-"Terminology", "Confidence and alternatives", "Tokenization conventions", "Offsets and pre-tokenized
+"Terminology", "Confidence and alternatives", "Glossary", "Tokenization conventions", "Offsets and pre-tokenized
 input", "Default model and loading cost" and "Errors" (the headings prove that the Markdown headings
 written in the carrier's remarks are rendered, which the other pages rely on as link anchors).
 
@@ -71,6 +71,18 @@ XML summary: with severity `Error`, a green build cannot coexist with an undocum
 
 **Requirement coverage**: `PartOfSpeech-OTS-ApiMark-EnforceDocs`.
 
+#### ApiMark_GlossaryDocumented
+
+**Scenario**: The pages of the glossary types are generated.
+
+**Expected**: The `Glossary` page contains a fenced `csharp` example, the thread safety, the technical-name example
+(`bleed valve`) and the head-word rule for phrasal verbs (`WithHead`); the `GlossaryBuilder` page contains an example and
+the thread safety, and its `Add` member page exists; the `GlossaryEntry` page contains an example and `WithHead`; the
+`GlossaryOptions` and `GlossaryMatch` pages contain an example; the `GlossaryMode` page lists the modes; the `Tagger.Tag`
+member page mentions the glossary overloads; and the `TaggedToken.GlossaryMatch` member page exists.
+
+**Requirement coverage**: `PartOfSpeech-OTS-ApiMark-EnforceDocs`.
+
 #### PartOfSpeech_XmlDocExamples_Compile
 
 **Scenario**: Every `<example><code>` block in the shipped XML documentation file of the package is
@@ -86,9 +98,10 @@ the rendered examples are only useful to a reader if they are correct.
 
 **Scenario**: The package is created with `dotnet pack` after the build that generated the reference.
 
-**Expected**: The single `.nupkg` contains `api/api.md`, `api/DemaConsulting.PartOfSpeech.md` and
-`api/DemaConsulting.PartOfSpeech/Tagger.md` once each, with the index naming the namespace, the
-namespace page containing "UPOS" and the `Tagger` page containing a fenced `csharp` block.
+**Expected**: The single `.nupkg` contains `api/api.md`, `api/DemaConsulting.PartOfSpeech.md`,
+`api/DemaConsulting.PartOfSpeech/Tagger.md` and `api/DemaConsulting.PartOfSpeech/Glossary.md` once each, with the index
+naming the namespace, the namespace page containing "UPOS" and the `Tagger` and `Glossary` pages containing a fenced
+`csharp` block.
 
 **Requirement coverage**: `PartOfSpeech-Lib-ApiDocsPackaged` (a software requirement; it verifies
 the ApiMark packaging feature in use).
@@ -98,4 +111,4 @@ the ApiMark packaging feature in use).
 - **`PartOfSpeech-OTS-ApiMark-Generate`**: ApiMark_ApiIndex
 - **`PartOfSpeech-OTS-ApiMark-RenderExamples`**: ApiMark_ExampleCodeRendered,
   ApiMark_TerminologyDocumented, PartOfSpeech_XmlDocExamples_Compile
-- **`PartOfSpeech-OTS-ApiMark-EnforceDocs`**: ApiMark_EntryPointDocumented
+- **`PartOfSpeech-OTS-ApiMark-EnforceDocs`**: ApiMark_EntryPointDocumented, ApiMark_GlossaryDocumented

@@ -20,6 +20,7 @@ input-files:
   - docs/design/part-of-speech/tagging/feature-extractor.md
   - docs/design/part-of-speech/tagging/tag-decoder.md
   - docs/design/part-of-speech/tagging/token-constraint.md
+  - docs/design/part-of-speech/tagging/glossary.md
   - docs/design/part-of-speech/tagging/tagger.md
   - docs/design/ots.md
   - docs/design/ots/apimark.md

@@ -1,4 +1,4 @@
-// cspell:ignore DCDAFUL mklink
+// cspell:ignore DCDAFUL mklink XQZW
 using DemaConsulting.PartOfSpeech.Trainer;
 
 namespace DemaConsulting.PartOfSpeech.Tests.ModelTrainer;
@@ -1305,6 +1305,492 @@ public class ModelTrainerTests
             Assert.Equal(1.0, hard.Confidences[1]);
             Assert.Equal(1 << (int)tag, hard.Candidates[1]);
             Assert.Equal((int)tag, boosted.Tags[1]);
+        }
+    }
+
+    /// <summary>
+    ///     Creates a gold v2 table fixture from rows of (id, document, target index, form, class, lemma, sentence).
+    /// </summary>
+    private static List<GoldTarget> GoldFixture(params string[] rows)
+    {
+        var lines = new List<string>
+        {
+            "# corpus = fixture, dev split",
+            "# columns = id doc_id source terms_url sent_id target form strata pos lemma features tense sense status agreement sentence",
+        };
+        lines.AddRange(rows.Select(r => r.Split('|')).Select(c => $"{c[0]}\t{c[1]}\ts\tu\tx\t{c[2]}\t{c[3]}\tC\t{c[4]}\t{c[5]}\t-\t-\t-\tagreed\tfull\t{c[6]}"));
+        return DevSets.ParseGoldDev(lines, "fixture");
+    }
+
+    /// <summary>
+    ///     Creates an open development fixture from sentences written as <c>word/TAG</c> separated by spaces.
+    /// </summary>
+    private static List<TrainingSentence> OpenFixture(params string[] sentences)
+    {
+        var lines = new List<string>();
+        for (var i = 0; i < sentences.Length; i++)
+        {
+            lines.Add($"# sent_id = s{i}");
+            lines.Add($"# source_id = d{i}");
+            lines.AddRange(sentences[i].Split(' ').Select(w => w.Split('/')).Select(p => $"{p[0]}\t{p[1]}\tunanimous"));
+            lines.Add(string.Empty);
+        }
+
+        return DevSets.ParseOpenDev(lines, "fixture");
+    }
+
+    /// <summary>
+    ///     The lexicon of the tiny glossary evaluation model.
+    /// </summary>
+    private static readonly byte[] GlossaryEvalLexicon = TinyModels.CreateLexicon(
+        "the DET", "open VERB ADJ", "bleed NOUN VERB", "valve NOUN", "now ADV", "and CCONJ", "it PRON", ". PUNCT");
+
+    /// <summary>
+    ///     Creates the tiny tagger of the glossary evaluation tests: <c>bleed</c> is a verb for the model (by 4 raw units at temperature 1).
+    /// </summary>
+    private static Tagger GlossaryEvalTagger() =>
+        TinyModels.CreateTagger(
+            new TinyModels.WeightsBuilder()
+                .Word("the", Upos.Det, 5).Word("open", Upos.Verb, 3).Word("bleed", Upos.Verb, 5).Word("bleed", Upos.Noun, 1)
+                .Word("valve", Upos.Noun, 3).Word("now", Upos.Adv, 3).Word("and", Upos.Cconj, 5).Word("it", Upos.Pron, 5).Word(".", Upos.Punct, 5)
+                .Build(temperature: 1f),
+            GlossaryEvalLexicon,
+            new TaggerOptions { MaxAlternatives = 16 });
+
+    /// <summary>
+    ///     The two sentences of the tiny glossary evaluation: one with the compound, one without.
+    /// </summary>
+    private static List<TrainingSentence> GlossaryEvalSentences() =>
+        OpenFixture(
+            "open/VERB the/DET bleed/NOUN valve/NOUN now/ADV and/CCONJ it/PRON ./PUNCT",
+            "open/VERB the/DET valve/NOUN ./PUNCT");
+
+    /// <summary>
+    ///     Loads the tiny evaluation lexicon.
+    /// </summary>
+    private static DemaConsulting.PartOfSpeech.Lexicon GlossaryEvalLexiconModel()
+    {
+        using var stream = new MemoryStream(GlossaryEvalLexicon);
+        return DemaConsulting.PartOfSpeech.Lexicon.Load(stream);
+    }
+
+    /// <summary>
+    ///     Validates that the gold v2 parser reads the lemma column when there is one and gives an empty lemma otherwise.
+    /// </summary>
+    [Fact]
+    public void GoldTarget_Lemma_IsParsedAndOptional()
+    {
+        // Arrange: a row with a lemma, a row with the placeholder, and a table without a lemma column
+        var withLemma = GoldFixture("d-1|doc-a|3|valves|Noun|valve|The big red valves leak .", "d-2|doc-a|1|it|Pronoun|-|It leaks .");
+        var withoutColumn = DevSets.ParseGoldDev(
+            new[]
+            {
+                "# columns = id doc_id sentence target pos",
+                "d-1\tdoc-a\tThe dog barks\t1\tNoun",
+            },
+            "fixture");
+
+        // Act / Assert
+        Assert.Equal("valve", withLemma[0].Lemma);
+        Assert.Equal(string.Empty, withLemma[1].Lemma);
+        Assert.Equal(string.Empty, withoutColumn[0].Lemma);
+        Assert.Equal(string.Empty, new GoldTarget("i", "d", new[] { "a" }, 0, "Noun").Lemma);
+    }
+
+    /// <summary>
+    ///     Validates that the default soft strength is a member of the evaluated grid, so the constant and the evaluation cannot drift apart.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_StrengthGrid_ContainsTheDefaultSoftStrength()
+    {
+        // Arrange / Act / Assert
+        Assert.Contains(GlossaryOptions.DefaultSoftStrength, GlossaryEvaluation.StrengthGrid);
+        Assert.Equal(GlossaryEvaluation.StrengthGrid.OrderBy(s => s), GlossaryEvaluation.StrengthGrid);
+    }
+
+    /// <summary>
+    ///     Validates the rule for the default soft strength on a synthetic table: only the strengths that pass both wrong-entry conditions count, and the largest of them wins.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_ChooseSoftStrength_LargestPassingStrengthWins()
+    {
+        // Arrange: 0.5 to 2 pass; 3 fails the swap condition and 4 fails the accuracy interval, although it has the best covered accuracy
+        var candidates = new List<StrengthCandidate>
+        {
+            new() { Strength = 0.5, AccuracyUpperFull30 = 0.08, SwapDifferenceFull30 = -0.67, CoveredAccuracy0 = 98.0 },
+            new() { Strength = 1, AccuracyUpperFull30 = 0.17, SwapDifferenceFull30 = -1.78, CoveredAccuracy0 = 98.1 },
+            new() { Strength = 2, AccuracyUpperFull30 = 0.15, SwapDifferenceFull30 = -2.45, CoveredAccuracy0 = 98.2 },
+            new() { Strength = 3, AccuracyUpperFull30 = 0.01, SwapDifferenceFull30 = 0.45, CoveredAccuracy0 = 98.6 },
+            new() { Strength = 4, AccuracyUpperFull30 = -0.30, SwapDifferenceFull30 = 4.24, CoveredAccuracy0 = 99.5 },
+        };
+
+        // Act
+        var chosen = GlossaryEvaluation.ChooseSoftStrength(candidates, out var passes);
+
+        // Assert: the largest passing strength, not the best covered accuracy
+        Assert.True(passes);
+        Assert.Equal(2, chosen);
+        candidates[3].SwapDifferenceFull30 = 0;
+        Assert.Equal(3, GlossaryEvaluation.ChooseSoftStrength(candidates, out _));
+    }
+
+    /// <summary>
+    ///     Validates each condition of the rule for the default soft strength at its boundary, and that the smallest strength of the grid is chosen when none passes.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_ChooseSoftStrength_ConditionsAndNonePasses()
+    {
+        // Arrange / Act / Assert: the boundaries (an upper bound of exactly 0 and a swap change of exactly 0 pass)
+        Assert.True(GlossaryEvaluation.PassesWrongEntryRule(new StrengthCandidate { AccuracyUpperFull30 = 0, SwapDifferenceFull30 = 0 }));
+        Assert.False(GlossaryEvaluation.PassesWrongEntryRule(new StrengthCandidate { AccuracyUpperFull30 = -0.01, SwapDifferenceFull30 = 0 }));
+        Assert.False(GlossaryEvaluation.PassesWrongEntryRule(new StrengthCandidate { AccuracyUpperFull30 = 0, SwapDifferenceFull30 = 0.01 }));
+
+        // None passes: the smallest strength, whatever its figures
+        var candidates = new[]
+        {
+            new StrengthCandidate { Strength = 2, AccuracyUpperFull30 = -1, SwapDifferenceFull30 = 1 },
+            new StrengthCandidate { Strength = 0.5, AccuracyUpperFull30 = -2, SwapDifferenceFull30 = 3 },
+        };
+        Assert.Equal(0.5, GlossaryEvaluation.ChooseSoftStrength(candidates, out var passes));
+        Assert.False(passes);
+        Assert.Throws<ArgumentException>(() => GlossaryEvaluation.ChooseSoftStrength(Array.Empty<StrengthCandidate>(), out _));
+    }
+
+    /// <summary>
+    ///     Validates that the rule for the default soft strength, applied to the cells recorded in the run log (scenario AB at 100% coverage with 30% wrong entries), gives the shipped default.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_ChooseSoftStrength_RecordedCells_EqualsTheDefaultSoftStrength()
+    {
+        // Arrange: the upper end of the paired interval of the accuracy change and the swap change, as recorded for each strength of the grid
+        var upper = new[] { 0.08, 0.17, 0.17, 0.15, 0.01, -0.30 };
+        var swaps = new[] { -0.67, -1.78, -2.01, -2.45, 0.45, 4.24 };
+        var candidates = GlossaryEvaluation.StrengthGrid
+            .Select((strength, i) => new StrengthCandidate { Strength = strength, AccuracyUpperFull30 = upper[i], SwapDifferenceFull30 = swaps[i] })
+            .ToList();
+
+        // Act
+        var chosen = GlossaryEvaluation.ChooseSoftStrength(candidates, out var passes);
+
+        // Assert: the rule picks the strength that the library ships, and that strength is a member of the grid
+        Assert.True(passes);
+        Assert.Equal(GlossaryOptions.DefaultSoftStrength, chosen);
+        Assert.Contains(chosen, GlossaryEvaluation.StrengthGrid);
+    }
+
+    /// <summary>
+    ///     Validates the original pre-registered strength rule of the first run (kept as the historical decision) on a synthetic table: inadmissible strengths are out, strengths within 0.1 points of the best are tied, and the smallest tied strength wins.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_ChooseFirstRunSoftStrength_PicksSmallestWithinTolerance()
+    {
+        // Arrange: strength 4 has the best covered accuracy but loses accuracy at r = 10%; 1, 2 and 3 are within 0.1 of the best admissible one
+        var candidates = new List<StrengthCandidate>
+        {
+            new() { Strength = 0.5, CoveredAccuracy0 = 98.0 },
+            new() { Strength = 1, CoveredAccuracy0 = 98.5 },
+            new() { Strength = 2, CoveredAccuracy0 = 98.55 },
+            new() { Strength = 3, CoveredAccuracy0 = 98.6 },
+            new() { Strength = 4, AccuracyDifference10 = -0.01, CoveredAccuracy0 = 99.5 },
+        };
+
+        // Act
+        var chosen = GlossaryEvaluation.ChooseFirstRunSoftStrength(candidates, out var admissible);
+
+        // Assert
+        Assert.True(admissible);
+        Assert.Equal(1, chosen);
+        candidates[3].CoveredAccuracy0 = 98.7;
+        Assert.Equal(3, GlossaryEvaluation.ChooseFirstRunSoftStrength(candidates, out _));
+    }
+
+    /// <summary>
+    ///     Validates each admissibility condition of the first-run strength rule, and that without an admissible strength the smallest of the grid is chosen.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_ChooseFirstRunSoftStrength_ConditionsAndNoneAdmissible()
+    {
+        // Arrange / Act / Assert: the boundaries of the three conditions
+        Assert.True(GlossaryEvaluation.IsAdmissible(new StrengthCandidate { AccuracyDifference30 = -0.5 }));
+        Assert.False(GlossaryEvaluation.IsAdmissible(new StrengthCandidate { AccuracyDifference30 = -0.51 }));
+        Assert.False(GlossaryEvaluation.IsAdmissible(new StrengthCandidate { SwapDifference10 = 0.01 }));
+        Assert.False(GlossaryEvaluation.IsAdmissible(new StrengthCandidate { AccuracyDifference10 = -0.01 }));
+
+        // None admissible: the smallest strength, whatever its figures
+        var candidates = new[]
+        {
+            new StrengthCandidate { Strength = 2, SwapDifference10 = 1, CoveredAccuracy0 = 99 },
+            new StrengthCandidate { Strength = 0.5, SwapDifference10 = 3, CoveredAccuracy0 = 90 },
+        };
+        Assert.Equal(0.5, GlossaryEvaluation.ChooseFirstRunSoftStrength(candidates, out var admissible));
+        Assert.False(admissible);
+        Assert.Throws<ArgumentException>(() => GlossaryEvaluation.ChooseFirstRunSoftStrength(Array.Empty<StrengthCandidate>(), out _));
+    }
+
+    /// <summary>
+    ///     Validates the pre-registered bar of scenario G: a gain of at least 0.5 points whose interval excludes zero, and no loss at r = 10%.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_ChooseNonHeadRule_BarNeedsGainIntervalAndNoLoss()
+    {
+        // Arrange: one rule per way to miss the bar, and two that meet it
+        var candidates = new List<RuleCandidate>
+        {
+            new() { Name = "interval touches zero", Gain0 = 1.0, Low0 = 0.0, Gain10 = 1.0 },
+            new() { Name = "small gain", Gain0 = 0.49, Low0 = 0.1, Gain10 = 1.0 },
+            new() { Name = "loss at r=10", Gain0 = 2.0, Low0 = 1.0, Gain10 = -0.1 },
+        };
+
+        // Act / Assert: none qualifies, so the default stays
+        Assert.Null(GlossaryEvaluation.ChooseNonHeadRule(candidates));
+
+        // With two that qualify the larger gain wins
+        candidates.Add(new RuleCandidate { Name = "boundary", Gain0 = 0.5, Low0 = 0.01, Gain10 = 0.0 });
+        Assert.Equal("boundary", GlossaryEvaluation.ChooseNonHeadRule(candidates));
+        candidates.Add(new RuleCandidate { Name = "best", Gain0 = 0.9, Low0 = 0.4, Gain10 = 0.9 });
+        Assert.Equal("best", GlossaryEvaluation.ChooseNonHeadRule(candidates));
+    }
+
+    /// <summary>
+    ///     Validates the compound candidates of scenario A: the longest suffix of two or three tokens of a run of nominal tokens that ends in a noun, one term per distinct text.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_CompoundCandidates_SpansEndInNounAndAreDistinct()
+    {
+        // Arrange: a run ADJ NOUN NOUN (three tokens), a run ending in an adjective (no compound), a single noun (no compound), a repeated compound and a token with a digit
+        var open = OpenFixture(
+            "the/DET old/ADJ kitchen/NOUN table/NOUN is/AUX ./PUNCT",
+            "a/DET big/ADJ dog/NOUN ./PUNCT",
+            "the/DET kitchen/NOUN table/NOUN ./PUNCT",
+            "it/PRON is/AUX the/DET table/NOUN old/ADJ ./PUNCT",
+            "a/DET 3d/ADJ printer/NOUN ./PUNCT");
+
+        // Act
+        var candidates = GlossaryEvaluation.CompoundCandidates(open, EmbeddedModel.Lexicon);
+
+        // Assert: ordinal order, the three-token suffix and the two-token compounds, no span with a digit
+        Assert.Equal(new[] { "big dog", "kitchen table", "old kitchen table" }, candidates.Select(c => c.Text));
+        Assert.All(candidates, c => Assert.Contains(c.Tag, new[] { Upos.Noun, Upos.Propn }));
+        Assert.All(candidates, c => Assert.InRange(c.Tokens.Length, 2, 3));
+    }
+
+    /// <summary>
+    ///     Validates the draw of a simulated glossary: deterministic for a seed, the coverage share, and a wrong entry never keeps the right tag.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_DrawTerms_DeterministicSeededAndWrongEntriesDiffer()
+    {
+        // Arrange: fifty candidates
+        var candidates = Enumerable.Range(0, 50).Select(i => new SimTerm(new[] { "w" + i.ToString("00"), "x" }, Upos.Noun)).ToList();
+
+        // Act
+        var first = GlossaryEvaluation.DrawTerms(candidates, 300, 0, 7, GlossaryEvaluation.WrongCompoundTags);
+        var again = GlossaryEvaluation.DrawTerms(candidates, 300, 0, 7, GlossaryEvaluation.WrongCompoundTags);
+        var other = GlossaryEvaluation.DrawTerms(candidates, 300, 0, 8, GlossaryEvaluation.WrongCompoundTags);
+        var allWrong = GlossaryEvaluation.DrawTerms(candidates, 1000, 100, 7, GlossaryEvaluation.WrongCompoundTags);
+        var someWrong = GlossaryEvaluation.DrawTerms(candidates, 1000, 30, 7, GlossaryEvaluation.WrongCompoundTags);
+
+        // Assert: 15 of 50, reproducible, seed dependent; with 100% wrong no entry keeps its tag, with 30% about a third do not
+        Assert.Equal(15, first.Count);
+        Assert.Equal(first.Select(t => t.Text), again.Select(t => t.Text));
+        Assert.NotEqual(first.Select(t => t.Text), other.Select(t => t.Text));
+        Assert.All(first, t => Assert.Equal(Upos.Noun, t.Tag));
+        Assert.Equal(50, allWrong.Count);
+        Assert.All(allWrong, t => Assert.NotEqual(Upos.Noun, t.Tag));
+        Assert.InRange(someWrong.Count(t => t.Tag != Upos.Noun), 5, 25);
+    }
+
+    /// <summary>
+    ///     Validates that terms the glossary cannot represent as simulated (punctuation, an abbreviation the tokenizer splits) and repeated terms are skipped and counted.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_ToEntries_UnrepresentableTermsAreSkipped()
+    {
+        // Arrange
+        var terms = new[]
+        {
+            new SimTerm(new[] { "valve" }, Upos.Noun),
+            new SimTerm(new[] { "." }, Upos.Punct),
+            new SimTerm(new[] { "dr." }, Upos.Propn),
+            new SimTerm(new[] { "valve" }, Upos.Verb),
+            new SimTerm(new[] { "bleed", "valve" }, Upos.Noun),
+        };
+        var skippedTexts = new SortedSet<string>(StringComparer.Ordinal);
+
+        // Act
+        var entries = GlossaryEvaluation.ToEntries(terms, out var skipped, skippedTexts);
+
+        // Assert: the two entries that the glossary can express, three skipped
+        Assert.Equal(new[] { "valve", "bleed valve" }, entries.Select(e => e.Term));
+        Assert.Equal(3, skipped);
+        Assert.Contains(".", skippedTexts);
+    }
+
+    /// <summary>
+    ///     Validates that the categories partition every scored token of a run: before the match, the non-head and head of the match, and the tokens at distances +1, +2 and later; and that the at-risk flag marks the first token of a compound that the lexicon lists as a verb.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_RunSystem_CategoriesPartitionEveryScoredToken()
+    {
+        // Arrange: the compound "bleed valve" is a right entry in the first sentence; the second sentence has no match
+        var tagger = GlossaryEvalTagger();
+        var lexicon = GlossaryEvalLexiconModel();
+        var set = EvalSet.FromOpen(GlossaryEvalSentences());
+        var entries = new[] { new GlossaryEntry("bleed valve", Upos.Noun) };
+
+        // Act
+        var run = GlossaryEvaluation.RunSystem(tagger, set, GlossaryEvaluation.MakeGlossary(entries, GlossaryMode.Hard, 1), lexicon, "hard");
+
+        // Assert: twelve scored tokens, each in exactly one category
+        Assert.Equal(12, set.ScoredCount);
+        Assert.Equal(
+            new[]
+            {
+                GlossaryCategory.Before, GlossaryCategory.Before, GlossaryCategory.NonHead, GlossaryCategory.HeadRight,
+                GlossaryCategory.Plus1, GlossaryCategory.Plus2, GlossaryCategory.Later, GlossaryCategory.Later,
+                GlossaryCategory.NoMatch, GlossaryCategory.NoMatch, GlossaryCategory.NoMatch, GlossaryCategory.NoMatch,
+            },
+            run.Categories);
+        Assert.Equal(new[] { 2 }, Enumerable.Range(0, 12).Where(i => run.AtRisk[i]));
+        Assert.Equal(1, run.Categories.Count(GlossaryEvaluation.IsCovered) - run.Categories.Count(c => c == GlossaryCategory.NonHead));
+        Assert.Equal(6, run.Categories.Count(GlossaryEvaluation.IsNeighbor));
+
+        // A wrong entry makes the head wrong
+        var wrong = GlossaryEvaluation.RunSystem(tagger, set, GlossaryEvaluation.MakeGlossary(new[] { new GlossaryEntry("bleed valve", Upos.Verb) }, GlossaryMode.Hard, 1), lexicon, "wrong");
+        Assert.Equal(GlossaryCategory.HeadWrong, wrong.Categories[3]);
+    }
+
+    /// <summary>
+    ///     Validates the swap count, the flips and the baseline denominator: a hard constraint that fixes a confident noun-verb error removes the swap and the harmful error, and a hard wrong entry is a swap although it leaves one candidate (so no harmful error).
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_RunScenario_ConfidentSwapsFlipsAndBaselineDenominator()
+    {
+        // Arrange: the model reads "bleed" as a verb with certainty; the gold says noun
+        var tagger = GlossaryEvalTagger();
+        var lexicon = GlossaryEvalLexiconModel();
+        var set = EvalSet.FromOpen(GlossaryEvalSentences());
+        var none = GlossaryEvaluation.RunSystem(tagger, set, null, lexicon, "no glossary");
+
+        // Act: a right entry, then a wrong one
+        var right = GlossaryEvaluation.RunScenario(tagger, set, new[] { new GlossaryEntry("bleed valve", Upos.Noun) }, lexicon, none);
+        GlossaryEvaluation.Pair(right, 20, 1);
+        var wrong = GlossaryEvaluation.RunScenario(tagger, set, new[] { new GlossaryEntry("bleed valve", Upos.Verb) }, lexicon, none);
+
+        // Assert: the baseline has one confident swap and one harmful error ("bleed"), the right entry removes both
+        Assert.Equal(new[] { 2 }, Enumerable.Range(0, 12).Where(i => none.Swaps[i]));
+        Assert.Equal(1, none.Outcomes.Count(o => o.Harmful));
+        Assert.Equal(1, none.Outcomes.Count(o => o.NounVerb));
+        Assert.DoesNotContain(true, right.Systems[0].Swaps);
+        Assert.Equal(-1000.0, right.Cells[0].Harmful.Difference);
+        Assert.Equal(-1000.0, right.Cells[0].Swaps.Difference);
+        Assert.Equal(100.0 / 12, right.Cells[0].Accuracy.Difference, 9);
+        GlossaryEvaluation.CountFlips(none, right.Systems[0], right.Categories, GlossaryCategory.NonHead, out var rightToWrong, out var wrongToRight);
+        Assert.Equal((0, 1), (rightToWrong, wrongToRight));
+
+        // The wrong entry forces the head to VERB with one candidate: a confident swap that Judge does not count as a noun-verb decision
+        Assert.True(wrong.Systems[0].Swaps[3]);
+        Assert.False(wrong.Systems[0].Outcomes[3].NounVerb);
+        Assert.False(wrong.Systems[0].Outcomes[3].Harmful);
+        Assert.Equal(1.0, wrong.Systems[0].Outcomes[3].Confidence);
+
+        // The invariant: nothing before the first match changes
+        Assert.Equal(0, GlossaryEvaluation.CountBeforeDifferences(none, right.Systems[0], right.Categories, out var before));
+        Assert.Equal(2, before);
+    }
+
+    /// <summary>
+    ///     Validates the acronym types of scenario D: all-capital tokens of two to five letters whose lower case is a lexicon word and whose majority gold is a noun.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_AcronymEntries_AllCapitalNounsWithLexiconHomograph()
+    {
+        // Arrange: "IT" is a noun twice, "US" is a pronoun, "XQZW" is not a lexicon word, "It" is not an acronym shape
+        var set = EvalSet.FromOpen(OpenFixture(
+            "the/DET IT/NOUN team/NOUN ./PUNCT",
+            "our/PRON IT/NOUN department/NOUN ./PUNCT",
+            "give/VERB US/PRON it/PRON ./PUNCT",
+            "the/DET XQZW/NOUN team/NOUN ./PUNCT",
+            "It/PRON works/VERB ./PUNCT"));
+
+        // Act
+        var entries = GlossaryEvaluation.AcronymEntries(EmbeddedModel.Lexicon, new[] { set });
+
+        // Assert
+        Assert.Equal(new[] { "IT" }, entries.Select(e => e.Term));
+        Assert.Equal(Upos.Noun, entries[0].Tags.Single());
+    }
+
+    /// <summary>
+    ///     Validates that the whole evaluation runs on tiny dev-like data, reports every part, is deterministic and finds no change before a match.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_Run_TinyData_ReportsEveryScenarioDeterministically()
+    {
+        // Arrange: a small trained model and a few sentences with a compound, an acronym and its homograph; gold targets with lemmas
+        var config = SmallConfig(RestrictionMode.History);
+        var weights = ModelBuilder.Build(TrainSmall(config), config, false);
+        var open = OpenFixture(
+            "the/DET old/ADJ kitchen/NOUN table/NOUN is/AUX here/ADV ./PUNCT",
+            "they/PRON open/VERB the/DET kitchen/NOUN table/NOUN now/ADV ./PUNCT",
+            "the/DET IT/NOUN team/NOUN works/VERB ./PUNCT",
+            "i/PRON use/VERB it/PRON now/ADV ./PUNCT",
+            "she/PRON gives/VERB up/ADP ./PUNCT",
+            "he/PRON gave/VERB up/ADP ./PUNCT");
+        var gold = GoldFixture(
+            "d-1|doc-a|3|valves|Noun|valve|The big red valves leak .",
+            "d-2|doc-b|1|valve|Noun|valve|The valve leaks .",
+            "d-3|doc-c|1|opened|Verb|open|They opened the valve .",
+            "d-4|doc-d|1|bought|Verb|buy|They bought a valve .");
+
+        // Act
+        var first = GlossaryEvaluation.Run(weights, open, gold, EmbeddedModel.Lexicon, 1, 20);
+        var second = GlossaryEvaluation.Run(weights, open, gold, EmbeddedModel.Lexicon, 1, 20);
+        var text = string.Join("\n", first);
+
+        // Assert: reproducible, every part is reported, the parity and the invariant hold
+        Assert.Equal(first, second);
+        Assert.Contains("**Parity (B), tags**", text);
+        Assert.Contains("give 0 different tags", text);
+        Assert.Contains("**Scenario sizes", text);
+        Assert.Contains("**A, coverage 30%", text);
+        Assert.Contains("**AB, coverage 100%", text);
+        Assert.Contains("**A, at-risk subset", text);
+        Assert.Contains("**F, history effect, scenario AB", text);
+        Assert.Contains("differ from the no-glossary tags in 0 of", text);
+        Assert.Contains("**E, coverage 100%", text);
+        Assert.Contains("**C, inflection from gold lemmas", text);
+        Assert.Contains("| Verb, inflected form | 2 |", text);
+        Assert.Contains("**D, case sensitivity", text);
+        Assert.Contains("**G, phrasal verbs", text);
+        Assert.Contains("**Decision (soft strength)**", text);
+        Assert.Contains("**Historical decision (soft strength, rule of the first run)**", text);
+        Assert.Contains("**Decision (non-head rule)**", text);
+        Assert.Throws<ArgumentOutOfRangeException>(() => GlossaryEvaluation.Run(weights, open, gold, EmbeddedModel.Lexicon, 1, 0));
+    }
+
+    /// <summary>
+    ///     Validates that the glossary evaluation is structurally unable to read any file: its entry point takes no path, and its sources use no file API and name no data file.
+    /// </summary>
+    [Fact]
+    public void GlossaryEvaluation_UsesOnlyDevData_NoPathParameterAndNoFileAccess()
+    {
+        // Arrange: the entry point and the two source files of the evaluation
+        var run = typeof(GlossaryEvaluation).GetMethod(nameof(GlossaryEvaluation.Run))!;
+        var folder = DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/Evaluation");
+        var sources = new[] { "GlossaryEvaluation.cs", "GlossaryEvaluationReport.cs" }.Select(f => File.ReadAllText(Path.Combine(folder, f))).ToList();
+
+        // Act / Assert: the parameters are data and settings only (weights, sentences, targets, lexicon, seed, resamples)
+        Assert.DoesNotContain(run.GetParameters(), p => p.ParameterType == typeof(string));
+        Assert.Equal(
+            new[] { typeof(byte[]), typeof(IReadOnlyList<TrainingSentence>), typeof(IReadOnlyList<GoldTarget>), typeof(DemaConsulting.PartOfSpeech.Lexicon), typeof(ulong), typeof(int) },
+            run.GetParameters().Select(p => p.ParameterType));
+        foreach (var text in sources)
+        {
+            foreach (var forbidden in new[] { "File.", "Directory.", "FileStream", "StreamReader", "DevSets.Read", "Path." })
+            {
+                Assert.DoesNotContain(forbidden, text);
+            }
         }
     }
 

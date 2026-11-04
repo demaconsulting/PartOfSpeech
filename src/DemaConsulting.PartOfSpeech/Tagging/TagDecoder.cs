@@ -62,6 +62,15 @@ internal sealed class TagDecoder
     }
 
     /// <summary>
+    ///     Gets the softmax temperature of the model.
+    /// </summary>
+    /// <remarks>
+    ///     Exposed (internally only) so that the glossary can state a soft boost in units of the temperature and convert it
+    ///     into the raw score units that the decoder adds to the scores.
+    /// </remarks>
+    internal double Temperature => _temperature;
+
+    /// <summary>
     ///     Tags the tokens of a sentence.
     /// </summary>
     /// <param name="tokens">The tokens of the sentence.</param>

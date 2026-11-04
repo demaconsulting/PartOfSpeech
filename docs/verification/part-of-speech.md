@@ -61,15 +61,21 @@ Two groups of requirements need methods beyond an ordinary assertion:
   tokens per second), so that the test still proves that the loop is sane and fails for a loop that is an order of
   magnitude too slow or broken. The relaxed gate is not evidence of the requirement; the evidence of the requirement is
   the non-instrumented run. A failing assertion states the rate, whether the run was instrumented and which gate applied.
-  The same method at the unit level is in _TagDecoder Verification_.
+  The same method at the unit level is in _TagDecoder Verification_. The glossary throughput requirement
+  (`PartOfSpeech-Lib-GlossaryThroughput`) uses the same meter and the same two gates for tagging the development sentences
+  with the embedded model and a glossary of 10,000 word pairs taken from the training text (the glossary overhead is
+  written to the test output as well); its unit-level counterpart, the speed of the matching alone, is in
+  _Glossary Verification_.
 - **Thread safety** (`PartOfSpeech-Lib-ThreadSafe`). One tagger is shared by 8 tasks that each tag the fixture texts
   (and a text with non-ASCII characters) 200 times in different orders; every result is compared with the result of a
   sequential run (text, offsets, tags, confidences and alternatives), so that shared scratch memory, a race in a lazy
-  initializer or a mutable result would show as a difference.
+  initializer or a mutable result would show as a difference. A second test does the same with one shared glossary, hard
+  and soft, and compares the matches as well.
 
 The allocation behavior (no allocation in the feature extraction after warm-up, only result arrays in the decoder, no
 allocation in the lexicon shape rules) is verified at the unit level with `GC.GetAllocatedBytesForCurrentThread`, which
-exists on .NET 8 and later; those three tests are not compiled for .NET Framework. The measurement
+exists on .NET 8 and later; those three tests, and the allocation tests of the glossary (see _Glossary Verification_),
+are not compiled for .NET Framework. The measurement
 (`TestSupport/AllocationMeter.cs`) is robust against the runtime's own background activity: a warm-up of at least 500
 rounds and 0.3 seconds, so that JIT compilation and tiered compilation are finished, then the minimum of the bytes
 allocated over 10 measured batches. An operation that allocates on every round allocates in every batch and so still
@@ -242,15 +248,41 @@ is committed, that it is not a restricted corpus, that its data folder declares 
 of the third-party notice on the embedded weights names MASC, its license, the open corpus and the silver corpus. That
 nothing was selected on held-out data is verified by the guard tests of the `ModelTrainer` unit.
 
+### Glossary: Hard and Soft Entries
+
+**Tests**: `PartOfSpeech_Glossary_HardEntry_ForcesHeadTag`, `PartOfSpeech_Glossary_SoftEntry_PreferenceShiftsCloseDecision`,
+`PartOfSpeech_Glossary_DocumentedExamples_GiveTheClaimedResults`
+
+The first gives the word "cat" the scores NOUN 3 and VERB 1, tags a text with a hard glossary entry that says VERB, and
+asserts NOUN without the glossary and VERB with it (also when capitalized), with confidence 1, `IsConstrained` and
+`IsGlossaryHead`. The second tags with soft entries of a small and of a large strength and asserts that the small
+preference keeps NOUN with a lower confidence and the large one gives VERB, with a confidence below 1. The third runs the
+examples of the documentation (the technical-name list, the acronym with case sensitivity and the soft example) with the
+embedded default model and asserts only what the constraints guarantee: the heads are nouns with confidence 1 also in the
+plural and at the start of a sentence, their first words are not verbs, the lower-case pronoun next to the acronym `IT`
+is tagged exactly as without a glossary, and the head of the soft match is constrained with a confidence in the range 0
+to 1. It never asserts a prediction of the model.
+
+### Glossary: Results
+
+**Test**: `PartOfSpeech_Glossary_Results_ReportMatchesOnTokensAndSentences`
+
+Tags a text of two sentences with a glossary of two entries (one with a definition) and asserts that the first
+sentence has no match, that the second lists its two matches in text order with texts that equal the original string at
+their offsets and the definition of the entry, that each token of a span carries its match, and that exactly the head
+tokens are flagged.
+
 ### Thread Safety
 
-**Test**: `PartOfSpeech_Concurrency_ParallelTagging_MatchesSequential`
+**Tests**: `PartOfSpeech_Concurrency_ParallelTagging_MatchesSequential`,
+`PartOfSpeech_Concurrency_GlossaryTagging_MatchesSequential`
 
 Method described under Verification Approach.
 
 ### Throughput
 
-**Test**: `PartOfSpeech_Performance_SingleThread_ExceedsFiftyThousandTokensPerSecond`
+**Tests**: `PartOfSpeech_Performance_SingleThread_ExceedsFiftyThousandTokensPerSecond`,
+`PartOfSpeech_Performance_GlossaryTagging_ExceedsFiftyThousandTokensPerSecond`
 
 Method described under Verification Approach; the measured rate is written to the test output.
 

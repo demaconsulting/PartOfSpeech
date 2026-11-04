@@ -79,6 +79,49 @@ sections:
             tests:
               - Tagging_Constraints_FirstTokenOnly_ChangesNextTokenTag
 
+          - id: PartOfSpeech-Tagging-Glossary
+            title: >-
+              A glossary of terms with allowed tags shall make the tagger give the head word of every term it finds in a
+              sentence one of those tags (hard mode) or prefer them (soft mode), without constraining the words that
+              are not part of a term, and the tag chosen for a term shall, through the tag history, change the tags of
+              the tokens that follow it.
+            justification: |
+              Domain terms such as bleed valve are read wrongly by a general model because their first word is also a
+              verb; the glossary of the domain already knows the answer, and the caller must be able to state it once
+              for every occurrence of the term, in any inflected form and in any letter case that the entry allows.
+            children:
+              - PartOfSpeech-Tagging-Glossary-EntryValidation
+              - PartOfSpeech-Tagging-Glossary-EntryValues
+              - PartOfSpeech-Tagging-Glossary-HeadDefault
+              - PartOfSpeech-Tagging-Glossary-Builder
+              - PartOfSpeech-Tagging-Glossary-Duplicates
+              - PartOfSpeech-Tagging-Glossary-Immutability
+              - PartOfSpeech-Tagging-Glossary-CaseHandling
+              - PartOfSpeech-Tagging-Glossary-Matching
+              - PartOfSpeech-Tagging-Glossary-TermTokenization
+              - PartOfSpeech-Tagging-Glossary-Inflection
+              - PartOfSpeech-Tagging-Glossary-HardConstraints
+              - PartOfSpeech-Tagging-Glossary-NonHeadRule
+              - PartOfSpeech-Tagging-Glossary-SoftConstraints
+              - PartOfSpeech-Tagging-Glossary-CallerConstraints
+              - PartOfSpeech-Tagging-Glossary-TaggingOverloads
+              - PartOfSpeech-Tagging-Glossary-Confidence
+              - PartOfSpeech-Tagging-Tagger-Glossary
+            tests:
+              - Tagging_Glossary_HardEntry_ChangesHeadAndNextTokenThroughHistory
+
+          - id: PartOfSpeech-Tagging-GlossaryResults
+            title: >-
+              The tokens and sentences of a result shall report the glossary terms that were found: which entry, which
+              tokens, which head token, and where in the text.
+            justification: |
+              Callers highlight the terms, show their definitions and review the tags that a glossary decided; they
+              need to know which tokens the glossary touched.
+            children:
+              - PartOfSpeech-Tagging-Glossary-Results
+            tests:
+              - Tagging_Glossary_Results_ReportMatchesOnTokensAndSentence
+
           - id: PartOfSpeech-Tagging-RankedAlternatives
             title: >-
               Every token shall be reported with its confidence and with the other tags that were considered, ranked by

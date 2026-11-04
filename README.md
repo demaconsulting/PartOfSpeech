@@ -23,6 +23,9 @@ This library provides:
   word may take any tag
 - **Confidences and Alternatives**: every tag comes with a calibrated probability and the ranked competing tags
 - **Constraints**: restrict or steer the tag of individual tokens, for example from a glossary
+- **Glossary**: a list of domain terms with their allowed tags (single words and multiword terms such as `bleed valve`,
+  with inflected forms, letter case rules, a hard or a soft mode and the matches reported in the results), so that
+  technical terms are tagged correctly wherever they occur
 - **Pre-Tokenized Input**: tag tokens that you already have
 - **No Dependencies, No Downloads**: the library uses only the base class library and embeds its lexicon and its trained
   weights (about 1.1 MB, about 0.5 MB compressed); it is fast (hundreds of thousands of tokens per second on one thread)
@@ -67,8 +70,29 @@ package, so it needs no file and no download. The first read inflates and valida
 are 492,971 bytes compressed and 1,111,898 bytes uncompressed, the lexicon 641,418 bytes compressed). To use other
 weights, create a tagger with `Tagger.Load(stream)`. The model was selected on development data only; its accuracy is
 measured separately, and this release recommends no confidence threshold until that measurement is published. The
-[user guide][link-user-guide] explains how to read confidences and alternatives, how to constrain tags, and the
-tokenization conventions.
+[user guide][link-user-guide] explains how to read confidences and alternatives, how to constrain tags, how to use a
+glossary and the tokenization conventions.
+
+To tag domain terms correctly, give the tagger a glossary. The general model reads `bleed` in `bleed valve` as a verb;
+the glossary says that the term is a noun, also in the plural and at the start of a sentence:
+
+```csharp
+Glossary glossary = new GlossaryBuilder
+{
+    { "bleed valve", Upos.Noun, "A valve that releases trapped air." },
+    { "torque wrench", Upos.Noun },
+}.Build();
+
+TaggedSentence sentence = Tagger.Default.Tag("Bleed valves need a torque wrench.", glossary)[0];
+foreach (GlossaryMatch match in sentence.GlossaryMatches)
+{
+    Console.WriteLine($"{match.Text} -> {sentence.Tokens[match.HeadToken].Tag}");   // Bleed valves -> Noun
+}
+```
+
+The default is hard mode: the entries are trusted completely, so a wrong entry forces a wrong tag. That fits a curated
+list such as the ASD-STE100 technical names and verbs; use soft mode for a list that is not curated or may be wrong.
+The measured cost is in section E9 of the [trainer run log][link-run-log].
 
 ## Documentation
 
@@ -150,6 +174,7 @@ By contributing to this project, you agree that your contributions will be licen
 [link-contributing]: https://github.com/demaconsulting/PartOfSpeech/blob/main/CONTRIBUTING.md
 [link-data]: https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md
 [link-user-guide]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/user_guide/introduction.md
+[link-run-log]: https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md
 [link-notices]: https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md
 [link-package-license]: https://github.com/demaconsulting/PartOfSpeech/blob/main/PACKAGE-LICENSE.md
 [link-wordsense]: https://github.com/demaconsulting/WordSense
