@@ -1055,6 +1055,20 @@ the repository are byte-identical (SHA-256 of all six dump files unchanged). The
 same values. The throughput of the committed report is the one of the second run: 514,620 tokens per second (the first run
 measured 488,158; it is a timing, not a result of the model).
 
+### Hardening of the evaluation guards (after the held-out run)
+
+A code review of the held-out engine found three weaknesses in the guards. They are closed with fixture tests only; the
+held-out run was not repeated and no model, configuration, threshold, operating point, scoring or metric logic, selection
+artifact or committed result changed. (1) The gate now requires exactly the development files of the data manifest (each
+once), exactly the points `strict` and `balanced` with the registered targets, the registered grid and grid thresholds, and,
+when the development data is present, that the points equal what the registered rule selects from the development curve of
+the embedded model; the committed `operating-points.json` passes it. (2) The cached mapped treebank table is verified
+against the SHA-256 that the committed `test-results.json` records for it (a constant of the evaluation guard) before it is
+parsed; a counts-only `evaluate --preflight` confirmed that the cache matches the pin. (3) The run-once guard is atomic:
+`evaluate` creates `docs/evaluation/test-results.json.running` exclusively immediately before scoring and removes it after the
+results file is written. A run that is aborted after scoring began leaves the lock behind, and the lock blocks every later run
+until a person deletes it by hand; any such deletion, with its reason, must be recorded in this log.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

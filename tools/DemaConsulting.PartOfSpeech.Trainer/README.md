@@ -85,13 +85,17 @@ written before any number existed. The order is fixed by code:
 2. **Fetch the external treebank (local only, never committed).** `python tools/data/fetch_ud_ewt.py fetch`, then
    `python tools/data/fetch_ud_ewt.py map` (pinned hashes are enforced; the cache is git-ignored). `evaluate` converts
    nothing itself: it reads the mapped table (the four convention rules of `data/CONVENTIONS.md`) from the cache and
-   verifies the pinned source file first. `--ud-cache DIR` names another cache folder.
+   verifies the pinned source file and the pinned hash of the mapped table first. `--ud-cache DIR` names another cache folder.
 3. **Pre-flight.** `evaluate --preflight` reads and parses every held-out input (verifying the hashes and headers) and
    prints counts only, next to the documented counts; no tag, prediction or metric. A difference stops the work.
 4. **The one run.** `evaluate --dump-dir DIR` (a folder outside the repository, which also receives the per-token records
    of the run) writes `docs/evaluation/test-results.md` and `test-results.json`. It refuses to run when
    `test-results.json` exists; a repeat needs that committed file to be deleted on purpose and the reason recorded in
-   `RUN-LOG.md`. The model, the configuration, the temperature and the thresholds never change in a repeat.
+   `RUN-LOG.md`. The run is claimed atomically: immediately before scoring `evaluate` creates the lock file
+   `docs/evaluation/test-results.json.running` exclusively (a second run is refused) and removes it once the results file
+   is written. After an aborted run the lock stays and blocks every later run; delete it by hand only after an aborted
+   run and record the deletion and its reason in `RUN-LOG.md`. The model, the configuration, the temperature and the
+   thresholds never change in a repeat.
 
 Run the commands at below-normal priority, one process at a time (see _Machine limits_). `build.ps1` and CI do not run
 `thresholds` or `evaluate`.

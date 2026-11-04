@@ -118,15 +118,29 @@ same results or a treebank word into a report, or lets a stop condition pass.
   `SelectedOperatingPoints_Validate_ValidArtifact_KeepsSelectedPoints` and
   `SelectedOperatingPoints_Validate_InconsistentArtifact_Throws` (another schema, rule, model, a changed or missing
   development file, an off-grid threshold, and a configuration that names another model),
+  `SelectedOperatingPoints_Validate_TamperedArtifact_Throws` (no points, duplicate, extra or missing development files,
+  duplicate, extra, missing or renamed points, another target, another grid, an off-grid threshold),
+  `SelectedOperatingPoints_Validate_ArbitraryGridThreshold_RefusedAgainstDerivation` (a point or count that differs from
+  what the rule selects from the derived development curve is refused, the rule's own selection is accepted) and
+  `DevDerivation_PooledCurve_FixtureOutcomes_EqualsSelectionCurve` (the derived curve equals the curve of the selection),
   `DataGuard_EnsureHeldOutHeader_AnnouncedSet_AcceptedOthersRefused` (a theory: the announced set is accepted, a development
-  split or another set is refused), `DataGuard_EnsureNotEvaluated_ExistingResultsFile_Throws` (the run-once marker),
+  split or another set is refused), `DataGuard_EnsureNotEvaluated_ExistingResultsFile_Throws` (the run-once marker: a
+  results file or a lock file refuses the run), `DataGuard_AcquireRunLock_ExclusiveAndRemovedOnCompletion`,
+  `DataGuard_AcquireRunLock_StaleLock_BlocksUntilDeletedByHand`, `RunLock_Complete_ExistingResultsFile_ThrowsAndKeepsLock`
+  and `DataGuard_AcquireRunLock_ConcurrentAttempts_ExactlyOneWins` (in temporary folders: the lock file is created
+  exclusively, a second run is refused, completion writes the results exclusively and removes the lock, a stale lock
+  blocks until it is deleted by hand, and of 16 concurrent attempts exactly one wins),
   `DataGuard_EnsureOutsideRepository_InsideRefused_OutsideAccepted` (also through a dotted detour),
   `HeldOutReader_Read_FixtureRepository_VerifiesHashAndHeader` and `HeldOutReader_ReadUd_FixtureCache_VerifiesPin` (in a
-  temporary fake repository: a changed file or a wrong header is refused, a changed treebank source or a missing cache is
-  refused with the fetch recipe), `OperatingPointsFile_FormatParseLoad_RoundTripAndValidation` (on .NET 8 and later:
-  canonical form, unknown members refused, the selection hash is the hash of the file bytes) and
+  temporary fake repository: a changed file or a wrong header is refused, a changed treebank source, a mapped table that
+  differs from its pin or a missing cache is refused, the latter with the fetch recipe),
+  `DataGuard_UdMappedSha256_EqualsHashRecordedInCommittedResults` (the pinned constant is the hash that the committed
+  results record for the mapped table), `OperatingPointsFile_FormatParseLoad_RoundTripAndValidation` (on .NET 8 and later:
+  canonical form, unknown members refused, the selection hash is the hash of the file bytes),
   `OperatingPointsFile_Load_CommittedSelection_PassesGateForFrozenModel` (the committed selection is valid for the
-  embedded model and the committed development files; no held-out file is opened).
+  embedded model and the committed development files; no held-out file is opened) and
+  `OperatingPointsFile_Load_CommittedSelection_EqualsDevDerivation` (the committed points equal what the rule selects from
+  the development data for the embedded model, and a tampered threshold is refused).
 - **Confidence curve and rule**: `EvalTally_Of_Outcomes_AgreesWithMetricsCompute` (also the sum of the document tallies),
   `ConfidenceCurve_Of_HandComputedOutcomes_MatchesExpectedRows` (answered, harmful, coverage and rates on seven
   decisions at

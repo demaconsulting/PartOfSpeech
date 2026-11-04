@@ -60,6 +60,13 @@ internal static class DataGuard
     public const string UdMappedFile = "ud_test.tsv";
 
     /// <summary>
+    ///     The pinned SHA-256 of the convention-mapped table of the treebank, as recorded for the held-out run in
+    ///     <c>docs/evaluation/test-results.json</c> (input <c>ud-test-mapped</c>). The cached table is verified against it
+    ///     before a line is parsed, so a stale or locally edited cache cannot be scored.
+    /// </summary>
+    public const string UdMappedSha256 = "fdb535bdbbc4ece79826323e450fc30a686543358c0f0c958deb8289850f6695";
+
+    /// <summary>
     ///     The file of the pinned hashes of the treebank, relative to the repository root.
     /// </summary>
     public const string UdPinsFile = "tools/data/pins/ud-ewt.tsv";
@@ -214,10 +221,24 @@ internal static class DataGuard
     }
 
     /// <summary>
-    ///     Checks that the one held-out run has not been made yet: the results file must not exist.
+    ///     Gets the path of the lock file of a held-out run: the results file name with the suffix <c>.running</c>, next to it.
     /// </summary>
     /// <param name="resultsPath">The full path of the results file.</param>
-    /// <exception cref="InvalidOperationException">The results file exists.</exception>
+    /// <returns>The path of the lock file.</returns>
+    public static string RunLockPath(string resultsPath)
+    {
+        ArgumentNullException.ThrowIfNull(resultsPath);
+        return resultsPath + ".running";
+    }
+
+    /// <summary>
+    ///     Checks that the one held-out run has not been made or started yet: neither the results file nor the lock file of a run may exist.
+    /// </summary>
+    /// <remarks>
+    ///     This is a courtesy check for an early, clear message; the atomic guard is <see cref="AcquireRunLock"/>.
+    /// </remarks>
+    /// <param name="resultsPath">The full path of the results file.</param>
+    /// <exception cref="InvalidOperationException">The results file or the lock file exists.</exception>
     public static void EnsureNotEvaluated(string resultsPath)
     {
         ArgumentNullException.ThrowIfNull(resultsPath);
@@ -225,6 +246,43 @@ internal static class DataGuard
         {
             throw new InvalidOperationException($"{resultsPath} exists: the held-out evaluation was already run once. A repeat needs that file to be deleted on purpose (a visible change in the history) and a recorded reason.");
         }
+
+        var lockPath = RunLockPath(resultsPath);
+        if (File.Exists(lockPath))
+        {
+            throw new InvalidOperationException($"{lockPath} exists: a held-out run was started and did not complete (or is still running). The lock is never removed automatically; after an aborted run it must be deleted by hand, and the deletion and its reason recorded in RUN-LOG.md.");
+        }
+    }
+
+    /// <summary>
+    ///     Acquires the exclusive run lock of the one held-out run by creating the lock file with <see cref="FileMode.CreateNew"/>.
+    /// </summary>
+    /// <remarks>
+    ///     Creation is atomic, so of two concurrent runs exactly one gets the lock. The lock is acquired before the first
+    ///     held-out token is scored and stays on disk until the results file is written; a stale lock of an aborted run blocks
+    ///     every later run until it is deleted by hand.
+    /// </remarks>
+    /// <param name="resultsPath">The full path of the results file.</param>
+    /// <returns>The held lock.</returns>
+    /// <exception cref="InvalidOperationException">The run was already made or started, or another run holds the lock.</exception>
+    public static RunLock AcquireRunLock(string resultsPath)
+    {
+        EnsureNotEvaluated(resultsPath);
+        var lockPath = RunLockPath(resultsPath);
+        FileStream stream;
+        try
+        {
+            stream = new FileStream(lockPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        }
+        catch (IOException) when (File.Exists(lockPath))
+        {
+            throw new InvalidOperationException($"{lockPath} exists: another held-out run holds the lock or an aborted run left it. Delete it by hand only after an aborted run, and record the deletion and its reason in RUN-LOG.md.");
+        }
+
+        var note = new UTF8Encoding(false).GetBytes("held-out run started " + DateTime.UtcNow.ToString("o", System.Globalization.CultureInfo.InvariantCulture) + "\n");
+        stream.Write(note, 0, note.Length);
+        stream.Flush();
+        return new RunLock(stream, lockPath, resultsPath);
     }
 
     /// <summary>
@@ -349,6 +407,68 @@ internal static class DataGuard
     private static string[] Segments(string full, string root) =>
         full.Substring(root.Length).Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
 #endif
+}
+
+/// <summary>
+///     The exclusive lock of the one held-out run: a lock file next to the results file, created atomically.
+/// </summary>
+/// <remarks>
+///     The lock file stays until <see cref="Complete"/> has written the results file. Disposing the lock without completing
+///     it (an exception, a killed process) leaves the file behind on purpose: a run that started scoring and did not finish
+///     must be looked at by a person, who deletes the lock by hand and records that in RUN-LOG.md.
+/// </remarks>
+internal sealed class RunLock : IDisposable
+{
+    /// <summary>
+    ///     The open lock file.
+    /// </summary>
+    private readonly FileStream _stream;
+
+    /// <summary>
+    ///     The path of the results file.
+    /// </summary>
+    private readonly string _resultsPath;
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="RunLock"/> class.
+    /// </summary>
+    /// <param name="stream">The open lock file.</param>
+    /// <param name="lockPath">The path of the lock file.</param>
+    /// <param name="resultsPath">The path of the results file.</param>
+    internal RunLock(FileStream stream, string lockPath, string resultsPath)
+    {
+        _stream = stream;
+        LockPath = lockPath;
+        _resultsPath = resultsPath;
+    }
+
+    /// <summary>
+    ///     Gets the path of the lock file.
+    /// </summary>
+    public string LockPath { get; }
+
+    /// <summary>
+    ///     Writes the results file exclusively (it must not exist) and then removes the lock file.
+    /// </summary>
+    /// <param name="resultsText">The text of the results file.</param>
+    /// <exception cref="IOException">The results file exists or cannot be written; the lock file then stays.</exception>
+    public void Complete(string resultsText)
+    {
+        ArgumentNullException.ThrowIfNull(resultsText);
+        using (var results = new FileStream(_resultsPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        {
+            var bytes = new UTF8Encoding(false).GetBytes(resultsText);
+            results.Write(bytes, 0, bytes.Length);
+        }
+
+        _stream.Dispose();
+        File.Delete(LockPath);
+    }
+
+    /// <summary>
+    ///     Closes the lock file without removing it.
+    /// </summary>
+    public void Dispose() => _stream.Dispose();
 }
 
 /// <summary>
@@ -731,10 +851,24 @@ internal static class HeldOutReader
     /// <param name="selection">The validated development selection.</param>
     /// <returns>The mapped table.</returns>
     /// <exception cref="InvalidDataException">The cache or the pins are missing, or a hash differs from the pin.</exception>
-    public static HeldOutFile ReadUd(string repositoryRoot, string cacheFolder, SelectedOperatingPoints selection)
+    public static HeldOutFile ReadUd(string repositoryRoot, string cacheFolder, SelectedOperatingPoints selection) =>
+        ReadUd(repositoryRoot, cacheFolder, selection, DataGuard.UdMappedSha256);
+
+    /// <summary>
+    ///     Reads the convention-mapped table of the external treebank from its cache, after verifying the pinned source file
+    ///     and the table itself against the given pin.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="cacheFolder">The cache folder, absolute or relative to the repository root.</param>
+    /// <param name="selection">The validated development selection.</param>
+    /// <param name="mappedSha256">The pinned SHA-256 of the mapped table (the run uses <see cref="DataGuard.UdMappedSha256"/>).</param>
+    /// <returns>The mapped table.</returns>
+    /// <exception cref="InvalidDataException">The cache or the pins are missing, or a hash differs from its pin.</exception>
+    internal static HeldOutFile ReadUd(string repositoryRoot, string cacheFolder, SelectedOperatingPoints selection, string mappedSha256)
     {
         ArgumentNullException.ThrowIfNull(repositoryRoot);
         ArgumentNullException.ThrowIfNull(selection);
+        ArgumentNullException.ThrowIfNull(mappedSha256);
         var folder = Path.GetFullPath(Path.Combine(repositoryRoot, cacheFolder.Replace('/', Path.DirectorySeparatorChar)));
         var sourcePath = Path.Combine(folder, UdSource);
         var mappedPath = Path.Combine(folder, DataGuard.UdMappedFile);
@@ -758,8 +892,15 @@ internal static class HeldOutReader
             throw new InvalidDataException($"The cached {UdSource} does not match its pinned SHA-256. {Recipe}");
         }
 
+        // The mapped table is derived data in a local cache: it must be the exact table of the held-out run, not merely a table made from the pinned source
         var bytes = File.ReadAllBytes(mappedPath);
-        return new HeldOutFile(mappedPath, ModelBuilder.Sha256Hex(bytes), Split(bytes), sourceSha);
+        var mappedSha = ModelBuilder.Sha256Hex(bytes);
+        if (!string.Equals(mappedSha, mappedSha256, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException($"The cached {DataGuard.UdMappedFile} does not match its pinned SHA-256. {Recipe}");
+        }
+
+        return new HeldOutFile(mappedPath, mappedSha, Split(bytes), sourceSha);
     }
 
     /// <summary>

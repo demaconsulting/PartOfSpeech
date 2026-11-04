@@ -199,6 +199,13 @@ internal sealed class OperatingPointsExpectation
     ///     Gets the SHA-256 of the development files recorded in the data manifest, by path below the data folder.
     /// </summary>
     public Dictionary<string, string> DevFileHashes { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>
+    ///     Gets or sets the derivation of the pooled development curve of the frozen model, or <c>null</c> when the
+    ///     development data is not available. When set, the points of the artifact must equal what the registered rule
+    ///     selects from the derived curve.
+    /// </summary>
+    public Func<IReadOnlyList<CurveRow>>? DerivePooledCurve { get; set; }
 }
 
 /// <summary>
@@ -272,29 +279,177 @@ internal sealed class SelectedOperatingPoints
             throw new InvalidDataException("The selection artifact was made for another model than the embedded one; a held-out run needs a selection for the frozen model.");
         }
 
-        // The development files must be the committed ones
-        if (data.DevFiles.Count != expectation.DevFileHashes.Count)
+        ValidateDevFiles(data, expectation);
+        ValidateGridAndPoints(data);
+
+        // When the development data is available, the points must be what the registered rule selects from it
+        if (expectation.DerivePooledCurve != null)
         {
-            throw new InvalidDataException("The selection artifact does not list exactly the development files of the data manifest.");
+            ValidateAgainstDerivation(data, expectation.DerivePooledCurve());
         }
 
+        return new SelectedOperatingPoints(data, selectionSha256);
+    }
+
+    /// <summary>
+    ///     Requires that the development files of the artifact are exactly the expected set, each once and with its manifest hash.
+    /// </summary>
+    /// <param name="data">The artifact.</param>
+    /// <param name="expectation">What the run requires.</param>
+    /// <exception cref="InvalidDataException">A file is missing, duplicated, unexpected or has another hash.</exception>
+    private static void ValidateDevFiles(OperatingPointsData data, OperatingPointsExpectation expectation)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var file in data.DevFiles)
         {
-            if (!expectation.DevFileHashes.TryGetValue(file.Path, out var expected) || !string.Equals(expected, file.Sha256, StringComparison.OrdinalIgnoreCase))
+            if (!seen.Add(file.Path))
+            {
+                throw new InvalidDataException($"The selection artifact lists the development file '{file.Path}' more than once.");
+            }
+
+            if (!expectation.DevFileHashes.TryGetValue(file.Path, out var expected))
+            {
+                throw new InvalidDataException($"The selection artifact names '{file.Path}', which is not a development file of the data manifest.");
+            }
+
+            if (!string.Equals(expected, file.Sha256, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidDataException($"The selection artifact names '{file.Path}' with a hash that differs from the data manifest.");
             }
         }
 
-        // Every threshold must be a point of the grid
+        var absent = expectation.DevFileHashes.Keys.FirstOrDefault(p => !seen.Contains(p));
+        if (absent != null)
+        {
+            throw new InvalidDataException($"The selection artifact does not list the development file '{absent}' of the data manifest.");
+        }
+    }
+
+    /// <summary>
+    ///     Requires the registered grid, exactly the points <c>strict</c> and <c>balanced</c> with their registered targets, and grid thresholds.
+    /// </summary>
+    /// <param name="data">The artifact.</param>
+    /// <exception cref="InvalidDataException">The grid or the set of points differs from the registered one, or a threshold is off the grid.</exception>
+    private static void ValidateGridAndPoints(OperatingPointsData data)
+    {
+        if (data.Grid.Count != ConfidenceCurve.Grid.Count || data.Grid.Where((t, i) => Math.Abs(t - ConfidenceCurve.Grid[i]) >= 1e-9).Any())
+        {
+            throw new InvalidDataException("The selection artifact does not carry the registered threshold grid.");
+        }
+
+        var registered = new Dictionary<string, (double MaxHarmful, double MinCoverage)>(StringComparer.Ordinal)
+        {
+            ["strict"] = (OperatingPointRule.StrictMaxHarmful, OperatingPointRule.StrictMinCoverage),
+            ["balanced"] = (OperatingPointRule.BalancedMaxHarmful, OperatingPointRule.BalancedMinCoverage),
+        };
+        var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var point in data.Points)
         {
+            if (!registered.TryGetValue(point.Name, out var target))
+            {
+                throw new InvalidDataException($"The selection artifact names the point '{point.Name}'; the registered points are 'strict' and 'balanced'.");
+            }
+
+            if (!seen.Add(point.Name))
+            {
+                throw new InvalidDataException($"The selection artifact lists the point '{point.Name}' more than once.");
+            }
+
+            if (Math.Abs(point.MaxHarmfulPer1000Answered - target.MaxHarmful) >= 1e-9 || Math.Abs(point.MinCoveragePercent - target.MinCoverage) >= 1e-9)
+            {
+                throw new InvalidDataException($"The target of the point '{point.Name}' differs from the registered rule.");
+            }
+
             if (point.Threshold.HasValue && ConfidenceCurve.IndexOf(point.Threshold.Value) < 0)
             {
                 throw new InvalidDataException($"The threshold of the point '{point.Name}' is not on the grid.");
             }
         }
 
-        return new SelectedOperatingPoints(data, selectionSha256);
+        if (seen.Count != registered.Count)
+        {
+            throw new InvalidDataException("The selection artifact must hold exactly the points 'strict' and 'balanced'.");
+        }
+    }
+
+    /// <summary>
+    ///     Requires that the points of the artifact equal the points that the registered rule selects from the development curve.
+    /// </summary>
+    /// <param name="data">The artifact.</param>
+    /// <param name="pooled">The curve rows of the pooled development decisions, in grid order.</param>
+    /// <exception cref="InvalidDataException">A point or the number of development decisions differs from the derivation.</exception>
+    private static void ValidateAgainstDerivation(OperatingPointsData data, IReadOnlyList<CurveRow> pooled)
+    {
+        if (pooled.Count > 0 && pooled[0].Decisions != data.OpenDevDecisions + data.GoldDevDecisions)
+        {
+            throw new InvalidDataException("The decisions of the selection artifact differ from the development data.");
+        }
+
+        foreach (var derived in OperatingPointRule.Select(pooled))
+        {
+            var recorded = data.Points.Single(p => string.Equals(p.Name, derived.Name, StringComparison.Ordinal));
+            var row = derived.Row;
+            var same = recorded.Threshold.HasValue == derived.Threshold.HasValue
+                && (!recorded.Threshold.HasValue || Math.Abs(recorded.Threshold.Value - derived.Threshold!.Value) < 1e-9)
+                && recorded.Answered == (row?.Answered ?? 0)
+                && recorded.Harmful == (row?.Harmful ?? 0)
+                && Math.Abs(recorded.CoveragePercent - (row?.CoveragePercent ?? 0)) < 1e-9
+                && Math.Abs(recorded.HarmfulPer1000Answered - (row?.HarmfulPer1000Answered ?? 0)) < 1e-9;
+            if (!same)
+            {
+                throw new InvalidDataException($"The point '{derived.Name}' of the selection artifact is not what the rule '{OperatingPointRule.Id}' selects from the development data.");
+            }
+        }
+    }
+}
+
+/// <summary>
+///     Derives the pooled development curve of a model: the cheap, deterministic input of the check that the selection
+///     artifact is what the registered rule selects.
+/// </summary>
+/// <remarks>
+///     Reads the two development files only (through <see cref="DevSets"/>) and runs no bootstrap. Stateless and thread-safe.
+/// </remarks>
+internal static class DevDerivation
+{
+    /// <summary>
+    ///     Computes the curve rows of the pooled development decisions from the outcomes of the two development sets.
+    /// </summary>
+    /// <param name="open">The outcomes of the open development split.</param>
+    /// <param name="gold">The outcomes of the gold v2 development split without <c>to</c> and <c>not</c>.</param>
+    /// <returns>One row for each threshold of the grid.</returns>
+    public static List<CurveRow> PooledCurve(IReadOnlyList<Outcome> open, IReadOnlyList<Outcome> gold)
+    {
+        ArgumentNullException.ThrowIfNull(open);
+        ArgumentNullException.ThrowIfNull(gold);
+        var pooled = new EvalTally();
+        pooled.Add(EvalTally.Of(open));
+        pooled.Add(EvalTally.Of(gold));
+        return ConfidenceCurve.Of(pooled);
+    }
+
+    /// <summary>
+    ///     Tells whether the two development files exist below a repository root.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <returns><c>true</c> when both files exist.</returns>
+    public static bool IsAvailable(string repositoryRoot)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        return DataGuard.DevelopmentFiles.All(f => File.Exists(Path.Combine(repositoryRoot, f.Replace('/', Path.DirectorySeparatorChar))));
+    }
+
+    /// <summary>
+    ///     Scores the model on the two development sets of a repository and computes the pooled curve.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="weights">The bytes of the weights file of the model.</param>
+    /// <returns>One row for each threshold of the grid.</returns>
+    public static List<CurveRow> PooledCurveOfModel(string repositoryRoot, byte[] weights)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        ArgumentNullException.ThrowIfNull(weights);
+        var result = DevEvaluator.Evaluate(DevEvaluator.CreateTagger(weights), DevSets.ReadOpenDev(repositoryRoot), DevSets.ReadGoldDev(repositoryRoot));
+        return PooledCurve(result.Open, result.Gold);
     }
 }

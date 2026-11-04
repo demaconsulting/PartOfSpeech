@@ -182,6 +182,143 @@ public class HeldOutEvaluationTests
     }
 
     /// <summary>
+    ///     Validates that a tampered artifact is refused: no points, duplicate or extra development files, duplicate, extra,
+    ///     missing or renamed points, another grid and thresholds that are not grid points.
+    /// </summary>
+    [Fact]
+    public void SelectedOperatingPoints_Validate_TamperedArtifact_Throws()
+    {
+        var emptyPoints = Data();
+        emptyPoints.Points.Clear();
+        var noDevFiles = Data();
+        noDevFiles.DevFiles.Clear();
+
+        // The count of the development files is right, but one is listed twice and the other is missing
+        var duplicateFile = Data();
+        duplicateFile.DevFiles[1] = new DevFileRecord { Path = "open/dev.tsv", Sha256 = OpenDevHash };
+
+        // Every expected file is there, and one more is listed twice or is not a development file
+        var duplicateExtra = Data();
+        duplicateExtra.DevFiles.Add(new DevFileRecord { Path = "open/dev.tsv", Sha256 = OpenDevHash });
+        var extraFile = Data();
+        extraFile.DevFiles.Add(new DevFileRecord { Path = "open/other.tsv", Sha256 = OpenDevHash });
+
+        var duplicatePoint = Data();
+        duplicatePoint.Points[1].Name = "strict";
+        var missingBalanced = Data();
+        missingBalanced.Points.RemoveAt(1);
+        var extraPoint = Data();
+        extraPoint.Points.Add(new PointRecord { Name = "strict", MaxHarmfulPer1000Answered = 5, MinCoveragePercent = 60 });
+        var renamedPoint = Data();
+        renamedPoint.Points[1].Name = "lenient";
+        var otherTarget = Data();
+        otherTarget.Points[0].MaxHarmfulPer1000Answered = 50;
+        var otherFloor = Data();
+        otherFloor.Points[1].MinCoveragePercent = 1;
+        var otherGrid = Data();
+        otherGrid.Grid.RemoveAt(otherGrid.Grid.Count - 1);
+        var emptyGrid = Data();
+        emptyGrid.Grid.Clear();
+        var offGrid = Data();
+        offGrid.Points[0].Threshold = 0.9001;
+
+        foreach (var broken in new[] { emptyPoints, noDevFiles, duplicateFile, duplicateExtra, extraFile, duplicatePoint, missingBalanced, extraPoint, renamedPoint, otherTarget, otherFloor, otherGrid, emptyGrid, offGrid })
+        {
+            Assert.Throws<InvalidDataException>(() => SelectedOperatingPoints.Validate(broken, "ee", Expectation()));
+        }
+
+        // The untouched artifact stays valid
+        Assert.NotNull(SelectedOperatingPoints.Validate(Data(), "ee", Expectation()));
+    }
+
+    /// <summary>
+    ///     Validates that a threshold that is a grid point but not the one the rule selects from the development curve is refused,
+    ///     and that a selection made by the rule is accepted.
+    /// </summary>
+    [Fact]
+    public void SelectedOperatingPoints_Validate_ArbitraryGridThreshold_RefusedAgainstDerivation()
+    {
+        // Arrange: a pooled curve of 1,000 decisions (900 open, 100 gold) whose strict point is 0.60 and balanced point 0.50
+        var rows = Rows(i => i switch
+        {
+            0 => (1000, 20),
+            1 => (950, 7),
+            2 => (590, 2),
+            3 => (700, 3),
+            _ => (400, 0),
+        });
+        var points = OperatingPointRule.Select(rows);
+        Func<OperatingPointsData> artifact = () => OperatingPointsData.Build(
+            ModelHash,
+            6.727,
+            96.0,
+            900,
+            100,
+            new[] { new DevFileRecord { Path = "open/dev.tsv", Sha256 = OpenDevHash }, new DevFileRecord { Path = "eval/gold-v2/dev.tsv", Sha256 = GoldDevHash } },
+            points);
+        var expectation = Expectation();
+        expectation.DerivePooledCurve = () => rows;
+
+        // Act / Assert: the artifact the rule produces is valid
+        var selection = SelectedOperatingPoints.Validate(artifact(), "ee", expectation);
+        Assert.Equal(new[] { 0.60, 0.50 }, selection.SelectedPoints.Select(p => p.Threshold!.Value).ToArray());
+
+        // An arbitrary grid threshold (valid on its own) differs from the derivation
+        var arbitrary = artifact();
+        arbitrary.Points[0].Threshold = 0.99;
+        Assert.Throws<InvalidDataException>(() => SelectedOperatingPoints.Validate(arbitrary, "ee", expectation));
+        Assert.NotNull(SelectedOperatingPoints.Validate(arbitrary, "ee", Expectation()));
+
+        // A point turned into none, a changed count or a changed rate differs as well
+        var none = artifact();
+        none.Points[1].Threshold = null;
+        var harmful = artifact();
+        harmful.Points[0].Harmful += 1;
+        var answered = artifact();
+        answered.Points[1].Answered += 1;
+        var coverage = artifact();
+        coverage.Points[0].CoveragePercent += 0.5;
+        var decisions = artifact();
+        decisions.OpenDevDecisions += 1;
+        foreach (var broken in new[] { none, harmful, answered, coverage, decisions })
+        {
+            Assert.Throws<InvalidDataException>(() => SelectedOperatingPoints.Validate(broken, "ee", expectation));
+        }
+
+        // The derivation is only consulted after the cheap checks, and a curve with no qualifying point yields none and none
+        var nothing = Rows(_ => (1000, 50));
+        var noneData = OperatingPointsData.Build(ModelHash, 6.727, 96.0, 900, 100, artifact().DevFiles, OperatingPointRule.Select(nothing));
+        expectation.DerivePooledCurve = () => nothing;
+        Assert.Empty(SelectedOperatingPoints.Validate(noneData, "ee", expectation).SelectedPoints);
+    }
+
+    /// <summary>
+    ///     Validates that the pooled development curve equals the curve of the development selection of the same outcomes.
+    /// </summary>
+    [Fact]
+    public void DevDerivation_PooledCurve_FixtureOutcomes_EqualsSelectionCurve()
+    {
+        // Arrange
+        var open = Enumerable.Range(0, 200).Select(i => Decision("open:d" + (i % 20), 0.46 + ((i % 54) / 100.0), i % 7 != 0, i % 7 == 0)).ToList();
+        var gold = Enumerable.Range(0, 40).Select(i => Decision("gold:d" + (i % 30), 0.50 + ((i % 49) / 100.0), i % 11 != 0, i % 11 == 0)).ToList();
+
+        // Act
+        var derived = DevDerivation.PooledCurve(open, gold);
+        var selection = DevSelection.Create(ModelHash, 6.727, open, gold, 10, 1);
+        var expected = ConfidenceCurve.Of(selection.Pooled);
+
+        // Assert
+        Assert.Equal(expected.Count, derived.Count);
+        for (var i = 0; i < expected.Count; i++)
+        {
+            Assert.Equal(expected[i].Threshold, derived[i].Threshold);
+            Assert.Equal(expected[i].Decisions, derived[i].Decisions);
+            Assert.Equal(expected[i].Answered, derived[i].Answered);
+            Assert.Equal(expected[i].Harmful, derived[i].Harmful);
+        }
+    }
+
+    /// <summary>
     ///     Validates that the header check accepts the announced set and refuses development splits, other sets and unannounced files.
     /// </summary>
     [Theory]
@@ -211,7 +348,7 @@ public class HeldOutEvaluationTests
     }
 
     /// <summary>
-    ///     Validates that the run-once check refuses an existing results file and accepts a missing one.
+    ///     Validates that the run-once check refuses an existing results file or lock file and accepts a missing one.
     /// </summary>
     [Fact]
     public void DataGuard_EnsureNotEvaluated_ExistingResultsFile_Throws()
@@ -226,9 +363,158 @@ public class HeldOutEvaluationTests
             DataGuard.EnsureNotEvaluated(path);
             File.WriteAllText(path, "{}");
             Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureNotEvaluated(path));
+            File.Delete(path);
+
+            // A lock file next to the results file is refused as well
+            DataGuard.EnsureNotEvaluated(path);
+            File.WriteAllText(DataGuard.RunLockPath(path), string.Empty);
+            Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureNotEvaluated(path));
         }
         finally
         {
+            Directory.Delete(folder, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that the run lock is created exclusively before scoring, blocks a second run, and is replaced by the results file on completion.
+    /// </summary>
+    [Fact]
+    public void DataGuard_AcquireRunLock_ExclusiveAndRemovedOnCompletion()
+    {
+        // Arrange
+        var folder = Path.Combine(Path.GetTempPath(), "pos-run-lock-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, "test-results.json");
+        var lockPath = DataGuard.RunLockPath(path);
+        try
+        {
+            // Act: the first run takes the lock, which is a file next to the results file
+            var held = DataGuard.AcquireRunLock(path);
+            Assert.Equal(lockPath, held.LockPath);
+            Assert.EndsWith(".running", lockPath, StringComparison.Ordinal);
+            Assert.True(File.Exists(lockPath));
+            Assert.False(File.Exists(path));
+
+            // Assert: a second run is refused while the lock is held, and the lock stays
+            Assert.Throws<InvalidOperationException>(() => DataGuard.AcquireRunLock(path));
+            Assert.True(File.Exists(lockPath));
+
+            // Completing writes the results exclusively and removes the lock; afterwards the results file is the marker
+            held.Complete("{\"done\": true}\n");
+            Assert.False(File.Exists(lockPath));
+            Assert.Equal("{\"done\": true}\n", File.ReadAllText(path));
+            Assert.Throws<InvalidOperationException>(() => DataGuard.AcquireRunLock(path));
+            Assert.False(File.Exists(lockPath));
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that a lock that was not completed (an aborted run) blocks every later run until it is deleted by hand.
+    /// </summary>
+    [Fact]
+    public void DataGuard_AcquireRunLock_StaleLock_BlocksUntilDeletedByHand()
+    {
+        // Arrange
+        var folder = Path.Combine(Path.GetTempPath(), "pos-run-stale-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, "test-results.json");
+        var lockPath = DataGuard.RunLockPath(path);
+        try
+        {
+            // Act: a run takes the lock and is aborted (disposed without completing)
+            using (DataGuard.AcquireRunLock(path))
+            {
+                Assert.True(File.Exists(lockPath));
+            }
+
+            // Assert: the lock stays, no results file exists, and a new run is refused with the manual-deletion message
+            Assert.True(File.Exists(lockPath));
+            Assert.False(File.Exists(path));
+            var refused = Assert.Throws<InvalidOperationException>(() => DataGuard.AcquireRunLock(path));
+            Assert.Contains("RUN-LOG", refused.Message, StringComparison.Ordinal);
+            Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureNotEvaluated(path));
+
+            // Only the explicit deletion releases it
+            File.Delete(lockPath);
+            using var again = DataGuard.AcquireRunLock(path);
+            Assert.True(File.Exists(lockPath));
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that a run whose results file appears while it is running does not overwrite it and keeps its lock.
+    /// </summary>
+    [Fact]
+    public void RunLock_Complete_ExistingResultsFile_ThrowsAndKeepsLock()
+    {
+        // Arrange
+        var folder = Path.Combine(Path.GetTempPath(), "pos-run-complete-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, "test-results.json");
+        try
+        {
+            var held = DataGuard.AcquireRunLock(path);
+            File.WriteAllText(path, "first");
+
+            // Act / Assert: the exclusive write fails, the first file is untouched and the lock remains
+            Assert.ThrowsAny<IOException>(() => held.Complete("second"));
+            Assert.Equal("first", File.ReadAllText(path));
+            Assert.True(File.Exists(DataGuard.RunLockPath(path)));
+            held.Dispose();
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that of many concurrent attempts to start the run exactly one gets the lock.
+    /// </summary>
+    [Fact]
+    public void DataGuard_AcquireRunLock_ConcurrentAttempts_ExactlyOneWins()
+    {
+        // Arrange
+        var folder = Path.Combine(Path.GetTempPath(), "pos-run-race-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, "test-results.json");
+        var winners = new System.Collections.Concurrent.ConcurrentBag<RunLock>();
+        var refused = 0;
+        try
+        {
+            // Act
+            Parallel.For(0, 16, new ParallelOptions { MaxDegreeOfParallelism = 8 }, _ =>
+            {
+                try
+                {
+                    winners.Add(DataGuard.AcquireRunLock(path));
+                }
+                catch (InvalidOperationException)
+                {
+                    Interlocked.Increment(ref refused);
+                }
+            });
+
+            // Assert
+            Assert.Single(winners);
+            Assert.Equal(15, refused);
+        }
+        finally
+        {
+            foreach (var winner in winners)
+            {
+                winner.Dispose();
+            }
+
             Directory.Delete(folder, true);
         }
     }
@@ -298,19 +584,29 @@ public class HeldOutEvaluationTests
         Directory.CreateDirectory(Path.Combine(root, "tools", "data", "pins"));
         var source = new System.Text.UTF8Encoding(false).GetBytes("fixture source\n");
         File.WriteAllBytes(Path.Combine(cache, DataGuard.UdSourceFile), source);
-        File.WriteAllText(Path.Combine(cache, DataGuard.UdMappedFile), "# columns = form, mapped_upos, raw_upos, rule\n\n# sent_id = x-0001\nA\tDET\tDET\t_\n");
+        var mappedText = "# columns = form, mapped_upos, raw_upos, rule\n\n# sent_id = x-0001\nA\tDET\tDET\t_\n";
+        var mappedPin = ModelBuilder.Sha256Hex(new System.Text.UTF8Encoding(false).GetBytes(mappedText));
+        File.WriteAllText(Path.Combine(cache, DataGuard.UdMappedFile), mappedText);
         var pins = Path.Combine(root, DataGuard.UdPinsFile.Replace('/', Path.DirectorySeparatorChar));
         File.WriteAllText(pins, "# pins\n" + DataGuard.UdSourceFile + "\t" + ModelBuilder.Sha256Hex(source) + "\n");
         try
         {
             // Act / Assert: the pinned cache is read; a changed source and a missing table are refused with the recipe
-            var read = HeldOutReader.ReadUd(root, "cache", Selection());
+            var read = HeldOutReader.ReadUd(root, "cache", Selection(), mappedPin);
             Assert.Equal(ModelBuilder.Sha256Hex(source), read.SourceSha256);
+            Assert.Equal(mappedPin, read.Sha256);
             Assert.Equal(4, read.Lines.Count);
-            File.WriteAllBytes(Path.Combine(cache, DataGuard.UdSourceFile), new System.Text.UTF8Encoding(false).GetBytes("changed\n"));
-            Assert.Contains("fetch", Assert.Throws<InvalidDataException>(() => HeldOutReader.ReadUd(root, "cache", Selection())).Message, StringComparison.Ordinal);
-            File.Delete(Path.Combine(cache, DataGuard.UdMappedFile));
+
+            // A mapped table that differs from the pin is refused, even though the pinned source is intact: the run pins the table of the held-out run
             Assert.Throws<InvalidDataException>(() => HeldOutReader.ReadUd(root, "cache", Selection()));
+            File.WriteAllText(Path.Combine(cache, DataGuard.UdMappedFile), mappedText.Replace("DET\tDET", "NOUN\tDET"));
+            Assert.Contains("pinned", Assert.Throws<InvalidDataException>(() => HeldOutReader.ReadUd(root, "cache", Selection(), mappedPin)).Message, StringComparison.Ordinal);
+            File.WriteAllText(Path.Combine(cache, DataGuard.UdMappedFile), mappedText);
+
+            File.WriteAllBytes(Path.Combine(cache, DataGuard.UdSourceFile), new System.Text.UTF8Encoding(false).GetBytes("changed\n"));
+            Assert.Contains("fetch", Assert.Throws<InvalidDataException>(() => HeldOutReader.ReadUd(root, "cache", Selection(), mappedPin)).Message, StringComparison.Ordinal);
+            File.Delete(Path.Combine(cache, DataGuard.UdMappedFile));
+            Assert.Throws<InvalidDataException>(() => HeldOutReader.ReadUd(root, "cache", Selection(), mappedPin));
         }
         finally
         {
@@ -1043,6 +1339,49 @@ public class HeldOutEvaluationTests
         Assert.Equal(ModelBuilder.Sha256Hex(File.ReadAllBytes(path)), selection.SelectionSha256);
         Assert.Equal(modelSha, selection.Data.ModelImageSha256);
         Assert.Equal(OperatingPointRule.Id, selection.Data.RuleId);
+    }
+
+    /// <summary>
+    ///     Validates that the committed selection is exactly what the registered rule selects from the two development files
+    ///     for the frozen embedded model (the development-data derivation of the gate). Only development data is read.
+    /// </summary>
+    [Fact]
+    public void OperatingPointsFile_Load_CommittedSelection_EqualsDevDerivation()
+    {
+        // Arrange
+        var root = DataFiles.RepositoryRoot;
+        var weights = OperatingPointsFile.ReadEmbeddedWeights();
+        var modelSha = ModelBuilder.Sha256Hex(PerceptronModel.ToUncompressedImage(weights));
+        var config = ConfigFile.Load(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/training.json"));
+        var path = DataFiles.Repository("docs/evaluation/operating-points.json");
+        var expectation = OperatingPointsFile.Expect(root, modelSha, config.ImageSha256, weights);
+
+        // Act / Assert: the derivation is wired in (the development files exist) and the committed artifact passes it
+        Assert.NotNull(expectation.DerivePooledCurve);
+        var selection = OperatingPointsFile.Load(path, expectation);
+        Assert.Equal(2, selection.Data.Points.Count);
+
+        // A tampered threshold of the committed artifact (another grid point) is refused by the same gate
+        var tampered = OperatingPointsFile.Parse(File.ReadAllBytes(path));
+        var strict = tampered.Points.Single(p => p.Name == "strict");
+        strict.Threshold = strict.Threshold > 0.985 ? 0.98 : 0.99;
+        Assert.Throws<InvalidDataException>(() => SelectedOperatingPoints.Validate(tampered, "ee", expectation));
+    }
+
+    /// <summary>
+    ///     Validates that the pinned hash of the mapped treebank table is the hash that the committed results record for it.
+    /// </summary>
+    [Fact]
+    public void DataGuard_UdMappedSha256_EqualsHashRecordedInCommittedResults()
+    {
+        // Arrange
+        var results = OperatingPointsFile.ParseResults(File.ReadAllBytes(DataFiles.Repository("docs/evaluation/test-results.json")));
+
+        // Act
+        var recorded = results.Inputs.Single(i => i.Name == "ud-test-mapped").Sha256;
+
+        // Assert
+        Assert.Equal(DataGuard.UdMappedSha256, recorded);
     }
 
     /// <summary>

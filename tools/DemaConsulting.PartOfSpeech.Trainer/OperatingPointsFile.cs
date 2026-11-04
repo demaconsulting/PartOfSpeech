@@ -111,13 +111,19 @@ internal static class OperatingPointsFile
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <param name="modelImageSha256">The SHA-256 of the uncompressed image of the model that will be scored.</param>
     /// <param name="configuredImageSha256">The image hash recorded in the training configuration.</param>
+    /// <param name="weights">The bytes of the weights of the model that will be scored; when given and the development files exist below the root, the expectation also requires that the artifact equals the points the rule selects from the development data.</param>
     /// <returns>The expectation.</returns>
-    public static OperatingPointsExpectation Expect(string repositoryRoot, string modelImageSha256, string configuredImageSha256)
+    public static OperatingPointsExpectation Expect(string repositoryRoot, string modelImageSha256, string configuredImageSha256, byte[]? weights = null)
     {
         var expectation = new OperatingPointsExpectation { ModelImageSha256 = modelImageSha256, ConfiguredImageSha256 = configuredImageSha256 };
         foreach (var file in DevFiles(repositoryRoot))
         {
             expectation.DevFileHashes[file.Path] = file.Sha256;
+        }
+
+        if (weights != null && DevDerivation.IsAvailable(repositoryRoot))
+        {
+            expectation.DerivePooledCurve = () => DevDerivation.PooledCurveOfModel(repositoryRoot, weights);
         }
 
         return expectation;

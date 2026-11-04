@@ -122,29 +122,42 @@ sections:
               The held-out sets shall be readable only by the evaluation command and only with a development selection
               that is valid for the frozen model, for the committed development files and for the pre-registered rule
               (a held-out reader shall not exist without it); every held-out file shall be verified against the
-              recorded hash and its header before it is parsed, the evaluation shall refuse to run twice, shall be
-              preceded by a check that prints counts only, and shall write per-token records only outside the
+              recorded hash and its header (and the cached mapped treebank table against its pinned hash) before it is
+              parsed, the evaluation shall refuse to run twice (the run shall be claimed atomically before scoring),
+              shall be preceded by a check that prints counts only, and shall write per-token records only outside the
               repository.
             justification: |
               Choosing the confidence thresholds on development data and then measuring them once on data that nothing
               touched is only credible if the order cannot be reversed or repeated by accident. The held-out readers
               take the validated selection as a required parameter, the selection names the hash of the model that is
-              scored, so a changed model or threshold needs a new selection; the results file is the run-once marker,
-              which can only be removed by a visible change; the pre-flight finds format and pin problems without
-              showing a label, a prediction or a figure; and the per-token records, which can hold third-party text,
-              cannot land in the tree.
+              scored and must equal what the registered rule selects from the development data, so a changed model or
+              threshold needs a new selection; the results file is the run-once marker and an exclusively created lock
+              file claims the run before scoring, so neither a second process nor an aborted run can repeat it
+              unnoticed, and both can only be removed by a deliberate, recorded act; the pre-flight finds format and
+              pin problems
+              without showing a label, a prediction or a figure; and the per-token records, which can hold third-party
+              text, cannot land in the tree.
             tests:
               - DataGuard_HeldOutFiles_AreFourSetsAndNoDevelopmentFile
               - DataGuard_EnsureHeldOutFile_NoSelection_Throws
               - SelectedOperatingPoints_Validate_ValidArtifact_KeepsSelectedPoints
               - SelectedOperatingPoints_Validate_InconsistentArtifact_Throws
+              - SelectedOperatingPoints_Validate_TamperedArtifact_Throws
+              - SelectedOperatingPoints_Validate_ArbitraryGridThreshold_RefusedAgainstDerivation
+              - DevDerivation_PooledCurve_FixtureOutcomes_EqualsSelectionCurve
               - DataGuard_EnsureHeldOutHeader_AnnouncedSet_AcceptedOthersRefused
               - DataGuard_EnsureNotEvaluated_ExistingResultsFile_Throws
+              - DataGuard_AcquireRunLock_ExclusiveAndRemovedOnCompletion
+              - DataGuard_AcquireRunLock_StaleLock_BlocksUntilDeletedByHand
+              - RunLock_Complete_ExistingResultsFile_ThrowsAndKeepsLock
+              - DataGuard_AcquireRunLock_ConcurrentAttempts_ExactlyOneWins
               - DataGuard_EnsureOutsideRepository_InsideRefused_OutsideAccepted
               - HeldOutReader_Read_FixtureRepository_VerifiesHashAndHeader
               - HeldOutReader_ReadUd_FixtureCache_VerifiesPin
+              - DataGuard_UdMappedSha256_EqualsHashRecordedInCommittedResults
               - OperatingPointsFile_FormatParseLoad_RoundTripAndValidation
               - OperatingPointsFile_Load_CommittedSelection_PassesGateForFrozenModel
+              - OperatingPointsFile_Load_CommittedSelection_EqualsDevDerivation
 
           - id: PartOfSpeech-ModelTrainer-ConfidenceCurve
             title: >-

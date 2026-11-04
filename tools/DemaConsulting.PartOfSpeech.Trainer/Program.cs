@@ -111,7 +111,9 @@ Commands:
   evaluate [--preflight] [--dump-dir DIR] [--ud-cache DIR] [--seed N] [--resamples N]
       The one held-out evaluation of the embedded model. Needs the committed operating-points.json for the frozen model
       (the held-out readers cannot open a file without it) and refuses to run when docs/evaluation/test-results.json
-      exists. --preflight parses every held-out input and prints counts only. --dump-dir (outside the repository) receives
+      or its lock file test-results.json.running exists; the lock is created exclusively before scoring and removed when
+      the results are written (a stale lock of an aborted run is deleted by hand and recorded in RUN-LOG.md).
+      --preflight parses every held-out input and prints counts only. --dump-dir (outside the repository) receives
       the per-token records of the run. There is no weights, data or threshold option.
 
 Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired (evaluate), 2 usage or data error.";
@@ -514,7 +516,7 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
         var modelSha = ModelBuilder.Sha256Hex(PerceptronModel.ToUncompressedImage(weights));
         var config = ConfigFile.Load(Path.Combine(root, DefaultConfig.Replace('/', Path.DirectorySeparatorChar)));
         var folder = Path.Combine(root, EvaluationFolder.Replace('/', Path.DirectorySeparatorChar));
-        var selection = OperatingPointsFile.Load(Path.Combine(folder, "operating-points.json"), OperatingPointsFile.Expect(root, modelSha, config.ImageSha256));
+        var selection = OperatingPointsFile.Load(Path.Combine(folder, "operating-points.json"), OperatingPointsFile.Expect(root, modelSha, config.ImageSha256, weights));
 
         // Run once, and keep the per-token records outside the repository
         var resultsPath = Path.Combine(folder, "test-results.json");
@@ -545,7 +547,9 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
             return 0;
         }
 
-        // The one run: judge every set with the embedded model, then measure the throughput of the default tagger
+        // The one run: take the exclusive run lock (atomic, before anything is scored), judge every set with the embedded
+        // model, then measure the throughput of the default tagger. An exception from here on leaves the lock behind.
+        using var runLock = DataGuard.AcquireRunLock(resultsPath);
         var scores = HeldOutEvaluator.Score(DevEvaluator.CreateTagger(weights), EmbeddedModel.Lexicon, data);
         var results = new ResultsData
         {
@@ -576,7 +580,8 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
 
         results.TripwiresFired.AddRange(EvaluationReport.Tripwires(results, selection));
 
-        // Write the per-token records first, then the report, and the results file (the run-once marker) last
+        // Write the per-token records first, then the report, and the results file (the run-once marker) last; completing the
+        // lock writes the results file exclusively and only then removes the lock file
         if (dump != null)
         {
             foreach (var (name, tokens) in EvaluationReport.Views(scores))
@@ -588,7 +593,7 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
         }
 
         File.WriteAllText(Path.Combine(folder, "test-results.md"), EvaluationReport.RenderResults(results, scores));
-        File.WriteAllText(resultsPath, OperatingPointsFile.Format(results));
+        runLock.Complete(OperatingPointsFile.Format(results));
         Console.WriteLine($"Wrote test-results.md and test-results.json to {folder}.");
         Console.WriteLine(results.TripwiresFired.Count == 0 ? "No stop condition fired." : "Stop conditions fired:\n" + string.Join("\n", results.TripwiresFired));
         return results.TripwiresFired.Count == 0 ? 0 : 1;

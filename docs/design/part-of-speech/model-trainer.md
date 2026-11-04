@@ -189,18 +189,29 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
 "selection first, test once" is enforced by code:
 
 - **The gate.** `evaluate` loads `operating-points.json` through `OperatingPointsFile.Load`, which validates it
-  (`SelectedOperatingPoints.Validate`): schema version, rule id, the model image hash must equal the hash of the embedded
-  weights and the `imageSha256` of `training.json`, the development file hashes must equal `data/MANIFEST.tsv`, and every
-  threshold must be on the grid. The held-out resolver and every held-out reader take the validated object as a required
+  (`SelectedOperatingPoints.Validate`) strictly: schema version, rule id, the model image hash must equal the hash of the
+  embedded weights and the `imageSha256` of `training.json`, the development files of the artifact must be exactly the set
+  of development files of `data/MANIFEST.tsv` (each once, with its manifest hash; none missing, none extra), the grid must
+  be the registered grid, the points must be exactly `strict` and `balanced` (each once, with the registered target and
+  coverage floor), and every threshold must be on the grid. When the two development files are present, the gate also
+  derives the pooled development curve of the embedded model (`DevDerivation`, development data only, no bootstrap) and
+  requires that the points of the artifact, and the number of development decisions, equal what the registered rule
+  selects from it. The held-out resolver and every held-out reader take the validated object as a required
   parameter, so no held-out file can be opened without it. `evaluate` has no weights, data path or threshold option.
 - **Verification before parsing.** `HeldOutReader` compares the SHA-256 of each repository file with
   `data/MANIFEST.tsv` and
   checks its header (the open, gold and challenge files announce their split or set; the probe has its column row); the
   treebank source file is compared with its pin in `tools/data/pins`, and the mapped table is read from the cache that
-  the fetch script of the data tools writes. A mismatch is a data error (exit code 2) before any line is parsed.
-- **Run once.** `evaluate` refuses to start when `docs/evaluation/test-results.json` exists. There is no `--force`: a
-  repeat needs that committed file to be deleted, which is visible in the history and must be recorded in the run log.
-  The results file is written last, so an aborted run leaves no marker.
+  the fetch script of the data tools writes and compared with its pinned SHA-256 (`DataGuard.UdMappedSha256`, the hash
+  that the committed `test-results.json` records for the mapped table), so a stale or edited cache is refused. A mismatch
+  is a data error (exit code 2) before any line is parsed.
+- **Run once.** `evaluate` refuses to start when `docs/evaluation/test-results.json` or its lock file
+  `docs/evaluation/test-results.json.running` exists. There is no `--force`: a repeat needs that committed file to be
+  deleted, which is visible in the history and must be recorded in the run log. Immediately before the first held-out
+  token is scored, `evaluate` creates the lock file with `FileMode.CreateNew` (`DataGuard.AcquireRunLock`), so of two
+  concurrent runs exactly one proceeds. The results file is written last, exclusively, and only then is the lock file
+  removed. A run that is aborted after scoring began leaves the lock file behind on purpose; a stale lock blocks every
+  later run until it is deleted by hand, and the deletion and its reason must be recorded in the run log.
 - **Pre-flight.** `evaluate --preflight` performs the gate and the verification, parses every input and prints only
   counts (sentences, tokens, documents, rows) next to the documented ones; it prints no tag, prediction or metric and
   writes nothing. If a count differs, both modes stop with exit code 2 (a stop condition of the protocol).
@@ -322,10 +333,11 @@ evaluation input that is not a development file, throw `InvalidOperationExceptio
 training source that lies outside the `data` folder after resolution, and a link cycle). A gold development row with a
 negative, non-numeric or out-of-sentence target index throws `InvalidDataException`. A held-out gate failure (no
 selection artifact, an artifact for another model, rule or development file, a held-out file that differs from its recorded
-hash or announces another set, a missing or unpinned treebank cache, a malformed probe or treebank row, a count that
-differs from the documented one) throws `InvalidDataException`; an existing results file and a dump folder inside the
-repository throw `InvalidOperationException`; all of these are exit code 2 and none of them opens or evaluates a held-out
-file further. A weights
+hash or announces another set, a missing or unpinned treebank cache or a mapped table that differs from its pin, a
+malformed probe or treebank row, an artifact whose points differ from the development derivation, a count that
+differs from the documented one) throws `InvalidDataException`; an existing results file, an existing run lock file and
+a dump folder inside the repository throw `InvalidOperationException`; all of these are exit code 2 and none of them
+opens or evaluates a held-out file further. A weights
 file that is not valid for this build (damaged, or built for another feature set) makes the check report `Invalid`. A
 stale or missing committed file is reported with exit code 1 and the command that regenerates it. An integer sum of the
 averaging that exceeds its range (`checked` arithmetic, practically unreachable: the product of epochs, repeats, tokens

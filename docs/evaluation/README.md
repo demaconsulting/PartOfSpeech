@@ -175,7 +175,8 @@ files. The cache never leaves your machine; see [data/eval/ud-ewt](../../data/ev
 `evaluate` names another cache folder.
 
 The held-out run checks every input and then runs. The committed tree already contains `test-results.json`, and
-`evaluate` refuses to run when it exists, so reproduce in a separate clone or worktree in which you delete
+`evaluate` refuses to run when it exists (and while its lock file `test-results.json.running` exists), so reproduce in a
+separate clone or worktree in which you delete
 `docs/evaluation/test-results.md` and `test-results.json`:
 
 ```text
