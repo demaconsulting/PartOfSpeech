@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Trainer: a build-time console tool that trains the averaged-perceptron weights (src/DemaConsulting.PartOfSpeech/
+       Resources/weights.bin) from the committed corpora with the library's own FeatureExtractor, lexicon restriction and
+       PerceptronModelWriter, selects settings on the development sets only, and checks that the committed weights are
+       current. It is not part of the package and not a test project; it references the library (internals are shared
+       through InternalsVisibleTo). The engine files under Training/ and Evaluation/ use only the base class library so
+       that the test project can compile them for every target framework (see the test project file); Program.cs and
+       ConfigFile.cs are the only files that need net10.0 features. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>DemaConsulting.PartOfSpeech.Trainer</AssemblyName>
+    <RootNamespace>DemaConsulting.PartOfSpeech.Trainer</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+
+    <!-- Code Quality Configuration -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+  </PropertyGroup>
+
+  <!-- Code Analysis Dependencies -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.403">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.35.0.4138">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- Project References -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DemaConsulting.PartOfSpeech\DemaConsulting.PartOfSpeech.csproj" />
+  </ItemGroup>
+
+</Project>

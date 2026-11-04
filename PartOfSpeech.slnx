@@ -6,6 +6,7 @@
     <Project Path="test/DemaConsulting.PartOfSpeech.Tests/DemaConsulting.PartOfSpeech.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
+    <Project Path="tools/DemaConsulting.PartOfSpeech.Trainer/DemaConsulting.PartOfSpeech.Trainer.csproj" />
     <Project Path="tools/LexiconCompiler/LexiconCompiler.csproj" />
   </Folder>
 </Solution>

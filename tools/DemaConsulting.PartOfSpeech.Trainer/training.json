@@ -1,0 +1,41 @@
+{
+  "sources": [
+    {
+      "name": "open",
+      "path": "data/open/train.tsv",
+      "weight": 2,
+      "maskDisputed": false,
+      "minSilverProbability": 0,
+      "samplePermille": 1000,
+      "maxSentences": 0
+    },
+    {
+      "name": "masc",
+      "path": "data/masc/masc.tsv",
+      "weight": 1,
+      "maskDisputed": false,
+      "minSilverProbability": 0,
+      "samplePermille": 1000,
+      "maxSentences": 0
+    },
+    {
+      "name": "silver",
+      "path": "data/silver/silver.tsv",
+      "weight": 1,
+      "maskDisputed": false,
+      "minSilverProbability": 80,
+      "samplePermille": 1000,
+      "maxSentences": 0
+    }
+  ],
+  "epochs": 6,
+  "hashBits": 19,
+  "minCount": 1,
+  "pruneThreshold": 8,
+  "quantScale": 8,
+  "seed": 20260101,
+  "restriction": "history",
+  "history": "predicted",
+  "temperature": 6.727,
+  "imageSha256": "68673a9ff48fea494991a82b6106b42e3cd63f9ef0c8c3fde4fc80477060f32a"
+}

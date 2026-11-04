@@ -5,8 +5,8 @@
 #### Purpose
 
 `PerceptronModel` reads, validates and scores with the weights of the averaged perceptron (format `POSW`, version 2),
-and `PerceptronModelWriter` encodes them. The runtime only reads weights; the writer is used by the tests now and by
-the trainer of a later release. The source files are `PerceptronModel.cs` and `PerceptronModelWriter.cs`.
+and `PerceptronModelWriter` encodes them. The runtime only reads weights; the writer is used by the trainer and the
+tests. The source files are `PerceptronModel.cs` and `PerceptronModelWriter.cs`.
 
 #### Data Model
 
@@ -72,8 +72,17 @@ Deflate validation in the `BinaryFormat` design.
   takes the occupied buckets as a bucket and a dense 17-element `int16` vector each, orders them by bucket, skips rows
   whose weights are all zero, and writes the sparse layout above. Postcondition: the file loads with the same weights.
 
-Size note for the later release: the spike's sparse `int16` model had about 105,000 rows and 286,000 weights, which is
-about 1.07 MB uncompressed and 0.6 MB with Deflate; the trainer chooses `hashBits` and pruning to stay near 1 MB.
+- **`ToUncompressedImage(byte[] file)`**: validates the file completely with `Load` (including the feature set of this
+  build, because a stale feature set is what a staleness check must report), then returns the header with the
+  compression flag cleared, the payload and stored lengths replaced by the payload length, the checksum recomputed over
+  the payload, followed by the inflated payload. The Deflate bytes differ between runtimes but this image is a function
+  of the weights only, so the trainer compares it (and its SHA-256) to decide whether a committed file is current.
+  Postcondition: the compressed and the plain form of the same weights give the same image. An invalid file throws
+  `InvalidDataException`.
+
+Size note: the shipped model (selected on development data, see _ModelTrainer Design_) has 119,632 rows and 290,862
+weights at 19 hash bits and scale 1/8, which is 1,111,898 bytes uncompressed and 492,971 bytes with Deflate. The spike's
+sparse `int16` model, for comparison, had about 105,000 rows and 286,000 weights at 13 classes.
 
 #### Error Handling
 
@@ -88,10 +97,11 @@ bits) or `ArgumentException` (wrong vector length, weight -32768, repeated bucke
 #### Dependencies
 
 - **BinaryFormat** (validation, varints, checksum, Deflate, population count) and **Upos** (`UposExtensions.Count`).
-- It does not depend on `FeatureExtractor`: the expected feature set version is an argument.
+- It does not depend on `FeatureExtractor` for loading: the expected feature set version is an argument. Only
+  `ToUncompressedImage` reads the constant `FeatureExtractor.FeatureSetVersion` (a constant, so there is no call cycle).
 
 #### Callers
 
-- **EmbeddedModel** (`Load` of the embedded weights, when they exist) and **Tagger** (`Load`).
+- **EmbeddedModel** (`Load` of the embedded weights) and **Tagger** (`Load`).
 - **TagDecoder** (`AddScores`, `HashBits`, `Temperature`, `Scale`).
-- The test suite and, in a later release, the trainer (`PerceptronModelWriter`).
+- The test suite and the trainer (`PerceptronModelWriter`, `ToUncompressedImage`).

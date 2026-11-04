@@ -1,6 +1,6 @@
 package PartOfSpeech {
     part def ModelStorage {
-        doc /* Holds the binary formats of the weights and the lexicon, their readers and writers, and the lexicon that is embedded in the package. */
+        doc /* Holds the binary formats of the weights and the lexicon, their readers and writers, and the lexicon and the trained weights that are embedded in the package. */
 
         comment testRef /* Test: test/DemaConsulting.PartOfSpeech.Tests/ModelStorage/ModelStorageTests.cs */
         comment designRef /* Design: docs/design/part-of-speech/model-storage.md */

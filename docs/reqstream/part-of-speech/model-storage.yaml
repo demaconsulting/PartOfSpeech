@@ -63,11 +63,12 @@ sections:
               A weights file and a lexicon file that were written by the writers shall load from streams with the same
               weights, header values and spellings.
             justification: |
-              The writers are what produces the weights of a later release; a file that does not read back as written
-              would make every trained model wrong.
+              The writers are what produces the weights that the trainer writes; a file that does not read back as
+              written would make every trained model wrong.
             children:
               - PartOfSpeech-ModelStorage-PerceptronModel-RoundTrip
               - PartOfSpeech-ModelStorage-PerceptronModel-ScoreLookup
               - PartOfSpeech-ModelStorage-PerceptronModel-Temperature
+              - PartOfSpeech-ModelStorage-PerceptronModel-UncompressedImage
             tests:
               - ModelStorage_WeightsWriterAndReader_RoundTrip

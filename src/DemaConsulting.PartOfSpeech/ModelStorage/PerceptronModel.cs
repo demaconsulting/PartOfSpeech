@@ -201,6 +201,41 @@ internal sealed class PerceptronModel
     }
 
     /// <summary>
+    ///     Reads the uncompressed form of a weights file: the header with the compression flag cleared followed by the payload.
+    /// </summary>
+    /// <remarks>
+    ///     The Deflate bytes differ between runtimes, but the uncompressed form is deterministic, so the trainer tool
+    ///     compares this form to decide whether a committed weights file is current (the same method as
+    ///     <see cref="Lexicon.ToUncompressedImage(byte[])"/> uses for the lexicon). The checksum of the uncompressed form
+    ///     covers the payload, which is what the stored bytes of that form are. The file must be valid and use the
+    ///     feature set of this build, because a stale feature set is exactly what a staleness check must report.
+    /// </remarks>
+    /// <param name="file">The whole file.</param>
+    /// <returns>The uncompressed file image.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="file"/> is <c>null</c>.</exception>
+    /// <exception cref="InvalidDataException">The file is not a valid weights file of a supported version and of the feature set of this build.</exception>
+    public static byte[] ToUncompressedImage(byte[] file)
+    {
+        // Validate completely first so a damaged file never produces a plausible-looking image
+        _ = Load(file, FeatureExtractor.FeatureSetVersion);
+
+        // Re-read the verified payload and rebuild the header for the uncompressed form
+        var flags = BinaryFormat.ReadHeader(file, Magic, HeaderLength, FormatVersion, Kind);
+        var payloadLength = BinaryFormat.ReadInt32Field(file, 28, "payload length");
+        var storedLength = BinaryFormat.ReadInt32Field(file, 32, "stored length");
+        var checksum = BinaryFormat.ReadUInt32(file, 36);
+        var payload = BinaryFormat.ReadPayload(file, HeaderLength, flags, payloadLength, MaxPayloadLength, storedLength, checksum, Kind);
+        var image = new byte[HeaderLength + payload.Length];
+        Buffer.BlockCopy(file, 0, image, 0, HeaderLength);
+        BinaryFormat.WriteUInt16(image, 6, (ushort)(flags & ~BinaryFormat.FlagDeflate));
+        BinaryFormat.WriteUInt32(image, 28, (uint)payload.Length);
+        BinaryFormat.WriteUInt32(image, 32, (uint)payload.Length);
+        BinaryFormat.WriteUInt32(image, 36, BinaryFormat.Fnv1a(payload, 0, payload.Length));
+        Buffer.BlockCopy(payload, 0, image, HeaderLength, payload.Length);
+        return image;
+    }
+
+    /// <summary>
     ///     Adds the weights of one bucket to a score vector.
     /// </summary>
     /// <remarks>

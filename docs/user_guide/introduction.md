@@ -14,7 +14,7 @@ This user guide covers:
 - Tagging text and pre-tokenized sentences, results and offsets
 - Reading confidences and alternatives
 - Constraining the tag of a token
-- Loading a weights file, and the current state of the default model
+- Loading a weights file, and the default model
 - The tokenization conventions of the library
 - API reference
 - Data and license credits
@@ -46,11 +46,15 @@ The package targets .NET Standard 2.0 (and so runs on .NET Framework 4.8.1 and e
 .NET 8, .NET 9 and .NET 10. It has no package dependencies. The package also contains a Markdown API reference of the
 public API under its `api/` folder, generated from the XML documentation of the library.
 
-**The trained model is not part of the package yet.** The package contains the tokenizer, the tagger, the file formats
-and the compiled word lexicon, but the averaged-perceptron weights arrive in a later release. Until then
-`Tagger.Default` throws an `InvalidOperationException` that says so, and you create a tagger from a weights file that
-you load yourself (see _Loading a Weights File_). When a release embeds a model, `Tagger.Default` returns a shared tagger
-and the samples that use it need no file.
+**The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
+compiled word lexicon (641,418 bytes compressed) and the trained averaged-perceptron weights (492,971 bytes compressed,
+1,111,898 bytes uncompressed, about 0.5 MB and 1.1 MB). `Tagger.Default` returns a shared tagger that uses them, so the
+samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
+Weights File_).
+
+The model was selected on development data only, and this release does not recommend a confidence threshold: the
+accuracy of the model and the guidance on what confidence is low enough to check a token again will be added after
+the model has been evaluated on data that was not used to select it.
 
 # Usage
 
@@ -59,8 +63,7 @@ and the samples that use it need no file.
 ```csharp
 using DemaConsulting.PartOfSpeech;
 
-using var weights = File.OpenRead("model.posw");
-var tagger = Tagger.Load(weights);
+var tagger = Tagger.Default;
 
 foreach (TaggedSentence sentence in tagger.Tag("The cat sat on the mat. It didn't move."))
 {
@@ -71,8 +74,9 @@ foreach (TaggedSentence sentence in tagger.Tag("The cat sat on the mat. It didn'
 }
 ```
 
-`Tag(string)` tokenizes the text, splits it into sentences and tags every token. Create one tagger and share it: it is
-immutable and safe for concurrent use (see _Thread Safety_).
+`Tag(string)` tokenizes the text, splits it into sentences and tags every token. `Tagger.Default` is created on first
+use and is shared by every caller; you can also create your own tagger and share it: it is immutable and safe for
+concurrent use (see _Thread Safety_).
 
 ## Offsets
 
@@ -189,17 +193,16 @@ a weights file, or is of a format or feature set version that this build does no
 ## The Default Tagger
 
 ```csharp
-try
-{
-    Tagger tagger = Tagger.Default;
-}
-catch (InvalidOperationException)
-{
-    // This build has no embedded model: load weights with Tagger.Load instead
-}
+Tagger tagger = Tagger.Default;
+TaggedSentence sentence = tagger.Tag("Dogs bark.")[0];
 ```
 
-`Tagger.Default` currently always throws, as described under _Installation_.
+`Tagger.Default` is the shared tagger that uses the weights and the lexicon that are embedded in the package. It is
+created on first use, so a program that only tokenizes pays nothing; the first read inflates and validates the two
+embedded files once (the weights: 492,971 bytes compressed, 1,111,898 bytes uncompressed; the lexicon: 641,418 bytes
+compressed, 1,635,344 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
+same thread-safe instance. A read does not fail in a released package; an `InvalidOperationException` or an
+`InvalidDataException` would mean that the package is broken.
 
 ## Thread Safety
 
@@ -244,7 +247,7 @@ reference with every member under `api/`.
 
 The entry point. Immutable and thread-safe.
 
-- `static Tagger Default`: the tagger with the embedded model; currently throws `InvalidOperationException`.
+- `static Tagger Default`: the shared tagger that uses the embedded model and lexicon; created on first use.
 - `static Tagger Load(Stream weights, TaggerOptions? options = null)`: creates a tagger from a weights stream with the
   embedded lexicon.
 - `static Tagger Load(Stream weights, Stream lexicon, TaggerOptions? options = null)`: with your own lexicon file.
@@ -318,11 +321,18 @@ An immutable set of tags: `Empty`, `All`, `Of(params Upos[])`, `Count`, `IsEmpty
 
 # Data and Licenses
 
-The library is MIT licensed. The repository also holds open data for the 17 Universal POS tags: training corpora, a
-part-of-speech lexicon and evaluation sets, described in the
-[data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md). The only part of the data that the
-library uses at run time is the lexicon: it is compiled into a binary file that is embedded in the assembly and
-restricts the tags of known words. The attribution and license notices of the third-party data are in
+The code is MIT licensed. The package also embeds a lexicon and trained weights that are derived from third-party data,
+so its license is the file
+[PACKAGE-LICENSE.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/PACKAGE-LICENSE.md), which is packed at the
+root of the NuGet package. It starts with the SPDX expression `MIT AND CC-BY-4.0 AND CC-BY-3.0-US`, states which license
+covers which part, and is used instead of a license expression because nuget.org accepts only expressions of licenses
+that the Open Source Initiative or the Free Software Foundation approve, which CC BY 3.0 US is not. The repository also
+holds open data for the 17 Universal POS tags: training corpora, a part-of-speech lexicon and evaluation sets, described
+in the [data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md). The parts of the data that
+the library uses at run time are the lexicon, which is compiled into a binary file that is embedded in the assembly and
+restricts the tags of known words, and the weights, which the trainer tool of the repository learned from the open
+corpus, MASC and the silver corpus and which are embedded as a binary file too. The attribution and license notices of
+the third-party data are in
 [THIRD-PARTY-NOTICES.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md), which is also
 packed at the root of the NuGet package.
 
@@ -330,7 +340,8 @@ packed at the root of the NuGet package.
 
 - **MASC**, the Manually Annotated Sub-Corpus of the Open American National Corpus, is licensed CC BY 3.0 US
   (<https://creativecommons.org/licenses/by/3.0/us/>). Its Penn Treebank parts of speech were converted to Universal POS
-  tags.
+  tags. The lexicon uses its tags, and the trained weights were learned in part from the converted data and are provided
+  under the terms of this license.
 - **Open English WordNet** is licensed CC BY 4.0 (<https://creativecommons.org/licenses/by/4.0/>) and carries the
   Princeton WordNet notice. Its word forms were reduced to a lexicon of spellings and the Universal POS tags they may
   carry; the lexicon is embedded in the package in a compiled form.

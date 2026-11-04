@@ -8,7 +8,7 @@ Tagging is the subsystem that assigns a Universal POS tag to every token and is 
 contains four units:
 
 - **FeatureExtractor** (`FeatureExtractor.cs`): the single definition of the 22 hashed features of a token. It is shared
-  between decoding and, in a later release, training.
+  between decoding and training (the trainer tool).
 - **TagDecoder** (`TagDecoder.cs`, `DecoderWorkspace.cs`, `ScoreSlice.cs`): the greedy left-to-right decoder that scores
   the features with the weights, restricts the candidates with the lexicon and the constraints, and turns the scores
   into probabilities. `DecoderWorkspace` is its reusable per-thread scratch memory and `ScoreSlice` is the read-only
@@ -39,8 +39,9 @@ Consumed: `Tokenizer.Tokenize` and `Tokenizer.CreateSentence` (Tokenization); `L
 `Tagger` is a thin, immutable facade. It owns one `TagDecoder` (built from a `PerceptronModel` and a `Lexicon`) and the
 maximum number of alternatives. `Tag(string)` tokenizes into sentences and tags each; `Tag(Sentence, constraints)`
 passes the sentence tokens to the decoder; `Tag(IReadOnlyList<string>, constraints)` builds a sentence with
-`Tokenizer.CreateSentence` first. `Tagger.Default` is a `Lazy<Tagger>` over the embedded weights and lexicon and throws
-`InvalidOperationException` while no weights are embedded.
+`Tokenizer.CreateSentence` first. `Tagger.Default` is a `Lazy<Tagger>` over the embedded weights and lexicon (created
+once, thread-safe, never fails in a released package; a missing or damaged resource would be a broken package and is
+reported as `InvalidOperationException` or `InvalidDataException`).
 
 For each sentence the decoder performs these steps (the detail is in _TagDecoder Design_):
 
@@ -70,18 +71,25 @@ it):
   mapped to `'` and `"`, dashes to `--` and the ellipsis character to `...`, because the corpora are ASCII-normalized
   while real text is not. Token text and offsets always keep the original characters.
 - **The 17-tag set.** The spike was calibrated for its own target set. This library tags with all 17 Universal POS
-  tags, so the temperature of a trained model is refitted for 17 tags in the later release; the lexicon restriction
-  at decode time was kept (training is unrestricted).
+  tags, so the temperature of the trained model was refitted for 17 tags (on open development data, by the trainer's
+  `calibrate` command and recorded in `training.json`). The lexicon restriction at decode time was kept. For training
+  the restriction mode was chosen by measurement on development data: the spike's unrestricted training broke with its
+  lexicon, which missed 2% of the gold tags, but the present lexicon covers the training data by construction, so three
+  modes were compared (unrestricted, restricted history, fully restricted) and mode B (the history comes from the
+  restricted guess, the update from the unrestricted guess) was selected; the log is in `RUN-LOG.md` of the trainer.
 - **Extra features.** The feature set also contains the previous-two-tags pair (`p12`) and the previous-and-next
   neighbor pair (`m1n1`), which are not in the spike's base template list.
 - **Tag history type.** Previous tags are `Upos` ordinals plus two start sentinels, not strings, and the extractor takes
   them as arguments, so a trainer can pass gold or predicted history.
 
-**Contract with the phase 3 trainer.** The trainer reuses `FeatureExtractor` unchanged, so that training and decoding
+**Contract with the Trainer.** The trainer reuses `FeatureExtractor` unchanged, so that training and decoding
 see identical buckets, and writes weights with `PerceptronModelWriter` using `FeatureExtractor.FeatureSetVersion`
 (currently 1). Any change of the template set, the hash or the fold requires a new feature set version; readers refuse
-a weights file of another version. The trainer also chooses `hashBits` (18 to 24), refits the temperature for 17 tags
-and writes the weight scale. The byte layouts are in _ModelStorage_ (`POSW` and `POSL`).
+a weights file of another version. The trainer also chooses `hashBits` (18 to 24; the shipped model uses 19), the
+temperature (fitted for 17 tags) and the weight scale (the shipped model uses 1/8). The byte layouts are in
+_ModelStorage_ (`POSW` and `POSL`). The feature set was not extended for glossary support: a trained "glossary says X"
+feature (feature set version 2) was measured on development data and rejected in favor of calibrated score boosts of
+`TokenConstraint.Prefer` (see _ModelTrainer Design_), so version 1 stays.
 
 **Thread safety.** `Tagger`, `TagDecoder`, `Lexicon` and `PerceptronModel` hold read-only data. All per-call scratch
 memory is a `[ThreadStatic]` workspace that grows to the largest sentence and is reused; the decoder resolves a

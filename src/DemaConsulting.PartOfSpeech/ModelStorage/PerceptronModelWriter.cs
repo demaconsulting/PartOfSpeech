@@ -4,8 +4,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     Encodes averaged-perceptron weights in the <c>POSW</c> binary format.
 /// </summary>
 /// <remarks>
-///     The writer is used by the tests now and by the phase 3 trainer (through <c>InternalsVisibleTo</c>); the runtime
-///     only reads weights. Rows are given as dense 17-element weight vectors keyed by bucket so that a trainer can
+///     The writer is used by the tests and by the <c>DemaConsulting.PartOfSpeech.Trainer</c> tool (through
+///     <c>InternalsVisibleTo</c>); the runtime only reads weights. Rows are given as dense 17-element weight vectors keyed by bucket so that a trainer can
 ///     quantize its float weights once and hand them over without knowing the sparse layout. All members are stateless
 ///     and thread-safe.
 /// </remarks>

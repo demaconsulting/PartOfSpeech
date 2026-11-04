@@ -1,6 +1,6 @@
 package PartOfSpeech {
     part def EmbeddedModel {
-        doc /* Gives lazy, thread-safe access to the lexicon, and in a later release the weights, that are embedded in the assembly. */
+        doc /* Gives lazy, thread-safe access to the lexicon and the trained weights that are embedded in the assembly. */
 
         comment sourceRef /* Source: src/DemaConsulting.PartOfSpeech/ModelStorage/EmbeddedModel.cs */
         comment testRef /* Test: test/DemaConsulting.PartOfSpeech.Tests/ModelStorage/EmbeddedModelTests.cs */

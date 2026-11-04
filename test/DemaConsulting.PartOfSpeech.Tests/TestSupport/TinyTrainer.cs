@@ -7,7 +7,8 @@ namespace DemaConsulting.PartOfSpeech.Tests;
 ///     <para>
 ///         The trainer produces the "tiny trained weights file" that the end-to-end tests use. It deliberately uses only
 ///         <see cref="FeatureExtractor"/> and <see cref="PerceptronModelWriter"/>, which is also the proof that the
-///         trainer of a later phase can reuse the extractor and the writer unchanged.
+///         Trainer tool (<c>tools/DemaConsulting.PartOfSpeech.Trainer</c>) reuses the extractor and the writer
+///         unchanged.
 ///     </para>
 ///     <para>
 ///         The algorithm is the one of the spike: left to right, unrestricted greedy decoding with the previous

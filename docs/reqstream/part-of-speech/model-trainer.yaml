@@ -1,0 +1,191 @@
+---
+# Software Unit Requirements for ModelTrainer
+#
+# ModelTrainer is a unit directly under the system: the build-time tool (tools/DemaConsulting.PartOfSpeech.Trainer) that
+# trains the averaged-perceptron weights that the package embeds, selects every setting on development data only, and
+# checks that the committed weights are what the committed data and configuration produce. Its engine files are compiled
+# into the test project, so the tests run the real trainer code on every target framework.
+
+sections:
+  - title: PartOfSpeech Requirements
+    sections:
+      - title: ModelTrainer Requirements
+        requirements:
+          - id: PartOfSpeech-ModelTrainer-Deterministic
+            title: >-
+              Training with the same corpora, configuration and seed shall give a byte-identical uncompressed weights
+              image, a different seed shall give a different image, and the image of a small reference run shall equal
+              a pinned SHA-256 on every operating system and target framework.
+            justification: |
+              The check that the committed weights are current retrains the model and compares the result, so the same
+              inputs must give the same image everywhere. The shuffle uses an own generator with a fixed reference
+              sequence instead of the platform random generator, the arithmetic is integer, and the pinned hashes are
+              the golden values that the CI matrix checks on every operating system.
+            tests:
+              - ModelTrainer_Train_SameInputs_ByteIdenticalImage
+              - ModelTrainer_Train_DifferentSeed_DifferentImage
+              - ModelTrainer_Train_SmallUnrestrictedRun_MatchesGoldenHash
+              - ModelTrainer_Train_SmallRestrictedRun_MatchesGoldenHash
+              - DeterministicRandom_NextUInt64_SeedZero_ReferenceSequence
+              - DeterministicRandom_Shuffle_Permutation_ReproducibleAndSeedDependent
+              - DeterministicRandom_NextInt_NonPositiveBound_Throws
+
+          - id: PartOfSpeech-ModelTrainer-SharedDefinitions
+            title: >-
+              The tags that the trainer predicts while it trains shall equal the tags of the runtime decoder for the
+              same weights, with the embedded lexicon and with unknown words.
+            justification: |
+              A trainer that predicts with its own copy of the decoder would train for conditions that the tagger does
+              not have. The trainer uses the feature extractor and the lexicon restriction of the library, and the
+              parity tests prove that its predictor and the decoder agree, so training and use cannot drift apart.
+            tests:
+              - ModelTrainer_Predict_RestrictedWithLexicon_MatchesTagDecoder
+              - ModelTrainer_Predict_Unrestricted_MatchesTagDecoderWithUnknownWords
+
+          - id: PartOfSpeech-ModelTrainer-ExactQuantization
+            title: >-
+              The averaged weights shall be computed and quantized in exact integer arithmetic (equal to a decimal
+              oracle, with ties rounded away from zero and values clamped to the 16-bit range), a run whose integer sums
+              do not fit their range shall fail with a clear error instead of wrapping around, small weights shall be
+              dropped by the pruning threshold, and the resulting file shall load with the quantized weights.
+            justification: |
+              Floating-point averaging would make the weights depend on the platform and would make the committed file
+              impossible to reproduce. Exact integers give the same weights everywhere, but an unnoticed overflow of the
+              64-bit sums would silently corrupt them, so the arithmetic is checked. The loader of the library proves
+              that the written file holds what the quantization produced.
+            tests:
+              - AveragedPerceptron_Quantize_RandomUpdates_MatchesDecimalOracle
+              - AveragedPerceptron_Quantize_TiesAndClamp_RoundAwayFromZeroAndClamp
+              - AveragedPerceptron_Quantize_RangeExceeded_ThrowsClearException
+              - AveragedPerceptron_Update_SumsExceedRange_ThrowsClearException
+              - AveragedPerceptron_Quantize_PruneThreshold_DropsSmallWeights
+              - ModelTrainer_Build_SmallRun_LoadsWithTheQuantizedWeights
+              - ModelBuilder_WithTemperature_ReplacesOnlyTheTemperature
+
+          - id: PartOfSpeech-ModelTrainer-CorpusRules
+            title: >-
+              The trainer shall read the corpus format of the data folder and refuse an unknown tag, shall give tokens
+              without a training signal (masked tokens and, when configured, disputed tokens and low-probability silver
+              tokens) no update but still count them as steps and put them in the tag history, and shall repeat the
+              sentences of a source as many times as its weight says and limit or subsample a source deterministically.
+            justification: |
+              The model must be trained on exactly the data that the configuration describes, and a masked token is
+              still decoded at run time, so it takes part in the history. A misread corpus would silently change the
+              weights and their provenance.
+            tests:
+              - ModelTrainer_Train_MaskedToken_NoUpdateButStepAndHistory
+              - CorpusReader_Parse_MaskingRules_MarkTokensWithoutSignal
+              - CorpusReader_Parse_LimitAndSample_AreDeterministic
+              - CorpusReader_Parse_UnknownTag_ThrowsWithLine
+              - CorpusReader_LoadSources_Weight_RepeatsSentences
+
+          - id: PartOfSpeech-ModelTrainer-TrainingSettings
+            title: >-
+              The minimum feature count, the restriction mode and the history mode shall each change what is trained.
+            justification: |
+              The selection of these settings on development data is only meaningful if each setting really takes
+              effect; a setting that was silently ignored would make the logged comparison meaningless.
+            tests:
+              - ModelTrainer_Train_MinCount_ShrinksTheModel
+              - ModelTrainer_Train_RestrictionAndHistoryModes_ChangeTheImage
+
+          - id: PartOfSpeech-ModelTrainer-DevOnlySelection
+            title: >-
+              Evaluation shall read only the two development files (also when the path is spelled with a detour), a
+              file that does not announce a development split shall be refused, training shall accept only files below
+              the data folder of the repository (after the path is made absolute and symbolic links and junctions are
+              resolved) and refuse held-out sets, evaluation folders and development files there, and no other source of
+              the trainer shall name a held-out set.
+            justification: |
+              The accuracy that is reported later is only honest if nothing in the model was tuned on the data that
+              measures it. A rule in a document is easy to forget, so the rule is code: there is no path through the
+              trainer that opens a held-out file, and tests prove the allow-list, the deny-list and the absence of other
+              references. The deny-list works on the canonical path, because a rooted path, a dotted detour or a link
+              could otherwise point a safe-looking name at held-out data.
+            tests:
+              - DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused
+              - DataGuard_EnsureDevelopmentFile_DevelopmentFile_Admitted
+              - DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused
+              - DataGuard_EnsureTrainable_TrainingCorpus_Admitted
+              - DataGuard_EnsureTrainable_PathOutsideDataRoot_Refused
+              - CorpusReader_LoadSources_RootedPathOutsideData_Refused
+              - DataGuard_EnsureTrainable_LinkToHeldOutOrOutsideData_Refused
+              - DataGuard_EnsureDevelopmentHeader_NoDevSplitHeader_Throws
+              - ModelTrainer_Sources_NoHeldOutPathLiterals
+
+          - id: PartOfSpeech-ModelTrainer-CheckDetectsStaleWeights
+            title: >-
+              The check shall report a committed weights file as current when its uncompressed image equals the fresh
+              training (whether it is stored compressed or not), and as stale, missing or invalid otherwise.
+            justification: |
+              The build retrains the model and compares it with the committed file; the comparison must accept the
+              compressed committed file, whose bytes depend on the platform, and must never take a perturbed, absent or
+              damaged file for a current one.
+            tests:
+              - ModelBuilder_Check_CommittedFile_DetectsStaleMissingAndInvalid
+
+          - id: PartOfSpeech-ModelTrainer-ProtectsShippedWeights
+            title: >-
+              A training run with experiment overrides or calibration shall be refused unless an output file is named,
+              so that an experiment never overwrites the shipped weights.
+            justification: |
+              The default output of `train` is the embedded weights file, which `train --check` and the tests hold
+              equal to `training.json`. A casual experiment such as `train --epochs 3` must not be able to replace it
+              silently; the rule is code instead of a sentence in the README.
+            tests:
+              - OutputGuard_EnsureExplicitOutput_ExperimentWithoutOutput_Throws
+              - OutputGuard_EnsureExplicitOutput_ExperimentWithOutputOrDefaultRun_Admitted
+
+          - id: PartOfSpeech-ModelTrainer-Configuration
+            title: >-
+              The training configuration shall be a valid, canonical file that names existing training corpora, and a
+              misspelled setting or an out-of-range value shall be an error.
+            justification: |
+              The configuration is the record of what the committed weights were trained from. A silently ignored
+              misspelling would train something other than what the file says, and a file that the tool rewrites in
+              another form would make every configuration update noisy.
+            tests:
+              - ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical
+              - ConfigFile_Parse_UnknownMemberOrBadRange_Throws
+
+          - id: PartOfSpeech-ModelTrainer-DevMetrics
+            title: >-
+              The evaluation shall score a tagger on the development sets with accuracy, harmful noun-verb errors,
+              log-likelihood and calibration error, shall read the gold development targets with the class mapping (a
+              negative or out-of-sentence target index is an error), and shall compare two models with a paired
+              bootstrap by document that reports a tie when the interval contains zero.
+            justification: |
+              The settings of the model are selected by these numbers, so the numbers must be right: the metrics are
+              checked against hand-computed outcomes, and the bootstrap against lists with a known difference and with
+              none. The run log rows must have one cell for each column of their table.
+            tests:
+              - DevSets_ParseGoldDev_Fixture_ReadsTargetsAndMapsClasses
+              - DevSets_ParseGoldDev_InvalidTarget_Throws
+              - Metrics_Compute_KnownOutcomes_ExpectedNumbers
+              - Metrics_Judge_TinyTagger_CorrectAndNounVerbError
+              - Bootstrap_Compare_IdenticalLists_ZeroDifferenceTied
+              - Bootstrap_Compare_BetterList_PositiveDifferenceExcludesZero
+              - DevEvaluator_EvaluateOpen_FixtureSentences_OneOutcomePerToken
+              - RunLog_Row_Summary_HasOneCellPerHeaderColumn
+
+          - id: PartOfSpeech-ModelTrainer-GlossaryExperiment
+            title: >-
+              The dev-only glossary experiment shall draw simulated glossary hints reproducibly (gold hints, or another
+              allowed tag for wrong ones), with the allowed tags of a token computed for the token as written exactly as
+              the runtime decoder does (capitalization included), shall change the trained model only when hints are
+              used, and its decoder shall equal the plain predictor without hints and shall follow a hard or a very
+              large hint.
+            justification: |
+              The decision between a trained glossary feature and a score boost rests on this experiment, so the
+              experiment must be reproducible, must not disturb the shipped feature set (the plain run keeps its pinned
+              hash), must judge eligibility with the same candidates that the tagger has, and its decoder must agree
+              with the real one before the comparison means anything.
+            tests:
+              - GlossaryTraining_Draw_NoWrongHints_HintsAreGoldAndReproducible
+              - GlossaryTraining_Draw_AllHintsWrong_HintIsAnotherAllowedTag
+              - GlossaryTraining_Draw_CapitalizedToken_UsesShapeCandidatesOfTheOriginalToken
+              - GlossaryTraining_Draw_CorpusSample_EligibilityMatchesRuntimeMask
+              - ModelTrainer_Train_GlossaryHints_ChangeTheImage
+              - GlossaryFeatures_Append_InBucketSpaceAndDependOnHintAndHistory
+              - HintedPredictor_NoHints_MatchesQuantizedPredictor
+              - HintedPredictor_HardHintAndHugeBoost_FollowTheHint

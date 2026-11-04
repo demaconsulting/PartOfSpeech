@@ -36,9 +36,10 @@ result types: `Tagger.cs`, `TaggerOptions.cs`, `TaggedSentence.cs`, `TaggedToken
   tokens, wrapped in a `TaggedSentence`.
 - **`Tag(IReadOnlyList<string> tokens, IReadOnlyList<TokenConstraint>? constraints = null)`**: `Tokenizer.CreateSentence`
   and then the sentence overload; the tagged sentence's text is the tokens joined by single spaces.
-- **`Default`**: the tagger over the embedded weights and lexicon; while `EmbeddedModel.Weights` is `null` it throws
-  `InvalidOperationException` ("This build of DemaConsulting.PartOfSpeech contains no trained model yet. Load a weights
-  file with Tagger.Load(Stream)."). The failure is cached by the `Lazy`, so every access fails the same way.
+- **`Default`**: the tagger over the embedded weights and lexicon: `new Tagger(EmbeddedModel.Weights,
+  EmbeddedModel.Lexicon, default options)` created once by the `Lazy` (`ExecutionAndPublication`), so every caller, also
+  concurrent first callers, receives the same instance. A missing resource (`InvalidOperationException`) or a damaged one
+  (`InvalidDataException`) means a broken package; the `Lazy` caches the failure, so every access fails the same way.
 
 #### Error Handling
 

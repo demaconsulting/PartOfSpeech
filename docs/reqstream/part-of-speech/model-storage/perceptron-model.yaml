@@ -60,6 +60,18 @@ sections:
                   - PerceptronModel_Load_PayloadLengthAboveMaximum_Throws
                   - PerceptronModelWriter_Compile_InvalidRows_Throw
 
+              - id: PartOfSpeech-ModelStorage-PerceptronModel-UncompressedImage
+                title: >-
+                  The uncompressed image of a weights file shall be available for comparison, shall be the same for the
+                  compressed and the plain form of the same weights, and shall be refused for a file that is not valid.
+                justification: |
+                  The compressed bytes depend on the Deflate implementation of the platform, so the trainer check
+                  compares the uncompressed image, which is identical everywhere; an invalid file must never be taken
+                  for a current one.
+                tests:
+                  - PerceptronModel_ToUncompressedImage_CompressedAndPlain_SameImageAsPlainFile
+                  - PerceptronModel_ToUncompressedImage_InvalidFile_Throws
+
               - id: PartOfSpeech-ModelStorage-PerceptronModel-Temperature
                 title: The calibration temperature stored in a weights file shall be available to the tagger.
                 justification: |

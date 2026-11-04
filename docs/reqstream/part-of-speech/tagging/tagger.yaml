@@ -53,13 +53,16 @@ sections:
 
               - id: PartOfSpeech-Tagging-Tagger-Default
                 title: >-
-                  While the package contains no weights, reading the default tagger shall throw an
-                  InvalidOperationException whose message says that no model is available and that weights can be
-                  loaded; this requirement is replaced when a trained model is embedded.
+                  Reading the default tagger shall return a tagger that uses the embedded weights and lexicon and tags
+                  text without a file, every read shall return the same instance, and threads that read it at the same
+                  time shall receive that one instance.
                 justification: |
-                  A clear failure is safer than a placeholder model whose tags could be trusted.
+                  Most callers want the shipped model without managing a stream; a shared instance avoids loading the
+                  model again, and services read the property from many threads on the first request.
                 tests:
-                  - Tagger_Default_NoEmbeddedWeights_ThrowsWithClearMessage
+                  - Tagger_Default_EmbeddedModel_ReturnsSameWorkingTagger
+                  - Tagger_Default_ParallelAccess_ReturnsSingleInstance
+                  - Tagger_Default_ObviousSentences_AreTaggedCorrectly
 
               - id: PartOfSpeech-Tagging-Tagger-ThreadSafe
                 title: >-

@@ -7,6 +7,7 @@ input-files:
   - docs/design/introduction.md
   - docs/design/part-of-speech.md
   - docs/design/part-of-speech/upos.md
+  - docs/design/part-of-speech/model-trainer.md
   - docs/design/part-of-speech/tokenization.md
   - docs/design/part-of-speech/tokenization/tokenizer.md
   - docs/design/part-of-speech/tokenization/sentence-splitter.md

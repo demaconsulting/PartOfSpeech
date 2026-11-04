@@ -10,16 +10,20 @@ trained model of `TinyTrainer` (which learns the fixture sentences) with the emb
 fixture words, and hand-set models from `TinyModels` where a test needs exact scores. The decoder, extractor, readers and
 tokenizer are real, so these tests also prove that the facade connects them correctly; nothing is mocked. The
 thread-safety test shares one tagger between 8 threads and compares every result with a sequential run; the immutability
-test tries to modify results and options through the interfaces that they expose.
+test tries to modify results and options through the interfaces that they expose. The tests of `Tagger.Default` use the
+shipped model, but only for properties that do not depend on its accuracy (it exists, it is one shared instance, and it
+tags four hand-written sentences whose tags are unmistakable; the sentences were written once and are not tuned, and
+the accuracy of the model is measured by the trainer's evaluation, never by these tests).
 
 #### Test Environment
 
-No setup beyond the standard test runner: models are built in memory, no files and no network.
+No setup beyond the standard test runner: models are built in memory (the default tagger uses the embedded
+resources), no files and no network.
 
 #### Acceptance Criteria
 
 All tests pass on every target framework. A test fails when a tag, offset or text is wrong, an invalid argument is not
-rejected with the specified exception, the default tagger does not explain why it is unavailable, a parallel result
+rejected with the specified exception, the default tagger is not one shared instance or does not tag, a parallel result
 differs from the sequential one, a result can be modified after it is returned, or an alternative list violates its
 invariants (excludes the tag, sorted, limited, sums with the confidence to at most one).
 
@@ -32,8 +36,11 @@ invariants (excludes the tag, sorted, limited, sums with the confidence to at mo
 - **Offsets**: `Tagger_Tag_Text_TokenTextMatchesOffsets`.
 - **Load**: `Tagger_Load_NullStreams_Throw` (both overloads), `Tagger_Load_InvalidOptions_Throw` (the number of
   alternatives must be 0 to 16) and `Tagger_Load_CustomLexicon_IsUsed`.
-- **Default**: `Tagger_Default_NoEmbeddedWeights_ThrowsWithClearMessage` (explains why it is unavailable and keeps doing
-  so).
+- **Default**: `Tagger_Default_EmbeddedModel_ReturnsSameWorkingTagger` (every read returns the same tagger, with the
+  default options, that tags with the embedded model),
+  `Tagger_Default_ParallelAccess_ReturnsSingleInstance` (16 threads released together all receive one instance) and
+  `Tagger_Default_ObviousSentences_AreTaggedCorrectly` (a theory over four hand-written sentences with unmistakable
+  tags).
 - **Thread safety and immutability**: `Tagger_Tag_Parallel_MatchesSequential` (eight threads) and
   `Tagger_Tag_ResultsAreImmutable` (results and options cannot be modified through the interfaces they expose).
 - **Input validation**: `Tagger_Tag_NullArguments_Throw` (every overload) and
