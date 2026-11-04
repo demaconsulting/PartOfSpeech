@@ -203,7 +203,7 @@ internal static class LexiconWriter
         BinaryFormat.WriteUInt32(file, 20, (uint)blockCount);
         BinaryFormat.WriteUInt32(file, 24, (uint)payload.Length);
         BinaryFormat.WriteUInt32(file, 28, (uint)stored.Length);
-        BinaryFormat.WriteUInt32(file, 32, BinaryFormat.Fnv1a(payload, 0, payload.Length));
+        BinaryFormat.WriteUInt32(file, 32, BinaryFormat.Fnv1a(stored, 0, stored.Length));
         BinaryFormat.WriteUInt16(file, 36, (ushort)longest);
         Buffer.BlockCopy(stored, 0, file, Lexicon.HeaderLength, stored.Length);
         return file;

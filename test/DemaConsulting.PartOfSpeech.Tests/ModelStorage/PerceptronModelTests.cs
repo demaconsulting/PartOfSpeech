@@ -51,6 +51,44 @@ public class PerceptronModelTests
     }
 
     /// <summary>
+    ///     Writes a compressed model of 3000 rows, whose payload is large enough for several blocks of Deflate data.
+    /// </summary>
+    private static byte[] LargeCompressedFile()
+    {
+        var rows = new List<KeyValuePair<int, short[]>>();
+        var random = new Random(5);
+        for (var bucket = 0; bucket < 3000; bucket++)
+        {
+            var row = new short[17];
+            row[random.Next(17)] = (short)random.Next(1, 3000);
+            rows.Add(new KeyValuePair<int, short[]>(bucket * 7, row));
+        }
+
+        return PerceptronModelWriter.Compile(18, 1f, 1f, FeatureSet, rows, true);
+    }
+
+    /// <summary>
+    ///     Returns a copy of the stored bytes (the bytes after the header) of a file.
+    /// </summary>
+    private static byte[] StoredRegion(byte[] file) => file.Skip(PerceptronModel.HeaderLength).ToArray();
+
+    /// <summary>
+    ///     Returns a copy of a file whose stored region was replaced, with the stored length adjusted and, on request,
+    ///     with the checksum recomputed over the new region.
+    /// </summary>
+    private static byte[] WithStoredRegion(byte[] file, byte[] stored, bool recomputeChecksum)
+    {
+        var changed = file.Take(PerceptronModel.HeaderLength).Concat(stored).ToArray();
+        BinaryFormat.WriteUInt32(changed, 32, (uint)stored.Length);
+        if (recomputeChecksum)
+        {
+            BinaryFormat.WriteUInt32(changed, 36, BinaryFormat.Fnv1a(stored, 0, stored.Length));
+        }
+
+        return changed;
+    }
+
+    /// <summary>
     ///     Proves that a written model loads with the header values and the right sizes.
     /// </summary>
     [Fact]
@@ -290,6 +328,109 @@ public class PerceptronModelTests
         Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(RecomputeChecksum(unsortedTags), FeatureSet));
         Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(RecomputeChecksum(zeroGap), FeatureSet));
         Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(RecomputeChecksum(zeroWeight), FeatureSet));
+    }
+
+    /// <summary>
+    ///     Proves that extra bytes after the Deflate data, inside the stored region that the header declares, are
+    ///     rejected: with the checksum of the stored bytes left alone, and with it recomputed to match the new region.
+    /// </summary>
+    [Fact]
+    public void PerceptronModel_Load_DeflateTrailingBytesInStoredRegion_Throws()
+    {
+        // Arrange: a valid compressed file, and copies with three extra bytes behind the Deflate data whose stored
+        // length is raised to match, once with the old checksum and once with a matching one
+        var file = SmallFile(true);
+        Assert.Equal(1, BinaryFormat.ReadUInt16(file, 6) & BinaryFormat.FlagDeflate);
+        var padded = StoredRegion(file).Concat(new byte[] { 0x00, 0xFF, 0x42 }).ToArray();
+        var staleChecksum = WithStoredRegion(file, padded, false);
+        var freshChecksum = WithStoredRegion(file, padded, true);
+
+        // Act / Assert: the original loads; the stale checksum is caught by the checksum, the fresh one by the strict inflation
+        Assert.NotNull(PerceptronModel.Load(file, FeatureSet));
+        Assert.Contains("checksum", Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(staleChecksum, FeatureSet)).Message);
+        Assert.Contains("trailing", Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(freshChecksum, FeatureSet)).Message);
+    }
+
+    /// <summary>
+    ///     Proves that a compressed file whose last Deflate byte was removed is rejected even when the header's stored
+    ///     length is adjusted and the checksum is recomputed, so that the checksum cannot be what catches it.
+    /// </summary>
+    [Fact]
+    public void PerceptronModel_Load_DeflateLastByteRemoved_Throws()
+    {
+        // Arrange: valid compressed files (the small one and one with several thousand rows) and copies without the last
+        // compressed byte, with the stored length adjusted, once with the old checksum and once with a recomputed one
+        foreach (var file in new[] { SmallFile(true), LargeCompressedFile() })
+        {
+            var shortened = StoredRegion(file).Take(StoredRegion(file).Length - 1).ToArray();
+            var staleChecksum = WithStoredRegion(file, shortened, false);
+            var freshChecksum = WithStoredRegion(file, shortened, true);
+
+            // Act / Assert: the original loads; the shortened copies are invalid data, the second one by the strict inflation
+            Assert.NotNull(PerceptronModel.Load(file, FeatureSet));
+            Assert.Contains("checksum", Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(staleChecksum, FeatureSet)).Message);
+            Assert.Contains("cut off", Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(freshChecksum, FeatureSet)).Message);
+        }
+    }
+
+    /// <summary>
+    ///     Proves that a compressed file cut in the middle of its Deflate data is rejected at every cut point, even when
+    ///     the stored length and the checksum are adjusted to the shortened region.
+    /// </summary>
+    [Fact]
+    public void PerceptronModel_Load_DeflateCutAtAnyPoint_Throws()
+    {
+        // Arrange: a valid compressed file with a payload large enough for several blocks of Deflate data, and its region
+        var file = LargeCompressedFile();
+        var stored = StoredRegion(file);
+        Assert.NotNull(PerceptronModel.Load(file, FeatureSet));
+
+        // Act / Assert: every proper prefix of the region is rejected as InvalidDataException, nothing else
+        for (var length = 0; length < stored.Length; length += length < 64 ? 1 : 37)
+        {
+            var cut = WithStoredRegion(file, stored.Take(length).ToArray(), true);
+            Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(cut, FeatureSet));
+        }
+
+        Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(WithStoredRegion(file, stored.Take(stored.Length - 1).ToArray(), true), FeatureSet));
+    }
+
+    /// <summary>
+    ///     Proves that a declared payload length that is too large is rejected, even though the stored bytes and their
+    ///     checksum are intact.
+    /// </summary>
+    /// <param name="extra">The number of bytes by which the declared payload length is too large.</param>
+    [Theory]
+    [InlineData(1)]
+    [InlineData(4096)]
+    public void PerceptronModel_Load_DeflatePayloadLengthTooLarge_Throws(int extra)
+    {
+        // Arrange: a valid compressed file with a larger declared payload length
+        var file = SmallFile(true);
+        BinaryFormat.WriteUInt32(file, 28, BinaryFormat.ReadUInt32(file, 28) + (uint)extra);
+
+        // Act / Assert: the inflated payload is shorter than declared
+        var ex = Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(file, FeatureSet));
+        Assert.Contains("shorter", ex.Message);
+    }
+
+    /// <summary>
+    ///     Proves that a declared payload length that is too small is rejected, even though the stored bytes and their
+    ///     checksum are intact.
+    /// </summary>
+    /// <param name="missing">The number of bytes by which the declared payload length is too small.</param>
+    [Theory]
+    [InlineData(1)]
+    [InlineData(5)]
+    public void PerceptronModel_Load_DeflatePayloadLengthTooSmall_Throws(int missing)
+    {
+        // Arrange: a valid compressed file with a smaller declared payload length
+        var file = SmallFile(true);
+        BinaryFormat.WriteUInt32(file, 28, BinaryFormat.ReadUInt32(file, 28) - (uint)missing);
+
+        // Act / Assert: the inflated payload is longer than declared
+        var ex = Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(file, FeatureSet));
+        Assert.Contains("longer", ex.Message);
     }
 
     /// <summary>

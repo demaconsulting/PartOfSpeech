@@ -3,7 +3,7 @@ using System.Text;
 namespace DemaConsulting.PartOfSpeech;
 
 /// <summary>
-///     The compiled word lexicon (format <c>POSL</c> version 1): a read-only map from a lower-case spelling to the set
+///     The compiled word lexicon (format <c>POSL</c> version 2): a read-only map from a lower-case spelling to the set
 ///     of Universal POS tags that the spelling may carry.
 /// </summary>
 /// <remarks>
@@ -35,7 +35,7 @@ internal sealed class Lexicon
     /// <summary>
     ///     The format version that this build reads and writes.
     /// </summary>
-    public const int FormatVersion = 1;
+    public const int FormatVersion = 2;
 
     /// <summary>
     ///     The largest uncompressed payload length that is accepted (16 MiB; the compiled lexicon needs about 1.6 MB).
@@ -336,7 +336,8 @@ internal sealed class Lexicon
     /// </summary>
     /// <remarks>
     ///     The Deflate bytes differ between runtimes, but the uncompressed form is deterministic, so the compiler
-    ///     tool compares this form to decide whether a committed binary is current.
+    ///     tool compares this form to decide whether a committed binary is current. The checksum of the uncompressed form
+    ///     covers the payload, which is what the stored bytes of that form are.
     /// </remarks>
     /// <param name="file">The whole file.</param>
     /// <returns>The uncompressed file image.</returns>
@@ -352,6 +353,7 @@ internal sealed class Lexicon
         Buffer.BlockCopy(file, 0, image, 0, HeaderLength);
         BinaryFormat.WriteUInt16(image, 6, (ushort)(flags & ~BinaryFormat.FlagDeflate));
         BinaryFormat.WriteUInt32(image, 28, (uint)payload.Length);
+        BinaryFormat.WriteUInt32(image, 32, BinaryFormat.Fnv1a(payload, 0, payload.Length));
         Buffer.BlockCopy(payload, 0, image, HeaderLength, payload.Length);
         return image;
     }
@@ -695,7 +697,7 @@ internal sealed class Lexicon
     /// <param name="BlockCount">The number of blocks.</param>
     /// <param name="PayloadLength">The uncompressed payload length.</param>
     /// <param name="StoredLength">The stored payload length.</param>
-    /// <param name="Checksum">The payload checksum.</param>
+    /// <param name="Checksum">The FNV-1a checksum of the stored bytes.</param>
     /// <param name="MaxSpellingBytes">The longest spelling in bytes.</param>
     private readonly record struct HeaderFields(
         int BlockShift,

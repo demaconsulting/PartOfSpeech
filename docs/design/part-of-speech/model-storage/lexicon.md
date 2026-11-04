@@ -4,7 +4,7 @@
 
 #### Purpose
 
-`Lexicon` reads, searches and writes the compiled word lexicon (format `POSL`, version 1) and applies the token-shape
+`Lexicon` reads, searches and writes the compiled word lexicon (format `POSL`, version 2) and applies the token-shape
 rules that turn the lexicon tags of a word into the tags that the tagger may choose. The source files are `Lexicon.cs`
 (reader, search, shape rules) and `LexiconWriter.cs` (parser of the source table and compiler; build-time and test code
 that the runtime never calls).
@@ -16,12 +16,12 @@ the mask palette (`int[]`), the byte offset of every block (`int[]`), the block 
 `SpellingCount`, `EntryCount`, `MaxSpellingBytes`, `BlockCount` and `MaskCount`. `ScratchSize` is twice
 `MaxSpellingBytes`; it is the size of the buffer that a lookup needs (the encoded key and the rebuilt spelling).
 
-**File format `POSL` version 1**, little endian. The header is 40 bytes:
+**File format `POSL` version 2**, little endian. The header is 40 bytes:
 
 | Offset | Size | Field | Rule |
 | ---: | ---: | --- | --- |
 | 0 | 4 | magic | ASCII `POSL` |
-| 4 | 2 | formatVersion | 1 |
+| 4 | 2 | formatVersion | 2 |
 | 6 | 2 | flags | bit 0: payload is raw Deflate |
 | 8 | 1 | tagCount | 17 |
 | 9 | 1 | blockShift | 1 to 8 (4 gives 16 spellings per block) |
@@ -29,9 +29,9 @@ the mask palette (`int[]`), the byte offset of every block (`int[]`), the block 
 | 12 | 4 | spellingCount | number of spellings |
 | 16 | 4 | entryCount | total number of tag entries |
 | 20 | 4 | blockCount | ceil(spellingCount / 2^blockShift) |
-| 24 | 4 | payloadLength | uncompressed payload bytes, at most `Lexicon.MaxPayloadLength` (16 MiB) |
-| 28 | 4 | storedLength | bytes after the header |
-| 32 | 4 | checksum | FNV-1a 32 of the uncompressed payload |
+| 24 | 4 | payloadLength | inflated payload bytes (exact), at most `Lexicon.MaxPayloadLength` (16 MiB) |
+| 28 | 4 | storedLength | bytes after the header (the whole rest of the file) |
+| 32 | 4 | checksum | FNV-1a 32 of the stored bytes (Deflate bytes, or the payload if the flag is clear) |
 | 36 | 2 | maxSpellingBytes | longest UTF-8 spelling |
 | 38 | 2 | reserved | zero |
 
@@ -46,12 +46,18 @@ used as a length or an index (`sharedPrefixBytes`, `suffixLength`, `maskIndex` a
 negative number.
 
 For the committed lexicon the file is 641,418 bytes (262,667 spellings, 339,880 entries, 230 masks, 16 spellings per
-block, Deflate).
+block, Deflate). The change from version 1 to version 2 (the checksum covers the stored bytes) did not change the
+size: only the version and checksum fields differ.
+
+Version 2 replaced version 1 because a version 1 file could pass its checksum (computed over the inflated payload) with
+the last byte of its Deflate data removed and the stored length adjusted; see the strict Deflate validation in the
+`BinaryFormat` design. Version 1 was never released.
 
 #### Key Methods
 
 - **`Load(Stream)` and `Load(byte[])`**: `BinaryFormat.ReadHeader` and `ReadPayload` (with the maximum payload length
-  `MaxPayloadLength`, 16 MiB, which is far above the 1,635,304 bytes of the committed lexicon), then the header fields
+  `MaxPayloadLength`, 16 MiB, which is far above the 1,635,304 bytes of the committed lexicon; the stored-bytes
+  checksum and the strict Deflate validation are described in the `BinaryFormat` design), then the header fields
   (tag count
   17, block shift 1 to 8, block count equal to the ceiling formula, reserved field zero), the palette and block index,
   and `Validate`, which walks every spelling once and checks that spellings ascend strictly, prefixes and lengths fit,
@@ -71,8 +77,9 @@ block, Deflate).
   `char.IsDigit` and `char.IsUpper` and applies the rules; used by tests so that the decoder's allowed set can be
   compared with an independent reading of the rules.
 - **`Enumerate()` and `ToUncompressedImage(byte[])`**: decode every spelling with its tags; return the uncompressed
-  file image (the header with the Deflate flag cleared and the stored length set to the payload length, then the
-  payload), which `LexiconCompiler --check` compares because the Deflate bytes depend on the runtime.
+  file image (the header with the Deflate flag cleared, the stored length set to the payload length and the checksum
+  recomputed over the payload, then the payload), which `LexiconCompiler --check` compares because the Deflate bytes
+  depend on the runtime.
 - **`LexiconWriter.FromTsv(IEnumerable<string>)`**: parses the source table: a comment line starts with `#`, a row is a
   lower-case NFC spelling without space, a tab and the tags in alphabetical order separated by spaces; spellings must
   ascend strictly in UTF-8 byte order; a header comment that records `spellings=N, tag entries=M` is checked against

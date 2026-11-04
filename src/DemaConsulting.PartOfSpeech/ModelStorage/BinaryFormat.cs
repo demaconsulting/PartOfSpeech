@@ -284,7 +284,7 @@ internal static class BinaryFormat
     }
 
     /// <summary>
-    ///     Extracts and verifies the payload of a file: length, optional Deflate and checksum.
+    ///     Extracts and verifies the payload of a file: lengths, checksum of the stored bytes and optional strict Deflate.
     /// </summary>
     /// <param name="file">The whole file.</param>
     /// <param name="headerLength">The header length.</param>
@@ -292,9 +292,15 @@ internal static class BinaryFormat
     /// <param name="payloadLength">The declared uncompressed payload length.</param>
     /// <param name="maxPayloadLength">The largest uncompressed payload length that the format accepts (a guard against decompression bombs in a corrupt header).</param>
     /// <param name="storedLength">The declared number of stored bytes after the header.</param>
-    /// <param name="checksum">The declared FNV-1a checksum of the uncompressed payload.</param>
+    /// <param name="checksum">The declared FNV-1a checksum of the stored bytes (the Deflate bytes or, for a raw payload, the payload).</param>
     /// <param name="kind">A name for the file kind used in messages.</param>
     /// <returns>The uncompressed payload.</returns>
+    /// <remarks>
+    ///     The checksum covers the stored bytes, not the inflated payload, so any change to the compressed region (a cut,
+    ///     a changed byte, extra bytes) is detected before a single byte is inflated. The inflation itself is strict
+    ///     as well (see <see cref="Decompress"/>), so a file whose checksum was recomputed after tampering with the
+    ///     compressed region is still rejected when its Deflate stream is not complete.
+    /// </remarks>
     /// <exception cref="InvalidDataException">A declared length does not match the file or the checksum differs.</exception>
     public static byte[] ReadPayload(byte[] file, int headerLength, int flags, int payloadLength, int maxPayloadLength, int storedLength, uint checksum, string kind)
     {
@@ -315,28 +321,26 @@ internal static class BinaryFormat
             throw new InvalidDataException($"Invalid {kind}: the payload length {payloadLength} is larger than the maximum {maxPayloadLength}.");
         }
 
-        // Stored raw or inflated into a buffer of exactly the declared size
-        byte[] payload;
-        if ((flags & FlagDeflate) != 0)
+        var deflated = (flags & FlagDeflate) != 0;
+        if (!deflated && storedLength != payloadLength)
         {
-            payload = Decompress(file, headerLength, storedLength, payloadLength);
-        }
-        else
-        {
-            if (storedLength != payloadLength)
-            {
-                throw new InvalidDataException($"Invalid {kind}: an uncompressed payload must have equal stored and payload lengths.");
-            }
-
-            payload = new byte[payloadLength];
-            Buffer.BlockCopy(file, headerLength, payload, 0, payloadLength);
+            throw new InvalidDataException($"Invalid {kind}: an uncompressed payload must have equal stored and payload lengths.");
         }
 
-        if (Fnv1a(payload, 0, payload.Length) != checksum)
+        // The checksum covers the stored bytes, so it is verified before anything is inflated
+        if (Fnv1a(file, headerLength, storedLength) != checksum)
         {
             throw new InvalidDataException($"The {kind} is corrupt: the checksum does not match.");
         }
 
+        // Stored raw, or inflated strictly into a buffer of exactly the declared size
+        if (deflated)
+        {
+            return Decompress(file, headerLength, storedLength, payloadLength);
+        }
+
+        var payload = new byte[payloadLength];
+        Buffer.BlockCopy(file, headerLength, payload, 0, payloadLength);
         return payload;
     }
 
@@ -359,11 +363,14 @@ internal static class BinaryFormat
             deflate.Write(data, 0, data.Length);
         }
 
-        return output.ToArray();
+        // Some runtimes write nothing for an empty input; a stored file must still hold a complete stream (one empty
+        // final block), because the reader rejects a region in which the end of the stream is missing
+        return output.Length == 0 ? new byte[] { 0x03, 0x00 } : output.ToArray();
     }
 
     /// <summary>
-    ///     Inflates a raw Deflate region into a buffer of an exactly known size.
+    ///     Inflates a raw Deflate region into a buffer of an exactly known size, and only accepts a complete stream that
+    ///     fills the region exactly.
     /// </summary>
     /// <param name="file">The buffer that holds the compressed region.</param>
     /// <param name="offset">The offset of the region.</param>
@@ -371,43 +378,70 @@ internal static class BinaryFormat
     /// <param name="expectedLength">The declared uncompressed length.</param>
     /// <returns>The uncompressed bytes.</returns>
     /// <remarks>
-    ///     <see cref="DeflateStream"/> reads its input in large chunks, so the position of a plain stream after the end
-    ///     of the Deflate data says nothing about how many bytes the data really used. The region is therefore served
-    ///     through a stream that withholds its last byte until every byte before it has been read: the inflater asks
-    ///     for that last byte only when it still needs input, so the byte is read if and only if the Deflate data
-    ///     extends to the end of the region. Bytes after the end of the Deflate data are never read and are rejected.
+    ///     <para>
+    ///         <see cref="DeflateStream"/> cannot be asked whether its stream ended properly: a stream that is cut off
+    ///         (for example without the byte that holds the end-of-block code) can deliver all of its data and then
+    ///         report the end exactly as a complete stream does, and it reads its input in large chunks, so the
+    ///         position of a plain source stream says nothing about how many bytes the data really used. The region is
+    ///         therefore served through a <see cref="RegionStream"/> that observes what the inflater asks for. An
+    ///         inflater reads more input if and only if it has consumed everything it was given and still needs data, so:
+    ///     </para>
+    ///     <list type="bullet">
+    ///         <item><description>if it asks for input beyond the region, the stream has no end of stream inside the region (it is cut off);</description></item>
+    ///         <item><description>if it never asks for the last byte of the region, the stream ended earlier and the rest is trailing bytes.</description></item>
+    ///     </list>
+    ///     <para>
+    ///         The inflated size must equal the declared size: a stream that ends early is shorter, and one that has more
+    ///         data after the declared length is longer. At most the declared length plus one byte is ever inflated, so a
+    ///         hostile stream cannot produce more than the declared (and capped) size.
+    ///     </para>
     /// </remarks>
     /// <exception cref="InvalidDataException">
-    ///     The data is not valid Deflate, does not inflate to exactly the declared length, or does not fill the stored
-    ///     region exactly (it ends early and leaves trailing bytes, or it is cut off).
+    ///     The data is not valid Deflate, does not inflate to exactly the declared length, is cut off before its end of
+    ///     stream, or does not fill the stored region exactly (it ends early and leaves trailing bytes).
     /// </exception>
     public static byte[] Decompress(byte[] file, int offset, int count, int expectedLength)
     {
         var result = new byte[expectedLength];
-        using var source = new HoldBackStream(file, offset, count);
-        using var deflate = new DeflateStream(source, CompressionMode.Decompress);
-
-        // Fill the buffer completely; a short read means the stream ended early
-        var filled = 0;
-        while (filled < expectedLength)
+        using var source = new RegionStream(file, offset, count);
+        try
         {
-            var read = deflate.Read(result, filled, expectedLength - filled);
-            if (read == 0)
+            using var deflate = new DeflateStream(source, CompressionMode.Decompress);
+
+            // Fill the buffer completely; a short read means the stream ended early or was cut off
+            var filled = 0;
+            while (filled < expectedLength)
             {
-                throw new InvalidDataException("The compressed payload is shorter than declared.");
+                var read = deflate.Read(result, filled, expectedLength - filled);
+                if (read == 0)
+                {
+                    throw new InvalidDataException(source.ReadPastEnd
+                        ? "The compressed payload is cut off: its Deflate stream has no end of stream."
+                        : "The compressed payload is shorter than declared.");
+                }
+
+                filled += read;
             }
 
-            filled += read;
+            // Anything after the declared length means the header lies about the size
+            if (deflate.ReadByte() >= 0)
+            {
+                throw new InvalidDataException("The compressed payload is longer than declared.");
+            }
         }
-
-        // Anything after the declared length means the header lies about the size
-        if (deflate.ReadByte() >= 0)
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or IOException or IndexOutOfRangeException or NotSupportedException)
         {
-            throw new InvalidDataException("The compressed payload is longer than declared.");
+            // The inflaters of the supported runtimes report bad data as InvalidDataException; anything else is still bad data
+            throw new InvalidDataException("The compressed payload is not valid Deflate data.", ex);
         }
 
-        // The Deflate data must also use the whole stored region; bytes that it never asked for are trailing garbage
-        if (!source.IsExhausted)
+        // All declared bytes are present; the stream must now have ended by itself, inside the region, using all of it
+        if (source.ReadPastEnd)
+        {
+            throw new InvalidDataException("The compressed payload is cut off: its Deflate stream has no end of stream.");
+        }
+
+        if (!source.LastByteRead)
         {
             throw new InvalidDataException("The compressed payload is followed by unexpected trailing bytes inside the stored region.");
         }
@@ -416,14 +450,15 @@ internal static class BinaryFormat
     }
 
     /// <summary>
-    ///     A read-only stream over a byte range that hands out its last byte only after every earlier byte was read, and
-    ///     only to a read that still wants data.
+    ///     A read-only stream over a byte range that records whether a reader asked for more than the range holds and
+    ///     whether it asked for the last byte, and that hands out the last byte only after every earlier byte was read.
     /// </summary>
     /// <remarks>
-    ///     It lets <see cref="Decompress"/> tell whether a Deflate decoder needed the very last byte of its region
-    ///     without relying on how far the decoder reads ahead.
+    ///     It lets <see cref="Decompress"/> tell whether a Deflate decoder ended inside its region and needed the very
+    ///     last byte of it, without relying on how far the decoder reads ahead: the last byte is withheld until a
+    ///     read still wants data after everything before it was consumed.
     /// </remarks>
-    private sealed class HoldBackStream : Stream
+    private sealed class RegionStream : Stream
     {
         /// <summary>
         ///     The buffer that holds the range.
@@ -441,12 +476,12 @@ internal static class BinaryFormat
         private int _next;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="HoldBackStream"/> class.
+        ///     Initializes a new instance of the <see cref="RegionStream"/> class.
         /// </summary>
         /// <param name="buffer">The buffer.</param>
         /// <param name="offset">The offset of the range.</param>
         /// <param name="count">The length of the range.</param>
-        public HoldBackStream(byte[] buffer, int offset, int count)
+        public RegionStream(byte[] buffer, int offset, int count)
         {
             _buffer = buffer;
             _next = offset;
@@ -454,9 +489,14 @@ internal static class BinaryFormat
         }
 
         /// <summary>
-        ///     Gets a value that indicates whether every byte of the range, including the last one, was read.
+        ///     Gets a value that indicates whether a read asked for data after every byte of the range was handed out.
         /// </summary>
-        public bool IsExhausted => _next == _end;
+        public bool ReadPastEnd { get; private set; }
+
+        /// <summary>
+        ///     Gets a value that indicates whether the last byte of the range was handed out (an empty range counts as read).
+        /// </summary>
+        public bool LastByteRead => _next == _end;
 
         /// <inheritdoc />
         public override bool CanRead => true;
@@ -480,14 +520,21 @@ internal static class BinaryFormat
         /// <inheritdoc />
         public override int Read(byte[] buffer, int offset, int count)
         {
-            // Hand out everything but the last byte; the last byte only goes out alone, when all else was read
-            var remaining = _end - _next;
-            var n = remaining > 1 ? Math.Min(count, remaining - 1) : Math.Min(count, remaining);
-            if (n <= 0)
+            // A request for nothing never counts as asking for data
+            if (count <= 0)
             {
                 return 0;
             }
 
+            // Hand out everything but the last byte; the last byte only goes out alone, when all else was read
+            var remaining = _end - _next;
+            if (remaining <= 0)
+            {
+                ReadPastEnd = true;
+                return 0;
+            }
+
+            var n = remaining > 1 ? Math.Min(count, remaining - 1) : 1;
             Buffer.BlockCopy(_buffer, _next, buffer, offset, n);
             _next += n;
             return n;

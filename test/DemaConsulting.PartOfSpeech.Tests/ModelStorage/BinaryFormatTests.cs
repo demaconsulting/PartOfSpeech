@@ -234,6 +234,125 @@ public class BinaryFormatTests
     }
 
     /// <summary>
+    ///     Proves that a Deflate stream that is cut off is rejected at every cut point, in particular when only its last
+    ///     byte is missing (which holds the end-of-block code, so all data can still be inflated), whatever the region
+    ///     length that the caller passes.
+    /// </summary>
+    /// <param name="length">The uncompressed length of the data.</param>
+    /// <param name="random">Whether the data is incompressible (stored blocks) instead of repetitive.</param>
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(100, true)]
+    [InlineData(5000, false)]
+    [InlineData(70000, true)]
+    public void BinaryFormat_Decompress_CutOffStream_Throws(int length, bool random)
+    {
+        // Arrange: valid Deflate data
+        var data = new byte[length];
+        if (random)
+        {
+            new Random(length).NextBytes(data);
+        }
+        else
+        {
+            for (var i = 0; i < data.Length; i++)
+            {
+                data[i] = (byte)(i % 7);
+            }
+        }
+
+        var compressed = BinaryFormat.Compress(data);
+
+        // Act / Assert: the last byte missing, with the region length adjusted, is reported as a cut-off stream
+        var oneShort = Assert.Throws<InvalidDataException>(() => BinaryFormat.Decompress(compressed, 0, compressed.Length - 1, data.Length));
+        Assert.Contains("cut off", oneShort.Message);
+
+        // Act / Assert: every other cut point, from the empty region to a single missing byte, is rejected; the cut is
+        // taken in a buffer that is longer than the region so that bytes after the region cannot be read by accident
+        var cuts = new[] { 0, 1, 2, 3, compressed.Length / 4, compressed.Length / 2, compressed.Length - 3, compressed.Length - 2 };
+        foreach (var cut in cuts.Where(c => c >= 0 && c < compressed.Length).Distinct())
+        {
+            Assert.Throws<InvalidDataException>(() => BinaryFormat.Decompress(compressed, 0, cut, data.Length));
+        }
+    }
+
+    /// <summary>
+    ///     Proves that a declared length that is not the inflated length is rejected in both directions, for compressible
+    ///     and incompressible data.
+    /// </summary>
+    /// <param name="random">Whether the data is incompressible instead of repetitive.</param>
+    /// <param name="delta">The difference between the declared length and the real length.</param>
+    [Theory]
+    [InlineData(false, 1)]
+    [InlineData(false, 1000)]
+    [InlineData(true, 1)]
+    [InlineData(true, 1000)]
+    [InlineData(false, -1)]
+    [InlineData(false, -1000)]
+    [InlineData(true, -1)]
+    [InlineData(true, -1000)]
+    public void BinaryFormat_Decompress_DeclaredLengthWrong_Throws(bool random, int delta)
+    {
+        // Arrange: valid Deflate data of 3000 bytes
+        var data = new byte[3000];
+        if (random)
+        {
+            new Random(3).NextBytes(data);
+        }
+        else
+        {
+            for (var i = 0; i < data.Length; i++)
+            {
+                data[i] = (byte)(i % 11);
+            }
+        }
+
+        var compressed = BinaryFormat.Compress(data);
+
+        // Act / Assert: a larger declared length finds the stream shorter, a smaller one finds it longer
+        var ex = Assert.Throws<InvalidDataException>(() => BinaryFormat.Decompress(compressed, 0, compressed.Length, data.Length + delta));
+        Assert.Contains(delta > 0 ? "shorter" : "longer", ex.Message);
+    }
+
+    /// <summary>
+    ///     Proves that an empty payload is stored as a complete stream, so that it round trips and a cut-off empty
+    ///     region is not mistaken for it.
+    /// </summary>
+    [Fact]
+    public void BinaryFormat_Compress_EmptyPayload_StoresCompleteStream()
+    {
+        // Arrange / Act: compress nothing
+        var compressed = BinaryFormat.Compress(Array.Empty<byte>());
+        var inflated = BinaryFormat.Decompress(compressed, 0, compressed.Length, 0);
+
+        // Assert: a non-empty complete stream that inflates to nothing; an empty region and a declared byte are rejected
+        Assert.NotEmpty(compressed);
+        Assert.Empty(inflated);
+        Assert.Throws<InvalidDataException>(() => BinaryFormat.Decompress(compressed, 0, 0, 0));
+        Assert.Throws<InvalidDataException>(() => BinaryFormat.Decompress(compressed, 0, compressed.Length, 1));
+    }
+
+    /// <summary>
+    ///     Proves that the reader reports bytes that are not Deflate data as invalid data and never as another exception
+    ///     type, for several kinds of garbage.
+    /// </summary>
+    [Fact]
+    public void BinaryFormat_Decompress_GarbageRegion_Throws()
+    {
+        // Arrange: regions of one reserved block type (type 3), all ones, and pseudo-random bytes
+        var reserved = new byte[] { 0x07, 0x00, 0x00, 0x00 };
+        var ones = Enumerable.Repeat((byte)0xFF, 64).ToArray();
+        var random = new byte[200];
+        new Random(11).NextBytes(random);
+
+        // Act / Assert: every case is InvalidDataException
+        foreach (var region in new[] { reserved, ones, random })
+        {
+            Assert.Throws<InvalidDataException>(() => BinaryFormat.Decompress(region, 0, region.Length, 100));
+        }
+    }
+
+    /// <summary>
     ///     Proves that the population count equals a bit-by-bit reference on every platform branch.
     /// </summary>
     [Fact]

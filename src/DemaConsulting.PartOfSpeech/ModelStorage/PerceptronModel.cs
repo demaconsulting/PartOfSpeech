@@ -1,7 +1,7 @@
 namespace DemaConsulting.PartOfSpeech;
 
 /// <summary>
-///     The averaged-perceptron weights (format <c>POSW</c> version 1) in the in-memory form that the decoder reads.
+///     The averaged-perceptron weights (format <c>POSW</c> version 2) in the in-memory form that the decoder reads.
 /// </summary>
 /// <remarks>
 ///     <para>
@@ -32,7 +32,7 @@ internal sealed class PerceptronModel
     /// <summary>
     ///     The format version that this build reads and writes.
     /// </summary>
-    public const int FormatVersion = 1;
+    public const int FormatVersion = 2;
 
     /// <summary>
     ///     The smallest allowed bucket space exponent.

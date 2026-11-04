@@ -52,8 +52,11 @@ _PerceptronModel Design_ and _Lexicon Design_:
 
 Both formats follow one layout: a fixed little-endian header (magic, format version, flags, counts, payload length,
 stored length, checksum), then a payload that is optionally compressed with raw Deflate. `BinaryFormat` validates the
-magic, the version, the flags, the lengths and the FNV-1a checksum of the uncompressed payload before either reader
-looks at a payload byte, so every unit can assume a verified payload and only checks the structure inside it.
+magic, the version (both formats are at version 2), the flags, the lengths and the FNV-1a checksum of the stored bytes
+before either reader inflates or looks at a payload byte, and then inflates a compressed payload strictly: the Deflate
+stream must reach its own end inside the stored region, fill the region exactly and inflate to exactly the declared
+payload length, so a truncated or padded file is refused even when its header lengths were adjusted. Every unit can
+therefore assume a verified payload and only checks the structure inside it.
 
 A reader never trusts counts: it rebuilds the structure from the payload and validates every invariant (sorted unique
 spellings, ascending buckets and tags, no zero weights) at load time, so the lookup and scoring code needs no checks and

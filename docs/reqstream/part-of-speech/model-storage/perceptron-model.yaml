@@ -37,8 +37,9 @@ sections:
                 title: >-
                   A weights file shall be refused when its magic, version, feature set or reserved bytes are wrong, its
                   temperature or scale is not finite and positive, its checksum fails, it is truncated or has trailing
-                  bytes, its buckets or tags are not in ascending order, or it declares a payload above the format
-                  limit.
+                  bytes, its compressed region is incomplete (cut off at any point), holds bytes after the Deflate data
+                  or inflates to another size than the header declares, its buckets or tags are not in ascending order,
+                  or it declares a payload above the format limit.
                 justification: |
                   Weights from another feature set, or damaged weights, would produce plausible but wrong tags; every
                   defect must be refused when the file is loaded.
@@ -49,6 +50,11 @@ sections:
                   - PerceptronModel_Load_InvalidTemperatureOrScale_Throws
                   - PerceptronModel_Load_ChecksumMismatch_Throws
                   - PerceptronModel_Load_TruncatedOrTrailingBytes_Throws
+                  - PerceptronModel_Load_DeflateTrailingBytesInStoredRegion_Throws
+                  - PerceptronModel_Load_DeflateLastByteRemoved_Throws
+                  - PerceptronModel_Load_DeflateCutAtAnyPoint_Throws
+                  - PerceptronModel_Load_DeflatePayloadLengthTooLarge_Throws
+                  - PerceptronModel_Load_DeflatePayloadLengthTooSmall_Throws
                   - PerceptronModel_Load_UnsortedTagsOrBuckets_Throws
                   - PerceptronModel_Load_ReservedNotZero_Throws
                   - PerceptronModel_Load_PayloadLengthAboveMaximum_Throws

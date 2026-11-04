@@ -34,6 +34,17 @@ the kinds listed below) is accepted.
   (on load and on write), `PerceptronModel_Load_ChecksumMismatch_Throws` (also in a Deflate file),
   `PerceptronModel_Load_TruncatedOrTrailingBytes_Throws`, `PerceptronModel_Load_UnsortedTagsOrBuckets_Throws` (with a valid
   checksum), `PerceptronModel_Load_ReservedNotZero_Throws` (and unknown flag bits),
+  `PerceptronModel_Load_DeflateTrailingBytesInStoredRegion_Throws` (bytes appended after the Deflate data with the stored
+  length raised: refused by the checksum when it is left alone, and by the strict inflation when it is recomputed),
+  `PerceptronModel_Load_DeflateLastByteRemoved_Throws` (the last compressed byte removed and the stored length adjusted,
+  for the small file and for a file of 3000 rows: refused by the checksum when it is left alone, with a "cut off"
+  message when it is recomputed),
+  `PerceptronModel_Load_DeflateCutAtAnyPoint_Throws` (proper prefixes of the compressed region of the 3000-row file,
+  every one of the first 64 and then every 37th, with stored length and checksum adjusted, give
+  `InvalidDataException` and no other exception type),
+  `PerceptronModel_Load_DeflatePayloadLengthTooLarge_Throws` and `PerceptronModel_Load_DeflatePayloadLengthTooSmall_Throws`
+  (a declared payload length that is too large or too small, with intact stored bytes, is "shorter" or "longer than
+  declared"),
   `PerceptronModel_Load_PayloadLengthAboveMaximum_Throws` (a declared payload length above 256 MiB is refused before
   inflation) and
   `PerceptronModelWriter_Compile_InvalidRows_Throw` (wrong vector length, the weight -32768 and a repeated bucket).

@@ -29,7 +29,8 @@ load back with the same content.
 ### Test Scenarios
 
 - **Versioned formats**: `ModelStorage_Formats_StartWithMagicAndVersion` writes one file of each format and asserts the
-  magic (`POSL`, `POSW`), version 1 and the Deflate flag, then changes the version and asserts that both readers throw
+  magic (`POSL`, `POSW`), version 2 and the Deflate flag, then changes the version (to the retired version 1, and to 3)
+  and asserts that both readers throw
   `InvalidDataException`.
 - **The embedded lexicon encodes the table**: `ModelStorage_EmbeddedLexicon_EncodesLexiconTsv` asserts that the decoded
   embedded lexicon equals the independent reading of the table (spellings, order and tags), that the committed file and

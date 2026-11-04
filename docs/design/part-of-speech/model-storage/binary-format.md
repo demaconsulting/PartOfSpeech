@@ -16,7 +16,10 @@ class: each format passes its own maximum to `ReadPayload` (`Lexicon.MaxPayloadL
 
 Fixed header fields that both formats place at the same offsets: bytes 0 to 3 the ASCII magic; bytes 4 to 5 the format
 version (`uint16`); bytes 6 to 7 the flags (`uint16`, only bit 0 is defined). All multi-byte integers are little endian.
-The payload of a format is stored after its fixed header, raw or as a raw Deflate stream (no zlib or gzip wrapper).
+The payload of a format is stored after its fixed header, raw or as a raw Deflate stream (no zlib or gzip wrapper). Both
+formats are at version 2: version 1 (unreleased) put a checksum over the inflated payload, which let a truncated
+Deflate stream pass; version 2 checksums the stored bytes and the reader inflates strictly (see Key Methods). Version 1
+files are refused as an unsupported version.
 
 #### Key Methods
 
@@ -35,29 +38,26 @@ The payload of a format is stored after its fixed header, raw or as a raw Deflat
   order, the magic (so that a file of another kind is reported as such even when it is short), the header length, the
   version and the flag bits; returns the flags. Postcondition: the first eight bytes of the header are valid.
 - **`ReadPayload(file, headerLength, flags, payloadLength, maxPayloadLength, storedLength, checksum, kind)`**: requires
-  that the stored length equals the remaining file length exactly (shorter means
-  truncated, longer means trailing bytes), rejects a payload length above the format's `maxPayloadLength` before any
-  inflation (a guard against decompression bombs; the message names the limit), restores the payload (raw copy, or
-  inflate into a
-  buffer of exactly the declared size), and verifies the FNV-1a checksum of the uncompressed payload.
-- **`Compress(byte[])` and `Decompress(...)`**: raw Deflate through `DeflateStream`. Compression uses the smallest-size
-  level where the target framework has it (.NET 6 and later) and the optimal level otherwise; the compressed bytes
-  therefore differ between runtimes, which is why compatibility checks compare uncompressed payloads. Decompression
-  refuses a stream that ends before or continues after the declared length, and a stored region that is not used
-  exactly: bytes after the end of the Deflate data are not covered by the payload checksum (it is computed over the
-  uncompressed bytes), so they must be detected here. `DeflateStream` reads its input ahead in chunks on every
-  target framework (and differently on `netstandard2.0` running on .NET Framework, the .NET runtime and zlib-based
-  builds), so neither the position of a `MemoryStream` after the end nor a re-compression is a reliable test.
-  (Re-deflating and comparing is not acceptable: the output differs between runtimes.) The method instead reads the
-  region through a private `HoldBackStream` that never hands out the last byte of the region unless a read still wants
-  data after every earlier byte was read. An inflater asks for input only when it has not finished, so the last byte is
-  requested if and only if the Deflate data extends to it; after the output was read to its declared length and the
-  end-of-data check (`ReadByte`) was made, an unread last byte proves that the data ended earlier, and the region is
-  rejected with a "trailing bytes" `InvalidDataException`. A region that is used exactly, as every file the writers
-  produce, is accepted on every target framework. Known limit: a stream that is cut off inside its last block is not
-  detectable through `DeflateStream` on every runtime (some return end of data silently); the payload checksum and the
-  declared output length catch such files, and the empty payload (which .NET compresses to zero bytes) cannot be told
-  from a cut-off stream, which is why no format payload is empty.
+  that the stored length equals the remaining file length exactly (shorter means truncated, longer means trailing
+  bytes), rejects a payload length above the format's `maxPayloadLength` before any inflation (a guard against
+  decompression bombs; the message names the limit), requires equal stored and payload lengths for a raw payload,
+  verifies the FNV-1a checksum of the **stored bytes** (format version 2: the Deflate bytes of a compressed file, the
+  payload of a raw one) before anything is inflated, and only then restores the payload (raw copy, or strict
+  inflation into a buffer of exactly the declared size, see `Decompress`).
+- **`Compress(byte[])`**: raw Deflate through `DeflateStream`. Compression uses the smallest-size level where the target
+  framework has it (.NET 6 and later) and the optimal level otherwise; the compressed bytes therefore differ between
+  runtimes, which is why compatibility checks compare uncompressed payloads. An empty input, for which some runtimes
+  write no byte at all, is stored as the complete two-byte stream of one empty final block (`03 00`), so that every
+  stored region holds a complete stream and a missing stream is never mistaken for an empty payload.
+- **`Decompress(file, offset, count, expectedLength)`**: inflates a region strictly. It accepts the region if and only
+  if all of the following hold, and otherwise throws `InvalidDataException`: (1) the data is valid Deflate; (2) it
+  inflates to exactly `expectedLength` bytes (a stream that ends earlier is "shorter than declared", one with more data
+  is "longer than declared"; only `expectedLength + 1` bytes are ever inflated, so a hostile stream cannot allocate or
+  produce more than the capped declared size); (3) the Deflate stream reaches its own end (a final block with its
+  end-of-block code) **inside** the region; (4) the Deflate data uses the region to its last byte, so no byte follows
+  it. Any exception of another type that the inflater raises for bad data (`InvalidOperationException`,
+  `ArgumentException`, `IOException`, `IndexOutOfRangeException`, `NotSupportedException`) is wrapped into
+  `InvalidDataException`.
 - **`PopCount(ulong)`**: `BitOperations.PopCount` on .NET 6 and later, and a bit-parallel software count on
   `netstandard2.0`.
 - **`Compare(byte[], int, int, byte[], int, int)`**: lexicographic comparison of byte ranges as unsigned bytes, the sort
@@ -65,12 +65,58 @@ The payload of a format is stored after its fixed header, raw or as a raw Deflat
 - **`ReadAllBytes(Stream)`**: reads a stream from its current position to its end; throws `ArgumentNullException` for
   `null`.
 
+##### Strict Deflate validation
+
+`DeflateStream` has no way to ask whether the stream ended properly: a stream whose last byte is missing can deliver
+all of its data (the last byte often holds only the end-of-block code and padding) and then report the end of data
+exactly as a complete stream does, on some runtimes silently and on others after a delay. It also reads its input in
+chunks, so the position of a plain source stream after the end says nothing about the bytes that the data used. The
+first reviewed implementation withheld the last byte only; it caught trailing bytes but not a stream cut off after its
+last data, so a file whose stored length was reduced by one byte passed.
+
+The region is therefore served through a private `RegionStream` that observes what the inflater asks for. It hands out
+the bytes of the region, withholds the **last** byte until every earlier byte was read and a read still wants data, and
+records a read that asks for data after the last byte was handed out. An inflater reads more input if and only if it
+has consumed all input it was given and still needs data, which gives two facts that do not depend on read-ahead sizes:
+
+- a read **beyond the region** means the inflater was starved: the stream has no end of stream inside the region (it is
+  cut off, at any point, including a missing last byte), rejected with "cut off";
+- an **unread last byte** after the output was read to its declared length and the end-of-data check (`ReadByte`) was
+  made means the stream ended earlier and the rest is trailing garbage, rejected with "trailing bytes".
+
+A complete stream that fills the region exactly (as every file the writers produce) never makes a read beyond the
+region and always requests the last byte, so it is accepted. The behavior was verified on `net481` (the managed
+inflater), `net8.0`, `net9.0` and `net10.0` (zlib-based inflaters) with the regression tests of the three units; the
+library itself is `netstandard2.0` and only uses `Stream.Read`, so the same contract applies to every host. If a host
+inflater asked for input differently, the result would be a rejected good file (the tests of that host would show it),
+never an accepted bad one.
+
+##### Format version 2 and the integrity model
+
+The version 2 checksum covers the stored bytes, not the inflated payload. A truncation or any other change of the
+compressed region, and any trailing bytes inside it, therefore fail the checksum before a byte is inflated, and the
+inflater is never run on damaged data. The header lengths need no checksum of their own because each is checked against
+an independent measurement: the stored length against the file size, the payload length against the cap and against the
+inflated size (both too large and too small are rejected), and the reserved and count fields against the structure of
+the payload. A forged file whose checksum was recomputed after tampering is outside the integrity model (FNV-1a is not
+a cryptographic hash), but it is still rejected whenever its Deflate stream is incomplete or has trailing bytes, because
+the strict inflation does not depend on the checksum.
+
+Alternatives that were rejected: a sentinel final block appended by the writer (the `Flush` that produces a known
+marker does nothing on .NET Framework, so the writer could not produce it on every target); a terminator inside the
+payload (the missing byte can be one that holds no payload data, so the terminator is inflated before the cut); and a
+hand-written inflater (about 150 lines of security-sensitive code that the project would have to own and review, for
+a property that the observed read behavior already guarantees).
+
 #### Error Handling
 
 Every structural defect of a file is reported as `InvalidDataException` with a message that names the kind of file and
 the defect (wrong magic, unsupported version, unknown flags, truncated, trailing bytes, checksum mismatch, bad
-Deflate). Argument errors (`null` stream) are `ArgumentNullException`. Nothing is caught inside the unit; the readers
-let the exception reach the caller of `Tagger.Load`.
+Deflate, Deflate stream cut off, Deflate data shorter or longer than declared). No other exception type, no unbounded
+allocation and no loop that depends on the data can occur: the output buffer has the capped declared size, and the
+inflation loop ends when the inflater returns no data. Argument errors (`null` stream) are `ArgumentNullException`.
+Nothing is caught inside the unit except the inflater's non-data exceptions that are wrapped as described above; the
+readers let the exception reach the caller of `Tagger.Load`.
 
 #### Dependencies
 

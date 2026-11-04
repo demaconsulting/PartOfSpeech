@@ -40,7 +40,15 @@ percent.
   `Lexicon_Load_OversizedVarintWithValidChecksum_Throws` (a varint above 2^31-1 at each length or index site, with the
   header lengths and the checksum fixed, must give `InvalidDataException` and no other exception type),
   `Lexicon_Load_DeflateTrailingBytesInStoredRegion_Throws` (a compressed file with bytes appended after the Deflate
-  data and the stored length raised to match, so that the payload checksum is still right, is refused) and
+  data and the stored length raised to match is refused: with the old checksum by the checksum of the stored bytes, and
+  with a recomputed checksum by the strict inflation),
+  `Lexicon_Load_DeflateLastByteRemoved_Throws` (the last compressed byte removed and the stored length adjusted: refused
+  by the checksum when it is left alone, and with a "cut off" message when it is recomputed, so that only the strict
+  inflation can catch it),
+  `Lexicon_Load_DeflateCutAtAnyPoint_Throws` (every proper prefix of the compressed region, with the stored length and the
+  checksum adjusted, gives `InvalidDataException` and no other exception type),
+  `Lexicon_Load_DeflatePayloadLengthTooLarge_Throws` and `Lexicon_Load_DeflatePayloadLengthTooSmall_Throws` (a declared
+  payload length that is too large or too small, with intact stored bytes, is "shorter" or "longer than declared") and
   `Lexicon_Load_PayloadLengthAboveMaximum_Throws` (a declared payload length above 16 MiB is refused before inflation).
 - **Allowed tags by rule**: `Lexicon_AllowedTags_UnknownWord_AllowsAllSeventeen`,
   `Lexicon_AllowedTags_KnownWord_AllowsLexiconTags`, `Lexicon_AllowedTags_NoLetterOrDigit_AddsPunctSymX`,

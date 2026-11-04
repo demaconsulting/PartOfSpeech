@@ -29,15 +29,15 @@ public class ModelStorageTests
         var lexiconStart = System.Text.Encoding.ASCII.GetString(lexicon, 0, 4);
         var weightsStart = System.Text.Encoding.ASCII.GetString(weights, 0, 4);
 
-        // Assert: magic and version 1 (little endian), Deflate flag set; readers refuse any other version
+        // Assert: magic and version 2 (little endian), Deflate flag set; readers refuse any other version
         Assert.Equal("POSL", lexiconStart);
         Assert.Equal("POSW", weightsStart);
-        Assert.Equal((ushort)1, BinaryFormat.ReadUInt16(lexicon, 4));
-        Assert.Equal((ushort)1, BinaryFormat.ReadUInt16(weights, 4));
+        Assert.Equal((ushort)2, BinaryFormat.ReadUInt16(lexicon, 4));
+        Assert.Equal((ushort)2, BinaryFormat.ReadUInt16(weights, 4));
         Assert.Equal((ushort)1, BinaryFormat.ReadUInt16(lexicon, 6));
         Assert.Equal((ushort)1, BinaryFormat.ReadUInt16(weights, 6));
-        BinaryFormat.WriteUInt16(lexicon, 4, 2);
-        BinaryFormat.WriteUInt16(weights, 4, 2);
+        BinaryFormat.WriteUInt16(lexicon, 4, 1);
+        BinaryFormat.WriteUInt16(weights, 4, 3);
         Assert.Throws<InvalidDataException>(() => Lexicon.Load(lexicon));
         Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(weights, FeatureExtractor.FeatureSetVersion));
     }

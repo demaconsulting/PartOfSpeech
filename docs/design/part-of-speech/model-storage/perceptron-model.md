@@ -4,7 +4,7 @@
 
 #### Purpose
 
-`PerceptronModel` reads, validates and scores with the weights of the averaged perceptron (format `POSW`, version 1),
+`PerceptronModel` reads, validates and scores with the weights of the averaged perceptron (format `POSW`, version 2),
 and `PerceptronModelWriter` encodes them. The runtime only reads weights; the writer is used by the tests now and by
 the trainer of a later release. The source files are `PerceptronModel.cs` and `PerceptronModelWriter.cs`.
 
@@ -21,12 +21,12 @@ immutable afterwards (safe for concurrent use):
 - `HashBits`, `Temperature` (the softmax temperature in score units that calibrates confidences) and `Scale` (the factor
   from an integer score to the real score scale).
 
-**File format `POSW` version 1**, little endian. The header is 48 bytes:
+**File format `POSW` version 2**, little endian. The header is 48 bytes:
 
 | Offset | Size | Field | Rule |
 | ---: | ---: | --- | --- |
 | 0 | 4 | magic | ASCII `POSW` |
-| 4 | 2 | formatVersion | 1 |
+| 4 | 2 | formatVersion | 2 |
 | 6 | 2 | flags | bit 0: payload is raw Deflate |
 | 8 | 2 | featureSetVersion | the feature set the weights were trained with |
 | 10 | 1 | tagCount | 17 |
@@ -35,9 +35,9 @@ immutable afterwards (safe for concurrent use):
 | 16 | 4 | scale | `float32`, finite and greater than zero |
 | 20 | 4 | rowCount | at most 2^hashBits |
 | 24 | 4 | weightCount | from rowCount to 17 times rowCount |
-| 28 | 4 | payloadLength | uncompressed payload bytes, at most `PerceptronModel.MaxPayloadLength` (256 MiB) |
-| 32 | 4 | storedLength | bytes after the header |
-| 36 | 4 | checksum | FNV-1a 32 of the uncompressed payload |
+| 28 | 4 | payloadLength | inflated payload bytes (exact), at most `PerceptronModel.MaxPayloadLength` (256 MiB) |
+| 32 | 4 | storedLength | bytes after the header (the whole rest of the file) |
+| 36 | 4 | checksum | FNV-1a 32 of the stored bytes (Deflate bytes, or the payload if the flag is clear) |
 | 40 | 8 | reserved | zero |
 
 The payload has four sections, stored column by column so that Deflate works well:
@@ -50,10 +50,15 @@ The payload has four sections, stored column by column so that Deflate works wel
 
 The payload length must therefore equal the gaps plus `rowCount` plus `weightCount` plus 2 times `weightCount`.
 
+Version 2 replaced version 1 (never released) because a version 1 file could pass its checksum, which covered the
+inflated payload, with the last byte of its Deflate data removed and the stored length adjusted; see the strict
+Deflate validation in the `BinaryFormat` design.
+
 #### Key Methods
 
 - **`Load(Stream, int expectedFeatureSetVersion)` and `Load(byte[], int)`**: `BinaryFormat.ReadHeader` and
-  `ReadPayload` (magic, version, flags, lengths, checksum; the payload length is checked against the constant
+  `ReadPayload` (magic, version, flags, lengths, checksum of the stored bytes, strict Deflate validation; the payload
+  length is checked against the constant
   `MaxPayloadLength` of 256 MiB, a per-format bound that does not depend on the equally untrusted row and weight
   counts), then the feature set number (must equal the expected value;
   the caller, not this unit, knows the extractor), the tag count, `hashBits`, temperature, scale, counts and reserved
@@ -74,7 +79,8 @@ about 1.07 MB uncompressed and 0.6 MB with Deflate; the trainer chooses `hashBit
 
 All structural defects (wrong magic, unsupported version, feature set mismatch, wrong tag count, `hashBits` outside 18 to
 24, non-positive or non-finite temperature or scale, non-zero reserved bytes, inconsistent counts, checksum, truncation,
-trailing bytes, zero gap, out-of-range bucket, row size 0 or above 17, tags out of order, weight 0 or -32768) throw
+trailing bytes (after the file or inside the stored region), a Deflate stream that is cut off or inflates to a size other
+than declared, zero gap, out-of-range bucket, row size 0 or above 17, tags out of order, weight 0 or -32768) throw
 `InvalidDataException` when the file is loaded. `Load` throws `ArgumentNullException` for `null`. The writer throws
 `ArgumentNullException`, `ArgumentOutOfRangeException` (numeric parameters, bucket out of range, feature set above 16
 bits) or `ArgumentException` (wrong vector length, weight -32768, repeated bucket).

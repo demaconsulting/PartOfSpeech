@@ -32,10 +32,13 @@ sections:
                   - BinaryFormat_Varint_OverlongOrTruncated_Throws
 
               - id: PartOfSpeech-ModelStorage-BinaryFormat-Checksum
-                title: The checksum of a payload shall equal the published FNV-1a 32-bit value for that payload.
+                title: >-
+                  The checksum of the stored bytes of a file shall equal the published FNV-1a 32-bit value for those
+                  bytes.
                 justification: |
                   A checksum that follows the published algorithm can be recomputed by any other tool that reads or
-                  writes the files.
+                  writes the files. It covers the stored (compressed) bytes, so a change to the compressed region is
+                  found before anything is inflated.
                 tests:
                   - BinaryFormat_Fnv1a_MatchesKnownVectors
 
@@ -54,14 +57,21 @@ sections:
               - id: PartOfSpeech-ModelStorage-BinaryFormat-Compression
                 title: >-
                   A payload shall be stored compressed with Deflate and shall be restored byte for byte, and a stored
-                  region that holds anything besides the Deflate data, such as bytes after its end, shall be refused.
+                  region shall be refused when its Deflate stream is incomplete (cut off at any point, including only
+                  its last byte), has bytes after its end, is not valid Deflate data, or inflates to a size other than
+                  the declared one.
                 justification: |
-                  Compression keeps the package small; any loss would corrupt the data the tagger relies on. Bytes that
-                  the decoder never uses are not covered by the payload checksum, so a region that holds them would
-                  pass unnoticed unless the reader checks for them.
+                  Compression keeps the package small; any loss would corrupt the data the tagger relies on. A stream
+                  that is cut off can still inflate to all of its data, and bytes that the decoder never uses are not
+                  inflated at all, so only a reader that checks the end of the stream and the use of the whole region
+                  can tell a damaged region from a good one when the checksum was recomputed.
                 tests:
                   - BinaryFormat_Deflate_RoundTrips
                   - BinaryFormat_Decompress_TrailingBytesInStoredRegion_Throws
+                  - BinaryFormat_Decompress_CutOffStream_Throws
+                  - BinaryFormat_Decompress_DeclaredLengthWrong_Throws
+                  - BinaryFormat_Compress_EmptyPayload_StoresCompleteStream
+                  - BinaryFormat_Decompress_GarbageRegion_Throws
 
               - id: PartOfSpeech-ModelStorage-BinaryFormat-PopCount
                 title: The number of set bits of a 64-bit word shall be counted correctly on every target framework.

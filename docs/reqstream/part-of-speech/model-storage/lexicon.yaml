@@ -41,8 +41,9 @@ sections:
               - id: PartOfSpeech-ModelStorage-Lexicon-Validation
                 title: >-
                   A lexicon file shall be refused when its checksum fails, it is truncated, its tag count is not 17,
-                  its structure is inconsistent, its compressed region holds bytes after the Deflate data or it
-                  declares a size above the format limit.
+                  its structure is inconsistent, its compressed region is incomplete (cut off at any point), holds bytes
+                  after the Deflate data or inflates to another size than the header declares, or it declares a size
+                  above the format limit.
                 justification: |
                   A damaged lexicon must fail when it is loaded, not return wrong tags later.
                 tests:
@@ -52,6 +53,10 @@ sections:
                   - Lexicon_Load_InvalidStructureWithValidChecksum_Throws
                   - Lexicon_Load_OversizedVarintWithValidChecksum_Throws
                   - Lexicon_Load_DeflateTrailingBytesInStoredRegion_Throws
+                  - Lexicon_Load_DeflateLastByteRemoved_Throws
+                  - Lexicon_Load_DeflateCutAtAnyPoint_Throws
+                  - Lexicon_Load_DeflatePayloadLengthTooLarge_Throws
+                  - Lexicon_Load_DeflatePayloadLengthTooSmall_Throws
                   - Lexicon_Load_PayloadLengthAboveMaximum_Throws
 
               - id: PartOfSpeech-ModelStorage-Lexicon-AllowedTags

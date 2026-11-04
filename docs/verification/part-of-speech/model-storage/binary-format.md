@@ -18,7 +18,8 @@ branch on `netstandard2.0` and the intrinsic on .NET 6 and later by running on e
 
 All tests pass on every target framework. A test fails when a primitive is not little endian, a varint does not round
 trip or an invalid one is accepted, the checksum differs from a published vector, a bad header is accepted or reported
-as the wrong defect, compression loses data, accepts a wrong declared size or accepts bytes after the Deflate data inside
+as the wrong defect, compression loses data, accepts a wrong declared size (too large or too small), accepts a Deflate
+stream that is cut off (at any point, including only its last byte) or accepts bytes after the Deflate data inside
 the stored region, or the population count or comparison
 differs from the reference.
 
@@ -32,10 +33,21 @@ differs from the reference.
 - **Header**: `BinaryFormat_ReadHeader_BadMagic_Throws` (reported as the wrong kind of file),
   `BinaryFormat_ReadHeader_UnsupportedVersion_Throws` (another version and unknown flag bits, with a version message) and
   `BinaryFormat_ReadHeader_Truncated_Throws`.
-- **Compression**: `BinaryFormat_Deflate_RoundTrips` (round trip, and a wrong declared size is rejected) and
+- **Compression**: `BinaryFormat_Deflate_RoundTrips` (round trip, and a wrong declared size is rejected),
   `BinaryFormat_Decompress_TrailingBytesInStoredRegion_Throws` (for repetitive and incompressible data of several
   sizes, the exact region is accepted and one to 9000 extra bytes of several values behind the Deflate data, inside the
-  stored region, are rejected as trailing bytes; the test runs on every target framework including .NET Framework, which
-  is what makes the read-ahead independent approach credible).
+  stored region, are rejected as trailing bytes),
+  `BinaryFormat_Decompress_CutOffStream_Throws` (for repetitive and incompressible data of several sizes, the region
+  without its last byte is rejected with a "cut off" message, and every other cut point from the empty region to the
+  middle of the data is rejected with `InvalidDataException`),
+  `BinaryFormat_Decompress_DeclaredLengthWrong_Throws` (a declared length too large by 1 or 1000 is "shorter", one too
+  small by 1 or 1000 is "longer", for both kinds of data),
+  `BinaryFormat_Compress_EmptyPayload_StoresCompleteStream` (an empty payload is a non-empty complete stream that
+  round trips, and an empty or one-byte-declared region is rejected) and
+  `BinaryFormat_Decompress_GarbageRegion_Throws` (a reserved block type, all ones and random bytes give
+  `InvalidDataException` and no other exception type). These tests run on every target framework including .NET
+  Framework, which is what makes the read-behavior-based end-of-stream check credible: the inflaters of .NET Framework
+  and of the zlib-based runtimes all behave as the design relies on. Non-vacuity was checked by disabling the
+  end-of-stream check, which made the cut-off tests of all three units fail.
 - **Population count**: `BinaryFormat_PopCount_MatchesReference`.
 - **Byte comparison** (no requirement; supports the lexicon search): `BinaryFormat_Compare_OrdersUnsignedBytes`.

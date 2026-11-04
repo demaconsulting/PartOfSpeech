@@ -124,7 +124,8 @@ tag instead of hiding uncertainty; callers that need certainty for a word can co
 integrity of what the library ships:
 
 - **Format checks**: every binary file carries a magic, a format version, a feature set number (weights) and a checksum
-  of its payload, and a reader refuses anything that does not match, so a damaged or incompatible file fails when it is
+  of its stored bytes, and a reader refuses anything that does not match (including a Deflate stream that is cut off or
+  has trailing bytes), so a damaged or incompatible file fails when it is
   loaded and never yields wrong tags.
 - **Embedded data check**: a unit test and the `--check` step of the build fail when the embedded lexicon does not encode
   `data/lexicon/lexicon.tsv`.

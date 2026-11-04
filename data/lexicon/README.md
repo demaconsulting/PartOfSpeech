@@ -88,7 +88,8 @@ data tests implement them identically. The comparison is by `lower()` of the tok
 ## Embedded Form
 
 The package does not contain `lexicon.tsv`; it embeds a compiled binary form, `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`
-(format `POSL`, version 1, little endian, raw Deflate payload). It is 641,418 bytes for the committed lexicon (262,667
+(format `POSL`, version 2, little endian, raw Deflate payload; the header checksum covers the stored bytes and the reader
+requires the Deflate stream to be complete). It is 641,418 bytes for the committed lexicon (262,667
 spellings, 339,880 entries, 230 distinct tag masks) against 4,452,746 bytes of TSV. The spellings are stored sorted by
 UTF-8 bytes in blocks of 16: the first spelling of a block whole and the others front-coded against their predecessor,
 each with the index of its tag mask in a palette. A lookup is exact (no hash collisions), searches the block heads by

@@ -142,7 +142,7 @@ internal static class PerceptronModelWriter
         BinaryFormat.WriteUInt32(file, 24, (uint)weightCount);
         BinaryFormat.WriteUInt32(file, 28, (uint)payload.Length);
         BinaryFormat.WriteUInt32(file, 32, (uint)stored.Length);
-        BinaryFormat.WriteUInt32(file, 36, BinaryFormat.Fnv1a(payload, 0, payload.Length));
+        BinaryFormat.WriteUInt32(file, 36, BinaryFormat.Fnv1a(stored, 0, stored.Length));
         Buffer.BlockCopy(stored, 0, file, PerceptronModel.HeaderLength, stored.Length);
         return file;
     }
