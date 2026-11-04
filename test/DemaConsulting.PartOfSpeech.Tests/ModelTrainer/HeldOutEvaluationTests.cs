@@ -886,6 +886,41 @@ public class HeldOutEvaluationTests
     }
 
     /// <summary>
+    ///     Validates that the columns of the noun-verb confusion table name the cells they hold: every cell has its own known count.
+    /// </summary>
+    [Fact]
+    public void EvaluationReport_Confusion_KnownCells_LabelsMatchCounts()
+    {
+        // Arrange: gold noun answered other 1, noun 2, verb 3 times; gold verb answered other 4, noun 5, verb 6 times
+        var scores = new HeldOutScores();
+        void Add(int gold, int chosen, int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                var outcome = new Outcome("doc", gold == chosen, 0.9, 0.5, true, true, false);
+                scores.OpenTest.Add(new EvalToken("fixture-set", "doc", "s" + i, 0, "form", gold == 1 ? "NOUN" : "VERB", "X", 0.9, new double[UposExtensions.Count], outcome, gold, chosen));
+            }
+        }
+
+        Add(1, 0, 1);
+        Add(1, 1, 2);
+        Add(1, 2, 3);
+        Add(2, 0, 4);
+        Add(2, 1, 5);
+        Add(2, 2, 6);
+
+        // Act
+        var text = new System.Text.StringBuilder();
+        EvaluationReport.Confusion(text, scores);
+
+        // Assert: the header names the cells in the order of the counts
+        var lines = text.ToString().Split('\n');
+        Assert.Equal("## Noun-verb confusion", lines[0]);
+        Assert.Equal("| Set | Noun as other | Noun as noun | Noun as verb | Verb as other | Verb as noun | Verb as verb |", lines[2]);
+        Assert.Equal($"| {HeldOutEvaluator.Names.OpenTest} | 1 | 2 | 3 | 4 | 5 | 6 |", lines[4]);
+    }
+
+    /// <summary>
     ///     Validates the throughput measurement on a fixture: a positive rate.
     /// </summary>
     [Fact]

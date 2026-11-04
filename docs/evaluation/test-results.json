@@ -6,7 +6,7 @@
   "resamples": 1000,
   "seed": 1,
   "runtime": ".NET 10.0.13 on Microsoft Windows 10.0.26100",
-  "tokensPerSecond": 488158.1792827794,
+  "tokensPerSecond": 514620.0439446407,
   "inputs": [
     {
       "name": "open-test",

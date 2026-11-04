@@ -294,7 +294,7 @@ internal sealed class EvalTally
     public double[] BinDecisionConfidence { get; } = new double[ReliabilityEdges.Count];
 
     /// <summary>
-    ///     Gets the noun-verb confusion: 6 cells, gold noun then gold verb, each answered noun, verb or another tag.
+    ///     Gets the noun-verb confusion: 6 cells, gold noun then gold verb, each answered with another tag, a noun or a verb (in that order).
     /// </summary>
     public long[] Confusion { get; } = new long[6];
 

@@ -317,27 +317,7 @@ internal static class EvaluationReport
 
         ReportFormat.Table(text, new[] { "Set", "Point", "Threshold", "Coverage (%)", "Harmful per 1,000 answered", "Harmful of answered", "Paired difference to 0.45" }, pointRows);
 
-        text.Append("## Noun-verb confusion\n\n");
-        var confusion = new List<IReadOnlyList<string>>();
-        foreach (var (name, tokens) in Views(scores))
-        {
-            var tally = EvalTally.Of(tokens);
-            if (tally.Decisions > 0)
-            {
-                confusion.Add(new[]
-                {
-                    name,
-                    ReportFormat.N(tally.Confusion[0]),
-                    ReportFormat.N(tally.Confusion[1]),
-                    ReportFormat.N(tally.Confusion[2]),
-                    ReportFormat.N(tally.Confusion[3]),
-                    ReportFormat.N(tally.Confusion[4]),
-                    ReportFormat.N(tally.Confusion[5]),
-                });
-            }
-        }
-
-        ReportFormat.Table(text, new[] { "Set", "Noun as noun", "Noun as verb", "Noun as other", "Verb as noun", "Verb as verb", "Verb as other" }, confusion);
+        Confusion(text, scores);
 
         Subsets(text, scores);
         Probe(text, scores);
@@ -413,6 +393,38 @@ internal static class EvaluationReport
             (HeldOutEvaluator.Names.UdMapped, scores.UdMapped),
             (HeldOutEvaluator.Names.UdRaw, scores.UdRaw),
         };
+    }
+
+    /// <summary>
+    ///     Appends the noun-verb confusion of every view that has noun-verb decisions: one row for each view, with the cells in
+    ///     the order that <see cref="EvalTally.Confusion"/> stores them (gold noun, then gold verb, each answered with another
+    ///     tag, a noun or a verb).
+    /// </summary>
+    /// <param name="text">The text to append to.</param>
+    /// <param name="scores">The judged tokens.</param>
+    internal static void Confusion(StringBuilder text, HeldOutScores scores)
+    {
+        text.Append("## Noun-verb confusion\n\n");
+        var confusion = new List<IReadOnlyList<string>>();
+        foreach (var (name, tokens) in Views(scores))
+        {
+            var tally = EvalTally.Of(tokens);
+            if (tally.Decisions > 0)
+            {
+                confusion.Add(new[]
+                {
+                    name,
+                    ReportFormat.N(tally.Confusion[0]),
+                    ReportFormat.N(tally.Confusion[1]),
+                    ReportFormat.N(tally.Confusion[2]),
+                    ReportFormat.N(tally.Confusion[3]),
+                    ReportFormat.N(tally.Confusion[4]),
+                    ReportFormat.N(tally.Confusion[5]),
+                });
+            }
+        }
+
+        ReportFormat.Table(text, new[] { "Set", "Noun as other", "Noun as noun", "Noun as verb", "Verb as other", "Verb as noun", "Verb as verb" }, confusion);
     }
 
     /// <summary>
