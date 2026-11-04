@@ -11,7 +11,10 @@ lexicon and the trained weights, which are embedded in the package in compact bi
 (`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 492,971 bytes compressed, 1,111,898 bytes uncompressed) are
 trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC and silver
 corpora with settings that were selected on the two development sets only (the run log is
-[RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not shipped.
+[RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not
+shipped. How the model scores on the evaluation sets, the confidence thresholds that were chosen on the development
+sets, and how to reproduce the evaluation (including the local UD English-EWT run) are in the
+[evaluation record](../docs/evaluation/README.md).
 
 ## Contents
 
@@ -53,7 +56,7 @@ From the repository root, with Python 3.10 or later (standard library only):
 ```text
 python tools/data/import_open.py   --source-dir <WordSense checkout at the pinned commit>   # open/
 python tools/data/import_eval.py   --source-dir <WordSense checkout at the pinned commit>   # eval/
-python tools/data/fetch_ud_ewt.py fetch                                                     # cache for the leakage filter
+python tools/data/fetch_ud_ewt.py fetch                                                     # cache for the leakage filter and the local UD evaluation (docs/evaluation/README.md)
 python tools/data/import_masc.py   [--archive penn-treebank.tgz]                            # masc/
 python tools/data/build_lexicon.py [--wordsense-dir <checkout>]                             # lexicon/lexicon.tsv (attests tags from masc/)
 python tools/data/check_lexicon.py                                                          # lexicon/coverage.tsv, COVERAGE.md
