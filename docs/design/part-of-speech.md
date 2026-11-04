@@ -228,7 +228,8 @@ boosts is later work that starts from the measured curve in `RUN-LOG.md` (see _M
   verification document)
 - **Package size**: the lexicon resource is 641,418 bytes and the weights resource 492,971 bytes (both already
   compressed), embedded once per target framework, so the four assemblies are about 1.2 to 1.5 MB each and the package
-  (with the API reference and the XML documentation files) is 5,298,150 bytes (about 5.3 MB)
+  (with the API reference and the XML documentation files) is about 5.3 MB (the exact size is not stated because it
+  is not reproducible: the package holds timestamps and the SBOM)
 - **Open licenses only**: No share-alike, non-commercial or no-derivatives data; attribution notices for every
   attribution-licensed source travel with the package, and the package license file covers the embedded data
 - **Data format**: Data files are tab-separated text (UTF-8, no byte order mark, LF line endings), so that their

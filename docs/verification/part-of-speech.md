@@ -129,8 +129,8 @@ are information for reviewers, not acceptance values:
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
 - The embedded weights are 492,971 bytes (1,111,898 uncompressed) and the embedded lexicon 641,418 bytes (1,635,344
-  uncompressed); the package is 5,298,150 bytes because both resources are embedded once per target framework (and the
-  package also holds the API reference).
+  uncompressed); the package is larger because both resources are embedded once per target framework (the package size
+  is stated, approximately, in the "Package size" item of the design document `part-of-speech.md`).
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
   consecutive sentences: recall 100.00 percent and precision 99.95 percent (the splitter lists were tuned while looking
   at these documents, so these two values are optimistic).

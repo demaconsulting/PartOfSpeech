@@ -78,4 +78,4 @@ should build with nothing to run. The weights resource is generated the same way
 build, and a unit test fail when the committed binary is not what the committed corpora and `training.json` produce).
 The package contains each resource once per target framework: the lexicon resource is 641,418 bytes (1,635,344
 uncompressed) and the weights resource 492,971 bytes (1,111,898 uncompressed, 119,632 rows, 290,862 weights, 19 hash
-bits, scale 1/8), which is why the package is 5,298,150 bytes.
+bits, scale 1/8), which is why the package is several MB (see "Package size" in the system design).
