@@ -976,6 +976,23 @@ dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eva
 `thresholds` and its two output files are committed first; only then are the last two commands run. The reports are
 committed as produced.
 
+### Outcome of the development selection
+
+`thresholds` (seed 1, 1,000 resamples; development data only) ran once the engine was committed and applied the rule above
+without change. The 0.45 row reproduced the frozen figures: 94 harmful errors on open dev, 9 on gold v2 dev and 103
+pooled (4,484, 611 and 5,095 decisions). Result on the pooled development decisions (the full curves, the reliability
+table and the bootstrap intervals are in `docs/evaluation/confidence-thresholds.md`, the selection artifact is
+`docs/evaluation/operating-points.json`):
+
+| Point | Threshold | Coverage | Harmful per 1,000 answered | Harmful of answered |
+| --- | ---: | ---: | ---: | ---: |
+| `strict` (at most 5.0, coverage at least 60%) | 0.95 | 80.6% | 3.9 | 16 of 4,105 |
+| `balanced` (at most 10.0, coverage at least 85%) | 0.80 | 91.0% | 9.9 | 46 of 4,636 |
+
+Both targets were met on the grid (strict: 0.90 gives 6.4 per 1,000, so 0.95 is the first threshold that qualifies;
+balanced: 0.75 gives 10.8, so 0.80 is the first); nothing was relaxed. These are development figures and optimistic by
+selection; the held-out run reports what the thresholds do on data that played no part in choosing them.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
