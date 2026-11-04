@@ -2,7 +2,7 @@
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
-///     Subsystem tests of Tagging: the tagger, decoder, extractor and constraints working together on a tiny trained model.
+///     Subsystem tests of Tagging: the tagger, decoder, extractor, constraints and glossary working together on tiny models.
 /// </summary>
 public class TaggingTests
 {
@@ -119,6 +119,65 @@ public class TaggingTests
         Assert.Equal(new[] { Upos.Adj, Upos.Verb }, constrained.Tokens.Select(t => t.Tag));
         Assert.True(constrained.Tokens[0].IsConstrained);
         Assert.False(constrained.Tokens[1].IsConstrained);
+    }
+
+    /// <summary>
+    ///     Proves through the public API that a glossary entry changes the tag of its head word and, through the tag history, the tag of the next token.
+    /// </summary>
+    [Fact]
+    public void Tagging_Glossary_HardEntry_ChangesHeadAndNextTokenThroughHistory()
+    {
+        // Arrange: a is DET (2) or ADJ (1); the word after DET is a NOUN, after ADJ it is a VERB; the glossary says a is ADJ
+        var weights = new TinyModels.WeightsBuilder()
+            .Word("a", Upos.Det, 2).Word("a", Upos.Adj, 1)
+            .AfterTag("DET", Upos.Noun, 5).AfterTag("ADJ", Upos.Verb, 5)
+            .Build();
+        var tagger = TinyModels.CreateTagger(weights, TinyModels.CreateLexicon("a DET ADJ", "dog NOUN VERB"));
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("a", Upos.Adj) });
+
+        // Act: tag free and with the glossary
+        var free = tagger.Tag(new[] { "a", "dog" });
+        var withGlossary = tagger.Tag(new[] { "a", "dog" }, glossary);
+
+        // Assert: the head word follows the entry with certainty, the neighbor follows through the history
+        Assert.Equal(new[] { Upos.Det, Upos.Noun }, free.Tokens.Select(t => t.Tag));
+        Assert.Equal(new[] { Upos.Adj, Upos.Verb }, withGlossary.Tokens.Select(t => t.Tag));
+        Assert.Equal(1.0, withGlossary.Tokens[0].Confidence);
+        Assert.True(withGlossary.Tokens[0].IsConstrained);
+        Assert.False(withGlossary.Tokens[1].IsConstrained);
+    }
+
+    /// <summary>
+    ///     Proves that a multiword entry keeps its other words from being verbs and that the match is reported on the tokens and on the sentence.
+    /// </summary>
+    [Fact]
+    public void Tagging_Glossary_Results_ReportMatchesOnTokensAndSentence()
+    {
+        // Arrange: hand-set weights under which "run" is a verb for the model, a lexicon where it may be NOUN or VERB, and a noun term "run mat"
+        var weights = new TinyModels.WeightsBuilder()
+            .Word("a", Upos.Det, 5).Word("run", Upos.Verb, 5).Word("run", Upos.Noun, 1).Word("mat", Upos.Noun, 3)
+            .Build();
+        var tagger = TinyModels.CreateTagger(weights, TinyModels.CreateLexicon("a DET", "run NOUN VERB", "mat NOUN VERB"));
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("run mat", Upos.Noun, "A mat for exercise.") });
+        const string text = "Use a run mat.";
+
+        // Act: tag the text without and with the glossary
+        var free = tagger.Tag(text)[0];
+        var tagged = tagger.Tag(text, glossary)[0];
+
+        // Assert: the model alone reads "run" as a verb; with the glossary both words are nouns, one match covers them and the head is the last word
+        Assert.Equal(Upos.Verb, free.Tokens[2].Tag);
+        Assert.Equal(Upos.Noun, tagged.Tokens[2].Tag);
+        Assert.Equal(Upos.Noun, tagged.Tokens[3].Tag);
+        var match = Assert.Single(tagged.GlossaryMatches);
+        Assert.Equal(2, match.FirstToken);
+        Assert.Equal(2, match.TokenCount);
+        Assert.Equal(3, match.HeadToken);
+        Assert.Equal("run mat", match.Text);
+        Assert.Equal("A mat for exercise.", match.Entry.Definition);
+        Assert.Equal(new[] { false, false, false, true, false }, tagged.Tokens.Select(t => t.IsGlossaryHead));
+        Assert.Equal(new[] { false, false, true, true, false }, tagged.Tokens.Select(t => t.GlossaryMatch != null));
+        Assert.Empty(free.GlossaryMatches);
     }
 
     /// <summary>

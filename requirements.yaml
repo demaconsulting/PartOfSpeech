@@ -23,6 +23,7 @@ includes:
   - docs/reqstream/part-of-speech/tagging/feature-extractor.yaml
   - docs/reqstream/part-of-speech/tagging/tag-decoder.yaml
   - docs/reqstream/part-of-speech/tagging/token-constraint.yaml
+  - docs/reqstream/part-of-speech/tagging/glossary.yaml
   - docs/reqstream/part-of-speech/tagging/tagger.yaml
   - docs/reqstream/part-of-speech/platform-requirements.yaml
   - docs/reqstream/ots/xunit.yaml

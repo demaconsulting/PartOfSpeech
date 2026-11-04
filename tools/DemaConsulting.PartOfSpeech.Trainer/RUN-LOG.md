@@ -417,6 +417,409 @@ between seeds); training `disputed` tokens and a high MASC weight were chosen on
 fitted on the open split leaves gold dev overconfident (ECE 2.37%); the model of the chosen configuration was trained
 once per seed 20260101 (the seed spread of the baseline, not of the final model, was measured).
 
+## E9 glossary evaluation (phase 4; protocol fixed before the run)
+
+This section was written **before the first run of `glossary-eval`**; the results section after it only records what the
+command printed and applies the two rules below without changing them.
+
+Question: the library now has a real `Glossary` (terms with allowed tags, hard or soft, inflection, case handling) that
+`Tagger.Tag(IReadOnlyList<string>, Glossary)` applies. What does it buy on development data, what do wrong entries cost
+(0, 10 and 30% of the entries), how far does the effect reach into the tokens after a match, and which soft strength
+should be the default? The type-level, single-word measurement of phase 3 is in the section "E8 results" and is not
+repeated; the parity check below ties the new path to it.
+
+Data discipline: the command reads the open dev split and the gold v2 dev split through `DevSets` (guarded by `DataGuard`)
+and nothing else. `GlossaryEvaluation` takes the already loaded sentences, has no path parameter, and cannot open a file;
+the command accepts only `--seed` and `--resamples`. The open test split, gold v2 test split, shape probe, STE challenge
+set and UD English-EWT are neither opened nor evaluated. Every glossary is simulated **from the same dev text it is
+scored on** (that is what a domain glossary is, but it makes the benefit in-sample); the numbers are dev figures, not
+test figures.
+
+### E9 protocol
+
+Systems (same tokens in the same order, so the paired bootstrap applies): **no glossary**; **hard**; **soft** at strength
+s in {0.5, 1, 1.5, 2, 3, 4} (units of the model temperature). The tagger is `Tagger.Load` of the embedded weights with all
+16 alternatives (as `eval` does); every glossary run goes through the public `Tagger.Tag(IReadOnlyList<string>,
+Glossary)`. Glossaries are case-insensitive, with inflection off in A, B, D and E (the simulation lists the surface
+forms) and on in C and G. Wrong entries r = 0, 10, 30% are drawn deterministically with `DeterministicRandom`; coverage 30%
+and 100% of the distinct terms; all type lists are sorted in ordinal order before the seeded shuffle. Default seed 1.
+
+Scenarios:
+
+- **A, noun compounds (open dev).** From each maximal run of gold NOUN/PROPN/ADJ tokens that ends in NOUN or PROPN take the
+  last up to three tokens (at least two); every token must be alphabetic (a hyphen is allowed) and listed in the lexicon
+  with an open-class tag (NOUN, PROPN, VERB, ADJ or ADV). Entry = lower-cased term, tag = gold tag of the last token, head =
+  last token. A wrong entry draws its tag uniformly from {VERB, ADJ, the other of NOUN/PROPN}. A term also matches every
+  other occurrence of the same token sequence (type-level, as in phase 3), and each occurrence is scored against its own
+  gold tags. The **at-risk subset** is the matches whose first token the lexicon lists with VERB; it is reported by the
+  accuracy of that first token. Seed of the scenario with number n (1 to 6 over coverage 30%/100% and r = 0/10/30%): seed + 10 + n.
+- **B, single-word technical words (open dev).** `GlossaryProbe.EligibleTypes` (the phase-3 criteria) and
+  `GlossaryProbe.BuildGlossary` with the phase-3 seeds (seed + n), as `Glossary` entries. **Parity check**, printed first:
+  for every B scenario and every system, the tags of the real glossary path equal the tags of the hand-built
+  `TokenConstraint` path of `GlossaryProbe` (0 mismatches expected), and the row figures (covered right/wrong counts and
+  accuracy, neighbor count and accuracy, overall accuracy, harmful errors) equal the printed `glossary-probe` rows of the
+  same system.
+- **AB, the primary scenario.** The entries of A and B of the same coverage and r in one glossary (A terms have at least
+  two tokens, B terms one, so no term is in both).
+- **C, inflection (gold v2 dev).** Entries = lemmas of the gold Noun and Verb targets (not `to`/`not`; a lemma with both
+  classes has both tags), inflection on, hard. For targets whose form differs from the lemma, per class: the share found
+  by a generated form (**recall**; irregular forms are missed on purpose), the share whose gold class is among the tags
+  that the matched form allows (**precision**), and the class accuracy without a glossary and with the hard glossary.
+- **D, case sensitivity (open dev and gold v2 dev).** Acronym types = all-capital tokens of two to five letters whose lower
+  case is a lexicon word and whose gold is NOUN or PROPN (open dev, majority gold) or Noun (gold v2); one case-insensitive
+  and one case-sensitive glossary, hard. Counts over the scored tokens: homograph tokens (same letters, not all capital),
+  how many each glossary matches, how many of those it forces to a tag that is not their gold, and how many it turns from
+  right to wrong; the acronym tokens themselves are counted as the benefit.
+- **E, gold v2 dev, head effect only.** One target per sentence, so no history effect is measurable. Entries = target forms
+  of the Noun and Verb targets (majority class per form, ties Noun), right = the class, wrong = the other class (the
+  costly noun-verb error), coverage 30% and 100%, r = 0/10/30%; type-level, so other tokens of a sentence can match too.
+- **F, history effect (from A, B and AB on open dev).** Every scored token of a sentence with a match that is not itself
+  covered is classified by its distance after the nearest preceding match: **+1**, **+2**, **+3 or later**, or **before**
+  the first match. Per class: accuracy without a glossary and the change per system, with the flips right to wrong and
+  wrong to right on identical tokens, for r = 0 and 10%. **Invariant**: tokens before the first match of a sentence get
+  exactly the tags of the no-glossary run, in every scenario and system (0 differences required).
+- **G, the non-head rule for non-nominal entries.** Phrasal verbs from gold: VERB followed directly by ADP, ADV or PART
+  (alphabetic tokens). Entry = lower-cased pair, tag VERB, head = first token, inflection on, hard mode; a wrong entry draws
+  its tag from {NOUN, ADJ}. Three rules for the second token: **R0** none (the library default `None`), **R1** hard limit to
+  ADP, ADV, PART (`WithTokenTags`), **R2** hard limit to every tag except VERB and AUX. Scenario seed: seed + 20 + n.
+
+Metrics per cell: accuracy over all open-dev (or gold-target) tokens, and over the categories **head right** (a covered
+head whose entry contains the gold tag), **head wrong**, **non-head** (the other tokens of a match), **neighbors**
+(uncovered tokens of sentences with a match; F splits them) and uncovered tokens; **harmful errors** exactly as E0 defines
+them (`Metrics.Judge`, confidence at least 0.45) per 1,000 N/V decisions with the **denominator fixed to the no-glossary
+run's N/V decisions**; and **confident N<->V swaps** = a gold NOUN answered VERB or a gold VERB answered NOUN with
+confidence at least 0.45 whether or not both were candidates (so a hard constraint that leaves one candidate still counts),
+per 1,000 of the same denominator. Paired bootstrap by document (glossary minus no glossary; 1,000 resamples; the seed of
+the command) for overall accuracy (points), harmful errors and swaps (per 1,000 baseline N/V decisions).
+
+**Pre-registered rule for the soft strength** (the default of `GlossaryOptions.SoftStrength`): the primary scenario is AB at
+30% coverage. A strength is **admissible** if (i) the overall accuracy at r = 10% is not below the no-glossary accuracy
+(point difference >= 0), (ii) the confident swaps at r = 10% are not above the no-glossary run (point difference <= 0), and
+(iii) the overall accuracy at r = 30% is at most 0.5 points below the no-glossary accuracy. Among the admissible strengths
+choose the one with the highest **covered-token accuracy at r = 0** (head and non-head tokens of all matches); strengths
+within 0.1 points of the best are tied and the **smallest** of them wins. If none is admissible the smallest strength of the
+grid is the default and the result says so. Hard mode is reported as the reference and stays the default mode of
+`GlossaryOptions` (a curated glossary is trusted); the rule decides only the strength of soft mode. The chosen number is
+written once, in the decision of the results section, and the constant `GlossaryOptions.DefaultSoftStrength` must be a
+member of the evaluated grid (a test checks it).
+
+**Pre-registered bar for scenario G** (the default of the non-head rule of non-nominal terms, now `None`): primary scenario
+G at 100% coverage, **covered-token accuracy** (head and second token of the matches). R1 or R2 replaces `None` only if,
+against R0, the covered-token accuracy at r = 0 improves by at least **0.5 points** with a paired 95% interval (covered
+tokens only, by document) that excludes 0, **and** the covered-token accuracy at r = 10% does not fall (point difference
+>= 0). If both qualify the larger gain at r = 0 wins. Otherwise the default stays `None`, and this log says that the data are
+too thin to justify a rule (per-token `WithTokenTags` remains the way to say it).
+
+Limits stated in advance: the glossaries are simulated from the evaluated text (in-sample); the open dev labels are
+language-model labeled and the gold v2 set has one target per sentence; the strength rule is a point rule on one scenario
+(the paired intervals are reported next to it, but they do not decide); throughput and allocation are measured by tests,
+not by this command; no test or held-out figure is looked at.
+
+### E9 results (command `glossary-eval --seed 1 --resamples 1000`; development data only)
+
+The command ran once on the embedded model in about 20 seconds (single thread, below-normal priority). During the run the
+library's non-head default for non-nominal terms was `None` (R0 below) and every soft system set its own strength, so the
+provisional constant did not enter. The protocol above was not changed after the run; two rules were applied to the figures
+(decisions at the end). Tables show the **change against no glossary** (paired by document, 95% interval) and the accuracy of
+categories; the no-glossary overall accuracy, harmful errors and N/V decisions are in the section "Final configuration and
+results (freeze)" and are not repeated. The no-glossary confident swaps per 1,000 N/V decisions equal that section's harmful
+errors per 1,000 (with all candidates available every confident N<->V swap of the unconstrained model is a harmful error);
+they are the reference of the swap columns. Terms: coverage = share of the distinct terms; r = share of wrong entries;
+"covered" = tokens of matches (head and non-head); "neighbors" = uncovered tokens of sentences with a match.
+
+**Parity (B).** The real glossary path and the hand-built `TokenConstraint` path of `glossary-probe` (the same entries) give
+0 different tags over 1,101,744 token decisions (6 scenarios x 7 systems). Sixteen of the simulated terms cannot be glossary
+entries as written and were left out of the glossaries (the printed phase-3 rows were produced with them): `! " $ % & ( ) , -- . ... : ; ? dr. mr.`
+(terms without a letter or digit are refused, and the tokenizer splits `dr.` and `mr.` into word and period, so a
+pre-tokenized `Dr.` cannot match). The hand-built path over the complete phase-3 glossaries reproduces all 30 printed rows of
+`glossary-probe` that share a system with this grid (hard is its `only`; boosts 0.5, 1, 2, 4) exactly; the real path differs
+from those rows in all 30, which is exactly the effect of the 16 left-out terms (mostly punctuation: they make up about 1,700
+of the covered tokens of the 30% glossary, so the figures of B are those of single *words*).
+
+**Scenario sizes** (scored tokens per category; every row has its own seed, so the term sets differ between rows):
+
+| Scenario | coverage % | wrong % | entries | head right | head wrong | non-head | neighbors | no match | at-risk first tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| A | 30 | 0 | 502 | 544 | 0 | 651 | 8,561 | 16,476 | 163 |
+| A | 30 | 10 | 502 | 496 | 70 | 673 | 8,914 | 16,079 | 178 |
+| A | 30 | 30 | 502 | 384 | 152 | 640 | 8,268 | 16,788 | 151 |
+| A | 100 | 0 | 1,674 | 1,779 | 0 | 2,108 | 15,438 | 6,907 | 535 |
+| A | 100 | 10 | 1,674 | 1,609 | 170 | 2,108 | 15,438 | 6,907 | 535 |
+| A | 100 | 30 | 1,674 | 1,249 | 530 | 2,108 | 15,438 | 6,907 | 535 |
+| B | 30 | 0 | 176 | 2,872 | 27 | 0 | 19,724 | 3,609 | 0 |
+| B | 30 | 10 | 180 | 2,833 | 301 | 0 | 20,061 | 3,037 | 0 |
+| B | 30 | 30 | 176 | 2,935 | 652 | 0 | 20,305 | 2,340 | 0 |
+| B | 100 | 0 | 597 | 9,175 | 91 | 0 | 16,700 | 266 | 0 |
+| B | 100 | 10 | 597 | 8,338 | 928 | 0 | 16,700 | 266 | 0 |
+| B | 100 | 30 | 597 | 6,293 | 2,973 | 0 | 16,700 | 266 | 0 |
+| AB | 30 | 0 | 678 | 3,323 | 25 | 651 | 19,594 | 2,639 | 163 |
+| AB | 30 | 10 | 682 | 3,247 | 362 | 673 | 19,500 | 2,450 | 178 |
+| AB | 30 | 30 | 678 | 3,242 | 789 | 640 | 19,812 | 1,749 | 151 |
+| AB | 100 | 0 | 2,271 | 9,894 | 73 | 2,108 | 13,941 | 216 | 535 |
+| AB | 100 | 10 | 2,271 | 8,962 | 1,005 | 2,108 | 13,941 | 216 | 535 |
+| AB | 100 | 30 | 2,271 | 6,767 | 3,200 | 2,108 | 13,941 | 216 | 535 |
+
+#### AB (the primary scenario), coverage 30%
+
+Accuracy on the covered tokens (%) and change of the overall accuracy (points, paired 95% interval), by r:
+
+| System | covered r=0 | covered r=10 | covered r=30 | overall r=0 | overall r=10 | overall r=30 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| no glossary | 97.87 | 97.83 | 98.22 | - | - | - |
+| hard | 98.57 | 90.78 | 82.55 | +0.11 [+0.04, +0.16] | -1.19 [-1.39, -0.98] | -2.87 [-3.12, -2.63] |
+| soft 0.5 | 98.05 | 97.99 | 98.29 | +0.03 [0.00, +0.06] | +0.03 [0.00, +0.06] | +0.01 [-0.01, +0.03] |
+| soft 1 | 98.17 | 98.20 | 98.29 | +0.05 [+0.01, +0.09] | +0.06 [+0.02, +0.11] | +0.01 [-0.02, +0.05] |
+| soft 1.5 | 98.30 | 98.27 | 98.27 | +0.06 [+0.02, +0.11] | +0.07 [+0.02, +0.13] | +0.01 [-0.03, +0.04] |
+| soft 2 | 98.40 | 98.39 | 98.16 | +0.08 [+0.03, +0.13] | +0.09 [+0.03, +0.16] | -0.02 [-0.06, +0.03] |
+| soft 3 | 98.45 | 98.62 | 97.99 | +0.09 [+0.03, +0.14] | +0.12 [+0.04, +0.23] | -0.05 [-0.12, +0.02] |
+| soft 4 | 98.57 | 98.32 | 97.71 | +0.11 [+0.05, +0.16] | +0.07 [-0.02, +0.17] | -0.10 [-0.18, -0.02] |
+
+Change of the harmful errors and of the confident N<->V swaps per 1,000 no-glossary N/V decisions (swaps: absolute value, then the change with its paired 95% interval); the harmful errors of a hard system are few by construction (one candidate is no N/V decision), the swaps are not:
+
+| System | harmful r=0 | harmful r=10 | harmful r=30 | swaps r=0 | swaps r=10 | swaps r=30 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| no glossary | - | - | - | 20.96 | 20.96 | 20.96 |
+| hard | -2.01 [-4.22, -0.45] | -2.45 [-5.16, -0.23] | -1.12 [-3.79, +1.42] | 18.96 (-2.01 [-4.22, -0.45]) | 31.67 (+10.70 [+6.31, +14.94]) | 42.37 (+21.41 [+15.92, +27.29]) |
+| soft 0.5 | -0.45 [-1.14, 0.00] | -0.22 [-0.94, +0.51] | -0.45 [-1.31, +0.45] | 20.52 (-0.45 [-1.14, 0.00]) | 20.74 (-0.22 [-0.94, +0.51]) | 20.52 (-0.45 [-1.31, +0.45]) |
+| soft 1 | -0.45 [-1.14, 0.00] | -0.89 [-2.20, +0.25] | -0.89 [-2.27, +0.46] | 20.52 (-0.45 [-1.14, 0.00]) | 20.07 (-0.89 [-2.20, +0.25]) | 20.07 (-0.89 [-2.27, +0.46]) |
+| soft 1.5 | -0.89 [-1.84, -0.20] | -1.12 [-3.00, +0.46] | -1.12 [-2.94, +0.46] | 20.07 (-0.89 [-1.84, -0.20]) | 19.85 (-1.12 [-3.00, +0.46]) | 19.85 (-1.12 [-2.94, +0.46]) |
+| soft 2 | -1.56 [-3.29, -0.23] | -1.34 [-3.25, +0.44] | -0.89 [-2.80, +0.76] | 19.40 (-1.56 [-3.29, -0.23]) | 19.63 (-1.34 [-3.25, +0.44]) | 20.07 (-0.89 [-2.80, +0.76]) |
+| soft 3 | -2.01 [-4.22, -0.45] | -2.01 [-4.71, +0.43] | -0.22 [-2.73, +2.12] | 18.96 (-2.01 [-4.22, -0.45]) | 18.96 (-2.01 [-4.71, +0.43]) | 20.74 (-0.22 [-2.73, +2.12]) |
+| soft 4 | -2.01 [-4.22, -0.45] | -0.22 [-3.15, +2.55] | 0.00 [-2.62, +2.42] | 18.96 (-2.01 [-4.22, -0.45]) | 20.74 (-0.22 [-3.15, +2.55]) | 20.96 (0.00 [-2.62, +2.42]) |
+
+Accuracy (%) by token category at r = 10%:
+
+| System | head right | head wrong | non-head | neighbors | no match in sentence |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| no glossary | 98.86 | 97.24 | 93.16 | 95.94 | 94.04 |
+| hard | 100.00 | 0.00 | 95.10 | 95.89 | 94.04 |
+| soft 0.5 | 99.17 | 96.41 | 93.16 | 95.94 | 94.04 |
+| soft 1 | 99.38 | 96.13 | 93.61 | 95.94 | 94.04 |
+| soft 1.5 | 99.54 | 95.30 | 93.76 | 95.94 | 94.04 |
+| soft 2 | 99.66 | 94.75 | 94.21 | 95.94 | 94.04 |
+| soft 3 | 99.94 | 93.65 | 94.95 | 95.93 | 94.04 |
+| soft 4 | 99.97 | 89.78 | 94.95 | 95.93 | 94.04 |
+
+#### AB, coverage 100%
+
+| System | covered r=0 | covered r=10 | covered r=30 | overall r=0 | overall r=10 | overall r=30 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| no glossary | 98.02 | 98.02 | 98.02 | - | - | - |
+| hard | 98.61 | 90.87 | 72.61 | +0.27 [+0.16, +0.39] | -3.31 [-3.63, -2.98] | -11.90 [-12.39, -11.37] |
+| soft 0.5 | 98.19 | 98.16 | 98.11 | +0.08 [+0.03, +0.12] | +0.06 [+0.02, +0.11] | +0.04 [+0.01, +0.08] |
+| soft 1 | 98.39 | 98.33 | 98.24 | +0.18 [+0.11, +0.24] | +0.14 [+0.08, +0.21] | +0.11 [+0.05, +0.17] |
+| soft 1.5 | 98.49 | 98.41 | 98.25 | +0.22 [+0.15, +0.30] | +0.18 [+0.11, +0.26] | +0.11 [+0.05, +0.17] |
+| soft 2 | 98.54 | 98.42 | 98.19 | +0.24 [+0.16, +0.33] | +0.18 [+0.10, +0.26] | +0.08 [0.00, +0.15] |
+| soft 3 | 98.62 | 98.39 | 97.81 | +0.27 [+0.17, +0.39] | +0.17 [+0.07, +0.29] | -0.10 [-0.22, +0.01] |
+| soft 4 | 98.63 | 98.21 | 97.11 | +0.28 [+0.17, +0.39] | +0.09 [-0.02, +0.21] | -0.43 [-0.55, -0.30] |
+
+| System | harmful r=0 | harmful r=10 | harmful r=30 | swaps r=0 | swaps r=10 | swaps r=30 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| no glossary | - | - | - | 20.96 | 20.96 | 20.96 |
+| hard | -6.02 [-9.29, -3.21] | -5.13 [-8.62, -2.08] | -1.12 [-4.35, +2.27] | 16.50 (-4.46 [-7.87, -1.54]) | 46.16 (+25.20 [+18.87, +31.75]) | 122.66 (+101.69 [+90.13, +114.27]) |
+| soft 0.5 | -1.34 [-2.43, -0.39] | -1.34 [-2.43, -0.39] | -0.67 [-1.45, 0.00] | 19.63 (-1.34 [-2.43, -0.39]) | 19.63 (-1.34 [-2.43, -0.39]) | 20.29 (-0.67 [-1.45, 0.00]) |
+| soft 1 | -2.68 [-4.54, -1.01] | -2.45 [-4.34, -0.66] | -1.78 [-3.52, 0.00] | 18.29 (-2.68 [-4.54, -1.01]) | 18.51 (-2.45 [-4.34, -0.66]) | 19.18 (-1.78 [-3.52, 0.00]) |
+| soft 1.5 | -3.57 [-5.66, -1.60] | -3.12 [-5.25, -0.99] | -2.01 [-4.27, +0.21] | 17.40 (-3.57 [-5.66, -1.60]) | 17.84 (-3.12 [-5.25, -0.99]) | 18.96 (-2.01 [-4.27, +0.21]) |
+| soft 2 | -4.24 [-6.91, -1.86] | -3.35 [-6.05, -0.89] | -2.45 [-5.28, +0.22] | 16.73 (-4.24 [-6.91, -1.86]) | 17.62 (-3.35 [-6.05, -0.89]) | 18.51 (-2.45 [-5.28, +0.22]) |
+| soft 3 | -4.46 [-7.87, -1.61] | -2.90 [-6.36, +0.23] | +0.45 [-3.15, +4.12] | 16.50 (-4.46 [-7.87, -1.61]) | 18.06 (-2.90 [-6.36, +0.23]) | 21.41 (+0.45 [-3.15, +4.12]) |
+| soft 4 | -4.24 [-7.54, -1.38] | -2.23 [-5.84, +0.93] | +4.24 [+0.86, +7.66] | 16.73 (-4.24 [-7.54, -1.38]) | 18.73 (-2.23 [-5.84, +0.93]) | 25.20 (+4.24 [+0.86, +7.66]) |
+
+| System (r = 10%) | head right | head wrong | non-head | neighbors | no match in sentence |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| no glossary | 99.10 | 96.32 | 94.26 | 94.74 | 72.69 |
+| hard | 100.00 | 0.00 | 95.40 | 94.71 | 72.69 |
+| soft 0.5 | 99.33 | 95.52 | 94.45 | 94.74 | 72.69 |
+| soft 1 | 99.55 | 94.73 | 94.83 | 94.75 | 72.69 |
+| soft 1.5 | 99.68 | 94.53 | 94.88 | 94.75 | 72.69 |
+| soft 2 | 99.77 | 93.43 | 95.07 | 94.74 | 72.69 |
+| soft 3 | 99.89 | 91.24 | 95.40 | 94.75 | 72.69 |
+| soft 4 | 99.92 | 88.66 | 95.49 | 94.75 | 72.69 |
+
+#### A (compounds only) and B (single words only), change of the overall accuracy (points) and of the confident swaps (per 1,000)
+
+| Scenario, coverage | System | overall r=0 | overall r=10 | overall r=30 | swaps r=0 | swaps r=10 | swaps r=30 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A, 30% | hard | +0.10 [+0.06, +0.13] | -0.16 [-0.26, -0.08] | -0.53 [-0.66, -0.40] | -1.34 | +2.68 | +8.92 |
+| A, 30% | soft 1.5 | +0.02 [+0.01, +0.04] | +0.04 [+0.01, +0.07] | +0.02 [-0.01, +0.05] | -0.22 | -1.12 | -0.89 |
+| A, 30% | soft 4 | +0.08 [+0.05, +0.12] | +0.09 [+0.04, +0.14] | +0.02 [-0.02, +0.06] | -1.34 | -1.78 | -0.67 |
+| A, 100% | hard | +0.25 [+0.18, +0.32] | -0.41 [-0.55, -0.30] | -1.85 [-2.10, -1.62] | -4.91 | +7.14 | +30.11 |
+| A, 100% | soft 1.5 | +0.13 [+0.08, +0.17] | +0.11 [+0.06, +0.15] | +0.07 [+0.03, +0.12] | -3.12 | -2.90 | -2.01 |
+| A, 100% | soft 4 | +0.23 [+0.16, +0.29] | +0.19 [+0.12, +0.25] | +0.06 [0.00, +0.13] | -4.68 | -3.57 | -1.12 |
+| B, 30% | hard | +0.01 [-0.04, +0.06] | -1.04 [-1.23, -0.87] | -2.39 [-2.62, -2.16] | -0.89 | +8.47 | +13.60 |
+| B, 30% | soft 1.5 | +0.04 [0.00, +0.09] | +0.04 [-0.01, +0.09] | -0.01 [-0.05, +0.02] | -0.67 | 0.00 | -0.22 |
+| B, 30% | soft 4 | +0.02 [-0.03, +0.07] | -0.01 [-0.08, +0.09] | -0.12 [-0.19, -0.05] | -0.89 | +1.34 | +1.12 |
+| B, 100% | hard | +0.03 [-0.07, +0.14] | -3.17 [-3.47, -2.87] | -11.15 [-11.65, -10.64] | -0.67 | +24.31 | +90.77 |
+| B, 100% | soft 1.5 | +0.11 [+0.05, +0.17] | +0.09 [+0.04, +0.16] | +0.03 [-0.02, +0.09] | -1.12 | -0.89 | -0.45 |
+| B, 100% | soft 4 | +0.08 [-0.02, +0.18] | -0.10 [-0.20, +0.02] | -0.53 [-0.65, -0.42] | -0.89 | +0.89 | +4.91 |
+
+(The swap columns are changes against no glossary; the full A and B tables, with every strength, the intervals of the swaps
+and the category tables, are printed by the command.)
+
+**A, at-risk subset** (the first token of a compound is listed with VERB in the lexicon; accuracy of that first token, %):
+
+| System | cov 30% r=0 (n=163) | cov 30% r=10 (n=178) | cov 30% r=30 (n=151) | cov 100% r=0 (n=535) | cov 100% r=10 (n=535) | cov 100% r=30 (n=535) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| no glossary | 88.34 | 88.76 | 88.74 | 89.91 | 89.91 | 89.91 |
+| hard | 93.87 | 94.94 | 93.38 | 94.02 | 94.02 | 93.27 |
+| soft 0.5 | 88.96 | 88.76 | 89.40 | 90.47 | 90.47 | 90.09 |
+| soft 1 | 89.57 | 89.89 | 91.39 | 91.40 | 91.40 | 90.84 |
+| soft 1.5 | 89.57 | 90.45 | 92.05 | 91.59 | 91.59 | 91.03 |
+| soft 2 | 90.80 | 92.13 | 92.05 | 92.34 | 92.34 | 91.78 |
+| soft 3 | 92.64 | 94.94 | 92.72 | 93.64 | 93.64 | 92.90 |
+| soft 4 | 93.87 | 94.94 | 93.38 | 94.02 | 94.02 | 93.27 |
+
+**F, history effect** (scenario AB at 30% coverage; change of accuracy in points on identical tokens, with the flips right to wrong / wrong to right in parentheses; no-glossary accuracy of the class in the fourth column):
+
+| r % | uncovered tokens | tokens | no glossary % | hard | soft 0.5 | soft 1 | soft 1.5 | soft 2 | soft 3 | soft 4 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | before the first match | 5,271 | 95.47 | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) |
+| 0 | +1 after a match | 2,996 | 96.70 | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) |
+| 0 | +2 after a match | 2,392 | 96.28 | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) |
+| 0 | +3 or later | 8,935 | 96.17 | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) |
+| 10 | before the first match | 4,333 | 94.92 | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) |
+| 10 | +1 after a match | 3,183 | 96.29 | -0.09 (-3/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) |
+| 10 | +2 after a match | 2,568 | 95.95 | -0.27 (-7/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | -0.08 (-2/+0) | -0.08 (-2/+0) |
+| 10 | +3 or later | 9,416 | 96.28 | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) | 0.00 (-0/+0) |
+
+Scenarios A and B alone show the same pattern (at r = 10% hard: A -1 token at +1; B -2 at +1, -7/+1 at +2; soft: B -2 at +2 for
+strengths 3 and 4, nothing else). **Invariant**: tokens before the first match of their sentence differ from the no-glossary
+tags in 0 of 482,839 comparisons (all scenarios and systems).
+
+#### E, gold v2 dev (one target per sentence; type-level glossaries of target forms, wrong entry = the other class)
+
+| Coverage | System | covered r=0 | covered r=10 | covered r=30 | overall r=0 | overall r=10 | overall r=30 | swaps r=0 | swaps r=10 | swaps r=30 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 30% | no glossary | 98.04 | 97.77 | 97.11 | - | - | - | 14.73 | 14.73 | 14.73 |
+| 30% | hard | 97.06 | 84.40 | 66.88 | -0.20 [-0.46, +0.05] | -2.38 [-3.07, -1.67] | -4.66 [-5.71, -3.65] | +8.18 | +73.65 | +157.12 |
+| 30% | soft 1.5 | 98.53 | 97.49 | 98.39 | +0.10 [0.00, +0.26] | -0.05 [-0.24, +0.10] | +0.20 [+0.05, +0.41] | 0.00 | +3.27 | -3.27 |
+| 30% | soft 4 | 98.28 | 96.10 | 98.07 | +0.05 [-0.10, +0.21] | -0.30 [-0.66, +0.05] | +0.15 [-0.15, +0.44] | 0.00 | +4.91 | 0.00 |
+| 100% | no glossary | 97.41 | 97.41 | 97.41 | - | - | - | 14.73 | 14.73 | 14.73 |
+| 100% | hard | 97.25 | 86.25 | 68.85 | -0.10 [-0.86, +0.62] | -6.84 [-8.36, -5.48] | -17.50 [-19.33, -15.77] | +11.46 | +234.04 | +585.92 |
+| 100% | soft 1.5 | 98.30 | 97.82 | 97.90 | +0.55 [+0.20, +0.94] | +0.25 [-0.11, +0.63] | +0.30 [+0.05, +0.59] | -4.91 | +1.64 | -1.64 |
+| 100% | soft 4 | 98.71 | 97.73 | 95.79 | +0.79 [+0.25, +1.33] | +0.20 [-0.40, +0.77] | -0.99 [-1.73, -0.30] | -9.82 | +6.55 | +44.19 |
+
+(The swap columns are changes against no glossary. At r = 0 the entry of a form is its majority class, so the minority
+occurrences of forms that occur as both noun and verb are "wrong" even then; that is why the hard system loses on the covered
+targets at r = 0. The full table with every strength is printed by the command.)
+
+**C, inflection from gold lemmas** (725 lemma entries, hard; recall = found, precision = found targets whose gold class is allowed by the matched form):
+
+| Targets | n | found % | generated form % | precision % | no glossary % | hard glossary % |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Noun, inflected form | 236 | 95.34 | 93.64 | 99.56 | 99.15 | 99.58 |
+| Noun, base form | 515 | 100.00 | 0.00 | 100.00 | 97.28 | 99.81 |
+| Verb, inflected form | 227 | 54.63 | 51.54 | 97.58 | 96.92 | 96.04 |
+| Verb, base form | 240 | 100.00 | 0.00 | 100.00 | 98.75 | 100.00 |
+
+Inflected targets that no entry found are the irregular and the longer doubling forms, as documented: `bought (buy)`, `built (build)`,
+`clergymen (clergyman)`, `committed (commit)`, `crept (creep)`, `drawn (draw)`, `fell (fall)`, `felt (feel)`, `found (find)`,
+`heard (hear)`, `held (hold)`, `kt (knot)` (first twelve in ordinal order).
+
+**D, case sensitivity** (27 acronym entries, hard; over the scored tokens of open dev and gold v2 dev):
+
+| Tokens | n | no glossary right | insensitive matched | forced wrong | right to wrong | right | sensitive matched | forced wrong | right to wrong | right |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| acronym tokens (all capitals) | 65 | 59 | 65 | 1 | 0 | 64 | 65 | 1 | 0 | 64 |
+| homograph tokens (other letter case) | 263 | 257 | 263 | 256 | 250 | 7 | 0 | 0 | 0 | 257 |
+
+**G, phrasal verbs** (915 distinct candidates, hard mode; covered = head and second token; "change vs R0" on the covered tokens, points, paired 95% interval; R0 = the library default of the time, `None`; R1 = second token limited to ADP, ADV, PART; R2 = second token not VERB or AUX):
+
+| coverage % | wrong % | System | covered tokens | covered | head | second token | change vs R0 (covered) |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 30 | 0 | no glossary | 756 | 95.37 | 94.97 | 95.77 | - |
+| 30 | 0 | R0 | 756 | 96.43 | 97.09 | 95.77 | - |
+| 30 | 0 | R1 | 756 | 97.35 | 97.09 | 97.62 | +0.93 [+0.25, +1.70] |
+| 30 | 0 | R2 | 756 | 96.43 | 97.09 | 95.77 | 0.00 [0.00, 0.00] |
+| 30 | 10 | no glossary | 742 | 96.09 | 95.69 | 96.50 | - |
+| 30 | 10 | R0 | 742 | 92.59 | 89.22 | 95.96 | - |
+| 30 | 10 | R1 | 742 | 93.26 | 89.22 | 97.30 | +0.67 [-0.15, +1.61] |
+| 30 | 10 | R2 | 742 | 92.72 | 89.22 | 96.23 | +0.13 [0.00, +0.44] |
+| 30 | 30 | no glossary | 716 | 94.83 | 94.97 | 94.69 | - |
+| 30 | 30 | R0 | 716 | 81.56 | 68.44 | 94.69 | - |
+| 30 | 30 | R1 | 716 | 82.54 | 68.44 | 96.65 | +0.98 [+0.27, +1.96] |
+| 30 | 30 | R2 | 716 | 81.56 | 68.44 | 94.69 | 0.00 [0.00, 0.00] |
+| 100 | 0 | no glossary | 2,344 | 95.39 | 95.73 | 95.05 | - |
+| 100 | 0 | R0 | 2,344 | 95.99 | 96.84 | 95.14 | - |
+| 100 | 0 | R1 | 2,344 | 96.89 | 96.84 | 96.93 | +0.90 [+0.47, +1.37] |
+| 100 | 0 | R2 | 2,344 | 96.03 | 96.84 | 95.22 | +0.04 [0.00, +0.14] |
+| 100 | 10 | no glossary | 2,340 | 95.38 | 95.73 | 95.04 | - |
+| 100 | 10 | R0 | 2,340 | 90.85 | 86.67 | 95.04 | - |
+| 100 | 10 | R1 | 2,340 | 91.79 | 86.67 | 96.92 | +0.94 [+0.49, +1.45] |
+| 100 | 10 | R2 | 2,340 | 90.90 | 86.67 | 95.13 | +0.04 [0.00, +0.14] |
+| 100 | 30 | no glossary | 2,342 | 95.39 | 95.73 | 95.05 | - |
+| 100 | 30 | R0 | 2,342 | 80.83 | 66.87 | 94.79 | - |
+| 100 | 30 | R1 | 2,342 | 81.73 | 66.87 | 96.58 | +0.90 [+0.49, +1.34] |
+| 100 | 30 | R2 | 2,342 | 80.87 | 66.87 | 94.88 | +0.04 [0.00, +0.14] |
+
+#### Application of the two pre-registered rules
+
+Soft strength rule, scenario AB at 30% coverage (accuracy changes in points, swap change per 1,000, covered-token accuracy in %):
+
+| Strength | accuracy r=10 | swaps r=10 | accuracy r=30 | covered r=0 | admissible |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 0.5 | +0.03 | -0.22 | +0.01 | 98.05 | yes |
+| 1 | +0.06 | -0.89 | +0.01 | 98.17 | yes |
+| 1.5 | +0.07 | -1.12 | +0.01 | 98.30 | yes |
+| 2 | +0.09 | -1.34 | -0.02 | 98.40 | yes |
+| 3 | +0.12 | -2.01 | -0.05 | 98.45 | yes |
+| 4 | +0.07 | -0.22 | -0.10 | 98.57 | yes |
+
+**Decision (soft strength): 4.** All six strengths are admissible; the highest covered-token accuracy at r = 0 is the
+grid maximum, and the next strength (3) is 0.12 points below it, outside the 0.1 tie. `GlossaryOptions.DefaultSoftStrength`
+is set to this value (this is the one place where the number is stated; other documents link here). The default mode stays
+**hard**. Observations that are **not** part of the rule and did not change it: 4 is the edge of the grid, so the rule cannot
+say whether more would be better; with a wrong share of 30% at 100% coverage a strength of 4 costs accuracy and adds
+confident swaps (the AB 100% table: -0.43 points and +4.24 swaps per 1,000, intervals excluding 0), which strengths up to 2 do
+not; at the primary scenario's own 30% coverage the margin of 4 over 3 is small (covered accuracy at r = 0: 0.12 points). A user
+who doubts the glossary's quality can set a lower `SoftStrength`.
+
+**Decision (non-head rule): the bar is met by R1**, so the non-nominal default changes from `None` to the particles-only rule
+(`GlossaryConstraints.NonNominalRule` is now `ParticlesOnly`). At coverage 100% against R0 the covered-token accuracy changes by
++0.90 points at r = 0 (paired interval [+0.47, +1.37], bar +0.5 with the interval above 0) and by +0.94 at r = 10% (bar: not
+lower); R2 gains +0.04 [0.00, +0.14] and does not meet the bar. The gain is the second token of the pair (about 95 to 97%) and
+is the same with 30% wrong entries, because the rule does not depend on the head entry. Scope of the evidence, not a result of
+the rule: the data are two-token phrasal verbs (gold VERB followed by ADP, ADV or PART) with the head on the first token
+(about 900 distinct candidates, 2,344 covered tokens at 100%). The shipped scope of the rule is narrower than the default it
+replaced: it applies only to an entry whose tags contain VERB, whose term has exactly two tokens and whose head is the first
+token (the second token is then the non-head token), and every other non-head token of a non-noun term (such as `it` in
+`take it apart`) is left to the model, because other shapes (adjective phrases, longer verb phrases, a verb term with
+the head last) were not measured; `WithTokenTags` overrides it per token.
+
+Limits of this evaluation (as stated in advance): in-sample glossaries on one LLM-labeled split and the small gold v2 set; type-level
+matching, so the terms apply to every occurrence; punctuation types and `dr.`/`mr.` were not representable (parity paragraph);
+the effect on neighbors is small (F) because the model usually agrees with the glossary where it matters; no test or held-out
+figure was used.
+
+#### Consistency re-run with the adopted defaults
+
+After the two decisions were applied to the library (the non-head default and the default strength), the command was run
+again with the same seed and resamples, to see what the shipped state does. The rule was applied to every non-nominal entry
+in that run and narrowed afterwards (see the decision above), so the cells of wrong ADJ or other-noun-kind entries below were
+measured under the wider rule. Every figure above that does not involve a wrong
+entry of a non-nominal term is unchanged (all r = 0 cells, scenario B, E, C, D, and the right-entry rows), because the
+adopted rule only touches the non-head tokens of entries whose tags are not NOUN or PROPN, and in A and AB only the wrong
+entries (a VERB, ADJ or other-noun-kind tag) are such entries. Those cells move a little, mostly for the worse (the second
+token of a wrong compound entry is now pushed towards a particle). The pre-registered strength rule gives the **same
+decision** (all six strengths admissible, 4 chosen); its table changes only in the r = 30% column. The G comparison against
+R0 now compares R1 with itself, so it is not repeated.
+
+| Strength (AB, 30%) | accuracy r=10 | swaps r=10 | accuracy r=30 | covered r=0 | admissible |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 0.5 | +0.03 | -0.22 | 0.00 | 98.05 | yes |
+| 1 | +0.06 | -0.89 | 0.00 | 98.17 | yes |
+| 1.5 | +0.07 | -1.12 | 0.00 | 98.30 | yes |
+| 2 | +0.09 | -1.34 | -0.02 | 98.40 | yes |
+| 3 | +0.12 | -2.01 | -0.06 | 98.45 | yes |
+| 4 | +0.07 | -0.22 | -0.12 | 98.57 | yes |
+
+Changed cells of the shipped state (overall accuracy change in points with the paired interval; swaps per 1,000 as the change
+against no glossary): AB at 30% coverage, hard: -1.41 [-1.65, -1.17] at r = 10% and -3.35 [-3.64, -3.03] at r = 30%; soft 4:
++0.07 [-0.02, +0.17] and -0.12 [-0.21, -0.04]. AB at 100%, hard: -3.80 [-4.21, -3.40] and -13.35 [-13.94, -12.74]; soft 4:
++0.08 [-0.04, +0.20] and -0.50 [-0.63, -0.37], with +4.46 [+0.98, +8.01] swaps at r = 30%. The at-risk first tokens of scenario A
+with a hard glossary and wrong entries lose accuracy (A at 100% coverage: 88.60 at r = 10% and 77.01 at r = 30%), soft strength 4
+keeps most of it (93.83 and 92.90). The history pattern (F) is unchanged apart from the tokens of the wrong compound entries
+(A at r = 10%, hard: -2 tokens at +1).
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

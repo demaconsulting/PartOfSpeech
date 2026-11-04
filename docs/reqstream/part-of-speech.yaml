@@ -96,6 +96,38 @@ sections:
           - PartOfSpeech_Tagging_Constraint_AllowedSetForcesTag
           - PartOfSpeech_Tagging_Constraint_BoostShiftsCloseDecision
 
+      - id: PartOfSpeech-Lib-Glossary
+        title: >-
+          A caller shall be able to hand the tagger a glossary of single-word and multiword terms with the tags that
+          the head word of each term may take, in hard mode (the head word takes only those tags) or soft mode (those
+          tags are preferred and the model can still disagree), and the tagger shall apply it to every occurrence of
+          the terms in the text.
+        tags: [system]
+        justification: |
+          In technical text the costly error is a confident wrong tag on a domain term, and the glossary of the domain
+          already knows the right answer; a caller must be able to state it once, without retraining, and choose
+          between certainty (a curated glossary) and a safeguard against wrong entries (a glossary of unknown
+          quality).
+        children:
+          - PartOfSpeech-Tagging-Glossary
+        tests:
+          - PartOfSpeech_Glossary_HardEntry_ForcesHeadTag
+          - PartOfSpeech_Glossary_SoftEntry_PreferenceShiftsCloseDecision
+          - PartOfSpeech_Glossary_DocumentedExamples_GiveTheClaimedResults
+
+      - id: PartOfSpeech-Lib-GlossaryResults
+        title: >-
+          Each result shall report the glossary terms that were found, with the entry (and its definition), the tokens,
+          the head token and the offsets into the original string.
+        tags: [system]
+        justification: |
+          Callers highlight terms, show their definitions and review what the glossary decided, which needs the match
+          and not only the tag.
+        children:
+          - PartOfSpeech-Tagging-GlossaryResults
+        tests:
+          - PartOfSpeech_Glossary_Results_ReportMatchesOnTokensAndSentences
+
       - id: PartOfSpeech-Lib-LoadModel
         title: >-
           The library shall load a weights file from a stream and shall reject a file that is damaged, is not a weights
@@ -138,8 +170,10 @@ sections:
         children:
           - PartOfSpeech-Tagging-Determinism
           - PartOfSpeech-Tagging-Tagger-ThreadSafe
+          - PartOfSpeech-Tagging-Glossary-ThreadSafe
         tests:
           - PartOfSpeech_Concurrency_ParallelTagging_MatchesSequential
+          - PartOfSpeech_Concurrency_GlossaryTagging_MatchesSequential
 
       - id: PartOfSpeech-Lib-Throughput
         title: Tagging pre-tokenized text shall exceed 50,000 tokens per second on one thread.
@@ -157,6 +191,22 @@ sections:
           - PartOfSpeech-Tagging-FeatureExtractor-NoAllocation
         tests:
           - PartOfSpeech_Performance_SingleThread_ExceedsFiftyThousandTokensPerSecond
+
+      - id: PartOfSpeech-Lib-GlossaryThroughput
+        title: >-
+          Tagging pre-tokenized text with a glossary of 10,000 entries shall exceed 50,000 tokens per second on one
+          thread.
+        tags: [system, performance]
+        justification: |
+          A glossary must not make tagging impractically slow, whatever its size. The bound is the one of tagging
+          without a glossary, enforced in runs without code coverage and relaxed in a run with code coverage in the same
+          way (see the verification document); the unit requirements prove that matching itself is far faster and
+          allocates nothing per token.
+        children:
+          - PartOfSpeech-Tagging-Glossary-Throughput
+          - PartOfSpeech-Tagging-Glossary-NoAllocation
+        tests:
+          - PartOfSpeech_Performance_GlossaryTagging_ExceedsFiftyThousandTokensPerSecond
 
       - id: PartOfSpeech-Lib-NoRuntimeDependencies
         title: The package shall have no runtime package dependency.
@@ -499,6 +549,7 @@ sections:
           - PartOfSpeech-ModelTrainer-TrainingSettings
           - PartOfSpeech-ModelTrainer-DevMetrics
           - PartOfSpeech-ModelTrainer-GlossaryExperiment
+          - PartOfSpeech-ModelTrainer-GlossaryEvaluation
         tests:
           - PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora
 

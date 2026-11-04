@@ -79,8 +79,10 @@ target framework, including .NET Framework.
   the runtime shows up as a measured difference. `Calibration.Fit` chooses the temperature with the minimum
   log-likelihood on the open development split. `compare` runs the paired bootstrap between two weights files.
 - **Glossary experiment** (`GlossaryExperiment`, `GlossaryProbe`, `GlossaryFeatures`): see _Glossary Decision_.
+- **Glossary evaluation** (`GlossaryEvaluation`, `GlossaryEvaluationReport`): see _Glossary Evaluation_.
 - **Commands** (`Program.cs`): `train` (with experiment overrides, `--check`, `--update-config`, `--eval`, `--log`,
-  `--calibrate`, `--checkpoints`), `eval`, `calibrate`, `compare`, `glossary-probe` and `glossary-experiment`; the exit
+  `--calibrate`, `--checkpoints`), `eval`, `calibrate`, `compare`, `glossary-probe`, `glossary-experiment` and
+  `glossary-eval` (`--seed`, `--resamples`; it takes no weights or data path and appends no run-log row); the exit
   code is 0 for success, 1 for stale weights and 2 for a usage or data error. Overrides are rejected together with
   `--check` and `--update-config`. An experiment (overrides or `--calibrate`) must name `--output`, so it can never
   overwrite the shipped weights (`OutputGuard`, which fails fast, before the corpora are loaded, with exit code 2). The
@@ -147,18 +149,52 @@ These are development figures; they say nothing about held-out data.
 The later glossary mode (`TokenConstraint.Prefer`) needs to know whether the model should learn how far to trust a
 glossary. The question was answered by an experiment on development data with thresholds fixed beforehand: a model M1
 with trained "glossary says X" features (trained with simulated hints on 30% of the lexicon-ambiguous tokens, 10% of
-them wrong) against the shipped model M0 with a score boost on type-level simulated glossaries. M1 lost 0.22 accuracy
-points without a glossary (the rule allows 0.05) and did not beat the boost on covered tokens or on the neighbors of
+them wrong) against the shipped model M0 with a score boost on type-level simulated glossaries. M1 lost more accuracy
+without a glossary than the rule allows and did not beat the boost on covered tokens or on the neighbors of
 covered tokens. (The eligibility of a training token for a hint uses the allowed tags of the token as written, the same
 mask as the runtime decoder, so a capitalized token also allows PROPN and X; a first run that lower-cased the token was
 corrected and repeated, with the same decision.) **Decision: boost only.** The feature set stays at version 1 and the
 library's extractor and decoder are
-unchanged. The measured boost curve is the starting point for calibrating the boosts: up to about two temperatures
+unchanged. The measured boost curve was the starting point for calibrating the boosts: up to about two temperatures
 (a log-odds shift of 2) give most of the benefit of right entries and cost at most 0.5 points on wrong entries at 10%
-wrong; four temperatures start to raise harmful errors; eight or more behave like a hard constraint. The experiment code
+wrong; larger boosts cost more on wrong entries, and eight or more behave like a hard constraint. This curve is not the
+final word on the default: the strength that the library ships as `GlossaryOptions.DefaultSoftStrength` was chosen
+later, by a rule that was fixed beforehand, in the evaluation of the real glossary (see _Glossary Evaluation_ and
+section E9 of `RUN-LOG.md`), where the cost of that choice on wrong entries is also recorded. The experiment code
 (`glossary-probe`, `glossary-experiment`, `GlossaryFeatures`, and the optional `glossary` parameter of the trainer, which
 is `null` for the shipped model and does not change its pinned hash) stays in the tool so that the decision can be
 reproduced.
+
+### Glossary Evaluation
+
+The glossary that the library ships (see _Glossary Design_) was measured with the command `glossary-eval` before its
+defaults were fixed. The evaluation tags the development data through the real `Tagger` with real `Glossary` objects, so
+what is measured is what a caller gets. It reads only the two development sets, through `DevSets` and `DataGuard`, and
+has no path parameter at all (a test checks that the sources contain no file API and no data file name), so it cannot
+open a held-out set. Its protocol, the simulated glossaries and the two decision rules were written into `RUN-LOG.md`
+before the evaluation code existed, and the results and decisions are in section E9 of the same file; this design does
+not repeat any measured figure.
+
+- **Simulated glossaries**, all reproducible from a seed (`DeterministicRandom`, types sorted before they are shuffled):
+  noun compounds taken from runs of gold tags in the open development set (with an at-risk subset whose first word the
+  lexicon also lists as a verb), single technical words (the phase 3 eligibility), lemmas of the gold development
+  targets for inflection, all-capital acronyms against their lower-case homographs for letter case, the target forms of
+  the gold development set for the head effect, and two-word phrasal verbs for the rule for the second word. A
+  share of the entries is made wrong by replacing the head tag with another allowed class. A term that cannot be an entry
+  (no letter or digit, or split by the tokenizer) is skipped.
+- **Systems** compared on identical tokens: no glossary, hard mode and soft mode at each strength of a grid; the
+  default soft strength of the library must be a member of the grid (a test checks it).
+- **Metrics**: accuracy over all tokens and over categories (every scored token is in exactly one: head right, head wrong,
+  non-head, neighbor, uncovered), harmful errors as in the model selection but with the baseline's decision count as
+  denominator, and confident noun-verb swaps counted even when a hard constraint leaves one candidate (so the cost of a
+  wrong hard entry is visible), each with a paired bootstrap by document. A parity check proves that the real glossary
+  path gives the tags of the hand-built constraint path of the phase 3 probe, and an invariant check proves that the tokens
+  before the first match of a sentence are unchanged.
+- **Decision rules**, implemented as functions of the result tables (`ChooseSoftStrength`, `ChooseNonHeadRule`) and
+  tested on synthetic tables: the default soft strength is chosen among the admissible strengths of one pre-registered
+  scenario, and the particle rule for the second word of a two-word verb term with the head first was adopted because its
+  bar was met; the shipped scope of that rule is the measured shape (two-token verb terms, head first), and other shapes
+  were not measured.
 
 ### Error Handling
 
@@ -179,7 +215,8 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
 - **FeatureExtractor**, **DecoderWorkspace** and **Lexicon** (the same extraction and the same `AllowedTags` rules as at
   run time), **PerceptronModel** (`Load`, `ToUncompressedImage`), **PerceptronModelWriter**, **BinaryFormat**
   (header patching for the temperature), **Upos**; **Tagger**, **TagDecoder** and **TokenConstraint** for the evaluation
-  and the glossary experiment through the real decoder. All of these are internal and reached through
+  and the glossary experiment through the real decoder; **Glossary** (with its builder, entry, options and match types)
+  for the glossary evaluation through the real tagger. All of these are internal and reached through
   `InternalsVisibleTo` (the assembly name `DemaConsulting.PartOfSpeech.Trainer` is reserved there).
 - The base class library and, for `training.json`, System.Text.Json (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv` and `data/silver/silver.tsv`, and the two

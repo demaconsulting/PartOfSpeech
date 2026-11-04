@@ -3,7 +3,7 @@ namespace DemaConsulting.PartOfSpeech;
 /// <summary>
 ///     Part-of-speech tagging for English text: a tokenizer, a sentence splitter and a greedy averaged-perceptron tagger
 ///     that assigns one of the 17 Universal POS tags to every token, with a confidence, ranked alternatives and
-///     optional per-token constraints. This is the whole public API of the package
+///     optional per-token constraints and glossaries of domain terms. This is the whole public API of the package
 ///     <c>DemaConsulting.PartOfSpeech</c>.
 /// </summary>
 /// <remarks>
@@ -23,7 +23,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     returns <see cref="TaggedSentence"/> objects of <see cref="TaggedToken"/> items; each token carries its
 ///     <see cref="Upos"/> tag, a confidence, and its ranked alternatives as <see cref="TagScore"/> items.
 ///     <see cref="TaggerOptions"/> sets how many alternatives are reported. <see cref="TokenConstraint"/> lets you
-///     restrict or nudge the tag of one token. <see cref="UposSet"/> is an allocation-free set of tags, and
+///     restrict or nudge the tag of one token, and <see cref="Glossary"/> (with <see cref="GlossaryBuilder"/>,
+///     <see cref="GlossaryEntry"/>, <see cref="GlossaryOptions"/>, <see cref="GlossaryMode"/> and
+///     <see cref="GlossaryMatch"/>) applies a whole list of domain terms to a text. <see cref="UposSet"/> is an allocation-free set of tags, and
 ///     <see cref="UposExtensions"/> converts between <see cref="Upos"/> values and the Universal Dependencies spelling
 ///     (<c>NOUN</c>, <c>CCONJ</c>, <c>X</c>).
 ///     </para>
@@ -214,11 +216,77 @@ namespace DemaConsulting.PartOfSpeech;
 ///     returned (the examples use <c>using</c>), and the tagger does not close it itself.
 ///     </para>
 ///     <para>
+///     ## Glossary
+///     </para>
+///     <para>
+///     A <see cref="Glossary"/> is a set of domain terms that you pass to a <c>Tag</c> call, for example the technical
+///     names of a maintenance manual. A general model reads <c>bleed valve</c> as a verb and a noun because <c>bleed</c> is
+///     also a verb; the glossary states the answer once and the tagger applies it to every occurrence. You create entries
+///     (<see cref="GlossaryEntry"/>: a term of one or more words, the <see cref="Upos"/> tags that its head word may take,
+///     and an optional definition), collect them with a <see cref="GlossaryBuilder"/> (or
+///     <see cref="Glossary.Create(IEnumerable{GlossaryEntry}, GlossaryOptions?)"/>), and pass the glossary to
+///     <see cref="Tagger.Tag(string, Glossary)"/>, <see cref="Tagger.Tag(Sentence, Glossary, IReadOnlyList{TokenConstraint}?)"/>
+///     or <see cref="Tagger.Tag(IReadOnlyList{string}, Glossary, IReadOnlyList{TokenConstraint}?)"/>. The glossary belongs to
+///     the call, not to the tagger, so <see cref="Tagger.Default"/> can serve any number of glossaries.
+///     </para>
+///     <list type="bullet">
+///     <item><description>
+///     **Matching.** A sentence is searched from left to right; at each position the longest term that matches wins, and
+///     matches never overlap (<c>bleed valve</c> beats <c>valve</c>). A term is split into tokens by the tokenizer, like
+///     the text, so <c>bleed-valve</c> is one token and does not match <c>bleed valve</c>, and a pre-tokenized token with a
+///     period stuck to it (<c>valve.</c>) does not match <c>valve</c>. <see cref="Glossary.FindMatches(Sentence)"/> finds the
+///     terms without tagging, for example to show their definitions.
+///     </description></item>
+///     <item><description>
+///     **Inflection.** A glossary lists lemmas and text has plurals and verb forms, so the regular English forms of the
+///     <em>head word</em> match too (<c>valves</c>, <c>isolated</c>, <c>isolating</c>), with the tags that fit the form. Irregular
+///     forms (<c>bled</c>) are listed with <see cref="GlossaryEntry.WithVariants(string[])"/>; inflection can be switched off for
+///     the glossary (<see cref="GlossaryOptions.Inflect"/>) or an entry (<see cref="GlossaryEntry.WithInflection(bool)"/>).
+///     </description></item>
+///     <item><description>
+///     **Letter case.** Terms match in any letter case by default, because a term at the start of a sentence is
+///     capitalized. An acronym whose lower-case spelling is another word needs a case-sensitive entry
+///     (<see cref="GlossaryEntry.WithCaseSensitive(bool)"/>): the entry <c>IT</c> then leaves the pronoun <c>it</c> alone.
+///     </description></item>
+///     <item><description>
+///     **Modes.** In <see cref="GlossaryMode.Hard"/> mode (the default) the head word can only take the tags of the entry. In
+///     <see cref="GlossaryMode.Soft"/> mode the tags get a preference of <see cref="GlossaryOptions.SoftStrength"/> times the
+///     model temperature, so the model can still disagree when it is sure; use it for a glossary of unknown quality. A wrong
+///     entry costs accuracy in hard mode, which is why soft mode exists; the measured cost and the effect of the strength are
+///     in section E9 of https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md
+///     (simulated glossaries on development data).
+///     </description></item>
+///     <item><description>
+///     **Other words of a term.** The other words of a noun term (<c>bleed</c> in <c>bleed valve</c>) can no longer be a verb or an
+///     auxiliary. The second word of a two-word verb term whose head is the first word is limited to adposition, adverb and
+///     particle, which suits a phrasal verb: give <c>shut down</c> the head <c>WithHead(0)</c> (see <see cref="GlossaryEntry.WithHead(int)"/>), because
+///     its head is the first word. Every other word (for example <c>it</c> in <c>take it apart</c>) is left to the model, and
+///     <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/> sets the tags of one word explicitly.
+///     </description></item>
+///     <item><description>
+///     **Constraints.** A glossary is turned into per-token constraints, so a tag that it decides becomes history for the next
+///     tokens: the neighbors after a match can change, the tokens before the first match never do. Your own constraints, passed
+///     to the same call, are combined with those of the glossary; where the two allow no tag in common, yours win.
+///     </description></item>
+///     <item><description>
+///     **Results.** Every token of a match reports it (<see cref="TaggedToken.GlossaryMatch"/>), the head word is flagged
+///     (<see cref="TaggedToken.IsGlossaryHead"/>), and the sentence lists its matches in text order
+///     (<see cref="TaggedSentence.GlossaryMatches"/>) with the entry, the definition, the tokens and the offsets in the string.
+///     </description></item>
+///     <item><description>
+///     **Confidence.** A head word that a hard entry limits to one tag has the confidence exactly 1.0 and no alternatives: there
+///     was no choice, so the value does not say that the model is sure (see
+///     [Confidence and alternatives](#confidence-and-alternatives)). With several tags or in soft mode the confidence is the
+///     softmax over the tags that remain, so a soft preference shows in the number.
+///     </description></item>
+///     </list>
+///     <para>
 ///     ## Thread safety
 ///     </para>
 ///     <para>
 ///     A <see cref="Tagger"/> is immutable after creation and may be used from any number of threads at once; share one
-///     instance. All result types and <see cref="Tokenizer"/> are immutable or stateless and are also safe to share.
+///     instance. A <see cref="Glossary"/> and all result types are immutable too, and <see cref="Tokenizer"/> is stateless, so
+///     they are also safe to share. A <see cref="GlossaryBuilder"/> is not thread-safe.
 ///     </para>
 ///     <para>
 ///     ## Errors
@@ -227,7 +295,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     The same rules apply to every member, and each member page lists its own exceptions. A <c>null</c> argument
 ///     throws <see cref="ArgumentNullException"/>. A value of the wrong kind throws <see cref="ArgumentException"/>: a
 ///     token that is empty or contains white space, a constraint list that does not have one element per token, an
-///     empty tag set for <see cref="TokenConstraint.Only(UposSet)"/>. A number or enum value out of range throws
+///     empty tag set for <see cref="TokenConstraint.Only(UposSet)"/>, a glossary term without a letter or a digit or two
+///     entries for the same term. A number or enum value out of range throws
 ///     <see cref="ArgumentOutOfRangeException"/> (a <see cref="TaggerOptions.MaxAlternatives"/> outside 0 to 16, a tag
 ///     that is not one of the 17 defined values, a boost or penalty that is not finite and greater than zero). A
 ///     weights or lexicon file that is damaged, of an unsupported version or built for another feature set throws

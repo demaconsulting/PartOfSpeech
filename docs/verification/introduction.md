@@ -28,7 +28,8 @@ constituent software items, specifically:
 - **ModelTrainer (Unit)** — The build-time tool that trains the embedded weights and checks that they are current
 - **Tokenization (Subsystem)** — with the **Tokenizer** and **SentenceSplitter** units
 - **ModelStorage (Subsystem)** — with the **BinaryFormat**, **Lexicon**, **PerceptronModel** and **EmbeddedModel** units
-- **Tagging (Subsystem)** — with the **FeatureExtractor**, **TagDecoder**, **TokenConstraint** and **Tagger** units
+- **Tagging (Subsystem)** — with the **FeatureExtractor**, **TagDecoder**, **TokenConstraint**, **Glossary** and
+  **Tagger** units
 
 The following OTS items are also covered:
 

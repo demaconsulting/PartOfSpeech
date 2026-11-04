@@ -36,10 +36,11 @@ software items, specifically:
   - **Lexicon (Unit)** — Reads, searches and writes the compiled lexicon and applies the token-shape rules
   - **PerceptronModel (Unit)** — Reads, writes and scores with the perceptron weights
   - **EmbeddedModel (Unit)** — Lazy, thread-safe access to the data embedded in the package
-- **Tagging (Subsystem)** — Assigns tags with confidences, alternatives and constraints
+- **Tagging (Subsystem)** — Assigns tags with confidences, alternatives, constraints and glossary terms
   - **FeatureExtractor (Unit)** — The single definition of the hashed features
   - **TagDecoder (Unit)** — The greedy decoder with lexicon restriction and softmax confidence
   - **TokenConstraint (Unit)** — The caller's restriction or preference for the tag of one token
+  - **Glossary (Unit)** — The caller's domain terms with allowed tags, their matching and their constraints
   - **Tagger (Unit)** — The public entry point, its options and the result types
 - **Data assets and tools (not software items)** — Training corpora, evaluation sets, the lexicon, the third-party
   notice and the package license, covered at system level together with the build-time tools that produce and compile
@@ -82,7 +83,7 @@ diagram or the prose below.
 The system has two units directly under it (`Upos`, the tag vocabulary that every part uses, and `ModelTrainer`, the
 build-time tool that trains the embedded weights) and three subsystems:
 `Tokenization` (text to sentences and tokens), `ModelStorage` (the binary formats of the weights and the lexicon and the
-embedded lexicon and weights) and `Tagging` (features, decoding, constraints and the public `Tagger`). The dependencies
+embedded lexicon and weights) and `Tagging` (features, decoding, constraints, glossaries and the public `Tagger`). The dependencies
 between them have no unit-level call cycle, but the subsystem graph is not acyclic: `Tagging` uses `Tokenization`,
 `ModelStorage` and `Upos`; `ModelStorage` uses `Upos` and, for one constant (`EmbeddedModel` reads
 `FeatureExtractor.FeatureSetVersion`), `Tagging`; `Tokenization` uses nothing else. `ModelTrainer` is not part of the
@@ -122,6 +123,15 @@ src/DemaConsulting.PartOfSpeech/
 │   ├── ScoreSlice.cs           — Read-only list over the alternatives array
 │   ├── TagDecoder.cs           — Greedy decoder
 │   ├── TokenConstraint.cs      — Per-token constraint value
+│   ├── Glossary.cs             — Immutable set of domain terms, matching of a sentence
+│   ├── GlossaryBuilder.cs      — Collection-initializer builder
+│   ├── GlossaryEntry.cs        — One term with its tags, head, definition and case, mode and inflection settings
+│   ├── GlossaryOptions.cs      — Glossary-wide settings and the hard or soft mode
+│   ├── GlossaryMatch.cs        — Result type: one found term
+│   ├── GlossaryIndex.cs        — Trie matcher over the folded tokens of every spelling
+│   ├── GlossaryWorkspace.cs    — Per-thread scratch memory of the matcher
+│   ├── GlossaryInflector.cs    — Regular noun and verb forms of the head word
+│   ├── GlossaryConstraints.cs  — Per-token constraints of a glossary, compiled for one tagger
 │   ├── Tagger.cs               — Public entry point
 │   ├── TaggerOptions.cs        — Options
 │   ├── TaggedSentence.cs       — Result type
@@ -134,21 +144,23 @@ src/DemaConsulting.PartOfSpeech/
 
 `DecoderWorkspace.cs` and `ScoreSlice.cs` are internal helpers of the decoder and belong to the `TagDecoder` unit.
 `Token.cs` and `Sentence.cs` belong to the `Tokenizer` unit; `LexiconWriter.cs` to `Lexicon`;
-`PerceptronModelWriter.cs` to `PerceptronModel`; and `TaggerOptions.cs`, `TaggedSentence.cs`, `TaggedToken.cs` and
-`TagScore.cs` to `Tagger`.
+`PerceptronModelWriter.cs` to `PerceptronModel`; the nine `Glossary*.cs` files to `Glossary`; and `TaggerOptions.cs`,
+`TaggedSentence.cs`, `TaggedToken.cs` and `TagScore.cs` to `Tagger`.
 
 The unit `ModelTrainer` is the tool project `tools/DemaConsulting.PartOfSpeech.Trainer/`, which is not shipped:
 
 ```text
 tools/DemaConsulting.PartOfSpeech.Trainer/
-├── Program.cs                  — Command line (train, eval, calibrate, compare, glossary-probe, glossary-experiment)
+├── Program.cs                  — Command line (train, eval, calibrate, compare, glossary-probe, glossary-experiment,
+│                                 glossary-eval)
 ├── ConfigFile.cs               — Reads and writes training.json (System.Text.Json)
 ├── RunLog.cs                   — Formats the rows of the run log table
 ├── training.json               — The selected, committed configuration (including imageSha256)
 ├── README.md                   — How to run it, the determinism contract
-├── RUN-LOG.md                  — The pre-registered rule, the dev-only run log and the glossary decision
+├── RUN-LOG.md                  — The pre-registered rules, the dev-only run log and the glossary decisions
 ├── Training/                   — Corpus reader, random generator, integer averaged perceptron, trainer, builder, predictor
-└── Evaluation/                 — Data guard, development sets, metrics, bootstrap, calibration, glossary experiments
+└── Evaluation/                 — Data guard, development sets, metrics, bootstrap, calibration, glossary experiment and
+                                  glossary evaluation
 ```
 
 Further top-level folders hold files that are not software items and are therefore not part of the software
@@ -202,7 +214,8 @@ project, so the tests run the real code on every target framework) and the revie
 Test files follow the same tree as the sources: the subsystem tests are `Tokenization/TokenizationTests.cs`,
 `ModelStorage/ModelStorageTests.cs` and `Tagging/TaggingTests.cs`, the unit tests are named `{Unit}Tests.cs` in the
 folder of their subsystem (`UposTests.cs` for the unit directly under the system, and `ModelTrainer/ModelTrainerTests.cs`
-for the trainer), and the system tests are
+for the trainer; the unit `Glossary` has `GlossaryTests.cs`, `GlossaryMatchingTests.cs` and `GlossaryThroughputTests.cs`),
+and the system tests are
 `PartOfSpeechTests.cs` and `PartOfSpeechDataTests.cs`. The helpers `TestSupport/TinyModels.cs`, `TinyTrainer.cs` and
 `SyntheticModel.cs` build small and synthetic models for the tests and belong to the `Tagging` review-set.
 

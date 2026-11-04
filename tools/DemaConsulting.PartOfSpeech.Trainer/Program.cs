@@ -11,7 +11,8 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///         Commands: <c>train</c> (train, write the weights file, or with <c>--check</c> verify that the committed file is
 ///         current), <c>eval</c> (score a weights file on the development sets), <c>calibrate</c> (choose the softmax
 ///         temperature on the open development split), <c>compare</c> (paired bootstrap of two weights files) and
-///         <c>glossary-probe</c> (simulated glossaries on the open development split). The exit code is 0 on success, 1
+///         <c>glossary-probe</c> (simulated glossaries on the open development split) and <c>glossary-eval</c> (the dev-only
+///         evaluation of the <c>Glossary</c> API). The exit code is 0 on success, 1
 ///         when <c>train --check</c> finds the committed weights stale, and 2 for a usage or data error. Run
 ///         without arguments for the usage text.
 ///     </para>
@@ -81,6 +82,11 @@ Commands:
   glossary-experiment [--config FILE] [--seed N] [--m0-output FILE] [--m1-output FILE]
       Dev-only glossary decision (E8): trains the configured model (M0) and a model with trained glossary features (M1),
       compares score boosts on M0 with the features of M1 on simulated glossaries and prints the pre-registered decision.
+  glossary-eval [--seed N] [--resamples N]
+      Dev-only evaluation of the Glossary API (E9): simulated glossaries (noun compounds, single words, inflection, acronym
+      case, gold v2 head effect, history effect, non-head rule) through Tagger.Tag(tokens, glossary) with the embedded model;
+      hard and soft modes against no glossary, 0/10/30% wrong entries, paired bootstrap by document. Reads the two
+      development files only and takes no path.
 
 Exit codes: 0 success, 1 stale weights (train --check), 2 usage or data error.";
 
@@ -115,6 +121,8 @@ Exit codes: 0 success, 1 stale weights (train --check), 2 usage or data error.";
                     return Probe(line, root);
                 case "glossary-experiment":
                     return GlossaryDecision(line, root);
+                case "glossary-eval":
+                    return GlossaryEvaluate(line, root);
                 default:
                     throw new ArgumentException($"Unknown command '{line.Command}'.");
             }
@@ -348,8 +356,8 @@ Exit codes: 0 success, 1 stale weights (train --check), 2 usage or data error.";
     {
         var a = DevEvaluator.CreateTagger(File.ReadAllBytes(RequireValue(line, "--a")));
         var b = DevEvaluator.CreateTagger(File.ReadAllBytes(RequireValue(line, "--b")));
-        var resamples = int.Parse(line.Value("--resamples") ?? Bootstrap.DefaultResamples.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
-        var seed = ulong.Parse(line.Value("--seed") ?? "1", CultureInfo.InvariantCulture);
+        var resamples = ParseInt32(line.Value("--resamples"), "--resamples", Bootstrap.DefaultResamples);
+        var seed = ParseUInt64(line.Value("--seed"), "--seed", 1UL);
         var dev = DevData.Load(root);
         var resultA = DevEvaluator.Evaluate(a, dev.Open, dev.Gold);
         var resultB = DevEvaluator.Evaluate(b, dev.Open, dev.Gold);
@@ -370,8 +378,34 @@ Exit codes: 0 success, 1 stale weights (train --check), 2 usage or data error.";
     private static int Probe(CommandLine line, string root)
     {
         var file = File.ReadAllBytes(RequireValue(line, "--weights"));
-        var seed = ulong.Parse(line.Value("--seed") ?? "1", CultureInfo.InvariantCulture);
+        var seed = ParseUInt64(line.Value("--seed"), "--seed", 1UL);
         foreach (var text in GlossaryProbe.Run(file, DevData.Load(root).Open, EmbeddedModel.Lexicon, seed))
+        {
+            Console.WriteLine(text);
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    ///     Runs the <c>glossary-eval</c> command: the dev-only evaluation of the glossary API with the embedded model.
+    /// </summary>
+    /// <param name="line">The parsed command line.</param>
+    /// <param name="root">The repository root.</param>
+    /// <returns>The exit code.</returns>
+    /// <exception cref="InvalidOperationException">The embedded weights resource is missing.</exception>
+    private static int GlossaryEvaluate(CommandLine line, string root)
+    {
+        var seed = ParseUInt64(line.Value("--seed"), "--seed", 1UL);
+        var resamples = ParseInt32(line.Value("--resamples"), "--resamples", Bootstrap.DefaultResamples);
+
+        // The embedded model is what Tagger.Default uses; the data are the two development sets and nothing else
+        using var stream = EmbeddedModel.OpenResource(EmbeddedModel.WeightsResourceName)
+            ?? throw new InvalidOperationException($"The embedded resource '{EmbeddedModel.WeightsResourceName}' is missing.");
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        var dev = DevData.Load(root);
+        foreach (var text in GlossaryEvaluation.Run(buffer.ToArray(), dev.Open, dev.Gold, EmbeddedModel.Lexicon, seed, resamples))
         {
             Console.WriteLine(text);
         }
@@ -391,7 +425,7 @@ Exit codes: 0 success, 1 stale weights (train --check), 2 usage or data error.";
         var configPath = line.Value("--config") ?? Path.Combine(root, DefaultConfig.Replace('/', Path.DirectorySeparatorChar));
         var config = ConfigFile.Load(configPath).Clone();
         config.Validate();
-        var seed = ulong.Parse(line.Value("--seed") ?? "1", CultureInfo.InvariantCulture);
+        var seed = ParseUInt64(line.Value("--seed"), "--seed", 1UL);
         var lexicon = EmbeddedModel.Lexicon;
         var data = CorpusReader.LoadSources(root, config);
         var dev = DevData.Load(root);
@@ -619,6 +653,46 @@ Exit codes: 0 success, 1 stale weights (train --check), 2 usage or data error.";
         return Enum.TryParse<T>(text, true, out var value)
             ? value
             : throw new ArgumentException($"{option} expects one of {string.Join(", ", Enum.GetNames(typeof(T)).Select(n => n.ToLowerInvariant()))}; got '{text}'.");
+    }
+
+    /// <summary>
+    ///     Parses an optional unsigned 64-bit option, so that a malformed or out-of-range value is a usage error.
+    /// </summary>
+    /// <param name="text">The option text, or <c>null</c> when the option is absent.</param>
+    /// <param name="option">The option name for the message.</param>
+    /// <param name="fallback">The value when the option is absent.</param>
+    /// <returns>The value.</returns>
+    /// <exception cref="ArgumentException">The text is not an unsigned 64-bit integer.</exception>
+    private static ulong ParseUInt64(string? text, string option, ulong fallback)
+    {
+        if (text == null)
+        {
+            return fallback;
+        }
+
+        return ulong.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : throw new ArgumentException($"{option} expects a non-negative integer that fits in 64 bits; got '{text}'.");
+    }
+
+    /// <summary>
+    ///     Parses an optional positive 32-bit option, so that a malformed or out-of-range value is a usage error.
+    /// </summary>
+    /// <param name="text">The option text, or <c>null</c> when the option is absent.</param>
+    /// <param name="option">The option name for the message.</param>
+    /// <param name="fallback">The value when the option is absent.</param>
+    /// <returns>The value.</returns>
+    /// <exception cref="ArgumentException">The text is not a positive 32-bit integer.</exception>
+    private static int ParseInt32(string? text, string option, int fallback)
+    {
+        if (text == null)
+        {
+            return fallback;
+        }
+
+        return int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var value) && value > 0
+            ? value
+            : throw new ArgumentException($"{option} expects a positive integer that fits in 32 bits; got '{text}'.");
     }
 
     /// <summary>

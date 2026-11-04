@@ -55,7 +55,10 @@ held-out file is admitted for evaluation, a source
 names a held-out set, an experiment without an output file is admitted, the check takes a perturbed, missing or damaged
 file for a current one or rejects the compressed form of the current file, the configuration is accepted with a
 misspelled member or an out-of-range value, a metric or a bootstrap interval differs from the known answer, or the
-glossary experiment's decoder differs from the plain predictor.
+glossary experiment's decoder differs from the plain predictor, or the glossary evaluation reads any file, gives another
+result for the same seed, puts a scored token in no category or in two, does not count a confident swap that a hard
+constraint leaves with one candidate, changes a token before the first match, or applies one of its two decision rules
+differently from the pre-registered text.
 
 ### Test Scenarios
 
@@ -114,3 +117,26 @@ glossary experiment's decoder differs from the plain predictor.
   the plain run keeps its pinned hash, which is the golden test),
   `GlossaryFeatures_Append_InBucketSpaceAndDependOnHintAndHistory`, `HintedPredictor_NoHints_MatchesQuantizedPredictor`
   and `HintedPredictor_HardHintAndHugeBoost_FollowTheHint`.
+- **Glossary evaluation** (the tests run the evaluation code of the tool on tiny dev-like fixtures with known answers, not
+  on the development data): `GoldTarget_Lemma_IsParsedAndOptional` (the lemma column of the gold development set is read
+  when present, and is empty otherwise), `GlossaryEvaluation_StrengthGrid_ContainsTheDefaultSoftStrength` (the library
+  constant is a member of the evaluated grid, which is sorted),
+  `GlossaryEvaluation_ChooseSoftStrength_PicksSmallestWithinTolerance` and
+  `GlossaryEvaluation_ChooseSoftStrength_ConditionsAndNoneAdmissible` (the pre-registered strength rule on synthetic
+  tables: the boundary of each admissibility condition, the tie tolerance, the smallest tied strength, and the smallest
+  of the grid when none is admissible), `GlossaryEvaluation_ChooseNonHeadRule_BarNeedsGainIntervalAndNoLoss` (the bar of
+  scenario G: a gain of the required size whose interval excludes zero and no loss at 10% wrong entries; the larger gain
+  wins), `GlossaryEvaluation_CompoundCandidates_SpansEndInNounAndAreDistinct`,
+  `GlossaryEvaluation_DrawTerms_DeterministicSeededAndWrongEntriesDiffer` (the same seed gives the same glossary, the
+  coverage share is met and a wrong entry never keeps the right tag),
+  `GlossaryEvaluation_ToEntries_UnrepresentableTermsAreSkipped`,
+  `GlossaryEvaluation_RunSystem_CategoriesPartitionEveryScoredToken` (every scored token is in exactly one category and
+  the at-risk flag marks the compounds whose first word is also a verb),
+  `GlossaryEvaluation_RunScenario_ConfidentSwapsFlipsAndBaselineDenominator` (a hard wrong entry is a confident swap
+  although it leaves one candidate, a hard right entry removes a swap, the denominator is the baseline's, and no token
+  before the first match changes), `GlossaryEvaluation_AcronymEntries_AllCapitalNounsWithLexiconHomograph`,
+  `GlossaryEvaluation_Run_TinyData_ReportsEveryScenarioDeterministically` (the whole pipeline, twice, with equal output,
+  zero parity differences and zero changes before a match) and
+  `GlossaryEvaluation_UsesOnlyDevData_NoPathParameterAndNoFileAccess` (the entry point takes no path, and the sources use
+  no file API and name no data file). The measured results are not asserted anywhere; they are recorded in section E9 of
+  the run log.
