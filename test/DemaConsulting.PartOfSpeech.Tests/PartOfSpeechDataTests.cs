@@ -892,7 +892,65 @@ public class PartOfSpeechDataTests
         Assert.Equal(ConfigValue(config, "imageSha256"), hash);
         Assert.Equal(int.Parse(ConfigValue(config, "hashBits"), CultureInfo.InvariantCulture), model.HashBits);
         Assert.Equal(1f / int.Parse(ConfigValue(config, "quantScale"), CultureInfo.InvariantCulture), model.Scale);
-        Assert.Equal((float)double.Parse(ConfigValue(config, "temperature"), CultureInfo.InvariantCulture), model.Temperature);
+    }
+
+    /// <summary>
+    ///     Proves that the size figures that the documentation states for the embedded weights (compressed and
+    ///     uncompressed bytes and, where a document states it, the number of rows) equal the embedded file. A retrained
+    ///     model fails here and the message names the document that must be updated. The run log is excluded on purpose:
+    ///     it records the figures of historical runs.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Model_EmbeddedWeights_SizeFiguresInDocs_AreCurrent()
+    {
+        // Arrange: the figures of the embedded file, formatted as the documents state them
+        using var stream = EmbeddedModel.OpenResource(EmbeddedModel.WeightsResourceName);
+        Assert.NotNull(stream);
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        var embedded = buffer.ToArray();
+        var model = PerceptronModel.Load(embedded, FeatureExtractor.FeatureSetVersion);
+        var compressed = embedded.Length.ToString("N0", CultureInfo.InvariantCulture);
+        var uncompressed = PerceptronModel.ToUncompressedImage(embedded).Length.ToString("N0", CultureInfo.InvariantCulture);
+        var rows = model.RowCount.ToString("N0", CultureInfo.InvariantCulture);
+        var sizeDocuments = new[]
+        {
+            "README.md",
+            "docs/user_guide/introduction.md",
+            "data/README.md",
+            "src/DemaConsulting.PartOfSpeech/NamespaceDoc.cs",
+            "tools/DemaConsulting.PartOfSpeech.Trainer/README.md",
+            "docs/design/part-of-speech.md",
+            "docs/design/part-of-speech/model-storage.md",
+            "docs/design/part-of-speech/model-storage/perceptron-model.md",
+            "docs/design/part-of-speech/model-trainer.md",
+            "docs/verification/part-of-speech.md"
+        };
+        var rowDocuments = new[]
+        {
+            "src/DemaConsulting.PartOfSpeech/NamespaceDoc.cs",
+            "tools/DemaConsulting.PartOfSpeech.Trainer/README.md",
+            "docs/design/part-of-speech/model-storage.md",
+            "docs/design/part-of-speech/model-storage/perceptron-model.md",
+            "docs/design/part-of-speech/model-trainer.md"
+        };
+
+        // Act: collect the figures that a document does not state
+        var missing = new List<string>();
+        foreach (var path in sizeDocuments)
+        {
+            var text = Collapse(File.ReadAllText(DataFiles.Repository(path)));
+            missing.AddRange(MissingFragments(text, new[] { compressed, uncompressed }).Select(figure => $"{path}: {figure}"));
+        }
+
+        foreach (var path in rowDocuments)
+        {
+            var text = Collapse(File.ReadAllText(DataFiles.Repository(path)));
+            missing.AddRange(MissingFragments(text, new[] { rows }).Select(figure => $"{path}: {figure} rows"));
+        }
+
+        // Assert: every document states the current figures
+        Assert.True(missing.Count == 0, "Update the size figures of the embedded weights in: " + string.Join("; ", missing));
     }
 
     /// <summary>

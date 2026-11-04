@@ -183,7 +183,7 @@ jobs:
           --property:Version=${{ inputs.version }}
 
       # The embedded weights must be exactly what the committed corpora and training.json produce (about 15 s);
-      # running it on all three operating systems also proves that the training is identical across them.
+      # each OS compares its own retraining with the same pinned imageSha256, so a platform difference fails that job.
       - name: Check embedded model
         run: >
           dotnet run

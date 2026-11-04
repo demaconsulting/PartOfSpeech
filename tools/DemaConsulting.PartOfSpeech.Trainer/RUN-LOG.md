@@ -394,7 +394,7 @@ Paired bootstrap by document of the final model (a) against other models (pooled
   dev +0.541 [+0.333, +0.756], gold dev +0.892 [+0.200, +1.593];
 - against open-only with the chosen restriction (E1 B): +0.524 [+0.304, +0.731], harmful -2.55 [-5.68, +0.60] (tied);
 - against the unpruned, 21-bit, 10-epoch version of the same mix: -0.067 [-0.178, +0.061], harmful +0.79 [-1.65, +3.43]
-  (tied): the size reduction (2.9 MB raw / 1.3 MB deflated down to 1.1 MB / 0.48 MB) costs nothing measurable.
+  (tied): the size reduction (2.9 MB raw / 1.3 MB deflated down to 1.1 MB / 0.5 MB) costs nothing measurable.
 
 Why the dev results are not below the spike's: the dev accuracy of the open-only baseline (95.53% at 17 tags) is close to
 the spike's (95.91% at 13 classes), and the mixture of the three corpora adds +0.5 points; the missing FAA text in the

@@ -66,8 +66,9 @@ Commands:
         [--source NAME:WEIGHT]... [--max-sentences N] [--sample-permille N] [--mask-disputed true|false] [--silver-min N]
       Trains and writes the weights (default: the embedded resource). With --check it retrains with the
       committed configuration and compares the uncompressed image with the committed file (exit 1 if stale);
-      --weights names the committed file when it is not the embedded resource. Overrides are for experiments and
-      are not allowed with --check. --calibrate (experiments only) fits the temperature of the run on the open
+      --weights names the committed file when it is not the embedded resource. Overrides and --calibrate are for
+      experiments: they require --output so that the shipped weights are never overwritten, and are not allowed with
+      --check. --calibrate fits the temperature of the run on the open
       development split before the run is written and scored, so confidence-based metrics are comparable.
   eval --weights FILE [--temperature T] [--label TEXT] [--log FILE]
       Scores a weights file on the development sets (open dev, gold v2 dev) through the real decoder.
@@ -160,6 +161,9 @@ Exit codes: 0 success, 1 stale weights (train --check), 2 usage or data error.";
         {
             throw new ArgumentException("--update-config records the image of the committed configuration and cannot be combined with overrides.");
         }
+
+        // An experiment must name its output so that it never overwrites the shipped weights (fail fast, before the corpora load)
+        OutputGuard.EnsureExplicitOutput(overridden || calibrate, line.Value("--output"));
 
         // Train, reporting every epoch and evaluating the requested checkpoints
         var lexicon = EmbeddedModel.Lexicon;

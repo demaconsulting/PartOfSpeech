@@ -69,7 +69,8 @@ target framework, including .NET Framework.
   `PerceptronModel.ToUncompressedImage` of the committed file and with `imageSha256`; the status is `Current`, `Missing`,
   `Stale` or `Invalid`, and the exit code is 1 with the regeneration command in the message unless the file is current.
   The same method is how `LexiconCompiler --check` works for the lexicon. `build.ps1` and the CI build run it (about 15
-  seconds, on all three operating systems, which also proves that the training is identical across them).
+  seconds, on all three operating systems; every job compares its own retraining with the same pinned `imageSha256`, so
+  a difference between the operating systems fails the job of that system).
 - **Evaluation** (`DevEvaluator`, `DevSets`, `Metrics`, `Calibration`): a weights file is scored on the two development
   sets through the real decoder (`Tagger.Load` on the in-memory file), so a difference between the training predictor and
   the runtime shows up as a measured difference. `Calibration.Fit` chooses the temperature with the minimum
@@ -78,19 +79,23 @@ target framework, including .NET Framework.
 - **Commands** (`Program.cs`): `train` (with experiment overrides, `--check`, `--update-config`, `--eval`, `--log`,
   `--calibrate`, `--checkpoints`), `eval`, `calibrate`, `compare`, `glossary-probe` and `glossary-experiment`; the exit
   code is 0 for success, 1 for stale weights and 2 for a usage or data error. Overrides are rejected together with
-  `--check` and `--update-config`. The README of the tool lists every option.
+  `--check` and `--update-config`. An experiment (overrides or `--calibrate`) must name `--output`, so it can never
+  overwrite the shipped weights (`OutputGuard`, which fails fast, before the corpora are loaded, with exit code 2). The
+  README of the tool lists every option.
 
 ### Determinism Contract
 
 The training is integer arithmetic (`int` weights, `long` sums), the shuffle uses `DeterministicRandom` and never
 `System.Random`, the writer sorts the buckets, and the temperature is a configuration value instead of a fitted one, so
-the uncompressed image is byte-identical on every operating system and framework for the same corpora, configuration and
-library. The Deflate bytes of the committed file depend on the zlib of the runtime, so the check compares uncompressed
+the uncompressed image is designed to be byte-identical on every operating system and framework for the same corpora,
+configuration and library; the CI build verifies this on Windows, Linux and macOS against one pinned hash. The Deflate
+bytes of the committed file depend on the zlib of the runtime, so the check compares uncompressed
 images. A test trains a small subset (300 open sentences, three epochs, 18 bits) and compares the SHA-256 of the image
 with a pinned value on every target framework, with and without lexicon restriction; if the extractor, the lexicon
-or the open training corpus changes, those values must be pinned again (a failing test prints the new hash). The one
-environmental input is the Unicode normalization of the few non-ASCII tokens of the corpora, which is stable by Unicode
-policy.
+or the open training corpus changes, those values must be pinned again (a failing test prints the new hash). The
+environmental inputs are the Unicode normalization and the culture-invariant case mapping and character classification
+of the few non-ASCII tokens of the corpora, which are stable by Unicode policy; any difference would surface as a
+failing `train --check` or golden test in the CI job of that system.
 
 ### Development-Only Selection
 

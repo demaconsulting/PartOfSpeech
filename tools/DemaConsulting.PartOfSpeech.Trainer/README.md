@@ -33,7 +33,7 @@ Exit codes: 0 success, 1 stale weights (`train --check`), 2 usage or data error.
 | Option | Meaning |
 | --- | --- |
 | `--config FILE` | Configuration file (default `tools/DemaConsulting.PartOfSpeech.Trainer/training.json`). |
-| `--output FILE` | Where to write the (compressed) weights file. |
+| `--output FILE` | Where to write the (compressed) weights file. Required with experiment overrides and `--calibrate`, so that the shipped weights are never overwritten by an experiment. |
 | `--update-config` | Record the SHA-256 of the uncompressed image in the configuration file. |
 | `--check` / `--weights FILE` | Verify instead of write; `--weights` names the committed file when it is not the embedded resource. |
 | `--eval`, `--label TEXT`, `--log FILE` | Evaluate the result on the development sets; label the run; append a row to a run-log table. |
@@ -45,7 +45,8 @@ Exit codes: 0 success, 1 stale weights (`train --check`), 2 usage or data error.
 | `--max-sentences N`, `--sample-permille N` | Limit or subsample every source (deterministic by sentence id). |
 | `--mask-disputed true\|false`, `--silver-min N` | Masking of `disputed` tokens and of silver tokens below N percent. |
 
-Overrides are for experiments; they are rejected together with `--check` and `--update-config`.
+Overrides and `--calibrate` are for experiments: they require `--output` (the run is refused with exit code 2 otherwise),
+and they are rejected together with `--check` and `--update-config`.
 
 ## Configuration
 
@@ -57,8 +58,9 @@ softmax `temperature`, which is chosen once by `calibrate` and only written into
 ## Determinism contract
 
 The training is integer arithmetic (weights `int`, time-weighted sums `long`), the shuffle uses an own SplitMix64
-generator, and the writer sorts the buckets, so the **uncompressed** image is byte-identical on every operating system
-and framework for the same corpora, configuration and library. The Deflate bytes of the committed file depend on the
+generator, and the writer sorts the buckets, so the **uncompressed** image is designed to be byte-identical on every
+operating system and framework for the same corpora, configuration and library; CI verifies it on Windows, Linux and
+macOS against the same pinned hash. The Deflate bytes of the committed file depend on the
 zlib of the runtime, so `--check` compares uncompressed images only. The tests train a small subset and compare the
 SHA-256 of the image with a pinned value on every target framework.
 

@@ -226,6 +226,13 @@ the CI build run after the build (about 15 seconds; on Windows, Linux and macOS,
 systems would fail one of the jobs); its logic is verified by the `ModelTrainer` unit tests (see _ModelTrainer
 Verification_). The check is supplementary evidence of the requirement, since a build step is not a test.
 
+**Test**: `PartOfSpeech_Model_EmbeddedWeights_SizeFiguresInDocs_AreCurrent` (in `PartOfSpeechDataTests.cs`)
+
+The same requirement is also served by a test that reads the embedded weights and asserts that the size figures stated in
+the documentation (compressed and uncompressed bytes, and the number of rows where a document states it) equal the
+embedded file, so a retrained model cannot leave a stale number behind; the message names the document to update. The
+run log is excluded because it records the figures of historical runs.
+
 ### Weights Come From Committed, Allowed Corpora
 
 **Test**: `PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora` (in `PartOfSpeechDataTests.cs`)

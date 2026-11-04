@@ -27,7 +27,7 @@ the code it describes.
   one carrier. Its documentation covers the package and target frameworks, the types and how they fit
   together, the terminology (UPOS, lexicon, weights, averaged perceptron, greedy, raw score, temperature,
   softmax, confidence, alternatives, constraint), the explanation of confidence and alternatives, the tokenization
-  conventions, offsets and pre-tokenized input, the default model that throws until a later release, the loading
+  conventions, offsets and pre-tokenized input, the default model that is embedded in the package, the loading
   cost, thread safety and the general error rules, each as a section of the namespace page. The sections are
   Markdown headings written into the remarks (ApiMark passes raw Markdown through, so the headings become
   anchors; ApiMark drops the bold and emphasis elements and renders a cross-reference to a namespace as plain

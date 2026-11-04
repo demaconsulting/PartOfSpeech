@@ -25,7 +25,7 @@ This library provides:
 - **Constraints**: restrict or steer the tag of individual tokens, for example from a glossary
 - **Pre-Tokenized Input**: tag tokens that you already have
 - **No Dependencies, No Downloads**: the library uses only the base class library and embeds its lexicon and its trained
-  weights (about 1.1 MB, 0.48 MB compressed); it is fast (hundreds of thousands of tokens per second on one thread)
+  weights (about 1.1 MB, about 0.5 MB compressed); it is fast (hundreds of thousands of tokens per second on one thread)
   and thread-safe
 - **Multi-Platform Support**: Builds and runs on Windows, Linux, and macOS
 - **Multi-Runtime Support**: Targets .NET Standard 2.0, .NET 8, 9, and 10

@@ -477,8 +477,10 @@ sections:
           - PartOfSpeech-ModelTrainer-SharedDefinitions
           - PartOfSpeech-ModelTrainer-ExactQuantization
           - PartOfSpeech-ModelTrainer-CheckDetectsStaleWeights
+          - PartOfSpeech-ModelTrainer-ProtectsShippedWeights
         tests:
           - PartOfSpeech_Model_EmbeddedWeights_MatchTrainingConfig
+          - PartOfSpeech_Model_EmbeddedWeights_SizeFiguresInDocs_AreCurrent
 
       - id: PartOfSpeech-Model-TrainedFromCommittedData
         title: >-

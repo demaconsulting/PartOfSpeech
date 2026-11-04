@@ -637,6 +637,34 @@ public class ModelTrainerTests
     }
 
     /// <summary>
+    ///     Validates that an experiment without an output file is refused, so that it cannot overwrite the shipped weights.
+    /// </summary>
+    /// <param name="output">The value of <c>--output</c>: absent or empty.</param>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void OutputGuard_EnsureExplicitOutput_ExperimentWithoutOutput_Throws(string? output)
+    {
+        // Arrange / Act / Assert
+        Assert.Throws<ArgumentException>(() => OutputGuard.EnsureExplicitOutput(true, output));
+    }
+
+    /// <summary>
+    ///     Validates that an experiment with an output file and a default run without one are admitted.
+    /// </summary>
+    [Fact]
+    public void OutputGuard_EnsureExplicitOutput_ExperimentWithOutputOrDefaultRun_Admitted()
+    {
+        // Arrange / Act
+        var experiment = Record.Exception(() => OutputGuard.EnsureExplicitOutput(true, "experiment.bin"));
+        var defaultRun = Record.Exception(() => OutputGuard.EnsureExplicitOutput(false, null));
+
+        // Assert: no exception
+        Assert.Null(experiment);
+        Assert.Null(defaultRun);
+    }
+
+    /// <summary>
     ///     Validates that a file that does not announce a development split is refused even at a development path.
     /// </summary>
     [Fact]

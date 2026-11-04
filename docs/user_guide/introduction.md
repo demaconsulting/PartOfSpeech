@@ -48,7 +48,7 @@ public API under its `api/` folder, generated from the XML documentation of the 
 
 **The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
 compiled word lexicon (641,418 bytes compressed) and the trained averaged-perceptron weights (492,971 bytes compressed,
-1,111,898 bytes uncompressed, about 0.48 MB and 1.1 MB). `Tagger.Default` returns a shared tagger that uses them, so the
+1,111,898 bytes uncompressed, about 0.5 MB and 1.1 MB). `Tagger.Default` returns a shared tagger that uses them, so the
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 

@@ -14,9 +14,10 @@ not have in the box) is linked and tested on .NET 8 and later. Nothing is mocked
 - **Small real runs.** The trainer is run for real on 300 sentences of the open training corpus (three epochs, 18
   hash bits, the smallest bucket space the format allows), which takes a fraction of a second. Two runs with the same
   inputs must give the same uncompressed image, another seed another image, and the SHA-256 of the image of a reference
-  run (once without and once with the lexicon restriction) is pinned in the test as a cross-platform golden value: it is
-  the same on Windows, Linux and macOS and on every target framework, which is the evidence of the determinism contract
-  of the design. If the extractor, the lexicon or the open training corpus changes, the pinned values must be updated; a
+  run (once without and once with the lexicon restriction) is pinned in the test as a cross-platform golden value: the
+  test runs on every target framework and, in the CI matrix, on Windows, Linux and macOS, so the same value is verified
+  on every system (this is the evidence of the determinism contract of the design). If the extractor, the lexicon or the
+  open training corpus changes, the pinned values must be updated; a
   failing test prints the actual hash.
 - **Parity with the runtime.** The trainer's predictor is compared token by token with the real `TagDecoder` for the same
   quantized weights, once restricted with the embedded lexicon and once unrestricted with unknown words, so that the
@@ -27,11 +28,14 @@ not have in the box) is linked and tested on .NET 8 and later. Nothing is mocked
   published reference sequence.
 - **Guards by scanning.** The rule that no trainer source other than the guard names a held-out data set is verified by
   reading the C# files of the tool and asserting that none of them contains the names.
+- **Command-line safety.** The rule that an experiment (overrides or calibration) must name an output file is code in
+  `OutputGuard`, which is linked into the test project; the tests call it directly with and without an output.
 
 The development evaluations and the training of the shipped model are not unit tests (they would take much longer and
 depend on the data): the shipped weights are verified at system level (the embedded weights match `training.json`, the
 configuration names only committed training corpora) and by the build step `train --check`, which retrains the model from
-the committed corpora and compares it with the committed file on all three operating systems. That step is supplementary
+the committed corpora and compares it with the committed file in the CI build on Windows, Linux and macOS (every system
+against the same pinned hash). That step is supplementary
 evidence, since a build step is not a test; the tests prove that the comparison logic is right.
 
 ### Test Environment
@@ -47,9 +51,10 @@ All tests pass on every target framework. A test fails when two runs with the sa
 does not differ, the image of a reference run differs from its pinned hash, the trainer's tags differ from the decoder's,
 a quantized weight differs from the oracle, a masked token changes a weight or is not counted as a step, a setting has no
 effect, a held-out or development file is admitted as a source (or a held-out file is admitted for evaluation), a source
-names a held-out set, the check takes a perturbed, missing or damaged file for a current one or rejects the compressed form
-of the current file, the configuration is accepted with a misspelled member or an out-of-range value, a metric or a
-bootstrap interval differs from the known answer, or the glossary experiment's decoder differs from the plain predictor.
+names a held-out set, an experiment without an output file is admitted, the check takes a perturbed, missing or damaged
+file for a current one or rejects the compressed form of the current file, the configuration is accepted with a
+misspelled member or an out-of-range value, a metric or a bootstrap interval differs from the known answer, or the
+glossary experiment's decoder differs from the plain predictor.
 
 ### Test Scenarios
 
@@ -78,6 +83,8 @@ bootstrap interval differs from the known answer, or the glossary experiment's d
   `DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused` (also in other spellings of the path),
   `DataGuard_EnsureTrainable_TrainingCorpus_Admitted`, `DataGuard_EnsureDevelopmentHeader_NoDevSplitHeader_Throws` and
   `ModelTrainer_Sources_NoHeldOutPathLiterals`.
+- **Command-line safety**: `OutputGuard_EnsureExplicitOutput_ExperimentWithoutOutput_Throws` (a theory: no output and an
+  empty output) and `OutputGuard_EnsureExplicitOutput_ExperimentWithOutputOrDefaultRun_Admitted`.
 - **The check**: `ModelBuilder_Check_CommittedFile_DetectsStaleMissingAndInvalid` (the compressed committed form of the
   fresh image is current, another seed or another temperature is stale, no file is missing, bytes that are no weights file
   are invalid).

@@ -20,7 +20,7 @@ sections:
               The check that the committed weights are current retrains the model and compares the result, so the same
               inputs must give the same image everywhere. The shuffle uses an own generator with a fixed reference
               sequence instead of the platform random generator, the arithmetic is integer, and the pinned hashes are
-              the cross-platform golden values that prove it.
+              the golden values that the CI matrix checks on every operating system.
             tests:
               - ModelTrainer_Train_SameInputs_ByteIdenticalImage
               - ModelTrainer_Train_DifferentSeed_DifferentImage
@@ -113,6 +113,18 @@ sections:
               damaged file for a current one.
             tests:
               - ModelBuilder_Check_CommittedFile_DetectsStaleMissingAndInvalid
+
+          - id: PartOfSpeech-ModelTrainer-ProtectsShippedWeights
+            title: >-
+              A training run with experiment overrides or calibration shall be refused unless an output file is named,
+              so that an experiment never overwrites the shipped weights.
+            justification: |
+              The default output of `train` is the embedded weights file, which `train --check` and the tests hold
+              equal to `training.json`. A casual experiment such as `train --epochs 3` must not be able to replace it
+              silently; the rule is code instead of a sentence in the README.
+            tests:
+              - OutputGuard_EnsureExplicitOutput_ExperimentWithoutOutput_Throws
+              - OutputGuard_EnsureExplicitOutput_ExperimentWithOutputOrDefaultRun_Admitted
 
           - id: PartOfSpeech-ModelTrainer-Configuration
             title: >-
