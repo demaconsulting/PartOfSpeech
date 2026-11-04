@@ -61,6 +61,17 @@ internal sealed class GlossaryConstraints
     private const double MaximumBoost = 1e9;
 
     /// <summary>
+    ///     The smallest boost in raw score units; a smaller product of strength and temperature (it can underflow to zero for a
+    ///     valid strength such as 1e-320) is raised to it so that the constraint can always be built.
+    /// </summary>
+    /// <remarks>
+    ///     A shift this small changes no probability that a double can show, so the clamp changes no result; it only keeps
+    ///     <see cref="TokenConstraint.Prefer(Upos, double)"/> and <see cref="TokenConstraint.Penalize(Upos, double)"/>, which need a
+    ///     positive boost, from throwing on the first use of a soft glossary.
+    /// </remarks>
+    private const double MinimumBoost = 1e-9;
+
+    /// <summary>
     ///     The hard constraint of the head token for every tag set of the glossary.
     /// </summary>
     private readonly TokenConstraint[] _hardHead;
@@ -112,7 +123,8 @@ internal sealed class GlossaryConstraints
     /// <returns>The compiled constraints.</returns>
     public static GlossaryConstraints Compile(Glossary glossary, double temperature)
     {
-        var boost = Math.Min(glossary.Settings.SoftStrength * temperature, MaximumBoost);
+        // The product of a valid strength and the temperature can overflow to infinity or underflow to zero: keep it in range
+        var boost = Math.Min(Math.Max(glossary.Settings.SoftStrength * temperature, MinimumBoost), MaximumBoost);
 
         // Head constraints per distinct tag set, in both modes (an entry may override the mode of the glossary)
         var masks = glossary.Index.TagSetMasks;

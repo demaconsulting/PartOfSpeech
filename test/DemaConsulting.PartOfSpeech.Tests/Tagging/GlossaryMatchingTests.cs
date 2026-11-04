@@ -1300,6 +1300,55 @@ public class GlossaryMatchingTests
     }
 
     /// <summary>
+    ///     Proves that a valid but extremely small strength is raised to the smallest boost instead of failing on first use.
+    /// </summary>
+    /// <param name="strength">A positive strength whose product with the temperature falls to zero.</param>
+    /// <param name="temperature">The temperature of the tagger's model.</param>
+    [Theory]
+    [InlineData(double.Epsilon, 1f)]
+    [InlineData(1e-320, 1f)]
+    [InlineData(1e-300, 1e-30f)]
+    public void Tagger_TagWithGlossary_SoftMode_TinyBoost_DoesNotThrowAndChangesNothing(double strength, float temperature)
+    {
+        // Arrange: the model prefers VERB for "torque"; a soft NOUN entry whose boost would fall to zero
+        var tagger = CreateTagger(temperature);
+        var options = new GlossaryOptions { Mode = GlossaryMode.Soft, SoftStrength = strength };
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("bleed valve", Upos.Noun), new GlossaryEntry("torque", Upos.Noun) }, options);
+
+        // Act: tag with the glossary (the first soft use compiles the constraints) and without
+        var baseline = tagger.Tag(Words("need a bleed valve and torque ."));
+        var tagged = tagger.Tag(Words("need a bleed valve and torque ."), glossary);
+
+        // Assert: no exception, and a boost this small does not change any tag
+        Assert.Equal(baseline.Tokens.Select(t => t.Tag), tagged.Tokens.Select(t => t.Tag));
+        Assert.Equal(2, tagged.GlossaryMatches.Count);
+    }
+
+    /// <summary>
+    ///     Proves that a valid but huge strength, whose product with the temperature grows to infinity, is limited and acts as a decisive boost.
+    /// </summary>
+    /// <param name="strength">A finite strength whose product with the temperature overflows.</param>
+    [Theory]
+    [InlineData(double.MaxValue)]
+    [InlineData(1e300)]
+    public void Tagger_TagWithGlossary_SoftMode_HugeBoost_DoesNotThrowAndIsDecisive(double strength)
+    {
+        // Arrange: temperature 2 so that the product of strength and temperature overflows for the largest strength
+        var tagger = CreateTagger(2f);
+        var options = new GlossaryOptions { Mode = GlossaryMode.Soft, SoftStrength = strength };
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("torque", Upos.Noun) }, options);
+
+        // Act: tag with the glossary; the model prefers VERB by 2 raw units
+        var baseline = tagger.Tag(Words("use a torque ."));
+        var tagged = tagger.Tag(Words("use a torque ."), glossary);
+
+        // Assert: no exception, and the boost is decisive, as the model alone chooses VERB
+        Assert.Equal(Upos.Verb, baseline.Tokens[2].Tag);
+        Assert.Equal(Upos.Noun, tagged.Tokens[2].Tag);
+        Assert.False(double.IsNaN(tagged.Tokens[2].Confidence) || double.IsInfinity(tagged.Tokens[2].Confidence));
+    }
+
+    /// <summary>
     ///     Proves that the mode of an entry overrides the mode of the glossary, in both directions.
     /// </summary>
     [Fact]

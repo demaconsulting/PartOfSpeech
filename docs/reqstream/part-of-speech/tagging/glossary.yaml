@@ -265,13 +265,18 @@ sections:
                   In soft mode the tags of an entry shall get a preference of the configured strength, in units of the
                   model temperature, so that the model keeps its tag when it is clearly sure and follows the glossary
                   when it is close; a mode set on an entry shall override the mode of the glossary, and the strength
-                  shall be refused unless it is finite and greater than zero.
+                  shall be refused unless it is finite and greater than zero; a valid strength whose boost would
+                  underflow to zero or overflow to infinity shall be limited to a finite positive range instead of
+                  failing at tagging time.
                 justification: |
                   A glossary of unknown quality can still help without being able to force a wrong tag, and a
-                  strength in units of the temperature means the same shift for every weights file.
+                  strength in units of the temperature means the same shift for every weights file. A validated
+                  option must never make the first tagging call throw.
                 tests:
                   - Tagger_TagWithGlossary_SoftMode_FlipsCloseDecisionButNotDecisiveOne
                   - Tagger_TagWithGlossary_SoftMode_AdjustmentEqualsStrengthTimesTemperature
+                  - Tagger_TagWithGlossary_SoftMode_TinyBoost_DoesNotThrowAndChangesNothing
+                  - Tagger_TagWithGlossary_SoftMode_HugeBoost_DoesNotThrowAndIsDecisive
                   - Tagger_TagWithGlossary_SoftMode_RaisesConfidenceOfPreferredTag
                   - Tagger_TagWithGlossary_PerEntryMode_OverridesGlossaryMode
                   - GlossaryMatch_Mode_IsEntryModeOrGlossaryMode

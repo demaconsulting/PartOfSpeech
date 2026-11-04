@@ -102,7 +102,8 @@ public sealed class GlossaryOptions
     ///     of its tags. Because the unit is the temperature, the value means the same shift of the log-odds for every
     ///     weights file: 1.0 multiplies the odds of the preferred tags by about 2.7, 2.0 by about 7.4. See
     ///     [Terminology](../DemaConsulting.PartOfSpeech.md#terminology) for raw score and temperature. Only soft
-    ///     entries use it.
+    ///     entries use it. The shift actually applied is limited to the range 1e-9 to 1e9 raw score units, so an extremely
+    ///     small or large (but valid) strength never fails at tagging time; the limits change no result a double can show.
     /// </remarks>
     /// <value>Finite and greater than zero; the default is <see cref="DefaultSoftStrength"/>. Other values are rejected with an <see cref="ArgumentOutOfRangeException"/> when the glossary is created.</value>
     public double SoftStrength { get; init; } = DefaultSoftStrength;

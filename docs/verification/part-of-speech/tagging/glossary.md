@@ -184,6 +184,9 @@ allocates per token, a parallel result differs from the sequential one, or match
 - **Soft constraints**: `Tagger_TagWithGlossary_SoftMode_FlipsCloseDecisionButNotDecisiveOne`,
   `Tagger_TagWithGlossary_SoftMode_AdjustmentEqualsStrengthTimesTemperature` (compared with a hand-built
   `TokenConstraint.Prefer` on the same tagger, at a temperature other than 1),
+  `Tagger_TagWithGlossary_SoftMode_TinyBoost_DoesNotThrowAndChangesNothing` and
+  `Tagger_TagWithGlossary_SoftMode_HugeBoost_DoesNotThrowAndIsDecisive` (a valid strength whose boost
+  falls to zero or grows to infinity is limited to a finite positive range and never throws at tagging time),
   `Tagger_TagWithGlossary_SoftMode_RaisesConfidenceOfPreferredTag`, `Tagger_TagWithGlossary_PerEntryMode_OverridesGlossaryMode`
   and `GlossaryMatch_Mode_IsEntryModeOrGlossaryMode`; the strength validation is in the builder scenario.
 - **Caller constraints**: `GlossaryConstraints_Merge_NoneIntersectionAndContradiction`,
