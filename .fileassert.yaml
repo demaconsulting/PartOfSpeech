@@ -51,6 +51,7 @@ tests:
           - contains: "temperature"
           - contains: "## Terminology"
           - contains: "## Confidence and alternatives"
+          - contains: "## Confidence thresholds"
           - contains: "## Glossary"
           - contains: "## Glossary modes: hard and soft"
           - contains: "## Glossary navigation"
@@ -61,6 +62,26 @@ tests:
           - contains: "## Offsets and pre-tokenized input"
           - contains: "## Default model and loading cost"
           - contains: "## Errors"
+
+  - name: ApiMark_ConfidenceGuidanceDocumented
+    description: "The packed API reference carries the confidence guidance: thresholds, advice and evaluation links"
+    tags: [api-docs]
+    files:
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech.md"
+        count: 1
+        text:
+          - contains: "## Confidence thresholds"
+          - contains: "strict"
+          - contains: "balanced"
+          - contains: "0.95"
+          - contains: "0.80"
+          - contains: "must use a threshold"
+          - contains: "github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/confidence-thresholds.md"
+          - contains: "github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/test-results.md"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/TaggedToken/Confidence.md"
+        count: 1
+        text:
+          - contains: "DemaConsulting.PartOfSpeech.md#confidence-thresholds"
 
   - name: ApiMark_EntryPointDocumented
     description: "The tagger entry point is documented with thread safety, exceptions, examples and explanation links"
