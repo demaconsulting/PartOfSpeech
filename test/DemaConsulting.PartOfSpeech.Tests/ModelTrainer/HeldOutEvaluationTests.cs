@@ -768,6 +768,40 @@ public class HeldOutEvaluationTests
     }
 
     /// <summary>
+    ///     Validates the documented sizes that the preflight compares with: they are the sizes of the pinned files, and a fixture
+    ///     that has the documented sizes matches every one of them.
+    /// </summary>
+    [Fact]
+    public void HeldOutData_Counts_DocumentedSizes()
+    {
+        // Arrange: a fixture with exactly the documented number of items of each set (the content is a placeholder)
+        TrainingSentence Sentence(string document, int tokens) =>
+            new("s", document, Enumerable.Range(0, tokens).Select(i => "w" + i).ToArray(), new sbyte[tokens]);
+
+        GoldTarget Target(int i) => new("g" + i, "g" + (i % 856), new[] { "w" }, 0, "Noun");
+
+        var data = new HeldOutData
+        {
+            OpenTest = Enumerable.Range(0, 1501).Select(i => Sentence("d" + (i % 517), i == 0 ? 26185 - 1500 : 1)).ToList(),
+            Gold = Enumerable.Range(0, 3047).Select(Target).ToList(),
+            Probe = Enumerable.Range(0, 560).Select(Target).ToList(),
+            Challenge = Enumerable.Range(0, 32).Select(i => Sentence("c", i == 0 ? 272 - 31 : 1)).ToList(),
+            Ud = Enumerable.Range(0, 2077).Select(i =>
+            {
+                var words = i == 0 ? 25094 - 2076 : 1;
+                return new UdSentence("u" + i, "u", new string[words], new Upos[words], new Upos[words], new string[words]);
+            }).ToList(),
+        };
+
+        // Act
+        var counts = data.Counts();
+
+        // Assert
+        Assert.All(counts, c => Assert.True(c.Matches, $"{c.Name}: {c.Actual} against {c.Expected}"));
+        Assert.Equal(25094, counts.Single(c => c.Name == "treebank words").Expected);
+    }
+
+    /// <summary>
     ///     Validates that the model is judged on every held-out view of fixtures, the views are consistent, the report is deterministic and the treebank never appears in it.
     /// </summary>
     [Fact]

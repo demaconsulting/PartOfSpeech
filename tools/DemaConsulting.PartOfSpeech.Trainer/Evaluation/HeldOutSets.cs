@@ -374,6 +374,6 @@ internal sealed class HeldOutData
         new("challenge set sentences", Challenge.Count, 32),
         new("challenge set tokens", Challenge.Sum(s => (long)s.Tokens.Length), 272),
         new("treebank sentences", Ud.Count, 2077),
-        new("treebank words", Ud.Sum(s => (long)s.Tokens.Length), 25086),
+        new("treebank words", Ud.Sum(s => (long)s.Tokens.Length), 25094),
     };
 }

@@ -993,6 +993,21 @@ Both targets were met on the grid (strict: 0.90 gives 6.4 per 1,000, so 0.95 is 
 balanced: 0.75 gives 10.8, so 0.80 is the first); nothing was relaxed. These are development figures and optimistic by
 selection; the held-out run reports what the thresholds do on data that played no part in choosing them.
 
+### Erratum found by the preflight (documented size of the UD test words)
+
+`evaluate --preflight` (counts only: no tag, prediction or metric was produced or seen) matched every documented size
+(open test 1,501 sentences, 26,185 tokens, 517 documents; gold v2 test 3,047 targets, 856 documents; shape probe 560 rows;
+challenge set 32 sentences, 272 tokens; UD test 2,077 sentences) except the UD test words: it found 25,094 where the
+protocol above says 25,086. The 25,086 came from the planning notes, not from the data. The pinned file
+`en_ewt-ud-test.conllu` (SHA-256 verified against `tools/data/pins/ud-ewt.tsv` after a fresh fetch into a cache outside the
+repository) has 2,077 sentences and 25,094 syntactic words (354 multiword-token range lines and 2 empty-node lines are not
+words); three independent counts agree: the fetch script's mapper (rule counts add up to 25,094), the trainer's parser and
+a stand-alone line count of the conllu file. The mismatch was therefore an error in the documented count, an evaluation-code
+constant (`HeldOutData.Counts`), not a data or model defect and not a parse failure. The constant was corrected to 25,094
+and a fixture test pins the documented sizes; nothing else changed (model, configuration, weights, thresholds and operating
+points are untouched) and the tripwire was not treated as a model defect because no held-out label, prediction or metric
+had been produced. The 25,086 in the protocol text above is left as written for the record.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
