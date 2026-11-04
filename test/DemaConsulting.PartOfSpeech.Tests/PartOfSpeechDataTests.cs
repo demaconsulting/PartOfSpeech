@@ -19,6 +19,16 @@ public class PartOfSpeechDataTests
     private const int ShownProblems = 20;
 
     /// <summary>
+    ///     The training configuration of the trainer tool, relative to the repository root.
+    /// </summary>
+    private const string TrainingConfigPath = "tools/DemaConsulting.PartOfSpeech.Trainer/training.json";
+
+    /// <summary>
+    ///     The file name of the combined license of the package.
+    /// </summary>
+    private const string PackageLicenseName = "PACKAGE-LICENSE.md";
+
+    /// <summary>
     ///     The license class that the MASC source table records for every document: the license of the whole corpus.
     /// </summary>
     private const string MascLicenseBasis = "CC BY 3.0 US";
@@ -848,6 +858,176 @@ public class PartOfSpeechDataTests
         Assert.Empty(problems.Take(ShownProblems));
         Assert.Equal(table.Count, embedded.SpellingCount);
         Assert.Equal(table.Values.Sum(tags => tags.Length), embedded.EntryCount);
+    }
+
+    /// <summary>
+    ///     Proves that the weights that are embedded in the assembly are exactly the model that the committed training
+    ///     configuration describes: the same file as the committed one, the same hash bits, scale and temperature, and
+    ///     the SHA-256 of the uncompressed image that the trainer recorded. A model that was edited or retrained
+    ///     without the configuration (or the other way around) fails here in every normal test run; the full retraining
+    ///     check is <c>train --check</c> in the build.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Model_EmbeddedWeights_MatchTrainingConfig()
+    {
+        // Arrange: the embedded resource, the committed file next to the project and the text of the configuration
+        using var stream = EmbeddedModel.OpenResource(EmbeddedModel.WeightsResourceName);
+        Assert.NotNull(stream);
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        var embedded = buffer.ToArray();
+        var committed = File.ReadAllBytes(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/weights.bin"));
+        var config = File.ReadAllText(DataFiles.Repository(TrainingConfigPath));
+
+        // Act: load the model and hash its uncompressed image
+        var model = PerceptronModel.Load(embedded, FeatureExtractor.FeatureSetVersion);
+        string hash;
+        using (var sha = System.Security.Cryptography.SHA256.Create())
+        {
+            hash = BitConverter.ToString(sha.ComputeHash(PerceptronModel.ToUncompressedImage(embedded))).Replace("-", string.Empty).ToLowerInvariant();
+        }
+
+        // Assert: embedded equals committed, and the header and the image match the configuration
+        Assert.Equal(committed, embedded);
+        Assert.Equal(ConfigValue(config, "imageSha256"), hash);
+        Assert.Equal(int.Parse(ConfigValue(config, "hashBits"), CultureInfo.InvariantCulture), model.HashBits);
+        Assert.Equal(1f / int.Parse(ConfigValue(config, "quantScale"), CultureInfo.InvariantCulture), model.Scale);
+        Assert.Equal((float)double.Parse(ConfigValue(config, "temperature"), CultureInfo.InvariantCulture), model.Temperature);
+    }
+
+    /// <summary>
+    ///     Proves that the training configuration names only corpora that are committed in the repository, that are
+    ///     training corpora (no development, held-out or restricted data) and whose data folders declare an allowed
+    ///     license, and that the third-party notice names the corpora that the weights were trained on.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora()
+    {
+        // Arrange: the corpus paths of the configuration
+        var config = File.ReadAllText(DataFiles.Repository(TrainingConfigPath));
+        var paths = Regex.Matches(config, "\"path\"\\s*:\\s*\"([^\"]+)\"").Cast<Match>().Select(m => m.Groups[1].Value).ToList();
+        var notice = NoticeSection("## Embedded Weights");
+
+        // Act: find the problems of each source
+        var problems = new List<string>();
+        foreach (var path in paths)
+        {
+            var relative = path.StartsWith("data/", StringComparison.Ordinal) ? path.Substring("data/".Length) : path;
+            if (Array.IndexOf(TrainingCorpora, relative) < 0)
+            {
+                problems.Add("not a training corpus: " + path);
+            }
+            else if (!File.Exists(DataFiles.Repository(path)))
+            {
+                problems.Add("not committed: " + path);
+            }
+
+            if (RestrictedCorpusPath.IsMatch(path))
+            {
+                problems.Add("restricted corpus: " + path);
+            }
+
+            problems.AddRange(LicenseProblems(relative.Substring(0, relative.IndexOf('/'))));
+        }
+
+        // Assert: at least one source, no problem, and the notice says which corpora the weights come from
+        Assert.NotEmpty(paths);
+        Assert.Empty(problems.Take(ShownProblems));
+        Assert.Empty(MissingFragments(notice, new[] { "MASC", "CC BY 3.0 US", "open corpus", "silver corpus" }));
+    }
+
+    /// <summary>
+    ///     Proves that the project file names the combined package license file instead of a license expression, packs
+    ///     the file at the package root, and that the file exists.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_PackageLicense_ProjectFile_NamesLicenseFileAtPackageRoot()
+    {
+        // Arrange: load the project file of the library
+        var projectFile = DataFiles.Repository("src/DemaConsulting.PartOfSpeech/DemaConsulting.PartOfSpeech.csproj");
+        var project = XDocument.Load(projectFile);
+
+        // Act: find the license property and the items that include the license file
+        var licenseFile = project.Descendants("PackageLicenseFile").Select(e => e.Value.Trim()).ToList();
+        var expressions = project.Descendants("PackageLicenseExpression").ToList();
+        var items = project.Descendants("None")
+            .Where(item => ((string?)item.Attribute("Include") ?? string.Empty).EndsWith(PackageLicenseName, StringComparison.Ordinal))
+            .ToList();
+
+        // Assert: a license file and no expression (a package has one of them); the file is packed at the root
+        Assert.Equal(new[] { PackageLicenseName }, licenseFile);
+        Assert.Empty(expressions);
+        var item = Assert.Single(items);
+        var include = ((string?)item.Attribute("Include"))!.Replace('\\', '/');
+        Assert.True(File.Exists(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(projectFile)!, include))));
+        Assert.Equal("true", (string?)item.Attribute("Pack"));
+        Assert.Equal("/", ((string?)item.Attribute("PackagePath"))!.Replace('\\', '/'));
+    }
+
+    /// <summary>
+    ///     Proves that the package license starts with the SPDX expression of the whole package, contains the MIT license
+    ///     text of the repository for the code, covers the two embedded data files with their licenses, and points to
+    ///     the third-party notice.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_PackageLicense_File_CoversCodeAndEmbeddedData()
+    {
+        // Arrange: the package license and the license of the repository, with white space collapsed
+        var text = Collapse(File.ReadAllText(DataFiles.Repository(PackageLicenseName)));
+        var repositoryLicense = Collapse(File.ReadAllText(DataFiles.Repository("LICENSE"))).Trim();
+        var required = new[]
+        {
+            "## Code: MIT License",
+            "lexicon.bin",
+            "weights.bin",
+            "Open English WordNet",
+            "Creative Commons Attribution 4.0 International",
+            "https://creativecommons.org/licenses/by/4.0/",
+            "Manually Annotated Sub-Corpus (MASC)",
+            "Creative Commons Attribution 3.0 United States",
+            "https://creativecommons.org/licenses/by/3.0/us/",
+            "THIRD-PARTY-NOTICES.md"
+        };
+
+        // Act: find what the file lacks
+        var missing = MissingFragments(text, required);
+
+        // Assert: the SPDX line first, the MIT text of the repository, and every required statement
+        Assert.StartsWith("SPDX-License-Identifier: MIT AND CC-BY-4.0 AND CC-BY-3.0-US ", text, StringComparison.Ordinal);
+        Assert.Contains(repositoryLicense, text, StringComparison.Ordinal);
+        Assert.Empty(missing);
+    }
+
+    /// <summary>
+    ///     Proves that the third-party notice covers the embedded weights: the MASC section says that the weights were
+    ///     learned from the converted MASC data and are provided under its license, and a section of their own names the
+    ///     trainer and the corpora.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ThirdPartyNotices_Weights_AreCovered()
+    {
+        // Arrange: the sections of the notice that must cover the weights
+        var masc = NoticeSection("## The Manually Annotated Sub-Corpus (MASC)");
+        var weights = NoticeSection("## Embedded Weights");
+
+        // Act: find the statements that the sections lack
+        var missing = MissingFragments(masc, new[] { "weights of the tagger (`weights.bin`) were learned in part from the converted data", "provided under the terms of this license" })
+            .Concat(MissingFragments(weights, new[] { "Resources/weights.bin", "tools/DemaConsulting.PartOfSpeech.Trainer", "`training.json`", "`RUN-LOG.md`", "the attribution of MASC applies to the weights" }))
+            .ToList();
+
+        // Assert: nothing is missing
+        Assert.Empty(missing);
+    }
+
+    /// <summary>
+    ///     Gets the value of a top-level setting of the training configuration, without a JSON parser (which .NET
+    ///     Framework does not have in the box).
+    /// </summary>
+    private static string ConfigValue(string config, string name)
+    {
+        var match = Regex.Match(config, "\"" + name + "\"\\s*:\\s*\"?([^\",\\s}]+)");
+        Assert.True(match.Success, "training.json has no setting " + name);
+        return match.Groups[1].Value;
     }
 
     /// <summary>

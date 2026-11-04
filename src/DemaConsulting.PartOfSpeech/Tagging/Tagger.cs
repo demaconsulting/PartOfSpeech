@@ -20,11 +20,11 @@ namespace DemaConsulting.PartOfSpeech;
 ///         results are immutable too.
 ///     </para>
 ///     <para>
-///         <strong>Default model:</strong> in this build <see cref="Default"/> throws
-///         <see cref="InvalidOperationException"/>, because no trained weights are embedded yet (it returns the shared
-///         tagger with the embedded model once they are); create the tagger with
-///         <see cref="Load(Stream, TaggerOptions?)"/> instead. Loading cost and the lifetime of the stream are
-///         described in [Default model and loading cost](../DemaConsulting.PartOfSpeech.md#default-model-and-loading-cost).
+///         <strong>Default model:</strong> <see cref="Default"/> is the shared tagger that uses the trained weights
+///         and the lexicon embedded in the package, so you need no file; it is created on first use. Create your own
+///         tagger with <see cref="Load(Stream, TaggerOptions?)"/> to use other weights. Loading cost and the lifetime of
+///         the stream are described in
+///         [Default model and loading cost](../DemaConsulting.PartOfSpeech.md#default-model-and-loading-cost).
 ///     </para>
 ///     <para>
 ///         <strong>Exceptions:</strong> creating a tagger throws <see cref="ArgumentNullException"/> for a <c>null</c>
@@ -36,26 +36,24 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </para>
 /// </remarks>
 /// <example>
-///     Create a tagger from a weights file once, share it, and tag a text:
+///     Tag a text with the model that is embedded in the package, and read the tags and confidences:
 ///     <code>
-///     using var weights = File.OpenRead("model.posw");
-///     var tagger = Tagger.Load(weights);
-///
-///     TaggedSentence sentence = tagger.Tag("The cat sat on the mat.")[0];
+///     TaggedSentence sentence = Tagger.Default.Tag("The cat sat on the mat.")[0];
 ///     foreach (TaggedToken token in sentence.Tokens)
 ///     {
 ///         Console.WriteLine($"{token.Text}\t{token.Tag.ToTagString()}\t{token.Confidence:0.00}");
 ///     }
 ///     </code>
+///     To use other weights, create a tagger from a weights file once and share it:
+///     <code>
+///     using var weights = File.OpenRead("model.posw");
+///     var tagger = Tagger.Load(weights);
+///
+///     TaggedSentence sentence = tagger.Tag("The cat sat on the mat.")[0];
+///     </code>
 /// </example>
 public sealed class Tagger
 {
-    /// <summary>
-    ///     The message of the exception that <see cref="Default"/> throws while no model is embedded.
-    /// </summary>
-    private const string NoModelMessage =
-        "This build of DemaConsulting.PartOfSpeech contains no trained model yet. Load a weights file with Tagger.Load(Stream).";
-
     /// <summary>
     ///     The lazily created default tagger.
     /// </summary>
@@ -87,27 +85,18 @@ public sealed class Tagger
     ///     Gets the shared tagger that uses the model embedded in the package.
     /// </summary>
     /// <remarks>
-    ///     In this build the package embeds the lexicon but no trained weights, so reading this property always throws
-    ///     <see cref="InvalidOperationException"/>; create the tagger with <see cref="Load(Stream, TaggerOptions?)"/>
-    ///     instead. When a trained model is embedded, the tagger is created on first use and every caller receives the
-    ///     same thread-safe instance. See
-    ///     [Default model and loading cost](../../DemaConsulting.PartOfSpeech.md#default-model-and-loading-cost).
+    ///     The package embeds the trained weights and the lexicon. The tagger is created on first use (inflating and
+    ///     validating both embedded files once, see
+    ///     [Default model and loading cost](../../DemaConsulting.PartOfSpeech.md#default-model-and-loading-cost)) and
+    ///     every caller receives the same thread-safe instance; a program that never reads this property pays nothing.
     /// </remarks>
-    /// <exception cref="InvalidOperationException">No trained weights are embedded in this build.</exception>
+    /// <exception cref="InvalidOperationException">An embedded resource is missing from the assembly (a broken package; not expected in a released package).</exception>
     /// <exception cref="InvalidDataException">The embedded model is damaged or built for another feature set (not expected in a released package).</exception>
     /// <example>
-    ///     Use the embedded model when the build has one, otherwise load a weights file:
+    ///     Tag a text with the embedded model, with no file to load:
     ///     <code>
-    ///     Tagger tagger;
-    ///     try
-    ///     {
-    ///         tagger = Tagger.Default;
-    ///     }
-    ///     catch (InvalidOperationException)
-    ///     {
-    ///         using var weights = File.OpenRead("model.posw");
-    ///         tagger = Tagger.Load(weights);
-    ///     }
+    ///     TaggedSentence sentence = Tagger.Default.Tag("The cat sat on the mat.")[0];
+    ///     Console.WriteLine(sentence.Tokens[1].Tag.ToTagString());   // NOUN
     ///     </code>
     /// </example>
     public static Tagger Default => LazyDefault.Value;
@@ -304,15 +293,13 @@ public sealed class Tagger
         Tag(Tokenizer.CreateSentence(tokens), constraints);
 
     /// <summary>
-    ///     Creates the default tagger or explains why that is not possible.
+    ///     Creates the default tagger from the embedded model.
     /// </summary>
     /// <returns>The tagger.</returns>
-    /// <exception cref="InvalidOperationException">No weights are embedded in this build.</exception>
-    private static Tagger CreateDefault()
-    {
-        var weights = EmbeddedModel.Weights ?? throw new InvalidOperationException(NoModelMessage);
-        return new Tagger(weights, EmbeddedModel.Lexicon, new TaggerOptions().MaxAlternatives);
-    }
+    /// <exception cref="InvalidOperationException">An embedded resource is missing.</exception>
+    /// <exception cref="InvalidDataException">An embedded resource is damaged.</exception>
+    private static Tagger CreateDefault() =>
+        new(EmbeddedModel.Weights, EmbeddedModel.Lexicon, new TaggerOptions().MaxAlternatives);
 
     /// <summary>
     ///     Validates the options.

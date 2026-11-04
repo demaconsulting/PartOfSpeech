@@ -192,21 +192,26 @@ namespace DemaConsulting.PartOfSpeech;
 ///     ## Default model and loading cost
 ///     </para>
 ///     <para>
-///     This build embeds the lexicon but no trained weights, so <see cref="Tagger.Default"/> throws
-///     <see cref="InvalidOperationException"/>. Create a tagger from a weights file with
-///     <see cref="Tagger.Load(Stream, TaggerOptions?)"/>; a later release embeds a trained model, and
-///     <see cref="Tagger.Default"/> then returns a shared tagger without a file.
+///     The package embeds the trained weights and the lexicon, so <see cref="Tagger.Default"/> returns a shared tagger
+///     that needs no file: it is created on first use and every caller receives the same thread-safe instance. Create
+///     your own tagger from a weights file with <see cref="Tagger.Load(Stream, TaggerOptions?)"/> when you want other
+///     weights (the embedded lexicon is used unless you pass one as well).
 ///     </para>
 ///     <para>
-///     Loading reads the whole stream, from its current position to its end, into memory, then decompresses and
-///     validates the whole file before <see cref="Tagger.Load(Stream, TaggerOptions?)"/> returns; there is no lazy or
-///     partial loading. Load once, keep the <see cref="Tagger"/> and share it across threads and calls. The stream is
-///     not needed afterwards: the tagger keeps no reference to it, so you may dispose it as soon as Load has returned
-///     (the examples use <c>using</c>), and the tagger does not close it itself. The embedded lexicon (the file
-///     <c>lexicon.bin</c>) is 641,418 bytes compressed and holds 262,667 spellings; the first creation of a tagger that
-///     uses it (<see cref="Tagger.Default"/> or <see cref="Tagger.Load(Stream, TaggerOptions?)"/>) inflates and validates
-///     it once in the process, and every later tagger reuses it, while a program that only tokenizes never loads it.
-///     The size and load time of the trained weights will be stated here when they are embedded.
+///     The embedded weights file (<c>weights.bin</c>) is 492,971 bytes compressed and 1,111,898 bytes uncompressed (about
+///     0.48 MB and 1.1 MB); it holds 119,632 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 641,418
+///     bytes compressed and 1,635,344 bytes uncompressed and holds 262,667 spellings. Both files are stored as resources
+///     of the assembly, so the package grows by their compressed sizes for each target framework. The first read of
+///     <see cref="Tagger.Default"/> inflates and validates both files once in the process (tens of milliseconds on a
+///     current machine); every later read, and every later tagger that uses the embedded
+///     lexicon, reuses the loaded data, while a program that only tokenizes never loads either file.
+///     </para>
+///     <para>
+///     Loading your own weights reads the whole stream, from its current position to its end, into memory, then
+///     decompresses and validates the whole file before <see cref="Tagger.Load(Stream, TaggerOptions?)"/> returns; there
+///     is no lazy or partial loading. Load once, keep the <see cref="Tagger"/> and share it across threads and calls. The
+///     stream is not needed afterwards: the tagger keeps no reference to it, so you may dispose it as soon as Load has
+///     returned (the examples use <c>using</c>), and the tagger does not close it itself.
 ///     </para>
 ///     <para>
 ///     ## Thread safety
@@ -228,7 +233,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     weights or lexicon file that is damaged, of an unsupported version or built for another feature set throws
 ///     <see cref="InvalidDataException"/> when the tagger is created; a stream that cannot be read throws the exception
 ///     of the stream (for example <see cref="NotSupportedException"/> or <see cref="ObjectDisposedException"/>). Reading
-///     <see cref="Tagger.Default"/> throws <see cref="InvalidOperationException"/> while no model is embedded.
+///     <see cref="Tagger.Default"/> does not fail in a released package (an <see cref="InvalidOperationException"/> or
+///     <see cref="InvalidDataException"/> would mean that the package is broken).
 ///     Tokenizing never fails for a non-null string. Tagging does not depend on the content of the text either: no text
 ///     makes it fail, including a text with an unpaired surrogate (which is not valid UTF-16); such a character is
 ///     treated like U+FFFD for the features of its token only, and the token text and offsets stay those of the input.
@@ -238,10 +244,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </para>
 /// </remarks>
 /// <example>
-///     Create a tagger from a weights file, tag a text and read the tags, confidences and alternatives:
+///     Tag a text with the embedded model and read the tags, confidences and alternatives:
 ///     <code>
-///     using var weights = File.OpenRead("model.posw");
-///     var tagger = Tagger.Load(weights);
+///     var tagger = Tagger.Default;
 ///
 ///     foreach (var sentence in tagger.Tag("The cat sat on the mat. Does it purr?"))
 ///     {
@@ -254,6 +259,11 @@ namespace DemaConsulting.PartOfSpeech;
 ///             }
 ///         }
 ///     }
+///     </code>
+///     To use other weights, create a tagger from a weights file instead:
+///     <code>
+///     using var weights = File.OpenRead("model.posw");
+///     var tagger = Tagger.Load(weights);
 ///     </code>
 /// </example>
 internal static class NamespaceDoc;

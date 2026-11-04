@@ -41,17 +41,59 @@ public class EmbeddedModelTests
     }
 
     /// <summary>
-    ///     Proves that a build without a weights resource reports no weights instead of failing.
+    ///     Proves that the weights resource is part of the assembly and loads as a model of this feature set.
     /// </summary>
     [Fact]
-    public void EmbeddedModel_Weights_NoResource_ReturnsNull()
+    public void EmbeddedModel_Weights_IsPresentAndLoads()
     {
-        // Arrange / Act: ask for the weights (phase 3 replaces this test by one that loads them)
+        // Arrange: the resource stream of the assembly
+        using var stream = EmbeddedModel.OpenResource(EmbeddedModel.WeightsResourceName);
+
+        // Act: access the weights (loading validates the format, the checksum and the feature set)
         var weights = EmbeddedModel.Weights;
 
-        // Assert: none embedded yet
-        Assert.Null(weights);
-        Assert.Null(EmbeddedModel.OpenResource(EmbeddedModel.WeightsResourceName));
+        // Assert: the resource exists and is the model that the trainer wrote: 19 hash bits, scale 1/8, a temperature
+        Assert.NotNull(stream);
+        Assert.Equal(19, weights.HashBits);
+        Assert.Equal(0.125f, weights.Scale);
+        Assert.True(weights.Temperature > 0f);
+        Assert.True(weights.RowCount > 100_000);
+        Assert.True(weights.WeightCount > weights.RowCount);
+    }
+
+    /// <summary>
+    ///     Proves that repeated access to the weights returns the same instance.
+    /// </summary>
+    [Fact]
+    public void EmbeddedModel_Weights_SecondAccess_ReturnsSameInstance()
+    {
+        // Arrange / Act: access twice
+        var first = EmbeddedModel.Weights;
+        var second = EmbeddedModel.Weights;
+
+        // Assert: one instance
+        Assert.Same(first, second);
+    }
+
+    /// <summary>
+    ///     Proves that many threads asking at once all receive one weights instance.
+    /// </summary>
+    [Fact]
+    public async Task EmbeddedModel_Weights_ParallelAccess_ReturnsSingleInstance()
+    {
+        // Arrange: 16 tasks that start together
+        using var barrier = new Barrier(16);
+        var tasks = Enumerable.Range(0, 16).Select(_ => Task.Run(() =>
+        {
+            barrier.SignalAndWait();
+            return EmbeddedModel.Weights;
+        }, TestContext.Current.CancellationToken)).ToArray();
+
+        // Act: wait for all of them
+        var results = await Task.WhenAll(tasks);
+
+        // Assert: every task saw the same instance
+        Assert.All(results, r => Assert.Same(results[0], r));
     }
 
     /// <summary>

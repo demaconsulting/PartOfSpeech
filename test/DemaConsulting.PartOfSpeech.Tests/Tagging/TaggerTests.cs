@@ -236,19 +236,64 @@ public class TaggerTests
     }
 
     /// <summary>
-    ///     Proves that the default tagger explains why it is unavailable and keeps doing so.
+    ///     Proves that the default tagger is the embedded model and that every read returns the same instance.
     /// </summary>
     [Fact]
-    public void Tagger_Default_NoEmbeddedWeights_ThrowsWithClearMessage()
+    public void Tagger_Default_EmbeddedModel_ReturnsSameWorkingTagger()
     {
-        // Arrange / Act: ask twice
-        var first = Assert.Throws<InvalidOperationException>(() => Tagger.Default);
-        var second = Assert.Throws<InvalidOperationException>(() => Tagger.Default);
+        // Arrange / Act: read the property twice and tag with it
+        var first = Tagger.Default;
+        var second = Tagger.Default;
+        var token = first.Tag("The cat sat on the mat.").Single().Tokens[1];
 
-        // Assert: the message names the problem and the remedy
-        Assert.Contains("no trained model", first.Message);
-        Assert.Contains("Tagger.Load(Stream)", first.Message);
-        Assert.Equal(first.Message, second.Message);
+        // Assert: one instance with the default options that tags with the embedded lexicon and weights
+        Assert.NotNull(first);
+        Assert.Same(first, second);
+        Assert.Equal(3, first.Options.MaxAlternatives);
+        Assert.Equal("cat", token.Text);
+        Assert.Equal(Upos.Noun, token.Tag);
+    }
+
+    /// <summary>
+    ///     Proves that many threads reading the default tagger at once all receive one instance.
+    /// </summary>
+    [Fact]
+    public async Task Tagger_Default_ParallelAccess_ReturnsSingleInstance()
+    {
+        // Arrange: 16 tasks that start together
+        using var barrier = new Barrier(16);
+        var tasks = Enumerable.Range(0, 16).Select(_ => Task.Run(() =>
+        {
+            barrier.SignalAndWait();
+            return Tagger.Default;
+        }, TestContext.Current.CancellationToken)).ToArray();
+
+        // Act: wait for all of them
+        var results = await Task.WhenAll(tasks);
+
+        // Assert: every task saw the same instance
+        Assert.All(results, r => Assert.Same(results[0], r));
+    }
+
+    /// <summary>
+    ///     Proves that the default tagger tags a few hand-written sentences with unmistakable tags correctly. The
+    ///     sentences are deliberately simple and were not tuned; accuracy is measured in the evaluation, not here.
+    /// </summary>
+    [Theory]
+    [InlineData("The cat sat on the mat .", "DET NOUN VERB ADP DET NOUN PUNCT")]
+    [InlineData("She bought two red books .", "PRON VERB NUM ADJ NOUN PUNCT")]
+    [InlineData("The dog and the cat sleep quietly .", "DET NOUN CCONJ DET NOUN VERB ADV PUNCT")]
+    [InlineData("They walked to the old house .", "PRON VERB ADP DET ADJ NOUN PUNCT")]
+    public void Tagger_Default_ObviousSentences_AreTaggedCorrectly(string text, string expected)
+    {
+        // Arrange: the sentence as pre-tokenized text (the tokens are separated by single spaces)
+        var tokens = text.Split(' ');
+
+        // Act: tag it with the embedded model
+        var sentence = Tagger.Default.Tag(tokens);
+
+        // Assert: every tag is the unmistakable one
+        Assert.Equal(expected, string.Join(" ", sentence.Tokens.Select(t => t.Tag.ToTagString())));
     }
 
     /// <summary>

@@ -265,17 +265,43 @@ public class PartOfSpeechTests
     }
 
     /// <summary>
-    ///     Proves that the default tagger throws a clear exception while no trained model is embedded.
+    ///     Proves that the default tagger needs no file: it tags running text with the model that is embedded in the
+    ///     package, gives the unmistakable tags of a few hand-written sentences, and many threads share one instance
+    ///     with sequential results.
     /// </summary>
     [Fact]
-    public void PartOfSpeech_Default_NoEmbeddedModel_ThrowsInvalidOperationException()
+    public async Task PartOfSpeech_Default_EmbeddedModel_TagsTextWithoutFile()
     {
-        // Arrange / Act: read the property
-        var exception = Assert.Throws<InvalidOperationException>(() => Tagger.Default);
+        // Arrange: the default tagger, two simple sentences as text and a sequential reference
+        var tagger = Tagger.Default;
+        const string text = "The cat sat on the mat. She bought two red books.";
+        var expected = Describe(tagger.Tag(text));
+        var mismatches = 0;
 
-        // Assert: the message says what is missing and what to do
-        Assert.Contains("no trained model", exception.Message);
-        Assert.Contains("Tagger.Load", exception.Message);
+        // Act: tag the text and tag it again from eight threads that read the property themselves
+        var sentences = tagger.Tag(text);
+        var tasks = Enumerable.Range(0, 8).Select(_ => Task.Run(() =>
+        {
+            for (var iteration = 0; iteration < 20; iteration++)
+            {
+                if (Describe(Tagger.Default.Tag(text)) != expected)
+                {
+                    Interlocked.Increment(ref mismatches);
+                }
+            }
+        }, TestContext.Current.CancellationToken)).ToArray();
+        await Task.WhenAll(tasks);
+
+        // Assert: two sentences with the obvious tags, the shared instance and no difference between threads
+        Assert.Same(tagger, Tagger.Default);
+        Assert.Equal(2, sentences.Count);
+        Assert.Equal(
+            new[] { Upos.Det, Upos.Noun, Upos.Verb, Upos.Adp, Upos.Det, Upos.Noun, Upos.Punct },
+            sentences[0].Tokens.Select(t => t.Tag));
+        Assert.Equal(
+            new[] { Upos.Pron, Upos.Verb, Upos.Num, Upos.Adj, Upos.Noun, Upos.Punct },
+            sentences[1].Tokens.Select(t => t.Tag));
+        Assert.Equal(0, mismatches);
     }
 
     /// <summary>
@@ -324,10 +350,11 @@ public class PartOfSpeechTests
             .Select(r => (string?)r.Attribute("Include"))
             .ToList();
 
-        // Assert: none is exposed, and the lexicon is embedded as a resource
+        // Assert: none is exposed, and the lexicon and the weights are embedded as resources
         Assert.NotEmpty(references);
         Assert.Empty(exposed);
         Assert.Contains(project.Descendants("EmbeddedResource"), r => ((string?)r.Attribute("Include") ?? string.Empty).Replace('\\', '/').EndsWith("Resources/lexicon.bin", StringComparison.Ordinal));
+        Assert.Contains(project.Descendants("EmbeddedResource"), r => ((string?)r.Attribute("Include") ?? string.Empty).Replace('\\', '/').EndsWith("Resources/weights.bin", StringComparison.Ordinal));
     }
 
     /// <summary>

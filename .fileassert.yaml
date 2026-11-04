@@ -118,6 +118,33 @@ tests:
               text:
                 - contains: "UPOS"
 
+  - name: Package_LicenseFilesPackaged
+    description: "The package carries its license and notices at the root and names the license file"
+    tags: [package-docs]
+    files:
+      - pattern: "src/DemaConsulting.PartOfSpeech/bin/Release/DemaConsulting.PartOfSpeech.*.nupkg"
+        count: 1
+        zip:
+          files:
+            - pattern: "PACKAGE-LICENSE.md"
+              min: 1
+              max: 1
+              text:
+                - contains: "SPDX-License-Identifier: MIT AND CC-BY-4.0 AND CC-BY-3.0-US"
+                - contains: "CC BY 3.0 US"
+                - contains: "THIRD-PARTY-NOTICES.md"
+            - pattern: "THIRD-PARTY-NOTICES.md"
+              min: 1
+              max: 1
+              text:
+                - contains: "weights.bin"
+                - contains: "Creative Commons Attribution 3.0 United States"
+            - pattern: "DemaConsulting.PartOfSpeech.nuspec"
+              min: 1
+              max: 1
+              text:
+                - contains: 'type="file">PACKAGE-LICENSE.md</license>'
+
   # --- BUILD NOTES ---
 
   - name: Pandoc_BuildNotesHtml

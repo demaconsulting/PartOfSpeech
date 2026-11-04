@@ -3,10 +3,12 @@
 PartOfSpeech is Copyright (c) DEMA Consulting and is licensed under the MIT License (see `LICENSE`). The code and the
 data of this project build on the third-party works below. Their attribution and license notices are reproduced here, and
 this file is packed at the root of the NuGet package so that the notices travel with every copy of the package. The
-data and the files derived from it are kept in the `data/` folder of the repository; compiled forms of them may be
-embedded in the package. The package embeds a compiled form of the lexicon `data/lexicon/lexicon.tsv` (derived from Open
+data and the files derived from it are kept in the `data/` folder of the repository; compiled forms of them are embedded
+in the package. The package embeds a compiled form of the lexicon `data/lexicon/lexicon.tsv` (derived from Open
 English WordNet and the Moby Part-of-Speech List, with tags attested in MASC and the open corpus) as the binary resource
-that restricts the tags of known words.
+that restricts the tags of known words, and the trained weights of the tagger (`Resources/weights.bin`), which the
+Trainer tool learned from the corpora in `data/open/`, `data/masc/` and `data/silver/`. The file `PACKAGE-LICENSE.md`,
+also packed at the root of the package, is the license of the package and states which license covers which part.
 
 No Creative Commons Attribution-ShareAlike (CC BY-SA), NonCommercial or NoDerivatives material is part of this
 repository or package. The one CC BY-SA corpus that the project evaluates against is described in the last section and
@@ -14,7 +16,8 @@ is never distributed.
 
 ## The Manually Annotated Sub-Corpus (MASC)
 
-Part-of-speech training data in `data/masc/` and the lexicon in `data/lexicon/` are adapted from MASC.
+Part-of-speech training data in `data/masc/`, the lexicon in `data/lexicon/` and the trained weights that are embedded in
+the package are adapted from MASC.
 
 - **Title:** The Manually Annotated Sub-Corpus (MASC), Penn Treebank syntax annotations of the written texts (release of
   2026-09-25)
@@ -31,7 +34,10 @@ Part-of-speech training data in `data/masc/` and the lexicon in `data/lexicon/` 
 - **Changes:** the work was adapted by DEMA Consulting. The Penn Treebank part-of-speech tags and tree positions of every
   token were converted to Universal POS (UPOS) tags; the empty-category traces were removed, quotation marks and dashes
   were normalized, the sentences were reduced to those of 3 to 70 tokens, and the spoken genre and a few documents and
-  sentences that overlap evaluation data were left out. The converted data is not the original MASC data. The authors of
+  sentences that overlap evaluation data were left out. The converted data is not the original MASC data. The trained
+  weights of the tagger (`weights.bin`) were learned in part from the converted data: they are numbers that a training
+  program computed from the tags and the text of the converted sentences, and they contain no MASC text. The weights are
+  provided under the terms of this license. The authors of
   MASC do not endorse this project or the converted data. The full statement is `data/masc/ATTRIBUTION.md`.
 
 ## Open English WordNet
@@ -86,6 +92,14 @@ and/or database.  Title to copyright in this software, database and
 any associated documentation shall at all times remain with
 Princeton University and LICENSEE agrees to preserve same.
 ```
+
+## Embedded Weights
+
+The weights embedded in the package (`Resources/weights.bin`) are the output of the Trainer tool of this repository
+(`tools/DemaConsulting.PartOfSpeech.Trainer`), which learned them from the open corpus (CC0 1.0), the written texts of
+MASC (CC BY 3.0 US, see the MASC section above) and the silver corpus (CC0 1.0). The tool, its settings
+(`training.json`) and its run log (`RUN-LOG.md`) are in the repository, and the committed corpora and the tool
+reproduce the model bit for bit. Because of the MASC part, the attribution of MASC applies to the weights.
 
 ## Courtesy Notices
 

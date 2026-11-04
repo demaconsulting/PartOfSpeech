@@ -7,10 +7,11 @@ namespace DemaConsulting.PartOfSpeech;
 /// </summary>
 /// <remarks>
 ///     <para>
-///         The compiled lexicon (<c>Resources/lexicon.bin</c>) is always embedded; the trained weights
-///         (<c>Resources/weights.bin</c>) are added by a later release, so <see cref="Weights"/> is <c>null</c> in a
-///         build that has none. Each model is parsed once on first use (about a megabyte of inflate and validation
-///         work), never at assembly load, so a program that only tokenizes pays nothing.
+///         The compiled lexicon (<c>Resources/lexicon.bin</c>) and the trained weights
+///         (<c>Resources/weights.bin</c>, written by the Trainer tool) are both embedded; a package without either
+///         resource is broken, so a missing resource is an error and never a silent fallback. Each model is parsed
+///         once on first use (about a megabyte of inflate and validation work for each), never at assembly load, so a
+///         program that only tokenizes pays nothing.
 ///     </para>
 ///     <para>
 ///         The initialization uses <see cref="Lazy{T}"/> in publication-safe mode: concurrent first accesses run the
@@ -26,7 +27,7 @@ internal static class EmbeddedModel
     public const string LexiconResourceName = "DemaConsulting.PartOfSpeech.Resources.lexicon.bin";
 
     /// <summary>
-    ///     The logical name of the embedded weights resource (absent until a trained model ships).
+    ///     The logical name of the embedded weights resource (fixed in the project file, independent of namespaces).
     /// </summary>
     public const string WeightsResourceName = "DemaConsulting.PartOfSpeech.Resources.weights.bin";
 
@@ -38,7 +39,7 @@ internal static class EmbeddedModel
     /// <summary>
     ///     The lazily loaded weights.
     /// </summary>
-    private static readonly Lazy<PerceptronModel?> LazyWeights = new(LoadWeights, LazyThreadSafetyMode.ExecutionAndPublication);
+    private static readonly Lazy<PerceptronModel> LazyWeights = new(LoadWeights, LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>
     ///     Gets the embedded lexicon, loading it on first access.
@@ -50,9 +51,9 @@ internal static class EmbeddedModel
     /// <summary>
     ///     Gets the embedded weights, loading them on first access.
     /// </summary>
-    /// <value>The model, or <c>null</c> if this build embeds no weights.</value>
+    /// <exception cref="InvalidOperationException">The assembly has no weights resource.</exception>
     /// <exception cref="InvalidDataException">The embedded weights are corrupt or from another feature set.</exception>
-    public static PerceptronModel? Weights => LazyWeights.Value;
+    public static PerceptronModel Weights => LazyWeights.Value;
 
     /// <summary>
     ///     Opens an embedded resource of this assembly.
@@ -73,12 +74,13 @@ internal static class EmbeddedModel
     }
 
     /// <summary>
-    ///     Loads the weights resource if it exists.
+    ///     Loads the weights resource.
     /// </summary>
-    /// <returns>The model, or <c>null</c> if the resource does not exist.</returns>
-    private static PerceptronModel? LoadWeights()
+    /// <returns>The model.</returns>
+    private static PerceptronModel LoadWeights()
     {
-        using var stream = OpenResource(WeightsResourceName);
-        return stream == null ? null : PerceptronModel.Load(stream, FeatureExtractor.FeatureSetVersion);
+        using var stream = OpenResource(WeightsResourceName)
+            ?? throw new InvalidOperationException($"The embedded resource '{WeightsResourceName}' is missing from the assembly.");
+        return PerceptronModel.Load(stream, FeatureExtractor.FeatureSetVersion);
     }
 }
