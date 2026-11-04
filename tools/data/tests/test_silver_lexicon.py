@@ -6,6 +6,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import build_lexicon
+import check_lexicon
 import common
 import import_open
 import import_silver as silver
@@ -109,6 +110,27 @@ class FlagPreservationTests(unittest.TestCase):
             common.write_text(path, lines)
             self.assertEqual(build_lexicon.attested(path, 1, skip_disputed=True), {("snowball", "VERB"): 2})
             self.assertEqual(build_lexicon.attested(path, 1, skip_disputed=False), {("snowball", "VERB"): 3})
+
+
+    def test_lexicon_tools_refuse_a_malformed_status(self):
+        for status in ("unanimous+bogus", "unanimous+mentioned+foreign", "unanimous+mentioned+mentioned", "bogus"):
+            lines = ["# corpus = test", "", "# sent_id = s1", "# source_id = d1", "# text = x", "snowball\tVERB\t" + status]
+            with tempfile.TemporaryDirectory() as folder:
+                path = os.path.join(folder, "c.tsv")
+                common.write_text(path, lines)
+                with self.assertRaises(ValueError, msg=status):
+                    build_lexicon.attested(path, 1, skip_disputed=True)
+                with self.assertRaises(ValueError, msg=status):
+                    check_lexicon.measure(LEXICON, path)
+
+    def test_lexicon_coverage_ignores_flags_when_deciding_disputed(self):
+        lines = ["# corpus = test", "", "# sent_id = s1", "# source_id = d1", "# text = x",
+                 "dog\tNOUN\tunanimous+mentioned", "dog\tVERB\tdisputed+mentioned"]
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, "c.tsv")
+            common.write_text(path, lines)
+            stats, _ = check_lexicon.measure(LEXICON, path)
+        self.assertEqual((stats["a_tokens"], stats["n_tokens"]), (2, 1))
 
 
 class LexiconBuildTests(unittest.TestCase):

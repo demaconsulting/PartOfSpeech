@@ -67,9 +67,10 @@ and the `Mentioned=Yes` feature of [UD English-EWT, issue 446](https://github.co
 - **Tag** a mentioned word with the tag it gets in ordinary use, never NOUN because it is mentioned and never X: `snowball`
   VERB, `it` PRON, `Eureka` INTJ, `Sierra` NOUN (a common Spanish word, not a name).
 - **Flag** every token of the mentioned word or phrase `+mentioned`. The quotation marks and other punctuation are not flagged.
-- **Foreign** words of another language, used or mentioned, are tagged by the category the word has in its own
-  language and flagged `+foreign` (`Sierra` in the example is `NOUN` with `+foreign+mentioned`). X is reserved for
-  material that cannot be analyzed: gibberish, fragments, and runs of foreign text where no category is meaningful.
+- **Foreign.** Words of another language carry the flag `+foreign`. A single foreign word that is mentioned for its form
+  or meaning gets the category it has in its own language (`Sierra` NOUN with `+foreign+mentioned`; `Eureka` INTJ).
+  Foreign text used as running text inside an English sentence stays X (existing practice, as in UD English-EWT), with
+  `+foreign`. X is never given to a word only because it is mentioned.
 
 Ordered tests; stop at the first that answers:
 
@@ -80,8 +81,10 @@ Ordered tests; stop at the first that answers:
 2. Tag the word as if it were used in its ordinary sense.
 3. Closed-class words named in a list (`so` and `neither`, `it` and `that`) get each its own most frequent use when the
    mention gives no syntax to test; do not give the pair one shared tag.
-4. Foreign word or phrase mentioned for its form or meaning: tag by its category in the donor language and add `+foreign`.
-5. X only in the restricted cases above.
+4. A foreign word or phrase mentioned for its form or meaning: tag each word by its category in the donor language and
+   add `+foreign` (with `+mentioned`).
+5. X only for foreign running text and material that cannot be analyzed (gibberish, fragments); a mentioned word that
+   can be analyzed is never X.
 6. Annotators still disagree (for example speech quotation against mention): `disputed`.
 
 ### Prenominal Modifiers and Predicate Participles

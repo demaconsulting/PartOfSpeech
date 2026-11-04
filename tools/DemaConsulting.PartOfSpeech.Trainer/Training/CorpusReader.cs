@@ -38,18 +38,31 @@ internal enum TokenMarks
 internal static class CorpusStatus
 {
     /// <summary>
+    ///     The statuses of the committed corpora, without flags.
+    /// </summary>
+    private static readonly HashSet<string> KnownStatuses = new(StringComparer.Ordinal)
+    {
+        "unanimous", "disputed", "unchecked", "ptb", "silver", "masked",
+    };
+
+    /// <summary>
     ///     Splits a status cell into the status and its flags.
     /// </summary>
     /// <param name="cell">The cell, such as <c>unanimous</c> or <c>disputed+foreign+mentioned</c>.</param>
     /// <param name="status">Receives the status without its flags.</param>
     /// <param name="flags">Receives the flags.</param>
-    /// <returns><c>true</c> if the flags are known, unique and in canonical order.</returns>
+    /// <returns><c>true</c> if the status is known and the flags are known, unique and in canonical order.</returns>
     public static bool TryParse(string cell, out string status, out TokenMarks flags)
     {
         ArgumentNullException.ThrowIfNull(cell);
         var parts = cell.Split('+');
         status = parts[0];
         flags = TokenMarks.None;
+        if (!KnownStatuses.Contains(status))
+        {
+            return false;
+        }
+
         var previous = TokenMarks.None;
         for (var i = 1; i < parts.Length; i++)
         {
@@ -273,7 +286,7 @@ internal static class CorpusReader
             forms.Add(cells[0]);
             if (!CorpusStatus.TryParse(cells[2], out _, out var tokenFlags))
             {
-                throw new InvalidDataException($"{origin}, line {lineNumber}: invalid status '{cells[2]}' (flags are +foreign and +mentioned, in that order, once).");
+                throw new InvalidDataException($"{origin}, line {lineNumber}: invalid status '{cells[2]}' (a known status, then the flags +foreign and +mentioned, in that order, once).");
             }
 
             flags.Add(tokenFlags);

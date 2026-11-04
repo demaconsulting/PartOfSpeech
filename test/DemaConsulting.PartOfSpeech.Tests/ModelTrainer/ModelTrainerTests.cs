@@ -516,7 +516,7 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates that an unknown, repeated or out-of-order status flag is reported with its line number.
+    ///     Validates that an unknown status, or an unknown, repeated or out-of-order status flag, is reported with its line number.
     /// </summary>
     /// <param name="status">The status cell.</param>
     [Theory]
@@ -524,6 +524,12 @@ public class ModelTrainerTests
     [InlineData("unanimous+mentioned+mentioned")]
     [InlineData("unanimous+mentioned+foreign")]
     [InlineData("unanimous+")]
+    [InlineData("")]
+    [InlineData("bogus")]
+    [InlineData("UNANIMOUS")]
+    [InlineData(" unanimous")]
+    [InlineData("+mentioned")]
+    [InlineData("mentioned")]
     public void CorpusReader_Parse_InvalidStatusFlags_ThrowsWithLine(string status)
     {
         // Arrange / Act
@@ -531,7 +537,7 @@ public class ModelTrainerTests
 
         // Assert
         Assert.Contains("line 2", ex.Message);
-        Assert.Contains(status, ex.Message);
+        Assert.Contains($"'{status}'", ex.Message);
     }
 
     /// <summary>

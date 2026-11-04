@@ -138,7 +138,7 @@ def attested(path, minimum, skip_disputed):
     for sentence in common.read_corpus(path)[1]:
         for row in sentence["rows"]:
             form, upos, status = row[0], row[1], row[2]
-            status = common.base_status(status)  # flags such as +mentioned do not change what the row attests
+            status = common.parse_status(status)[0]  # refuses a malformed status or flag; flags do not change what a row attests
             if (skip_disputed and status == "disputed") or status == "masked" or upos == "_":
                 continue
             if any(ch.isdigit() for ch in form):
