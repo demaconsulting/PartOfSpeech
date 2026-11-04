@@ -2,9 +2,10 @@
 # Software Unit Requirements for ModelTrainer
 #
 # ModelTrainer is a unit directly under the system: the build-time tool (tools/DemaConsulting.PartOfSpeech.Trainer) that
-# trains the averaged-perceptron weights that the package embeds, selects every setting on development data only, and
-# checks that the committed weights are what the committed data and configuration produce. Its engine files are compiled
-# into the test project, so the tests run the real trainer code on every target framework.
+# trains the averaged-perceptron weights that the package embeds, selects every setting on development data only,
+# checks that the committed weights are what the committed data and configuration produce, and runs the one held-out
+# evaluation of the frozen model behind a development-only selection of the confidence thresholds. Its engine files are
+# compiled into the test project, so the tests run the real trainer code on every target framework.
 
 sections:
   - title: PartOfSpeech Requirements
@@ -91,17 +92,18 @@ sections:
 
           - id: PartOfSpeech-ModelTrainer-DevOnlySelection
             title: >-
-              Evaluation shall read only the two development files (also when the path is spelled with a detour), a
-              file that does not announce a development split shall be refused, training shall accept only files below
-              the data folder of the repository (after the path is made absolute and symbolic links and junctions are
-              resolved) and refuse held-out sets, evaluation folders and development files there, and no other source of
-              the trainer shall name a held-out set.
+              Development evaluation shall read only the two development files (also when the path is spelled with a
+              detour), a file that does not announce a development split shall be refused, training shall accept only
+              files below the data folder of the repository (after the path is made absolute and symbolic links and
+              junctions are resolved) and refuse held-out sets, evaluation folders and development files there, and no
+              other source of the trainer than the guard shall name a held-out set.
             justification: |
               The accuracy that is reported later is only honest if nothing in the model was tuned on the data that
               measures it. A rule in a document is easy to forget, so the rule is code: there is no path through the
-              trainer that opens a held-out file, and tests prove the allow-list, the deny-list and the absence of other
-              references. The deny-list works on the canonical path, because a rooted path, a dotted detour or a link
-              could otherwise point a safe-looking name at held-out data.
+              selection and training commands that opens a held-out file, and tests prove the allow-list, the deny-list
+              and the absence of other references. The deny-list works on the canonical path, because a rooted path, a
+              dotted detour or a link could otherwise point a safe-looking name at held-out data. The one command that
+              reads held-out sets is covered by the held-out gate requirement.
             tests:
               - DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused
               - DataGuard_EnsureDevelopmentFile_DevelopmentFile_Admitted
@@ -112,6 +114,97 @@ sections:
               - DataGuard_EnsureTrainable_LinkToHeldOutOrOutsideData_Refused
               - DataGuard_EnsureDevelopmentHeader_NoDevSplitHeader_Throws
               - ModelTrainer_Sources_NoHeldOutPathLiterals
+              - HeldOutEvaluation_Sources_NewFilesDoNotSpellHeldOutNames
+              - DataGuard_HeldOutFiles_RefusedForDevelopmentEvaluationAndTraining
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutGate
+            title: >-
+              The held-out sets shall be readable only by the evaluation command and only with a development selection
+              that is valid for the frozen model, for the committed development files and for the pre-registered rule
+              (a held-out reader shall not exist without it); every held-out file shall be verified against the
+              recorded hash and its header before it is parsed, the evaluation shall refuse to run twice, shall be
+              preceded by a check that prints counts only, and shall write per-token records only outside the
+              repository.
+            justification: |
+              Choosing the confidence thresholds on development data and then measuring them once on data that nothing
+              touched is only credible if the order cannot be reversed or repeated by accident. The held-out readers
+              take the validated selection as a required parameter, the selection names the hash of the model that is
+              scored, so a changed model or threshold needs a new selection; the results file is the run-once marker,
+              which can only be removed by a visible change; the pre-flight finds format and pin problems without
+              showing a label, a prediction or a figure; and the per-token records, which can hold third-party text,
+              cannot land in the tree.
+            tests:
+              - DataGuard_HeldOutFiles_AreFourSetsAndNoDevelopmentFile
+              - DataGuard_EnsureHeldOutFile_NoSelection_Throws
+              - SelectedOperatingPoints_Validate_ValidArtifact_KeepsSelectedPoints
+              - SelectedOperatingPoints_Validate_InconsistentArtifact_Throws
+              - DataGuard_EnsureHeldOutHeader_AnnouncedSet_AcceptedOthersRefused
+              - DataGuard_EnsureNotEvaluated_ExistingResultsFile_Throws
+              - DataGuard_EnsureOutsideRepository_InsideRefused_OutsideAccepted
+              - HeldOutReader_Read_FixtureRepository_VerifiesHashAndHeader
+              - HeldOutReader_ReadUd_FixtureCache_VerifiesPin
+              - OperatingPointsFile_FormatParseLoad_RoundTripAndValidation
+
+          - id: PartOfSpeech-ModelTrainer-ConfidenceCurve
+            title: >-
+              The evaluation shall compute, for the noun-verb decisions, the curve of coverage and harmful errors per
+              1,000 answered decisions over a fixed threshold grid and the reliability table of the confidences, and
+              shall select the strict and the balanced operating point of the pooled development decisions by the
+              pre-registered rule (the first grid threshold that meets the target and the coverage floor, none when no
+              threshold qualifies, nothing relaxed).
+            justification: |
+              Guidance on a confidence threshold must come from a measurement that was defined in advance. The curve and
+              the rule are pure functions, checked against hand-computed outcomes, at the boundaries of the targets and
+              for the case that nothing qualifies, so the committed thresholds are what the rule says and not what
+              looked good after the fact.
+            tests:
+              - EvalTally_Of_Outcomes_AgreesWithMetricsCompute
+              - ConfidenceCurve_Of_HandComputedOutcomes_MatchesExpectedRows
+              - ConfidenceCurve_Reliability_Decisions_OneBinEach
+              - OperatingPointRule_Select_FirstQualifyingThreshold_StrictAndBalanced
+              - OperatingPointRule_Select_BoundariesAndNone_AreNotRelaxed
+              - DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutMetrics
+            title: >-
+              The held-out evaluation shall judge every set with the definitions of the development evaluation (one
+              definition of a decision and of a harmful error), shall parse the held-out formats (shape probe with its
+              braces, the convention-mapped treebank table with its document, gold v2 with status and agreement) and
+              refuse malformed rows, shall report each set and view with 95 percent bootstrap intervals over documents
+              (over rows where a set has none) and the paired difference of every operating point against 0.45, and
+              shall check the stop conditions of the protocol.
+            justification: |
+              A held-out number is only comparable with the development number when both are made by the same code, and
+              a malformed row that is silently skipped would change a headline figure. The bootstrap is deterministic
+              for a seed, resamples whole documents because the tokens of a document are not independent, and pairs the
+              operating point with the 0.45 point on the same decisions. The stop conditions are written before the run
+              and tested on crafted results, so a defect is declared by rule.
+            tests:
+              - HeldOutSets_ParseProbe_Rows_BracesRemovedAndValidated
+              - HeldOutSets_ParseUd_MappedTable_ReadsTagsRulesAndDocuments
+              - DevSets_ParseGold_StatusAndAgreement_Carried
+              - DevSets_GoldClassOf_EveryTag_CollapsesToTenClassesAndOther
+              - ClusterBootstrap_Intervals_TiedBetterDeterministicAndSingleItemClusters
+              - EvaluationReport_Summarize_OperatingPoint_PairedDifferenceAgainstReference
+              - EvaluationReport_Tripwires_EachConditionFiresAlone
+              - HeldOutEvaluator_Score_FixtureSets_ViewsAndReports
+              - HeldOutEvaluator_Throughput_Fixture_IsPositive
+
+          - id: PartOfSpeech-ModelTrainer-EvaluationReport
+            title: >-
+              The reports of the development selection and of the held-out run shall be deterministic Markdown and
+              canonical JSON generated from the results (the same results give the same text), shall publish no word,
+              sentence or sentence id of the external treebank, and the per-token dump shall have one record for each
+              token with all 17 tag probabilities.
+            justification: |
+              The committed figures are the record of the evaluation, so they are generated and not typed, and a report
+              that changed between two renderings of the same results could not be reviewed. The treebank is licensed
+              share-alike and may not enter the repository, so only aggregates and tag-level confusion are written.
+            tests:
+              - HeldOutEvaluator_Score_FixtureSets_ViewsAndReports
+              - DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent
+              - EvaluationReport_WriteDump_Tokens_HeaderAndRows
+              - OperatingPointsFile_FormatResults_RoundTrip
 
           - id: PartOfSpeech-ModelTrainer-CheckDetectsStaleWeights
             title: >-

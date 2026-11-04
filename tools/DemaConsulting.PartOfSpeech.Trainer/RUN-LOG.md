@@ -963,6 +963,19 @@ A tripwire declares a model or data defect by a rule written in advance; the res
   same single run (`--dump-dir`, which must be outside the repository); they add no figure of those taggers to the
   repository.
 
+### Recipe
+
+```text
+dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- thresholds
+python tools/data/fetch_ud_ewt.py fetch
+python tools/data/fetch_ud_ewt.py map
+dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- evaluate --preflight
+dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- evaluate --dump-dir <folder outside the repository>
+```
+
+`thresholds` and its two output files are committed first; only then are the last two commands run. The reports are
+committed as produced.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

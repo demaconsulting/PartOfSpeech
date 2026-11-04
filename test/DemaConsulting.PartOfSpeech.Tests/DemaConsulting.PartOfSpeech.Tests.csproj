@@ -76,13 +76,14 @@
   <!-- Model trainer engine: the trainer is a net10.0 tool, but its engine files (Training and Evaluation, plus the run
        log formatter) use only the base class library, so they are compiled into this test assembly. That way the same
        tests run the real trainer code on every target framework, including .NET Framework. Program.cs (console) and
-       ConfigFile.cs (System.Text.Json, not part of .NET Framework) are not linked; the configuration file is tested on
-       the frameworks that have the JSON API. -->
+       ConfigFile.cs and OperatingPointsFile.cs (System.Text.Json, not part of .NET Framework) are not linked on
+       .NET Framework; the JSON files are tested on the frameworks that have the JSON API. -->
   <ItemGroup>
     <Compile Include="..\..\tools\DemaConsulting.PartOfSpeech.Trainer\Training\*.cs" LinkBase="ModelTrainer\Training" />
     <Compile Include="..\..\tools\DemaConsulting.PartOfSpeech.Trainer\Evaluation\*.cs" LinkBase="ModelTrainer\Evaluation" />
     <Compile Include="..\..\tools\DemaConsulting.PartOfSpeech.Trainer\RunLog.cs" Link="ModelTrainer\RunLog.cs" />
     <Compile Include="..\..\tools\DemaConsulting.PartOfSpeech.Trainer\ConfigFile.cs" Link="ModelTrainer\ConfigFile.cs" Condition="'$(TargetFramework)' != 'net481'" />
+    <Compile Include="..\..\tools\DemaConsulting.PartOfSpeech.Trainer\OperatingPointsFile.cs" Link="ModelTrainer\OperatingPointsFile.cs" Condition="'$(TargetFramework)' != 'net481'" />
   </ItemGroup>
 
 </Project>

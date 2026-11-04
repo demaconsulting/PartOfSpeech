@@ -8,9 +8,12 @@
 weights that the package embeds (`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`) from the committed corpora, with
 the feature extractor, the lexicon restriction and the weights writer of the library itself. It also selects every
 setting of the model on development data only, and it checks that the committed weights are exactly what the committed
-corpora and the committed configuration produce. It is a unit directly under the system, like `Upos`. It is not part of
+corpora and the committed configuration produce. It also chooses the confidence thresholds on development data and runs
+the one held-out evaluation of the frozen model (see _Confidence Thresholds_ and _Held-Out Evaluation_). It is a unit
+directly under the system, like `Upos`. It is not part of
 the NuGet package and not part of the runtime; the library never calls it. The tool is a .NET 10 console program
-(`Program.cs`, `ConfigFile.cs`, `RunLog.cs`) with an engine in two folders (`Training/` and `Evaluation/`); the engine
+(`Program.cs`, `ConfigFile.cs`, `OperatingPointsFile.cs`, `RunLog.cs`) with an engine in two folders (`Training/` and
+`Evaluation/`); the engine
 files use only the base class library, so they are compiled into the test project and run by the unit tests on every
 target framework, including .NET Framework.
 
@@ -33,13 +36,41 @@ target framework, including .NET Framework.
   mistakes.
 - **`DeterministicRandom`** (`Training/DeterministicRandom.cs`): SplitMix64 with a Fisher-Yates shuffle; the sequence for
   seed 0 is pinned by a test.
-- **`DataGuard`** (`Evaluation/DevSets.cs`): the allow-list of the two development files and the deny-list for training
+- **`DataGuard`** (`Evaluation/DevSets.cs`): the allow-list of the two development files, the deny-list for training
   sources, which works on the canonical path (absolute, with symbolic links and junctions resolved on .NET 6 and later)
-  and requires a training source to lie below the `data` folder of the repository.
+  and requires a training source to lie below the `data` folder of the repository, and the held-out allow-list (the four
+  repository sets and the cache of the external treebank), whose resolver and header check need a validated selection.
+  `HeldOutReader` (same file) opens the held-out files and verifies their hashes against `data/MANIFEST.tsv` (the
+  treebank against its pins) and their headers.
 - **Metrics** (`Evaluation/Metrics.cs`): per-token outcomes, accuracy, accuracy on lexicon-ambiguous tokens, harmful
   errors (gold NOUN answered VERB or gold VERB answered NOUN with confidence at least 0.45, counted per 1,000
   noun-verb decisions), negative log-likelihood and expected calibration error (15 equal-width bins), and the paired
   bootstrap by document (1,000 resamples, fixed seed) with 95% intervals.
+- **`EvalToken`** and **`EvalTally`** (`Evaluation/EvalTally.cs`): a judged token (set, document, sentence, form, gold,
+  chosen label, the 17 probabilities and the `Outcome` made by `Metrics.Judge`, so that development and held-out use one
+  definition of a decision and a harmful error) and the additive counts of a set of tokens (accuracy, ambiguous accuracy,
+  noun-verb decisions, harmful errors, log-likelihood sum, 15 calibration bins, answered and harmful counts at every
+  threshold of the grid, the reliability bins, the noun-verb confusion, per-label true and false positives and pairs).
+  A bootstrap resample is the sum of the tallies of the drawn documents; a test asserts that the tally agrees with
+  `Metrics.Compute`.
+- **`ConfidenceCurve`**, **`CurveRow`**, **`ReliabilityRow`**, **`SelectedPoint`** and **`OperatingPointRule`**
+  (`Evaluation/ConfidenceCurve.cs`): the threshold grid (0.45 to 0.95 in steps of 0.05, then 0.96 to 0.99, built from
+  integer hundredths), the curve of a tally, the reliability table and the pre-registered selection rule.
+- **`ClusterBootstrap`** (`Evaluation/ClusterBootstrap.cs`): percentile intervals of any statistic of a tally over
+  resampled clusters (documents, or single rows or sentences for a set without documents); a paired difference is the
+  statistic `f - g` on the same draw.
+- **`OperatingPointsData`**, **`OperatingPointsExpectation`** and **`SelectedOperatingPoints`**
+  (`Evaluation/OperatingPoints.cs`): the content of the selection artifact and the validated proof of a development
+  selection; **`OperatingPointsFile`** (`OperatingPointsFile.cs`, System.Text.Json) reads and writes `operating-points.json`
+  and `test-results.json` in canonical form and builds the expectation from the embedded model, `training.json` and
+  `data/MANIFEST.tsv`.
+- **`DevSelection`**, **`SetRecord`**, **`PointResult`**, **`ResultsData`** and **`ReportFormat`**
+  (`Evaluation/EvaluationData.cs`) and **`EvaluationReport`** (`Evaluation/EvaluationReport.cs`): the development
+  selection, the summaries of the held-out sets, the stop conditions and the deterministic writers of the reports and of
+  the per-token dump.
+- **`HeldOutSets`**, **`HeldOutData`**, **`UdSentence`** (`Evaluation/HeldOutSets.cs`) and **`HeldOutEvaluator`**
+  (`Evaluation/HeldOutEvaluator.cs`): the line parsers of the held-out formats, the data of one run with its documented
+  counts, and the judging of every set and view with the embedded model.
 
 ### Key Methods
 
@@ -82,8 +113,10 @@ target framework, including .NET Framework.
 - **Glossary evaluation** (`GlossaryEvaluation`, `GlossaryEvaluationReport`): see _Glossary Evaluation_.
 - **Commands** (`Program.cs`): `train` (with experiment overrides, `--check`, `--update-config`, `--eval`, `--log`,
   `--calibrate`, `--checkpoints`), `eval`, `calibrate`, `compare`, `glossary-probe`, `glossary-experiment` and
-  `glossary-eval` (`--seed`, `--resamples`; it takes no weights or data path and appends no run-log row); the exit
-  code is 0 for success, 1 for stale weights and 2 for a usage or data error. Overrides are rejected together with
+  `glossary-eval` (`--seed`, `--resamples`; it takes no weights or data path and appends no run-log row), `thresholds`
+  (development data only) and `evaluate` (the one held-out run; see _Held-Out Evaluation_); the exit
+  code is 0 for success, 1 for stale weights (or a stop condition that fired in `evaluate`) and 2 for a usage or data
+  error. Overrides are rejected together with
   `--check` and `--update-config`. An experiment (overrides or `--calibrate`) must name `--output`, so it can never
   overwrite the shipped weights (`OutputGuard`, which fails fast, before the corpora are loaded, with exit code 2). The
   README of the tool lists every option.
@@ -114,13 +147,86 @@ the data folder is refused) and symbolic links and junctions are resolved with
 `FileSystemInfo.ResolveLinkTarget` (a safe-looking name that points at held-out data is refused); on .NET Framework,
 which only compiles this file for the tests, links are not resolved. The held-out names (the open and gold test
 splits, the shape probe, the challenge set and the external treebank) are spelled in `DevSets.cs` only, and a test scans
-every other trainer source for them, so there is no code path that opens such a file. The held-out sets are evaluated
-once, later. The selection protocol was written into `RUN-LOG.md` before the first experiment: the primary criterion is
+every other trainer source for them, so the development and training commands have no code path that opens such a file;
+the one command that reads them is described in _Held-Out Evaluation_. The selection protocol was written into
+`RUN-LOG.md` before the first experiment: the primary criterion is
 the pooled harmful errors per 1,000 noun-verb decisions, an option must stay within 0.30 accuracy points of the best, ties
 (paired bootstrap intervals containing zero) go to the smaller model and then to fewer sources, and a noise floor was
 measured with two more seeds. The settings were chosen by coordinate descent (no interactions), which is a stated
 limitation, as are the small size of the gold development set (2,025 targets) and the fact that both development sets are
 labeled by language models.
+
+### Confidence Thresholds
+
+A consumer who wants to avoid confident noun-verb mistakes needs a threshold below which it abstains. The `thresholds`
+command measures that on **development data only**, with a rule that is written in the protocol section of `RUN-LOG.md`
+before any curve existed.
+
+- **Decisions and rates.** A decision is a token whose gold label is a noun or a verb and for which both were candidates
+  (the existing `Outcome.NounVerb`). It is answered at a threshold t when the confidence of the chosen tag is at least
+  t, and
+  a harmful error is an answered decision with the other one of the two tags. The curve gives, for every threshold of the
+  grid, the answered decisions, the coverage, the harmful errors, the harmful errors per 1,000 answered and per 1,000
+  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 94, 9 and 103 harmful
+  errors on open dev, gold v2 dev and pooled). The reliability table groups the decisions by confidence.
+- **Rule `nv-pooled-dev-v1`.** On the pooled development decisions the first grid threshold with at most 5.0 harmful
+  errors per 1,000 answered and a coverage of at least 60% is the `strict` point, the first with at most 10.0 and at
+  least 85%
+  is the `balanced` point. If no grid threshold qualifies the point is recorded as none; neither target nor grid is relaxed.
+- **Output.** `docs/evaluation/operating-points.json` (the artifact read by `evaluate`: rule id, model image hash,
+  temperature, development file hashes, grid, points with their pooled development figures) and
+  `docs/evaluation/confidence-thresholds.md` (curves of both development sets and of the pooled set, reliability table,
+  rule, points with bootstrap intervals over documents). Both are written by the command and committed; the command
+  refuses to write when the 0.45 row does not reproduce the frozen figures or when the embedded weights are not the model
+  of `training.json`.
+- **Limitation.** A threshold chosen on development data is optimistic, and the gold v2 development set has few harmful
+  errors; the held-out run reports what the thresholds do on data that played no part in choosing them.
+
+### Held-Out Evaluation
+
+The held-out sets (open test split, gold v2 test split, shape probe, challenge set and the external treebank, which is
+fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` command, for the frozen model. The order
+"selection first, test once" is enforced by code:
+
+- **The gate.** `evaluate` loads `operating-points.json` through `OperatingPointsFile.Load`, which validates it
+  (`SelectedOperatingPoints.Validate`): schema version, rule id, the model image hash must equal the hash of the embedded
+  weights and the `imageSha256` of `training.json`, the development file hashes must equal `data/MANIFEST.tsv`, and every
+  threshold must be on the grid. The held-out resolver and every held-out reader take the validated object as a required
+  parameter, so no held-out file can be opened without it. `evaluate` has no weights, data path or threshold option.
+- **Verification before parsing.** `HeldOutReader` compares the SHA-256 of each repository file with
+  `data/MANIFEST.tsv` and
+  checks its header (the open, gold and challenge files announce their split or set; the probe has its column row); the
+  treebank source file is compared with its pin in `tools/data/pins`, and the mapped table is read from the cache that
+  the fetch script of the data tools writes. A mismatch is a data error (exit code 2) before any line is parsed.
+- **Run once.** `evaluate` refuses to start when `docs/evaluation/test-results.json` exists. There is no `--force`: a
+  repeat needs that committed file to be deleted, which is visible in the history and must be recorded in the run log.
+  The results file is written last, so an aborted run leaves no marker.
+- **Pre-flight.** `evaluate --preflight` performs the gate and the verification, parses every input and prints only
+  counts (sentences, tokens, documents, rows) next to the documented ones; it prints no tag, prediction or metric and
+  writes nothing. If a count differs, both modes stop with exit code 2 (a stop condition of the protocol).
+- **Per-token dump.** `--dump-dir DIR` receives one TSV per set with the gold label, the chosen tag, the confidence
+  and the
+  17 probabilities of every token (for the comparison with other taggers outside the repository). The folder must lie
+  outside the repository, links resolved, because the treebank words are third-party text.
+- **Scoring.** The embedded model is created with all 16 alternatives (the candidates of a token decide what a
+  decision is)
+  and every set is judged with `Metrics.Judge`, exactly as on development data. Gold v2 reports its `to` and `not`
+  targets separately and a subset whose labelers agreed fully; the probe is reported per shape; the challenge set per
+  sentence and never merged into a headline number. The treebank is judged once and reported in two views: the tags after
+  the convention mapping of `data/CONVENTIONS.md` (primary) and the raw tags. The throughput of the default tagger is
+  measured separately (one warm-up pass, then the median of three passes over the open test sentences).
+- **Statistics.** Each set and view gets accuracy, ambiguous-token accuracy, noun-verb confusion, harmful errors, calibration
+  error, log-likelihood and per-tag precision and recall, with 95% percentile intervals over documents (rows or sentences
+  where a set has none), and each operating point gets its coverage, its harmful rate per 1,000 answered with an
+  interval and
+  the paired difference of the harmful errors per 1,000 decisions against 0.45 on the same decisions.
+- **Stop conditions.** The protocol lists the conditions that declare a model or data defect (count mismatch, gold outside
+  the candidates for more than 1% of a set, open test accuracy more than 2.0 points below development with an interval that
+  excludes it, a point whose harmful rate on the open test split is more than twice its development rate, more than 5%
+  harmful errors on the probe, calibration error above 3% on the open test split). `evaluate` evaluates them and the
+  report names every one that fired; the exit code is then 1 and the response is to stop and report, not to tune.
+- **Reports.** `docs/evaluation/test-results.md` and `.json` are generated, deterministic and committed as produced; the
+  treebank appears only as aggregate figures and tag-level confusion.
 
 ### Selection of the Shipped Model
 
@@ -210,7 +316,12 @@ line with an unknown tag) throws `InvalidDataException` with the setting or the 
 turns it into exit code 2 with the message. A held-out or development file given as a training source, and an
 evaluation input that is not a development file, throw `InvalidOperationException` before any file is opened (so does a
 training source that lies outside the `data` folder after resolution, and a link cycle). A gold development row with a
-negative, non-numeric or out-of-sentence target index throws `InvalidDataException`. A weights
+negative, non-numeric or out-of-sentence target index throws `InvalidDataException`. A held-out gate failure (no
+selection artifact, an artifact for another model, rule or development file, a held-out file that differs from its recorded
+hash or announces another set, a missing or unpinned treebank cache, a malformed probe or treebank row, a count that
+differs from the documented one) throws `InvalidDataException`; an existing results file and a dump folder inside the
+repository throw `InvalidOperationException`; all of these are exit code 2 and none of them opens or evaluates a held-out
+file further. A weights
 file that is not valid for this build (damaged, or built for another feature set) makes the check report `Invalid`. A
 stale or missing committed file is reported with exit code 1 and the command that regenerates it. An integer sum of the
 averaging that exceeds its range (`checked` arithmetic, practically unreachable: the product of epochs, repeats, tokens
@@ -225,11 +336,14 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
   and the glossary experiment through the real decoder; **Glossary** (with its builder, entry, options and match types)
   for the glossary evaluation through the real tagger. All of these are internal and reached through
   `InternalsVisibleTo` (the assembly name `DemaConsulting.PartOfSpeech.Trainer` is reserved there).
-- The base class library and, for `training.json`, System.Text.Json (net10.0 only; the engine does not use it).
+- The base class library and, for `training.json`, `operating-points.json` and `test-results.json`, System.Text.Json
+  (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv` and `data/silver/silver.tsv`, and the two
-  development files; no network and no other tool.
+  development files; for `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the
+  external treebank that the data tools fetch (the tool itself uses no network).
 
 ### Callers
 
 The developer (the commands above), `build.ps1` and the CI build (`train --check`), and the test project, which compiles
-the engine files and calls them directly. Nothing in the library calls this unit.
+the engine files and calls them directly. Nothing in the library calls this unit. `build.ps1` and CI never run `thresholds`
+or `evaluate`, so CI never reads a held-out file through the evaluation code.

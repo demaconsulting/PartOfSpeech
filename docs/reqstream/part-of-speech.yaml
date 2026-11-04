@@ -542,9 +542,15 @@ sections:
         justification: |
           The reported accuracy of the model is only honest if nothing about the model was tuned on the data that
           measures it, and the license obligations of the package depend on knowing exactly which corpora the weights
-          come from. The trainer refuses held-out data by construction, and the configuration names its corpora.
+          come from. The trainer refuses held-out data by construction, and the configuration names its corpora. The one
+          evaluation on held-out data is only possible after the confidence thresholds were selected on development data
+          and committed, for the frozen model, and only once.
         children:
           - PartOfSpeech-ModelTrainer-DevOnlySelection
+          - PartOfSpeech-ModelTrainer-HeldOutGate
+          - PartOfSpeech-ModelTrainer-ConfidenceCurve
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics
+          - PartOfSpeech-ModelTrainer-EvaluationReport
           - PartOfSpeech-ModelTrainer-CorpusRules
           - PartOfSpeech-ModelTrainer-Configuration
           - PartOfSpeech-ModelTrainer-TrainingSettings
