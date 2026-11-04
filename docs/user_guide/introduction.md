@@ -12,7 +12,7 @@ This user guide covers:
 
 - Installation of the library
 - Tagging text and pre-tokenized sentences, results and offsets
-- Reading confidences and alternatives
+- Reading confidences and alternatives, and choosing a confidence threshold
 - Constraining the tag of a token
 - Giving the tagger a glossary of domain terms
 - Loading a weights file, and the default model
@@ -53,9 +53,9 @@ compiled word lexicon (641,418 bytes compressed) and the trained averaged-percep
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
-The model was selected on development data only, and this release does not recommend a confidence threshold: the
-accuracy of the model and the guidance on what confidence is low enough to check a token again will be added after
-the model has been evaluated on data that was not used to select it.
+The model was selected on development data only and then evaluated once on held-out data. The
+[evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the results
+and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to trust.
 
 # Usage
 
@@ -145,8 +145,45 @@ Read the numbers with these points in mind:
   lexicon can receive any of the 17 tags, so its confidence is spread over all of them.
 - **The lexicon is not a gold standard.** It records which tags a word is attested with, including some annotation noise
   (for example `the` also appears as PROPN), so a tag in the allowed set is not necessarily correct.
-- **A low confidence is a reason to look.** Use a threshold that suits your use, and look at the alternatives to see what
-  the competing readings are.
+- **A low confidence is a reason to look.** Which confidence is low enough is measured: see _Choosing a Confidence
+  Threshold_ below. Look at the alternatives to see what the competing readings are.
+
+### Choosing a Confidence Threshold
+
+The confidence is not equally reliable at every level, and the mistake that matters most is a noun that is tagged as a
+verb or a verb that is tagged as a noun (a harmful error). The embedded model was measured on that mistake: two
+thresholds were selected on development data only, and the model was then evaluated once on held-out data. A token is
+answered at a threshold when its confidence is at least the threshold; coverage is the share of the noun-verb
+decisions that is answered.
+
+| Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
+| --- | ---: | ---: | ---: |
+| strict | 0.95 | 82.3% | 4.1 |
+| balanced | 0.80 | 92.3% | 9.3 |
+
+Without a threshold, 20.6 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
+on short technical and imperative text. Use these rules:
+
+- **A consumer that needs a low harmful rate must use a threshold.** A rule checker, for example, uses `strict`:
+
+  ```csharp
+  foreach (TaggedToken token in Tagger.Default.Tag("Close the valve.")[0].Tokens)
+  {
+      bool trusted = token.Confidence >= 0.95;
+      Console.WriteLine($"{token.Text}: {(trusted ? token.Tag.ToTagString() : "unknown")}");
+  }
+  ```
+
+- **Treat a token below the threshold as unknown.** Do not act on its tag, show it to a person, or look at its
+  alternatives and give the word a constraint or a glossary entry.
+- **`balanced` is for consumers that can tolerate more errors** or that show the result to a person.
+- **The thresholds apply to the embedded model.** Weights that you load need their own measurement.
+- **Confidence 1.0 is not a measurement.** A token with one allowed tag is not a decision, and the confidence of a token
+  that a hard glossary entry limits to one tag says nothing about whether the entry is right.
+
+The development selection, the results on every evaluation set and their limits are in the
+[evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md); the same
+guidance is in the API reference that is packed with the library.
 
 ## Constraints
 
@@ -577,7 +614,10 @@ packed at the root of the NuGet package.
 
 The UD English-EWT treebank (CC BY-SA 4.0) is used for evaluation only. It is not distributed, nothing is trained on it,
 and the repository ignores its files. No CC BY-SA or NonCommercial data is committed to the repository or included in the
-package.
+package. The evaluation is run on it locally from a git-ignored cache; the recipe is in the
+[evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md), and the results
+of every evaluation set are in its
+[held-out report](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/test-results.md).
 
 # References
 

@@ -542,9 +542,17 @@ sections:
         justification: |
           The reported accuracy of the model is only honest if nothing about the model was tuned on the data that
           measures it, and the license obligations of the package depend on knowing exactly which corpora the weights
-          come from. The trainer refuses held-out data by construction, and the configuration names its corpora.
+          come from. The trainer refuses held-out data by construction, and the configuration names its corpora. The one
+          evaluation on held-out data is only possible after the confidence thresholds were selected on development data
+          and committed, for the frozen model, and only once.
         children:
           - PartOfSpeech-ModelTrainer-DevOnlySelection
+          - PartOfSpeech-ModelTrainer-HeldOutGate-SelectionRequired
+          - PartOfSpeech-ModelTrainer-HeldOutGate-SelectionDerivedFromDevelopment
+          - PartOfSpeech-ModelTrainer-HeldOutGate-InputsVerified
+          - PartOfSpeech-ModelTrainer-HeldOutGate-RunsOnce
+          - PartOfSpeech-ModelTrainer-HeldOutGate-PreflightCountsOnly
+          - PartOfSpeech-ModelTrainer-HeldOutGate-DumpOutsideRepository
           - PartOfSpeech-ModelTrainer-CorpusRules
           - PartOfSpeech-ModelTrainer-Configuration
           - PartOfSpeech-ModelTrainer-TrainingSettings
@@ -554,8 +562,64 @@ sections:
         tests:
           - PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora
 
+      - id: PartOfSpeech-Model-EvaluationReported
+        title: >-
+          The repository shall report the accuracy of the embedded model and its harmful noun-verb errors, with and
+          without a confidence threshold, from one held-out evaluation of exactly that model with thresholds that were
+          selected on development data first, and the report shall name the model, the selection and the input files
+          that it used.
+        tags: [system]
+        justification: |
+          A consumer can only judge how far to trust the tagger from a measurement that was made on data nothing was
+          tuned on, for the model that is actually in the package. The results are a generated record that names the
+          SHA-256 of the model image, of the committed selection of the thresholds and of every input file, so that a
+          retrained model, a changed selection or a changed data file shows as a failing test until the evaluation is
+          redone, and a few words of explanation (how to read the results, the limits and how to reproduce them) are
+          kept next to the figures. The report never contains text of the external treebank, which is share-alike
+          licensed and used locally only.
+        children:
+          - PartOfSpeech-ModelTrainer-HeldOutGate-SelectionRequired
+          - PartOfSpeech-ModelTrainer-HeldOutGate-SelectionDerivedFromDevelopment
+          - PartOfSpeech-ModelTrainer-HeldOutGate-InputsVerified
+          - PartOfSpeech-ModelTrainer-HeldOutGate-RunsOnce
+          - PartOfSpeech-ModelTrainer-HeldOutGate-PreflightCountsOnly
+          - PartOfSpeech-ModelTrainer-HeldOutGate-DumpOutsideRepository
+          - PartOfSpeech-ModelTrainer-ConfidenceCurve
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-SameDefinitions
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-ParsesFormats
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-Intervals
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-PairedDifference
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-StopConditions
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-Throughput
+          - PartOfSpeech-ModelTrainer-EvaluationReport-Deterministic
+          - PartOfSpeech-ModelTrainer-EvaluationReport-JsonComplete
+          - PartOfSpeech-ModelTrainer-EvaluationReport-NoTreebankText
+          - PartOfSpeech-ModelTrainer-EvaluationReport-PerTokenDump
+        tests:
+          - PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs
+          - PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports
+          - PartOfSpeech_Evaluation_Record_ContainsNoTreebankText
+
   - title: API Documentation
     requirements:
+      - id: PartOfSpeech-Lib-ConfidenceGuidance
+        title: >-
+          The documentation that is packed with the library shall recommend a strict and a balanced confidence threshold
+          with the coverage and the harmful-error rate that were measured for them, state that a consumer that needs a
+          low harmful rate must use one, and link to the evaluation record.
+        tags: [system]
+        justification: |
+          A confidence is only useful with guidance on which values to trust, and a consumer that reads the packed
+          reference (or an agent that works for it) never sees the repository. The thresholds and figures are copies of
+          a generated record, so a test compares them with the committed selection and results, and the build asserts
+          that the generated reference carries the section, the thresholds and the links, so that a threshold cannot be
+          changed in one place only.
+        children:
+          - PartOfSpeech-ModelTrainer-ConfidenceCurve
+        tests:
+          - PartOfSpeech_Evaluation_ConfidenceGuidance_MatchesTheCommittedFigures
+          - ApiMark_ConfidenceGuidanceDocumented
+
       - id: PartOfSpeech-Lib-ApiDocsPackaged
         title: >-
           The NuGet package shall contain the generated Markdown API reference of the public API, including its

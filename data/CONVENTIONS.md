@@ -242,6 +242,10 @@ differ from UD:
 | Phrasal-verb particle | ADP with relation `compound:prt` | ADV |
 | Preposition before a gerund or noun phrase | SCONJ when the lexicon has the word but no SCONJ analysis for it, or relation `mark` with a gerund head | ADP |
 
+The held-out evaluation scores the mapped tags (the primary view) and the raw tags (a second view); how each evaluation
+set is compared with the library's tags, and how to run the treebank evaluation locally, is in
+[docs/evaluation/README.md](../docs/evaluation/README.md). This section stays the normative description of the rules.
+
 ### Gold v2: UPOS to the Gold Classes
 
 Gold v2 labels one target word per sentence with one of 11 values (the ten word classes of the WordSense lexicon and
@@ -263,4 +267,5 @@ Gold v2 labels one target word per sentence with one of 11 values (the ten word 
 
 The WordSense class set has no particle class, so gold v2 labels `not` as Adverb (8 of 8 targets) and the infinitive
 `to` as Preposition (5 targets) or Other (3 targets). Evaluation code must report targets whose form is `to` or `not`
-separately from the headline number; they are convention differences, not tagger errors.
+separately from the headline number; they are convention differences, not tagger errors. The held-out report does so
+(see [docs/evaluation/README.md](../docs/evaluation/README.md)).

@@ -396,7 +396,7 @@ internal static class Bootstrap
     /// <param name="observed">The observed difference.</param>
     /// <param name="samples">The resampled differences (sorted in place).</param>
     /// <returns>The result.</returns>
-    private static BootstrapResult Interval(double observed, double[] samples)
+    internal static BootstrapResult Interval(double observed, double[] samples)
     {
         Array.Sort(samples);
         var low = samples.Length == 0 ? observed : samples[(int)(0.025 * (samples.Length - 1))];

@@ -26,8 +26,10 @@ dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- <co
 | `glossary-probe --weights FILE` | Simulated glossaries on the open development split: score boost versus hard constraint. |
 | `glossary-experiment` | Dev-only glossary decision: trains the configured model and a model with trained glossary features, compares them with score boosts and prints the pre-registered decision (outcome: boost only, see `RUN-LOG.md`). |
 | `glossary-eval [--seed N] [--resamples N]` | Dev-only evaluation of the `Glossary` API (section E9 of `RUN-LOG.md`): simulated glossaries (noun compounds, single words, inflection, acronym case, gold v2 head effect, history effect after a match, non-head rule) tagged through `Tagger.Tag(tokens, glossary)` with the embedded model; hard and soft mode against no glossary with 0, 10 and 30% wrong entries, paired bootstrap by document (default 1,000 resamples, seed 1). Prints Markdown tables, the parity check against the phase-3 path, the invariant that nothing before a match changes, and the two decisions: the soft strength by the wrong-entry rule that fixes the shipped default (the first-run rule that it replaced is printed after it as the historical decision) and the non-head rule. Reads the two development files only and takes no path; it appends no run-log row. |
+| `thresholds [--seed N] [--resamples N]` | Dev-only confidence curve of the embedded model and the pre-registered operating points (`strict`, `balanced`; the protocol section of `RUN-LOG.md`). Writes `docs/evaluation/operating-points.json` and `docs/evaluation/confidence-thresholds.md`; refuses to write when the 0.45 row does not reproduce the frozen development figures. Reads the two development files only. |
+| `evaluate [--preflight] [--dump-dir DIR] [--ud-cache DIR] [--seed N] [--resamples N]` | The **one** held-out evaluation of the embedded model, behind the committed `operating-points.json`; see _Held-out evaluation_ below. It has no weights, data path or threshold option. |
 
-Exit codes: 0 success, 1 stale weights (`train --check`), 2 usage or data error.
+Exit codes: 0 success, 1 stale weights (`train --check`) or a stop condition fired (`evaluate`), 2 usage or data error.
 
 ### Options of `train`
 
@@ -65,12 +67,38 @@ macOS against the same pinned hash. The Deflate bytes of the committed file depe
 zlib of the runtime, so `--check` compares uncompressed images only. The tests train a small subset and compare the
 SHA-256 of the image with a pinned value on every target framework.
 
-## Development data only
+## Development data and the held-out gate
 
-Every setting is selected on the two development sets (`data/open/dev.tsv`, `data/eval/gold-v2/dev.tsv`). The tool
-has no code path that reads any other evaluation file: evaluation accepts exactly those two paths, and training accepts
+Every setting is selected on the two development sets (`data/open/dev.tsv`, `data/eval/gold-v2/dev.tsv`). Every command
+except `evaluate` reads those two files and nothing else: evaluation accepts exactly those two paths, and training accepts
 only files below the repository's `data` folder (after the path is made absolute and links are resolved) and refuses
-held-out and development files there (`Evaluation/DevSets.cs`, tested).
+held-out and development files there (`Evaluation/DevSets.cs`, tested). The held-out sets are read by `evaluate` only, and
+only with a committed selection artifact that is valid for the frozen model.
+
+### Held-out evaluation
+
+The protocol (definitions, selection rule, stop conditions) is the section "Phase 5 protocol" of `RUN-LOG.md`; it was
+written before any number existed. The order is fixed by code:
+
+1. **Select on development data.** `thresholds` writes `docs/evaluation/operating-points.json` and
+   `docs/evaluation/confidence-thresholds.md`. Commit both before step 3.
+2. **Fetch the external treebank (local only, never committed).** `python tools/data/fetch_ud_ewt.py fetch`, then
+   `python tools/data/fetch_ud_ewt.py map` (pinned hashes are enforced; the cache is git-ignored). `evaluate` converts
+   nothing itself: it reads the mapped table (the four convention rules of `data/CONVENTIONS.md`) from the cache and
+   verifies the pinned source file and the pinned hash of the mapped table first. `--ud-cache DIR` names another cache folder.
+3. **Pre-flight.** `evaluate --preflight` reads and parses every held-out input (verifying the hashes and headers) and
+   prints counts only, next to the documented counts; no tag, prediction or metric. A difference stops the work.
+4. **The one run.** `evaluate --dump-dir DIR` (a folder outside the repository, which also receives the per-token records
+   of the run) writes `docs/evaluation/test-results.md` and `test-results.json`. It refuses to run when
+   `test-results.json` exists; a repeat needs that committed file to be deleted on purpose and the reason recorded in
+   `RUN-LOG.md`. The run is claimed atomically: immediately before scoring `evaluate` creates the lock file
+   `docs/evaluation/test-results.json.running` exclusively (a second run is refused) and removes it once the results file
+   is written. After an aborted run the lock stays and blocks every later run; delete it by hand only after an aborted
+   run and record the deletion and its reason in `RUN-LOG.md`. The model, the configuration, the temperature and the
+   thresholds never change in a repeat.
+
+Run the commands at below-normal priority, one process at a time (see _Machine limits_). `build.ps1` and CI do not run
+`thresholds` or `evaluate`.
 
 ## Current model
 

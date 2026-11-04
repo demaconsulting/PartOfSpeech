@@ -10,8 +10,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///         token, computed with a softmax at the model temperature. When the lexicon and the shape rules leave only one
 ///         tag, the confidence is 1.0 whatever the model thinks: it measures the choice between the allowed tags, so
 ///         read it on tokens that had several. The full explanation, including when the confidence and the
-///         alternatives add up to 1 and why this reference gives no threshold, is in
-///         [Confidence and alternatives](../DemaConsulting.PartOfSpeech.md#confidence-and-alternatives); the words
+///         alternatives add up to 1 and which thresholds are recommended, is in
+///         [Confidence and alternatives](../DemaConsulting.PartOfSpeech.md#confidence-and-alternatives) and
+///         [Confidence thresholds](../DemaConsulting.PartOfSpeech.md#confidence-thresholds); the words
 ///         softmax, temperature and raw score are defined in
 ///         [Terminology](../DemaConsulting.PartOfSpeech.md#terminology).
 ///     </para>
@@ -118,8 +119,9 @@ public readonly struct TaggedToken
     ///     <em>not</em> evidence that the entry is correct, and the confidence of a head word that a hard entry limits to
     ///     one tag is always 1.0, also when the entry is wrong. Together with the
     ///     probabilities in <see cref="Alternatives"/> it adds up to 1 only when
-    ///     <see cref="TaggerOptions.MaxAlternatives"/> did not cut any alternative off. This reference recommends no
-    ///     threshold: what confidence is low enough to double-check a token is the choice of your application. See
+    ///     <see cref="TaggerOptions.MaxAlternatives"/> did not cut any alternative off. Measured thresholds for
+    ///     the confidence of the embedded model, below which a token should not be trusted, are in
+    ///     [Confidence thresholds](../../DemaConsulting.PartOfSpeech.md#confidence-thresholds). See
     ///     [Confidence and alternatives](../../DemaConsulting.PartOfSpeech.md#confidence-and-alternatives) for the
     ///     details and [Terminology](../../DemaConsulting.PartOfSpeech.md#terminology) for the words used.
     /// </remarks>

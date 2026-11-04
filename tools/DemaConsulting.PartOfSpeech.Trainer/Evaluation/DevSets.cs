@@ -3,17 +3,19 @@ using System.Text;
 namespace DemaConsulting.PartOfSpeech.Trainer;
 
 /// <summary>
-///     Keeps the trainer away from the data that must stay unseen: it admits exactly the two development files for
-///     evaluation and refuses every held-out evaluation set for training.
+///     Keeps the trainer away from the data that must stay unseen: evaluation reads exactly the two development files
+///     until a validated development selection exists, and every held-out evaluation set is refused for training.
 /// </summary>
 /// <remarks>
 ///     <para>
-///         The selection of every setting uses development data only, and the held-out sets (the open test split, the
-///         gold v2 test split, the shape probe, the challenge set and the external treebank) are evaluated once, in a
-///         later phase. A rule in a document is easy to forget, so the rule is code: there is no path through the
-///         trainer that opens one of those files. Evaluation inputs are an allow-list of two files; training inputs are
-///         checked against a deny-list that also refuses the development files, because training on them would
-///         invalidate the selection.
+///         The selection of every setting uses development data only. The held-out sets (the open test split, the gold v2
+///         test split, the shape probe, the challenge set and the external treebank) are evaluated once, by the
+///         <c>evaluate</c> command, and only behind a validated development selection: a rule in a document is easy to
+///         forget, so the rule is code. The development readers accept an allow-list of two files; the held-out readers
+///         take a <see cref="SelectedOperatingPoints"/> as a required parameter, and that object exists only for the frozen
+///         model, the committed development files and the pre-registered rule. Training inputs are checked against a
+///         deny-list that refuses the held-out and the development files, because training on them would invalidate the
+///         selection and the evaluation.
 ///     </para>
 ///     <para>
 ///         The held-out names are spelled only in this file; a test scans the other trainer sources for them. The
@@ -23,13 +25,51 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 internal static class DataGuard
 {
     /// <summary>
-    ///     The only files that evaluation may read, relative to the repository root with forward slashes.
+    ///     The only files that development evaluation may read, relative to the repository root with forward slashes.
     /// </summary>
     public static readonly IReadOnlyList<string> DevelopmentFiles = new[]
     {
         "data/open/dev.tsv",
         "data/eval/gold-v2/dev.tsv",
     };
+
+    /// <summary>
+    ///     The held-out files of the repository that the <c>evaluate</c> command may read, in the order of <see cref="HeldOutSet"/>.
+    /// </summary>
+    public static readonly IReadOnlyList<string> HeldOutFiles = new[]
+    {
+        "data/open/test.tsv",
+        "data/eval/gold-v2/test.tsv",
+        "data/eval/shapes/probe.tsv",
+        "data/eval/ste-challenge/test.tsv",
+    };
+
+    /// <summary>
+    ///     The default location of the cache of the external treebank, relative to the repository root.
+    /// </summary>
+    public const string UdCacheFolder = "tools/data/cache/ud-ewt";
+
+    /// <summary>
+    ///     The name of the pinned treebank file that the mapped table is made from.
+    /// </summary>
+    public const string UdSourceFile = "en_ewt-ud-test.conllu";
+
+    /// <summary>
+    ///     The name of the convention-mapped table of the treebank in the cache.
+    /// </summary>
+    public const string UdMappedFile = "ud_test.tsv";
+
+    /// <summary>
+    ///     The pinned SHA-256 of the convention-mapped table of the treebank, as recorded for the held-out run in
+    ///     <c>docs/evaluation/test-results.json</c> (input <c>ud-test-mapped</c>). The cached table is verified against it
+    ///     before a line is parsed, so a stale or locally edited cache cannot be scored.
+    /// </summary>
+    public const string UdMappedSha256 = "fdb535bdbbc4ece79826323e450fc30a686543358c0f0c958deb8289850f6695";
+
+    /// <summary>
+    ///     The file of the pinned hashes of the treebank, relative to the repository root.
+    /// </summary>
+    public const string UdPinsFile = "tools/data/pins/ud-ewt.tsv";
 
     /// <summary>
     ///     The file names that no training source may have (held-out splits and the development splits).
@@ -42,7 +82,70 @@ internal static class DataGuard
     private static readonly string[] RefusedFolderNames = { "eval", "shapes", "ste-challenge", "ud-ewt", "ewt", "en_ewt" };
 
     /// <summary>
-    ///     Resolves an evaluation input, which must be one of the two development files.
+    ///     Resolves a held-out evaluation input of the repository; the caller must hold a validated development selection.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="set">The held-out set.</param>
+    /// <param name="selection">The validated development selection (proof that the selection was made before this read).</param>
+    /// <returns>The full path of the held-out file.</returns>
+    /// <exception cref="ArgumentNullException">A required argument is <c>null</c>; there is no way to open a held-out file without a selection.</exception>
+    public static string EnsureHeldOutFile(string repositoryRoot, HeldOutSet set, SelectedOperatingPoints selection)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        ArgumentNullException.ThrowIfNull(selection);
+        return Path.GetFullPath(Path.Combine(repositoryRoot, HeldOutFiles[(int)set].Replace('/', Path.DirectorySeparatorChar)));
+    }
+
+    /// <summary>
+    ///     Checks that the header of a held-out file says it is the set that was asked for.
+    /// </summary>
+    /// <remarks>
+    ///     This guards against a file that was copied or renamed to a held-out path, and a development split that was
+    ///     mistaken for a held-out split.
+    /// </remarks>
+    /// <param name="lines">The lines of the file; only the leading lines are inspected.</param>
+    /// <param name="set">The held-out set.</param>
+    /// <param name="origin">The name of the file for the message.</param>
+    /// <exception cref="InvalidDataException">The header does not announce the set.</exception>
+    public static void EnsureHeldOutHeader(IEnumerable<string> lines, HeldOutSet set, string origin)
+    {
+        ArgumentNullException.ThrowIfNull(lines);
+        var marker = set switch
+        {
+            HeldOutSet.OpenTest => "test split",
+            HeldOutSet.GoldTest => "test split",
+            HeldOutSet.Challenge => "challenge set",
+            _ => string.Empty,
+        };
+        foreach (var line in lines)
+        {
+            // The probe is a table with a header row; the corpora announce themselves in a comment
+            if (set == HeldOutSet.Probe)
+            {
+                if (line.StartsWith("id\tshape\t", StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                break;
+            }
+
+            if (!line.StartsWith("#", StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            if (line.StartsWith("# corpus", StringComparison.Ordinal) && line.Contains(marker))
+            {
+                return;
+            }
+        }
+
+        throw new InvalidDataException($"{origin} does not announce itself as the expected held-out set in its header; refusing to read it.");
+    }
+
+    /// <summary>
+    ///     Resolves a development evaluation input, which must be one of the two development files.
     /// </summary>
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <param name="path">The path that was asked for, absolute or relative to the working directory.</param>
@@ -65,7 +168,7 @@ internal static class DataGuard
         }
 
         throw new InvalidOperationException(
-            $"'{path}' is not a development file. Evaluation reads only {string.Join(" and ", DevelopmentFiles)}; held-out sets are evaluated once, in a later phase.");
+            $"'{path}' is not a development file. Development evaluation reads only {string.Join(" and ", DevelopmentFiles)}; held-out sets are read only by the evaluate command, behind a validated development selection.");
     }
 
     /// <summary>
@@ -93,6 +196,93 @@ internal static class DataGuard
         }
 
         throw new InvalidDataException($"{origin} does not announce itself as a development split in its header; refusing to read it.");
+    }
+
+    /// <summary>
+    ///     Checks that a folder for per-token output lies outside the repository, links resolved, so that held-out content can never land in the tree.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="directory">The folder, absolute or relative to the working directory.</param>
+    /// <returns>The full path of the folder.</returns>
+    /// <exception cref="InvalidOperationException">The folder is the repository root or lies inside it.</exception>
+    public static string EnsureOutsideRepository(string repositoryRoot, string directory)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        ArgumentNullException.ThrowIfNull(directory);
+        var root = Canonicalize(repositoryRoot);
+        var target = Canonicalize(directory);
+        var same = string.Equals(root.TrimEnd(Path.DirectorySeparatorChar), target.TrimEnd(Path.DirectorySeparatorChar), Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+        if (same || RelativeTo(root, target) != null || RelativeTo(Path.GetFullPath(repositoryRoot), Path.GetFullPath(directory)) != null)
+        {
+            throw new InvalidOperationException($"'{directory}' is inside the repository; the per-token dump holds held-out content and must be written outside it.");
+        }
+
+        return Path.GetFullPath(directory);
+    }
+
+    /// <summary>
+    ///     Gets the path of the lock file of a held-out run: the results file name with the suffix <c>.running</c>, next to it.
+    /// </summary>
+    /// <param name="resultsPath">The full path of the results file.</param>
+    /// <returns>The path of the lock file.</returns>
+    public static string RunLockPath(string resultsPath)
+    {
+        ArgumentNullException.ThrowIfNull(resultsPath);
+        return resultsPath + ".running";
+    }
+
+    /// <summary>
+    ///     Checks that the one held-out run has not been made or started yet: neither the results file nor the lock file of a run may exist.
+    /// </summary>
+    /// <remarks>
+    ///     This is a courtesy check for an early, clear message; the atomic guard is <see cref="AcquireRunLock"/>.
+    /// </remarks>
+    /// <param name="resultsPath">The full path of the results file.</param>
+    /// <exception cref="InvalidOperationException">The results file or the lock file exists.</exception>
+    public static void EnsureNotEvaluated(string resultsPath)
+    {
+        ArgumentNullException.ThrowIfNull(resultsPath);
+        if (File.Exists(resultsPath))
+        {
+            throw new InvalidOperationException($"{resultsPath} exists: the held-out evaluation was already run once. A repeat needs that file to be deleted on purpose (a visible change in the history) and a recorded reason.");
+        }
+
+        var lockPath = RunLockPath(resultsPath);
+        if (File.Exists(lockPath))
+        {
+            throw new InvalidOperationException($"{lockPath} exists: a held-out run was started and did not complete (or is still running). The lock is never removed automatically; after an aborted run it must be deleted by hand, and the deletion and its reason recorded in RUN-LOG.md.");
+        }
+    }
+
+    /// <summary>
+    ///     Acquires the exclusive run lock of the one held-out run by creating the lock file with <see cref="FileMode.CreateNew"/>.
+    /// </summary>
+    /// <remarks>
+    ///     Creation is atomic, so of two concurrent runs exactly one gets the lock. The lock is acquired before the first
+    ///     held-out token is scored and stays on disk until the results file is written; a stale lock of an aborted run blocks
+    ///     every later run until it is deleted by hand.
+    /// </remarks>
+    /// <param name="resultsPath">The full path of the results file.</param>
+    /// <returns>The held lock.</returns>
+    /// <exception cref="InvalidOperationException">The run was already made or started, or another run holds the lock.</exception>
+    public static RunLock AcquireRunLock(string resultsPath)
+    {
+        EnsureNotEvaluated(resultsPath);
+        var lockPath = RunLockPath(resultsPath);
+        FileStream stream;
+        try
+        {
+            stream = new FileStream(lockPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        }
+        catch (IOException) when (File.Exists(lockPath))
+        {
+            throw new InvalidOperationException($"{lockPath} exists: another held-out run holds the lock or an aborted run left it. Delete it by hand only after an aborted run, and record the deletion and its reason in RUN-LOG.md.");
+        }
+
+        var note = new UTF8Encoding(false).GetBytes("held-out run started " + DateTime.UtcNow.ToString("o", System.Globalization.CultureInfo.InvariantCulture) + "\n");
+        stream.Write(note, 0, note.Length);
+        stream.Flush();
+        return new RunLock(stream, lockPath, resultsPath);
     }
 
     /// <summary>
@@ -220,6 +410,68 @@ internal static class DataGuard
 }
 
 /// <summary>
+///     The exclusive lock of the one held-out run: a lock file next to the results file, created atomically.
+/// </summary>
+/// <remarks>
+///     The lock file stays until <see cref="Complete"/> has written the results file. Disposing the lock without completing
+///     it (an exception, a killed process) leaves the file behind on purpose: a run that started scoring and did not finish
+///     must be looked at by a person, who deletes the lock by hand and records that in RUN-LOG.md.
+/// </remarks>
+internal sealed class RunLock : IDisposable
+{
+    /// <summary>
+    ///     The open lock file.
+    /// </summary>
+    private readonly FileStream _stream;
+
+    /// <summary>
+    ///     The path of the results file.
+    /// </summary>
+    private readonly string _resultsPath;
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="RunLock"/> class.
+    /// </summary>
+    /// <param name="stream">The open lock file.</param>
+    /// <param name="lockPath">The path of the lock file.</param>
+    /// <param name="resultsPath">The path of the results file.</param>
+    internal RunLock(FileStream stream, string lockPath, string resultsPath)
+    {
+        _stream = stream;
+        LockPath = lockPath;
+        _resultsPath = resultsPath;
+    }
+
+    /// <summary>
+    ///     Gets the path of the lock file.
+    /// </summary>
+    public string LockPath { get; }
+
+    /// <summary>
+    ///     Writes the results file exclusively (it must not exist) and then removes the lock file.
+    /// </summary>
+    /// <param name="resultsText">The text of the results file.</param>
+    /// <exception cref="IOException">The results file exists or cannot be written; the lock file then stays.</exception>
+    public void Complete(string resultsText)
+    {
+        ArgumentNullException.ThrowIfNull(resultsText);
+        using (var results = new FileStream(_resultsPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        {
+            var bytes = new UTF8Encoding(false).GetBytes(resultsText);
+            results.Write(bytes, 0, bytes.Length);
+        }
+
+        _stream.Dispose();
+        File.Delete(LockPath);
+    }
+
+    /// <summary>
+    ///     Closes the lock file without removing it.
+    /// </summary>
+    public void Dispose() => _stream.Dispose();
+}
+
+/// <summary>
 ///     One target token of the gold v2 development set: a sentence, the index of the word to judge and its gold class.
 /// </summary>
 internal sealed class GoldTarget
@@ -233,7 +485,10 @@ internal sealed class GoldTarget
     /// <param name="target">The index of the target token.</param>
     /// <param name="goldClass">The gold class name (Noun, Verb, and so on).</param>
     /// <param name="lemma">The lemma of the target as the table gives it, or an empty string when the table has no lemma column or no lemma.</param>
-    public GoldTarget(string id, string documentId, string[] tokens, int target, string goldClass, string lemma = "")
+    /// <param name="status">The adjudication status of the row (<c>agreed</c> or <c>adjudicated</c>), or an empty string.</param>
+    /// <param name="agreement">The agreement of the labelers (<c>full</c>, <c>analysis</c>, <c>pos</c> or <c>none</c>), or an empty string.</param>
+    /// <param name="group">The group of the row for per-group reporting (the shape of a probe row), or an empty string.</param>
+    public GoldTarget(string id, string documentId, string[] tokens, int target, string goldClass, string lemma = "", string status = "", string agreement = "", string group = "")
     {
         Id = id;
         DocumentId = documentId;
@@ -241,7 +496,25 @@ internal sealed class GoldTarget
         Target = target;
         GoldClass = goldClass;
         Lemma = lemma;
+        Status = status;
+        Agreement = agreement;
+        Group = group;
     }
+
+    /// <summary>
+    ///     Gets the adjudication status of the row, or an empty string.
+    /// </summary>
+    public string Status { get; }
+
+    /// <summary>
+    ///     Gets the agreement of the labelers, or an empty string.
+    /// </summary>
+    public string Agreement { get; }
+
+    /// <summary>
+    ///     Gets the group of the row for per-group reporting (the shape of a probe row), or an empty string.
+    /// </summary>
+    public string Group { get; }
 
     /// <summary>
     ///     Gets the id of the row.
@@ -373,7 +646,16 @@ internal static class DevSets
     /// <param name="origin">The origin for error messages.</param>
     /// <returns>The targets in file order.</returns>
     /// <exception cref="InvalidDataException">A required column is missing, a row is malformed or the target index is negative or outside the sentence.</exception>
-    public static List<GoldTarget> ParseGoldDev(IEnumerable<string> lines, string origin)
+    public static List<GoldTarget> ParseGoldDev(IEnumerable<string> lines, string origin) => ParseGold(lines, origin);
+
+    /// <summary>
+    ///     Parses the lines of a gold v2 table (development or held-out): a <c># columns =</c> comment names the tab-separated columns.
+    /// </summary>
+    /// <param name="lines">The lines.</param>
+    /// <param name="origin">The origin for error messages.</param>
+    /// <returns>The targets in file order.</returns>
+    /// <exception cref="InvalidDataException">A required column is missing, a row is malformed or the target index is negative or outside the sentence.</exception>
+    public static List<GoldTarget> ParseGold(IEnumerable<string> lines, string origin)
     {
         ArgumentNullException.ThrowIfNull(lines);
         string[]? columns = null;
@@ -420,7 +702,9 @@ internal static class DevSets
                 tokens,
                 target,
                 Cell(cells, columns, "pos", origin),
-                OptionalCell(cells, columns, "lemma")));
+                OptionalCell(cells, columns, "lemma"),
+                OptionalCell(cells, columns, "status"),
+                OptionalCell(cells, columns, "agreement")));
         }
 
         return result;
@@ -452,5 +736,192 @@ internal static class DevSets
     {
         var index = Array.IndexOf(columns, name);
         return index >= 0 ? cells[index] : throw new InvalidDataException($"{origin}: the column '{name}' is missing.");
+    }
+}
+
+/// <summary>
+///     The held-out evaluation sets of the repository.
+/// </summary>
+internal enum HeldOutSet
+{
+    /// <summary>
+    ///     The test split of the open corpus.
+    /// </summary>
+    OpenTest = 0,
+
+    /// <summary>
+    ///     The test split of gold v2.
+    /// </summary>
+    GoldTest = 1,
+
+    /// <summary>
+    ///     The noun-verb shape probe.
+    /// </summary>
+    Probe = 2,
+
+    /// <summary>
+    ///     The simplified-technical-English challenge set.
+    /// </summary>
+    Challenge = 3,
+}
+
+/// <summary>
+///     The content of a held-out file together with the hashes that identify it.
+/// </summary>
+internal sealed class HeldOutFile
+{
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="HeldOutFile"/> class.
+    /// </summary>
+    /// <param name="path">The full path of the file.</param>
+    /// <param name="sha256">The SHA-256 of the file.</param>
+    /// <param name="lines">The lines of the file.</param>
+    /// <param name="sourceSha256">The SHA-256 of the pinned source the file was made from, or an empty string.</param>
+    public HeldOutFile(string path, string sha256, IReadOnlyList<string> lines, string sourceSha256 = "")
+    {
+        Path = path;
+        Sha256 = sha256;
+        Lines = lines;
+        SourceSha256 = sourceSha256;
+    }
+
+    /// <summary>
+    ///     Gets the full path of the file.
+    /// </summary>
+    public string Path { get; }
+
+    /// <summary>
+    ///     Gets the SHA-256 of the file.
+    /// </summary>
+    public string Sha256 { get; }
+
+    /// <summary>
+    ///     Gets the lines of the file.
+    /// </summary>
+    public IReadOnlyList<string> Lines { get; }
+
+    /// <summary>
+    ///     Gets the SHA-256 of the pinned source file the file was made from, or an empty string.
+    /// </summary>
+    public string SourceSha256 { get; }
+}
+
+/// <summary>
+///     Opens the held-out files, and only for a caller that holds a validated development selection.
+/// </summary>
+/// <remarks>
+///     <para>
+///         Every read verifies the SHA-256 of the file against the data manifest (the repository sets) or the pins of the
+///         treebank, and the header of the file, before a line reaches a parser. The held-out names are spelled in this
+///         file and nowhere else in the trainer. Stateless and thread-safe.
+///     </para>
+/// </remarks>
+internal static class HeldOutReader
+{
+    /// <summary>
+    ///     Reads a held-out file of the repository.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="set">The set.</param>
+    /// <param name="selection">The validated development selection.</param>
+    /// <returns>The file.</returns>
+    /// <exception cref="InvalidDataException">The hash differs from the data manifest or the header is not the one of the set.</exception>
+    public static HeldOutFile Read(string repositoryRoot, HeldOutSet set, SelectedOperatingPoints selection)
+    {
+        var path = DataGuard.EnsureHeldOutFile(repositoryRoot, set, selection);
+        var bytes = File.ReadAllBytes(path);
+        var sha = ModelBuilder.Sha256Hex(bytes);
+        var relative = DataGuard.HeldOutFiles[(int)set].Substring("data/".Length);
+        var expected = DataManifest.Load(repositoryRoot).TryGetValue(relative, out var recorded) ? recorded : string.Empty;
+        if (!string.Equals(sha, expected, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException($"{path} does not match the SHA-256 of the data manifest; refusing to evaluate on a changed file.");
+        }
+
+        var lines = Split(bytes);
+        DataGuard.EnsureHeldOutHeader(lines.Take(20), set, path);
+        return new HeldOutFile(path, sha, lines);
+    }
+
+    /// <summary>
+    ///     Reads the convention-mapped table of the external treebank from its cache, after verifying the pinned source file.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="cacheFolder">The cache folder, absolute or relative to the repository root.</param>
+    /// <param name="selection">The validated development selection.</param>
+    /// <returns>The mapped table.</returns>
+    /// <exception cref="InvalidDataException">The cache or the pins are missing, or a hash differs from the pin.</exception>
+    public static HeldOutFile ReadUd(string repositoryRoot, string cacheFolder, SelectedOperatingPoints selection) =>
+        ReadUd(repositoryRoot, cacheFolder, selection, DataGuard.UdMappedSha256);
+
+    /// <summary>
+    ///     Reads the convention-mapped table of the external treebank from its cache, after verifying the pinned source file
+    ///     and the table itself against the given pin.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="cacheFolder">The cache folder, absolute or relative to the repository root.</param>
+    /// <param name="selection">The validated development selection.</param>
+    /// <param name="mappedSha256">The pinned SHA-256 of the mapped table (the run uses <see cref="DataGuard.UdMappedSha256"/>).</param>
+    /// <returns>The mapped table.</returns>
+    /// <exception cref="InvalidDataException">The cache or the pins are missing, or a hash differs from its pin.</exception>
+    internal static HeldOutFile ReadUd(string repositoryRoot, string cacheFolder, SelectedOperatingPoints selection, string mappedSha256)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        ArgumentNullException.ThrowIfNull(selection);
+        ArgumentNullException.ThrowIfNull(mappedSha256);
+        var folder = Path.GetFullPath(Path.Combine(repositoryRoot, cacheFolder.Replace('/', Path.DirectorySeparatorChar)));
+        var sourcePath = Path.Combine(folder, UdSource);
+        var mappedPath = Path.Combine(folder, DataGuard.UdMappedFile);
+        const string Recipe = "Run: python tools/data/fetch_ud_ewt.py fetch, then python tools/data/fetch_ud_ewt.py map.";
+        if (!File.Exists(sourcePath) || !File.Exists(mappedPath))
+        {
+            throw new InvalidDataException($"The treebank cache {folder} is missing the pinned source or the mapped table. {Recipe}");
+        }
+
+        // The pinned source decides which treebank text the mapped table may have been made from
+        var pins = Path.Combine(repositoryRoot, DataGuard.UdPinsFile.Replace('/', Path.DirectorySeparatorChar));
+        var pinned = File.ReadLines(pins)
+            .Where(l => l.Length > 0 && l[0] != '#')
+            .Select(l => l.Split('\t'))
+            .Where(c => c.Length >= 2 && c[0] == UdSource)
+            .Select(c => c[1])
+            .FirstOrDefault() ?? string.Empty;
+        var sourceSha = ModelBuilder.Sha256Hex(File.ReadAllBytes(sourcePath));
+        if (!string.Equals(sourceSha, pinned, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException($"The cached {UdSource} does not match its pinned SHA-256. {Recipe}");
+        }
+
+        // The mapped table is derived data in a local cache: it must be the exact table of the held-out run, not merely a table made from the pinned source
+        var bytes = File.ReadAllBytes(mappedPath);
+        var mappedSha = ModelBuilder.Sha256Hex(bytes);
+        if (!string.Equals(mappedSha, mappedSha256, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException($"The cached {DataGuard.UdMappedFile} does not match its pinned SHA-256. {Recipe}");
+        }
+
+        return new HeldOutFile(mappedPath, mappedSha, Split(bytes), sourceSha);
+    }
+
+    /// <summary>
+    ///     Gets the name of the pinned treebank source file.
+    /// </summary>
+    private static string UdSource => DataGuard.UdSourceFile;
+
+    /// <summary>
+    ///     Splits the bytes of a UTF-8 text file into lines.
+    /// </summary>
+    /// <param name="bytes">The bytes.</param>
+    /// <returns>The lines without line terminators.</returns>
+    private static List<string> Split(byte[] bytes)
+    {
+        var lines = new List<string>();
+        using var reader = new StringReader(new UTF8Encoding(false).GetString(bytes));
+        while (reader.ReadLine() is { } line)
+        {
+            lines.Add(line);
+        }
+
+        return lines;
     }
 }

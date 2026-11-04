@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "ruleId": "nv-pooled-dev-v1",
+  "modelImageSha256": "68673a9ff48fea494991a82b6106b42e3cd63f9ef0c8c3fde4fc80477060f32a",
+  "temperature": 6.727,
+  "devOpenAccuracyPercent": 96.06968587984142,
+  "openDevDecisions": 4484,
+  "goldDevDecisions": 611,
+  "devFiles": [
+    {
+      "path": "open/dev.tsv",
+      "sha256": "3d946e483e015657c8e5dca3b235f4b7995817d9db87d9373e39c4712b0777fd"
+    },
+    {
+      "path": "eval/gold-v2/dev.tsv",
+      "sha256": "ffb2f3afd3460523656f5528a66094bad507982b15eb2b4a9341cdb78ff117f5"
+    }
+  ],
+  "grid": [
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95,
+    0.96,
+    0.97,
+    0.98,
+    0.99
+  ],
+  "points": [
+    {
+      "name": "strict",
+      "maxHarmfulPer1000Answered": 5,
+      "minCoveragePercent": 60,
+      "threshold": 0.95,
+      "answered": 4105,
+      "harmful": 16,
+      "coveragePercent": 80.56918547595681,
+      "harmfulPer1000Answered": 3.89768574908648
+    },
+    {
+      "name": "balanced",
+      "maxHarmfulPer1000Answered": 10,
+      "minCoveragePercent": 85,
+      "threshold": 0.8,
+      "answered": 4636,
+      "harmful": 46,
+      "coveragePercent": 90.99116781157998,
+      "harmfulPer1000Answered": 9.92234685073339
+    }
+  ]
+}

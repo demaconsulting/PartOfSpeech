@@ -5,11 +5,13 @@ This document describes the unit-level verification strategy for the `ModelTrain
 
 ### Verification Approach
 
-The unit is verified by unit tests in `ModelTrainer/ModelTrainerTests.cs`. The engine files of the tool (everything under
+The unit is verified by unit tests in `ModelTrainer/ModelTrainerTests.cs` and `ModelTrainer/HeldOutEvaluationTests.cs` (the
+held-out gate, the confidence curve and the held-out evaluation). The engine files of the tool (everything under
 `Training/` and `Evaluation/` and `RunLog.cs`) use only the base class library and are compiled into the test project by
 source links, so the tests run the real trainer code on every target framework of the test project, including .NET
-Framework; only `Program.cs` (the console) is not linked, and `ConfigFile.cs` (System.Text.Json, which .NET Framework does
-not have in the box) is linked and tested on .NET 8 and later. Nothing is mocked. The tests use four kinds of method:
+Framework; only `Program.cs` (the console) is not linked, and `ConfigFile.cs` and `OperatingPointsFile.cs`
+(System.Text.Json, which .NET Framework does not have in the box) are linked and tested on .NET 8 and later. Nothing
+is mocked. The tests use four kinds of method:
 
 - **Small real runs.** The trainer is run for real on 300 sentences of the open training corpus (three epochs, 18
   hash bits, the smallest bucket space the format allows), which takes a fraction of a second. Two runs with the same
@@ -30,6 +32,14 @@ not have in the box) is linked and tested on .NET 8 and later. Nothing is mocked
   reading the C# files of the tool and asserting that none of them contains the names.
 - **Command-line safety.** The rule that an experiment (overrides or calibration) must name an output file is code in
   `OutputGuard`, which is linked into the test project; the tests call it directly with and without an output.
+- **Held-out evaluation on fixtures only.** Every code path of the held-out evaluation (the gate, the guarded readers, the
+  parsers, the tallies, the curve, the rule, the bootstrap, the judging, the report writers and the stop conditions) is
+  tested with tiny fixtures: a temporary fake repository with a manifest for the guarded reader, hand-written probe and
+  treebank rows, hand-computed outcomes for the curve and the rule, and the tiny trained model for the judging. No test,
+  build step or CI job reads a real held-out file through this code, so CI never looks at held-out data. The real held-out
+  run is a documented, once-only procedure (the protocol section of the run log), not a test: it would be wrong for a
+  test to run it, because its value is that it happens once, after the selection is committed. Its output is a committed,
+  generated report; the system-level tests that tie it to the shipped model and to the selection accompany the report.
 
 The development evaluations and the training of the shipped model are not unit tests (they would take much longer and
 depend on the data): the shipped weights are verified at system level (the embedded weights match `training.json`, the
@@ -42,8 +52,8 @@ evidence, since a build step is not a test; the tests prove that the comparison 
 
 No setup beyond the standard test runner. The tests read the committed corpus `data/open/train.tsv` and the embedded
 lexicon (the small runs), the committed `training.json` (on .NET 8 and later) and the C# sources of the tool (the guard
-scan) from the working copy through `DataFiles.cs`, which finds the repository root. No network and no other tool is
-needed.
+scan) from the working copy through `DataFiles.cs`, which finds the repository root. The held-out tests create temporary
+folders below the system temporary folder and remove them. No network and no other tool is needed.
 
 ### Acceptance Criteria
 
@@ -58,7 +68,11 @@ misspelled member or an out-of-range value, a metric or a bootstrap interval dif
 glossary experiment's decoder differs from the plain predictor, or the glossary evaluation reads any file, gives another
 result for the same seed, puts a scored token in no category or in two, does not count a confident swap that a hard
 constraint leaves with one candidate, changes a token before the first match, or applies one of its two decision rules
-differently from the pre-registered text.
+differently from the pre-registered text, or the held-out evaluation opens a file without a valid selection (also for
+another model, rule or development file), runs after a results file exists, writes a dump inside the repository, accepts
+a malformed probe or treebank row, selects an operating point that does not meet the pre-registered target and floor (or
+relaxes them when none qualifies), computes a tally that disagrees with the metrics, renders a different report for the
+same results or a treebank word into a report, or lets a stop condition pass.
 
 ### Test Scenarios
 
@@ -95,8 +109,73 @@ differently from the pre-registered text.
   held-out folder and to a folder outside the data root, made with symbolic links or, on Windows when those need a
   privilege, with junctions, and file links where symbolic links can be created; the test is skipped only where no link
   can be made at all and on .NET Framework, which does not resolve links),
-  `DataGuard_EnsureDevelopmentHeader_NoDevSplitHeader_Throws` and
-  `ModelTrainer_Sources_NoHeldOutPathLiterals`.
+  `DataGuard_EnsureDevelopmentHeader_NoDevSplitHeader_Throws`, `ModelTrainer_Sources_NoHeldOutPathLiterals` and
+  `HeldOutEvaluation_Sources_NewFilesDoNotSpellHeldOutNames` (the evaluation files and the console program name no
+  held-out set), and `DataGuard_HeldOutFiles_RefusedForDevelopmentEvaluationAndTraining` (the held-out files stay refused
+  for development evaluation and for training).
+- **Held-out gate**: `DataGuard_HeldOutFiles_AreFourSetsAndNoDevelopmentFile`, `DataGuard_EnsureHeldOutFile_NoSelection_Throws`
+  (there is no way to resolve or read a held-out file without a selection),
+  `SelectedOperatingPoints_Validate_ValidArtifact_KeepsSelectedPoints` and
+  `SelectedOperatingPoints_Validate_InconsistentArtifact_Throws` (another schema, rule, model, a changed or missing
+  development file, an off-grid threshold, and a configuration that names another model),
+  `SelectedOperatingPoints_Validate_TamperedArtifact_Throws` (no points, duplicate, extra or missing development files,
+  duplicate, extra, missing or renamed points, another target, another grid, an off-grid threshold),
+  `SelectedOperatingPoints_Validate_ArbitraryGridThreshold_RefusedAgainstDerivation` (a point or count that differs from
+  what the rule selects from the derived development curve is refused, the rule's own selection is accepted),
+  `SelectedOperatingPoints_Validate_NoDerivationOrWrongDevAccuracy_Throws` (the gate fails closed: an expectation without
+  the curve derivation or without the accuracy derivation is refused, and so is a recorded development accuracy that
+  differs from the derived one by any amount),
+  `OperatingPointsFile_Expect_MissingOrChangedDevelopmentFile_Throws` (in a temporary fake repository: a missing
+  development file, or one whose bytes differ from the manifest hash, is refused; files as recorded give an expectation
+  with both derivations) and
+  `DevDerivation_PooledCurve_FixtureOutcomes_EqualsSelectionCurve` (the derived curve equals the curve of the selection),
+  `DataGuard_EnsureHeldOutHeader_AnnouncedSet_AcceptedOthersRefused` (a theory: the announced set is accepted, a development
+  split or another set is refused), `DataGuard_EnsureNotEvaluated_ExistingResultsFile_Throws` (the run-once marker: a
+  results file or a lock file refuses the run), `DataGuard_AcquireRunLock_ExclusiveAndRemovedOnCompletion`,
+  `DataGuard_AcquireRunLock_StaleLock_BlocksUntilDeletedByHand`, `RunLock_Complete_ExistingResultsFile_ThrowsAndKeepsLock`
+  and `DataGuard_AcquireRunLock_ConcurrentAttempts_ExactlyOneWins` (in temporary folders: the lock file is created
+  exclusively, a second run is refused, completion writes the results exclusively and removes the lock, a stale lock
+  blocks until it is deleted by hand, and of 16 concurrent attempts exactly one wins),
+  `DataGuard_EnsureOutsideRepository_InsideRefused_OutsideAccepted` (also through a dotted detour),
+  `HeldOutReader_Read_FixtureRepository_VerifiesHashAndHeader` and `HeldOutReader_ReadUd_FixtureCache_VerifiesPin` (in a
+  temporary fake repository: a changed file or a wrong header is refused, a changed treebank source, a mapped table that
+  differs from its pin or a missing cache is refused, the latter with the fetch recipe),
+  `DataGuard_UdMappedSha256_EqualsHashRecordedInCommittedResults` (the pinned constant is the hash that the committed
+  results record for the mapped table), `OperatingPointsFile_FormatParseLoad_RoundTripAndValidation` (on .NET 8 and later:
+  canonical form, unknown members refused, the selection hash is the hash of the file bytes),
+  `OperatingPointsFile_Load_CommittedSelection_PassesGateForFrozenModel` (the committed selection is valid for the
+  embedded model and the committed development files; no held-out file is opened) and
+  `OperatingPointsFile_Load_CommittedSelection_EqualsDevDerivation` (the committed points and the committed development
+  accuracy equal what the rule and the model give on the development data, and a tampered threshold or accuracy is
+  refused).
+- **Confidence curve and rule**: `EvalTally_Of_Outcomes_AgreesWithMetricsCompute` (also the sum of the document tallies),
+  `ConfidenceCurve_Of_HandComputedOutcomes_MatchesExpectedRows` (answered, harmful, coverage and rates on seven
+  decisions at
+  several thresholds, coverage never rises with the threshold),
+  `ConfidenceCurve_Reliability_Decisions_OneBinEach`,
+  `OperatingPointRule_Select_FirstQualifyingThreshold_StrictAndBalanced` (the first qualifying threshold, a point that
+  fails only the coverage floor is skipped), `OperatingPointRule_Select_BoundariesAndNone_AreNotRelaxed` (a target and a
+  floor met exactly qualify, a hair above does not, none qualifies, nothing answered never qualifies) and
+  `DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent` (the selection, its report and its artifact are
+  deterministic and consistent with the rule).
+- **Held-out metrics and reports**: `HeldOutSets_ParseProbe_Rows_BracesRemovedAndValidated`,
+  `HeldOutSets_ParseProbe_NegativeOrNonNumericTargetIndex_ThrowsDataError` (a negative, signed, fractional, empty,
+  non-numeric or overflowing target index is an `InvalidDataException` that names the row, never an index error),
+  `HeldOutSets_ParseUd_MappedTable_ReadsTagsRulesAndDocuments`, `DevSets_ParseGold_StatusAndAgreement_Carried`,
+  `DevSets_GoldClassOf_EveryTag_CollapsesToTenClassesAndOther`,
+  `ClusterBootstrap_Intervals_TiedBetterDeterministicAndSingleItemClusters`,
+  `EvaluationReport_Summarize_OperatingPoint_PairedDifferenceAgainstReference`,
+  `EvaluationReport_Summarize_TagFiguresAndIntervals_ArePresent` (the precision and recall of every tag that occurs, the
+  ambiguous-accuracy and log-likelihood intervals and the confusion cells, on known counts),
+  `OperatingPointsFile_ParseResults_CommittedResults_HaveTagFiguresAndIntervalsForEverySet` (on .NET 8 and later: every
+  set of the committed results has its tags, intervals and confusion, the gold tokens of the tags add up to the tokens
+  of the set, and the report has a tag table for every set),
+  `EvaluationReport_Tripwires_EachConditionFiresAlone` (each stop condition fires alone, at its boundary),
+  `HeldOutEvaluator_Score_FixtureSets_ViewsAndReports` (every view of every set, the judgment equal to the development
+  judgment, a deterministic report with a tag table for every view and without any treebank word, sentence id or
+  document),
+  `HeldOutEvaluator_Throughput_Fixture_IsPositive`, `EvaluationReport_WriteDump_Tokens_HeaderAndRows` and
+  `OperatingPointsFile_FormatResults_RoundTrip`.
 - **Command-line safety**: `OutputGuard_EnsureExplicitOutput_ExperimentWithoutOutput_Throws` (a theory: no output and an
   empty output) and `OutputGuard_EnsureExplicitOutput_ExperimentWithOutputOrDefaultRun_Admitted`.
 - **The check**: `ModelBuilder_Check_CommittedFile_DetectsStaleMissingAndInvalid` (the compressed committed form of the

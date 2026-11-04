@@ -17,12 +17,15 @@ feature extractor and the same weights writer that the trainer uses, so the test
 unchanged. The tests of the default tagger and of the embedded weights use the real shipped model, but only for
 properties that do not depend on its accuracy: that it loads, that it is one shared instance, and that it gives the
 unmistakable tags of a few hand-written sentences (these sentences were written once and not tuned; the accuracy of the
-model is measured by the evaluation of the trainer and of a later release, never by these tests).
+model is measured by the held-out evaluation of the trainer, which is a documented once-only procedure and not a test,
+and its committed results are tied to the shipped model by the evaluation record tests, never by the tests of the tagger).
 
 System tests reside in `PartOfSpeechTests.cs` within the `DemaConsulting.PartOfSpeech.Tests` project. The data and
 licensing tests reside in `PartOfSpeechDataTests.cs` in the same project, with the helper `DataFiles.cs`; they read the
 committed data files, the project file, the package license, the third-party notice and the training configuration, and
-assert on their content, format and checksums;
+assert on their content, format and checksums. The evaluation record tests reside in `PartOfSpeechEvaluationTests.cs`;
+they read the committed evaluation record (`docs/evaluation`) and the documents that copy figures from it, parse the
+JSON with regular expressions and compare the copies with the generated files;
 each test proves one obligation of one requirement, and a test that finds a file missing or a table empty fails instead
 of passing on nothing. The Python tools that produce the data have developer unit tests in `tools/data/tests/`, which are
 not requirements evidence; they are reviewed with the tools in the data tools review sets (see the Companion Artifact
@@ -96,10 +99,14 @@ fails; only a one-time or sporadic runtime allocation is filtered out.
 - **Files**: The data and licensing tests, the embedded-lexicon test and the embedded-weights test read `data/`,
   `PACKAGE-LICENSE.md`, `LICENSE`, `THIRD-PARTY-NOTICES.md`, the library project file,
   `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` and
-  `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin` and `weights.bin` from the working copy. They find the
+  `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin` and `weights.bin` from the working copy. The evaluation record
+  tests read `docs/evaluation/*`, the manifest `data/MANIFEST.tsv`, the pins of the treebank, `README.md`, the user guide,
+  `NamespaceDoc.cs`, `TaggedToken.cs` and `.fileassert.yaml`; when the git-ignored local cache of the treebank exists they
+  also read its test file to prove that none of its text was committed. They find the
   repository root by walking up from the test binaries to the solution file, so they run from any checkout location.
   The checkout uses LF line endings (`.gitattributes`), which the checksums depend on. No network access is needed;
-  the UD English-EWT treebank is not required.
+  the UD English-EWT treebank is not required (the treebank check of the evaluation record tests runs its cache part only
+  where a developer has fetched the treebank).
 - **Platform evidence**: the platform requirements are proven by one end-to-end test that runs on the CI matrix (Windows,
   Linux and macOS, with .NET 8, 9 and 10, and .NET Framework 4.8.1 for `netstandard2.0`); the requirements carry source
   filters so that only runs on that platform count.
@@ -247,6 +254,54 @@ Reads the corpus paths of `training.json` and asserts for each that it is one of
 is committed, that it is not a restricted corpus, that its data folder declares an allowed license, and that the section
 of the third-party notice on the embedded weights names MASC, its license, the open corpus and the silver corpus. That
 nothing was selected on held-out data is verified by the guard tests of the `ModelTrainer` unit.
+
+### Evaluation Results Record the Shipped Model
+
+**Test**: `PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs` (in `PartOfSpeechEvaluationTests.cs`)
+
+Reads `training.json`, `operating-points.json`, `test-results.json` and the manifest and asserts that the model image
+hash of the selection and of the results equals the `imageSha256` of the configuration, that the selection hash of the
+results equals the SHA-256 of the committed bytes of `operating-points.json`, that the rule ids agree, that the hash of
+each input that is a committed data file (open test, gold v2 test, shape probe, challenge set) and of each development
+file of the selection equals the manifest, and that the hash of the treebank test file equals its pin. It also asserts
+that the two reports quote the same model and selection hashes. A retrained model, another selection or a changed data
+file therefore fails until the evaluation is redone. The held-out run itself is not repeated: it is a once-only
+procedure of the trainer (see _ModelTrainer Verification_), and no test opens a held-out data file.
+
+### Evaluation Record States the Figures of the Reports
+
+**Test**: `PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports`
+
+Reads the figures of `test-results.json` (the harmful-error rate of the open test split, of gold v2 and of the shape
+probe, and the rate, coverage and counts of the strict and the balanced point) and asserts that the sentences of
+`docs/evaluation/README.md` that state them contain the same figures, formatted as the documents format them. The
+figures are quoted from the generated reports, never typed independently.
+
+### Evaluation Record Contains No Treebank Text
+
+**Test**: `PartOfSpeech_Evaluation_Record_ContainsNoTreebankText`
+
+Asserts that the five files of the evaluation record exist, that none contains a text in the form of a treebank sentence
+id, and, when the git-ignored cache of the pinned treebank test file is present, that none contains one of its sentence
+ids or one of its sentences of 25 or more characters. The cache part is skipped silently in CI, where the treebank is not
+fetched; the form check always runs, and the data licensing test `PartOfSpeech_DataLicensing_UdEwt_IsNotCommitted`
+asserts that no treebank file is committed.
+
+### Confidence Guidance Is Documented
+
+**Tests**: `PartOfSpeech_Evaluation_ConfidenceGuidance_MatchesTheCommittedFigures` and the FileAssert test
+`ApiMark_ConfidenceGuidanceDocumented`
+
+The first reads the committed selection and results and asserts that the bullets of the section "Confidence thresholds"
+of
+`NamespaceDoc.cs` state the two thresholds with their development and open test figures, that the section states the rate
+without a threshold, the advice to use a threshold and the three absolute links to the evaluation record, that the rows
+of the user guide and its example state the same thresholds and figures, that `.fileassert.yaml` asserts the same
+thresholds, that `TaggedToken` links to the section and states no threshold, and that none of the documents still says
+that no threshold is recommended. The FileAssert test opens the generated API reference after the build and asserts that
+the namespace page carries the heading, both thresholds, the advice and the links and that the page of
+`TaggedToken.Confidence` links to the section, which proves the generated result and not only the source comment. It runs
+in `build.ps1` and in the CI build, immediately after the API reference is generated.
 
 ### Glossary: Hard and Soft Entries
 

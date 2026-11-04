@@ -27,7 +27,10 @@ python tools/data/fetch_ud_ewt.py map                        # write the convent
 
 ## Use in This Project
 
-- **Evaluation:** score a tagger on the mapped `dev` (choose settings) and `test` (report) tables.
+- **Evaluation:** the mapped `test` table is scored once by the `evaluate` command of the trainer, for the frozen model,
+  as a local run; the mapped `dev` table is not used to choose anything. The step-by-step recipe, the pinned files and
+  how the results are read are in the [evaluation record](../../../docs/evaluation/README.md). Only aggregate figures
+  and tag-level confusion are committed (to `docs/evaluation/`); no UD word, sentence or sentence id is.
 - **Leakage:** `tools/data/check_leakage.py` adds the sentence keys of the train, dev and test files to the evaluation
   universe when the cache is present, and `import_masc.py` and `import_silver.py` drop any training document (long
   matches) or sentence (short matches) that equals a sentence of them (only document and sentence ids are recorded).

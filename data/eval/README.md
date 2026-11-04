@@ -14,3 +14,14 @@ was produced.
 
 The open corpus dev and test splits (`../open/`) are also evaluation data. The leakage rules that keep every training
 document and sentence out of these sets are in [../README.md](../README.md).
+
+## Results and Reproduction
+
+Only the development splits (the open corpus and gold v2) were used to select the model and the confidence thresholds.
+The test splits, the shape probe, the challenge set and the UD English-EWT test file were evaluated once, for the frozen
+model. The [evaluation record](../../docs/evaluation/README.md) explains how to read the results, lists the limits of
+the measurement (for example the convention differences for `to` and `not` in gold v2 and the weakness that the shape
+probe shows) and gives the commands that reproduce them, including the local UD English-EWT run. The figures are in
+[confidence-thresholds.md](../../docs/evaluation/confidence-thresholds.md) and
+[test-results.md](../../docs/evaluation/test-results.md). The `ud-ewt/` folder holds the fetch recipe only; no treebank
+file or text is ever committed.

@@ -13,6 +13,8 @@ needs-review:
   - "**/*.cs"                     # All C# source and test files
   - "tools/DemaConsulting.PartOfSpeech.Trainer/**/*.md"    # Trainer documentation and run log
   - "tools/DemaConsulting.PartOfSpeech.Trainer/training.json"  # The selected training configuration
+  - "docs/evaluation/**/*.md"     # Evaluation record: confidence thresholds and held-out results
+  - "docs/evaluation/**/*.json"   # Evaluation record: selection artifact and run-once results
   - "docs/reqstream/**/*.yaml"    # Requirements files
   - "docs/design/**/*.md"         # Design documentation files
   - "docs/verification/**/*.md"  # Verification documentation files
@@ -80,6 +82,7 @@ reviews:
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechTests.cs"  # integration tests
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechThroughputTests.cs"  # throughput test
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechDataTests.cs"  # data and licensing tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechEvaluationTests.cs"  # evaluation record and guidance tests
       - "test/DemaConsulting.PartOfSpeech.Tests/DataFiles.cs"          # data file helpers of the data tests
 
   # PartOfSpeech-Design Review (one per system)
@@ -142,13 +145,17 @@ reviews:
       - "docs/verification/part-of-speech/model-trainer.md"          # unit verification
       - "tools/DemaConsulting.PartOfSpeech.Trainer/Program.cs"       # unit source (command line)
       - "tools/DemaConsulting.PartOfSpeech.Trainer/ConfigFile.cs"    # unit source (configuration file)
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/OperatingPointsFile.cs"  # unit source (JSON artifacts)
       - "tools/DemaConsulting.PartOfSpeech.Trainer/RunLog.cs"        # unit source (run log rows)
       - "tools/DemaConsulting.PartOfSpeech.Trainer/Training/**/*.cs"    # unit source (training engine)
-      - "tools/DemaConsulting.PartOfSpeech.Trainer/Evaluation/**/*.cs"  # unit source (development-only evaluation)
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/Evaluation/**/*.cs"  # unit source (evaluation, held-out gate)
       - "tools/DemaConsulting.PartOfSpeech.Trainer/training.json"    # the selected configuration
       - "tools/DemaConsulting.PartOfSpeech.Trainer/README.md"        # how to run the tool
       - "tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md"       # pre-registered rule, run log and decisions
+      - "docs/evaluation/**/*.md"                                    # evaluation record (thresholds, held-out results)
+      - "docs/evaluation/**/*.json"                                  # selection artifact and run-once results
       - "test/DemaConsulting.PartOfSpeech.Tests/ModelTrainer/ModelTrainerTests.cs"  # unit tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/ModelTrainer/HeldOutEvaluationTests.cs"  # unit tests (held-out)
 
   # PartOfSpeech-Tokenization Review (one per subsystem)
   - id: PartOfSpeech-Tokenization

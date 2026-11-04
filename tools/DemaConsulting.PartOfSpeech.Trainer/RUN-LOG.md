@@ -877,6 +877,231 @@ What hard mode costs when entries are wrong is in the same tables (the hard rows
 hard mode trusts the entries completely, so a wrong entry forces a wrong tag. That is the intended behavior for a curated
 glossary and the reason soft mode exists for a glossary that is not curated.
 
+## Phase 5 protocol (written before any threshold curve or held-out number exists)
+
+This section was committed **before** the first run of `thresholds` and before any held-out file was read by the new
+code. It fixes the definitions, the rule that selects the confidence thresholds, the grid and the stop conditions. The
+sections that record results only apply this text; nothing in it is changed after a number has been seen. The model
+(`weights.bin`, `imageSha256` `68673a9f...0f32a`, temperature 6.727) and `training.json` are frozen: the held-out
+evaluation does not retrain, recalibrate, reweigh or re-threshold anything.
+
+### Definitions
+
+- **Decision**: a scored token whose gold label is NOUN or VERB (open sets, UD) or the class Noun or Verb (gold v2, where
+  PROPN counts as Noun) and for which both tags are among the decoder's candidates (the chosen tag and its alternatives).
+  This is the `NounVerb` flag of the existing outcome; the pooled development set has 5,095 decisions (open dev 4,484,
+  gold v2 dev without `to`/`not` 611).
+- **Answered at t**: the confidence of the chosen tag is at least t.
+- **Harmful at t**: a decision that is answered at t with the other one of the two tags (NOUN for VERB or the reverse).
+- **Coverage at t**: answered decisions divided by all decisions, in percent.
+- **Harmful per 1,000 answered at t**: 1,000 times harmful at t divided by the answered decisions at t (0 when nothing is
+  answered). **Harmful per 1,000 decisions** divides by all decisions instead; at t = 0.45 it is the figure of the freeze
+  table above. The consistency check of the dev run: the 0.45 row must show 94 harmful for open dev, 9 for gold v2 dev and
+  103 pooled.
+- **Grid**: 0.45 to 0.95 in steps of 0.05, then 0.96, 0.97, 0.98 and 0.99 (15 thresholds). No other threshold is a candidate.
+
+### Selection rule (id `nv-pooled-dev-v1`)
+
+The rule operates on the pooled development decisions only (open dev and gold v2 dev, `to` and `not` excluded). Thresholds
+are scanned in ascending order and the **first** grid threshold that satisfies both conditions is the operating point:
+
+| Point | Harmful per 1,000 answered (pooled dev) | Coverage floor (pooled dev) |
+| --- | --- | --- |
+| `strict` | at most 5.0 | at least 60% |
+| `balanced` | at most 10.0 | at least 85% |
+
+If no grid threshold satisfies both conditions the point is recorded as **none**; the targets, the floors and the grid are
+not relaxed afterwards, and a threshold outside the grid is not substituted. The report also shows both development sets
+separately, the reliability table of the decisions and the 95% bootstrap interval of each selected point, so that the
+reader sees the noise of the selection (gold v2 dev has 611 decisions and 9 harmful errors at 0.45). The selection is a
+dev-only choice and therefore optimistic; this is stated in every place that quotes the thresholds.
+
+### Process and gates
+
+1. `thresholds` (development sets only) writes `docs/evaluation/operating-points.json` and
+   `docs/evaluation/confidence-thresholds.md`. They are committed and pushed **before** any held-out number exists.
+2. `evaluate --preflight` parses every held-out input and prints counts only (no tag, prediction or metric). It is the only
+   thing that runs before the real run.
+3. `evaluate` runs **once** (it refuses to run when `docs/evaluation/test-results.json` exists), scores the embedded model
+   on the held-out sets and applies the committed operating points. It has no weights, data or threshold option and cannot
+   open a held-out file without a validated `operating-points.json` that names the frozen model and the two dev files.
+4. A defect of the **evaluation code** found after seeing the output may be fixed only when it is reproduced on a fixture,
+   recorded in this log with its reason, and the results file is deleted on purpose for one re-run. The model, the
+   configuration, the temperature and the thresholds never change. A **model** defect (a tripwire below) stops the work: it
+   is reported and not tuned.
+
+### Stop conditions (tripwires of the held-out run)
+
+A tripwire declares a model or data defect by a rule written in advance; the response is to stop and report, not to tune.
+
+- a held-out set cannot be parsed, or its counts differ from the documented ones (open test 1,501 sentences, gold v2 test
+  3,047 targets, shape probe 560 rows, challenge set 32 sentences and 272 tokens, UD test 2,077 sentences and 25,086 words);
+- the gold label is outside the decoder's candidates for more than 1% of the scored tokens of a held-out set;
+- the accuracy on the open test split is more than 2.0 points below that of the open development split (96.07%) and the
+  paired document interval of the difference excludes 0;
+- a selected operating point has a harmful rate (per 1,000 answered) on the open test split that is more than twice its
+  pooled development rate;
+- the harmful errors of the shape probe at 0.45 are more than 5% of its 560 rows (more than 28);
+- the expected calibration error on the open test split is above 3%.
+
+### Held-out sets and views
+
+- Open test split, gold v2 test split (`to` and `not` reported separately, as on dev; the `full`-agreement subset as a
+  second row), shape probe (per shape), challenge set (reported separately, never merged into a headline number) and UD
+  English-EWT test.
+- **UD English-EWT** is a local run only: the pinned files are fetched into the git-ignored cache by
+  `tools/data/fetch_ud_ewt.py` (SHA-256 pinned in `tools/data/pins/ud-ewt.tsv`), mapped to the library conventions by the
+  four rules of `data/CONVENTIONS.md`, and scored on the **mapped** tags (primary view) and on the raw UD tags (second
+  view). Only aggregate numbers and tag-level confusion are committed; no UD form, sentence or sentence id is committed.
+  The document of a UD sentence is its `sent_id` without the trailing `-NNNN`.
+- Metrics per set: accuracy (all tokens and lexicon-ambiguous tokens), noun-verb confusion, harmful errors and harmful
+  per 1,000 decisions, ECE (15 equal-width bins), mean NLL (floor 1e-6), per-tag precision and recall, 95% percentile
+  bootstrap intervals (1,000 resamples, seed 1) over documents (over rows where a set has no documents: shape probe,
+  challenge set), the paired difference of each operating point against the 0.45 point, and the single-thread throughput
+  of the default options (warm-up, then the median of three passes).
+- The off-repository comparison with the WordSense taggers and the beta.6 regression check use the per-token dump of the
+  same single run (`--dump-dir`, which must be outside the repository); they add no figure of those taggers to the
+  repository.
+
+### Recipe
+
+```text
+dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- thresholds
+python tools/data/fetch_ud_ewt.py fetch
+python tools/data/fetch_ud_ewt.py map
+dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- evaluate --preflight
+dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- evaluate --dump-dir <folder outside the repository>
+```
+
+`thresholds` and its two output files are committed first; only then are the last two commands run. The reports are
+committed as produced.
+
+### Outcome of the development selection
+
+`thresholds` (seed 1, 1,000 resamples; development data only) ran once the engine was committed and applied the rule above
+without change. The 0.45 row reproduced the frozen figures: 94 harmful errors on open dev, 9 on gold v2 dev and 103
+pooled (4,484, 611 and 5,095 decisions). Result on the pooled development decisions (the full curves, the reliability
+table and the bootstrap intervals are in `docs/evaluation/confidence-thresholds.md`, the selection artifact is
+`docs/evaluation/operating-points.json`):
+
+| Point | Threshold | Coverage | Harmful per 1,000 answered | Harmful of answered |
+| --- | ---: | ---: | ---: | ---: |
+| `strict` (at most 5.0, coverage at least 60%) | 0.95 | 80.6% | 3.9 | 16 of 4,105 |
+| `balanced` (at most 10.0, coverage at least 85%) | 0.80 | 91.0% | 9.9 | 46 of 4,636 |
+
+Both targets were met on the grid (strict: 0.90 gives 6.4 per 1,000, so 0.95 is the first threshold that qualifies;
+balanced: 0.75 gives 10.8, so 0.80 is the first); nothing was relaxed. These are development figures and optimistic by
+selection; the held-out run reports what the thresholds do on data that played no part in choosing them.
+
+### Erratum found by the preflight (documented size of the UD test words)
+
+`evaluate --preflight` (counts only: no tag, prediction or metric was produced or seen) matched every documented size
+(open test 1,501 sentences, 26,185 tokens, 517 documents; gold v2 test 3,047 targets, 856 documents; shape probe 560 rows;
+challenge set 32 sentences, 272 tokens; UD test 2,077 sentences) except the UD test words: it found 25,094 where the
+protocol above says 25,086. The 25,086 came from the planning notes, not from the data. The pinned file
+`en_ewt-ud-test.conllu` (SHA-256 verified against `tools/data/pins/ud-ewt.tsv` after a fresh fetch into a cache outside the
+repository) has 2,077 sentences and 25,094 syntactic words (354 multiword-token range lines and 2 empty-node lines are not
+words); three independent counts agree: the fetch script's mapper (rule counts add up to 25,094), the trainer's parser and
+a stand-alone line count of the conllu file. The mismatch was therefore an error in the documented count, an evaluation-code
+constant (`HeldOutData.Counts`), not a data or model defect and not a parse failure. The constant was corrected to 25,094
+and a fixture test pins the documented sizes; nothing else changed (model, configuration, weights, thresholds and operating
+points are untouched) and the tripwire was not treated as a model defect because no held-out label, prediction or metric
+had been produced. The 25,086 in the protocol text above is left as written for the record.
+
+### Outcome of the held-out run (one run, results committed as produced)
+
+`evaluate` ran (BelowNormal, one process, the treebank from a cache outside the repository, the per-token records in a
+folder outside the repository) and wrote `docs/evaluation/test-results.md` and `.json`, which were committed as produced.
+The run printed that three stop conditions of the protocol fired. Nothing was tuned. The three findings, with the reading
+of each (the results were produced once; two later runs, after the errata below, regenerated the report only):
+
+- **`shape-probe`: 48 harmful errors at 0.45, more than 28 (5% of the 560 rows). Finding: a real limitation of the model,
+  reported, not tuned.** This is the stop condition about the model's behavior and it stands: 48 of 548 answered noun-verb
+  decisions (86.3 per 1,000 decisions), concentrated in the shapes `n-compound-head` (16), `n-subject-initial` (12),
+  `v-imperative-initial` (12) and `n-measure` (6). No model, configuration, threshold or selection was changed in response.
+- **`gold-v2-test-to-not`: gold outside the decoder's candidates for 50.00% (4 of 8 targets).** The set is the eight `to` and
+  `not` targets that are a documented convention difference and are reported separately from the headline row (as on
+  development). The 1% limit fires here by construction of the convention targets, not through a model defect.
+- **`ud-test-raw`: gold outside the decoder's candidates for 1.68% (421 of 25,094 words).** The raw view is the treebank's
+  tags before the four convention rules of `data/CONVENTIONS.md` (the mapping changes 1,070 words); the library does not
+  produce these tags by design, so the raw gold lies outside the candidates by construction. The primary, mapped view is at
+  0.56% (140 words), under the limit.
+
+Interpretation of the last two: the stop-condition rule on gold
+outside the candidates is meant for the headline views of a held-out set; it applies to the `to`/`not` convention view
+and to the raw UD view only as views that are reported separately, and the firing of those two is not a model defect. The
+protocol text above applies the 1% limit to every view; it was not changed after seeing the result, and the two findings are
+reported as fired.
+
+All other stop conditions held: open test accuracy 96.10% against 96.07% on development; the harmful rates per 1,000
+answered on open test at the strict (4.1) and balanced (9.3) points are below twice the pooled development rates (3.9 and
+9.9); open test ECE 0.28%; open test gold outside the candidates 0.27%.
+
+### Erratum: column labels of the noun-verb confusion table (presentational writer fix, report regenerated)
+
+The first `test-results.md` (commit `e760c29`) labeled the six cells of the table "Noun-verb confusion" in the order noun,
+verb, other, but `EvalTally.Confusion` stores them as the chosen tag other (0), noun (1), verb (2) after each gold tag
+(`(gold - 1) * 3 + chosen`). The numbers were correct; only the six column labels were wrong (the open-test row
+`59 | 2,379 | 32 | 45 | 59 | 1,839` is read as noun as other 59, noun as noun 2,379, noun as verb 32, verb as other 45, verb as
+noun 59, verb as verb 1,839, whose swaps 32 + 59 equal the 91 harmful errors of that row). The report writer now labels the
+columns in the stored order (noun as other, noun as noun, noun as verb, verb as other, verb as noun, verb as verb), and a
+fixture test pins the labels against six known distinct counts.
+
+Procedure: the old `test-results.*` run marker was deleted and `evaluate` was run once more with the same inputs. The
+evaluation of the frozen model is deterministic; no model, configuration, threshold, operating point or selection changed,
+and nothing else in the evaluation logic changed. The regenerated files differ from the first ones in exactly two places:
+the throughput line and the six column labels. Every other figure is identical, and the per-token records written outside
+the repository are byte-identical (SHA-256 of all six dump files unchanged). The same three stop conditions fired with the
+same values. The throughput of the committed report is the one of the second run: 514,620 tokens per second (the first run
+measured 488,158; it is a timing, not a result of the model).
+
+### Hardening of the evaluation guards (after the held-out run)
+
+A code review of the held-out engine found three weaknesses in the guards. They are closed with fixture tests only; the
+held-out run was not repeated and no model, configuration, threshold, operating point, scoring or metric logic, selection
+artifact or committed result changed. (1) The gate now requires exactly the development files of the data manifest (each
+once), exactly the points `strict` and `balanced` with the registered targets, the registered grid and grid thresholds, and,
+when the development data is present, that the points equal what the registered rule selects from the development curve of
+the embedded model; the committed `operating-points.json` passes it. (2) The cached mapped treebank table is verified
+against the SHA-256 that the committed `test-results.json` records for it (a constant of the evaluation guard) before it is
+parsed; a counts-only `evaluate --preflight` confirmed that the cache matches the pin. (3) The run-once guard is atomic:
+`evaluate` creates `docs/evaluation/test-results.json.running` exclusively immediately before scoring and removes it after the
+results file is written. A run that is aborted after scoring began leaves the lock behind, and the lock blocks every later run
+until a person deletes it by hand; any such deletion, with its reason, must be recorded in this log.
+
+### Second hardening of the gate (after the formal review of the pull request)
+
+The formal review found that the gate of the previous section still depended on the artifact in two places. Both are closed
+with fixture tests; the model, the configuration, the thresholds, the selection artifact and every figure are unchanged.
+(1) The development derivation is no longer optional: `OperatingPointsFile.Expect` refuses a development file that is
+missing or whose bytes do not have the manifest hash, and `SelectedOperatingPoints.Validate` refuses an expectation without
+the derivation, so absent development data cannot skip the check. (2) The development accuracy that the open-test accuracy
+stop condition compares with (`devOpenAccuracyPercent`) is recomputed from the frozen model on the open development split
+and must equal the recorded value; before, the stop condition trusted the file. The committed selection passes both
+(`evaluate --preflight` ran the gate on the real data). The negative target index of the shape probe was already refused
+(the parser reads the index without a sign) and is now also rejected by an explicit range check and a test.
+
+### Erratum: incomplete statistics of the report (second report regeneration)
+
+The review found that the report did not have everything that the design and the protocol promised: the precision and
+recall by tag were written for three views only, the intervals of the ambiguous-token accuracy, of the log-likelihood and
+of every tag figure were missing, and `test-results.json` had none of the tag figures or of the noun-verb confusion. The
+report writer now writes, for every set and view (eight in all), the interval of the ambiguous-token accuracy and of the
+log-likelihood, the precision and recall of every tag that has a gold token or was chosen with 95% intervals (document
+bootstrap, the same draws as the other statistics, so no existing interval can change), and the six confusion cells; the
+JSON carries all of them. A precision or recall that is undefined is 0 in the figure and in every resample.
+
+Procedure: the per-token records of the first run were not kept in a form that carries the decoder's candidates, so the
+figures could not be recomputed without tagging again; the one permitted re-run was used. The old `test-results.json` (the
+run marker) was deleted on purpose and `evaluate` was run once more with the same inputs, the same seed and resamples and the
+same frozen model (the gate, including the new development derivation, passed first). Nothing was tuned and nothing else in
+the evaluation logic changed. A comparison of the old and the new `test-results.json` found every existing member of every
+set, and every top-level member, identical (model and selection hashes, input hashes, counts, accuracies, harmful errors,
+calibration errors, log-likelihoods, every operating point with its intervals, the stop conditions) except the throughput
+line, which is a timing: the committed report now shows 315,213 tokens per second (earlier runs: 488,158 and 514,620; the
+machine was busy with other work during this run). The same three stop conditions fired with the same values. No further
+re-run is permitted for a presentational change; a figure that is wrong is a defect to be reported, not regenerated.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

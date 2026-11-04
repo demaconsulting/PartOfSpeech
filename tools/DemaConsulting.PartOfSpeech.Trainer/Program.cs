@@ -12,14 +12,16 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///         current), <c>eval</c> (score a weights file on the development sets), <c>calibrate</c> (choose the softmax
 ///         temperature on the open development split), <c>compare</c> (paired bootstrap of two weights files) and
 ///         <c>glossary-probe</c> (simulated glossaries on the open development split) and <c>glossary-eval</c> (the dev-only
-///         evaluation of the <c>Glossary</c> API). The exit code is 0 on success, 1
-///         when <c>train --check</c> finds the committed weights stale, and 2 for a usage or data error. Run
-///         without arguments for the usage text.
+///         evaluation of the <c>Glossary</c> API), <c>thresholds</c> (the development-only confidence curve and operating points)
+///         and <c>evaluate</c> (the one held-out evaluation, behind a validated selection). The exit code is 0 on success, 1
+///         when <c>train --check</c> finds the committed weights stale or <c>evaluate</c> reports a fired stop condition, and 2
+///         for a usage or data error. Run without arguments for the usage text.
 ///     </para>
 ///     <para>
 ///         The program only parses arguments and does I/O and printing; the engine is in <c>Training/</c> and
-///         <c>Evaluation/</c>, which the tests compile and exercise directly. Evaluation never reads anything but the two
-///         development files (see <see cref="DataGuard"/>).
+///         <c>Evaluation/</c>, which the tests compile and exercise directly. Every command except <c>evaluate</c> reads
+///         nothing but the two development files (see <see cref="DataGuard"/>); <c>evaluate</c> reads the held-out sets
+///         only through the guarded readers and only with a selection artifact that is valid for the frozen model.
 ///     </para>
 /// </remarks>
 internal static class Program
@@ -46,13 +48,28 @@ internal static class Program
     {
         "--config", "--output", "--weights", "--label", "--log", "--epochs", "--hash-bits", "--min-count", "--prune", "--scale",
         "--seed", "--temperature", "--restrict", "--history", "--source", "--max-sentences", "--mask-disputed", "--silver-min",
-        "--sample-permille", "--checkpoints", "--a", "--b", "--resamples", "--m0-output", "--m1-output",
+        "--sample-permille", "--checkpoints", "--a", "--b", "--resamples", "--m0-output", "--m1-output", "--dump-dir", "--ud-cache",
     };
 
     /// <summary>
     ///     The options that are switches.
     /// </summary>
-    private static readonly string[] FlagOptions = { "--check", "--update-config", "--eval", "--calibrate" };
+    private static readonly string[] FlagOptions = { "--check", "--update-config", "--eval", "--calibrate", "--preflight" };
+
+    /// <summary>
+    ///     The repository-relative folder of the evaluation record (the selection artifact and the held-out results).
+    /// </summary>
+    private const string EvaluationFolder = "docs/evaluation";
+
+    /// <summary>
+    ///     The harmful errors at 0.45 of the frozen model on the open development split (the freeze table of the run log).
+    /// </summary>
+    private const int FrozenOpenHarmful = 94;
+
+    /// <summary>
+    ///     The harmful errors at 0.45 of the frozen model on the gold v2 development split (the freeze table of the run log).
+    /// </summary>
+    private const int FrozenGoldHarmful = 9;
 
     /// <summary>
     ///     The usage text.
@@ -87,8 +104,19 @@ Commands:
       case, gold v2 head effect, history effect, non-head rule) through Tagger.Tag(tokens, glossary) with the embedded model;
       hard and soft modes against no glossary, 0/10/30% wrong entries, paired bootstrap by document. Reads the two
       development files only and takes no path.
+  thresholds [--seed N] [--resamples N]
+      Development-only confidence curve and operating points: scores the embedded model on the two development sets,
+      applies the pre-registered rule (strict and balanced points) and writes docs/evaluation/operating-points.json and
+      docs/evaluation/confidence-thresholds.md. Refuses to write when the 0.45 row does not reproduce the frozen figures.
+  evaluate [--preflight] [--dump-dir DIR] [--ud-cache DIR] [--seed N] [--resamples N]
+      The one held-out evaluation of the embedded model. Needs the committed operating-points.json for the frozen model
+      (the held-out readers cannot open a file without it) and refuses to run when docs/evaluation/test-results.json
+      or its lock file test-results.json.running exists; the lock is created exclusively before scoring and removed when
+      the results are written (a stale lock of an aborted run is deleted by hand and recorded in RUN-LOG.md).
+      --preflight parses every held-out input and prints counts only. --dump-dir (outside the repository) receives
+      the per-token records of the run. There is no weights, data or threshold option.
 
-Exit codes: 0 success, 1 stale weights (train --check), 2 usage or data error.";
+Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired (evaluate), 2 usage or data error.";
 
     /// <summary>
     ///     Runs the tool.
@@ -123,6 +151,10 @@ Exit codes: 0 success, 1 stale weights (train --check), 2 usage or data error.";
                     return GlossaryDecision(line, root);
                 case "glossary-eval":
                     return GlossaryEvaluate(line, root);
+                case "thresholds":
+                    return Thresholds(line, root);
+                case "evaluate":
+                    return Evaluate(line, root);
                 default:
                     throw new ArgumentException($"Unknown command '{line.Command}'.");
             }
@@ -411,6 +443,160 @@ Exit codes: 0 success, 1 stale weights (train --check), 2 usage or data error.";
         }
 
         return 0;
+    }
+
+    /// <summary>
+    ///     Runs the <c>thresholds</c> command: the development-only confidence curve and the pre-registered operating points.
+    /// </summary>
+    /// <param name="line">The parsed command line.</param>
+    /// <param name="root">The repository root.</param>
+    /// <returns>The exit code.</returns>
+    /// <exception cref="InvalidDataException">The embedded model is not the frozen one or the 0.45 row does not reproduce the frozen figures.</exception>
+    private static int Thresholds(CommandLine line, string root)
+    {
+        var seed = ParseUInt64(line.Value("--seed"), "--seed", 1UL);
+        var resamples = ParseInt32(line.Value("--resamples"), "--resamples", Bootstrap.DefaultResamples);
+
+        // The model must be the frozen one: its image hash is recorded in the configuration
+        var weights = OperatingPointsFile.ReadEmbeddedWeights();
+        var modelSha = ModelBuilder.Sha256Hex(PerceptronModel.ToUncompressedImage(weights));
+        var config = ConfigFile.Load(Path.Combine(root, DefaultConfig.Replace('/', Path.DirectorySeparatorChar)));
+        if (!string.Equals(modelSha, config.ImageSha256, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException("The embedded weights are not the frozen model of training.json; the selection is made for the frozen model only.");
+        }
+
+        // Score the two development sets (the only data this command can read) and select the points
+        var dev = DevData.Load(root);
+        var result = DevEvaluator.Evaluate(DevEvaluator.CreateTagger(weights), dev.Open, dev.Gold);
+        var selection = DevSelection.Create(modelSha, config.Temperature, result.Open, result.Gold, resamples, seed);
+
+        // Consistency check: the 0.45 row must reproduce the harmful errors of the freeze table, otherwise nothing is written
+        Console.WriteLine($"At 0.45: harmful {selection.Open.Harmful} (open dev), {selection.Gold.Harmful} (gold v2 dev), {selection.Pooled.Harmful} (pooled); frozen figures {FrozenOpenHarmful}, {FrozenGoldHarmful}, {FrozenOpenHarmful + FrozenGoldHarmful}.");
+        if (selection.Open.Harmful != FrozenOpenHarmful || selection.Gold.Harmful != FrozenGoldHarmful)
+        {
+            throw new InvalidDataException("The 0.45 row does not reproduce the frozen development figures; nothing was written.");
+        }
+
+        var folder = Path.Combine(root, EvaluationFolder.Replace('/', Path.DirectorySeparatorChar));
+        Directory.CreateDirectory(folder);
+        File.WriteAllText(Path.Combine(folder, "operating-points.json"), OperatingPointsFile.Format(selection.ToArtifact(OperatingPointsFile.DevFiles(root))));
+        File.WriteAllText(Path.Combine(folder, "confidence-thresholds.md"), EvaluationReport.RenderDev(selection));
+        foreach (var point in selection.Points)
+        {
+            Console.WriteLine(point.Row == null
+                ? $"{point.Name}: no grid threshold qualifies (target {point.MaxHarmfulPer1000Answered:0.0} per 1,000 answered at coverage >= {point.MinCoveragePercent:0}%)."
+                : $"{point.Name}: threshold {OperatingPointRule.Format(point.Row.Threshold)}, coverage {point.Row.CoveragePercent:0.0}%, harmful {point.Row.HarmfulPer1000Answered:0.0} per 1,000 answered ({point.Row.Harmful} of {point.Row.Answered}).");
+        }
+
+        Console.WriteLine($"Wrote operating-points.json and confidence-thresholds.md to {folder}.");
+        return 0;
+    }
+
+    /// <summary>
+    ///     Runs the <c>evaluate</c> command: the one held-out evaluation of the embedded model.
+    /// </summary>
+    /// <param name="line">The parsed command line.</param>
+    /// <param name="root">The repository root.</param>
+    /// <returns>0 on success, 1 when a stop condition of the protocol fired, 2 for a gate or data error.</returns>
+    /// <exception cref="ArgumentException">An option is combined with <c>--preflight</c> that has no meaning there.</exception>
+    /// <exception cref="InvalidDataException">The selection artifact is not valid for the frozen model or an input differs from its recorded hash or count.</exception>
+    private static int Evaluate(CommandLine line, string root)
+    {
+        var preflight = line.Flag("--preflight");
+        var seed = ParseUInt64(line.Value("--seed"), "--seed", 1UL);
+        var resamples = ParseInt32(line.Value("--resamples"), "--resamples", Bootstrap.DefaultResamples);
+        if (preflight && line.Value("--dump-dir") != null)
+        {
+            throw new ArgumentException("--preflight prints counts only and writes nothing; it cannot be combined with --dump-dir.");
+        }
+
+        // The gate: the committed selection must be valid for the frozen model and the committed development files
+        var weights = OperatingPointsFile.ReadEmbeddedWeights();
+        var modelSha = ModelBuilder.Sha256Hex(PerceptronModel.ToUncompressedImage(weights));
+        var config = ConfigFile.Load(Path.Combine(root, DefaultConfig.Replace('/', Path.DirectorySeparatorChar)));
+        var folder = Path.Combine(root, EvaluationFolder.Replace('/', Path.DirectorySeparatorChar));
+        var selection = OperatingPointsFile.Load(Path.Combine(folder, "operating-points.json"), OperatingPointsFile.Expect(root, modelSha, config.ImageSha256, weights));
+
+        // Run once, and keep the per-token records outside the repository
+        var resultsPath = Path.Combine(folder, "test-results.json");
+        string? dump = null;
+        if (!preflight)
+        {
+            DataGuard.EnsureNotEvaluated(resultsPath);
+            dump = line.Value("--dump-dir") is { } directory ? DataGuard.EnsureOutsideRepository(root, directory) : null;
+        }
+
+        // Read every input through the guard and compare the counts with the documented ones (counts only)
+        var data = HeldOutData.Load(root, selection, line.Value("--ud-cache") ?? DataGuard.UdCacheFolder);
+        var counts = data.Counts();
+        foreach (var count in counts)
+        {
+            Console.WriteLine($"{count.Name}: {count.Actual:N0} (documented {count.Expected:N0}){(count.Matches ? string.Empty : " MISMATCH")}");
+        }
+
+        if (counts.Any(c => !c.Matches))
+        {
+            Console.Error.WriteLine("A held-out input does not match its documented size; stopping (a stop condition of the protocol).");
+            return 2;
+        }
+
+        if (preflight)
+        {
+            Console.WriteLine("Pre-flight passed: every input was read, its hash and header verified and its size matches. Nothing was scored.");
+            return 0;
+        }
+
+        // The one run: take the exclusive run lock (atomic, before anything is scored), judge every set with the embedded
+        // model, then measure the throughput of the default tagger. An exception from here on leaves the lock behind.
+        using var runLock = DataGuard.AcquireRunLock(resultsPath);
+        var scores = HeldOutEvaluator.Score(DevEvaluator.CreateTagger(weights), EmbeddedModel.Lexicon, data);
+        var results = new ResultsData
+        {
+            ModelImageSha256 = modelSha,
+            SelectionSha256 = selection.SelectionSha256,
+            RuleId = selection.Data.RuleId,
+            Resamples = resamples,
+            Seed = seed,
+            Runtime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription + " on " + System.Runtime.InteropServices.RuntimeInformation.OSDescription,
+            TokensPerSecond = HeldOutEvaluator.Throughput(Tagger.Default, data.OpenTest.Select(s => s.Tokens).ToList()),
+        };
+        results.Inputs.AddRange(data.Inputs.Select(i => new InputRecord { Name = i.Key, Sha256 = i.Value }));
+        var views = new (string Name, List<EvalToken> Tokens)[]
+        {
+            (HeldOutEvaluator.Names.OpenTest, scores.OpenTest),
+            (HeldOutEvaluator.Names.GoldTest, scores.Gold),
+            (HeldOutEvaluator.Names.GoldTest + "-full-agreement", scores.GoldFullAgreement),
+            (HeldOutEvaluator.Names.GoldTest + "-to-not", scores.GoldConvention),
+            (HeldOutEvaluator.Names.Probe, scores.Probe),
+            (HeldOutEvaluator.Names.Challenge, scores.Challenge),
+            (HeldOutEvaluator.Names.UdMapped, scores.UdMapped),
+            (HeldOutEvaluator.Names.UdRaw, scores.UdRaw),
+        };
+        foreach (var (name, tokens) in views)
+        {
+            results.Sets.Add(EvaluationReport.Summarize(name, tokens, selection.SelectedPoints, resamples, seed));
+        }
+
+        results.TripwiresFired.AddRange(EvaluationReport.Tripwires(results, selection));
+
+        // Write the per-token records first, then the report, and the results file (the run-once marker) last; completing the
+        // lock writes the results file exclusively and only then removes the lock file
+        if (dump != null)
+        {
+            foreach (var (name, tokens) in EvaluationReport.Views(scores))
+            {
+                EvaluationReport.WriteDump(dump, name, tokens);
+            }
+
+            Console.WriteLine($"Wrote the per-token records to {dump}.");
+        }
+
+        File.WriteAllText(Path.Combine(folder, "test-results.md"), EvaluationReport.RenderResults(results, scores));
+        runLock.Complete(OperatingPointsFile.Format(results));
+        Console.WriteLine($"Wrote test-results.md and test-results.json to {folder}.");
+        Console.WriteLine(results.TripwiresFired.Count == 0 ? "No stop condition fired." : "Stop conditions fired:\n" + string.Join("\n", results.TripwiresFired));
+        return results.TripwiresFired.Count == 0 ? 0 : 1;
     }
 
     /// <summary>
