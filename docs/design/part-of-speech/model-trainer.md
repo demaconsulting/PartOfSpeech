@@ -193,10 +193,14 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   embedded weights and the `imageSha256` of `training.json`, the development files of the artifact must be exactly the set
   of development files of `data/MANIFEST.tsv` (each once, with its manifest hash; none missing, none extra), the grid must
   be the registered grid, the points must be exactly `strict` and `balanced` (each once, with the registered target and
-  coverage floor), and every threshold must be on the grid. When the two development files are present, the gate also
-  derives the pooled development curve of the embedded model (`DevDerivation`, development data only, no bootstrap) and
-  requires that the points of the artifact, and the number of development decisions, equal what the registered rule
-  selects from it. The held-out resolver and every held-out reader take the validated object as a required
+  coverage floor), and every threshold must be on the grid. The gate then **fails closed** on the development data: the
+  expectation of the run (`OperatingPointsFile.Expect`) refuses a development file that is missing or whose bytes do not
+  have the hash of the manifest, and `Validate` refuses an expectation without the development derivation. The gate
+  derives the pooled development curve and the accuracy on the open development split of the embedded model once
+  (`DevDerivation`, development data only, no bootstrap) and requires that the points of the artifact, the number of
+  development decisions and the recorded `devOpenAccuracyPercent` (the baseline of the accuracy stop condition) equal
+  what the data gives; nothing in the artifact that the evaluation uses is trusted. The held-out resolver and every
+  held-out reader take the validated object as a required
   parameter, so no held-out file can be opened without it. `evaluate` has no weights, data path or threshold option.
 - **Verification before parsing.** `HeldOutReader` compares the SHA-256 of each repository file with
   `data/MANIFEST.tsv` and
@@ -227,10 +231,14 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   the convention mapping of `data/CONVENTIONS.md` (primary) and the raw tags. The throughput of the default tagger is
   measured separately (one warm-up pass, then the median of three passes over the open test sentences).
 - **Statistics.** Each set and view gets accuracy, ambiguous-token accuracy, noun-verb confusion, harmful errors, calibration
-  error, log-likelihood and per-tag precision and recall, with 95% percentile intervals over documents (rows or sentences
-  where a set has none), and each operating point gets its coverage, its harmful rate per 1,000 answered with an
-  interval and
-  the paired difference of the harmful errors per 1,000 decisions against 0.45 on the same decisions.
+  error, log-likelihood and the precision and recall of every tag that has a gold token or was chosen, with 95% percentile
+  intervals over documents (rows or sentences where a set has none) for each of them except the confusion counts, and each
+  operating point gets its coverage, its harmful rate per 1,000 answered with an interval and
+  the paired difference of the harmful errors per 1,000 decisions against 0.45 on the same decisions. All statistics are
+  evaluated on the same bootstrap draws, so the number of statistics does not change any interval. A precision or recall
+  that is undefined (a tag never chosen, or without a gold token) is 0, in the figure and in every resample. The
+  Markdown report and `test-results.json` are written from the same summary (`SetRecord`), so the JSON holds every
+  figure of the report for every set, including the tag tables and the six cells of the noun-verb confusion.
 - **Stop conditions.** The protocol lists the conditions that declare a model or data defect (count mismatch, gold outside
   the candidates for more than 1% of a set, open test accuracy more than 2.0 points below development with an interval that
   excludes it, a point whose harmful rate on the open test split is more than twice its development rate, more than 5%
@@ -335,7 +343,8 @@ training source that lies outside the `data` folder after resolution, and a link
 negative, non-numeric or out-of-sentence target index throws `InvalidDataException`. A held-out gate failure (no
 selection artifact, an artifact for another model, rule or development file, a held-out file that differs from its recorded
 hash or announces another set, a missing or unpinned treebank cache or a mapped table that differs from its pin, a
-malformed probe or treebank row, an artifact whose points differ from the development derivation, a count that
+malformed probe or treebank row, a missing development file or one that differs from the manifest hash, an artifact
+whose points or recorded development accuracy differ from the development derivation, a count that
 differs from the documented one) throws `InvalidDataException`; an existing results file, an existing run lock file and
 a dump folder inside the repository throw `InvalidOperationException`; all of these are exit code 2 and none of them
 opens or evaluates a held-out file further. A weights

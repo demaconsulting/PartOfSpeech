@@ -25,8 +25,10 @@ them and states what they do not show.
    ([operating-points.json](operating-points.json)).
 4. **The held-out sets were evaluated once.** The `evaluate` command is the only code that opens a held-out file, only
    with a valid selection for the frozen model, and it refuses to run when `test-results.json` exists. The results were
-   committed as produced. One later fix changed the labels of one table of the report (an erratum recorded in the run
-   log); no figure changed.
+   committed as produced. Two later changes to the report writer, each followed by a re-run with the same frozen model
+   and inputs, changed the text and the JSON but no figure (errata recorded in the run log): the labels of one table, and
+   the addition of the per-tag precision and recall, their intervals and the interval of the remaining measures for every
+   set and view.
 
 The evaluation sets are described in [data/eval](../../data/eval/README.md). In short:
 
@@ -55,7 +57,11 @@ Conventions_).
 - Without a threshold the figure is **harmful errors per 1,000 decisions** at the reference point 0.45 of the reports,
   where about 99% of the decisions are answered. At a recommended threshold it is **per 1,000 answered decisions**.
 
-The reports define the remaining columns (ECE, NLL, the intervals).
+The reports define the remaining columns (ECE, NLL, the intervals). Every set and view also has a table of precision
+and recall by tag with 95% intervals; a precision or recall that is undefined (a tag that was never chosen, or that
+has no gold token) is shown as 0. `test-results.json` holds the same figures for every set. The intervals of the small
+sets (the challenge set, the `to` and `not` targets, single tags with few tokens) are wide and should not be read as
+measurements.
 
 ## Reading the Results
 

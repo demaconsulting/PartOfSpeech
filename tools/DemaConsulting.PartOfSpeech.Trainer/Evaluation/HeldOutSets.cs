@@ -156,7 +156,7 @@ internal static class HeldOutSets
             string Get(string name) => cells[Array.IndexOf(columns, name)];
             var id = Get("id");
             var tokens = Get("sentence").Split(' ');
-            if (!int.TryParse(Get("target_index"), NumberStyles.None, CultureInfo.InvariantCulture, out var target) || target >= tokens.Length)
+            if (!int.TryParse(Get("target_index"), NumberStyles.None, CultureInfo.InvariantCulture, out var target) || target < 0 || target >= tokens.Length)
             {
                 throw new InvalidDataException($"{origin}: the target index of row {id} is not an index of its sentence.");
             }

@@ -106,26 +106,42 @@ internal static class OperatingPointsFile
     }
 
     /// <summary>
-    ///     Builds what a held-out run requires: the hash of the embedded model, the hash in the configuration and the manifest hashes of the development files.
+    ///     Builds what a held-out run requires: the hash of the embedded model, the hash in the configuration, the manifest
+    ///     hashes of the development files (each file must exist and its actual bytes must have the manifest hash) and the
+    ///     derivation of the development figures of the model, scored once on first use.
     /// </summary>
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <param name="modelImageSha256">The SHA-256 of the uncompressed image of the model that will be scored.</param>
     /// <param name="configuredImageSha256">The image hash recorded in the training configuration.</param>
-    /// <param name="weights">The bytes of the weights of the model that will be scored; when given and the development files exist below the root, the expectation also requires that the artifact equals the points the rule selects from the development data.</param>
+    /// <param name="weights">The bytes of the weights of the model that will be scored; the artifact must equal what the rule selects from the development data for it.</param>
     /// <returns>The expectation.</returns>
-    public static OperatingPointsExpectation Expect(string repositoryRoot, string modelImageSha256, string configuredImageSha256, byte[]? weights = null)
+    /// <exception cref="InvalidDataException">A development file is missing or its bytes do not have the hash of the data manifest, or the manifest has no row for it.</exception>
+    public static OperatingPointsExpectation Expect(string repositoryRoot, string modelImageSha256, string configuredImageSha256, byte[] weights)
     {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        ArgumentNullException.ThrowIfNull(weights);
         var expectation = new OperatingPointsExpectation { ModelImageSha256 = modelImageSha256, ConfiguredImageSha256 = configuredImageSha256 };
         foreach (var file in DevFiles(repositoryRoot))
         {
+            // Fail closed: the development data must be there and must be the data of the manifest, otherwise nothing can be derived
+            var full = Path.Combine(repositoryRoot, "data", file.Path.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(full))
+            {
+                throw new InvalidDataException($"The development file 'data/{file.Path}' is missing; a held-out run needs the development data to check the selection.");
+            }
+
+            if (!string.Equals(ModelBuilder.Sha256Hex(File.ReadAllBytes(full)), file.Sha256, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidDataException($"The development file 'data/{file.Path}' differs from the hash of the data manifest.");
+            }
+
             expectation.DevFileHashes[file.Path] = file.Sha256;
         }
 
-        if (weights != null && DevDerivation.IsAvailable(repositoryRoot))
-        {
-            expectation.DerivePooledCurve = () => DevDerivation.PooledCurveOfModel(repositoryRoot, weights);
-        }
-
+        // One scoring of the development sets serves both derivations
+        var derived = new Lazy<(List<CurveRow> PooledCurve, double OpenAccuracyPercent)>(() => DevDerivation.OfModel(repositoryRoot, weights));
+        expectation.DerivePooledCurve = () => derived.Value.PooledCurve;
+        expectation.DeriveOpenAccuracyPercent = () => derived.Value.OpenAccuracyPercent;
         return expectation;
     }
 

@@ -222,6 +222,56 @@ internal sealed class PointResult
 }
 
 /// <summary>
+///     The precision and recall of one tag in one held-out set (or view of a set), with their 95 percent intervals.
+/// </summary>
+/// <remarks>
+///     A precision or recall that is undefined (the tag was never chosen, or has no gold token) is 0, in the figure and in
+///     every resample, as in <see cref="EvalTally.Precision"/> and <see cref="EvalTally.Recall"/>.
+/// </remarks>
+internal sealed class TagRecord
+{
+    /// <summary>
+    ///     Gets or sets the label of the tag.
+    /// </summary>
+    public string Tag { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     Gets or sets the number of tokens whose gold label is the tag.
+    /// </summary>
+    public long GoldTokens { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the precision in percent.
+    /// </summary>
+    public double Precision { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the lower end of the 95 percent interval of the precision.
+    /// </summary>
+    public double PrecisionLow { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the upper end of the 95 percent interval of the precision.
+    /// </summary>
+    public double PrecisionHigh { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the recall in percent.
+    /// </summary>
+    public double Recall { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the lower end of the 95 percent interval of the recall.
+    /// </summary>
+    public double RecallLow { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the upper end of the 95 percent interval of the recall.
+    /// </summary>
+    public double RecallHigh { get; set; }
+}
+
+/// <summary>
 ///     The summary of one held-out set (or view of a set) in the results.
 /// </summary>
 internal sealed class SetRecord
@@ -265,6 +315,16 @@ internal sealed class SetRecord
     ///     Gets or sets the accuracy on the lexicon-ambiguous tokens in percent.
     /// </summary>
     public double AmbiguousAccuracy { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the lower end of the 95 percent interval of the accuracy on the lexicon-ambiguous tokens.
+    /// </summary>
+    public double AmbiguousAccuracyLow { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the upper end of the 95 percent interval of the accuracy on the lexicon-ambiguous tokens.
+    /// </summary>
+    public double AmbiguousAccuracyHigh { get; set; }
 
     /// <summary>
     ///     Gets or sets the number of noun-verb decisions.
@@ -312,9 +372,30 @@ internal sealed class SetRecord
     public double Nll { get; set; }
 
     /// <summary>
+    ///     Gets or sets the lower end of the 95 percent interval of the mean negative log-likelihood.
+    /// </summary>
+    public double NllLow { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the upper end of the 95 percent interval of the mean negative log-likelihood.
+    /// </summary>
+    public double NllHigh { get; set; }
+
+    /// <summary>
     ///     Gets or sets the number of tokens whose gold label was not among the decoder's candidates.
     /// </summary>
     public long OutsideCandidates { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the six cells of the noun-verb confusion: gold noun answered with another tag, a noun or a verb, then
+    ///     gold verb answered with another tag, a noun or a verb.
+    /// </summary>
+    public List<long> NounVerbConfusion { get; set; } = new();
+
+    /// <summary>
+    ///     Gets or sets the precision and recall of every tag that has a gold token or was chosen, with 95 percent intervals.
+    /// </summary>
+    public List<TagRecord> Tags { get; set; } = new();
 
     /// <summary>
     ///     Gets or sets the reference row (0.45) and one row for every selected operating point.

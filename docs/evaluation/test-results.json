@@ -6,7 +6,7 @@
   "resamples": 1000,
   "seed": 1,
   "runtime": ".NET 10.0.13 on Microsoft Windows 10.0.26100",
-  "tokensPerSecond": 514620.0439446407,
+  "tokensPerSecond": 315213.4266353841,
   "inputs": [
     {
       "name": "open-test",
@@ -43,6 +43,8 @@
       "accuracyHigh": 96.48575587440216,
       "ambiguousTokens": 17522,
       "ambiguousAccuracy": 95.16036982079672,
+      "ambiguousAccuracyLow": 94.72406818838486,
+      "ambiguousAccuracyHigh": 95.61460079969044,
       "decisions": 4413,
       "harmful": 91,
       "harmfulPer1000": 20.620892816677998,
@@ -52,7 +54,189 @@
       "eceLow": 0.187090930890974,
       "eceHigh": 0.6106564928545416,
       "nll": 0.1393608023018651,
+      "nllLow": 0.12109716095495164,
+      "nllHigh": 0.16017504229222593,
       "outsideCandidates": 71,
+      "nounVerbConfusion": [
+        59,
+        2379,
+        32,
+        45,
+        59,
+        1839
+      ],
+      "tags": [
+        {
+          "tag": "ADJ",
+          "goldTokens": 1934,
+          "precision": 93.01217575436739,
+          "precisionLow": 91.77001127395715,
+          "precisionHigh": 94.09921671018277,
+          "recall": 90.84798345398139,
+          "recallLow": 89.30571108622621,
+          "recallHigh": 92.22103004291846
+        },
+        {
+          "tag": "ADP",
+          "goldTokens": 2633,
+          "precision": 97.71689497716895,
+          "precisionLow": 97.04656011118833,
+          "precisionHigh": 98.3864294580058,
+          "recall": 97.53133308013673,
+          "recallLow": 96.93721286370597,
+          "recallHigh": 98.13972715998347
+        },
+        {
+          "tag": "ADV",
+          "goldTokens": 1191,
+          "precision": 92.12924606462303,
+          "precisionLow": 90.47619047619048,
+          "precisionHigh": 93.73567608861727,
+          "recall": 93.36691855583543,
+          "recallLow": 91.61168708765315,
+          "recallHigh": 95.08970727101038
+        },
+        {
+          "tag": "AUX",
+          "goldTokens": 873,
+          "precision": 93.1113662456946,
+          "precisionLow": 91.07551487414187,
+          "precisionHigh": 95.04405286343612,
+          "recall": 92.89805269186712,
+          "recallLow": 90.59165858389913,
+          "recallHigh": 94.88095238095238
+        },
+        {
+          "tag": "CCONJ",
+          "goldTokens": 834,
+          "precision": 99.63985594237695,
+          "precisionLow": 99.07834101382488,
+          "precisionHigh": 100,
+          "recall": 99.52038369304556,
+          "recallLow": 99.02386117136659,
+          "recallHigh": 100
+        },
+        {
+          "tag": "DET",
+          "goldTokens": 2671,
+          "precision": 98.22616407982261,
+          "precisionLow": 97.56277695716396,
+          "precisionHigh": 98.79351947604275,
+          "recall": 99.51329090228379,
+          "recallLow": 99.18879056047197,
+          "recallHigh": 99.7532894736842
+        },
+        {
+          "tag": "INTJ",
+          "goldTokens": 22,
+          "precision": 80.95238095238095,
+          "precisionLow": 58.8235294117647,
+          "precisionHigh": 100,
+          "recall": 77.27272727272727,
+          "recallLow": 56.52173913043478,
+          "recallHigh": 94.73684210526316
+        },
+        {
+          "tag": "NOUN",
+          "goldTokens": 5118,
+          "precision": 96.1906622387185,
+          "precisionLow": 95.06123268419996,
+          "precisionHigh": 96.99961285327139,
+          "recall": 96.20945681906996,
+          "recallLow": 95.29667149059334,
+          "recallHigh": 96.97468614941346
+        },
+        {
+          "tag": "NUM",
+          "goldTokens": 276,
+          "precision": 95.92592592592592,
+          "precisionLow": 93.0795847750865,
+          "precisionHigh": 98.11320754716981,
+          "recall": 93.84057971014492,
+          "recallLow": 89.12280701754386,
+          "recallHigh": 97.36842105263158
+        },
+        {
+          "tag": "PART",
+          "goldTokens": 638,
+          "precision": 95.31722054380664,
+          "precisionLow": 93.62549800796813,
+          "precisionHigh": 96.82997118155619,
+          "recall": 98.90282131661442,
+          "recallLow": 97.91332263242376,
+          "recallHigh": 99.6923076923077
+        },
+        {
+          "tag": "PRON",
+          "goldTokens": 1668,
+          "precision": 97.9280926264473,
+          "precisionLow": 96.7067764407853,
+          "precisionHigh": 98.85057471264368,
+          "recall": 96.34292565947243,
+          "recallLow": 95.39895165987187,
+          "recallHigh": 97.29574223245109
+        },
+        {
+          "tag": "PROPN",
+          "goldTokens": 1289,
+          "precision": 90.53435114503817,
+          "precisionLow": 87.450357426529,
+          "precisionHigh": 93.31436699857753,
+          "recall": 92.00930954228083,
+          "recallLow": 89.78658536585365,
+          "recallHigh": 94.06850459482038
+        },
+        {
+          "tag": "PUNCT",
+          "goldTokens": 3276,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 100,
+          "recallHigh": 100
+        },
+        {
+          "tag": "SCONJ",
+          "goldTokens": 346,
+          "precision": 91.78885630498533,
+          "precisionLow": 88.54748603351955,
+          "precisionHigh": 95.01661129568106,
+          "recall": 90.46242774566474,
+          "recallLow": 86.88046647230321,
+          "recallHigh": 94.27609427609427
+        },
+        {
+          "tag": "SYM",
+          "goldTokens": 11,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 100,
+          "recallHigh": 100
+        },
+        {
+          "tag": "VERB",
+          "goldTokens": 3291,
+          "precision": 94.31137724550898,
+          "precisionLow": 93.20987654320987,
+          "precisionHigh": 95.34151715454831,
+          "recall": 95.71558796718323,
+          "recallLow": 94.92053599252104,
+          "recallHigh": 96.52628343067937
+        },
+        {
+          "tag": "X",
+          "goldTokens": 114,
+          "precision": 90,
+          "precisionLow": 0,
+          "precisionHigh": 100,
+          "recall": 47.36842105263158,
+          "recallLow": 0,
+          "recallHigh": 61.38996138996139
+        }
+      ],
       "points": [
         {
           "name": "reference",
@@ -104,6 +288,8 @@
       "accuracyHigh": 95.38615847542629,
       "ambiguousTokens": 1964,
       "ambiguousAccuracy": 91.70061099796334,
+      "ambiguousAccuracyLow": 90.33232628398791,
+      "ambiguousAccuracyHigh": 92.93304994686504,
       "decisions": 936,
       "harmful": 23,
       "harmfulPer1000": 24.572649572649574,
@@ -113,7 +299,129 @@
       "eceLow": 1.4666935091906097,
       "eceHigh": 2.7960608509568834,
       "nll": 0.21781995419024852,
+      "nllLow": 0.1811989044198273,
+      "nllHigh": 0.25963610720149355,
       "outsideCandidates": 7,
+      "nounVerbConfusion": [
+        2,
+        455,
+        10,
+        9,
+        14,
+        446
+      ],
+      "tags": [
+        {
+          "tag": "Noun",
+          "goldTokens": 1313,
+          "precision": 97.72209567198178,
+          "precisionLow": 96.91358024691358,
+          "precisionHigh": 98.52507374631269,
+          "recall": 98.01980198019803,
+          "recallLow": 97.22882026920031,
+          "recallHigh": 98.75583203732504
+        },
+        {
+          "tag": "Verb",
+          "goldTokens": 670,
+          "precision": 95.34534534534535,
+          "precisionLow": 93.52159468438538,
+          "precisionHigh": 96.92307692307692,
+          "recall": 94.77611940298507,
+          "recallLow": 92.5,
+          "recallHigh": 96.68508287292818
+        },
+        {
+          "tag": "Auxiliary",
+          "goldTokens": 37,
+          "precision": 94.5945945945946,
+          "precisionLow": 81.81818181818181,
+          "precisionHigh": 100,
+          "recall": 94.5945945945946,
+          "recallLow": 84.84848484848484,
+          "recallHigh": 100
+        },
+        {
+          "tag": "Adjective",
+          "goldTokens": 419,
+          "precision": 88.20861678004535,
+          "precisionLow": 84.9624060150376,
+          "precisionHigh": 91.01941747572816,
+          "recall": 92.8400954653938,
+          "recallLow": 90.33816425120773,
+          "recallHigh": 95.14066496163683
+        },
+        {
+          "tag": "Adverb",
+          "goldTokens": 207,
+          "precision": 94.76190476190476,
+          "precisionLow": 91.28440366972477,
+          "precisionHigh": 97.6,
+          "recall": 96.13526570048309,
+          "recallLow": 93.36492890995261,
+          "recallHigh": 98.5781990521327
+        },
+        {
+          "tag": "Preposition",
+          "goldTokens": 113,
+          "precision": 94.39252336448598,
+          "precisionLow": 90,
+          "precisionHigh": 98.13084112149532,
+          "recall": 89.38053097345133,
+          "recallLow": 82.41758241758242,
+          "recallHigh": 95.53571428571429
+        },
+        {
+          "tag": "Conjunction",
+          "goldTokens": 62,
+          "precision": 96.61016949152543,
+          "precisionLow": 91.66666666666667,
+          "precisionHigh": 100,
+          "recall": 91.93548387096774,
+          "recallLow": 84.375,
+          "recallHigh": 98.11320754716981
+        },
+        {
+          "tag": "Determiner",
+          "goldTokens": 95,
+          "precision": 91.30434782608695,
+          "precisionLow": 83.6734693877551,
+          "precisionHigh": 97.14285714285714,
+          "recall": 66.3157894736842,
+          "recallLow": 56.98924731182796,
+          "recallHigh": 75.70093457943925
+        },
+        {
+          "tag": "Pronoun",
+          "goldTokens": 116,
+          "precision": 95.45454545454545,
+          "precisionLow": 91,
+          "precisionHigh": 99.02912621359224,
+          "recall": 90.51724137931035,
+          "recallLow": 85.15625,
+          "recallHigh": 95.16129032258064
+        },
+        {
+          "tag": "Interjection",
+          "goldTokens": 4,
+          "precision": 50,
+          "precisionLow": 0,
+          "precisionHigh": 100,
+          "recall": 75,
+          "recallLow": 0,
+          "recallHigh": 100
+        },
+        {
+          "tag": "Other",
+          "goldTokens": 3,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        }
+      ],
       "points": [
         {
           "name": "reference",
@@ -165,6 +473,8 @@
       "accuracyHigh": 96.24201428034573,
       "ambiguousTokens": 1585,
       "ambiguousAccuracy": 92.49211356466877,
+      "ambiguousAccuracyLow": 91.12181693048865,
+      "ambiguousAccuracyHigh": 93.80787037037037,
       "decisions": 713,
       "harmful": 17,
       "harmfulPer1000": 23.842917251051894,
@@ -174,7 +484,129 @@
       "eceLow": 1.1102827547182879,
       "eceHigh": 2.344662643082688,
       "nll": 0.18378122258733653,
+      "nllLow": 0.14479767593817072,
+      "nllHigh": 0.22407695835732436,
       "outsideCandidates": 4,
+      "nounVerbConfusion": [
+        1,
+        380,
+        6,
+        6,
+        12,
+        308
+      ],
+      "tags": [
+        {
+          "tag": "Noun",
+          "goldTokens": 1153,
+          "precision": 97.9256698357822,
+          "precisionLow": 97.01357466063348,
+          "precisionHigh": 98.7551867219917,
+          "recall": 98.26539462272333,
+          "recallLow": 97.43801652892562,
+          "recallHigh": 98.95833333333333
+        },
+        {
+          "tag": "Verb",
+          "goldTokens": 495,
+          "precision": 96.28099173553719,
+          "precisionLow": 94.53781512605042,
+          "precisionHigh": 97.7924944812362,
+          "recall": 94.14141414141415,
+          "recallLow": 91.70124481327801,
+          "recallHigh": 96.2719298245614
+        },
+        {
+          "tag": "Auxiliary",
+          "goldTokens": 37,
+          "precision": 94.5945945945946,
+          "precisionLow": 82.6086956521739,
+          "precisionHigh": 100,
+          "recall": 94.5945945945946,
+          "recallLow": 85.18518518518519,
+          "recallHigh": 100
+        },
+        {
+          "tag": "Adjective",
+          "goldTokens": 351,
+          "precision": 89.21832884097034,
+          "precisionLow": 86.09112709832134,
+          "precisionHigh": 92.34828496042216,
+          "recall": 94.3019943019943,
+          "recallLow": 91.78885630498533,
+          "recallHigh": 96.52173913043478
+        },
+        {
+          "tag": "Adverb",
+          "goldTokens": 187,
+          "precision": 97.81420765027322,
+          "precisionLow": 95.50561797752809,
+          "precisionHigh": 99.5049504950495,
+          "recall": 95.72192513368984,
+          "recallLow": 92.63157894736842,
+          "recallHigh": 98.38709677419355
+        },
+        {
+          "tag": "Preposition",
+          "goldTokens": 106,
+          "precision": 94.28571428571429,
+          "precisionLow": 89.7196261682243,
+          "precisionHigh": 98.3739837398374,
+          "recall": 93.39622641509433,
+          "recallLow": 87,
+          "recallHigh": 98.95833333333333
+        },
+        {
+          "tag": "Conjunction",
+          "goldTokens": 58,
+          "precision": 96.42857142857143,
+          "precisionLow": 91.52542372881356,
+          "precisionHigh": 100,
+          "recall": 93.10344827586206,
+          "recallLow": 85.48387096774194,
+          "recallHigh": 98.59154929577464
+        },
+        {
+          "tag": "Determiner",
+          "goldTokens": 88,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 71.5909090909091,
+          "recallLow": 62.365591397849464,
+          "recallHigh": 80.45977011494253
+        },
+        {
+          "tag": "Pronoun",
+          "goldTokens": 102,
+          "precision": 96.11650485436893,
+          "precisionLow": 91.57894736842105,
+          "precisionHigh": 99.23664122137404,
+          "recall": 97.05882352941177,
+          "recallLow": 92.94117647058823,
+          "recallHigh": 100
+        },
+        {
+          "tag": "Interjection",
+          "goldTokens": 4,
+          "precision": 50,
+          "precisionLow": 0,
+          "precisionHigh": 100,
+          "recall": 75,
+          "recallLow": 0,
+          "recallHigh": 100
+        },
+        {
+          "tag": "Other",
+          "goldTokens": 0,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        }
+      ],
       "points": [
         {
           "name": "reference",
@@ -226,6 +658,8 @@
       "accuracyHigh": 87.5,
       "ambiguousTokens": 4,
       "ambiguousAccuracy": 100,
+      "ambiguousAccuracyLow": 100,
+      "ambiguousAccuracyHigh": 100,
       "decisions": 0,
       "harmful": 0,
       "harmfulPer1000": 0,
@@ -235,7 +669,49 @@
       "eceLow": 27.172828161897257,
       "eceHigh": 88.44279936075574,
       "nll": 6.98654366454587,
+      "nllLow": 1.9303849290929127,
+      "nllHigh": 12.098374234421769,
       "outsideCandidates": 4,
+      "nounVerbConfusion": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "tags": [
+        {
+          "tag": "Adverb",
+          "goldTokens": 4,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        },
+        {
+          "tag": "Preposition",
+          "goldTokens": 1,
+          "precision": 100,
+          "precisionLow": 0,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 0,
+          "recallHigh": 100
+        },
+        {
+          "tag": "Other",
+          "goldTokens": 3,
+          "precision": 42.857142857142854,
+          "precisionLow": 12.5,
+          "precisionHigh": 80,
+          "recall": 100,
+          "recallLow": 100,
+          "recallHigh": 100
+        }
+      ],
       "points": [
         {
           "name": "reference",
@@ -287,6 +763,8 @@
       "accuracyHigh": 91.60714285714286,
       "ambiguousTokens": 556,
       "ambiguousAccuracy": 89.20863309352518,
+      "ambiguousAccuracyLow": 86.56987295825772,
+      "ambiguousAccuracyHigh": 91.56193895870736,
       "decisions": 556,
       "harmful": 48,
       "harmfulPer1000": 86.33093525179856,
@@ -296,7 +774,69 @@
       "eceLow": 1.985170593667531,
       "eceHigh": 5.308526813622002,
       "nll": 0.2766376478767181,
+      "nllLow": 0.22281267600554727,
+      "nllHigh": 0.33511862339363524,
       "outsideCandidates": 0,
+      "nounVerbConfusion": [
+        7,
+        353,
+        36,
+        2,
+        15,
+        143
+      ],
+      "tags": [
+        {
+          "tag": "Noun",
+          "goldTokens": 400,
+          "precision": 95.95687331536388,
+          "precisionLow": 94,
+          "precisionHigh": 97.85522788203754,
+          "recall": 89,
+          "recallLow": 85.96491228070175,
+          "recallHigh": 91.91919191919192
+        },
+        {
+          "tag": "Verb",
+          "goldTokens": 160,
+          "precision": 79.88826815642459,
+          "precisionLow": 74.23312883435582,
+          "precisionHigh": 85.63829787234043,
+          "recall": 89.375,
+          "recallLow": 84.41558441558442,
+          "recallHigh": 93.91891891891892
+        },
+        {
+          "tag": "Adjective",
+          "goldTokens": 0,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        },
+        {
+          "tag": "Adverb",
+          "goldTokens": 0,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        },
+        {
+          "tag": "Other",
+          "goldTokens": 0,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        }
+      ],
       "points": [
         {
           "name": "reference",
@@ -348,6 +888,8 @@
       "accuracyHigh": 92.7007299270073,
       "ambiguousTokens": 196,
       "ambiguousAccuracy": 88.77551020408163,
+      "ambiguousAccuracyLow": 82.65306122448979,
+      "ambiguousAccuracyHigh": 93.717277486911,
       "decisions": 86,
       "harmful": 0,
       "harmfulPer1000": 0,
@@ -357,7 +899,179 @@
       "eceLow": 3.8427585856590336,
       "eceHigh": 12.975431627455016,
       "nll": 0.3317479331349505,
+      "nllLow": 0.1952869594541647,
+      "nllHigh": 0.4884743678245062,
       "outsideCandidates": 0,
+      "nounVerbConfusion": [
+        7,
+        43,
+        0,
+        3,
+        0,
+        33
+      ],
+      "tags": [
+        {
+          "tag": "ADJ",
+          "goldTokens": 13,
+          "precision": 90,
+          "precisionLow": 66.66666666666667,
+          "precisionHigh": 100,
+          "recall": 69.23076923076923,
+          "recallLow": 43.75,
+          "recallHigh": 91.66666666666667
+        },
+        {
+          "tag": "ADP",
+          "goldTokens": 22,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 90.9090909090909,
+          "recallLow": 77.27272727272727,
+          "recallHigh": 100
+        },
+        {
+          "tag": "ADV",
+          "goldTokens": 6,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 100,
+          "recallHigh": 100
+        },
+        {
+          "tag": "AUX",
+          "goldTokens": 4,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 100,
+          "recallHigh": 100
+        },
+        {
+          "tag": "CCONJ",
+          "goldTokens": 2,
+          "precision": 100,
+          "precisionLow": 0,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 0,
+          "recallHigh": 100
+        },
+        {
+          "tag": "DET",
+          "goldTokens": 49,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 100,
+          "recallHigh": 100
+        },
+        {
+          "tag": "NOUN",
+          "goldTokens": 75,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 69.33333333333333,
+          "recallLow": 55.95238095238095,
+          "recallHigh": 83.78378378378379
+        },
+        {
+          "tag": "NUM",
+          "goldTokens": 5,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 100,
+          "recallHigh": 100
+        },
+        {
+          "tag": "PART",
+          "goldTokens": 6,
+          "precision": 75,
+          "precisionLow": 40,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 100,
+          "recallHigh": 100
+        },
+        {
+          "tag": "PRON",
+          "goldTokens": 4,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 100,
+          "recallHigh": 100
+        },
+        {
+          "tag": "PROPN",
+          "goldTokens": 0,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        },
+        {
+          "tag": "PUNCT",
+          "goldTokens": 38,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 97.36842105263158,
+          "recallLow": 91.83673469387755,
+          "recallHigh": 100
+        },
+        {
+          "tag": "SCONJ",
+          "goldTokens": 5,
+          "precision": 100,
+          "precisionLow": 100,
+          "precisionHigh": 100,
+          "recall": 100,
+          "recallLow": 100,
+          "recallHigh": 100
+        },
+        {
+          "tag": "SYM",
+          "goldTokens": 2,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        },
+        {
+          "tag": "VERB",
+          "goldTokens": 41,
+          "precision": 97.43589743589743,
+          "precisionLow": 92.6829268292683,
+          "precisionHigh": 100,
+          "recall": 92.6829268292683,
+          "recallLow": 85,
+          "recallHigh": 100
+        },
+        {
+          "tag": "X",
+          "goldTokens": 0,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        }
+      ],
       "points": [
         {
           "name": "reference",
@@ -409,6 +1123,8 @@
       "accuracyHigh": 92.82476506357104,
       "ambiguousTokens": 16830,
       "ambiguousAccuracy": 91.71122994652407,
+      "ambiguousAccuracyLow": 91.05159648310968,
+      "ambiguousAccuracyHigh": 92.26306828929945,
       "decisions": 4413,
       "harmful": 73,
       "harmfulPer1000": 16.542034896895537,
@@ -418,7 +1134,189 @@
       "eceLow": 2.0575211844026424,
       "eceHigh": 2.808975665770194,
       "nll": 0.31748352056533896,
+      "nllLow": 0.29092168545999253,
+      "nllHigh": 0.35045478825131,
       "outsideCandidates": 140,
+      "nounVerbConfusion": [
+        150,
+        2121,
+        43,
+        67,
+        36,
+        1996
+      ],
+      "tags": [
+        {
+          "tag": "ADJ",
+          "goldTokens": 1788,
+          "precision": 89.19392523364486,
+          "precisionLow": 86.92886061307114,
+          "precisionHigh": 91.4385556202679,
+          "recall": 85.40268456375838,
+          "recallLow": 83.3938764919564,
+          "recallHigh": 87.5
+        },
+        {
+          "tag": "ADP",
+          "goldTokens": 2003,
+          "precision": 94.76516634050881,
+          "precisionLow": 93.59801488833747,
+          "precisionHigh": 95.71836346336822,
+          "recall": 96.70494258612082,
+          "recallLow": 95.75892857142857,
+          "recallHigh": 97.56404871902562
+        },
+        {
+          "tag": "ADV",
+          "goldTokens": 1280,
+          "precision": 88.73456790123457,
+          "precisionLow": 86.26465661641541,
+          "precisionHigh": 90.74818986323412,
+          "recall": 89.84375,
+          "recallLow": 87.91666666666667,
+          "recallHigh": 91.43968871595331
+        },
+        {
+          "tag": "AUX",
+          "goldTokens": 959,
+          "precision": 94.20600858369099,
+          "precisionLow": 92.69461077844312,
+          "precisionHigh": 95.64796905222437,
+          "recall": 91.55370177267987,
+          "recallLow": 89.86013986013987,
+          "recallHigh": 93.09338521400778
+        },
+        {
+          "tag": "CCONJ",
+          "goldTokens": 736,
+          "precision": 99.4550408719346,
+          "precisionLow": 98.89042995839112,
+          "precisionHigh": 99.88095238095238,
+          "recall": 99.18478260869566,
+          "recallLow": 98.25653798256538,
+          "recallHigh": 99.86130374479889
+        },
+        {
+          "tag": "DET",
+          "goldTokens": 2227,
+          "precision": 98.40764331210191,
+          "precisionLow": 97.8481526593585,
+          "precisionHigh": 98.94204231830727,
+          "recall": 97.12617871576111,
+          "recallLow": 96.38157894736842,
+          "recallHigh": 97.85681714546284
+        },
+        {
+          "tag": "INTJ",
+          "goldTokens": 121,
+          "precision": 91.66666666666667,
+          "precisionLow": 85,
+          "precisionHigh": 96.7479674796748,
+          "recall": 81.81818181818181,
+          "recallLow": 73.22834645669292,
+          "recallHigh": 88.40579710144928
+        },
+        {
+          "tag": "NOUN",
+          "goldTokens": 4123,
+          "precision": 89.11645629911884,
+          "precisionLow": 87.55912961210974,
+          "precisionHigh": 90.42799915665191,
+          "recall": 90.75915595440213,
+          "recallLow": 89.03410251174188,
+          "recallHigh": 92.65175718849841
+        },
+        {
+          "tag": "NUM",
+          "goldTokens": 542,
+          "precision": 94.5179584120983,
+          "precisionLow": 89.60498960498961,
+          "precisionHigh": 98.03921568627452,
+          "recall": 92.25092250922509,
+          "recallLow": 87.52399232245682,
+          "recallHigh": 95.57344064386318
+        },
+        {
+          "tag": "PART",
+          "goldTokens": 649,
+          "precision": 95.6923076923077,
+          "precisionLow": 94.0032414910859,
+          "precisionHigh": 97.18804920913884,
+          "recall": 95.83975346687211,
+          "recallLow": 93.96984924623115,
+          "recallHigh": 97.40634005763688
+        },
+        {
+          "tag": "PRON",
+          "goldTokens": 1834,
+          "precision": 94.13305395495024,
+          "precisionLow": 92.8535732133933,
+          "precisionHigh": 95.26627218934911,
+          "recall": 97.98255179934569,
+          "recallLow": 97.29888432178508,
+          "recallHigh": 98.61027190332327
+        },
+        {
+          "tag": "PROPN",
+          "goldTokens": 2075,
+          "precision": 83.30765279917823,
+          "precisionLow": 79.44803288314739,
+          "precisionHigh": 86.7997781475319,
+          "recall": 78.16867469879519,
+          "recallLow": 74.0909090909091,
+          "recallHigh": 81.46584804297774
+        },
+        {
+          "tag": "PUNCT",
+          "goldTokens": 3096,
+          "precision": 98.45659163987138,
+          "precisionLow": 97.95427196149218,
+          "precisionHigh": 98.89860706187237,
+          "recall": 98.90180878552971,
+          "recallLow": 98.07171853856563,
+          "recallHigh": 99.54798331015299
+        },
+        {
+          "tag": "SCONJ",
+          "goldTokens": 317,
+          "precision": 83.01282051282051,
+          "precisionLow": 78.81944444444444,
+          "precisionHigh": 86.91275167785236,
+          "recall": 81.70347003154573,
+          "recallLow": 77.40863787375416,
+          "recallHigh": 85.46511627906976
+        },
+        {
+          "tag": "SYM",
+          "goldTokens": 113,
+          "precision": 62.37623762376238,
+          "precisionLow": 41.791044776119406,
+          "precisionHigh": 79.71014492753623,
+          "recall": 55.75221238938053,
+          "recallLow": 40.27777777777778,
+          "recallHigh": 66.66666666666667
+        },
+        {
+          "tag": "VERB",
+          "goldTokens": 3189,
+          "precision": 94.27230046948357,
+          "precisionLow": 93.36478914774403,
+          "precisionHigh": 95.20482692918387,
+          "recall": 94.44967074317968,
+          "recallLow": 93.43655334904072,
+          "recallHigh": 95.35911602209944
+        },
+        {
+          "tag": "X",
+          "goldTokens": 42,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        }
+      ],
       "points": [
         {
           "name": "reference",
@@ -470,6 +1368,8 @@
       "accuracyHigh": 88.91357646337725,
       "ambiguousTokens": 16830,
       "ambiguousAccuracy": 87.1301247771836,
+      "ambiguousAccuracyLow": 86.44674835061262,
+      "ambiguousAccuracyHigh": 87.73065942483115,
       "decisions": 4010,
       "harmful": 72,
       "harmfulPer1000": 17.955112219451372,
@@ -479,7 +1379,189 @@
       "eceLow": 5.858979654057994,
       "eceHigh": 6.7252611388432975,
       "nll": 0.6062225829013084,
+      "nllLow": 0.573138217630364,
+      "nllHigh": 0.6457199676389245,
       "outsideCandidates": 421,
+      "nounVerbConfusion": [
+        150,
+        2121,
+        43,
+        52,
+        35,
+        1609
+      ],
+      "tags": [
+        {
+          "tag": "ADJ",
+          "goldTokens": 1788,
+          "precision": 89.19392523364486,
+          "precisionLow": 86.92886061307114,
+          "precisionHigh": 91.4385556202679,
+          "recall": 85.40268456375838,
+          "recallLow": 83.3938764919564,
+          "recallHigh": 87.5
+        },
+        {
+          "tag": "ADP",
+          "goldTokens": 2025,
+          "precision": 92.07436399217221,
+          "precisionLow": 90.67560022333892,
+          "precisionHigh": 93.45396487493348,
+          "recall": 92.93827160493827,
+          "recallLow": 91.52196118488253,
+          "recallHigh": 94.32111512648426
+        },
+        {
+          "tag": "ADV",
+          "goldTokens": 1191,
+          "precision": 82.25308641975309,
+          "precisionLow": 79.5400475812847,
+          "precisionHigh": 84.7520355292376,
+          "recall": 89.50461796809404,
+          "recallLow": 87.43038981702466,
+          "recallHigh": 91.1371237458194
+        },
+        {
+          "tag": "AUX",
+          "goldTokens": 1543,
+          "precision": 97.21030042918454,
+          "precisionLow": 96.00409836065573,
+          "precisionHigh": 98.18731117824774,
+          "recall": 58.716785482825664,
+          "recallLow": 55.379984951091046,
+          "recallHigh": 61.77514792899408
+        },
+        {
+          "tag": "CCONJ",
+          "goldTokens": 736,
+          "precision": 99.4550408719346,
+          "precisionLow": 98.89042995839112,
+          "precisionHigh": 99.88095238095238,
+          "recall": 99.18478260869566,
+          "recallLow": 98.25653798256538,
+          "recallHigh": 99.86130374479889
+        },
+        {
+          "tag": "DET",
+          "goldTokens": 1897,
+          "precision": 83.84895359417652,
+          "precisionLow": 81.96908986834573,
+          "precisionHigh": 85.80796252927401,
+          "recall": 97.15340010542963,
+          "recallLow": 96.33898305084746,
+          "recallHigh": 97.89156626506023
+        },
+        {
+          "tag": "INTJ",
+          "goldTokens": 121,
+          "precision": 91.66666666666667,
+          "precisionLow": 85,
+          "precisionHigh": 96.7479674796748,
+          "recall": 81.81818181818181,
+          "recallLow": 73.22834645669292,
+          "recallHigh": 88.40579710144928
+        },
+        {
+          "tag": "NOUN",
+          "goldTokens": 4123,
+          "precision": 89.11645629911884,
+          "precisionLow": 87.55912961210974,
+          "precisionHigh": 90.42799915665191,
+          "recall": 90.75915595440213,
+          "recallLow": 89.03410251174188,
+          "recallHigh": 92.65175718849841
+        },
+        {
+          "tag": "NUM",
+          "goldTokens": 542,
+          "precision": 94.5179584120983,
+          "precisionLow": 89.60498960498961,
+          "precisionHigh": 98.03921568627452,
+          "recall": 92.25092250922509,
+          "recallLow": 87.52399232245682,
+          "recallHigh": 95.57344064386318
+        },
+        {
+          "tag": "PART",
+          "goldTokens": 649,
+          "precision": 95.6923076923077,
+          "precisionLow": 94.0032414910859,
+          "precisionHigh": 97.18804920913884,
+          "recall": 95.83975346687211,
+          "recallLow": 93.96984924623115,
+          "recallHigh": 97.40634005763688
+        },
+        {
+          "tag": "PRON",
+          "goldTokens": 2164,
+          "precision": 94.34258774227344,
+          "precisionLow": 93.0310262529833,
+          "precisionHigh": 95.46258102533884,
+          "recall": 83.22550831792977,
+          "recallLow": 81.60714285714286,
+          "recallHigh": 84.92530556813037
+        },
+        {
+          "tag": "PROPN",
+          "goldTokens": 2075,
+          "precision": 83.30765279917823,
+          "precisionLow": 79.44803288314739,
+          "precisionHigh": 86.7997781475319,
+          "recall": 78.16867469879519,
+          "recallLow": 74.0909090909091,
+          "recallHigh": 81.46584804297774
+        },
+        {
+          "tag": "PUNCT",
+          "goldTokens": 3096,
+          "precision": 98.45659163987138,
+          "precisionLow": 97.95427196149218,
+          "precisionHigh": 98.89860706187237,
+          "recall": 98.90180878552971,
+          "recallLow": 98.07171853856563,
+          "recallHigh": 99.54798331015299
+        },
+        {
+          "tag": "SCONJ",
+          "goldTokens": 384,
+          "precision": 83.01282051282051,
+          "precisionLow": 78.81944444444444,
+          "precisionHigh": 86.91275167785236,
+          "recall": 67.44791666666667,
+          "recallLow": 62.46913580246913,
+          "recallHigh": 71.9298245614035
+        },
+        {
+          "tag": "SYM",
+          "goldTokens": 113,
+          "precision": 62.37623762376238,
+          "precisionLow": 41.791044776119406,
+          "precisionHigh": 79.71014492753623,
+          "recall": 55.75221238938053,
+          "recallLow": 40.27777777777778,
+          "recallHigh": 66.66666666666667
+        },
+        {
+          "tag": "VERB",
+          "goldTokens": 2605,
+          "precision": 76.99530516431925,
+          "precisionLow": 75.09117432530999,
+          "precisionHigh": 78.74516307352128,
+          "recall": 94.43378119001919,
+          "recallLow": 93.34170854271356,
+          "recallHigh": 95.38249483115094
+        },
+        {
+          "tag": "X",
+          "goldTokens": 42,
+          "precision": 0,
+          "precisionLow": 0,
+          "precisionHigh": 0,
+          "recall": 0,
+          "recallLow": 0,
+          "recallHigh": 0
+        }
+      ],
       "points": [
         {
           "name": "reference",

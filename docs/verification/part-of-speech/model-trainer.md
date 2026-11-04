@@ -121,7 +121,13 @@ same results or a treebank word into a report, or lets a stop condition pass.
   `SelectedOperatingPoints_Validate_TamperedArtifact_Throws` (no points, duplicate, extra or missing development files,
   duplicate, extra, missing or renamed points, another target, another grid, an off-grid threshold),
   `SelectedOperatingPoints_Validate_ArbitraryGridThreshold_RefusedAgainstDerivation` (a point or count that differs from
-  what the rule selects from the derived development curve is refused, the rule's own selection is accepted) and
+  what the rule selects from the derived development curve is refused, the rule's own selection is accepted),
+  `SelectedOperatingPoints_Validate_NoDerivationOrWrongDevAccuracy_Throws` (the gate fails closed: an expectation without
+  the curve derivation or without the accuracy derivation is refused, and so is a recorded development accuracy that
+  differs from the derived one by any amount),
+  `OperatingPointsFile_Expect_MissingOrChangedDevelopmentFile_Throws` (in a temporary fake repository: a missing
+  development file, or one whose bytes differ from the manifest hash, is refused; files as recorded give an expectation
+  with both derivations) and
   `DevDerivation_PooledCurve_FixtureOutcomes_EqualsSelectionCurve` (the derived curve equals the curve of the selection),
   `DataGuard_EnsureHeldOutHeader_AnnouncedSet_AcceptedOthersRefused` (a theory: the announced set is accepted, a development
   split or another set is refused), `DataGuard_EnsureNotEvaluated_ExistingResultsFile_Throws` (the run-once marker: a
@@ -139,8 +145,9 @@ same results or a treebank word into a report, or lets a stop condition pass.
   canonical form, unknown members refused, the selection hash is the hash of the file bytes),
   `OperatingPointsFile_Load_CommittedSelection_PassesGateForFrozenModel` (the committed selection is valid for the
   embedded model and the committed development files; no held-out file is opened) and
-  `OperatingPointsFile_Load_CommittedSelection_EqualsDevDerivation` (the committed points equal what the rule selects from
-  the development data for the embedded model, and a tampered threshold is refused).
+  `OperatingPointsFile_Load_CommittedSelection_EqualsDevDerivation` (the committed points and the committed development
+  accuracy equal what the rule and the model give on the development data, and a tampered threshold or accuracy is
+  refused).
 - **Confidence curve and rule**: `EvalTally_Of_Outcomes_AgreesWithMetricsCompute` (also the sum of the document tallies),
   `ConfidenceCurve_Of_HandComputedOutcomes_MatchesExpectedRows` (answered, harmful, coverage and rates on seven
   decisions at
@@ -152,13 +159,21 @@ same results or a treebank word into a report, or lets a stop condition pass.
   `DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent` (the selection, its report and its artifact are
   deterministic and consistent with the rule).
 - **Held-out metrics and reports**: `HeldOutSets_ParseProbe_Rows_BracesRemovedAndValidated`,
+  `HeldOutSets_ParseProbe_NegativeOrNonNumericTargetIndex_ThrowsDataError` (a negative, signed, fractional, empty,
+  non-numeric or overflowing target index is an `InvalidDataException` that names the row, never an index error),
   `HeldOutSets_ParseUd_MappedTable_ReadsTagsRulesAndDocuments`, `DevSets_ParseGold_StatusAndAgreement_Carried`,
   `DevSets_GoldClassOf_EveryTag_CollapsesToTenClassesAndOther`,
   `ClusterBootstrap_Intervals_TiedBetterDeterministicAndSingleItemClusters`,
   `EvaluationReport_Summarize_OperatingPoint_PairedDifferenceAgainstReference`,
+  `EvaluationReport_Summarize_TagFiguresAndIntervals_ArePresent` (the precision and recall of every tag that occurs, the
+  ambiguous-accuracy and log-likelihood intervals and the confusion cells, on known counts),
+  `OperatingPointsFile_ParseResults_CommittedResults_HaveTagFiguresAndIntervalsForEverySet` (on .NET 8 and later: every
+  set of the committed results has its tags, intervals and confusion, the gold tokens of the tags add up to the tokens
+  of the set, and the report has a tag table for every set),
   `EvaluationReport_Tripwires_EachConditionFiresAlone` (each stop condition fires alone, at its boundary),
   `HeldOutEvaluator_Score_FixtureSets_ViewsAndReports` (every view of every set, the judgment equal to the development
-  judgment, a deterministic report without any treebank word, sentence id or document),
+  judgment, a deterministic report with a tag table for every view and without any treebank word, sentence id or
+  document),
   `HeldOutEvaluator_Throughput_Fixture_IsPositive`, `EvaluationReport_WriteDump_Tokens_HeaderAndRows` and
   `OperatingPointsFile_FormatResults_RoundTrip`.
 - **Command-line safety**: `OutputGuard_EnsureExplicitOutput_ExperimentWithoutOutput_Throws` (a theory: no output and an

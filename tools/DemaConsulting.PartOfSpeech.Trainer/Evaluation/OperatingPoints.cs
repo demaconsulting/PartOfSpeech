@@ -201,11 +201,18 @@ internal sealed class OperatingPointsExpectation
     public Dictionary<string, string> DevFileHashes { get; } = new(StringComparer.Ordinal);
 
     /// <summary>
-    ///     Gets or sets the derivation of the pooled development curve of the frozen model, or <c>null</c> when the
-    ///     development data is not available. When set, the points of the artifact must equal what the registered rule
-    ///     selects from the derived curve.
+    ///     Gets or sets the derivation of the pooled development curve of the frozen model. It is required: an expectation
+    ///     without it is refused by <see cref="SelectedOperatingPoints.Validate"/> (the check fails closed when the development
+    ///     data is not available). The points of the artifact must equal what the registered rule selects from the derived curve.
     /// </summary>
     public Func<IReadOnlyList<CurveRow>>? DerivePooledCurve { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the derivation of the accuracy of the frozen model on the open development split in percent. It is
+    ///     required like <see cref="DerivePooledCurve"/>: the stop condition on the open test accuracy compares with the value
+    ///     of the artifact, so the value is recomputed and never trusted.
+    /// </summary>
+    public Func<double>? DeriveOpenAccuracyPercent { get; set; }
 }
 
 /// <summary>
@@ -282,10 +289,18 @@ internal sealed class SelectedOperatingPoints
         ValidateDevFiles(data, expectation);
         ValidateGridAndPoints(data);
 
-        // When the development data is available, the points must be what the registered rule selects from it
-        if (expectation.DerivePooledCurve != null)
+        // The points and the development accuracy must be what the development data gives: without the derivation nothing is
+        // admitted (a held-out reader must not exist on the word of the artifact alone)
+        if (expectation.DerivePooledCurve == null || expectation.DeriveOpenAccuracyPercent == null)
         {
-            ValidateAgainstDerivation(data, expectation.DerivePooledCurve());
+            throw new InvalidDataException("The selection artifact cannot be validated without the development derivation (the development data of the frozen model); a held-out run needs it.");
+        }
+
+        ValidateAgainstDerivation(data, expectation.DerivePooledCurve());
+        var openAccuracy = expectation.DeriveOpenAccuracyPercent();
+        if (Math.Abs(data.DevOpenAccuracyPercent - openAccuracy) >= 1e-9)
+        {
+            throw new InvalidDataException("The development accuracy of the selection artifact differs from the accuracy of the frozen model on the open development split.");
         }
 
         return new SelectedOperatingPoints(data, selectionSha256);
@@ -429,27 +444,28 @@ internal static class DevDerivation
     }
 
     /// <summary>
-    ///     Tells whether the two development files exist below a repository root.
+    ///     Computes the accuracy on the open development split in percent, with the definition of the selection report.
     /// </summary>
-    /// <param name="repositoryRoot">The full path of the repository root.</param>
-    /// <returns><c>true</c> when both files exist.</returns>
-    public static bool IsAvailable(string repositoryRoot)
+    /// <param name="open">The outcomes of the open development split.</param>
+    /// <returns>The accuracy in percent.</returns>
+    public static double OpenAccuracyPercent(IReadOnlyList<Outcome> open)
     {
-        ArgumentNullException.ThrowIfNull(repositoryRoot);
-        return DataGuard.DevelopmentFiles.All(f => File.Exists(Path.Combine(repositoryRoot, f.Replace('/', Path.DirectorySeparatorChar))));
+        ArgumentNullException.ThrowIfNull(open);
+        return EvalTally.Of(open).Accuracy;
     }
 
     /// <summary>
-    ///     Scores the model on the two development sets of a repository and computes the pooled curve.
+    ///     Scores the model on the two development sets of a repository once and derives the pooled curve and the open accuracy.
     /// </summary>
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <param name="weights">The bytes of the weights file of the model.</param>
-    /// <returns>One row for each threshold of the grid.</returns>
-    public static List<CurveRow> PooledCurveOfModel(string repositoryRoot, byte[] weights)
+    /// <returns>The pooled curve (one row for each threshold of the grid) and the accuracy on the open development split in percent.</returns>
+    /// <exception cref="InvalidDataException">A development file is missing or malformed.</exception>
+    public static (List<CurveRow> PooledCurve, double OpenAccuracyPercent) OfModel(string repositoryRoot, byte[] weights)
     {
         ArgumentNullException.ThrowIfNull(repositoryRoot);
         ArgumentNullException.ThrowIfNull(weights);
         var result = DevEvaluator.Evaluate(DevEvaluator.CreateTagger(weights), DevSets.ReadOpenDev(repositoryRoot), DevSets.ReadGoldDev(repositoryRoot));
-        return PooledCurve(result.Open, result.Gold);
+        return (PooledCurve(result.Open, result.Gold), OpenAccuracyPercent(result.Open));
     }
 }

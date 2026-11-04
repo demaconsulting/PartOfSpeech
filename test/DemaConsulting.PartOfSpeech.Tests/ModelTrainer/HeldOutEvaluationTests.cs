@@ -32,34 +32,45 @@ public class HeldOutEvaluationTests
         var expectation = new OperatingPointsExpectation { ModelImageSha256 = ModelHash, ConfiguredImageSha256 = ModelHash };
         expectation.DevFileHashes["open/dev.tsv"] = OpenDevHash;
         expectation.DevFileHashes["eval/gold-v2/dev.tsv"] = GoldDevHash;
+        expectation.DerivePooledCurve = () => FixtureRows();
+        expectation.DeriveOpenAccuracyPercent = () => FixtureOpenAccuracy;
         return expectation;
     }
 
     /// <summary>
-    ///     Builds a selection artifact with a strict point at 0.90 and a balanced point at 0.70.
+    ///     The development accuracy that the fixture selection records and the fixture derivation gives.
+    /// </summary>
+    private const double FixtureOpenAccuracy = 96.0;
+
+    /// <summary>
+    ///     Builds the pooled development curve of 1,000 decisions (800 open, 200 gold) from which the rule selects the strict point at
+    ///     0.90 (4.0 harmful per 1,000 answered) and the balanced point at 0.70; <paramref name="balancedQualifies"/> false leaves
+    ///     the balanced point without a threshold.
+    /// </summary>
+    private static List<CurveRow> FixtureRows(bool balancedQualifies = true) =>
+        ConfidenceCurve.Grid.Select((t, i) => i switch
+        {
+            < 5 => new CurveRow(t, 1000, 950, 12),
+            5 when balancedQualifies => new CurveRow(t, 1000, 900, 8),
+            < 9 when balancedQualifies => new CurveRow(t, 1000, 900, 6),
+            < 9 => new CurveRow(t, 1000, 950, 12),
+            _ => new CurveRow(t, 1000, 750, 3),
+        }).ToList();
+
+    /// <summary>
+    ///     Builds a selection artifact with a strict point at 0.90 and a balanced point at 0.70, as the registered rule selects
+    ///     them from <see cref="FixtureRows"/>.
     /// </summary>
     private static OperatingPointsData Data()
     {
-        var data = new OperatingPointsData
-        {
-            RuleId = OperatingPointRule.Id,
-            ModelImageSha256 = ModelHash,
-            Temperature = 6.727,
-            DevOpenAccuracyPercent = 96.0,
-            OpenDevDecisions = 100,
-            GoldDevDecisions = 20,
-            DevFiles =
-            {
-                new DevFileRecord { Path = "open/dev.tsv", Sha256 = OpenDevHash },
-                new DevFileRecord { Path = "eval/gold-v2/dev.tsv", Sha256 = GoldDevHash },
-            },
-            Points =
-            {
-                new PointRecord { Name = "strict", Threshold = 0.9, HarmfulPer1000Answered = 4.0, CoveragePercent = 70, Answered = 80, Harmful = 1, MaxHarmfulPer1000Answered = 5, MinCoveragePercent = 60 },
-                new PointRecord { Name = "balanced", Threshold = 0.7, HarmfulPer1000Answered = 9.0, CoveragePercent = 90, Answered = 100, Harmful = 1, MaxHarmfulPer1000Answered = 10, MinCoveragePercent = 85 },
-            },
-        };
-        data.Grid.AddRange(ConfidenceCurve.Grid);
+        var data = OperatingPointsData.Build(
+            ModelHash,
+            6.727,
+            FixtureOpenAccuracy,
+            800,
+            200,
+            new[] { new DevFileRecord { Path = "open/dev.tsv", Sha256 = OpenDevHash }, new DevFileRecord { Path = "eval/gold-v2/dev.tsv", Sha256 = GoldDevHash } },
+            OperatingPointRule.Select(FixtureRows()));
         return data;
     }
 
@@ -138,12 +149,14 @@ public class HeldOutEvaluationTests
     [Fact]
     public void SelectedOperatingPoints_Validate_ValidArtifact_KeepsSelectedPoints()
     {
-        // Arrange: a balanced point that no threshold qualified for
-        var data = Data();
-        data.Points[1].Threshold = null;
+        // Arrange: a balanced point that no threshold qualified for (the derivation agrees: its curve has no balanced threshold)
+        var rows = FixtureRows(false);
+        var data = OperatingPointsData.Build(ModelHash, 6.727, FixtureOpenAccuracy, 800, 200, Data().DevFiles, OperatingPointRule.Select(rows));
+        var expectation = Expectation();
+        expectation.DerivePooledCurve = () => rows;
 
         // Act
-        var selection = SelectedOperatingPoints.Validate(data, "ee", Expectation());
+        var selection = SelectedOperatingPoints.Validate(data, "ee", expectation);
 
         // Assert
         Assert.Equal("ee", selection.SelectionSha256);
@@ -267,7 +280,6 @@ public class HeldOutEvaluationTests
         var arbitrary = artifact();
         arbitrary.Points[0].Threshold = 0.99;
         Assert.Throws<InvalidDataException>(() => SelectedOperatingPoints.Validate(arbitrary, "ee", expectation));
-        Assert.NotNull(SelectedOperatingPoints.Validate(arbitrary, "ee", Expectation()));
 
         // A point turned into none, a changed count or a changed rate differs as well
         var none = artifact();
@@ -640,6 +652,10 @@ public class HeldOutEvaluationTests
             "p-1\ts\tclose\tVerb\t0\t{Close} {the} valve .",
             "p-1\ts\tclose\tAdverb\t0\t{Close} the valve .",
             "p-1\ts\tclose\tVerb\t9\t{Close} the valve .",
+            "p-1\ts\tclose\tVerb\t-1\t{Close} the valve .",
+            "p-1\ts\tclose\tVerb\t-1\tClose the {valve} .",
+            "p-1\ts\tclose\tVerb\t-2147483648\t{Close} the valve .",
+            "p-1\ts\tclose\tVerb\t+0\t{Close} the valve .",
             "p-1\ts\tclose\tVerb",
         })
         {
@@ -647,6 +663,24 @@ public class HeldOutEvaluationTests
         }
 
         Assert.Throws<InvalidDataException>(() => HeldOutSets.ParseProbe(new[] { "id\tshape\tsentence" }.Concat(new[] { "x" }), "fixture"));
+    }
+
+    /// <summary>
+    ///     Validates that a negative or otherwise non-numeric target index of a probe row raises the documented data error
+    ///     (an <see cref="InvalidDataException"/> that names the row) and never an index error.
+    /// </summary>
+    [Fact]
+    public void HeldOutSets_ParseProbe_NegativeOrNonNumericTargetIndex_ThrowsDataError()
+    {
+        // Arrange
+        var header = "id\tshape\tlemma\tgold\ttarget_index\tsentence";
+
+        // Act / Assert: every bad index is a data error that names the row, not an IndexOutOfRangeException
+        foreach (var index in new[] { "-1", "-2147483648", "-0", "+1", "1.0", " 1", string.Empty, "abc", "99999999999" })
+        {
+            var error = Assert.Throws<InvalidDataException>(() => HeldOutSets.ParseProbe(new[] { header, "p-7\ts\tclose\tVerb\t" + index + "\tClose {the} valve ." }, "fixture"));
+            Assert.Contains("p-7", error.Message, StringComparison.Ordinal);
+        }
     }
 
     /// <summary>
@@ -986,6 +1020,54 @@ public class HeldOutEvaluationTests
     }
 
     /// <summary>
+    ///     Validates that the summary of a set carries the ambiguous-accuracy and log-likelihood intervals, the precision and
+    ///     recall of every tag that occurs (gold or chosen) with intervals, and the six cells of the noun-verb confusion.
+    /// </summary>
+    [Fact]
+    public void EvaluationReport_Summarize_TagFiguresAndIntervals_ArePresent()
+    {
+        // Arrange: 400 gold verbs in 40 documents, 50 of them tagged as nouns
+        var tokens = new List<EvalToken>();
+        for (var i = 0; i < 400; i++)
+        {
+            tokens.Add(Token("fixture-set", "doc" + (i / 10), "s" + i, i % 8 == 0, i % 8 == 0 ? 0.55 : 0.90));
+        }
+
+        // Act
+        var summary = EvaluationReport.Summarize("fixture-set", tokens, Array.Empty<PointRecord>(), 200, 1);
+
+        // Assert: the verb (gold and chosen) and the noun (chosen only) are listed, in label order, each with its figures and an interval
+        Assert.Equal(new[] { "NOUN", "VERB" }, summary.Tags.Select(t => t.Tag).ToArray());
+        var noun = summary.Tags[0];
+        var verb = summary.Tags[1];
+        Assert.Equal(0, noun.GoldTokens);
+        Assert.Equal(0, noun.Precision);
+        Assert.Equal(0, noun.Recall);
+        Assert.Equal(400, verb.GoldTokens);
+        Assert.Equal(100.0, verb.Precision, 9);
+        Assert.Equal(87.5, verb.Recall, 9);
+        foreach (var tag in summary.Tags)
+        {
+            Assert.InRange(tag.PrecisionLow, 0, tag.PrecisionHigh);
+            Assert.InRange(tag.RecallLow, 0, tag.RecallHigh);
+            Assert.InRange(tag.PrecisionHigh, 0, 100);
+            Assert.InRange(tag.RecallHigh, 0, 100);
+        }
+
+        Assert.InRange(verb.Recall, verb.RecallLow, verb.RecallHigh);
+        Assert.True(verb.RecallLow < verb.RecallHigh);
+        Assert.InRange(summary.AmbiguousAccuracy, summary.AmbiguousAccuracyLow, summary.AmbiguousAccuracyHigh);
+        Assert.InRange(summary.Nll, summary.NllLow, summary.NllHigh);
+        Assert.True(summary.NllLow < summary.NllHigh);
+        Assert.Equal(EvalTally.Of(tokens).Confusion, summary.NounVerbConfusion.ToArray());
+
+        // A set that has no tokens has no tags and degenerate intervals
+        var empty = EvaluationReport.Summarize("empty-set", new List<EvalToken>(), Array.Empty<PointRecord>(), 200, 1);
+        Assert.Empty(empty.Tags);
+        Assert.Equal(empty.Nll, empty.NllHigh);
+    }
+
+    /// <summary>
     ///     Validates the stop conditions of the protocol: each fires on its own and nothing fires on healthy results.
     /// </summary>
     [Fact]
@@ -1179,6 +1261,12 @@ public class HeldOutEvaluationTests
         Assert.Contains("## Operating points on the held-out sets", report, StringComparison.Ordinal);
         Assert.Contains("12,345 tokens per second", report, StringComparison.Ordinal);
         Assert.Contains(HeldOutEvaluator.Names.UdMapped, report, StringComparison.Ordinal);
+
+        // Every set and view has its table of precision and recall by tag, with intervals
+        foreach (var (name, _) in EvaluationReport.Views(scores))
+        {
+            Assert.Contains("## Precision and recall by tag: " + name + "\n\n| Tag | Gold tokens | Precision (%) | Recall (%) |", report, StringComparison.Ordinal);
+        }
     }
 
     /// <summary>
@@ -1333,7 +1421,7 @@ public class HeldOutEvaluationTests
         var path = DataFiles.Repository("docs/evaluation/operating-points.json");
 
         // Act
-        var selection = OperatingPointsFile.Load(path, OperatingPointsFile.Expect(root, modelSha, config.ImageSha256));
+        var selection = OperatingPointsFile.Load(path, OperatingPointsFile.Expect(root, modelSha, config.ImageSha256, OperatingPointsFile.ReadEmbeddedWeights()));
 
         // Assert: valid for the frozen model, and the selection hash is the hash of the committed bytes
         Assert.Equal(ModelBuilder.Sha256Hex(File.ReadAllBytes(path)), selection.SelectionSha256);
@@ -1366,6 +1454,127 @@ public class HeldOutEvaluationTests
         var strict = tampered.Points.Single(p => p.Name == "strict");
         strict.Threshold = strict.Threshold > 0.985 ? 0.98 : 0.99;
         Assert.Throws<InvalidDataException>(() => SelectedOperatingPoints.Validate(tampered, "ee", expectation));
+
+        // A changed development accuracy (the baseline of the stop condition on the open test accuracy) is refused as well
+        var accuracy = OperatingPointsFile.Parse(File.ReadAllBytes(path));
+        accuracy.DevOpenAccuracyPercent -= 5.0;
+        Assert.Throws<InvalidDataException>(() => SelectedOperatingPoints.Validate(accuracy, "ee", expectation));
+    }
+
+    /// <summary>
+    ///     Validates that the gate fails closed: an expectation without the development derivation is refused, and so is an
+    ///     artifact whose recorded development accuracy differs from the derived one.
+    /// </summary>
+    [Fact]
+    public void SelectedOperatingPoints_Validate_NoDerivationOrWrongDevAccuracy_Throws()
+    {
+        // Arrange: the valid fixture artifact passes with both derivations
+        Assert.NotNull(SelectedOperatingPoints.Validate(Data(), "ee", Expectation()));
+
+        // Act / Assert: no derivation of the curve, no derivation of the accuracy, or neither
+        var noCurve = Expectation();
+        noCurve.DerivePooledCurve = null;
+        var noAccuracy = Expectation();
+        noAccuracy.DeriveOpenAccuracyPercent = null;
+        var neither = Expectation();
+        neither.DerivePooledCurve = null;
+        neither.DeriveOpenAccuracyPercent = null;
+        foreach (var expectation in new[] { noCurve, noAccuracy, neither })
+        {
+            Assert.Throws<InvalidDataException>(() => SelectedOperatingPoints.Validate(Data(), "ee", expectation));
+        }
+
+        // The recorded development accuracy is recomputed and never trusted: a lowered or raised value is refused
+        foreach (var delta in new[] { -3.0, -0.001, 0.001, 2.5 })
+        {
+            var changed = Data();
+            changed.DevOpenAccuracyPercent += delta;
+            Assert.Throws<InvalidDataException>(() => SelectedOperatingPoints.Validate(changed, "ee", Expectation()));
+        }
+    }
+
+    /// <summary>
+    ///     Validates that the expectation of a run is refused when a development file is missing or differs from the hash of the
+    ///     data manifest, and is built, with both derivations, when the files are as recorded.
+    /// </summary>
+    [Fact]
+    public void OperatingPointsFile_Expect_MissingOrChangedDevelopmentFile_Throws()
+    {
+        // Arrange: a repository folder with a manifest that records two development files
+        var root = Path.Combine(Path.GetTempPath(), "pos-expect-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(root, "data", "open"));
+            Directory.CreateDirectory(Path.Combine(root, "data", "eval", "gold-v2"));
+            var open = System.Text.Encoding.UTF8.GetBytes("open development fixture\n");
+            var gold = System.Text.Encoding.UTF8.GetBytes("gold development fixture\n");
+            File.WriteAllText(
+                Path.Combine(root, "data", "MANIFEST.tsv"),
+                "# fixture\nopen/dev.tsv\t" + open.Length + "\t" + ModelBuilder.Sha256Hex(open) + "\neval/gold-v2/dev.tsv\t" + gold.Length + "\t" + ModelBuilder.Sha256Hex(gold) + "\n");
+            var weights = new byte[] { 1, 2, 3 };
+
+            // Act / Assert: both files missing, then one present, then both present but one changed, then both as recorded
+            Assert.Throws<InvalidDataException>(() => OperatingPointsFile.Expect(root, ModelHash, ModelHash, weights));
+            File.WriteAllBytes(Path.Combine(root, "data", "open", "dev.tsv"), open);
+            Assert.Throws<InvalidDataException>(() => OperatingPointsFile.Expect(root, ModelHash, ModelHash, weights));
+            File.WriteAllBytes(Path.Combine(root, "data", "eval", "gold-v2", "dev.tsv"), System.Text.Encoding.UTF8.GetBytes("gold development fixture changed\n"));
+            Assert.Throws<InvalidDataException>(() => OperatingPointsFile.Expect(root, ModelHash, ModelHash, weights));
+            File.WriteAllBytes(Path.Combine(root, "data", "eval", "gold-v2", "dev.tsv"), gold);
+            var expectation = OperatingPointsFile.Expect(root, ModelHash, ModelHash, weights);
+
+            // The derivations are wired in (they are not run here) and the hashes are the manifest's
+            Assert.NotNull(expectation.DerivePooledCurve);
+            Assert.NotNull(expectation.DeriveOpenAccuracyPercent);
+            Assert.Equal(ModelBuilder.Sha256Hex(open), expectation.DevFileHashes["open/dev.tsv"]);
+            Assert.Throws<ArgumentNullException>(() => OperatingPointsFile.Expect(root, ModelHash, ModelHash, null!));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that the committed results carry, for every set and view, the ambiguous-accuracy and log-likelihood
+    ///     intervals, the noun-verb confusion and the precision and recall of every tag with intervals, and that the figures are
+    ///     consistent with each other (the machine-readable record is as complete as the report).
+    /// </summary>
+    [Fact]
+    public void OperatingPointsFile_ParseResults_CommittedResults_HaveTagFiguresAndIntervalsForEverySet()
+    {
+        // Arrange
+        var results = OperatingPointsFile.ParseResults(File.ReadAllBytes(DataFiles.Repository("docs/evaluation/test-results.json")));
+
+        // Act / Assert
+        Assert.Equal(8, results.Sets.Count);
+        foreach (var set in results.Sets)
+        {
+            Assert.True(set.Tokens > 0, set.Name);
+            Assert.NotEmpty(set.Tags);
+            Assert.Equal(6, set.NounVerbConfusion.Count);
+            Assert.InRange(set.AmbiguousAccuracyLow, 0, set.AmbiguousAccuracyHigh);
+            Assert.InRange(set.NllLow, 0, set.NllHigh);
+            Assert.Equal(set.Tags.Select(t => t.Tag).Distinct(StringComparer.Ordinal).Count(), set.Tags.Count);
+
+            // The gold tokens of the tags add up to the tokens of the set, and every interval is ordered and within 0 to 100 percent
+            Assert.Equal(set.Tokens, set.Tags.Sum(t => t.GoldTokens));
+            foreach (var tag in set.Tags)
+            {
+                Assert.InRange(tag.PrecisionLow, 0, tag.PrecisionHigh);
+                Assert.InRange(tag.RecallLow, 0, tag.RecallHigh);
+                Assert.InRange(tag.PrecisionHigh, 0, 100);
+                Assert.InRange(tag.RecallHigh, 0, 100);
+                Assert.InRange(tag.Precision, 0, 100);
+                Assert.InRange(tag.Recall, 0, 100);
+            }
+        }
+
+        // The report has a table for every one of them
+        var report = File.ReadAllText(DataFiles.Repository("docs/evaluation/test-results.md"));
+        foreach (var set in results.Sets)
+        {
+            Assert.Contains("## Precision and recall by tag: " + set.Name + "\n", report.Replace("\r\n", "\n"), StringComparison.Ordinal);
+        }
     }
 
     /// <summary>

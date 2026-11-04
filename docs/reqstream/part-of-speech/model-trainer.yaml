@@ -117,47 +117,91 @@ sections:
               - HeldOutEvaluation_Sources_NewFilesDoNotSpellHeldOutNames
               - DataGuard_HeldOutFiles_RefusedForDevelopmentEvaluationAndTraining
 
-          - id: PartOfSpeech-ModelTrainer-HeldOutGate
+          - id: PartOfSpeech-ModelTrainer-HeldOutGate-SelectionRequired
             title: >-
-              The held-out sets shall be readable only by the evaluation command and only with a development selection
-              that is valid for the frozen model, for the committed development files and for the pre-registered rule
-              (a held-out reader shall not exist without it); every held-out file shall be verified against the
-              recorded hash and its header (and the cached mapped treebank table against its pinned hash) before it is
-              parsed, the evaluation shall refuse to run twice (the run shall be claimed atomically before scoring),
-              shall be preceded by a check that prints counts only, and shall write per-token records only outside the
-              repository.
+              The held-out sets shall be readable only by the evaluation command and only through a validated
+              development selection that is for the frozen model, for the committed development files and for the
+              registered rule and grid (a held-out reader shall not exist without it).
             justification: |
               Choosing the confidence thresholds on development data and then measuring them once on data that nothing
-              touched is only credible if the order cannot be reversed or repeated by accident. The held-out readers
-              take the validated selection as a required parameter, the selection names the hash of the model that is
-              scored and must equal what the registered rule selects from the development data, so a changed model or
-              threshold needs a new selection; the results file is the run-once marker and an exclusively created lock
-              file claims the run before scoring, so neither a second process nor an aborted run can repeat it
-              unnoticed, and both can only be removed by a deliberate, recorded act; the pre-flight finds format and
-              pin problems
-              without showing a label, a prediction or a figure; and the per-token records, which can hold third-party
-              text, cannot land in the tree.
+              touched is only credible if the order cannot be reversed by accident. The held-out readers take the
+              validated selection as a required parameter, and the only way to obtain one is the validation, which
+              names the hash of the model that is scored, so a changed model or threshold needs a new selection.
             tests:
               - DataGuard_HeldOutFiles_AreFourSetsAndNoDevelopmentFile
               - DataGuard_EnsureHeldOutFile_NoSelection_Throws
               - SelectedOperatingPoints_Validate_ValidArtifact_KeepsSelectedPoints
               - SelectedOperatingPoints_Validate_InconsistentArtifact_Throws
               - SelectedOperatingPoints_Validate_TamperedArtifact_Throws
+              - OperatingPointsFile_FormatParseLoad_RoundTripAndValidation
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutGate-SelectionDerivedFromDevelopment
+            title: >-
+              The gate shall derive the operating points and the development accuracy of the open development split
+              from the committed development files for the frozen model, shall require that the selection equals what
+              the registered rule selects from them, and shall fail closed when a development file is missing or does
+              not have the hash of the data manifest.
+            justification: |
+              A selection file that is only checked for its shape could be edited to name any grid threshold, or to
+              record a development accuracy that silences the accuracy stop condition. The gate therefore scores the
+              frozen model on the development data itself, compares the points, the decision counts and the recorded
+              accuracy with the derivation, and verifies the actual bytes of the development files against the
+              manifest; without that evidence nothing is admitted, so absent data cannot bypass the check.
+            tests:
               - SelectedOperatingPoints_Validate_ArbitraryGridThreshold_RefusedAgainstDerivation
+              - SelectedOperatingPoints_Validate_NoDerivationOrWrongDevAccuracy_Throws
+              - OperatingPointsFile_Expect_MissingOrChangedDevelopmentFile_Throws
               - DevDerivation_PooledCurve_FixtureOutcomes_EqualsSelectionCurve
+              - OperatingPointsFile_Load_CommittedSelection_PassesGateForFrozenModel
+              - OperatingPointsFile_Load_CommittedSelection_EqualsDevDerivation
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutGate-InputsVerified
+            title: >-
+              Every held-out file shall be verified against its recorded hash and its header, and the cached mapped
+              treebank table against its pinned hash, before it is parsed.
+            justification: |
+              A wrong or substituted file would give figures for another set than the one that the report names. The
+              hash and the announced header are checked first, and the table of the external treebank, which is not
+              committed, is pinned by the hash that the committed results record for it.
+            tests:
               - DataGuard_EnsureHeldOutHeader_AnnouncedSet_AcceptedOthersRefused
+              - HeldOutReader_Read_FixtureRepository_VerifiesHashAndHeader
+              - HeldOutReader_ReadUd_FixtureCache_VerifiesPin
+              - DataGuard_UdMappedSha256_EqualsHashRecordedInCommittedResults
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutGate-RunsOnce
+            title: >-
+              The evaluation shall refuse to run when a results file exists and shall claim the run atomically, with an
+              exclusively created lock file, before anything is scored.
+            justification: |
+              The results file is the run-once marker and the lock file claims the run before scoring, so neither a
+              second process nor an aborted run can repeat the evaluation unnoticed; both can only be removed by a
+              deliberate, recorded act.
+            tests:
               - DataGuard_EnsureNotEvaluated_ExistingResultsFile_Throws
               - DataGuard_AcquireRunLock_ExclusiveAndRemovedOnCompletion
               - DataGuard_AcquireRunLock_StaleLock_BlocksUntilDeletedByHand
               - RunLock_Complete_ExistingResultsFile_ThrowsAndKeepsLock
               - DataGuard_AcquireRunLock_ConcurrentAttempts_ExactlyOneWins
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutGate-PreflightCountsOnly
+            title: >-
+              The evaluation shall be preceded by a pre-flight that reads every input and prints only counts next to the
+              documented ones, and shall stop when a count differs.
+            justification: |
+              The pre-flight finds format and pin problems without showing a label, a prediction or a figure, so a
+              defect of the data is found before the one run is spent and without a look at a result.
+            tests:
+              - HeldOutData_Counts_DocumentedSizes
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutGate-DumpOutsideRepository
+            title: >-
+              The evaluation shall write per-token records only to a folder outside the repository.
+            justification: |
+              The per-token records hold the words of the external treebank, which is third-party share-alike text, so
+              the folder is checked with links resolved and a folder inside the tree is refused.
+            tests:
               - DataGuard_EnsureOutsideRepository_InsideRefused_OutsideAccepted
-              - HeldOutReader_Read_FixtureRepository_VerifiesHashAndHeader
-              - HeldOutReader_ReadUd_FixtureCache_VerifiesPin
-              - DataGuard_UdMappedSha256_EqualsHashRecordedInCommittedResults
-              - OperatingPointsFile_FormatParseLoad_RoundTripAndValidation
-              - OperatingPointsFile_Load_CommittedSelection_PassesGateForFrozenModel
-              - OperatingPointsFile_Load_CommittedSelection_EqualsDevDerivation
 
           - id: PartOfSpeech-ModelTrainer-ConfidenceCurve
             title: >-
@@ -179,46 +223,120 @@ sections:
               - OperatingPointRule_Select_BoundariesAndNone_AreNotRelaxed
               - DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent
 
-          - id: PartOfSpeech-ModelTrainer-HeldOutMetrics
+          - id: PartOfSpeech-ModelTrainer-HeldOutMetrics-SameDefinitions
             title: >-
               The held-out evaluation shall judge every set with the definitions of the development evaluation (one
-              definition of a decision and of a harmful error), shall parse the held-out formats (shape probe with its
-              braces, the convention-mapped treebank table with its document, gold v2 with status and agreement) and
-              refuse malformed rows, shall report each set and view with 95 percent bootstrap intervals over documents
-              (over rows where a set has none) and the paired difference of every operating point against 0.45, and
-              shall check the stop conditions of the protocol.
+              definition of a decision and of a harmful error).
             justification: |
-              A held-out number is only comparable with the development number when both are made by the same code, and
-              a malformed row that is silently skipped would change a headline figure. The bootstrap is deterministic
-              for a seed, resamples whole documents because the tokens of a document are not independent, and pairs the
-              operating point with the 0.45 point on the same decisions. The stop conditions are written before the run
-              and tested on crafted results, so a defect is declared by rule.
+              A held-out number is only comparable with the development number when both are made by the same code, so
+              the held-out views reuse the decoder output and the judgment of the development evaluation and the gold
+              classes of the development views.
+            tests:
+              - HeldOutEvaluator_Score_FixtureSets_ViewsAndReports
+              - DevSets_GoldClassOf_EveryTag_CollapsesToTenClassesAndOther
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutMetrics-ParsesFormats
+            title: >-
+              The held-out evaluation shall parse the held-out formats (the shape probe with its braces and target
+              index, the convention-mapped treebank table with its document, gold v2 with status and agreement) and
+              shall refuse a malformed row, including a negative or non-numeric target index, with a data error that
+              names the row.
+            justification: |
+              A malformed row that is silently skipped, or that ends the run with an unrelated exception, would change a
+              headline figure or hide the cause; the parsers refuse every bad row with the documented data error.
             tests:
               - HeldOutSets_ParseProbe_Rows_BracesRemovedAndValidated
+              - HeldOutSets_ParseProbe_NegativeOrNonNumericTargetIndex_ThrowsDataError
               - HeldOutSets_ParseUd_MappedTable_ReadsTagsRulesAndDocuments
               - DevSets_ParseGold_StatusAndAgreement_Carried
-              - DevSets_GoldClassOf_EveryTag_CollapsesToTenClassesAndOther
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutMetrics-Intervals
+            title: >-
+              The held-out evaluation shall report every set and view with the accuracy, the accuracy on
+              lexicon-ambiguous tokens, the harmful errors per 1,000 decisions, the calibration error, the mean
+              log-likelihood and the
+              precision and recall of every tag, each with a 95 percent bootstrap interval over documents (over rows or
+              sentences where a set has none).
+            justification: |
+              A figure of a small or clustered set is only meaningful with its uncertainty. The bootstrap is
+              deterministic for a seed and resamples whole documents because the tokens of a document are not
+              independent; every statistic is evaluated on the same draws, and the machine-readable results carry all of
+              them for every set.
+            tests:
               - ClusterBootstrap_Intervals_TiedBetterDeterministicAndSingleItemClusters
+              - EvaluationReport_Summarize_TagFiguresAndIntervals_ArePresent
+              - OperatingPointsFile_ParseResults_CommittedResults_HaveTagFiguresAndIntervalsForEverySet
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutMetrics-PairedDifference
+            title: >-
+              The held-out evaluation shall report, for every operating point of every set, the coverage, the harmful
+              errors per 1,000 answered decisions with an interval and the paired difference of the harmful errors per
+              1,000 decisions against 0.45 on the same decisions with an interval.
+            justification: |
+              Whether a threshold removes harmful errors is a statement about the same decisions at two thresholds, so
+              the difference is evaluated on each draw of the bootstrap and not as a difference of two intervals.
+            tests:
               - EvaluationReport_Summarize_OperatingPoint_PairedDifferenceAgainstReference
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutMetrics-StopConditions
+            title: >-
+              The held-out evaluation shall check the stop conditions of the protocol against the results and name every
+              one that fired.
+            justification: |
+              The stop conditions are written before the run and tested on crafted results, so a model or data defect is
+              declared by rule and not by a reading of the figures after the fact.
+            tests:
               - EvaluationReport_Tripwires_EachConditionFiresAlone
-              - HeldOutEvaluator_Score_FixtureSets_ViewsAndReports
+
+          - id: PartOfSpeech-ModelTrainer-HeldOutMetrics-Throughput
+            title: >-
+              The held-out evaluation shall measure the throughput of the default tagger on the open test sentences.
+            justification: |
+              The speed of the shipped tagger is reported next to its accuracy; it is a timing, measured separately and
+              not a result of the model.
+            tests:
               - HeldOutEvaluator_Throughput_Fixture_IsPositive
 
-          - id: PartOfSpeech-ModelTrainer-EvaluationReport
+          - id: PartOfSpeech-ModelTrainer-EvaluationReport-Deterministic
             title: >-
               The reports of the development selection and of the held-out run shall be deterministic Markdown and
-              canonical JSON generated from the results (the same results give the same text), shall publish no word,
-              sentence or sentence id of the external treebank, and the per-token dump shall have one record for each
-              token with all 17 tag probabilities.
+              canonical JSON generated from the results (the same results give the same text).
             justification: |
               The committed figures are the record of the evaluation, so they are generated and not typed, and a report
-              that changed between two renderings of the same results could not be reviewed. The treebank is licensed
-              share-alike and may not enter the repository, so only aggregates and tag-level confusion are written.
+              that changed between two renderings of the same results could not be reviewed.
             tests:
               - HeldOutEvaluator_Score_FixtureSets_ViewsAndReports
               - DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent
-              - EvaluationReport_WriteDump_Tokens_HeaderAndRows
               - OperatingPointsFile_FormatResults_RoundTrip
+
+          - id: PartOfSpeech-ModelTrainer-EvaluationReport-JsonComplete
+            title: >-
+              The JSON results shall hold every figure of the Markdown report for every set and view, including the
+              precision and recall of every tag with their intervals and the cells of the noun-verb confusion.
+            justification: |
+              A consistency check and a consumer can only rely on the machine-readable record if it is as complete
+              as the text, so the report and the JSON are generated from the same summary of each set.
+            tests:
+              - EvaluationReport_Summarize_TagFiguresAndIntervals_ArePresent
+              - OperatingPointsFile_ParseResults_CommittedResults_HaveTagFiguresAndIntervalsForEverySet
+
+          - id: PartOfSpeech-ModelTrainer-EvaluationReport-NoTreebankText
+            title: >-
+              The reports shall publish no word, sentence or sentence id of the external treebank.
+            justification: |
+              The treebank is licensed share-alike and may not enter the repository, so only aggregates and tag-level
+              confusion are written.
+            tests:
+              - HeldOutEvaluator_Score_FixtureSets_ViewsAndReports
+
+          - id: PartOfSpeech-ModelTrainer-EvaluationReport-PerTokenDump
+            title: >-
+              The per-token dump shall have one record for each token with all 17 tag probabilities.
+            justification: |
+              The comparison with other taggers outside the repository needs the probabilities of every token of the one
+              run, so the dump is complete and carries the same judgment as the report.
+            tests:
+              - EvaluationReport_WriteDump_Tokens_HeaderAndRows
 
           - id: PartOfSpeech-ModelTrainer-CheckDetectsStaleWeights
             title: >-

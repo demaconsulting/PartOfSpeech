@@ -1013,7 +1013,7 @@ had been produced. The 25,086 in the protocol text above is left as written for 
 `evaluate` ran (BelowNormal, one process, the treebank from a cache outside the repository, the per-token records in a
 folder outside the repository) and wrote `docs/evaluation/test-results.md` and `.json`, which were committed as produced.
 The run printed that three stop conditions of the protocol fired. Nothing was tuned. The three findings, with the reading
-of each (the results were produced once; a second run after the erratum below regenerated the report only):
+of each (the results were produced once; two later runs, after the errata below, regenerated the report only):
 
 - **`shape-probe`: 48 harmful errors at 0.45, more than 28 (5% of the 560 rows). Finding: a real limitation of the model,
   reported, not tuned.** This is the stop condition about the model's behavior and it stands: 48 of 548 answered noun-verb
@@ -1068,6 +1068,39 @@ parsed; a counts-only `evaluate --preflight` confirmed that the cache matches th
 `evaluate` creates `docs/evaluation/test-results.json.running` exclusively immediately before scoring and removes it after the
 results file is written. A run that is aborted after scoring began leaves the lock behind, and the lock blocks every later run
 until a person deletes it by hand; any such deletion, with its reason, must be recorded in this log.
+
+### Second hardening of the gate (after the formal review of the pull request)
+
+The formal review found that the gate of the previous section still depended on the artifact in two places. Both are closed
+with fixture tests; the model, the configuration, the thresholds, the selection artifact and every figure are unchanged.
+(1) The development derivation is no longer optional: `OperatingPointsFile.Expect` refuses a development file that is
+missing or whose bytes do not have the manifest hash, and `SelectedOperatingPoints.Validate` refuses an expectation without
+the derivation, so absent development data cannot skip the check. (2) The development accuracy that the open-test accuracy
+stop condition compares with (`devOpenAccuracyPercent`) is recomputed from the frozen model on the open development split
+and must equal the recorded value; before, the stop condition trusted the file. The committed selection passes both
+(`evaluate --preflight` ran the gate on the real data). The negative target index of the shape probe was already refused
+(the parser reads the index without a sign) and is now also rejected by an explicit range check and a test.
+
+### Erratum: incomplete statistics of the report (second report regeneration)
+
+The review found that the report did not have everything that the design and the protocol promised: the precision and
+recall by tag were written for three views only, the intervals of the ambiguous-token accuracy, of the log-likelihood and
+of every tag figure were missing, and `test-results.json` had none of the tag figures or of the noun-verb confusion. The
+report writer now writes, for every set and view (eight in all), the interval of the ambiguous-token accuracy and of the
+log-likelihood, the precision and recall of every tag that has a gold token or was chosen with 95% intervals (document
+bootstrap, the same draws as the other statistics, so no existing interval can change), and the six confusion cells; the
+JSON carries all of them. A precision or recall that is undefined is 0 in the figure and in every resample.
+
+Procedure: the per-token records of the first run were not kept in a form that carries the decoder's candidates, so the
+figures could not be recomputed without tagging again; the one permitted re-run was used. The old `test-results.json` (the
+run marker) was deleted on purpose and `evaluate` was run once more with the same inputs, the same seed and resamples and the
+same frozen model (the gate, including the new development derivation, passed first). Nothing was tuned and nothing else in
+the evaluation logic changed. A comparison of the old and the new `test-results.json` found every existing member of every
+set, and every top-level member, identical (model and selection hashes, input hashes, counts, accuracies, harmful errors,
+calibration errors, log-likelihoods, every operating point with its intervals, the stop conditions) except the throughput
+line, which is a timing: the committed report now shows 315,213 tokens per second (earlier runs: 488,158 and 514,620; the
+machine was busy with other work during this run). The same three stop conditions fired with the same values. No further
+re-run is permitted for a presentational change; a figure that is wrong is a defect to be reported, not regenerated.
 
 ## Run table
 

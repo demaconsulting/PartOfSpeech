@@ -49,6 +49,8 @@ internal static class EvaluationReport
             AccuracyHigh = tally.Accuracy,
             AmbiguousTokens = tally.Ambiguous,
             AmbiguousAccuracy = tally.AmbiguousAccuracy,
+            AmbiguousAccuracyLow = tally.AmbiguousAccuracy,
+            AmbiguousAccuracyHigh = tally.AmbiguousAccuracy,
             Decisions = tally.Decisions,
             Harmful = tally.Harmful,
             HarmfulPer1000 = tally.HarmfulPer1000,
@@ -58,6 +60,8 @@ internal static class EvaluationReport
             EceLow = tally.Ece,
             EceHigh = tally.Ece,
             Nll = tally.Nll,
+            NllLow = tally.Nll,
+            NllHigh = tally.Nll,
             OutsideCandidates = tally.OutsideCandidates,
         };
 
@@ -72,6 +76,19 @@ internal static class EvaluationReport
             statistics.Add(t => DevSelection.HarmfulPerDecisions(t, index) - DevSelection.HarmfulPerDecisions(t, 0));
         }
 
+        // The statistics of the other figures follow the points on the same draws: the ambiguous accuracy, the log-likelihood and
+        // the precision and recall of every label that has a gold token or was chosen
+        var otherStart = statistics.Count;
+        statistics.Add(t => t.AmbiguousAccuracy);
+        statistics.Add(t => t.Nll);
+        var labels = Enumerable.Range(0, EvalTally.Labels.Count).Where(i => tally.TruePositives[i] + tally.FalseNegatives[i] + tally.FalsePositives[i] > 0).ToList();
+        foreach (var label in labels)
+        {
+            var captured = label;
+            statistics.Add(t => t.Precision(captured));
+            statistics.Add(t => t.Recall(captured));
+        }
+
         var intervals = clusters.Count == 0 ? null : ClusterBootstrap.Intervals(clusters, statistics, resamples, seed);
         if (intervals != null)
         {
@@ -81,7 +98,38 @@ internal static class EvaluationReport
             record.HarmfulPer1000High = intervals[1].High;
             record.EceLow = intervals[2].Low;
             record.EceHigh = intervals[2].High;
+            record.AmbiguousAccuracyLow = intervals[otherStart].Low;
+            record.AmbiguousAccuracyHigh = intervals[otherStart].High;
+            record.NllLow = intervals[otherStart + 1].Low;
+            record.NllHigh = intervals[otherStart + 1].High;
         }
+
+        for (var l = 0; l < labels.Count; l++)
+        {
+            var label = labels[l];
+            var tag = new TagRecord
+            {
+                Tag = EvalTally.Labels[label],
+                GoldTokens = tally.TruePositives[label] + tally.FalseNegatives[label],
+                Precision = tally.Precision(label),
+                Recall = tally.Recall(label),
+            };
+            tag.PrecisionLow = tag.Precision;
+            tag.PrecisionHigh = tag.Precision;
+            tag.RecallLow = tag.Recall;
+            tag.RecallHigh = tag.Recall;
+            if (intervals != null)
+            {
+                tag.PrecisionLow = intervals[otherStart + 2 + (2 * l)].Low;
+                tag.PrecisionHigh = intervals[otherStart + 2 + (2 * l)].High;
+                tag.RecallLow = intervals[otherStart + 3 + (2 * l)].Low;
+                tag.RecallHigh = intervals[otherStart + 3 + (2 * l)].High;
+            }
+
+            record.Tags.Add(tag);
+        }
+
+        record.NounVerbConfusion.AddRange(tally.Confusion);
 
         for (var r = 0; r < rows.Count; r++)
         {
@@ -286,12 +334,12 @@ internal static class EvaluationReport
                 ReportFormat.N(s.Tokens),
                 ReportFormat.N(s.Documents),
                 ReportFormat.WithInterval(s.Accuracy, s.AccuracyLow, s.AccuracyHigh, 2),
-                ReportFormat.F(s.AmbiguousAccuracy, 2),
+                ReportFormat.WithInterval(s.AmbiguousAccuracy, s.AmbiguousAccuracyLow, s.AmbiguousAccuracyHigh, 2),
                 ReportFormat.N(s.Decisions),
                 ReportFormat.N(s.Harmful),
                 ReportFormat.WithInterval(s.HarmfulPer1000, s.HarmfulPer1000Low, s.HarmfulPer1000High, 1),
                 ReportFormat.WithInterval(s.Ece, s.EceLow, s.EceHigh, 2),
-                ReportFormat.F(s.Nll, 4),
+                ReportFormat.WithInterval(s.Nll, s.NllLow, s.NllHigh, 4),
                 ReportFormat.N(s.OutsideCandidates),
             }));
 
@@ -322,9 +370,9 @@ internal static class EvaluationReport
         Subsets(text, scores);
         Probe(text, scores);
         Challenge(text, scores);
-        foreach (var (name, tokens) in new[] { (HeldOutEvaluator.Names.OpenTest, scores.OpenTest), (HeldOutEvaluator.Names.GoldTest, scores.Gold), (HeldOutEvaluator.Names.UdMapped, scores.UdMapped) })
+        foreach (var set in results.Sets)
         {
-            Tags(text, name, tokens);
+            Tags(text, set);
         }
 
         text.Append("## Treebank views\n\n");
@@ -517,26 +565,23 @@ internal static class EvaluationReport
     }
 
     /// <summary>
-    ///     Appends the precision and recall of every tag of a view.
+    ///     Appends the precision and recall of every tag of a set or view, with 95 percent intervals.
     /// </summary>
     /// <param name="text">The text to append to.</param>
-    /// <param name="name">The name of the view.</param>
-    /// <param name="tokens">The judged tokens.</param>
-    private static void Tags(StringBuilder text, string name, IReadOnlyList<EvalToken> tokens)
+    /// <param name="set">The summary of the set or view.</param>
+    private static void Tags(StringBuilder text, SetRecord set)
     {
-        text.Append("## Precision and recall by tag: ").Append(name).Append("\n\n");
-        var tally = EvalTally.Of(tokens);
-        var rows = new List<IReadOnlyList<string>>();
-        for (var i = 0; i < EvalTally.Labels.Count; i++)
-        {
-            var gold = tally.TruePositives[i] + tally.FalseNegatives[i];
-            if (gold + tally.FalsePositives[i] > 0)
+        text.Append("## Precision and recall by tag: ").Append(set.Name).Append("\n\n");
+        ReportFormat.Table(
+            text,
+            new[] { "Tag", "Gold tokens", "Precision (%)", "Recall (%)" },
+            set.Tags.Select(t => (IReadOnlyList<string>)new[]
             {
-                rows.Add(new[] { EvalTally.Labels[i], ReportFormat.N(gold), ReportFormat.F(tally.Precision(i), 2), ReportFormat.F(tally.Recall(i), 2) });
-            }
-        }
-
-        ReportFormat.Table(text, new[] { "Tag", "Gold tokens", "Precision (%)", "Recall (%)" }, rows);
+                t.Tag,
+                ReportFormat.N(t.GoldTokens),
+                ReportFormat.WithInterval(t.Precision, t.PrecisionLow, t.PrecisionHigh, 2),
+                ReportFormat.WithInterval(t.Recall, t.RecallLow, t.RecallHigh, 2),
+            }));
     }
 
     /// <summary>

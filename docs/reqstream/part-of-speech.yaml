@@ -547,7 +547,12 @@ sections:
           and committed, for the frozen model, and only once.
         children:
           - PartOfSpeech-ModelTrainer-DevOnlySelection
-          - PartOfSpeech-ModelTrainer-HeldOutGate
+          - PartOfSpeech-ModelTrainer-HeldOutGate-SelectionRequired
+          - PartOfSpeech-ModelTrainer-HeldOutGate-SelectionDerivedFromDevelopment
+          - PartOfSpeech-ModelTrainer-HeldOutGate-InputsVerified
+          - PartOfSpeech-ModelTrainer-HeldOutGate-RunsOnce
+          - PartOfSpeech-ModelTrainer-HeldOutGate-PreflightCountsOnly
+          - PartOfSpeech-ModelTrainer-HeldOutGate-DumpOutsideRepository
           - PartOfSpeech-ModelTrainer-CorpusRules
           - PartOfSpeech-ModelTrainer-Configuration
           - PartOfSpeech-ModelTrainer-TrainingSettings
@@ -573,10 +578,23 @@ sections:
           kept next to the figures. The report never contains text of the external treebank, which is share-alike
           licensed and used locally only.
         children:
-          - PartOfSpeech-ModelTrainer-HeldOutGate
+          - PartOfSpeech-ModelTrainer-HeldOutGate-SelectionRequired
+          - PartOfSpeech-ModelTrainer-HeldOutGate-SelectionDerivedFromDevelopment
+          - PartOfSpeech-ModelTrainer-HeldOutGate-InputsVerified
+          - PartOfSpeech-ModelTrainer-HeldOutGate-RunsOnce
+          - PartOfSpeech-ModelTrainer-HeldOutGate-PreflightCountsOnly
+          - PartOfSpeech-ModelTrainer-HeldOutGate-DumpOutsideRepository
           - PartOfSpeech-ModelTrainer-ConfidenceCurve
-          - PartOfSpeech-ModelTrainer-HeldOutMetrics
-          - PartOfSpeech-ModelTrainer-EvaluationReport
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-SameDefinitions
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-ParsesFormats
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-Intervals
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-PairedDifference
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-StopConditions
+          - PartOfSpeech-ModelTrainer-HeldOutMetrics-Throughput
+          - PartOfSpeech-ModelTrainer-EvaluationReport-Deterministic
+          - PartOfSpeech-ModelTrainer-EvaluationReport-JsonComplete
+          - PartOfSpeech-ModelTrainer-EvaluationReport-NoTreebankText
+          - PartOfSpeech-ModelTrainer-EvaluationReport-PerTokenDump
         tests:
           - PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs
           - PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports
