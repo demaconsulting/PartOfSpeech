@@ -24,6 +24,10 @@ Write-Host "Checking the compiled lexicon..."
 dotnet run --no-build --configuration Release --project tools/LexiconCompiler -- --check
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+Write-Host "Checking the trained model..."
+dotnet run --no-build --configuration Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- train --check
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 Write-Host "Asserting the generated API documentation..."
 dotnet tool restore
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

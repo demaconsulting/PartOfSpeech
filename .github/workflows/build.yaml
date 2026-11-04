@@ -182,6 +182,16 @@ jobs:
           --configuration Release
           --property:Version=${{ inputs.version }}
 
+      # The embedded weights must be exactly what the committed corpora and training.json produce (about 15 s);
+      # running it on all three operating systems also proves that the training is identical across them.
+      - name: Check embedded model
+        run: >
+          dotnet run
+          --no-build
+          --configuration Release
+          --project tools/DemaConsulting.PartOfSpeech.Trainer
+          -- train --check
+
       - name: Assert API documentation
         run: >
           dotnet fileassert
