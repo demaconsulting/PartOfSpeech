@@ -82,6 +82,7 @@ reviews:
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechTests.cs"  # integration tests
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechThroughputTests.cs"  # throughput test
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechDataTests.cs"  # data and licensing tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechEvaluationTests.cs"  # evaluation record and guidance tests
       - "test/DemaConsulting.PartOfSpeech.Tests/DataFiles.cs"          # data file helpers of the data tests
 
   # PartOfSpeech-Design Review (one per system)

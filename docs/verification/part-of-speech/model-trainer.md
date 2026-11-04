@@ -123,8 +123,10 @@ same results or a treebank word into a report, or lets a stop condition pass.
   `DataGuard_EnsureOutsideRepository_InsideRefused_OutsideAccepted` (also through a dotted detour),
   `HeldOutReader_Read_FixtureRepository_VerifiesHashAndHeader` and `HeldOutReader_ReadUd_FixtureCache_VerifiesPin` (in a
   temporary fake repository: a changed file or a wrong header is refused, a changed treebank source or a missing cache is
-  refused with the fetch recipe), and `OperatingPointsFile_FormatParseLoad_RoundTripAndValidation` (on .NET 8 and later:
-  canonical form, unknown members refused, the selection hash is the hash of the file bytes).
+  refused with the fetch recipe), `OperatingPointsFile_FormatParseLoad_RoundTripAndValidation` (on .NET 8 and later:
+  canonical form, unknown members refused, the selection hash is the hash of the file bytes) and
+  `OperatingPointsFile_Load_CommittedSelection_PassesGateForFrozenModel` (the committed selection is valid for the
+  embedded model and the committed development files; no held-out file is opened).
 - **Confidence curve and rule**: `EvalTally_Of_Outcomes_AgreesWithMetricsCompute` (also the sum of the document tallies),
   `ConfidenceCurve_Of_HandComputedOutcomes_MatchesExpectedRows` (answered, harmful, coverage and rates on seven
   decisions at

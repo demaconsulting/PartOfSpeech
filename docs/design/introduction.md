@@ -152,15 +152,17 @@ The unit `ModelTrainer` is the tool project `tools/DemaConsulting.PartOfSpeech.T
 ```text
 tools/DemaConsulting.PartOfSpeech.Trainer/
 ├── Program.cs                  — Command line (train, eval, calibrate, compare, glossary-probe, glossary-experiment,
-│                                 glossary-eval)
+│                                 glossary-eval, thresholds, evaluate)
 ├── ConfigFile.cs               — Reads and writes training.json (System.Text.Json)
+├── OperatingPointsFile.cs      — Reads and writes the selection and the results of the evaluation (System.Text.Json)
 ├── RunLog.cs                   — Formats the rows of the run log table
 ├── training.json               — The selected, committed configuration (including imageSha256)
-├── README.md                   — How to run it, the determinism contract
-├── RUN-LOG.md                  — The pre-registered rules, the dev-only run log and the glossary decisions
+├── README.md                   — How to run it, the determinism contract, the held-out gate
+├── RUN-LOG.md                  — The pre-registered rules, the dev-only run log, the glossary decisions and the
+│                                 protocol and outcome of the held-out evaluation
 ├── Training/                   — Corpus reader, random generator, integer averaged perceptron, trainer, builder, predictor
-└── Evaluation/                 — Data guard, development sets, metrics, bootstrap, calibration, glossary experiment and
-                                  glossary evaluation
+└── Evaluation/                 — Data guard, development and held-out sets, metrics, bootstrap, calibration, confidence
+                                  curve and selection, held-out evaluator, reports, glossary experiment and evaluation
 ```
 
 Further top-level folders hold files that are not software items and are therefore not part of the software
@@ -168,6 +170,7 @@ structure:
 
 ```text
 data/                           — Training corpora, evaluation sets, lexicon, checksum manifest and leakage report
+docs/evaluation/                — The evaluation record: thresholds, held-out results, how to read and reproduce them
 tools/data/                     — Build-time Python tools and their tests that produce and check the data
 tools/LexiconCompiler/          — Build-time C# tool that compiles the lexicon table into Resources/lexicon.bin
 PACKAGE-LICENSE.md              — The license of the NuGet package (MIT code and CC BY data), packed at the package root
@@ -199,7 +202,11 @@ Each software item has corresponding artifacts in parallel directory trees:
 The data assets are not software items and have no parallel design or verification files. Their system-level
 requirements are in the _Data and Licensing_ section of `docs/reqstream/{system}.yaml` (and the package license and the
 embedded model requirements in the same file), their tests are in
-`test/{System}.Tests/{System}DataTests.cs`, and the data folders carry their own `README.md` files. The build-time
+`test/{System}.Tests/{System}DataTests.cs`, and the data folders carry their own `README.md` files. The evaluation record
+`docs/evaluation/` is not a software item either: its generated files are produced by the unit `ModelTrainer`, its
+`README.md` and the copies of its figures in the package documentation are covered by the system requirements
+`PartOfSpeech-Model-EvaluationReported` and `PartOfSpeech-Lib-ConfidenceGuidance`, and their consistency tests are in
+`test/{System}.Tests/{System}EvaluationTests.cs`. The build-time
 tools have developer unit tests in `tools/data/tests/`, which are not requirements evidence. The Python files of the
 tools and their tests are reviewed in two review-sets of `.reviewmark.yaml`: `PartOfSpeech-DataConversion` (the tools
 that import and convert data and build the lexicon) and `PartOfSpeech-DataChecks` (the tools that check, record and
@@ -215,8 +222,8 @@ Test files follow the same tree as the sources: the subsystem tests are `Tokeniz
 `ModelStorage/ModelStorageTests.cs` and `Tagging/TaggingTests.cs`, the unit tests are named `{Unit}Tests.cs` in the
 folder of their subsystem (`UposTests.cs` for the unit directly under the system, and `ModelTrainer/ModelTrainerTests.cs`
 for the trainer; the unit `Glossary` has `GlossaryTests.cs`, `GlossaryMatchingTests.cs` and `GlossaryThroughputTests.cs`),
-and the system tests are
-`PartOfSpeechTests.cs` and `PartOfSpeechDataTests.cs`. The helpers `TestSupport/TinyModels.cs`, `TinyTrainer.cs` and
+and the system tests are `PartOfSpeechTests.cs`, `PartOfSpeechDataTests.cs` and `PartOfSpeechEvaluationTests.cs`. The
+helpers `TestSupport/TinyModels.cs`, `TinyTrainer.cs` and
 `SyntheticModel.cs` build small and synthetic models for the tests and belong to the `Tagging` review-set.
 
 ## References

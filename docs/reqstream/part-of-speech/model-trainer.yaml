@@ -144,6 +144,7 @@ sections:
               - HeldOutReader_Read_FixtureRepository_VerifiesHashAndHeader
               - HeldOutReader_ReadUd_FixtureCache_VerifiesPin
               - OperatingPointsFile_FormatParseLoad_RoundTripAndValidation
+              - OperatingPointsFile_Load_CommittedSelection_PassesGateForFrozenModel
 
           - id: PartOfSpeech-ModelTrainer-ConfidenceCurve
             title: >-

@@ -226,7 +226,11 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   harmful errors on the probe, calibration error above 3% on the open test split). `evaluate` evaluates them and the
   report names every one that fired; the exit code is then 1 and the response is to stop and report, not to tune.
 - **Reports.** `docs/evaluation/test-results.md` and `.json` are generated, deterministic and committed as produced; the
-  treebank appears only as aggregate figures and tag-level confusion.
+  treebank appears only as aggregate figures and tag-level confusion. `docs/evaluation/README.md` is written by hand: it
+  explains how to read the two reports, the mapping of the evaluation sets to the library conventions, the limits of the
+  measurement and the commands that reproduce it, and states no figure that is not in a generated file (a test
+  compares the few it states). The figures that the package documentation, the user guide and the root `README.md`
+  quote are verified against the committed JSON by the system tests, not by this unit.
 
 ### Selection of the Shipped Model
 
