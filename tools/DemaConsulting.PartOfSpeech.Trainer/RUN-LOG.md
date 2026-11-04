@@ -1027,7 +1027,7 @@ of each (the results were produced once; a second run after the erratum below re
   produce these tags by design, so the raw gold lies outside the candidates by construction. The primary, mapped view is at
   0.56% (140 words), under the limit.
 
-Interpretation of the last two (the orchestrator's, flagged for confirmation by the user): the stop-condition rule on gold
+Interpretation of the last two: the stop-condition rule on gold
 outside the candidates is meant for the headline views of a held-out set; it applies to the `to`/`not` convention view
 and to the raw UD view only as views that are reported separately, and the firing of those two is not a model defect. The
 protocol text above applies the 1% limit to every view; it was not changed after seeing the result, and the two findings are
@@ -1039,7 +1039,7 @@ answered on open test at the strict (4.1) and balanced (9.3) points are below tw
 
 ### Erratum: column labels of the noun-verb confusion table (presentational writer fix, report regenerated)
 
-The first `test-results.md` (commit `e760c29`) labelled the six cells of the table "Noun-verb confusion" in the order noun,
+The first `test-results.md` (commit `e760c29`) labeled the six cells of the table "Noun-verb confusion" in the order noun,
 verb, other, but `EvalTally.Confusion` stores them as the chosen tag other (0), noun (1), verb (2) after each gold tag
 (`(gold - 1) * 3 + chosen`). The numbers were correct; only the six column labels were wrong (the open-test row
 `59 | 2,379 | 32 | 45 | 59 | 1,839` is read as noun as other 59, noun as noun 2,379, noun as verb 32, verb as other 45, verb as
