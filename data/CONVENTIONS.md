@@ -96,11 +96,15 @@ the first test that applies:
 
 1. Names the type or purpose of the head (`N for X-ing`, `a kind of`) → NOUN: `operating modes`, `landing gear`,
    `cooling system`, `bleed valve`, `torque wrench`.
-2. A gradable, fixed property (takes `very`, forms a comparative) → ADJ: `a very exciting match`.
+2. A gradable, fixed property → ADJ: `a very exciting match`. **Gradable** means the word accepts a degree word
+   (`very`, `so`, `too`, `quite`, `extremely`, `a little`) or a comparison (`more`, `less`, `-er`) with its meaning unchanged:
+   `very confused`, `I'm a little confused`, `more surprised` pass; `was killed`, `very killed` do not.
 3. An ongoing action of the head (`N that is X-ing`) → VERB: `evolving knowledge`.
-4. A predicate participle after `be`, `become`, `feel`, `look`, `remain`, `seem`, `sound`: an overt `by` or `from`
-   agent → VERB (`I feel attacked by this`); otherwise ADJ (`I'm a little confused`). With a VERB participle `be` is
-   AUX (passive); with an ADJ participle `be` is the copula VERB.
+4. A predicate participle:
+   - after `be`: a passive, VERB with AUX `be` (`was killed`, `has been shown`), unless the participle is gradable
+     (test 2); then ADJ with the copula VERB `be` (`was very confused`, `is more surprised than`);
+   - after `become`, `feel`, `look`, `remain`, `seem`, `sound`: an overt `by` or `from` agent → VERB
+     (`I feel attacked by this`); otherwise ADJ (`she seemed pleased`, `it looks broken`).
 5. A hyphenated lexicalized unit → the dictionary category of the whole unit, typically ADJ: `a high-water mark`.
 6. A noun coerced under degree or comparison → ADJ for that token: `more twilight`, `very London`.
 7. Otherwise → `disputed`.
