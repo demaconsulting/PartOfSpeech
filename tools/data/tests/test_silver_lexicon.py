@@ -75,7 +75,9 @@ class FlagPreservationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             path = os.path.join(folder, "silver.tsv")
             silver.write_silver(path, sentences, LEXICON)
-            rows = common.read_corpus(path)[1][0]["rows"]
+            header, back = common.read_corpus(path)
+            rows = back[0]["rows"]
+        self.assertTrue(any(line.startswith("# status flags = ") for line in header))
         self.assertEqual([r[1] for r in rows], ["DET", "NOUN", "PROPN", "_", "PUNCT"])
         self.assertEqual([r[2] for r in rows], ["silver", "silver", "silver+foreign+mentioned", "masked+mentioned", "silver"])
 

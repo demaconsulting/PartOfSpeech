@@ -101,7 +101,9 @@ same results or a treebank word into a report, or lets a stop condition pass.
   token, and tags and masking are those of the plain status, for open-style and silver-style rows),
   `CorpusReader_Parse_NoStatusFlags_GivesNoFlags` (the committed files stay valid),
   `CorpusReader_Parse_InvalidStatusFlags_ThrowsWithLine` (an unknown, repeated or out-of-order flag is refused with its
-  line) and `CorpusStatus_TryParse_SplitsStatusAndFlags`.
+  line) and `CorpusStatus_TryParse_SplitsStatusAndFlags`. `CorpusReader_Parse_SharedParityCases_AgreeWithPython` reads the
+  cases of `tools/data/tests/status-cases.tsv`, which the Python tests (`ReaderParityTests`) read too, so that both
+  readers give the same verdict, status, flags and error value for every case.
 - **Training settings take effect**: `ModelTrainer_Train_MinCount_ShrinksTheModel` and
   `ModelTrainer_Train_RestrictionAndHistoryModes_ChangeTheImage`.
 - **Development-only selection**: `DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused` (a theory over the held-out

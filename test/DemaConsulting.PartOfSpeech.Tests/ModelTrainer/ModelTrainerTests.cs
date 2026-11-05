@@ -541,6 +541,45 @@ public class ModelTrainerTests
     }
 
     /// <summary>
+    ///     Validates that the trainer's reader gives the same verdicts, statuses, flags and error values as the Python reader
+    ///     for the shared parity cases (<c>tools/data/tests/status-cases.tsv</c>, also read by the Python tests).
+    /// </summary>
+    [Fact]
+    public void CorpusReader_Parse_SharedParityCases_AgreeWithPython()
+    {
+        // Arrange: the shared cases (tag, status cell, verdict, status, flags)
+        var path = Path.Combine(DataFiles.RepositoryRoot, "tools", "data", "tests", "status-cases.tsv");
+        var cases = File.ReadLines(path).Where(line => line.Length > 0 && !line.StartsWith("# ", StringComparison.Ordinal)).Select(line => line.Split('\t')).ToList();
+        Assert.True(cases.Count > 20);
+
+        foreach (var (tag, cell, verdict, status, flags) in cases.Select(c => (c[0], c[1], c[2], c[3], c[4])))
+        {
+            // Act
+            var attempt = Record.Exception(() => Parse(new SourceConfig { Name = "t" }, "# sent_id = s1", "a\t" + tag + "\t" + cell));
+
+            // Assert
+            if (verdict == "accept")
+            {
+                Assert.Null(attempt);
+                Assert.True(CorpusStatus.TryParse(cell, out var parsedStatus, out var marks), cell);
+                Assert.Equal(status, parsedStatus);
+                var expected = flags == "-" ? TokenMarks.None : flags.Split(',').Select(f => (TokenMarks)Enum.Parse(typeof(TokenMarks), f, true)).Aggregate((x, y) => x | y);
+                Assert.Equal(expected, marks);
+            }
+            else
+            {
+                var ex = Assert.IsType<InvalidDataException>(attempt);
+                Assert.Contains("line 2", ex.Message);
+                Assert.Contains(verdict == "invalid-status" ? $"invalid status '{cell}'" : $"unknown tag '{tag}'", ex.Message);
+            }
+        }
+
+        // A row with fewer than three cells is refused like the Python reader does
+        var tooShort = Assert.Throws<InvalidDataException>(() => Parse(new SourceConfig { Name = "t" }, "# sent_id = s1", "a\tNOUN"));
+        Assert.Contains("a token row needs at least form, tag and status", tooShort.Message);
+    }
+
+    /// <summary>
     ///     Validates the status cell helpers: the base status without its flags and the canonical flag order.
     /// </summary>
     [Fact]

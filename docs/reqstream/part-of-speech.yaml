@@ -553,7 +553,13 @@ sections:
           - PartOfSpeech-ModelTrainer-HeldOutGate-RunsOnce
           - PartOfSpeech-ModelTrainer-HeldOutGate-PreflightCountsOnly
           - PartOfSpeech-ModelTrainer-HeldOutGate-DumpOutsideRepository
-          - PartOfSpeech-ModelTrainer-CorpusRules
+          - PartOfSpeech-ModelTrainer-CorpusTags
+          - PartOfSpeech-ModelTrainer-CorpusStatusFlags-Kept
+          - PartOfSpeech-ModelTrainer-CorpusStatusFlags-Validated
+          - PartOfSpeech-ModelTrainer-NoSignalTokens
+          - PartOfSpeech-ModelTrainer-NoSignalStepsAndHistory
+          - PartOfSpeech-ModelTrainer-SourceWeights
+          - PartOfSpeech-ModelTrainer-SourceLimits
           - PartOfSpeech-ModelTrainer-Configuration
           - PartOfSpeech-ModelTrainer-TrainingSettings
           - PartOfSpeech-ModelTrainer-DevMetrics

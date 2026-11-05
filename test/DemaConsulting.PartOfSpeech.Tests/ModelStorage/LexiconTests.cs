@@ -1,5 +1,4 @@
 using System.Text;
-using DemaConsulting.PartOfSpeech.Trainer;
 
 namespace DemaConsulting.PartOfSpeech.Tests.ModelStorage;
 
@@ -593,7 +592,7 @@ public class LexiconTests
         {
             foreach (var row in sentence.Tokens)
             {
-                if (CorpusStatus.BaseStatus(row[2]) == "disputed")
+                if (DataFiles.BaseStatus(row[2]) == "disputed")
                 {
                     continue;
                 }

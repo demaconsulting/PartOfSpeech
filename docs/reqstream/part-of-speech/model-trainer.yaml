@@ -63,29 +63,79 @@ sections:
               - ModelTrainer_Build_SmallRun_LoadsWithTheQuantizedWeights
               - ModelBuilder_WithTemperature_ReplacesOnlyTheTemperature
 
-          - id: PartOfSpeech-ModelTrainer-CorpusRules
+          - id: PartOfSpeech-ModelTrainer-CorpusTags
             title: >-
-              The trainer shall read the corpus format of the data folder (including the optional status flags) and
-              refuse an unknown tag or an unknown status flag, shall keep the flags of every token without changing its
-              tag or its masking, shall give tokens
-              without a training signal (masked tokens and, when configured, disputed tokens and low-probability silver
-              tokens) no update but still count them as steps and put them in the tag history, and shall repeat the
-              sentences of a source as many times as its weight says and limit or subsample a source deterministically.
+              The trainer shall read the corpus format of the data folder and refuse a token whose tag is unknown, with
+              the line number of the row.
             justification: |
-              The model must be trained on exactly the data that the configuration describes, and a masked token is
-              still decoded at run time, so it takes part in the history. A misread corpus would silently change the
-              weights and their provenance. The status flags (`mentioned`, `foreign`) are facts about a word; reading
-              them must not change which tokens train and with which tag.
+              The model must be trained on exactly the data that the configuration describes. A misread corpus would
+              silently change the weights and their provenance, so an unknown tag is an error and not a skipped token.
             tests:
-              - ModelTrainer_Train_MaskedToken_NoUpdateButStepAndHistory
-              - CorpusReader_Parse_MaskingRules_MarkTokensWithoutSignal
-              - CorpusReader_Parse_LimitAndSample_AreDeterministic
               - CorpusReader_Parse_UnknownTag_ThrowsWithLine
+
+          - id: PartOfSpeech-ModelTrainer-CorpusStatusFlags-Kept
+            title: >-
+              The trainer shall read the optional status flags of a corpus row (`status[+foreign][+mentioned]`), keep
+              the flags of every token, and give the same tag and the same masking as for the status without flags; a
+              file without flags shall read as before.
+            justification: |
+              The flags (`mentioned`, `foreign`) are facts about a word. Reading them must not change which tokens
+              train and with which tag, and the committed files, which have no flags, must stay valid.
+            tests:
               - CorpusReader_Parse_StatusFlags_AreKeptAndDoNotChangeTagsOrMasking
               - CorpusReader_Parse_NoStatusFlags_GivesNoFlags
-              - CorpusReader_Parse_InvalidStatusFlags_ThrowsWithLine
               - CorpusStatus_TryParse_SplitsStatusAndFlags
+
+          - id: PartOfSpeech-ModelTrainer-CorpusStatusFlags-Validated
+            title: >-
+              The trainer shall refuse a corpus row whose status is unknown or whose flags are unknown, repeated or out
+              of order, with the line number of the row.
+            justification: |
+              One spelling of every status cell keeps the readers of the format (the trainer and the Python data tools)
+              in agreement, so that a malformed file cannot pass through one of them.
+            tests:
+              - CorpusReader_Parse_InvalidStatusFlags_ThrowsWithLine
+              - CorpusReader_Parse_SharedParityCases_AgreeWithPython
+              - CorpusStatus_TryParse_SplitsStatusAndFlags
+
+          - id: PartOfSpeech-ModelTrainer-NoSignalTokens
+            title: >-
+              The trainer shall treat tokens whose tag is a placeholder, masked tokens and, when configured, disputed
+              tokens and silver tokens below the probability limit as tokens without a training signal.
+            justification: |
+              Masking is decided by the status (without its flags) and by the configuration only, so that the selected
+              training data is exactly what the configuration describes.
+            tests:
+              - CorpusReader_Parse_MaskingRules_MarkTokensWithoutSignal
+
+          - id: PartOfSpeech-ModelTrainer-NoSignalStepsAndHistory
+            title: >-
+              A token without a training signal shall cause no weight update but shall still count as a step of the
+              averaging and enter the tag history.
+            justification: |
+              A masked token is still decoded at run time, so it takes part in the history; the averaging counts
+              every step so that the weights do not depend on how many tokens were masked.
+            tests:
+              - ModelTrainer_Train_MaskedToken_NoUpdateButStepAndHistory
+
+          - id: PartOfSpeech-ModelTrainer-SourceWeights
+            title: >-
+              The trainer shall repeat the sentences of a source in every epoch as many times as the weight of the
+              source says.
+            justification: |
+              The weight of a source is a selected training setting, so the epoch must contain exactly the repeats that
+              the configuration names.
+            tests:
               - CorpusReader_LoadSources_Weight_RepeatsSentences
+
+          - id: PartOfSpeech-ModelTrainer-SourceLimits
+            title: >-
+              The trainer shall limit the sentences of a source to a maximum or subsample them by a share of 1,000, in
+              both cases deterministically.
+            justification: |
+              A subset must not depend on file order or platform, so that an experiment on a subset can be repeated.
+            tests:
+              - CorpusReader_Parse_LimitAndSample_AreDeterministic
 
           - id: PartOfSpeech-ModelTrainer-TrainingSettings
             title: >-

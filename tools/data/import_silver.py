@@ -252,7 +252,7 @@ def write_silver(path, sentences, lexicon):
         for row, (upos, status) in zip(sentence["rows"], derive_sentence(forms, tags, lexicon)):
             # the derivation decides the status; the flags of the row (mentioned, foreign) are token facts and are kept
             row[1], row[2] = upos, common.format_status(status, common.parse_status(row[2])[1])
-    common.write_corpus(path, SILVER_HEADER, sentences)
+    common.write_corpus(path, common.with_flag_documentation(SILVER_HEADER, sentences), sentences)
 
 
 def clean(text):

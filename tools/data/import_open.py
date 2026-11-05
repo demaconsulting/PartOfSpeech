@@ -25,7 +25,7 @@ STATUSES = ("unanimous", "disputed", "unchecked")
 
 def read_projected(path):
     """Sentences of an open-corpus file projected to form, upos, status (extra comment lines kept in `extra`)."""
-    header, sentences = common.read_corpus(path)
+    header, sentences = common.read_corpus(path, strict=False)  # the source has seven columns; they are validated below
     out = []
     for sentence in sentences:
         rows = []
@@ -65,7 +65,7 @@ def project(path, split, sha):
         "# status = unanimous | disputed | unchecked (consensus of the two annotators; unchecked = no second annotator)",
         "# origin = WordSense commit %s, corpus/open/representative/data/%s.tsv, sha256 %s" % (common.WORDSENSE_COMMIT, split, sha),
     ]
-    common.write_corpus(os.path.join(common.DATA, "open", split + ".tsv"), head, out)
+    common.write_corpus(os.path.join(common.DATA, "open", split + ".tsv"), common.with_flag_documentation(head, out), out)
     return len(out), tokens
 
 

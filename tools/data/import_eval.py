@@ -48,7 +48,7 @@ def main():
         "# origin = WordSense commit %s, %s, sha256 %s" % (common.WORDSENSE_COMMIT, STE, sha),
         "# use = evaluation only; report separately, never merge into a headline number",
     ]
-    common.write_corpus(os.path.join(common.DATA, "eval", "ste-challenge", "test.tsv"), header, sentences)
+    common.write_corpus(os.path.join(common.DATA, "eval", "ste-challenge", "test.tsv"), common.with_flag_documentation(header, sentences), sentences)
     print("ste-challenge: %d sentences" % len(sentences))
 
 

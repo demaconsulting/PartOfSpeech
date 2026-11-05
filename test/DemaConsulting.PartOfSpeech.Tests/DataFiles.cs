@@ -174,6 +174,21 @@ internal static class DataFiles
     public static bool IsComment(string line) => line.StartsWith("# ", StringComparison.Ordinal);
 
     /// <summary>
+    ///     Gets the status of a corpus status cell without its flags (<c>disputed+mentioned</c> gives <c>disputed</c>).
+    /// </summary>
+    /// <remarks>
+    ///     Plain test support for the data files; the parser of the trainer is not used here, so that a unit test of
+    ///     another unit does not depend on the trainer.
+    /// </remarks>
+    /// <param name="cell">The status cell.</param>
+    /// <returns>The text before the first plus sign.</returns>
+    public static string BaseStatus(string cell)
+    {
+        var plus = cell.IndexOf('+', StringComparison.Ordinal);
+        return plus < 0 ? cell : cell.Substring(0, plus);
+    }
+
+    /// <summary>
     ///     Reads a corpus in the shared block format: header comments, a blank line, then one block per sentence.
     /// </summary>
     /// <param name="path">The full path of the file.</param>

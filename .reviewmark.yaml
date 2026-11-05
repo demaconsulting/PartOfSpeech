@@ -22,6 +22,9 @@ needs-review:
   - "docs/sysml2/**/*.sysml"     # SysML2 architecture model
   - "tools/data/**/*.py"         # Build-time Python tools of the data assets, and their tests
   - "tools/data/README.md"       # Documentation of the data tools
+  - "tools/data/tests/status-cases.tsv"  # Shared parity cases of the corpus status cell (Python and C# tests)
+  - "data/CONVENTIONS.md"        # Normative labeling conventions, formats and mapping tables of the data
+  - "data/README.md"             # Documentation of the data folder
   - "!**/obj/**"                  # Exclude build output
   - "!**/bin/**"                  # Exclude build output
   - "!**/generated/**"            # Exclude generated documentation (API reference)
@@ -400,8 +403,9 @@ reviews:
     context:
       - "docs/design/part-of-speech.md"
       - "docs/reqstream/part-of-speech.yaml"
-      - "data/CONVENTIONS.md"
     paths:
+      - "data/CONVENTIONS.md"                                       # normative conventions, formats and mapping tables
+      - "data/README.md"                                            # data folder documentation
       - "tools/data/README.md"                                      # tools documentation
       - "tools/data/common.py"                                      # shared helpers, tokenization, lexicon rules
       - "tools/data/leakage.py"                                     # evaluation universe and leakage rule
@@ -412,6 +416,7 @@ reviews:
       - "tools/data/fetch_ud_ewt.py"                                # UD English-EWT fetch (cache only)
       - "tools/data/build_lexicon.py"                               # lexicon build
       - "tools/data/tests/test_common.py"                           # tests of the shared helpers
+      - "tools/data/tests/status-cases.tsv"                         # shared parity cases of the status cell
       - "tools/data/tests/test_masc.py"                             # tests of the MASC mapping
       - "tools/data/tests/test_silver_lexicon.py"                   # tests of the silver derivation and lexicon rules
 
