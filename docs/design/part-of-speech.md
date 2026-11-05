@@ -66,11 +66,22 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   configuration `training.json` (which records the SHA-256 of the uncompressed image) and the run log `RUN-LOG.md` next
   to the trainer
 - **Checks**: the checksum manifest and the leakage report
+- **Corrections overlay**: `data/corrections/` stages label corrections for the three training corpora as tables, not as
+  edits of the corpus files. `mechanical.tsv` holds the rows that the mechanical rules of the conventions linter write
+  (the rule knows the tag), `candidates.tsv` the cases that need a judgment, and `exceptions.tsv` the reviewed cases that
+  stay as they are. A row addresses one token (source, split, sentence id, token index) and carries the old and the new
+  tag and status and its provenance; the key is unique across the tables. A table is valid against the corpora when all
+  of its rows match them before the application or all after it, so the same files stay valid when a later change applies
+  them. The corpora, the lexicon and the weights are still built from the uncorrected files; the corrections are not
+  applied yet
 - **Package license and third-party notice**: `PACKAGE-LICENSE.md` (the license of the package: the MIT code and the
   CC BY data) and `THIRD-PARTY-NOTICES.md` (attribution and change statements, also for the weights), both packed at
   the package root
-- **Build-time tools**: the Python scripts that import, check and regenerate the data, and the C# tool
-  `tools/LexiconCompiler` that compiles the lexicon; they are not shipped and are not part of the runtime
+- **Build-time tools**: the Python scripts that import, check and regenerate the data, including the conventions
+  linter (`check_conventions.py`) and the generator of the corrections overlay (`make_corrections.py`), and the C# tool
+  `tools/LexiconCompiler` that compiles the lexicon; they are not shipped and are not part of the runtime. The unit
+  tests of the correction tools and a report-only linter pass run in `lint.ps1`, which the quality-checks job of the
+  workflow runs; they are developer tooling and not requirements evidence
 
 ## External Interfaces
 
@@ -219,18 +230,22 @@ The data assets are protected by two release gates, which the data tests of the 
    pinned inputs whose SHA-256 values are recorded
 2. **Import**: the tools convert every source to the shared corpus format with the 17 Universal POS tags, remove
    training documents or sentences that overlap evaluation data, and write sorted UTF-8 files with LF line endings
-3. **Lexicon**: the tools build the spelling-to-tags lexicon from the dictionary tables and the tags attested in the
+3. **Staged corrections**: the conventions linter finds the tokens whose label breaks a rule of `data/CONVENTIONS.md`;
+   the generator writes the fixes of the mechanical rules and the cases that need a judgment to `data/corrections/`,
+   and a validator checks the rows against the corpora. The rows are not applied to the corpora yet, so the steps below
+   read the uncorrected files
+4. **Lexicon**: the tools build the spelling-to-tags lexicon from the dictionary tables and the tags attested in the
    training corpora, then measure its coverage of the open training and development sets
-4. **Compilation**: `tools/LexiconCompiler` compiles the lexicon table into `Resources/lexicon.bin`, which is committed
+5. **Compilation**: `tools/LexiconCompiler` compiles the lexicon table into `Resources/lexicon.bin`, which is committed
    and embedded in the assembly
-5. **Training**: the unit `ModelTrainer` reads the three training corpora named in `training.json`, extracts features with
+6. **Training**: the unit `ModelTrainer` reads the three training corpora named in `training.json`, extracts features with
    the same `FeatureExtractor`, restricts the tags with the same lexicon code, trains an averaged perceptron in integer
    arithmetic, quantizes and prunes the weights and writes the `POSW` file with `PerceptronModelWriter`; the file is
    committed as `Resources/weights.bin` and embedded, and `training.json` records the SHA-256 of its uncompressed image.
    Every setting was selected on the development sets only (the run log is `RUN-LOG.md` next to the trainer); `train
    --check` retrains and compares in the build
-6. **Checks**: the tools write the leakage report and the checksum manifest
-7. **Notices**: `THIRD-PARTY-NOTICES.md` carries the attributions of the sources (the weights included), and
+7. **Checks**: the tools write the leakage report and the checksum manifest
+8. **Notices**: `THIRD-PARTY-NOTICES.md` carries the attributions of the sources (the weights included), and
    `PACKAGE-LICENSE.md` is the license of the package; the NuGet package includes both
 
 **Glossary support**: a `Glossary` is an immutable set of domain terms that a caller passes to a `Tag` call. The tagger

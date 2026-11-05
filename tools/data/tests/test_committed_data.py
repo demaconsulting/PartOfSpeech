@@ -1,9 +1,14 @@
 """Sanity tests of the committed data files (formats, tag sets, gates). Run after the import scripts."""
+import contextlib
+import io
 import os
+import shutil
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import check_licenses
 import check_lexicon
 import common
 import leakage
@@ -76,6 +81,98 @@ class CommittedDataTests(unittest.TestCase):
             if previous is not None:
                 self.assertLess(previous.encode("utf-8"), spelling.encode("utf-8"))
             previous = spelling
+
+    def test_license_check_accepts_the_committed_corrections(self):
+        # Arrange and Act: run the license check of the staged corrections on the committed folder
+        with contextlib.redirect_stdout(io.StringIO()):
+            findings = check_licenses.corrections_findings()
+        # Assert
+        self.assertEqual([], findings)
+
+    def test_corrections_readme_links_the_masc_attribution_that_exists(self):
+        # Arrange
+        with open(os.path.join(common.DATA, "corrections", "README.md"), encoding="utf-8") as handle:
+            readme = handle.read()
+        # Act and Assert: the link resolves from the folder of the README
+        self.assertIn(check_licenses.MASC_ATTRIBUTION_LINK, readme)
+        self.assertTrue(os.path.exists(os.path.join(common.DATA, "corrections", "..", "masc", "ATTRIBUTION.md")))
+
+
+class CorrectionsLicenseCheckTests(unittest.TestCase):
+    """The license check of data/corrections on a miniature data folder: what it accepts and what it refuses."""
+
+    LICENSE = "# license = CC0-1.0 for the labels; MASC text is CC BY 3.0 US, see data/masc/ATTRIBUTION.md"
+    COLUMNS = "# columns = source, split, source_id, sent_id, token_index, token, rule, reason, provenance"
+
+    def setUp(self):
+        self.base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.base, True)
+        self.write("masc/ATTRIBUTION.md", "# MASC Attribution\n")
+        self.write("masc/sources.tsv", "# masc\nmasc:written/a\tblog\tCC BY 3.0 US\t1\t2\nmasc:written/b\tblog\tCC BY-SA 4.0\t1\t2\n")
+        self.write("open/sources.tsv", "source_id\tfamily\ngutenberg-1\tgutenberg\n")
+        self.write("silver/sources.tsv", "# silver\ngutenberg-2\tgutenberg\n")
+        self.write("corrections/README.md", "License: CC0-1.0\n\n[MASC](../masc/ATTRIBUTION.md)\n")
+
+    def write(self, relative, text):
+        path = os.path.join(self.base, *relative.split("/"))
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
+
+    def table(self, rows, license_line=None):
+        self.write("corrections/exceptions.tsv", "\n".join([license_line or self.LICENSE, self.COLUMNS] + rows) + "\n")
+
+    def findings(self):
+        with contextlib.redirect_stdout(io.StringIO()):
+            return check_licenses.corrections_findings(self.base)
+
+    def test_listed_documents_of_every_source_pass(self):
+        # Arrange
+        self.table(["masc\t-\tmasc:written/a\ts1\t1\tx\tr\tok\tp", "open\ttrain\tgutenberg-1\ts2\t1\tx\tr\tok\tp",
+                    "silver\t-\tgutenberg-2\ts3\t1\tx\tr\tok\tp"])
+        # Act and Assert
+        self.assertEqual([], self.findings())
+
+    def test_masc_document_with_another_license_is_refused(self):
+        # Arrange
+        self.table(["masc\t-\tmasc:written/b\ts1\t1\tx\tr\tok\tp"])
+        # Act
+        findings = self.findings()
+        # Assert
+        self.assertEqual(1, len(findings))
+        self.assertIn("masc:written/b", findings[0])
+
+    def test_unlisted_document_and_wrong_source_are_refused(self):
+        # Arrange: a document that no table lists, and an open document named as a silver row
+        self.table(["masc\t-\tmasc:written/zzz\ts1\t1\tx\tr\tok\tp", "silver\t-\tgutenberg-1\ts2\t1\tx\tr\tok\tp"])
+        # Act and Assert
+        self.assertEqual(2, len(self.findings()))
+
+    def test_restricted_license_text_in_a_label_cell_is_refused_but_not_in_a_text_cell(self):
+        # Arrange: a reason that names a share-alike license, and a token that is the word `Wikipedia`
+        self.table(["open\ttrain\tgutenberg-1\ts1\t1\tWikipedia\tr\tCC BY-SA text\tp"])
+        # Act
+        findings = self.findings()
+        # Assert
+        self.assertEqual(1, len(findings))
+        self.assertIn("column reason", findings[0])
+
+    def test_missing_license_declaration_or_attribution_is_refused(self):
+        # Arrange: no CC0 declaration, and a README that does not link the attribution
+        self.table([], license_line="# license = CC0-1.0")
+        self.write("corrections/README.md", "License: CC0-1.0\n\nsee masc/ATTRIBUTION.md\n")
+        # Act
+        findings = self.findings()
+        # Assert
+        self.assertEqual(2, len(findings))
+        self.assertTrue(any("does not link" in finding for finding in findings))
+        self.assertTrue(any("needs one '# license' line" in finding for finding in findings))
+
+    def test_malformed_row_is_refused(self):
+        # Arrange
+        self.table(["open\ttrain\tgutenberg-1"])
+        # Act and Assert
+        self.assertTrue(any("cells" in finding for finding in self.findings()))
 
 
 if __name__ == "__main__":

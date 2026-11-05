@@ -1,9 +1,12 @@
 <!-- markdownlint-disable MD013 MD060 -->
+<!-- cspell:ignore prenominal testdata -->
 
 # Data Tools
 
-Python 3 scripts (standard library only) that produce and check the files under [`data/`](../../data/README.md). They are
-development-time tooling: nothing here is shipped in the NuGet package, and no CI job depends on them.
+Python 3.10 or later scripts (standard library only) that produce and check the files under [`data/`](../../data/README.md).
+They are development-time tooling: nothing here is shipped in the NuGet package. One part runs in CI: the correction tools
+and their tests are a gate of `lint.ps1`, which the quality-checks job of the workflow runs (see _Tests_ below); the
+importers and the other checks are not run in CI.
 
 ## Why Python
 
@@ -14,14 +17,16 @@ development-time tooling: nothing here is shipped in the NuGet package, and no C
   GitHub Actions `setup-python`).
 - **Reproducible:** every input is pinned by SHA-256, every output is deterministic (sorted, fixed seeds recorded, LF,
   UTF-8 without BOM, NFC), and a re-run is bit-identical. `data/MANIFEST.tsv` and the C# data tests re-verify the committed
-  outputs on every platform, so the scripts themselves do not need to run in CI.
+  outputs on every platform, so the importers themselves do not need to run in CI.
 - **Not shipped:** the trainer and tagger of the package stay C#; these scripts only prepare the data.
 
 Python files are outside the repository's lint tooling (there is no Python linter configured), so
-`python -m py_compile tools/data/*.py` and the unit tests below are the quality gate for this folder. They are inside the
-repository's review tooling: `.reviewmark.yaml` lists `tools/data/**/*.py` and this README in `needs-review`, and two
+`python -m compileall -q tools/data` and the unit tests below are the quality gate for this folder. They are inside the
+repository's review tooling: `.reviewmark.yaml` lists `tools/data/**/*.py` and this README in `needs-review`, and three
 review-sets cover them, `PartOfSpeech-DataConversion` (the common helpers, the importers, the lexicon build and their
-tests) and `PartOfSpeech-DataChecks` (the leakage, lexicon and license checks, the manifest and the line-ending tool).
+tests), `PartOfSpeech-DataChecks` (the leakage, lexicon and license checks, the manifest and the line-ending tool) and
+`PartOfSpeech-DataCorrections` (the conventions linter, the generator and validator of the staged corrections, and their
+tests and fixtures).
 
 ## Scripts
 
@@ -39,10 +44,15 @@ Run from the repository root. Scripts take their input locations as arguments or
 | `build_lexicon.py` | build `data/lexicon/lexicon.tsv`; `--write-pins` writes the form pin manifest | `--wordsense-dir`, `--k`, `--masc-k` |
 | `check_lexicon.py` | coverage report (`coverage.tsv`, `COVERAGE.md`), gate G1, `--sweep` | exit code 1 if the gate fails |
 | `check_leakage.py` | training versus evaluation overlap (documents, sentences of any length, near duplicates) | exit code 1 on any overlap; `--write-report` |
-| `check_licenses.py` | scan for share-alike or non-commercial text, restricted corpus names, `*.conllu`; the MASC source table for the corpus-wide CC BY 3.0 US class; README license lines | exit code 1 on a finding |
+| `check_licenses.py` | scan for share-alike or non-commercial text, restricted corpus names, `*.conllu`; the MASC source table for the corpus-wide CC BY 3.0 US class; README license lines; the staged corrections (`data/corrections`): CC0-1.0 declaration, MASC attribution link, every row's document listed with an allowed license | exit code 1 on a finding |
 | `make_manifest.py` | write or `--verify` `data/MANIFEST.tsv` | Markdown files excluded |
 | `normalize_eol.py` | convert CRLF to LF in `data/` and `tools/data/` text files | run before `make_manifest.py` after editing on Windows |
 | `leakage.py` | library: the evaluation sets and keys used by the importers and the leakage check; the rule that a long match excludes the document and a short match drops the sentence | |
+| `corrections.py` | the staged corrections in `data/corrections/`: table formats, row and table validation, `validate` against the corpora (pending or applied state), `apply [--write] [--reverse]` (edits corpus lines in place), `show` | exit code 1 on an error; `apply` writes only with `--write` and is not used on the committed corpora yet |
+| `convention_rules.py` | library: the rule registry of the conventions (mechanical `fix` rules with their guards, and `check` rules), shared by the linter and the generator | the catalog is in [`data/corrections/README.md`](../../data/corrections/README.md#rule-catalog) |
+| `convention_candidates.py` | library: the detectors of the cases that need a judgment (prenominal participles, mentioned words, foreign text, proper-noun boundaries, ...) | feeds `candidates.tsv` |
+| `check_conventions.py` | the conventions linter: counts per rule and source, `--apply` (lint as after the staged corrections), `--list RULE`, `--tsv FILE`, `--enforce` | report only (exit code 0) without `--enforce`; the STE challenge set is linted but never counts |
+| `make_corrections.py` | generate `data/corrections/*.tsv` from the rules; `--check` (compare with the committed files), `sample` (seeded hand-check sample), `fixed-point`, `catalog` | deterministic; refuses candidates above 5 MB |
 
 Pins (`pins/`): `wordsense-inputs.tsv` (open corpus and evaluation inputs), `wordsense-form.manifest.tsv` (151 form
 tables), `masc.tsv` (the MASC archive), `ud-ewt.tsv` (the UD files). All WordSense inputs are at commit
@@ -56,9 +66,31 @@ python -m unittest discover -s tools/data/tests
 ```
 
 The unit tests cover the shared helpers, the Penn Treebank mapping, the silver derivation, the lexicon rules (including
-the homograph-number parse of entry ids) and sanity checks of the committed data (tag set, manifest, lexicon gate).
+the homograph-number parse of entry ids), sanity checks of the committed data (tag set, manifest, lexicon gate) and the
+correction tools: the overlay (`test_corrections_overlay.py`), the rules and their guards on the fixture sentences of
+`convention-cases.tsv` (`test_corrections_rules.py`), the linter (`test_corrections_linter.py`) and the generator
+(`test_corrections_generator.py`, including the check that the committed tables are valid against the committed corpora).
+`corrections-cases.tsv` and `candidate-cases.tsv` hold the row cases that both this validator and the C# data tests are held
+to (as `status-cases.tsv` does for the status cell); `corrections_testdata.py` builds the miniature data folder of the tests.
+
+**CI gate.** No workflow job runs the full suite (some tests read the git-ignored download cache). The quality-checks job
+runs `lint.ps1`, and its Python step (the `[PROJECT-SPECIFIC]` extension point) runs, in about one minute:
+
+```text
+python -m compileall -q tools/data
+python -m unittest discover -s tools/data/tests -p "test_corrections_*.py"
+python tools/data/corrections.py validate
+python tools/data/make_corrections.py --check
+python tools/data/check_conventions.py
+```
+
+A failing step fails the lint run. The linter runs without `--enforce`, so the violations that are left in the corpora are
+reported but do not fail the run; `--enforce` is added when the corrections are applied and none are left. The
+requirements evidence stays in C# (`PartOfSpeech_DataCorrections_*` in `PartOfSpeechDataTests.cs`), which reads the
+committed tables and corpora. A C# port of the rules was rejected: it would duplicate the detectors and let two
+implementations of a heuristic drift.
 
 ## Machine Etiquette
 
-The scripts are light (the heaviest, `import_masc.py`, takes seconds). On a shared workstation run them at below-normal
-priority and one at a time.
+The scripts are light (the heaviest, `import_masc.py`, takes seconds; the correction tools and their tests that read the
+corpora take up to a minute). On a shared workstation run them at below-normal priority and one at a time.

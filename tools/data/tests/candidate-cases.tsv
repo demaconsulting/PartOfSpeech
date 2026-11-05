@@ -1,0 +1,38 @@
+# Row cases of the candidate table of the corrections overlay: one candidates row per line and the verdict of corrections.candidate_error.
+# Read by tools/data/tests/test_corrections_overlay.py and by the C# data test PartOfSpeech_DataCorrections_CandidateCases_MatchSharedFixture, so that both validators give the same verdicts.
+# The syntax of every field is checked in the pending and in the applied state alike; the comparison of current_tag and current_status with the corpus is not part of these cases.
+# columns = case_id, source, split, source_id, sent_id, token_index, span_length, token, current_tag, current_status, source_tag, candidate_rule, hint, context, result
+# result = valid, or the first error code: bad-source, bad-split, bad-index, bad-token, bad-span, bad-current-state, bad-rule-or-hint
+valid-open	open	train	doc1	s1	3	1	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the operating [modes] of the	valid
+valid-open-dev-span	open	dev	doc1	s1	0	3	The	DET	disputed+mentioned		mention-the-word	head=word	[The] word is	valid
+valid-masc	masc	-	masc:written/blog/x	masc:written/blog/x#1	1	1	out	ADV	ptb	RB	out-of-after-verb	verb=get	Get [out] of here	valid
+valid-silver	silver	-	gutenberg-1	silver-7	2	1	can	VERB	silver	V:60	for-subject-to-ambiguous	before=-; subject=x	a [can] be	valid
+valid-check-rule-id	silver	-	gutenberg-1	silver-7	0	1	is	VERB	silver	V:55	be-aux-passive	check-rule	[is] done	valid
+valid-index-zero	open	test	doc1	s1	0	1	It	PRON	unchecked+foreign		language-name	next=VERB	[It] is	valid
+bad-source-ste	ste	-	doc1	s1	3	1	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-source
+bad-split-for-masc	masc	train	doc1	s1	3	1	modes	NOUN	ptb	NNS	prenominal-ing	penn=NNS; head=modes	the [modes]	bad-split
+bad-split-for-open	open	-	doc1	s1	3	1	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-split
+bad-index-negative	open	train	doc1	s1	-1	1	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-index
+bad-index-leading-zero	open	train	doc1	s1	03	1	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-index
+bad-index-text	open	train	doc1	s1	x	1	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-index
+bad-index-empty	open	train	doc1	s1		1	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-index
+bad-index-space	open	train	doc1	s1	3 	1	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-index
+bad-token-empty	open	train	doc1	s1	3	1		NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [] of	bad-token
+bad-token-space	open	train	doc1	s1	3	1	two words	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-token
+bad-token-empty-sentence-id	open	train	doc1		3	1	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-token
+bad-span-zero	open	train	doc1	s1	3	0	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-span
+bad-span-negative	open	train	doc1	s1	3	-2	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-span
+bad-span-leading-zero	open	train	doc1	s1	3	01	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-span
+bad-span-text	open	train	doc1	s1	3	two	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-span
+bad-current-tag	open	train	doc1	s1	3	1	modes	NOUNS	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-current-state
+bad-current-tag-masked	silver	-	gutenberg-1	silver-7	3	1	go	_	masked	?	prenominal-ing	penn=-; head=go	to [go]	bad-current-state
+bad-current-tag-lower-case	open	train	doc1	s1	3	1	modes	noun	unchecked		prenominal-ing	penn=-; head=modes	the [modes]	bad-current-state
+bad-current-status-base	open	train	doc1	s1	3	1	modes	NOUN	approved		prenominal-ing	penn=-; head=modes	the [modes]	bad-current-state
+bad-current-status-flag	open	train	doc1	s1	3	1	modes	NOUN	unchecked+shiny		prenominal-ing	penn=-; head=modes	the [modes]	bad-current-state
+bad-current-status-flag-order	open	train	doc1	s1	3	1	modes	NOUN	unchecked+mentioned+foreign		prenominal-ing	penn=-; head=modes	the [modes]	bad-current-state
+bad-current-status-empty	open	train	doc1	s1	3	1	modes	NOUN			prenominal-ing	penn=-; head=modes	the [modes]	bad-current-state
+bad-rule-upper-case	open	train	doc1	s1	3	1	modes	NOUN	unchecked		Prenominal_Ing	penn=-; head=modes	the [modes]	bad-rule-or-hint
+bad-rule-empty	open	train	doc1	s1	3	1	modes	NOUN	unchecked			penn=-; head=modes	the [modes]	bad-rule-or-hint
+bad-rule-trailing-hyphen	open	train	doc1	s1	3	1	modes	NOUN	unchecked		prenominal-	penn=-; head=modes	the [modes]	bad-rule-or-hint
+bad-hint-empty	open	train	doc1	s1	3	1	modes	NOUN	unchecked		prenominal-ing		the [modes]	bad-rule-or-hint
+bad-context-empty	open	train	doc1	s1	3	1	modes	NOUN	unchecked		prenominal-ing	penn=-; head=modes		bad-rule-or-hint

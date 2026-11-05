@@ -23,8 +23,13 @@ needs-review:
   - "tools/data/**/*.py"         # Build-time Python tools of the data assets, and their tests
   - "tools/data/README.md"       # Documentation of the data tools
   - "tools/data/tests/status-cases.tsv"  # Shared parity cases of the corpus status cell (Python and C# tests)
+  - "tools/data/tests/corrections-cases.tsv"  # Shared row cases of the corrections overlay (Python and C# tests)
+  - "tools/data/tests/candidate-cases.tsv"  # Shared candidate row cases of the overlay (Python and C# tests)
+  - "tools/data/tests/convention-cases.tsv"  # Fixture sentences of the convention rules
   - "data/CONVENTIONS.md"        # Normative labeling conventions, formats and mapping tables of the data
   - "data/README.md"             # Documentation of the data folder
+  - "data/corrections/README.md"  # Format, states, rule catalog and precision record of the staged corrections
+  - "data/corrections/*.tsv"      # The staged correction tables (generated; reviewers read and approve the rows)
   - "!**/obj/**"                  # Exclude build output
   - "!**/bin/**"                  # Exclude build output
   - "!**/generated/**"            # Exclude generated documentation (API reference)
@@ -435,6 +440,32 @@ reviews:
       - "tools/data/make_manifest.py"                               # checksum manifest
       - "tools/data/normalize_eol.py"                               # line-ending normalization
       - "tools/data/tests/test_committed_data.py"                   # sanity checks of the committed data
+
+  # PartOfSpeech-DataCorrections Review (build-time tools that stage and lint corpus corrections)
+  - id: PartOfSpeech-DataCorrections
+    title: Review that PartOfSpeech Corrections Tools Implement the Documented Conventions
+    context:
+      - "docs/design/part-of-speech.md"
+      - "docs/reqstream/part-of-speech.yaml"
+      - "tools/data/common.py"
+    paths:
+      - "data/CONVENTIONS.md"                                       # normative conventions and overlay format
+      - "data/corrections/README.md"                                # staged corrections: format, states, rule catalog
+      - "data/corrections/*.tsv"                                    # staged tables: mechanical, candidates, exceptions
+      - "tools/data/README.md"                                      # tools documentation
+      - "tools/data/corrections.py"                                 # overlay tables: validation, apply and reverse
+      - "tools/data/convention_rules.py"                            # rule registry: mechanical and check rules
+      - "tools/data/convention_candidates.py"                       # detectors of the cases that need judgment
+      - "tools/data/check_conventions.py"                           # conventions linter
+      - "tools/data/make_corrections.py"                            # generator of the staged tables
+      - "tools/data/tests/corrections_testdata.py"                  # miniature data folder of the tests
+      - "tools/data/tests/test_corrections_overlay.py"              # tests of the overlay
+      - "tools/data/tests/test_corrections_rules.py"                # tests of the rules and their guards
+      - "tools/data/tests/test_corrections_linter.py"               # tests of the linter
+      - "tools/data/tests/test_corrections_generator.py"            # tests of the generator and the committed tables
+      - "tools/data/tests/convention-cases.tsv"                     # fixture sentences of the rules
+      - "tools/data/tests/corrections-cases.tsv"                    # shared row cases of the overlay
+      - "tools/data/tests/candidate-cases.tsv"                      # shared candidate row cases of the overlay
 
   # OTS-ApiMark Review (one per OTS item)
   - id: OTS-ApiMark

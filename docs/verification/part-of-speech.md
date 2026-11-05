@@ -29,7 +29,11 @@ JSON with regular expressions and compare the copies with the generated files;
 each test proves one obligation of one requirement, and a test that finds a file missing or a table empty fails instead
 of passing on nothing. The Python tools that produce the data have developer unit tests in `tools/data/tests/`, which are
 not requirements evidence; they are reviewed with the tools in the data tools review sets (see the Companion Artifact
-Structure of the design introduction).
+Structure of the design introduction). The unit tests of the correction tools (`test_corrections_*.py`), the validation
+of the staged corrections against the corpora, the check that the generator reproduces the committed tables and a
+report-only pass of the conventions linter run as a gate in `lint.ps1`, which the quality-checks job of the workflow runs
+(standard library only, about one minute); a failing step fails the lint run. The linter does not yet fail on violations
+that are left in the corpora.
 
 Two groups of requirements need methods beyond an ordinary assertion:
 
@@ -384,11 +388,31 @@ and not just the project file. The reasons for a license file instead of an expr
 ### Data and Licensing
 
 **Tests**: the `PartOfSpeech_ThirdPartyNotices_*`, `PartOfSpeech_DataLicensing_*`, `PartOfSpeech_DataProvenance_*`,
-`PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*` and `PartOfSpeech_Lexicon_*`
-tests of `PartOfSpeechDataTests.cs`
+`PartOfSpeech_DataCorrections_*`, `PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*`
+and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
 
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
 and fails when a file is missing or empty.
+
+The `PartOfSpeech_DataCorrections_*` tests read the staged corrections of `data/corrections/`. `Tables_AreWellFormed`
+asserts the column lists of the three tables, that every correction row is valid on its own (legal source and split pair,
+token index, tags among the 17 and never the masked placeholder, status cells with known statuses and flags in order, a
+change, a provenance of the form `rule:<id>` or `llm:<model>:<run>`), that the rows are in key order, and that no
+token has two rows across the tables; it fails when the mechanical table or the candidates are empty. A candidate row is
+valid on its own when its address, token, span (a positive integer), current tag (one of the 17), current status, candidate
+id (lower-case words) and hint and context (not empty) are well formed, in the pending and in the applied state alike.
+`RowCases_MatchSharedFixture`
+runs the same row validation over `tools/data/tests/corrections-cases.tsv`, one row and one expected verdict each, the file
+that the Python validator is tested against, so that the two implementations cannot drift apart; it fails when a verdict
+differs or the file has too few cases. `CandidateCases_MatchSharedFixture` does the same for the candidate fields over
+`tools/data/tests/candidate-cases.tsv` (the one check that only the Python validator makes is that the candidate id is a
+rule or a detector of its registry). `Rows_MatchCommittedCorpora` reads the sentences that the rows name from the
+committed corpora and asserts for every correction and exception row that the sentence, its document id, the token index
+and the token form exist, and that all correction rows match the corpus in the pending state (old tag and status) or all
+in the applied state (new tag and status); a mixture, a row that matches neither state, and an empty table fail.
+`Candidates_AddressExistingTokens` asserts the same for the candidate rows, including that the span stays inside the
+sentence. The tests do not depend on the tools; the unit tests of the tools, the validation of the tables, the check that
+the generator reproduces them and a report-only conventions linter pass run in `lint.ps1` (see the Verification Approach).
 
 ### Platform Support
 

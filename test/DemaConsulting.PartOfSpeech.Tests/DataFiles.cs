@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace DemaConsulting.PartOfSpeech.Tests;
 
@@ -413,5 +415,460 @@ internal static class DataFiles
         }
 
         return char.IsUpper(token[0]) && tag is "PROPN" or "X";
+    }
+}
+
+/// <summary>
+///     Helpers of the data tests of the staged corpus corrections (<c>data/corrections</c>): the column lists, the
+///     validation of one row and of a whole table, and the lookup of the addressed tokens in the committed corpora.
+/// </summary>
+/// <remarks>
+///     This is the second implementation of the validation that <c>tools/data/corrections.py</c> performs; both are
+///     held to the shared cases of <c>tools/data/tests/corrections-cases.tsv</c>. The corpus files are read with the
+///     plain readers of <see cref="DataFiles"/>, so a test of the data does not depend on the trainer.
+/// </remarks>
+internal static class CorrectionTables
+{
+    /// <summary>
+    ///     The names of the tables of corrections, relative to <c>data/corrections</c>; <c>llm.tsv</c> exists only after
+    ///     the adjudication of the candidates.
+    /// </summary>
+    public static readonly IReadOnlyList<string> CorrectionTableNames = new[] { "mechanical.tsv", "llm.tsv" };
+
+    /// <summary>
+    ///     The columns of a table of corrections.
+    /// </summary>
+    public static readonly IReadOnlyList<string> CorrectionColumns = new[]
+    {
+        "source", "split", "source_id", "sent_id", "token_index", "token", "old_tag", "new_tag", "old_status",
+        "new_status", "provenance"
+    };
+
+    /// <summary>
+    ///     The columns of the table of candidates.
+    /// </summary>
+    public static readonly IReadOnlyList<string> CandidateColumns = new[]
+    {
+        "source", "split", "source_id", "sent_id", "token_index", "span_length", "token", "current_tag",
+        "current_status", "source_tag", "candidate_rule", "hint", "context"
+    };
+
+    /// <summary>
+    ///     The columns of the table of exceptions.
+    /// </summary>
+    public static readonly IReadOnlyList<string> ExceptionColumns = new[]
+    {
+        "source", "split", "source_id", "sent_id", "token_index", "token", "rule", "reason", "provenance"
+    };
+
+    /// <summary>
+    ///     The corpus file of every addressable source and split, relative to the data folder.
+    /// </summary>
+    private static readonly Dictionary<(string Source, string Split), string> CorpusFiles = new()
+    {
+        [("open", "train")] = "open/train.tsv",
+        [("open", "dev")] = "open/dev.tsv",
+        [("open", "test")] = "open/test.tsv",
+        [("masc", "-")] = "masc/masc.tsv",
+        [("silver", "-")] = "silver/silver.tsv"
+    };
+
+    /// <summary>
+    ///     The base statuses of the status cell of a token row.
+    /// </summary>
+    private static readonly string[] StatusBases = { "unanimous", "disputed", "unchecked", "ptb", "silver", "masked" };
+
+    /// <summary>
+    ///     The flags of the status cell, in their canonical order.
+    /// </summary>
+    private static readonly string[] StatusFlags = { "foreign", "mentioned" };
+
+    /// <summary>
+    ///     The provenance of a row: a rule of the catalog, or a model and a run of the adjudication.
+    /// </summary>
+    private static readonly Regex ProvenancePattern = new(
+        @"^(?:rule:[a-z0-9]+(?:-[a-z0-9]+)*|llm:[^:\s]+:[^:\s]+)$", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    ///     A non-negative integer without leading zeros.
+    /// </summary>
+    private static readonly Regex IndexPattern = new(@"^(?:0|[1-9][0-9]*)$", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    ///     A positive integer without leading zeros.
+    /// </summary>
+    private static readonly Regex SpanPattern = new(@"^[1-9][0-9]*$", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    ///     The id of a rule or of a candidate class: lower-case words joined by hyphens.
+    /// </summary>
+    private static readonly Regex RuleIdPattern = new(@"^[a-z0-9]+(?:-[a-z0-9]+)*$", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    ///     Gets the full path of a table of the corrections folder.
+    /// </summary>
+    /// <param name="name">The file name, for example <c>mechanical.tsv</c>.</param>
+    /// <returns>The full path.</returns>
+    public static string FilePath(string name) => DataFiles.Data("corrections/" + name);
+
+    /// <summary>
+    ///     Finds the first error of one corrections row, with the same checks in the same order as the Python validator.
+    /// </summary>
+    /// <param name="table">The table that holds the row (it may have more columns than a corrections table).</param>
+    /// <param name="row">The row.</param>
+    /// <returns>The error code, or <c>null</c> when the row is valid on its own.</returns>
+    public static string? RowError(DataTable table, string[] row) =>
+        AddressError(table, row) ??
+        TokenError(table, row) ??
+        TagError(table, row) ??
+        StatusError(table, row);
+
+    /// <summary>
+    ///     Finds the first error of one candidate row, with the same checks in the same order as the Python validator.
+    /// </summary>
+    /// <remarks>
+    ///     The syntax of every field is checked in the pending and in the applied state alike; the comparison of the
+    ///     current tag and status with the corpus is not part of it. The one check that only the Python validator makes
+    ///     is that the candidate id is a rule or a detector of the registry.
+    /// </remarks>
+    /// <param name="table">The table that holds the row (it may have more columns than a candidates table).</param>
+    /// <param name="row">The row.</param>
+    /// <returns>The error code, or <c>null</c> when the row is valid on its own.</returns>
+    public static string? CandidateError(DataTable table, string[] row) =>
+        AddressError(table, row) ??
+        TokenError(table, row) ??
+        CandidateProblem(table, row);
+
+    /// <summary>
+    ///     Finds the first problem of the address columns (source, split, token index) of a row of any overlay table.
+    /// </summary>
+    /// <param name="table">The table that holds the row.</param>
+    /// <param name="row">The row.</param>
+    /// <returns>The error code, or <c>null</c> when the address is legal.</returns>
+    public static string? AddressError(DataTable table, string[] row)
+    {
+        var source = table.Cell(row, "source");
+        var split = table.Cell(row, "split");
+        if (source != "open" && source != "masc" && source != "silver")
+        {
+            return "bad-source";
+        }
+
+        var legal = source == "open" ? split is "train" or "dev" or "test" : split == "-";
+        if (!legal)
+        {
+            return "bad-split";
+        }
+
+        return IndexPattern.IsMatch(table.Cell(row, "token_index")) ? null : "bad-index";
+    }
+
+    /// <summary>
+    ///     Finds the problems of the whole table: the rows that are not valid on their own, rows out of order and
+    ///     rows that share an address with an earlier row of the same table or of <paramref name="seen"/>.
+    /// </summary>
+    /// <param name="name">The name of the table for the messages.</param>
+    /// <param name="kind">The kind of the table: <c>corrections</c>, <c>candidates</c> or <c>exceptions</c>.</param>
+    /// <param name="table">The table.</param>
+    /// <param name="seen">The keys of the rows of the tables of the same kind read before (updated).</param>
+    /// <returns>The problems; empty when the table is well formed.</returns>
+    public static IEnumerable<string> TableProblems(string name, string kind, DataTable table, HashSet<string> seen)
+    {
+        var columns = kind switch
+        {
+            "corrections" => CorrectionColumns,
+            "candidates" => CandidateColumns,
+            _ => ExceptionColumns
+        };
+        if (!columns.SequenceEqual(table.Columns))
+        {
+            yield return $"{name}: the columns are not {string.Join(", ", columns)}";
+            yield break;
+        }
+
+        string[]? previous = null;
+        foreach (var row in table.Rows)
+        {
+            var problem = RowProblem(kind, table, row);
+            var where = $"{name}: {table.Cell(row, "sent_id")}#{table.Cell(row, "token_index")}";
+            if (problem != null)
+            {
+                yield return $"{where}: {problem}";
+                continue;
+            }
+
+            if (previous != null && CompareKeys(table, previous, row) > 0)
+            {
+                yield return where + ": out of order";
+            }
+
+            previous = row;
+            if (!seen.Add(AddressKey(kind, table, row)))
+            {
+                yield return where + ": the address is used twice";
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Finds the sentences that the rows of the tables name, and reads them from the committed corpora.
+    /// </summary>
+    /// <param name="tables">The tables.</param>
+    /// <returns>The sentences by source, split and sentence id; only the sentences that a row names are kept.</returns>
+    public static Dictionary<(string Source, string Split), Dictionary<string, CorpusSentence>> ReadNamedSentences(
+        IEnumerable<DataTable> tables)
+    {
+        // Collect the sentence ids per corpus so that the corpora are read once and only the named sentences are kept
+        var wanted = new Dictionary<(string Source, string Split), HashSet<string>>();
+        foreach (var table in tables)
+        {
+            foreach (var row in table.Rows)
+            {
+                var corpus = (table.Cell(row, "source"), table.Cell(row, "split"));
+                if (!wanted.TryGetValue(corpus, out var ids))
+                {
+                    ids = new HashSet<string>(StringComparer.Ordinal);
+                    wanted[corpus] = ids;
+                }
+
+                ids.Add(table.Cell(row, "sent_id"));
+            }
+        }
+
+        var sentences = new Dictionary<(string Source, string Split), Dictionary<string, CorpusSentence>>();
+        foreach (var entry in wanted)
+        {
+            var found = new Dictionary<string, CorpusSentence>(StringComparer.Ordinal);
+            if (CorpusFiles.TryGetValue(entry.Key, out var file))
+            {
+                foreach (var sentence in DataFiles.ReadCorpus(DataFiles.Data(file)).Where(s => entry.Value.Contains(s.SentenceId)))
+                {
+                    found[sentence.SentenceId] = sentence;
+                }
+            }
+
+            sentences[entry.Key] = found;
+        }
+
+        return sentences;
+    }
+
+    /// <summary>
+    ///     Finds the token that a row addresses, and the problem of the address when there is none.
+    /// </summary>
+    /// <param name="sentences">The sentences that <see cref="ReadNamedSentences"/> returned.</param>
+    /// <param name="table">The table that holds the row.</param>
+    /// <param name="row">The row.</param>
+    /// <param name="span">The number of tokens of the row that must exist, from the token index on.</param>
+    /// <returns>The token row of the corpus, or <c>null</c> with the problem.</returns>
+    public static (string[]? Token, string? Problem) FindToken(
+        IReadOnlyDictionary<(string Source, string Split), Dictionary<string, CorpusSentence>> sentences,
+        DataTable table,
+        string[] row,
+        int span)
+    {
+        var id = table.Cell(row, "sent_id");
+        if (!sentences.TryGetValue((table.Cell(row, "source"), table.Cell(row, "split")), out var corpus) ||
+            !corpus.TryGetValue(id, out var sentence))
+        {
+            return (null, $"{id}: no such sentence");
+        }
+
+        if (sentence.SourceId != table.Cell(row, "source_id"))
+        {
+            return (null, $"{id}: the document id is {sentence.SourceId}");
+        }
+
+        if (!int.TryParse(table.Cell(row, "token_index"), NumberStyles.None, CultureInfo.InvariantCulture, out var index) ||
+            index > sentence.Tokens.Count - span)
+        {
+            return (null, $"{id}#{table.Cell(row, "token_index")}: outside the {sentence.Tokens.Count} tokens of the sentence");
+        }
+
+        var token = sentence.Tokens[index];
+        return token[0] == table.Cell(row, "token") ? (token, null) : (null, $"{id}#{index}: the token is {token[0]}, not {table.Cell(row, "token")}");
+    }
+
+    /// <summary>
+    ///     Determines whether a status cell is valid: a known status and the flags once each, in canonical order.
+    /// </summary>
+    /// <param name="cell">The cell.</param>
+    /// <param name="status">The status without its flags.</param>
+    /// <returns><c>true</c> for a valid cell.</returns>
+    public static bool IsStatus(string cell, out string status)
+    {
+        var parts = cell.Split('+');
+        status = parts[0];
+        if (Array.IndexOf(StatusBases, status) < 0)
+        {
+            return false;
+        }
+
+        var previous = -1;
+        foreach (var flag in parts.Skip(1))
+        {
+            var position = Array.IndexOf(StatusFlags, flag);
+            if (position <= previous)
+            {
+                return false;
+            }
+
+            previous = position;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    ///     Finds the problems of the token columns of a corrections row.
+    /// </summary>
+    private static string? TokenError(DataTable table, string[] row)
+    {
+        var token = table.Cell(row, "token");
+        var empty = token.Length == 0 || table.Cell(row, "sent_id").Length == 0 || table.Cell(row, "source_id").Length == 0;
+        return empty || token.Any(char.IsWhiteSpace) ? "bad-token" : null;
+    }
+
+    /// <summary>
+    ///     Finds the problems of the tag columns of a corrections row.
+    /// </summary>
+    private static string? TagError(DataTable table, string[] row)
+    {
+        foreach (var column in new[] { "old_tag", "new_tag" })
+        {
+            var tag = table.Cell(row, column);
+            if (tag == "_")
+            {
+                return "masked-tag";
+            }
+
+            if (!DataFiles.UniversalTags.Contains(tag))
+            {
+                return "bad-tag";
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    ///     Finds the problems of the status columns and the provenance of a corrections row.
+    /// </summary>
+    private static string? StatusError(DataTable table, string[] row)
+    {
+        var oldStatus = table.Cell(row, "old_status");
+        var newStatus = table.Cell(row, "new_status");
+        var provenance = table.Cell(row, "provenance");
+        if (!IsStatus(oldStatus, out var oldBase) || !IsStatus(newStatus, out var newBase))
+        {
+            return "bad-status";
+        }
+
+        if (table.Cell(row, "old_tag") == table.Cell(row, "new_tag") && oldStatus == newStatus)
+        {
+            return "no-change";
+        }
+
+        if (oldBase != newBase && !(provenance.StartsWith("llm:", StringComparison.Ordinal) && newBase == "disputed"))
+        {
+            return "status-base-change";
+        }
+
+        if (provenance.StartsWith("rule:", StringComparison.Ordinal) && oldStatus != newStatus)
+        {
+            return "mechanical-status-change";
+        }
+
+        return ProvenancePattern.IsMatch(provenance) ? null : "bad-provenance";
+    }
+
+    /// <summary>
+    ///     Finds the problem of one row of a table of the given kind, other than its order and its uniqueness.
+    /// </summary>
+    private static string? RowProblem(string kind, DataTable table, string[] row)
+    {
+        if (kind == "corrections")
+        {
+            return RowError(table, row);
+        }
+
+        if (kind == "candidates")
+        {
+            return CandidateError(table, row);
+        }
+
+        return AddressError(table, row) ?? TokenError(table, row) ?? ExceptionProblem(table, row);
+    }
+
+    /// <summary>
+    ///     Finds the problems of the columns that are specific to a candidate row.
+    /// </summary>
+    private static string? CandidateProblem(DataTable table, string[] row)
+    {
+        if (!SpanPattern.IsMatch(table.Cell(row, "span_length")))
+        {
+            return "bad-span";
+        }
+
+        if (!DataFiles.UniversalTags.Contains(table.Cell(row, "current_tag")) || !IsStatus(table.Cell(row, "current_status"), out _))
+        {
+            return "bad-current-state";
+        }
+
+        return RuleIdPattern.IsMatch(table.Cell(row, "candidate_rule")) && table.Cell(row, "hint").Length > 0 && table.Cell(row, "context").Length > 0
+            ? null
+            : "bad-rule-or-hint";
+    }
+
+    /// <summary>
+    ///     Finds the problems of the columns that are specific to an exception row.
+    /// </summary>
+    private static string? ExceptionProblem(DataTable table, string[] row) =>
+        RuleIdPattern.IsMatch(table.Cell(row, "rule")) && table.Cell(row, "reason").Length > 0 && ProvenancePattern.IsMatch(table.Cell(row, "provenance"))
+            ? null
+            : "bad-rule-reason-or-provenance";
+
+    /// <summary>
+    ///     Gets the key that must be unique in a table: the address of the token, and for candidates and exceptions
+    ///     also the rule.
+    /// </summary>
+    private static string AddressKey(string kind, DataTable table, string[] row)
+    {
+        var rule = kind switch
+        {
+            "candidates" => table.Cell(row, "candidate_rule"),
+            "exceptions" => table.Cell(row, "rule"),
+            _ => string.Empty
+        };
+        return string.Join("|", table.Cell(row, "source"), table.Cell(row, "split"), table.Cell(row, "sent_id"), table.Cell(row, "token_index"), rule);
+    }
+
+    /// <summary>
+    ///     Compares the keys of two rows: source, split, sentence id by the bytes of its UTF-8 encoding, token index.
+    /// </summary>
+    private static int CompareKeys(DataTable table, string[] left, string[] right)
+    {
+        var order = string.CompareOrdinal(table.Cell(left, "source"), table.Cell(right, "source"));
+        order = order != 0 ? order : string.CompareOrdinal(table.Cell(left, "split"), table.Cell(right, "split"));
+        if (order != 0)
+        {
+            return order;
+        }
+
+        var x = Encoding.UTF8.GetBytes(table.Cell(left, "sent_id"));
+        var y = Encoding.UTF8.GetBytes(table.Cell(right, "sent_id"));
+        for (var i = 0; i < Math.Min(x.Length, y.Length); i++)
+        {
+            if (x[i] != y[i])
+            {
+                return x[i] < y[i] ? -1 : 1;
+            }
+        }
+
+        order = x.Length.CompareTo(y.Length);
+        return order != 0
+            ? order
+            : long.Parse(table.Cell(left, "token_index"), CultureInfo.InvariantCulture)
+                .CompareTo(long.Parse(table.Cell(right, "token_index"), CultureInfo.InvariantCulture));
     }
 }

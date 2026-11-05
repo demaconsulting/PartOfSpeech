@@ -324,6 +324,7 @@ sections:
           the project does not accept.
         tests:
           - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
+          - PartOfSpeech_DataLicensing_Corrections_AreCoveredByTheLicenseGate
 
       - id: PartOfSpeech-Licensing-UdEwtNotCommitted
         title: The repository shall not contain any UD English-EWT data.
@@ -392,6 +393,47 @@ sections:
           that silent changes are detected.
         tests:
           - PartOfSpeech_DataProvenance_Manifest_ChecksumsMatchCommittedFiles
+
+      - id: PartOfSpeech-Data-CorrectionsWellFormed
+        title: >-
+          Every staged corpus correction shall be a well-formed row of the documented tables, with a valid address,
+          tags, statuses and provenance, in key order and without a second row for a token.
+        tags: [system]
+        justification: |
+          The staged corrections are the evidence for every label that a later change applies to the corpora. A row with
+          an illegal address, a tag outside the 17, a status cell that the corpus readers refuse, no change, or no
+          provenance, or two rows for one token, could not be applied or reviewed safely. A candidate row with a
+          malformed span, current tag or status, or an empty hint, would mislead the adjudication the same way, so the
+          fields of the candidates are validated before and after the application of the corrections alike. The row
+          validation is also run on shared cases that the Python validator of the overlay uses, so that the two
+          implementations cannot diverge.
+        tests:
+          - PartOfSpeech_DataCorrections_Tables_AreWellFormed
+          - PartOfSpeech_DataCorrections_RowCases_MatchSharedFixture
+          - PartOfSpeech_DataCorrections_CandidateCases_MatchSharedFixture
+
+      - id: PartOfSpeech-Data-CorrectionsMatchCorpora
+        title: >-
+          Every staged correction and every recorded exception shall address an existing token of a committed corpus,
+          and the corrections shall match the corpora either all before or all after their application.
+        tags: [system]
+        justification: |
+          A correction that names a missing sentence, a shifted token index or another word, or that expects a label
+          that the corpus does not have, would change the wrong token or nothing at all when it is applied. Accepting
+          the corpora both before and after the application keeps the table valid as the evidence of the change; a
+          mixture shows a partial application.
+        tests:
+          - PartOfSpeech_DataCorrections_Rows_MatchCommittedCorpora
+
+      - id: PartOfSpeech-Data-CandidatesAddressTokens
+        title: Every correction candidate shall address an existing token of a committed corpus.
+        tags: [system]
+        justification: |
+          The candidates are the work list of the adjudication that follows the mechanical corrections. A candidate
+          that does not address the token it describes sends the reviewer to the wrong word, so each one must name an
+          existing sentence, token and span.
+        tests:
+          - PartOfSpeech_DataCorrections_Candidates_AddressExistingTokens
 
       - id: PartOfSpeech-Data-UniversalTags
         title: Every committed token-level corpus shall be labeled with the 17 Universal POS tags only.

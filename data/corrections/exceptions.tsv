@@ -1,0 +1,10 @@
+# corpus = DemaConsulting.PartOfSpeech staged corpus corrections: reviewed cases that stay as they are (empty until the adjudication)
+# license = CC0-1.0 for the labels, addresses and rules; the token forms and context excerpts of MASC rows are MASC text (CC BY 3.0 US, see data/masc/ATTRIBUTION.md)
+# kind = exceptions
+# columns = source, split, source_id, sent_id, token_index, token, rule, reason, provenance
+# generator = tools/data/make_corrections.py (rule set 1)
+# input = masc/masc.tsv sha256 bed4ccda0a4a9d225f6188d1ffdf3163a22ff3766aeae09266dd137e23185952
+# input = open/dev.tsv sha256 3d946e483e015657c8e5dca3b235f4b7995817d9db87d9373e39c4712b0777fd
+# input = open/test.tsv sha256 ca6ce0af464a83e8f05c503e3dc6d5112a34c9cedebfc61fb8a37108a1e077ce
+# input = open/train.tsv sha256 c8d1d07113b98082587c0627a33d6b5c3c68982ab19a8ebf66c42b8d88be9df1
+# input = silver/silver.tsv sha256 7cfa56011f2e6cdf8acfadb5b87809e490e8f660ebfaba2025fce2e91ca3bc12
