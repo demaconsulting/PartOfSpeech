@@ -12,14 +12,14 @@ applies the rows and regenerates everything that depends on the labels (the lexi
 
 The rows are labels and addresses of tokens: the labels and the selection are dedicated under CC0-1.0, like the corpus labels.
 Token forms of MASC rows and the short context excerpts in `candidates.tsv` are MASC text, which stays under its own license
-(see `masc/ATTRIBUTION.md`).
+(see [`../masc/ATTRIBUTION.md`](../masc/ATTRIBUTION.md)).
 
 ## Contents
 
 | File | Kind | What |
 | --- | --- | --- |
-| `mechanical.tsv` | corrections | 2,223 rows from the mechanical rules (tier `fix`): the rule knows the correct tag |
-| `candidates.tsv` | candidates | 12,499 cases that need judgment (13,076 tokens in 9,296 sentences), never changes |
+| `mechanical.tsv` | corrections | 2,225 rows from the mechanical rules (tier `fix`): the rule knows the correct tag |
+| `candidates.tsv` | candidates | 12,500 cases that need judgment (13,077 tokens in 9,296 sentences), never changes |
 | `exceptions.tsv` | exceptions | reviewed cases that stay as they are; empty (header only) until the adjudication |
 
 `llm.tsv` (same format as `mechanical.tsv`) is where the adjudication of the candidates will put its rows. Everything is
@@ -164,7 +164,7 @@ reason to override a rule.
 | `fy-token` | mechanical | Names and Labels | a fiscal-year token (`FY2020`) is a NOUN (no case yet) |
 | `negation-part` | mechanical | Annotation Conventions | `not`, `n't`: PART |
 | `to-not-infinitive` | mechanical | Annotation Conventions | `to` tagged PART before a determiner, pronoun, number or gerund is the preposition: ADP (not after a verb that takes the infinitive such as `hopes`, `forgot`, `wants`; not before `one`, not before a determiner and a bare verb) |
-| `modal-aux` | mechanical | Annotation Conventions | a modal tagged VERB before a verb, `not` or an adverb: AUX (the stem of `can not`) |
+| `modal-aux` | mechanical | Annotation Conventions | a modal (`can, could, may, might, must, shall, should, will, would`; lower case, ALL CAPS or capitalized at the start of the sentence) tagged VERB before a verb, `not` or an adverb, a symbol in between ignored: AUX (the stem of `can not`) |
 | `possessive-det` | mechanical | Annotation Conventions | `my, your, his, its, our, their, whose` directly before a noun, adjective or number: DET; `her` the same after a preposition, conjunction or punctuation (before a noun, number, or `own`) |
 | `be-participle-adj-not-gradable` | check | Prenominal Modifiers and Predicate Participles | agentless `be` + a participle tagged ADJ without a degree word that is not known to be gradable: passive VERB or gradable ADJ? |
 | `be-passive-agent` | check | Prenominal Modifiers and Predicate Participles | `be` or a linking verb + a participle tagged ADJ with an overt `by`/`from` agent: VERB unless the participle is gradable (`fascinated by` ADJ, `dominated by` VERB) |
@@ -172,7 +172,7 @@ reason to override a rule.
 | `get-state-participle` | check | The get-passive | `get` + a state participle (`get used to`) tagged AUX + VERB instead of VERB + ADJ (no case yet) |
 | `out-of-phrasal` | check | Multiword Prepositions | `run out of`: `out` is a phrasal-verb particle (ADV), not ADP |
 | `infinitive-to` | check | Annotation Conventions | `to` is PART only as the infinitive marker: not ADP before a bare verb, not PART before a noun |
-| `modal-aux-other` | check | Annotation Conventions | a modal tagged ADV, PART, ADJ, ADP, SCONJ or X before a verb; `ca`, `wo`, `sha` before `n't` not AUX (no case yet) |
+| `modal-aux-other` | check | Annotation Conventions | a modal tagged ADV, PART, ADJ, ADP, SCONJ or X before a verb (lower case, ALL CAPS or capitalized at the start of the sentence); a modal tagged VERB that starts the sentence before its subject (`May Old England reign`, the inversion or the wish); `ca`, `wo`, `sha` before `n't` not AUX |
 | `speaker-label` | check | Numbers and Dates | `A:` and `B:` at the start of a sentence label a speaker: PROPN (no case yet) |
 | `no-all-degree` | check | Annotation Conventions | `no`/`all` directly before an adjective or adverb (`no better`, `all alone`) is ADV, not DET |
 | `language-name-token` | check | Names and Labels | a language name is PROPN, ADJ or NOUN, never ADV, VERB or X (no case yet) |
@@ -219,9 +219,9 @@ all states that look like passives.
 | `do-your-best` | 2 | 1 | 0 | 0 | 3 | 6 |
 | `negation-part` | 0 | 0 | 0 | 3 | 0 | 3 |
 | `to-not-infinitive` | 0 | 0 | 0 | 14 | 35 | 49 |
-| `modal-aux` | 0 | 0 | 0 | 0 | 65 | 65 |
+| `modal-aux` | 0 | 0 | 0 | 1 | 66 | 67 |
 | `possessive-det` | 4 | 0 | 0 | 0 | 0 | 4 |
-| **Total** | **610** | **79** | **70** | **858** | **606** | **2,223** |
+| **Total** | **610** | **79** | **70** | **859** | **607** | **2,225** |
 
 `fy-token` has no case in the corpora. Every row keeps its status cell. 93 rows give a token a tag that the current lexicon and its
 shape rules do not allow: 90 `get`-forms as AUX and 3 Roman numerals (`ix`, `xii`, `xiv`) as NUM. The lexicon is not changed here and
@@ -237,10 +237,11 @@ the weights are not retrained, so the change that applies the rows has to rebuil
 | `infinitive-to` | 3 | 0 | 1 | 7 | 0 | 0 | 11 |
 | `no-all-degree` | 0 | 0 | 0 | 6 | 5 | 0 | 11 |
 | `out-of-phrasal` | 0 | 0 | 0 | 2 | 0 | 0 | 2 |
-| **Total** | **241** | **36** | **34** | **84** | **286** | **2** | **683** |
+| `modal-aux-other` | 0 | 0 | 0 | 0 | 1 | 0 | 1 |
+| **Total** | **241** | **36** | **34** | **84** | **287** | **2** | **684** |
 
-With the rows applied, these 683 are everything the linter reports (the two STE tokens belong to the evaluation-only set, which
-is linted but never corrected). On the committed corpora the linter reports 2,223 mechanical plus these 683 violations.
+With the rows applied, these 684 are everything the linter reports (the two STE tokens belong to the evaluation-only set, which
+is linted but never corrected). On the committed corpora the linter reports 2,225 mechanical plus these 684 violations.
 
 ### Known gaps of the mechanical rules
 
@@ -293,7 +294,8 @@ Judgment cases for the adjudication (sentences / tokens per source; a mentioned 
 | `title-before-name` | 0 / 0 | 4 / 4 | 0 / 0 | 4 | 4 |
 | `half-ambiguous` | 3 / 3 | 1 / 1 | 0 / 0 | 4 | 4 |
 | `out-of-phrasal` (check) | 0 / 0 | 2 / 2 | 0 / 0 | 2 | 2 |
-| **All** | 3,060 sentences | 4,533 sentences | 1,703 sentences | 9,296 | 13,076 |
+| `modal-aux-other` (check) | 0 / 0 | 0 / 0 | 1 / 1 | 1 | 1 |
+| **All** | 3,060 sentences | 4,533 sentences | 1,703 sentences | 9,296 | 13,077 |
 
 Cells are sentences / tokens. A sentence with candidates of several detectors is counted once in the last row. The detector
 `list-label` found no case.
@@ -317,6 +319,7 @@ full.
 | 5 | guard for `all of a sudden` | 20261112, 50, 2 | census of `to-not-infinitive`, 52 rows, 4 | failed |
 | 6 | `be-copula-gradable` and `to-not-infinitive` tightened | 20261113, 50, 1 | census of the 71 `more than a`/`an`/`half`/`one` rows of `more-than`, 5 wrong | failed |
 | 7 | final: `more-than` takes `a`/`an` only before a measure | 20261114, 50, **0** | - | passed |
+| 8 | review fix: `modal-aux` reads ALL CAPS and sentence-initial modals and looks past a symbol | - (2 changed rows, none else) | census of all 2 new rows, **0** | passed |
 
 Round 1: seven of the eight random errors were `be-passive-verbal` (a state read as a passive: `settled`, `focused`, `composed`,
 `lost`, `well established`, `gone`, `done`) and one `be-passive-agent` (`far removed from`). In the stratified sample
@@ -346,12 +349,21 @@ gerund or a number after `hopes`, `forgot`, ... or before `one` or a determiner 
 `a six-month`), and `more than once` stays unchanged. The guards removed 14 rows of the first change: 6 of `more-than`,
 3 of `partitive-det`, 3 of `to-not-infinitive` and 2 of `be-copula-gradable`.
 
-Final result for the rules as committed: **551 distinct rows of the final tables read** (the censuses and the samples of rounds
-4 to 7, the 189 new rows included): 549 correct, 1 wrong (`for-subject-to`, see above) and 1 doubtful (`to-not-infinitive`: `back
+Final result for the rules as committed: **553 distinct rows of the final tables read** (the censuses and the samples of rounds
+4 to 8, the 189 new rows and the 2 rows of round 8 included): 551 correct, 1 wrong (`for-subject-to`, see above) and 1 doubtful (`to-not-infinitive`: `back
 in the car to warming up`, a slip of the keyboard for `warm up`, which the tags cannot tell from the preposition). That is 99.6
 percent (98.7 percent for `for-subject-to`, 98.0 percent for `to-not-infinitive`, the two weakest rules, both above the gate).
 The fresh random sample of round 7 on the final tables has 0 wrong in 50 rows. The rows of the first gate (261 rows, 0 wrong)
 were read against the same convention text; the final tables differ from that state only by the rows listed above.
+
+Round 8 (the formal review of the pull request): the guards of `modal-aux` and `modal-aux-other` accepted a lower-case first
+letter only, so three modals tagged VERB in the corpora were not reported. A modal now counts when it is lower case, ALL CAPS or
+capitalized at the start of the sentence (`Will` and `May` elsewhere are a name and a month, and a capitalized form before a
+finite `be` or `have` is one too), and a symbol between the modal and its verb is ignored. The two new rows of `modal-aux` were
+read in full against CONVENTIONS.md (modals are AUX): `I decided to [WILL] $$ DONATE the sum` (a spam text, the modal of `will
+donate`) and `[Can] not one be found who is willing to go` (the stem of `can not`) are both correct, 2 of 2. The third case, `[May]
+Old England ... reign` (a wish: the modal comes before its subject), has no safe tag rule because `May Smith went` is a name, so
+it is a violation of `modal-aux-other` and a candidate for the adjudication, not a row. No other row of the tables changed.
 
 | Rule | Rows read, first gate | Rows read, final tables | Wrong |
 | --- | ---: | ---: | ---: |
@@ -374,7 +386,7 @@ were read against the same convention text; the final tables differ from that st
 | `half-noun` | 3 (census) | - | 0 |
 | `in-front-of` | - | 7 (census) | 0 |
 | `link-participle` | 17 (census) | 17 (census) | 0 |
-| `modal-aux` | 5 | 10 | 0 |
+| `modal-aux` | 5 | 12 | 0 |
 | `more-than` | 17 | 49, and 71 listed before the guard | 0 |
 | `multiword-prep` | 17 | 16 | 0 |
 | `negation-part` | 3 (census) | - | 0 |

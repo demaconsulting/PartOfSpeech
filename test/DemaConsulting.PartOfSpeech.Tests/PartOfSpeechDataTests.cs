@@ -53,7 +53,7 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static readonly string[] LicensedFolders =
     {
-        "open", "masc", "silver", "eval/shapes", "eval/gold-v2", "eval/ste-challenge", "lexicon"
+        "open", "masc", "silver", "eval/shapes", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections"
     };
 
     /// <summary>
@@ -277,8 +277,73 @@ public class PartOfSpeechDataTests
         }
 
         // Assert: every folder was checked and no problem was found
-        Assert.Equal(7, LicensedFolders.Length);
+        Assert.Equal(8, LicensedFolders.Length);
         Assert.Empty(problems);
+    }
+
+    /// <summary>
+    ///     Proves that the staged correction tables are covered by the license gate: each table declares CC0-1.0 for its
+    ///     labels and names the MASC license and attribution, the README of the folder links the attribution file, every
+    ///     row belongs to a document that a source table lists (a MASC row only with the CC BY 3.0 US class, because its
+    ///     token and context excerpt are MASC text), and no label, id, reason or provenance cell names a restricted license.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataLicensing_Corrections_AreCoveredByTheLicenseGate()
+    {
+        // Arrange: the documents that each source table lists (MASC: only those with the corpus license class), the README
+        var problems = new List<string>();
+        var mascSources = DataFiles.ReadTable(DataFiles.Data("masc/sources.tsv"));
+        var listed = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal)
+        {
+            ["open"] = SourceIds("open/sources.tsv", "source_id"),
+            ["silver"] = SourceIds("silver/sources.tsv", "source_id"),
+            ["masc"] = new HashSet<string>(
+                mascSources.Rows.Where(row => mascSources.Cell(row, "license_basis") == MascLicenseBasis).Select(row => mascSources.Cell(row, "source_id")),
+                StringComparer.Ordinal)
+        };
+        var readme = File.ReadAllText(DataFiles.Data("corrections/README.md"));
+        var textColumns = new[] { "token", "hint", "context" };
+        var names = new[] { "mechanical.tsv", "candidates.tsv", "exceptions.tsv", "llm.tsv" }
+            .Where(name => File.Exists(CorrectionTables.FilePath(name))).ToList();
+        var rows = 0;
+
+        // Act: check the attribution, then the license line and every row of each table
+        if (!readme.Contains("](../masc/ATTRIBUTION.md)", StringComparison.Ordinal) || !File.Exists(DataFiles.Data("masc/ATTRIBUTION.md")))
+        {
+            problems.Add("data/corrections/README.md: does not link the existing MASC attribution ../masc/ATTRIBUTION.md");
+        }
+
+        foreach (var name in names)
+        {
+            var declarations = File.ReadLines(CorrectionTables.FilePath(name)).Where(line => line.StartsWith("# license = ", StringComparison.Ordinal)).ToList();
+            if (declarations.Count != 1 || !declarations[0].Contains("CC0-1.0", StringComparison.Ordinal)
+                || !declarations[0].Contains(MascLicenseBasis, StringComparison.Ordinal)
+                || !declarations[0].Contains("masc/ATTRIBUTION.md", StringComparison.Ordinal))
+            {
+                problems.Add($"data/corrections/{name}: needs one '# license' line with CC0-1.0, {MascLicenseBasis} and masc/ATTRIBUTION.md");
+            }
+
+            var table = DataFiles.ReadTable(CorrectionTables.FilePath(name));
+            rows += table.Rows.Count;
+            foreach (var row in table.Rows)
+            {
+                var source = table.Cell(row, "source");
+                var document = table.Cell(row, "source_id");
+                if (!listed.TryGetValue(source, out var documents) || !documents.Contains(document))
+                {
+                    problems.Add($"data/corrections/{name}: the document {document} is not listed with an allowed license for source {source}");
+                }
+
+                problems.AddRange(table.Columns
+                    .Where(column => Array.IndexOf(textColumns, column) < 0 && RestrictedLicenseText.IsMatch(table.Cell(row, column)))
+                    .Select(column => $"data/corrections/{name}: column {column} names a restricted license for {document}"));
+            }
+        }
+
+        // Assert: the three tables were scanned, they carry rows, and no problem was found
+        Assert.True(names.Count >= 3);
+        Assert.True(rows > 10000);
+        Assert.Empty(problems.Take(ShownProblems));
     }
 
     /// <summary>

@@ -849,15 +849,40 @@ def to_not_infinitive(s, res):
 
 
 MODALS = frozenset("can could may might must shall should will would".split())
+FINITE_AFTER_NAME = frozenset("is are was were am has does did".split())  # a modal never takes these: the token before is a name
+
+def sentence_initial(s, i):
+    """True when only punctuation or symbols (an opening quote, a bullet) precede token i."""
+    return all(tag in ("PUNCT", "SYM") for tag in s.t[:i])
+
+
+def modal_form(s, i):
+    """True when the spelling of token i can be a modal: lower case (`can`), ALL CAPS (`WILL`) or capitalized only because it
+    starts the sentence (`Can not one be found`). `Will` and `May` elsewhere are a name and a month, so they are not a modal;
+    a capitalized form directly before a finite `be` or `have` (`May is a month`, `Will has gone`) is a name or a month too."""
+    form = s.f[i]
+    if form.islower():
+        return True
+    if s.word(i + 1) in FINITE_AFTER_NAME:
+        return False
+    return (len(form) > 1 and form.isupper()) or sentence_initial(s, i)
+
+
+def tag_after_symbols(s, i):
+    """The tag of the first token after i that is not a symbol (`WILL $$ DONATE`: the symbol does not hide the verb)."""
+    j = i + 1
+    while s.tag(j) == "SYM":
+        j += 1
+    return s.tag(j)
 
 
 @rule("modal-aux", FIX, "Annotation Conventions",
-      "a modal (`can, could, may, might, must, shall, should, will, would`) tagged VERB before a verb, `not` or an adverb: AUX "
-      "(the stem of `can not`)", words=MODALS)
+      "a modal (`can, could, may, might, must, shall, should, will, would`; lower case, ALL CAPS or capitalized at the start of the "
+      "sentence) tagged VERB before a verb, `not` or an adverb, a symbol in between ignored: AUX (the stem of `can not`)", words=MODALS)
 def modal_aux(s, res):
     out = []
     for i in s.where(*MODALS):
-        if s.t[i] == "VERB" and s.f[i][0].islower() and s.tag(i + 1) in ("VERB", "AUX", "PART", "ADV"):
+        if s.t[i] == "VERB" and modal_form(s, i) and tag_after_symbols(s, i) in ("VERB", "AUX", "PART", "ADV"):
             s.change(out, i, "AUX")
     return out
 
@@ -948,13 +973,18 @@ def infinitive_to(s, res):
 
 
 @rule("modal-aux-other", CHECK, "Annotation Conventions",
-      "a modal tagged ADV, PART, ADJ, ADP, SCONJ or X before a verb; `ca`, `wo`, `sha` before `n't` not AUX",
+      "a modal tagged ADV, PART, ADJ, ADP, SCONJ or X before a verb (lower case, ALL CAPS or capitalized at the start of the "
+      "sentence); a modal tagged VERB that starts the sentence before its subject (`May Old England reign`, the inversion or "
+      "the wish); `ca`, `wo`, `sha` before `n't` not AUX",
       words=MODALS | {"ca", "wo", "sha"})
 def modal_aux_other(s, res):
     out = []
     for i in s.where(*MODALS):
-        if s.t[i] in ("ADV", "PART", "ADJ", "ADP", "SCONJ", "X") and s.f[i][0].islower() \
-                and s.tag(i + 1) in ("VERB", "AUX", "PART", "ADV", "PRON"):
+        if not modal_form(s, i):
+            continue
+        if s.t[i] in ("ADV", "PART", "ADJ", "ADP", "SCONJ", "X") and tag_after_symbols(s, i) in ("VERB", "AUX", "PART", "ADV", "PRON"):
+            s.change(out, i, None)
+        elif s.t[i] == "VERB" and i == 0 and s.tag(1) in ("DET", "PRON", "ADJ", "NOUN", "PROPN", "_"):
             s.change(out, i, None)
     for i in s.where("ca", "wo", "sha"):
         if s.word(i + 1) == "n't" and s.t[i] != "AUX":

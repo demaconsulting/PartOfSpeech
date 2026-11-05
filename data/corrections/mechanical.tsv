@@ -248,6 +248,7 @@ masc	-	masc:written/email/spam/111359	masc:written/email/spam/111359#6	23	all	PR
 masc	-	masc:written/email/spam/111363	masc:written/email/spam/111363#10	32	rather	CCONJ	ADV	ptb	ptb	rule:multiword-prep
 masc	-	masc:written/email/spam/111363	masc:written/email/spam/111363#10	33	than	CCONJ	ADP	ptb	ptb	rule:multiword-prep
 masc	-	masc:written/email/spam/111363	masc:written/email/spam/111363#25	12	due	ADP	ADJ	ptb	ptb	rule:multiword-prep
+masc	-	masc:written/email/spam/111364	masc:written/email/spam/111364#7	3	WILL	VERB	AUX	ptb	ptb	rule:modal-aux
 masc	-	masc:written/email/spam/111364	masc:written/email/spam/111364#7	20	rather	SCONJ	ADV	ptb	ptb	rule:multiword-prep
 masc	-	masc:written/email/spam/111364	masc:written/email/spam/111364#8	5	else	ADJ	ADV	ptb	ptb	rule:degree-word
 masc	-	masc:written/email/spam/111364	masc:written/email/spam/111364#8	28	any	PRON	DET	ptb	ptb	rule:partitive-det
@@ -1665,6 +1666,7 @@ silver	-	gutenberg-6411	silver-10826	5	less	ADV	ADJ	silver	silver	rule:more-than
 silver	-	gutenberg-45828	silver-10834	11	plenty	ADV	NOUN	silver	silver	rule:partitive-noun
 silver	-	gutenberg-1190	silver-10886	7	the	DET	ADV	silver	silver	rule:correlative-the
 silver	-	gutenberg-1190	silver-10886	12	the	DET	ADV	silver	silver	rule:correlative-the
+silver	-	gutenberg-38644	silver-10889	0	Can	VERB	AUX	silver	silver	rule:modal-aux
 silver	-	gutenberg-42716	silver-10891	10	one	PRON	NUM	silver	silver	rule:one-of
 silver	-	gutenberg-66022	silver-10936	10	to	PART	ADP	silver	silver	rule:to-not-infinitive
 silver	-	gutenberg-64458	silver-10952	6	least	ADV	ADJ	silver	silver	rule:at-least

@@ -44,7 +44,7 @@ Run from the repository root. Scripts take their input locations as arguments or
 | `build_lexicon.py` | build `data/lexicon/lexicon.tsv`; `--write-pins` writes the form pin manifest | `--wordsense-dir`, `--k`, `--masc-k` |
 | `check_lexicon.py` | coverage report (`coverage.tsv`, `COVERAGE.md`), gate G1, `--sweep` | exit code 1 if the gate fails |
 | `check_leakage.py` | training versus evaluation overlap (documents, sentences of any length, near duplicates) | exit code 1 on any overlap; `--write-report` |
-| `check_licenses.py` | scan for share-alike or non-commercial text, restricted corpus names, `*.conllu`; the MASC source table for the corpus-wide CC BY 3.0 US class; README license lines | exit code 1 on a finding |
+| `check_licenses.py` | scan for share-alike or non-commercial text, restricted corpus names, `*.conllu`; the MASC source table for the corpus-wide CC BY 3.0 US class; README license lines; the staged corrections (`data/corrections`): CC0-1.0 declaration, MASC attribution link, every row's document listed with an allowed license | exit code 1 on a finding |
 | `make_manifest.py` | write or `--verify` `data/MANIFEST.tsv` | Markdown files excluded |
 | `normalize_eol.py` | convert CRLF to LF in `data/` and `tools/data/` text files | run before `make_manifest.py` after editing on Windows |
 | `leakage.py` | library: the evaluation sets and keys used by the importers and the leakage check; the rule that a long match excludes the document and a short match drops the sentence | |

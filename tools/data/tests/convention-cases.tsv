@@ -180,6 +180,11 @@ to-not-infinitive-forgot-gerund-guard	to-not-infinitive	open	I/PRON forgot/VERB 
 to-not-infinitive-one-guard	to-not-infinitive	open	They/PRON went/VERB to/PART one/NUM another/DET ./PUNCT	none
 to-not-infinitive-determiner-bare-verb-guard	to-not-infinitive	open	It/PRON is/VERB used/VERB to/PART a/DET make/VERB it/PRON ./PUNCT	none
 modal-aux-can-not	modal-aux	silver	She/PRON can/VERB not/PART go/VERB ./PUNCT	1:AUX
+modal-aux-all-caps-symbol	modal-aux	masc	I/PRON/PRP decided/VERB/VBD to/PART/TO WILL/VERB/VB $$/SYM/SYM DONATE/VERB/VB the/DET/DT sum/NOUN/NN ./PUNCT/.	3:AUX
+modal-aux-sentence-initial	modal-aux	silver	Can/VERB not/PART one/PRON be/AUX found/VERB ?/PUNCT	0:AUX
+modal-aux-sentence-initial-quote	modal-aux	open	"/PUNCT Must/VERB go/VERB ./PUNCT	1:AUX
+modal-aux-name-guard	modal-aux	open	I/PRON know/VERB Will/VERB came/VERB ./PUNCT	none
+modal-aux-name-be-guard	modal-aux	open	Will/VERB has/AUX gone/VERB ./PUNCT	none
 modal-aux-noun-guard	modal-aux	open	He/PRON likes/VERB to/PART can/VERB fruit/NOUN ./PUNCT	none
 modal-aux-capitalized-guard	modal-aux	open	May/VERB is/VERB a/DET month/NOUN ./PUNCT	none
 possessive-det-own	possessive-det	open	A/DET will/NOUN of/ADP his/PRON own/ADJ ./PUNCT	3:DET
@@ -203,6 +208,11 @@ infinitive-to-adp	infinitive-to	open	I/PRON want/VERB to/ADP go/VERB ./PUNCT	2:?
 infinitive-to-noun	infinitive-to	open	He/PRON went/VERB to/PART Paris/PROPN ./PUNCT	2:?
 infinitive-to-guard	infinitive-to	open	I/PRON want/VERB to/PART go/VERB ./PUNCT	none
 modal-aux-other-check	modal-aux-other	open	It/PRON might/ADV go/VERB ./PUNCT	1:?
+modal-aux-other-all-caps	modal-aux-other	open	IT/PRON WILL/ADV GO/VERB ./PUNCT	1:?
+modal-aux-other-sentence-initial	modal-aux-other	open	Should/ADV not/PART go/VERB ./PUNCT	0:?
+modal-aux-other-optative	modal-aux-other	open	May/VERB Old/ADJ England/PROPN reign/VERB ./PUNCT	0:?
+modal-aux-other-name-guard	modal-aux-other	open	In/ADP May/ADV go/VERB ./PUNCT	none
+modal-aux-other-month-guard	modal-aux-other	open	May/VERB is/VERB a/DET month/NOUN ./PUNCT	none
 modal-aux-other-ca	modal-aux-other	open	I/PRON ca/VERB n't/PART go/VERB ./PUNCT	1:?
 modal-aux-other-guard	modal-aux-other	open	I/PRON can/AUX go/VERB ./PUNCT	none
 speaker-label-check	speaker-label	open	A/NOUN :/PUNCT Hello/INTJ ./PUNCT	0:?

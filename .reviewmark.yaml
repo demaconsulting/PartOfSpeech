@@ -29,6 +29,7 @@ needs-review:
   - "data/CONVENTIONS.md"        # Normative labeling conventions, formats and mapping tables of the data
   - "data/README.md"             # Documentation of the data folder
   - "data/corrections/README.md"  # Format, states, rule catalog and precision record of the staged corrections
+  - "data/corrections/*.tsv"      # The staged correction tables (generated; reviewers read and approve the rows)
   - "!**/obj/**"                  # Exclude build output
   - "!**/bin/**"                  # Exclude build output
   - "!**/generated/**"            # Exclude generated documentation (API reference)
@@ -450,6 +451,7 @@ reviews:
     paths:
       - "data/CONVENTIONS.md"                                       # normative conventions and overlay format
       - "data/corrections/README.md"                                # staged corrections: format, states, rule catalog
+      - "data/corrections/*.tsv"                                    # staged tables: mechanical, candidates, exceptions
       - "tools/data/README.md"                                      # tools documentation
       - "tools/data/corrections.py"                                 # overlay tables: validation, apply and reverse
       - "tools/data/convention_rules.py"                            # rule registry: mechanical and check rules

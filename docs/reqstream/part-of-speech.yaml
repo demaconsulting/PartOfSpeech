@@ -324,6 +324,7 @@ sections:
           the project does not accept.
         tests:
           - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
+          - PartOfSpeech_DataLicensing_Corrections_AreCoveredByTheLicenseGate
 
       - id: PartOfSpeech-Licensing-UdEwtNotCommitted
         title: The repository shall not contain any UD English-EWT data.
