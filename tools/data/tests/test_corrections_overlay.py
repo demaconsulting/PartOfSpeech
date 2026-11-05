@@ -330,15 +330,21 @@ class CommandLineTests(unittest.TestCase):
         self.assertIn("token-mismatch", text)
 
     def test_validate_reports_a_conflict_between_two_tables(self):
-        # Arrange
+        # Arrange: an adjudicated row for the token of a mechanical row that does not start from the same corpus value
         self.write_mechanical([OUT_OF])
-        other = OUT_OF._replace(new_tag="INTJ", provenance="llm:model-a:run1")
-        corrections.write_table(os.path.join(self.folder, "llm.tsv"), "corrections", HEADER, [other])
+        other = OUT_OF._replace(old_tag="ADP", new_tag="INTJ", provenance="llm:opus+sol:b001")
+        corrections.write_table(os.path.join(self.folder, "adjudicated.tsv"), "corrections", HEADER, [other])
         # Act
         code, text = run(corrections.main, ["--data-dir", self.data, "validate"])
         # Assert
         self.assertEqual(1, code)
         self.assertIn("across tables: conflict", text)
+
+    def test_the_correction_tables_are_mechanical_then_adjudicated(self):
+        # Arrange and Act: the single list that load, validate, apply and the linter use
+        names = corrections.CORRECTION_TABLES
+        # Assert
+        self.assertEqual(("mechanical.tsv", "adjudicated.tsv"), names)
 
     def test_apply_is_a_dry_run_unless_write_is_given_and_reverse_undoes_it(self):
         # Arrange

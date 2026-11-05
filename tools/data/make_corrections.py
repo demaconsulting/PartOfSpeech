@@ -13,6 +13,11 @@ decisions use the Penn tag of the `source_tag` column where it disambiguates). T
 detectors of convention_candidates.py and every `check` rule violation) go to candidates.tsv for the adjudication. exceptions.tsv is
 written header-only: it is where a reviewed "keep as is" decision is recorded later.
 
+`adjudicated.tsv` (the decisions of the two blind taggers, one row per token, written by tools/data/adjudicate.py) is NOT produced
+here and is never rewritten by this generator: `--check` only validates it when it exists (corrections.adjudicated_findings).
+An adjudicated row replaces the mechanical row of the same token (see corrections.combine_tables); mechanical.tsv itself, the
+rules and `fixed-point` do not change.
+
 The output is a pure function of the committed corpora, the lexicon (for the informational count only) and the rules, in
 deterministic order, so `--check` is exact. The tables describe the corpora as committed *before* the corrections are applied (the
 header lists the SHA-256 of each corpus file the rows were derived from); `--check` is meaningful only until then.
@@ -302,7 +307,15 @@ def main(argv=None):
         if different:
             print("FAILED: differs from the committed file(s): " + ", ".join(different))
             return 1
-        print("committed tables are up to date")
+        findings = []
+        if os.path.exists(os.path.join(corrections.corrections_dir(args.data_dir), corrections.ADJUDICATED_TABLE)):
+            # The full overlay validation: row rules, supersession and conflicts across the tables, the corpora and the adjudication findings.
+            findings = corrections.validate_overlay(args.data_dir)[0]
+        if findings:
+            print("FAILED: %s has %d problems, first: %s" % (corrections.ADJUDICATED_TABLE, len(findings), findings[0]))
+            return 1
+        print("committed tables are up to date" + (" (and %s is valid)" % corrections.ADJUDICATED_TABLE if os.path.exists(
+            os.path.join(corrections.corrections_dir(args.data_dir), corrections.ADJUDICATED_TABLE)) else ""))
         return 0
     write_files(files, args.data_dir)
     print("wrote %s" % ", ".join(files))

@@ -430,10 +430,11 @@ internal static class DataFiles
 internal static class CorrectionTables
 {
     /// <summary>
-    ///     The names of the tables of corrections, relative to <c>data/corrections</c>; <c>llm.tsv</c> exists only after
-    ///     the adjudication of the candidates.
+    ///     The names of the tables of corrections, relative to <c>data/corrections</c>, in the order of precedence:
+    ///     <c>adjudicated.tsv</c> (the decisions of the two blind taggers) exists only after the adjudication of the
+    ///     candidates, and its row replaces the <c>mechanical.tsv</c> row of the same token.
     /// </summary>
-    public static readonly IReadOnlyList<string> CorrectionTableNames = new[] { "mechanical.tsv", "llm.tsv" };
+    public static readonly IReadOnlyList<string> CorrectionTableNames = new[] { "mechanical.tsv", "adjudicated.tsv" };
 
     /// <summary>
     ///     The columns of a table of corrections.
@@ -510,6 +511,72 @@ internal static class CorrectionTables
     /// <param name="name">The file name, for example <c>mechanical.tsv</c>.</param>
     /// <returns>The full path.</returns>
     public static string FilePath(string name) => DataFiles.Data("corrections/" + name);
+
+    /// <summary>
+    ///     Gets the address of the token that a corrections row changes: source, split, sentence id and token index.
+    /// </summary>
+    /// <param name="table">The table that holds the row.</param>
+    /// <param name="row">The row.</param>
+    /// <returns>The key that is the same for the rows of any table of corrections that change the same token.</returns>
+    public static string CorrectionAddress(DataTable table, string[] row) => AddressKey("corrections", table, row);
+
+    /// <summary>
+    ///     Finds what an adjudicated row does, with the same rules as the Python validator.
+    /// </summary>
+    /// <remarks>
+    ///     An adjudicated row is exactly one of: <c>tag</c> (the tag changes, the base status stays, the flags may
+    ///     change), <c>disputed</c> (the tag stays, the base becomes <c>disputed</c>, the flags stay) or <c>flags</c> (the
+    ///     tag and the base stay, the flags change).
+    /// </remarks>
+    /// <param name="table">The table that holds the row.</param>
+    /// <param name="row">The row, valid on its own.</param>
+    /// <returns>The kind of the row, or <c>null</c> when it is none of the three.</returns>
+    public static string? AdjudicatedKind(DataTable table, string[] row)
+    {
+        var oldStatus = table.Cell(row, "old_status");
+        var newStatus = table.Cell(row, "new_status");
+        if (!IsStatus(oldStatus, out var oldBase) || !IsStatus(newStatus, out var newBase))
+        {
+            return null;
+        }
+
+        var oldFlags = oldStatus.Substring(oldBase.Length);
+        var newFlags = newStatus.Substring(newBase.Length);
+        if (table.Cell(row, "old_tag") != table.Cell(row, "new_tag"))
+        {
+            return oldBase == newBase ? "tag" : null;
+        }
+
+        if (oldBase != newBase)
+        {
+            return newBase == "disputed" && oldFlags == newFlags ? "disputed" : null;
+        }
+
+        return oldFlags != newFlags ? "flags" : null;
+    }
+
+    /// <summary>
+    ///     Lists the rows of the tables of corrections that are in effect: every row, except the <c>mechanical.tsv</c>
+    ///     row of a token that an <c>adjudicated.tsv</c> row replaces (the mechanical row stays in its file, ignored).
+    /// </summary>
+    /// <param name="tables">The tables of corrections with their file names.</param>
+    /// <returns>The table and the row of every row in effect.</returns>
+    public static IEnumerable<(DataTable Table, string[] Row)> EffectiveCorrections(IReadOnlyList<(string Name, DataTable Table)> tables)
+    {
+        var replaced = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (_, table) in tables.Where(entry => entry.Name == "adjudicated.tsv"))
+        {
+            replaced.UnionWith(table.Rows.Select(row => CorrectionAddress(table, row)));
+        }
+
+        foreach (var (name, table) in tables)
+        {
+            foreach (var row in table.Rows.Where(row => name != "mechanical.tsv" || !replaced.Contains(CorrectionAddress(table, row))))
+            {
+                yield return (table, row);
+            }
+        }
+    }
 
     /// <summary>
     ///     Finds the first error of one corrections row, with the same checks in the same order as the Python validator.

@@ -11,15 +11,20 @@ all go through it.
                                                        # show (or, with --write, perform) the corrections on the corpus files
   python tools/data/corrections.py show --sent-id ID   # the rows of a sentence, in context
 
-Three tables share the module (see data/corrections/README.md and data/CONVENTIONS.md, "Other Formats"):
+Four tables share the module (see data/corrections/README.md and data/CONVENTIONS.md, "Other Formats"):
 
-* `corrections` (`mechanical.tsv`, later `llm.tsv`): the changes themselves;
+* `corrections` (`mechanical.tsv` of the rules, `adjudicated.tsv` of the two blind taggers): the changes themselves;
 * `candidates` (`candidates.tsv`): judgment cases for the adjudication, never changes;
 * `exceptions` (`exceptions.tsv`): "reviewed, keep as is" decisions that the linter honors.
 
 State-aware validation: a corrections table is valid when EVERY row matches the corpus in the pending state (token,
 `old_tag`, `old_status`) or EVERY row matches in the applied state (`new_*`); a mix of both is an error. The same files stay
 valid after the corrections are applied to the corpora.
+
+One row per token, with one exception (supersession, see `combine_tables`): an `adjudicated.tsv` row replaces the
+`mechanical.tsv` row of the same token when both rows start from the same corpus value (`old_tag`, `old_status`). The
+mechanical row stays in its file, byte for byte, and is only ignored by everything that validates, applies or simulates the
+corrections (the "effective" rows); `validate` reports the number of superseded rows as a note.
 """
 import argparse
 import collections
@@ -53,7 +58,10 @@ CORPUS_FILES = {("open", "train"): "open/train.tsv", ("open", "dev"): "open/dev.
 LINT_ONLY_FILES = {("ste", "-"): "eval/ste-challenge/test.tsv"}
 
 CORRECTIONS_FOLDER = "corrections"
-CORRECTION_TABLES = ("mechanical.tsv", "llm.tsv")  # tables of kind `corrections`, in this order; llm.tsv appears later
+MECHANICAL_TABLE = "mechanical.tsv"
+ADJUDICATED_TABLE = "adjudicated.tsv"
+CORRECTION_TABLES = (MECHANICAL_TABLE, ADJUDICATED_TABLE)  # tables of kind `corrections`, in this order; adjudicated.tsv appears with the adjudication
+ADJUDICATED_PROVENANCE_RE = re.compile(r"^llm:opus\+sol:[a-z0-9]+$")
 CANDIDATES_TABLE = "candidates.tsv"
 EXCEPTIONS_TABLE = "exceptions.tsv"
 
@@ -261,6 +269,103 @@ def table_errors(rows, kind="corrections"):
         else:
             seen[key] = row
     return errors
+
+
+def combine_tables(tables):
+    """Merge the rows of the correction tables into the effective rows: returns (effective, superseded, errors).
+
+    `tables` is a list of `(table name, rows)` in `CORRECTION_TABLES` order. The address of a token is unique across the
+    tables, with one exception: an `adjudicated.tsv` row REPLACES the `mechanical.tsv` row of the same token (the owner's
+    decision: the adjudication of two blind taggers outranks a rule). The replacement is legal only when both rows start from
+    the same corpus value (equal `old_tag` and `old_status`) and the adjudicated row is not the same change as the mechanical
+    one; the superseded mechanical row is returned in `superseded` and is not part of `effective`.
+
+    Every other second row for an address (two mechanical rows, two adjudicated rows, a replacement that starts from a
+    different value, a replacement that repeats the change) is an error ("duplicate" for the same change, "conflict" for a
+    different one) and both rows stay in `effective`, so that the corpora comparison reports them too. Rows that are not valid on
+    their own are reported elsewhere and are left out of the address check.
+    """
+    owners = collections.defaultdict(list)
+    for name, rows in tables:
+        for row in rows:
+            if row_error(row) is None:
+                owners[address(row)].append((name, row))
+    superseded_ids, errors = set(), []
+    for rows in owners.values():
+        if len(rows) < 2:
+            continue
+        first, second = rows[0], rows[1]
+        clean = (len(rows) == 2 and first[0] == MECHANICAL_TABLE and second[0] == ADJUDICATED_TABLE
+                 and first[1].old_tag == second[1].old_tag and first[1].old_status == second[1].old_status
+                 and (first[1].new_tag, first[1].new_status) != (second[1].new_tag, second[1].new_status))
+        if clean:
+            superseded_ids.add(id(first[1]))
+            continue
+        row = second[1]
+        same = first[1][5:10] == row[5:10]  # token, old and new tag, old and new status
+        errors.append("across tables: %s %s#%s" % ("duplicate" if same else "conflict", row.sent_id, row.token_index))
+    effective, superseded = [], []
+    for _, rows in tables:
+        for row in rows:
+            (superseded if id(row) in superseded_ids else effective).append(row)
+    return effective, superseded, errors
+
+
+def adjudicated_row_kind(row):
+    """What an adjudicated row does: `tag` (the tag changes, the base status stays, flags may change), `disputed` (same tag,
+    the base becomes disputed, the flags stay), `flags` (same tag and base, the flags change), or None for a row that is none of these.
+    """
+    try:
+        old_base, old_flags = common.parse_status(row.old_status)
+        new_base, new_flags = common.parse_status(row.new_status)
+    except ValueError:
+        return None
+    if row.old_tag != row.new_tag:
+        return "tag" if old_base == new_base else None
+    if old_base != new_base:
+        return "disputed" if new_base == "disputed" and old_flags == new_flags else None
+    return "flags" if old_flags != new_flags else None
+
+
+def adjudicated_findings(data_dir=None, rows=None, state=None, header=None):
+    """Messages for `adjudicated.tsv` beyond the generic table rules; an empty list when the table is absent or sound.
+
+    Every row is a decision of the two blind taggers (provenance `llm:opus+sol:<batch>`, a `rule:` row does not belong here), is
+    exactly one of the kinds of `adjudicated_row_kind`, and the `# input = <file> sha256 <hash>` header lines name the corpus
+    files as they are (a stale table is a finding), the last check only in the pending state: once the corrections are
+    applied the corpus files have, by design, other hashes. The table is read from `<data>/corrections/adjudicated.tsv`
+    unless the caller passes its `rows` and `header` (the adjudication tool checks a table before it writes it); `state` may be
+    given when the caller has it already.
+    """
+    if rows is None:
+        path = os.path.join(corrections_dir(data_dir), ADJUDICATED_TABLE)
+        if not os.path.exists(path):
+            return []
+        try:
+            header, rows = read_table(path, "corrections")
+        except ValueError as error:
+            return [ADJUDICATED_TABLE + ": " + str(error)]
+    findings = []
+    for row in rows:
+        where = "%s %s#%s" % (ADJUDICATED_TABLE, row.sent_id, row.token_index)
+        if not ADJUDICATED_PROVENANCE_RE.match(row.provenance):
+            findings.append("%s: provenance %r is not llm:opus+sol:<batch>" % (where, row.provenance))
+        if row_error(row) is None and adjudicated_row_kind(row) is None:
+            findings.append("%s: the row is neither a tag change, a disputed mark nor a flag change" % where)
+    if state is None:
+        state = validate_against_corpora([row for row in rows if row_error(row) is None], load_corpora(data_dir))[1]
+    if state != "applied":
+        base = data_dir or common.DATA
+        listed = {}
+        for line in header or []:
+            if line.startswith("# input = ") and " sha256 " in line:
+                name, _, digest = line[len("# input = "):].partition(" sha256 ")
+                listed[name] = digest
+        for key, relative in CORPUS_FILES.items():
+            corpus_path = os.path.join(base, *relative.split("/"))
+            if os.path.exists(corpus_path) and listed.get(relative) != common.sha256_file(corpus_path):
+                findings.append("%s: stale, the corpus file %s has another SHA-256 than the '# input' line" % (ADJUDICATED_TABLE, relative))
+    return findings
 
 
 # ---------------------------------------------------------------- corpora
@@ -532,16 +637,22 @@ def apply_to_files(rows, data_dir=None, reverse=False, write=False):
 # ---------------------------------------------------------------- loading the overlay of a data folder
 
 def load_overlay(data_dir=None):
-    """The tables of `<data>/corrections`: {"corrections": [rows of all correction tables], "candidates": [...], "exceptions": [...]}.
+    """The tables of `<data>/corrections`: {"corrections": [effective rows of all correction tables], "superseded": [...],
+    "candidates": [...], "exceptions": [...]}.
 
-    A table that does not exist is empty (llm.tsv appears only with the adjudication). Problems of the format raise ValueError.
+    "corrections" is what validation, `apply` and the linter's `--apply` use: the rows of `mechanical.tsv` without the ones that
+    an `adjudicated.tsv` row replaces (see `combine_tables`), which are listed in "superseded". A table that does not exist is
+    empty (adjudicated.tsv appears only with the adjudication). Problems of the format raise ValueError; the unresolvable
+    duplicates of an address are left in the rows for `validate_overlay` to report.
     """
     folder = corrections_dir(data_dir)
-    tables = {"corrections": [], "candidates": [], "exceptions": []}
+    tables = {"corrections": [], "superseded": [], "candidates": [], "exceptions": []}
+    found = []
     for name in CORRECTION_TABLES:
         path = os.path.join(folder, name)
         if os.path.exists(path):
-            tables["corrections"].extend(read_table(path, "corrections")[1])
+            found.append((name, read_table(path, "corrections")[1]))
+    tables["corrections"], tables["superseded"], _ = combine_tables(found)
     for kind, name in (("candidates", CANDIDATES_TABLE), ("exceptions", EXCEPTIONS_TABLE)):
         path = os.path.join(folder, name)
         if os.path.exists(path):
@@ -550,11 +661,17 @@ def load_overlay(data_dir=None):
 
 
 def validate_overlay(data_dir=None):
-    """Validate every table of a data folder against its corpora: returns (errors, state, counts)."""
+    """Validate every table of a data folder against its corpora: returns (errors, state, counts).
+
+    The corrections are compared with the corpora as the effective rows (an adjudicated row replaces the mechanical row of
+    its token, see `combine_tables`); the number of superseded rows is returned in `counts["superseded"]` and is a note, not an error.
+    `adjudicated.tsv` is also checked with `adjudicated_findings`.
+    """
     errors = []
     tables = {"corrections": [], "candidates": [], "exceptions": []}
     folder = corrections_dir(data_dir)
     counts = {}
+    found = []
     for name in CORRECTION_TABLES:
         path = os.path.join(folder, name)
         if os.path.exists(path):
@@ -564,7 +681,7 @@ def validate_overlay(data_dir=None):
                 errors.append(str(error))
                 continue
             errors.extend(name + ": " + problem for problem in table_errors(rows))
-            tables["corrections"].extend(rows)
+            found.append((name, rows))
             counts[name] = len(rows)
     for kind, name in (("candidates", CANDIDATES_TABLE), ("exceptions", EXCEPTIONS_TABLE)):
         path = os.path.join(folder, name)
@@ -577,14 +694,11 @@ def validate_overlay(data_dir=None):
             errors.extend(name + ": " + problem for problem in table_errors(rows, kind))
             tables[kind] = rows
             counts[name] = len(rows)
-    # The address of a token is unique across all correction tables (a second row for the same token is a conflict).
-    owners = {}
-    for row in tables["corrections"]:
-        if row_error(row) is None:
-            first = owners.setdefault(address(row), row)
-            if first is not row:
-                same = first[5:10] == row[5:10]  # token, old and new tag, old and new status
-                errors.append("across tables: %s %s#%s" % ("duplicate" if same else "conflict", row.sent_id, row.token_index))
+    # The address of a token is unique across all correction tables, except that an adjudicated row replaces a mechanical one.
+    tables["corrections"], superseded, across = combine_tables(found)
+    errors.extend(across)
+    if superseded:
+        counts["superseded"] = len(superseded)
     corpora = load_corpora(data_dir)
     # Rows that are malformed on their own are already reported above; only well-formed rows are compared with the corpora
     # (a malformed index must not reach the code that converts it to a number).
@@ -596,6 +710,8 @@ def validate_overlay(data_dir=None):
     errors.extend(row_errors)
     errors.extend(validate_candidates_against_corpora(valid_candidates, corpora, check_tags=state != "applied"))
     errors.extend(validate_exceptions_against_corpora(valid_exceptions, corpora))
+    if ADJUDICATED_TABLE in counts:
+        errors.extend(adjudicated_findings(data_dir, state=state))
     return errors, state, counts
 
 
@@ -604,7 +720,10 @@ def validate_overlay(data_dir=None):
 def _command_validate(args):
     errors, state, counts = validate_overlay(args.data_dir)
     for name, count in counts.items():
-        print("%-16s %d rows" % (name, count))
+        if name == "superseded":
+            print("note: %d mechanical rows are superseded by adjudicated rows (the same token; ignored by validate and apply)" % count)
+        else:
+            print("%-16s %d rows" % (name, count))
     if errors:
         print("%d errors:" % len(errors))
         for message in errors[:args.limit]:
@@ -631,6 +750,10 @@ def _command_apply(args):
     wanted = "applied" if args.reverse else "pending"
     if state not in (wanted, "empty"):
         print("refusing to %s: the corpora are in the %s state" % ("reverse" if args.reverse else "apply", state))
+        return 1
+    findings = adjudicated_findings(args.data_dir, state=state)
+    if findings:
+        print("refusing to %s: %s has %d findings (first: %s)" % ("reverse" if args.reverse else "apply", ADJUDICATED_TABLE, len(findings), findings[0]))
         return 1
     try:
         result = apply_to_files(tables["corrections"], args.data_dir, args.reverse, args.write)
