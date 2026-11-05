@@ -14,6 +14,26 @@ multiword-infinitive-guard	multiword-prep	open	It/PRON is/VERB due/ADJ to/PART a
 multiword-already-right	multiword-prep	open	It/PRON is/VERB due/ADJ to/ADP rain/NOUN ./PUNCT	none
 multiword-phrasal-along-guard	multiword-prep	open	Come/VERB along/ADV with/ADP me/PRON ./PUNCT	none
 multiword-rather-than-clause-guard	multiword-prep	open	Stay/VERB rather/ADV than/CCONJ he/PRON leaves/VERB ./PUNCT	none
+in-front-of-adj	in-front-of	open	He/PRON stood/VERB in/ADP front/ADJ of/ADP a/DET light/NOUN ./PUNCT	3:NOUN
+in-front-of-masc	in-front-of	masc	She/PRON/PRP sat/VERB/VBD in/ADP/IN front/ADJ/JJ of/ADP/IN me/PRON/PRP ./PUNCT/.	3:NOUN
+in-front-of-already-right	in-front-of	open	He/PRON stood/VERB in/ADP front/NOUN of/ADP a/DET light/NOUN ./PUNCT	none
+in-front-of-last-word-adv	in-front-of	open	He/PRON stood/VERB in/ADP front/ADJ of/ADV a/DET light/NOUN ./PUNCT	3:NOUN,4:ADP
+in-front-of-sconj-kept	in-front-of	open	He/PRON stood/VERB in/ADP front/ADJ of/SCONJ what/PRON he/PRON saw/VERB ./PUNCT	3:NOUN
+in-front-of-clause-guard	in-front-of	open	He/PRON stood/VERB in/ADP front/ADJ of/ADV he/PRON went/VERB ./PUNCT	3:NOUN
+in-front-of-gerund	in-front-of	open	He/PRON sat/VERB in/ADP front/ADJ of/ADV watching/VERB ./PUNCT	3:NOUN,4:ADP
+in-front-of-in-adverb-guard	in-front-of	open	Come/VERB in/ADV front/ADJ of/ADP me/PRON ./PUNCT	none
+in-front-of-cut-off-guard	in-front-of	open	He/PRON stood/VERB in/ADP front/ADJ of/ADP ./PUNCT	none
+as-well-as-conjunction	as-well-as	open	Cats/NOUN ,/PUNCT as/CCONJ well/CCONJ as/CCONJ dogs/NOUN ./PUNCT	2:ADV,3:ADV,4:ADP
+as-well-as-masc	as-well-as	masc	It/PRON/PRP is/VERB/VBZ harmonic/ADJ/JJ as/CCONJ/CC well/CCONJ/CC as/CCONJ/CC formal/ADJ/JJ ./PUNCT/.	3:ADV,4:ADV,5:ADP
+as-well-as-first-as-adp	as-well-as	open	Fish/NOUN ,/PUNCT as/ADP well/ADV as/ADP Israel/PROPN ./PUNCT	2:ADV
+as-well-as-gerund	as-well-as	open	Fish/NOUN ,/PUNCT as/ADP well/ADV as/CCONJ providing/VERB homes/NOUN ./PUNCT	2:ADV,4:ADP
+as-well-as-already-right	as-well-as	open	Cats/NOUN as/ADV well/ADV as/ADP dogs/NOUN ./PUNCT	none
+as-well-as-sconj-kept	as-well-as	open	Cats/NOUN as/ADV well/ADV as/SCONJ the/DET dog/NOUN knew/VERB ./PUNCT	none
+as-well-as-clause-guard	as-well-as	open	He/PRON sings/VERB as/ADV well/ADV as/CCONJ he/PRON can/AUX ./PUNCT	none
+as-well-as-possible-guard	as-well-as	open	Do/VERB it/PRON as/ADV well/ADV as/CCONJ possible/ADJ ./PUNCT	none
+as-well-as-bare-verb-guard	as-well-as	open	We/PRON measure/VERB as/ADV well/ADV as/CCONJ analyze/VERB ./PUNCT	none
+as-well-as-adjective-well-guard	as-well-as	open	He/PRON is/VERB as/ADV well/ADJ as/ADP me/PRON ./PUNCT	none
+as-well-as-cut-off-guard	as-well-as	open	He/PRON ran/VERB as/ADV well/ADV as/ADP ./PUNCT	none
 according-to-verb	according-to	silver	According/VERB to/ADP him/PRON ,/PUNCT it/PRON works/VERB ./PUNCT	0:ADP
 according-to-already-right	according-to	open	according/ADP to/ADP him/PRON	none
 out-of-after-be	out-of	open	It/PRON is/VERB out/ADV of/ADP order/NOUN ./PUNCT	2:ADP
@@ -24,12 +44,25 @@ at-least-adv	at-least	open	At/ADP least/ADV five/NUM came/VERB ./PUNCT	1:ADJ
 at-most-pron	at-least	open	At/ADP most/PRON ten/NUM ./PUNCT	1:ADJ
 at-least-already-right	at-least	open	At/ADP least/ADJ five/NUM came/VERB ./PUNCT	none
 the-least-guard	at-least	open	It/PRON hurt/VERB the/DET least/ADV ./PUNCT	none
+at-least-adverb-at	at-least	open	You/PRON need/VERB at/ADV least/ADV two/NUM ./PUNCT	2:ADP,3:ADJ
+at-least-adverb-at-masc	at-least	masc	You/PRON/PRP need/VERB/VBP at/ADV/RB most/ADV/RBS ten/NUM/CD ./PUNCT/.	2:ADP,3:ADJ
 more-than-number	more-than	open	More/ADV than/ADP 5/NUM men/NOUN came/VERB ./PUNCT	0:ADJ
 more-than-conjunction	more-than	open	More/ADJ than/SCONJ 5/NUM men/NOUN came/VERB ./PUNCT	1:ADP
 more-than-less-half	more-than	open	It/PRON took/VERB less/ADV than/ADP half/ADJ a/DET day/NOUN ./PUNCT	2:ADJ
 more-than-clause-guard	more-than	open	It/PRON is/VERB not/PART more/ADV than/SCONJ a/DET cloud/NOUN is/VERB wet/ADJ ./PUNCT	none
 more-than-any-guard	more-than	open	It/PRON is/VERB not/PART any/ADV more/ADV than/SCONJ 5/NUM ./PUNCT	none
 more-than-adjective-guard	more-than	open	He/PRON is/VERB more/ADV than/SCONJ happy/ADJ ./PUNCT	none
+more-than-currency	more-than	open	It/PRON cost/VERB more/ADV than/SCONJ $/SYM 5/NUM ./PUNCT	2:ADJ,3:ADP
+more-than-spelled-number	more-than	open	For/ADP more/ADV than/ADP fifty/ADJ years/NOUN ./PUNCT	1:ADJ
+more-than-hyphenated-number	more-than	open	Not/PART more/ADV than/ADP fifty-four/ADJ ./PUNCT	1:ADJ
+more-than-twice	more-than	open	It/PRON looks/VERB more/ADV than/SCONJ twice/ADV the/DET size/NOUN ./PUNCT	2:ADJ,3:ADP
+more-than-once-guard	more-than	open	It/PRON happened/VERB more/ADV than/ADP once/ADV ./PUNCT	none
+more-than-near-number-word-guard	more-than	open	It/PRON is/VERB more/ADV than/SCONJ tenable/ADJ ./PUNCT	none
+more-than-article-measure	more-than	open	It/PRON took/VERB less/ADV than/SCONJ a/DET year/NOUN ./PUNCT	2:ADJ,3:ADP
+more-than-article-number-word	more-than	open	We/PRON made/VERB more/ADV than/ADP a/DET dozen/NOUN ./PUNCT	2:ADJ
+more-than-article-hyphenated-measure	more-than	open	It/PRON is/VERB no/DET less/ADV than/SCONJ a/DET six-month/ADJ term/NOUN ./PUNCT	3:ADJ,4:ADP
+more-than-article-noun-guard	more-than	open	It/PRON is/VERB little/ADV more/ADV than/SCONJ a/DET ghost/NOUN ./PUNCT	none
+more-than-article-adjective-guard	more-than	open	He/PRON was/VERB no/DET less/ADV than/SCONJ an/DET honorable/ADJ prisoner/NOUN ./PUNCT	none
 a-little-adv	a-little	open	He/PRON is/VERB a/DET little/ADV tired/ADJ ./PUNCT	3:ADJ
 a-little-pron	a-little	open	Wait/VERB a/DET little/PRON ./PUNCT	2:ADJ
 a-little-name-guard	a-little	open	Meet/VERB a/DET Little/NOUN ./PUNCT	none
@@ -38,15 +71,38 @@ partitive-det-all	partitive-det	open	All/PRON of/ADP them/PRON left/VERB ./PUNCT
 partitive-det-masc	partitive-det	masc	Some/PRON/DT of/ADP/IN the/DET/DT men/NOUN/NNS stayed/VERB/VBD ./PUNCT/.	0:DET
 partitive-det-at-all-guard	partitive-det	open	No/DET chance/NOUN at/ADP all/ADV of/ADP it/PRON ./PUNCT	none
 partitive-det-of-course-guard	partitive-det	open	Some/PRON of/ADP course/NOUN ./PUNCT	none
+partitive-det-at-some	partitive-det	open	Look/VERB at/ADP some/PRON of/ADP them/PRON ./PUNCT	2:DET
+partitive-det-noun-tag	partitive-det	open	It/PRON is/VERB just/ADV about/ADP all/NOUN of/ADP it/PRON ./PUNCT	4:DET
+partitive-det-correlative-guard	partitive-det	open	A/DET lack/NOUN either/CCONJ of/ADP guidance/NOUN or/CCONJ hope/NOUN ./PUNCT	none
+partitive-det-all-of-a-sudden-guard	partitive-det	open	Now/ADV all/ADV of/ADP a/DET sudden/NOUN I/PRON 'm/VERB glad/ADJ ./PUNCT	none
 partitive-adj-most	partitive-adj	open	Most/PRON of/ADP them/PRON left/VERB ./PUNCT	0:ADJ
 partitive-adj-more-of-a-guard	partitive-adj	open	It/PRON was/VERB more/PRON of/ADP a/DET surprise/NOUN ./PUNCT	none
 partitive-adj-most-of-all-guard	partitive-adj	open	Most/ADV of/ADP all/DET it/PRON hurt/VERB ./PUNCT	none
+partitive-adj-noun-tag	partitive-adj	open	In/ADP many/NOUN of/ADP the/DET battles/NOUN ./PUNCT	1:ADJ
+partitive-adj-det-tag	partitive-adj	open	Noblemen/NOUN ,/PUNCT many/DET of/ADP whom/PRON left/VERB ./PUNCT	2:ADJ
 partitive-noun-plenty	partitive-noun	open	There/PRON is/VERB plenty/PRON of/ADP time/NOUN ./PUNCT	2:NOUN
 partitive-noun-already-right	partitive-noun	open	There/PRON is/VERB plenty/NOUN of/ADP time/NOUN ./PUNCT	none
 one-of-the	one-of	open	One/PRON of/ADP the/DET men/NOUN left/VERB ./PUNCT	0:NUM
 one-of-them	one-of	open	I/PRON saw/VERB one/PRON of/ADP them/PRON ./PUNCT	2:NUM
 one-of-which-guard	one-of	open	Which/PRON one/PRON of/ADP the/DET two/NUM ?/PUNCT	none
 one-of-the-one-guard	one-of	open	The/DET one/PRON of/ADP them/PRON ./PUNCT	none
+one-of-that-sconj	one-of	open	She/PRON noticed/VERB that/SCONJ one/PRON of/ADP the/DET trees/NOUN fell/VERB ./PUNCT	3:NUM
+one-of-only	one-of	open	Only/ADV one/PRON of/ADP the/DET men/NOUN left/VERB ./PUNCT	1:NUM
+one-of-name-with-possessive	one-of	open	It/PRON was/VERB one/PRON of/ADP Africa/PROPN 's/PART first/ADJ cities/NOUN ./PUNCT	2:NUM
+one-of-long-name-with-possessive	one-of	open	It/PRON was/VERB one/PRON of/ADP New/PROPN York/PROPN City/PROPN 's/PART stations/NOUN ./PUNCT	2:NUM
+one-of-number-after	one-of	open	She/PRON was/VERB one/PRON of/ADP thirteen/NUM children/NOUN ./PUNCT	2:NUM
+one-of-plural-adjective-phrase	one-of	open	It/PRON is/VERB one/PRON of/ADP great/ADJ accomplishments/NOUN ./PUNCT	2:NUM
+one-of-quantifier-adjective	one-of	open	It/PRON is/VERB one/PRON of/ADP many/ADJ reasons/NOUN ./PUNCT	2:NUM
+one-of-relative-pronoun	one-of	open	Rings/NOUN ,/PUNCT on/ADP one/PRON of/ADP which/PRON I/PRON looked/VERB ./PUNCT	3:NUM
+one-of-bare-noun-guard	one-of	open	It/PRON is/VERB one/PRON of/ADP style/NOUN ./PUNCT	none
+one-of-singular-adjective-guard	one-of	open	It/PRON is/VERB one/PRON of/ADP great/ADJ prominence/NOUN ./PUNCT	none
+one-of-bare-name-guard	one-of	open	It/PRON is/VERB one/PRON of/ADP Humanity/PROPN ./PUNCT	none
+one-of-demonstrative-guard	one-of	open	It/PRON is/VERB one/PRON of/ADP that/DET brand/NOUN ./PUNCT	none
+one-of-negative-determiner-guard	one-of	open	It/PRON is/VERB one/PRON of/ADP no/DET importance/NOUN ./PUNCT	none
+one-of-a-kind-guard	one-of	open	It/PRON is/VERB one/PRON of/ADP a/DET kind/NOUN ./PUNCT	none
+one-of-before-determiner-guard	one-of	open	Take/VERB that/DET one/PRON of/ADP the/DET two/NUM ./PUNCT	none
+one-of-before-adjective-guard	one-of	open	The/DET principal/ADJ one/PRON of/ADP them/PRON ./PUNCT	none
+one-of-each-one-guard	one-of	open	He/PRON asked/VERB each/DET one/PRON of/ADP us/PRON ./PUNCT	none
 half-noun-of	half-noun	open	Half/NUM of/ADP them/PRON left/VERB ./PUNCT	0:NOUN
 half-noun-after-a-guard	half-noun	open	A/DET half/NOUN of/ADP it/PRON ./PUNCT	none
 half-det-the	half-det	open	Half/ADJ the/DET men/NOUN left/VERB ./PUNCT	0:DET
@@ -95,6 +151,7 @@ get-passive-already-aux	get-passive	open	He/PRON got/AUX fired/VERB ./PUNCT	none
 be-copula-very	be-copula-gradable	open	She/PRON was/AUX very/ADV confused/VERB ./PUNCT	1:VERB,3:ADJ
 be-copula-really-gradable	be-copula-gradable	open	She/PRON was/AUX really/ADV confused/VERB ./PUNCT	1:VERB,3:ADJ
 be-copula-weak-degree-guard	be-copula-gradable	open	It/PRON was/AUX rather/ADV hinted/VERB than/SCONJ told/VERB ./PUNCT	none
+be-copula-weak-degree-corpus-form-guard	be-copula-gradable	open	The/DET issue/NOUN was/AUX really/ADV engaged/VERB at/ADP Camp/PROPN David/PROPN ./PUNCT	none
 be-copula-focus-adverb-guard	be-copula-gradable	open	It/PRON is/AUX particularly/ADV seen/VERB here/ADV ./PUNCT	none
 be-copula-agent-guard	be-copula-gradable	open	She/PRON was/AUX very/ADV confused/VERB by/ADP him/PRON ./PUNCT	none
 link-participle-seemed	link-participle	open	She/PRON seemed/VERB pleased/VERB ./PUNCT	2:ADJ
@@ -118,6 +175,10 @@ to-not-infinitive-determiner	to-not-infinitive	open	Go/VERB to/PART the/DET stor
 to-not-infinitive-number	to-not-infinitive	open	Raise/VERB 5/NUM to/PART 10/NUM ./PUNCT	2:ADP
 to-not-infinitive-bare-verb-guard	to-not-infinitive	open	I/PRON want/VERB to/PART bring/VERB it/PRON ./PUNCT	none
 to-not-infinitive-be-guard	to-not-infinitive	open	I/PRON want/VERB to/PART be/AUX there/ADV ./PUNCT	none
+to-not-infinitive-control-verb-guard	to-not-infinitive	open	She/PRON hopes/VERB to/PART one/NUM day/NOUN become/VERB rich/ADJ ./PUNCT	none
+to-not-infinitive-forgot-gerund-guard	to-not-infinitive	open	I/PRON forgot/VERB to/PART being/VERB an/DET umbrella/NOUN ./PUNCT	none
+to-not-infinitive-one-guard	to-not-infinitive	open	They/PRON went/VERB to/PART one/NUM another/DET ./PUNCT	none
+to-not-infinitive-determiner-bare-verb-guard	to-not-infinitive	open	It/PRON is/VERB used/VERB to/PART a/DET make/VERB it/PRON ./PUNCT	none
 modal-aux-can-not	modal-aux	silver	She/PRON can/VERB not/PART go/VERB ./PUNCT	1:AUX
 modal-aux-noun-guard	modal-aux	open	He/PRON likes/VERB to/PART can/VERB fruit/NOUN ./PUNCT	none
 modal-aux-capitalized-guard	modal-aux	open	May/VERB is/VERB a/DET month/NOUN ./PUNCT	none

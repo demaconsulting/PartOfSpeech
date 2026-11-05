@@ -564,6 +564,35 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
+    ///     Proves that the field validation of the candidate rows gives the verdicts of the shared cases
+    ///     (<c>tools/data/tests/candidate-cases.tsv</c>), which the Python validator of the overlay is also held to; the
+    ///     syntax of the fields is validated whether the corrections are pending or applied.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataCorrections_CandidateCases_MatchSharedFixture()
+    {
+        // Arrange: the shared cases (one candidate row and the expected verdict each)
+        var cases = DataFiles.ReadTable(DataFiles.Repository("tools/data/tests/candidate-cases.tsv"));
+
+        // Act: validate every case row and compare the verdict
+        var problems = cases.Rows
+            .Select(row => (Case: cases.Cell(row, "case_id"), Expected: cases.Cell(row, "result"), Actual: CorrectionTables.CandidateError(cases, row) ?? "valid"))
+            .Where(verdict => verdict.Expected != verdict.Actual)
+            .Select(verdict => $"{verdict.Case}: expected {verdict.Expected}, got {verdict.Actual}")
+            .ToList();
+
+        // Assert: the cases are not empty, cover valid rows and every error code, and every verdict agrees
+        Assert.True(cases.Rows.Count > 25);
+        var results = cases.Column("result").ToList();
+        foreach (var code in new[] { "valid", "bad-source", "bad-split", "bad-index", "bad-token", "bad-span", "bad-current-state", "bad-rule-or-hint" })
+        {
+            Assert.Contains(code, results);
+        }
+
+        Assert.Empty(problems);
+    }
+
+    /// <summary>
     ///     Proves that every correction row and every exception row addresses an existing token of a committed corpus
     ///     (sentence id, document id, token index and form), and that the correction rows match the corpora either all
     ///     in the pending state (old tag and status) or all in the applied state (new tag and status).

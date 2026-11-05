@@ -59,11 +59,18 @@ EXCEPTIONS_TABLE = "exceptions.tsv"
 
 PROVENANCE_RE = re.compile(r"^(?:rule:[a-z0-9]+(?:-[a-z0-9]+)*|llm:[^:\s]+:[^:\s]+)$")
 INDEX_RE = re.compile(r"^(?:0|[1-9][0-9]*)$")
+SPAN_RE = re.compile(r"^[1-9][0-9]*$")
+RULE_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 def corrections_dir(data_dir=None):
     """Folder of the overlay tables (`<data>/corrections`)."""
     return os.path.join(data_dir or common.DATA, CORRECTIONS_FOLDER)
+
+
+def has_valid_index(row):
+    """True when the `token_index` of a row is a non-negative integer without leading zeros (safe to convert with `int`)."""
+    return bool(INDEX_RE.match(row.token_index))
 
 
 def sort_key(row):
@@ -170,11 +177,58 @@ def row_error(row):
     return None
 
 
+def candidate_error(row, check_registry=False):
+    """First error of one candidate row as (code, message), or None when its fields are valid on their own.
+
+    Independent of the corpus state: the syntax of every field is checked in the pending and in the applied state alike
+    (only the comparison of `current_tag` and `current_status` with the corpus is state dependent, see
+    `validate_candidates_against_corpora`). The codes and their order are shared with the C# data tests through
+    tools/data/tests/candidate-cases.tsv: bad-source, bad-split, bad-index, bad-token, bad-span, bad-current-state,
+    bad-rule-or-hint. With `check_registry` a last check, which only this module can make, follows: unknown-rule (the id is
+    neither a rule nor a candidate detector).
+    """
+    if row.source not in SOURCES:
+        return "bad-source", "source " + repr(row.source) + " is not one of " + ", ".join(SOURCES)
+    if row.split not in SOURCES[row.source]:
+        return "bad-split", "split " + repr(row.split) + " is not legal for source " + row.source
+    if not INDEX_RE.match(row.token_index):
+        return "bad-index", "token_index " + repr(row.token_index) + " is not a non-negative integer"
+    if row.token == "" or any(ch.isspace() for ch in row.token) or row.sent_id == "" or row.source_id == "":
+        return "bad-token", "empty token, sentence id or document id, or white space in the token"
+    if not SPAN_RE.match(row.span_length):
+        return "bad-span", "span_length " + repr(row.span_length) + " is not a positive integer"
+    try:
+        common.parse_status(row.current_status)
+    except ValueError as error:
+        return "bad-current-state", str(error)
+    if row.current_tag not in common.UPOS_SET:
+        return "bad-current-state", "current_tag " + repr(row.current_tag) + " is not one of the 17 tags"
+    if not RULE_ID_RE.match(row.candidate_rule) or row.hint == "" or row.context == "":
+        return "bad-rule-or-hint", "candidate_rule is not an id, or the hint or the context is empty"
+    if check_registry:
+        import convention_candidates
+        import convention_rules
+        if row.candidate_rule not in convention_candidates.candidate_ids() | convention_rules.rule_ids():
+            return "unknown-rule", "candidate_rule " + repr(row.candidate_rule) + " is neither a rule nor a candidate detector"
+    return None
+
+
+def row_errors(rows):
+    """Messages for the rows of a corrections table (or several) that are not valid on their own (no ordering or uniqueness check)."""
+    errors = []
+    for row in rows:
+        problem = row_error(row)
+        if problem:
+            errors.append("%s %s#%s: %s (%s)" % (problem[0], row.sent_id, row.token_index, problem[1], row.token))
+    return errors
+
+
 def table_errors(rows, kind="corrections"):
     """Errors of a whole table (or of several tables concatenated): row errors, ordering and unique addresses.
 
     A duplicate address with the same change is a duplicate; with a different change it is a conflict. The result is
-    a list of messages, empty when the rows are valid.
+    a list of messages, empty when the rows are valid. A row with an invalid field is reported and then skipped, so a
+    malformed index never reaches the ordering or the address (which convert it to a number).
     """
     errors = []
     seen = {}
@@ -182,6 +236,11 @@ def table_errors(rows, kind="corrections"):
     for row in rows:
         if kind == "corrections":
             problem = row_error(row)
+            if problem:
+                errors.append("%s %s#%s: %s (%s)" % (problem[0], row.sent_id, row.token_index, problem[1], row.token))
+                continue
+        elif kind == "candidates":
+            problem = candidate_error(row, check_registry=True)
             if problem:
                 errors.append("%s %s#%s: %s (%s)" % (problem[0], row.sent_id, row.token_index, problem[1], row.token))
                 continue
@@ -245,6 +304,9 @@ def validate_against_corpora(rows, corpora):
     errors = []
     states = collections.Counter()
     for row in rows:
+        if not has_valid_index(row):
+            errors.append("bad-index %s#%s" % (row.sent_id, row.token_index))
+            continue
         corpus = corpora.get((row.source, row.split))
         if corpus is None:
             errors.append("no-corpus %s/%s" % (row.source, row.split))
@@ -282,10 +344,14 @@ def validate_candidates_against_corpora(rows, corpora, check_tags=True):
     """Errors of candidate rows against the corpora: address and token always, `current_tag/status` when `check_tags`.
 
     The tag columns describe the corpus before the corrections; once they are applied they are history, so the caller
-    passes `check_tags=False` for the applied state.
+    passes `check_tags=False` for the applied state. Only this state-dependent comparison is skipped: the syntax of every
+    field is validated by `candidate_error` in both states. A row with a malformed index or span is reported and skipped.
     """
     errors = []
     for row in rows:
+        if not has_valid_index(row) or not SPAN_RE.match(row.span_length):
+            errors.append("bad-index-or-span %s#%s+%s" % (row.sent_id, row.token_index, row.span_length))
+            continue
         corpus = corpora.get((row.source, row.split))
         sentence = corpus.by_id.get(row.sent_id) if corpus else None
         if sentence is None or sentence["source_id"] != row.source_id:
@@ -311,7 +377,9 @@ def validate_exceptions_against_corpora(rows, corpora):
     for row in rows:
         corpus = corpora.get((row.source, row.split))
         sentence = corpus.by_id.get(row.sent_id) if corpus else None
-        if sentence is None or sentence["source_id"] != row.source_id:
+        if not has_valid_index(row):
+            errors.append("bad-index %s#%s" % (row.sent_id, row.token_index))
+        elif sentence is None or sentence["source_id"] != row.source_id:
             errors.append("unknown-sentence %s" % row.sent_id)
         elif int(row.token_index) >= len(sentence["rows"]) or sentence["rows"][int(row.token_index)][0] != row.token:
             errors.append("token-mismatch %s#%s" % (row.sent_id, row.token_index))
@@ -341,7 +409,11 @@ def apply_to_sentences(sentences, rows, reverse=False):
     by_id = {sentence["sent_id"]: sentence for sentence in sentences}
     changed = 0
     for row in rows:
-        cells = by_id[row.sent_id]["rows"][int(row.token_index)]
+        sentence = by_id.get(row.sent_id)
+        if not has_valid_index(row) or sentence is None or int(row.token_index) >= len(sentence["rows"]):
+            raise ValueError("row addresses no token (unknown sentence, or a token index that is malformed or out of range): "
+                             + "\t".join(row))
+        cells = sentence["rows"][int(row.token_index)]
         before = (row.new_tag, row.new_status) if reverse else (row.old_tag, row.old_status)
         after = (row.old_tag, row.old_status) if reverse else (row.new_tag, row.new_status)
         if cells[0] != row.token or (cells[1], cells[2]) != before:
@@ -352,8 +424,15 @@ def apply_to_sentences(sentences, rows, reverse=False):
 
 
 def apply_in_memory(corpora, rows, reverse=False):
-    """Apply (or reverse) corrections rows to the loaded corpora, in place; returns the number of changed tokens."""
-    return sum(apply_to_sentences(corpora[key].sentences, group, reverse) for key, group in group_rows(rows).items())
+    """Apply (or reverse) corrections rows to the loaded corpora, in place; returns the number of changed tokens.
+
+    Raises ValueError for a row whose corpus is not loaded or whose address is malformed, never KeyError or IndexError.
+    """
+    groups = group_rows(rows)
+    for key in groups:
+        if key not in corpora:
+            raise ValueError("no corpus %s/%s is loaded for the rows" % key)
+    return sum(apply_to_sentences(corpora[key].sentences, group, reverse) for key, group in groups.items())
 
 
 def flag_note():
@@ -385,8 +464,9 @@ def apply_to_lines(lines, rows, reverse=False):
             positions[sent_id].append(number)
     for row in rows:
         where = positions.get(row.sent_id)
-        if where is None or int(row.token_index) >= len(where):
-            raise ValueError("row addresses no token: " + "\t".join(row))
+        if where is None or not has_valid_index(row) or int(row.token_index) >= len(where):
+            raise ValueError("row addresses no token (unknown sentence, or a token index that is malformed or out of range): "
+                             + "\t".join(row))
         number = where[int(row.token_index)]
         cells = out[number].split("\t")
         before = (row.new_tag, row.new_status) if reverse else (row.old_tag, row.old_status)
@@ -426,20 +506,26 @@ def apply_to_files(rows, data_dir=None, reverse=False, write=False):
     """
     base = data_dir or common.DATA
     result = {}
-    for key, group in group_rows(rows).items():
+    groups = group_rows(rows)
+    for key in groups:
+        if key not in CORPUS_FILES:
+            raise ValueError("no corpus file for %s/%s" % key)
+    for key, group in groups.items():
         path = os.path.join(base, *CORPUS_FILES[key].split("/"))
         old = common.read_lines(path)
-        new = apply_to_lines(old, group, reverse)
-        result[key] = (old, new)
-        if write and new != old:
-            handle, temp = tempfile.mkstemp(dir=os.path.dirname(path), suffix=".part")
-            os.close(handle)
-            try:
-                common.write_text(temp, new)
-                os.replace(temp, path)
-            finally:
-                if os.path.exists(temp):
-                    os.remove(temp)
+        result[key] = (old, apply_to_lines(old, group, reverse))  # every corpus is checked before the first file is written
+    if write:
+        for key, (old, new) in result.items():
+            path = os.path.join(base, *CORPUS_FILES[key].split("/"))
+            if new != old:
+                handle, temp = tempfile.mkstemp(dir=os.path.dirname(path), suffix=".part")
+                os.close(handle)
+                try:
+                    common.write_text(temp, new)
+                    os.replace(temp, path)
+                finally:
+                    if os.path.exists(temp):
+                        os.remove(temp)
     return result
 
 
@@ -500,10 +586,16 @@ def validate_overlay(data_dir=None):
                 same = first[5:10] == row[5:10]  # token, old and new tag, old and new status
                 errors.append("across tables: %s %s#%s" % ("duplicate" if same else "conflict", row.sent_id, row.token_index))
     corpora = load_corpora(data_dir)
-    row_errors, state = validate_against_corpora(tables["corrections"], corpora)
+    # Rows that are malformed on their own are already reported above; only well-formed rows are compared with the corpora
+    # (a malformed index must not reach the code that converts it to a number).
+    valid_corrections = [row for row in tables["corrections"] if row_error(row) is None]
+    valid_candidates = [row for row in tables["candidates"] if candidate_error(row) is None]
+    valid_exceptions = [row for row in tables["exceptions"]
+                        if has_valid_index(row) and row.source in SOURCES and row.split in SOURCES[row.source]]
+    row_errors, state = validate_against_corpora(valid_corrections, corpora)
     errors.extend(row_errors)
-    errors.extend(validate_candidates_against_corpora(tables["candidates"], corpora, check_tags=state != "applied"))
-    errors.extend(validate_exceptions_against_corpora(tables["exceptions"], corpora))
+    errors.extend(validate_candidates_against_corpora(valid_candidates, corpora, check_tags=state != "applied"))
+    errors.extend(validate_exceptions_against_corpora(valid_exceptions, corpora))
     return errors, state, counts
 
 
@@ -523,7 +615,15 @@ def _command_validate(args):
 
 
 def _command_apply(args):
-    tables = load_overlay(args.data_dir)
+    try:
+        tables = load_overlay(args.data_dir)
+    except ValueError as error:
+        print("refusing to apply: the overlay is malformed (%s)" % error)
+        return 1
+    problems = row_errors(tables["corrections"])
+    if problems:
+        print("refusing to apply: the correction rows are invalid (%d errors, first: %s)" % (len(problems), problems[0]))
+        return 1
     errors, state = validate_against_corpora(tables["corrections"], load_corpora(args.data_dir))
     if errors:
         print("refusing to apply: the overlay does not match the corpora (%d errors, first: %s)" % (len(errors), errors[0]))
@@ -532,7 +632,11 @@ def _command_apply(args):
     if state not in (wanted, "empty"):
         print("refusing to %s: the corpora are in the %s state" % ("reverse" if args.reverse else "apply", state))
         return 1
-    result = apply_to_files(tables["corrections"], args.data_dir, args.reverse, args.write)
+    try:
+        result = apply_to_files(tables["corrections"], args.data_dir, args.reverse, args.write)
+    except ValueError as error:
+        print("refusing to apply: %s" % error)
+        return 1
     shown = 0
     for key, (old, new) in sorted(result.items()):
         changed = sum(1 for a, b in zip(old, new) if a != b) + abs(len(new) - len(old))
@@ -551,7 +655,11 @@ def _command_show(args):
     rows = [row for row in tables["corrections"] if (not args.sent_id or row.sent_id == args.sent_id)
             and (not args.rule or row.provenance == "rule:" + args.rule)]
     for row in rows[:args.limit]:
-        sentence = corpora[(row.source, row.split)].by_id[row.sent_id]
+        corpus = corpora.get((row.source, row.split))
+        sentence = corpus.by_id.get(row.sent_id) if corpus else None
+        if sentence is None or not has_valid_index(row) or int(row.token_index) >= len(sentence["rows"]):
+            print("%s/%s %s#%s %s: the row addresses no token (run `validate`)" % (row.source, row.split, row.sent_id, row.token_index, row.token))
+            continue
         index = int(row.token_index)
         words = [cells[0] for cells in sentence["rows"]]
         window = words[max(0, index - 8):index] + ["[" + words[index] + "]"] + words[index + 1:index + 9]

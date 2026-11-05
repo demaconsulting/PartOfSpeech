@@ -18,8 +18,8 @@ Token forms of MASC rows and the short context excerpts in `candidates.tsv` are 
 
 | File | Kind | What |
 | --- | --- | --- |
-| `mechanical.tsv` | corrections | 2,048 rows from the mechanical rules (tier `fix`): the rule knows the correct tag |
-| `candidates.tsv` | candidates | 12,490 cases that need judgment (13,067 tokens in 9,287 sentences), never changes |
+| `mechanical.tsv` | corrections | 2,223 rows from the mechanical rules (tier `fix`): the rule knows the correct tag |
+| `candidates.tsv` | candidates | 12,499 cases that need judgment (13,076 tokens in 9,296 sentences), never changes |
 | `exceptions.tsv` | exceptions | reviewed cases that stay as they are; empty (header only) until the adjudication |
 
 `llm.tsv` (same format as `mechanical.tsv`) is where the adjudication of the candidates will put its rows. Everything is
@@ -55,6 +55,8 @@ tags, the old and the new value differ, the base status changes at most to `disp
 the only things a row changes; `source_tag` and every other column stay as they are. The key
 `(source, split, sent_id, token_index)` is unique across all correction tables: a second row for the same token is a duplicate
 (same change) or a conflict (different change). Order: `source`, `split`, `sent_id` by UTF-8 bytes, `token_index` numerically.
+A malformed or negative `token_index` is an error of the row (`bad-index`): every validator names the row and skips it, and
+`apply` refuses the table, so a bad index is never converted to a number or used as a list index.
 
 ### Candidates (`candidates.tsv`)
 
@@ -69,6 +71,14 @@ window of six tokens either side with the target in brackets. A violation of a `
 rule (hint `check-rule`), so every violation the linter reports has a row for the adjudication. A token that has a correction row
 is never a candidate. The tag columns describe the corpus before the corrections; they are history once the corrections are
 applied.
+
+A candidate row is valid on its own when its source and split are a legal pair, the index is a number without leading zeros, the
+token, sentence id and document id are not empty (no white space in the token), `span_length` is a positive integer, `current_tag`
+is one of the 17 tags (never `_`) and `current_status` a valid status cell, `candidate_rule` is an id (lower-case words joined by
+hyphens) of a rule or of a candidate detector of the registry, and `hint` and `context` are not empty. These field checks run in the
+pending **and** in the applied state; only the comparison of `current_tag` and `current_status` with the corpus is skipped once the
+corrections are applied (address and token are always compared). The C# data tests make the same checks except the registry
+membership, and both validators are held to `tools/data/tests/candidate-cases.tsv`.
 
 ### Exceptions (`exceptions.tsv`)
 
@@ -123,15 +133,17 @@ reason to override a rule.
 | Id | Tier | CONVENTIONS section | Detection and change |
 | --- | --- | --- | --- |
 | `multiword-prep` | mechanical | Multiword Prepositions | `due to`, `prior to`, `such as` ADJ ADP; `instead of`, `next to`, `rather than` ADV ADP; `because of`, `along with` ADP ADP; `thanks to` NOUN ADP; the last word is ADP (SCONJ before a clause is kept); not `due to` + infinitive, not the phrasal `come along with` |
+| `in-front-of` | mechanical | Multiword Prepositions | `in front of`: ADP NOUN ADP (`front` is a noun, never ADJ; the last word stays SCONJ before a clause with its own subject and is ADP before a gerund; not when `of` ends the sentence) |
+| `as-well-as` | mechanical | Multiword Prepositions | `as well as`: ADV ADV ADP (also where the corpus has CCONJ or ADP); the last `as` stays SCONJ before a clause and is not changed before a bare verb, before `possible` or before a subject pronoun + verb; not when `well` is ADJ |
 | `according-to` | mechanical | Multiword Prepositions | `according to`: both words ADP (`according` is not VERB or ADJ) |
 | `out-of` | mechanical | Multiword Prepositions | `out of` ADP ADP after a noun phrase, an adverb or a form of `be` (not a phrasal verb such as `get out of`, not `run out of`) |
-| `at-least` | mechanical | Degree and Quantity Words | `at least`, `at most`: ADP ADJ |
-| `more-than` | mechanical | Degree and Quantity Words | `more than`, `less than` before a quantity (number, `a`/`an`/`half`, `one`): `more`/`less` ADJ and `than` ADP; not `any more than`, not a clause (`more than a cloud is`) |
+| `at-least` | mechanical | Degree and Quantity Words | `at least`, `at most`: ADP ADJ (`at` is ADP, never ADV: MASC has `at least` as ADV ADV) |
+| `more-than` | mechanical | Degree and Quantity Words | `more than`, `less than` before a quantity (number, spelled number, `$` + number, `half`, `one`, `twice`, `a`/`an` + a measure such as `a year`, `a dozen`): `more`/`less` ADJ and `than` ADP; not `any more than`, not a clause (`more than a cloud is`), not a comparison of degree (`little more than a ghost`), not `more than once` |
 | `a-little` | mechanical | Degree and Quantity Words | `a little`: DET ADJ (`little` is never ADV, PRON or NOUN after `a`) |
-| `partitive-det` | mechanical | Degree and Quantity Words | `all, any, both, each, either, some` before `of`: DET (never PRON or ADV); not `at all of` |
-| `partitive-adj` | mechanical | Degree and Quantity Words | `many, much, several, few, more, most, less, enough` before `of`: ADJ (never PRON or ADV); not `more of a`, `most of all` |
+| `partitive-det` | mechanical | Degree and Quantity Words | `all, any, both, each, either, some` before `of`: DET (never PRON, ADV, NOUN or ADJ); not `at all of`, `all of a sudden`, not the correlative `both`/`either` tagged CCONJ |
+| `partitive-adj` | mechanical | Degree and Quantity Words | `many, much, several, few, more, most, less, enough` before `of`: ADJ (never PRON, ADV, NOUN or DET); not `more of a`, `most of all` |
 | `partitive-noun` | mechanical | Degree and Quantity Words | `plenty of`, `lots of`: NOUN |
-| `one-of` | mechanical | Numbers and Dates | `one of` + noun phrase or pronoun: `one` NUM (not after `the`, `which`, `any`, ...) |
+| `one-of` | mechanical | Numbers and Dates | `one of` + a definite or quantified noun phrase or a pronoun (`the`, `these`, a possessive, `each`, `all`, `many`, `a few`; `them`, `which`; a number; adjectives before a regular plural noun; a name with `'s`): `one` NUM (not after `the`, `which`, `any`, a determiner or an adjective, `that` as SCONJ is fine; not before a bare singular noun such as `one of style`, `that brand`, `no importance`, `a kind`) |
 | `half-noun` | mechanical | Degree and Quantity Words | `half of`: `half` NOUN |
 | `half-det` | mechanical | Degree and Quantity Words | `half` before `the`, `a`, `an` or a possessive (not after `a`/`an`): DET |
 | `half-adj` | mechanical | Degree and Quantity Words | `half` after `a`/`an` before a noun or number: ADJ (`a half century`) |
@@ -145,13 +157,13 @@ reason to override a rule.
 | `as-possible` | mechanical | Multiword Prepositions | `as X as possible`: the second `as` SCONJ |
 | `for-subject-to` | mechanical | Multiword Prepositions | `for` + subject + `to` + verb after an adjective, `too`/`enough`/`so`, `way`/`time`/`place`/`room` or a verb of waiting, asking, calling, hoping, arranging: `for` SCONJ; not after a subject noun that takes its own infinitive (`the right to marry`) |
 | `get-passive` | mechanical | The get-passive | `get` + a past participle that asserts an event (`got fired`, `get married`): `get` AUX (not before a state participle such as `used`; MASC needs Penn `VBN`) |
-| `be-copula-gradable` | mechanical | Prenominal Modifiers and Predicate Participles | `be` + a participle tagged VERB right after `very`, `too`, `quite`, `extremely`, `more`, `less`, `how` (or `so`, `really`, `rather`, `pretty` for a form that is gradable by the corpora): participle ADJ, `be` VERB (test 2); not with an agent |
+| `be-copula-gradable` | mechanical | Prenominal Modifiers and Predicate Participles | `be` + a participle tagged VERB right after `very`, `too`, `quite`, `extremely`, `more`, `less`, `how` (or `so`, `really`, `rather`, `pretty` for a participle of the curated list of psychological and evaluative forms): participle ADJ, `be` VERB (test 2); not with an agent |
 | `link-participle` | mechanical | Prenominal Modifiers and Predicate Participles | after `become, feel, look, remain, seem, sound` (not `felt`): a participle tagged VERB without `by`/`from` agent is ADJ (test 4) |
 | `clock-suffix` | mechanical | Names and Labels | `a.m.`, `p.m.`, `am`, `pm` after a clock numeral of 1 to 12: NOUN |
 | `do-your-best` | mechanical | Degree and Quantity Words | `do your best`, `all the best`: `best` ADJ (a superlative that stands for a noun) |
 | `fy-token` | mechanical | Names and Labels | a fiscal-year token (`FY2020`) is a NOUN (no case yet) |
 | `negation-part` | mechanical | Annotation Conventions | `not`, `n't`: PART |
-| `to-not-infinitive` | mechanical | Annotation Conventions | `to` tagged PART before a determiner, pronoun, number or gerund is the preposition: ADP |
+| `to-not-infinitive` | mechanical | Annotation Conventions | `to` tagged PART before a determiner, pronoun, number or gerund is the preposition: ADP (not after a verb that takes the infinitive such as `hopes`, `forgot`, `wants`; not before `one`, not before a determiner and a bare verb) |
 | `modal-aux` | mechanical | Annotation Conventions | a modal tagged VERB before a verb, `not` or an adverb: AUX (the stem of `can not`) |
 | `possessive-det` | mechanical | Annotation Conventions | `my, your, his, its, our, their, whose` directly before a noun, adjective or number: DET; `her` the same after a preposition, conjunction or punctuation (before a noun, number, or `own`) |
 | `be-participle-adj-not-gradable` | check | Prenominal Modifiers and Predicate Participles | agentless `be` + a participle tagged ADJ without a degree word that is not known to be gradable: passive VERB or gradable ADJ? |
@@ -177,15 +189,17 @@ all states that look like passives.
 | Rule | open train | open dev | open test | MASC | silver | Total |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `multiword-prep` | 14 | 1 | 1 | 143 | 15 | 174 |
+| `in-front-of` | 0 | 0 | 0 | 7 | 0 | 7 |
+| `as-well-as` | 1 | 0 | 0 | 13 | 1 | 15 |
 | `according-to` | 0 | 0 | 0 | 0 | 29 | 29 |
 | `out-of` | 43 | 4 | 5 | 2 | 53 | 107 |
-| `at-least` | 31 | 1 | 2 | 0 | 41 | 75 |
-| `more-than` | 88 | 8 | 9 | 22 | 43 | 170 |
+| `at-least` | 31 | 1 | 2 | 116 | 41 | 191 |
+| `more-than` | 91 | 8 | 9 | 22 | 57 | 187 |
 | `a-little` | 35 | 8 | 1 | 2 | 36 | 82 |
-| `partitive-det` | 106 | 9 | 13 | 140 | 7 | 275 |
-| `partitive-adj` | 101 | 15 | 11 | 22 | 27 | 176 |
+| `partitive-det` | 105 | 9 | 14 | 141 | 8 | 277 |
+| `partitive-adj` | 101 | 15 | 11 | 23 | 30 | 180 |
 | `partitive-noun` | 5 | 2 | 1 | 11 | 4 | 23 |
-| `one-of` | 97 | 16 | 16 | 5 | 126 | 260 |
+| `one-of` | 105 | 16 | 18 | 6 | 134 | 279 |
 | `half-noun` | 3 | 0 | 0 | 0 | 0 | 3 |
 | `half-det` | 9 | 0 | 1 | 1 | 21 | 32 |
 | `half-adj` | 1 | 0 | 0 | 0 | 0 | 1 |
@@ -199,15 +213,15 @@ all states that look like passives.
 | `as-possible` | 2 | 0 | 0 | 19 | 2 | 23 |
 | `for-subject-to` | 18 | 3 | 5 | 39 | 13 | 78 |
 | `get-passive` | 11 | 5 | 1 | 54 | 19 | 90 |
-| `be-copula-gradable` | 0 | 0 | 0 | 6 | 2 | 8 |
+| `be-copula-gradable` | 0 | 0 | 0 | 4 | 2 | 6 |
 | `link-participle` | 1 | 0 | 0 | 11 | 5 | 17 |
 | `clock-suffix` | 9 | 0 | 0 | 175 | 0 | 184 |
 | `do-your-best` | 2 | 1 | 0 | 0 | 3 | 6 |
 | `negation-part` | 0 | 0 | 0 | 3 | 0 | 3 |
-| `to-not-infinitive` | 2 | 0 | 0 | 15 | 35 | 52 |
+| `to-not-infinitive` | 0 | 0 | 0 | 14 | 35 | 49 |
 | `modal-aux` | 0 | 0 | 0 | 0 | 65 | 65 |
 | `possessive-det` | 4 | 0 | 0 | 0 | 0 | 4 |
-| **Total** | **601** | **79** | **67** | **722** | **579** | **2,048** |
+| **Total** | **610** | **79** | **70** | **858** | **606** | **2,223** |
 
 `fy-token` has no case in the corpora. Every row keeps its status cell. 93 rows give a token a tag that the current lexicon and its
 shape rules do not allow: 90 `get`-forms as AUX and 3 Roman numerals (`ix`, `xii`, `xiv`) as NUM. The lexicon is not changed here and
@@ -226,7 +240,27 @@ the weights are not retrained, so the change that applies the rows has to rebuil
 | **Total** | **241** | **36** | **34** | **84** | **286** | **2** | **683** |
 
 With the rows applied, these 683 are everything the linter reports (the two STE tokens belong to the evaluation-only set, which
-is linted but never corrected). On the committed corpora the linter reports 2,048 mechanical plus these 683 violations.
+is linted but never corrected). On the committed corpora the linter reports 2,223 mechanical plus these 683 violations.
+
+### Known gaps of the mechanical rules
+
+A rule with a guard misses some cases on purpose. The near misses of the quantity rules were counted in the corpora (a token of
+the pattern that the rule leaves alone and that does not already have the convention tag); what stays open is not a violation
+that the linter reports, so it is listed here for the adjudication and for a later rule:
+
+- `partitive-det`, `partitive-adj`: `both of` and `either of` tagged CCONJ in the correlative `either of guidance or of`; `more of
+  a`, `less of a` (`was more of a thinker`, about a dozen cases, the tag of `more` is a decision); `most of all`; masked tokens
+  (`_`).
+- `at-least`: `at least` is ADP ADJ in every use (the sentence adverb `At least, ...` too), as the convention table has it.
+- `more-than`: `more than` before a pronoun, `the`, `any`, `all`, an adjective or a noun is a comparison (`more than we
+  bargained for`, `more than the others`); `more than once` (nine cases, the quantity reading is possible); `more than enough`;
+  `any more than` (a clause comparison). `little more than a ghost` and `nothing more than a ploy` compare degree.
+- `one-of`: `one of` + a bare singular noun, a name without `'s`, `that`/`this`/`no` + noun or `a kind` is a type reading
+  (`one of style`, `one of that brand`) and `one` stays PRON; `each one of`, `any one of`, `the one of` are not partitive counts.
+- `to-not-infinitive`: `to` before a gerund after a noun that is a typing slip for the infinitive (`back in the car to warming up`)
+  cannot be told from the preposition by tags; one such row is left.
+- `for-subject-to`: `called for a match to light his pipe with` (the noun is not the subject of the infinitive) is the one wrong
+  row of the 78 read.
 
 ### Candidates per detector
 
@@ -255,10 +289,11 @@ Judgment cases for the adjudication (sentences / tokens per source; a mentioned 
 | `infinitive-to` (check) | 4 / 4 | 7 / 7 | 0 / 0 | 11 | 11 |
 | `no-all-degree` (check) | 0 / 0 | 6 / 6 | 5 / 5 | 11 | 11 |
 | `be-passive-agent` (check) | 4 / 4 | 1 / 1 | 6 / 6 | 11 | 11 |
+| `as-well-as-sconj` | 3 / 3 | 1 / 1 | 5 / 5 | 9 | 9 |
 | `title-before-name` | 0 / 0 | 4 / 4 | 0 / 0 | 4 | 4 |
 | `half-ambiguous` | 3 / 3 | 1 / 1 | 0 / 0 | 4 | 4 |
 | `out-of-phrasal` (check) | 0 / 0 | 2 / 2 | 0 / 0 | 2 | 2 |
-| **All** | 3,057 sentences | 4,532 sentences | 1,698 sentences | 9,287 | 13,067 |
+| **All** | 3,060 sentences | 4,533 sentences | 1,703 sentences | 9,296 | 13,076 |
 
 Cells are sentences / tokens. A sentence with candidates of several detectors is counted once in the last row. The detector
 `list-label` found no case.
@@ -277,7 +312,11 @@ full.
 | --- | --- | --- | --- | --- |
 | 1 | first version, with participle rules `be-passive-verbal`, `be-passive-agent`, `be-aux-passive` | 20261104, 50, 8 (84 percent) | 20261105, 4, 126, 8 | failed |
 | 2 | participle rules demoted to `check`, guards added | 20261106, 50, 1 | 20261107, 4, 113, 2; census of `be-copula-gradable` and `link-participle`, 35 rows, 8 wrong | failed |
-| 3 | final | 20261108, 50, **0** | 20261109, 5 for 12 rules (the five changed ones and seven large ones), 53 rows, **0**; census of the two participle rules, 25 rows, **0** | passed |
+| 3 | final of the first change | 20261108, 50, **0** | 20261109, 5 for 12 rules (the five changed ones and seven large ones), 53 rows, **0**; census of the two participle rules, 25 rows, **0** | passed |
+| 4 | fix round: new rules `in-front-of`, `as-well-as`; `one-of`, `at-least`, `more-than`, `partitive-det`, `partitive-adj` widened | 20261110, 50, 1 | 20261110, 15 for the 5 widened rules, 75 rows, 1; census of all 189 new rows, 0; census of `for-subject-to`, 78 rows, 1 | failed |
+| 5 | guard for `all of a sudden` | 20261112, 50, 2 | census of `to-not-infinitive`, 52 rows, 4 | failed |
+| 6 | `be-copula-gradable` and `to-not-infinitive` tightened | 20261113, 50, 1 | census of the 71 `more than a`/`an`/`half`/`one` rows of `more-than`, 5 wrong | failed |
+| 7 | final: `more-than` takes `a`/`an` only before a measure | 20261114, 50, **0** | - | passed |
 
 Round 1: seven of the eight random errors were `be-passive-verbal` (a state read as a passive: `settled`, `focused`, `composed`,
 `lost`, `well established`, `gone`, `done`) and one `be-passive-agent` (`far removed from`). In the stratified sample
@@ -292,42 +331,62 @@ emphasised`, `particularly seen`, `most reserved`, `felt belonged` and `seem to 
 do not make a participle gradable; `felt` is not a linking verb; an infinitive `to` breaks the chain between `be` and the
 participle.
 
-Final result for the rules as committed (distinct rows of rounds 2 and 3 that the final rule set still produces, plus the
-censuses): **261 rows, 0 wrong, 100 percent** (a zero in 261 rows bounds the error rate below about 1.2 percent at 95 percent
-confidence). Round 3 alone: 103 random and stratified rows, 0 wrong (lower bound about 97 percent).
+Rounds 4 to 7 (the corrections of the code review): the rules `in-front-of` and `as-well-as` were added (the two three-word
+rows of the Multiword Prepositions table that no rule covered; every other row of the table was already a rule), and the
+whitelists of `one-of`, `at-least`, `more-than`, `partitive-det` and `partitive-adj` were replaced by tag and context tests.
+The new rows of these rules (189, all read, see below) were correct, and the reading found the errors that the guards now
+remove. Round 4: `all of a sudden` is an adverb idiom (`partitive-det`, 3 rows), and one `for-subject-to` row (`called for a match
+to light his pipe with`, the noun is not the subject of the infinitive; the only wrong row of the 78, it stays). Round 5:
+`was really engaged at Camp David` is a passive (`be-copula-gradable`: `so`, `really`, `rather`, `pretty` now count only for the
+curated list of gradable participles, not for a form that occurs after `very` somewhere in the corpora), and `to` before a
+gerund or a number after `hopes`, `forgot`, ... or before `one` or a determiner and a bare verb is the infinitive marker
+(`to-not-infinitive`, 3 rows; `hopes to one day become`, `forgot to being an umbrella`, `used to a make a ...`). Round 6:
+`little more than a ghost`, `nothing more than a ploy`, `no less than an honorable prisoner`, `little less than a disgrace` and
+`little more than a bare chronicle` compare degree, so `more than` + `a`/`an` needs a measure (`a year`, `a dozen`, `a few`,
+`a six-month`), and `more than once` stays unchanged. The guards removed 14 rows of the first change: 6 of `more-than`,
+3 of `partitive-det`, 3 of `to-not-infinitive` and 2 of `be-copula-gradable`.
 
-| Rule | Rows read | Wrong |
-| --- | ---: | ---: |
-| `a-little` | 4 | 0 |
-| `according-to` | 7 | 0 |
-| `as-possible` | 7 | 0 |
-| `at-least` | 7 | 0 |
-| `be-copula-gradable` | 8 (census) | 0 |
-| `big-number` | 5 | 0 |
-| `clock-suffix` | 16 | 0 |
-| `correlative-the` | 7 | 0 |
-| `decade` | 2 (census) | 0 |
-| `degree-word` | 10 | 0 |
-| `do-your-best` | 4 | 0 |
-| `for-subject-to` | 11 | 0 |
-| `get-passive` | 12 | 0 |
-| `half-adj` | 1 (census) | 0 |
-| `half-det` | 9 | 0 |
-| `half-noun` | 3 (census) | 0 |
-| `link-participle` | 17 (census) | 0 |
-| `modal-aux` | 5 | 0 |
-| `more-than` | 17 | 0 |
-| `multiword-prep` | 17 | 0 |
-| `negation-part` | 3 (census) | 0 |
-| `one-of` | 16 | 0 |
-| `out-of` | 14 | 0 |
-| `partitive-adj` | 11 | 0 |
-| `partitive-det` | 21 | 0 |
-| `partitive-noun` | 4 | 0 |
-| `possessive-det` | 4 (census) | 0 |
-| `regnal-numeral` | 4 | 0 |
-| `superlative-the` | 4 | 0 |
-| `to-not-infinitive` | 11 | 0 |
+Final result for the rules as committed: **551 distinct rows of the final tables read** (the censuses and the samples of rounds
+4 to 7, the 189 new rows included): 549 correct, 1 wrong (`for-subject-to`, see above) and 1 doubtful (`to-not-infinitive`: `back
+in the car to warming up`, a slip of the keyboard for `warm up`, which the tags cannot tell from the preposition). That is 99.6
+percent (98.7 percent for `for-subject-to`, 98.0 percent for `to-not-infinitive`, the two weakest rules, both above the gate).
+The fresh random sample of round 7 on the final tables has 0 wrong in 50 rows. The rows of the first gate (261 rows, 0 wrong)
+were read against the same convention text; the final tables differ from that state only by the rows listed above.
+
+| Rule | Rows read, first gate | Rows read, final tables | Wrong |
+| --- | ---: | ---: | ---: |
+| `a-little` | 4 | 8 | 0 |
+| `according-to` | 7 | 2 | 0 |
+| `as-possible` | 7 | 3 | 0 |
+| `as-well-as` | - | 15 (census) | 0 |
+| `at-least` | 7 | 131 | 0 |
+| `be-copula-gradable` | 8 (census) | 6 (census) | 0 |
+| `big-number` | 5 | - | 0 |
+| `clock-suffix` | 16 | 16 | 0 |
+| `correlative-the` | 7 | - | 0 |
+| `decade` | 2 (census) | - | 0 |
+| `degree-word` | 10 | 2 | 0 |
+| `do-your-best` | 4 | 1 | 0 |
+| `for-subject-to` | 11 | 78 (census) | 1 |
+| `get-passive` | 12 | 4 | 0 |
+| `half-adj` | 1 (census) | - | 0 |
+| `half-det` | 9 | 4 | 0 |
+| `half-noun` | 3 (census) | - | 0 |
+| `in-front-of` | - | 7 (census) | 0 |
+| `link-participle` | 17 (census) | 17 (census) | 0 |
+| `modal-aux` | 5 | 10 | 0 |
+| `more-than` | 17 | 49, and 71 listed before the guard | 0 |
+| `multiword-prep` | 17 | 16 | 0 |
+| `negation-part` | 3 (census) | - | 0 |
+| `one-of` | 16 | 47 | 0 |
+| `out-of` | 14 | 16 | 0 |
+| `partitive-adj` | 11 | 28 | 0 |
+| `partitive-det` | 21 | 38 | 0 |
+| `partitive-noun` | 4 | 2 | 0 |
+| `possessive-det` | 4 (census) | - | 0 |
+| `regnal-numeral` | 4 | 2 | 0 |
+| `superlative-the` | 4 | - | 0 |
+| `to-not-infinitive` | 11 | 49 (census) | 1 doubtful |
 
 Limits of this record: one rater read the rows (no second annotator), small rules have few rows, `half-adv` and `fy-token` have no
 row, and the debatable class is `link-participle` (`became known as`, `became identified as` follow the convention text "otherwise

@@ -35,7 +35,9 @@ def load_sentences(data_dir=None, apply_overlay=False):
     corpora = corrections.load_corpora(data_dir, lint_only=True)
     if apply_overlay:
         rows = corrections.load_overlay(data_dir)["corrections"]
-        errors, state = corrections.validate_against_corpora(rows, corpora)
+        errors = corrections.row_errors(rows)
+        if not errors:
+            errors, state = corrections.validate_against_corpora(rows, corpora)
         if errors:
             raise ValueError("the staged corrections do not match the corpora: " + errors[0])
         if state == "pending":
@@ -68,6 +70,9 @@ def lint(sentences, resources, exceptions=frozenset(), tiers=(convention_rules.F
 def load_exceptions(data_dir=None):
     """Set of (source, split, sent_id, token_index, rule) of the exceptions table (rows reviewed and kept as they are)."""
     rows = corrections.load_overlay(data_dir)["exceptions"]
+    bad = [row for row in rows if not corrections.has_valid_index(row)]
+    if bad:
+        raise ValueError("exception row with a malformed token index: %s#%s" % (bad[0].sent_id, bad[0].token_index))
     return frozenset((row.source, row.split, row.sent_id, int(row.token_index), row.rule) for row in rows)
 
 

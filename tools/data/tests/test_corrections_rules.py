@@ -198,6 +198,7 @@ class CandidateTests(unittest.TestCase):
             "title-before-name": ("open", "Vice/ADJ President/NOUN Charles/PROPN spoke/VERB"),
             "possessive-her": ("open", "He/PRON gave/VERB her/PRON flowers/NOUN"),
             "out-of-after-verb": ("open", "Get/VERB out/ADV of/ADP here/ADV"),
+            "as-well-as-sconj": ("open", "Cats/NOUN as/ADV well/ADV as/SCONJ the/DET dog/NOUN knew/VERB"),
             "for-subject-to-ambiguous": ("open", "Thanks/NOUN for/ADP his/DET efforts/NOUN to/PART register/VERB"),
             "degree-word-ambiguous": ("open", "It/PRON is/VERB more/ADJ serious/ADJ problems/NOUN"),
             "half-ambiguous": ("open", "Half/NUM was/VERB left/VERB"),

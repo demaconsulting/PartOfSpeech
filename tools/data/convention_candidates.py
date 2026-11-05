@@ -256,6 +256,17 @@ def out_of_after_verb(s, res):
     return out
 
 
+@candidate("as-well-as-sconj",
+           "`as well as` whose last `as` is SCONJ: SCONJ before a clause with its own subject, ADP before a noun phrase or gerund",
+           words={"well"})
+def as_well_as_sconj(s, res):
+    out = []
+    for i in s.where("well"):
+        if s.word(i - 1) == "as" and s.word(i + 1) == "as" and s.t[i + 1] == "SCONJ" and s.word(i + 2) != "possible":
+            out.append((i + 1, 1, "next=%s" % (s.tag(i + 2) or "end")))
+    return out
+
+
 @candidate("for-subject-to-ambiguous", "`for` + subject + `to` + verb outside the sure cases: SCONJ or ADP", words={"for"})
 def for_subject_to_ambiguous(s, res):
     out = []

@@ -112,8 +112,8 @@ QUANT_DET = frozenset("all any both each either some".split())
 QUANT_ADJ = frozenset("many much several few more most less enough".split())
 # Degree words that prove gradability: the participle accepts them with its meaning unchanged (`very confused`, `more surprised`).
 DEGREE_STRONG = frozenset("very more less too quite extremely how incredibly terribly awfully".split())
-# `so`, `really`, `rather`, `pretty` also mean `thus`, `truly`, `fairly` (`so characterized`, `rather hinted than told`): they count
-# only for a form that is gradable by the evidence of the corpora.
+# `so`, `really`, `rather`, `pretty` also mean `thus`, `truly`, `fairly` (`so characterized`, `rather hinted than told`, `really
+# engaged at Camp David`): they count only for a participle of the curated list of psychological and evaluative forms (GRADABLE_SEED).
 DEGREE_WEAK = frozenset("so really rather pretty".split())
 # Adverbs that grade, focus or complete a verb as well (`somewhat amended`, `completely reassured`, `well established`,
 # `most reserved for`, `particularly seen`, `increasingly emphasised`): they show that a degree word is present, but not that the
@@ -278,6 +278,46 @@ def multiword_prep(s, res):
     return out
 
 
+NOMINATIVE = frozenset("i he she we they you it who".split())
+
+
+def starts_clause(s, j):
+    """True when token j is a subject pronoun that a finite verb follows (`he could`, `I went`): a clause with its own subject."""
+    return s.tag(j) == "PRON" and s.word(j) in NOMINATIVE and s.tag(j + 1) in ("VERB", "AUX", "PART")
+
+
+@rule("in-front-of", FIX, "Multiword Prepositions",
+      "`in front of`: ADP NOUN ADP (`front` is a noun, never ADJ; SCONJ before a clause is kept)", words={"front"})
+def in_front_of(s, res):
+    out = []
+    for i in s.where("front"):
+        if s.word(i - 1) != "in" or s.word(i + 1) != "of" or s.tag(i - 1) != "ADP" or s.tag(i + 2) in ("PUNCT", ""):
+            continue  # `in front of .` is cut off: the expression is not complete
+        s.change(out, i, "NOUN")
+        if s.tag(i + 1) not in ("SCONJ", "ADP") and not starts_clause(s, i + 2):
+            s.change(out, i + 1, "ADP")
+    return out
+
+
+@rule("as-well-as", FIX, "Multiword Prepositions",
+      "`as well as`: ADV ADV ADP (the first `as` and `well` are adverbs; the last `as` stays SCONJ before a clause and is not "
+      "changed before a bare verb or `possible`)", words={"well"})
+def as_well_as(s, res):
+    out = []
+    for i in s.where("well"):
+        if s.word(i - 1) != "as" or s.word(i + 1) != "as" or s.t[i] not in ("ADV", "CCONJ", "ADP", "SCONJ") \
+                or s.tag(i + 2) in ("PUNCT", ""):
+            continue
+        s.change(out, i - 1, "ADV")
+        s.change(out, i, "ADV")
+        after = i + 2
+        noun_phrase = s.tag(after) in ("NOUN", "PROPN", "ADJ", "DET", "NUM", "SYM") or is_gerund(s, after) \
+            or (s.tag(after) == "PRON" and not starts_clause(s, after))
+        if s.t[i + 1] not in ("SCONJ", "ADP") and noun_phrase and s.word(after) != "possible":
+            s.change(out, i + 1, "ADP")
+    return out
+
+
 @rule("according-to", FIX, "Multiword Prepositions", "`according to`: both words ADP (`according` is not VERB or ADJ)",
       words={"according"})
 def according_to(s, res):
@@ -306,17 +346,49 @@ def out_of(s, res):
     return out
 
 
-@rule("at-least", FIX, "Degree and Quantity Words", "`at least`, `at most`: ADP ADJ", words={"least", "most"})
+@rule("at-least", FIX, "Degree and Quantity Words", "`at least`, `at most`: ADP ADJ (`at` is ADP, never ADV)", words={"least", "most"})
 def at_least(s, res):
     out = []
     for i in s.where("least", "most"):
-        if s.word(i - 1) == "at" and s.tag(i - 1) == "ADP" and s.t[i] in ("ADV", "PRON"):
+        if s.word(i - 1) == "at" and s.tag(i - 1) in ("ADP", "ADV") and s.t[i] in ("ADV", "PRON"):
+            s.change(out, i - 1, "ADP")
             s.change(out, i, "ADJ")
     return out
 
 
+NUMBER_WORDS = frozenset(("two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen "
+                          "eighteen nineteen twenty thirty forty fifty sixty seventy eighty ninety hundred thousand million "
+                          "billion dozen").split())
+
+
+def is_number_word(word):
+    """A spelled-out number (`ten`, `fifty-four`, `hundred`)."""
+    return word in NUMBER_WORDS or (word.count("-") == 1 and all(part in NUMBER_WORDS for part in word.split("-")))
+
+
+MEASURE_NOUNS = frozenset(("year day hour minute second week month century decade mile foot inch quarter fraction handful dozen "
+                           "couple few bit nickel dime dollar cent penny pound ton gallon third half percent score pair lot").split())
+
+
+def is_measure_after_article(s, j):
+    """True when the token at j after `a`/`an` starts a measure (`a year`, `a few`, `a hundred`, `a 3 % drop`, `a six-month`), not a plain noun."""
+    word = s.word(j)
+    return s.tag(j) == "NUM" or word in MEASURE_NOUNS or is_number_word(word) or is_number_word(word.split("-")[0])
+
+
+def is_quantity(s, j):
+    """True when the token at j starts a quantity: a number, a spelled number, a currency sign before a number, `half`, `one`, `twice`, or
+    `a`/`an` and a measure (`a year`, `a dozen`; not `a ghost`, `a disgrace`: `little more than a ghost` compares degree)."""
+    word = s.word(j)
+    if word in ("a", "an"):
+        return is_measure_after_article(s, j + 1)
+    return s.tag(j) == "NUM" or word in ("half", "one", "twice") \
+        or (s.tag(j) == "SYM" and s.tag(j + 1) == "NUM") or (s.tag(j) == "ADJ" and is_number_word(word))
+
+
 @rule("more-than", FIX, "Degree and Quantity Words",
-      "`more than`, `less than` before a quantity (number, `a`/`an`/`half`, `one`): `more`/`less` ADJ and `than` ADP",
+      "`more than`, `less than` before a quantity (number, spelled number, `$` + number, `half`, `one`, `twice`, `a`/`an` + a "
+      "measure such as `a year`, `a dozen`; not `little more than a ghost`): `more`/`less` ADJ and `than` ADP",
       words={"more", "less"})
 def more_than(s, res):
     out = []
@@ -324,7 +396,7 @@ def more_than(s, res):
         if s.word(i + 1) != "than" or s.word(i - 1) == "any":
             continue  # `any more than a cloud is`: a comparison of clauses
         after = s.word(i + 2)
-        if not (s.tag(i + 2) == "NUM" or after in ("a", "an", "half", "one")):
+        if not is_quantity(s, i + 2):
             continue
         if after in ("a", "an") and s.tag(i + 4) in ("VERB", "AUX"):
             continue  # `more than a cloud is ...`: the noun phrase is the subject of a clause
@@ -349,22 +421,25 @@ PARTITIVE_NOUN = frozenset(("plenty", "lots"))
 
 
 @rule("partitive-det", FIX, "Degree and Quantity Words",
-      "`all, any, both, each, either, some` before `of`: DET (never PRON or ADV)", words=QUANT_DET)
+      "`all, any, both, each, either, some` before `of`: DET (never PRON, ADV, NOUN or ADJ); not `at all of`, `all of a sudden`; "
+      "`both`/`either` as CCONJ (`either of guidance or of`) are correlatives", words=QUANT_DET)
 def partitive_det(s, res):
     out = []
     for i in s.where(*QUANT_DET):
-        if s.word(i + 1) == "of" and s.t[i] in ("PRON", "ADV") and s.word(i + 2) != "course" and s.word(i - 1) != "at":
+        if s.word(i + 1) == "of" and s.t[i] in ("PRON", "ADV", "NOUN", "ADJ") and s.word(i + 2) != "course" \
+                and not (s.w[i] == "all" and (s.word(i - 1) == "at" or (s.word(i + 2) == "a" and s.word(i + 3) == "sudden"))):
             s.change(out, i, "DET")
     return out
 
 
 @rule("partitive-adj", FIX, "Degree and Quantity Words",
-      "`many, much, several, few, more, most, less, enough` before `of`: ADJ (never PRON or ADV); not `more of a`, `most of all`",
+      "`many, much, several, few, more, most, less, enough` before `of`: ADJ (never PRON, ADV, NOUN or DET); not `more of a`, "
+      "`most of all`",
       words=QUANT_ADJ)
 def partitive_adj(s, res):
     out = []
     for i in s.where(*QUANT_ADJ):
-        if s.word(i + 1) != "of" or s.t[i] not in ("PRON", "ADV"):
+        if s.word(i + 1) != "of" or s.t[i] not in ("PRON", "ADV", "NOUN", "DET"):
             continue
         after = s.word(i + 2)
         if after in ("course", "all", "late") or (s.w[i] in ("more", "less", "much", "most") and after in ("a", "an")):
@@ -382,18 +457,59 @@ def partitive_noun(s, res):
     return out
 
 
-ONE_OF_AFTER = frozenset("the them us you these those him her his their our my your its a an many several all".split())
-ONE_OF_BEFORE = frozenset("the this that which what no any every each another a an some such other same only last next first".split())
+ONE_OF_BEFORE = frozenset("the this that which what no any every each another a an some such other same last next first".split())
+ONE_OF_DET = frozenset("the these those his her its their our my your whose each all both some any a an many several few".split())
+ONE_OF_PRON = frozenset("them us you him her these those themselves ourselves yourselves which whom each".split())
+ONE_OF_ADJ = frozenset("many several few numerous various countless certain".split())
+
+
+def _plural_noun(word):
+    """A regular plural shape: ends in -s but not in -ss, -us or -is (`accomplishments`, not `prominence`, `success`, `Paris`)."""
+    return len(word) > 3 and word.endswith("s") and not word.endswith(("ss", "us", "is"))
+
+
+def one_of_noun_phrase(s, j):
+    """True when a noun phrase or pronoun that `one of` can partition starts at j, judged by tags and a few closed classes.
+
+    That is a determiner that makes the noun phrase definite or quantified (`the`, `these`, a possessive), an object or
+    demonstrative pronoun (`them`, `which`), a number, a quantifier adjective (`many`) or adjectives before a regular plural
+    noun, and a name with a possessive (`Africa 's most ...`). Not a bare singular noun (`one of style`), a name without
+    possessive, `a kind`, `this`/`that`/`no` (`one of that brand`, `one of no importance`) or `another`.
+    """
+    tag, word = s.tag(j), s.word(j)
+    if tag == "DET":
+        return word in ONE_OF_DET and not (word in ("a", "an") and s.word(j + 1) == "kind")
+    if tag == "PRON":
+        return word in ONE_OF_PRON
+    if tag == "NUM":
+        return True
+    if tag == "ADJ":
+        if word in ONE_OF_ADJ:
+            return True
+        k = j
+        while s.tag(k) == "ADJ" and k < j + 3:
+            k += 1
+        return s.tag(k) == "NOUN" and _plural_noun(s.word(k))
+    if tag == "PROPN":
+        k = j
+        while s.tag(k) == "PROPN" and k < j + 4:
+            k += 1
+        return s.word(k) in ("'s", "\u2019s", "'", "\u2019") and s.tag(k) in ("PART", "PUNCT")
+    return False
 
 
 @rule("one-of", FIX, "Numbers and Dates",
-      "`one of` + noun phrase or pronoun: `one` NUM (not after `the`, `which`, `any`, ...)", words={"one"})
+      "`one of` + noun phrase or pronoun (determiner, pronoun, number, plural noun phrase, name with `'s`): `one` NUM "
+      "(not after `the`, `which`, `any`, a determiner or an adjective; `that` as SCONJ is fine)", words={"one"})
 def one_of(s, res):
     out = []
     for i in s.where("one"):
-        if s.word(i + 1) == "of" and s.t[i] == "PRON" and s.word(i + 2) in ONE_OF_AFTER \
-                and s.word(i - 1) not in ONE_OF_BEFORE and s.tag(i - 1) != "ADJ":
-            s.change(out, i, "NUM")
+        if s.word(i + 1) != "of" or s.t[i] != "PRON" or not one_of_noun_phrase(s, i + 2):
+            continue
+        before = s.word(i - 1)
+        if s.tag(i - 1) in ("ADJ", "DET") or (before in ONE_OF_BEFORE and s.tag(i - 1) != "SCONJ"):
+            continue
+        s.change(out, i, "NUM")
     return out
 
 
@@ -640,8 +756,8 @@ def be_copula_gradable(s, res):
         near = s.word(j - 1)
         if kind != "be" or agent or s.t[j] != "VERB" or near not in DEGREE_NEAR or not (s.tag(j - 1) == "ADV" or near in DEGREE_FLIP):
             continue
-        if near in DEGREE_WEAK and s.w[j] not in res.gradable:
-            continue  # `so discovered`, `rather hinted than told`: not a degree word
+        if near in DEGREE_WEAK and s.w[j] not in GRADABLE_SEED:
+            continue  # `so discovered`, `rather hinted than told`, `really engaged at Camp David`: not a degree word
         s.change(out, j, "ADJ")
         s.change(out, k, "VERB")
     return out
@@ -713,12 +829,21 @@ def is_gerund(s, i):
     return s.tag(i) in ("VERB", "AUX") and word.endswith("ing") and len(word) > 4 and word not in GERUND_NOT
 
 
+CONTROL_BEFORE_TO = frozenset(("forget forgets forgot forgotten hope hopes hoped hoping want wants wanted need needs needed try tries "
+                               "tried plan plans planned decide decides decided").split())
+
+
 @rule("to-not-infinitive", FIX, "Annotation Conventions",
-      "`to` tagged PART before a determiner, pronoun, number or gerund is the preposition: ADP", words={"to"})
+      "`to` tagged PART before a determiner, pronoun, number or gerund is the preposition: ADP (not after a verb that takes the "
+      "infinitive such as `hopes to one day become`, not before `one` or a determiner and a bare verb)", words={"to"})
 def to_not_infinitive(s, res):
     out = []
     for i in s.where("to"):
-        if s.t[i] == "PART" and (s.tag(i + 1) in ("DET", "PRON", "NUM") or is_gerund(s, i + 1)):
+        if s.t[i] != "PART" or s.word(i - 1) in CONTROL_BEFORE_TO or s.word(i + 1) == "one":
+            continue
+        if s.tag(i + 1) == "DET" and s.tag(i + 2) == "VERB" and not is_gerund(s, i + 2):
+            continue  # `used to a make a ...`: a slip of the keyboard, not a noun phrase
+        if s.tag(i + 1) in ("DET", "PRON", "NUM") or is_gerund(s, i + 1):
             s.change(out, i, "ADP")
     return out
 

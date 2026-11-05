@@ -70,8 +70,8 @@ the homograph-number parse of entry ids), sanity checks of the committed data (t
 correction tools: the overlay (`test_corrections_overlay.py`), the rules and their guards on the fixture sentences of
 `convention-cases.tsv` (`test_corrections_rules.py`), the linter (`test_corrections_linter.py`) and the generator
 (`test_corrections_generator.py`, including the check that the committed tables are valid against the committed corpora).
-`corrections-cases.tsv` holds the row cases that both this validator and the C# data tests are held to (as
-`status-cases.tsv` does for the status cell); `corrections_testdata.py` builds the miniature data folder of the tests.
+`corrections-cases.tsv` and `candidate-cases.tsv` hold the row cases that both this validator and the C# data tests are held
+to (as `status-cases.tsv` does for the status cell); `corrections_testdata.py` builds the miniature data folder of the tests.
 
 **CI gate.** No workflow job runs the full suite (some tests read the git-ignored download cache). The quality-checks job
 runs `lint.ps1`, and its Python step (the `[PROJECT-SPECIFIC]` extension point) runs, in about one minute:

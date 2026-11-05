@@ -524,6 +524,22 @@ internal static class CorrectionTables
         StatusError(table, row);
 
     /// <summary>
+    ///     Finds the first error of one candidate row, with the same checks in the same order as the Python validator.
+    /// </summary>
+    /// <remarks>
+    ///     The syntax of every field is checked in the pending and in the applied state alike; the comparison of the
+    ///     current tag and status with the corpus is not part of it. The one check that only the Python validator makes
+    ///     is that the candidate id is a rule or a detector of the registry.
+    /// </remarks>
+    /// <param name="table">The table that holds the row (it may have more columns than a candidates table).</param>
+    /// <param name="row">The row.</param>
+    /// <returns>The error code, or <c>null</c> when the row is valid on its own.</returns>
+    public static string? CandidateError(DataTable table, string[] row) =>
+        AddressError(table, row) ??
+        TokenError(table, row) ??
+        CandidateProblem(table, row);
+
+    /// <summary>
     ///     Finds the first problem of the address columns (source, split, token index) of a row of any overlay table.
     /// </summary>
     /// <param name="table">The table that holds the row.</param>
@@ -776,13 +792,12 @@ internal static class CorrectionTables
             return RowError(table, row);
         }
 
-        var problem = AddressError(table, row) ?? TokenError(table, row);
-        if (problem != null)
+        if (kind == "candidates")
         {
-            return problem;
+            return CandidateError(table, row);
         }
 
-        return kind == "candidates" ? CandidateProblem(table, row) : ExceptionProblem(table, row);
+        return AddressError(table, row) ?? TokenError(table, row) ?? ExceptionProblem(table, row);
     }
 
     /// <summary>
@@ -800,7 +815,9 @@ internal static class CorrectionTables
             return "bad-current-state";
         }
 
-        return RuleIdPattern.IsMatch(table.Cell(row, "candidate_rule")) && table.Cell(row, "hint").Length > 0 ? null : "bad-rule-or-hint";
+        return RuleIdPattern.IsMatch(table.Cell(row, "candidate_rule")) && table.Cell(row, "hint").Length > 0 && table.Cell(row, "context").Length > 0
+            ? null
+            : "bad-rule-or-hint";
     }
 
     /// <summary>

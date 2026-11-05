@@ -4173,6 +4173,7 @@ masc	-	masc:written/newspaper/nyt/NYTnewswire9	masc:written/newspaper/nyt/NYTnew
 masc	-	masc:written/newspaper/nyt/NYTnewswire9	masc:written/newspaper/nyt/NYTnewswire9#32	11	1	Latin	ADJ	ptb	JJ	language-name	next=ADJ	history from Stanford University and taught [Latin] American history at Tulane University and
 masc	-	masc:written/newspaper/nyt/NYTnewswire9	masc:written/newspaper/nyt/NYTnewswire9#39	15	1	developed	VERB	ptb	VBN	be-participle-gradable	tag=VERB; form-gradable=yes; agent=by	force to drop a bomb being [developed] by a secret enterprise known as
 masc	-	masc:written/newspaper/nyt/NYTnewswire9	masc:written/newspaper/nyt/NYTnewswire9#41	12	1	surrounding	ADJ	ptb	VBG	prenominal-ing	penn=VBG; head=bonneville	vast size of Wendover and the [surrounding] Bonneville Salt Flats .
+masc	-	masc:written/newspaper/nyt/NYTnewswire9	masc:written/newspaper/nyt/NYTnewswire9#46	20	1	as	SCONJ	ptb	IN	as-well-as-sconj	next=PROPN	the military rule book as well [as] Tibbets could fly .
 masc	-	masc:written/newspaper/nyt/NYTnewswire9	masc:written/newspaper/nyt/NYTnewswire9#52	18	1	barbed	ADJ	ptb	JJ	prenominal-ed	penn=JJ; form-gradable=no; head=wire	off - limit areas covered in [barbed] wire .
 masc	-	masc:written/newspaper/nyt/NYTnewswire9	masc:written/newspaper/nyt/NYTnewswire9#53	33	1	modified	VERB	ptb	VBN	be-participle-gradable	tag=VERB; form-gradable=yes; agent=none	except that 15 B-29s were being [modified] to carry a heavy load .
 masc	-	masc:written/newspaper/nyt/NYTnewswire9	masc:written/newspaper/nyt/NYTnewswire9#54	5	1	outgoing	ADJ	ptb	JJ	prenominal-ing	penn=JJ; head=mail	Karnes and his staff read [outgoing] mail to make sure no secrets
@@ -6592,6 +6593,7 @@ open	dev	usgs-science-snippet-unusual-suspects-diving-ducks-and-avian-influenza	
 open	dev	usgs-science-snippet-unusual-suspects-diving-ducks-and-avian-influenza	usgs-science-snippet-unusual-suspects-diving-ducks-and-avian-influenza-s0009	29	1	dabbling	NOUN	unchecked		prenominal-ing	penn=-; head=ducks	a shorter window of time than [dabbling] ducks .
 open	dev	usgs-science-snippet-unusual-suspects-diving-ducks-and-avian-influenza	usgs-science-snippet-unusual-suspects-diving-ducks-and-avian-influenza-s0010	5	1	diving	NOUN	unchecked		prenominal-ing	penn=-; head=duck	However , the potential for [diving] duck species to contribute to the
 open	dev	usgs-science-snippet-volunteering-science-0	usgs-science-snippet-volunteering-science-0-s0004	25	1	rjerrard	PROPN	unchecked		propn-boundary	lowercase-propn	goes by the handle of ' [rjerrard] . '
+open	dev	usgs-science-snippet-waterbirds-risk-chesapeake-bay	usgs-science-snippet-waterbirds-risk-chesapeake-bay-s0004	22	1	as	SCONJ	unchecked		as-well-as-sconj	next=VERB	many native coastal species as well [as] contribute to the spread of invasive
 open	dev	usgs-sediment-and-suspended-sediment	usgs-sediment-and-suspended-sediment-s0010	15	1	suspended	ADJ	unchecked		prenominal-ed	penn=-; form-gradable=no; head=sediment	a glass you are viewing the [suspended] sediment in the water .
 open	dev	usgs-sediment-and-suspended-sediment	usgs-sediment-and-suspended-sediment-s0012	20	1	suspended	ADJ	unchecked		prenominal-ed	penn=-; form-gradable=no; head=sediment	so quickly -- much of the [suspended] sediment falls to the stream bed
 open	dev	usgs-sediment-and-suspended-sediment	usgs-sediment-and-suspended-sediment-s0021	15	1	intended	ADJ	unchecked		prenominal-ed	penn=-; form-gradable=no; head=purposes	eventually making them unusable for their [intended] purposes .
@@ -8416,6 +8418,7 @@ open	train	nws-jetstream-jetstream-learning-lesson-pie-in-sky	nws-jetstream-jets
 open	train	nws-jetstream-learning-lesson-quadraphonic-wind	nws-jetstream-learning-lesson-quadraphonic-wind-s0002	8	1	skewed	ADJ	disputed		be-participle-adj-not-gradable	check-rule	of this wind field is often [skewed] to the right side of the
 open	train	nws-jetstream-lightning-positive-and-negative-side-of-lightning	nws-jetstream-lightning-positive-and-negative-side-of-lightning-s0013	11	1	struck	VERB	unanimous		be-participle-gradable	tag=VERB; form-gradable=yes; agent=by	you are close enough to be [struck] by lightning regardless of where the
 open	train	nws-jetstream-lightning-positive-and-negative-side-of-lightning	nws-jetstream-lightning-positive-and-negative-side-of-lightning-s0013	24	1	located	ADJ	disputed		be-participle-adj-not-gradable	check-rule	Doppler radar says the storm is [located] .
+open	train	nws-jetstream-lightning-sound-of-thunder	nws-jetstream-lightning-sound-of-thunder-s0010	12	1	as	SCONJ	disputed		as-well-as-sconj	next=ADV	the sound of thunder as well [as] how far it travels .
 open	train	nws-jetstream-lightning-sound-of-thunder	nws-jetstream-lightning-sound-of-thunder-s0018	15	1	giving	VERB	unanimous		prenominal-ing	penn=-; head=thunder	strikes remain below the inversion , [giving] thunder a much louder impact .
 open	train	nws-jetstream-ll-canned-heat	nws-jetstream-ll-canned-heat-s0034	12	1	evening	NOUN	unanimous		prenominal-ing	penn=-; head=hours	are during early morning and late [evening] hours .
 open	train	nws-jetstream-ll-crunch	nws-jetstream-ll-crunch-s0011	1	1	lowered	ADJ	disputed		prenominal-ed	penn=-; form-gradable=no; head=pressure	This [lowered] pressure pulls outside air through the
@@ -9701,6 +9704,7 @@ open	train	usgs-sr-usgs-dye-tracing-study-kansas-river-aid-protecting-water-sup	
 open	train	usgs-sr-usgs-dye-tracing-study-kansas-river-aid-protecting-water-sup	usgs-sr-usgs-dye-tracing-study-kansas-river-aid-protecting-water-sup-s0014	9	1	for	ADP	unchecked		for-subject-to-ambiguous	before=take; subject=contaminant	predict the time it will take [for] a contaminant to reach a specific
 open	train	usgs-sr-usgs-earth-mri-invests-colorado-critical-mineral-mapping	usgs-sr-usgs-earth-mri-invests-colorado-critical-mineral-mapping-s0010	9	1	ongoing	ADJ	unchecked		prenominal-ing	penn=-; head=earth	Colorado Geological Survey have described the [ongoing] Earth MRI surveys as a partnership
 open	train	usgs-sr-usgs-media-alert-low-level-flights-image-3d-geology-northeas	usgs-sr-usgs-media-alert-low-level-flights-image-3d-geology-northeas-s0007	4	1	out	ADV	unchecked		out-of-after-verb	verb=based	Flights will be based [out] of assorted regional airports .
+open	train	usgs-sr-usgs-media-alert-usgs-crews-continue-measure-and-assess-yell	usgs-sr-usgs-media-alert-usgs-crews-continue-measure-and-assess-yell-s0002	14	1	as	SCONJ	unchecked		as-well-as-sconj	next=VERB	estimate downstream flow , as well [as] analyze results to predict future event
 open	train	usgs-sr-usgs-scientists-deploy-new-mexico-fire-enhance-water-monitor	usgs-sr-usgs-scientists-deploy-new-mexico-fire-enhance-water-monitor-s0005	8	1	life-saving	ADJ	unchecked		prenominal-ing	penn=-; head=warnings	matters when it comes to issuing [life-saving] warnings .
 open	train	usgs-sr-usgs-scientists-deploy-new-mexico-fire-enhance-water-monitor	usgs-sr-usgs-scientists-deploy-new-mexico-fire-enhance-water-monitor-s0008	1	1	increased	ADJ	unchecked		prenominal-ed	penn=-; form-gradable=yes; head=data	The [increased] data transmission will aid in quicker
 open	train	usgs-sr-usgs-scientists-deploy-new-mexico-fire-enhance-water-monitor	usgs-sr-usgs-scientists-deploy-new-mexico-fire-enhance-water-monitor-s0010	1	1	specialized	ADJ	unchecked		prenominal-ed	penn=-; form-gradable=yes; head=training	This [specialized] training allows them to safely operate
@@ -10603,6 +10607,7 @@ silver	-	gutenberg-7130	silver-10149	5	1	is	VERB	silver	V:52	be-aux-passive	chec
 silver	-	gutenberg-49921	silver-10157	24	1	French	ADJ	silver	J:95	language-name	next=NOUN	Switzerland , Paris , and the [French] provinces .
 silver	-	gutenberg-49728	silver-10176	16	1	Irish	ADJ	silver	J:99	language-name	next=NOUN	and singing a verse of an [Irish] song .
 silver	-	gutenberg-74463	silver-10185	17	1	slavery	NOUN	silver	N:100	mention-quoted	quote=" "	given by the mere term " [slavery] " .
+silver	-	gutenberg-44966	silver-10189	16	1	as	SCONJ	silver	C:54	as-well-as-sconj	next=ADP	supervision over the linen as well [as] over the woollen cloth manufactures ,
 silver	-	gutenberg-44245	silver-10200	28	1	unaided	ADJ	silver	J:100	prenominal-ed	penn=-; form-gradable=no; head=powers	in a difficult job past his [unaided] powers .
 silver	-	gutenberg-60038	silver-10201	4	1	dying	ADJ	silver	J:98	prenominal-ing	penn=-; head=man	Was it to a [dying] man who gave his last coin
 silver	-	gutenberg-42870	silver-10214	9	1	more	ADJ	silver	J:81	degree-word-ambiguous	next=ADJ; after=NOUN; before=no	no ! there must be no [more] such doings , " quickly interposed
@@ -11934,6 +11939,7 @@ silver	-	gutenberg-35152	silver-6625	1	1	is	VERB	silver	V:52	be-aux-passive	chec
 silver	-	gutenberg-7179	silver-6626	18	1	labored	ADJ	silver	J:100	prenominal-ed	penn=-; form-gradable=no; head=attempt	us at the gate with a [labored] attempt at everyday manners .
 silver	-	gutenberg-57071	silver-6629	2	1	disasters	NOUN	silver	N:100	zero-derived-degree	degree-before=very	The very [disasters] before which our ancestors bowed most
 silver	-	gutenberg-41034	silver-6630	7	1	existing	ADJ	silver	J:100	prenominal-ing	penn=-; head=firms	majority doubtless begin as clerks in [existing] firms , and , if men
+silver	-	gutenberg-38423	silver-6638	25	1	as	SCONJ	silver	C:84	as-well-as-sconj	next=PRON	I understood furrin langwidges as well [as] he did , if I was
 silver	-	gutenberg-45828	silver-6639	2	1	are	VERB	silver	V:56	be-aux-passive	check-rule	Though they [are] surrounded by luxury , they enjoy
 silver	-	tatoeba-12263336	silver-664	26	1	smoking	NOUN	silver	N:93	prenominal-ing	penn=-; head=habits	helped them end or reduce their [smoking] habits .
 silver	-	gutenberg-7816	silver-6640	11	1	letter	NOUN	silver	N:100	zero-derived-degree	degree-before=very	the eminent physician to the very [letter] .
@@ -12016,6 +12022,7 @@ silver	-	gutenberg-9627	silver-7047	3	1	embroidered	VERB	silver	V:100	prenominal
 silver	-	gutenberg-12426	silver-7050	20	1	intending	VERB	silver	V:100	prenominal-ing	penn=-; head=bridegroom	side ; and it behoves the [intending] bridegroom to take care there is
 silver	-	gutenberg-54046	silver-7070	9	1	confused	ADJ	silver	J:100	prenominal-ed	penn=-; form-gradable=yes; head=region	summit my sketch is of a [confused] region of rough-hewn granite obelisks and
 silver	-	gutenberg-74840	silver-7071	15	1	dashing	ADJ	silver	J:88	prenominal-ing	penn=-; head=charge	one hand , and a sudden [dashing] charge on the other .
+silver	-	gutenberg-8089	silver-7072	32	1	as	SCONJ	silver	C:99	as-well-as-sconj	next=DET	their master 's stall as well [as] the master himself knew his own
 silver	-	gutenberg-71297	silver-7088	2	1	act	NOUN	silver	N:100	mention-the-word	head=term	The term [act] is very commonly restricted to external
 silver	-	gutenberg-10234	silver-7091	26	1	accustomed	ADJ	silver	J:100	prenominal-ed	penn=-; form-gradable=no; head=haunt	has been startled up from its [accustomed] haunt .
 silver	-	gutenberg-61599	silver-7110	12	1	cultivated	ADJ	silver	J:98	prenominal-ed	penn=-; form-gradable=no; head=crops	glass , we saw patches of [cultivated] crops on the low coast hills
@@ -12188,6 +12195,7 @@ silver	-	gutenberg-57812	silver-8162	4	1	placed	VERB	silver	V:100	be-participle-
 silver	-	gutenberg-57812	silver-8162	31	1	are	VERB	silver	V:68	be-aux-passive	check-rule	in the districts in which they [are] situated .
 silver	-	gutenberg-34681	silver-8163	2	1	said	VERB	silver	V:97	be-participle-gradable	tag=VERB; form-gradable=yes; agent=none	It is [said] the Old Boy himself sometimes helps
 silver	-	gutenberg-71379	silver-8166	4	1	twisted	ADJ	silver	J:54	be-participle-adj-not-gradable	check-rule	Indeed , it is [twisted] about according to fancy and convenience
+silver	-	gutenberg-71379	silver-8167	2	1	as	SCONJ	silver	C:99	as-well-as-sconj	next=PRON	As well [as] I could judge , she was
 silver	-	gutenberg-6411	silver-8171	5	1	Italian	ADJ	silver	J:98	language-name	next=NOUN	Messina is a very quaint [Italian] city .
 silver	-	gutenberg-23383	silver-8175	1	1	shipwrecked	VERB	silver	V:100	prenominal-ed	penn=-; form-gradable=no; head=party	The [shipwrecked] party again pushed on , the
 silver	-	gutenberg-34229	silver-8176	8	1	uncovered	ADJ	silver	J:100	prenominal-ed	penn=-; form-gradable=no; head=trap	I have caught mink in an [uncovered] trap that was in plain sight
@@ -12347,6 +12355,7 @@ silver	-	gutenberg-13312	silver-9147	5	1	yelled	ADJ	silver	J:77	prenominal-ed	pe
 silver	-	gutenberg-50507	silver-9154	18	1	said	VERB	silver	V:100	be-participle-gradable	tag=VERB; form-gradable=yes; agent=none	; so that she may be [said] to have come of a martial
 silver	-	gutenberg-36588	silver-9155	25	1	out	ADV	silver	B:99	out-of-after-verb	verb=fired	knocked down by a chump fired [out] of my bar in the middle
 silver	-	gutenberg-11327	silver-9159	17	1	sustained	ADJ	silver	J:100	prenominal-ed	penn=-; form-gradable=no; head=brilliancy	concentration , could have achieved the [sustained] brilliancy of the result .
+silver	-	gutenberg-2776	silver-9162	5	1	as	SCONJ	silver	C:99	as-well-as-sconj	next=PRON	But you know as well [as] I do that the hatpins did
 silver	-	gutenberg-5746	silver-9164	28	1	carved	ADJ	silver	J:100	prenominal-ed	penn=-; form-gradable=no; head=work	the light was pouring through the [carved] work of the shuttered windows .
 silver	-	gutenberg-5746	silver-9164	32	1	shuttered	ADJ	silver	J:100	prenominal-ed	penn=-; form-gradable=no; head=windows	through the carved work of the [shuttered] windows .
 silver	-	gutenberg-41034	silver-9167	7	1	for	ADP	silver	P:100	for-subject-to-ambiguous	before=collectively; subject=advantages	people have learned to agitate collectively [for] advantages to be taken from some

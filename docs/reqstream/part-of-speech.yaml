@@ -401,11 +401,15 @@ sections:
         justification: |
           The staged corrections are the evidence for every label that a later change applies to the corpora. A row with
           an illegal address, a tag outside the 17, a status cell that the corpus readers refuse, no change, or no
-          provenance, or two rows for one token, could not be applied or reviewed safely. The row validation is also run
-          on shared cases that the Python validator of the overlay uses, so that the two implementations cannot diverge.
+          provenance, or two rows for one token, could not be applied or reviewed safely. A candidate row with a
+          malformed span, current tag or status, or an empty hint, would mislead the adjudication the same way, so the
+          fields of the candidates are validated before and after the application of the corrections alike. The row
+          validation is also run on shared cases that the Python validator of the overlay uses, so that the two
+          implementations cannot diverge.
         tests:
           - PartOfSpeech_DataCorrections_Tables_AreWellFormed
           - PartOfSpeech_DataCorrections_RowCases_MatchSharedFixture
+          - PartOfSpeech_DataCorrections_CandidateCases_MatchSharedFixture
 
       - id: PartOfSpeech-Data-CorrectionsMatchCorpora
         title: >-

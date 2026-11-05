@@ -24,6 +24,7 @@ needs-review:
   - "tools/data/README.md"       # Documentation of the data tools
   - "tools/data/tests/status-cases.tsv"  # Shared parity cases of the corpus status cell (Python and C# tests)
   - "tools/data/tests/corrections-cases.tsv"  # Shared row cases of the corrections overlay (Python and C# tests)
+  - "tools/data/tests/candidate-cases.tsv"  # Shared candidate row cases of the overlay (Python and C# tests)
   - "tools/data/tests/convention-cases.tsv"  # Fixture sentences of the convention rules
   - "data/CONVENTIONS.md"        # Normative labeling conventions, formats and mapping tables of the data
   - "data/README.md"             # Documentation of the data folder
@@ -462,6 +463,7 @@ reviews:
       - "tools/data/tests/test_corrections_generator.py"            # tests of the generator and the committed tables
       - "tools/data/tests/convention-cases.tsv"                     # fixture sentences of the rules
       - "tools/data/tests/corrections-cases.tsv"                    # shared row cases of the overlay
+      - "tools/data/tests/candidate-cases.tsv"                      # shared candidate row cases of the overlay
 
   # OTS-ApiMark Review (one per OTS item)
   - id: OTS-ApiMark
