@@ -1,0 +1,34 @@
+# Row cases of the corrections overlay: one corrections row per line and the verdict of corrections.row_error.
+# Read by tools/data/tests/test_corrections_overlay.py (a second implementation, such as a C# data test, can be held to the same table).
+# columns = case_id, source, split, source_id, sent_id, token_index, token, old_tag, new_tag, old_status, new_status, provenance, result
+# result = valid, or the first error code: bad-source, bad-split, bad-index, bad-token, bad-tag, masked-tag, bad-status, no-change, status-base-change, mechanical-status-change, bad-provenance
+valid-open-rule	open	train	doc1	s1	3	out	ADV	ADP	unanimous	unanimous	rule:out-of	valid
+valid-open-dev-unchecked	open	dev	doc1	s1	0	more	ADV	ADJ	unchecked	unchecked	rule:more-than	valid
+valid-masc	masc	-	masc:written/blog/x	masc:written/blog/x#1	4	such	ADP	ADJ	ptb	ptb	rule:multiword-prep	valid
+valid-silver	silver	-	gutenberg-1	silver-7	2	can	VERB	AUX	silver	silver	rule:modal-aux	valid
+valid-llm-flag	open	train	doc1	s1	2	snowball	VERB	VERB	unanimous	unanimous+mentioned	llm:model-a:run1	valid
+valid-llm-disputed	open	test	doc1	s1	2	flooding	VERB	NOUN	unchecked	disputed	llm:model-a:run1	valid
+valid-llm-flag-order	open	train	doc1	s1	2	Sierra	NOUN	NOUN	unanimous	unanimous+foreign+mentioned	llm:model-a:run1	valid
+bad-source-ste	ste	-	doc1	s1	3	out	ADV	ADP	unanimous	unanimous	rule:out-of	bad-source
+bad-split-masc-train	masc	train	doc1	s1	3	out	ADV	ADP	ptb	ptb	rule:out-of	bad-split
+bad-split-open-dash	open	-	doc1	s1	3	out	ADV	ADP	unanimous	unanimous	rule:out-of	bad-split
+bad-index-negative	open	train	doc1	s1	-1	out	ADV	ADP	unanimous	unanimous	rule:out-of	bad-index
+bad-index-leading-zero	open	train	doc1	s1	01	out	ADV	ADP	unanimous	unanimous	rule:out-of	bad-index
+bad-index-text	open	train	doc1	s1	x	out	ADV	ADP	unanimous	unanimous	rule:out-of	bad-index
+bad-token-empty	open	train	doc1	s1	3		ADV	ADP	unanimous	unanimous	rule:out-of	bad-token
+bad-token-space	open	train	doc1	s1	3	out of	ADV	ADP	unanimous	unanimous	rule:out-of	bad-token
+bad-tag-old	open	train	doc1	s1	3	out	ADVERB	ADP	unanimous	unanimous	rule:out-of	bad-tag
+bad-tag-new	open	train	doc1	s1	3	out	ADV	PREP	unanimous	unanimous	rule:out-of	bad-tag
+masked-new-tag	silver	-	gutenberg-1	silver-7	2	can	VERB	_	masked	masked	rule:modal-aux	masked-tag
+masked-old-tag	silver	-	gutenberg-1	silver-7	2	can	_	AUX	masked	masked	rule:modal-aux	masked-tag
+bad-status-unknown	open	train	doc1	s1	3	out	ADV	ADP	unanimous	certain	rule:out-of	bad-status
+bad-status-flag-order	open	train	doc1	s1	2	Sierra	NOUN	NOUN	unanimous	unanimous+mentioned+foreign	llm:model-a:run1	bad-status
+bad-status-unknown-flag	open	train	doc1	s1	2	Sierra	NOUN	NOUN	unanimous	unanimous+quoted	llm:model-a:run1	bad-status
+no-change-same-row	open	train	doc1	s1	3	out	ADP	ADP	unanimous	unanimous	rule:out-of	no-change
+status-base-change-rule	open	train	doc1	s1	3	out	ADV	ADP	unanimous	disputed	rule:out-of	status-base-change
+status-base-change-llm-to-ptb	open	train	doc1	s1	3	out	ADV	ADP	unanimous	ptb	llm:model-a:run1	status-base-change
+status-base-change-llm-unchecked	open	train	doc1	s1	3	out	ADV	ADP	disputed	unchecked	llm:model-a:run1	status-base-change
+mechanical-status-flag	open	train	doc1	s1	2	snowball	VERB	VERB	unanimous	unanimous+mentioned	rule:mention	mechanical-status-change
+bad-provenance-free-text	open	train	doc1	s1	3	out	ADV	ADP	unanimous	unanimous	manual	bad-provenance
+bad-provenance-rule-id	open	train	doc1	s1	3	out	ADV	ADP	unanimous	unanimous	rule:Bad_Id	bad-provenance
+bad-provenance-llm-run	open	train	doc1	s1	3	out	ADV	ADP	unanimous	unanimous+mentioned	llm:model-only	bad-provenance

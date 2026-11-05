@@ -68,12 +68,28 @@ if (-not $skipPython) {
     deactivate
 }
 
-# [PROJECT-SPECIFIC] Add additional Python-based lint checks here.
-# Example:
-#   if (-not $skipPython) {
-#       flake8 src/
-#       if ($LASTEXITCODE -ne 0) { $lintError = $true }
-#   }
+# [PROJECT-SPECIFIC] Python checks of the data tools and the staged corpus corrections (standard library only, no
+# network): every tool compiles, the unit tests of the correction tools pass, the staged tables are valid against the
+# corpora and equal to what the generator writes, and the conventions linter runs (report only: it does not fail on
+# violations that are left in the corpora yet; a later change adds --enforce). The virtual environment is left, so
+# `python` is the interpreter that the workflow or the developer provides (3.10 or later).
+if (-not $skipPython) {
+    Write-Host "Linting: data tools and staged corrections..."
+    python -m compileall -q tools/data
+    if ($LASTEXITCODE -ne 0) { $lintError = $true }
+
+    python -m unittest discover -s tools/data/tests -p "test_corrections_*.py"
+    if ($LASTEXITCODE -ne 0) { $lintError = $true }
+
+    python tools/data/corrections.py validate
+    if ($LASTEXITCODE -ne 0) { $lintError = $true }
+
+    python tools/data/make_corrections.py --check
+    if ($LASTEXITCODE -ne 0) { $lintError = $true }
+
+    python tools/data/check_conventions.py
+    if ($LASTEXITCODE -ne 0) { $lintError = $true }
+}
 
 # --- NPM SECTION ---
 # Installs npm dependencies and runs cspell and markdownlint-cli2.

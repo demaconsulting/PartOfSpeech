@@ -217,7 +217,8 @@ final newline). A file starts with header comment lines, then a blank line, then
   importer (flags come in the consensus column of the source), the silver derivation (it recomputes the status and keeps
   the flags), the lexicon and coverage tools, and the readers of the trainer and the tests accept and keep the flags;
   the MASC importer derives every row from Penn trees and has no source for a flag. No committed file carries a flag
-  yet; the corpus labels are corrected in a later change.
+  yet; the corpus labels are corrected in a later change, and the corrections are staged in `data/corrections/` (see "Other
+  Formats").
 - `source_tag` (MASC, silver) records what the tag was derived from, so the derivation is reproducible from the file.
 
 ### Other Formats
@@ -225,6 +226,28 @@ final newline). A file starts with header comment lines, then a blank line, then
 The shape probe and gold v2 keep the column sets of their source (see `data/eval/*/README.md`). `lexicon.tsv` is
 `spelling TAB TAG TAG ...` (see `data/lexicon/README.md`). All TSV files may start with comment lines (hash and space). The
 `MANIFEST.tsv` lists size and SHA-256 of every data file except Markdown.
+
+**Corrections overlay** (`data/corrections/`, specified in full in its `README.md`). Corrections to the labels of the open
+corpus, MASC and the silver data are rows of three tables, not edits of the corpus files, until a later change applies them.
+Each table starts with comment lines (`# corpus`, `# license`, `# kind`, `# columns`, `# generator`, `# input`), then one
+row per line, sorted by the key `(source, split, sent_id, token_index)`, with these columns:
+
+- `mechanical.tsv` (and `llm.tsv` for the adjudicated cases), kind `corrections`: `source, split, source_id, sent_id,
+  token_index, token, old_tag, new_tag, old_status, new_status, provenance`
+- `candidates.tsv`, kind `candidates` (cases that need a judgment; never a change): `source, split, source_id, sent_id,
+  token_index, span_length, token, current_tag, current_status, source_tag, candidate_rule, hint, context`
+- `exceptions.tsv`, kind `exceptions` (reviewed, keep as is): `source, split, source_id, sent_id, token_index, token, rule,
+  reason, provenance`
+
+Normative rules: `source` is `open`, `masc` or `silver`; `split` is `train`, `dev` or `test` for `open` and `-` otherwise;
+`token_index` is the 0-based position among the token rows of the sentence and `token` is its form; tags are among the 17
+and never the masked placeholder; `old_status` and `new_status` are whole status cells; a row changes the tag or the status
+(the base status may change only to `disputed` and only for an `llm:` row; a `rule:` row keeps its status cell); the
+provenance is `rule:<id>` (the id of a rule of the catalog in `data/corrections/README.md`) or `llm:<model>:<run>`; a token
+has at most one correction row across all correction tables. A correction table is valid against the corpora when every row
+matches them in the pending state (`old_tag`, `old_status`) or every row matches them in the applied state (`new_tag`,
+`new_status`); a mixture is an error. The rules of the catalog implement the text of "Annotation Conventions"; where the
+text and a rule disagree, this document governs and the rule is changed.
 
 ## Tokenization Convention
 

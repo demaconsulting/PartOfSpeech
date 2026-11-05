@@ -169,9 +169,9 @@ Further top-level folders hold files that are not software items and are therefo
 structure:
 
 ```text
-data/                           — Training corpora, evaluation sets, lexicon, checksum manifest and leakage report
+data/                           — Training corpora, evaluation sets, lexicon, staged corrections, checksums, leakage report
 docs/evaluation/                — The evaluation record: thresholds, held-out results, how to read and reproduce them
-tools/data/                     — Build-time Python tools and their tests that produce and check the data
+tools/data/                     — Build-time Python tools and their tests that produce, lint and check the data
 tools/LexiconCompiler/          — Build-time C# tool that compiles the lexicon table into Resources/lexicon.bin
 PACKAGE-LICENSE.md              — The license of the NuGet package (MIT code and CC BY data), packed at the package root
 THIRD-PARTY-NOTICES.md          — Third-party attribution and license notices, packed in the NuGet package
@@ -208,9 +208,14 @@ embedded model requirements in the same file), their tests are in
 `PartOfSpeech-Model-EvaluationReported` and `PartOfSpeech-Lib-ConfidenceGuidance`, and their consistency tests are in
 `test/{System}.Tests/{System}EvaluationTests.cs`. The build-time
 tools have developer unit tests in `tools/data/tests/`, which are not requirements evidence. The Python files of the
-tools and their tests are reviewed in two review-sets of `.reviewmark.yaml`: `PartOfSpeech-DataConversion` (the tools
-that import and convert data and build the lexicon) and `PartOfSpeech-DataChecks` (the tools that check, record and
-verify it); the system design and the system requirements are their context. The C# tool `tools/LexiconCompiler` has
+tools and their tests are reviewed in three review-sets of `.reviewmark.yaml`: `PartOfSpeech-DataConversion` (the tools
+that import and convert data and build the lexicon), `PartOfSpeech-DataChecks` (the tools that check, record and
+verify it) and `PartOfSpeech-DataCorrections` (the conventions linter and the generator and validator of the staged
+corrections in `data/corrections/`, with their tests and fixtures); the system design and the system requirements are
+their context. The data tools run in two places: `lint.ps1` runs the unit tests of the correction tools, the validation
+and regeneration check of the staged tables and a report-only linter pass (the quality-checks job of the workflow runs
+`lint.ps1`, and it is the only workflow entry that can host Python checks), while the C# tests of the system read the
+committed tables and corpora and are the requirements evidence. The C# tool `tools/LexiconCompiler` has
 its own review-set, `PartOfSpeech-LexiconCompiler`; it has no requirements of its own because its result is proven by
 the system requirement `PartOfSpeech-Data-EmbeddedLexiconCurrent`. The Trainer, in contrast, is the unit `ModelTrainer`
 with the full set of artifacts: `docs/reqstream/{system}/model-trainer.yaml`, `docs/design/{system}/model-trainer.md`,

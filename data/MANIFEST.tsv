@@ -1,5 +1,8 @@
 # Checksums of the committed data files (tools/data/make_manifest.py); Markdown files are not listed
 # columns = path (relative to data/), bytes, sha256, lines, sentences
+corrections/candidates.tsv	2441631	9cb400f7cf27bd413a8c840f466e922a9b5ff398f0274cb4762e921454aa9672	12490	-
+corrections/exceptions.tsv	954	8cba4e654a185275e79295f0dbe7ad8e923da45792a7d03a7bce1214c2ea78ee	0	-
+corrections/mechanical.tsv	224985	0d0e0a85d7ba51bb05748b8cd29b8fab4dbab4bff7897a5b0ef762eb113d678a	2048	-
 eval/gold-v2/dev.tsv	606762	ffb2f3afd3460523656f5528a66094bad507982b15eb2b4a9341cdb78ff117f5	2025	-
 eval/gold-v2/sources.tsv	886502	0f5e84194e64459393dfea7c466c1d7efb4e8f43603f10480b2aa29dd1d36d21	1443	-
 eval/gold-v2/test.tsv	922745	11b4a38e2cb1154d063d503b289c4a40ae1ba0c7009b92bf4a069a4dc3317cfb	3047	-

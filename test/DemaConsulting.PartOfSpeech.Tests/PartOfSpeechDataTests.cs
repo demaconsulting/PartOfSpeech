@@ -8,9 +8,10 @@ namespace DemaConsulting.PartOfSpeech.Tests;
 
 /// <summary>
 ///     System-level tests of the committed data and licensing artifacts: the third-party notice and its packaging, the
-///     licenses and provenance of the data, the Universal POS tags, the separation of training and evaluation data, and
-///     the lexicon. The tests read the files of the working copy and need no network. Each test proves one obligation
-///     of one requirement; a test that finds no file or no row fails instead of passing on nothing.
+///     licenses and provenance of the data, the staged corpus corrections, the Universal POS tags, the separation of
+///     training and evaluation data, and the lexicon. The tests read the files of the working copy and need no network.
+///     Each test proves one obligation of one requirement; a test that finds no file or no row fails instead of passing
+///     on nothing.
 /// </summary>
 public class PartOfSpeechDataTests
 {
@@ -508,6 +509,123 @@ public class PartOfSpeechDataTests
         // Assert: the manifest is not empty and every file matches
         Assert.True(manifest.Count > 20);
         Assert.Empty(problems);
+    }
+
+    /// <summary>
+    ///     Proves that the staged correction tables (<c>data/corrections</c>) have the documented columns, that every
+    ///     row is valid on its own (legal address, tags of the 17, status cells with canonical flags, a change, a
+    ///     provenance), that the rows are sorted, and that no token has two correction rows.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataCorrections_Tables_AreWellFormed()
+    {
+        // Arrange: the tables of corrections that exist (the mechanical one is required), the candidates and the exceptions
+        var names = CorrectionTables.CorrectionTableNames.Where(name => File.Exists(CorrectionTables.FilePath(name))).ToList();
+        Assert.Contains("mechanical.tsv", names);
+        var corrections = names.Select(name => (Name: name, Table: DataFiles.ReadTable(CorrectionTables.FilePath(name)))).ToList();
+        var candidates = DataFiles.ReadTable(CorrectionTables.FilePath("candidates.tsv"));
+        var exceptions = DataFiles.ReadTable(CorrectionTables.FilePath("exceptions.tsv"));
+
+        // Act: validate each table; the addresses of the corrections must be unique across the tables of corrections
+        var addresses = new HashSet<string>(StringComparer.Ordinal);
+        var problems = corrections.SelectMany(entry => CorrectionTables.TableProblems(entry.Name, "corrections", entry.Table, addresses))
+            .Concat(CorrectionTables.TableProblems("candidates.tsv", "candidates", candidates, new HashSet<string>(StringComparer.Ordinal)))
+            .Concat(CorrectionTables.TableProblems("exceptions.tsv", "exceptions", exceptions, new HashSet<string>(StringComparer.Ordinal)))
+            .ToList();
+
+        // Assert: the tables that carry the staged work are not empty and no problem was found
+        Assert.True(corrections.First(entry => entry.Name == "mechanical.tsv").Table.Rows.Count > 0);
+        Assert.True(candidates.Rows.Count > 0);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the row validation of the data tests gives the verdicts of the shared cases
+    ///     (<c>tools/data/tests/corrections-cases.tsv</c>), which the Python validator of the overlay is also held to.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataCorrections_RowCases_MatchSharedFixture()
+    {
+        // Arrange: the shared cases (one corrections row and the expected verdict each)
+        var cases = DataFiles.ReadTable(DataFiles.Repository("tools/data/tests/corrections-cases.tsv"));
+
+        // Act: validate every case row and compare the verdict
+        var problems = cases.Rows
+            .Select(row => (Case: cases.Cell(row, "case_id"), Expected: cases.Cell(row, "result"), Actual: CorrectionTables.RowError(cases, row) ?? "valid"))
+            .Where(verdict => verdict.Expected != verdict.Actual)
+            .Select(verdict => $"{verdict.Case}: expected {verdict.Expected}, got {verdict.Actual}")
+            .ToList();
+
+        // Assert: the cases are not empty, cover valid and invalid rows, and every verdict agrees
+        Assert.True(cases.Rows.Count > 20);
+        Assert.Contains("valid", cases.Column("result"));
+        Assert.Contains("no-change", cases.Column("result"));
+        Assert.Empty(problems);
+    }
+
+    /// <summary>
+    ///     Proves that every correction row and every exception row addresses an existing token of a committed corpus
+    ///     (sentence id, document id, token index and form), and that the correction rows match the corpora either all
+    ///     in the pending state (old tag and status) or all in the applied state (new tag and status).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataCorrections_Rows_MatchCommittedCorpora()
+    {
+        // Arrange: the correction tables and the exceptions, and the sentences that their rows name
+        var corrections = CorrectionTables.CorrectionTableNames
+            .Where(name => File.Exists(CorrectionTables.FilePath(name)))
+            .Select(name => DataFiles.ReadTable(CorrectionTables.FilePath(name)))
+            .ToList();
+        var exceptions = DataFiles.ReadTable(CorrectionTables.FilePath("exceptions.tsv"));
+        var sentences = CorrectionTables.ReadNamedSentences(corrections.Concat(new[] { exceptions }));
+        var problems = new List<string>();
+        var pending = 0;
+        var applied = 0;
+
+        // Act: find the token of every row and the state of the corpus at that token
+        foreach (var table in corrections)
+        {
+            foreach (var row in table.Rows)
+            {
+                var (token, problem) = CorrectionTables.FindToken(sentences, table, row, 1);
+                var state = token == null ? null : CorrectionState(table, row, token);
+                pending += state == "pending" ? 1 : 0;
+                applied += state == "applied" ? 1 : 0;
+                if (state == null)
+                {
+                    problems.Add(problem ?? $"{table.Cell(row, "sent_id")}#{table.Cell(row, "token_index")}: the corpus matches neither the old nor the new value");
+                }
+            }
+        }
+
+        problems.AddRange(exceptions.Rows.Select(row => CorrectionTables.FindToken(sentences, exceptions, row, 1).Problem).OfType<string>());
+
+        // Assert: there are rows, all of one state, and every row addresses its token
+        Assert.True(pending + applied > 0);
+        Assert.True(pending == 0 || applied == 0, $"rows of both states: {pending} pending and {applied} applied");
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that every candidate row addresses an existing token of a committed corpus (sentence id, document id,
+    ///     token index and form) and that its span stays inside the sentence.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataCorrections_Candidates_AddressExistingTokens()
+    {
+        // Arrange: the candidates and the sentences that they name
+        var candidates = DataFiles.ReadTable(CorrectionTables.FilePath("candidates.tsv"));
+        var sentences = CorrectionTables.ReadNamedSentences(new[] { candidates });
+
+        // Act: find the token of every row, with room for the whole span
+        var problems = candidates.Rows
+            .Select(row => CorrectionTables.FindToken(sentences, candidates, row, int.Parse(candidates.Cell(row, "span_length"), CultureInfo.InvariantCulture)).Problem)
+            .OfType<string>()
+            .ToList();
+
+        // Assert: there are candidates and every one addresses its token
+        Assert.True(candidates.Rows.Count > 0);
+        Assert.Empty(problems.Take(ShownProblems));
     }
 
     /// <summary>
@@ -1348,6 +1466,20 @@ public class PartOfSpeechDataTests
         var probe = DataFiles.ReadTable(DataFiles.Data("eval/shapes/probe.tsv"));
         items.AddRange(probe.Column("id").Zip(probe.Column("sentence"), (id, text) => ("shapes/probe.tsv", id, text)));
         return items;
+    }
+
+    /// <summary>
+    ///     Compares the corpus token of a correction row with the row: the state of the corpus at that token.
+    /// </summary>
+    /// <returns><c>pending</c> (the old value), <c>applied</c> (the new value) or <c>null</c> (neither).</returns>
+    private static string? CorrectionState(DataTable table, string[] row, string[] token)
+    {
+        if (token[1] == table.Cell(row, "old_tag") && token[2] == table.Cell(row, "old_status"))
+        {
+            return "pending";
+        }
+
+        return token[1] == table.Cell(row, "new_tag") && token[2] == table.Cell(row, "new_status") ? "applied" : null;
     }
 
     /// <summary>
