@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using DemaConsulting.PartOfSpeech.Trainer;
 
 namespace DemaConsulting.PartOfSpeech.Tests;
 
@@ -1288,7 +1289,8 @@ public class PartOfSpeechDataTests
         foreach (var token in sentence.Tokens)
         {
             var valid = token.Length >= 3 &&
-                        (DataFiles.UniversalTags.Contains(token[1]) || (token[1] == "_" && token[2] == "masked"));
+                        CorpusStatus.TryParse(token[2], out var status, out _) &&
+                        (DataFiles.UniversalTags.Contains(token[1]) || (token[1] == "_" && status == "masked"));
             if (!valid)
             {
                 yield return $"{corpus}: {sentence.SentenceId}: invalid token row '{string.Join("|", token)}'";
@@ -1305,7 +1307,7 @@ public class PartOfSpeechDataTests
         long covered = 0;
         foreach (var token in DataFiles.ReadCorpus(DataFiles.Data(corpus)).SelectMany(sentence => sentence.Tokens))
         {
-            if (token[2] == "disputed")
+            if (CorpusStatus.BaseStatus(token[2]) == "disputed")
             {
                 continue;
             }

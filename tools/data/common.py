@@ -125,38 +125,122 @@ def key(text):
 
 # ---------------------------------------------------------------- corpus block format
 
-def read_corpus(path):
+def check_row(origin, line_number, cells):
+    """Validate one token row of the shared corpus format exactly like the trainer's reader (CorpusReader.cs).
+
+    The same grammar and the same checks in the same order: at least form, tag and status; a known status followed
+    by the flags in canonical order; a known tag unless the tag is `_` or the status is `masked`. The messages carry
+    the same wording as the C# reader (origin, line number, the offending value).
+    """
+    where = "%s, line %d: " % (origin, line_number)
+    if len(cells) < 3:
+        raise ValueError(where + "a token row needs at least form, tag and status.")
+    try:
+        base = parse_status(cells[2])[0]
+    except ValueError as error:
+        raise ValueError(where + "invalid status '" + cells[2] + "' (a known status, then the flags +foreign and "
+                         "+mentioned, in that order, once).") from error
+    if cells[1] != "_" and base != "masked" and cells[1] not in UPOS_SET:
+        raise ValueError(where + "unknown tag '" + cells[1] + "'.")
+
+
+def read_corpus(path, strict=True):
     """Read the shared corpus format: header comment lines, blank line, then one block per sentence.
 
     Returns (header_lines, sentences). A sentence is a dict with sent_id, source_id, text, comments (all
     comment key/value pairs) and rows (lists of the tab separated cells of every token). A comment line is a
     line that starts with "# " (a token whose form is "#" is followed by a tab, never by a space).
+
+    With `strict` (the default) every token row is validated like the trainer's reader does (see `check_row`: tag,
+    status and status flags), so a malformed corpus is an error in every consumer. Only the reader of the source
+    format of the open corpus (seven columns, import_open.py) passes `strict=False` and validates its own columns.
     """
     header, sentences = [], []
     block = []
-    for line in read_lines(path) + [""]:
+    for line_number, line in enumerate(read_lines(path) + [""], 1):
         if line != "":
-            block.append(line)
+            block.append((line_number, line))
             continue
         if not block:
             continue
         comments = {}
         rows = []
-        for item in block:
+        for number, item in block:
             if item.startswith("# "):
                 name, _, value = item[2:].partition(" = ")
                 comments[name] = value
             else:
-                rows.append(item.split("\t"))
+                cells = item.split("\t")
+                if strict:
+                    check_row(path, number, cells)
+                rows.append(cells)
         if "sent_id" in comments:
             sentences.append({"sent_id": comments["sent_id"], "source_id": comments.get("source_id", ""),
                               "text": comments.get("text", ""), "comments": comments, "rows": rows})
         elif not sentences and not rows:
-            header = list(block)
+            header = [item for _, item in block]
         else:
             raise ValueError(path + ": block without sent_id")
         block = []
     return header, sentences
+
+
+# ---------------------------------------------------------------- corpus status cell: status and flags
+
+# The status cell of a token row is `status` or `status+flag+flag`: one status of the file's vocabulary, then the
+# flags, each after a plus sign, in alphabetical order. A cell without a plus sign (every committed file today) has no
+# flags. Flags are token-level facts about the word and never change the tag (see data/CONVENTIONS.md, "Mentioned Words").
+STATUS_BASES = ("unanimous", "disputed", "unchecked", "ptb", "silver", "masked")
+STATUS_FLAGS = ("foreign", "mentioned")  # canonical order
+
+
+def parse_status(cell):
+    """Split a status cell `status[+flag...]` into (status, flags tuple); the flags come back in canonical order.
+
+    Raises ValueError for an unknown status, an unknown flag, a duplicate flag or flags out of canonical order, so
+    that a file has exactly one spelling of every status cell.
+    """
+    base, *flags = cell.split("+")
+    if base not in STATUS_BASES:
+        raise ValueError("unknown status " + repr(cell))
+    for flag in flags:
+        if flag not in STATUS_FLAGS:
+            raise ValueError("unknown status flag " + repr(flag) + " in " + repr(cell))
+    if flags != sorted(set(flags), key=STATUS_FLAGS.index):
+        raise ValueError("status flags must be unique and in the order " + "+".join(STATUS_FLAGS) + ": " + repr(cell))
+    return base, tuple(flags)
+
+
+def base_status(cell):
+    """The status of a status cell without its flags (`disputed+mentioned` gives `disputed`)."""
+    return cell.partition("+")[0]
+
+
+def format_status(base, flags=()):
+    """The status cell of a status and its flags (flags are put in canonical order, duplicates are an error)."""
+    ordered = sorted(flags, key=STATUS_FLAGS.index)
+    if len(set(ordered)) != len(ordered):
+        raise ValueError("duplicate status flag in " + repr(flags))
+    return "+".join([base] + ordered)
+
+
+def with_flag_documentation(header, sentences):
+    """The header lines, plus a line that documents the status flags when (and only when) a row carries one.
+
+    Files without flags keep their header byte for byte (the committed files have no flags, and their hashes are
+    pinned by the evaluation record); a file that does carry flags says what they are, right after its status line.
+    """
+    flagged = any("+" in row[2] for sentence in sentences for row in sentence["rows"] if len(row) > 2)
+    if not flagged:
+        return list(header)
+    note = ("# status flags = a status may be followed by +foreign (word of another language) and +mentioned (word talked "
+            "about, not used), in that order; a flag never changes the tag (data/CONVENTIONS.md)")
+    out = []
+    for line in header:
+        out.append(line)
+        if line.startswith("# status = "):
+            out.append(note)
+    return out
 
 
 def write_corpus(path, header, sentences):

@@ -1,0 +1,33 @@
+# Parity cases of the corpus token row: the Python reader (tools/data/common.py, check_row) and the trainer reader
+# (CorpusReader.cs) must give the same verdict, the same status and flags, and name the same offending value.
+# Read by tools/data/tests/test_common.py and by ModelTrainerTests.cs (CorpusReader_Parse_SharedParityCases_AgreeWithPython).
+# columns = tag, cell, result, status, flags
+# result = accept | invalid-status | unknown-tag; flags = - (none) or foreign, mentioned separated by a comma
+NOUN	unanimous	accept	unanimous	-
+NOUN	disputed	accept	disputed	-
+NOUN	unchecked	accept	unchecked	-
+NOUN	ptb	accept	ptb	-
+NOUN	silver	accept	silver	-
+NOUN	masked	accept	masked	-
+NOUN	unanimous+mentioned	accept	unanimous	mentioned
+NOUN	unanimous+foreign	accept	unanimous	foreign
+NOUN	unchecked+foreign+mentioned	accept	unchecked	foreign,mentioned
+NOUN	masked+mentioned	accept	masked	mentioned
+_	silver	accept	silver	-
+_	masked+foreign	accept	masked	foreign
+FOO	masked	accept	masked	-
+NOUN		invalid-status	-	-
+NOUN	bogus	invalid-status	-	-
+NOUN	UNANIMOUS	invalid-status	-	-
+NOUN	 unanimous	invalid-status	-	-
+NOUN	unanimous+	invalid-status	-	-
+NOUN	unanimous++mentioned	invalid-status	-	-
+NOUN	+mentioned	invalid-status	-	-
+NOUN	mentioned	invalid-status	-	-
+NOUN	unanimous+shouted	invalid-status	-	-
+NOUN	unanimous+Mentioned	invalid-status	-	-
+NOUN	unanimous+mentioned+mentioned	invalid-status	-	-
+NOUN	unanimous+foreign+foreign	invalid-status	-	-
+NOUN	unanimous+mentioned+foreign	invalid-status	-	-
+FOO	unanimous	unknown-tag	-	-
+noun	unanimous+mentioned	unknown-tag	-	-

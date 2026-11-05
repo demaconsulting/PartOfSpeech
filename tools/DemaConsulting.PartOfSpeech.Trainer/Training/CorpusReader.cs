@@ -3,6 +3,101 @@ using System.Text;
 namespace DemaConsulting.PartOfSpeech.Trainer;
 
 /// <summary>
+///     The token-level marks that the flags after the status of a corpus row stand for (<c>unanimous+mentioned</c>).
+/// </summary>
+/// <remarks>
+///     A flag records a fact about the word and never changes its tag (see <c>data/CONVENTIONS.md</c>, "Mentioned
+///     Words"). The trainer reads and keeps the marks and does not use them yet.
+/// </remarks>
+[Flags]
+internal enum TokenMarks
+{
+    /// <summary>
+    ///     No flag.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    ///     The word belongs to another language than English (<c>foreign</c>).
+    /// </summary>
+    Foreign = 1,
+
+    /// <summary>
+    ///     The word is talked about and not used (<c>mentioned</c>).
+    /// </summary>
+    Mentioned = 2,
+}
+
+/// <summary>
+///     Reads the status cell of a corpus row: a status, then flags, each after a plus sign.
+/// </summary>
+/// <remarks>
+///     The flags are <c>foreign</c> and <c>mentioned</c>, unique and in that (alphabetical) order, so that a cell has
+///     one spelling. A cell without a plus sign has no flags, which is every cell of the committed files today.
+/// </remarks>
+internal static class CorpusStatus
+{
+    /// <summary>
+    ///     The statuses of the committed corpora, without flags.
+    /// </summary>
+    private static readonly HashSet<string> KnownStatuses = new(StringComparer.Ordinal)
+    {
+        "unanimous", "disputed", "unchecked", "ptb", "silver", "masked",
+    };
+
+    /// <summary>
+    ///     Splits a status cell into the status and its flags.
+    /// </summary>
+    /// <param name="cell">The cell, such as <c>unanimous</c> or <c>disputed+foreign+mentioned</c>.</param>
+    /// <param name="status">Receives the status without its flags.</param>
+    /// <param name="flags">Receives the flags.</param>
+    /// <returns><c>true</c> if the status is known and the flags are known, unique and in canonical order.</returns>
+    public static bool TryParse(string cell, out string status, out TokenMarks flags)
+    {
+        ArgumentNullException.ThrowIfNull(cell);
+        var parts = cell.Split('+');
+        status = parts[0];
+        flags = TokenMarks.None;
+        if (!KnownStatuses.Contains(status))
+        {
+            return false;
+        }
+
+        var previous = TokenMarks.None;
+        for (var i = 1; i < parts.Length; i++)
+        {
+            var flag = parts[i] switch
+            {
+                "foreign" => TokenMarks.Foreign,
+                "mentioned" => TokenMarks.Mentioned,
+                _ => TokenMarks.None,
+            };
+            if (flag == TokenMarks.None || flag <= previous)
+            {
+                return false;
+            }
+
+            flags |= flag;
+            previous = flag;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    ///     Gets the status of a cell without its flags.
+    /// </summary>
+    /// <param name="cell">The cell.</param>
+    /// <returns>The text before the first plus sign.</returns>
+    public static string BaseStatus(string cell)
+    {
+        ArgumentNullException.ThrowIfNull(cell);
+        var plus = cell.IndexOf('+', StringComparison.Ordinal);
+        return plus < 0 ? cell : cell.Substring(0, plus);
+    }
+}
+
+/// <summary>
 ///     One training sentence: its tokens and, for every token, the gold tag or the marker that the token gives no training signal.
 /// </summary>
 internal sealed class TrainingSentence
@@ -19,12 +114,14 @@ internal sealed class TrainingSentence
     /// <param name="sourceId">The id of the document that the sentence belongs to.</param>
     /// <param name="tokens">The tokens as written.</param>
     /// <param name="gold">The gold tag ordinal of every token, or <see cref="NoSignal"/>.</param>
-    public TrainingSentence(string sentenceId, string sourceId, string[] tokens, sbyte[] gold)
+    /// <param name="marks">The marks (flags) of every token, or <c>null</c> for no flag on any token.</param>
+    public TrainingSentence(string sentenceId, string sourceId, string[] tokens, sbyte[] gold, TokenMarks[]? marks = null)
     {
         SentenceId = sentenceId;
         SourceId = sourceId;
         Tokens = tokens;
         Gold = gold;
+        Marks = marks ?? new TokenMarks[tokens.Length];
     }
 
     /// <summary>
@@ -46,6 +143,11 @@ internal sealed class TrainingSentence
     ///     Gets the gold tag ordinal of every token, or <see cref="NoSignal"/> for a masked token.
     /// </summary>
     public sbyte[] Gold { get; }
+
+    /// <summary>
+    ///     Gets the marks of every token (the <c>foreign</c> and <c>mentioned</c> flags); the trainer keeps them and does not use them yet.
+    /// </summary>
+    public TokenMarks[] Marks { get; }
 }
 
 /// <summary>
@@ -55,7 +157,10 @@ internal sealed class TrainingSentence
 ///     <para>
 ///         A corpus file is a header of <c># key = value</c> comments, then one block per sentence: comment lines
 ///         (<c># sent_id</c>, <c># source_id</c>) and one tab-separated row per token (form, tag, status and an optional
-///         source tag), blocks separated by an empty line. A comment starts with a hash and a space, so the token
+///         source tag), blocks separated by an empty line. The status may carry flags after plus signs
+///         (<c>unanimous+mentioned</c>, see <see cref="CorpusStatus"/>); the reader keeps them in
+///         <see cref="TrainingSentence.Marks"/>, and they never change the tag or the masking. A comment starts with
+///         a hash and a space, so the token
 ///         <c>#</c> (which has a tab after the hash) is a row, not a comment.
 ///     </para>
 ///     <para>
@@ -134,6 +239,7 @@ internal static class CorpusReader
         string sourceId = string.Empty;
         var forms = new List<string>();
         var gold = new List<sbyte>();
+        var flags = new List<TokenMarks>();
         var lineNumber = 0;
 
         // Finishes the block that was collected so far; a block without rows (the file header) yields nothing
@@ -141,13 +247,14 @@ internal static class CorpusReader
         {
             if (forms.Count > 0 && Selected(sentenceId, source))
             {
-                result.Add(new TrainingSentence(sentenceId, sourceId, forms.ToArray(), gold.ToArray()));
+                result.Add(new TrainingSentence(sentenceId, sourceId, forms.ToArray(), gold.ToArray(), flags.ToArray()));
             }
 
             sentenceId = string.Empty;
             sourceId = string.Empty;
             forms.Clear();
             gold.Clear();
+            flags.Clear();
         }
 
         foreach (var line in lines)
@@ -177,6 +284,12 @@ internal static class CorpusReader
             }
 
             forms.Add(cells[0]);
+            if (!CorpusStatus.TryParse(cells[2], out _, out var tokenFlags))
+            {
+                throw new InvalidDataException($"{origin}, line {lineNumber}: invalid status '{cells[2]}' (a known status, then the flags +foreign and +mentioned, in that order, once).");
+            }
+
+            flags.Add(tokenFlags);
             gold.Add(ReadGold(cells, source, origin, lineNumber));
         }
 
@@ -241,7 +354,7 @@ internal static class CorpusReader
     private static sbyte ReadGold(string[] cells, SourceConfig source, string origin, int lineNumber)
     {
         var tag = cells[1];
-        var status = cells[2];
+        var status = CorpusStatus.BaseStatus(cells[2]);
         if (tag == "_" || status == "masked")
         {
             return TrainingSentence.NoSignal;

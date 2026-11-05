@@ -30,7 +30,7 @@ Run from the repository root. Scripts take their input locations as arguments or
 
 | Script | Purpose | Notes |
 | --- | --- | --- |
-| `common.py` | shared helpers: paths, the 17 tags, corpus block reader/writer, LF/UTF-8 writer, SHA-256, pinned download, sentence keys, clitic splitter, lexicon reader and token-shape rules | unit tested |
+| `common.py` | shared helpers: paths, the 17 tags, corpus block reader/writer, status-and-flags cells (`parse_status`, `base_status`, `format_status`), LF/UTF-8 writer, SHA-256, pinned download, sentence keys, clitic splitter, lexicon reader and token-shape rules | unit tested |
 | `import_open.py` | open corpus to `data/open/` (UPOS projection, `sources.tsv`, `LICENSE`) | `--source-dir <WordSense checkout>` or download |
 | `import_eval.py` | shape probe, gold v2 and the STE challenge set to `data/eval/` | same |
 | `import_masc.py` | MASC Penn trees to `data/masc/` (`ptb_to_upos`, leakage exclusion, mapping audit) | `--archive`, `--exclude-genre`; writes `sources.tsv`, `excluded-documents.tsv` and `dropped-sentences.tsv` |

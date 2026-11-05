@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
+<!-- cspell:ignore Prenominal Santorini lexicalized -->
 
 # Data Conventions
 
@@ -16,37 +17,171 @@ ADJ ADP ADV AUX CCONJ DET INTJ NOUN NUM PART PRON PROPN PUNCT SCONJ SYM VERB X
 ```
 
 The only other value that can appear in a tag column is `_`, and only in a row whose status is `masked` (silver data:
-the model label was not trustworthy, so the token carries no training signal).
+the model label was not trustworthy, so the token carries no training signal). A status can carry flags
+(`unanimous+mentioned`); a flag is a fact about the word and never changes its tag (see "Corpus Block Format").
 
 ## Annotation Conventions
 
 All training data follows the conventions of the open English POS corpus (the guideline is
 [GUIDELINE.md, version 4](https://github.com/demaconsulting/WordSense/blob/6530de1928baf30f9a14446a54bfb5dd5f67b41c/corpus/open/GUIDELINE.md),
-section 4). They differ from Universal Dependencies in documented ways, which is why UD English-EWT is mapped before it
-is scored (see below). The decisions that matter most:
+section 4), extended by the sections below the table. They differ from Universal Dependencies in documented ways,
+which is why UD English-EWT is mapped before it is scored (see below).
+
+**Precedence.** Where these conventions are silent, UD English practice decides: the
+[UD English guidelines](https://universaldependencies.org/en/index.html) and the labels of the English-EWT treebank
+(read to learn the practice, never copied). An existing convention in the table or in the mapping tables wins over
+UD where the two differ. A case that still has no clear answer after the tests of a section gets the status
+`disputed`; nobody settles it silently.
+
+The decisions that matter most:
 
 | Topic | Convention |
 | --- | --- |
 | Possessive words | `my, your, his, her, its, our, their, whose` before a noun are DET (not PRON) |
 | Phrasal-verb particles | `give up`, `turn it off`, `come back` are ADV (not ADP) |
-| Prepositions before gerunds | `before giving`, `of smoking`, `without asking` are ADP; SCONJ only before a clause with its own subject |
+| Prepositions before gerunds | `before giving`, `of smoking`, `without asking`, `for helping` are ADP; SCONJ only before a clause with its own subject |
 | `be` | VERB when it is the main verb (copula, existence, location, identity); AUX only when it helps another verb (progressive, passive) |
 | `have`, `do` | AUX only as helpers (perfect; question, negation, emphasis); VERB otherwise |
 | Modals | AUX; `need` and `dare` are AUX only before a bare verb without `to` |
 | `to` | PART only as the infinitive marker; ADP everywhere else, including before a gerund |
 | `not`, `n't`, possessive `'s` | PART |
 | Relative `that` | PRON when it is the subject or object of its clause; SCONJ when the clause is complete without it |
-| `no`, `all` before an adjective or adverb | ADV (`no better`); `the` before a comparative is ADV |
-| Quantity words | `many, much, few, several, enough, more, most, less, such, other` before a noun are ADJ; DET is a closed list |
-| Participles | VERB when an event is asserted; ADJ when a state is described (`a broken window`) |
-| Names | PROPN only for names; members of a people or religion are NOUN; language names are PROPN |
-| Numbers | cardinals NUM; ordinals ADJ; `one` is NUM when it counts and PRON when it stands for a noun |
+| `no`, `all` before an adjective or adverb | ADV (`no better`); `the` before a comparative is ADV (`the more, the merrier`) |
+| Quantity words | `many, much, few, several, enough, more, most, less, such, other` before a noun are ADJ; DET is a closed list; more in "Degree and Quantity Words" |
+| Participles | decided by the ordered tests in "Prenominal Modifiers and Predicate Participles" |
+| Names | PROPN only for names; members of a people or religion are NOUN; language names are PROPN; more in "Names and Labels" |
+| Numbers | cardinals NUM; ordinals ADJ; `one` is NUM when it counts and PRON when it stands for a noun; more in "Numbers and Dates" |
 | Contraction stems | the stem gets the tag of the word it stands for: `ca` AUX (can), `wo` AUX (will), `ai` like `be` |
 
 Two limitations apply to the open corpus itself and are inherited by everything trained on it: its annotations were
 written by language models (about 95 to 96 percent agreement with UD English-EWT after the convention mapping below),
 and 36 percent of its training tokens are `unchecked` (no second annotator) and 3.6 percent `disputed` (the two
 annotators disagreed). Guidance from the corpus: mask or down-weight `disputed` tokens when training.
+
+### Mentioned Words
+
+A word that is talked about rather than used is *mentioned*: `using the verb snowball`, `it and that in English`,
+`the word Eureka`, `Sierra is a Spanish word`. Source: [UD, "Using a word vs. mentioning it"](https://universaldependencies.org/u/overview/morphology.html)
+and the `Mentioned=Yes` feature of [UD English-EWT, issue 446](https://github.com/UniversalDependencies/UD_English-EWT/issues/446).
+
+- **Tag** a mentioned word with the tag it gets in ordinary use, never NOUN because it is mentioned and never X: `snowball`
+  VERB, `it` PRON, `Eureka` INTJ, `Sierra` NOUN (a common Spanish word, not a name).
+- **Flag** every token of the mentioned word or phrase `+mentioned`. The quotation marks and other punctuation are not flagged.
+- **Foreign.** Words of another language carry the flag `+foreign`. A single foreign word that is mentioned for its form
+  or meaning gets the category it has in its own language (`Sierra` NOUN with `+foreign+mentioned`; `Eureka` INTJ).
+  Foreign text used as running text inside an English sentence stays X (existing practice, as in UD English-EWT), with
+  `+foreign`. X is never given to a word only because it is mentioned.
+
+Ordered tests; stop at the first that answers:
+
+1. Is the word talked about as a linguistic item (a spelling, a pronunciation, a translation, a term, a word choice)
+   rather than used to say something about the world? Cues: quotation marks or italics around a word or short phrase,
+   `the word X`, `the verb X`, `X in English`, `X is a Spanish word`. If not, it is an ordinary use: tag it normally
+   and stop. A quotation of real or hypothetical speech is not a mention.
+2. Tag the word as if it were used in its ordinary sense.
+3. Closed-class words named in a list (`so` and `neither`, `it` and `that`) get each its own most frequent use when the
+   mention gives no syntax to test; do not give the pair one shared tag.
+4. A foreign word or phrase mentioned for its form or meaning: tag each word by its category in the donor language and
+   add `+foreign` (with `+mentioned`).
+5. X only for foreign running text and material that cannot be analyzed (gibberish, fragments); a mentioned word that
+   can be analyzed is never X.
+6. Annotators still disagree (for example speech quotation against mention): `disputed`.
+
+### Prenominal Modifiers and Predicate Participles
+
+Applies to an `-ing` or `-ed` word, or a zero-derived noun, that modifies a noun or follows a linking verb. Sources:
+[Santorini, Treebank tagging guidelines, section 4.1](https://catalog.ldc.upenn.edu/docs/LDC99T42/tagguid1.pdf) ("JJ or VBG", "NN or VBG"),
+[UD, ADJ: Nouns vs. Adjectives](https://universaldependencies.org/u/pos/ADJ.html) and the UD English-EWT labels. Stop at
+the first test that applies:
+
+1. Names the type or purpose of the head (`N for X-ing`, `a kind of`) → NOUN: `operating modes`, `landing gear`,
+   `cooling system`, `bleed valve`, `torque wrench`.
+2. A gradable, fixed property → ADJ: `a very exciting match`. **Gradable** means the word accepts a degree word
+   (`very`, `so`, `too`, `quite`, `extremely`, `a little`) or a comparison (`more`, `less`, `-er`) with its meaning unchanged:
+   `very confused`, `I'm a little confused`, `more surprised` pass; `was killed`, `very killed` do not.
+3. An ongoing action of the head (`N that is X-ing`) → VERB: `evolving knowledge`.
+4. A predicate participle:
+   - after `be`: a passive, VERB with AUX `be` (`was killed`, `has been shown`), unless the participle is gradable
+     (test 2); then ADJ with the copula VERB `be` (`was very confused`, `is more surprised than`);
+   - after `become`, `feel`, `look`, `remain`, `seem`, `sound`: an overt `by` or `from` agent → VERB
+     (`I feel attacked by this`); otherwise ADJ (`she seemed pleased`, `it looks broken`).
+5. A hyphenated lexicalized unit → the dictionary category of the whole unit, typically ADJ: `a high-water mark`.
+6. A noun coerced under degree or comparison → ADJ for that token: `more twilight`, `very London`.
+7. Otherwise → `disputed`.
+
+### Degree and Quantity Words
+
+Source: UD English-EWT labels; the closed DET list of the table is unchanged.
+
+| Case | Convention | Examples |
+| --- | --- | --- |
+| `more`, `most`, `less`, `least`, `much`, `enough` | ADV when modifying an adjective, adverb or verb; ADJ when quantifying a noun or standing for one | `more serious`, `works less` ADV; `more time`, `for more`, `not enough` ADJ; `good enough` ADV |
+| `more than`, `less than` before a quantity | `more`, `less` ADJ; `than` ADP | `more than half`, `less than 20` |
+| `at least`, `at most` | ADP, ADJ | `at least 5` |
+| `a little` | DET, ADJ, before a noun, adjective, adverb or verb, and alone | `a little leaky`, `a little time`, `budge a little`; bare `little` is ADJ before a noun or alone (`little to do`) and ADV before a verb or participle |
+| `late`, `else` | `late` ADJ, ADV only when it modifies a verb; `else` ADV | `the late 1980s`, `arrived late`; `who else` |
+| Superlatives | `the` before a superlative adjective is DET; `the most`, `the least` before an adjective or adverb is DET ADV | `the longest`, `the best option`, `the most serious` |
+| Superlative standing for a noun | ADJ | `do your best`, `all the best` |
+| Quantity word before `of` | never PRON: `all, any, both, each, either, some` DET; `many, much, several, few, more, most, less, enough` ADJ; `none` PRON; `plenty`, `lots` NOUN | `Most of them`, `some of the`, `a lot of` (`a` DET, `lot` NOUN) |
+| `half` | NOUN as a head; DET before `the`, `a`, `an` or a possessive; ADJ after `a`/`an`; ADV before an adjective, adverb or preposition | `half of the`, `a week and a half`; `half the visitors`, `half an hour`; `a half century`; `half naked` |
+
+### Numbers and Dates
+
+Source: UD English-EWT labels.
+
+| Case | Convention | Examples |
+| --- | --- | --- |
+| `one of` + noun phrase | `one` NUM (it counts), also before a pronoun | `one of the`, `one of them` |
+| `some` before a number | DET; `million`, `billion`, `thousand` after a number are NUM | `some 15 million` |
+| Decades | NOUN, also with a prefix | `1990s`, `'90s`, `mid-1800s`, `the late 1980s` |
+| Roman numeral after a name | NUM (a written-out ordinal stays ADJ) | `Henry II`, `Henry the Eighth` |
+| List labels | item label: digits and numerals NUM, letters X; speaker label of a dialogue: PROPN; the punctuation around it PUNCT | `1)` NUM, `(a)` X; `A:` and `B:` in a dialogue PROPN |
+
+### Multiword Prepositions and Related Patterns
+
+Source: [UD English, `fixed`](https://universaldependencies.org/en/dep/fixed.html) and the English-EWT labels. The
+words of the expression keep the tag of their own category and the last word is ADP:
+
+| Expression | Tags |
+| --- | --- |
+| `due to`, `prior to`, `such as` | ADJ ADP |
+| `instead of`, `next to`, `rather than` | ADV ADP |
+| `because of`, `along with`, `out of`, `according to` | ADP ADP |
+| `in front of` | ADP NOUN ADP |
+| `thanks to` | NOUN ADP |
+| `as well as` | ADV ADV ADP |
+
+- Before a clause with its own subject the last word is SCONJ (`because of what they received`); before a gerund it is
+  ADP (existing convention): `instead of having`, `such as respecting`.
+- `according` stays ADP, as in every participial preposition (`including`, `regarding`, `given`); UD tags it VERB.
+- A phrasal-verb particle stays ADV even in front of a preposition: `run out of`, `get along with` are ADV ADP; the
+  preposition `out of` (`out of the window`, `out of order`) is ADP ADP.
+- `as … as possible`: the first `as` is ADV, the degree word ADV or ADJ by its own use, the second `as` SCONJ before a
+  clause or an elliptical clause and ADP before a noun phrase, `possible` ADJ: `as soon as possible`, `as big as a house`.
+- `for` + subject + `to`-infinitive: `for` is SCONJ, the subject NOUN or PRON, `to` PART (`easier for students to
+  organize`, `waited for him to return`). `for` is ADP before a noun phrase with no infinitive predicate of its own
+  (`ways to vote`) and before a gerund (`thanks for helping`).
+
+### Names and Labels
+
+Source: UD English-EWT labels; [UD, PROPN](https://universaldependencies.org/u/pos/PROPN.html).
+
+- A title directly before a name is part of the name: PROPN (`President Bush`, `Archduke Franz Ferdinand`, `Dr. Lee`).
+  A capitalized title that stands for one particular person is PROPN (`the Marshal`, `the President`); lowercase and
+  vocative uses are NOUN (`the president of the club`, `Yes, sir`).
+- A capitalized common noun that names one particular entity, or a personification used as a name, is PROPN:
+  `the City` (of London), `Black Care`. Inside a name the nouns and adjectives are PROPN and the function words keep
+  their own tag (`University of Houston`: PROPN ADP PROPN).
+- `AM` and `FM` as radio bands are PROPN; `a.m.`, `p.m.` and `AM`, `PM` after a clock time are NOUN.
+- A fiscal-year token such as `FY2020` is NOUN.
+- A language name is PROPN (existing convention), also as a modifier that names the language of the head (`English
+  conversation`, `a Spanish word`); it is ADJ when it means of the people or place (`English tea`, `Spanish soldiers`).
+
+### The `get`-passive
+
+`get` + a past participle that asserts an event: `get` is AUX and the participle VERB (`got fired`, `get married`,
+`got promoted`). When the participle is a gradable state (test 2 above), `get` is the main VERB and the participle ADJ
+(`get depressed`, `get used to`).
 
 ## File Formats
 
@@ -73,6 +208,16 @@ final newline). A file starts with header comment lines, then a blank line, then
 - `text` is the original sentence for the open corpus and the STE set. For MASC and silver it is the tokens joined by
   single spaces (the original text is not kept). The tokens of a sentence always concatenate to its text without spaces.
 - `status` vocabulary: open and STE `unanimous | disputed | unchecked`; MASC `ptb`; silver `silver | masked`.
+- **Status flags.** The status cell may continue with flags, each after a plus sign: `status[+foreign][+mentioned]`
+  (`unanimous+mentioned`, `unchecked+foreign+mentioned`). `mentioned` marks a word that is talked about rather than used
+  and `foreign` a word of another language (see "Mentioned Words"). A flag never changes the tag, and a flag is
+  not a status: masking, `disputed` handling and the lexicon use the status in front of the first plus sign. A flag
+  appears at most once, in the order above, so a cell has one spelling; an unknown, repeated or out-of-order flag
+  is an error. The optional `source_tag` column is unaffected, so every file without flags stays valid. The open
+  importer (flags come in the consensus column of the source), the silver derivation (it recomputes the status and keeps
+  the flags), the lexicon and coverage tools, and the readers of the trainer and the tests accept and keep the flags;
+  the MASC importer derives every row from Penn trees and has no source for a flag. No committed file carries a flag
+  yet; the corpus labels are corrected in a later change.
 - `source_tag` (MASC, silver) records what the tag was derived from, so the derivation is reproducible from the file.
 
 ### Other Formats

@@ -1,7 +1,7 @@
 """Import the CC0 open English POS corpus (WordSense) as UPOS-only training and evaluation files.
 
 The open corpus already carries UPOS. The import is a lossless projection of the columns
-`id form lemma upos collapsed feats consensus` to `form upos status` (status = the consensus column), written in
+`id form lemma upos collapsed feats consensus` to `form upos status` (status = the consensus column, kept as written, so a `+mentioned` or `+foreign` flag survives), written in
 the shared corpus block format of tools/data/common.py. `sources.tsv` and `LICENSE` are copied unchanged.
 
 Inputs are pinned (tools/data/pins/wordsense-inputs.tsv, WordSense commit 6530de19...). Give a local WordSense
@@ -25,7 +25,7 @@ STATUSES = ("unanimous", "disputed", "unchecked")
 
 def read_projected(path):
     """Sentences of an open-corpus file projected to form, upos, status (extra comment lines kept in `extra`)."""
-    header, sentences = common.read_corpus(path)
+    header, sentences = common.read_corpus(path, strict=False)  # the source has seven columns; they are validated below
     out = []
     for sentence in sentences:
         rows = []
@@ -35,7 +35,11 @@ def read_projected(path):
             _, form, _, upos, _, _, status = cells
             if upos not in common.UPOS_SET:
                 raise ValueError(sentence["sent_id"] + ": unknown UPOS " + upos)
-            if status not in STATUSES:
+            try:
+                base, _ = common.parse_status(status)  # `unanimous+mentioned` is valid; the flags are kept as written
+            except ValueError as error:
+                raise ValueError(sentence["sent_id"] + ": " + str(error)) from error
+            if base not in STATUSES:
                 raise ValueError(sentence["sent_id"] + ": unknown status " + status)
             rows.append([common.nfc(form), upos, status])
         text = common.nfc(sentence["text"])
@@ -61,7 +65,7 @@ def project(path, split, sha):
         "# status = unanimous | disputed | unchecked (consensus of the two annotators; unchecked = no second annotator)",
         "# origin = WordSense commit %s, corpus/open/representative/data/%s.tsv, sha256 %s" % (common.WORDSENSE_COMMIT, split, sha),
     ]
-    common.write_corpus(os.path.join(common.DATA, "open", split + ".tsv"), head, out)
+    common.write_corpus(os.path.join(common.DATA, "open", split + ".tsv"), common.with_flag_documentation(head, out), out)
     return len(out), tokens
 
 

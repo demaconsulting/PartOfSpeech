@@ -592,7 +592,7 @@ public class LexiconTests
         {
             foreach (var row in sentence.Tokens)
             {
-                if (row[2] == "disputed")
+                if (DataFiles.BaseStatus(row[2]) == "disputed")
                 {
                     continue;
                 }

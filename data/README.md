@@ -110,6 +110,11 @@ by design; the UD check applies only when the cache is present, so a run without
 
 ## Downstream Notes
 
+- **Status flags.** A token's status cell can carry flags after plus signs (`unanimous+mentioned`, `silver+foreign+mentioned`;
+  the flags are `foreign` and `mentioned`, once each, in that order). They record facts about the word and never change
+  the tag; the status in front of the first plus sign drives masking, `disputed` handling and the lexicon. Every committed
+  file is valid without flags and carries none yet. The format is specified in [CONVENTIONS.md](CONVENTIONS.md), "Corpus
+  Block Format", and the data tools and the trainer's corpus reader accept and keep them.
 - The tokenizer of the library emits the corpus tokenization (clitics split: `do` + `n't`, `John` + `'s`); its rules are
   in the "Tokenizer Rules" section of [CONVENTIONS.md](CONVENTIONS.md) and the test suite checks them against the open
   corpus.
