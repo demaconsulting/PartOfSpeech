@@ -62,14 +62,18 @@ internal static class Program
     private const string EvaluationFolder = "docs/evaluation";
 
     /// <summary>
-    ///     The harmful errors at 0.45 of the frozen model on the open development split (the freeze table of the run log).
+    ///     The harmful errors at 0.45 of the frozen model on the open development split (the freeze table of the run log;
+    ///     for the model retrained after the corpus cleanup C the development figure of the "Corpus cleanup C" sections
+    ///     of the run log, 103 of 4,467 decisions, replaces the first freeze figure of 94).
     /// </summary>
-    private const int FrozenOpenHarmful = 94;
+    private const int FrozenOpenHarmful = 103;
 
     /// <summary>
-    ///     The harmful errors at 0.45 of the frozen model on the gold v2 development split (the freeze table of the run log).
+    ///     The harmful errors at 0.45 of the frozen model on the gold v2 development split (the freeze table of the run log;
+    ///     for the model retrained after the corpus cleanup C the development figure of the "Corpus cleanup C" sections
+    ///     of the run log, 14 of 611 decisions, replaces the first freeze figure of 9).
     /// </summary>
-    private const int FrozenGoldHarmful = 9;
+    private const int FrozenGoldHarmful = 14;
 
     /// <summary>
     ///     The usage text.
