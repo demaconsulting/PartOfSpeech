@@ -451,18 +451,22 @@ reviews:
     paths:
       - "data/CONVENTIONS.md"                                       # normative conventions and overlay format
       - "data/corrections/README.md"                                # staged corrections: format, states, rule catalog
-      - "data/corrections/*.tsv"                                    # staged tables: mechanical, candidates, exceptions
+      - "data/corrections/*.tsv"                                    # staged tables (mechanical, adjudicated, ...)
       - "tools/data/README.md"                                      # tools documentation
       - "tools/data/corrections.py"                                 # overlay tables: validation, apply and reverse
       - "tools/data/convention_rules.py"                            # rule registry: mechanical and check rules
       - "tools/data/convention_candidates.py"                       # detectors of the cases that need judgment
       - "tools/data/check_conventions.py"                           # conventions linter
       - "tools/data/make_corrections.py"                            # generator of the staged tables
+      - "tools/data/adjudicate.py"                                  # adjudication of the candidates
       - "tools/data/tests/corrections_testdata.py"                  # miniature data folder of the tests
       - "tools/data/tests/test_corrections_overlay.py"              # tests of the overlay
       - "tools/data/tests/test_corrections_rules.py"                # tests of the rules and their guards
       - "tools/data/tests/test_corrections_linter.py"               # tests of the linter
       - "tools/data/tests/test_corrections_generator.py"            # tests of the generator and the committed tables
+      - "tools/data/tests/test_corrections_adjudication.py"         # tests of the adjudication tool
+      - "tools/data/tests/run_trx.py"                               # runner of the Python tests that writes TRX
+      - "tools/data/tests/test_corrections_runner.py"               # tests of that runner
       - "tools/data/tests/convention-cases.tsv"                     # fixture sentences of the rules
       - "tools/data/tests/corrections-cases.tsv"                    # shared row cases of the overlay
       - "tools/data/tests/candidate-cases.tsv"                      # shared candidate row cases of the overlay

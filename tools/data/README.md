@@ -25,8 +25,8 @@ Python files are outside the repository's lint tooling (there is no Python linte
 repository's review tooling: `.reviewmark.yaml` lists `tools/data/**/*.py` and this README in `needs-review`, and three
 review-sets cover them, `PartOfSpeech-DataConversion` (the common helpers, the importers, the lexicon build and their
 tests), `PartOfSpeech-DataChecks` (the leakage, lexicon and license checks, the manifest and the line-ending tool) and
-`PartOfSpeech-DataCorrections` (the conventions linter, the generator and validator of the staged corrections, and their
-tests and fixtures).
+`PartOfSpeech-DataCorrections` (the conventions linter, the generator and validator of the staged corrections, the adjudication
+tool, and their tests and fixtures).
 
 ## Scripts
 
@@ -48,11 +48,12 @@ Run from the repository root. Scripts take their input locations as arguments or
 | `make_manifest.py` | write or `--verify` `data/MANIFEST.tsv` | Markdown files excluded |
 | `normalize_eol.py` | convert CRLF to LF in `data/` and `tools/data/` text files | run before `make_manifest.py` after editing on Windows |
 | `leakage.py` | library: the evaluation sets and keys used by the importers and the leakage check; the rule that a long match excludes the document and a short match drops the sentence | |
-| `corrections.py` | the staged corrections in `data/corrections/`: table formats, row and table validation, `validate` against the corpora (pending or applied state), `apply [--write] [--reverse]` (edits corpus lines in place), `show` | exit code 1 on an error; `apply` writes only with `--write` and is not used on the committed corpora yet |
+| `corrections.py` | the staged corrections in `data/corrections/`: table formats, row and table validation (`mechanical.tsv`, `adjudicated.tsv`; an adjudicated row replaces the mechanical row of its token), `validate` against the corpora (pending or applied state), `apply [--write] [--reverse]` (edits corpus lines in place), `show` | exit code 1 on an error; `apply` writes only with `--write` and is not used on the committed corpora yet |
 | `convention_rules.py` | library: the rule registry of the conventions (mechanical `fix` rules with their guards, and `check` rules), shared by the linter and the generator | the catalog is in [`data/corrections/README.md`](../../data/corrections/README.md#rule-catalog) |
 | `convention_candidates.py` | library: the detectors of the cases that need a judgment (prenominal participles, mentioned words, foreign text, proper-noun boundaries, ...) | feeds `candidates.tsv` |
 | `check_conventions.py` | the conventions linter: counts per rule and source, `--apply` (lint as after the staged corrections), `--list RULE`, `--tsv FILE`, `--enforce` | report only (exit code 0) without `--enforce`; the STE challenge set is linted but never counts |
-| `make_corrections.py` | generate `data/corrections/*.tsv` from the rules; `--check` (compare with the committed files), `sample` (seeded hand-check sample), `fixed-point`, `catalog` | deterministic; refuses candidates above 5 MB |
+| `make_corrections.py` | generate `data/corrections/{mechanical,candidates,exceptions}.tsv` from the rules; `--check` (compare with the committed files, and validate `adjudicated.tsv` when it exists), `sample` (seeded hand-check sample), `fixed-point`, `catalog` | deterministic; refuses candidates above 5 MB; never writes `adjudicated.tsv` |
+| `adjudicate.py` | the adjudication of the candidates by two blind language-model taggers, everything around the models: `select` (sentences, bands and the 14,000 cap, volumes first), `export` (blind three-column batches, private key, state table), `check-batches`, `validate-output` (the taggers' outputs), `status`, `decide [--drop CLASS,...]` (decision rule, writes `adjudicated.tsv` and the private reports), `sample` and `review-result` (the precision gate of a third reviewer model) | needs a work folder outside the repository (`--work`, with the flag files of the off-the-shelf taggers); never calls a model; exit code 1 on an invalid batch, output or table; the method is in [`data/corrections/README.md`](../../data/corrections/README.md#adjudication) |
 
 Pins (`pins/`): `wordsense-inputs.tsv` (open corpus and evaluation inputs), `wordsense-form.manifest.tsv` (151 form
 tables), `masc.tsv` (the MASC archive), `ud-ewt.tsv` (the UD files). All WordSense inputs are at commit
@@ -68,8 +69,10 @@ python -m unittest discover -s tools/data/tests
 The unit tests cover the shared helpers, the Penn Treebank mapping, the silver derivation, the lexicon rules (including
 the homograph-number parse of entry ids), sanity checks of the committed data (tag set, manifest, lexicon gate) and the
 correction tools: the overlay (`test_corrections_overlay.py`), the rules and their guards on the fixture sentences of
-`convention-cases.tsv` (`test_corrections_rules.py`), the linter (`test_corrections_linter.py`) and the generator
-(`test_corrections_generator.py`, including the check that the committed tables are valid against the committed corpora).
+`convention-cases.tsv` (`test_corrections_rules.py`), the linter (`test_corrections_linter.py`), the generator
+(`test_corrections_generator.py`, including the check that the committed tables are valid against the committed corpora) and
+the adjudication tool (`test_corrections_adjudication.py`: cell escaping, blind batches, bands and cap, the output validator, the
+decision rule, the table, the sample and the gate, on the miniature data folder).
 `corrections-cases.tsv` and `candidate-cases.tsv` hold the row cases that both this validator and the C# data tests are held
 to (as `status-cases.tsv` does for the status cell); `corrections_testdata.py` builds the miniature data folder of the tests.
 
@@ -78,15 +81,18 @@ runs `lint.ps1`, and its Python step (the `[PROJECT-SPECIFIC]` extension point) 
 
 ```text
 python -m compileall -q tools/data
-python -m unittest discover -s tools/data/tests -p "test_corrections_*.py"
+python tools/data/tests/run_trx.py --out artifacts/python-data-tools.trx --pattern "test_corrections_*.py"
 python tools/data/corrections.py validate
 python tools/data/make_corrections.py --check
 python tools/data/check_conventions.py
 ```
 
 A failing step fails the lint run. The linter runs without `--enforce`, so the violations that are left in the corpora are
-reported but do not fail the run; `--enforce` is added when the corrections are applied and none are left. The
-requirements evidence stays in C# (`PartOfSpeech_DataCorrections_*` in `PartOfSpeechDataTests.cs`), which reads the
+reported but do not fail the run; `--enforce` is added when the corrections are applied and none are left. `run_trx.py` runs
+the same discovery as `python -m unittest discover -s tools/data/tests -p "test_corrections_*.py"` and also writes the results as a
+TRX file; the quality-checks job uploads `artifacts/`, and ReqStream reads the file with the C# results as the evidence of the
+`PartOfSpeech-Adjudication-*` requirements (the requirement lists the test method names). The other requirements evidence stays
+in C# (`PartOfSpeech_DataCorrections_*` in `PartOfSpeechDataTests.cs`), which reads the
 committed tables and corpora. A C# port of the rules was rejected: it would duplicate the detectors and let two
 implementations of a heuristic drift.
 

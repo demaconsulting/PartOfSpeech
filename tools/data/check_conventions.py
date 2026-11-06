@@ -76,6 +76,22 @@ def load_exceptions(data_dir=None):
     return frozenset((row.source, row.split, row.sent_id, int(row.token_index), row.rule) for row in rows)
 
 
+def superseded_hits(data_dir=None):
+    """Set of (source, split, sent_id, token_index, rule) of the mechanical rows that an adjudicated row replaces.
+
+    The adjudication outranks the rule for these tokens (see corrections.combine_tables), so once the corrections are applied the
+    rule that wrote the replaced row would fire on the token again by construction; that hit is not a violation.
+    """
+    rows = corrections.load_overlay(data_dir)["superseded"]
+    return frozenset((row.source, row.split, row.sent_id, int(row.token_index), row.provenance[len("rule:"):]) for row in rows)
+
+
+def kept_exceptions(data_dir=None, apply_overlay=False):
+    """The exceptions the linter honors: the exceptions table and, when the corrections are applied, the replaced rule hits."""
+    found = load_exceptions(data_dir)
+    return found | superseded_hits(data_dir) if apply_overlay else found
+
+
 def counts_table(violations):
     """{(rule): {(source, split): n}} counts."""
     table = collections.defaultdict(collections.Counter)
@@ -146,7 +162,7 @@ def main(argv=None):
     def keep(s):
         return (args.source is None or s.source == args.source) and (args.split is None or s.split == args.split)
 
-    violations, suppressed = lint(sentences, resources, load_exceptions(args.data_dir), tiers, only, keep)
+    violations, suppressed = lint(sentences, resources, kept_exceptions(args.data_dir, args.apply), tiers, only, keep)
     if args.list_rule:
         shown = [item for item in violations if item.rule == args.list_rule]
         for item in shown[:args.limit]:

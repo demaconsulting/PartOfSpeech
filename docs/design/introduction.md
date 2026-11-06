@@ -210,8 +210,9 @@ embedded model requirements in the same file), their tests are in
 tools have developer unit tests in `tools/data/tests/`, which are not requirements evidence. The Python files of the
 tools and their tests are reviewed in three review-sets of `.reviewmark.yaml`: `PartOfSpeech-DataConversion` (the tools
 that import and convert data and build the lexicon), `PartOfSpeech-DataChecks` (the tools that check, record and
-verify it) and `PartOfSpeech-DataCorrections` (the conventions linter and the generator and validator of the staged
-corrections in `data/corrections/`, with their tests and fixtures); the system design and the system requirements are
+verify it) and `PartOfSpeech-DataCorrections` (the conventions linter, the generator and validator of the staged
+corrections in `data/corrections/` and the adjudication tool, with their tests and fixtures); the system design and the
+system requirements are
 their context. The data tools run in two places: `lint.ps1` runs the unit tests of the correction tools, the validation
 and regeneration check of the staged tables and a report-only linter pass (the quality-checks job of the workflow runs
 `lint.ps1`, and it is the only workflow entry that can host Python checks), while the C# tests of the system read the

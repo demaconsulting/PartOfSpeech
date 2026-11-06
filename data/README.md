@@ -28,7 +28,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [eval/ste-challenge/](eval/ste-challenge/README.md) | simplified-technical-English challenge set (evaluation) | 32 | 272 | 0.01 MB | CC0-1.0 |
 | [eval/ud-ewt/](eval/ud-ewt/README.md) | UD English-EWT: fetch documentation only, **no data** | | | | CC BY-SA 4.0, never committed |
 | [lexicon/](lexicon/README.md) | spelling to UPOS tags lexicon, closed-class list, coverage report | | | 4.5 MB | CC-BY-4.0 and CC-BY-3.0-US (attribution), others |
-| [corrections/](corrections/README.md) | staged label corrections for open, MASC and silver (mechanical rows, candidates, exceptions); **not applied yet** | | | 2.7 MB | CC0-1.0 labels; MASC token forms and excerpts CC-BY-3.0-US |
+| [corrections/](corrections/README.md) | staged label corrections for open, MASC and silver (mechanical rows, adjudicated rows, candidates, exceptions); **not applied yet** | | | 2.7 MB | CC0-1.0 labels; MASC token forms and excerpts CC-BY-3.0-US |
 
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
 masked). Total size of `data/`: 40.1 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
@@ -63,8 +63,8 @@ python tools/data/build_lexicon.py [--wordsense-dir <checkout>]                 
 python tools/data/check_lexicon.py                                                          # lexicon/coverage.tsv, COVERAGE.md
 python tools/data/import_silver.py derive                                                   # silver/silver.tsv
 python tools/data/check_leakage.py --write-report                                           # leakage-report.tsv
-python tools/data/make_corrections.py                                                       # corrections/*.tsv (staged corrections; --check compares with the committed files)
-python tools/data/corrections.py validate                                                   # the staged tables against the corpora
+python tools/data/make_corrections.py                                                       # corrections/{mechanical,candidates,exceptions}.tsv (--check compares with the committed files)
+python tools/data/corrections.py validate                                                   # the staged tables (adjudicated.tsv included) against the corpora
 python tools/data/check_conventions.py                                                      # linter, report only (--apply: as after the corrections; --enforce: fail on any violation)
 python tools/data/make_manifest.py                                                          # MANIFEST.tsv
 ```
@@ -118,7 +118,10 @@ by design; the UD check applies only when the cache is present, so a run without
   [CONVENTIONS.md](CONVENTIONS.md) as small tables (one row per token: address, old and new tag and status, provenance)
   instead of edits of the corpus files. They are **not applied**: `open/`, `masc/` and `silver/` are exactly the importer
   output, and the lexicon, the weights and the evaluation record are built from them as they are. A later change applies
-  the rows and regenerates everything that depends on the labels. The tables are generated (`make_corrections.py`), run
+  the rows and regenerates everything that depends on the labels. `mechanical.tsv`, `candidates.tsv` and `exceptions.tsv` are
+  generated (`make_corrections.py`); `adjudicated.tsv` holds the decisions of two blind language-model taggers on the
+  judgment cases (`adjudicate.py`; the method is in [corrections/README.md](corrections/README.md#adjudication), and no human
+  reviewed the rows), and an adjudicated row replaces the mechanical row of the same token. All tables are run
   through the tests and the lint run, and are valid against the corpora both before and after the application.
 - **Status flags.** A token's status cell can carry flags after plus signs (`unanimous+mentioned`, `silver+foreign+mentioned`;
   the flags are `foreign` and `mentioned`, once each, in that order). They record facts about the word and never change

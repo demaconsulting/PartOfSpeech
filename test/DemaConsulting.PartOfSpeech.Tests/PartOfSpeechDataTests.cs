@@ -129,6 +129,11 @@ public class PartOfSpeechDataTests
     private static readonly Regex MascDocument = new(@"^masc:written/([a-z-]+)/\S+$", RegexOptions.CultureInvariant);
 
     /// <summary>
+    ///     The provenance of an adjudicated correction: the two blind models and the batch that the decision comes from.
+    /// </summary>
+    private static readonly Regex AdjudicatedProvenance = new(@"^llm:opus\+sol:[a-z0-9]+$", RegexOptions.CultureInvariant);
+
+    /// <summary>
     ///     Text that must not appear in the license basis of any source document.
     /// </summary>
     private static readonly Regex RestrictedLicenseText = new(
@@ -303,7 +308,7 @@ public class PartOfSpeechDataTests
         };
         var readme = File.ReadAllText(DataFiles.Data("corrections/README.md"));
         var textColumns = new[] { "token", "hint", "context" };
-        var names = new[] { "mechanical.tsv", "candidates.tsv", "exceptions.tsv", "llm.tsv" }
+        var names = new[] { "mechanical.tsv", "candidates.tsv", "exceptions.tsv", "adjudicated.tsv" }
             .Where(name => File.Exists(CorrectionTables.FilePath(name))).ToList();
         var rows = 0;
 
@@ -340,8 +345,8 @@ public class PartOfSpeechDataTests
             }
         }
 
-        // Assert: the three tables were scanned, they carry rows, and no problem was found
-        Assert.True(names.Count >= 3);
+        // Assert: the four tables were scanned, they carry rows, and no problem was found
+        Assert.True(names.Count >= 4);
         Assert.True(rows > 10000);
         Assert.Empty(problems.Take(ShownProblems));
     }
@@ -579,7 +584,8 @@ public class PartOfSpeechDataTests
     /// <summary>
     ///     Proves that the staged correction tables (<c>data/corrections</c>) have the documented columns, that every
     ///     row is valid on its own (legal address, tags of the 17, status cells with canonical flags, a change, a
-    ///     provenance), that the rows are sorted, and that no token has two correction rows.
+    ///     provenance), that the rows are sorted, and that no token has two rows in one table (the one allowed overlap
+    ///     between the two tables of corrections is checked by the test of the adjudicated rows).
     /// </summary>
     [Fact]
     public void PartOfSpeech_DataCorrections_Tables_AreWellFormed()
@@ -591,9 +597,8 @@ public class PartOfSpeechDataTests
         var candidates = DataFiles.ReadTable(CorrectionTables.FilePath("candidates.tsv"));
         var exceptions = DataFiles.ReadTable(CorrectionTables.FilePath("exceptions.tsv"));
 
-        // Act: validate each table; the addresses of the corrections must be unique across the tables of corrections
-        var addresses = new HashSet<string>(StringComparer.Ordinal);
-        var problems = corrections.SelectMany(entry => CorrectionTables.TableProblems(entry.Name, "corrections", entry.Table, addresses))
+        // Act: validate each table; the addresses of the rows must be unique within each table
+        var problems = corrections.SelectMany(entry => CorrectionTables.TableProblems(entry.Name, "corrections", entry.Table, new HashSet<string>(StringComparer.Ordinal)))
             .Concat(CorrectionTables.TableProblems("candidates.tsv", "candidates", candidates, new HashSet<string>(StringComparer.Ordinal)))
             .Concat(CorrectionTables.TableProblems("exceptions.tsv", "exceptions", exceptions, new HashSet<string>(StringComparer.Ordinal)))
             .ToList();
@@ -659,36 +664,35 @@ public class PartOfSpeechDataTests
 
     /// <summary>
     ///     Proves that every correction row and every exception row addresses an existing token of a committed corpus
-    ///     (sentence id, document id, token index and form), and that the correction rows match the corpora either all
-    ///     in the pending state (old tag and status) or all in the applied state (new tag and status).
+    ///     (sentence id, document id, token index and form), and that the correction rows in effect (a mechanical row
+    ///     that an adjudicated row replaces is not in effect) match the corpora either all in the pending state (old
+    ///     tag and status) or all in the applied state (new tag and status).
     /// </summary>
     [Fact]
     public void PartOfSpeech_DataCorrections_Rows_MatchCommittedCorpora()
     {
         // Arrange: the correction tables and the exceptions, and the sentences that their rows name
-        var corrections = CorrectionTables.CorrectionTableNames
+        var named = CorrectionTables.CorrectionTableNames
             .Where(name => File.Exists(CorrectionTables.FilePath(name)))
-            .Select(name => DataFiles.ReadTable(CorrectionTables.FilePath(name)))
+            .Select(name => (Name: name, Table: DataFiles.ReadTable(CorrectionTables.FilePath(name))))
             .ToList();
+        var corrections = named.Select(entry => entry.Table).ToList();
         var exceptions = DataFiles.ReadTable(CorrectionTables.FilePath("exceptions.tsv"));
         var sentences = CorrectionTables.ReadNamedSentences(corrections.Concat(new[] { exceptions }));
         var problems = new List<string>();
         var pending = 0;
         var applied = 0;
 
-        // Act: find the token of every row and the state of the corpus at that token
-        foreach (var table in corrections)
+        // Act: find the token of every row in effect and the state of the corpus at that token
+        foreach (var (table, row) in CorrectionTables.EffectiveCorrections(named))
         {
-            foreach (var row in table.Rows)
+            var (token, problem) = CorrectionTables.FindToken(sentences, table, row, 1);
+            var state = token == null ? null : CorrectionState(table, row, token);
+            pending += state == "pending" ? 1 : 0;
+            applied += state == "applied" ? 1 : 0;
+            if (state == null)
             {
-                var (token, problem) = CorrectionTables.FindToken(sentences, table, row, 1);
-                var state = token == null ? null : CorrectionState(table, row, token);
-                pending += state == "pending" ? 1 : 0;
-                applied += state == "applied" ? 1 : 0;
-                if (state == null)
-                {
-                    problems.Add(problem ?? $"{table.Cell(row, "sent_id")}#{table.Cell(row, "token_index")}: the corpus matches neither the old nor the new value");
-                }
+                problems.Add(problem ?? $"{table.Cell(row, "sent_id")}#{table.Cell(row, "token_index")}: the corpus matches neither the old nor the new value");
             }
         }
 
@@ -697,6 +701,67 @@ public class PartOfSpeechDataTests
         // Assert: there are rows, all of one state, and every row addresses its token
         Assert.True(pending + applied > 0);
         Assert.True(pending == 0 || applied == 0, $"rows of both states: {pending} pending and {applied} applied");
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that every row of the adjudicated corrections (<c>data/corrections/adjudicated.tsv</c>) is a decision of
+    ///     the two blind taggers: the provenance is <c>llm:opus+sol:&lt;batch&gt;</c> (a rule row does not belong there),
+    ///     the row is exactly one of a tag change with the base status kept, a <c>disputed</c> mark with the tag and the
+    ///     flags kept, or a flag change with the tag and the base kept, and a token that also has a mechanical row
+    ///     starts from the same corpus value (old tag and status) with another change, so that the adjudicated row
+    ///     replaces the mechanical one.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataCorrections_Adjudicated_RowsAreLlmDecisions()
+    {
+        // Arrange: the adjudicated table, and the mechanical rows by address
+        var adjudicated = DataFiles.ReadTable(CorrectionTables.FilePath("adjudicated.tsv"));
+        var mechanical = DataFiles.ReadTable(CorrectionTables.FilePath("mechanical.tsv"));
+        var mechanicalRows = new Dictionary<string, string[]>(StringComparer.Ordinal);
+        foreach (var row in mechanical.Rows)
+        {
+            mechanicalRows[CorrectionTables.CorrectionAddress(mechanical, row)] = row;
+        }
+
+        var problems = new List<string>();
+        var replaced = 0;
+
+        // Act: check the provenance, the kind and the replacement of every row
+        foreach (var row in adjudicated.Rows)
+        {
+            var where = $"{adjudicated.Cell(row, "sent_id")}#{adjudicated.Cell(row, "token_index")}";
+            if (!AdjudicatedProvenance.IsMatch(adjudicated.Cell(row, "provenance")))
+            {
+                problems.Add($"{where}: the provenance {adjudicated.Cell(row, "provenance")} is not llm:opus+sol:<batch>");
+            }
+
+            if (CorrectionTables.RowError(adjudicated, row) is { } error)
+            {
+                problems.Add($"{where}: {error}");
+            }
+            else if (CorrectionTables.AdjudicatedKind(adjudicated, row) == null)
+            {
+                problems.Add($"{where}: the row is neither a tag change, a disputed mark nor a flag change");
+            }
+
+            if (mechanicalRows.TryGetValue(CorrectionTables.CorrectionAddress(adjudicated, row), out var rule))
+            {
+                replaced++;
+                var sameStart = mechanical.Cell(rule, "old_tag") == adjudicated.Cell(row, "old_tag")
+                    && mechanical.Cell(rule, "old_status") == adjudicated.Cell(row, "old_status");
+                var sameChange = mechanical.Cell(rule, "new_tag") == adjudicated.Cell(row, "new_tag")
+                    && mechanical.Cell(rule, "new_status") == adjudicated.Cell(row, "new_status");
+                if (!sameStart || sameChange)
+                {
+                    problems.Add($"{where}: the mechanical row of the token does not start from the same value or makes the same change");
+                }
+            }
+        }
+
+        // Assert: the table is not empty, the replaced mechanical rows are a subset of the mechanical table, no problem was found
+        Assert.True(adjudicated.Rows.Count > 0);
+        Assert.True(replaced <= mechanical.Rows.Count);
         Assert.Empty(problems.Take(ShownProblems));
     }
 

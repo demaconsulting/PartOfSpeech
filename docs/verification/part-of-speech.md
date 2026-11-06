@@ -27,11 +27,16 @@ assert on their content, format and checksums. The evaluation record tests resid
 they read the committed evaluation record (`docs/evaluation`) and the documents that copy figures from it, parse the
 JSON with regular expressions and compare the copies with the generated files;
 each test proves one obligation of one requirement, and a test that finds a file missing or a table empty fails instead
-of passing on nothing. The Python tools that produce the data have developer unit tests in `tools/data/tests/`, which are
-not requirements evidence; they are reviewed with the tools in the data tools review sets (see the Companion Artifact
-Structure of the design introduction). The unit tests of the correction tools (`test_corrections_*.py`), the validation
-of the staged corrections against the corpora, the check that the generator reproduces the committed tables and a
-report-only pass of the conventions linter run as a gate in `lint.ps1`, which the quality-checks job of the workflow runs
+of passing on nothing. The Python tools that produce the data have developer unit tests in `tools/data/tests/`. Those of
+the adjudication tool and the overlay (`test_corrections_*.py`) are requirements evidence for the
+`PartOfSpeech-Adjudication-*` requirements: `lint.ps1` runs them through `tools/data/tests/run_trx.py`, which writes
+`artifacts/python-data-tools.trx`, the quality-checks job uploads the artifacts folder, and ReqStream reads the file with
+the other TRX files and matches a requirement's test by the method name. All other tool tests are not requirements
+evidence; they are reviewed with the tools in the data tools review sets (see the Companion Artifact
+Structure of the design introduction). The unit tests of the correction tools (`test_corrections_*.py`, including those
+of the adjudication tool `adjudicate.py`), the validation of the staged corrections (`adjudicated.tsv` included) against
+the corpora, the check that the generator reproduces the committed mechanical tables and a report-only pass of the
+conventions linter run as a gate in `lint.ps1`, which the quality-checks job of the workflow runs
 (standard library only, about one minute); a failing step fails the lint run. The linter does not yet fail on violations
 that are left in the corpora.
 
@@ -395,10 +400,11 @@ One test per obligation, as named in the requirements of the _Data and Licensing
 and fails when a file is missing or empty.
 
 The `PartOfSpeech_DataCorrections_*` tests read the staged corrections of `data/corrections/`. `Tables_AreWellFormed`
-asserts the column lists of the three tables, that every correction row is valid on its own (legal source and split pair,
+asserts the column lists of the tables, that every correction row (of `mechanical.tsv` and, when it exists,
+`adjudicated.tsv`) is valid on its own (legal source and split pair,
 token index, tags among the 17 and never the masked placeholder, status cells with known statuses and flags in order, a
 change, a provenance of the form `rule:<id>` or `llm:<model>:<run>`), that the rows are in key order, and that no
-token has two rows across the tables; it fails when the mechanical table or the candidates are empty. A candidate row is
+token has two rows in one table; it fails when the mechanical table or the candidates are empty. A candidate row is
 valid on its own when its address, token, span (a positive integer), current tag (one of the 17), current status, candidate
 id (lower-case words) and hint and context (not empty) are well formed, in the pending and in the applied state alike.
 `RowCases_MatchSharedFixture`
@@ -407,12 +413,42 @@ that the Python validator is tested against, so that the two implementations can
 differs or the file has too few cases. `CandidateCases_MatchSharedFixture` does the same for the candidate fields over
 `tools/data/tests/candidate-cases.tsv` (the one check that only the Python validator makes is that the candidate id is a
 rule or a detector of its registry). `Rows_MatchCommittedCorpora` reads the sentences that the rows name from the
-committed corpora and asserts for every correction and exception row that the sentence, its document id, the token index
-and the token form exist, and that all correction rows match the corpus in the pending state (old tag and status) or all
-in the applied state (new tag and status); a mixture, a row that matches neither state, and an empty table fail.
+committed corpora and asserts for every correction row in effect and every exception row that the sentence, its document
+id, the token index and the token form exist, and that all correction rows in effect match the corpus in the pending
+state (old tag and status) or all in the applied state (new tag and status); a mechanical row that an adjudicated row
+replaces is not in effect, so it is not compared. A mixture, a row that matches neither state, and an empty table fail.
+`Adjudicated_RowsAreLlmDecisions` asserts for every row of `adjudicated.tsv` that the provenance is
+`llm:opus+sol:<batch>` (a `rule:` row fails), that the row is valid on its own and is exactly one of a tag change with
+the base status kept, a `disputed` mark with the tag and the flags kept, or a flag change with the tag and the base kept,
+and that a token that also has a mechanical row starts from the same old tag and status with another change (the
+replacement of the mechanical row); it fails when the table is missing or empty.
 `Candidates_AddressExistingTokens` asserts the same for the candidate rows, including that the span stays inside the
 sentence. The tests do not depend on the tools; the unit tests of the tools, the validation of the tables, the check that
-the generator reproduces them and a report-only conventions linter pass run in `lint.ps1` (see the Verification Approach).
+the generator reproduces the mechanical tables and a report-only conventions linter pass run in `lint.ps1` (see the
+Verification Approach).
+
+### Adjudication Tool
+
+**Tests**: the Python unit tests named in the `PartOfSpeech-Adjudication-*` requirements
+(`tools/data/tests/test_corrections_adjudication.py`)
+
+Each requirement is proven on a miniature data folder (a few sentences of every source) and a miniature work folder, so
+no model is called and no corpus text of the real data is needed. `BlindExportCarriesNoLabels` reads the exported batch
+files and asserts exactly three columns, opaque ids, no label, status, flag or sentence id in any cell, and that the key
+is outside the `batches` folder. `OutputIsValidated` feeds one correct output and one output per kind of defect (header,
+row count, order, copied cell, tag, confidence, flag, a part gap, both a whole file and parts, a BOM, a blank line) and
+asserts the error for each. `RetryLimitIsEnforced` runs `validate-output` on an output that stays invalid and asserts
+the first attempt is `invalid`, the second is `skipped` with the counter at the limit, a later call changes nothing even
+when a valid output appears, the counter never passes the limit when a valid retry follows, and `decide` lists a skipped
+batch as incomplete and stages nothing for its sentences. `DecisionRule` runs a table of cases through `decide_token`
+(agreement on another tag, agreement on the label, disagreement, flags, a mechanical row) and asserts the outcome, the
+new tag, the new status and the row kind, and that every staged row is valid. `DecisionScope` asserts the decision set
+of a sentence and that the tokens outside it get no row. `AdjudicatedRowsSupersedeMechanicalRows` asserts the
+replacement, every other second row as an error, that validate, apply and the linter use the effective rows, and that
+the mechanical file keeps its hash. `DroppedDetectorsLeaveNoCorrections` asserts that a dropped class loses its tag and
+flag rows and keeps its `disputed` marks, and the gate on given verdicts. `TableHeaderIsStrict` mutates the metadata
+lines of a valid table (each of the five lines removed, repeated or changed, an input line missing, malformed, unknown
+or repeated, an unknown metadata line) and asserts a finding for each, and runs `validate` on a file with removed lines.
 
 ### Platform Support
 

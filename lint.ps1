@@ -78,7 +78,8 @@ if (-not $skipPython) {
     python -m compileall -q tools/data
     if ($LASTEXITCODE -ne 0) { $lintError = $true }
 
-    python -m unittest discover -s tools/data/tests -p "test_corrections_*.py"
+    # The runner writes the TRX evidence that ReqStream reads (the Quality Checks job uploads the artifacts folder).
+    python tools/data/tests/run_trx.py --out artifacts/python-data-tools.trx --pattern "test_corrections_*.py"
     if ($LASTEXITCODE -ne 0) { $lintError = $true }
 
     python tools/data/corrections.py validate

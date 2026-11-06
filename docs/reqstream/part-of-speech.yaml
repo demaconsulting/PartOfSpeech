@@ -397,15 +397,15 @@ sections:
       - id: PartOfSpeech-Data-CorrectionsWellFormed
         title: >-
           Every staged corpus correction shall be a well-formed row of the documented tables, with a valid address,
-          tags, statuses and provenance, in key order and without a second row for a token.
+          tags, statuses and provenance, in key order and without a second row for a token in the same table.
         tags: [system]
         justification: |
           The staged corrections are the evidence for every label that a later change applies to the corpora. A row with
           an illegal address, a tag outside the 17, a status cell that the corpus readers refuse, no change, or no
-          provenance, or two rows for one token, could not be applied or reviewed safely. A candidate row with a
-          malformed span, current tag or status, or an empty hint, would mislead the adjudication the same way, so the
-          fields of the candidates are validated before and after the application of the corrections alike. The row
-          validation is also run on shared cases that the Python validator of the overlay uses, so that the two
+          provenance, or two rows for one token in a table, could not be applied or reviewed safely. A candidate row
+          with a malformed span, current tag or status, or an empty hint, would mislead the adjudication the same way,
+          so the fields of the candidates are validated before and after the application of the corrections alike. The
+          row validation is also run on shared cases that the Python validator of the overlay uses, so that the two
           implementations cannot diverge.
         tests:
           - PartOfSpeech_DataCorrections_Tables_AreWellFormed
@@ -415,7 +415,7 @@ sections:
       - id: PartOfSpeech-Data-CorrectionsMatchCorpora
         title: >-
           Every staged correction and every recorded exception shall address an existing token of a committed corpus,
-          and the corrections shall match the corpora either all before or all after their application.
+          and the corrections in effect shall match the corpora either all before or all after their application.
         tags: [system]
         justification: |
           A correction that names a missing sentence, a shifted token index or another word, or that expects a label
@@ -424,6 +424,143 @@ sections:
           mixture shows a partial application.
         tests:
           - PartOfSpeech_DataCorrections_Rows_MatchCommittedCorpora
+
+      - id: PartOfSpeech-Data-AdjudicatedCorrectionsAreRecorded
+        title: >-
+          Every adjudicated correction shall be an `llm:opus+sol:<batch>` decision row that changes the tag, the flags
+          or the disputed status of one token, and a token that also has a mechanical row shall start from the same
+          corpus value.
+        tags: [system]
+        justification: |
+          The adjudicated rows are the evidence of the later relabeling by two blind taggers. A row with a rule
+          provenance there, a row that changes more than one aspect of the status, or a second row for a token that does
+          not start from the value of its mechanical row would be applied twice or would misstate what the taggers
+          decided. A mechanical row that an adjudicated row replaces is only ignored, so the replacement is legal only
+          when both rows start from the same corpus value and make different changes.
+        tests:
+          - PartOfSpeech_DataCorrections_Adjudicated_RowsAreLlmDecisions
+
+      - id: PartOfSpeech-Adjudication-BlindExportCarriesNoLabels
+        title: >-
+          The blind batches for the taggers shall hold only an opaque sentence id, the token index and the token text of
+          each token, with no label, status, flag, source, split or sentence id, and the key shall stay outside them.
+        tags: [system]
+        justification: |
+          The two taggers are independent only if they decide from the sentence and the conventions alone. A batch that
+          shows the corpus label, a flag, a detector or the sentence id would let the models copy the label that is in
+          doubt, so the export is tested for the exact columns, the opaque ids and the location of the key.
+        tests:
+          - test_a_batch_file_has_exactly_three_columns_and_nothing_that_identifies_a_label_or_a_sentence
+          - test_the_ids_are_unique_opaque_and_deterministic
+          - test_the_key_stays_outside_the_batches_folder_and_names_the_corpus_sentence
+          - test_check_batches_passes_and_finds_a_fourth_column_a_changed_token_and_a_missing_row
+
+      - id: PartOfSpeech-Adjudication-OutputIsValidated
+        title: >-
+          A tagger output shall be accepted only when it repeats the batch row for row and every tag, confidence and
+          flag cell is in its vocabulary.
+        tags: [system]
+        justification: |
+          A truncated, reordered or misspelled output would give a vote to the wrong token or no vote at all. The check
+          covers the header, the row count and order, the three copied cells, the 17 tags, the confidences and the flag
+          cells, and a part file set without a gap, so that no output is repaired by hand or accepted by accident.
+        tests:
+          - test_a_correct_output_has_no_error
+          - test_each_kind_of_defect_is_found
+          - test_the_output_is_one_file_or_numbered_parts_but_not_both_and_without_gaps
+          - test_a_wrong_header_a_blank_line_and_a_bom_are_refused
+
+      - id: PartOfSpeech-Adjudication-RetryLimitIsEnforced
+        title: >-
+          An invalid tagger output shall be asked for again once; the second invalid output shall mark the batch as
+          skipped, no further attempt shall be recorded, and the sentences of a skipped batch shall not be decided.
+        tags: [system]
+        justification: |
+          A batch that no model can tag completely must not hold up the work or enter it half done. The limit is a
+          property of the state table, not of the operator, so the attempt counter never passes it, a skipped state is
+          final, and the decision step lists the batch as not used.
+        tests:
+          - test_an_invalid_output_is_asked_for_once_more_and_the_second_failure_skips_the_batch
+          - test_a_skipped_state_is_final_even_when_a_valid_output_appears_later
+          - test_the_attempt_counter_never_passes_the_limit_and_a_valid_retry_is_accepted
+          - test_a_skipped_batch_is_not_decided_and_is_listed_as_incomplete
+          - test_export_status_and_validate_output
+
+      - id: PartOfSpeech-Adjudication-DecisionRule
+        title: >-
+          Where both models give the same tag that differs from the label the tool shall stage a correction, where they
+          give different tags it shall stage a disputed mark, and where both confirm the label it shall stage nothing
+          except an agreed change of the flags.
+        tags: [system]
+        justification: |
+          The staged rows are the decisions that a later change applies. A correction needs two independent models to
+          agree against the label, a disagreement is an unsettled case and must not be turned into a tag, and a label
+          that both confirm needs no row. The table of cases covers every outcome, including the flags and the
+          mechanical rows, and each staged row is a valid row of one of the three kinds.
+        tests:
+          - test_the_decision_table
+          - test_every_staged_row_is_valid_and_one_of_the_three_kinds
+          - test_the_effective_flags_follow_the_agreement_per_flag
+
+      - id: PartOfSpeech-Adjudication-DecisionScope
+        title: >-
+          The tool shall decide only the candidate tokens, the tokens that the off-the-shelf taggers flag and the
+          dependents of a candidate, and shall stage nothing for any other token of a selected sentence.
+        tags: [system]
+        justification: |
+          The models tag whole sentences, but the cleanup is limited to the cases that need a judgment. A correction at
+          any other token would change the corpus outside the reviewed scope, so the decision set is tested and the
+          tokens outside it are only counted.
+        tests:
+          - test_the_decision_set_is_candidates_voter_flags_and_dependents_without_masked_tokens
+          - test_dependents_of_the_candidate_detectors
+          - test_decide_writes_the_table_the_reports_and_the_superseded_note
+
+      - id: PartOfSpeech-Adjudication-AdjudicatedRowsSupersedeMechanicalRows
+        title: >-
+          An adjudicated row shall replace the mechanical row of the same token when both start from the same corpus
+          value and make different changes, the mechanical file shall stay as it is, and every other second row for a
+          token shall be an error.
+        tags: [system]
+        justification: |
+          The agreement of two models outranks a rule, but only for the token that they decided, so the overlay uses the
+          effective rows for validation, application and the linter. A second row that starts from another value, or
+          repeats the change, would be applied twice or would misstate the decision.
+        tests:
+          - test_an_adjudicated_row_replaces_the_mechanical_row_of_the_same_token
+          - test_every_other_second_row_for_a_token_is_an_error
+          - test_validate_applies_and_the_linter_use_the_effective_rows_and_the_files_stay_as_they_are
+          - test_a_replacement_that_starts_from_another_value_fails_validate
+
+      - id: PartOfSpeech-Adjudication-DroppedDetectorsLeaveNoCorrections
+        title: >-
+          When the review gate drops a detector, the tool shall leave out its tag and flag rows and keep its disputed
+          marks, and a detector shall be dropped when its precision is below 90 percent with at least two incorrect
+          rows.
+        tags: [system]
+        justification: |
+          A detector whose corrections are not reliable enough must not change the corpus, while the unsettled tokens it
+          found are still worth a mark. The gate and the drop are tested on the decision records and on the verdicts of
+          the review.
+        tests:
+          - test_a_dropped_class_loses_its_tag_and_flag_rows_but_keeps_the_disputed_marks
+          - test_the_gate_drops_a_class_below_ninety_percent_with_two_incorrect_or_over_thirty_percent_unclear
+          - test_review_result_reads_the_verdicts_and_names_the_classes_to_drop
+
+      - id: PartOfSpeech-Adjudication-TableHeaderIsStrict
+        title: >-
+          The adjudicated table shall carry exactly the metadata lines of the format (corpus, license, kind, columns,
+          generator and one well-formed SHA-256 input line per corpus file), and a missing, repeated, malformed or
+          unknown line shall be a validation error.
+        tags: [system]
+        justification: |
+          The header names the data the decisions were made on and the license of the table. A table with a removed
+          license line, a wrong kind or a malformed input hash could not be traced to the corpora, so the validator
+          reports every such defect instead of reading only the rows.
+        tests:
+          - test_malformed_metadata_headers_of_the_adjudicated_table_are_findings
+          - test_validate_reports_a_table_file_whose_metadata_lines_were_removed
+          - test_findings_for_the_adjudicated_table
 
       - id: PartOfSpeech-Data-CandidatesAddressTokens
         title: Every correction candidate shall address an existing token of a committed corpus.
