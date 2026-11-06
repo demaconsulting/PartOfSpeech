@@ -36,6 +36,6 @@
   "seed": 20260101,
   "restriction": "history",
   "history": "predicted",
-  "temperature": 6.727,
-  "imageSha256": "68673a9ff48fea494991a82b6106b42e3cd63f9ef0c8c3fde4fc80477060f32a"
+  "temperature": 6.583,
+  "imageSha256": "dca810e400d6e5cf27cdbb126db810c4ead6aaa07bb410709f3cedb515da339d"
 }

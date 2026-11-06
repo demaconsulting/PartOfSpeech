@@ -80,8 +80,8 @@ Deflate validation in the `BinaryFormat` design.
   Postcondition: the compressed and the plain form of the same weights give the same image. An invalid file throws
   `InvalidDataException`.
 
-Size note: the shipped model (selected on development data, see _ModelTrainer Design_) has 119,632 rows and 290,862
-weights at 19 hash bits and scale 1/8, which is 1,111,898 bytes uncompressed and 492,971 bytes with Deflate. The spike's
+Size note: the shipped model (selected on development data, see _ModelTrainer Design_) has 116,448 rows and 281,682
+weights at 19 hash bits and scale 1/8, which is 1,077,990 bytes uncompressed and 477,899 bytes with Deflate. The spike's
 sparse `int16` model, for comparison, had about 105,000 rows and 286,000 weights at 13 classes.
 
 #### Error Handling

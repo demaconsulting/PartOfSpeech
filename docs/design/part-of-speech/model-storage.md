@@ -77,5 +77,5 @@ should build with nothing to run. The weights resource is generated the same way
 (`train` writes `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`; `train --check`, run by `build.ps1` and the CI
 build, and a unit test fail when the committed binary is not what the committed corpora and `training.json` produce).
 The package contains each resource once per target framework: the lexicon resource is 639,617 bytes (1,625,974
-uncompressed) and the weights resource 492,971 bytes (1,111,898 uncompressed, 119,632 rows, 290,862 weights, 19 hash
+uncompressed) and the weights resource 477,899 bytes (1,077,990 uncompressed, 116,448 rows, 281,682 weights, 19 hash
 bits, scale 1/8), which is why the package is several MB (see "Package size" in the system design).

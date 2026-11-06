@@ -104,8 +104,8 @@ Run the commands at below-normal priority, one process at a time (see _Machine l
 
 `training.json` selects: sources open (x2), MASC and silver (labeled tokens with probability of at least 80%); restriction
 mode `history` with predicted history; 6 epochs; 19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8;
-temperature 6.727. The file `weights.bin` has 119,632 rows and 290,862 weights, is 1,111,898 bytes uncompressed and
-492,971 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check` takes about 15 seconds and runs
+temperature 6.583. The file `weights.bin` has 116,448 rows and 281,682 weights, is 1,077,990 bytes uncompressed and
+477,899 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check` takes about 15 seconds and runs
 in `build.ps1` and in the CI build on all three operating systems. The glossary decision (boost only, no trained
 feature) and every experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and
 `docs/verification/part-of-speech/model-trainer.md` the verification. To change the model: edit `training.json` (or run
