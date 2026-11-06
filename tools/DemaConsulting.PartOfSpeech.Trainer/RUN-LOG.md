@@ -1751,6 +1751,111 @@ the 5 seeds of each arm.
    if it is selected, is a separate step with its own record and, for the held-out sets, a disclosed second look.
 4. `evaluate` and `thresholds` are not run; no held-out file is evaluated.
 
+### Results and selection (dev only)
+
+Order of events (the git history and the file times agree): pre-registration commit `476a51d` at 2026-11-06 09:29:28 (-05:00); the first
+follow-up model was trained at 09:31:23 and the last at 09:35:01; the scoring was run after all 15 models existed. Arm builds: the
+rows removed are exactly those of the pre-registration (NO-ING 861: open train 151, open dev 22, MASC 518, silver 170; NO-CTRL 734:
+open train 152, open dev 19, MASC 563); the rebuilt lexicon of NO-ING has 262,635 spellings / 339,819 entries (`lexicon.bin` 639,711
+bytes, as in the diagnosis), that of NO-CTRL 262,634 / 339,798 (639,690 bytes); the shipped-seed images are 1,077,990 bytes (FULL),
+1,080,650 (NO-ING, 116,662 rows). Scoring: scratch tool `prenominal-ing/score_arms.py` (committed with this record) over the
+prediction files of the runtime decoder; only open dev and UD-EWT dev were read; no `evaluate`, `thresholds` or held-out file.
+
+**Acceptance test: passed on every point.** FULL at the shipped seed: open dev 103 harmful of 4,467 decisions, UD-EWT dev 107 of 4,570,
+UD agreement 23,338 of 25,148 (92.803%), and its weights are **byte-identical** to the committed `weights.bin` (SHA-256
+`ccd38ef2...bce`). The five FULL seeds reproduce the diagnosis arm NEW (UD agreement 92.803, 92.711, 92.655, 92.695, 92.747) and their
+weights are byte-identical to the diagnosis models; NO-ING reproduces the diagnosis ablation exactly (agreement 92.711, 92.779, 92.683,
+92.616, 92.747; open harmful 90, 98, 96, 100, 90; UD harmful 103, 109, 95, 99, 101; weights byte-identical to the diagnosis models).
+So the FULL and NO-ING numbers below are the diagnosis numbers; what is new is the pooled rate, the compound-head measure, NO-CTRL
+and the rule.
+
+Per-seed values (seeds 20260101, 11, 12, 13, 14) and mean +- sample sd (n = 5). Harmful counts in brackets are harmful / decisions.
+
+| Metric | Arm | 20260101 | 11 | 12 | 13 | 14 | mean +- sd |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Pooled harmful / 1k** (primary) | FULL | 23.238 (210/9,037) | 22.353 (202) | 22.795 (206) | 22.242 (201) | 22.795 (206) | **22.685 +- 0.399** |
+| | NO-ING | 21.357 (193) | 22.906 (207) | 21.135 (191) | 22.021 (199) | 21.135 (191) | **21.711 +- 0.760** |
+| | NO-CTRL | 22.242 (201) | 21.689 (196) | 23.016 (208) | 23.348 (211) | 20.914 (189) | 22.242 +- 0.987 |
+| Open dev harmful / 1k (relabeled) | FULL | 23.058 (103/4,467) | 21.491 (96) | 21.939 (98) | 22.386 (100) | 22.610 (101) | 22.297 +- 0.605 |
+| | NO-ING | 20.148 (90) | 21.939 (98) | 21.491 (96) | 22.386 (100) | 20.148 (90) | 21.222 +- 1.031 |
+| | NO-CTRL | 22.834 (102) | 20.372 (91) | 23.058 (103) | 22.163 (99) | 19.700 (88) | 21.625 +- 1.507 |
+| UD-EWT dev harmful / 1k | FULL | 23.414 (107/4,570) | 23.195 (106) | 23.632 (108) | 22.101 (101) | 22.976 (105) | 23.063 +- 0.591 |
+| | NO-ING | 22.538 (103) | 23.851 (109) | 20.788 (95) | 21.663 (99) | 22.101 (101) | 22.188 +- 1.133 |
+| | NO-CTRL | 21.663 (99) | 22.976 (105) | 22.976 (105) | 24.508 (112) | 22.101 (101) | 22.845 +- 1.090 |
+| UD-EWT dev agreement % | FULL | 92.803 | 92.711 | 92.655 | 92.695 | 92.747 | 92.722 +- 0.056 |
+| | NO-ING | 92.711 | 92.779 | 92.683 | 92.616 | 92.747 | 92.707 +- 0.063 |
+| | NO-CTRL | 92.683 | 92.747 | 92.799 | 92.683 | 92.811 | 92.745 +- 0.061 |
+| **Compound-head NOUN accuracy %** (248 items) | FULL | 90.323 | 90.323 | 88.306 | 89.919 | 89.919 | **89.758 +- 0.836** |
+| | NO-ING | 87.500 | 89.516 | 88.710 | 89.516 | 88.710 | **88.790 +- 0.826** |
+| | NO-CTRL | 89.113 | 89.113 | 88.710 | 89.113 | 88.710 | 88.952 +- 0.221 |
+| compound-ing NOUN accuracy % (41) | FULL | 70.732 | 68.293 | 58.537 | 65.854 | 65.854 | 65.854 +- 4.563 |
+| | NO-ING | 60.976 | 60.976 | 63.415 | 63.415 | 63.415 | 62.439 +- 1.336 |
+| | NO-CTRL | 63.415 | 65.854 | 68.293 | 65.854 | 63.415 | 65.366 +- 2.041 |
+| compound-zero NOUN accuracy % (207) | FULL | 94.203 | 94.686 | 94.203 | 94.686 | 94.686 | 94.493 +- 0.265 |
+| | NO-ING | 92.754 | 95.169 | 93.720 | 94.686 | 93.720 | 94.010 +- 0.942 |
+| | NO-CTRL | 94.203 | 93.720 | 92.754 | 93.720 | 93.720 | 93.623 +- 0.529 |
+| **Verbal-ing VERB accuracy %** (384 items) | FULL | 92.969 | 92.188 | 93.750 | 93.490 | 93.750 | 93.229 +- 0.664 |
+| | NO-ING | 89.844 | 90.885 | 90.104 | 90.885 | 92.448 | 90.833 +- 1.015 |
+| | NO-CTRL | 93.750 | 93.490 | 93.229 | 94.531 | 94.010 | 93.802 +- 0.501 |
+| Open dev accuracy % (context) | FULL | 96.375 | 96.325 | 96.367 | 96.371 | 96.298 | 96.347 +- 0.034 |
+| | NO-ING | 96.348 | 96.329 | 96.302 | 96.298 | 96.352 | 96.326 +- 0.025 |
+| | NO-CTRL | 96.375 | 96.340 | 96.302 | 96.394 | 96.367 | 96.356 +- 0.035 |
+
+Differences against FULL (arm minus FULL, mean of the 5 seeds; descriptive, the rule is the selection). Welch t 95% interval
+(degrees of freedom, p) and the combined seed + document bootstrap 95% interval (2,000 replicates, seed 20261104):
+
+| Metric | NO-ING - FULL: difference, Welch, bootstrap | NO-CTRL - FULL: difference, Welch, bootstrap |
+| --- | --- | --- |
+| Pooled harmful / 1k | **-0.974** [-1.911, -0.036] (6.0, p = 0.044); [-2.581, +0.699] | -0.443 [-1.647, +0.762] (5.3, p = 0.39); [-1.979, +1.046] |
+| Open dev harmful / 1k | -1.075 [-2.360, +0.211] (6.5, p = 0.088); [-3.454, +1.285] | -0.672 [-2.511, +1.168]; [-2.622, +1.226] |
+| UD-EWT dev harmful / 1k | -0.875 [-2.272, +0.521] (6.0, p = 0.18); [-3.104, +1.514] | -0.219 [-1.567, +1.129]; [-2.228, +1.842] |
+| UD-EWT dev agreement (points) | -0.015 [-0.102, +0.071]; [-0.148, +0.114] | +0.022 [-0.063, +0.107]; [-0.106, +0.151] |
+| Compound-head NOUN accuracy (points) | -0.968 [-2.180, +0.245] (8.0, p = 0.10); [-2.908, +0.701] | -0.806 [-1.831, +0.218]; [-2.778, +0.918] |
+| compound-ing NOUN accuracy (points) | -3.415 [-8.995, +2.165]; [-12.246, +4.375] | -0.488 [-6.070, +5.094]; [-6.286, +5.000] |
+| compound-zero NOUN accuracy (points) | -0.483 [-1.635, +0.669]; [-2.039, +0.788] | -0.870 [-1.520, -0.219] (p = 0.017); [-3.051, +0.953] |
+| **Verbal-ing VERB accuracy (points)** | **-2.396 [-3.683, -1.109] (6.9, p = 0.003); [-4.270, -0.714]** | +0.573 [-0.296, +1.442]; [-0.400, +1.734] |
+| Open dev accuracy (points) | -0.021 [-0.065, +0.023]; [-0.106, +0.063] | +0.008 [-0.042, +0.059]; [-0.080, +0.099] |
+
+NO-ING minus NO-CTRL on the pooled harmful rate: -0.531 per 1,000, Welch [-1.830, +0.768].
+
+**Application of the pre-registered rule, exactly as written.**
+
+- Primary (mean pooled harmful per 1,000): FULL 22.685, NO-ING 21.711; the lowest candidate is NO-ING and the difference FULL minus
+  NO-ING is **0.974 per 1,000**, which is not under the 0.5 tie-break threshold.
+- C1 (UD-EWT agreement within 0.15 points of the best candidate): the best is FULL (92.722); NO-ING 92.707, shortfall 0.015: **holds**.
+- C2 (compound-head NOUN accuracy within 2 points of the best candidate): the best is FULL (89.758); NO-ING 88.790, shortfall
+  0.968: **holds**.
+- **Selected arm: NO-ING** (it has the lowest primary mean by at least 0.5 per 1,000 and both constraints hold). The shipped seed
+  stays 20260101 whichever arm wins.
+- Negative control (context only, not a candidate): NO-CTRL (734 `propn-boundary` rows removed) has a pooled mean of 22.242, 0.443
+  per 1,000 below FULL (Welch interval contains 0). The pre-registered reading aid compares it with half of the NO-ING reduction
+  (0.487): 0.443 is **below** that half, so the aid reads "a comparable removal does not match the NO-ING reduction". It is a narrow
+  margin (the NO-CTRL reduction is 45% of the NO-ING one), the two arms' interval of difference contains 0 (-0.531, Welch [-1.830,
+  +0.768]), and removing a set of the same size of an unrelated detector also moved the harmful rates down by about 0.4 per 1,000:
+  part of the NO-ING reduction may be what any such removal does or ordinary seed variation.
+
+**Reading (what is better and what is worse, stated plainly).**
+
+- The primary evidence is thin. The Welch interval of the pooled difference ([-1.911, -0.036]) just excludes 0 while the combined
+  seed + document bootstrap interval ([-2.581, +0.699]) contains it; the rule is a point-estimate rule on 5 seeds and the number
+  that selects NO-ING (0.974) is about the size of the seed standard deviation of an arm (0.4 to 1.0). The result is the one the
+  diagnosis already showed for these two arms, so it is not an independent confirmation.
+- **Not part of the rule, and against NO-ING: the verbal -ing VERB accuracy falls 2.4 points** (93.229 to 90.833; Welch [-3.683,
+  -1.109], bootstrap [-4.270, -0.714]; the per-seed ranges barely overlap: FULL 92.188 to 93.750, NO-ING 89.844 to 92.448):
+  without the `prenominal-ing` corrections fewer genuine verbal -ing tokens are tagged VERB (the wrong tags were not tabulated).
+  The rule had no constraint on this control, as pre-registered, and the rule is applied as written; but the cost is visible and
+  is one of the things an adoption decision has to weigh.
+- Compound-head NOUN accuracy is lower in NO-ING (-0.97 points; within the 2-point constraint), driven by the 41 `compound-ing`
+  items (-3.4 points, wide interval, 41 items); the zero-derived items hardly move. UD-EWT agreement and open dev accuracy are
+  unchanged (-0.015 and -0.021 points).
+- NO-ING keeps the pre-cleanup labels of the 861 tokens (and rebuilds the lexicon from them), so it moves part of the corpus back
+  to the old convention for -ing words (the corrected `ADJ`/`VERB` choices of `prenominal-ing`); whether the convention linter
+  and the corrections tables stay consistent with such files was not checked here and is for the adoption step, if any.
+
+**Nothing is adopted.** The committed data, lexicon, weights and `training.json` are unchanged by this follow-up; `evaluate` and
+`thresholds` were not run; no held-out set was read. If NO-ING is to be adopted, that is a separate step (step 3) with its own record
+and, for the held-out sets, a disclosed second look (the held-out sets were seen once, for the model of `58da737`).
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
