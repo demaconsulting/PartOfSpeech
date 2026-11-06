@@ -77,15 +77,12 @@ list; use soft mode for a list that may be wrong. The measured cost is in sectio
 
 ## Accuracy and Confidence
 
-The model was selected on development data only. The held-out evaluation record below (test results and confidence
-thresholds) was produced for the model that was trained before the label corrections of the corpora (see the
-[trainer run log][link-run-log]). The embedded model was retrained on the corrected corpora and checked on development
-data only: it did not pass all of the development gates that were fixed before the retraining, and it has not been
-evaluated on held-out data, so the record does not describe it. The tagger is accurate on ordinary running text. Its most
-costly mistake is a harmful error: a noun
-tagged as a verb, or a verb tagged as a noun. It makes some on every test set and noticeably more on short, technical
-and imperative sentences built to be hard, a limitation that is reported and was not tuned away. The labels of the test
-sets were written by language models, and the results come from one run.
+The model was selected on development data only, its confidence thresholds too, and it was then evaluated once on
+held-out data (after the corpora had been corrected and the model retrained; the [trainer run log][link-run-log] has the
+decisions and the gates). The tagger is accurate on ordinary running text. Its most costly mistake is a harmful error: a
+noun tagged as a verb, or a verb tagged as a noun. It makes some on every test set and noticeably more on short,
+technical and imperative sentences built to be hard, a limitation that is reported and was not tuned away. The labels of
+the test sets were written by language models, and the results come from one run.
 
 See the evaluation report for accuracy, harmful-error rates and recommended thresholds: the [test results][link-test-results]
 have every held-out set and the [confidence thresholds][link-thresholds] have the coverage and harmful-rate tables. The
@@ -93,10 +90,18 @@ have every held-out set and the [confidence thresholds][link-thresholds] have th
 
 **Consumers that need a low harmful rate must use a confidence threshold.** Treat a token below the threshold as
 unknown. A rule checker should use the `strict` threshold; `balanced` suits consumers that can tolerate more errors or
-show the result to a person. The recommended thresholds were measured for the earlier model only: no validated threshold
-exists yet for the embedded (retrained) model, so re-measure before you rely on them. A token with a single allowed tag
-has confidence 1.0 without being a decision. The [user guide][link-user-guide] and the packed API reference have the
-details.
+show the result to a person. The thresholds were chosen on development data and measured on the held-out open test
+split:
+
+- `strict` (0.90) answers 86.5% of the noun-verb decisions on the development data with 4.8 harmful errors in 1,000
+  answered, and 87.7% with 5.7 in 1,000 on the open test split.
+- `balanced` (0.85) answers 89.8% with 7.7 in 1,000 on the development data, and 90.9% with 6.5 in 1,000 on the open
+  test split.
+
+The `strict` target (at most 5 harmful errors in 1,000 answered) was met on the development data and is slightly
+exceeded on the held-out open test split, where its 95% interval includes 5. A token with a single allowed tag has
+confidence 1.0 without being a decision. The [user guide][link-user-guide] and
+the packed API reference have the details.
 
 ## Documentation
 

@@ -8,9 +8,9 @@ License: CC0-1.0
 Label corrections for the open corpus, MASC and the silver data that follow the conventions of
 [CONVENTIONS.md](../CONVENTIONS.md), kept as small tables next to the corpus files. **The rows are applied:** the corpora under
 `open/`, `masc/` and `silver/` carry them (`corrections.py apply --write`), and the lexicon and the weights were rebuilt from the
-corrected labels. The held-out evaluation record (`docs/evaluation/`) was **not** reissued: it describes the model that was trained
-before the corrections and the old development files (the pre-registered development gate G2 failed; see the trainer
-`RUN-LOG.md`, "Corpus cleanup C"). The tables stay as provenance: they describe the corpora as the importers wrote them,
+corrected labels. The held-out evaluation record (`docs/evaluation/`) was reissued for the retrained model: the model was
+evaluated once on held-out data after the corrections (the pre-registered development gate G2 failed on its single seed, and
+the owner accepted the model after a development-only diagnosis; see the trainer `RUN-LOG.md`, "Corpus cleanup C"). The tables stay as provenance: they describe the corpora as the importers wrote them,
 and they stay valid against the corrected files (see _States and Apply_).
 
 The rows are labels and addresses of tokens: the labels and the selection are dedicated under CC0-1.0, like the corpus labels.
@@ -608,5 +608,5 @@ decision rule is the function `decide_token`; the tests of both are in `tools/da
   new rows are produced against the corrected files (the generator `--check` reverses the applied rows in a temporary copy).
 - **Evaluation data.** The development and test splits of the open corpus are corrected like the training split. The gold v2
   set, the shape probe and the STE challenge set are not addressable by the overlay and keep their labels; they could follow
-  the same conventions in a later change. The held-out evaluation record pins the SHA-256 of the old development files and
-  the old model, so it is not valid for the retrained model; reissuing it needs a new decision (see the trainer `RUN-LOG.md`).
+  the same conventions in a later change. The held-out evaluation record was reissued for the retrained model (a new
+  record, in the trainer `RUN-LOG.md`, "Corpus cleanup C"); it pins the SHA-256 of the corrected development files.

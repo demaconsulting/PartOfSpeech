@@ -160,7 +160,7 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </description></item>
 ///     </list>
 ///     <para>
-///     The temperature is meant to make the probabilities match how often the chosen tag is right, and for the evaluated
+///     The temperature is meant to make the probabilities match how often the chosen tag is right, and for the embedded
 ///     model the evaluation shows that it does. Which confidence is low enough to check a token again is measured too;
 ///     see [Confidence thresholds](#confidence-thresholds).
 ///     </para>
@@ -168,11 +168,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     ## Confidence thresholds
 ///     </para>
 ///     <para>
-///     The measurement below was made once on held-out data for the model that the package embedded before the training
-///     corpora were corrected, after two thresholds had been chosen on development data only. The embedded model has been
-///     retrained on the corrected corpora since then, checked on development data only, and not evaluated on held-out data
-///     (the evaluation record and the trainer run log say how it stands), so read the figures as those of the earlier model
-///     and re-measure before you rely on them. The measurement is about the mistake that changes the meaning of a sentence: a word that is a noun and is
+///     The embedded model was evaluated once on held-out data, after two thresholds had been chosen on development data
+///     only. The measurement is about the mistake that changes the meaning of a sentence: a word that is a noun and is
 ///     tagged as a verb, or the other way round (a <em>harmful error</em>). A token is <em>answered</em> at a threshold
 ///     when the confidence of its tag is at least the threshold, and <em>coverage</em> is the share of the noun-verb
 ///     decisions that is answered. Without a threshold, 20.6 of 1,000 noun-verb decisions of the open test split are
@@ -181,13 +178,13 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </para>
 ///     <list type="bullet">
 ///     <item><description>
-///     **strict**, 0.95: on the development data it answered 80.6% of the decisions with 3.9 harmful errors in 1,000
-///     answered decisions; on the open test split it answered 82.3% with 4.1 in 1,000. Use it when a wrong noun or verb
+///     **strict**, 0.90: on the development data it answered 86.5% of the decisions with 4.8 harmful errors in 1,000
+///     answered decisions; on the open test split it answered 87.7% with 5.7 in 1,000. Use it when a wrong noun or verb
 ///     does harm, for example in a rule checker.
 ///     </description></item>
 ///     <item><description>
-///     **balanced**, 0.80: on the development data it answered 91.0% of the decisions with 9.9 harmful errors in 1,000
-///     answered decisions; on the open test split it answered 92.3% with 9.3 in 1,000. Use it when more errors are
+///     **balanced**, 0.85: on the development data it answered 89.8% of the decisions with 7.7 harmful errors in 1,000
+///     answered decisions; on the open test split it answered 90.9% with 6.5 in 1,000. Use it when more errors are
 ///     acceptable or when a person sees the result.
 ///     </description></item>
 ///     </list>
@@ -195,9 +192,10 @@ namespace DemaConsulting.PartOfSpeech;
 ///     Treat a token below the threshold as unknown: do not act on its tag, show it to a person, or look at
 ///     <see cref="TaggedToken.Alternatives"/> and give the word a <see cref="TokenConstraint"/> or a
 ///     <see cref="Glossary"/> entry. A consumer that needs a low harmful rate must use a threshold, because the harmful
-///     rate without one is two to five times higher; the rate is higher still on short technical and imperative text
-///     (86.3 in 1,000 on a probe of such sentences without a threshold). The thresholds were measured for the earlier model;
-///     no threshold is validated yet for the embedded model, so re-measure before you rely on them, and weights that you load need their own measurement. A token with only one allowed tag has the confidence 1.0 and
+///     rate without one is three to four times higher; the rate is higher still on short technical and imperative text
+///     (93.5 in 1,000 on a probe of such sentences without a threshold). The strict target of at most 5 in 1,000 was met on
+///     the development data and is slightly exceeded on the open test split. The thresholds apply to the embedded model:
+///     weights that you load need their own measurement. A token with only one allowed tag has the confidence 1.0 and
 ///     is not a decision, and the confidence of a token that a hard glossary entry limits to one tag says nothing about
 ///     whether the entry is right.
 ///     </para>

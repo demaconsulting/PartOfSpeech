@@ -53,11 +53,10 @@ compiled word lexicon (639,617 bytes compressed) and the trained averaged-percep
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
-The model was selected on development data only. The
-[evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the held-out
-results and the limits of the measurement; it was made for the model that the package embedded before the training corpora
-were corrected. The embedded model has been retrained on the corrected corpora, checked on development data only and not
-evaluated on held-out data. The section _Choosing a Confidence Threshold_ says which confidence to trust.
+The model was selected on development data only and then evaluated once on held-out data, after the training corpora had
+been corrected and the model retrained. The
+[evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the results
+and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to trust.
 
 # Usage
 
@@ -153,18 +152,19 @@ Read the numbers with these points in mind:
 ### Choosing a Confidence Threshold
 
 The confidence is not equally reliable at every level, and the mistake that matters most is a noun that is tagged as a
-verb or a verb that is tagged as a noun (a harmful error). The figures below were measured on that mistake for the model
-that the package embedded before the training corpora were corrected: two thresholds were selected on development data
-only, and that model was then evaluated once on held-out data. The embedded model has since been retrained on the corrected
-corpora and has not been evaluated on held-out data, so no threshold below is validated for it: re-measure before you rely
-on the figures. A token is
+verb or a verb that is tagged as a noun (a harmful error). The embedded model was measured on that mistake: two
+thresholds were selected on development data only, and the model was then evaluated once on held-out data. A token is
 answered at a threshold when its confidence is at least the threshold; coverage is the share of the noun-verb
 decisions that is answered.
 
 | Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
 | --- | ---: | ---: | ---: |
-| strict | 0.95 | 82.3% | 4.1 |
-| balanced | 0.80 | 92.3% | 9.3 |
+| strict | 0.90 | 87.7% | 5.7 |
+| balanced | 0.85 | 90.9% | 6.5 |
+
+On the development data the same thresholds answered 86.5% (strict, 4.8 harmful errors in 1,000) and 89.8% (balanced, 7.7)
+of the decisions. The strict target of at most 5 in 1,000 was met there and is slightly exceeded on the open test split
+(its 95% interval, 3.0 to 8.8, includes 5).
 
 Without a threshold, 20.6 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
@@ -174,7 +174,7 @@ on short technical and imperative text. Use these rules:
   ```csharp
   foreach (TaggedToken token in Tagger.Default.Tag("Close the valve.")[0].Tokens)
   {
-      bool trusted = token.Confidence >= 0.95;
+      bool trusted = token.Confidence >= 0.90;
       Console.WriteLine($"{token.Text}: {(trusted ? token.Tag.ToTagString() : "unknown")}");
   }
   ```
