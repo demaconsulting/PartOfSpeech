@@ -196,8 +196,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <see cref="TaggedToken.Alternatives"/> and give the word a <see cref="TokenConstraint"/> or a
 ///     <see cref="Glossary"/> entry. A consumer that needs a low harmful rate must use a threshold, because the harmful
 ///     rate without one is two to five times higher; the rate is higher still on short technical and imperative text
-///     (86.3 in 1,000 on a probe of such sentences without a threshold). The thresholds apply to the embedded model:
-///     weights that you load need their own measurement. A token with only one allowed tag has the confidence 1.0 and
+///     (86.3 in 1,000 on a probe of such sentences without a threshold). The thresholds were measured for the earlier model;
+///     no threshold is validated yet for the embedded model, so re-measure before you rely on them, and weights that you load need their own measurement. A token with only one allowed tag has the confidence 1.0 and
 ///     is not a decision, and the confidence of a token that a hard glossary entry limits to one tag says nothing about
 ///     whether the entry is right.
 ///     </para>

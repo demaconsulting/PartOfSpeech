@@ -93,8 +93,9 @@ have every held-out set and the [confidence thresholds][link-thresholds] have th
 
 **Consumers that need a low harmful rate must use a confidence threshold.** Treat a token below the threshold as
 unknown. A rule checker should use the `strict` threshold; `balanced` suits consumers that can tolerate more errors or
-show the result to a person. The thresholds apply to the embedded model, and a token with a single allowed tag has
-confidence 1.0 without being a decision. The [user guide][link-user-guide] and the packed API reference have the
+show the result to a person. The recommended thresholds were measured for the earlier model only: no validated threshold
+exists yet for the embedded (retrained) model, so re-measure before you rely on them. A token with a single allowed tag
+has confidence 1.0 without being a decision. The [user guide][link-user-guide] and the packed API reference have the
 details.
 
 ## Documentation

@@ -1203,7 +1203,7 @@ resamples, seed 20261104, 95% percentile intervals, differences paired):
 | **G2a** harmful per 1k, open dev, relabeled | 92 of 4,468 = **20.59** [15.62, 25.96] | 103 of 4,467 = **23.06** [17.53, 29.07] | +2.47 [0.00, +5.26] | **FAIL** (23.06 > 20.59) |
 | **G2b** harmful per 1k, UD-EWT dev | 100 of 4,573 = **21.87** [18.03, 26.19] | 107 of 4,570 = **23.41** [18.77, 28.59] | +1.55 [-1.50, +4.93] | **FAIL** (23.41 > 21.87) |
 | **G3** `check_conventions.py --tier fix --enforce` | - | exit 0, 0 violations in open train, dev, test, MASC, silver and STE | - | **PASS** |
-| **G4** `build.ps1` | - | not final, see below | - | open |
+| **G4** `build.ps1` | - | **FAIL** (not satisfiable under the stop rule: only the 10 held-out-record pin tests are red, see below) | - | **FAIL** |
 
 Check tier (report only, unchanged by the gate): 298 = open train 95, dev 12, test 17, MASC 66, silver 106, STE 2 (251
 `be-participle-adj-not-gradable`, 26 `be-aux-passive`, 13 `infinitive-to`, 4 `be-passive-agent`, 2 `no-all-degree`, 2 `out-of-phrasal`).
