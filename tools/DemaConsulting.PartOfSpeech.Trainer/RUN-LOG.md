@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest -->
 
 # Trainer Run Log
 
@@ -1864,7 +1864,7 @@ by `--selftest` against published values). It is meant to be run against a workt
 folder of the 15 runs, as in the Procedure above. Re-running it on the same 30 prediction files (worktree of `0d7a0b3`) reproduces
 the committed output **exactly** for the acceptance test, every per-seed value, mean and sample sd, every Welch interval, degree of
 freedom and p-value, and the rule outcome (selected arm NO-ING, same numbers); only the 18 bootstrap-interval cells differ, because
-`random.Random(20261104)` is another stream than numpy's generator, so they agree with the committed ones statistically and not
+`random.Random(20261104)` is another stream than the numpy generator, so they agree with the committed ones statistically and not
 digit for digit. Examples (committed, then standard library): pooled harmful rate NO-ING - FULL [-2.581, +0.699] and [-2.643,
 +0.640]; NO-CTRL - FULL [-1.979, +1.046] and [-1.925, +0.961]; verbal-ing VERB accuracy NO-ING - FULL [-4.270, -0.714] and
 [-4.204, -0.580]. Over the 18 cells the largest endpoint difference is 0.30 points (the 41-item `compound-ing` row, interval width
