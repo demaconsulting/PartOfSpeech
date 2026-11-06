@@ -5,7 +5,7 @@
 Checks (exit code 1 on any finding):
   1. no *.conllu file anywhere in the repository data and tools folders (outside the git-ignored cache), and no path under
      data/ containing semcor, brown, ewt or ud-ewt except the fetch-only documentation data/eval/ud-ewt/README.md;
-  2. the source tables (open, gold v2, silver) contain no row that mentions a share-alike, no-derivatives or
+  2. the source tables (open, gold v2, silver, shapes-dev) contain no row that mentions a share-alike, no-derivatives or
      non-commercial license, a Creative Commons BY-family license other than CC0, or Wikipedia; the MASC source table
      (a CC BY 3.0 US corpus) must record exactly that license for every document;
   3. every data folder README declares `License: <id>` with an id from the allowed set (the staged corrections folder included);
@@ -25,9 +25,12 @@ import common
 FORBIDDEN_TEXT = re.compile(r"share-?alike|by-sa|by-nc|by-nd|non-?commercial|no-?derivat|cc by|wikipedia|creativecommons\.org/licenses/by", re.I)
 FORBIDDEN_PATH = re.compile(r"semcor|brown|ewt", re.I)
 ALLOWED_LICENSES = {"CC0-1.0", "CC-BY-3.0-US", "CC-BY-4.0", "Public-Domain", "MIT"}
-SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv")
+SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv")
 MASC_LICENSE = "CC BY 3.0 US"
-READMES = ("open", "masc", "silver", "eval/shapes", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections")
+# The hard-shape development set takes no FAA material (host, publisher or handbook); see data/eval/shapes-dev/README.md.
+FAA_TEXT = re.compile(r"faa\.gov|\bFAA\b|Federal Aviation", re.I)
+FAA_TABLES = ("eval/shapes-dev/sources.tsv",)
+READMES = ("open", "masc", "silver", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections")
 ALLOWED_PATHS = {"data/eval/ud-ewt/README.md"}
 CORRECTION_SOURCES = {"open": "open/sources.tsv", "masc": "masc/sources.tsv", "silver": "silver/sources.tsv"}
 CORRECTION_TEXT_COLUMNS = frozenset(("token", "hint", "context"))  # corpus text: covered by the check of the document
@@ -147,6 +150,9 @@ def main():
                 match = FORBIDDEN_TEXT.search(line)
                 if match:
                     findings.append("%s: row mentions '%s': %s" % (table, match.group(0), line[:80]))
+                faa = FAA_TEXT.search(line) if table in FAA_TABLES else None
+                if faa:
+                    findings.append("%s: row mentions FAA material ('%s'): %s" % (table, faa.group(0), line[:80]))
         print("%-28s %6d rows scanned" % (table, rows))
     findings.extend(masc_findings())
     findings.extend(corrections_findings())

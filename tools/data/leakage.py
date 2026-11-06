@@ -6,6 +6,9 @@ Evaluation sets whose sentences and documents no training file may contain:
   gold-v2                    data/eval/gold-v2/{dev,test}.tsv   (column `sentence`; document column `doc_id`)
   shapes-probe               data/eval/shapes/probe.tsv         (column `sentence`; target braces are ignored by the key)
   ste-challenge              data/eval/ste-challenge/test.tsv
+  shapes-dev                 data/eval/shapes-dev/dev.tsv       (hard-shape development set; corpus format; required, so a
+                                                                 missing file fails loudly; `shapes_dev.py` builds it and passes
+                                                                 `shapes_dev=False` because the set does not exist yet)
   ud-ewt-dev, ud-ewt-test, ud-ewt-train   tools/data/cache/ud-ewt/*.conllu, only when the git-ignored cache is present
                                           (never committed; only the match result is reported)
 
@@ -17,6 +20,7 @@ dropped from its training document. Either way the evaluation data is never touc
 """
 import csv
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,6 +31,10 @@ csv.field_size_limit(1 << 24)
 # A matching sentence key of at least this many alphanumeric characters excludes its whole training document;
 # a shorter one drops only the sentence.
 DOCUMENT_KEY_LENGTH = 25
+
+# The label of the hard-shape development set among the evaluation sets, and the word n-gram length of the probe gate.
+SHAPES_DEV_LABEL = "shapes-dev"
+PROBE_NGRAM = 5
 
 
 def _tsv_rows(path):
@@ -48,7 +56,8 @@ def corpus_sets():
     """{label: [(source_id, sentence text)]} of the committed evaluation sets that use the shared corpus format."""
     sets = {}
     for label, parts in (("open-dev", ("open", "dev.tsv")), ("open-test", ("open", "test.tsv")),
-                         ("ste-challenge", ("eval", "ste-challenge", "test.tsv"))):
+                         ("ste-challenge", ("eval", "ste-challenge", "test.tsv")),
+                         (SHAPES_DEV_LABEL, ("eval", "shapes-dev", "dev.tsv"))):
         path = os.path.join(common.DATA, *parts)
         if os.path.exists(path):
             sets[label] = [(s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]
@@ -89,7 +98,7 @@ def ud_sets():
     return sets
 
 
-REQUIRED_EVALUATION_SETS = ("open-dev", "open-test", "ste-challenge", "gold-v2", "shapes-probe")
+REQUIRED_EVALUATION_SETS = ("open-dev", "open-test", "ste-challenge", "gold-v2", "shapes-probe", SHAPES_DEV_LABEL)
 
 
 def require_sets(sets, required, kind):
@@ -99,20 +108,52 @@ def require_sets(sets, required, kind):
         raise SystemExit("missing committed %s sets: %s" % (kind, ", ".join(missing)))
 
 
-def evaluation_sets(include_ud=True):
+def evaluation_sets(include_ud=True, shapes_dev=True):
+    """{label: [(document id, text)]} of every evaluation set; a missing required set is a loud failure.
+
+    `shapes_dev=False` leaves the hard-shape development set out (and does not require it): the builder of that set
+    (shapes_dev.py) checks its candidates against all the other sets, and a stale earlier build must not count.
+    """
     sets = {}
     sets.update(corpus_sets())
     sets.update(table_sets())
-    require_sets(sets, REQUIRED_EVALUATION_SETS, "evaluation")
+    required = REQUIRED_EVALUATION_SETS
+    if not shapes_dev:
+        sets.pop(SHAPES_DEV_LABEL, None)
+        required = tuple(label for label in required if label != SHAPES_DEV_LABEL)
+    require_sets(sets, required, "evaluation")
     if include_ud:
         sets.update(ud_sets())
     return sets
 
 
-def evaluation_keys(include_ud=True):
+def words(text):
+    """Lower-case alphanumeric words of a text (the units of the word n-grams)."""
+    return re.findall(r"[a-z0-9]+", common.nfc(text).lower())
+
+
+def ngrams(text, n):
+    """The set of hashes of the word n-grams of a text (hashes, so that a set of them never holds readable text)."""
+    w = words(text)
+    return {hash(" ".join(w[i:i + n])) for i in range(len(w) - n + 1)}
+
+
+def probe_ngrams(n=PROBE_NGRAM):
+    """The hashed word n-grams of the shape probe sentences, for the gate that keeps probe wording out of the development set.
+
+    The probe is read here and nowhere else; only hashes leave this function, and callers print counts and ids of their
+    own sentences, never probe text. A probe sentence with fewer than `n` words has no n-gram (the exact key covers it).
+    """
+    found = set()
+    for _, text in table_sets().get("shapes-probe", []):
+        found |= ngrams(text, n)
+    return found
+
+
+def evaluation_keys(include_ud=True, shapes_dev=True):
     """({key: label}, {document id: label}) over all evaluation sets (keys of every length, never the empty key)."""
     keys, documents = {}, {}
-    for label, items in evaluation_sets(include_ud).items():
+    for label, items in evaluation_sets(include_ud, shapes_dev).items():
         for doc, text in items:
             k = common.key(text)
             if k and k not in keys:
