@@ -1102,6 +1102,77 @@ line, which is a timing: the committed report now shows 315,213 tokens per secon
 machine was busy with other work during this run). The same three stop conditions fired with the same values. No further
 re-run is permitted for a presentational change; a figure that is wrong is a defect to be reported, not regenerated.
 
+## Corpus cleanup C: pre-registered gates (written before the retraining)
+
+Context. The staged corrections of the convention linter (`data/corrections/mechanical.tsv`, 2,225 rows, and
+`adjudicated.tsv`, 7,063 rows; 3 mechanical rows are superseded, so 9,285 effective rows) were applied to open train, dev and
+test, MASC and silver (commit "apply the staged corrections", before this section), the manifest was regenerated, and the lexicon
+is rebuilt and the model retrained in the commits after this one. This section was written and committed **before** any
+retraining, so the git history shows that the gates were fixed first. Nothing in it is tuned afterwards.
+
+Which labels changed (stated plainly). Only the open corpus (train, dev, **test**), MASC and silver changed. Gold v2, the shape
+probe, the STE challenge set and the UD English-EWT labels did **not** change (the overlay cannot address them: the STE set is
+linted but never corrected). Among the evaluation sets only the open dev and the open test labels moved, so the open test
+result of a retrained model is not strictly comparable with the old record; gold v2, the shape probe, the STE challenge set
+and UD-EWT are fair before-and-after comparisons. On open dev 274 tokens of 26,232 changed their tag and 213 their status cell
+(flags and `disputed` marks; 465 correction rows in 1,489 sentences).
+
+Method (a scratch harness outside the repository, `%TEMP%\pos-c`, not committed). The model is the one a user gets: weights plus
+the embedded lexicon of its own tree. The "old model" is the assembly built from commit `a94abd0` (`weights.bin` 492,971 bytes,
+`imageSha256` `68673a9f...0f32a`, temperature 6.727, the old lexicon: 262,667 spellings / 339,880 entries), snapshotted before any
+change. A small tool tags the forms of a corpus file with `Tagger.Load` (`MaxAlternatives` = the limit) and writes the chosen tag,
+the confidence and the alternatives; a Python script scores the predictions. Definitions are those of E0: a decision is a gold
+NOUN or VERB token with both tags among the decoder's candidates (chosen tag and alternatives); a harmful error is a chosen tag
+that is the other of NOUN and VERB with confidence >= 0.45; rates are per 1,000 decisions. Intervals are percentile intervals of
+a bootstrap by document (open: `source_id`, 502 documents on dev; UD: the sentence id without its running number, 318 documents),
+1,000 resamples, seed 20261104, 95%; differences are paired (the same resample for both models). UD-EWT dev is the mapped view
+(`tools/data/cache/ud-ewt/ud_dev.tsv`, 25,148 tokens, the same cache and mapping as the earlier participle spike).
+
+Baseline reproduction (acceptance test of the harness, run before any file changed). The harness reproduces the figures of the
+earlier records exactly: open dev 96.07% and **94 harmful of 4,484 decisions** (20.96 per 1k) on the old labels; the trainer's
+`eval` on the old weights prints the same two figures (and gold v2 dev 95.34%, 9 harmful of 611); UD-EWT dev mapped agreement
+**23,227 of 25,148 = 92.361%** (interval [91.80, 92.88]; the earlier spike printed [91.80, 92.95] from a different random
+sequence of the same procedure).
+
+| Old model (a94abd0) | Tokens | Decisions | Harmful | Per 1k [95%] | Agreement / accuracy % |
+| --- | ---: | ---: | ---: | --- | --- |
+| open dev, old labels (reproduction) | 26,232 | 4,484 | 94 | 20.96 [16.12, 26.30] | 96.07 [95.20, 96.63] |
+| open dev, **relabeled** (the G2a baseline) | 26,232 | 4,468 | 92 | 20.59 [15.62, 25.96] | 96.05 [95.24, 96.61] |
+| UD-EWT dev, mapped (the G1 and G2b baseline) | 25,148 | 4,573 | 100 | 21.87 [18.03, 26.19] | 92.36 [91.80, 92.88] |
+
+The harmful rate on UD-EWT dev was never recorded before; it is measured here, with the old model, before the retraining.
+
+The gates (all on development data; none reads a held-out file):
+
+- **G1 (UD-EWT dev agreement).** The new model's agreement with the mapped UD-EWT dev labels is at least the old model's:
+  **23,227 correct tokens of 25,148 (92.361%, reported as 92.36%)**. Pass or fail by the point estimate. The paired bootstrap
+  interval of the difference (new minus old) is reported, not used for the verdict.
+- **G2 (harmful noun-verb errors, both must hold).** (a) On open dev with the relabeled gold labels, the new model's harmful
+  errors per 1,000 decisions are no higher than the old model's on the same labels (**20.59**, 92 of 4,468). (b) On UD-EWT dev
+  the new model's harmful errors per 1,000 decisions are no higher than the old model's (**21.87**, 100 of 4,573). Pass or fail by
+  the point estimates (no tolerance); the rates, counts and intervals of both models and the paired difference are reported. The
+  decision sets of the two models differ slightly (the lexicon changed); the rate per decision is the compared quantity.
+- **G3 (linter).** `python tools/data/check_conventions.py --tier fix --enforce` exits 0 over open train, dev, test, MASC and silver
+  (the evaluation-only STE set is shown and counts for nothing). The check tier stays report-only and its counts are reported
+  (expected 298 after the application: open train 95, dev 12, test 17, MASC 66, silver 106, STE 2).
+- **G4 (build).** `build.ps1` is green: Release build of every target, `LexiconCompiler --check`, `train --check` (reproducible
+  image), the API-docs check and all tests on all target frameworks. The held-out evaluation record must also be consistent
+  with the shipped model before G4 can be final; that part is decided after the development gates, only if they pass.
+
+Selection rule. Only development sets are used. The shipped `training.json` settings are used unchanged (sources and weights,
+restriction `history`, 6 epochs, 19 hash bits, minimum count 1, pruning threshold 8, scale 8, seed 20260101, disputed tokens
+trained): **no hyperparameter is searched**. The one value that is refit is the softmax temperature, by the existing
+`calibrate` on open dev with the new labels (minimum NLL; it never changes a chosen tag), exactly as the first freeze did.
+
+Stop rule. If G1, G2 or G3 fails: nothing is tuned, no held-out file is opened or evaluated, `thresholds` and `evaluate` are not
+run, and the pull request is a draft with the failure report. A passing development result does not authorize any further
+tuning either.
+
+Reproducibility of the labels and tools. The application is deterministic (a second application on a pristine copy gives the
+same SHA-256 for all five files); a second `apply` is refused; `make_corrections.py --check` passes in the applied state (it
+reverses the rows in a temporary copy and regenerates); the fix-tier linter finds 0 violations over all sources including the
+STE set; the check tier has 298 (the counts above).
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
