@@ -465,6 +465,7 @@ reviews:
       - "tools/data/tests/test_corrections_linter.py"               # tests of the linter
       - "tools/data/tests/test_corrections_generator.py"            # tests of the generator and the committed tables
       - "tools/data/tests/test_corrections_adjudication.py"         # tests of the adjudication tool
+      - "tools/data/tests/run_trx.py"                               # runner of the Python tests that writes TRX
       - "tools/data/tests/convention-cases.tsv"                     # fixture sentences of the rules
       - "tools/data/tests/corrections-cases.tsv"                    # shared row cases of the overlay
       - "tools/data/tests/candidate-cases.tsv"                      # shared candidate row cases of the overlay

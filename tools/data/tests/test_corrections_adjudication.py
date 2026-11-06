@@ -712,8 +712,9 @@ class SupersessionTests(Fixture):
         # Act
         clean = corrections.adjudicated_findings(self.data, [good], "pending", header[:-1])
         rule = corrections.adjudicated_findings(self.data, [rule_row], "pending", header[:-1])
-        stale = corrections.adjudicated_findings(self.data, [good], "pending", [line for line in header if "open/train" not in line])
-        applied = corrections.adjudicated_findings(self.data, [good], "applied", [line for line in header if "open/train" not in line])
+        stale_header = [line[:-1] + ("0" if line[-1] != "0" else "1") if "open/train" in line else line for line in header]
+        stale = corrections.adjudicated_findings(self.data, [good], "pending", stale_header[:-1])
+        applied = corrections.adjudicated_findings(self.data, [good], "applied", stale_header[:-1])
         bad_kind = corrections.adjudicated_findings(self.data, [base_change], "pending", header[:-1])
         # Assert
         self.assertEqual([], clean)
@@ -722,6 +723,46 @@ class SupersessionTests(Fixture):
         self.assertEqual([], applied)
         self.assertTrue(any("neither a tag change" in message for message in bad_kind))
         self.assertIsNone(corrections.adjudicated_row_kind(no_kind))
+
+    def test_malformed_metadata_headers_of_the_adjudicated_table_are_findings(self):
+        # Arrange
+        corpora = corrections.load_corpora(self.data)
+        comments = adjudicate.table_lines([self.adjudicated()], corpora, self.data)[:-1]
+        train = next(line for line in comments if line.startswith("# input = open/train.tsv"))
+        cases = {
+            "no corpus line": ([line for line in comments if not line.startswith("# corpus = ")], "corpus"),
+            "no license line": ([line for line in comments if not line.startswith("# license = ")], "license"),
+            "no kind line": ([line for line in comments if not line.startswith("# kind = ")], "kind"),
+            "no generator line": ([line for line in comments if not line.startswith("# generator = ")], "generator"),
+            "repeated generator line": (comments + [line for line in comments if line.startswith("# generator = ")], "generator"),
+            "wrong kind": ([line.replace("= corrections", "= candidates") if line.startswith("# kind = ") else line for line in comments], "kind"),
+            "foreign generator": ([line.replace("adjudicate.py", "other.py") if line.startswith("# generator = ") else line for line in comments],
+                                  "generator"),
+            "wrong license": ([line.replace("CC0-1.0", "MIT") if line.startswith("# license = ") else line for line in comments], "license"),
+            "no input line for an existing corpus": ([line for line in comments if line != train], "no '# input' line"),
+            "malformed input line": ([train[:-5] if line == train else line for line in comments], "malformed"),
+            "unknown corpus file": (comments + ["# input = open/other.tsv sha256 " + "0" * 64], "unknown corpus file"),
+            "repeated input line": (comments + [train], "repeated"),
+            "unknown metadata line": (comments + ["# note = something"], "unknown metadata line"),
+        }
+        # Act and Assert
+        self.assertEqual([], corrections.adjudicated_findings(self.data, [self.adjudicated()], "pending", comments))
+        for name, (header, word) in cases.items():
+            with self.subTest(case=name):
+                findings = corrections.adjudicated_findings(self.data, [self.adjudicated()], "pending", header)
+                self.assertTrue(any(word in message for message in findings), (name, findings))
+
+    def test_validate_reports_a_table_file_whose_metadata_lines_were_removed(self):
+        # Arrange
+        lines = adjudicate.table_lines([self.adjudicated()], corrections.load_corpora(self.data), self.data)
+        common.write_text(os.path.join(self.folder, "adjudicated.tsv"),
+                          [line for line in lines if not line.startswith(("# license = ", "# generator = "))])
+        # Act
+        code, text = run(corrections.main, ["--data-dir", self.data, "validate"])
+        # Assert
+        self.assertEqual(1, code)
+        self.assertIn("'# license' line is missing", text)
+        self.assertIn("'# generator' line is missing", text)
 
     def test_make_corrections_check_validates_an_existing_adjudicated_table(self):
         # Arrange: the regenerated tables are current, so only the adjudicated table can fail the check
@@ -862,6 +903,90 @@ class PipelineTests(Fixture):
         self.assertEqual("1", status["b003"]["attempts_opus"])
         self.assertEqual(0, again_code)
         self.assertEqual("1", adjudicate.read_status(self.work)["b003"]["attempts_opus"])
+
+    def test_an_invalid_output_is_asked_for_once_more_and_the_second_failure_skips_the_batch(self):
+        # Arrange: the sol output of b001 has an extra row, so it is invalid on every attempt
+        self.call("select")
+        self.call("export")
+        self.tag_everything({})
+        path = os.path.join(self.work.out("sol"), "b001.tsv")
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write("s000000\t0\tx\tNOUN\thigh\t-\n")
+        # Act
+        first_code, first_text = self.call("validate-output", "--batch", "b001", "--model", "sol")
+        first = dict(adjudicate.read_status(self.work)["b001"])
+        second_code, second_text = self.call("validate-output", "--batch", "b001", "--model", "sol")
+        second = dict(adjudicate.read_status(self.work)["b001"])
+        third_code, third_text = self.call("validate-output", "--batch", "b001", "--model", "sol")
+        third = dict(adjudicate.read_status(self.work)["b001"])
+        # Assert
+        self.assertEqual((1, "invalid", "1"), (first_code, first["sol_state"], first["attempts_sol"]))
+        self.assertIn("b001 sol: invalid", first_text)
+        self.assertEqual((0, "skipped", str(adjudicate.MAX_ATTEMPTS)), (second_code, second["sol_state"], second["attempts_sol"]))
+        self.assertIn("b001 sol: skipped", second_text)
+        self.assertIn("attempt limit", second["note"])
+        self.assertEqual((0, "skipped", str(adjudicate.MAX_ATTEMPTS)), (third_code, third["sol_state"], third["attempts_sol"]))
+        self.assertIn("attempt limit", third_text)
+        self.assertEqual(second["note"], third["note"])
+
+    def test_a_skipped_state_is_final_even_when_a_valid_output_appears_later(self):
+        # Arrange
+        self.call("select")
+        self.call("export")
+        self.tag_everything({})
+        path = os.path.join(self.work.out("sol"), "b001.tsv")
+        good = common.read_lines(path)
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write("s000000\t0\tx\tNOUN\thigh\t-\n")
+        self.call("validate-output", "--batch", "b001", "--model", "sol")
+        self.call("validate-output", "--batch", "b001", "--model", "sol")
+        with open(path, "w", encoding="utf-8", newline="") as handle:
+            handle.write("\n".join(good) + "\n")
+        # Act
+        code, text = self.call("validate-output", "--batch", "b001", "--model", "sol")
+        status = adjudicate.read_status(self.work)["b001"]
+        # Assert
+        self.assertEqual(0, code)
+        self.assertIn("skipped", text)
+        self.assertEqual(("skipped", str(adjudicate.MAX_ATTEMPTS)), (status["sol_state"], status["attempts_sol"]))
+
+    def test_the_attempt_counter_never_passes_the_limit_and_a_valid_retry_is_accepted(self):
+        # Arrange: first attempt invalid, the retry valid, then more re-validations
+        self.call("select")
+        self.call("export")
+        self.tag_everything({})
+        path = os.path.join(self.work.out("opus"), "b001.tsv")
+        good = common.read_lines(path)
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write("s000000\t0\tx\tNOUN\thigh\t-\n")
+        self.call("validate-output", "--batch", "b001", "--model", "opus")
+        with open(path, "w", encoding="utf-8", newline="") as handle:
+            handle.write("\n".join(good) + "\n")
+        # Act
+        for _ in range(3):
+            code, _ = self.call("validate-output", "--batch", "b001", "--model", "opus")
+        status = adjudicate.read_status(self.work)["b001"]
+        # Assert
+        self.assertEqual(0, code)
+        self.assertEqual(("ok", str(adjudicate.MAX_ATTEMPTS)), (status["opus_state"], status["attempts_opus"]))
+
+    def test_a_skipped_batch_is_not_decided_and_is_listed_as_incomplete(self):
+        # Arrange
+        self.prepare()
+        for _ in range(adjudicate.MAX_ATTEMPTS):
+            with open(os.path.join(self.work.out("sol"), "b001.tsv"), "a", encoding="utf-8") as handle:
+                handle.write("s000000\t0\tx\tNOUN\thigh\t-\n")
+            self.call("validate-output", "--batch", "b001", "--model", "sol")
+        out = os.path.join(self.temp.name, "adjudicated.tsv")
+        # Act
+        key = [item for item in adjudicate.read_key(self.work) if item.batch == "b001"]
+        code, text = self.call("decide", "--out", out)
+        incomplete = adjudicate.read_records(self.work.private_file("incomplete-batches.tsv"))[1]
+        _, records = adjudicate.read_records(self.work.private_file("decisions.tsv"))
+        # Assert
+        self.assertEqual(0, code, text)
+        self.assertEqual([("b001", "skipped after %d attempts (sol)" % adjudicate.MAX_ATTEMPTS)], [(r["batch"], r["reason"]) for r in incomplete])
+        self.assertEqual(set(), {r["sent_id"] for r in records} & {item.sent_id for item in key})
 
     def test_decide_writes_the_table_the_reports_and_the_superseded_note(self):
         # Arrange

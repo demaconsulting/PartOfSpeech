@@ -27,8 +27,12 @@ assert on their content, format and checksums. The evaluation record tests resid
 they read the committed evaluation record (`docs/evaluation`) and the documents that copy figures from it, parse the
 JSON with regular expressions and compare the copies with the generated files;
 each test proves one obligation of one requirement, and a test that finds a file missing or a table empty fails instead
-of passing on nothing. The Python tools that produce the data have developer unit tests in `tools/data/tests/`, which are
-not requirements evidence; they are reviewed with the tools in the data tools review sets (see the Companion Artifact
+of passing on nothing. The Python tools that produce the data have developer unit tests in `tools/data/tests/`. Those of
+the adjudication tool and the overlay (`test_corrections_*.py`) are requirements evidence for the
+`PartOfSpeech-Adjudication-*` requirements: `lint.ps1` runs them through `tools/data/tests/run_trx.py`, which writes
+`artifacts/python-data-tools.trx`, the quality-checks job uploads the artifacts folder, and ReqStream reads the file with
+the other TRX files and matches a requirement's test by the method name. All other tool tests are not requirements
+evidence; they are reviewed with the tools in the data tools review sets (see the Companion Artifact
 Structure of the design introduction). The unit tests of the correction tools (`test_corrections_*.py`, including those
 of the adjudication tool `adjudicate.py`), the validation of the staged corrections (`adjudicated.tsv` included) against
 the corpora, the check that the generator reproduces the committed mechanical tables and a report-only pass of the
@@ -422,6 +426,29 @@ replacement of the mechanical row); it fails when the table is missing or empty.
 sentence. The tests do not depend on the tools; the unit tests of the tools, the validation of the tables, the check that
 the generator reproduces the mechanical tables and a report-only conventions linter pass run in `lint.ps1` (see the
 Verification Approach).
+
+### Adjudication Tool
+
+**Tests**: the Python unit tests named in the `PartOfSpeech-Adjudication-*` requirements
+(`tools/data/tests/test_corrections_adjudication.py`)
+
+Each requirement is proven on a miniature data folder (a few sentences of every source) and a miniature work folder, so
+no model is called and no corpus text of the real data is needed. `BlindExportCarriesNoLabels` reads the exported batch
+files and asserts exactly three columns, opaque ids, no label, status, flag or sentence id in any cell, and that the key
+is outside the `batches` folder. `OutputIsValidated` feeds one correct output and one output per kind of defect (header,
+row count, order, copied cell, tag, confidence, flag, a part gap, both a whole file and parts, a BOM, a blank line) and
+asserts the error for each. `RetryLimitIsEnforced` runs `validate-output` on an output that stays invalid and asserts
+the first attempt is `invalid`, the second is `skipped` with the counter at the limit, a later call changes nothing even
+when a valid output appears, the counter never passes the limit when a valid retry follows, and `decide` lists a skipped
+batch as incomplete and stages nothing for its sentences. `DecisionRule` runs a table of cases through `decide_token`
+(agreement on another tag, agreement on the label, disagreement, flags, a mechanical row) and asserts the outcome, the
+new tag, the new status and the row kind, and that every staged row is valid. `DecisionScope` asserts the decision set
+of a sentence and that the tokens outside it get no row. `AdjudicatedRowsSupersedeMechanicalRows` asserts the
+replacement, every other second row as an error, that validate, apply and the linter use the effective rows, and that
+the mechanical file keeps its hash. `DroppedDetectorsLeaveNoCorrections` asserts that a dropped class loses its tag and
+flag rows and keeps its `disputed` marks, and the gate on given verdicts. `TableHeaderIsStrict` mutates the metadata
+lines of a valid table (each of the five lines removed, repeated or changed, an input line missing, malformed, unknown
+or repeated, an unknown metadata line) and asserts a finding for each, and runs `validate` on a file with removed lines.
 
 ### Platform Support
 

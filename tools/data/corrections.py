@@ -354,18 +354,65 @@ def adjudicated_findings(data_dir=None, rows=None, state=None, header=None):
             findings.append("%s: the row is neither a tag change, a disputed mark nor a flag change" % where)
     if state is None:
         state = validate_against_corpora([row for row in rows if row_error(row) is None], load_corpora(data_dir))[1]
-    if state != "applied":
-        base = data_dir or common.DATA
-        listed = {}
-        for line in header or []:
-            if line.startswith("# input = ") and " sha256 " in line:
-                name, _, digest = line[len("# input = "):].partition(" sha256 ")
-                listed[name] = digest
-        for key, relative in CORPUS_FILES.items():
-            corpus_path = os.path.join(base, *relative.split("/"))
-            if os.path.exists(corpus_path) and listed.get(relative) != common.sha256_file(corpus_path):
-                findings.append("%s: stale, the corpus file %s has another SHA-256 than the '# input' line" % (ADJUDICATED_TABLE, relative))
+    listed, header_findings = adjudicated_header(header)
+    findings.extend(header_findings)
+    base = data_dir or common.DATA
+    for key, relative in CORPUS_FILES.items():
+        corpus_path = os.path.join(base, *relative.split("/"))
+        if not os.path.exists(corpus_path):
+            continue
+        if relative not in listed:
+            findings.append("%s: no '# input' line for the corpus file %s" % (ADJUDICATED_TABLE, relative))
+        elif state != "applied" and listed[relative] != common.sha256_file(corpus_path):
+            # Once the corrections are applied the corpus files have, by design, other hashes.
+            findings.append("%s: stale, the corpus file %s has another SHA-256 than the '# input' line" % (ADJUDICATED_TABLE, relative))
     return findings
+
+
+ADJUDICATED_HEADER_KEYS = ("corpus", "license", "kind", "columns", "generator")
+INPUT_LINE_RE = re.compile(r"^# input = (\S+) sha256 ([0-9a-f]{64})$")
+
+
+def adjudicated_header(header):
+    """(listed, findings) of the metadata lines of `adjudicated.tsv`: `listed` is {corpus file: SHA-256} of the `# input` lines.
+
+    The header is the five lines `# corpus = ...`, `# license = CC0-1.0 ...`, `# kind = corrections`, `# columns = ...` and
+    `# generator = tools/data/adjudicate.py ...`, each exactly once, then one well-formed `# input = <file> sha256 <hash>` line per
+    corpus file (a known file, no repeat); any other comment line is a finding.
+    """
+    findings = []
+    listed = {}
+    seen = collections.Counter()
+    known = {relative for relative in CORPUS_FILES.values()}
+    for line in header or []:
+        key = line[2:].split(" = ", 1)[0] if line.startswith("# ") and " = " in line else None
+        if key in ADJUDICATED_HEADER_KEYS:
+            seen[key] += 1
+            value = line[len("# %s = " % key):]
+            if key == "kind" and value != "corrections":
+                findings.append("%s: '# kind' is %r, expected corrections" % (ADJUDICATED_TABLE, value))
+            if key == "corpus" and not value.startswith("DemaConsulting.PartOfSpeech staged corpus corrections: "):
+                findings.append("%s: the '# corpus' line is not 'DemaConsulting.PartOfSpeech staged corpus corrections: ...'" % ADJUDICATED_TABLE)
+            if key == "license" and not value.startswith("CC0-1.0 "):
+                findings.append("%s: the '# license' line does not start with 'CC0-1.0 '" % ADJUDICATED_TABLE)
+            if key == "generator" and not value.startswith("tools/data/adjudicate.py"):
+                findings.append("%s: the '# generator' line does not name tools/data/adjudicate.py" % ADJUDICATED_TABLE)
+        elif key == "input" or line.startswith("# input"):
+            match = INPUT_LINE_RE.match(line)
+            if not match:
+                findings.append("%s: malformed line %r, expected '# input = <file> sha256 <64 hex digits>'" % (ADJUDICATED_TABLE, line))
+            elif match.group(1) not in known:
+                findings.append("%s: '# input' names an unknown corpus file %s" % (ADJUDICATED_TABLE, match.group(1)))
+            elif match.group(1) in listed:
+                findings.append("%s: '# input' line for %s is repeated" % (ADJUDICATED_TABLE, match.group(1)))
+            else:
+                listed[match.group(1)] = match.group(2)
+        else:
+            findings.append("%s: unknown metadata line %r" % (ADJUDICATED_TABLE, line))
+    for key in ADJUDICATED_HEADER_KEYS:
+        if seen[key] != 1:
+            findings.append("%s: the '# %s' line is %s" % (ADJUDICATED_TABLE, key, "missing" if not seen[key] else "repeated"))
+    return listed, findings
 
 
 # ---------------------------------------------------------------- corpora

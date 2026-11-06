@@ -81,15 +81,18 @@ runs `lint.ps1`, and its Python step (the `[PROJECT-SPECIFIC]` extension point) 
 
 ```text
 python -m compileall -q tools/data
-python -m unittest discover -s tools/data/tests -p "test_corrections_*.py"
+python tools/data/tests/run_trx.py --out artifacts/python-data-tools.trx --pattern "test_corrections_*.py"
 python tools/data/corrections.py validate
 python tools/data/make_corrections.py --check
 python tools/data/check_conventions.py
 ```
 
 A failing step fails the lint run. The linter runs without `--enforce`, so the violations that are left in the corpora are
-reported but do not fail the run; `--enforce` is added when the corrections are applied and none are left. The
-requirements evidence stays in C# (`PartOfSpeech_DataCorrections_*` in `PartOfSpeechDataTests.cs`), which reads the
+reported but do not fail the run; `--enforce` is added when the corrections are applied and none are left. `run_trx.py` runs
+the same discovery as `python -m unittest discover -s tools/data/tests -p "test_corrections_*.py"` and also writes the results as a
+TRX file; the quality-checks job uploads `artifacts/`, and ReqStream reads the file with the C# results as the evidence of the
+`PartOfSpeech-Adjudication-*` requirements (the requirement lists the test method names). The other requirements evidence stays
+in C# (`PartOfSpeech_DataCorrections_*` in `PartOfSpeechDataTests.cs`), which reads the
 committed tables and corpora. A C# port of the rules was rejected: it would duplicate the detectors and let two
 implementations of a heuristic drift.
 

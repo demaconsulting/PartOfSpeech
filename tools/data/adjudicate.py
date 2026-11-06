@@ -46,6 +46,7 @@ BATCH_SENTENCES = 150                # sentences per batch (at most)
 BATCH_ROWS = 3500                    # token rows per batch (at most)
 BANDS = ("P1", "P2", "P3", "P4")
 MODELS = ("opus", "sol")
+MAX_ATTEMPTS = 2                     # a tagger run per batch and model: the first one and one retry
 
 # Detectors whose decision is about NOUN, VERB, ADJ, AUX or PROPN against NOUN/ADJ: band P1.
 NV_DETECTORS = frozenset(("prenominal-ing", "prenominal-ed", "be-participle-gradable", "be-participle-adj-not-gradable",
@@ -683,14 +684,26 @@ def new_status_record(batch):
 def validate_and_record(work, model, batch, count=True):
     """Validate one output, record the state in status.tsv and return (state, errors).
 
-    `attempts_<model>` counts the validations of an existing output (call once per tagger run; `count=False` re-checks).
+    `attempts_<model>` counts the validations of an existing output (call once per tagger run; `count=False` re-checks). The retry
+    limit is `MAX_ATTEMPTS`: an invalid output is asked for again once; the invalid output of the last allowed attempt makes the state
+    `skipped` (the batch is removed, its sentences are not decided). A `skipped` state is final: no further attempt is recorded,
+    the state and the counter stay, and the call returns ("skipped", [message]) without looking at the output.
     """
-    _, state, errors = check_output(work, model, batch)
     status = read_status(work)
     record = status.setdefault(batch, new_status_record(batch))
-    record[model + "_state"] = state
+    if record[model + "_state"] == "skipped":
+        return "skipped", ["the attempt limit of %d is reached for %s %s: the batch is skipped, no further attempt is recorded"
+                           % (MAX_ATTEMPTS, batch, model)]
+    _, state, errors = check_output(work, model, batch)
     if count and state != "missing":
-        record["attempts_" + model] = str(int(record["attempts_" + model]) + 1)
+        attempts = int(record["attempts_" + model])
+        if attempts < MAX_ATTEMPTS:                      # the counter never passes the limit
+            attempts += 1
+            record["attempts_" + model] = str(attempts)
+        if state == "invalid" and attempts >= MAX_ATTEMPTS:
+            state = "skipped"
+            errors = list(errors) + ["the attempt limit of %d is reached: the batch is skipped" % MAX_ATTEMPTS]
+    record[model + "_state"] = state
     notes = [item for item in record["note"].split(" | ") if item and not item.startswith(model + ":")]
     if errors:
         notes.append(model + ": " + "; ".join(errors[:3]).replace("\t", " "))
@@ -788,11 +801,16 @@ def run_decisions(work, inputs, flags, drop=frozenset()):
     [(batch, reason)] of the batches that are not used. The class drop is applied to the staged rows (`final` = dropped-class).
     """
     key = read_key(work)
+    status = read_status(work)
     by_batch = collections.defaultdict(list)
     for item in key:
         by_batch[item.batch].append(item)
     records, rows, others, incomplete = [], [], [], []
     for batch in sorted(by_batch):
+        skipped = [model for model in MODELS if status.get(batch, {}).get(model + "_state") == "skipped"]
+        if skipped:
+            incomplete.append((batch, "skipped after %d attempts (%s)" % (MAX_ATTEMPTS, ", ".join(skipped))))
+            continue
         outputs = read_outputs_by_id(work, batch)
         if outputs is None:
             incomplete.append((batch, "an output is missing or invalid"))

@@ -32,6 +32,10 @@ rewritten by `make_corrections.py`. Do not edit the tables by hand.
 All files: UTF-8 without BOM, LF, NFC, final newline. A table starts with comment lines (`# corpus`, `# license`, `# kind`,
 `# columns`, `# generator`, and one `# input = <file> sha256 <hash>` line per corpus file the rows were derived from), then one
 row per line, tab separated, sorted by the key below. The `# columns = ...` line is the column list of the C# data tests.
+`adjudicated.tsv` is checked strictly: each of the first five lines exactly once (`# kind = corrections`, a `# license` that starts
+with `CC0-1.0`, a `# generator` that names `tools/data/adjudicate.py`), one well-formed `# input = <file> sha256 <64 hex digits>`
+line for every corpus file (no repeat, no unknown file) and no other comment line; a defect is an error of `validate`,
+`make_corrections.py --check` and `apply`.
 
 ### Corrections (`mechanical.tsv`, `adjudicated.tsv`)
 
@@ -461,7 +465,9 @@ a third model, not by a person.
    of the 17, a confidence (`high`, `medium`, `low`) and the flags (`mentioned`, `foreign`).
 3. **Output check.** `validate-output` accepts an output only when its header, row count and the `(id, token_index, token)` sequence
    equal the batch, every tag is one of the 17, and the confidence and flag cells are in the vocabulary. An invalid output is
-   asked for again once; a second failure removes the batch, and its sentences are not decided. An output is never repaired by hand.
+   asked for again once: the state table (`status.tsv`) counts the attempts per batch and model, the second invalid output
+   (`MAX_ATTEMPTS` = 2) makes the state `skipped`, no further attempt is recorded for a skipped state, and `decide` leaves the
+   sentences of a skipped batch out and lists the batch as not used. An output is never repaired by hand.
 4. **Decision tokens.** For a selected sentence the tokens that are decided are the candidate tokens (the whole span of a mentioned
    phrase), the unanimous-against and the split tokens, and the dependents of a candidate (the head of a prenominal participle,
    the linking verb or the participle of a passive, the degree word of a zero-derived degree, the verb after a modal), except
