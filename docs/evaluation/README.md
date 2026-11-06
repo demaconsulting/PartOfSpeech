@@ -13,13 +13,14 @@ them and states what they do not show.
 > corrected, so its figures are not strictly comparable with the earlier record; the labels of UD English-EWT, gold v2,
 > the shape probe and the challenge set did not change (the correction tooling does not cover them), so those four are
 > the fair comparisons. The pre-registered development gate on harmful errors failed on its single seed, and the owner
-> accepted the model after a development-only diagnosis. On the fair comparison sets the harmful rates of the embedded
-> model are higher than before (see _Earlier Model_ below); the trainer run log, section "Corpus cleanup C", has the
+> accepted the model after a development-only diagnosis. On three of the four fair comparison sets (gold v2, the shape
+> probe and UD English-EWT) the harmful rates of the embedded model are higher than before; on the challenge set they
+> are 0.0 in both records (see _Earlier Model_ below). The trainer run log, section "Corpus cleanup C", has the
 > complete old-versus-new tables, the gates and the decision.
 
 | File | What it is |
 | --- | --- |
-| [confidence-thresholds.md](confidence-thresholds.md) | Selection of the two recommended thresholds on development data: curves, reliability table, the rule, the bootstrap intervals. |
+| [confidence-thresholds.md](confidence-thresholds.md) | Selection of the two recommended thresholds on development data only: curves, reliability table, the rule, the bootstrap intervals. It reads no held-out file, so it cannot show the held-out outcome: the strict point, within its target of 5.0 on development data, is above it on the open test split (see _Reading the Results_ below and [test-results.md](test-results.md)). |
 | [operating-points.json](operating-points.json) | The selection as data. The `evaluate` command refuses to read a held-out file without it. |
 | [test-results.md](test-results.md) | The one held-out run of the embedded model, every set and view, and the hashes of the inputs. |
 | [test-results.json](test-results.json) | The same results as data; it is also the marker that the run was done. |

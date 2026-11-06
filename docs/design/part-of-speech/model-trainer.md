@@ -253,10 +253,11 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
 - **Reports.** `docs/evaluation/test-results.md` and `.json` are generated, deterministic and committed as produced; the
   treebank appears only as aggregate figures and tag-level confusion. `docs/evaluation/README.md` is written by hand: it
   explains how to read the two reports, the mapping of the evaluation sets to the library conventions, the limits of the
-  measurement and the commands that reproduce it, and states no figure that is not in a generated file (a test
-  compares the few it states). The figures that the package documentation and the user guide
-  quote are verified against the committed JSON by the system tests, not by this unit. The root `README.md` states no
-  figure and links to the reports.
+  measurement and the commands that reproduce it, and states no figure that is not in a generated file or in its
+  "Earlier Model" table (a test compares the few it states; the earlier-model figures are copied from the trainer
+  `RUN-LOG.md`, which is their record). The figures that the package documentation and the user guide
+  quote are verified against the committed JSON by the system tests, not by this unit. The root `README.md` repeats the
+  current threshold figures of the generated reports and links to them; no test compares that copy.
 
 ### Selection of the Shipped Model
 
