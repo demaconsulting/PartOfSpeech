@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
+<!-- cspell:ignore gamify -->
 
 # Trainer Run Log
 
@@ -1240,6 +1241,40 @@ therefore fail on this branch by design, and G4 cannot be green until the held-o
 shipped one. (2) The development gates being failed, reissuing it is not authorized by the pre-registration. (3) The golden
 hashes of the small trainer runs (`ModelTrainerTests`) and the size figures of the documents were re-pinned to the retrained
 files; they carry no judgment.
+
+### Corpus cleanup C: stop decision, G4 and decisions on the open questions of the plan
+
+**Stop decision.** The pre-registered gates G1 and G3 pass and G2 fails on both of its parts (G2a open dev, G2b UD-EWT dev). By the stop
+rule written before the retraining, nothing is tuned and no held-out file is read: `thresholds` and `evaluate` were not run, the
+held-out record `docs/evaluation/{test-results.*,operating-points.json,confidence-thresholds.md}` is not reissued, the constants
+`FrozenOpenHarmful` and `FrozenGoldHarmful` of `thresholds` are not changed, and the pull request is opened as a draft with this
+report. The gate texts and verdicts above are unchanged by this section.
+
+**G4 (build) is reported as FAIL, and cannot be satisfied on this branch.** `build.ps1` passes the Release build of every target, the
+`LexiconCompiler --check`, `train --check` and the API-docs check, and runs every test on net481, net8.0, net9.0 and net10.0. The only
+tests that fail are the ones that pin the held-out record to the shipped model and to the development files:
+`PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs` (net481, net8.0, net9.0, net10.0) and
+`PartOfSpeech_Evaluation_OperatingPointsFile_Load_CommittedSelection_EqualsDevDerivation` and
+`..._PassesGateForFrozenModel` (net8.0, net9.0, net10.0; 10 failures in all). They fail because the held-out record names the old
+model hash and the old development file hashes. This is the accepted, documented consequence of the stop rule (decision Q2), not a defect
+of the retraining; it ends only when a held-out record is reissued for a model, which the pre-registration forbids after the G2 failure.
+Nothing else is red.
+
+**Decisions on the open questions of the plan** (recorded as decisions of this change; none changes a gate or a verdict):
+
+| # | Question | Decision |
+| --- | --- | --- |
+| Q1 | Where does the old-versus-new comparison live? | In this run log (and the pull request description), not in `docs/evaluation/*`: `AGENTS.md` asks the documents to describe the current state once, and tests pin the figures of the evaluation record. `docs/evaluation/README.md` carries only a short status note that the record describes the earlier model and that the retrained one was not evaluated on held-out data. |
+| Q2 | CI is red on the draft (the three held-out-record tests) | Accepted. The pull request is a draft, the failing tests are named in its description, and `thresholds` is not run to turn them green (it would reselect thresholds for a model that failed its gate). |
+| Q3 | Tolerance for G2 | None. The gate was pre-registered as a point-estimate rule and is judged as written (23.06 > 20.59 and 23.41 > 21.87), although the paired intervals touch or contain 0. |
+| Q4 | `import_silver.py verify` on the corrected silver file | Documented, no code change: `verify` describes the derivation and passes only on the pre-correction file (`corrections.py apply --write --reverse`); see `data/silver/README.md` and `tools/data/README.md`. |
+| Q5 | The 1,779 new `disputed` tokens | They stay in training (`maskDisputed` false in `training.json`, as for the 7,449 earlier ones); nothing was tuned on them. |
+| Q6 | Gold v2, the shape probe and the STE challenge set | Their labels are not corrected here (the overlay cannot address them); bringing them to the same conventions is left to a later change. |
+
+Documents and tests changed with this decision (no model, setting or weight): the data READMEs and `CONVENTIONS.md` describe the applied
+state, the design and verification documents state the applied state, the new requirement `PartOfSpeech-Data-CorrectionsApplied`
+with its test `PartOfSpeech_DataCorrections_Rows_AreApplied`, and the README, user guide and packed API reference no longer say that the
+embedded model was evaluated on held-out data.
 
 ## Run table
 

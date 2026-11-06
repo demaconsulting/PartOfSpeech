@@ -44,10 +44,11 @@ family (train, dev, test): Tatoeba 3,035 / 357 / 358 sentences (one document eac
 VOA Learning English 306 / 34 / 39 articles, USGS 361 / 39 / 43 pages, National Park Service 288 / 36 / 39 pages,
 NOAA National Weather Service 165 / 15 / 20 pages.
 
-Token statuses in the training split: 127,202 `unanimous`, 74,573 `unchecked` (no second annotator), 7,449 `disputed`.
-Dev: 14,887 / 10,478 / 867. Test: 15,490 / 9,788 / 907. Tag counts of the training split: NOUN 40,634, VERB 26,488,
-PUNCT 26,309, DET 21,430, ADP 20,630, ADJ 15,798, PRON 13,368, PROPN 10,119, ADV 9,902, AUX 6,999, CCONJ 6,894,
-PART 5,009, SCONJ 2,691, NUM 2,208, X 425, INTJ 243, SYM 77.
+Token statuses in the training split: 126,880 `unanimous`, 74,216 `unchecked` (no second annotator), 8,128 `disputed`.
+Dev: 14,846 / 10,445 / 941. Test: 15,450 / 9,747 / 988. Status flags: 291 `foreign` and 496 `mentioned` in the training split,
+94 and 48 in dev, 95 and 85 in test. Tag counts of the training split: NOUN 40,235, VERB 26,771, PUNCT 26,309, DET 21,597, ADP 20,667,
+ADJ 15,772, PRON 12,875, PROPN 10,437, ADV 9,719, AUX 7,195, CCONJ 6,895, PART 5,011, SCONJ 2,736, NUM 2,320, X 362,
+INTJ 246, SYM 77. These are the counts after the staged corrections were applied (`../corrections/README.md`).
 
 ## Use
 

@@ -705,6 +705,38 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
+    ///     Proves that every correction row in effect is applied to the committed corpora: each row's token carries the
+    ///     new tag and the new status cell, and none carries the old value that the importers wrote.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_DataCorrections_Rows_AreApplied()
+    {
+        // Arrange: the correction tables and the sentences that their rows name
+        var named = CorrectionTables.CorrectionTableNames
+            .Where(name => File.Exists(CorrectionTables.FilePath(name)))
+            .Select(name => (Name: name, Table: DataFiles.ReadTable(CorrectionTables.FilePath(name))))
+            .ToList();
+        var sentences = CorrectionTables.ReadNamedSentences(named.Select(entry => entry.Table));
+        var effective = CorrectionTables.EffectiveCorrections(named).ToList();
+        var pending = 0;
+        var applied = 0;
+
+        // Act: find the token of every row in effect and count the rows whose token has the old and the new value
+        foreach (var (table, row) in effective)
+        {
+            var (token, _) = CorrectionTables.FindToken(sentences, table, row, 1);
+            var state = token == null ? null : CorrectionState(table, row, token);
+            pending += state == "pending" ? 1 : 0;
+            applied += state == "applied" ? 1 : 0;
+        }
+
+        // Assert: there are rows, none is pending and every one is applied
+        Assert.NotEmpty(effective);
+        Assert.Equal(0, pending);
+        Assert.Equal(effective.Count, applied);
+    }
+
+    /// <summary>
     ///     Proves that every row of the adjudicated corrections (<c>data/corrections/adjudicated.tsv</c>) is a decision of
     ///     the two blind taggers: the provenance is <c>llm:opus+sol:&lt;batch&gt;</c> (a rule row does not belong there),
     ///     the row is exactly one of a tag change with the base status kept, a <c>disputed</c> mark with the tag and the

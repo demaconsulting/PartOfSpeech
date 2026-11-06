@@ -169,7 +169,7 @@ Further top-level folders hold files that are not software items and are therefo
 structure:
 
 ```text
-data/                           — Training corpora, evaluation sets, lexicon, staged corrections, checksums, leakage report
+data/                           — Training corpora, evaluation sets, lexicon, label corrections, checksums, leakage report
 docs/evaluation/                — The evaluation record: thresholds, held-out results, how to read and reproduce them
 tools/data/                     — Build-time Python tools and their tests that produce, lint and check the data
 tools/LexiconCompiler/          — Build-time C# tool that compiles the lexicon table into Resources/lexicon.bin
@@ -210,11 +210,12 @@ embedded model requirements in the same file), their tests are in
 tools have developer unit tests in `tools/data/tests/`, which are not requirements evidence. The Python files of the
 tools and their tests are reviewed in three review-sets of `.reviewmark.yaml`: `PartOfSpeech-DataConversion` (the tools
 that import and convert data and build the lexicon), `PartOfSpeech-DataChecks` (the tools that check, record and
-verify it) and `PartOfSpeech-DataCorrections` (the conventions linter, the generator and validator of the staged
+verify it) and `PartOfSpeech-DataCorrections` (the conventions linter, the generator and validator of the
 corrections in `data/corrections/` and the adjudication tool, with their tests and fixtures); the system design and the
 system requirements are
 their context. The data tools run in two places: `lint.ps1` runs the unit tests of the correction tools, the validation
-and regeneration check of the staged tables and a report-only linter pass (the quality-checks job of the workflow runs
+and the state-aware regeneration check of the correction tables, the fix tier of the linter with `--enforce` and a
+report-only pass of the check tier (the quality-checks job of the workflow runs
 `lint.ps1`, and it is the only workflow entry that can host Python checks), while the C# tests of the system read the
 committed tables and corpora and are the requirements evidence. The C# tool `tools/LexiconCompiler` has
 its own review-set, `PartOfSpeech-LexiconCompiler`; it has no requirements of its own because its result is proven by

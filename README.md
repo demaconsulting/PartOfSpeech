@@ -77,8 +77,12 @@ list; use soft mode for a list that may be wrong. The measured cost is in sectio
 
 ## Accuracy and Confidence
 
-The model was selected on development data only, its confidence thresholds too, and it was then evaluated once on
-held-out data. The tagger is accurate on ordinary running text. Its most costly mistake is a harmful error: a noun
+The model was selected on development data only. The held-out evaluation record below (test results and confidence
+thresholds) was produced for the model that was trained before the label corrections of the corpora (see the
+[trainer run log][link-run-log]). The embedded model was retrained on the corrected corpora and checked on development
+data only: it did not pass all of the development gates that were fixed before the retraining, and it has not been
+evaluated on held-out data, so the record does not describe it. The tagger is accurate on ordinary running text. Its most
+costly mistake is a harmful error: a noun
 tagged as a verb, or a verb tagged as a noun. It makes some on every test set and noticeably more on short, technical
 and imperative sentences built to be hard, a limitation that is reported and was not tuned away. The labels of the test
 sets were written by language models, and the results come from one run.

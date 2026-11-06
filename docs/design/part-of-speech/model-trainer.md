@@ -171,7 +171,9 @@ before any curve existed.
   a harmful error is an answered decision with the other one of the two tags. The curve gives, for every threshold of the
   grid, the answered decisions, the coverage, the harmful errors, the harmful errors per 1,000 answered and per 1,000
   decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 94, 9 and 103 harmful
-  errors on open dev, gold v2 dev and pooled). The reliability table groups the decisions by confidence.
+  errors on open dev, gold v2 dev and pooled). The constants of the command are those of the first freeze; the retrained
+  model has other development figures (`RUN-LOG.md`, "Corpus cleanup C"), so the command refuses to write for it until
+  the constants are set by a decision to reissue the record. The reliability table groups the decisions by confidence.
 - **Rule `nv-pooled-dev-v1`.** On the pooled development decisions the first grid threshold with at most 5.0 harmful
   errors per 1,000 answered and a coverage of at least 60% is the `strict` point, the first with at most 10.0 and at
   least 85%

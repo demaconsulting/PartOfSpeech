@@ -39,7 +39,7 @@ Run from the repository root. Scripts take their input locations as arguments or
 | `import_open.py` | open corpus to `data/open/` (UPOS projection, `sources.tsv`, `LICENSE`) | `--source-dir <WordSense checkout>` or download |
 | `import_eval.py` | shape probe, gold v2 and the STE challenge set to `data/eval/` | same |
 | `import_masc.py` | MASC Penn trees to `data/masc/` (`ptb_to_upos`, leakage exclusion, mapping audit) | `--archive`, `--exclude-genre`; writes `sources.tsv`, `excluded-documents.tsv` and `dropped-sentences.tsv` |
-| `import_silver.py` | `export-spike` (one-off), `derive`, `verify`, `verify-sources` | silver data to `data/silver/`; FAA only behind `--include-faa`, never committed; run after `build_lexicon.py` |
+| `import_silver.py` | `export-spike` (one-off), `derive`, `verify`, `verify-sources` | silver data to `data/silver/`; FAA only behind `--include-faa`, never committed; run after `build_lexicon.py`; `verify` describes the derivation, so it passes only on the pre-correction file (after `corrections.py apply --write --reverse`) |
 | `fetch_ud_ewt.py` | `fetch` the pinned UD English-EWT files into the cache; `map` writes the convention-mapped tables (cache only) | evaluation only; nothing is ever committed |
 | `build_lexicon.py` | build `data/lexicon/lexicon.tsv`; `--write-pins` writes the form pin manifest | `--wordsense-dir`, `--k`, `--masc-k` |
 | `check_lexicon.py` | coverage report (`coverage.tsv`, `COVERAGE.md`), gate G1, `--sweep` | exit code 1 if the gate fails |

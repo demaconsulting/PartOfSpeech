@@ -1,14 +1,16 @@
 <!-- markdownlint-disable MD013 MD060 -->
 <!-- cspell:ignore gradable gradability prenominal adjudication unmatched demonyms undersample emphasised -->
 
-# Staged Corpus Corrections
+# Corpus Corrections
 
 License: CC0-1.0
 
 Label corrections for the open corpus, MASC and the silver data that follow the conventions of
 [CONVENTIONS.md](../CONVENTIONS.md), kept as small tables next to the corpus files. **The rows are applied:** the corpora under
-`open/`, `masc/` and `silver/` carry them (`corrections.py apply --write`), and the lexicon, the weights and the evaluation record
-were regenerated from the corrected labels. The tables stay as provenance: they describe the corpora as the importers wrote them,
+`open/`, `masc/` and `silver/` carry them (`corrections.py apply --write`), and the lexicon and the weights were rebuilt from the
+corrected labels. The held-out evaluation record (`docs/evaluation/`) was **not** reissued: it describes the model that was trained
+before the corrections and the old development files (the pre-registered development gate G2 failed; see the trainer
+`RUN-LOG.md`, "Corpus cleanup C"). The tables stay as provenance: they describe the corpora as the importers wrote them,
 and they stay valid against the corrected files (see _States and Apply_).
 
 The rows are labels and addresses of tokens: the labels and the selection are dedicated under CC0-1.0, like the corpus labels.
@@ -136,7 +138,7 @@ python tools/data/make_corrections.py --check              # compare with the co
 python tools/data/make_corrections.py sample --n 50 --seed 20261108 [--per-rule 4] [--only RULE,RULE] [--out FILE]
 python tools/data/make_corrections.py fixed-point          # apply in memory, then the rules must find nothing left to fix
 python tools/data/make_corrections.py catalog              # the rule tables below
-python tools/data/check_conventions.py [--apply] [--enforce] [--list RULE] [--tsv FILE]   # the linter
+python tools/data/check_conventions.py [--apply] [--enforce] [--tier fix|check] [--list RULE] [--tsv FILE]   # the linter (lint.ps1 runs --tier fix --enforce)
 python tools/data/adjudicate.py --work DIR select          # choose the sentences (volumes first); DIR is a work folder outside the repository
 python tools/data/adjudicate.py --work DIR export          # blind batches for the taggers, the private key, the state table
 python tools/data/adjudicate.py --work DIR check-batches   # the batches have three columns, equal the corpus and leak nothing
@@ -149,9 +151,9 @@ python tools/data/adjudicate.py --work DIR review-result --verdicts FILE   # pre
 The taggers themselves are language models that run outside the repository; `adjudicate.py` never calls one. The work folder
 (the flag files of the off-the-shelf taggers, the batches, the raw outputs, the private key and the decisions) is not committed.
 
-The linter reports per rule and source how many violations are left; `--apply` lints the corpora as they are after the staged
-corrections, and `--enforce` fails while any violation is left (the evaluation-only STE set is shown but never counts). After the
-rows are applied, no mechanical (`fix`) rule finds anything: `make_corrections.py fixed-point` and the committed-data tests prove
+The linter reports per rule and source how many violations are left; `--apply` lints the corpora as they are after the
+corrections (in the applied state it gives the same result as without), and `--enforce` fails while any violation of the selected tier is left (the evaluation-only STE set is shown but never counts). The corpora are in the applied state: no mechanical (`fix`) rule finds
+anything (`--tier fix --enforce` exits 0, as `lint.ps1` requires), and the `check` tier reports 298 violations. `make_corrections.py fixed-point` and the committed-data tests prove
 it, with the corpus resources recomputed from the corrected data. With `--apply` the rule of a replaced mechanical row does not
 count on the replaced token: the adjudicated tag outranks the rule, and the rule would fire there again by construction.
 
@@ -257,11 +259,14 @@ all states that look like passives.
 | `possessive-det` | 4 | 0 | 0 | 0 | 0 | 4 |
 | **Total** | **610** | **79** | **70** | **859** | **607** | **2,225** |
 
-`fy-token` has no case in the corpora. Every row keeps its status cell. 93 rows give a token a tag that the current lexicon and its
-shape rules do not allow: 90 `get`-forms as AUX and 3 Roman numerals (`ix`, `xii`, `xiv`) as NUM. The lexicon is not changed here and
-the weights are not retrained, so the change that applies the rows has to rebuild the lexicon.
+`fy-token` has no case in the corpora. Every row keeps its status cell. 93 rows give a token a tag that the lexicon and its
+shape rules of the importers' state did not allow: 90 `get`-forms as AUX and 3 Roman numerals (`ix`, `xii`, `xiv`) as NUM. The
+lexicon was rebuilt from the corrected corpora after the application and allows these tags.
 
-### Check violations left after the rows (report only today)
+### Check violations that the mechanical rows alone leave (report only)
+
+These counts are those of the generator before the adjudication, with the mechanical rows only; the adjudicated rows reduce them to
+the 298 of the committed corpora (see _Adjudication_, Results).
 
 | Rule | open train | open dev | open test | MASC | silver | STE | Total |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -274,8 +279,8 @@ the weights are not retrained, so the change that applies the rows has to rebuil
 | `modal-aux-other` | 0 | 0 | 0 | 0 | 1 | 0 | 1 |
 | **Total** | **241** | **36** | **34** | **84** | **287** | **2** | **684** |
 
-With the rows applied, these 684 are everything the linter reports (the two STE tokens belong to the evaluation-only set, which
-is linted but never corrected). On the committed corpora the linter reports 2,225 mechanical plus these 684 violations.
+With the mechanical rows applied, these 684 are everything the `check` tier reports (the two STE tokens belong to the
+evaluation-only set, which is linted but never corrected). The 2,225 mechanical rows are the `fix` violations of the importers' state.
 
 ### Known gaps of the mechanical rules
 
@@ -597,7 +602,11 @@ decision rule is the function `decide_token`; the tests of both are in `tools/da
 - **Adjudication.** `adjudicated.tsv` holds the decisions (see _Adjudication_). The `disputed` tokens are the unsettled cases,
   and the violations that stay in the linter report are the cases that the models did not change; a later change can settle
   them, by another round of decisions or by a clearer convention.
-- **Applying.** `corrections.py validate`, then `apply --write`, then regenerate the lexicon, retrain and record the evaluation
-  (`train --check`, the lexicon check and the evaluation record pin the corpus files). The linter then runs with `--enforce`.
-- **Evaluation data.** The development and test splits of the open corpus are corrected like the training split; the evaluation
-  record pins their SHA-256, so the change that applies the rows must also reissue those pins.
+- **Applying.** `corrections.py validate`, then `apply --write`, then regenerate the lexicon, retrain (`train --check`) and
+  record the development result. The linter runs with `--tier fix --enforce` in `lint.ps1`; the check tier stays report only.
+  The same sequence is the recipe for the next round of corrections: a second `apply` on corrected corpora is refused, so
+  new rows are produced against the corrected files (the generator `--check` reverses the applied rows in a temporary copy).
+- **Evaluation data.** The development and test splits of the open corpus are corrected like the training split. The gold v2
+  set, the shape probe and the STE challenge set are not addressable by the overlay and keep their labels; they could follow
+  the same conventions in a later change. The held-out evaluation record pins the SHA-256 of the old development files and
+  the old model, so it is not valid for the retrained model; reissuing it needs a new decision (see the trainer `RUN-LOG.md`).

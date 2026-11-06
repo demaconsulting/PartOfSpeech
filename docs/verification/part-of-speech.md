@@ -34,11 +34,12 @@ the adjudication tool and the overlay (`test_corrections_*.py`) are requirements
 the other TRX files and matches a requirement's test by the method name. All other tool tests are not requirements
 evidence; they are reviewed with the tools in the data tools review sets (see the Companion Artifact
 Structure of the design introduction). The unit tests of the correction tools (`test_corrections_*.py`, including those
-of the adjudication tool `adjudicate.py`), the validation of the staged corrections (`adjudicated.tsv` included) against
-the corpora, the check that the generator reproduces the committed mechanical tables and a report-only pass of the
-conventions linter run as a gate in `lint.ps1`, which the quality-checks job of the workflow runs
-(standard library only, about one minute); a failing step fails the lint run. The linter does not yet fail on violations
-that are left in the corpora.
+of the adjudication tool `adjudicate.py`), the validation of the corrections (`adjudicated.tsv` included) against
+the corpora, the state-aware check that the generator reproduces the committed mechanical tables (in the applied state it
+reverses the applied rows in a temporary copy first), the conventions linter with `--tier fix --enforce` and a
+report-only pass of its check tier run as a gate in `lint.ps1`, which the quality-checks job of the workflow runs
+(standard library only, about one minute); a failing step fails the lint run. The linter fails on a violation of the fix
+tier; the 298 violations of the check tier that need a judgment are reported and do not fail the run.
 
 Two groups of requirements need methods beyond an ordinary assertion:
 
@@ -399,7 +400,7 @@ and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
 and fails when a file is missing or empty.
 
-The `PartOfSpeech_DataCorrections_*` tests read the staged corrections of `data/corrections/`. `Tables_AreWellFormed`
+The `PartOfSpeech_DataCorrections_*` tests read the corrections of `data/corrections/`. `Tables_AreWellFormed`
 asserts the column lists of the tables, that every correction row (of `mechanical.tsv` and, when it exists,
 `adjudicated.tsv`) is valid on its own (legal source and split pair,
 token index, tags among the 17 and never the masked placeholder, status cells with known statuses and flags in order, a
@@ -417,6 +418,10 @@ committed corpora and asserts for every correction row in effect and every excep
 id, the token index and the token form exist, and that all correction rows in effect match the corpus in the pending
 state (old tag and status) or all in the applied state (new tag and status); a mechanical row that an adjudicated row
 replaces is not in effect, so it is not compared. A mixture, a row that matches neither state, and an empty table fail.
+`Rows_AreApplied` reads the same rows in effect and asserts that none is pending (its token still has the old tag and status
+cell) and that every one is applied (its token has the new tag and status cell); a row whose token is missing or has another
+value counts as not applied, and an empty table fails. The check that the corpora have no violation of the fix tier of the
+conventions linter is made by the linter in `lint.ps1` (`--tier fix --enforce`) and by `tools/data/tests`, not by this test.
 `Adjudicated_RowsAreLlmDecisions` asserts for every row of `adjudicated.tsv` that the provenance is
 `llm:opus+sol:<batch>` (a `rule:` row fails), that the row is valid on its own and is exactly one of a tag change with
 the base status kept, a `disputed` mark with the tag and the flags kept, or a flag change with the tag and the base kept,

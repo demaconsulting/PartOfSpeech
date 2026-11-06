@@ -160,7 +160,7 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </description></item>
 ///     </list>
 ///     <para>
-///     The temperature is meant to make the probabilities match how often the chosen tag is right, and for the embedded
+///     The temperature is meant to make the probabilities match how often the chosen tag is right, and for the evaluated
 ///     model the evaluation shows that it does. Which confidence is low enough to check a token again is measured too;
 ///     see [Confidence thresholds](#confidence-thresholds).
 ///     </para>
@@ -168,8 +168,11 @@ namespace DemaConsulting.PartOfSpeech;
 ///     ## Confidence thresholds
 ///     </para>
 ///     <para>
-///     The embedded model was evaluated once on held-out data, after two thresholds had been chosen on development data
-///     only. The measurement is about the mistake that changes the meaning of a sentence: a word that is a noun and is
+///     The measurement below was made once on held-out data for the model that the package embedded before the training
+///     corpora were corrected, after two thresholds had been chosen on development data only. The embedded model has been
+///     retrained on the corrected corpora since then, checked on development data only, and not evaluated on held-out data
+///     (the evaluation record and the trainer run log say how it stands), so read the figures as those of the earlier model
+///     and re-measure before you rely on them. The measurement is about the mistake that changes the meaning of a sentence: a word that is a noun and is
 ///     tagged as a verb, or the other way round (a <em>harmful error</em>). A token is <em>answered</em> at a threshold
 ///     when the confidence of its tag is at least the threshold, and <em>coverage</em> is the share of the noun-verb
 ///     decisions that is answered. Without a threshold, 20.6 of 1,000 noun-verb decisions of the open test split are

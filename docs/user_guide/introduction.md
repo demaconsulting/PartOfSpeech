@@ -53,9 +53,11 @@ compiled word lexicon (639,617 bytes compressed) and the trained averaged-percep
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
-The model was selected on development data only and then evaluated once on held-out data. The
-[evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the results
-and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to trust.
+The model was selected on development data only. The
+[evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the held-out
+results and the limits of the measurement; it was made for the model that the package embedded before the training corpora
+were corrected. The embedded model has been retrained on the corrected corpora, checked on development data only and not
+evaluated on held-out data. The section _Choosing a Confidence Threshold_ says which confidence to trust.
 
 # Usage
 
@@ -151,8 +153,10 @@ Read the numbers with these points in mind:
 ### Choosing a Confidence Threshold
 
 The confidence is not equally reliable at every level, and the mistake that matters most is a noun that is tagged as a
-verb or a verb that is tagged as a noun (a harmful error). The embedded model was measured on that mistake: two
-thresholds were selected on development data only, and the model was then evaluated once on held-out data. A token is
+verb or a verb that is tagged as a noun (a harmful error). The figures below were measured on that mistake for the model
+that the package embedded before the training corpora were corrected: two thresholds were selected on development data
+only, and that model was then evaluated once on held-out data. The embedded model has since been retrained on the corrected
+corpora and has not been evaluated on held-out data, so re-measure before you rely on the figures. A token is
 answered at a threshold when its confidence is at least the threshold; coverage is the share of the noun-verb
 decisions that is answered.
 

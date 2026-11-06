@@ -28,7 +28,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [eval/ste-challenge/](eval/ste-challenge/README.md) | simplified-technical-English challenge set (evaluation) | 32 | 272 | 0.01 MB | CC0-1.0 |
 | [eval/ud-ewt/](eval/ud-ewt/README.md) | UD English-EWT: fetch documentation only, **no data** | | | | CC BY-SA 4.0, never committed |
 | [lexicon/](lexicon/README.md) | spelling to UPOS tags lexicon, closed-class list, coverage report | | | 4.5 MB | CC-BY-4.0 and CC-BY-3.0-US (attribution), others |
-| [corrections/](corrections/README.md) | staged label corrections for open, MASC and silver (mechanical rows, adjudicated rows, candidates, exceptions); **not applied yet** | | | 2.7 MB | CC0-1.0 labels; MASC token forms and excerpts CC-BY-3.0-US |
+| [corrections/](corrections/README.md) | label corrections for open, MASC and silver (mechanical rows, adjudicated rows, candidates, exceptions); **applied** to the corpora | | | 2.7 MB | CC0-1.0 labels; MASC token forms and excerpts CC-BY-3.0-US |
 
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
 masked). Total size of `data/`: 40.1 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
@@ -59,19 +59,23 @@ python tools/data/import_open.py   --source-dir <WordSense checkout at the pinne
 python tools/data/import_eval.py   --source-dir <WordSense checkout at the pinned commit>   # eval/
 python tools/data/fetch_ud_ewt.py fetch                                                     # cache for the leakage filter and the local UD evaluation (docs/evaluation/README.md)
 python tools/data/import_masc.py   [--archive penn-treebank.tgz]                            # masc/
-python tools/data/build_lexicon.py [--wordsense-dir <checkout>]                             # lexicon/lexicon.tsv (attests tags from masc/)
+python tools/data/build_lexicon.py [--wordsense-dir <checkout>]                             # lexicon/lexicon.tsv (the silver derivation reads it; rebuilt after the corrections)
+python tools/data/import_silver.py derive                                                   # silver/silver.tsv (the derivation; the corrections come after it)
+python tools/data/make_corrections.py                                                       # corrections/{mechanical,candidates,exceptions}.tsv; regenerates only in the pending state (--check is state-aware)
+python tools/data/corrections.py validate                                                   # the correction tables (adjudicated.tsv included) against the corpora (pending or applied)
+python tools/data/corrections.py apply --write                                              # the corrections onto open, MASC and silver (a second apply is refused)
+python tools/data/build_lexicon.py [--wordsense-dir <checkout>]                             # lexicon/lexicon.tsv again, from the corrected corpora
 python tools/data/check_lexicon.py                                                          # lexicon/coverage.tsv, COVERAGE.md
-python tools/data/import_silver.py derive                                                   # silver/silver.tsv
 python tools/data/check_leakage.py --write-report                                           # leakage-report.tsv
-python tools/data/make_corrections.py                                                       # corrections/{mechanical,candidates,exceptions}.tsv (--check compares with the committed files)
-python tools/data/corrections.py validate                                                   # the staged tables (adjudicated.tsv included) against the corpora
-python tools/data/check_conventions.py                                                      # linter, report only (--apply: as after the corrections; --enforce: fail on any violation)
+python tools/data/check_conventions.py                                                      # linter, report only (--tier fix --enforce: fail on any fix-tier violation, as lint.ps1 does)
 python tools/data/make_manifest.py                                                          # MANIFEST.tsv
 ```
 
 `--source-dir` and `--wordsense-dir` are optional: without them the pinned files are downloaded into the git-ignored
 `tools/data/cache/`. The silver labeling itself (`import_silver.py export-spike`) is a documented one-off that needs the
-earlier experiment's model output (`silver/README.md`).
+earlier experiment's model output (`silver/README.md`). The importers write the uncorrected files (the pending state);
+the corrections are applied after them, and every artifact that depends on the labels (the lexicon, then the weights) is
+built from the corrected files.
 
 ## Leakage Check
 
@@ -114,19 +118,22 @@ by design; the UD check applies only when the cache is present, so a run without
 
 ## Downstream Notes
 
-- **Staged corrections.** [corrections/](corrections/README.md) holds label corrections that follow
-  [CONVENTIONS.md](CONVENTIONS.md) as small tables (one row per token: address, old and new tag and status, provenance)
-  instead of edits of the corpus files. They are **not applied**: `open/`, `masc/` and `silver/` are exactly the importer
-  output, and the lexicon, the weights and the evaluation record are built from them as they are. A later change applies
-  the rows and regenerates everything that depends on the labels. `mechanical.tsv`, `candidates.tsv` and `exceptions.tsv` are
+- **Corrections.** [corrections/](corrections/README.md) holds the label corrections that follow
+  [CONVENTIONS.md](CONVENTIONS.md) as small tables (one row per token: address, old and new tag and status, provenance).
+  They are **applied**: `open/`, `masc/` and `silver/` carry the corrected labels (9,285 effective rows), and the lexicon and
+  the weights are built from them. The tables stay as the provenance of every change; a second application is refused and
+  the `--check` of the generator reverses the rows in a temporary copy to prove that the tables are still the generator's
+  output. `mechanical.tsv`, `candidates.tsv` and `exceptions.tsv` are
   generated (`make_corrections.py`); `adjudicated.tsv` holds the decisions of two blind language-model taggers on the
   judgment cases (`adjudicate.py`; the method is in [corrections/README.md](corrections/README.md#adjudication), and no human
   reviewed the rows), and an adjudicated row replaces the mechanical row of the same token. All tables are run
-  through the tests and the lint run, and are valid against the corpora both before and after the application.
+  through the tests and the lint run, and are valid against the corpora both before and after the application. The fix tier
+  of the conventions linter finds no violation in the corrected files (`lint.ps1` enforces that); the check tier is report only.
 - **Status flags.** A token's status cell can carry flags after plus signs (`unanimous+mentioned`, `silver+foreign+mentioned`;
   the flags are `foreign` and `mentioned`, once each, in that order). They record facts about the word and never change
-  the tag; the status in front of the first plus sign drives masking, `disputed` handling and the lexicon. Every committed
-  file is valid without flags and carries none yet. The format is specified in [CONVENTIONS.md](CONVENTIONS.md), "Corpus
+  the tag; the status in front of the first plus sign drives masking, `disputed` handling and the lexicon. The open, MASC and
+  silver files carry flags after the corrections (counts in the README of each folder); the other data files carry none. The
+  format is specified in [CONVENTIONS.md](CONVENTIONS.md), "Corpus
   Block Format", and the data tools and the trainer's corpus reader accept and keep them.
 - The tokenizer of the library emits the corpus tokenization (clitics split: `do` + `n't`, `John` + `'s`); its rules are
   in the "Tokenizer Rules" section of [CONVENTIONS.md](CONVENTIONS.md) and the test suite checks them against the open

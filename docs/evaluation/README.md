@@ -5,6 +5,15 @@ confidence thresholds the library recommends. It is plain Markdown and JSON, rea
 generated documents. The figures live in the two generated reports; this page explains them, says how to reproduce
 them and states what they do not show.
 
+> **Status of this record.** The record below (selection, held-out results and the hashes of the inputs) describes the
+> model that was frozen before the labels of the training corpora were corrected. The embedded model has since been
+> retrained on the corrected corpora and was checked on development data only: of the development gates that were fixed
+> before the retraining, the agreement with the UD English-EWT development set improved and the convention linter is clean,
+> but the harmful noun-verb errors per 1,000 decisions rose on both the open and the UD development sets, so the
+> pre-registered stop rule applied and no held-out set was evaluated and no threshold was reselected. The record
+> therefore does not describe the embedded model; the old-versus-new development comparison is in the trainer run log,
+> section "Corpus cleanup C".
+
 | File | What it is |
 | --- | --- |
 | [confidence-thresholds.md](confidence-thresholds.md) | Selection of the two recommended thresholds on development data: curves, reliability table, the rule, the bootstrap intervals. |

@@ -396,11 +396,11 @@ sections:
 
       - id: PartOfSpeech-Data-CorrectionsWellFormed
         title: >-
-          Every staged corpus correction shall be a well-formed row of the documented tables, with a valid address,
+          Every corpus correction shall be a well-formed row of the documented tables, with a valid address,
           tags, statuses and provenance, in key order and without a second row for a token in the same table.
         tags: [system]
         justification: |
-          The staged corrections are the evidence for every label that a later change applies to the corpora. A row with
+          The corrections are the evidence for every label that was changed in the corpora. A row with
           an illegal address, a tag outside the 17, a status cell that the corpus readers refuse, no change, or no
           provenance, or two rows for one token in a table, could not be applied or reviewed safely. A candidate row
           with a malformed span, current tag or status, or an empty hint, would mislead the adjudication the same way,
@@ -414,7 +414,7 @@ sections:
 
       - id: PartOfSpeech-Data-CorrectionsMatchCorpora
         title: >-
-          Every staged correction and every recorded exception shall address an existing token of a committed corpus,
+          Every correction and every recorded exception shall address an existing token of a committed corpus,
           and the corrections in effect shall match the corpora either all before or all after their application.
         tags: [system]
         justification: |
@@ -424,6 +424,20 @@ sections:
           mixture shows a partial application.
         tests:
           - PartOfSpeech_DataCorrections_Rows_MatchCommittedCorpora
+
+      - id: PartOfSpeech-Data-CorrectionsApplied
+        title: >-
+          Every correction in effect shall be applied to the committed corpora: the token of each row shall carry the
+          new tag and the new status.
+        tags: [system]
+        justification: |
+          The labels that the lexicon, the weights and the evaluations are built from are the labels of the committed
+          corpora, so a correction that was decided but is still pending would not reach them, and a partial application
+          would give a corpus that matches neither the tables nor the importers. Requiring every row in effect to be
+          applied keeps the corpora, the correction tables that record the decisions, and everything derived from the
+          labels consistent.
+        tests:
+          - PartOfSpeech_DataCorrections_Rows_AreApplied
 
       - id: PartOfSpeech-Data-AdjudicatedCorrectionsAreRecorded
         title: >-
