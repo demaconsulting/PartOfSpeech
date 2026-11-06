@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore Prenominal Santorini lexicalized -->
+<!-- cspell:ignore Santorini lexicalized -->
 
 # Data Conventions
 

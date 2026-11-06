@@ -1,4 +1,3 @@
-<!-- cspell:ignore prenominal -->
 # Evaluation of the Embedded Model
 
 This folder is the record of how the embedded model of `DemaConsulting.PartOfSpeech` was measured and which

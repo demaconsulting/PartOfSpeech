@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gradable gradability prenominal adjudication unmatched demonyms undersample emphasised -->
+<!-- cspell:ignore gradable gradability adjudication unmatched demonyms undersample emphasised -->
 
 # Corpus Corrections
 

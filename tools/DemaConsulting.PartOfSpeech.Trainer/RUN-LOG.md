@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify prenominal mkabl mkarm worktree worktrees isalpha scorings -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings -->
 
 # Trainer Run Log
 
@@ -1855,6 +1855,21 @@ NO-ING minus NO-CTRL on the pooled harmful rate: -0.531 per 1,000, Welch [-1.830
 **Nothing is adopted.** The committed data, lexicon, weights and `training.json` are unchanged by this follow-up; `evaluate` and
 `thresholds` were not run; no held-out set was read. If NO-ING is to be adopted, that is a separate step (step 3) with its own record
 and, for the held-out sets, a disclosed second look (the held-out sets were seen once, for the model of `58da737`).
+
+**Reproducibility note (added after the review of this record; the committed figures above are not altered).** The tables above
+were produced by the first version of `prenominal-ing/score_arms.py`, which used numpy 2.2 (`default_rng`, seed 20261104) and scipy
+1.18 for the Student t quantile and the bootstrap; neither package was declared in the repository. The script is now standard
+library only (`math`, `statistics`, `random`; the t quantile and p-value come from the regularized incomplete beta function, checked
+by `--selftest` against published values). It is meant to be run against a worktree of `476a51d` or `0d7a0b3` with the scratch
+folder of the 15 runs, as in the Procedure above. Re-running it on the same 30 prediction files (worktree of `0d7a0b3`) reproduces
+the committed output **exactly** for the acceptance test, every per-seed value, mean and sample sd, every Welch interval, degree of
+freedom and p-value, and the rule outcome (selected arm NO-ING, same numbers); only the 18 bootstrap-interval cells differ, because
+`random.Random(20261104)` is another stream than numpy's generator, so they agree with the committed ones statistically and not
+digit for digit. Examples (committed, then standard library): pooled harmful rate NO-ING - FULL [-2.581, +0.699] and [-2.643,
++0.640]; NO-CTRL - FULL [-1.979, +1.046] and [-1.925, +0.961]; verbal-ing VERB accuracy NO-ING - FULL [-4.270, -0.714] and
+[-4.204, -0.580]. Over the 18 cells the largest endpoint difference is 0.30 points (the 41-item `compound-ing` row, interval width
+16.6) and no endpoint moves by more than 5.4% of its interval width, which is the Monte-Carlo error of 2,000 replicates. No conclusion changes: whether an interval contains 0 is the same in all 18 cells (the pooled bootstrap interval of
+NO-ING - FULL contains 0 in both, the verbal-ing one excludes 0 in both).
 
 ## Corpus cleanup C: adoption of the NO-ING model (step 3 of the pre-registered follow-up; written before any held-out command)
 

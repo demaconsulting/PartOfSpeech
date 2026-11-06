@@ -1,4 +1,3 @@
-<!-- cspell:ignore prenominal -->
 # System Design
 
 This document provides the system-level design for the Part Of Speech.

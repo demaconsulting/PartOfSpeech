@@ -1,4 +1,3 @@
-<!-- cspell:ignore prenominal -->
 ## ModelTrainer
 
 ![Part Of Speech Structure](PartOfSpeechView.svg)

@@ -13,20 +13,26 @@ compound items whose chosen tag is NOUN; verbal-ing VERB accuracy = share of the
 Statistics: sample sd (n = 5); Welch t 95% interval of the difference of means; combined seed + document bootstrap (2,000 replicates, seed
 20261104: documents shared by the arms, the 5 seeds resampled with replacement within each arm). Descriptive only; the rule is the selection.
 
+Standard library only (like every other script of the repository's tools): the Student t quantile and p-value are computed with the
+regularized incomplete beta function (continued fraction); `--selftest` checks them against published values. Reproducibility note:
+the committed bootstrap intervals of the RUN-LOG ("Results and selection (dev only)") were produced by the first version of this script
+with numpy `default_rng` seed 20261104 (numpy 2.2, scipy 1.18). This standard-library version reproduces the means, standard deviations,
+Welch intervals, degrees of freedom and p-values, the acceptance test and the rule outcome exactly, but `random.Random(20261104)` is
+another stream than numpy's generator, so its bootstrap intervals agree with the committed ones only statistically (Monte-Carlo
+error), not digit for digit; the committed figures are not altered.
+
 Historical record: the script is tied to the state of the branch at the pre-registration (commit 476a51d; FULL data, shipped weights = FULL).
 After the adoption of NO-ING the committed data and weights differ, so re-run it with `--repo` pointing to a `git worktree` of 476a51d (or
 0d7a0b3), where the frozen item list is current too. An acceptance failure (any check below false) exits 1 before the tables and the selection.
 """
 import argparse
 import hashlib
-import itertools
 import json
 import math
 import os
+import random
+import statistics
 import sys
-
-import numpy as np
-from scipy import stats
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(HERE))), "tools", "data"))
@@ -79,9 +85,10 @@ class Sets:
 
 
 def per_doc(sets, setname, pred):
+    """One list of counts (COLS) per document of the set, in the order of sets.docs[setname]."""
     gold, doc = (sets.og, sets.od) if setname == "open" else (sets.ug, sets.ud)
     index = {d: i for i, d in enumerate(sets.docs[setname])}
-    arr = np.zeros((len(index), len(COLS)))
+    arr = [[0] * len(COLS) for _ in index]
     for k, g in gold.items():
         tag, conf, alts = pred[k]
         row = arr[index[doc[k]]]
@@ -97,13 +104,18 @@ def per_doc(sets, setname, pred):
             if kind in ("compound-ing", "compound-zero"):
                 row[IX["cn"]] += 1
                 row[IX["cok"]] += tag == "NOUN"
-                key = ("i" if kind == "compound-ing" else "z")
-                row[IX[key + "n" if key == "z" else "in_"]] += 1
-                row[IX[key + "ok" if key == "z" else "iok"]] += tag == "NOUN"
+                n_col, ok_col = ("in_", "iok") if kind == "compound-ing" else ("zn", "zok")
+                row[IX[n_col]] += 1
+                row[IX[ok_col]] += tag == "NOUN"
             elif kind == "verbal-ing":
                 row[IX["vn"]] += 1
                 row[IX["vok"]] += tag == "VERB"
     return arr
+
+
+def col_sums(rows):
+    """Column sums of a list of count rows."""
+    return [sum(col) for col in zip(*rows)]
 
 
 METRICS = [
@@ -120,8 +132,8 @@ METRICS = [
 
 
 def value(metric, o, u):
-    """o, u: summed (or resampled-summed) arrays over the documents of open dev / UD dev. Works on the last axis."""
-    g = lambda a, c: a[..., IX[c]]
+    """o, u: summed (or resampled-summed) count lists over the documents of open dev / UD dev."""
+    g = lambda a, c: a[IX[c]]
     if metric == "pooled":
         return 1000.0 * (g(o, "harm") + g(u, "harm")) / (g(o, "nv") + g(u, "nv"))
     if metric == "open":
@@ -143,16 +155,98 @@ def value(metric, o, u):
     raise KeyError(metric)
 
 
+def _betacf(a, b, x):
+    """Continued fraction of the incomplete beta function (modified Lentz's method)."""
+    tiny = 1e-300
+    qab, qap, qam = a + b, a + 1.0, a - 1.0
+    c = 1.0
+    d = 1.0 - qab * x / qap
+    d = 1.0 / (d if abs(d) > tiny else tiny)
+    h = d
+    for m in range(1, 1000):
+        m2 = 2 * m
+        aa = m * (b - m) * x / ((qam + m2) * (a + m2))
+        d = 1.0 + aa * d
+        d = 1.0 / (d if abs(d) > tiny else tiny)
+        c = 1.0 + aa / c
+        c = c if abs(c) > tiny else tiny
+        h *= d * c
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2))
+        d = 1.0 + aa * d
+        d = 1.0 / (d if abs(d) > tiny else tiny)
+        c = 1.0 + aa / c
+        c = c if abs(c) > tiny else tiny
+        delta = d * c
+        h *= delta
+        if abs(delta - 1.0) < 1e-15:
+            break
+    return h
+
+
+def betainc(a, b, x):
+    """Regularized incomplete beta function I_x(a, b)."""
+    if x <= 0.0:
+        return 0.0
+    if x >= 1.0:
+        return 1.0
+    bt = math.exp(math.lgamma(a + b) - math.lgamma(a) - math.lgamma(b) + a * math.log(x) + b * math.log1p(-x))
+    if x < (a + 1.0) / (a + b + 2.0):
+        return bt * _betacf(a, b, x) / a
+    return 1.0 - bt * _betacf(b, a, 1.0 - x) / b
+
+
+def t_two_sided_p(t, df):
+    """P(|T| >= |t|) of Student's t distribution with df degrees of freedom."""
+    return betainc(df / 2.0, 0.5, df / (df + t * t))
+
+
+def t_quantile_975(df):
+    """The 0.975 quantile of Student's t distribution (bisection on the two-sided p = 0.05)."""
+    lo, hi = 0.0, 2.0
+    while t_two_sided_p(hi, df) > 0.05:
+        hi *= 2.0
+    for _ in range(200):
+        mid = (lo + hi) / 2.0
+        if t_two_sided_p(mid, df) > 0.05:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2.0
+
+
+def selftest():
+    """Check the t routines against published table values; exits 1 on a mismatch."""
+    quantiles = {1: 12.7062047, 2: 4.3026527, 5: 2.5705818, 6: 2.4469119, 10: 2.2281389, 30: 2.0422725}
+    bad = [df for df, q in quantiles.items() if abs(t_quantile_975(df) - q) > 1e-6]
+    pvalues = [(2.0, 10, 0.0733880), (1.0, 1, 0.5), (2.2281389, 10, 0.05), (3.0, 5, 0.0300992)]
+    bad += [(t, df) for t, df, p in pvalues if abs(t_two_sided_p(t, df) - p) > 1e-6]
+    print("selftest: %s" % ("ok" if not bad else "FAILED for %s" % bad))
+    sys.exit(1 if bad else 0)
+
+
+def percentile(values, q):
+    """Linear-interpolation percentile (the default definition of numpy.percentile)."""
+    ordered = sorted(values)
+    pos = q / 100.0 * (len(ordered) - 1)
+    lo = int(math.floor(pos))
+    hi = min(lo + 1, len(ordered) - 1)
+    return ordered[lo] + (ordered[hi] - ordered[lo]) * (pos - lo)
+
+
+def mean(values):
+    return sum(values) / len(values)
+
+
 def welch(a, b):
     """Difference of the means b - a, Welch t 95% interval, df, p."""
-    d = b.mean() - a.mean()
-    va, vb = a.var(ddof=1) / len(a), b.var(ddof=1) / len(b)
+    d = mean(b) - mean(a)
+    va, vb = statistics.variance(a) / len(a), statistics.variance(b) / len(b)
     se = math.sqrt(va + vb)
     if se == 0:
         return d, d, d, float("nan"), float("nan")
     df = (va + vb) ** 2 / (va ** 2 / (len(a) - 1) + vb ** 2 / (len(b) - 1))
-    t = stats.t.ppf(0.975, df)
-    return d, d - t * se, d + t * se, df, 2 * (1 - stats.t.cdf(abs(d) / se, df))
+    t = t_quantile_975(df)
+    return d, d - t * se, d + t * se, df, t_two_sided_p(d / se, df)
 
 
 def sha(path):
@@ -161,19 +255,24 @@ def sha(path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--scratch", required=True)
-    parser.add_argument("--repo", required=True)
+    parser.add_argument("--scratch")
+    parser.add_argument("--repo")
     parser.add_argument("--diag", default=None, help="folder of the diagnosis predictions (new-s*, abl-s*), for the acceptance comparison")
     parser.add_argument("--json", default=None)
+    parser.add_argument("--selftest", action="store_true", help="check the Student t routines against published values and exit")
     args = parser.parse_args()
+    if args.selftest:
+        selftest()
+    if not args.scratch or not args.repo:
+        parser.error("--scratch and --repo are required")
     sets = Sets(args.repo)
     runs = os.path.join(args.scratch, "runs")
     data = {a: {s: {k: per_doc(sets, k, read_pred(os.path.join(runs, "%s-s%d-%s.tsv" % (a, s, k)))) for k in ("open", "ud")} for s in SEEDS} for a in ARMS}
     out = []
     p = out.append
-    totals = lambda a, s: (data[a][s]["open"].sum(axis=0), data[a][s]["ud"].sum(axis=0))
-    vals = {a: {m: np.array([value(m, *totals(a, s)) for s in SEEDS]) for m, _ in METRICS} for a in ARMS}
-    counts = {a: {s: {k: data[a][s][k].sum(axis=0).astype(int).tolist() for k in ("open", "ud")} for s in SEEDS} for a in ARMS}
+    totals = lambda a, s: (col_sums(data[a][s]["open"]), col_sums(data[a][s]["ud"]))
+    vals = {a: {m: [value(m, *totals(a, s)) for s in SEEDS] for m, _ in METRICS} for a in ARMS}
+    counts = {a: {s: {k: col_sums(data[a][s][k]) for k in ("open", "ud")} for s in SEEDS} for a in ARMS}
 
     # ----------------------------------------------------------- acceptance
     p("## Acceptance")
@@ -233,20 +332,35 @@ def main():
                     cells.append("%.3f (%d/%d)" % (v[i], h, d))
                 else:
                     cells.append("%.3f" % v[i])
-            p("| %s | %s | %.3f +- %.3f |" % (LABEL[a], " | ".join(cells), v.mean(), v.std(ddof=1)))
+            p("| %s | %s | %.3f +- %.3f |" % (LABEL[a], " | ".join(cells), mean(v), statistics.stdev(v)))
 
     # ----------------------------------------------------------- differences vs FULL
-    rng = np.random.default_rng(BSEED)
+    # combined seed + document bootstrap: one document resample per replicate, shared by the arms; the 5 seeds are resampled per arm
+    rng = random.Random(BSEED)
     nd = {k: len(sets.docs[k]) for k in ("open", "ud")}
-    wo = rng.multinomial(nd["open"], [1.0 / nd["open"]] * nd["open"], size=BOOT).astype(np.float64)
-    wu = rng.multinomial(nd["ud"], [1.0 / nd["ud"]] * nd["ud"], size=BOOT).astype(np.float64)
+
+    def resample(n):
+        """Sparse document weights of one replicate: [(document index, times drawn)] (a multinomial draw)."""
+        w = {}
+        for _ in range(n):
+            i = rng.randrange(n)
+            w[i] = w.get(i, 0) + 1
+        return list(w.items())
+
+    weights = [(resample(nd["open"]), resample(nd["ud"])) for _ in range(BOOT)]
+
+    def weighted(rows, w):
+        return [sum(c * rows[i][j] for i, c in w) for j in range(len(COLS))]
+
     boot = {}
     for a in ARMS:
-        boot[a] = {}
-        per_seed = {m: np.stack([value(m, wo @ data[a][s]["open"], wu @ data[a][s]["ud"]) for s in SEEDS], axis=1) for m, _ in METRICS}
-        idx = rng.integers(0, len(SEEDS), size=(BOOT, len(SEEDS)))
-        for m, _ in METRICS:
-            boot[a][m] = np.take_along_axis(per_seed[m], idx, axis=1).mean(axis=1)
+        # per_seed[s][r] = every metric of seed s on the documents resampled by replicate r
+        per_seed = []
+        for s in SEEDS:
+            per_seed.append([{m: value(m, weighted(data[a][s]["open"], wo), weighted(data[a][s]["ud"], wu)) for m, _ in METRICS}
+                             for wo, wu in weights])
+        idx = [[rng.randrange(len(SEEDS)) for _ in SEEDS] for _ in range(BOOT)]
+        boot[a] = {m: [mean([per_seed[j][r][m] for j in idx[r]]) for r in range(BOOT)] for m, _ in METRICS}
     p("\n## Differences against FULL (descriptive; the selection is the rule below)")
     p("| Metric | Arm - FULL | mean difference | Welch t 95% (df, p) | seed + document bootstrap 95% | shipped-seed difference |")
     p("| --- | --- | ---: | --- | --- | ---: |")
@@ -254,8 +368,8 @@ def main():
     for m, label in METRICS:
         for a in ("noing", "noctrl"):
             d, lo, hi, df, pv = welch(vals["full"][m], vals[a][m])
-            bd = boot[a][m] - boot["full"][m]
-            blo, bhi = np.percentile(bd, [2.5, 97.5])
+            bd = [x - y for x, y in zip(boot[a][m], boot["full"][m])]
+            blo, bhi = percentile(bd, 2.5), percentile(bd, 97.5)
             diffs[(a, m)] = (d, lo, hi, blo, bhi)
             p("| %s | %s | %+.3f | [%+.3f, %+.3f] (%.1f, p = %.3f) | [%+.3f, %+.3f] | %+.3f |" % (
                 label.strip(), LABEL[a], d, lo, hi, df, pv, blo, bhi, vals[a][m][0] - vals["full"][m][0]))
@@ -263,20 +377,20 @@ def main():
 
     # ----------------------------------------------------------- the rule
     p("\n## Application of the pre-registered selection rule")
-    mean = {a: {m: vals[a][m].mean() for m, _ in METRICS} for a in ARMS}
+    avg = {a: {m: mean(vals[a][m]) for m, _ in METRICS} for a in ARMS}
     cand = ["full", "noing"]
-    prim = {a: mean[a]["pooled"] for a in cand}
-    best_agree = max(mean[a]["agree"] for a in cand)
-    best_comp = max(mean[a]["comp"] for a in cand)
+    prim = {a: avg[a]["pooled"] for a in cand}
+    best_agree = max(avg[a]["agree"] for a in cand)
+    best_comp = max(avg[a]["comp"] for a in cand)
     lowest = min(cand, key=lambda a: prim[a])
     diff = prim["full"] - prim[lowest]
     p("primary (mean pooled harmful / 1k): FULL %.3f, NO-ING %.3f; lowest candidate %s; difference FULL - lowest = %.3f per 1k (tie-break threshold 0.5)"
       % (prim["full"], prim["noing"], LABEL[lowest], diff))
-    c1 = {a: best_agree - mean[a]["agree"] for a in cand}
-    c2 = {a: best_comp - mean[a]["comp"] for a in cand}
+    c1 = {a: best_agree - avg[a]["agree"] for a in cand}
+    c2 = {a: best_comp - avg[a]["comp"] for a in cand}
     for a in cand:
         p("%s: UD agreement mean %.3f (best %.3f, shortfall %.3f; C1 limit 0.15: %s); compound NOUN accuracy mean %.3f (best %.3f, shortfall %.3f; C2 limit 2.0: %s)"
-          % (LABEL[a], mean[a]["agree"], best_agree, c1[a], "holds" if c1[a] <= 0.15 else "FAILS", mean[a]["comp"], best_comp, c2[a], "holds" if c2[a] <= 2.0 else "FAILS"))
+          % (LABEL[a], avg[a]["agree"], best_agree, c1[a], "holds" if c1[a] <= 0.15 else "FAILS", avg[a]["comp"], best_comp, c2[a], "holds" if c2[a] <= 2.0 else "FAILS"))
     if lowest == "full":
         selected, why = "full", "FULL has the lowest primary mean"
     elif diff < 0.5:
@@ -287,14 +401,14 @@ def main():
         selected, why = "full", "NO-ING has the lowest primary by %.3f but fails a constraint" % diff
     p("**SELECTED ARM: %s** (%s)" % (LABEL[selected], why))
     red_ing = prim["full"] - prim["noing"]
-    red_ctrl = mean["full"]["pooled"] - mean["noctrl"]["pooled"]
+    red_ctrl = avg["full"]["pooled"] - avg["noctrl"]["pooled"]
     p("negative control (context only, not a candidate): NO-CTRL pooled mean %.3f, FULL minus NO-CTRL = %+.3f; NO-ING reduction %+.3f; half of it %+.3f; reading aid: %s" % (
-        mean["noctrl"]["pooled"], red_ctrl, red_ing, red_ing / 2,
+        avg["noctrl"]["pooled"], red_ctrl, red_ing, red_ing / 2,
         "the NO-ING reduction is NOT specific to -ing rows (NO-CTRL reduction >= half of it)" if red_ctrl >= red_ing / 2 and red_ing > 0 else "a comparable removal does not match the NO-ING reduction"))
     print("\n".join(out))
     if args.json:
         with open(args.json, "w", encoding="utf-8") as handle:
-            json.dump({"seeds": SEEDS, "values": {a: {m: vals[a][m].tolist() for m, _ in METRICS} for a in ARMS},
+            json.dump({"seeds": SEEDS, "values": {a: {m: vals[a][m] for m, _ in METRICS} for a in ARMS},
                        "counts": {a: {str(s): counts[a][s] for s in SEEDS} for a in ARMS}, "selected": selected}, handle, indent=1)
 
 

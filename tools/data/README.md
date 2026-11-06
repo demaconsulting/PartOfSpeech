@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore prenominal testdata -->
+<!-- cspell:ignore testdata -->
 
 # Data Tools
 
