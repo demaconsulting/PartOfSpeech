@@ -170,10 +170,12 @@ before any curve existed.
   t, and
   a harmful error is an answered decision with the other one of the two tags. The curve gives, for every threshold of the
   grid, the answered decisions, the coverage, the harmful errors, the harmful errors per 1,000 answered and per 1,000
-  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 103, 14 and 117 harmful
-  errors on open dev, gold v2 dev and pooled for the model retrained after the corpus cleanup C; the first freeze had 94,
-  9 and 103). The constants of the command are the development figures of the embedded model (`RUN-LOG.md`, "Corpus
-  cleanup C"); they were set to those of the retrained model once, before its `thresholds` run. The reliability table
+  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 90, 11 and 101 harmful
+  errors on open dev, gold v2 dev and pooled for the model adopted after the pre-registered `prenominal-ing` follow-up; the
+  first retrained model of the corpus cleanup C had 103, 14 and 117, and the first freeze 94, 9 and 103). The constants of
+  the command are the development figures of the embedded model (`RUN-LOG.md`, "Corpus cleanup C"); they were set to
+  those of the adopted model once, to the figures that `thresholds` itself reported (it refused to write with the old
+  constants), before its run that wrote the artifact. The reliability table
   groups the decisions by confidence.
 - **Rule `nv-pooled-dev-v1`.** On the pooled development decisions the first grid threshold with at most 5.0 harmful
   errors per 1,000 answered and a coverage of at least 60% is the `strict` point, the first with at most 10.0 and at

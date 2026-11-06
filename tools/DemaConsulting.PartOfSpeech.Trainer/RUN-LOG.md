@@ -1965,6 +1965,16 @@ The adopted model is selected on development data by the pre-registered rule, no
    the 17 withdrawn test rows); UD-EWT, gold v2, the shape probe and the STE set have unchanged labels and are the fair
    comparisons. Nothing is claimed as an improvement unless the data show it.
 
+### `thresholds` result (development data only; committed before the held-out run)
+
+`thresholds` first refused to write with the old constants (it printed 90, 11 and 101 harmful errors at 0.45 against the frozen
+figures 103, 14 and 117 of FULL and wrote nothing); the two constants were then set to 90 and 11 (comments in `Program.cs`) and
+the command wrote `operating-points.json` and `confidence-thresholds.md` (model image `a0d45458...8da3`, temperature 6.442, new
+dev file hashes). The rule `nv-pooled-dev-v1` gave: **strict 0.95** (coverage 81.8% [80.4, 83.3], 3.1 harmful per 1,000 answered
+[1.3, 5.3], 13 of 4,141) and **balanced 0.80** (coverage 92.4% [91.4, 93.3], 9.0 [5.8, 12.1], 42 of 4,675); the earlier model had the
+same thresholds (strict 0.95: 80.6%, 3.9, 16 of 4,105; balanced 0.80: 91.0%, 9.9, 46 of 4,636) and FULL had 0.90 and 0.85
+(strict 86.5%, 4.8; balanced 89.8%, 7.7).
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
