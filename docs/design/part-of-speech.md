@@ -279,7 +279,7 @@ of `RUN-LOG.md` next to the trainer and are not repeated here. See _Glossary Des
   coverage; coverage
   instrumentation slows the hot loops too much to prove it, so a run with coverage (CI) applies a relaxed gate (see the
   verification document)
-- **Package size**: the lexicon resource is 641,418 bytes and the weights resource 492,971 bytes (both already
+- **Package size**: the lexicon resource is 639,617 bytes and the weights resource 492,971 bytes (both already
   compressed), embedded once per target framework, so the four assemblies are about 1.2 to 1.5 MB each and the package
   (with the API reference and the XML documentation files) is about 5.3 MB (the exact size is not stated because it
   is not reproducible: the package holds timestamps and the SBOM)

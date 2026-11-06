@@ -186,8 +186,8 @@ public class LexiconTests
         // Assert: the wrong header is rejected, the right one accepted, and the real table has the documented counts
         Assert.Throws<InvalidDataException>(() => LexiconWriter.FromTsv(wrong));
         Assert.Equal(2, entries.Count);
-        Assert.Equal(262667, committed.Count);
-        Assert.Equal(339880, committed.Sum(e => e.Value.Count));
+        Assert.Equal(262635, committed.Count);
+        Assert.Equal(339823, committed.Sum(e => e.Value.Count));
     }
 
     /// <summary>
@@ -606,7 +606,7 @@ public class LexiconTests
             }
         }
 
-        // Assert: the coverage gate of the lexicon (the phase 1 table measures 99.913 percent)
+        // Assert: the coverage gate of the lexicon (the phase 1 table measures 99.921 percent)
         Assert.True(total > 20000);
         Assert.True(covered >= total * 0.999, $"covered {covered} of {total}");
     }
