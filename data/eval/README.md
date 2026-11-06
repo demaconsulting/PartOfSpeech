@@ -18,8 +18,9 @@ document and sentence out of these sets are in [../README.md](../README.md).
 ## Results and Reproduction
 
 Only the development splits (the open corpus and gold v2) were used to select the model and the confidence thresholds.
-The test splits, the shape probe, the challenge set and the UD English-EWT test file were evaluated once, for the frozen
-model. The [evaluation record](../../docs/evaluation/README.md) explains how to read the results, lists the limits of
+The test splits, the shape probe, the challenge set and the UD English-EWT test file were evaluated once for each of two
+models of one family (the model of the first corpus cleanup, then the embedded model that the follow-up selected: a
+disclosed second look), the last time for the frozen embedded model. The [evaluation record](../../docs/evaluation/README.md) explains how to read the results, lists the limits of
 the measurement (for example the convention differences for `to` and `not` in gold v2 and the weakness that the shape
 probe shows) and gives the commands that reproduce them, including the local UD English-EWT run. The figures are in
 [confidence-thresholds.md](../../docs/evaluation/confidence-thresholds.md) and

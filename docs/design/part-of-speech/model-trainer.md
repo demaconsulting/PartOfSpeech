@@ -219,7 +219,9 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   is a data error (exit code 2) before any line is parsed.
 - **Run once.** `evaluate` refuses to start when `docs/evaluation/test-results.json` or its lock file
   `docs/evaluation/test-results.json.running` exists. There is no `--force`: a repeat needs that committed file to be
-  deleted, which is visible in the history and must be recorded in the run log. Immediately before the first held-out
+  deleted, which is visible in the history and must be recorded in the run log. That was done once, for the second
+  evaluation of the model family (the model adopted after the `prenominal-ing` follow-up, a disclosed second look): the
+  record of the first retrained model was deleted on purpose before the run and stays in the history. Immediately before the first held-out
   token is scored, `evaluate` creates the lock file with `FileMode.CreateNew` (`DataGuard.AcquireRunLock`), so of two
   concurrent runs exactly one proceeds. The results file is written last, exclusively, and only then is the lock file
   removed. A run that is aborted after scoring began leaves the lock file behind on purpose; a stale lock blocks every

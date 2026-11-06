@@ -53,8 +53,8 @@ compiled word lexicon (639,711 bytes compressed) and the trained averaged-percep
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
-The model was selected on development data only and then evaluated once on held-out data, after the training corpora had
-been corrected and the model retrained. The
+The model was selected on development data only and then evaluated on held-out data (twice over the model family: a
+disclosed second look), after the training corpora had been corrected and the model retrained. The
 [evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the results
 and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to trust.
 
@@ -153,20 +153,22 @@ Read the numbers with these points in mind:
 
 The confidence is not equally reliable at every level, and the mistake that matters most is a noun that is tagged as a
 verb or a verb that is tagged as a noun (a harmful error). The embedded model was measured on that mistake: two
-thresholds were selected on development data only, and the model was then evaluated once on held-out data. A token is
+thresholds were selected on development data only, and the model was then evaluated on held-out data (the second
+evaluation of the model family on those sets). A token is
 answered at a threshold when its confidence is at least the threshold; coverage is the share of the noun-verb
 decisions that is answered.
 
 | Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
 | --- | ---: | ---: | ---: |
-| strict | 0.90 | 87.7% | 5.7 |
-| balanced | 0.85 | 90.9% | 6.5 |
+| strict | 0.95 | 83.8% | 3.5 |
+| balanced | 0.80 | 93.3% | 7.3 |
 
-On the development data the same thresholds answered 86.5% (strict, 4.8 harmful errors in 1,000) and 89.8% (balanced, 7.7)
-of the decisions. The strict target of at most 5 in 1,000 was met there and is slightly exceeded on the open test split
-(its 95% interval, 3.0 to 8.8, includes 5).
+On the development data the same thresholds answered 81.8% (strict, 3.1 harmful errors in 1,000) and 92.4% (balanced, 9.0)
+of the decisions. The strict target of at most 5 in 1,000 was met on the open test split by the point estimate (its 95%
+interval, 1.6 to 6.0, reaches above 5) and is exceeded on the held-out gold v2 test split (6.5 in 1,000 answered, five
+errors; interval 1.4 to 13.3).
 
-Without a threshold, 20.6 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
+Without a threshold, 18.7 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
 
 - **A consumer that needs a low harmful rate must use a threshold.** A rule checker, for example, uses `strict`:
@@ -174,7 +176,7 @@ on short technical and imperative text. Use these rules:
   ```csharp
   foreach (TaggedToken token in Tagger.Default.Tag("Close the valve.")[0].Tokens)
   {
-      bool trusted = token.Confidence >= 0.90;
+      bool trusted = token.Confidence >= 0.95;
       Console.WriteLine($"{token.Text}: {(trusted ? token.Tag.ToTagString() : "unknown")}");
   }
   ```

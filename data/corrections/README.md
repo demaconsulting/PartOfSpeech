@@ -658,5 +658,6 @@ the labels the importers wrote (and the mechanical rows changed) for these token
   new rows are produced against the corrected files (the generator `--check` reverses the applied rows in a temporary copy).
 - **Evaluation data.** The development and test splits of the open corpus are corrected like the training split. The gold v2
   set, the shape probe and the STE challenge set are not addressable by the overlay and keep their labels; they could follow
-  the same conventions in a later change. The held-out evaluation record was reissued for the retrained model (a new
-  record, in the trainer `RUN-LOG.md`, "Corpus cleanup C"); it pins the SHA-256 of the corrected development files.
+  the same conventions in a later change. The held-out evaluation record was reissued for the adopted model (a new
+  record, in the trainer `RUN-LOG.md`, "Corpus cleanup C"); it pins the SHA-256 of the corrected development files and
+  of the open test file, whose 17 `prenominal-ing` labels differ from those of the first record.
