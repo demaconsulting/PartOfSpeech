@@ -300,6 +300,41 @@ class ApplyTests(unittest.TestCase):
         self.assertEqual([], [name for name in os.listdir(os.path.dirname(path)) if name.endswith(".part")])
 
 
+class ChangedLinesTests(unittest.TestCase):
+    """`corrections.changed_lines`: the cheap comparison of an applied corpus file (no whole-file `difflib`)."""
+
+    HEADER = ["# corpus = x", "# status = unanimous | disputed | unchecked", ""]
+
+    def test_a_changed_token_row_is_reported_as_a_removed_and_an_added_line(self):
+        # Arrange
+        old = self.HEADER + ["a\tNOUN\tunchecked", "b\tVERB\tunchecked"]
+        new = self.HEADER + ["a\tNOUN\tunchecked", "b\tAUX\tunchecked"]
+        # Act
+        changes = corrections.changed_lines(old, new)
+        # Assert
+        self.assertEqual(["-b\tVERB\tunchecked", "+b\tAUX\tunchecked"], changes)
+
+    def test_nothing_changed_gives_no_lines(self):
+        self.assertEqual([], corrections.changed_lines(self.HEADER + ["a\tNOUN\tunchecked"], self.HEADER + ["a\tNOUN\tunchecked"]))
+
+    def test_the_header_line_that_documents_the_status_flags_is_reported_without_shifting_the_body(self):
+        # Arrange
+        note = corrections.flag_note()
+        old = self.HEADER + ["a\tNOUN\tunchecked", "b\tVERB\tunchecked"]
+        new = [self.HEADER[0], self.HEADER[1], note, ""] + ["a\tNOUN\tunchecked+mentioned", "b\tVERB\tunchecked"]
+        # Act
+        changes = corrections.changed_lines(old, new)
+        # Assert
+        self.assertEqual(["+" + note, "-a\tNOUN\tunchecked", "+a\tNOUN\tunchecked+mentioned"], changes)
+
+    def test_a_body_of_another_length_falls_back_to_a_full_comparison(self):
+        # Arrange
+        old = self.HEADER + ["a\tNOUN\tunchecked"]
+        new = self.HEADER + ["a\tNOUN\tunchecked", "b\tVERB\tunchecked"]
+        # Act and Assert
+        self.assertEqual(["+b\tVERB\tunchecked"], corrections.changed_lines(old, new))
+
+
 class CommandLineTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -370,6 +405,20 @@ class CommandLineTests(unittest.TestCase):
         self.assertNotEqual(before, after_write)
         self.assertIn("applied", text_valid)
         self.assertEqual(before, restored)
+
+    def test_apply_reports_the_changed_lines_of_every_file_and_prints_them_up_to_the_diff_limit(self):
+        # Arrange
+        self.write_mechanical(self.rows)
+        # Act
+        code, text = run(corrections.main, ["--data-dir", self.data, "apply", "--diff", "20"])
+        code_none, text_none = run(corrections.main, ["--data-dir", self.data, "apply", "--diff", "0"])
+        # Assert
+        self.assertEqual((0, 0), (code, code_none))
+        self.assertIn("open/train: 2 lines change", text)
+        self.assertIn("-out\tADV\tunanimous", text)
+        self.assertIn("+out\tADP\tunanimous", text)
+        self.assertIn("open/train: 2 lines change", text_none)
+        self.assertNotIn("ADV", text_none)
 
     def test_apply_refuses_when_the_corpora_are_in_the_other_state(self):
         # Arrange

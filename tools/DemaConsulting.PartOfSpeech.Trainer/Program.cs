@@ -62,14 +62,28 @@ internal static class Program
     private const string EvaluationFolder = "docs/evaluation";
 
     /// <summary>
-    ///     The harmful errors at 0.45 of the frozen model on the open development split (the freeze table of the run log).
+    ///     The file name, inside <see cref="EvaluationFolder"/>, of the disclosure paragraph that the generated Markdown reports carry
+    ///     (a missing or blank file means no notice). The text describes one model and one evaluation and must be revised or removed
+    ///     before a later evaluation of a different model is rendered.
     /// </summary>
-    private const int FrozenOpenHarmful = 94;
+    private const string DisclosureFile = "disclosure.md";
+    /// <summary>
+    ///     The harmful errors at 0.45 of the frozen model on the open development split (the freeze table of the run log;
+    ///     for the model retrained after the corpus cleanup C the development figure of the "Corpus cleanup C" sections
+    ///     of the run log replaces the first freeze figure of 94: 103 of 4,467 decisions for the first retrained model, and
+    ///     90 of 4,451 decisions for the model adopted after the pre-registered <c>-ing</c> follow-up, the figure
+    ///     that <c>thresholds</c> reported for it before it wrote anything).
+    /// </summary>
+    private const int FrozenOpenHarmful = 90;
 
     /// <summary>
-    ///     The harmful errors at 0.45 of the frozen model on the gold v2 development split (the freeze table of the run log).
+    ///     The harmful errors at 0.45 of the frozen model on the gold v2 development split (the freeze table of the run log;
+    ///     for the model retrained after the corpus cleanup C the development figure of the "Corpus cleanup C" sections
+    ///     of the run log replaces the first freeze figure of 9: 14 of 611 decisions for the first retrained model, and
+    ///     11 of 611 decisions for the model adopted after the pre-registered <c>-ing</c> follow-up, as reported by
+    ///     <c>thresholds</c>).
     /// </summary>
-    private const int FrozenGoldHarmful = 9;
+    private const int FrozenGoldHarmful = 11;
 
     /// <summary>
     ///     The usage text.
@@ -108,11 +122,13 @@ Commands:
       Development-only confidence curve and operating points: scores the embedded model on the two development sets,
       applies the pre-registered rule (strict and balanced points) and writes docs/evaluation/operating-points.json and
       docs/evaluation/confidence-thresholds.md. Refuses to write when the 0.45 row does not reproduce the frozen figures.
+      The report carries the paragraph of docs/evaluation/disclosure.md, if that file exists and is not blank.
   evaluate [--preflight] [--dump-dir DIR] [--ud-cache DIR] [--seed N] [--resamples N]
       The one held-out evaluation of the embedded model. Needs the committed operating-points.json for the frozen model
       (the held-out readers cannot open a file without it) and refuses to run when docs/evaluation/test-results.json
       or its lock file test-results.json.running exists; the lock is created exclusively before scoring and removed when
       the results are written (a stale lock of an aborted run is deleted by hand and recorded in RUN-LOG.md).
+      test-results.md carries the paragraph of docs/evaluation/disclosure.md, if that file exists and is not blank.
       --preflight parses every held-out input and prints counts only. --dump-dir (outside the repository) receives
       the per-token records of the run. There is no weights, data or threshold option.
 
@@ -481,7 +497,7 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
         var folder = Path.Combine(root, EvaluationFolder.Replace('/', Path.DirectorySeparatorChar));
         Directory.CreateDirectory(folder);
         File.WriteAllText(Path.Combine(folder, "operating-points.json"), OperatingPointsFile.Format(selection.ToArtifact(OperatingPointsFile.DevFiles(root))));
-        File.WriteAllText(Path.Combine(folder, "confidence-thresholds.md"), EvaluationReport.RenderDev(selection));
+        File.WriteAllText(Path.Combine(folder, "confidence-thresholds.md"), EvaluationReport.RenderDev(selection, EvaluationReport.ReadDisclosure(Path.Combine(folder, DisclosureFile))));
         foreach (var point in selection.Points)
         {
             Console.WriteLine(point.Row == null
@@ -592,7 +608,7 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
             Console.WriteLine($"Wrote the per-token records to {dump}.");
         }
 
-        File.WriteAllText(Path.Combine(folder, "test-results.md"), EvaluationReport.RenderResults(results, scores));
+        File.WriteAllText(Path.Combine(folder, "test-results.md"), EvaluationReport.RenderResults(results, scores, EvaluationReport.ReadDisclosure(Path.Combine(folder, DisclosureFile))));
         runLock.Complete(OperatingPointsFile.Format(results));
         Console.WriteLine($"Wrote test-results.md and test-results.json to {folder}.");
         Console.WriteLine(results.TripwiresFired.Count == 0 ? "No stop condition fired." : "Stop conditions fired:\n" + string.Join("\n", results.TripwiresFired));

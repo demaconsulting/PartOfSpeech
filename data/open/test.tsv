@@ -2,6 +2,7 @@
 # license = CC0-1.0 for annotations and selection; sentences are public domain or CC0 per source, see sources.tsv
 # columns = form, upos, status
 # status = unanimous | disputed | unchecked (consensus of the two annotators; unchecked = no second annotator)
+# status flags = a status may be followed by +foreign (word of another language) and +mentioned (word talked about, not used), in that order; a flag never changes the tag (data/CONVENTIONS.md)
 # origin = WordSense commit 6530de1928baf30f9a14446a54bfb5dd5f67b41c, corpus/open/representative/data/test.tsv, sha256 578d2f341c9baff78ec31997506d409deeacd922b4d1ae825e8c65275c2e19ae
 
 # sent_id = tatoeba-10002832
@@ -265,7 +266,7 @@ Tom	PROPN	unanimous
 is	VERB	unanimous
 a	DET	unanimous
 monolingual	ADJ	unanimous
-French	ADJ	disputed
+French	PROPN	disputed
 speaker	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -293,8 +294,8 @@ there	ADV	disputed
 # source_id = tatoeba-10147173
 # text = It's frozen solid.
 It	PRON	unanimous
-'s	VERB	unanimous
-frozen	ADJ	unanimous
+'s	VERB	disputed
+frozen	ADJ	disputed
 solid	ADJ	unanimous
 .	PUNCT	unanimous
 
@@ -456,9 +457,9 @@ hard	ADV	unanimous
 # source_id = tatoeba-10289736
 # text = Tom is not allowed to use the microwave.
 Tom	PROPN	unanimous
-is	VERB	disputed
+is	AUX	disputed
 not	PART	unanimous
-allowed	ADJ	disputed
+allowed	VERB	disputed
 to	PART	unanimous
 use	VERB	unanimous
 the	DET	unanimous
@@ -482,7 +483,7 @@ to	ADP	unanimous
 New	PROPN	unanimous
 York	PROPN	unanimous
 from	ADP	unanimous
-out	ADV	unanimous
+out	ADP	unanimous
 of	ADP	unanimous
 state	NOUN	unanimous
 .	PUNCT	unanimous
@@ -778,7 +779,7 @@ A	DET	unanimous
 blue	ADJ	unanimous
 diamond	NOUN	unanimous
 ,	PUNCT	unanimous
-one	PRON	unanimous
+one	NUM	unanimous
 of	ADP	unanimous
 the	DET	unanimous
 rarest	ADJ	unanimous
@@ -921,7 +922,7 @@ ancient	ADJ	unanimous
 practice	NOUN	unanimous
 of	ADP	unanimous
 "	PUNCT	unanimous
-gleaning	VERB	unanimous
+gleaning	NOUN	unanimous
 "	PUNCT	unanimous
 can	AUX	unanimous
 help	VERB	unanimous
@@ -1143,7 +1144,7 @@ fluke	NOUN	unanimous
 # sent_id = tatoeba-11162888
 # source_id = tatoeba-11162888
 # text = Sculptured votive wreaths, six in all, are hung between the capitals of the columns and the spandrel of the arches.
-Sculptured	ADJ	unanimous
+Sculptured	ADJ	disputed
 votive	ADJ	unanimous
 wreaths	NOUN	unanimous
 ,	PUNCT	unanimous
@@ -1151,8 +1152,8 @@ six	NUM	unanimous
 in	ADP	unanimous
 all	PRON	unanimous
 ,	PUNCT	unanimous
-are	VERB	disputed
-hung	ADJ	disputed
+are	AUX	disputed
+hung	VERB	disputed
 between	ADP	unanimous
 the	DET	unanimous
 capitals	NOUN	unanimous
@@ -1190,7 +1191,7 @@ Tom	PROPN	unanimous
 children	NOUN	unanimous
 watch	VERB	unanimous
 a	DET	unanimous
-Kabyle	ADJ	unanimous
+Kabyle	ADJ	disputed
 movie	NOUN	unanimous
 on	ADP	unanimous
 TV	NOUN	unanimous
@@ -1243,7 +1244,7 @@ times	NOUN	unanimous
 # sent_id = tatoeba-11220122
 # source_id = tatoeba-11220122
 # text = Thanks for being there for me.
-Thanks	INTJ	unanimous
+Thanks	NOUN	unanimous
 for	ADP	unanimous
 being	VERB	unanimous
 there	ADV	unanimous
@@ -1797,7 +1798,7 @@ sat	VERB	unanimous
 down	ADV	unanimous
 on	ADP	unanimous
 a	DET	unanimous
-felled	ADJ	unanimous
+felled	VERB	unanimous
 elm	NOUN	unanimous
 to	PART	unanimous
 open	VERB	unanimous
@@ -1856,8 +1857,8 @@ food	NOUN	unanimous
 # source_id = tatoeba-11554997
 # text = You're cut off.
 You	PRON	unanimous
-'re	VERB	disputed
-cut	ADJ	disputed
+'re	AUX	disputed
+cut	VERB	disputed
 off	ADV	unanimous
 .	PUNCT	unanimous
 
@@ -1973,7 +1974,7 @@ story	NOUN	unanimous
 # sent_id = tatoeba-11605316
 # source_id = tatoeba-11605316
 # text = Elected representatives have their own interests, which often run contrary to those of their constituents.
-Elected	ADJ	unanimous
+Elected	VERB	unanimous
 representatives	NOUN	unanimous
 have	VERB	disputed
 their	DET	unanimous
@@ -2016,7 +2017,7 @@ violence	NOUN	unanimous
 "	PUNCT	unanimous
 "	PUNCT	unanimous
 The	DET	unanimous
-Ayatollah	NOUN	disputed
+Ayatollah	PROPN	disputed
 wrote	VERB	unanimous
 down	ADV	unanimous
 some	DET	unanimous
@@ -2081,7 +2082,7 @@ happens	VERB	unanimous
 That	PRON	unanimous
 was	VERB	unanimous
 a	DET	unanimous
-chance	ADJ	disputed
+chance	NOUN	disputed
 shot	NOUN	unanimous
 ,	PUNCT	unanimous
 but	CCONJ	unanimous
@@ -2145,7 +2146,7 @@ preferences	NOUN	unanimous
 # text = Morocco is one of the few Arab countries to retain a substantial Jewish population after the 20th century.
 Morocco	PROPN	unanimous
 is	VERB	unanimous
-one	PRON	disputed
+one	NUM	disputed
 of	ADP	unanimous
 the	DET	unanimous
 few	ADJ	unanimous
@@ -2224,7 +2225,7 @@ the	DET	unanimous
 three	NUM	unanimous
 countries	NOUN	unanimous
 '	PART	unanimous
-growing	ADJ	disputed
+growing	VERB	disputed
 economies	NOUN	unanimous
 guzzle	VERB	unanimous
 more	ADJ	unanimous
@@ -2254,7 +2255,7 @@ unguarded	ADJ	unanimous
 coastline	NOUN	unanimous
 that	PRON	unanimous
 's	VERB	unanimous
-more	ADV	unanimous
+more	ADJ	unanimous
 than	ADP	disputed
 3,000	NUM	unanimous
 kilometers	NOUN	unanimous
@@ -2390,7 +2391,7 @@ by	ADP	unanimous
 narrow	ADJ	unanimous
 lanes	NOUN	unanimous
 ,	PUNCT	unanimous
-clogged	ADJ	disputed
+clogged	VERB	disputed
 with	ADP	unanimous
 vendors	NOUN	unanimous
 and	CCONJ	unanimous
@@ -2417,7 +2418,7 @@ dwellings	NOUN	unanimous
 # source_id = tatoeba-11838550
 # text = The head nurse came striding up, her leather heels clacking on the tile floor.
 The	DET	unanimous
-head	ADJ	disputed
+head	NOUN	disputed
 nurse	NOUN	unanimous
 came	VERB	unanimous
 striding	VERB	unanimous
@@ -2980,7 +2981,7 @@ best-seller	NOUN	unanimous
 and	CCONJ	unanimous
 it	PRON	unanimous
 remains	VERB	unanimous
-one	PRON	unanimous
+one	NUM	unanimous
 of	ADP	unanimous
 the	DET	unanimous
 most	ADV	unanimous
@@ -3093,7 +3094,7 @@ cough	NOUN	unanimous
 a	DET	unanimous
 symptom	NOUN	unanimous
 of	ADP	unanimous
-COVID	NOUN	disputed
+COVID	PROPN	disputed
 ?	PUNCT	unanimous
 
 # sent_id = tatoeba-12099077
@@ -3172,8 +3173,8 @@ suspect	VERB	unanimous
 the	DET	unanimous
 surfaces	NOUN	unanimous
 may	AUX	unanimous
-be	VERB	unanimous
-covered	ADJ	disputed
+be	AUX	unanimous
+covered	VERB	disputed
 with	ADP	unanimous
 some	DET	unanimous
 kind	NOUN	unanimous
@@ -3243,7 +3244,7 @@ organizations	NOUN	unanimous
 that	PRON	unanimous
 have	AUX	unanimous
 called	VERB	unanimous
-for	ADP	unanimous
+for	SCONJ	unanimous
 Jews	NOUN	unanimous
 to	PART	unanimous
 be	AUX	disputed
@@ -3271,7 +3272,7 @@ destiny	NOUN	unanimous
 # source_id = tatoeba-12143668
 # text = The Nation's forests have shrunk appreciably through the years, yet today almost 800 different species of native trees and hundreds of others introduced from foreign lands grow and thrive in the United States.
 The	DET	unanimous
-Nation	NOUN	disputed
+Nation	PROPN	disputed
 's	PART	unanimous
 forests	NOUN	unanimous
 have	AUX	unanimous
@@ -3351,7 +3352,7 @@ me	PRON	unanimous
 # sent_id = tatoeba-12192478
 # source_id = tatoeba-12192478
 # text = One of the things language can be used for is to talk about mental health.
-One	PRON	disputed
+One	NUM	disputed
 of	ADP	unanimous
 the	DET	unanimous
 things	NOUN	unanimous
@@ -3487,7 +3488,7 @@ found	VERB	unanimous
 the	DET	unanimous
 Beagle	PROPN	unanimous
 under	ADP	unanimous
-more	ADV	disputed
+more	ADJ	disputed
 than	ADP	disputed
 three	NUM	unanimous
 meters	NOUN	unanimous
@@ -3548,7 +3549,7 @@ the	DET	unanimous
 only	ADJ	unanimous
 enemy	NOUN	unanimous
 .	PUNCT	unanimous
-Striga	NOUN	disputed
+Striga	PROPN	disputed
 is	VERB	unanimous
 a	DET	unanimous
 parasitic	ADJ	unanimous
@@ -3648,8 +3649,8 @@ soil	NOUN	unanimous
 ,	PUNCT	unanimous
 may	AUX	unanimous
 someday	ADV	unanimous
-be	VERB	unanimous
-covered	ADJ	disputed
+be	AUX	unanimous
+covered	VERB	disputed
 with	ADP	unanimous
 rubber-producing	ADJ	unanimous
 yellow	ADJ	unanimous
@@ -3710,7 +3711,7 @@ this	PRON	disputed
 # text = Could you please pass the salt?
 Could	AUX	unanimous
 you	PRON	unanimous
-please	INTJ	unanimous
+please	INTJ	disputed
 pass	VERB	unanimous
 the	DET	unanimous
 salt	NOUN	unanimous
@@ -3824,7 +3825,7 @@ in	ADP	unanimous
 the	DET	unanimous
 south	NOUN	unanimous
 ,	PUNCT	unanimous
-are	AUX	disputed
+are	VERB	disputed
 two	NUM	unanimous
 bright	ADJ	unanimous
 stars	NOUN	unanimous
@@ -3949,7 +3950,7 @@ brought	VERB	unanimous
 a	DET	unanimous
 bucket	NOUN	unanimous
 of	ADP	unanimous
-fried	ADJ	unanimous
+fried	ADJ	disputed
 chicken	NOUN	unanimous
 to	ADP	unanimous
 the	DET	unanimous
@@ -4010,7 +4011,7 @@ ecology	NOUN	unanimous
 # text = Japan is one of those most well-prepared countries on earth in terms of tsunami warning.
 Japan	PROPN	unanimous
 is	VERB	unanimous
-one	PRON	disputed
+one	NUM	disputed
 of	ADP	unanimous
 those	DET	unanimous
 most	ADV	unanimous
@@ -4756,8 +4757,8 @@ The	DET	unanimous
 queen	NOUN	unanimous
 's	PART	unanimous
 crown	NOUN	unanimous
-was	VERB	unanimous
-adorned	ADJ	disputed
+was	AUX	unanimous
+adorned	VERB	disputed
 with	ADP	unanimous
 rubies	NOUN	unanimous
 and	CCONJ	unanimous
@@ -4937,7 +4938,7 @@ insurgency	NOUN	unanimous
 was	AUX	disputed
 ignored	VERB	unanimous
 by	ADP	unanimous
-televised	ADJ	unanimous
+televised	ADJ	disputed
 media	NOUN	unanimous
 until	SCONJ	unanimous
 their	DET	unanimous
@@ -4947,7 +4948,7 @@ about	ADP	unanimous
 it	PRON	unanimous
 on	ADP	unanimous
 the	DET	unanimous
-Internet	PROPN	unanimous
+Internet	PROPN	disputed
 and	CCONJ	unanimous
 began	VERB	unanimous
 to	PART	unanimous
@@ -5388,7 +5389,7 @@ in	ADP	unanimous
 Arabic	PROPN	unanimous
 with	ADP	unanimous
 some	DET	unanimous
-Hebrew	ADJ	disputed
+Hebrew	PROPN	disputed
 dialog	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -5687,7 +5688,7 @@ Tom	PROPN	unanimous
 's	VERB	unanimous
 a	DET	unanimous
 real	ADJ	unanimous
-closet	ADJ	disputed
+closet	NOUN	disputed
 case	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -5697,7 +5698,7 @@ case	NOUN	unanimous
 Tom	PROPN	unanimous
 's	PART	unanimous
 wireless	ADJ	unanimous
-internet	PROPN	disputed
+internet	NOUN	disputed
 went	VERB	unanimous
 out	ADV	unanimous
 as	ADV	disputed
@@ -5848,7 +5849,7 @@ missing	NOUN	disputed
 # source_id = tatoeba-9772046
 # text = I got hit with a football in the gonads.
 I	PRON	unanimous
-got	VERB	unanimous
+got	AUX	unanimous
 hit	VERB	unanimous
 with	ADP	unanimous
 a	DET	unanimous
@@ -5931,7 +5932,7 @@ weaknesses	NOUN	unanimous
 Who	PRON	unanimous
 knows	VERB	unanimous
 you	PRON	unanimous
-the	ADV	disputed
+the	DET	disputed
 best	ADV	unanimous
 ?	PUNCT	unanimous
 
@@ -6118,7 +6119,7 @@ couple	NOUN	unanimous
 had	VERB	unanimous
 toward	ADP	unanimous
 each	DET	unanimous
-other	PRON	unanimous
+other	PRON	disputed
 .	PUNCT	unanimous
 
 # sent_id = voa-3714928-s0039
@@ -6208,7 +6209,7 @@ writing	NOUN	unanimous
 # sent_id = voa-3789406-s0010
 # source_id = voa-3789406
 # text = One of the most important -- and most debated -- punctuation marks is the comma.
-One	PRON	disputed
+One	NUM	disputed
 of	ADP	unanimous
 the	DET	unanimous
 most	ADV	unanimous
@@ -6240,7 +6241,7 @@ to	PART	unanimous
 use	VERB	unanimous
 commas	NOUN	unanimous
 in	ADP	unanimous
-writing	VERB	unanimous
+writing	NOUN	unanimous
 .	PUNCT	unanimous
 
 # sent_id = voa-3789406-s0029
@@ -6375,7 +6376,7 @@ help	VERB	unanimous
 you	PRON	unanimous
 learn	VERB	unanimous
 about	ADP	unanimous
-English	ADJ	disputed
+English	PROPN	disputed
 grammar	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -6411,7 +6412,7 @@ now	ADV	unanimous
 look	VERB	unanimous
 closer	ADV	unanimous
 at	ADP	unanimous
-each	PRON	disputed
+each	DET	disputed
 of	ADP	unanimous
 the	DET	unanimous
 groups	NOUN	unanimous
@@ -6494,22 +6495,22 @@ the	DET	unanimous
 noun	NOUN	unanimous
 phrase	NOUN	unanimous
 "	PUNCT	unanimous
-a	DET	unanimous
-large	ADJ	unanimous
-man	NOUN	unanimous
+a	DET	unanimous+mentioned
+large	ADJ	unanimous+mentioned
+man	NOUN	unanimous+mentioned
 "	PUNCT	unanimous
 comes	VERB	unanimous
 between	ADP	unanimous
 the	DET	unanimous
 verb	NOUN	unanimous
 "	PUNCT	unanimous
-see	NOUN	disputed
+see	VERB	disputed+mentioned
 "	PUNCT	unanimous
 and	CCONJ	unanimous
 the	DET	unanimous
 gerund	NOUN	unanimous
 "	PUNCT	unanimous
-waiting	NOUN	disputed
+waiting	VERB	disputed+mentioned
 .	PUNCT	unanimous
 "	PUNCT	unanimous
 
@@ -6639,21 +6640,21 @@ modal	NOUN	unanimous
 ,	PUNCT	unanimous
 such	ADJ	unanimous
 as	ADP	unanimous
-should	NOUN	disputed
+should	AUX	disputed+mentioned
 ,	PUNCT	unanimous
-can	NOUN	disputed
+can	AUX	disputed+mentioned
 and	CCONJ	unanimous
-could	NOUN	disputed
+could	AUX	disputed+mentioned
 ,	PUNCT	unanimous
 or	CCONJ	unanimous
 with	ADP	unanimous
 the	DET	unanimous
 word	NOUN	unanimous
-do	NOUN	disputed
+do	AUX	disputed+mentioned
 ,	PUNCT	unanimous
-did	NOUN	disputed
+did	AUX	disputed+mentioned
 or	CCONJ	unanimous
-does	NOUN	disputed
+does	AUX	disputed+mentioned
 or	CCONJ	unanimous
 is	NOUN	disputed
 or	CCONJ	unanimous
@@ -6698,7 +6699,7 @@ used	VERB	unanimous
 # text = There are plenty of real life situations where we use present continuous passive.
 There	PRON	unanimous
 are	VERB	unanimous
-plenty	PRON	unanimous
+plenty	NOUN	unanimous
 of	ADP	unanimous
 real	ADJ	unanimous
 life	NOUN	unanimous
@@ -6971,7 +6972,7 @@ conversation	NOUN	unanimous
 # source_id = voa-5023664
 # text = For all of these exercises, there will of course be words and phrases that you do not know.
 For	ADP	unanimous
-all	PRON	disputed
+all	DET	disputed
 of	ADP	unanimous
 these	DET	unanimous
 exercises	NOUN	unanimous
@@ -7230,8 +7231,8 @@ use	VERB	unanimous
 the	DET	unanimous
 term	NOUN	unanimous
 "	PUNCT	unanimous
-rat	NOUN	unanimous
-race	NOUN	unanimous
+rat	NOUN	unanimous+mentioned
+race	NOUN	unanimous+mentioned
 "	PUNCT	unanimous
 to	PART	unanimous
 describe	VERB	unanimous
@@ -7301,8 +7302,8 @@ farmer	NOUN	unanimous
 # text = In the Comments Section, let us know if you are stuck in a rat race, if you like being in the rat race or if you have avoided a rat-race kind of life.
 In	ADP	unanimous
 the	DET	unanimous
-Comments	NOUN	unanimous
-Section	NOUN	unanimous
+Comments	NOUN	disputed
+Section	NOUN	disputed
 ,	PUNCT	unanimous
 let	VERB	unanimous
 us	PRON	unanimous
@@ -7353,15 +7354,15 @@ meaning	NOUN	unanimous
 In	ADP	unanimous
 general	ADJ	disputed
 ,	PUNCT	unanimous
-English	ADJ	disputed
+English	PROPN	disputed
 speakers	NOUN	unanimous
 use	VERB	unanimous
 a	DET	unanimous
 number	NOUN	unanimous
 of	ADP	unanimous
 and	CCONJ	unanimous
-few	NOUN	disputed
-along	ADV	disputed
+few	ADJ	disputed+mentioned
+along	ADP	disputed
 with	ADP	unanimous
 count	ADJ	disputed
 nouns	NOUN	unanimous
@@ -7397,7 +7398,7 @@ reporter	NOUN	unanimous
 # sent_id = voa-5355886-s0022
 # source_id = voa-5355886
 # text = Some of these, such as a number of, almost always have the word of.
-Some	PRON	unanimous
+Some	DET	unanimous
 of	ADP	unanimous
 these	PRON	disputed
 ,	PUNCT	unanimous
@@ -7412,7 +7413,7 @@ always	ADV	unanimous
 have	VERB	disputed
 the	DET	unanimous
 word	NOUN	unanimous
-of	NOUN	disputed
+of	ADP	disputed+mentioned
 .	PUNCT	unanimous
 
 # sent_id = voa-5355886-s0025
@@ -7420,10 +7421,10 @@ of	NOUN	disputed
 # text = The word few is a little more complicated and harder to explain.
 The	DET	unanimous
 word	NOUN	unanimous
-few	NOUN	unanimous
+few	ADJ	unanimous+mentioned
 is	VERB	unanimous
 a	DET	unanimous
-little	ADV	disputed
+little	ADJ	disputed
 more	ADV	unanimous
 complicated	ADJ	unanimous
 and	CCONJ	unanimous
@@ -7437,7 +7438,7 @@ explain	VERB	unanimous
 # text = The word of only appears sometimes.
 The	DET	unanimous
 word	NOUN	unanimous
-of	NOUN	disputed
+of	ADP	disputed+mentioned
 only	ADV	unanimous
 appears	VERB	unanimous
 sometimes	ADV	unanimous
@@ -7573,7 +7574,7 @@ importance	NOUN	unanimous
 In	ADP	unanimous
 the	DET	unanimous
 book	NOUN	unanimous
-Mastering	PROPN	unanimous
+Mastering	VERB	unanimous
 the	DET	unanimous
 American	PROPN	disputed
 Accent	PROPN	unanimous
@@ -7816,11 +7817,11 @@ the	DET	unanimous
 difference	NOUN	unanimous
 between	ADP	unanimous
 "	PUNCT	unanimous
-please	NOUN	disputed
+please	INTJ	disputed+mentioned
 "	PUNCT	unanimous
 and	CCONJ	unanimous
 "	PUNCT	unanimous
-kindly	NOUN	disputed
+kindly	ADV	disputed+mentioned
 .	PUNCT	unanimous
 "	PUNCT	unanimous
 
@@ -7840,7 +7841,7 @@ us	PRON	unanimous
 # source_id = voa-5466905
 # text = "Kindly" can be an adverb, a word that usually describes a verb.
 "	PUNCT	unanimous
-Kindly	NOUN	disputed
+Kindly	ADV	disputed+mentioned
 "	PUNCT	unanimous
 can	AUX	unanimous
 be	VERB	unanimous
@@ -7899,10 +7900,10 @@ letter	NOUN	unanimous
 # text = There, kindly describes "man" which is a noun.
 There	ADV	disputed
 ,	PUNCT	unanimous
-kindly	NOUN	disputed
+kindly	ADJ	disputed+mentioned
 describes	VERB	unanimous
 "	PUNCT	unanimous
-man	NOUN	unanimous
+man	NOUN	unanimous+mentioned
 "	PUNCT	unanimous
 which	PRON	unanimous
 is	VERB	unanimous
@@ -7988,7 +7989,7 @@ this	PRON	unanimous
 # text = The words what, where or why are also used for "wh-" questions.
 The	DET	unanimous
 words	NOUN	unanimous
-what	NOUN	disputed
+what	PRON	disputed+mentioned
 ,	PUNCT	unanimous
 where	NOUN	disputed
 or	CCONJ	unanimous
@@ -7998,7 +7999,7 @@ also	ADV	unanimous
 used	VERB	unanimous
 for	ADP	unanimous
 "	PUNCT	unanimous
-wh-	NOUN	disputed
+wh-	X	disputed+mentioned
 "	PUNCT	unanimous
 questions	NOUN	unanimous
 .	PUNCT	unanimous
@@ -8044,10 +8045,10 @@ such	ADJ	unanimous
 as	ADP	unanimous
 do	NOUN	disputed
 ,	PUNCT	unanimous
-have	NOUN	disputed
+have	AUX	disputed+mentioned
 ,	PUNCT	unanimous
 or	CCONJ	unanimous
-can	NOUN	disputed
+can	AUX	disputed+mentioned
 ,	PUNCT	unanimous
 in	ADP	unanimous
 between	ADP	unanimous
@@ -8172,7 +8173,7 @@ together	ADV	unanimous
 # text = After several failed relationships, she found this litmus test to be the one sure indicator of a good fit.
 After	ADP	unanimous
 several	ADJ	unanimous
-failed	ADJ	unanimous
+failed	ADJ	disputed
 relationships	NOUN	unanimous
 ,	PUNCT	unanimous
 she	PRON	unanimous
@@ -8356,7 +8357,7 @@ of	ADP	unanimous
 the	DET	unanimous
 sentence	NOUN	unanimous
 ,	PUNCT	unanimous
-English	ADJ	disputed
+English	PROPN	disputed
 speakers	NOUN	unanimous
 treat	VERB	unanimous
 them	PRON	unanimous
@@ -8395,11 +8396,11 @@ these	DET	unanimous
 indefinite	ADJ	unanimous
 pronouns	NOUN	unanimous
 ,	PUNCT	unanimous
-English	ADJ	disputed
+English	PROPN	disputed
 speakers	NOUN	unanimous
 also	ADV	unanimous
 use	VERB	unanimous
-they	NOUN	disputed
+they	PRON	disputed+mentioned
 when	SCONJ	unanimous
 talking	VERB	unanimous
 about	ADP	unanimous
@@ -8415,12 +8416,12 @@ gender	NOUN	unanimous
 is	VERB	unanimous
 unclear	ADJ	unanimous
 ,	PUNCT	unanimous
-English	ADJ	disputed
+English	PROPN	disputed
 speakers	NOUN	unanimous
 use	VERB	unanimous
 the	DET	unanimous
 term	NOUN	unanimous
-they	NOUN	disputed
+they	PRON	disputed+mentioned
 as	ADP	unanimous
 a	DET	unanimous
 kind	NOUN	unanimous
@@ -8666,7 +8667,7 @@ good	ADJ	unanimous
 for	ADP	unanimous
 me	PRON	unanimous
 ,	PUNCT	unanimous
-right	INTJ	unanimous
+right	INTJ	disputed
 ?	PUNCT	unanimous
 
 # sent_id = voa-5810673-s0008
@@ -8769,9 +8770,9 @@ rainbow	NOUN	unanimous
 or	CCONJ	unanimous
 just	ADV	unanimous
 "	PUNCT	unanimous
-pot	NOUN	unanimous
-of	ADP	unanimous
-gold	NOUN	unanimous
+pot	NOUN	unanimous+mentioned
+of	ADP	unanimous+mentioned
+gold	NOUN	unanimous+mentioned
 "	PUNCT	unanimous
 for	ADP	unanimous
 short	ADJ	unanimous
@@ -8893,7 +8894,7 @@ and	CCONJ	unanimous
 expressions	NOUN	unanimous
 in	ADP	unanimous
 the	DET	unanimous
-English	ADJ	disputed
+English	PROPN	disputed
 language	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -9086,7 +9087,7 @@ protection	NOUN	unanimous
 you	PRON	unanimous
 might	AUX	unanimous
 get	VERB	unanimous
-sunburned	ADJ	unanimous
+sunburned	ADJ	disputed
 .	PUNCT	unanimous
 
 # sent_id = voa-5946787-s0015
@@ -9235,7 +9236,7 @@ with	ADP	unanimous
 the	DET	unanimous
 word	NOUN	unanimous
 "	PUNCT	unanimous
-to	NOUN	disputed
+to	PART	disputed+mentioned
 "	PUNCT	unanimous
 and	CCONJ	unanimous
 is	AUX	disputed
@@ -9292,8 +9293,8 @@ Here	ADV	unanimous
 the	DET	unanimous
 verb	NOUN	unanimous
 "	PUNCT	unanimous
-to	PART	unanimous
-double	VERB	unanimous
+to	PART	unanimous+mentioned
+double	VERB	unanimous+mentioned
 "	PUNCT	unanimous
 means	VERB	unanimous
 to	PART	unanimous
@@ -9427,9 +9428,9 @@ is	VERB	unanimous
 similar	ADJ	unanimous
 to	ADP	unanimous
 "	PUNCT	unanimous
-in	ADP	unanimous
-any	DET	unanimous
-case	NOUN	unanimous
+in	ADP	unanimous+mentioned
+any	DET	unanimous+mentioned
+case	NOUN	unanimous+mentioned
 "	PUNCT	unanimous
 or	CCONJ	unanimous
 "	PUNCT	unanimous
@@ -9528,7 +9529,7 @@ is	AUX	disputed
 used	VERB	unanimous
 like	ADP	unanimous
 "	PUNCT	unanimous
-anyway	NOUN	disputed
+anyway	ADV	disputed+mentioned
 "	PUNCT	unanimous
 is	VERB	unanimous
 "	PUNCT	unanimous
@@ -9546,7 +9547,7 @@ about	ADP	unanimous
 the	DET	unanimous
 word	NOUN	unanimous
 "	PUNCT	unanimous
-nevertheless	NOUN	disputed
+nevertheless	ADV	disputed+mentioned
 .	PUNCT	unanimous
 "	PUNCT	unanimous
 
@@ -10287,7 +10288,7 @@ any	DET	unanimous
 difference	NOUN	unanimous
 between	ADP	unanimous
 "	PUNCT	unanimous
-avoid	NOUN	disputed
+avoid	VERB	disputed+mentioned
 "	PUNCT	unanimous
 and	CCONJ	unanimous
 "	PUNCT	unanimous
@@ -10394,7 +10395,7 @@ find	VERB	unanimous
 the	DET	unanimous
 word	NOUN	unanimous
 "	PUNCT	unanimous
-from	NOUN	disputed
+from	ADP	disputed+mentioned
 "	PUNCT	unanimous
 in	ADP	unanimous
 sentences	NOUN	unanimous
@@ -10479,7 +10480,7 @@ the	DET	disputed
 winter	NOUN	unanimous
 holidays	NOUN	unanimous
 ,	PUNCT	unanimous
-some	PRON	disputed
+some	DET	disputed
 of	ADP	unanimous
 us	PRON	unanimous
 may	AUX	unanimous
@@ -10496,7 +10497,7 @@ healthy	ADJ	unanimous
 # sent_id = voa-6942950-s0004
 # source_id = voa-6942950
 # text = One of our readers asked about expressions like, "the more you eat, the bigger your stomach gets."
-One	PRON	unanimous
+One	NUM	unanimous
 of	ADP	unanimous
 our	DET	unanimous
 readers	NOUN	disputed
@@ -10531,11 +10532,11 @@ comparative	ADJ	unanimous
 adjectives	NOUN	unanimous
 are	VERB	unanimous
 "	PUNCT	unanimous
-bigger	NOUN	disputed
+bigger	ADJ	disputed+mentioned
 "	PUNCT	unanimous
 and	CCONJ	unanimous
 "	PUNCT	unanimous
-more	NOUN	disputed
+more	ADJ	disputed+mentioned
 .	PUNCT	unanimous
 "	PUNCT	unanimous
 
@@ -10581,7 +10582,7 @@ can	AUX	unanimous
 choose	VERB	unanimous
 to	PART	unanimous
 include	VERB	unanimous
-one	PRON	unanimous
+one	NUM	unanimous
 of	ADP	unanimous
 the	DET	unanimous
 verbs	NOUN	unanimous
@@ -10657,13 +10658,13 @@ question	NOUN	unanimous
 # text = Important verbs related to objects or contents include have.
 Important	ADJ	unanimous
 verbs	NOUN	unanimous
-related	ADJ	unanimous
+related	ADJ	disputed
 to	ADP	unanimous
 objects	NOUN	unanimous
 or	CCONJ	unanimous
 contents	NOUN	unanimous
 include	VERB	unanimous
-have	NOUN	disputed
+have	VERB	disputed+mentioned
 .	PUNCT	unanimous
 
 # sent_id = voa-7014516-s0028
@@ -10679,7 +10680,7 @@ spaces	NOUN	unanimous
 the	DET	unanimous
 preposition	NOUN	unanimous
 "	PUNCT	unanimous
-in	NOUN	disputed
+in	ADP	disputed+mentioned
 "	PUNCT	unanimous
 is	VERB	unanimous
 probably	ADV	unanimous
@@ -10750,7 +10751,7 @@ How	ADV	unanimous
 do	AUX	unanimous
 we	PRON	unanimous
 put	VERB	unanimous
-all	PRON	disputed
+all	DET	disputed
 of	ADP	unanimous
 them	PRON	unanimous
 together	ADV	unanimous
@@ -10850,9 +10851,9 @@ on	ADP	unanimous
 the	DET	unanimous
 graves	NOUN	unanimous
 of	ADP	unanimous
-Union	ADJ	disputed
+Union	PROPN	disputed
 and	CCONJ	unanimous
-Confederate	ADJ	unanimous
+Confederate	ADJ	disputed
 soldiers	NOUN	unanimous
 in	ADP	unanimous
 the	DET	unanimous
@@ -11105,7 +11106,7 @@ song	NOUN	unanimous
 Now	ADV	unanimous
 with	ADP	unanimous
 the	DET	unanimous
-added	ADJ	unanimous
+added	ADJ	disputed
 word	NOUN	unanimous
 of	ADP	unanimous
 "	PUNCT	unanimous
@@ -11169,7 +11170,7 @@ with	ADP	unanimous
 the	DET	unanimous
 words	NOUN	unanimous
 "	PUNCT	unanimous
-one	NOUN	disputed
+one	NUM	disputed+mentioned
 "	PUNCT	unanimous
 and	CCONJ	unanimous
 "	PUNCT	unanimous
@@ -11259,7 +11260,7 @@ use	VERB	unanimous
 include	VERB	unanimous
 hope	NOUN	unanimous
 ,	PUNCT	unanimous
-think	NOUN	disputed
+think	VERB	disputed+mentioned
 ,	PUNCT	unanimous
 or	CCONJ	unanimous
 doubt	NOUN	disputed
@@ -11362,7 +11363,7 @@ uncertainty	NOUN	unanimous
 This	DET	unanimous
 week	NOUN	unanimous
 on	ADP	unanimous
-Ask	PROPN	unanimous
+Ask	PROPN	disputed
 a	DET	unanimous
 Teacher	PROPN	unanimous
 ,	PUNCT	unanimous
@@ -11377,7 +11378,7 @@ of	ADP	unanimous
 prepositions	NOUN	unanimous
 with	ADP	unanimous
 "	PUNCT	unanimous
-which	NOUN	disputed
+which	PRON	disputed+mentioned
 .	PUNCT	unanimous
 "	PUNCT	unanimous
 
@@ -11392,7 +11393,7 @@ question	NOUN	unanimous
 for	ADP	unanimous
 using	VERB	unanimous
 "	PUNCT	unanimous
-which	NOUN	disputed
+which	PRON	disputed+mentioned
 "	PUNCT	unanimous
 such	ADJ	unanimous
 as	ADP	unanimous
@@ -11417,7 +11418,7 @@ on	ADV	unanimous
 How	ADV	unanimous
 do	AUX	unanimous
 native	ADJ	unanimous
-English	ADJ	disputed
+English	PROPN	disputed
 speakers	NOUN	unanimous
 immediately	ADV	unanimous
 decide	VERB	unanimous
@@ -11446,7 +11447,7 @@ When	SCONJ	unanimous
 we	PRON	unanimous
 use	VERB	unanimous
 "	PUNCT	unanimous
-which	NOUN	disputed
+which	PRON	disputed+mentioned
 "	PUNCT	unanimous
 with	ADP	unanimous
 a	DET	unanimous
@@ -11487,11 +11488,11 @@ used	VERB	disputed
 prepositions	NOUN	unanimous
 with	ADP	unanimous
 "	PUNCT	unanimous
-which	NOUN	disputed
+which	PRON	disputed+mentioned
 "	PUNCT	unanimous
 are	VERB	unanimous
 "	PUNCT	unanimous
-in	NOUN	disputed
+in	ADP	disputed+mentioned
 "	PUNCT	unanimous
 and	CCONJ	unanimous
 "	PUNCT	unanimous
@@ -11535,7 +11536,7 @@ to	PART	unanimous
 use	VERB	unanimous
 with	ADP	unanimous
 "	PUNCT	unanimous
-which	NOUN	disputed
+which	PRON	disputed+mentioned
 "	PUNCT	unanimous
 ,	PUNCT	unanimous
 a	DET	unanimous
@@ -11543,7 +11544,7 @@ good	ADJ	unanimous
 choice	NOUN	unanimous
 is	VERB	unanimous
 "	PUNCT	unanimous
-in	NOUN	disputed
+in	ADP	disputed+mentioned
 "	PUNCT	unanimous
 because	SCONJ	unanimous
 it	PRON	unanimous
@@ -11742,7 +11743,7 @@ weapons	NOUN	unanimous
 This	DET	unanimous
 week	NOUN	unanimous
 on	ADP	unanimous
-Ask	PROPN	unanimous
+Ask	PROPN	disputed
 a	DET	unanimous
 Teacher	PROPN	unanimous
 ,	PUNCT	unanimous
@@ -11754,7 +11755,7 @@ about	ADP	unanimous
 the	DET	unanimous
 word	NOUN	unanimous
 "	PUNCT	unanimous
-wonder	NOUN	unanimous
+wonder	NOUN	disputed
 "	PUNCT	unanimous
 as	ADP	unanimous
 a	DET	unanimous
@@ -11792,7 +11793,7 @@ ways	NOUN	unanimous
 In	ADP	unanimous
 today	NOUN	disputed
 's	PART	unanimous
-Ask	PROPN	unanimous
+Ask	PROPN	disputed
 a	DET	unanimous
 Teacher	PROPN	unanimous
 will	AUX	unanimous
@@ -11804,7 +11805,7 @@ by	ADP	unanimous
 looking	VERB	unanimous
 at	ADP	unanimous
 "	PUNCT	unanimous
-wonder	NOUN	unanimous
+wonder	NOUN	unanimous+mentioned
 "	PUNCT	unanimous
 as	ADP	unanimous
 a	DET	unanimous
@@ -11825,7 +11826,7 @@ Old	PROPN	unanimous
 San	PROPN	unanimous
 Juan	PROPN	unanimous
 are	VERB	unanimous
-one	PRON	disputed
+one	NUM	disputed
 of	ADP	unanimous
 the	DET	unanimous
 wonders	NOUN	unanimous
@@ -11887,7 +11888,7 @@ giraffes	NOUN	unanimous
 We	PRON	unanimous
 use	VERB	unanimous
 "	PUNCT	unanimous
-wonder	NOUN	disputed
+wonder	NOUN	disputed+mentioned
 "	PUNCT	unanimous
 to	PART	unanimous
 describe	VERB	unanimous
@@ -11931,7 +11932,7 @@ and	CCONJ	unanimous
 across	ADP	unanimous
 the	DET	unanimous
 southern	ADJ	unanimous
-U.S.	ADJ	disputed
+U.S.	PROPN	disputed
 state	NOUN	unanimous
 consider	VERB	unanimous
 themselves	PRON	unanimous
@@ -11989,7 +11990,7 @@ So	ADV	unanimous
 ,	PUNCT	unanimous
 what	PRON	unanimous
 is	VERB	unanimous
-Creole	NOUN	disputed
+Creole	PROPN	disputed
 ?	PUNCT	unanimous
 
 # sent_id = voa-7402747-s0028
@@ -12015,7 +12016,7 @@ Here	ADV	unanimous
 ,	PUNCT	unanimous
 the	DET	unanimous
 definition	NOUN	unanimous
-kind	NOUN	unanimous
+kind	NOUN	disputed
 of	ADP	unanimous
 depends	VERB	unanimous
 on	ADP	unanimous
@@ -12059,7 +12060,7 @@ likely	ADJ	unanimous
 to	PART	unanimous
 call	VERB	unanimous
 themselves	PRON	unanimous
-Creole	ADJ	unanimous
+Creole	ADJ	disputed
 as	ADP	disputed
 mixed-race	ADJ	unanimous
 people	NOUN	unanimous
@@ -12113,7 +12114,7 @@ the	DET	unanimous
 Civil	PROPN	unanimous
 war	PROPN	disputed
 as	ADP	unanimous
-organized	ADJ	disputed
+organized	VERB	disputed
 into	ADP	unanimous
 three	NUM	unanimous
 levels	NOUN	unanimous
@@ -12450,7 +12451,7 @@ me	PRON	unanimous
 or	CCONJ	unanimous
 "	PUNCT	unanimous
 My	DET	unanimous
-bad	NOUN	disputed
+bad	NOUN	disputed+mentioned
 .	PUNCT	unanimous
 "	PUNCT	unanimous
 
@@ -12481,12 +12482,12 @@ mistake	NOUN	unanimous
 # source_id = voa-7846622
 # text = Some English speakers may say mea culpa.
 Some	DET	unanimous
-English	ADJ	disputed
+English	PROPN	disputed
 speakers	NOUN	unanimous
 may	AUX	unanimous
 say	VERB	unanimous
-mea	X	unanimous
-culpa	X	unanimous
+mea	X	disputed
+culpa	X	disputed
 .	PUNCT	unanimous
 
 # sent_id = voa-7846622-s0010
@@ -12498,13 +12499,13 @@ publisher	NOUN	unanimous
 Merriam-Webster	PROPN	unanimous
 says	VERB	unanimous
 that	SCONJ	unanimous
-mea	X	unanimous
-culpa	X	unanimous
+mea	DET	unanimous+foreign+mentioned
+culpa	NOUN	unanimous+foreign+mentioned
 means	VERB	unanimous
 "	PUNCT	unanimous
-through	ADP	unanimous
-my	DET	unanimous
-fault	NOUN	unanimous
+through	ADP	unanimous+mentioned
+my	DET	unanimous+mentioned
+fault	NOUN	unanimous+mentioned
 "	PUNCT	unanimous
 in	ADP	unanimous
 Latin	PROPN	unanimous
@@ -12530,8 +12531,8 @@ Church	PROPN	unanimous
 # sent_id = voa-7846622-s0013
 # source_id = voa-7846622
 # text = Mea culpa is also a noun.
-Mea	X	unanimous
-culpa	X	unanimous
+Mea	DET	unanimous+foreign+mentioned
+culpa	NOUN	unanimous+foreign+mentioned
 is	VERB	unanimous
 also	ADV	unanimous
 a	DET	unanimous
@@ -12553,8 +12554,8 @@ or	CCONJ	unanimous
 issue	VERB	unanimous
 ,	PUNCT	unanimous
 a	DET	unanimous
-mea	X	unanimous
-culpa	X	unanimous
+mea	X	disputed
+culpa	X	disputed
 .	PUNCT	unanimous
 
 # sent_id = voa-7846622-s0017
@@ -12563,8 +12564,8 @@ culpa	X	unanimous
 The	DET	unanimous
 mayor	NOUN	unanimous
 's	PART	unanimous
-mea	X	unanimous
-culpa	X	unanimous
+mea	X	unanimous+foreign
+culpa	X	unanimous+foreign
 did	AUX	disputed
 not	PART	unanimous
 change	VERB	unanimous
@@ -12583,21 +12584,21 @@ election	NOUN	unanimous
 # sent_id = voa-7846622-s0018
 # source_id = voa-7846622
 # text = Mea culpa is one of many English terms that come from the Latin word culpa which means guilt.
-Mea	X	unanimous
-culpa	X	unanimous
+Mea	DET	unanimous+foreign+mentioned
+culpa	NOUN	unanimous+foreign+mentioned
 is	VERB	unanimous
-one	PRON	unanimous
+one	NUM	unanimous
 of	ADP	unanimous
 many	ADJ	unanimous
-English	ADJ	disputed
+English	PROPN	disputed
 terms	NOUN	unanimous
 that	PRON	unanimous
 come	VERB	unanimous
 from	ADP	unanimous
 the	DET	unanimous
-Latin	ADJ	disputed
+Latin	PROPN	disputed
 word	NOUN	unanimous
-culpa	X	disputed
+culpa	NOUN	disputed+foreign+mentioned
 which	PRON	unanimous
 means	VERB	unanimous
 guilt	NOUN	unanimous
@@ -12645,13 +12646,13 @@ culprit	NOUN	unanimous
 And	CCONJ	unanimous
 the	DET	unanimous
 word	NOUN	unanimous
-exculpate	NOUN	unanimous
+exculpate	VERB	unanimous+mentioned
 means	VERB	unanimous
 to	PART	unanimous
 clear	VERB	unanimous
 someone	PRON	unanimous
 from	ADP	unanimous
-suspected	ADJ	unanimous
+suspected	ADJ	disputed
 fault	NOUN	unanimous
 or	CCONJ	unanimous
 guilt	NOUN	unanimous
@@ -12735,11 +12736,11 @@ process	NOUN	unanimous
 The	DET	unanimous
 words	NOUN	unanimous
 "	PUNCT	unanimous
-involuntary	NOUN	disputed
+involuntary	ADJ	disputed+mentioned
 "	PUNCT	unanimous
 and	CCONJ	unanimous
 "	PUNCT	unanimous
-automatic	NOUN	disputed
+automatic	ADJ	disputed+mentioned
 "	PUNCT	unanimous
 are	VERB	unanimous
 important	ADJ	unanimous
@@ -12748,8 +12749,8 @@ understanding	VERB	unanimous
 the	DET	unanimous
 term	NOUN	unanimous
 "	PUNCT	unanimous
-knee	NOUN	unanimous
-jerk	NOUN	unanimous
+knee	NOUN	unanimous+mentioned
+jerk	NOUN	unanimous+mentioned
 "	PUNCT	unanimous
 and	CCONJ	unanimous
 when	ADV	disputed
@@ -12801,7 +12802,7 @@ player	NOUN	unanimous
 always	ADV	unanimous
 blames	VERB	unanimous
 the	DET	unanimous
-dropped	ADJ	unanimous
+dropped	ADJ	disputed
 ball	NOUN	unanimous
 on	ADP	unanimous
 other	ADJ	unanimous
@@ -13337,8 +13338,8 @@ heat	NOUN	unanimous
 ,	PUNCT	unanimous
 while	SCONJ	unanimous
 others	PRON	unanimous
-were	VERB	disputed
-suspended	ADJ	disputed
+were	AUX	disputed
+suspended	VERB	disputed
 in	ADP	unanimous
 the	DET	unanimous
 magma	NOUN	unanimous
@@ -13657,7 +13658,7 @@ Bend	PROPN	unanimous
 fossil	NOUN	disputed
 record	NOUN	unanimous
 is	VERB	unanimous
-one	PRON	unanimous
+one	NUM	unanimous
 of	ADP	unanimous
 the	DET	unanimous
 most	ADV	unanimous
@@ -13675,7 +13676,7 @@ System	PROPN	unanimous
 Big	PROPN	unanimous
 Bend	PROPN	unanimous
 is	VERB	unanimous
-one	PRON	unanimous
+one	NUM	unanimous
 of	ADP	unanimous
 the	DET	unanimous
 world	NOUN	unanimous
@@ -13770,7 +13771,7 @@ operations	NOUN	unanimous
 # source_id = nps-bibe-hc-original_settlers
 # text = After some of the mines in the Boquillas area closed in 1919, farming along the river floodplain became the major activity of the area.
 After	SCONJ	unanimous
-some	PRON	disputed
+some	DET	disputed
 of	ADP	unanimous
 the	DET	unanimous
 mines	NOUN	unanimous
@@ -13827,7 +13828,7 @@ Here	ADV	unanimous
 you	PRON	unanimous
 'll	AUX	unanimous
 find	VERB	unanimous
-some	PRON	disputed
+some	DET	disputed
 of	ADP	unanimous
 Big	PROPN	unanimous
 Bend	PROPN	unanimous
@@ -13999,8 +14000,8 @@ as	SCONJ	unanimous
 cultures	NOUN	unanimous
 interacted	VERB	unanimous
 with	ADP	unanimous
-each	PRON	disputed
-other	PRON	unanimous
+each	DET	disputed
+other	ADJ	unanimous
 and	CCONJ	unanimous
 the	DET	unanimous
 landscape	NOUN	unanimous
@@ -14030,7 +14031,7 @@ The	DET	unanimous
 descendents	NOUN	unanimous
 of	ADP	unanimous
 these	DET	unanimous
-groups―modern	X	disputed
+groups―modern	NOUN	disputed
 day	NOUN	unanimous
 Native	ADJ	unanimous
 American	ADJ	unanimous
@@ -14069,7 +14070,7 @@ the	DET	unanimous
 United	PROPN	unanimous
 States	PROPN	unanimous
 during	ADP	unanimous
-some	PRON	disputed
+some	DET	disputed
 of	ADP	unanimous
 its	DET	unanimous
 most	ADV	unanimous
@@ -14097,7 +14098,7 @@ our	DET	unanimous
 website	NOUN	unanimous
 to	PART	unanimous
 learn	VERB	unanimous
-more	PRON	unanimous
+more	ADJ	unanimous
 about	ADP	unanimous
 key	ADJ	unanimous
 historical	ADJ	unanimous
@@ -14187,7 +14188,7 @@ it	PRON	unanimous
 is	VERB	unanimous
 not	PART	unanimous
 common	ADJ	unanimous
-for	ADP	unanimous
+for	SCONJ	unanimous
 visitors	NOUN	unanimous
 to	PART	unanimous
 come	VERB	unanimous
@@ -14201,8 +14202,8 @@ them	PRON	unanimous
 An	DET	unanimous
 amphibian	NOUN	unanimous
 survey	NOUN	unanimous
-is	VERB	unanimous
-planned	ADJ	disputed
+is	AUX	unanimous
+planned	VERB	disputed
 for	ADP	unanimous
 the	DET	unanimous
 summer	NOUN	unanimous
@@ -14280,7 +14281,7 @@ staff	NOUN	unanimous
 in	ADP	unanimous
 research	NOUN	unanimous
 ,	PUNCT	unanimous
-planning	VERB	unanimous
+planning	VERB	disputed
 and	CCONJ	unanimous
 writing	VERB	unanimous
 park	NOUN	unanimous
@@ -14343,7 +14344,7 @@ battle	NOUN	unanimous
 # source_id = nps-gett-hc-research
 # text = (Most of the Civil War and battle related paper items have been copied for the research collection in the park library.)
 (	PUNCT	unanimous
-Most	PRON	disputed
+Most	ADJ	disputed
 of	ADP	unanimous
 the	DET	unanimous
 Civil	PROPN	disputed
@@ -14381,8 +14382,8 @@ determined	VERB	unanimous
 and	CCONJ	unanimous
 collection	NOUN	unanimous
 sites	NOUN	unanimous
-were	VERB	disputed
-based	ADJ	disputed
+were	AUX	disputed
+based	VERB	disputed
 on	ADP	unanimous
 the	DET	unanimous
 availability	NOUN	unanimous
@@ -14762,7 +14763,7 @@ collected	VERB	unanimous
 by	ADP	unanimous
 the	DET	unanimous
 crew	NOUN	unanimous
-while	SCONJ	unanimous
+while	SCONJ	disputed
 walking	VERB	unanimous
 shoulder	NOUN	unanimous
 to	ADP	unanimous
@@ -14898,7 +14899,7 @@ it	PRON	unanimous
 that	PRON	unanimous
 had	VERB	disputed
 an	DET	unanimous
-oxidized	ADJ	unanimous
+oxidized	ADJ	disputed
 soil	NOUN	unanimous
 base	NOUN	unanimous
 and	CCONJ	unanimous
@@ -15053,13 +15054,13 @@ screen	NOUN	unanimous
 You	PRON	unanimous
 need	VERB	unanimous
 at	ADP	unanimous
-least	ADV	unanimous
+least	ADJ	unanimous
 a	DET	unanimous
 high	ADJ	unanimous
 school	NOUN	unanimous
 diploma	NOUN	unanimous
 or	CCONJ	unanimous
-GED	NOUN	unanimous
+GED	NOUN	disputed
 for	ADP	unanimous
 most	ADJ	unanimous
 seasonal	ADJ	unanimous
@@ -15133,7 +15134,7 @@ by	ADP	unanimous
 Alana	PROPN	unanimous
 Kanahele	PROPN	unanimous
 ,	PUNCT	unanimous
-graduate	ADJ	disputed
+graduate	NOUN	disputed
 research	NOUN	unanimous
 assistant	NOUN	unanimous
 at	ADP	unanimous
@@ -15347,7 +15348,7 @@ The	DET	disputed
 CCC	PROPN	disputed
 program	NOUN	unanimous
 was	VERB	unanimous
-one	PRON	disputed
+one	NUM	disputed
 of	ADP	unanimous
 several	ADJ	disputed
 federal	ADJ	unanimous
@@ -15413,14 +15414,14 @@ tall	ADJ	unanimous
 ,	PUNCT	unanimous
 weigh	VERB	unanimous
 at	ADP	unanimous
-least	ADV	unanimous
+least	ADJ	unanimous
 107	NUM	unanimous
 pounds	NOUN	unanimous
 ,	PUNCT	unanimous
 and	CCONJ	unanimous
 have	VERB	unanimous
 no	ADV	disputed
-less	ADV	unanimous
+less	ADJ	unanimous
 than	ADP	disputed
 three	NUM	unanimous
 teeth	NOUN	unanimous
@@ -15453,7 +15454,7 @@ home	ADV	unanimous
 )	PUNCT	unanimous
 for	ADP	unanimous
 no	ADV	disputed
-less	ADV	unanimous
+less	ADJ	unanimous
 than	ADP	disputed
 a	DET	unanimous
 six-month	ADJ	unanimous
@@ -15469,8 +15470,8 @@ Arch	PROPN	unanimous
 National	PROPN	unanimous
 Park	PROPN	unanimous
 Archives	PROPN	unanimous
-are	VERB	unanimous
-located	ADJ	disputed
+are	AUX	unanimous
+located	VERB	disputed
 in	ADP	unanimous
 downtown	ADJ	disputed
 St.	PROPN	unanimous
@@ -15501,7 +15502,7 @@ the	DET	unanimous
 park	NOUN	unanimous
 and	CCONJ	unanimous
 its	DET	unanimous
-associated	ADJ	unanimous
+associated	ADJ	disputed
 themes	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -15566,7 +15567,7 @@ With	ADP	unanimous
 precipitation	NOUN	unanimous
 far	ADV	unanimous
 below	ADP	unanimous
-normal	NOUN	disputed
+normal	ADJ	disputed
 ,	PUNCT	unanimous
 conditions	NOUN	unanimous
 in	ADP	unanimous
@@ -15591,7 +15592,7 @@ fall	NOUN	unanimous
 Lassen	PROPN	unanimous
 Volcanic	PROPN	unanimous
 is	VERB	unanimous
-one	PRON	disputed
+one	NUM	disputed
 of	ADP	unanimous
 numerous	ADJ	unanimous
 organizations	NOUN	unanimous
@@ -15637,7 +15638,7 @@ and	CCONJ	unanimous
 Cascade	PROPN	unanimous
 ranges	NOUN	unanimous
 provide	VERB	unanimous
-more	ADV	disputed
+more	ADJ	disputed
 than	ADP	disputed
 one-third	NUM	unanimous
 of	ADP	unanimous
@@ -15702,7 +15703,7 @@ cave	NOUN	unanimous
 more	ADV	unanimous
 than	ADP	disputed
 the	DET	unanimous
-other	PRON	disputed
+other	ADJ	disputed
 .	PUNCT	unanimous
 
 # sent_id = nps-maca-hc-womens-history-s0050
@@ -15872,7 +15873,7 @@ our	DET	unanimous
 other	ADJ	unanimous
 senses	NOUN	unanimous
 of	ADP	unanimous
-hearing	VERB	disputed
+hearing	NOUN	disputed
 ,	PUNCT	unanimous
 touching	VERB	unanimous
 ,	PUNCT	unanimous
@@ -15974,7 +15975,7 @@ grounds	NOUN	disputed
 for	ADP	disputed
 the	DET	disputed
 African-American	ADJ	disputed
-Union	ADJ	unanimous
+Union	PROPN	unanimous
 soldiers	NOUN	unanimous
 ,	PUNCT	unanimous
 demonstrating	VERB	unanimous
@@ -16018,7 +16019,7 @@ ceiling	NOUN	unanimous
 could	AUX	unanimous
 n't	PART	unanimous
 be	VERB	unanimous
-more	ADV	unanimous
+more	ADJ	unanimous
 than	ADP	disputed
 two	NUM	unanimous
 feet	NOUN	unanimous
@@ -16195,13 +16196,13 @@ to	PART	unanimous
 say	VERB	unanimous
 we	PRON	unanimous
 learned	VERB	unanimous
-some	PRON	disputed
+some	DET	disputed
 of	ADP	unanimous
 their	DET	unanimous
 language	NOUN	unanimous
 and	CCONJ	unanimous
 they	PRON	unanimous
-some	PRON	disputed
+some	DET	disputed
 of	ADP	unanimous
 ours	PRON	unanimous
 .	PUNCT	unanimous
@@ -16359,7 +16360,7 @@ the	DET	unanimous
 year	NOUN	unanimous
 that	PRON	disputed
 showcase	VERB	unanimous
-some	PRON	disputed
+some	DET	disputed
 of	ADP	unanimous
 our	DET	unanimous
 own	ADJ	unanimous
@@ -16498,14 +16499,14 @@ are	VERB	unanimous
 the	DET	unanimous
 black-chinned	ADJ	unanimous
 (	PUNCT	unanimous
-Archilochus	X	disputed
-alexandri	X	disputed
+Archilochus	PROPN	disputed
+alexandri	PROPN	disputed
 )	PUNCT	unanimous
 and	CCONJ	unanimous
 broad-tailed	ADJ	unanimous
 (	PUNCT	unanimous
-Selasphorus	X	disputed
-platycercus	X	disputed
+Selasphorus	PROPN	disputed
+platycercus	PROPN	disputed
 )	PUNCT	unanimous
 hummingbirds	NOUN	unanimous
 which	PRON	unanimous
@@ -16578,7 +16579,7 @@ trails	NOUN	unanimous
 Return	VERB	unanimous
 to	ADP	unanimous
 the	DET	unanimous
-Birds	NOUN	disputed
+Birds	PROPN	disputed
 page	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -16640,8 +16641,8 @@ The	DET	unanimous
 desert	NOUN	unanimous
 tortoise	NOUN	unanimous
 population	NOUN	unanimous
-is	VERB	unanimous
-threatened	ADJ	unanimous
+is	VERB	disputed
+threatened	ADJ	disputed
 because	ADP	disputed
 of	ADP	unanimous
 high	ADJ	unanimous
@@ -16703,7 +16704,7 @@ height	NOUN	unanimous
 # text = From as low as -184°F (-120°C) at the bottom of this layer, temperatures can reach as high as 3,600°F (2,000°C) near the top.
 From	ADP	unanimous
 as	ADV	disputed
-low	ADV	disputed
+low	ADJ	disputed
 as	ADP	disputed
 -184°F	NUM	disputed
 (	PUNCT	unanimous
@@ -16799,7 +16800,7 @@ energy	NOUN	unanimous
 light	NOUN	unanimous
 waves	NOUN	unanimous
 refract	VERB	unanimous
-the	ADV	disputed
+the	DET	disputed
 least	ADV	unanimous
 ,	PUNCT	unanimous
 while	SCONJ	unanimous
@@ -16925,7 +16926,7 @@ leading	VERB	unanimous
 to	ADP	unanimous
 the	DET	unanimous
 phrase	NOUN	unanimous
-straight-line	ADJ	unanimous
+straight-line	ADJ	unanimous+mentioned
 wind	NOUN	unanimous
 damage	NOUN	unanimous
 .	PUNCT	unanimous
@@ -16982,7 +16983,7 @@ do	AUX	unanimous
 not	PART	unanimous
 cross	VERB	unanimous
 each	DET	unanimous
-other	PRON	unanimous
+other	ADJ	unanimous
 .	PUNCT	unanimous
 
 # sent_id = nws-jetstream-dew-point-temperature-map-s0005
@@ -17001,7 +17002,7 @@ temperatures	NOUN	unanimous
 much	ADV	unanimous
 like	SCONJ	disputed
 you	PRON	unanimous
-did	AUX	unanimous
+did	VERB	unanimous
 with	ADP	unanimous
 the	DET	unanimous
 air	NOUN	unanimous
@@ -17267,8 +17268,8 @@ wave	NOUN	unanimous
 called	VERB	unanimous
 a	DET	unanimous
 "	PUNCT	unanimous
-return	NOUN	unanimous
-stroke	NOUN	unanimous
+return	NOUN	disputed
+stroke	NOUN	disputed
 "	PUNCT	unanimous
 ,	PUNCT	unanimous
 then	ADV	unanimous
@@ -17292,8 +17293,8 @@ is	AUX	disputed
 called	VERB	unanimous
 a	DET	unanimous
 "	PUNCT	unanimous
-dart	NOUN	unanimous
-leader	NOUN	unanimous
+dart	NOUN	unanimous+mentioned
+leader	NOUN	unanimous+mentioned
 "	PUNCT	unanimous
 because	SCONJ	unanimous
 it	PRON	unanimous
@@ -17382,9 +17383,9 @@ as	ADV	disputed
 long	ADV	disputed
 as	SCONJ	unanimous
 they	PRON	unanimous
-are	VERB	unanimous
+are	AUX	unanimous
 not	PART	unanimous
-plugged	ADJ	disputed
+plugged	VERB	disputed
 in	ADV	unanimous
 .	PUNCT	unanimous
 
@@ -17410,7 +17411,7 @@ The	DET	unanimous
 students	NOUN	unanimous
 will	AUX	unanimous
 discover	VERB	unanimous
-more	PRON	disputed
+more	ADJ	disputed
 of	ADP	unanimous
 these	DET	unanimous
 cycles	NOUN	unanimous
@@ -17629,8 +17630,8 @@ forecaster	NOUN	unanimous
 and	CCONJ	unanimous
 the	DET	unanimous
 NWS	PROPN	unanimous
-Forecast	NOUN	disputed
-Offices	NOUN	disputed
+Forecast	PROPN	disputed
+Offices	PROPN	disputed
 .	PUNCT	unanimous
 
 # sent_id = nws-jetstream-rfcs-s0050
@@ -17647,7 +17648,7 @@ modeled	VERB	unanimous
 to	PART	unanimous
 estimate	VERB	unanimous
 how	ADV	unanimous
-much	PRON	disputed
+much	ADJ	disputed
 of	ADP	unanimous
 the	DET	unanimous
 rainfall	NOUN	unanimous
@@ -17860,8 +17861,8 @@ charts	NOUN	unanimous
 # source_id = nws-jetstream-upper-air-charts-constant-pressure-charts-500-mb
 # text = It is based upon the assumption 500 mb is one-half of 1000 millibars (at sea level) and the top of the atmosphere, zero millibars, which occurs at 30+ miles (50+ kilometers) high.
 It	PRON	unanimous
-is	VERB	unanimous
-based	ADJ	disputed
+is	AUX	unanimous
+based	VERB	disputed
 upon	ADP	unanimous
 the	DET	unanimous
 assumption	NOUN	unanimous
@@ -17987,7 +17988,7 @@ rotation	NOUN	unanimous
 of	ADP	unanimous
 an	DET	unanimous
 object	NOUN	unanimous
-based	ADJ	disputed
+based	VERB	disputed
 upon	ADP	unanimous
 its	DET	unanimous
 location	NOUN	unanimous
@@ -18170,7 +18171,7 @@ disabled	ADJ	unanimous
 person	NOUN	unanimous
 or	CCONJ	unanimous
 pet	NOUN	unanimous
-locked	ADJ	disputed
+locked	VERB	disputed
 in	ADP	unanimous
 a	DET	unanimous
 car	NOUN	unanimous
@@ -18482,8 +18483,8 @@ mountain	NOUN	unanimous
 # text = When winds are sustained at 40-50 mph, isolated wind damage is possible.
 When	SCONJ	unanimous
 winds	NOUN	unanimous
-are	VERB	unanimous
-sustained	ADJ	unanimous
+are	AUX	unanimous
+sustained	VERB	unanimous
 at	ADP	unanimous
 40-50	NUM	unanimous
 mph	NOUN	unanimous
@@ -18737,7 +18738,7 @@ Steblein	PROPN	unanimous
 # sent_id = usgs-featured-story-bipartisan-infrastructure-law-funds-stoke-wildland-fire-scie-s0022
 # source_id = usgs-featured-story-bipartisan-infrastructure-law-funds-stoke-wildland-fire-scie
 # text = Prescribed wildland fire was an important practice for Indigenous cultures, which long used fire to rejuvenate landscapes across the continent.
-Prescribed	ADJ	unanimous
+Prescribed	ADJ	disputed
 wildland	NOUN	unanimous
 fire	NOUN	unanimous
 was	VERB	unanimous
@@ -18794,7 +18795,7 @@ was	AUX	disputed
 detected	VERB	disputed
 in	ADP	unanimous
 26	NUM	unanimous
-U.S.	ADJ	disputed
+U.S.	PROPN	disputed
 states	NOUN	unanimous
 and	CCONJ	unanimous
 three	NUM	unanimous
@@ -18908,7 +18909,7 @@ clearly	ADV	unanimous
 changed	VERB	unanimous
 for	ADP	unanimous
 the	DET	unanimous
-better	NOUN	unanimous
+better	ADJ	unanimous
 ,	PUNCT	unanimous
 and	CCONJ	unanimous
 women	NOUN	unanimous
@@ -18929,7 +18930,7 @@ counterparts	NOUN	unanimous
 # sent_id = usgs-featured-story-could-you-be-a-scientist-s0061
 # source_id = usgs-featured-story-could-you-be-a-scientist
 # text = Today, she oversees six broadly based programs that provide science to balance the competing demands of resource use and protection.
-Today	ADV	unanimous
+Today	ADV	disputed
 ,	PUNCT	unanimous
 she	PRON	unanimous
 oversees	VERB	unanimous
@@ -19532,13 +19533,13 @@ South	PROPN	unanimous
 America	PROPN	unanimous
 from	ADP	unanimous
 the	DET	unanimous
-Centro	X	disputed
-Regional	X	disputed
-Seismological	X	disputed
-para	X	unanimous
-América	X	disputed
-del	X	unanimous
-Sur	X	disputed
+Centro	PROPN	disputed+foreign
+Regional	PROPN	disputed+foreign
+Seismological	PROPN	disputed
+para	ADP	unanimous+foreign
+América	PROPN	disputed+foreign
+del	ADP	unanimous+foreign
+Sur	PROPN	disputed+foreign
 requested	VERB	unanimous
 that	SCONJ	unanimous
 USGS	PROPN	unanimous
@@ -19847,7 +19848,7 @@ hydrologic	ADJ	unanimous
 experts	NOUN	unanimous
 finished	VERB	unanimous
 installing	VERB	unanimous
-more	ADV	disputed
+more	ADJ	disputed
 than	ADP	unanimous
 50	NUM	unanimous
 storm	NOUN	unanimous
@@ -19875,7 +19876,7 @@ is	VERB	unanimous
 likely	ADJ	unanimous
 to	PART	unanimous
 be	VERB	unanimous
-storm-washed	ADJ	unanimous
+storm-washed	VERB	unanimous
 .	PUNCT	unanimous
 
 # sent_id = usgs-featured-story-usgs-works-predict-and-track-isaias-effects-s0019
@@ -19925,8 +19926,8 @@ dunes	NOUN	unanimous
 # text = The prediction is based on the USGS Coastal Change Forecast model, which has been in use since 2011 and is continually being improved.
 The	DET	unanimous
 prediction	NOUN	unanimous
-is	VERB	unanimous
-based	ADJ	disputed
+is	AUX	unanimous
+based	VERB	disputed
 on	ADP	unanimous
 the	DET	unanimous
 USGS	PROPN	unanimous
@@ -19965,7 +19966,7 @@ be	AUX	disputed
 infected	VERB	unanimous
 with	ADP	unanimous
 the	DET	unanimous
-SARS-CoV-2	NOUN	disputed
+SARS-CoV-2	PROPN	disputed
 virus	NOUN	unanimous
 but	CCONJ	unanimous
 do	AUX	unanimous
@@ -20053,7 +20054,7 @@ humans	NOUN	unanimous
 may	AUX	unanimous
 accidentally	ADV	unanimous
 transmit	VERB	unanimous
-SARS-CoV-2	NOUN	disputed
+SARS-CoV-2	PROPN	disputed
 to	ADP	unanimous
 North	ADJ	disputed
 American	ADJ	disputed
@@ -20075,110 +20076,110 @@ purposes	NOUN	unanimous
 # sent_id = usgs-nr-en-un-estudio-de-costo-beneficio-se-confirma-que-la-restaura-s0003
 # source_id = usgs-nr-en-un-estudio-de-costo-beneficio-se-confirma-que-la-restaura
 # text = Los investigadores diseñaron un sistema de modelización para cuantificar el valor que la restauración de los arrecifes de coral podría aportar a 1000 kilómetros, o 621 millas, de costas en Florida y Puerto Rico.
-Los	X	unanimous
-investigadores	X	unanimous
-diseñaron	X	unanimous
-un	X	unanimous
-sistema	X	unanimous
-de	X	unanimous
-modelización	X	unanimous
-para	X	unanimous
-cuantificar	X	unanimous
-el	X	unanimous
-valor	X	unanimous
-que	X	unanimous
-la	X	unanimous
-restauración	X	unanimous
-de	X	unanimous
-los	X	unanimous
-arrecifes	X	unanimous
-de	X	unanimous
-coral	X	unanimous
-podría	X	unanimous
-aportar	X	unanimous
-a	X	unanimous
-1000	X	unanimous
-kilómetros	X	unanimous
+Los	X	unanimous+foreign
+investigadores	X	unanimous+foreign
+diseñaron	X	unanimous+foreign
+un	X	unanimous+foreign
+sistema	X	unanimous+foreign
+de	X	unanimous+foreign
+modelización	X	unanimous+foreign
+para	X	unanimous+foreign
+cuantificar	X	unanimous+foreign
+el	X	unanimous+foreign
+valor	X	unanimous+foreign
+que	X	unanimous+foreign
+la	X	unanimous+foreign
+restauración	X	unanimous+foreign
+de	X	unanimous+foreign
+los	X	unanimous+foreign
+arrecifes	X	unanimous+foreign
+de	X	unanimous+foreign
+coral	X	unanimous+foreign
+podría	X	unanimous+foreign
+aportar	X	unanimous+foreign
+a	X	unanimous+foreign
+1000	NUM	unanimous
+kilómetros	X	unanimous+foreign
 ,	PUNCT	disputed
-o	X	unanimous
-621	X	unanimous
-millas	X	unanimous
+o	X	unanimous+foreign
+621	NUM	unanimous
+millas	X	unanimous+foreign
 ,	PUNCT	disputed
-de	X	unanimous
-costas	X	unanimous
-en	X	unanimous
-Florida	X	unanimous
-y	X	unanimous
-Puerto	X	unanimous
-Rico	X	unanimous
+de	X	unanimous+foreign
+costas	X	unanimous+foreign
+en	X	unanimous+foreign
+Florida	X	unanimous+foreign
+y	X	unanimous+foreign
+Puerto	X	unanimous+foreign
+Rico	X	unanimous+foreign
 .	PUNCT	disputed
 
 # sent_id = usgs-nr-en-un-estudio-de-costo-beneficio-se-confirma-que-la-restaura-s0013
 # source_id = usgs-nr-en-un-estudio-de-costo-beneficio-se-confirma-que-la-restaura
 # text = Aproximadamente la mitad del presupuesto se destina a la creación de arrecifes y la otra mitad al mantenimiento.
-Aproximadamente	X	unanimous
-la	X	unanimous
-mitad	X	unanimous
-del	X	unanimous
-presupuesto	X	unanimous
-se	X	unanimous
-destina	X	unanimous
-a	X	unanimous
-la	X	unanimous
-creación	X	unanimous
-de	X	unanimous
-arrecifes	X	unanimous
-y	X	unanimous
-la	X	unanimous
-otra	X	unanimous
-mitad	X	unanimous
-al	X	unanimous
-mantenimiento	X	unanimous
+Aproximadamente	X	unanimous+foreign
+la	X	unanimous+foreign
+mitad	X	unanimous+foreign
+del	X	unanimous+foreign
+presupuesto	X	unanimous+foreign
+se	X	unanimous+foreign
+destina	X	unanimous+foreign
+a	X	unanimous+foreign
+la	X	unanimous+foreign
+creación	X	unanimous+foreign
+de	X	unanimous+foreign
+arrecifes	X	unanimous+foreign
+y	X	unanimous+foreign
+la	X	unanimous+foreign
+otra	X	unanimous+foreign
+mitad	X	unanimous+foreign
+al	X	unanimous+foreign
+mantenimiento	X	unanimous+foreign
 .	PUNCT	disputed
 
 # sent_id = usgs-nr-en-un-estudio-de-costo-beneficio-se-confirma-que-la-restaura-s0018
 # source_id = usgs-nr-en-un-estudio-de-costo-beneficio-se-confirma-que-la-restaura
 # text = Las poblaciones vulnerables están desproporcionadamente expuestas a los riesgos de los riesgos derivados de desastres naturales.
-Las	X	unanimous
-poblaciones	X	unanimous
-vulnerables	X	unanimous
-están	X	unanimous
-desproporcionadamente	X	unanimous
-expuestas	X	unanimous
-a	X	unanimous
-los	X	unanimous
-riesgos	X	unanimous
-de	X	unanimous
-los	X	unanimous
-riesgos	X	unanimous
-derivados	X	unanimous
-de	X	unanimous
-desastres	X	unanimous
-naturales	X	unanimous
+Las	X	unanimous+foreign
+poblaciones	X	unanimous+foreign
+vulnerables	X	unanimous+foreign
+están	X	unanimous+foreign
+desproporcionadamente	X	unanimous+foreign
+expuestas	X	unanimous+foreign
+a	X	unanimous+foreign
+los	X	unanimous+foreign
+riesgos	X	unanimous+foreign
+de	X	unanimous+foreign
+los	X	unanimous+foreign
+riesgos	X	unanimous+foreign
+derivados	X	unanimous+foreign
+de	X	unanimous+foreign
+desastres	X	unanimous+foreign
+naturales	X	unanimous+foreign
 .	PUNCT	disputed
 
 # sent_id = usgs-nr-en-un-estudio-de-costo-beneficio-se-confirma-que-la-restaura-s0019
 # source_id = usgs-nr-en-un-estudio-de-costo-beneficio-se-confirma-que-la-restaura
 # text = La restauración podría proporcionar beneficios monumentales a las personas que más necesitan ayuda.
-La	X	disputed
-restauración	X	disputed
-podría	X	disputed
-proporcionar	X	disputed
-beneficios	X	disputed
-monumentales	X	disputed
-a	X	disputed
-las	X	disputed
-personas	X	disputed
-que	X	disputed
-más	X	disputed
-necesitan	X	disputed
-ayuda	X	disputed
+La	X	disputed+foreign
+restauración	X	disputed+foreign
+podría	X	disputed+foreign
+proporcionar	X	disputed+foreign
+beneficios	X	disputed+foreign
+monumentales	X	disputed+foreign
+a	X	disputed+foreign
+las	X	disputed+foreign
+personas	X	disputed+foreign
+que	X	disputed+foreign
+más	X	disputed+foreign
+necesitan	X	disputed+foreign
+ayuda	X	disputed+foreign
 .	PUNCT	unanimous
 
 # sent_id = usgs-nr-president-proposes-16-billion-fy-2025-budget-usgs-s0001
 # source_id = usgs-nr-president-proposes-16-billion-fy-2025-budget-usgs
 # text = President's request to Congress promotes science to address climate change and natural-hazard resiliency while supporting national economic growth and security.
-President	NOUN	unanimous
+President	PROPN	unanimous
 's	PART	unanimous
 request	NOUN	unanimous
 to	ADP	disputed
@@ -20433,7 +20434,7 @@ indicate	VERB	unanimous
 Sally	PROPN	unanimous
 dumped	VERB	unanimous
 as	ADV	disputed
-much	ADV	unanimous
+much	ADJ	unanimous
 as	ADP	disputed
 20	NUM	unanimous
 inches	NOUN	unanimous
@@ -20602,7 +20603,7 @@ VIPER	PROPN	unchecked
 ,	PUNCT	unchecked
 or	CCONJ	unchecked
 Volatiles	PROPN	unchecked
-Investigating	PROPN	unchecked
+Investigating	PROPN	disputed
 Polar	PROPN	unchecked
 Exploration	PROPN	unchecked
 Rover	PROPN	unchecked
@@ -20776,7 +20777,7 @@ The	DET	unchecked
 authors	NOUN	unchecked
 note	VERB	unchecked
 that	SCONJ	unchecked
-much	PRON	unchecked
+much	ADJ	unchecked
 of	ADP	unchecked
 it	PRON	unchecked
 is	VERB	unchecked
@@ -20855,7 +20856,7 @@ on	ADP	unchecked
 account	NOUN	unchecked
 of	ADP	unchecked
 the	DET	unchecked
-increased	ADJ	unchecked
+increased	ADJ	disputed
 value	NOUN	unchecked
 of	ADP	unchecked
 production	NOUN	unchecked
@@ -20921,12 +20922,12 @@ their	DET	unchecked
 academic	ADJ	unchecked
 career	NOUN	unchecked
 (	PUNCT	unchecked
-B.S.	NOUN	unchecked
+B.S.	NOUN	disputed
 ,	PUNCT	unchecked
-M.S.	NOUN	unchecked
+M.S.	NOUN	disputed
 ,	PUNCT	unchecked
 or	CCONJ	unchecked
-Ph.D	NOUN	unchecked
+Ph.D	NOUN	disputed
 .	PUNCT	unchecked
 )	PUNCT	unchecked
 ,	PUNCT	unchecked
@@ -20968,7 +20969,7 @@ Geologic	PROPN	unchecked
 Mapping	PROPN	unchecked
 Competition	PROPN	unchecked
 (	PUNCT	unchecked
-Posters	NOUN	unchecked
+Posters	NOUN	disputed
 )	PUNCT	unchecked
 .	PUNCT	unchecked
 
@@ -21078,7 +21079,7 @@ winds	NOUN	unchecked
 caused	VERB	unchecked
 by	ADP	unchecked
 a	DET	unchecked
-stalled	ADJ	unchecked
+stalled	ADJ	disputed
 high-pressure	ADJ	unchecked
 system	NOUN	unchecked
 over	ADP	unchecked
@@ -21184,7 +21185,7 @@ EarthWord	PROPN	unchecked
 is	VERB	unchecked
 straight	ADV	unchecked
 up	ADV	unchecked
-steampunk	ADJ	unchecked
+steampunk	ADJ	disputed
 ...	PUNCT	unchecked
 
 # sent_id = usgs-science-snippet-earthword-salinity-s0001
@@ -21273,7 +21274,7 @@ value	NOUN	unchecked
 portland	NOUN	unchecked
 cement	NOUN	unchecked
 ,	PUNCT	unchecked
-crushed	ADJ	unchecked
+crushed	ADJ	disputed
 stone	NOUN	unchecked
 ,	PUNCT	unchecked
 construction	NOUN	unchecked
@@ -21292,7 +21293,7 @@ stone	NOUN	unchecked
 # sent_id = usgs-science-snippet-happy-229th-birthday-maryland-s0007
 # source_id = usgs-science-snippet-happy-229th-birthday-maryland
 # text = Much of the sand and gravel come from the sediments that gradually built Maryland's broad coastal plains.
-Much	PRON	unchecked
+Much	ADJ	unchecked
 of	ADP	unchecked
 the	DET	unchecked
 sand	NOUN	unchecked
@@ -21319,7 +21320,7 @@ So	ADV	unchecked
 happy	ADJ	unchecked
 birthday	NOUN	unchecked
 ,	PUNCT	unchecked
-Maryland-you	X	unchecked
+Maryland-you	PROPN	unchecked
 rock	VERB	unchecked
 !	PUNCT	unchecked
 
@@ -21357,8 +21358,8 @@ submitting	VERB	unchecked
 their	DET	unchecked
 abstracts	NOUN	unchecked
 to	ADP	unchecked
-Topical	ADJ	unchecked
-Session	NOUN	unchecked
+Topical	PROPN	unchecked
+Session	PROPN	unchecked
 T179	PROPN	unchecked
 -	PUNCT	unchecked
 Best	PROPN	unchecked
@@ -21367,7 +21368,7 @@ Geologic	PROPN	unchecked
 Mapping	PROPN	unchecked
 Competition	PROPN	unchecked
 (	PUNCT	unchecked
-Posters	NOUN	unchecked
+Posters	NOUN	disputed
 )	PUNCT	unchecked
 .	PUNCT	unchecked
 
@@ -21484,7 +21485,7 @@ precipitation	NOUN	unchecked
 from	ADP	unchecked
 the	DET	unchecked
 cool	ADJ	unchecked
-seasonwhen	X	unchecked
+seasonwhen	X	disputed
 most	ADJ	unchecked
 precipitation	NOUN	unchecked
 falls	VERB	unchecked
@@ -21493,7 +21494,7 @@ and	CCONJ	unchecked
 release	VERB	unchecked
 some	PRON	unchecked
 or	CCONJ	unchecked
-all	PRON	unchecked
+all	DET	unchecked
 of	ADP	unchecked
 it	PRON	unchecked
 during	ADP	unchecked
@@ -21526,7 +21527,7 @@ rivers	NOUN	unchecked
 # source_id = usgs-snowmelt-runoff-and-water-cycle
 # text = As much as 75 percent of water supplies in some western states are derived from snowmelt.
 As	ADV	unchecked
-much	ADV	unchecked
+much	ADJ	unchecked
 as	ADP	unchecked
 75	NUM	unchecked
 percent	NOUN	unchecked
@@ -21592,8 +21593,8 @@ coming	VERB	unchecked
 from	ADP	unchecked
 melting	VERB	unchecked
 snow	NOUN	unchecked
-was	VERB	unchecked
-exhausted	ADJ	unchecked
+was	AUX	unchecked
+exhausted	VERB	unchecked
 in	ADP	unchecked
 late	ADJ	unchecked
 spring	NOUN	unchecked
@@ -21610,7 +21611,7 @@ data	NOUN	unchecked
 visualization	NOUN	unchecked
 to	PART	unchecked
 learn	VERB	unchecked
-more	PRON	unchecked
+more	PRON	disputed
 about	ADP	unchecked
 this	DET	unchecked
 pool	NOUN	unchecked
@@ -22259,7 +22260,7 @@ Pacific	PROPN	unchecked
 The	DET	unchecked
 scientists	NOUN	unchecked
 exposed	VERB	unchecked
-harvested	ADJ	unchecked
+harvested	VERB	unchecked
 corallimorphs	NOUN	unchecked
 in	ADP	unchecked
 the	DET	unchecked
@@ -22508,7 +22509,7 @@ temperature	NOUN	unchecked
 ,	PUNCT	unchecked
 pH	NOUN	unchecked
 ,	PUNCT	unchecked
-dissolved	ADJ	unchecked
+dissolved	ADJ	disputed
 oxygen	NOUN	unchecked
 concentration	NOUN	unchecked
 ,	PUNCT	unchecked
@@ -22888,9 +22889,9 @@ The	DET	unchecked
 USGS	PROPN	unchecked
 recently	ADV	unchecked
 added	VERB	unchecked
-Spanish	ADJ	unchecked
+Spanish	PROPN	unchecked
 and	CCONJ	unchecked
-Chinese	ADJ	unchecked
+Chinese	PROPN	unchecked
 translations	NOUN	unchecked
 .	PUNCT	unchecked
 
@@ -23000,7 +23001,7 @@ owns	VERB	unchecked
 and	CCONJ	unchecked
 operates	VERB	unchecked
 aircraft	NOUN	unchecked
-equipped	ADJ	unchecked
+equipped	VERB	unchecked
 with	ADP	unchecked
 cutting-edge	ADJ	unchecked
 Lidar	NOUN	unchecked
@@ -23049,7 +23050,7 @@ it	PRON	unchecked
 It	PRON	unchecked
 is	VERB	unchecked
 impossible	ADJ	unchecked
-for	ADP	unchecked
+for	SCONJ	unchecked
 you	PRON	unchecked
 to	PART	unchecked
 diminish	VERB	unchecked
@@ -23094,7 +23095,7 @@ order	NOUN	unchecked
 I	PRON	unchecked
 found	VERB	unchecked
 him	PRON	unchecked
-well	ADJ	unchecked
+well	ADJ	disputed
 and	CCONJ	unchecked
 hard	ADV	unchecked
 at	ADP	unchecked
@@ -23216,7 +23217,7 @@ but	CCONJ	unchecked
 it	PRON	unchecked
 breathed	VERB	unchecked
 its	DET	unchecked
-last	NOUN	unchecked
+last	ADJ	unchecked
 by	ADP	unchecked
 the	DET	unchecked
 time	NOUN	unchecked
@@ -23282,7 +23283,7 @@ to	PART	unchecked
 come	VERB	unchecked
 under	ADP	unchecked
 the	DET	unchecked
-iron	ADJ	unchecked
+iron	ADJ	disputed
 rule	NOUN	unchecked
 of	ADP	unchecked
 Wolf	PROPN	unchecked
@@ -23493,7 +23494,7 @@ madame	NOUN	unchecked
 ,	PUNCT	unchecked
 but	CCONJ	unchecked
 M.	PROPN	unchecked
-de	ADP	unchecked
+de	ADP	disputed
 Villefort	PROPN	unchecked
 has	VERB	unchecked
 so	ADV	unchecked
@@ -23753,7 +23754,7 @@ head	NOUN	unchecked
 the	DET	unchecked
 appearance	NOUN	unchecked
 of	ADP	unchecked
-one	PRON	unchecked
+one	NUM	unchecked
 of	ADP	unchecked
 Titian	PROPN	unchecked
 's	PART	unchecked
@@ -23983,7 +23984,7 @@ crusts	NOUN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
 not	PART	unchecked
-enough	PRON	unchecked
+enough	ADJ	unchecked
 of	ADP	unchecked
 them	PRON	unchecked
 ,	PUNCT	unchecked
@@ -24021,7 +24022,7 @@ journey	NOUN	unchecked
 # sent_id = gutenberg-14658-s0636
 # source_id = gutenberg-14658
 # text = All this is happening in the space of only several seconds.
-All	PRON	unchecked
+All	DET	unchecked
 this	PRON	unchecked
 is	AUX	unchecked
 happening	VERB	unchecked
@@ -24077,7 +24078,7 @@ matter	VERB	unchecked
 where	ADV	unchecked
 or	CCONJ	unchecked
 '	PUNCT	unchecked
-ow	X	unchecked
+ow	ADV	unchecked
 we	PRON	unchecked
 die	VERB	unchecked
 ,	PUNCT	unchecked
@@ -24088,7 +24089,7 @@ we	PRON	unchecked
 've	VERB	unchecked
 our	DET	unchecked
 '	PUNCT	unchecked
-ealth	X	unchecked
+ealth	NOUN	unchecked
 to	PART	unchecked
 watch	VERB	unchecked
 it	PRON	unchecked
@@ -24159,7 +24160,7 @@ soon	ADV	unchecked
 to	PART	unchecked
 see	VERB	unchecked
 the	DET	unchecked
-last	NOUN	unchecked
+last	ADJ	unchecked
 of	ADP	unchecked
 it	PRON	unchecked
 for	ADP	unchecked
@@ -24230,7 +24231,7 @@ fellows	NOUN	unchecked
 # sent_id = gutenberg-14658-s2130
 # source_id = gutenberg-14658
 # text = Out of my pockets I dug up three or four newspapers.
-Out	ADV	unchecked
+Out	ADP	unchecked
 of	ADP	unchecked
 my	DET	unchecked
 pockets	NOUN	unchecked
@@ -24263,7 +24264,7 @@ up	ADV	unchecked
 ,	PUNCT	unchecked
 come	VERB	unchecked
 down	ADV	unchecked
-out	ADV	unchecked
+out	ADP	unchecked
 of	ADP	unchecked
 the	DET	unchecked
 cab	NOUN	unchecked
@@ -24635,7 +24636,7 @@ bed	NOUN	unchecked
 of	ADP	unchecked
 Sobieski	PROPN	unchecked
 ,	PUNCT	unchecked
-King	NOUN	unchecked
+King	PROPN	unchecked
 of	ADP	unchecked
 Poland	PROPN	unchecked
 ,	PUNCT	unchecked
@@ -24864,7 +24865,7 @@ distinguished	VERB	unchecked
 # sent_id = gutenberg-23427-s0676
 # source_id = gutenberg-23427
 # text = Many of his epigrammatic sayings have passed into proverbs: for example, that "genius is but a supreme capacity for taking pains."
-Many	PRON	unchecked
+Many	ADJ	unchecked
 of	ADP	unchecked
 his	DET	unchecked
 epigrammatic	ADJ	unchecked
@@ -25019,7 +25020,7 @@ Had	AUX	unchecked
 he	PRON	unchecked
 substituted	VERB	unchecked
 "	PUNCT	unchecked
-memory	NOUN	unchecked
+memory	NOUN	unchecked+mentioned
 "	PUNCT	unchecked
 for	ADP	unchecked
 "	PUNCT	unchecked
@@ -25033,7 +25034,7 @@ lady	NOUN	unchecked
 to	PART	unchecked
 define	VERB	unchecked
 "	PUNCT	unchecked
-sameness	NOUN	unchecked
+sameness	NOUN	unchecked+mentioned
 "	PUNCT	unchecked
 or	CCONJ	unchecked
 "	PUNCT	unchecked
@@ -25107,8 +25108,8 @@ the	DET	unchecked
 will	NOUN	unchecked
 of	ADP	unchecked
 this	DET	unchecked
-Supreme	ADJ	unchecked
-Author	NOUN	unchecked
+Supreme	PROPN	unchecked
+Author	PROPN	unchecked
 ,	PUNCT	unchecked
 but	CCONJ	unchecked
 can	AUX	unchecked
@@ -25281,7 +25282,7 @@ meaning	NOUN	unchecked
 of	ADP	unchecked
 the	DET	unchecked
 word	NOUN	unchecked
-race	NOUN	unchecked
+race	NOUN	unchecked+mentioned
 ,	PUNCT	unchecked
 as	ADP	unchecked
 expressing	VERB	unchecked
@@ -25447,7 +25448,7 @@ grown	ADJ	unchecked
 ox	NOUN	unchecked
 ,	PUNCT	unchecked
 as	ADV	unchecked
-much	ADV	unchecked
+much	ADJ	unchecked
 as	ADP	unchecked
 sixty	NUM	unchecked
 yards	NOUN	unchecked
@@ -26150,7 +26151,7 @@ be	AUX	unchecked
 suppressed	VERB	unchecked
 by	ADP	unchecked
 the	DET	unchecked
-State	NOUN	unchecked
+State	PROPN	unchecked
 ,	PUNCT	unchecked
 has	AUX	unchecked
 become	VERB	unchecked
@@ -26271,11 +26272,11 @@ lines	NOUN	unchecked
 built	VERB	unchecked
 by	ADP	unchecked
 the	DET	unchecked
-Government	NOUN	unchecked
+Government	PROPN	unchecked
 would	AUX	unchecked
 cost	VERB	unchecked
 much	ADV	unchecked
-more	ADV	unchecked
+more	ADV	disputed
 than	SCONJ	unchecked
 if	SCONJ	unchecked
 built	VERB	unchecked
@@ -26454,7 +26455,7 @@ Bernardine	PROPN	unchecked
 who	PRON	unchecked
 was	AUX	unchecked
 waiting	VERB	unchecked
-for	ADP	unchecked
+for	SCONJ	unchecked
 him	PRON	unchecked
 to	PART	unchecked
 return	VERB	unchecked
@@ -26573,7 +26574,7 @@ the	DET	unchecked
 beach	NOUN	unchecked
 ,	PUNCT	unchecked
 heavily	ADV	unchecked
-veiled	ADJ	unchecked
+veiled	ADJ	disputed
 and	CCONJ	unchecked
 all	ADV	unchecked
 alone	ADJ	unchecked
@@ -26740,7 +26741,7 @@ would	AUX	unchecked
 have	AUX	unchecked
 given	VERB	unchecked
 so	ADV	unchecked
-much	PRON	unchecked
+much	ADJ	unchecked
 to	PART	unchecked
 efface	VERB	unchecked
 .	PUNCT	unchecked
@@ -26761,9 +26762,9 @@ was	AUX	unchecked
 changed	VERB	unchecked
 to	ADP	unchecked
 "	PUNCT	unchecked
-of	ADP	unchecked
-much	ADJ	unchecked
-value	NOUN	unchecked
+of	ADP	unchecked+mentioned
+much	ADJ	unchecked+mentioned
+value	NOUN	unchecked+mentioned
 "	PUNCT	unchecked
 .	PUNCT	unchecked
 
@@ -26804,7 +26805,7 @@ place	NOUN	unchecked
 It	PRON	unchecked
 is	VERB	unchecked
 impossible	ADJ	unchecked
-for	ADP	unchecked
+for	SCONJ	unchecked
 an	DET	unchecked
 Englishman	NOUN	unchecked
 to	PART	unchecked
@@ -26930,7 +26931,7 @@ all	PRON	unchecked
 # sent_id = gutenberg-3825-s1215
 # source_id = gutenberg-3825
 # text = Landlady wouldn't have trusted me with it, Governor.
-Landlady	NOUN	unchecked
+Landlady	NOUN	disputed
 would	AUX	unchecked
 n't	PART	unchecked
 have	AUX	unchecked
@@ -27237,7 +27238,7 @@ prevented	VERB	unchecked
 her	PRON	unchecked
 from	ADP	unchecked
 getting	VERB	unchecked
-educated	ADJ	unchecked
+educated	ADJ	disputed
 ,	PUNCT	unchecked
 because	SCONJ	unchecked
 the	DET	unchecked
@@ -27404,7 +27405,7 @@ Coaster	NOUN	unchecked
 # text = The old French name was maneguilia, and the name they are still called by at Cape Palmas in the native tongue is Emanequetta.
 The	DET	unchecked
 old	ADJ	unchecked
-French	ADJ	unchecked
+French	PROPN	unchecked
 name	NOUN	unchecked
 was	VERB	unchecked
 maneguilia	NOUN	unchecked
@@ -27425,7 +27426,7 @@ the	DET	unchecked
 native	ADJ	unchecked
 tongue	NOUN	unchecked
 is	VERB	unchecked
-Emanequetta	NOUN	unchecked
+Emanequetta	NOUN	unchecked+foreign+mentioned
 .	PUNCT	unchecked
 
 # sent_id = gutenberg-38870-s0753
@@ -27571,7 +27572,7 @@ mission	NOUN	unchecked
 # sent_id = gutenberg-38870-s1536
 # source_id = gutenberg-38870
 # text = Much of it, of course, is, for diplomatic reasons, not known outside official circles.
-Much	PRON	unchecked
+Much	ADJ	unchecked
 of	ADP	unchecked
 it	PRON	unchecked
 ,	PUNCT	unchecked
@@ -27585,7 +27586,7 @@ diplomatic	ADJ	unchecked
 reasons	NOUN	unchecked
 ,	PUNCT	unchecked
 not	PART	unchecked
-known	ADJ	unchecked
+known	VERB	unchecked
 outside	ADP	unchecked
 official	ADJ	unchecked
 circles	NOUN	unchecked
@@ -27704,8 +27705,8 @@ previously	ADV	unchecked
 heard	VERB	unchecked
 on	ADP	unchecked
 the	DET	unchecked
-Eastern	ADJ	unchecked
-Coast	NOUN	unchecked
+Eastern	ADJ	disputed
+Coast	NOUN	disputed
 of	ADP	unchecked
 Africa	PROPN	unchecked
 .	PUNCT	unchecked
@@ -27762,7 +27763,7 @@ strayed	VERB	unchecked
 # source_id = gutenberg-38870
 # text = If any of the firms like to establish sub-factories in the district outside the town, they should have every facility impartially afforded them to do so.
 If	SCONJ	unchecked
-any	PRON	unchecked
+any	DET	unchecked
 of	ADP	unchecked
 the	DET	unchecked
 firms	NOUN	unchecked
@@ -27907,7 +27908,7 @@ you	PRON	unchecked
 to	PART	unchecked
 close	VERB	unchecked
 them	PRON	unchecked
-tight	ADJ	unchecked
+tight	ADJ	disputed
 .	PUNCT	unchecked
 
 # sent_id = gutenberg-38870-s4677
@@ -27938,8 +27939,8 @@ chief	NOUN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
 thus	ADV	unchecked
-be	VERB	unchecked
-entitled	ADJ	unchecked
+be	AUX	unchecked
+entitled	VERB	unchecked
 to	PART	unchecked
 wear	VERB	unchecked
 an	DET	unchecked
@@ -28031,7 +28032,7 @@ new	ADJ	unchecked
 villages	NOUN	unchecked
 that	PRON	unchecked
 were	VERB	unchecked
-about	ADV	unchecked
+about	ADV	disputed
 to	PART	unchecked
 be	AUX	unchecked
 built	VERB	unchecked
@@ -28068,7 +28069,7 @@ lemon	NOUN	unchecked
 Rub	VERB	unchecked
 butter	NOUN	unchecked
 ,	PUNCT	unchecked
-pounded	ADJ	unchecked
+pounded	VERB	unchecked
 yolks	NOUN	unchecked
 ,	PUNCT	unchecked
 pepper	NOUN	unchecked
@@ -28254,7 +28255,7 @@ carefully	ADV	unchecked
 # sent_id = gutenberg-49958-s2919
 # source_id = gutenberg-49958
 # text = Half a can of tomatoes.
-Half	ADJ	unchecked
+Half	DET	unchecked
 a	DET	unchecked
 can	NOUN	unchecked
 of	ADP	unchecked
@@ -28295,7 +28296,7 @@ a	DET	unchecked
 warm	ADJ	unchecked
 place	NOUN	unchecked
 ,	PUNCT	unchecked
-covered	ADJ	unchecked
+covered	VERB	unchecked
 .	PUNCT	unchecked
 
 # sent_id = gutenberg-49958-s4520
@@ -28307,12 +28308,12 @@ the	DET	unchecked
 soup-pot	NOUN	unchecked
 with	ADP	unchecked
 the	DET	unchecked
-chopped	ADJ	unchecked
+chopped	ADJ	disputed
 ham	NOUN	unchecked
 ;	PUNCT	unchecked
 the	DET	unchecked
 onion	NOUN	unchecked
-sliced	ADJ	unchecked
+sliced	VERB	unchecked
 ,	PUNCT	unchecked
 the	DET	unchecked
 herbs	NOUN	unchecked
@@ -28352,12 +28353,12 @@ balls	NOUN	unchecked
 ;	PUNCT	unchecked
 roll	VERB	unchecked
 in	ADP	unchecked
-beaten	ADJ	unchecked
+beaten	ADJ	disputed
 egg	NOUN	unchecked
 ,	PUNCT	unchecked
 then	ADV	unchecked
 in	ADP	unchecked
-pounded	ADJ	unchecked
+pounded	ADJ	disputed
 cracker	NOUN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
@@ -28476,7 +28477,7 @@ hot	ADJ	unchecked
 # source_id = gutenberg-60164
 # text = The Cavaliers were also aristocrats of the new classical culture, and used the word Gothic in the sense of barbaric.
 The	DET	unchecked
-Cavaliers	NOUN	unchecked
+Cavaliers	NOUN	disputed
 were	VERB	unchecked
 also	ADV	unchecked
 aristocrats	NOUN	unchecked
@@ -28490,7 +28491,7 @@ and	CCONJ	unchecked
 used	VERB	unchecked
 the	DET	unchecked
 word	NOUN	unchecked
-Gothic	NOUN	unchecked
+Gothic	ADJ	unchecked+mentioned
 in	ADP	unchecked
 the	DET	unchecked
 sense	NOUN	unchecked
@@ -28577,7 +28578,7 @@ occur	VERB	unchecked
 to	ADP	unchecked
 them	PRON	unchecked
 that	SCONJ	unchecked
-some	PRON	unchecked
+some	DET	unchecked
 of	ADP	unchecked
 us	PRON	unchecked
 doubt	VERB	unchecked
@@ -28647,7 +28648,7 @@ sticks	NOUN	unchecked
 # sent_id = gutenberg-60164-s0747
 # source_id = gutenberg-60164
 # text = Is he to climb the tree and go on the walking tour; or are we on his account to abolish all trees and tours?
-Is	VERB	unchecked
+Is	VERB	disputed
 he	PRON	unchecked
 to	PART	unchecked
 climb	VERB	unchecked
@@ -28677,7 +28678,7 @@ tours	NOUN	unchecked
 # sent_id = gutenberg-60164-s0776
 # source_id = gutenberg-60164
 # text = Are they to be brought up in complete ignorance of "The Merchant of Venice" because Shylock flourishes a knife for a highly disagreeable purpose?
-Are	VERB	unchecked
+Are	VERB	disputed
 they	PRON	unchecked
 to	PART	unchecked
 be	AUX	unchecked
@@ -28722,7 +28723,7 @@ shut	VERB	unchecked
 up	ADV	unchecked
 more	PRON	unchecked
 and	CCONJ	unchecked
-more	PRON	unchecked
+more	ADJ	unchecked
 of	ADP	unchecked
 the	DET	unchecked
 women	NOUN	unchecked
@@ -28795,7 +28796,7 @@ make	VERB	unchecked
 such	ADJ	unchecked
 splendid	ADJ	unchecked
 stuff	NOUN	unchecked
-out	ADV	unchecked
+out	ADP	unchecked
 of	ADP	unchecked
 the	DET	unchecked
 very	ADJ	unchecked
@@ -28884,7 +28885,7 @@ is	VERB	unchecked
 as	SCONJ	unchecked
 if	SCONJ	unchecked
 it	PRON	unchecked
-were	VERB	unchecked
+were	VERB	disputed
 to	PART	unchecked
 abolish	VERB	unchecked
 ponds	NOUN	unchecked
@@ -28992,8 +28993,8 @@ these	DET	unchecked
 two	NUM	unchecked
 lunacies	NOUN	unchecked
 against	ADP	unchecked
-each	PRON	unchecked
-other	PRON	unchecked
+each	DET	unchecked
+other	PRON	disputed
 ,	PUNCT	unchecked
 the	DET	unchecked
 central	ADJ	unchecked
@@ -29071,7 +29072,7 @@ adaption	NOUN	unchecked
 # text = If the young are always right and can do as they like, well and good; let us all be jolly, old and young, and free from every kind of responsibility.
 If	SCONJ	unchecked
 the	DET	unchecked
-young	NOUN	unchecked
+young	ADJ	unchecked
 are	VERB	unchecked
 always	ADV	unchecked
 right	ADJ	unchecked
@@ -29175,7 +29176,7 @@ proportion	NOUN	unchecked
 ,	PUNCT	unchecked
 like	ADP	unchecked
 any	DET	unchecked
-other	PRON	unchecked
+other	ADJ	unchecked
 .	PUNCT	unchecked
 
 # sent_id = gutenberg-60164-s2518
@@ -29404,7 +29405,7 @@ spurious	ADJ	unchecked
 # sent_id = gutenberg-61809-s3221
 # source_id = gutenberg-61809
 # text = One of the most flattering applications was received by Pearson from the French Consulate on 5th April, 1800.
-One	PRON	unchecked
+One	NUM	unchecked
 of	ADP	unchecked
 the	DET	unchecked
 most	ADV	unchecked
@@ -29416,7 +29417,7 @@ by	ADP	unchecked
 Pearson	PROPN	unchecked
 from	ADP	unchecked
 the	DET	unchecked
-French	ADJ	unchecked
+French	PROPN	unchecked
 Consulate	PROPN	unchecked
 on	ADP	unchecked
 5th	ADJ	unchecked
@@ -29607,8 +29608,8 @@ The	DET	unchecked
 causes	NOUN	unchecked
 of	ADP	unchecked
 disease	NOUN	unchecked
-were	VERB	unchecked
-unconsidered	ADJ	unchecked
+were	VERB	disputed
+unconsidered	ADJ	disputed
 in	ADP	unchecked
 Cobbett	PROPN	unchecked
 's	PART	unchecked
@@ -29690,7 +29691,7 @@ that	SCONJ	unchecked
 in	ADP	unchecked
 these	DET	unchecked
 years	NOUN	unchecked
-more	ADV	unchecked
+more	ADJ	unchecked
 than	ADP	unchecked
 a	DET	unchecked
 fraction	NOUN	unchecked
@@ -29746,13 +29747,13 @@ instance	NOUN	unchecked
 it	PRON	unchecked
 used	VERB	unchecked
 to	PART	unchecked
-be	VERB	unchecked
+be	VERB	disputed
 almost	ADV	unchecked
 exclusively	ADV	unchecked
-confined	ADJ	unchecked
+confined	ADJ	disputed
 to	ADP	unchecked
 the	DET	unchecked
-young	NOUN	unchecked
+young	ADJ	unchecked
 ,	PUNCT	unchecked
 like	ADP	unchecked
 measles	NOUN	unchecked
@@ -29832,7 +29833,7 @@ to	ADP	unchecked
 Thursday	PROPN	unchecked
 Island	PROPN	unchecked
 ,	PUNCT	unchecked
-one	PRON	unchecked
+one	NUM	unchecked
 of	ADP	unchecked
 the	DET	unchecked
 great	ADJ	unchecked
@@ -29914,7 +29915,7 @@ come	VERB	unchecked
 into	ADP	unchecked
 camp	NOUN	unchecked
 ,	PUNCT	unchecked
-most	PRON	unchecked
+most	ADJ	unchecked
 of	ADP	unchecked
 them	PRON	unchecked
 mere	ADJ	unchecked
@@ -30009,7 +30010,7 @@ rind	NOUN	unchecked
 and	CCONJ	unchecked
 of	ADP	unchecked
 a	DET	unchecked
-chocolate	ADJ	unchecked
+chocolate	ADJ	disputed
 rather	ADV	unchecked
 than	ADP	unchecked
 a	DET	unchecked
@@ -30037,8 +30038,8 @@ custom	NOUN	unchecked
 and	CCONJ	unchecked
 certain	ADJ	unchecked
 parts	NOUN	unchecked
-are	VERB	unchecked
-reserved	ADJ	unchecked
+are	AUX	unchecked
+reserved	VERB	unchecked
 for	ADP	unchecked
 the	DET	unchecked
 leading	ADJ	unchecked
@@ -30083,7 +30084,7 @@ Not	PART	unchecked
 a	DET	unchecked
 crab	NOUN	unchecked
 was	VERB	unchecked
-out	ADV	unchecked
+out	ADP	unchecked
 of	ADP	unchecked
 line	NOUN	unchecked
 .	PUNCT	unchecked
@@ -30243,8 +30244,8 @@ known	VERB	unchecked
 as	ADP	unchecked
 the	DET	unchecked
 "	PUNCT	unchecked
-black	ADJ	unchecked
-fish	NOUN	unchecked
+black	ADJ	unchecked+mentioned
+fish	NOUN	unchecked+mentioned
 "	PUNCT	unchecked
 fetches	VERB	unchecked
 as	ADV	unchecked
@@ -30441,7 +30442,7 @@ Chang	PROPN	unchecked
 It	PRON	unchecked
 was	VERB	unchecked
 also	ADV	unchecked
-united	ADJ	unchecked
+united	VERB	unchecked
 to	ADP	unchecked
 the	DET	unchecked
 superficial	ADJ	unchecked
@@ -30473,8 +30474,8 @@ parts	NOUN	unchecked
 # source_id = gutenberg-68165
 # text = It was loaded with fat, and, as it terminated at the scar, distinct lobules of fat (several of which were pedunculated) were abundantly deposited.
 It	PRON	unchecked
-was	VERB	unchecked
-loaded	ADJ	unchecked
+was	AUX	unchecked
+loaded	VERB	unchecked
 with	ADP	unchecked
 fat	NOUN	unchecked
 ,	PUNCT	unchecked
@@ -30492,7 +30493,7 @@ lobules	NOUN	unchecked
 of	ADP	unchecked
 fat	NOUN	unchecked
 (	PUNCT	unchecked
-several	PRON	unchecked
+several	ADJ	unchecked
 of	ADP	unchecked
 which	PRON	unchecked
 were	VERB	unchecked
@@ -30526,7 +30527,7 @@ is	AUX	unchecked
 well	ADV	unchecked
 seen	VERB	unchecked
 in	ADP	unchecked
-Fig	NOUN	unchecked
+Fig	NOUN	disputed
 .	PUNCT	unchecked
 
 # sent_id = gutenberg-68165-s0340
@@ -31037,14 +31038,14 @@ the	DET	unchecked
 chief	NOUN	unchecked
 of	ADP	unchecked
 their	DET	unchecked
-Order	NOUN	unchecked
+Order	PROPN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
 whom	PRON	unchecked
 they	PRON	unchecked
 term	VERB	unchecked
-Grand	ADJ	unchecked
-Master	NOUN	unchecked
+Grand	PROPN	unchecked
+Master	PROPN	unchecked
 ,	PUNCT	unchecked
 is	VERB	unchecked
 now	ADV	unchecked
@@ -31108,7 +31109,7 @@ Tuck	PROPN	unchecked
 "	PUNCT	unchecked
 I	PRON	unchecked
 had	VERB	unchecked
-mine	PRON	unchecked
+mine	PRON	disputed
 own	ADJ	unchecked
 returned	VERB	unchecked
 ,	PUNCT	unchecked
@@ -31118,7 +31119,7 @@ usury	NOUN	unchecked
 --	PUNCT	unchecked
 may	AUX	unchecked
 your	DET	unchecked
-Majesty	NOUN	unchecked
+Majesty	PROPN	unchecked
 ever	ADV	unchecked
 pay	VERB	unchecked
 your	DET	unchecked
@@ -31287,7 +31288,7 @@ permitted	VERB	unchecked
 her	PRON	unchecked
 to	PART	unchecked
 be	VERB	unchecked
-one	PRON	unchecked
+one	NUM	unchecked
 of	ADP	unchecked
 the	DET	unchecked
 nurses	NOUN	unchecked
@@ -31919,7 +31920,7 @@ till	SCONJ	unchecked
 he	PRON	unchecked
 made	VERB	unchecked
 himself	PRON	unchecked
-known	ADJ	unchecked
+known	ADJ	disputed
 .	PUNCT	unchecked
 
 # sent_id = gutenberg-9775-s2677
@@ -31941,7 +31942,7 @@ expensive	ADJ	unchecked
 clothes	NOUN	unchecked
 revealed	VERB	unchecked
 the	DET	unchecked
-former	PRON	unchecked
+former	ADJ	unchecked
 ,	PUNCT	unchecked
 her	DET	unchecked
 buoyant	ADJ	unchecked
@@ -32117,7 +32118,7 @@ come	VERB	unchecked
 in	ADV	unchecked
 and	CCONJ	unchecked
 seen	VERB	unchecked
-more	ADV	unchecked
+more	ADJ	unchecked
 than	ADP	unchecked
 half	NOUN	unchecked
 of	ADP	unchecked

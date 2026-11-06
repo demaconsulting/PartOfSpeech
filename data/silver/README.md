@@ -17,7 +17,8 @@ label, so each rule can be tuned or removed in phase 3.
 | Project Gutenberg | 8,998 | 187,837 | 94 books | public domain in the United States; only the body text is used |
 | **Total** | **13,971** | **242,699** | **5,067** | |
 
-Status of the tokens: 232,307 `silver` (a UPOS tag derived from the model label) and 10,392 `masked` (no training
+Status of the tokens: 232,078 `silver` (a UPOS tag derived from the model label), 229 `disputed` (the staged corrections
+marked the label as contested; the tag is trained like any other) and 10,392 `masked` (no training
 signal; the tag is `_`). Tokens are counted after the contraction split of the corpus tokenization.
 
 - **Sentences:** CC0 (Tatoeba) or public domain in the United States (Gutenberg) per `sources.tsv`. The Gutenberg
@@ -60,6 +61,10 @@ signal; the tag is `_`). Tokens are counted after the contraction split of the c
    (one-off) re-splits the contractions with the corpus tokenization (`can't` becomes `ca` and `n't`) and applies the
    table in [../CONVENTIONS.md](../CONVENTIONS.md); `python tools/data/import_silver.py derive` recomputes `upos` and
    `status` from `source_tag` and the lexicon (deterministic, bit-identical); `verify` checks the file against the rules.
+   The committed file is the derivation **plus** the staged corrections (`../corrections/README.md`), so `verify` reports
+   the corrected labels as problems on it (1,339 at the time of the application). It describes the derivation: it passes
+   after `python tools/data/corrections.py apply --write --reverse` (byte for byte the pre-correction file; run
+   `apply --write` again afterwards to restore the committed state).
    `verify-sources` (needs network, optional) checks the Tatoeba ids against the CC0 export and the Gutenberg landing pages.
 4. **Leakage:** no silver sentence equals a sentence of an evaluation set (open dev and test, gold v2, the shape probe, the
    STE challenge set, UD English-EWT), whatever its length, and no silver document id is an evaluation document id. A

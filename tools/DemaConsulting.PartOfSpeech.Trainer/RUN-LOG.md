@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest -->
 
 # Trainer Run Log
 
@@ -1102,6 +1103,1072 @@ line, which is a timing: the committed report now shows 315,213 tokens per secon
 machine was busy with other work during this run). The same three stop conditions fired with the same values. No further
 re-run is permitted for a presentational change; a figure that is wrong is a defect to be reported, not regenerated.
 
+## Corpus cleanup C: pre-registered gates (written before the retraining)
+
+Context. The staged corrections of the convention linter (`data/corrections/mechanical.tsv`, 2,225 rows, and
+`adjudicated.tsv`, 7,063 rows; 3 mechanical rows are superseded, so 9,285 effective rows) were applied to open train, dev and
+test, MASC and silver (commit "apply the staged corrections", before this section), the manifest was regenerated, and the lexicon
+is rebuilt and the model retrained in the commits after this one. This section was written and committed **before** any
+retraining, so the git history shows that the gates were fixed first. Nothing in it is tuned afterwards.
+
+Which labels changed (stated plainly). Only the open corpus (train, dev, **test**), MASC and silver changed. Gold v2, the shape
+probe, the STE challenge set and the UD English-EWT labels did **not** change (the overlay cannot address them: the STE set is
+linted but never corrected). Among the evaluation sets only the open dev and the open test labels moved, so the open test
+result of a retrained model is not strictly comparable with the old record; gold v2, the shape probe, the STE challenge set
+and UD-EWT are fair before-and-after comparisons. On open dev 274 tokens of 26,232 changed their tag and 213 their status cell
+(flags and `disputed` marks; 465 correction rows in 1,489 sentences).
+
+Method (a scratch harness outside the repository, `%TEMP%\pos-c`, not committed). The model is the one a user gets: weights plus
+the embedded lexicon of its own tree. The "old model" is the assembly built from commit `a94abd0` (`weights.bin` 492,971 bytes,
+`imageSha256` `68673a9f...0f32a`, temperature 6.727, the old lexicon: 262,667 spellings / 339,880 entries), snapshotted before any
+change. A small tool tags the forms of a corpus file with `Tagger.Load` (`MaxAlternatives` = the limit) and writes the chosen tag,
+the confidence and the alternatives; a Python script scores the predictions. Definitions are those of E0: a decision is a gold
+NOUN or VERB token with both tags among the decoder's candidates (chosen tag and alternatives); a harmful error is a chosen tag
+that is the other of NOUN and VERB with confidence >= 0.45; rates are per 1,000 decisions. Intervals are percentile intervals of
+a bootstrap by document (open: `source_id`, 502 documents on dev; UD: the sentence id without its running number, 318 documents),
+1,000 resamples, seed 20261104, 95%; differences are paired (the same resample for both models). UD-EWT dev is the mapped view
+(`tools/data/cache/ud-ewt/ud_dev.tsv`, 25,148 tokens, the same cache and mapping as the earlier participle spike).
+
+Baseline reproduction (acceptance test of the harness, run before any file changed). The harness reproduces the figures of the
+earlier records exactly: open dev 96.07% and **94 harmful of 4,484 decisions** (20.96 per 1k) on the old labels; the trainer's
+`eval` on the old weights prints the same two figures (and gold v2 dev 95.34%, 9 harmful of 611); UD-EWT dev mapped agreement
+**23,227 of 25,148 = 92.361%** (interval [91.80, 92.88]; the earlier spike printed [91.80, 92.95] from a different random
+sequence of the same procedure).
+
+| Old model (a94abd0) | Tokens | Decisions | Harmful | Per 1k [95%] | Agreement / accuracy % |
+| --- | ---: | ---: | ---: | --- | --- |
+| open dev, old labels (reproduction) | 26,232 | 4,484 | 94 | 20.96 [16.12, 26.30] | 96.07 [95.20, 96.63] |
+| open dev, **relabeled** (the G2a baseline) | 26,232 | 4,468 | 92 | 20.59 [15.62, 25.96] | 96.05 [95.24, 96.61] |
+| UD-EWT dev, mapped (the G1 and G2b baseline) | 25,148 | 4,573 | 100 | 21.87 [18.03, 26.19] | 92.36 [91.80, 92.88] |
+
+The harmful rate on UD-EWT dev was never recorded before; it is measured here, with the old model, before the retraining.
+
+The gates (all on development data; none reads a held-out file):
+
+- **G1 (UD-EWT dev agreement).** The new model's agreement with the mapped UD-EWT dev labels is at least the old model's:
+  **23,227 correct tokens of 25,148 (92.361%, reported as 92.36%)**. Pass or fail by the point estimate. The paired bootstrap
+  interval of the difference (new minus old) is reported, not used for the verdict.
+- **G2 (harmful noun-verb errors, both must hold).** (a) On open dev with the relabeled gold labels, the new model's harmful
+  errors per 1,000 decisions are no higher than the old model's on the same labels (**20.59**, 92 of 4,468). (b) On UD-EWT dev
+  the new model's harmful errors per 1,000 decisions are no higher than the old model's (**21.87**, 100 of 4,573). Pass or fail by
+  the point estimates (no tolerance); the rates, counts and intervals of both models and the paired difference are reported. The
+  decision sets of the two models differ slightly (the lexicon changed); the rate per decision is the compared quantity.
+- **G3 (linter).** `python tools/data/check_conventions.py --tier fix --enforce` exits 0 over open train, dev, test, MASC and silver
+  (the evaluation-only STE set is shown and counts for nothing). The check tier stays report-only and its counts are reported
+  (expected 298 after the application: open train 95, dev 12, test 17, MASC 66, silver 106, STE 2).
+- **G4 (build).** `build.ps1` is green: Release build of every target, `LexiconCompiler --check`, `train --check` (reproducible
+  image), the API-docs check and all tests on all target frameworks. The held-out evaluation record must also be consistent
+  with the shipped model before G4 can be final; that part is decided after the development gates, only if they pass.
+
+Selection rule. Only development sets are used. The shipped `training.json` settings are used unchanged (sources and weights,
+restriction `history`, 6 epochs, 19 hash bits, minimum count 1, pruning threshold 8, scale 8, seed 20260101, disputed tokens
+trained): **no hyperparameter is searched**. The one value that is refit is the softmax temperature, by the existing
+`calibrate` on open dev with the new labels (minimum NLL; it never changes a chosen tag), exactly as the first freeze did.
+
+Stop rule. If G1, G2 or G3 fails: nothing is tuned, no held-out file is opened or evaluated, `thresholds` and `evaluate` are not
+run, and the pull request is a draft with the failure report. A passing development result does not authorize any further
+tuning either.
+
+Reproducibility of the labels and tools. The application is deterministic (a second application on a pristine copy gives the
+same SHA-256 for all five files); a second `apply` is refused; `make_corrections.py --check` passes in the applied state (it
+reverses the rows in a temporary copy and regenerates); the fix-tier linter finds 0 violations over all sources including the
+STE set; the check tier has 298 (the counts above).
+
+## Corpus cleanup C: results of the development gates (retrained model; verdict: G2 failed, stop rule applies)
+
+Procedure (exactly the pre-registered one; no option other than `--update-config` was used). `dotnet build -c Release` of the
+trainer (the project reference embeds the rebuilt lexicon), `train` with the shipped `training.json` (temperature still 6.727,
+irrelevant for the fit), `calibrate --update-config` (open dev with the corrected labels: minimum NLL at **T = 6.583**, was 6.727;
+ECE 0.222%, NLL 0.12232; gold v2 dev at that T: NLL 0.2589, ECE 2.41%), then `train --update-config --label "C retrained (frozen)"`
+(this wrote the weights, the `imageSha256` and the run-table row below), and `train --check` twice (both exit 0, the same image
+SHA-256). The library was rebuilt so that it embeds the new weights, and a second copy of the scratch tool (`dump-new`) was built
+from that tree.
+
+| Model | Old (a94abd0) | New (corpus cleanup C) |
+| --- | --- | --- |
+| Rows / weights | 119,632 / 290,862 | 116,448 / 281,682 |
+| Image (uncompressed) | 1,111,898 bytes | 1,077,990 bytes (1,053 KB) |
+| `weights.bin` (deflated) | 492,971 bytes (481 KB) | 477,899 bytes (467 KB) |
+| `imageSha256` | `68673a9ff48fea494991a82b6106b42e3cd63f9ef0c8c3fde4fc80477060f32a` | `dca810e400d6e5cf27cdbb126db810c4ead6aaa07bb410709f3cedb515da339d` |
+| Temperature | 6.727 | 6.583 |
+| Lexicon | 262,667 spellings / 339,880 entries (641,418 bytes) | 262,635 / 339,823 (639,617 bytes) |
+| Training | 6,285,552 steps, 7.8 s | 6,285,552 steps, 5.3 s (peak working set 271 MB) |
+
+Gate table (development data only; all figures from the scratch harness of the pre-registration, bootstrap by document, 1,000
+resamples, seed 20261104, 95% percentile intervals, differences paired):
+
+| Gate | Old model | New model | New minus old (paired) | Verdict |
+| --- | --- | --- | --- | --- |
+| **G1** UD-EWT dev agreement (mapped, 25,148 tokens) | 23,227 correct, 92.361 [91.803, 92.881] | 23,338 correct, **92.803** [92.252, 93.312] | **+0.441** [+0.243, +0.628] points | **PASS** (92.803 >= 92.361) |
+| **G2a** harmful per 1k, open dev, relabeled | 92 of 4,468 = **20.59** [15.62, 25.96] | 103 of 4,467 = **23.06** [17.53, 29.07] | +2.47 [0.00, +5.26] | **FAIL** (23.06 > 20.59) |
+| **G2b** harmful per 1k, UD-EWT dev | 100 of 4,573 = **21.87** [18.03, 26.19] | 107 of 4,570 = **23.41** [18.77, 28.59] | +1.55 [-1.50, +4.93] | **FAIL** (23.41 > 21.87) |
+| **G3** `check_conventions.py --tier fix --enforce` | - | exit 0, 0 violations in open train, dev, test, MASC, silver and STE | - | **PASS** |
+| **G4** `build.ps1` | - | **FAIL** (not satisfiable under the stop rule: only the 10 held-out-record pin tests are red, see below) | - | **FAIL**; later reissued: PASS (see "owner decision" section) |
+
+Check tier (report only, unchanged by the gate): 298 = open train 95, dev 12, test 17, MASC 66, silver 106, STE 2 (251
+`be-participle-adj-not-gradable`, 26 `be-aux-passive`, 13 `infinitive-to`, 4 `be-passive-agent`, 2 `no-all-degree`, 2 `out-of-phrasal`).
+
+**Verdict.** G1 and G3 pass; **G2 fails on both of its parts** by the pre-registered point-estimate rule. The stop rule applies:
+nothing is tuned or re-selected, `thresholds` and `evaluate` were not run, and no held-out file was read. The frozen figures
+`FrozenOpenHarmful` and `FrozenGoldHarmful` of `thresholds` (Program.cs) are not changed. The failure is stated plainly; the
+interval of the paired difference of G2a touches 0 (lower bound 0.000) and that of G2b contains 0, and the 11 and 7 extra harmful
+errors are of the size that the seed spread of E0 showed on the old dev labels (106 to 113 harmful for three seeds of one
+configuration), but the gate was fixed as a point-estimate rule and is reported as failed, not re-interpreted.
+
+Informational figures (no gate; same harness or `eval`):
+
+| Set | Old model | New model |
+| --- | --- | --- |
+| Open dev, own labels: accuracy | 96.07% (old labels), 96.05% [95.24, 96.61] on the relabeled dev | **96.37%** [95.60, 96.89]; paired difference on the relabeled dev +0.320 [+0.173, +0.462] points |
+| Open dev: ambiguous-token accuracy, NLL, ECE | 95.28%, 0.1328, 0.35% (old labels) | 95.64% (17,628 tokens), 0.1223, 0.22% |
+| Gold v2 dev (labels unchanged; 2,017 targets) | 95.34%, harmful 9 of 611 = 14.7 per 1k, NLL 0.2423, ECE 2.37% | 94.99%, harmful 14 of 611 = 22.9 per 1k, NLL 0.2589, ECE 2.41% |
+| Pooled harmful, open dev + gold v2 dev | 103 of 5,095 = 20.2 per 1k (old labels) | 117 of 5,078 = 23.0 per 1k |
+| Gold outside the decoder's candidates (open dev) | 40 | 33 |
+
+Where the extra harmful errors are (diagnostic, development data only, no model or setting is chosen with it). On the relabeled
+open dev 79 harmful errors are shared by both models, 13 occur only in the old and 24 only in the new model (new: 13 gold VERB
+answered NOUN and 11 gold NOUN answered VERB, among them `dabbling` 2, `feeding`, `nibble`, `hit`, `use`, `worry`, `move`, `mind`);
+both models keep the same hard types (`pay`, `learning`, `diving`, `swimming`, `foraging`, `check`, `mash`, `gamify`). On UD-EWT dev
+79 are shared, 21 only old, 28 only new (17 gold VERB answered NOUN, e.g. `reply` 3, `look` 2, `focus`, `rip`, `type`, `cancel`;
+11 the other way). The retrained model loses mostly on base-form verbs against nouns (`reply`, `look`, `type`) on UD. The corrections
+moved many conventions at once (ADJ>VERB 1,034, NOUN>PROPN 644, VERB>AUX 540, ADV>ADJ 467, PRON>DET 305 of the 9,285 changes);
+whether any of them explains the loss was not tested, and nothing here is used to retune.
+
+Consequences recorded for the pull request. (1) The held-out record (`docs/evaluation/test-results.*`, `operating-points.json`,
+`confidence-thresholds.md`) still describes the old model and the old dev files; the tests that pin it
+(`PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs`, two `OperatingPointsFile_Load_CommittedSelection_*` tests)
+therefore fail on this branch by design, and G4 cannot be green until the held-out record is reissued or the model is not the
+shipped one. (2) The development gates being failed, reissuing it is not authorized by the pre-registration. (3) The golden
+hashes of the small trainer runs (`ModelTrainerTests`) and the size figures of the documents were re-pinned to the retrained
+files; they carry no judgment.
+
+### Corpus cleanup C: stop decision, G4 and decisions on the open questions of the plan
+
+**Stop decision.** The pre-registered gates G1 and G3 pass and G2 fails on both of its parts (G2a open dev, G2b UD-EWT dev). By the stop
+rule written before the retraining, nothing is tuned and no held-out file is read: `thresholds` and `evaluate` were not run, the
+held-out record `docs/evaluation/{test-results.*,operating-points.json,confidence-thresholds.md}` is not reissued, the constants
+`FrozenOpenHarmful` and `FrozenGoldHarmful` of `thresholds` are not changed, and the pull request is opened as a draft with this
+report. The gate texts and verdicts above are unchanged by this section.
+
+**G4 (build) is reported as FAIL, and cannot be satisfied on this branch.** `build.ps1` passes the Release build of every target, the
+`LexiconCompiler --check`, `train --check` and the API-docs check, and runs every test on net481, net8.0, net9.0 and net10.0. The only
+tests that fail are the ones that pin the held-out record to the shipped model and to the development files:
+`PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs` (net481, net8.0, net9.0, net10.0) and
+`PartOfSpeech_Evaluation_OperatingPointsFile_Load_CommittedSelection_EqualsDevDerivation` and
+`..._PassesGateForFrozenModel` (net8.0, net9.0, net10.0; 10 failures in all). They fail because the held-out record names the old
+model hash and the old development file hashes. This is the accepted, documented consequence of the stop rule (decision Q2), not a defect
+of the retraining; it ends only when a held-out record is reissued for a model, which the pre-registration forbids after the G2 failure.
+Nothing else is red.
+
+**Decisions on the open questions of the plan** (recorded as decisions of this change; none changes a gate or a verdict):
+
+| # | Question | Decision |
+| --- | --- | --- |
+| Q1 | Where does the old-versus-new comparison live? | In this run log (and the pull request description), not in `docs/evaluation/*`: `AGENTS.md` asks the documents to describe the current state once, and tests pin the figures of the evaluation record. `docs/evaluation/README.md` carries only a short status note that the record describes the earlier model and that the retrained one was not evaluated on held-out data. |
+| Q2 | CI is red on the draft (the three held-out-record tests) | Accepted. The pull request is a draft, the failing tests are named in its description, and `thresholds` is not run to turn them green (it would reselect thresholds for a model that failed its gate). |
+| Q3 | Tolerance for G2 | None. The gate was pre-registered as a point-estimate rule and is judged as written (23.06 > 20.59 and 23.41 > 21.87), although the paired intervals touch or contain 0. |
+| Q4 | `import_silver.py verify` on the corrected silver file | Documented, no code change: `verify` describes the derivation and passes only on the pre-correction file (`corrections.py apply --write --reverse`); see `data/silver/README.md` and `tools/data/README.md`. |
+| Q5 | The 1,779 new `disputed` tokens | They stay in training (`maskDisputed` false in `training.json`, as for the 7,449 earlier ones); nothing was tuned on them. |
+| Q6 | Gold v2, the shape probe and the STE challenge set | Their labels are not corrected here (the overlay cannot address them); bringing them to the same conventions is left to a later change. |
+
+Documents and tests changed with this decision (no model, setting or weight): the data READMEs and `CONVENTIONS.md` describe the applied
+state, the design and verification documents state the applied state, the new requirement `PartOfSpeech-Data-CorrectionsApplied`
+with its test `PartOfSpeech_DataCorrections_Rows_AreApplied`, and the README, user guide and packed API reference no longer say that the
+embedded model was evaluated on held-out data.
+
+## Corpus cleanup C: owner decision after the dev-only diagnosis
+
+This section is written and committed **before** `thresholds` or `evaluate` is run for the retrained model, so that the git history
+shows the order: gates (pre-registered), gate result (G2 failed), diagnosis (development data only), owner decision (this commit),
+and only then the held-out commands.
+
+**G2 failed as pre-registered, and it stays recorded as FAILED.** The gate was a point-estimate rule on the single shipped seed of
+each model. On that seed the harmful noun-verb errors per 1,000 decisions rose from 20.59 to 23.06 on the relabeled open dev
+(+2.47) and from 21.87 to 23.41 on UD-EWT dev (+1.55). Nothing in the gate text, the verdicts or the results sections above is
+changed by this section, and no gate is restated, re-interpreted or altered.
+
+**The decision is the owner's.** After the failure a diagnosis on development data only was run (below). The owner of the
+repository then accepted the retrained model on the basis of that diagnosis (option 1: accept the full cleanup, held-out
+evaluation of the retrained model). This is an **owner decision, not a restated gate**: G2 is not re-defined as passed, it is
+not replaced by a different test, and no tolerance was added to it. The decision overrides the stop rule of the
+pre-registration for the held-out step only, and the owner's reason is that the rise lies within the seed noise of the training
+while the agreement gain is real. The consequence is accepted knowingly: a real rise of about +1 harmful error per 1,000
+decisions is **not excluded** by the diagnosis. Nothing about the training, the weights, the lexicon, `training.json` or the
+data changes with this decision.
+
+### Diagnosis (development data only)
+
+The full write-up (`DIAGNOSIS.md` with its scripts and outputs) lives in a session folder outside the repository, so it is not
+part of the record; **the key tables are copied below**, and that file name is only a pointer. The diagnosis is post hoc: it was
+designed after the G2 failure had been seen.
+
+Method.
+
+- **Arms.** OLD is `a94abd0` (the data, lexicon and `training.json` before the cleanup), NEW is this branch at `02dac97`. Each arm's
+  trainer was built in its own scratch worktree, so each uses its own lexicon and corpora. The shipped `training.json` settings were
+  used unchanged (sources open x2, MASC, silver >= 80, restriction `history`, predicted history, 6 epochs, 19 hash bits, minimum
+  count 1, pruning 8, scale 8); only the shuffle seed changes. The temperature is refit on the arm's own open dev for every run,
+  exactly as the shipped model's `calibrate` did.
+- **Seeds.** 5 per arm: 20260101 (the shipped seed), 11, 12, 13, 14 (11 and 12 are the E0 seeds of this log; 13 and 14 are new).
+- **Acceptance test.** The runs at the shipped seed reproduce the figures of the gate table exactly (open dev 92 of 4,468 old and
+  103 of 4,467 new; UD-EWT dev 100 of 4,573 and 107 of 4,570; UD agreement 23,227 and 23,338), and the weights of those runs are
+  byte-identical to the shipped `weights.bin` of both arms.
+- **Scoring.** The runtime decoder (`Tagger.Load`) through the scratch tool of the pre-registration, against each arm's own
+  library; definitions as in the pre-registration (decision, harmful at confidence >= 0.45, per 1,000 decisions). The old arm is
+  scored on the **new** (relabeled) open dev labels, and both arms on the UD-EWT dev mapped view. Only open dev and UD-EWT dev were
+  read; no held-out file and no gold v2 dev.
+- **Statistics.** Sample standard deviation over the 5 seeds; Welch t interval for the difference of the means (independent
+  shuffles, so unpaired); a combined bootstrap (2,000 replicates, seed 20261104) that resamples documents (shared by both arms) and
+  the 5 seeds with replacement within each arm, then takes the difference of the arm means.
+
+Seed table (per-seed values; counts in brackets; the shipped seed is the first column).
+
+| Metric | Arm | 20260101 | 11 | 12 | 13 | 14 | mean ± sd |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| UD-EWT dev agreement % | OLD | 92.361 (23,227) | 92.218 (23,191) | 92.302 (23,212) | 92.146 (23,173) | 92.254 (23,200) | 92.256 ± 0.082 |
+| | NEW | 92.803 (23,338) | 92.711 (23,315) | 92.655 (23,301) | 92.695 (23,311) | 92.747 (23,324) | 92.722 ± 0.056 |
+| Open dev harmful / 1k (relabeled) | OLD | 20.591 (92/4,468) | 20.143 (90) | 21.486 (96) | 20.367 (91) | 22.605 (101) | 21.038 ± 1.013 |
+| | NEW | 23.058 (103/4,467) | 21.491 (96) | 21.939 (98) | 22.386 (100) | 22.610 (101) | 22.297 ± 0.605 |
+| UD-EWT dev harmful / 1k | OLD | 21.867 (100/4,573) | 22.305 (102) | 20.774 (95) | 24.054 (110) | 21.867 (100) | 22.174 ± 1.194 |
+| | NEW | 23.414 (107/4,570) | 23.195 (106) | 23.632 (108) | 22.101 (101) | 22.976 (105) | 23.063 ± 0.591 |
+| Open dev accuracy % (relabeled, context) | OLD | 96.054 | 96.016 | 95.952 | 96.020 | 95.936 | 95.996 ± 0.050 |
+| | NEW | 96.375 | 96.325 | 96.367 | 96.371 | 96.298 | 96.347 ± 0.034 |
+
+Difference table (NEW minus OLD, mean of 5 seeds; both interval types; where the shipped-seed difference falls among the 25
+seed-pair differences).
+
+| Metric | Mean difference | Welch t 95% (df) | Seed + document bootstrap 95% | Contains 0? | Shipped-seed difference | Rank of 25 | Pairs >= shipped / <= 0 |
+| --- | ---: | --- | --- | --- | ---: | --- | --- |
+| UD agreement (points) | +0.466 | [+0.362, +0.570] (7.1) | [+0.303, +0.624] | no (better) | +0.441 | 15 | 64% / 0% |
+| Open harmful / 1k | +1.258 | [-0.008, +2.525] (6.5), p = 0.051 | [-1.021, +3.433] | yes (barely for Welch) | +2.467 | 3 | 12% / 12% |
+| UD harmful / 1k | +0.890 | [-0.577, +2.357] (5.9), p = 0.187 | [-1.594, +3.236] | yes | +1.546 | 7 | 32% / 24% |
+| Open accuracy (points) | +0.351 | [+0.288, +0.415] (7.0) | [+0.216, +0.486] | no (better) | +0.320 | 17 | 68% / 0% |
+
+Reading. The shipped open-dev pair is a large draw (rank 3 of 25; 12% of the seed pairs are as large, 12% are at or below 0) and
+the shipped UD pair a middling one (rank 7 of 25). The standard deviation over seeds of one arm (0.6 to 1.2 per 1,000, 3 to 5
+errors) is as large as the shipped difference. The agreement gain on UD-EWT dev (+0.47 points) and the open dev accuracy gain
+(+0.35 points) are positive in all 25 seed pairs. The diagnosis does **not** show that the harmful rate is unchanged: both mean
+differences are positive (+1.26, +0.89), the Welch interval on open dev only just contains 0, and 5 seeds give low power (the
+standard error of the open-dev difference is about 0.55 per 1,000). The honest reading is a change of 0 to about +2.5 harmful
+errors per 1,000 decisions (0 to about 11 errors on open dev), best estimate about +1 per 1,000, next to a clear gain in agreement.
+
+Error diff at the shipped seeds (old scored on the new labels). A new error is wrong in the new and right in the old model, a
+fixed error the reverse.
+
+| Set | New errors | Fixed | Both wrong | Old total | New total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Open dev | 24 | 13 | 79 | 92 | 103 |
+| UD-EWT dev | 28 | 21 | 79 | 100 | 107 |
+| Pooled | 52 | 34 | 158 | 192 | 210 |
+
+Pattern findings (all post hoc and uncorrected, hypotheses only).
+
+- The new errors are diffuse. 48 new-error forms: 9 (19%) have a training token whose tag a correction changed, against 8 of 33 fixed
+  forms (24%) and 546 of 5,169 (11%) of all dev gold noun and verb forms: about 80% of the new errors are on forms no correction
+  touched. None of the 24 new open-dev errors is on a relabeled dev token (79 of 8,353 gold noun and verb tokens, 0.9%, were
+  relabeled), so the relabeling of the dev file cannot explain the G2a rise (the UD labels did not change at all).
+- Churn is symmetric across seeds: tokens with a harmful error in at least 3 more of the five new-arm models than of the five old-arm
+  models number 11 on open dev, the reverse 12; on UD 16 and 12. Mean harmful errors per model over five seeds: open 94.0 old and
+  99.6 new, UD 101.4 old and 105.4 new. The same form can churn in both directions (`look` is a new error twice and a fixed one
+  once on UD).
+- Direction: the new errors are 30 gold VERB answered NOUN and 22 gold NOUN answered VERB, the fixed ones 12 and 22 (Fisher p =
+  0.050). The new model tends to lose base-form verbs against nouns (`look`, `reply`, `type`, `focus`, `worry`, `move`, `mind`).
+  Of nine pattern tests, the only one with p < 0.05 is "after a determiner, adjective, number or possessive" (15 new against 3
+  fixed, p = 0.031); it does not survive a correction for nine tests.
+- The only rule with an association is `adj:prenominal-ing` (the adjudicated ADJ>VERB and ADJ>NOUN moves of -ing words, 645 of the
+  5,640 changed training tags): present in 7 of 48 new-error forms against 113 of 5,169 dev noun and verb forms (enrichment 6.67,
+  Fisher p = 0.0001), but 3 of 33 fixed-error forms (new against fixed p = 0.35). The enrichment is confounded with morphology (the
+  rule touches only -ing words): conditional on -ing forms, 7 of 15 touched forms are new errors (p = 0.058) against 3 of 11 fixed
+  (25% base rate). So the association is **weak and confounded**; touched -ing forms are over-represented among errors of both kinds.
+  Every other rule has at most one error form (`adj:no-detector` 3 new, 3 fixed; `adj:propn-boundary` 1 and 1).
+
+Prenominal-ing ablation (**exploratory, post hoc, not adopted**: a test of the one hypothesis the error diff suggested, with
+nothing chosen by it). The 861 correction rows of `adj:prenominal-ing` that touch development or training data (MASC 518, silver
+170, open train 151, open dev 22; the 17 open-test rows were excluded, so no held-out file was touched or needed) were reversed in
+a scratch worktree, the lexicon rebuilt (339,819 entries) and the same five seeds trained and scored on the same new dev labels.
+The ablated model is not committed and was not used for anything.
+
+| Metric | ABL per seed (20260101, 11, 12, 13, 14) | ABL mean ± sd | OLD mean | NEW mean | ABL − NEW (Welch 95%; bootstrap 95%) | ABL − OLD (Welch 95%; bootstrap 95%) |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| UD agreement % | 92.711, 92.779, 92.683, 92.616, 92.747 | 92.707 ± 0.063 | 92.256 | 92.722 | −0.015 ([−0.102, +0.071]; [−0.156, +0.112]) | +0.451 ([+0.344, +0.558]; [+0.283, +0.628]) |
+| Open harmful / 1k | 20.148 (90), 21.939 (98), 21.491 (96), 22.386 (100), 20.148 (90) | 21.222 ± 1.031 | 21.038 | 22.297 | −1.075 ([−2.360, +0.211]; [−3.315, +1.256]) | +0.184 ([−1.307, +1.675]; [−2.270, +2.528]) |
+| UD harmful / 1k | 22.538 (103), 23.851 (109), 20.788 (95), 21.663 (99), 22.101 (101) | 22.188 ± 1.133 | 22.174 | 23.063 | −0.875 ([−2.272, +0.521]; [−3.145, +1.552]) | +0.015 ([−1.683, +1.713]; [−2.614, +2.749]) |
+| Open accuracy % | 96.348, 96.329, 96.302, 96.298, 96.352 | 96.326 ± 0.025 | 95.996 | 96.347 | −0.021 ([−0.065, +0.023]; [−0.105, +0.065]) | +0.330 ([+0.269, +0.391]; [+0.186, +0.464]) |
+
+Without the `prenominal-ing` corrections the harmful rate returns to the old level (open 21.22 against 21.04, UD 22.19 against
+22.17) and the accuracy gain stays, but the difference to the new model is within noise (both intervals contain 0), so this is
+consistent with a small `prenominal-ing` effect and does not establish one. The ablation is **not adopted**.
+
+Caveats (as in the diagnosis).
+
+- Post hoc: designed after the G2 failure had been seen; the pattern and rule tests are uncorrected and generate hypotheses only.
+- Five seeds per arm is little: the Welch degrees of freedom are about 6 to 8, the open-dev interval is borderline and a real rise of
+  about +1 per 1,000 (4 to 6 errors) is **not excluded**. The shuffle seed is one source of variance; the lexicon and data also
+  differ between the arms, and the documents are covered by the bootstrap, which resamples the five observed seeds (a coarse
+  distribution), so the Welch interval is the primary statement.
+- The decision sets of the two arms differ slightly (the lexicon candidates), so rates rather than counts are compared, as in the
+  gates. The corpora have no lemma column; form statistics use the lower-cased form. The error diff uses one seed pair, so its
+  token-level patterns are descriptive.
+
+### Decision and order of the following steps
+
+The owner accepted the retrained model on the basis of the diagnosis above: the harmful-rate rise at the shipped seed is within the
+seed noise, the agreement gain is real (+0.47 points on UD-EWT dev, Welch [+0.36, +0.57]), and the gain in open dev accuracy is
+real too. **This is an owner decision.** G2 remains FAILED as pre-registered; no gate text, verdict or threshold was altered; the
+diagnosis did not replace a gate. The held-out step is therefore run for the retrained model as a new record and not as an erratum
+of the earlier one: first `thresholds` (development data only, with the two frozen harmful counts of `Program.cs` set to the
+retrained model's development figures), then `evaluate` exactly once, with no tuning of anything. G4 (the build) can become green
+once the held-out record is reissued; the G4 row above keeps its original FAIL text and is annotated when that has happened.
+
+**G4 after the reissue (added 2026-11-06, after the held-out record was committed).** With the new held-out record committed
+(commits `939c0fa` and `58da737`) and the documents updated, `pwsh ./build.ps1` at commit `52bb1e5` is **green**: Release build
+of every target, `LexiconCompiler --check` (262,635 spellings), `train --check` (image `dca810e4...339d`, current), the API-docs
+check, and all tests on net481, net8.0, net9.0 and net10.0 (3,225 tests, 0 failed, 1 skipped on net481 as before: link
+resolution needs .NET 6 or later). `pwsh ./lint.ps1` exits 0 and `dotnet reviewmark --lint` reports nothing. G4 is therefore
+**PASS** for the retrained model with its reissued record. This does not change the verdict of G2, which stays FAILED as
+pre-registered.
+
+## Corpus cleanup C: held-out evaluation of the retrained model (a new record for a new model, not an erratum)
+
+This is a **new** evaluation record for the retrained model. It does not correct or replace the text of the earlier record
+("Outcome of the held-out run" and its errata above), which describes the earlier model and stays as written. It was produced
+after the owner decision of the previous section, in this order (git history): owner decision (`6388220`), `thresholds`
+(`939c0fa`), the one `evaluate` (`58da737`), this section and the documents after it.
+
+Procedure, exactly the one of the protocol; nothing was tuned.
+
+1. The two constants of the `thresholds` command, `FrozenOpenHarmful` and `FrozenGoldHarmful` in `Program.cs`, held the first
+   freeze figures (94 and 9); they were set to the development figures of the retrained model, 103 (open dev, 4,467
+   decisions) and 14 (gold v2 dev, 611 decisions), 117 pooled, which the trainer's `eval` printed before (the figures of the
+   gate table above). They only guard that the 0.45 row of the curve reproduces the freeze figures; they do not select
+   anything. `thresholds` (seed 1, 1,000 resamples, development data only, rule `nv-pooled-dev-v1`, grid, targets and floors
+   unchanged) then reproduced 103, 14 and 117 and wrote `operating-points.json` (new model hash, new dev file hashes) and
+   `confidence-thresholds.md`. These were committed before the held-out run.
+2. `evaluate --preflight` passed (every documented size matched: open test 1,501 sentences, 26,185 tokens, 517 documents; gold
+   v2 test 3,047 targets, 856 documents; probe 560; challenge set 32 sentences, 272 tokens; UD test 2,077 sentences, 25,094
+   words); it scored nothing.
+3. `evaluate` refuses to run while `docs/evaluation/test-results.json` exists. The old `test-results.md` and `.json` (the record
+   of the earlier model) were **deleted on purpose** for this run, because the record of a retrained model is a new record, not
+   a re-run of the old one; they stay recoverable in git history (for example `git show 6388220:docs/evaluation/test-results.md`)
+   and were copied outside the repository before the deletion.
+4. `evaluate --dump-dir <folder outside the repository>` ran **once** (BelowNormal, 8 logical CPUs, the treebank from the
+   git-ignored cache). It exited with 1 because of the same three stop conditions as the earlier record (findings, not
+   failures of the run); the committed files are the output as produced. **No second `evaluate` run was made.**
+
+Stop conditions of the protocol (all three fired again, with these values; earlier values in brackets):
+
+- `shape-probe`: 52 harmful errors at 0.45 against a limit of 28 (5% of 560 rows) (earlier 48). This is the finding about the model's
+  behavior and it stands, as before, reported and not tuned.
+- `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (earlier the same); the `to`/`not` convention
+  difference, a view reported separately.
+- `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (earlier 1.68%, 421); the raw treebank tags that the
+  library does not produce by design. The primary mapped view is at 0.55% (138 words) (earlier 0.56%, 140), under the limit.
+
+All other stop conditions held: the open test accuracy 96.46% against 96.37% on development; the harmful rates per 1,000
+answered on open test at the strict (5.7) and balanced (6.5) points are below twice the pooled development rates (4.8 and
+7.7); open test ECE 0.24%; open test gold outside the candidates 41 of 26,185 tokens (0.16%).
+
+**What is comparable (stated plainly).** The labels of the **open test** split changed with the corrections (476 correction
+rows in it), so its before-and-after is **not strictly comparable**: the new model is scored against corrected labels and the
+earlier model against the old ones. The labels of **UD-EWT, gold v2, the shape probe and the STE challenge set did not change**
+(the correction tooling does not cover gold v2 or the probe; the STE set is linted but never corrected), so these four are
+the **fair comparisons**: the same sentences and labels, an earlier and a retrained model. The old figures below are those of the
+earlier record (model image `68673a9f...0f32a`); the new figures are those of the new record (model image `dca810e4...339d`,
+temperature 6.583). Intervals are the 95% percentile bootstrap over documents of each record (1,000 resamples, seed 1); no
+paired interval between the two models was computed, so overlapping intervals are not a test.
+
+Accuracy and harmful errors, earlier model (old) and retrained model (new), at the harmful limit 0.45 (same columns as the
+report; "n/c" marks the set whose labels changed):
+
+| Set | Model | Accuracy % | Ambiguous accuracy % | Decisions | Harmful | Harmful per 1,000 decisions | ECE % | NLL | Gold outside candidates |
+| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | ---: |
+| open-test (n/c: labels changed) | old | 96.10 [95.69, 96.49] | 95.16 [94.72, 95.61] | 4,413 | 91 | 20.6 [15.2, 26.5] | 0.28 [0.19, 0.61] | 0.1394 [0.1211, 0.1602] | 71 |
+| | new | 96.46 [96.07, 96.81] | 95.56 [95.19, 95.92] | 4,408 | 91 | 20.6 [15.7, 26.1] | 0.24 [0.19, 0.52] | 0.1163 [0.1013, 0.1322] | 41 |
+| gold-v2-test | old | 94.57 [93.67, 95.39] | 91.70 [90.33, 92.93] | 936 | 23 | 24.6 [14.9, 34.8] | 1.82 [1.47, 2.80] | 0.2178 [0.1812, 0.2596] | 7 |
+| | new | 94.34 [93.46, 95.16] | 91.34 [90.02, 92.55] | 936 | 29 | 31.0 [19.9, 42.4] | 2.23 [1.80, 3.18] | 0.2491 [0.2065, 0.2971] | 12 |
+| gold-v2-test-full-agreement | old | 95.39 [94.54, 96.24] | 92.49 [91.12, 93.81] | 713 | 17 | 23.8 [13.4, 35.9] | 1.43 [1.11, 2.34] | 0.1838 [0.1448, 0.2241] | 4 |
+| | new | 95.16 [94.26, 96.00] | 92.11 [90.65, 93.51] | 713 | 21 | 29.5 [17.9, 40.7] | 1.83 [1.32, 2.70] | 0.1960 [0.1560, 0.2379] | 5 |
+| gold-v2-test-to-not (8 targets) | old | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 56.66 [27.17, 88.44] | 6.9865 [1.9304, 12.0984] | 4 |
+| | new | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 55.56 [25.67, 88.55] | 6.9707 [1.8828, 12.0995] | 4 |
+| shape-probe (560 rows) | old | 89.11 [86.61, 91.61] | 89.21 [86.57, 91.56] | 556 | 48 | 86.3 [64.5, 109.9] | 2.38 [1.99, 5.31] | 0.2766 [0.2228, 0.3351] | 0 |
+| | new | 87.50 [84.82, 90.18] | 87.41 [84.78, 90.13] | 556 | 52 | 93.5 [69.8, 118.7] | 1.99 [2.01, 5.24] | 0.2829 [0.2233, 0.3433] | 0 |
+| challenge-set (STE, 272 tokens) | old | 87.13 [81.18, 92.70] | 88.78 [82.65, 93.72] | 86 | 0 | 0.0 | 7.80 [3.84, 12.98] | 0.3317 [0.1953, 0.4885] | 0 |
+| | new | 87.50 [82.56, 92.37] | 87.37 [80.98, 92.51] | 86 | 0 | 0.0 | 8.51 [5.28, 13.67] | 0.3842 [0.2251, 0.5604] | 0 |
+| ud-test-mapped (UD-EWT, primary view) | old | 92.30 [91.75, 92.82] | 91.71 [91.05, 92.26] | 4,413 | 73 | 16.5 [12.6, 20.9] | 2.36 [2.06, 2.81] | 0.3175 [0.2909, 0.3505] | 140 |
+| | new | 92.97 [92.46, 93.44] | 92.52 [91.90, 93.05] | 4,410 | 83 | 18.8 [14.5, 23.5] | 2.06 [1.78, 2.50] | 0.2982 [0.2733, 0.3319] | 138 |
+| ud-test-raw (UD-EWT, raw tags) | old | 88.40 [87.84, 88.91] | 87.13 [86.45, 87.73] | 4,010 | 72 | 18.0 [13.7, 22.6] | 6.22 [5.86, 6.73] | 0.6062 [0.5731, 0.6457] | 421 |
+| | new | 89.05 [88.53, 89.53] | 88.29 [87.60, 88.86] | 4,007 | 82 | 20.5 [15.6, 25.8] | 5.96 [5.59, 6.48] | 0.6106 [0.5764, 0.6509] | 484 |
+
+(The shape-probe ECE interval of the new record, [2.01, 5.24], does not contain its point estimate 1.99; that is how the
+report's percentile interval of this small set behaves and it is reproduced as written.)
+
+Operating points. The rule `nv-pooled-dev-v1` was applied unchanged to the dev curve of the retrained model. The first grid
+threshold that meets the strict target (at most 5.0 harmful per 1,000 answered, coverage at least 60%) is now 0.90 (it was 0.95),
+and the first that meets the balanced target (at most 10.0, coverage at least 85%) is now 0.85 (it was 0.80: at 0.80 the
+retrained model has 47 harmful of 4,677 answered, 10.05 per 1,000, which the report rounds to 10.0 but which is above the
+target, and the rule is applied to the unrounded figure). Development figures (pooled open dev and
+gold v2 dev, 95% bootstrap intervals over documents):
+
+| Point | Model | Threshold | Coverage % [95%] | Harmful per 1,000 answered [95%] | Harmful of answered |
+| --- | --- | ---: | --- | --- | --- |
+| strict | old | 0.95 | 80.6 [79.1, 82.0] | 3.9 [1.8, 6.1] | 16 of 4,105 |
+| | new | 0.90 | 86.5 [85.2, 87.7] | 4.8 [2.7, 7.0] | 21 of 4,392 |
+| balanced | old | 0.80 | 91.0 [90.0, 92.0] | 9.9 [6.6, 13.4] | 46 of 4,636 |
+| | new | 0.85 | 89.8 [88.7, 90.9] | 7.7 [4.8, 11.0] | 35 of 4,562 |
+
+On the held-out sets (the thresholds are those selected on development data; the earlier thresholds were 0.95 and 0.80, so
+the rows compare the points of each record, not one threshold):
+
+| Set | Point | Model (threshold) | Coverage % | Harmful per 1,000 answered [95%] | Harmful of answered |
+| --- | --- | --- | ---: | --- | --- |
+| open-test (n/c) | reference 0.45 | old | 99.9 | 20.6 [15.2, 26.5] | 91 of 4,407 |
+| | | new | 99.8 | 20.7 [15.8, 26.1] | 91 of 4,399 |
+| | strict | old (0.95) | 82.3 | 4.1 [2.0, 6.9] | 15 of 3,631 |
+| | | new (0.90) | 87.7 | 5.7 [3.0, 8.8] | 22 of 3,868 |
+| | balanced | old (0.80) | 92.3 | 9.3 [6.1, 12.6] | 38 of 4,072 |
+| | | new (0.85) | 90.9 | 6.5 [3.5, 9.7] | 26 of 4,005 |
+| gold-v2-test | reference 0.45 | old | 99.8 | 24.6 [14.9, 35.0] | 23 of 934 |
+| | | new | 99.9 | 31.0 [19.9, 42.4] | 29 of 935 |
+| | strict | old (0.95) | 81.3 | 3.9 [0.0, 9.1] | 3 of 761 |
+| | | new (0.90) | 86.3 | 5.0 [1.2, 10.3] | 4 of 808 |
+| | balanced | old (0.80) | 92.5 | 10.4 [3.9, 17.8] | 9 of 866 |
+| | | new (0.85) | 89.1 | 9.6 [3.7, 17.3] | 8 of 834 |
+| shape-probe | reference 0.45 | old | 98.6 | 87.6 [65.6, 111.3] | 48 of 548 |
+| | | new | 98.0 | 95.4 [71.3, 120.9] | 52 of 545 |
+| | strict | old (0.95) | 59.5 | 9.1 [0.0, 19.7] | 3 of 331 |
+| | | new (0.90) | 67.8 | 18.6 [5.4, 33.5] | 7 of 377 |
+| | balanced | old (0.80) | 80.6 | 42.4 [25.2, 61.7] | 19 of 448 |
+| | | new (0.85) | 74.1 | 26.7 [12.1, 42.3] | 11 of 412 |
+| challenge-set | strict and balanced | old and new | 69.8 to 84.9 (old), 76.7 to 77.9 (new) | 0.0 | 0 of 60 to 73 (old), 0 of 66 and 67 (new) |
+| ud-test-mapped | reference 0.45 | old | 99.3 | 16.7 [12.7, 21.0] | 73 of 4,382 |
+| | | new | 99.4 | 18.9 [14.8, 23.6] | 83 of 4,384 |
+| | strict | old (0.95) | 76.9 | 2.9 [1.3, 5.0] | 10 of 3,395 |
+| | | new (0.90) | 84.1 | 5.1 [2.8, 7.8] | 19 of 3,708 |
+| | balanced | old (0.80) | 89.2 | 7.4 [4.8, 10.2] | 29 of 3,936 |
+| | | new (0.85) | 87.4 | 5.7 [3.5, 8.6] | 22 of 3,855 |
+| ud-test-raw | strict | old (0.95) | 77.9 | 3.2 [1.5, 5.4] | 10 of 3,125 |
+| | | new (0.90) | 84.7 | 5.6 [3.1, 8.5] | 19 of 3,395 |
+| | balanced | old (0.80) | 89.6 | 8.1 [5.2, 11.3] | 29 of 3,593 |
+| | | new (0.85) | 87.8 | 6.2 [3.8, 9.4] | 22 of 3,520 |
+
+Shape probe by shape (harmful errors at 0.45, old then new): `n-obj-light` 1 and 1, `n-compound-head` 16 and 17,
+`n-modifier` 0 and 0, `n-subject-initial` 12 and 12, `n-measure` 6 and 6, `v-imperative-initial` 12 and 14, `v-after-modal`
+1 and 2. Open test per tag: NOUN precision/recall 96.19/96.21 (old) and 96.46/96.82 (new), VERB 94.31/95.72 and 94.87/96.30
+(the gold tag counts differ because the labels changed). The throughput of the new report (889,218
+tokens per second, one thread) is a timing of the machine; the earlier one (315,213) was measured on a busy machine and the two
+are not a comparison of the models.
+
+**Reading, with what is worse stated first.**
+
+- **Worse than before on the fair comparison sets.** The harmful noun-verb errors per 1,000 decisions at 0.45 are higher for
+  the retrained model on **gold v2 test** (24.6 to 31.0; 23 to 29 errors; the full-agreement subset 23.8 to 29.5), on the
+  **shape probe** (86.3 to 93.5; 48 to 52) and on **UD-EWT** (mapped 16.5 to 18.8, 73 to 83; raw 18.0 to 20.5). All three
+  moved in the direction that the pre-registered G2 had flagged on the development sets, and the diagnosis had said that a real
+  rise of about +1 per 1,000 was not excluded; the size here (about +2 to +7 per 1,000) is larger than that estimate on each
+  set. Every old and new interval overlaps (the sets are small: 29 and 23 errors on gold v2), so no single set proves a
+  regression, but the direction is the same on all three. Gold v2 accuracy (94.57 to 94.34), its ambiguous accuracy, ECE
+  (1.82 to 2.23) and NLL (0.2178 to 0.2491) are also slightly worse, and so are the shape probe accuracy (89.11 to 87.50) and its
+  NLL, and the NLL of the challenge set (0.3317 to 0.3842; its accuracy is 87.13 to 87.50, harmful 0 and 0).
+- **Better than before.** UD-EWT agreement improved on both views (mapped 92.30 to 92.97, raw 88.40 to 89.05; ambiguous
+  91.71 to 92.52), with a lower ECE (2.36 to 2.06) and NLL (0.3175 to 0.2982) on the mapped view; the open test accuracy
+  rose 96.10 to 96.46 with a lower NLL and ECE (not strictly comparable: the labels changed); the number of golds outside the
+  candidates on the open test split fell from 71 to 41 (also not comparable).
+- **Open test harmful rate unchanged** at 91 errors, 20.6 per 1,000 decisions (not strictly comparable).
+- **Operating points.** The strict threshold moved from 0.95 to 0.90 and the balanced from 0.80 to 0.85. On the held-out
+  open test split the new strict point answers more (87.7% against 82.3%) at a **higher** harmful rate (5.7 against 4.1 per
+  1,000 answered; the target of 5.0 was met on development data, 4.8, and is exceeded on the open test split, where the
+  interval [3.0, 8.8] contains 5.0); the balanced point has a lower rate (6.5 against 9.3) at a similar coverage (90.9% against
+  92.3%). On gold v2 test strict is 5.0 (earlier 3.9) and balanced 9.6 (earlier 10.4); on UD mapped strict 5.1 (earlier 2.9) and
+  balanced 5.7 (earlier 7.4); on the shape probe strict 18.6 (earlier 9.1) and balanced 26.7 (earlier 42.4). The strict point is
+  worse than before on every held-out set where it is not zero, and the balanced point is better or equal on open test, UD and
+  the shape probe and slightly better on gold v2; these are different thresholds, and the points of the two records answer
+  different shares of the decisions.
+- **What is not shown.** The held-out evaluation did not tune anything and no test figure was used to change a threshold, the
+  model or a setting. The shape probe weakness of the earlier record (stop condition fired) persists and is slightly larger.
+
+## Corpus cleanup C: pre-registered `prenominal-ing` follow-up
+
+This section is written and committed **before any training of the follow-up arms**, together with the frozen item list of the
+compound-head measure (`tools/DemaConsulting.PartOfSpeech.Trainer/prenominal-ing/`), so the git history shows the order:
+pre-registration (this commit), then training and scoring, then the results section. It changes no gate, no verdict, no weight, no
+lexicon, no `training.json` and no data of the branch. The owner decision behind it: run the pre-registered `-ing` follow-up on the
+same branch (the diagnosis above found one weak, post hoc association with the `prenominal-ing` corrections).
+
+### Disclosure (read first)
+
+- **The held-out sets have been seen once for this model.** The held-out evaluation of commit `58da737` (open test, gold v2 test,
+  shape probe, STE challenge set, UD-EWT test) was run once for the model of commit `dca810e4...339d`. Everything here is
+  **development data only** (open dev, UD-EWT dev); no held-out file is evaluated, scored or inspected by this follow-up. If an arm
+  other than FULL were ever adopted, a second held-out evaluation of that model would be a **disclosed second look** at sets already
+  seen for the sibling model, and would carry that label.
+- **The primary figures of FULL and NO-ING are already partly known.** NO-ING is built exactly like the ablation arm of the
+  diagnosis (same rows, same builder logic, same seeds), and FULL is the diagnosis arm NEW (the data, lexicon and weights have not
+  changed since `02dac97`; later commits changed only prose). Both were scored on the dev sets in the diagnosis, whose tables (above)
+  gave a mean difference of about -1.1 harmful per 1,000 on open dev and about -0.9 on UD-EWT dev (ablation minus new), i.e. about
+  -1.0 pooled, so the primary comparison is **foreseeable** and is expected to reproduce. What is new here: (1) a rule fixed in
+  advance, (2) the compound-head measure and its constraint, built from gold labels before any run of this follow-up and **not
+  computed on any earlier prediction file**, (3) a negative-control arm, (4) the reproduction itself. The hypothesis came from a
+  post hoc look at dev data, so even a clear dev result is evidence of the dev-selection kind and nothing more.
+- Open dev and UD-EWT dev have been used many times in this log (calibration, selection, the diagnosis). They are development
+  data; the selection here is made on them by the rule below and on nothing else.
+
+### Arms
+
+Every arm: 5 seeds, the **same seeds as the diagnosis** (20260101, 11, 12, 13, 14); the shipped `training.json` settings unchanged
+(sources open x2, MASC, silver >= 80, restriction `history`, predicted history, 6 epochs, 19 hash bits, minimum count 1, pruning 8,
+scale 8; only the shuffle seed changes); `train --seed S --calibrate --output <scratch file>`, i.e. the softmax temperature is refit
+for each run on the arm's own open dev (minimum NLL, as the shipped model's `calibrate` did, and as in the diagnosis; it never
+changes a chosen tag). Each arm has its own scratch worktree, its own corpora, its own rebuilt lexicon and its own trainer build.
+OLD is **not** an arm here. 3 arms x 5 seeds = 15 runs; no other run, seed or setting is trained for this follow-up.
+
+| Arm | Definition |
+| --- | --- |
+| **FULL** | The current branch data, lexicon and `training.json` (nothing removed). The diagnosis arm NEW. |
+| **NO-ING** | FULL minus every effective row of `data/corrections/adjudicated.tsv` whose detector is `prenominal-ing` (below). The tokens of those rows keep their pre-cleanup labels (tag and status cell) in whichever split the row belongs to. `mechanical.tsv` is unchanged (no mechanical row is touched; no removed row supersedes one: checked, 0). |
+| **NO-CTRL** (negative control) | FULL minus a comparable-sized set of `adjudicated.tsv` rows of **one unrelated detector**, `propn-boundary` (below), built the same way. |
+
+**Detector of a row.** A row of `adjudicated.tsv` carries detector X when a row of `data/corrections/candidates.tsv` with
+`candidate_rule` X covers its token (the candidate's `token_index` up to `token_index + span_length - 1`). A row covered by several
+candidate rows carries every one of their rules and belongs to each of them (168 of the 7,063 rows have more than one detector; 1,958
+have none: dependents and tagger-flagged tokens). This is the definition of the diagnosis builder (`mkabl.py`).
+
+**Rows removed (re-counted exactly on this branch, `mkarm.py --count-only`).** The 17 (`prenominal-ing`) and 12 (`propn-boundary`) rows
+of **open test** are **left out** of the removal: the held-out file is neither read for scoring nor reversed; open test is not a
+training, calibration or scoring file, so the arms differ from FULL in open train, open dev, MASC and silver only.
+
+| Detector | Open train | Open dev | Open test (left out) | MASC | Silver | Total with open test | **Removed (without open test)** |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `prenominal-ing` (NO-ING) | 151 | 22 | 17 | 518 | 170 | 878 | **861** |
+| `propn-boundary` (NO-CTRL) | 152 | 19 | 12 | 563 | 0 | 746 | **734** |
+
+(The diagnosis counted the same 861 `prenominal-ing` rows: 518 + 170 + 151 + 22. 8 of them carry a second detector,
+`mention-quoted` 6 and `mention-the-word` 2; the two removal sets share 0 rows.)
+
+**Choice of the control detector (made now, by row count and by morphology only, before any training).** The window of the brief is
+861 +- 25% = 646 to 1,076 rows. The adjudicated-row counts per detector (rows removed, i.e. without open test; all detectors counted
+with the definition above): `foreign-token` 1,076 (+25.0%: at the edge of the window), `prenominal-ing` 861, `propn-boundary` **734
+(-14.7%)**, `mention-quoted` 626 (-27.3%, outside), `prenominal-ed` 429, `be-participle-adj-not-gradable` 328, `mention-the-word` 214,
+`language-name` 199, and fewer below. The two detectors inside the window are `foreign-token` and `propn-boundary`; **`propn-boundary`
+is the closest to 861** (|734 - 861| = 127 against |1,076 - 861| = 215) and it is not related to -ing morphology (it moves a
+capitalization/name boundary, mostly NOUN against PROPN; `prenominal-ed` is excluded as the morphological sibling in any case). It is
+chosen on these two facts only. Limit stated in advance: the control removes corrections of a different kind (NOUN/PROPN) than the
+tested one (ADJ/VERB/NOUN of -ing words), so it shows what removing an arbitrary comparable set does to the noun-verb figures, not
+what removing a verb/adjective set would do.
+
+**How an arm is built (scratch worktrees only; the main working tree, `weights.bin`, `lexicon.*` and `data/` are never written).**
+
+1. `git worktree add <scratch>\wt-<arm> <this commit>` (detached) for each arm; for NO-ING and NO-CTRL the git-ignored
+   `tools/data/cache/wordsense` of the main tree is copied into the worktree (the lexicon builder needs the pinned WordSense forms).
+2. NO-ING and NO-CTRL: `python tools/DemaConsulting.PartOfSpeech.Trainer/prenominal-ing/mkarm.py --worktree <wt> --detector
+   prenominal-ing|propn-boundary` rewrites, in the worktree only, `adjudicated.tsv` to the rows of the set (open test left out) and
+   `mechanical.tsv` to its header; then `python tools/data/corrections.py apply --write --reverse` in the worktree restores exactly
+   those tokens (the tool reads the open test file only as part of its checks of the addresses; it is not modified and no row of it
+   is in the set).
+3. **The lexicon is rebuilt from the arm's own corpora**: `python tools/data/build_lexicon.py` (open train and MASC attestation; it
+   writes the arm's `data/lexicon/lexicon.tsv`), then `LexiconCompiler` (the arm's `lexicon.bin`), then `dotnet build -c Release` of
+   the arm's trainer (the project reference embeds the arm's lexicon and library). For FULL nothing is rebuilt.
+4. Training: `train --seed S --calibrate --output <scratch>\<arm>-s<S>.bin` with the arm's own trainer. A scoring tool (the
+   `Dump` tool of the diagnosis: `Tagger.Load`, `MaxAlternatives` limit) is built against **each arm's own library**, so every arm
+   is decoded with its own weights and its own lexicon.
+
+**Scoring sets (all arms alike).** Every arm is scored on **FULL's relabeled open dev labels** (the committed `data/open/dev.tsv`,
+like for like, as in the diagnosis; the arm's own open dev, which differs in 22 labels for NO-ING and 19 for NO-CTRL, is used only for
+the temperature refit) and on UD-EWT dev (the mapped view, `tools/data/cache/ud-ewt/ud_dev.tsv`, 25,148 tokens). Nothing else is
+read for scoring.
+
+**Definitions (those of E0 and of the diagnosis).** A decision is a gold NOUN or VERB token with both tags among the decoder's
+candidates; a harmful error is a chosen tag that is the other of NOUN and VERB with confidence >= 0.45; rates are per 1,000
+decisions; UD-EWT agreement is the share of tokens whose chosen tag equals the mapped gold tag. **Pooled harmful rate of a run** =
+(harmful errors on open dev + harmful errors on UD-EWT dev) / (decisions on open dev + decisions on UD-EWT dev) x 1,000, computed per
+run (the decision counts differ slightly per arm because the lexicon candidates differ).
+
+### The dev compound-head measure (frozen)
+
+Built before any training of this follow-up, by the committed script `prenominal-ing/build_items.py`, from the committed
+`data/open/dev.tsv` (sha256 `31c9048de0824867fab6d7a9f56bedbe36f8e4282bbcc4ffcedde84f1b4cbf91`, the relabeled dev) and FULL's
+committed `data/lexicon/lexicon.tsv` (sha256 `bcd7ea4538c77b6fea7bcb0b0df710cd85d49726811cd433b330ba95e910f614`) **only**: gold labels,
+the form and the lexicon, no prediction of any model, and no test or held-out data. The item list is the same for all arms. It is
+committed as `prenominal-ing/items-open-dev.tsv` (sha256 `c2ca9d9b5f2a2cc65e0fa3ed3a5f2c1b247797f0f3230b749db2e78ca2e57ea8`); `build_items.py --check`
+rebuilds it byte for byte.
+
+The rule (exactly): let `form` be the NFC form lower-cased, `plain` mean that it is purely alphabetic (`str.isalpha`) with at least 4
+letters, `tags` its lexicon tags (a form not in the lexicon is not an item) and `next` the gold tag of the following token of the same
+sentence.
+
+- **Compound item**: `plain`, gold NOUN, `next` in {NOUN, PROPN}, and `tags` contain NOUN and VERB. Class `compound-ing` if the form
+  ends in `ing`, else `compound-zero` (zero-derived noun/verb forms such as `water`, `storm`, `report`). This is the "-ing or
+  zero-derived modifier directly before a noun head that is labeled NOUN" of the brief (a determiner or a number cannot qualify: the
+  token must be gold NOUN and lexicon NOUN+VERB).
+- **Control item (class `verbal-ing`)**: `plain`, gold VERB, the form ends in `ing`, `tags` contain ADJ, NOUN and VERB (the signature
+  that the lexicon builder gives to the gerund/participle of a verb: base verbs such as `bring` or `sing` are not items). No
+  condition on the next token.
+
+Counts of the frozen list: **248 compound items (41 `compound-ing`, 207 `compound-zero`)** and **384 `verbal-ing` items**, 632 in
+all.
+
+Metrics, per run, with the chosen tag of the runtime decoder (`Tagger.Tag`, the tag of the token; no confidence condition and no
+candidate condition): **compound-head NOUN accuracy** = share of the 248 compound items whose chosen tag is NOUN (the two classes
+are also reported separately, descriptively); **verbal-ing VERB accuracy** = share of the 384 control items whose chosen tag is VERB.
+
+### Selection rule (fixed now; applied exactly as written; nothing is tuned afterwards)
+
+Candidates are **FULL and NO-ING**. NO-CTRL is **not** a candidate winner: it is reported for context only (it is evidence about
+whether removing *any* comparable set of rows lowers the harmful rates). The statistics below are computed from the per-run values of
+the 5 seeds of each arm.
+
+- **Primary.** The mean over the 5 seeds of the **pooled harmful noun-verb rate** (harmful errors summed over open dev and UD-EWT
+  dev divided by decisions summed over both sets, x 1,000, computed per run). Lower wins.
+- **Constraints** (on the winner). (C1) The winner's mean UD-EWT dev agreement is within **0.15 points** of the best candidate
+  arm's mean agreement (the higher of FULL and NO-ING). (C2) The winner's mean compound-head NOUN accuracy is within **2 points** of
+  the best candidate arm's mean (the higher of FULL and NO-ING).
+- **Tie-break.** If the primary difference between FULL and the lowest candidate arm is **under 0.5 per 1,000**, the winner is
+  **FULL**, the convention-consistent default.
+- **Reading.** The lowest-primary candidate is the provisional winner. If it is FULL, FULL is selected. If it is NO-ING, NO-ING is
+  selected only when the primary difference is at least 0.5 per 1,000 **and** C1 and C2 both hold; otherwise FULL is selected. FULL
+  is the default in every case not listed for NO-ING. (Literal reading, stated for the case the rule did not foresee: if FULL has the
+  lowest primary but would itself fail C1 or C2 against NO-ING, FULL is still selected, because the rule has no route that selects
+  the arm with the higher primary; the constraint check is reported either way.)
+- **Shipped seed.** The shipped seed stays **20260101** whichever arm wins; nothing here selects a seed.
+- **Reported but not part of the rule** (descriptive): per arm mean +- sample standard deviation (n = 5) and the per-seed values of
+  every metric; differences against FULL with a Welch t 95% interval and a combined seed + document bootstrap (2,000 replicates, seed
+  20261104, resampling documents shared by the arms and the 5 seeds within each arm); the item-class breakdown of the compound
+  measure; the harmful rates per set. Reading aid for the control (does not change the selection): if NO-CTRL's mean pooled rate
+  lies below FULL's by at least half of NO-ING's reduction, the report says that the NO-ING reduction is not specific to -ing rows;
+  otherwise that a comparable removal does not match it.
+
+### Procedure, acceptance test and stop rule
+
+1. The three arms are trained and scored through the real runtime decoder (`Tagger.Load`), 15 runs, one heavy process at a time.
+2. **Acceptance test (before the rule is applied).** FULL at the shipped seed 20260101 must reproduce the committed model's dev
+   numbers (open dev 103 harmful of 4,467 decisions, UD-EWT dev 107 of 4,570, UD-EWT agreement 23,338 of 25,148 = 92.803%), its
+   weights must be **byte-identical** to the committed `weights.bin`, and the five FULL seeds must reproduce the diagnosis arm NEW
+   (UD agreement 92.803, 92.711, 92.655, 92.695, 92.747). NO-ING is expected to reproduce the diagnosis ablation arm (UD
+   agreement 92.711, 92.779, 92.683, 92.616, 92.747; open harmful 90, 98, 96, 100, 90; UD harmful 103, 109, 95, 99, 101). If the
+   FULL acceptance fails, the follow-up stops and is reported as failed without a selection; a NO-ING or NO-CTRL arm that differs
+   from the diagnosis is reported as a deviation (the build is deterministic, so this would mean a construction defect).
+3. The rule above is applied to the numbers, the table and the verdict are recorded in this log (a section "Results and selection
+   (dev only)"), and nothing is adopted: the committed data, lexicon, weights and `training.json` stay as they are. Adopting NO-ING,
+   if it is selected, is a separate step with its own record and, for the held-out sets, a disclosed second look.
+4. `evaluate` and `thresholds` are not run; no held-out file is evaluated.
+
+### Results and selection (dev only)
+
+Order of events (the git history and the file times agree): pre-registration commit `476a51d` at 2026-11-06 09:29:28 (-05:00); the first
+follow-up model was trained at 09:31:23 and the last at 09:35:01; the scoring was run after all 15 models existed. Arm builds: the
+rows removed are exactly those of the pre-registration (NO-ING 861: open train 151, open dev 22, MASC 518, silver 170; NO-CTRL 734:
+open train 152, open dev 19, MASC 563); the rebuilt lexicon of NO-ING has 262,635 spellings / 339,819 entries (`lexicon.bin` 639,711
+bytes, as in the diagnosis), that of NO-CTRL 262,634 / 339,798 (639,690 bytes); the shipped-seed images are 1,077,990 bytes (FULL),
+1,080,650 (NO-ING, 116,662 rows). Scoring: scratch tool `prenominal-ing/score_arms.py` (committed with this record) over the
+prediction files of the runtime decoder; only open dev and UD-EWT dev were read; no `evaluate`, `thresholds` or held-out file.
+
+**Acceptance test: passed on every point.** FULL at the shipped seed: open dev 103 harmful of 4,467 decisions, UD-EWT dev 107 of 4,570,
+UD agreement 23,338 of 25,148 (92.803%), and its weights are **byte-identical** to the committed `weights.bin` (SHA-256
+`ccd38ef2...bce`). The five FULL seeds reproduce the diagnosis arm NEW (UD agreement 92.803, 92.711, 92.655, 92.695, 92.747) and their
+weights are byte-identical to the diagnosis models; NO-ING reproduces the diagnosis ablation exactly (agreement 92.711, 92.779, 92.683,
+92.616, 92.747; open harmful 90, 98, 96, 100, 90; UD harmful 103, 109, 95, 99, 101; weights byte-identical to the diagnosis models).
+So the FULL and NO-ING numbers below are the diagnosis numbers; what is new is the pooled rate, the compound-head measure, NO-CTRL
+and the rule.
+
+Per-seed values (seeds 20260101, 11, 12, 13, 14) and mean +- sample sd (n = 5). Harmful counts in brackets are harmful / decisions.
+
+| Metric | Arm | 20260101 | 11 | 12 | 13 | 14 | mean +- sd |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Pooled harmful / 1k** (primary) | FULL | 23.238 (210/9,037) | 22.353 (202) | 22.795 (206) | 22.242 (201) | 22.795 (206) | **22.685 +- 0.399** |
+| | NO-ING | 21.357 (193) | 22.906 (207) | 21.135 (191) | 22.021 (199) | 21.135 (191) | **21.711 +- 0.760** |
+| | NO-CTRL | 22.242 (201) | 21.689 (196) | 23.016 (208) | 23.348 (211) | 20.914 (189) | 22.242 +- 0.987 |
+| Open dev harmful / 1k (relabeled) | FULL | 23.058 (103/4,467) | 21.491 (96) | 21.939 (98) | 22.386 (100) | 22.610 (101) | 22.297 +- 0.605 |
+| | NO-ING | 20.148 (90) | 21.939 (98) | 21.491 (96) | 22.386 (100) | 20.148 (90) | 21.222 +- 1.031 |
+| | NO-CTRL | 22.834 (102) | 20.372 (91) | 23.058 (103) | 22.163 (99) | 19.700 (88) | 21.625 +- 1.507 |
+| UD-EWT dev harmful / 1k | FULL | 23.414 (107/4,570) | 23.195 (106) | 23.632 (108) | 22.101 (101) | 22.976 (105) | 23.063 +- 0.591 |
+| | NO-ING | 22.538 (103) | 23.851 (109) | 20.788 (95) | 21.663 (99) | 22.101 (101) | 22.188 +- 1.133 |
+| | NO-CTRL | 21.663 (99) | 22.976 (105) | 22.976 (105) | 24.508 (112) | 22.101 (101) | 22.845 +- 1.090 |
+| UD-EWT dev agreement % | FULL | 92.803 | 92.711 | 92.655 | 92.695 | 92.747 | 92.722 +- 0.056 |
+| | NO-ING | 92.711 | 92.779 | 92.683 | 92.616 | 92.747 | 92.707 +- 0.063 |
+| | NO-CTRL | 92.683 | 92.747 | 92.799 | 92.683 | 92.811 | 92.745 +- 0.061 |
+| **Compound-head NOUN accuracy %** (248 items) | FULL | 90.323 | 90.323 | 88.306 | 89.919 | 89.919 | **89.758 +- 0.836** |
+| | NO-ING | 87.500 | 89.516 | 88.710 | 89.516 | 88.710 | **88.790 +- 0.826** |
+| | NO-CTRL | 89.113 | 89.113 | 88.710 | 89.113 | 88.710 | 88.952 +- 0.221 |
+| compound-ing NOUN accuracy % (41) | FULL | 70.732 | 68.293 | 58.537 | 65.854 | 65.854 | 65.854 +- 4.563 |
+| | NO-ING | 60.976 | 60.976 | 63.415 | 63.415 | 63.415 | 62.439 +- 1.336 |
+| | NO-CTRL | 63.415 | 65.854 | 68.293 | 65.854 | 63.415 | 65.366 +- 2.041 |
+| compound-zero NOUN accuracy % (207) | FULL | 94.203 | 94.686 | 94.203 | 94.686 | 94.686 | 94.493 +- 0.265 |
+| | NO-ING | 92.754 | 95.169 | 93.720 | 94.686 | 93.720 | 94.010 +- 0.942 |
+| | NO-CTRL | 94.203 | 93.720 | 92.754 | 93.720 | 93.720 | 93.623 +- 0.529 |
+| **Verbal-ing VERB accuracy %** (384 items) | FULL | 92.969 | 92.188 | 93.750 | 93.490 | 93.750 | 93.229 +- 0.664 |
+| | NO-ING | 89.844 | 90.885 | 90.104 | 90.885 | 92.448 | 90.833 +- 1.015 |
+| | NO-CTRL | 93.750 | 93.490 | 93.229 | 94.531 | 94.010 | 93.802 +- 0.501 |
+| Open dev accuracy % (context) | FULL | 96.375 | 96.325 | 96.367 | 96.371 | 96.298 | 96.347 +- 0.034 |
+| | NO-ING | 96.348 | 96.329 | 96.302 | 96.298 | 96.352 | 96.326 +- 0.025 |
+| | NO-CTRL | 96.375 | 96.340 | 96.302 | 96.394 | 96.367 | 96.356 +- 0.035 |
+
+Differences against FULL (arm minus FULL, mean of the 5 seeds; descriptive, the rule is the selection). Welch t 95% interval
+(degrees of freedom, p) and the combined seed + document bootstrap 95% interval (2,000 replicates, seed 20261104):
+
+| Metric | NO-ING - FULL: difference, Welch, bootstrap | NO-CTRL - FULL: difference, Welch, bootstrap |
+| --- | --- | --- |
+| Pooled harmful / 1k | **-0.974** [-1.911, -0.036] (6.0, p = 0.044); [-2.581, +0.699] | -0.443 [-1.647, +0.762] (5.3, p = 0.39); [-1.979, +1.046] |
+| Open dev harmful / 1k | -1.075 [-2.360, +0.211] (6.5, p = 0.088); [-3.454, +1.285] | -0.672 [-2.511, +1.168]; [-2.622, +1.226] |
+| UD-EWT dev harmful / 1k | -0.875 [-2.272, +0.521] (6.0, p = 0.18); [-3.104, +1.514] | -0.219 [-1.567, +1.129]; [-2.228, +1.842] |
+| UD-EWT dev agreement (points) | -0.015 [-0.102, +0.071]; [-0.148, +0.114] | +0.022 [-0.063, +0.107]; [-0.106, +0.151] |
+| Compound-head NOUN accuracy (points) | -0.968 [-2.180, +0.245] (8.0, p = 0.10); [-2.908, +0.701] | -0.806 [-1.831, +0.218]; [-2.778, +0.918] |
+| compound-ing NOUN accuracy (points) | -3.415 [-8.995, +2.165]; [-12.246, +4.375] | -0.488 [-6.070, +5.094]; [-6.286, +5.000] |
+| compound-zero NOUN accuracy (points) | -0.483 [-1.635, +0.669]; [-2.039, +0.788] | -0.870 [-1.520, -0.219] (p = 0.017); [-3.051, +0.953] |
+| **Verbal-ing VERB accuracy (points)** | **-2.396 [-3.683, -1.109] (6.9, p = 0.003); [-4.270, -0.714]** | +0.573 [-0.296, +1.442]; [-0.400, +1.734] |
+| Open dev accuracy (points) | -0.021 [-0.065, +0.023]; [-0.106, +0.063] | +0.008 [-0.042, +0.059]; [-0.080, +0.099] |
+
+NO-ING minus NO-CTRL on the pooled harmful rate: -0.531 per 1,000, Welch [-1.830, +0.768].
+
+**Application of the pre-registered rule, exactly as written.**
+
+- Primary (mean pooled harmful per 1,000): FULL 22.685, NO-ING 21.711; the lowest candidate is NO-ING and the difference FULL minus
+  NO-ING is **0.974 per 1,000**, which is not under the 0.5 tie-break threshold.
+- C1 (UD-EWT agreement within 0.15 points of the best candidate): the best is FULL (92.722); NO-ING 92.707, shortfall 0.015: **holds**.
+- C2 (compound-head NOUN accuracy within 2 points of the best candidate): the best is FULL (89.758); NO-ING 88.790, shortfall
+  0.968: **holds**.
+- **Selected arm: NO-ING** (it has the lowest primary mean by at least 0.5 per 1,000 and both constraints hold). The shipped seed
+  stays 20260101 whichever arm wins.
+- Negative control (context only, not a candidate): NO-CTRL (734 `propn-boundary` rows removed) has a pooled mean of 22.242, 0.443
+  per 1,000 below FULL (Welch interval contains 0). The pre-registered reading aid compares it with half of the NO-ING reduction
+  (0.487): 0.443 is **below** that half, so the aid reads "a comparable removal does not match the NO-ING reduction". It is a narrow
+  margin (the NO-CTRL reduction is 45% of the NO-ING one), the two arms' interval of difference contains 0 (-0.531, Welch [-1.830,
+  +0.768]), and removing a set of the same size of an unrelated detector also moved the harmful rates down by about 0.4 per 1,000:
+  part of the NO-ING reduction may be what any such removal does or ordinary seed variation.
+
+**Reading (what is better and what is worse, stated plainly).**
+
+- The primary evidence is thin. The Welch interval of the pooled difference ([-1.911, -0.036]) just excludes 0 while the combined
+  seed + document bootstrap interval ([-2.581, +0.699]) contains it; the rule is a point-estimate rule on 5 seeds and the number
+  that selects NO-ING (0.974) is about the size of the seed standard deviation of an arm (0.4 to 1.0). The result is the one the
+  diagnosis already showed for these two arms, so it is not an independent confirmation.
+- **Not part of the rule, and against NO-ING: the verbal -ing VERB accuracy falls 2.4 points** (93.229 to 90.833; Welch [-3.683,
+  -1.109], bootstrap [-4.270, -0.714]; the per-seed ranges barely overlap: FULL 92.188 to 93.750, NO-ING 89.844 to 92.448):
+  without the `prenominal-ing` corrections fewer genuine verbal -ing tokens are tagged VERB (the wrong tags were not tabulated).
+  The rule had no constraint on this control, as pre-registered, and the rule is applied as written; but the cost is visible and
+  is one of the things an adoption decision has to weigh.
+- Compound-head NOUN accuracy is lower in NO-ING (-0.97 points; within the 2-point constraint), driven by the 41 `compound-ing`
+  items (-3.4 points, wide interval, 41 items); the zero-derived items hardly move. UD-EWT agreement and open dev accuracy are
+  unchanged (-0.015 and -0.021 points).
+- NO-ING keeps the pre-cleanup labels of the 861 tokens (and rebuilds the lexicon from them), so it moves part of the corpus back
+  to the old convention for -ing words (the corrected `ADJ`/`VERB` choices of `prenominal-ing`); whether the convention linter
+  and the corrections tables stay consistent with such files was not checked here and is for the adoption step, if any.
+
+**Nothing is adopted.** The committed data, lexicon, weights and `training.json` are unchanged by this follow-up; `evaluate` and
+`thresholds` were not run; no held-out set was read. If NO-ING is to be adopted, that is a separate step (step 3) with its own record
+and, for the held-out sets, a disclosed second look (the held-out sets were seen once, for the model of `58da737`).
+
+**Reproducibility note (added after the review of this record; the committed figures above are not altered).** The tables above
+were produced by the first version of `prenominal-ing/score_arms.py`, which used numpy 2.2 (`default_rng`, seed 20261104) and scipy
+1.18 for the Student t quantile and the bootstrap; neither package was declared in the repository. The script is now standard
+library only (`math`, `statistics`, `random`; the t quantile and p-value come from the regularized incomplete beta function, checked
+by `--selftest` against published values). It is meant to be run against a worktree of `476a51d` or `0d7a0b3` with the scratch
+folder of the 15 runs, as in the Procedure above. Re-running it on the same 30 prediction files (worktree of `0d7a0b3`) reproduces
+the committed output **exactly** for the acceptance test, every per-seed value, mean and sample sd, every Welch interval, degree of
+freedom and p-value, and the rule outcome (selected arm NO-ING, same numbers); only the 18 bootstrap-interval cells differ, because
+`random.Random(20261104)` is another stream than the numpy generator, so they agree with the committed ones statistically and not
+digit for digit. Examples (committed, then standard library): pooled harmful rate NO-ING - FULL [-2.581, +0.699] and [-2.643,
++0.640]; NO-CTRL - FULL [-1.979, +1.046] and [-1.925, +0.961]; verbal-ing VERB accuracy NO-ING - FULL [-4.270, -0.714] and
+[-4.204, -0.580]. Over the 18 cells the largest endpoint difference is 0.30 points (the 41-item `compound-ing` row, interval width
+16.6) and no endpoint moves by more than 5.4% of its interval width, which is the Monte-Carlo error of 2,000 replicates. No conclusion changes: whether an interval contains 0 is the same in all 18 cells (the pooled bootstrap interval of
+NO-ING - FULL contains 0 in both, the verbal-ing one excludes 0 in both).
+
+## Corpus cleanup C: adoption of the NO-ING model (step 3 of the pre-registered follow-up; written before any held-out command)
+
+The pre-registered `prenominal-ing` follow-up selected NO-ING (above), the owner decided to adopt it, and this section records the
+adoption **before any held-out command** of this step (`thresholds` and `evaluate` have not been run; git history shows the
+order: tooling, data, retraining, then this section, then the held-out commands, then the evaluation record). No hyperparameter,
+source, setting or seed changed.
+
+### Disclosure: the second look
+
+**The held-out sets (open test, gold v2 test, shape probe, STE challenge set, UD-EWT test) were seen once for the FULL model**
+(the evaluation of commit `58da737`, model image `dca810e4...339d`). The evaluation after this section is the **second
+evaluation of the model family** and a **disclosed second look** at sets that were already seen for the sibling model: the
+selection between FULL and NO-ING was made on development data only, but the held-out sets are no longer unseen for this
+family, so its held-out result is evidence of a weaker kind than the first. It is **not** an erratum of the earlier records,
+which stay as written. **Any further held-out evaluation would be a third look and is not planned.** The one `evaluate` of this
+step is run once; no second run is made after a result exists (an infrastructure failure without a result may be rerun without
+looking at results to tune).
+
+### What changed
+
+- **Data.** Every adjudicated row whose token a `prenominal-ing` candidate covers is withdrawn from `adjudicated.tsv`: **878
+  rows**, i.e. the 861 rows of the NO-ING arm (open train 151, open dev 22, MASC 518, silver 170) **and the 17 open test rows**.
+  Decision and reason: the arm left the 17 test rows out only so that no held-out file was read; with them left in, the corpora
+  would follow two conventions for `-ing` words (open train and dev withdrawn, open test not). Withdrawing all 878 gives open
+  train, dev and test the same convention. The 17 test rows had **no influence on training, calibration or selection** (open test
+  is never trained on), so the trained model is identical to the NO-ING arm at seed 20260101. **These 17 open test labels
+  differ from the labels that the first held-out evaluation used.** The rows stay as provenance in
+  `data/corrections/withdrawn-prenominal-ing.tsv` (the new `corrections.py withdraw` command; the file is never applied and
+  `validate` requires the old corpus value of every token of it); `adjudicated.tsv` has 6,185 rows (3,289 tag changes, 1,311
+  flag changes, 1,585 `disputed` marks; 7,063, 3,972, 1,312 and 1,779 before). Effective rows: 8,407 (9,285 before; 2,222
+  mechanical in effect and 6,185 adjudicated, 3 mechanical rows superseded as before). The corpora were regenerated with the
+  state-aware tooling, no data file was edited by hand: `apply --write --reverse` (all rows), `withdraw --detector prenominal-ing
+  --write`, `apply --write`; then `normalize_eol.py` (no change), `make_manifest.py`, `make_corrections.py --check` (passes in the
+  applied state) and `fixed-point` (0 left), `check_leakage.py`, `check_licenses.py` (the new file is scanned) all pass. The
+  corrections README records the decision, the reason and the caveats.
+- **Convention linter (G3 check).** `check_conventions.py --tier fix --enforce`: **0 violations of the fix tier in every source and
+  split** (open train/dev/test, MASC, silver, STE), exit 0. Check tier (report only) **298**, unchanged: open train 95, dev 12,
+  test 17, MASC 66, silver 106, STE 2 (251 `be-participle-adj-not-gradable`, 26 `be-aux-passive`, 13 `infinitive-to`, 4
+  `be-passive-agent`, 2 `no-all-degree`, 2 `out-of-phrasal`).
+- **Lexicon.** Rebuilt (`build_lexicon.py`, `LexiconCompiler`, `check_lexicon.py` gate G1 passes): 262,635 spellings, **339,819**
+  entries (339,823 before), `lexicon.bin` **639,711** bytes (639,617), 1,626,269 bytes uncompressed, 225 masks. Coverage: open
+  train 99.935% of all tokens and 100.000% of the non-disputed ones (201,130 of 201,131), **open dev 99.874% and 99.921%** non-disputed
+  (25,277 of 25,297; 593 unknown-spelling tokens), open test 99.843% and 99.909% (reported as always, never used to choose
+  anything), MASC 99.859% and 99.864%. The K sweep was re-run (`sweep.tsv`; the chosen K = 1, M = 2 row is unchanged in its
+  figures).
+- **Model.** `train` with the shipped `training.json` (sources open x2, MASC, silver >= 80, restriction `history`, predicted
+  history, 6 epochs, 19 hash bits, minimum count 1, pruning 8, scale 8, **seed 20260101**), then `calibrate --update-config` (the
+  temperature is refit on the new open dev: **6.442**, NLL 0.12220, ECE 0.260%; it was 6.583), `train --update-config` and
+  `train --check` (exit 0). 116,662 rows, **282,426 weights, 1,080,650 bytes raw, 478,835 bytes deflated** (116,448 rows,
+  281,682 weights, 1,077,990 and 477,899 before), `imageSha256` `a0d45458308f78dbe74669e563ea236a0a7b4688638d690dd0995ac4de988da3`.
+  **The new `weights.bin` is byte-identical to the NO-ING seed-20260101 weights of the follow-up** (SHA-256 `439d4af5...4092`
+  both; the arm calibrated on its own open dev, which equals the new open dev), and the predictions of the embedded model on
+  open dev and UD-EWT dev are byte-identical to the follow-up's prediction files. Golden hashes of `ModelTrainerTests`,
+  the lexicon counts of `EmbeddedModelTests` and `LexiconTests` and the size figures of the documents were re-pinned as in the
+  first cleanup phase; the Python suite (256 tests, 9 of them new) passes, and the C# suite fails only the three tests that
+  pin the held-out record (they pass again when the record is reissued below).
+
+### Development figures of the adopted model (dev data only)
+
+Definitions as in the pre-registration (decision = gold NOUN or VERB with both tags among the candidates; harmful = the other of
+NOUN and VERB with confidence >= 0.45; per 1,000 decisions; bootstrap by document, 1,000 resamples, seed 20261104; differences
+paired). Open dev has **two label sets** now: FULL's relabeled dev (the one the follow-up scored every arm on, 4,467
+decisions) and the dev file of this model (22 labels reverted, 4,451 decisions); both are shown. The figures are of the seed
+20260101 model; the five-seed means of the follow-up are in its table.
+
+| Measure | Earlier model (before the cleanup) | FULL (58da737) | NO-ING (adopted) |
+| --- | --- | --- | --- |
+| Open dev harmful per 1k, FULL's labels | 92 of 4,468 = 20.59 | 103 of 4,467 = 23.058 [17.527, 29.066] | **90 of 4,467 = 20.148 [15.322, 25.472]** (-2.910 [-5.867, 0.000] vs FULL) |
+| Open dev harmful per 1k, own labels | 94 of 4,484 = 20.96 (old labels) | 102 of 4,451 = 22.916 [17.419, 29.083] (FULL's predictions on these labels) | **90 of 4,451 = 20.220 [15.357, 25.542]** (-2.696 [-5.613, +0.259]) |
+| Open dev accuracy % | 96.07 (old labels) | 96.375 | 96.348 (FULL's labels), 96.378 [95.582, 96.922] (own labels) |
+| UD-EWT dev agreement % (mapped, 25,148 tokens) | 92.361 [91.803, 92.881] | 92.803 [92.252, 93.312] | **92.711 [92.167, 93.187]** (23,315; -0.091 [-0.274, +0.100] vs FULL) |
+| UD-EWT dev harmful per 1k | 100 of 4,573 = 21.87 | 107 of 4,570 = 23.414 [18.774, 28.587] | **103 of 4,570 = 22.538 [17.835, 27.489]** (-0.875 [-4.515, +2.799]) |
+| Pooled harmful per 1k (open dev FULL's labels + UD dev) | n/a | 210 of 9,037 = 23.238 | 193 of 9,037 = 21.357 |
+| Gold v2 dev (trainer `eval`) | 95.34%, 9 of 611 | 94.99%, 14 of 611 = 22.9 | 95.24%, **11 of 611 = 18.0**, NLL 0.2601, ECE 1.99% |
+| Open dev (trainer `eval`, own labels) | 96.07% | 96.37% | 96.38%, ambiguous 95.68% (17,628 tokens), NLL 0.1222, ECE 0.26% |
+| Verbal -ing VERB accuracy, % (384 frozen items) | n/a | 92.969 (357 of 384) | **89.844 (345 of 384)** |
+| Compound-head NOUN accuracy, % (248 frozen items) | n/a | 90.323 (224) | **87.500 (217)**; compound-ing 60.976 (25 of 41) vs 70.732; compound-zero 92.754 vs 94.203 |
+
+The earlier model (before the cleanup) was scored on the relabeled open dev in the first cleanup phase (92 of 4,468) and on the
+UD-EWT dev (100 of 4,573); it is a different model on a corpus with different labels, and these are the figures of the gate
+table above. The gate G2 of the first phase stays recorded as failed for FULL and is not re-judged; for information, the
+adopted model is below the earlier model's open dev rate (20.15 against 20.59) and above its UD dev rate (22.54 against 21.87).
+
+**What is worse (stated before the held-out evaluation).** (1) The cost already found by the follow-up: the verbal `-ing`
+VERB accuracy of the adopted model is 89.844% against 92.969% for FULL at this seed (-2.4 points on the five-seed means, Welch
+[-3.683, -1.109]); the selection rule had no constraint on it. (2) The compound-head NOUN accuracy is 87.500% against 90.323%
+(-0.97 points on the five-seed means, inside the 2-point constraint; `compound-ing` items 41, the largest drop). (3) UD-EWT dev
+agreement is 0.09 points below FULL at this seed (inside the C1 constraint). (4) The primary evidence behind the choice is thin:
+the pooled difference of 0.974 harmful per 1,000 on five seeds has a Welch interval that just excludes 0 and a bootstrap interval
+that contains it, a comparable removal of an unrelated detector gave about half of it, and the seed-20260101 differences above
+have paired intervals that contain 0 on every dev measure (the open dev one with FULL's labels reaches 0.000 at its upper end).
+The adopted model is selected on development data by the pre-registered rule, nothing more.
+
+### Procedure of the held-out step (fixed now)
+
+1. Copy the committed held-out record (`docs/evaluation/test-results.md` and `.json`, `operating-points.json`,
+   `confidence-thresholds.md`) outside the repository for the comparison; it stays in git history (the FULL record at `58da737`).
+2. `thresholds` (development data only; rule `nv-pooled-dev-v1`, grid, targets and floors unchanged) recomputes the strict and
+   balanced operating points for the adopted model. The two constants `FrozenOpenHarmful` and `FrozenGoldHarmful` of the
+   trainer (103 and 14 for FULL) are set to the development figures of the adopted model as the trainer's `eval` and the curve
+   report them (90 and 11); they only guard that the 0.45 row reproduces the freeze figures.
+3. Delete the old `test-results.json` and `.md` (`evaluate` refuses to run while one exists; the record of a retrained model is a
+   new record), then `evaluate` **once**. The stop conditions that fired in both earlier records (gold v2 `to`/`not`, UD-EWT raw
+   gold outside the candidates, the shape probe's harmful errors) may fire again; they are reported, not tuned.
+4. The evaluation record is written afterwards as one more section of this log, side by side for the earlier model, FULL and
+   the adopted model; open test is not strictly comparable across the three (its labels changed twice: with the cleanup, and for
+   the 17 withdrawn test rows); UD-EWT, gold v2, the shape probe and the STE set have unchanged labels and are the fair
+   comparisons. Nothing is claimed as an improvement unless the data show it.
+
+### `thresholds` result (development data only; committed before the held-out run)
+
+`thresholds` first refused to write with the old constants (it printed 90, 11 and 101 harmful errors at 0.45 against the frozen
+figures 103, 14 and 117 of FULL and wrote nothing); the two constants were then set to 90 and 11 (comments in `Program.cs`) and
+the command wrote `operating-points.json` and `confidence-thresholds.md` (model image `a0d45458...8da3`, temperature 6.442, new
+dev file hashes). The rule `nv-pooled-dev-v1` gave: **strict 0.95** (coverage 81.8% [80.4, 83.3], 3.1 harmful per 1,000 answered
+[1.3, 5.3], 13 of 4,141) and **balanced 0.80** (coverage 92.4% [91.4, 93.3], 9.0 [5.8, 12.1], 42 of 4,675); the earlier model had the
+same thresholds (strict 0.95: 80.6%, 3.9, 16 of 4,105; balanced 0.80: 91.0%, 9.9, 46 of 4,636) and FULL had 0.90 and 0.85
+(strict 86.5%, 4.8; balanced 89.8%, 7.7).
+
+## Corpus cleanup C: held-out evaluation of the adopted NO-ING model (disclosed second look; a new record, not an erratum)
+
+This is a **new** record for the adopted model. It does not correct or replace the earlier two ("Outcome of the held-out run"
+and its errata for the model before the cleanup, and "Corpus cleanup C: held-out evaluation of the retrained model" for FULL),
+which stay as written. Order (git history): adoption record above (`01b842a`), `thresholds` (`24b0664`), the deletion of the
+FULL record on purpose (`524fbc0`; `evaluate` refuses to run while a record exists; the FULL record stays in git at `58da737`
+and was copied outside the repository first), the one `evaluate` (`4d40101`), this section and the documents after it.
+
+**This is the second look at these held-out sets.** They were evaluated once for the FULL model and are evaluated here for its
+sibling, NO-ING, which was selected on development data by the pre-registered rule. A third look is not planned. `evaluate
+--preflight` passed first (it scores nothing); `evaluate --dump-dir <folder outside the repository>` then ran **once** (BelowNormal,
+the treebank from the git-ignored cache). It exited with 1 because of the stop conditions below (findings, not failures of the
+run) and the committed files are the output as produced. **No second `evaluate` run was made.** Nothing was tuned.
+
+Stop conditions of the protocol: the **same three fired as in both earlier records** (earlier model, FULL in brackets):
+
+- `shape-probe`: 48 harmful errors at 0.45 against a limit of 28 (5% of 560 rows) (48, 52).
+- `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (the same, the same); the `to`/`not` convention
+  difference, a view reported separately.
+- `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (1.68%, 1.93%). The primary mapped view is at 0.55%
+  (138 words) (0.56%, 0.55%), under the limit.
+
+All other stop conditions held: the open test accuracy 96.53% against 96.38% on development; the harmful rates per 1,000 answered
+on open test at the strict (3.5) and balanced (7.3) points are below twice the pooled development rates (3.1 and 9.0); open test
+ECE 0.20%; open test gold outside the candidates 41 of 26,185 tokens (0.16%).
+
+**What is comparable (stated plainly).** The labels of the **open test** split changed **twice** relative to the earliest record:
+with the corrections of the first cleanup (476 correction rows in it), and again with the **17 withdrawn `prenominal-ing` test
+rows** (relative to FULL's record), so the open test figures of the three models are **not strictly comparable** with each other
+(the earlier model was scored on the original labels, FULL on the corrected ones, NO-ING on corrected labels minus these 17
+corrections). The labels of **UD-EWT, gold v2, the shape probe and the STE challenge set are unchanged** in all three records,
+and these four are the **fair comparisons** across the earlier model (model image `68673a9f...`, main `a94abd0`), FULL (`dca810e4...`,
+`58da737`) and NO-ING (`a0d45458...`, this record). Intervals are the 95% percentile bootstrap over documents of each record (1,000
+resamples, seed 1); no paired interval between models was computed, so overlapping intervals are not a test.
+
+Accuracy and harmful errors at the harmful limit 0.45, earlier model, FULL and NO-ING (same columns as the report; "n/c" marks
+the set whose labels are not comparable across the three):
+
+| Set | Model | Accuracy % | Ambiguous accuracy % | Decisions | Harmful | Harmful per 1,000 decisions | ECE % | NLL | Gold outside candidates |
+| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | ---: |
+| open-test (n/c) | earlier | 96.10 [95.69, 96.49] | 95.16 [94.72, 95.61] | 4,413 | 91 | 20.6 [15.2, 26.5] | 0.28 [0.19, 0.61] | 0.1394 [0.1211, 0.1602] | 71 |
+| | FULL | 96.46 [96.07, 96.81] | 95.56 [95.19, 95.92] | 4,408 | 91 | 20.6 [15.7, 26.1] | 0.24 [0.19, 0.52] | 0.1163 [0.1013, 0.1322] | 41 |
+| | **NO-ING** | 96.53 [96.12, 96.87] | 95.69 [95.30, 96.05] | 4,392 | 82 | 18.7 [14.0, 23.7] | 0.20 [0.17, 0.52] | 0.1161 [0.1013, 0.1320] | 41 |
+| gold-v2-test | earlier | 94.57 [93.67, 95.39] | 91.70 [90.33, 92.93] | 936 | 23 | 24.6 [14.9, 34.8] | 1.82 [1.47, 2.80] | 0.2178 [0.1812, 0.2596] | 7 |
+| | FULL | 94.34 [93.46, 95.16] | 91.34 [90.02, 92.55] | 936 | 29 | 31.0 [19.9, 42.4] | 2.23 [1.80, 3.18] | 0.2491 [0.2065, 0.2971] | 12 |
+| | **NO-ING** | 94.37 [93.55, 95.18] | 91.39 [90.11, 92.64] | 936 | 28 | 29.9 [19.0, 41.2] | 2.49 [2.02, 3.38] | 0.2497 [0.2052, 0.2989] | 12 |
+| gold-v2-test-full-agreement | earlier | 95.39 [94.54, 96.24] | 92.49 [91.12, 93.81] | 713 | 17 | 23.8 [13.4, 35.9] | 1.43 [1.11, 2.34] | 0.1838 [0.1448, 0.2241] | 4 |
+| | FULL | 95.16 [94.26, 96.00] | 92.11 [90.65, 93.51] | 713 | 21 | 29.5 [17.9, 40.7] | 1.83 [1.32, 2.70] | 0.1960 [0.1560, 0.2379] | 5 |
+| | **NO-ING** | 95.23 [94.36, 96.05] | 92.23 [90.85, 93.54] | 713 | 22 | 30.9 [18.9, 44.3] | 1.85 [1.43, 2.74] | 0.1971 [0.1557, 0.2424] | 5 |
+| gold-v2-test-to-not (8 targets) | earlier | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 56.66 [27.17, 88.44] | 6.9865 [1.9304, 12.0984] | 4 |
+| | FULL | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 55.56 [25.67, 88.55] | 6.9707 [1.8828, 12.0995] | 4 |
+| | **NO-ING** | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 55.64 [24.45, 87.44] | 6.9910 [1.9506, 12.0940] | 4 |
+| shape-probe (560 rows) | earlier | 89.11 [86.61, 91.61] | 89.21 [86.57, 91.56] | 556 | 48 | 86.3 [64.5, 109.9] | 2.38 [1.99, 5.31] | 0.2766 [0.2228, 0.3351] | 0 |
+| | FULL | 87.50 [84.82, 90.18] | 87.41 [84.78, 90.13] | 556 | 52 | 93.5 [69.8, 118.7] | 1.99 [2.01, 5.24] | 0.2829 [0.2233, 0.3433] | 0 |
+| | **NO-ING** | 89.64 [87.14, 92.14] | 89.57 [87.07, 92.09] | 556 | 48 | 86.3 [63.1, 109.9] | 3.53 [2.84, 6.63] | 0.2704 [0.2143, 0.3291] | 0 |
+| challenge-set (STE, 272 tokens) | earlier | 87.13 [81.18, 92.70] | 88.78 [82.65, 93.72] | 86 | 0 | 0.0 | 7.80 [3.84, 12.98] | 0.3317 [0.1953, 0.4885] | 0 |
+| | FULL | 87.50 [82.56, 92.37] | 87.37 [80.98, 92.51] | 86 | 0 | 0.0 | 8.51 [5.28, 13.67] | 0.3842 [0.2251, 0.5604] | 0 |
+| | **NO-ING** | 88.60 [83.03, 93.65] | 89.90 [83.65, 94.79] | 86 | 0 | 0.0 | 6.25 [4.04, 11.47] | 0.3644 [0.2095, 0.5371] | 0 |
+| ud-test-mapped (UD-EWT, primary view) | earlier | 92.30 [91.75, 92.82] | 91.71 [91.05, 92.26] | 4,413 | 73 | 16.5 [12.6, 20.9] | 2.36 [2.06, 2.81] | 0.3175 [0.2909, 0.3505] | 140 |
+| | FULL | 92.97 [92.46, 93.44] | 92.52 [91.90, 93.05] | 4,410 | 83 | 18.8 [14.5, 23.5] | 2.06 [1.78, 2.50] | 0.2982 [0.2733, 0.3319] | 138 |
+| | **NO-ING** | 92.85 [92.33, 93.31] | 92.43 [91.83, 92.96] | 4,410 | 79 | 17.9 [13.9, 22.5] | 2.22 [1.90, 2.70] | 0.3025 [0.2770, 0.3373] | 138 |
+| ud-test-raw (UD-EWT, raw tags) | earlier | 88.40 [87.84, 88.91] | 87.13 [86.45, 87.73] | 4,010 | 72 | 18.0 [13.7, 22.6] | 6.22 [5.86, 6.73] | 0.6062 [0.5731, 0.6457] | 421 |
+| | FULL | 89.05 [88.53, 89.53] | 88.29 [87.60, 88.86] | 4,007 | 82 | 20.5 [15.6, 25.8] | 5.96 [5.59, 6.48] | 0.6106 [0.5764, 0.6509] | 484 |
+| | **NO-ING** | 88.92 [88.38, 89.40] | 88.18 [87.53, 88.74] | 4,007 | 79 | 19.7 [15.3, 24.8] | 6.15 [5.75, 6.67] | 0.6191 [0.5849, 0.6607] | 484 |
+
+(The shape-probe ECE interval of the FULL record, [2.01, 5.24], does not contain its point estimate 1.99; that is how the report's
+percentile interval of this small set behaved and it was reproduced as written.)
+
+**Operating points.** The rule `nv-pooled-dev-v1` was applied unchanged to the dev curve of NO-ING and selected the **same
+thresholds as for the earlier model (strict 0.95, balanced 0.80)**; FULL had 0.90 and 0.85. Development figures (pooled open dev and
+gold v2 dev, 95% bootstrap intervals over documents):
+
+| Point | Model | Threshold | Coverage % [95%] | Harmful per 1,000 answered [95%] | Harmful of answered |
+| --- | --- | ---: | --- | --- | --- |
+| strict | earlier | 0.95 | 80.6 [79.1, 82.0] | 3.9 [1.8, 6.1] | 16 of 4,105 |
+| | FULL | 0.90 | 86.5 [85.2, 87.7] | 4.8 [2.7, 7.0] | 21 of 4,392 |
+| | **NO-ING** | 0.95 | 81.8 [80.4, 83.3] | 3.1 [1.3, 5.3] | 13 of 4,141 |
+| balanced | earlier | 0.80 | 91.0 [90.0, 92.0] | 9.9 [6.6, 13.4] | 46 of 4,636 |
+| | FULL | 0.85 | 89.8 [88.7, 90.9] | 7.7 [4.8, 11.0] | 35 of 4,562 |
+| | **NO-ING** | 0.80 | 92.4 [91.4, 93.3] | 9.0 [5.8, 12.1] | 42 of 4,675 |
+
+On the held-out sets (the thresholds are those selected on development data; coverage = share of the noun-verb decisions answered):
+
+| Set | Point | Model (threshold) | Coverage % | Harmful per 1,000 answered [95%] | Harmful of answered |
+| --- | --- | --- | ---: | --- | --- |
+| open-test (n/c) | reference 0.45 | earlier | 99.9 | 20.6 [15.2, 26.5] | 91 of 4,407 |
+| | | FULL | 99.8 | 20.7 [15.8, 26.1] | 91 of 4,399 |
+| | | NO-ING | 99.7 | 18.7 [14.1, 23.8] | 82 of 4,381 |
+| | strict | earlier (0.95) | 82.3 | 4.1 [2.0, 6.9] | 15 of 3,631 |
+| | | FULL (0.90) | 87.7 | 5.7 [3.0, 8.8] | 22 of 3,868 |
+| | | **NO-ING (0.95)** | 83.8 | 3.5 [1.6, 6.0] | 13 of 3,682 |
+| | balanced | earlier (0.80) | 92.3 | 9.3 [6.1, 12.6] | 38 of 4,072 |
+| | | FULL (0.85) | 90.9 | 6.5 [3.5, 9.7] | 26 of 4,005 |
+| | | **NO-ING (0.80)** | 93.3 | 7.3 [4.5, 10.4] | 30 of 4,097 |
+| gold-v2-test | reference 0.45 | earlier | 99.8 | 24.6 [14.9, 35.0] | 23 of 934 |
+| | | FULL | 99.9 | 31.0 [19.9, 42.4] | 29 of 935 |
+| | | NO-ING | 99.8 | 30.0 [19.1, 41.3] | 28 of 934 |
+| | strict | earlier (0.95) | 81.3 | 3.9 [0.0, 9.1] | 3 of 761 |
+| | | FULL (0.90) | 86.3 | 5.0 [1.2, 10.3] | 4 of 808 |
+| | | **NO-ING (0.95)** | 82.2 | 6.5 [1.4, 13.3] | 5 of 769 |
+| | balanced | earlier (0.80) | 92.5 | 10.4 [3.9, 17.8] | 9 of 866 |
+| | | FULL (0.85) | 89.1 | 9.6 [3.7, 17.3] | 8 of 834 |
+| | | **NO-ING (0.80)** | 91.9 | 9.3 [3.4, 16.5] | 8 of 860 |
+| shape-probe | reference 0.45 | earlier | 98.6 | 87.6 [65.6, 111.3] | 48 of 548 |
+| | | FULL | 98.0 | 95.4 [71.3, 120.9] | 52 of 545 |
+| | | NO-ING | 98.0 | 88.1 [64.3, 112.1] | 48 of 545 |
+| | strict | earlier (0.95) | 59.5 | 9.1 [0.0, 19.7] | 3 of 331 |
+| | | FULL (0.90) | 67.8 | 18.6 [5.4, 33.5] | 7 of 377 |
+| | | **NO-ING (0.95)** | 60.6 | 11.9 [2.8, 24.0] | 4 of 337 |
+| | balanced | earlier (0.80) | 80.6 | 42.4 [25.2, 61.7] | 19 of 448 |
+| | | FULL (0.85) | 74.1 | 26.7 [12.1, 42.3] | 11 of 412 |
+| | | **NO-ING (0.80)** | 77.5 | 37.1 [19.0, 55.8] | 16 of 431 |
+| challenge-set | strict and balanced | earlier, FULL, NO-ING | 69.8 to 84.9, 76.7 to 77.9, 70.9 to 80.2 | 0.0 | 0 of 60 to 73, 0 of 66 and 67, 0 of 61 to 69 |
+| ud-test-mapped | reference 0.45 | earlier | 99.3 | 16.7 [12.7, 21.0] | 73 of 4,382 |
+| | | FULL | 99.4 | 18.9 [14.8, 23.6] | 83 of 4,384 |
+| | | NO-ING | 99.5 | 18.0 [14.1, 22.6] | 79 of 4,389 |
+| | strict | earlier (0.95) | 76.9 | 2.9 [1.3, 5.0] | 10 of 3,395 |
+| | | FULL (0.90) | 84.1 | 5.1 [2.8, 7.8] | 19 of 3,708 |
+| | | **NO-ING (0.95)** | 79.3 | 2.6 [1.1, 4.4] | 9 of 3,497 |
+| | balanced | earlier (0.80) | 89.2 | 7.4 [4.8, 10.2] | 29 of 3,936 |
+| | | FULL (0.85) | 87.4 | 5.7 [3.5, 8.6] | 22 of 3,855 |
+| | | **NO-ING (0.80)** | 89.8 | 6.6 [4.1, 9.5] | 26 of 3,961 |
+| ud-test-raw | strict | earlier (0.95) | 77.9 | 3.2 [1.5, 5.4] | 10 of 3,125 |
+| | | FULL (0.90) | 84.7 | 5.6 [3.1, 8.5] | 19 of 3,395 |
+| | | **NO-ING (0.95)** | 80.2 | 2.8 [1.2, 4.8] | 9 of 3,214 |
+| | balanced | earlier (0.80) | 89.6 | 8.1 [5.2, 11.3] | 29 of 3,593 |
+| | | FULL (0.85) | 87.8 | 6.2 [3.8, 9.4] | 22 of 3,520 |
+| | | **NO-ING (0.80)** | 90.0 | 7.2 [4.5, 10.6] | 26 of 3,607 |
+
+The strict target (at most 5.0 harmful per 1,000 answered) was met on development data (3.1) and on the **open test split (3.5,
+interval [1.6, 6.0])** and on UD-EWT (2.6, 2.8 raw); it is **exceeded on gold v2 test (6.5, 5 errors of 769 answered, interval
+[1.4, 13.3] contains 5.0)** and on the shape probe (11.9, a deliberately hard set). The balanced target (10.0) was met on every
+set except the shape probe (37.1; the earlier model 42.4).
+
+Shape probe by shape (harmful errors at 0.45; earlier, FULL, NO-ING): `n-obj-light` 1, 1, 1; `n-compound-head` 16, 17, **18**
+(accuracy 76.25, 73.75, 73.75); `n-modifier` 0, 0, 0; `n-subject-initial` 12, 12, 10; `n-measure` 6, 6, 5; `v-imperative-initial`
+12, 14, 12; `v-after-modal` 1, 2, 2. Noun-verb confusion on open test (verb as noun / noun as verb): earlier 59 / 32, FULL 60 / 32,
+NO-ING 53 / 29 (n/c); on UD mapped 41 / 43 (FULL 45 / 41; earlier 36 / 43); on gold v2 17 / 11 (FULL 15 / 14; earlier 14 / 10).
+The throughput of the new report (894,415 tokens per second, one thread) is a timing of the machine; the earliest record (315,213)
+was measured on a busy machine and the three are not a comparison of the models.
+
+**Reading, with what is worse stated first.**
+
+- **Worse than the earlier model on the fair comparison sets (where harmful errors exist).** NO-ING's harmful noun-verb errors
+  per 1,000 decisions at 0.45 are **higher than the earlier model's on gold v2 test (24.6 to 29.9; 23 to 28 errors)** and on
+  **UD-EWT (mapped 16.5 to 17.9, 73 to 79; raw 18.0 to 19.7, 72 to 79)**, and **equal on the shape probe (86.3 and 48 errors)**;
+  the challenge set has none in all three. Gold v2 accuracy (94.57 to 94.37), ambiguous accuracy, ECE (1.82 to 2.49) and NLL
+  (0.2178 to 0.2497) are also worse than the earlier model's, the shape probe ECE is worse (2.38 to 3.53) and its
+  `n-compound-head` errors are 18 against 16, and the strict point is worse than the earlier model's at the same 0.95 on gold
+  v2 (6.5 against 3.9) and on the shape probe (11.9 against 9.1). Every old and new interval overlaps (small sets), so no
+  single set proves a regression, but the direction is the same on all of them. So NO-ING **does not return to the earlier
+  model's harmful rate**: it recovers part of FULL's rise.
+- **Better than FULL on the same sets, in point estimates.** Harmful per 1,000 at 0.45: gold v2 31.0 to 29.9 (29 to 28), UD
+  mapped 18.8 to 17.9 (83 to 79), UD raw 20.5 to 19.7 (82 to 79), shape probe 93.5 to 86.3 (52 to 48, the earlier model's figure);
+  the shape-probe accuracy rises from 87.50 to 89.64 (the earlier 89.11) and the challenge set accuracy from 87.50 to 88.60. The
+  intervals of FULL and NO-ING overlap almost completely and the differences are 1 to 4 errors per set, far inside what the
+  sampling interval of a single record covers; the direction agrees with the dev selection (UD dev 23.4 to 22.5, open dev 23.1
+  to 20.1) and with nothing stronger. It is **not** evidence that the `prenominal-ing` corrections were wrong.
+- **Worse than FULL.** UD agreement is 0.12 points lower (mapped 92.97 to 92.85; raw 89.05 to 88.92), its ECE higher (2.06 to
+  2.22 mapped; gold v2 2.23 to 2.49) and its NLL higher (0.2982 to 0.3025 mapped; gold v2 and the raw view too), the shape probe
+  ECE is much higher (1.99 to 3.53) and `n-compound-head` has one more harmful error (17 to 18). The development cost found by the
+  follow-up (verbal `-ing` VERB accuracy, compound-head NOUN accuracy) is a dev measure over frozen items and has no held-out
+  counterpart here; the held-out sets are not designed to show it.
+- **Better than the earlier model.** UD-EWT agreement (mapped 92.30 to 92.85, raw 88.40 to 88.92; ambiguous 91.71 to 92.43), with
+  a lower ECE (2.36 to 2.22) and NLL (0.3175 to 0.3025) on the mapped view; shape probe accuracy (89.11 to 89.64) and NLL (0.2766 to
+  0.2704); the balanced point on every set is lower (open test 9.3 to 7.3, gold v2 10.4 to 9.3, UD mapped 7.4 to 6.6, shape
+  probe 42.4 to 37.1) and the strict point on open test and UD (4.1 to 3.5; 2.9 to 2.6). Open test accuracy, harmful rate, NLL
+  and ECE are better
+  (96.10 to 96.53; 20.6 to 18.7; 0.1394 to 0.1161; 0.28 to 0.20) but **not comparable** (labels changed twice).
+- **Open test against FULL.** 91 to 82 harmful errors and 96.46 to 96.53 accuracy; 17 test labels differ between the two scorings
+  (the withdrawn rows), so this difference mixes the model and the labels and is not a model comparison.
+- **The thin primary evidence.** The adoption rests on a pooled dev difference of 0.974 per 1,000 (five seeds; the Welch interval
+  excludes 0, the bootstrap interval contains it). The held-out figures do not add independent confirmation of an improvement
+  over FULL: they are consistent with a small effect and equally with none; they do not show an improvement over the earlier
+  model on the harmful measure.
+- **What is not shown.** The held-out evaluation did not tune anything and no test figure was used to change a threshold, the
+  model or a setting. The three stop conditions fired again as in both earlier records and are findings, not tuned.
+  Any further held-out evaluation would be a third look and is not planned.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
@@ -1166,3 +2233,4 @@ Every row is one run, scored on open dev and gold v2 dev only, at the run's own 
 | E7 final-candidate (S=8 prune 8 h19 6ep, T fitted) | sources=open:2,masc:1,silver:1 epochs=6 hashBits=19 minCount=1 prune=8 S=8 T=6.727 restriction=History history=Predicted seed=20260101 | 96.07 | 95.28 | 94 | 21.0 | 95.34 | 9 | 20.2 | 0.1328 | 0.35 | 119632 | 290862 | 1086 | 481 | 7.2 |
 | E8 M1 (glossary features, hints unused) | eval g_m1.bin | 95.85 | 94.94 | 111 | 24.8 | 95.19 | 9 | 23.6 | 0.1339 | 0.35 | 111046 | 266201 | 997 | - | 0.0 |
 | F final (frozen config, T=6.727) | sources=open:2,masc:1,silver:1 epochs=6 hashBits=19 minCount=1 prune=8 S=8 T=6.727 restriction=History history=Predicted seed=20260101 | 96.07 | 95.28 | 94 | 21.0 | 95.34 | 9 | 20.2 | 0.1328 | 0.35 | 119632 | 290862 | 1086 | 481 | 7.8 |
+| C retrained (frozen) | sources=open:2,masc:1,silver:1 epochs=6 hashBits=19 minCount=1 prune=8 S=8 T=6.583 restriction=History history=Predicted seed=20260101 | 96.37 | 95.64 | 103 | 23.1 | 94.99 | 14 | 23.0 | 0.1223 | 0.22 | 116448 | 281682 | 1053 | 467 | 5.4 |

@@ -48,12 +48,13 @@ The package targets .NET Standard 2.0 (and so runs on .NET Framework 4.8.1 and e
 public API under its `api/` folder, generated from the XML documentation of the library.
 
 **The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
-compiled word lexicon (641,418 bytes compressed) and the trained averaged-perceptron weights (492,971 bytes compressed,
-1,111,898 bytes uncompressed, about 0.5 MB and 1.1 MB). `Tagger.Default` returns a shared tagger that uses them, so the
+compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (478,835 bytes compressed,
+1,080,650 bytes uncompressed, about 0.5 MB and 1.1 MB). `Tagger.Default` returns a shared tagger that uses them, so the
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
-The model was selected on development data only and then evaluated once on held-out data. The
+The model was selected on development data only and then evaluated on held-out data (twice over the model family: a
+disclosed second look), after the training corpora had been corrected and the model retrained. The
 [evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the results
 and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to trust.
 
@@ -152,16 +153,22 @@ Read the numbers with these points in mind:
 
 The confidence is not equally reliable at every level, and the mistake that matters most is a noun that is tagged as a
 verb or a verb that is tagged as a noun (a harmful error). The embedded model was measured on that mistake: two
-thresholds were selected on development data only, and the model was then evaluated once on held-out data. A token is
+thresholds were selected on development data only, and the model was then evaluated on held-out data (the second
+evaluation of the model family on those sets). A token is
 answered at a threshold when its confidence is at least the threshold; coverage is the share of the noun-verb
 decisions that is answered.
 
 | Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
 | --- | ---: | ---: | ---: |
-| strict | 0.95 | 82.3% | 4.1 |
-| balanced | 0.80 | 92.3% | 9.3 |
+| strict | 0.95 | 83.8% | 3.5 |
+| balanced | 0.80 | 93.3% | 7.3 |
 
-Without a threshold, 20.6 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
+On the development data the same thresholds answered 81.8% (strict, 3.1 harmful errors in 1,000) and 92.4% (balanced, 9.0)
+of the decisions. The strict target of at most 5 in 1,000 was met on the open test split by the point estimate (its 95%
+interval, 1.6 to 6.0, reaches above 5) and is exceeded on the held-out gold v2 test split (6.5 in 1,000 answered, five
+errors; interval 1.4 to 13.3).
+
+Without a threshold, 18.7 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
 
 - **A consumer that needs a low harmful rate must use a threshold.** A rule checker, for example, uses `strict`:
@@ -397,8 +404,8 @@ TaggedSentence sentence = tagger.Tag("Dogs bark.")[0];
 
 `Tagger.Default` is the shared tagger that uses the weights and the lexicon that are embedded in the package. It is
 created on first use, so a program that only tokenizes pays nothing; the first read inflates and validates the two
-embedded files once (the weights: 492,971 bytes compressed, 1,111,898 bytes uncompressed; the lexicon: 641,418 bytes
-compressed, 1,635,344 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
+embedded files once (the weights: 478,835 bytes compressed, 1,080,650 bytes uncompressed; the lexicon: 639,711 bytes
+compressed, 1,626,269 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
 same thread-safe instance. A read does not fail in a released package; an `InvalidOperationException` or an
 `InvalidDataException` would mean that the package is broken.
 

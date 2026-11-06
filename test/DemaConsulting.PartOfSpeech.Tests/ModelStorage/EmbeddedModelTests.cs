@@ -19,8 +19,8 @@ public class EmbeddedModelTests
 
         // Assert: the resource exists and the lexicon has the counts of lexicon.tsv
         Assert.NotNull(stream);
-        Assert.Equal(262667, lexicon.SpellingCount);
-        Assert.Equal(339880, lexicon.EntryCount);
+        Assert.Equal(262635, lexicon.SpellingCount);
+        Assert.Equal(339819, lexicon.EntryCount);
         var chars = "the".ToCharArray();
         Assert.True(lexicon.TryGetTags(chars, 0, 3, new byte[lexicon.ScratchSize], out var tags));
         Assert.True(tags.Contains(Upos.Det));

@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore Prenominal Santorini lexicalized -->
+<!-- cspell:ignore Santorini lexicalized -->
 
 # Data Conventions
 
@@ -207,7 +207,8 @@ final newline). A file starts with header comment lines, then a blank line, then
   (`# genre = ...`, `# selection = ...`) may follow.
 - `text` is the original sentence for the open corpus and the STE set. For MASC and silver it is the tokens joined by
   single spaces (the original text is not kept). The tokens of a sentence always concatenate to its text without spaces.
-- `status` vocabulary: open and STE `unanimous | disputed | unchecked`; MASC `ptb`; silver `silver | masked`.
+- `status` vocabulary: open and STE `unanimous | disputed | unchecked`; MASC `ptb | disputed`; silver `silver | masked |
+  disputed` (a `disputed` mark on MASC or silver comes from the corrections overlay; the importers never write it).
 - **Status flags.** The status cell may continue with flags, each after a plus sign: `status[+foreign][+mentioned]`
   (`unanimous+mentioned`, `unchecked+foreign+mentioned`). `mentioned` marks a word that is talked about rather than used
   and `foreign` a word of another language (see "Mentioned Words"). A flag never changes the tag, and a flag is
@@ -216,9 +217,9 @@ final newline). A file starts with header comment lines, then a blank line, then
   is an error. The optional `source_tag` column is unaffected, so every file without flags stays valid. The open
   importer (flags come in the consensus column of the source), the silver derivation (it recomputes the status and keeps
   the flags), the lexicon and coverage tools, and the readers of the trainer and the tests accept and keep the flags;
-  the MASC importer derives every row from Penn trees and has no source for a flag. No committed file carries a flag
-  yet; the corpus labels are corrected in a later change, and the corrections are staged in `data/corrections/` (see "Other
-  Formats").
+  the MASC importer derives every row from Penn trees and has no source for a flag. The committed open, MASC and silver
+  files carry flags and `disputed` marks that the corrections overlay wrote (`data/corrections/`, see "Other Formats");
+  the STE challenge set, gold v2 and the shape probe carry none.
 - `source_tag` (MASC, silver) records what the tag was derived from, so the derivation is reproducible from the file.
 
 ### Other Formats
@@ -228,7 +229,8 @@ The shape probe and gold v2 keep the column sets of their source (see `data/eval
 `MANIFEST.tsv` lists size and SHA-256 of every data file except Markdown.
 
 **Corrections overlay** (`data/corrections/`, specified in full in its `README.md`). Corrections to the labels of the open
-corpus, MASC and the silver data are rows of three tables, not edits of the corpus files, until a later change applies them.
+corpus, MASC and the silver data are rows of three tables; the rows are applied to the corpus files (`corrections.py apply
+--write`), and the tables stay as the provenance of every change.
 Each table starts with comment lines (`# corpus`, `# license`, `# kind`, `# columns`, `# generator`, `# input`), then one
 row per line, sorted by the key `(source, split, sent_id, token_index)`, with these columns:
 
@@ -246,7 +248,7 @@ and never the masked placeholder; `old_status` and `new_status` are whole status
 provenance is `rule:<id>` (the id of a rule of the catalog in `data/corrections/README.md`) or `llm:<model>:<run>`; a token
 has at most one correction row across all correction tables. A correction table is valid against the corpora when every row
 matches them in the pending state (`old_tag`, `old_status`) or every row matches them in the applied state (`new_tag`,
-`new_status`); a mixture is an error. The rules of the catalog implement the text of "Annotation Conventions"; where the
+`new_status`); a mixture is an error. The committed corpora are in the applied state. The rules of the catalog implement the text of "Annotation Conventions"; where the
 text and a rule disagree, this document governs and the rule is changed.
 
 ## Tokenization Convention

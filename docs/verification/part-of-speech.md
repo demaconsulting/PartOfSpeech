@@ -17,7 +17,8 @@ feature extractor and the same weights writer that the trainer uses, so the test
 unchanged. The tests of the default tagger and of the embedded weights use the real shipped model, but only for
 properties that do not depend on its accuracy: that it loads, that it is one shared instance, and that it gives the
 unmistakable tags of a few hand-written sentences (these sentences were written once and not tuned; the accuracy of the
-model is measured by the held-out evaluation of the trainer, which is a documented once-only procedure and not a test,
+model is measured by the held-out evaluation of the trainer, which is a documented procedure (once for each frozen
+model; the model family has had two disclosed held-out evaluations) and not a test,
 and its committed results are tied to the shipped model by the evaluation record tests, never by the tests of the tagger).
 
 System tests reside in `PartOfSpeechTests.cs` within the `DemaConsulting.PartOfSpeech.Tests` project. The data and
@@ -34,11 +35,12 @@ the adjudication tool and the overlay (`test_corrections_*.py`) are requirements
 the other TRX files and matches a requirement's test by the method name. All other tool tests are not requirements
 evidence; they are reviewed with the tools in the data tools review sets (see the Companion Artifact
 Structure of the design introduction). The unit tests of the correction tools (`test_corrections_*.py`, including those
-of the adjudication tool `adjudicate.py`), the validation of the staged corrections (`adjudicated.tsv` included) against
-the corpora, the check that the generator reproduces the committed mechanical tables and a report-only pass of the
-conventions linter run as a gate in `lint.ps1`, which the quality-checks job of the workflow runs
-(standard library only, about one minute); a failing step fails the lint run. The linter does not yet fail on violations
-that are left in the corpora.
+of the adjudication tool `adjudicate.py`), the validation of the corrections (`adjudicated.tsv` included) against
+the corpora, the state-aware check that the generator reproduces the committed mechanical tables (in the applied state it
+reverses the applied rows in a temporary copy first), the conventions linter with `--tier fix --enforce` and a
+report-only pass of its check tier run as a gate in `lint.ps1`, which the quality-checks job of the workflow runs
+(standard library only, about one minute); a failing step fails the lint run. The linter fails on a violation of the fix
+tier; the 298 violations of the check tier that need a judgment are reported and do not fail the run.
 
 Two groups of requirements need methods beyond an ordinary assertion:
 
@@ -150,7 +152,7 @@ are information for reviewers, not acceptance values:
   instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
-- The embedded weights are 492,971 bytes (1,111,898 uncompressed) and the embedded lexicon 641,418 bytes (1,635,344
+- The embedded weights are 478,835 bytes (1,080,650 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
   uncompressed); the package is larger because both resources are embedded once per target framework (the package size
   is stated, approximately, in the "Package size" item of the design document `part-of-speech.md`).
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
@@ -274,8 +276,9 @@ results equals the SHA-256 of the committed bytes of `operating-points.json`, th
 each input that is a committed data file (open test, gold v2 test, shape probe, challenge set) and of each development
 file of the selection equals the manifest, and that the hash of the treebank test file equals its pin. It also asserts
 that the two reports quote the same model and selection hashes. A retrained model, another selection or a changed data
-file therefore fails until the evaluation is redone. The held-out run itself is not repeated: it is a once-only
-procedure of the trainer (see _ModelTrainer Verification_), and no test opens a held-out data file.
+file therefore fails until the evaluation is redone. The held-out run itself is not repeated by the tests: it is a
+procedure of the trainer that runs once for each frozen model (see _ModelTrainer Verification_), and no test opens a
+held-out data file.
 
 ### Evaluation Record States the Figures of the Reports
 
@@ -399,7 +402,7 @@ and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
 and fails when a file is missing or empty.
 
-The `PartOfSpeech_DataCorrections_*` tests read the staged corrections of `data/corrections/`. `Tables_AreWellFormed`
+The `PartOfSpeech_DataCorrections_*` tests read the corrections of `data/corrections/`. `Tables_AreWellFormed`
 asserts the column lists of the tables, that every correction row (of `mechanical.tsv` and, when it exists,
 `adjudicated.tsv`) is valid on its own (legal source and split pair,
 token index, tags among the 17 and never the masked placeholder, status cells with known statuses and flags in order, a
@@ -417,6 +420,10 @@ committed corpora and asserts for every correction row in effect and every excep
 id, the token index and the token form exist, and that all correction rows in effect match the corpus in the pending
 state (old tag and status) or all in the applied state (new tag and status); a mechanical row that an adjudicated row
 replaces is not in effect, so it is not compared. A mixture, a row that matches neither state, and an empty table fail.
+`Rows_AreApplied` reads the same rows in effect and asserts that none is pending (its token still has the old tag and status
+cell) and that every one is applied (its token has the new tag and status cell); a row whose token is missing or has another
+value counts as not applied, and an empty table fails. The check that the corpora have no violation of the fix tier of the
+conventions linter is made by the linter in `lint.ps1` (`--tier fix --enforce`) and by `tools/data/tests`, not by this test.
 `Adjudicated_RowsAreLlmDecisions` asserts for every row of `adjudicated.tsv` that the provenance is
 `llm:opus+sol:<batch>` (a `rule:` row fails), that the row is valid on its own and is exactly one of a tag change with
 the base status kept, a `disputed` mark with the tag and the flags kept, or a flag change with the tag and the base kept,
@@ -449,6 +456,14 @@ the mechanical file keeps its hash. `DroppedDetectorsLeaveNoCorrections` asserts
 flag rows and keeps its `disputed` marks, and the gate on given verdicts. `TableHeaderIsStrict` mutates the metadata
 lines of a valid table (each of the five lines removed, repeated or changed, an input line missing, malformed, unknown
 or repeated, an unknown metadata line) and asserts a finding for each, and runs `validate` on a file with removed lines.
+`WithdrawnRowsStayAsProvenance` withdraws the rows of one detector on the miniature data folder and asserts that the
+rows move byte for byte (a dry run writes nothing), that the remaining rows still apply while the withdrawn tokens keep
+the old value, that `withdraw` refuses the applied state, an existing table, a bad detector, a blank reason, a detector
+without rows and a row that would replace a mechanical row, that a span belongs to every token it covers, and that
+`validate` reports each defect of a withdrawn table (header lines, provenance, a token that no candidate of the
+detector covers, a token that is also in a current table, the new value in the corpus), mutates its `# input` lines (one
+missing, unknown, repeated, malformed or with a stale hash) and asserts a finding for each, and asserts that a complete
+table is accepted in the pending and in the applied state (where the corpus files have other hashes by design).
 
 ### Platform Support
 

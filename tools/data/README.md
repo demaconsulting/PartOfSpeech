@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore prenominal testdata -->
+<!-- cspell:ignore testdata -->
 
 # Data Tools
 
@@ -39,7 +39,7 @@ Run from the repository root. Scripts take their input locations as arguments or
 | `import_open.py` | open corpus to `data/open/` (UPOS projection, `sources.tsv`, `LICENSE`) | `--source-dir <WordSense checkout>` or download |
 | `import_eval.py` | shape probe, gold v2 and the STE challenge set to `data/eval/` | same |
 | `import_masc.py` | MASC Penn trees to `data/masc/` (`ptb_to_upos`, leakage exclusion, mapping audit) | `--archive`, `--exclude-genre`; writes `sources.tsv`, `excluded-documents.tsv` and `dropped-sentences.tsv` |
-| `import_silver.py` | `export-spike` (one-off), `derive`, `verify`, `verify-sources` | silver data to `data/silver/`; FAA only behind `--include-faa`, never committed; run after `build_lexicon.py` |
+| `import_silver.py` | `export-spike` (one-off), `derive`, `verify`, `verify-sources` | silver data to `data/silver/`; FAA only behind `--include-faa`, never committed; run after `build_lexicon.py`; `verify` describes the derivation, so it passes only on the pre-correction file (after `corrections.py apply --write --reverse`) |
 | `fetch_ud_ewt.py` | `fetch` the pinned UD English-EWT files into the cache; `map` writes the convention-mapped tables (cache only) | evaluation only; nothing is ever committed |
 | `build_lexicon.py` | build `data/lexicon/lexicon.tsv`; `--write-pins` writes the form pin manifest | `--wordsense-dir`, `--k`, `--masc-k` |
 | `check_lexicon.py` | coverage report (`coverage.tsv`, `COVERAGE.md`), gate G1, `--sweep` | exit code 1 if the gate fails |
@@ -48,10 +48,10 @@ Run from the repository root. Scripts take their input locations as arguments or
 | `make_manifest.py` | write or `--verify` `data/MANIFEST.tsv` | Markdown files excluded |
 | `normalize_eol.py` | convert CRLF to LF in `data/` and `tools/data/` text files | run before `make_manifest.py` after editing on Windows |
 | `leakage.py` | library: the evaluation sets and keys used by the importers and the leakage check; the rule that a long match excludes the document and a short match drops the sentence | |
-| `corrections.py` | the staged corrections in `data/corrections/`: table formats, row and table validation (`mechanical.tsv`, `adjudicated.tsv`; an adjudicated row replaces the mechanical row of its token), `validate` against the corpora (pending or applied state), `apply [--write] [--reverse]` (edits corpus lines in place), `show` | exit code 1 on an error; `apply` writes only with `--write` and is not used on the committed corpora yet |
+| `corrections.py` | the staged corrections in `data/corrections/`: table formats, row and table validation (`mechanical.tsv`, `adjudicated.tsv`; an adjudicated row replaces the mechanical row of its token; `withdrawn-<detector>.tsv` holds adjudicated rows taken out on purpose, never applied), `validate` against the corpora (pending or applied state), `apply [--write] [--reverse]` (edits corpus lines in place), `withdraw --detector ID --reason TEXT [--write]` (pending state only: the adjudicated rows of one detector move to `withdrawn-ID.tsv`), `show` | exit code 1 on an error; `apply` and `withdraw` write only with `--write`; the committed corpora are in the applied state, so a second `apply` is refused (reverse, withdraw, apply again) |
 | `convention_rules.py` | library: the rule registry of the conventions (mechanical `fix` rules with their guards, and `check` rules), shared by the linter and the generator | the catalog is in [`data/corrections/README.md`](../../data/corrections/README.md#rule-catalog) |
 | `convention_candidates.py` | library: the detectors of the cases that need a judgment (prenominal participles, mentioned words, foreign text, proper-noun boundaries, ...) | feeds `candidates.tsv` |
-| `check_conventions.py` | the conventions linter: counts per rule and source, `--apply` (lint as after the staged corrections), `--list RULE`, `--tsv FILE`, `--enforce` | report only (exit code 0) without `--enforce`; the STE challenge set is linted but never counts |
+| `check_conventions.py` | the conventions linter: counts per rule and source, `--apply` (lint as after the corrections; a no-op in the applied state), `--list RULE`, `--tsv FILE`, `--tier fix` or `--tier check`, `--enforce` | report only (exit code 0) without `--enforce`; with `--enforce` exit code 1 on a violation of the selected tiers; the STE challenge set is linted but never counts |
 | `make_corrections.py` | generate `data/corrections/{mechanical,candidates,exceptions}.tsv` from the rules; `--check` (compare with the committed files, and validate `adjudicated.tsv` when it exists), `sample` (seeded hand-check sample), `fixed-point`, `catalog` | deterministic; refuses candidates above 5 MB; never writes `adjudicated.tsv` |
 | `adjudicate.py` | the adjudication of the candidates by two blind language-model taggers, everything around the models: `select` (sentences, bands and the 14,000 cap, volumes first), `export` (blind three-column batches, private key, state table), `check-batches`, `validate-output` (the taggers' outputs), `status`, `decide [--drop CLASS,...]` (decision rule, writes `adjudicated.tsv` and the private reports), `sample` and `review-result` (the precision gate of a third reviewer model) | needs a work folder outside the repository (`--work`, with the flag files of the off-the-shelf taggers); never calls a model; exit code 1 on an invalid batch, output or table; the method is in [`data/corrections/README.md`](../../data/corrections/README.md#adjudication) |
 
@@ -84,11 +84,14 @@ python -m compileall -q tools/data
 python tools/data/tests/run_trx.py --out artifacts/python-data-tools.trx --pattern "test_corrections_*.py"
 python tools/data/corrections.py validate
 python tools/data/make_corrections.py --check
-python tools/data/check_conventions.py
+python tools/data/check_conventions.py --tier fix --enforce --apply
+python tools/data/check_conventions.py --tier check --apply
 ```
 
-A failing step fails the lint run. The linter runs without `--enforce`, so the violations that are left in the corpora are
-reported but do not fail the run; `--enforce` is added when the corrections are applied and none are left. `run_trx.py` runs
+A failing step fails the lint run. The linter enforces the fix tier (a violation of a `fix` rule fails the run; the
+evaluation-only STE set is shown and never counts) and reports the check tier, which needs judgment, without failing on it.
+`make_corrections.py --check` is state-aware: the corrections are applied, so it reverses them in a temporary copy before it
+regenerates the tables. `run_trx.py` runs
 the same discovery as `python -m unittest discover -s tools/data/tests -p "test_corrections_*.py"` and also writes the results as a
 TRX file; the quality-checks job uploads `artifacts/`, and ReqStream reads the file with the C# results as the evidence of the
 `PartOfSpeech-Adjudication-*` requirements (the requirement lists the test method names). The other requirements evidence stays

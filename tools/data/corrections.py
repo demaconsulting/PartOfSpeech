@@ -10,6 +10,9 @@ all go through it.
   python tools/data/corrections.py apply [--write] [--reverse]
                                                        # show (or, with --write, perform) the corrections on the corpus files
   python tools/data/corrections.py show --sent-id ID   # the rows of a sentence, in context
+  python tools/data/corrections.py withdraw --detector ID --reason TEXT [--write]
+                                                       # take the adjudicated rows of one detector out of adjudicated.tsv
+                                                       # into withdrawn-<ID>.tsv (provenance; pending state only)
 
 Four tables share the module (see data/corrections/README.md and data/CONVENTIONS.md, "Other Formats"):
 
@@ -25,6 +28,10 @@ One row per token, with one exception (supersession, see `combine_tables`): an `
 `mechanical.tsv` row of the same token when both rows start from the same corpus value (`old_tag`, `old_status`). The
 mechanical row stays in its file, byte for byte, and is only ignored by everything that validates, applies or simulates the
 corrections (the "effective" rows); `validate` reports the number of superseded rows as a note.
+
+Withdrawn rows (`withdrawn-<detector>.tsv`): adjudicated rows that were taken out of `adjudicated.tsv` on purpose (`withdraw`,
+pending state only) stay in their own table as provenance. A withdrawn table is never applied; `validate` checks that its
+tokens carry the OLD value in the corpora, whatever the state of the other tables.
 """
 import argparse
 import collections
@@ -356,21 +363,60 @@ def adjudicated_findings(data_dir=None, rows=None, state=None, header=None):
         state = validate_against_corpora([row for row in rows if row_error(row) is None], load_corpora(data_dir))[1]
     listed, header_findings = adjudicated_header(header)
     findings.extend(header_findings)
+    findings.extend(input_state_findings(ADJUDICATED_TABLE, listed, data_dir, state))
+    return findings
+
+
+def input_state_findings(table, listed, data_dir, state):
+    """Messages for the `# input` lines of a table (`listed` = {corpus file: SHA-256}) against the corpus files of a data folder.
+
+    There must be one line for every corpus file that exists; and, only in the pending state (`state` is not "applied"), its hash is
+    that of the corpus file as it is (a stale table is a finding): once the corrections are applied the corpus files have, by
+    design, other hashes. Used for `adjudicated.tsv` and for the `withdrawn-<detector>.tsv` tables.
+    """
+    findings = []
     base = data_dir or common.DATA
     for key, relative in CORPUS_FILES.items():
         corpus_path = os.path.join(base, *relative.split("/"))
         if not os.path.exists(corpus_path):
             continue
         if relative not in listed:
-            findings.append("%s: no '# input' line for the corpus file %s" % (ADJUDICATED_TABLE, relative))
+            findings.append("%s: no '# input' line for the corpus file %s" % (table, relative))
         elif state != "applied" and listed[relative] != common.sha256_file(corpus_path):
             # Once the corrections are applied the corpus files have, by design, other hashes.
-            findings.append("%s: stale, the corpus file %s has another SHA-256 than the '# input' line" % (ADJUDICATED_TABLE, relative))
+            findings.append("%s: stale, the corpus file %s has another SHA-256 than the '# input' line" % (table, relative))
     return findings
 
 
 ADJUDICATED_HEADER_KEYS = ("corpus", "license", "kind", "columns", "generator")
 INPUT_LINE_RE = re.compile(r"^# input = (\S+) sha256 ([0-9a-f]{64})$")
+
+
+def is_input_line(line):
+    """True for a metadata line that claims to be an `# input` line (well-formed or not)."""
+    return line.startswith("# input")
+
+
+def input_lines(table, lines):
+    """(listed, findings) of the `# input = <file> sha256 <hash>` lines among `lines`: `listed` is {corpus file: SHA-256}.
+
+    A line must be well formed and name a known corpus file (see `CORPUS_FILES`) once; the missing and the stale lines are
+    `input_state_findings`. Used for `adjudicated.tsv` and for the `withdrawn-<detector>.tsv` tables.
+    """
+    findings = []
+    listed = {}
+    known = {relative for relative in CORPUS_FILES.values()}
+    for line in lines:
+        match = INPUT_LINE_RE.match(line)
+        if not match:
+            findings.append("%s: malformed line %r, expected '# input = <file> sha256 <64 hex digits>'" % (table, line))
+        elif match.group(1) not in known:
+            findings.append("%s: '# input' names an unknown corpus file %s" % (table, match.group(1)))
+        elif match.group(1) in listed:
+            findings.append("%s: '# input' line for %s is repeated" % (table, match.group(1)))
+        else:
+            listed[match.group(1)] = match.group(2)
+    return listed, findings
 
 
 def adjudicated_header(header):
@@ -381,9 +427,8 @@ def adjudicated_header(header):
     corpus file (a known file, no repeat); any other comment line is a finding.
     """
     findings = []
-    listed = {}
     seen = collections.Counter()
-    known = {relative for relative in CORPUS_FILES.values()}
+    inputs = []
     for line in header or []:
         key = line[2:].split(" = ", 1)[0] if line.startswith("# ") and " = " in line else None
         if key in ADJUDICATED_HEADER_KEYS:
@@ -397,18 +442,12 @@ def adjudicated_header(header):
                 findings.append("%s: the '# license' line does not start with 'CC0-1.0 '" % ADJUDICATED_TABLE)
             if key == "generator" and not value.startswith("tools/data/adjudicate.py"):
                 findings.append("%s: the '# generator' line does not name tools/data/adjudicate.py" % ADJUDICATED_TABLE)
-        elif key == "input" or line.startswith("# input"):
-            match = INPUT_LINE_RE.match(line)
-            if not match:
-                findings.append("%s: malformed line %r, expected '# input = <file> sha256 <64 hex digits>'" % (ADJUDICATED_TABLE, line))
-            elif match.group(1) not in known:
-                findings.append("%s: '# input' names an unknown corpus file %s" % (ADJUDICATED_TABLE, match.group(1)))
-            elif match.group(1) in listed:
-                findings.append("%s: '# input' line for %s is repeated" % (ADJUDICATED_TABLE, match.group(1)))
-            else:
-                listed[match.group(1)] = match.group(2)
+        elif key == "input" or is_input_line(line):
+            inputs.append(line)
         else:
             findings.append("%s: unknown metadata line %r" % (ADJUDICATED_TABLE, line))
+    listed, input_findings = input_lines(ADJUDICATED_TABLE, inputs)
+    findings.extend(input_findings)
     for key in ADJUDICATED_HEADER_KEYS:
         if seen[key] != 1:
             findings.append("%s: the '# %s' line is %s" % (ADJUDICATED_TABLE, key, "missing" if not seen[key] else "repeated"))
@@ -759,7 +798,172 @@ def validate_overlay(data_dir=None):
     errors.extend(validate_exceptions_against_corpora(valid_exceptions, corpora))
     if ADJUDICATED_TABLE in counts:
         errors.extend(adjudicated_findings(data_dir, state=state))
+    withdrawn_errors, withdrawn_counts = withdrawn_findings(data_dir, [row for _, rows in found for row in rows], corpora, state)
+    errors.extend(withdrawn_errors)
+    counts.update(withdrawn_counts)
     return errors, state, counts
+
+
+# ---------------------------------------------------------------- withdrawn rows (provenance of rows taken out of adjudicated.tsv)
+
+WITHDRAWN_NAME_RE = re.compile(r"^withdrawn-([a-z0-9]+(?:-[a-z0-9]+)*)\.tsv$")
+WITHDRAWN_HEADER_KEYS = ("corpus", "license", "kind", "columns", "generator", "detector", "reason")
+WITHDRAWN_KIND = "withdrawn corrections"
+
+
+def withdrawn_names(data_dir=None):
+    """Names of the `withdrawn-<detector>.tsv` tables of a data folder, sorted."""
+    folder = corrections_dir(data_dir)
+    return sorted(name for name in os.listdir(folder) if WITHDRAWN_NAME_RE.match(name)) if os.path.isdir(folder) else []
+
+
+def detector_rows(rows, candidates, detector):
+    """The rows whose token is covered by a candidate row of `detector`.
+
+    A candidate covers its `token_index` up to `token_index + span_length - 1`; a row covered by candidates of several detectors
+    belongs to each of them. This is the definition that the trainer follow-up used for "the rows of a detector".
+    """
+    covered = set()
+    for candidate in candidates:
+        if candidate.candidate_rule == detector and has_valid_index(candidate) and SPAN_RE.match(candidate.span_length):
+            start = int(candidate.token_index)
+            covered.update((candidate.source, candidate.split, candidate.sent_id, index)
+                           for index in range(start, start + int(candidate.span_length)))
+    return [row for row in rows if has_valid_index(row) and address(row) in covered]
+
+
+def withdrawn_findings(data_dir=None, current_rows=None, corpora=None, state=None):
+    """(findings, counts) of the `withdrawn-<detector>.tsv` tables: rows taken out of `adjudicated.tsv` that stay as provenance.
+
+    A withdrawn table is never applied. Its header names each of `corpus`, `license` (CC0-1.0), `kind`
+    (`withdrawn corrections`), `columns`, `generator`, `detector` (the detector of the file name) and a non-empty `reason` once,
+    then one well-formed `# input = <file> sha256 <hash>` line per corpus file, as `adjudicated.tsv` does (no unknown or repeated
+    file, none missing, and in the pending state the hash of the corpus file as it is: see `input_state_findings`);
+    its rows are valid, sorted decisions of the adjudication, covered by a candidate of the detector, and their address is in
+    no current correction table; and the corpora hold the OLD value of every token (`old_tag`, `old_status`) in the pending and
+    in the applied state alike, because a withdrawn row is not a correction of the corpora. `current_rows` are the rows of the
+    correction tables (read from the folder when not given); `state` is the state of the corpora against those rows (computed
+    when not given).
+    """
+    names = withdrawn_names(data_dir)
+    if not names:
+        return [], {}
+    folder = corrections_dir(data_dir)
+    if current_rows is None:
+        current_rows = []
+        for name in CORRECTION_TABLES:
+            path = os.path.join(folder, name)
+            if os.path.exists(path):
+                current_rows.extend(read_table(path, "corrections")[1])
+    corpora = corpora if corpora is not None else load_corpora(data_dir)
+    if state is None:
+        state = validate_against_corpora([row for row in current_rows if row_error(row) is None], corpora)[1]
+    current = {address(row) for row in current_rows if has_valid_index(row)}
+    candidates_path = os.path.join(folder, CANDIDATES_TABLE)
+    candidates = read_table(candidates_path, "candidates")[1] if os.path.exists(candidates_path) else []
+    findings, counts = [], {}
+    for name in names:
+        detector = WITHDRAWN_NAME_RE.match(name).group(1)
+        try:
+            header, rows = read_table(os.path.join(folder, name), "corrections")
+        except ValueError as error:
+            findings.append(name + ": " + str(error))
+            continue
+        counts[name] = len(rows)
+        seen = collections.Counter()
+        inputs = []
+        for line in header:
+            key = line[2:].split(" = ", 1)[0] if line.startswith("# ") and " = " in line else None
+            if key in WITHDRAWN_HEADER_KEYS:
+                seen[key] += 1
+                value = line[len("# %s = " % key):]
+                if key == "kind" and value != WITHDRAWN_KIND:
+                    findings.append("%s: '# kind' is %r, expected %s" % (name, value, WITHDRAWN_KIND))
+                if key == "license" and not value.startswith("CC0-1.0 "):
+                    findings.append("%s: the '# license' line does not start with 'CC0-1.0 '" % name)
+                if key == "detector" and value != detector:
+                    findings.append("%s: '# detector' is %r, expected %s" % (name, value, detector))
+                if key == "reason" and not value.strip():
+                    findings.append("%s: the '# reason' line is empty" % name)
+            elif key == "input" or is_input_line(line):
+                inputs.append(line)
+            else:
+                findings.append("%s: unknown metadata line %r" % (name, line))
+        findings.extend("%s: the '# %s' line is %s" % (name, key, "missing" if not seen[key] else "repeated")
+                        for key in WITHDRAWN_HEADER_KEYS if seen[key] != 1)
+        # The input provenance is checked as for adjudicated.tsv: one well-formed line per corpus file, no unknown or repeated
+        # file, and (while the corpora are pending) the hash of the corpus file as it is.
+        listed, input_findings = input_lines(name, inputs)
+        findings.extend(input_findings)
+        findings.extend(input_state_findings(name, listed, data_dir, state))
+        findings.extend(name + ": " + problem for problem in table_errors(rows))
+        valid = [row for row in rows if row_error(row) is None]
+        covered = {address(row) for row in detector_rows(valid, candidates, detector)}
+        for row in valid:
+            where = "%s %s#%s" % (name, row.sent_id, row.token_index)
+            if not ADJUDICATED_PROVENANCE_RE.match(row.provenance):
+                findings.append("%s: provenance %r is not llm:opus+sol:<batch>" % (where, row.provenance))
+            if adjudicated_row_kind(row) is None:
+                findings.append("%s: the row is neither a tag change, a disputed mark nor a flag change" % where)
+            if address(row) not in covered:
+                findings.append("%s: no candidate of the detector %s covers the token" % (where, detector))
+            if address(row) in current:
+                findings.append("%s: the token is also in a current correction table" % where)
+        errors, withdrawn_state = validate_against_corpora(valid, corpora)
+        findings.extend(name + ": " + error for error in errors)
+        if withdrawn_state not in ("pending", "empty"):
+            findings.append("%s: the corpora hold the new value of the withdrawn tokens (state %s)" % (name, withdrawn_state))
+    return findings, counts
+
+
+def withdraw_detector(data_dir, detector, reason, write=False):
+    """Move the `adjudicated.tsv` rows of one detector to `withdrawn-<detector>.tsv`: returns (kept, withdrawn) rows.
+
+    The rows of the detector (see `detector_rows`) leave `adjudicated.tsv`, byte for byte and in key order, and become the rows
+    of the new table whose header records the detector, the `reason` and the corpus hashes of `adjudicated.tsv`. Nothing else
+    changes (`mechanical.tsv`, `candidates.tsv`, the header of `adjudicated.tsv`). The corpora must be in the pending state
+    (apply `--reverse` first and apply again afterwards), the overlay valid, the new table must not exist, and no withdrawn
+    row may replace a mechanical row (the rule would take the token back). Raises ValueError on any of these.
+    """
+    if not WITHDRAWN_NAME_RE.match("withdrawn-%s.tsv" % detector):
+        raise ValueError("%r is not a detector id" % detector)
+    if not reason.strip() or "\n" in reason or "\t" in reason:
+        raise ValueError("the reason must be one non-empty line of text")
+    folder = corrections_dir(data_dir)
+    target = os.path.join(folder, "withdrawn-%s.tsv" % detector)
+    if os.path.exists(target):
+        raise ValueError("%s exists already" % os.path.basename(target))
+    errors, state, _ = validate_overlay(data_dir)
+    if errors:
+        raise ValueError("the overlay is invalid (%d errors, first: %s)" % (len(errors), errors[0]))
+    if state != "pending":
+        raise ValueError("the corpora are in the %s state, expected pending (apply --reverse first)" % state)
+    path = os.path.join(folder, ADJUDICATED_TABLE)
+    header, rows = read_table(path, "corrections")
+    candidates = read_table(os.path.join(folder, CANDIDATES_TABLE), "candidates")[1]
+    withdrawn = detector_rows(rows, candidates, detector)
+    chosen = {address(row) for row in withdrawn}
+    kept = [row for row in rows if address(row) not in chosen]
+    mechanical_path = os.path.join(folder, MECHANICAL_TABLE)
+    mechanical = {address(row) for row in read_table(mechanical_path, "corrections")[1]} if os.path.exists(mechanical_path) else set()
+    if chosen & mechanical:
+        raise ValueError("%d withdrawn rows replace mechanical rows; the rules would take those tokens back" % len(chosen & mechanical))
+    if not withdrawn:
+        raise ValueError("no adjudicated row carries the detector " + detector)
+    if write:
+        license_line = next(line for line in header if line.startswith("# license = "))
+        head = [CORPUS_LINE_WITHDRAWN % detector, license_line, "# kind = " + WITHDRAWN_KIND,
+                "# columns = " + ", ".join(COLUMNS["corrections"]),
+                "# generator = tools/data/corrections.py withdraw (rows taken out of adjudicated.tsv byte for byte; "
+                "see data/corrections/README.md)", "# detector = " + detector, "# reason = " + reason.strip()]
+        head += [line for line in header if line.startswith("# input = ")]
+        write_table(target, "corrections", head, withdrawn)
+        write_table(path, "corrections", header, kept)
+    return kept, withdrawn
+
+
+CORPUS_LINE_WITHDRAWN = ("# corpus = DemaConsulting.PartOfSpeech staged corpus corrections: adjudicated rows withdrawn for the detector %s "
+                         "(provenance only, never applied)")
 
 
 # ---------------------------------------------------------------- command line
@@ -809,14 +1013,35 @@ def _command_apply(args):
         return 1
     shown = 0
     for key, (old, new) in sorted(result.items()):
-        changed = sum(1 for a, b in zip(old, new) if a != b) + abs(len(new) - len(old))
-        print("%s/%s: %d lines change" % (key[0], key[1], changed))
-        for line in difflib.unified_diff(old, new, "old", "new", n=0, lineterm=""):
+        changes = changed_lines(old, new)
+        print("%s/%s: %d lines change" % (key[0], key[1], max(sum(line[0] == "+" for line in changes), sum(line[0] == "-" for line in changes))))
+        for line in changes:
             if shown < args.diff:
                 print(line)
                 shown += 1
     print("written" if args.write else "dry run: nothing written (use --write)")
     return 0
+
+
+def changed_lines(old, new):
+    """The changed lines of an applied corpus file as diff lines (`-old`, `+new`), cheap on files of hundreds of thousands of lines.
+
+    The corrections edit the token rows in place, so the body (everything after the first blank line) has the same number of
+    lines and is compared line by line; only the header can gain or lose the documenting `# status flags` line, so only the
+    header goes through `difflib`. A file whose body changed its length (never produced by `apply_to_lines`) is compared with
+    `difflib` as a whole.
+    """
+    old_end = old.index("") if "" in old else len(old)
+    new_end = new.index("") if "" in new else len(new)
+    if len(old) - old_end != len(new) - new_end:
+        return [line for line in difflib.unified_diff(old, new, "old", "new", n=0, lineterm="") if line[:1] in "+-" and line[:3] not in ("+++", "---")]
+    changes = [line for line in difflib.unified_diff(old[:old_end], new[:new_end], "old", "new", n=0, lineterm="")
+               if line[:1] in "+-" and line[:3] not in ("+++", "---")]
+    for before, after in zip(old[old_end:], new[new_end:]):
+        if before != after:
+            changes.append("-" + before)
+            changes.append("+" + after)
+    return changes
 
 
 def _command_show(args):
@@ -839,6 +1064,19 @@ def _command_show(args):
     return 0
 
 
+def _command_withdraw(args):
+    try:
+        kept, withdrawn = withdraw_detector(args.data_dir, args.detector, args.reason, args.write)
+    except ValueError as error:
+        print("refusing to withdraw: %s" % error)
+        return 1
+    split = collections.Counter("%s/%s" % (row.source, row.split) for row in withdrawn)
+    print("detector %s: %d rows leave %s (%s); %d stay" % (args.detector, len(withdrawn), ADJUDICATED_TABLE,
+                                                          ", ".join("%s %d" % item for item in sorted(split.items())), len(kept)))
+    print("written" if args.write else "dry run: nothing written (use --write)")
+    return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--data-dir", default=None, help="data folder (default: the repository's data/)")
@@ -853,8 +1091,13 @@ def main(argv=None):
     show.add_argument("--sent-id", default=None)
     show.add_argument("--rule", default=None)
     show.add_argument("--limit", type=int, default=20)
+    withdraw = sub.add_parser("withdraw", help="move the adjudicated rows of one detector to withdrawn-<detector>.tsv (pending state only)")
+    withdraw.add_argument("--detector", required=True, help="candidate rule id whose rows leave adjudicated.tsv")
+    withdraw.add_argument("--reason", required=True, help="one line of text for the '# reason' header line of the withdrawn table")
+    withdraw.add_argument("--write", action="store_true", help="really write the two tables (default: dry run)")
     args = parser.parse_args(argv)
-    return {"validate": _command_validate, "apply": _command_apply, "show": _command_show}[args.command](args)
+    return {"validate": _command_validate, "apply": _command_apply, "show": _command_show,
+            "withdraw": _command_withdraw}[args.command](args)
 
 
 if __name__ == "__main__":

@@ -33,7 +33,8 @@ internal enum TokenMarks
 /// </summary>
 /// <remarks>
 ///     The flags are <c>foreign</c> and <c>mentioned</c>, unique and in that (alphabetical) order, so that a cell has
-///     one spelling. A cell without a plus sign has no flags, which is every cell of the committed files today.
+///     one spelling. A cell without a plus sign has no flags; the committed open, MASC and silver files carry flags where the
+///     corrections overlay wrote them.
 /// </remarks>
 internal static class CorpusStatus
 {

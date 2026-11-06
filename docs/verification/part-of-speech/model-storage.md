@@ -36,7 +36,7 @@ load back with the same content.
   embedded lexicon equals the independent reading of the table (spellings, order and tags), that the committed file and
   the embedded resource are the same bytes, and that a fresh compilation equals the uncompressed image of the committed
   file.
-- **Every spelling round trips**: `ModelStorage_EmbeddedLexicon_EveryTsvSpellingRoundTrips` looks every one of the 262,667
+- **Every spelling round trips**: `ModelStorage_EmbeddedLexicon_EveryTsvSpellingRoundTrips` looks every one of the 262,635
   spellings up and asserts its tags, and probes spellings that are not in the table (near misses and an over-long
   key) for false positives.
 - **Loaded once under parallel first access**: `ModelStorage_EmbeddedLexicon_ParallelFirstAccess_LoadsOnce` releases 16

@@ -154,6 +154,84 @@ class GeneratorFixtureTests(unittest.TestCase):
         self.assertEqual(1, code)
         self.assertIn("FAILED", text)
 
+    def apply_corrections(self):
+        """Write the generated tables, then apply the effective rows to the fixture corpora (the applied state)."""
+        run(["--data-dir", self.data])
+        corrections.apply_to_files(corrections.load_overlay(self.data)["corrections"], self.data, write=True)
+
+    def test_check_passes_in_the_applied_state_by_reversing_a_temporary_copy(self):
+        # Arrange
+        self.apply_corrections()
+        train = os.path.join(self.data, "open", "train.tsv")
+        before = common.read_lines(train)
+        # Act
+        code, text = run(["--data-dir", self.data, "--check"])
+        # Assert
+        self.assertEqual(0, code)
+        self.assertIn("up to date", text)
+        self.assertIn("corrections state: applied", text)
+        self.assertEqual(before, common.read_lines(train))
+        self.assertEqual("applied", corrections.validate_overlay(self.data)[1])
+
+    def test_check_fails_in_the_applied_state_after_a_table_was_edited(self):
+        # Arrange
+        self.apply_corrections()
+        path = os.path.join(corrections.corrections_dir(self.data), "candidates.tsv")
+        common.write_text(path, common.read_lines(path)[:-1])
+        # Act
+        code, text = run(["--data-dir", self.data, "--check"])
+        # Assert
+        self.assertEqual(1, code)
+        self.assertIn("FAILED", text)
+        self.assertIn("candidates.tsv", text)
+
+    def test_the_generator_refuses_to_rewrite_the_tables_in_the_applied_state(self):
+        # Arrange
+        self.apply_corrections()
+        path = os.path.join(corrections.corrections_dir(self.data), "mechanical.tsv")
+        before = common.read_lines(path)
+        # Act
+        code, text = run(["--data-dir", self.data])
+        # Assert
+        self.assertEqual(1, code)
+        self.assertIn("refusing to write", text)
+        self.assertEqual(before, common.read_lines(path))
+
+    def test_the_generator_refuses_a_partly_applied_corpus(self):
+        # Arrange: apply every correction, then put one corrected row of the training corpus back (an interrupted apply)
+        run(["--data-dir", self.data])
+        train = os.path.join(self.data, "open", "train.tsv")
+        before = common.read_lines(train)
+        self.apply_corrections()
+        after = common.read_lines(train)
+        changed = [i for i, (old, new) in enumerate(zip(before, after)) if old != new]
+        self.assertTrue(changed)
+        mixed = list(after)
+        mixed[changed[0]] = before[changed[0]]
+        common.write_text(train, mixed)
+        tables = {name: common.read_lines(os.path.join(corrections.corrections_dir(self.data), name))
+                  for name in ("mechanical.tsv", "candidates.tsv")}
+        # Act
+        code, text = run(["--data-dir", self.data])
+        code_check, text_check = run(["--data-dir", self.data, "--check"])
+        # Assert
+        self.assertEqual((1, 1), (code, code_check), text + text_check)
+        self.assertIn("partly corrected", text)
+        self.assertIn("partly corrected", text_check)
+        for name, lines in tables.items():
+            self.assertEqual(lines, common.read_lines(os.path.join(corrections.corrections_dir(self.data), name)))
+
+    def test_check_still_compares_a_stale_table_in_the_pending_state(self):
+        # Arrange: the tables were generated, then a corpus label changed (the situation a regeneration fixes)
+        run(["--data-dir", self.data])
+        train = os.path.join(self.data, "open", "train.tsv")
+        common.write_text(train, [line.replace("order\tNOUN", "order\tVERB") for line in common.read_lines(train)])
+        # Act
+        code, text = run(["--data-dir", self.data, "--check"])
+        # Assert
+        self.assertEqual(1, code)
+        self.assertIn("differs from the committed file(s)", text)
+
     def test_the_fixture_reaches_the_fixed_point(self):
         # Arrange and Act
         applied, leftover, conflicts = make_corrections.fixed_point(self.data)
@@ -238,15 +316,25 @@ class CommittedDataTests(unittest.TestCase):
     def test_no_token_of_the_committed_corpora_is_proposed_two_different_tags(self):
         self.assertEqual([], self.result.conflicts[:5])
 
-    def test_the_committed_tables_are_the_generator_output_while_the_corrections_are_pending(self):
-        # Arrange
-        _, state, _ = corrections.validate_overlay()
-        if state != "pending":
-            self.skipTest("the corrections are applied; the tables describe the corpora before the application")
-        # Act
-        different = make_corrections.check_files(self.files)
+    def test_the_committed_tables_are_the_generator_output_in_the_pending_and_in_the_applied_state(self):
+        # Arrange and Act: `--check` regenerates from the corpora as they are (pending) or reversed in a temporary copy (applied)
+        code, text = run(["--check"])
         # Assert
-        self.assertEqual([], different)
+        self.assertEqual((0, True), (code, "up to date" in text), text[-400:])
+
+    def test_the_committed_corpora_have_no_fix_tier_violation_in_either_state(self):
+        # Arrange
+        import check_conventions
+        results = []
+        # Act: without and with the in-memory application of the staged corrections (the same in the applied state)
+        for extra in ([], ["--apply"]):
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                results.append((check_conventions.main(["--tier", "fix", "--enforce"] + extra), buffer.getvalue()))
+        # Assert
+        self.assertEqual(0, results[1][0], results[1][1][-300:])
+        if corrections.validate_overlay()[1] == "applied":
+            self.assertEqual(0, results[0][0], results[0][1][-300:])
 
     def test_applying_the_rows_in_memory_leaves_nothing_for_the_rules_to_fix(self):
         # Arrange

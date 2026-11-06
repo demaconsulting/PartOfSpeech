@@ -29,7 +29,7 @@ attribution and the statement of changes are in [ATTRIBUTION.md](ATTRIBUTION.md)
 
 | File | Content |
 | --- | --- |
-| `masc.tsv` | 22,829 sentences, 386,445 tokens, 370 documents of 15 written genres, in the shared corpus format; column 4 is the Penn tag; a `# genre = ...` comment per sentence |
+| `masc.tsv` | 22,829 sentences, 386,445 tokens, 370 documents of 15 written genres, in the shared corpus format; column 4 is the Penn tag; a `# genre = ...` comment per sentence; status `ptb` (385,729 tokens) or `disputed` (716 tokens, marked by the staged corrections), and flags (470 `foreign`, 186 `mentioned`) |
 | `excluded-documents.tsv` | the 5 documents left out because a sentence of the document (25 or more key characters) is also in an evaluation set (ids only) |
 | `dropped-sentences.tsv` | the 104 short sentences (key shorter than 25 characters) left out because the sentence equals an evaluation sentence (ids only) |
 | `sources.tsv` | one row per document that contributes at least one sentence to `masc.tsv` (370 rows): document id, genre, license class (`CC BY 3.0 US`), sentence and token counts |

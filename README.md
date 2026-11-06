@@ -50,7 +50,7 @@ foreach (TaggedSentence sentence in Tagger.Default.Tag("The cat sat on the mat. 
 
 `Tagger.Default` is a shared, thread-safe tagger that uses the model and the lexicon that are embedded in the package,
 so it needs no file and no download. The first read inflates and validates the embedded files once (the weights are
-492,971 bytes compressed and 1,111,898 bytes uncompressed, the lexicon 641,418 bytes compressed). To use other weights,
+478,835 bytes compressed and 1,080,650 bytes uncompressed, the lexicon 639,711 bytes compressed). To use other weights,
 create a tagger with `Tagger.Load(stream)`. The [user guide][link-user-guide] explains confidences and alternatives,
 constraints, glossaries and the tokenization conventions.
 
@@ -77,11 +77,13 @@ list; use soft mode for a list that may be wrong. The measured cost is in sectio
 
 ## Accuracy and Confidence
 
-The model was selected on development data only, its confidence thresholds too, and it was then evaluated once on
-held-out data. The tagger is accurate on ordinary running text. Its most costly mistake is a harmful error: a noun
-tagged as a verb, or a verb tagged as a noun. It makes some on every test set and noticeably more on short, technical
-and imperative sentences built to be hard, a limitation that is reported and was not tuned away. The labels of the test
-sets were written by language models, and the results come from one run.
+The model was selected on development data only, its confidence thresholds too, and it was then evaluated on held-out
+data twice over the model family (after the corpora had been corrected and the model retrained, and again for the
+follow-up model that is embedded now, a disclosed second look; the [trainer run log][link-run-log] has the decisions and
+the gates). The tagger is accurate on ordinary running text. Its most costly mistake is a harmful error: a
+noun tagged as a verb, or a verb tagged as a noun. It makes some on every test set and noticeably more on short,
+technical and imperative sentences built to be hard, a limitation that is reported and was not tuned away. The labels of
+the test sets were written by language models, and the results come from one run.
 
 See the evaluation report for accuracy, harmful-error rates and recommended thresholds: the [test results][link-test-results]
 have every held-out set and the [confidence thresholds][link-thresholds] have the coverage and harmful-rate tables. The
@@ -89,9 +91,19 @@ have every held-out set and the [confidence thresholds][link-thresholds] have th
 
 **Consumers that need a low harmful rate must use a confidence threshold.** Treat a token below the threshold as
 unknown. A rule checker should use the `strict` threshold; `balanced` suits consumers that can tolerate more errors or
-show the result to a person. The thresholds apply to the embedded model, and a token with a single allowed tag has
-confidence 1.0 without being a decision. The [user guide][link-user-guide] and the packed API reference have the
-details.
+show the result to a person. The thresholds were chosen on development data and measured on the held-out open test
+split:
+
+- `strict` (0.95) answers 81.8% of the noun-verb decisions on the development data with 3.1 harmful errors in 1,000
+  answered, and 83.8% with 3.5 in 1,000 on the open test split.
+- `balanced` (0.80) answers 92.4% with 9.0 in 1,000 on the development data, and 93.3% with 7.3 in 1,000 on the open
+  test split.
+
+The `strict` target (at most 5 harmful errors in 1,000 answered) was met on the development data and on the open test
+split by the point estimate (its 95% interval, 1.6 to 6.0, reaches above 5), and it is **exceeded on the held-out gold v2
+test split** (6.5 in 1,000 answered, five errors, 95% interval 1.4 to 13.3). A token with a single allowed tag has
+confidence 1.0 without being a decision. The [user guide][link-user-guide] and
+the packed API reference have the details.
 
 ## Documentation
 

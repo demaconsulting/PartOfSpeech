@@ -18,12 +18,12 @@ public class ModelTrainerTests
     /// <summary>
     ///     The pinned SHA-256 of the uncompressed image of the small unrestricted run (cross-platform golden).
     /// </summary>
-    private const string GoldenUnrestricted = "ef72b1b04b54b3bc50d9ee56a56361d58ebebeccb456cad90af5037eaf335ef3";
+    private const string GoldenUnrestricted = "faa097a1197b9527a42de10f4292db35e39b6eca088c5147449d261577b78f52";
 
     /// <summary>
     ///     The pinned SHA-256 of the uncompressed image of the small fully restricted run (cross-platform golden).
     /// </summary>
-    private const string GoldenRestricted = "a7f8f36462151c7052b9d37db5d6c2b0bedeeeaa52861f867562bb6c479a4616";
+    private const string GoldenRestricted = "387e1eee31545ffc442a112a8b2684b1f21c81f4e5fc004da731adb97ca253b1";
 
     /// <summary>
     ///     Creates the configuration of the small runs: three epochs over the sentences of one source at 18 bits.

@@ -5,30 +5,51 @@ confidence thresholds the library recommends. It is plain Markdown and JSON, rea
 generated documents. The figures live in the two generated reports; this page explains them, says how to reproduce
 them and states what they do not show.
 
+> **Status of this record.** The record below (selection, held-out results and the hashes of the inputs) describes the
+> embedded model. That model is the **NO-ING follow-up model**: it was trained on the corpora after their labels were
+> corrected, **minus the 878 adjudicated `prenominal-ing` corrections**, which a pre-registered follow-up withdrew
+> (see the trainer run log, section "Corpus cleanup C"). The follow-up compared the model with and without those rows on
+> development data only and selected the one without them by a rule that was fixed before any training; its softmax
+> temperature was refit on development data, its two thresholds were selected on development data only, and it was then
+> evaluated on held-out data. **That is the second evaluation of the model family on these held-out sets** (the model
+> before the follow-up was evaluated once first and has its own record in the git history): a disclosed second look,
+> and a third look is not planned. **What can be compared with the earlier records:** the labels of the open test split
+> twice (with the corrections, and for the 17 withdrawn test rows), so its figures are not strictly comparable; the labels
+> of UD English-EWT, gold v2, the shape probe and the challenge set never changed (the correction tooling does not cover
+> them), so those four are the fair comparisons. The first pre-registered development gate on harmful errors failed on its
+> single seed, and the owner accepted the model of that cleanup after a development-only diagnosis. The harmful rates of
+> the embedded model on gold v2, the shape probe and UD English-EWT are lower than those of that first cleanup model and
+> still higher than those of the model before the cleanup, except on the shape probe, where they are equal; the evidence
+> for the selection is thin (see _Earlier Models_ below). The trainer run log has the complete side-by-side tables, the
+> gates and the decisions.
+
 | File | What it is |
 | --- | --- |
-| [confidence-thresholds.md](confidence-thresholds.md) | Selection of the two recommended thresholds on development data: curves, reliability table, the rule, the bootstrap intervals. |
+| [confidence-thresholds.md](confidence-thresholds.md) | Selection of the two recommended thresholds on development data only: curves, reliability table, the rule, the bootstrap intervals. It reads no held-out file, so it cannot show the held-out outcome: the strict point meets its target of 5.0 on the open test split (3.5) and exceeds it on gold v2 test (6.5; see _Reading the Results_ below and [test-results.md](test-results.md)). |
 | [operating-points.json](operating-points.json) | The selection as data. The `evaluate` command refuses to read a held-out file without it. |
-| [test-results.md](test-results.md) | The one held-out run of the frozen model, every set and view, and the hashes of the inputs. |
+| [test-results.md](test-results.md) | The one held-out run of the embedded model, every set and view, and the hashes of the inputs. |
 | [test-results.json](test-results.json) | The same results as data; it is also the marker that the run was done. |
+| [disclosure.md](disclosure.md) | The one paragraph that both generated reports carry after their introduction (here: the disclosed second look). The `thresholds` and `evaluate` commands read it; a missing or blank file means no notice. It describes the embedded model and this evaluation only, so it must be revised or removed before an evaluation of a different model is rendered. |
 
 ## How the Evaluation Was Done
 
 1. **The model was frozen first.** Every setting of the model was chosen on the two development sets (the open corpus
-   development split and the development split of gold v2). The weights, the configuration and the temperature did not
-   change afterwards. The run log of the trainer,
-   [RUN-LOG.md](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md), has the experiments.
+   development split and the development split of gold v2). After the labels of the corpora were corrected, the model
+   was trained again with those settings unchanged and only the softmax temperature was refit on development data; a
+   pre-registered follow-up then removed the `prenominal-ing` corrections from the training data on the strength of
+   development data alone, and the model was trained once more with the same settings (same seed, temperature refit). The
+   weights, the configuration and the temperature did not change afterwards. The run log of the trainer,
+   [RUN-LOG.md](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md), has the experiments, the gates of the
+   retraining, the follow-up and the decisions.
 2. **The protocol was written before any number existed.** The section "Phase 5 protocol" of the run log fixes the
    definitions, the grid of thresholds, the rule that selects them, the sets and the stop conditions. It was committed
-   before the first curve was computed.
+   before the first curve was computed, and it applied unchanged to both retrained models.
 3. **The thresholds were selected on development data only** and committed with the selection artifact
-   ([operating-points.json](operating-points.json)).
-4. **The held-out sets were evaluated once.** The `evaluate` command is the only code that opens a held-out file, only
-   with a valid selection for the frozen model, and it refuses to run when `test-results.json` exists. The results were
-   committed as produced. Two later changes to the report writer, each followed by a re-run with the same frozen model
-   and inputs, changed the text and the JSON but no figure (errata recorded in the run log): the labels of one table, and
-   the addition of the per-tag precision and recall, their intervals and the interval of the remaining measures for every
-   set and view.
+   ([operating-points.json](operating-points.json)) before the held-out run.
+4. **The held-out sets were evaluated once for this model.** The `evaluate` command is the only code that opens a
+   held-out file, only with a valid selection for the frozen model, and it refuses to run when `test-results.json`
+   exists. The results were committed as produced, from one run, with no later change of the report. The same sets had
+   been evaluated once before for the first retrained model, so this run is the second look of the model family.
 
 The evaluation sets are described in [data/eval](../../data/eval/README.md). In short:
 
@@ -70,13 +91,15 @@ What the held-out run shows, in plain terms (the tables are in [test-results.md]
 - **The accuracy generalizes.** The accuracy on the open test split is the accuracy on its development split within
   the bootstrap interval, and the model is well calibrated on it. Gold v2, which has other kinds of documents, is a
   little lower.
-- **Without a threshold the harmful rate is not low.** On the open test split 20.6 noun-verb decisions in 1,000 are
-  harmful errors, on gold v2 24.6 in 1,000, and on the shape probe 86.3 in 1,000.
+- **Without a threshold the harmful rate is not low.** On the open test split 18.7 noun-verb decisions in 1,000 are
+  harmful errors, on gold v2 29.9 in 1,000, and on the shape probe 86.3 in 1,000.
 - **A threshold fixes most of that at a price in coverage.** The strict threshold 0.95 cuts the open test split to
-  4.1 harmful errors in 1,000 answered decisions and answers 82% of the decisions. The balanced threshold 0.80 gives
-  9.3 in 1,000 and answers 92%. On gold v2 the figures are 3.9 (81% coverage) and 10.4 (93% coverage). They were chosen
-  on development data and then measured on test; the test figures are the ones to quote. The development figures are
-  slightly optimistic by the selection.
+  3.5 harmful errors in 1,000 answered decisions and answers 84% of the decisions. The balanced threshold 0.80 gives
+  7.3 in 1,000 and answers 93%. On gold v2 the figures are 6.5 (82% coverage) and 9.3 (92% coverage). They were chosen
+  on development data and then measured on test; the test figures are the ones to quote. The strict target of at most
+  5.0 in 1,000 answered was met on development data (3.1) and by the point estimate on the open test split (3.5; the
+  95% interval [1.6, 6.0] reaches above 5.0), and it is **exceeded on gold v2 test (6.5, five harmful errors in 769
+  answered decisions; interval [1.4, 13.3])**, so quote the gold v2 figure next to the open test one.
 - **Consumers who need a low harmful rate must use a threshold.** A rule checker, a style checker or any consumer that
   acts on a noun or verb reading by itself should use the strict threshold and treat every token below it as unknown.
   A consumer that can tolerate more errors, or that shows the tag to a person, can use the balanced threshold. The
@@ -92,11 +115,11 @@ What the held-out run shows, in plain terms (the tables are in [test-results.md]
 These are findings of the run. They are reported and the model was not changed in response.
 
 1. **The shape probe shows a real weakness.** Three stop conditions of the protocol fired. The one that concerns the
-   behavior of the model is the shape probe: 48 of its 548 answered noun-verb decisions are harmful at 0.45, and the
+   behavior of the model is the shape probe: 48 of its 545 answered noun-verb decisions are harmful at 0.45, and the
    protocol allowed at most 28 (5% of the 560 rows). The errors are concentrated in four shapes: the head of a noun
    compound, a noun that starts a sentence, the verb that starts an instruction, and a noun in a measurement. The
-   strict threshold reduces the figure to 3 harmful errors of 331 answered decisions but then answers only 60% of the
-   decisions; the balanced threshold still leaves 19 of 448. The probe is built to be hard, so its rates are not a
+   strict threshold reduces the figure to 4 harmful errors of 337 answered decisions but then answers only 61% of the
+   decisions; the balanced threshold still leaves 16 of 431. The probe is built to be hard, so its rates are not a
    forecast for ordinary text, but short technical and imperative text is a use that the library targets: use the strict
    threshold there, or give the tagger a glossary or constraints for the words that matter. It is a limitation of the
    model, and the thresholds and the model were not tuned on it.
@@ -123,8 +146,39 @@ These are findings of the run. They are reported and the model was not changed i
 7. **Tokens that a glossary constrains** are not measured here. A hard glossary entry gives confidence 1.0 whether or not
    the entry is right.
 
-The same model was also compared with earlier WordSense taggers outside this repository; that comparison is not part of
-this record and no figure of it is published here.
+The earlier model was also compared with earlier WordSense taggers outside this repository; that comparison is not part
+of this record, was not repeated for the embedded model and no figure of it is published here.
+
+## Earlier Models
+
+The embedded model is the third model with a held-out record: a model trained before the labels of the training corpora
+were corrected (the earlier model), the first model after the corrections (the first cleanup model, which kept the
+`prenominal-ing` corrections), and the embedded one (the same data without them). The first two have their records in
+the git history, and the trainer run log has every figure side by side, section "Corpus cleanup C". The open test split
+is not a fair comparison across the three, because its labels changed twice (the corrections, and then 17 withdrawn
+test rows); the other four held-out sets have the same labels in all records. Key figures (accuracy in percent and
+harmful errors in 1,000 decisions at the reference point 0.45; "first" is the first cleanup model; the thresholds were
+0.95 and 0.80 for the earlier and the embedded model and 0.90 and 0.85 for the first cleanup model):
+
+| Set | Accuracy earlier | Accuracy first | Accuracy embedded | Harmful earlier | Harmful first | Harmful embedded |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Open test split (labels changed, not comparable) | 96.10 | 96.46 | 96.53 | 20.6 | 20.6 | 18.7 |
+| Gold v2 test split | 94.57 | 94.34 | 94.37 | 24.6 | 31.0 | 29.9 |
+| Shape probe | 89.11 | 87.50 | 89.64 | 86.3 | 93.5 | 86.3 |
+| Challenge set | 87.13 | 87.50 | 88.60 | 0.0 | 0.0 | 0.0 |
+| UD English-EWT, mapped | 92.30 | 92.97 | 92.85 | 16.5 | 18.8 | 17.9 |
+
+Against the earlier model the embedded model agrees better with the human labels of the treebank and is better
+calibrated on it, and it has more harmful noun-verb errors on gold v2 (+5.3 in 1,000) and on the treebank (+1.4), and the
+same on the shape probe; its gold v2 calibration error and log-loss are worse. Against the first cleanup model it has fewer
+harmful errors on all three of those sets, a little lower agreement with the treebank (-0.12 points) and a higher
+calibration error on gold v2 and on the shape probe. The intervals of the records overlap on every set (the sets are small,
+and the differences are a few errors per set), so no one set proves a difference, and nothing here is evidence that the
+withdrawn corrections were wrong. The development evidence for the selection is thin (five seeds, a Welch interval that
+barely excludes 0 and a bootstrap interval that contains it), and the model tags fewer of the verbal `-ing` words of the
+development set as verbs than the first cleanup model did (a cost the selection rule did not weigh); the held-out sets do
+not measure that. The recommended thresholds are those of the earlier model again (strict 0.95, balanced 0.80); the
+first cleanup model had 0.90 and 0.85.
 
 ## Mapping to the Library Conventions
 
@@ -199,4 +253,5 @@ deterministic; the new files equal the committed ones except for the throughput 
 Tests keep the copies of the figures honest. They check that the results name the embedded model and the committed
 selection, that the input hashes equal the data manifest, that the thresholds and figures in the package documentation
 and the user guide equal these files, and that no treebank sentence or sentence id is in this folder. The root README
-links to the results and states no figure.
+repeats the two thresholds with their development and open test figures; no test compares those copies, so check them
+when the record is reissued.

@@ -170,8 +170,14 @@ before any curve existed.
   t, and
   a harmful error is an answered decision with the other one of the two tags. The curve gives, for every threshold of the
   grid, the answered decisions, the coverage, the harmful errors, the harmful errors per 1,000 answered and per 1,000
-  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 94, 9 and 103 harmful
-  errors on open dev, gold v2 dev and pooled). The reliability table groups the decisions by confidence.
+  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 90, 11 and 101 harmful
+  errors on open dev, gold v2 dev and pooled for the model adopted after the pre-registered `prenominal-ing`
+  follow-up; the first retrained model of the corpus cleanup C had 103, 14 and 117, and the first freeze 94, 9 and
+  103). The constants of
+  the command are the development figures of the embedded model (`RUN-LOG.md`, "Corpus cleanup C"); they were set to
+  those of the adopted model once, to the figures that `thresholds` itself reported (it refused to write with the old
+  constants), before its run that wrote the artifact. The reliability table
+  groups the decisions by confidence.
 - **Rule `nv-pooled-dev-v1`.** On the pooled development decisions the first grid threshold with at most 5.0 harmful
   errors per 1,000 answered and a coverage of at least 60% is the `strict` point, the first with at most 10.0 and at
   least 85%
@@ -214,11 +220,26 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   is a data error (exit code 2) before any line is parsed.
 - **Run once.** `evaluate` refuses to start when `docs/evaluation/test-results.json` or its lock file
   `docs/evaluation/test-results.json.running` exists. There is no `--force`: a repeat needs that committed file to be
-  deleted, which is visible in the history and must be recorded in the run log. Immediately before the first held-out
+  deleted, which is visible in the history and must be recorded in the run log. That was done once, for the second
+  evaluation of the model family (the model adopted after the `prenominal-ing` follow-up, a disclosed second look): the
+  record of the first retrained model was deleted on purpose before the run and stays in the history. Immediately before
+  the first held-out
   token is scored, `evaluate` creates the lock file with `FileMode.CreateNew` (`DataGuard.AcquireRunLock`), so of two
   concurrent runs exactly one proceeds. The results file is written last, exclusively, and only then is the lock file
   removed. A run that is aborted after scoring began leaves the lock file behind on purpose; a stale lock blocks every
   later run until it is deleted by hand, and the deletion and its reason must be recorded in the run log.
+- **Disclosure notice.** Both generated Markdown reports (`confidence-thresholds.md` and `test-results.md`) carry, directly
+  after their introduction, the one-paragraph disclosure that `EvaluationReport.ReadDisclosure` reads from the committed
+  file `docs/evaluation/disclosure.md` (the line breaks of the file collapse to single spaces; a missing or blank file
+  means no notice, and `RenderDev` and `RenderResults` take the text as an optional `disclosure` argument, so the renderer
+  itself holds no claim about any model). For the embedded model the text says that the record belongs to the second
+  held-out evaluation of the model family, a disclosed second look, with a link to the run log and the evaluation
+  overview. The text describes one model and one evaluation: it must be revised or removed (the file deleted or
+  emptied) before a later evaluation of a different model is rendered, so that no record inherits a stale claim. The notice
+  is in the Markdown only; the JSON artifacts, and so the pinned selection hash, do not carry it. The held-out report
+  needs the judged tokens, so it cannot be re-rendered without reading held-out files; the committed `test-results.md`
+  therefore holds the notice at the position of the generator (a unit test pins it against the committed file), and
+  `confidence-thresholds.md` is re-rendered from the development sets by `thresholds`.
 - **Pre-flight.** `evaluate --preflight` performs the gate and the verification, parses every input and prints only
   counts (sentences, tokens, documents, rows) next to the documented ones; it prints no tag, prediction or metric and
   writes nothing. If a count differs, both modes stop with exit code 2 (a stop condition of the protocol).
@@ -250,10 +271,11 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
 - **Reports.** `docs/evaluation/test-results.md` and `.json` are generated, deterministic and committed as produced; the
   treebank appears only as aggregate figures and tag-level confusion. `docs/evaluation/README.md` is written by hand: it
   explains how to read the two reports, the mapping of the evaluation sets to the library conventions, the limits of the
-  measurement and the commands that reproduce it, and states no figure that is not in a generated file (a test
-  compares the few it states). The figures that the package documentation and the user guide
-  quote are verified against the committed JSON by the system tests, not by this unit. The root `README.md` states no
-  figure and links to the reports.
+  measurement and the commands that reproduce it, and states no figure that is not in a generated file or in its
+  "Earlier Model" table (a test compares the few it states; the earlier-model figures are copied from the trainer
+  `RUN-LOG.md`, which is their record). The figures that the package documentation and the user guide
+  quote are verified against the committed JSON by the system tests, not by this unit. The root `README.md` repeats the
+  current threshold figures of the generated reports and links to them; no test compares that copy.
 
 ### Selection of the Shipped Model
 
@@ -268,13 +290,13 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | Hash bits | 19 | 18 was borderline, 19 is tied with 22 |
 | Pruning | minimum count 1, magnitude threshold 8 units | largest tied threshold; the next is not tied |
 | Quantization | `quantScale` 8 (scale 1/8) | tied with the unpruned scale 16; scale 4 is not tied |
-| Temperature | 6.727 | minimum log-likelihood on open development data |
+| Temperature | 6.442 | minimum log-likelihood on open development data |
 
-The result is a file of 119,632 rows and 290,862 weights, 1,111,898 bytes uncompressed and 492,971 bytes compressed;
-training takes about 7 to 14 seconds on one thread (6,285,552 steps), and the check about 15 seconds. Development
-results through the real decoder: open development 96.07% accuracy (95.28% on lexicon-ambiguous tokens), gold
-development 95.34% (without the `to` and `not` targets, which follow another convention and are reported
-separately), harmful errors 20.2 per 1,000 noun-verb decisions pooled, calibration error 0.35% (open) and 2.37% (gold).
+The result is a file of 116,662 rows and 282,426 weights, 1,080,650 bytes uncompressed and 478,835 bytes compressed;
+training takes about 5 to 14 seconds on one thread (6,285,552 steps), and the check about 15 seconds. Development
+results through the real decoder: open development 96.38% accuracy (95.68% on lexicon-ambiguous tokens), gold
+development 95.24% (without the `to` and `not` targets, which follow another convention and are reported
+separately), harmful errors 20.0 per 1,000 noun-verb decisions pooled, calibration error 0.26% (open) and 1.99% (gold).
 These are development figures; they say nothing about held-out data.
 
 ### Glossary Decision

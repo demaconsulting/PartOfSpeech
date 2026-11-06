@@ -396,11 +396,11 @@ sections:
 
       - id: PartOfSpeech-Data-CorrectionsWellFormed
         title: >-
-          Every staged corpus correction shall be a well-formed row of the documented tables, with a valid address,
+          Every corpus correction shall be a well-formed row of the documented tables, with a valid address,
           tags, statuses and provenance, in key order and without a second row for a token in the same table.
         tags: [system]
         justification: |
-          The staged corrections are the evidence for every label that a later change applies to the corpora. A row with
+          The corrections are the evidence for every label that was changed in the corpora. A row with
           an illegal address, a tag outside the 17, a status cell that the corpus readers refuse, no change, or no
           provenance, or two rows for one token in a table, could not be applied or reviewed safely. A candidate row
           with a malformed span, current tag or status, or an empty hint, would mislead the adjudication the same way,
@@ -414,7 +414,7 @@ sections:
 
       - id: PartOfSpeech-Data-CorrectionsMatchCorpora
         title: >-
-          Every staged correction and every recorded exception shall address an existing token of a committed corpus,
+          Every correction and every recorded exception shall address an existing token of a committed corpus,
           and the corrections in effect shall match the corpora either all before or all after their application.
         tags: [system]
         justification: |
@@ -424,6 +424,20 @@ sections:
           mixture shows a partial application.
         tests:
           - PartOfSpeech_DataCorrections_Rows_MatchCommittedCorpora
+
+      - id: PartOfSpeech-Data-CorrectionsApplied
+        title: >-
+          Every correction in effect shall be applied to the committed corpora: the token of each row shall carry the
+          new tag and the new status.
+        tags: [system]
+        justification: |
+          The labels that the lexicon, the weights and the evaluations are built from are the labels of the committed
+          corpora, so a correction that was decided but is still pending would not reach them, and a partial application
+          would give a corpus that matches neither the tables nor the importers. Requiring every row in effect to be
+          applied keeps the corpora, the correction tables that record the decisions, and everything derived from the
+          labels consistent.
+        tests:
+          - PartOfSpeech_DataCorrections_Rows_AreApplied
 
       - id: PartOfSpeech-Data-AdjudicatedCorrectionsAreRecorded
         title: >-
@@ -561,6 +575,33 @@ sections:
           - test_malformed_metadata_headers_of_the_adjudicated_table_are_findings
           - test_validate_reports_a_table_file_whose_metadata_lines_were_removed
           - test_findings_for_the_adjudicated_table
+
+      - id: PartOfSpeech-Adjudication-WithdrawnRowsStayAsProvenance
+        title: >-
+          The adjudicated rows of one detector shall be withdrawable from `adjudicated.tsv` into a
+          `withdrawn-<detector>.tsv` table byte for byte, only while the corpora are in the pending state, and a
+          withdrawn table shall be valid only when its header (including the input provenance lines, validated as those
+          of `adjudicated.tsv`), its rows and the old value of every token in the corpora (in both states) are sound.
+        tags: [system]
+        justification: |
+          A later decision may take decided rows out of the corrections (the pre-registered follow-up withdrew the rows
+          of one detector). Deleting them would lose the record of what the taggers decided; keeping them in the table
+          would apply them. A separate table that is never applied, written only from the pending state (so that the
+          corpora and the table cannot disagree), and checked against the old corpus value (so that a withdrawn token is
+          never half applied) keeps the provenance and the corpora consistent.
+        tests:
+          - test_a_dry_run_reports_the_counts_and_writes_nothing
+          - test_write_moves_the_rows_byte_for_byte_and_the_overlay_stays_valid
+          - test_the_withdrawn_tokens_keep_the_old_value_when_the_remaining_rows_are_applied
+          - test_withdraw_refuses_in_the_applied_state_and_when_the_table_exists
+          - test_withdraw_refuses_a_bad_detector_a_blank_reason_and_a_detector_without_rows
+          - test_withdraw_refuses_rows_that_replace_a_mechanical_row
+          - test_a_row_of_a_detector_with_a_span_belongs_to_every_token_of_the_span
+          - test_validate_reports_the_defects_of_a_withdrawn_table
+          - test_validate_reports_the_defects_of_the_input_provenance_of_a_withdrawn_table
+          - test_the_input_provenance_of_a_withdrawn_table_is_accepted_when_it_is_complete
+          - test_a_stale_input_hash_of_a_withdrawn_table_is_not_a_finding_once_the_corrections_are_applied
+          - test_validate_reports_a_withdrawn_token_that_is_also_in_a_current_table
 
       - id: PartOfSpeech-Data-CandidatesAddressTokens
         title: Every correction candidate shall address an existing token of a committed corpus.
@@ -777,6 +818,7 @@ sections:
           - PartOfSpeech-ModelTrainer-HeldOutMetrics-StopConditions
           - PartOfSpeech-ModelTrainer-HeldOutMetrics-Throughput
           - PartOfSpeech-ModelTrainer-EvaluationReport-Deterministic
+          - PartOfSpeech-ModelTrainer-EvaluationReport-SecondLookNotice
           - PartOfSpeech-ModelTrainer-EvaluationReport-JsonComplete
           - PartOfSpeech-ModelTrainer-EvaluationReport-NoTreebankText
           - PartOfSpeech-ModelTrainer-EvaluationReport-PerTokenDump

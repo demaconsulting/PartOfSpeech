@@ -68,7 +68,7 @@ public class ModelStorageTests
     }
 
     /// <summary>
-    ///     Proves that a lookup finds every one of the 262,667 spellings of the table with its tags and that a spelling that is
+    ///     Proves that a lookup finds every one of the 262,635 spellings of the table with its tags and that a spelling that is
     ///     not in the table is not found.
     /// </summary>
     [Fact]
