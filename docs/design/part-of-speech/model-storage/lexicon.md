@@ -46,7 +46,9 @@ used as a length or an index (`sharedPrefixBytes`, `suffixLength`, `maskIndex` a
 negative number.
 
 For the committed lexicon the file is 639,711 bytes (262,635 spellings, 339,819 entries, 225 masks, 16 spellings per
-block, Deflate). The change from version 1 to version 2 (the checksum covers the stored bytes) did not change the
+block, Deflate). Its inflated payload is 1,626,229 bytes (the `payloadLength` field); the uncompressed file image, the
+40-byte header plus that payload, is 1,626,269 bytes, which is the "uncompressed" size quoted elsewhere. The change from
+version 1 to version 2 (the checksum covers the stored bytes) did not change the
 size: only the version and checksum fields differ.
 
 Version 2 replaced version 1 because a version 1 file could pass its checksum (computed over the inflated payload) with
@@ -56,7 +58,7 @@ the last byte of its Deflate data removed and the stored length adjusted; see th
 #### Key Methods
 
 - **`Load(Stream)` and `Load(byte[])`**: `BinaryFormat.ReadHeader` and `ReadPayload` (with the maximum payload length
-  `MaxPayloadLength`, 16 MiB, which is far above the 1,626,229 bytes of the committed lexicon; the stored-bytes
+  `MaxPayloadLength`, 16 MiB, which is far above the 1,626,229 payload bytes of the committed lexicon; the stored-bytes
   checksum and the strict Deflate validation are described in the `BinaryFormat` design), then the header fields
   (tag count
   17, block shift 1 to 8, block count equal to the ceiling formula, reserved field zero), the palette and block index,
