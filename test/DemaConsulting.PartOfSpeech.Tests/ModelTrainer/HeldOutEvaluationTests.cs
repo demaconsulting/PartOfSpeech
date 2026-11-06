@@ -945,6 +945,7 @@ public class HeldOutEvaluationTests
         var report = EvaluationReport.RenderDev(first);
         Assert.Contains(OperatingPointRule.Id, report, StringComparison.Ordinal);
         Assert.Contains("## Selected operating points", report, StringComparison.Ordinal);
+        Assert.Contains(EvaluationReport.SecondLookNotice + "\n\n## Model and data\n", report, StringComparison.Ordinal);
         Assert.DoesNotContain("\r", report, StringComparison.Ordinal);
         Assert.DoesNotContain("\n\n\n", report, StringComparison.Ordinal);
         Assert.EndsWith("|\n", report, StringComparison.Ordinal);
@@ -1259,6 +1260,7 @@ public class HeldOutEvaluationTests
         Assert.EndsWith("|\n", report, StringComparison.Ordinal);
         Assert.DoesNotContain("\r", report, StringComparison.Ordinal);
         Assert.Contains("## Operating points on the held-out sets", report, StringComparison.Ordinal);
+        Assert.Contains(EvaluationReport.SecondLookNotice + "\n\n## Run\n", report, StringComparison.Ordinal);
         Assert.Contains("12,345 tokens per second", report, StringComparison.Ordinal);
         Assert.Contains(HeldOutEvaluator.Names.UdMapped, report, StringComparison.Ordinal);
 
@@ -1591,6 +1593,23 @@ public class HeldOutEvaluationTests
 
         // Assert
         Assert.Equal(DataGuard.UdMappedSha256, recorded);
+    }
+
+    /// <summary>
+    ///     Validates that the committed evaluation reports carry the second-look notice at the position where the generator puts it,
+    ///     so that a regeneration is byte-consistent with the committed text and each record discloses the context on its own.
+    /// </summary>
+    [Theory]
+    [InlineData("docs/evaluation/test-results.md", "## Run\n")]
+    [InlineData("docs/evaluation/confidence-thresholds.md", "## Model and data\n")]
+    public void DataGuard_CommittedReports_CarrySecondLookNoticeWhereGeneratorPutsIt(string path, string nextHeading)
+    {
+        // Arrange
+        var report = File.ReadAllText(DataFiles.Repository(path)).Replace("\r\n", "\n");
+
+        // Act and Assert
+        Assert.Contains("\n\n" + EvaluationReport.SecondLookNotice + "\n\n" + nextHeading, report, StringComparison.Ordinal);
+        Assert.Equal(2, report.Split(EvaluationReport.SecondLookNotice).Length);
     }
 
     /// <summary>

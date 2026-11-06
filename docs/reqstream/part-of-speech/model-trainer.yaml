@@ -366,6 +366,21 @@ sections:
               - DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent
               - OperatingPointsFile_FormatResults_RoundTrip
 
+          - id: PartOfSpeech-ModelTrainer-EvaluationReport-SecondLookNotice
+            title: >-
+              Each standalone evaluation record (the Markdown report of the development selection and the Markdown
+              report of the held-out run) shall state that it belongs to the second held-out evaluation of the model
+              family (a disclosed second look) and point to the run log, the text being generated and not typed.
+            justification: |
+              A record is read on its own. A held-out result that does not say that the held-out sets were already
+              seen once for the sibling model would read as a first look at unseen data. The notice is part of the
+              generated Markdown only, so the JSON artifacts and their pinned hashes do not change, and the committed
+              reports carry the text at the position where a regeneration puts it.
+            tests:
+              - HeldOutEvaluator_Score_FixtureSets_ViewsAndReports
+              - DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent
+              - DataGuard_CommittedReports_CarrySecondLookNoticeWhereGeneratorPutsIt
+
           - id: PartOfSpeech-ModelTrainer-EvaluationReport-JsonComplete
             title: >-
               The JSON results shall hold every figure of the Markdown report for every set and view, including the

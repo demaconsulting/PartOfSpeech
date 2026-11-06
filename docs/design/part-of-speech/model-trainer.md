@@ -228,6 +228,13 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   concurrent runs exactly one proceeds. The results file is written last, exclusively, and only then is the lock file
   removed. A run that is aborted after scoring began leaves the lock file behind on purpose; a stale lock blocks every
   later run until it is deleted by hand, and the deletion and its reason must be recorded in the run log.
+- **Second-look notice.** Both generated Markdown reports (`confidence-thresholds.md` and `test-results.md`) carry the fixed
+  notice `EvaluationReport.SecondLookNotice` directly after their introduction: the record belongs to the second held-out
+  evaluation of the model family, a disclosed second look, with a link to the run log and the evaluation overview. The notice
+  is in the Markdown only; the JSON artifacts, and so the pinned selection hash, do not carry it. The held-out report
+  needs the judged tokens, so it cannot be re-rendered without reading held-out files; the committed `test-results.md` therefore
+  holds the notice at the position of the generator (a unit test pins it), and `confidence-thresholds.md` is re-rendered
+  from the development sets by `thresholds`.
 - **Pre-flight.** `evaluate --preflight` performs the gate and the verification, parses every input and prints only
   counts (sentences, tokens, documents, rows) next to the documented ones; it prints no tag, prediction or metric and
   writes nothing. If a count differs, both modes stop with exit code 2 (a stop condition of the protocol).

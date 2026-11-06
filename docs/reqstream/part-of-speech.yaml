@@ -580,8 +580,8 @@ sections:
         title: >-
           The adjudicated rows of one detector shall be withdrawable from `adjudicated.tsv` into a
           `withdrawn-<detector>.tsv` table byte for byte, only while the corpora are in the pending state, and a
-          withdrawn table shall be valid only when its header (including the input provenance lines, validated as those of
-          `adjudicated.tsv`), its rows and the old value of every token in the corpora (in both states) are sound.
+          withdrawn table shall be valid only when its header (including the input provenance lines, validated as those
+          of `adjudicated.tsv`), its rows and the old value of every token in the corpora (in both states) are sound.
         tags: [system]
         justification: |
           A later decision may take decided rows out of the corrections (the pre-registered follow-up withdrew the rows
@@ -818,6 +818,7 @@ sections:
           - PartOfSpeech-ModelTrainer-HeldOutMetrics-StopConditions
           - PartOfSpeech-ModelTrainer-HeldOutMetrics-Throughput
           - PartOfSpeech-ModelTrainer-EvaluationReport-Deterministic
+          - PartOfSpeech-ModelTrainer-EvaluationReport-SecondLookNotice
           - PartOfSpeech-ModelTrainer-EvaluationReport-JsonComplete
           - PartOfSpeech-ModelTrainer-EvaluationReport-NoTreebankText
           - PartOfSpeech-ModelTrainer-EvaluationReport-PerTokenDump
