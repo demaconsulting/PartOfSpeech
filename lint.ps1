@@ -89,11 +89,11 @@ if (-not $skipPython) {
     python tools/data/make_corrections.py --check
     if ($LASTEXITCODE -ne 0) { $lintError = $true }
 
-    python tools/data/check_conventions.py --tier fix --enforce
+    python tools/data/check_conventions.py --tier fix --enforce --apply
     if ($LASTEXITCODE -ne 0) { $lintError = $true }
 
     # The check tier needs judgment: report only.
-    python tools/data/check_conventions.py --tier check
+    python tools/data/check_conventions.py --tier check --apply
     if ($LASTEXITCODE -ne 0) { $lintError = $true }
 }
 

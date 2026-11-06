@@ -314,6 +314,10 @@ def main(argv=None):
         if args.command == "generate":
             # Only the state matters here: a stale table in the pending state is what `--check` reports and a regeneration fixes.
             state = corpus_state(args.data_dir)[1]
+            if state == "mixed":
+                print("refusing: the corpora are partly corrected (state mixed, an interrupted apply?); run `corrections.py apply "
+                      "--write` or `apply --write --reverse` to finish it, then retry")
+                return 1
             if not args.check and state == "applied":
                 print("refusing to write: the corrections are applied, so the tables are provenance and cannot be regenerated from the "
                       "corpora (run `corrections.py apply --write --reverse` first, or use --check)")

@@ -84,8 +84,8 @@ python -m compileall -q tools/data
 python tools/data/tests/run_trx.py --out artifacts/python-data-tools.trx --pattern "test_corrections_*.py"
 python tools/data/corrections.py validate
 python tools/data/make_corrections.py --check
-python tools/data/check_conventions.py --tier fix --enforce
-python tools/data/check_conventions.py --tier check
+python tools/data/check_conventions.py --tier fix --enforce --apply
+python tools/data/check_conventions.py --tier check --apply
 ```
 
 A failing step fails the lint run. The linter enforces the fix tier (a violation of a `fix` rule fails the run; the

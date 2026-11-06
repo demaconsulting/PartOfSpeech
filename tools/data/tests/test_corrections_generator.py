@@ -197,6 +197,30 @@ class GeneratorFixtureTests(unittest.TestCase):
         self.assertIn("refusing to write", text)
         self.assertEqual(before, common.read_lines(path))
 
+    def test_the_generator_refuses_a_partly_applied_corpus(self):
+        # Arrange: apply every correction, then put one corrected row of the training corpus back (an interrupted apply)
+        run(["--data-dir", self.data])
+        train = os.path.join(self.data, "open", "train.tsv")
+        before = common.read_lines(train)
+        self.apply_corrections()
+        after = common.read_lines(train)
+        changed = [i for i, (old, new) in enumerate(zip(before, after)) if old != new]
+        self.assertTrue(changed)
+        mixed = list(after)
+        mixed[changed[0]] = before[changed[0]]
+        common.write_text(train, mixed)
+        tables = {name: common.read_lines(os.path.join(corrections.corrections_dir(self.data), name))
+                  for name in ("mechanical.tsv", "candidates.tsv")}
+        # Act
+        code, text = run(["--data-dir", self.data])
+        code_check, text_check = run(["--data-dir", self.data, "--check"])
+        # Assert
+        self.assertEqual((1, 1), (code, code_check), text + text_check)
+        self.assertIn("partly corrected", text)
+        self.assertIn("partly corrected", text_check)
+        for name, lines in tables.items():
+            self.assertEqual(lines, common.read_lines(os.path.join(corrections.corrections_dir(self.data), name)))
+
     def test_check_still_compares_a_stale_table_in_the_pending_state(self):
         # Arrange: the tables were generated, then a corpus label changed (the situation a regeneration fixes)
         run(["--data-dir", self.data])
