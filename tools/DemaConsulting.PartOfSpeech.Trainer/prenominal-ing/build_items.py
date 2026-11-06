@@ -25,6 +25,10 @@ Metrics (defined with the follow-up pre-registration in RUN-LOG.md): the NOUN ac
 on the verbal items, with the chosen tag of the runtime decoder.
 
 `--write` writes items-open-dev.tsv next to this script; `--check` rebuilds in memory and compares byte for byte.
+
+The frozen list belongs to the pre-registration state (commit 476a51d). The 878 `prenominal-ing` rows were withdrawn afterwards, which changed
+open dev (22 labels) and the lexicon, so `--check` on the current branch reports STALE (it would build 242 compound and 374 verbal items instead
+of the frozen 248 and 384); that is expected. To verify the frozen list, run `--check` from a `git worktree` of commit 476a51d.
 """
 import argparse
 import collections

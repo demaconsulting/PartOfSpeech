@@ -12,6 +12,10 @@ decisions; pooled harmful rate of a run = harmful over both sets / decisions ove
 compound items whose chosen tag is NOUN; verbal-ing VERB accuracy = share of the verbal-ing items whose chosen tag is VERB.
 Statistics: sample sd (n = 5); Welch t 95% interval of the difference of means; combined seed + document bootstrap (2,000 replicates, seed
 20261104: documents shared by the arms, the 5 seeds resampled with replacement within each arm). Descriptive only; the rule is the selection.
+
+Historical record: the script is tied to the state of the branch at the pre-registration (commit 476a51d; FULL data, shipped weights = FULL).
+After the adoption of NO-ING the committed data and weights differ, so re-run it with `--repo` pointing to a `git worktree` of 476a51d (or
+0d7a0b3), where the frozen item list is current too. An acceptance failure (any check below false) exits 1 before the tables and the selection.
 """
 import argparse
 import hashlib
@@ -176,18 +180,24 @@ def main():
     o, u = totals("full", SEEDS[0])
     p("FULL shipped seed: open harmful %d of %d decisions; UD harmful %d of %d; UD agreement %d of %d (%.3f%%)"
       % (o[IX["harm"]], o[IX["nv"]], u[IX["harm"]], u[IX["nv"]], u[IX["ok"]], u[IX["n"]], 100 * u[IX["ok"]] / u[IX["n"]]))
+    checks = []  # every acceptance result; any False stops the script before the tables and the selection
     expected_full = [92.803, 92.711, 92.655, 92.695, 92.747]
+    match_full = all(abs(a - b) < 5e-4 for a, b in zip(vals["full"]["agree"], expected_full))
+    checks.append(match_full)
     p("FULL UD agreement per seed: %s; diagnosis NEW: %s; match: %s" % (
-        ", ".join("%.3f" % v for v in vals["full"]["agree"]), ", ".join("%.3f" % v for v in expected_full),
-        all(abs(a - b) < 5e-4 for a, b in zip(vals["full"]["agree"], expected_full))))
-    p("shipped-seed acceptance (103/4,467; 107/4,570; 23,338): %s" % (
-        int(o[IX["harm"]]) == 103 and int(o[IX["nv"]]) == 4467 and int(u[IX["harm"]]) == 107 and int(u[IX["nv"]]) == 4570 and int(u[IX["ok"]]) == 23338))
+        ", ".join("%.3f" % v for v in vals["full"]["agree"]), ", ".join("%.3f" % v for v in expected_full), match_full))
+    shipped_ok = (int(o[IX["harm"]]) == 103 and int(o[IX["nv"]]) == 4467 and int(u[IX["harm"]]) == 107
+                  and int(u[IX["nv"]]) == 4570 and int(u[IX["ok"]]) == 23338)
+    checks.append(shipped_ok)
+    p("shipped-seed acceptance (103/4,467; 107/4,570; 23,338): %s" % shipped_ok)
     exp_abl = {"agree": [92.711, 92.779, 92.683, 92.616, 92.747], "open_h": [90, 98, 96, 100, 90], "ud_h": [103, 109, 95, 99, 101]}
     got_h = [counts["noing"][s]["open"][IX["harm"]] for s in SEEDS]
     got_u = [counts["noing"][s]["ud"][IX["harm"]] for s in SEEDS]
+    match_abl = (got_h == exp_abl["open_h"] and got_u == exp_abl["ud_h"]
+                 and all(abs(a - b) < 5e-4 for a, b in zip(vals["noing"]["agree"], exp_abl["agree"])))
+    checks.append(match_abl)
     p("NO-ING vs diagnosis ablation: agreement %s; open harmful %s (expected %s); UD harmful %s (expected %s); match: %s" % (
-        ", ".join("%.3f" % v for v in vals["noing"]["agree"]), got_h, exp_abl["open_h"], got_u, exp_abl["ud_h"],
-        got_h == exp_abl["open_h"] and got_u == exp_abl["ud_h"] and all(abs(a - b) < 5e-4 for a, b in zip(vals["noing"]["agree"], exp_abl["agree"]))))
+        ", ".join("%.3f" % v for v in vals["noing"]["agree"]), got_h, exp_abl["open_h"], got_u, exp_abl["ud_h"], match_abl))
     if args.diag:
         for arm, dname in (("full", "new"), ("noing", "abl")):
             same = []
@@ -195,9 +205,16 @@ def main():
                 a = os.path.join(runs, "%s-s%d.bin" % (arm, s))
                 b = os.path.join(args.diag, "%s-s%d.bin" % (dname, s))
                 same.append(os.path.exists(b) and sha(a) == sha(b))
+            checks.extend(same)
             p("weights byte-identical to the diagnosis %s models per seed: %s" % (dname, same))
     shipped = os.path.join(args.repo, "src", "DemaConsulting.PartOfSpeech", "Resources", "weights.bin")
-    p("FULL shipped-seed weights byte-identical to shipped weights.bin: %s" % (sha(os.path.join(runs, "full-s%d.bin" % SEEDS[0])) == sha(shipped)))
+    shipped_same = sha(os.path.join(runs, "full-s%d.bin" % SEEDS[0])) == sha(shipped)
+    checks.append(shipped_same)
+    p("FULL shipped-seed weights byte-identical to shipped weights.bin: %s" % shipped_same)
+    if not all(checks):
+        print("\n".join(out))
+        print("ACCEPTANCE FAILED: no tables and no selection are produced (pre-registration: stop on an acceptance failure)")
+        sys.exit(1)
 
     # ----------------------------------------------------------- tables
     p("\n## Per-seed values and mean +- sd (seeds %s)" % ", ".join(str(s) for s in SEEDS))

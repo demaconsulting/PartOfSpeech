@@ -17,7 +17,8 @@ feature extractor and the same weights writer that the trainer uses, so the test
 unchanged. The tests of the default tagger and of the embedded weights use the real shipped model, but only for
 properties that do not depend on its accuracy: that it loads, that it is one shared instance, and that it gives the
 unmistakable tags of a few hand-written sentences (these sentences were written once and not tuned; the accuracy of the
-model is measured by the held-out evaluation of the trainer, which is a documented once-only procedure and not a test,
+model is measured by the held-out evaluation of the trainer, which is a documented procedure (once for each frozen
+model; the model family has had two disclosed held-out evaluations) and not a test,
 and its committed results are tied to the shipped model by the evaluation record tests, never by the tests of the tagger).
 
 System tests reside in `PartOfSpeechTests.cs` within the `DemaConsulting.PartOfSpeech.Tests` project. The data and
@@ -275,8 +276,9 @@ results equals the SHA-256 of the committed bytes of `operating-points.json`, th
 each input that is a committed data file (open test, gold v2 test, shape probe, challenge set) and of each development
 file of the selection equals the manifest, and that the hash of the treebank test file equals its pin. It also asserts
 that the two reports quote the same model and selection hashes. A retrained model, another selection or a changed data
-file therefore fails until the evaluation is redone. The held-out run itself is not repeated: it is a once-only
-procedure of the trainer (see _ModelTrainer Verification_), and no test opens a held-out data file.
+file therefore fails until the evaluation is redone. The held-out run itself is not repeated by the tests: it is a
+procedure of the trainer that runs once for each frozen model (see _ModelTrainer Verification_), and no test opens a
+held-out data file.
 
 ### Evaluation Record States the Figures of the Reports
 

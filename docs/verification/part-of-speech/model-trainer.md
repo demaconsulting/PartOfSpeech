@@ -37,7 +37,8 @@ is mocked. The tests use four kinds of method:
   tested with tiny fixtures: a temporary fake repository with a manifest for the guarded reader, hand-written probe and
   treebank rows, hand-computed outcomes for the curve and the rule, and the tiny trained model for the judging. No test,
   build step or CI job reads a real held-out file through this code, so CI never looks at held-out data. The real held-out
-  run is a documented, once-only procedure (the protocol section of the run log), not a test: it would be wrong for a
+  run is a documented procedure that runs once for each frozen model (the protocol section of the run log; the model
+  family has had two disclosed held-out evaluations), not a test: it would be wrong for a
   test to run it, because its value is that it happens once, after the selection is committed. Its output is a committed,
   generated report; the system-level tests that tie it to the shipped model and to the selection accompany the report.
 
