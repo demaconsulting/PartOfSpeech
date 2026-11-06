@@ -809,14 +809,35 @@ def _command_apply(args):
         return 1
     shown = 0
     for key, (old, new) in sorted(result.items()):
-        changed = sum(1 for a, b in zip(old, new) if a != b) + abs(len(new) - len(old))
-        print("%s/%s: %d lines change" % (key[0], key[1], changed))
-        for line in difflib.unified_diff(old, new, "old", "new", n=0, lineterm=""):
+        changes = changed_lines(old, new)
+        print("%s/%s: %d lines change" % (key[0], key[1], max(sum(line[0] == "+" for line in changes), sum(line[0] == "-" for line in changes))))
+        for line in changes:
             if shown < args.diff:
                 print(line)
                 shown += 1
     print("written" if args.write else "dry run: nothing written (use --write)")
     return 0
+
+
+def changed_lines(old, new):
+    """The changed lines of an applied corpus file as diff lines (`-old`, `+new`), cheap on files of hundreds of thousands of lines.
+
+    The corrections edit the token rows in place, so the body (everything after the first blank line) has the same number of
+    lines and is compared line by line; only the header can gain or lose the documenting `# status flags` line, so only the
+    header goes through `difflib`. A file whose body changed its length (never produced by `apply_to_lines`) is compared with
+    `difflib` as a whole.
+    """
+    old_end = old.index("") if "" in old else len(old)
+    new_end = new.index("") if "" in new else len(new)
+    if len(old) - old_end != len(new) - new_end:
+        return [line for line in difflib.unified_diff(old, new, "old", "new", n=0, lineterm="") if line[:1] in "+-" and line[:3] not in ("+++", "---")]
+    changes = [line for line in difflib.unified_diff(old[:old_end], new[:new_end], "old", "new", n=0, lineterm="")
+               if line[:1] in "+-" and line[:3] not in ("+++", "---")]
+    for before, after in zip(old[old_end:], new[new_end:]):
+        if before != after:
+            changes.append("-" + before)
+            changes.append("+" + after)
+    return changes
 
 
 def _command_show(args):

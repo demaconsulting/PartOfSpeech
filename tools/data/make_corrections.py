@@ -18,16 +18,22 @@ here and is never rewritten by this generator: `--check` only validates it when 
 An adjudicated row replaces the mechanical row of the same token (see corrections.combine_tables); mechanical.tsv itself, the
 rules and `fixed-point` do not change.
 
-The output is a pure function of the committed corpora, the lexicon (for the informational count only) and the rules, in
-deterministic order, so `--check` is exact. The tables describe the corpora as committed *before* the corrections are applied (the
-header lists the SHA-256 of each corpus file the rows were derived from); `--check` is meaningful only until then.
+The output is a pure function of the corpora as they were before the corrections, the lexicon (for the informational count only) and
+the rules, in deterministic order, so `--check` is exact. The tables describe the corpora *before* the corrections are applied (the
+header lists the SHA-256 of each corpus file the rows were derived from) and stay as provenance afterwards. `--check` is therefore
+state-aware: while the corrections are pending it regenerates from the corpora as committed; once they are applied it copies the data
+folder to a temporary folder, reverses the effective rows there (`corrections.apply_to_files`, byte for byte), regenerates from the
+copy and compares with the committed tables. Without `--check` the generator refuses to write in the applied state (the regenerated
+tables would be empty and the provenance lost).
 """
 import argparse
 import collections
+import contextlib
 import os
 import random
+import shutil
 import sys
-
+import tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 import convention_candidates
@@ -260,6 +266,26 @@ def fixed_point(data_dir=None):
     return applied, second.rows, second.conflicts
 
 
+def corpus_state(data_dir=None):
+    """(errors, state) of the effective correction rows against the corpora: `pending`, `applied`, `empty` or `mixed`."""
+    return corrections.validate_against_corpora(corrections.load_overlay(data_dir)["corrections"], corrections.load_corpora(data_dir))
+
+
+@contextlib.contextmanager
+def generation_folder(data_dir, state):
+    """The data folder the generator reads: `data_dir` itself while the corrections are pending (or there are none), and a
+    temporary copy with the corrections reversed once they are applied (`apply --reverse` restores the files byte for byte,
+    so the copy is the corpora the committed tables were derived from). The committed folder is never touched."""
+    if state != "applied":
+        yield data_dir
+        return
+    with tempfile.TemporaryDirectory() as temp:
+        copy = os.path.join(temp, "data")
+        shutil.copytree(data_dir or common.DATA, copy)
+        corrections.apply_to_files(corrections.load_overlay(copy)["corrections"], copy, reverse=True, write=True)
+        yield copy
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", nargs="?", default="generate", choices=("generate", "sample", "fixed-point", "catalog"))
@@ -282,7 +308,25 @@ def main(argv=None):
             print("  left:", "\t".join(row))
         return 1 if leftover or conflicts else 0
 
-    files, result, corpora, sentences, resources = generate_all(args.data_dir)
+    state = "pending"
+    try:
+        if args.command == "generate":
+            # Only the state matters here: a stale table in the pending state is what `--check` reports and a regeneration fixes.
+            state = corpus_state(args.data_dir)[1]
+            if not args.check and state == "applied":
+                print("refusing to write: the corrections are applied, so the tables are provenance and cannot be regenerated from the "
+                      "corpora (run `corrections.py apply --write --reverse` first, or use --check)")
+                return 1
+        with generation_folder(args.data_dir, state) as work_dir:
+            return _generate(args, work_dir, state)
+    except ValueError as error:
+        print("FAILED: %s" % error)
+        return 1
+
+
+def _generate(args, work_dir, state):
+    """The generator commands that read the corpora (`sample` and `generate`); `work_dir` holds the corpora in the pending state."""
+    files, result, corpora, sentences, resources = generate_all(work_dir)
     if args.command == "sample":
         only = set(args.only.split(",")) if args.only else None
         text = sample_text(draw_sample(result.rows, args.n, args.seed, args.per_rule, only), corpora)
@@ -293,12 +337,14 @@ def main(argv=None):
             print("\n".join(text))
         return 0
 
+    if state == "applied":
+        print("corrections state: applied (the corpora were reversed in a temporary copy to regenerate the tables)")
     print("%d sentences, %d tokens" % (result.sentences, result.tokens))
     order = [item.id for item in convention_rules.RULES]
     print_counts("mechanical corrections (rows)", count_table(result.rows, lambda row: row.provenance[len("rule:"):]), order)
     print_counts("candidates (rows)", count_table(result.candidates, lambda row: row.candidate_rule),
                  order + [item.id for item in convention_candidates.CANDIDATES])
-    rejects = lexicon_rejects(result.rows, args.data_dir)
+    rejects = lexicon_rejects(result.rows, work_dir)
     print("new tag not allowed by the current lexicon: %d of %d rows" % (len(rejects), len(result.rows)))
     candidate_size = sum(len(line.encode("utf-8")) + 1 for line in files[KINDS["candidates"][0]])
     print("candidates.tsv: %d bytes" % candidate_size)
