@@ -1420,6 +1420,164 @@ of the earlier one: first `thresholds` (development data only, with the two froz
 retrained model's development figures), then `evaluate` exactly once, with no tuning of anything. G4 (the build) can become green
 once the held-out record is reissued; the G4 row above keeps its original FAIL text and is annotated when that has happened.
 
+## Corpus cleanup C: held-out evaluation of the retrained model (a new record for a new model, not an erratum)
+
+This is a **new** evaluation record for the retrained model. It does not correct or replace the text of the earlier record
+("Outcome of the held-out run" and its errata above), which describes the earlier model and stays as written. It was produced
+after the owner decision of the previous section, in this order (git history): owner decision (`6388220`), `thresholds`
+(`939c0fa`), the one `evaluate` (`58da737`), this section and the documents after it.
+
+Procedure, exactly the one of the protocol; nothing was tuned.
+
+1. The two constants of the `thresholds` command, `FrozenOpenHarmful` and `FrozenGoldHarmful` in `Program.cs`, held the first
+   freeze figures (94 and 9); they were set to the development figures of the retrained model, 103 (open dev, 4,467
+   decisions) and 14 (gold v2 dev, 611 decisions), 117 pooled, which the trainer's `eval` printed before (the figures of the
+   gate table above). They only guard that the 0.45 row of the curve reproduces the freeze figures; they do not select
+   anything. `thresholds` (seed 1, 1,000 resamples, development data only, rule `nv-pooled-dev-v1`, grid, targets and floors
+   unchanged) then reproduced 103, 14 and 117 and wrote `operating-points.json` (new model hash, new dev file hashes) and
+   `confidence-thresholds.md`. These were committed before the held-out run.
+2. `evaluate --preflight` passed (every documented size matched: open test 1,501 sentences, 26,185 tokens, 517 documents; gold
+   v2 test 3,047 targets, 856 documents; probe 560; challenge set 32 sentences, 272 tokens; UD test 2,077 sentences, 25,094
+   words); it scored nothing.
+3. `evaluate` refuses to run while `docs/evaluation/test-results.json` exists. The old `test-results.md` and `.json` (the record
+   of the earlier model) were **deleted on purpose** for this run, because the record of a retrained model is a new record, not
+   a re-run of the old one; they stay recoverable in git history (for example `git show 6388220:docs/evaluation/test-results.md`)
+   and were copied outside the repository before the deletion.
+4. `evaluate --dump-dir <folder outside the repository>` ran **once** (BelowNormal, 8 logical CPUs, the treebank from the
+   git-ignored cache). It exited with 1 because of the same three stop conditions as the earlier record (findings, not
+   failures of the run); the committed files are the output as produced. **No second `evaluate` run was made.**
+
+Stop conditions of the protocol (all three fired again, with these values; earlier values in brackets):
+
+- `shape-probe`: 52 harmful errors at 0.45 against a limit of 28 (5% of 560 rows) (earlier 48). This is the finding about the model's
+  behavior and it stands, as before, reported and not tuned.
+- `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (earlier the same); the `to`/`not` convention
+  difference, a view reported separately.
+- `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (earlier 1.68%, 421); the raw treebank tags that the
+  library does not produce by design. The primary mapped view is at 0.55% (138 words) (earlier 0.56%, 140), under the limit.
+
+All other stop conditions held: the open test accuracy 96.46% against 96.37% on development; the harmful rates per 1,000
+answered on open test at the strict (5.7) and balanced (6.5) points are below twice the pooled development rates (4.8 and
+7.7); open test ECE 0.24%; open test gold outside the candidates 41 of 26,185 tokens (0.16%).
+
+**What is comparable (stated plainly).** The labels of the **open test** split changed with the corrections (476 correction
+rows in it), so its before-and-after is **not strictly comparable**: the new model is scored against corrected labels and the
+earlier model against the old ones. The labels of **UD-EWT, gold v2, the shape probe and the STE challenge set did not change**
+(the correction tooling does not cover gold v2 or the probe; the STE set is linted but never corrected), so these four are
+the **fair comparisons**: the same sentences and labels, an earlier and a retrained model. The old figures below are those of the
+earlier record (model image `68673a9f...0f32a`); the new figures are those of the new record (model image `dca810e4...339d`,
+temperature 6.583). Intervals are the 95% percentile bootstrap over documents of each record (1,000 resamples, seed 1); no
+paired interval between the two models was computed, so overlapping intervals are not a test.
+
+Accuracy and harmful errors, earlier model (old) and retrained model (new), at the harmful limit 0.45 (same columns as the
+report; "n/c" marks the set whose labels changed):
+
+| Set | Model | Accuracy % | Ambiguous accuracy % | Decisions | Harmful | Harmful per 1,000 decisions | ECE % | NLL | Gold outside candidates |
+| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | ---: |
+| open-test (n/c: labels changed) | old | 96.10 [95.69, 96.49] | 95.16 [94.72, 95.61] | 4,413 | 91 | 20.6 [15.2, 26.5] | 0.28 [0.19, 0.61] | 0.1394 [0.1211, 0.1602] | 71 |
+| | new | 96.46 [96.07, 96.81] | 95.56 [95.19, 95.92] | 4,408 | 91 | 20.6 [15.7, 26.1] | 0.24 [0.19, 0.52] | 0.1163 [0.1013, 0.1322] | 41 |
+| gold-v2-test | old | 94.57 [93.67, 95.39] | 91.70 [90.33, 92.93] | 936 | 23 | 24.6 [14.9, 34.8] | 1.82 [1.47, 2.80] | 0.2178 [0.1812, 0.2596] | 7 |
+| | new | 94.34 [93.46, 95.16] | 91.34 [90.02, 92.55] | 936 | 29 | 31.0 [19.9, 42.4] | 2.23 [1.80, 3.18] | 0.2491 [0.2065, 0.2971] | 12 |
+| gold-v2-test-full-agreement | old | 95.39 [94.54, 96.24] | 92.49 [91.12, 93.81] | 713 | 17 | 23.8 [13.4, 35.9] | 1.43 [1.11, 2.34] | 0.1838 [0.1448, 0.2241] | 4 |
+| | new | 95.16 [94.26, 96.00] | 92.11 [90.65, 93.51] | 713 | 21 | 29.5 [17.9, 40.7] | 1.83 [1.32, 2.70] | 0.1960 [0.1560, 0.2379] | 5 |
+| gold-v2-test-to-not (8 targets) | old | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 56.66 [27.17, 88.44] | 6.9865 [1.9304, 12.0984] | 4 |
+| | new | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 55.56 [25.67, 88.55] | 6.9707 [1.8828, 12.0995] | 4 |
+| shape-probe (560 rows) | old | 89.11 [86.61, 91.61] | 89.21 [86.57, 91.56] | 556 | 48 | 86.3 [64.5, 109.9] | 2.38 [1.99, 5.31] | 0.2766 [0.2228, 0.3351] | 0 |
+| | new | 87.50 [84.82, 90.18] | 87.41 [84.78, 90.13] | 556 | 52 | 93.5 [69.8, 118.7] | 1.99 [2.01, 5.24] | 0.2829 [0.2233, 0.3433] | 0 |
+| challenge-set (STE, 272 tokens) | old | 87.13 [81.18, 92.70] | 88.78 [82.65, 93.72] | 86 | 0 | 0.0 | 7.80 [3.84, 12.98] | 0.3317 [0.1953, 0.4885] | 0 |
+| | new | 87.50 [82.56, 92.37] | 87.37 [80.98, 92.51] | 86 | 0 | 0.0 | 8.51 [5.28, 13.67] | 0.3842 [0.2251, 0.5604] | 0 |
+| ud-test-mapped (UD-EWT, primary view) | old | 92.30 [91.75, 92.82] | 91.71 [91.05, 92.26] | 4,413 | 73 | 16.5 [12.6, 20.9] | 2.36 [2.06, 2.81] | 0.3175 [0.2909, 0.3505] | 140 |
+| | new | 92.97 [92.46, 93.44] | 92.52 [91.90, 93.05] | 4,410 | 83 | 18.8 [14.5, 23.5] | 2.06 [1.78, 2.50] | 0.2982 [0.2733, 0.3319] | 138 |
+| ud-test-raw (UD-EWT, raw tags) | old | 88.40 [87.84, 88.91] | 87.13 [86.45, 87.73] | 4,010 | 72 | 18.0 [13.7, 22.6] | 6.22 [5.86, 6.73] | 0.6062 [0.5731, 0.6457] | 421 |
+| | new | 89.05 [88.53, 89.53] | 88.29 [87.60, 88.86] | 4,007 | 82 | 20.5 [15.6, 25.8] | 5.96 [5.59, 6.48] | 0.6106 [0.5764, 0.6509] | 484 |
+
+(The shape-probe ECE interval of the new record, [2.01, 5.24], does not contain its point estimate 1.99; that is how the
+report's percentile interval of this small set behaves and it is reproduced as written.)
+
+Operating points. The rule `nv-pooled-dev-v1` was applied unchanged to the dev curve of the retrained model. The first grid
+threshold that meets the strict target (at most 5.0 harmful per 1,000 answered, coverage at least 60%) is now 0.90 (it was 0.95),
+and the first that meets the balanced target (at most 10.0, coverage at least 85%) is now 0.85 (it was 0.80: at 0.80 the
+retrained model has 47 harmful of 4,677 answered, 10.05 per 1,000, which the report rounds to 10.0 but which is above the
+target, and the rule is applied to the unrounded figure). Development figures (pooled open dev and
+gold v2 dev, 95% bootstrap intervals over documents):
+
+| Point | Model | Threshold | Coverage % [95%] | Harmful per 1,000 answered [95%] | Harmful of answered |
+| --- | --- | ---: | --- | --- | --- |
+| strict | old | 0.95 | 80.6 [79.1, 82.0] | 3.9 [1.8, 6.1] | 16 of 4,105 |
+| | new | 0.90 | 86.5 [85.2, 87.7] | 4.8 [2.7, 7.0] | 21 of 4,392 |
+| balanced | old | 0.80 | 91.0 [90.0, 92.0] | 9.9 [6.6, 13.4] | 46 of 4,636 |
+| | new | 0.85 | 89.8 [88.7, 90.9] | 7.7 [4.8, 11.0] | 35 of 4,562 |
+
+On the held-out sets (the thresholds are those selected on development data; the earlier thresholds were 0.95 and 0.80, so
+the rows compare the points of each record, not one threshold):
+
+| Set | Point | Model (threshold) | Coverage % | Harmful per 1,000 answered [95%] | Harmful of answered |
+| --- | --- | --- | ---: | --- | --- |
+| open-test (n/c) | reference 0.45 | old | 99.9 | 20.6 [15.2, 26.5] | 91 of 4,407 |
+| | | new | 99.8 | 20.7 [15.8, 26.1] | 91 of 4,399 |
+| | strict | old (0.95) | 82.3 | 4.1 [2.0, 6.9] | 15 of 3,631 |
+| | | new (0.90) | 87.7 | 5.7 [3.0, 8.8] | 22 of 3,868 |
+| | balanced | old (0.80) | 92.3 | 9.3 [6.1, 12.6] | 38 of 4,072 |
+| | | new (0.85) | 90.9 | 6.5 [3.5, 9.7] | 26 of 4,005 |
+| gold-v2-test | reference 0.45 | old | 99.8 | 24.6 [14.9, 35.0] | 23 of 934 |
+| | | new | 99.9 | 31.0 [19.9, 42.4] | 29 of 935 |
+| | strict | old (0.95) | 81.3 | 3.9 [0.0, 9.1] | 3 of 761 |
+| | | new (0.90) | 86.3 | 5.0 [1.2, 10.3] | 4 of 808 |
+| | balanced | old (0.80) | 92.5 | 10.4 [3.9, 17.8] | 9 of 866 |
+| | | new (0.85) | 89.1 | 9.6 [3.7, 17.3] | 8 of 834 |
+| shape-probe | reference 0.45 | old | 98.6 | 87.6 [65.6, 111.3] | 48 of 548 |
+| | | new | 98.0 | 95.4 [71.3, 120.9] | 52 of 545 |
+| | strict | old (0.95) | 59.5 | 9.1 [0.0, 19.7] | 3 of 331 |
+| | | new (0.90) | 67.8 | 18.6 [5.4, 33.5] | 7 of 377 |
+| | balanced | old (0.80) | 80.6 | 42.4 [25.2, 61.7] | 19 of 448 |
+| | | new (0.85) | 74.1 | 26.7 [12.1, 42.3] | 11 of 412 |
+| challenge-set | strict and balanced | old and new | 69.8 to 84.9 (old), 76.7 to 77.9 (new) | 0.0 | 0 of 60 to 73 (old), 0 of 66 and 67 (new) |
+| ud-test-mapped | reference 0.45 | old | 99.3 | 16.7 [12.7, 21.0] | 73 of 4,382 |
+| | | new | 99.4 | 18.9 [14.8, 23.6] | 83 of 4,384 |
+| | strict | old (0.95) | 76.9 | 2.9 [1.3, 5.0] | 10 of 3,395 |
+| | | new (0.90) | 84.1 | 5.1 [2.8, 7.8] | 19 of 3,708 |
+| | balanced | old (0.80) | 89.2 | 7.4 [4.8, 10.2] | 29 of 3,936 |
+| | | new (0.85) | 87.4 | 5.7 [3.5, 8.6] | 22 of 3,855 |
+| ud-test-raw | strict | old (0.95) | 77.9 | 3.2 [1.5, 5.4] | 10 of 3,125 |
+| | | new (0.90) | 84.7 | 5.6 [3.1, 8.5] | 19 of 3,395 |
+| | balanced | old (0.80) | 89.6 | 8.1 [5.2, 11.3] | 29 of 3,593 |
+| | | new (0.85) | 87.8 | 6.2 [3.8, 9.4] | 22 of 3,520 |
+
+Shape probe by shape (harmful errors at 0.45, old then new): `n-obj-light` 1 and 1, `n-compound-head` 16 and 17,
+`n-modifier` 0 and 0, `n-subject-initial` 12 and 12, `n-measure` 6 and 6, `v-imperative-initial` 12 and 14, `v-after-modal`
+1 and 2. Open test per tag: NOUN precision/recall 96.19/96.21 (old) and 96.46/96.82 (new), VERB 94.31/95.72 and 94.87/96.30
+(the gold tag counts differ because the labels changed). The throughput of the new report (889,218
+tokens per second, one thread) is a timing of the machine; the earlier one (315,213) was measured on a busy machine and the two
+are not a comparison of the models.
+
+**Reading, with what is worse stated first.**
+
+- **Worse than before on the fair comparison sets.** The harmful noun-verb errors per 1,000 decisions at 0.45 are higher for
+  the retrained model on **gold v2 test** (24.6 to 31.0; 23 to 29 errors; the full-agreement subset 23.8 to 29.5), on the
+  **shape probe** (86.3 to 93.5; 48 to 52) and on **UD-EWT** (mapped 16.5 to 18.8, 73 to 83; raw 18.0 to 20.5). All three
+  moved in the direction that the pre-registered G2 had flagged on the development sets, and the diagnosis had said that a real
+  rise of about +1 per 1,000 was not excluded; the size here (about +2 to +7 per 1,000) is larger than that estimate on each
+  set. Every old and new interval overlaps (the sets are small: 29 and 23 errors on gold v2), so no single set proves a
+  regression, but the direction is the same on all three. Gold v2 accuracy (94.57 to 94.34), its ambiguous accuracy, ECE
+  (1.82 to 2.23) and NLL (0.2178 to 0.2491) are also slightly worse, and so are the shape probe accuracy (89.11 to 87.50) and its
+  NLL, and the NLL of the challenge set (0.3317 to 0.3842; its accuracy is 87.13 to 87.50, harmful 0 and 0).
+- **Better than before.** UD-EWT agreement improved on both views (mapped 92.30 to 92.97, raw 88.40 to 89.05; ambiguous
+  91.71 to 92.52), with a lower ECE (2.36 to 2.06) and NLL (0.3175 to 0.2982) on the mapped view; the open test accuracy
+  rose 96.10 to 96.46 with a lower NLL and ECE (not strictly comparable: the labels changed); the number of golds outside the
+  candidates on the open test split fell from 71 to 41 (also not comparable).
+- **Open test harmful rate unchanged** at 91 errors, 20.6 per 1,000 decisions (not strictly comparable).
+- **Operating points.** The strict threshold moved from 0.95 to 0.90 and the balanced from 0.80 to 0.85. On the held-out
+  open test split the new strict point answers more (87.7% against 82.3%) at a **higher** harmful rate (5.7 against 4.1 per
+  1,000 answered; the target of 5.0 was met on development data, 4.8, and is exceeded on the open test split, where the
+  interval [3.0, 8.8] contains 5.0); the balanced point has a lower rate (6.5 against 9.3) at a similar coverage (90.9% against
+  92.3%). On gold v2 test strict is 5.0 (earlier 3.9) and balanced 9.6 (earlier 10.4); on UD mapped strict 5.1 (earlier 2.9) and
+  balanced 5.7 (earlier 7.4); on the shape probe strict 18.6 (earlier 9.1) and balanced 26.7 (earlier 42.4). The strict point is
+  worse than before on every held-out set where it is not zero, and the balanced point is better or equal on open test, UD and
+  the shape probe and slightly better on gold v2; these are different thresholds, and the points of the two records answer
+  different shares of the decisions.
+- **What is not shown.** The held-out evaluation did not tune anything and no test figure was used to change a threshold, the
+  model or a setting. The shape probe weakness of the earlier record (stop condition fired) persists and is slightly larger.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
