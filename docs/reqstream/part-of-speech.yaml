@@ -785,6 +785,8 @@ sections:
           - PartOfSpeech-ModelTrainer-DevMetrics
           - PartOfSpeech-ModelTrainer-GlossaryExperiment
           - PartOfSpeech-ModelTrainer-GlossaryEvaluation
+          - PartOfSpeech-ModelTrainer-ShapesDevEvaluation
+          - PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
         tests:
           - PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora
 

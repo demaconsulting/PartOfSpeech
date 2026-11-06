@@ -526,3 +526,55 @@ sections:
               - GlossaryEvaluation_AcronymEntries_AllCapitalNounsWithLexiconHomograph
               - GlossaryEvaluation_Run_TinyData_ReportsEveryScenarioDeterministically
               - GlossaryEvaluation_UsesOnlyDevData_NoPathParameterAndNoFileAccess
+
+          - id: PartOfSpeech-ModelTrainer-ShapesDevEvaluation
+            title: >-
+              The shapes development evaluation shall parse the hard-shape development set (shape, role, target
+              index, lemma and origin of every sentence) and refuse a sentence whose judged word is missing, outside
+              the sentence, disputed, not a noun or verb, or in the wrong class for its shape and role; shall score the
+              judged word of every item through the real decoder and report, per shape and pooled, the target-token
+              accuracy, the harmful errors and the harmful errors per 1,000 noun-verb decisions and the control accuracy;
+              and shall render the same Markdown for the same results.
+            justification: |
+              The hard-shape set is the development measure for the noun-verb confusions that the held-out error
+              analysis found, so a malformed item must stop the run instead of shifting a figure, the figures must come
+              from the same decoder and the same harm definition as every other development number, and a re-run on the
+              same model and file must give the same text so that a recorded baseline can be compared. The tokens of
+              the file follow the corpus tokenization of the library tokenizer, which the evaluation relies on.
+            tests:
+              - ShapesDevSets_Parse_ValidFile_ReturnsItems
+              - ShapesDevSets_Parse_DisputedNonTargetAndFlags_Accepted
+              - ShapesDevSets_Parse_MissingTarget_Throws
+              - ShapesDevSets_Parse_WrongClassForShapeAndRole_Throws
+              - ShapesDevSets_Parse_DisputedTarget_Throws
+              - ShapesDevSets_Parse_TargetNotATokenIndex_Throws
+              - ShapesDevSets_Parse_UnknownShapeRoleOriginOrDuplicateId_Throws
+              - ShapesDevSets_Parse_AuthoredOriginAndDocumentMismatch_Throws
+              - ShapesDevSets_Parse_UnknownTag_Throws
+              - ShapesDevSets_Shapes_AreTheFiveHardShapesWithTheirClasses
+              - ShapesDevEvaluator_Evaluate_TinyTagger_ReportsPerShapeCounts
+              - ShapesDevEvaluator_Summarize_GroupsByShapeAndRoleAndRefusesBadInput
+              - ShapesDevReport_Render_SameResult_IsDeterministicMarkdown
+              - ShapesDevReport_Interval_KnownCounts_MatchesWilsonScore
+              - Tokenizer_Tokenize_ShapesSentences_ReproducesStoredTokens
+
+          - id: PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
+            title: >-
+              The hard-shape development file shall be readable only through its own guard (exactly that path, also
+              when it is spelled with a detour, and a header that announces a development split), shall not be in the
+              two-file development allow-list or the held-out list, shall be refused for training, and no source of the
+              trainer other than the guard shall name a held-out set.
+            justification: |
+              The set exists to select settings, so nothing may train on it, and it must never be mistaken for a
+              held-out figure. Giving it a guard of its own keeps the statement that development evaluation reads the
+              two development files true for every other command, and keeps the held-out gate unable to open it, so the
+              probe that shares its shapes stays evaluation only.
+            tests:
+              - DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted
+              - DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused
+              - DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt
+              - DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused
+              - DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused
+              - DevSets_ReadShapesDev_HeaderWithoutDevSplit_Throws
+              - DevSets_ReadShapesDev_MissingAndValidFile_ThrowsAndReads
+              - ModelTrainer_Sources_NoHeldOutPathLiterals

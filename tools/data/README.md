@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore testdata -->
+<!-- cspell:ignore testdata ngrams stdlib -->
 
 # Data Tools
 

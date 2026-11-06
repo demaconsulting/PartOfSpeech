@@ -253,7 +253,7 @@ public class ShapesDevEvaluationTests
     public void ShapesDevSets_Parse_UnknownTag_Throws()
     {
         // Arrange
-        var lines = File(Sentence("s1", "n-measure", "target", 1, new[] { "2", "pounds" }, new[] { "NUM", "NOUNISH" }));
+        var lines = File(Sentence("s1", "n-measure", "target", 1, new[] { "2", "pounds" }, new[] { "NUM", "banana" }));
 
         // Act / Assert
         Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(lines, "fixture"));

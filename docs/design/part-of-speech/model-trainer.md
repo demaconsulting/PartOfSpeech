@@ -44,7 +44,15 @@ target framework, including .NET Framework.
   and requires a training source to lie below the `data` folder of the repository, and the held-out allow-list (the four
   repository sets and the cache of the external treebank), whose resolver and header check need a validated selection.
   `HeldOutReader` (same file) opens the held-out files and verifies their hashes against `data/MANIFEST.tsv` (the
-  treebank against its pins) and their headers.
+  treebank against its pins) and their headers. The hard-shape development file has a guard of its own
+  (`ShapesDevelopmentFile`, `EnsureShapesDevelopmentFile`), next to and not inside the two-file allow-list.
+- **`ShapesDevItem`**, **`ShapesDevSets`**, **`ShapesDevShapeResult`**, **`ShapesDevResult`**, **`ShapesDevEvaluator`**
+  and **`ShapesDevReport`** (`Evaluation/ShapesDev.cs`): one judged word of the hard-shape development set (sentence id,
+  document, tokens, target index, the class of its gold tag, shape, role, lemma, origin), the parser, the per-shape
+  results (target items and accuracy, noun-verb decisions, harmful errors, control items and accuracy, authored counts),
+  the evaluator and the deterministic Markdown writer. The tokens, tags and status cells are read by
+  `CorpusReader.Parse` (one grammar for every corpus file); the extra comments `shape`, `role`, `target`, `lemma` and
+  `origin` are read from the same lines.
 - **Metrics** (`Evaluation/Metrics.cs`): per-token outcomes, accuracy, accuracy on lexicon-ambiguous tokens, harmful
   errors (gold NOUN answered VERB or gold VERB answered NOUN with confidence at least 0.45, counted per 1,000
   noun-verb decisions), negative log-likelihood and expected calibration error (15 equal-width bins), and the paired
@@ -114,8 +122,12 @@ target framework, including .NET Framework.
   log-likelihood on the open development split. `compare` runs the paired bootstrap between two weights files.
 - **Glossary experiment** (`GlossaryExperiment`, `GlossaryProbe`, `GlossaryFeatures`): see _Glossary Decision_.
 - **Glossary evaluation** (`GlossaryEvaluation`, `GlossaryEvaluationReport`): see _Glossary Evaluation_.
+- **Shapes development evaluation** (`ShapesDevSets`, `ShapesDevEvaluator`, `ShapesDevReport`): see _Shapes Development
+  Evaluation_.
 - **Commands** (`Program.cs`): `train` (with experiment overrides, `--check`, `--update-config`, `--eval`, `--log`,
-  `--calibrate`, `--checkpoints`), `eval`, `calibrate`, `compare`, `glossary-probe`, `glossary-experiment` and
+  `--calibrate`, `--checkpoints`), `eval`, `eval-shapes` (the hard-shape development set; `--weights`, `--label`),
+  `shapes-tokenize` (`--in`, `--out`; the library tokenizer over a text file, no repository data), `calibrate`, `compare`,
+  `glossary-probe`, `glossary-experiment` and
   `glossary-eval` (`--seed`, `--resamples`; it takes no weights or data path and appends no run-log row), `thresholds`
   (development data only) and `evaluate` (the one held-out run; see _Held-Out Evaluation_); the exit
   code is 0 for success, 1 for stale weights (or a stop condition that fired in `evaluate`) and 2 for a usage or data
@@ -158,6 +170,12 @@ the pooled harmful errors per 1,000 noun-verb decisions, an option must stay wit
 measured with two more seeds. The settings were chosen by coordinate descent (no interactions), which is a stated
 limitation, as are the small size of the gold development set (2,025 targets) and the fact that both development sets are
 labeled by language models.
+
+The hard-shape development set (`data/eval/shapes-dev/dev.tsv`) is a third development file. It is not added to the
+two-file allow-list: `DataGuard.EnsureShapesDevelopmentFile` compares full paths against that one file and the reader
+requires a development-split header, so a command that reads "the two development files" cannot reach it, the held-out
+list does not contain it (so `evaluate` cannot open it) and the training deny-list refuses it (folder `eval`, file name
+`dev.tsv`). The shape probe, which shares the shapes, stays a held-out file and is never read to build or tune the set.
 
 ### Confidence Thresholds
 
@@ -358,6 +376,32 @@ not repeat any measured figure.
   term with the head first was adopted because its bar was met; the shipped scope of that rule is the measured shape
   (two-token verb terms, head first), and other shapes were not measured.
 
+### Shapes Development Evaluation
+
+The held-out error analysis found the noun-verb errors concentrated in four word-in-context shapes (the head of a noun
+compound, a noun that starts a sentence, the verb that starts an instruction, a noun in a measurement); the development
+set adds a fifth, the base verb after a modal. The set holds items for exactly those shapes, each with one judged word
+that the lexicon lists as both noun and verb, plus controls (the same spelling in the other class), so that a change to
+the decoder or the features can be selected on the shapes without touching a held-out figure. The command `eval-shapes`
+scores a weights file on it:
+
+- **Parser** (`ShapesDevSets.Parse`): one grammar for the tokens, tags and status cells (`CorpusReader.Parse`), plus the
+  comments `shape` (one of the five ids), `role` (`target` or `control`), `target` (token index), `lemma` and `origin`
+  (`real` or `authored`; authored sentences belong to the pseudo-document `shapes-dev-authored` and only they do). The
+  judged word must be tagged NOUN, PROPN or VERB, must be in the class its role asks for (the class of the shape for a
+  target, the other class for a control) and must not be `disputed`; any other state is an `InvalidDataException` that
+  names the sentence.
+- **Scoring** (`ShapesDevEvaluator`): the same path as the other development sets (`Tagger.Load`, all 16 alternatives,
+  `Metrics.Judge` with the classes Noun and Verb), so a noun-verb decision and a harmful error mean what they mean
+  elsewhere. Per shape: target-token accuracy, noun-verb decisions, harmful errors and harmful errors per 1,000
+  decisions (targets only), and the accuracy of the controls of the shape; plus a pooled row. A shape without items has
+  zero counts and prints dashes.
+- **Report** (`ShapesDevReport`): Markdown with a Wilson 95% interval of the target accuracy, the SHA-256 of the
+  development file and of the weights file; no time stamp or machine name, so the same model and file give the same bytes.
+  The command appends no run-log row; a baseline is pasted into `RUN-LOG.md` by hand.
+- **Tokens**: the file stores tokens made by the library `Tokenizer`; the command `shapes-tokenize` runs it over a text
+  file for `tools/data/shapes_dev.py`, which builds the set from sentences that two blind model taggers labeled.
+
 ### Error Handling
 
 Invalid configuration (an unknown member, an out-of-range value, no source, a source with weight above 16, a corpus
@@ -365,7 +409,11 @@ line with an unknown tag) throws `InvalidDataException` with the setting or the 
 turns it into exit code 2 with the message. A held-out or development file given as a training source, and an
 evaluation input that is not a development file, throw `InvalidOperationException` before any file is opened (so does a
 training source that lies outside the `data` folder after resolution, and a link cycle). A gold development row with a
-negative, non-numeric or out-of-sentence target index throws `InvalidDataException`. A held-out gate failure (no
+negative, non-numeric or out-of-sentence target index throws `InvalidDataException`. A shapes development item whose
+judged word is missing, outside its sentence, disputed, not a noun or verb or in the wrong class for its shape and role,
+a header without `dev split`, and a missing file throw as well (`InvalidDataException`, `FileNotFoundException`), and a
+path other than the shapes development file given to its guard throws `InvalidOperationException`. A held-out gate
+failure (no
 selection artifact, an artifact for another model, rule or development file, a held-out file that differs from its recorded
 hash or announces another set, a missing or unpinned treebank cache or a mapped table that differs from its pin, a
 malformed probe or treebank row, a missing development file or one that differs from the manifest hash, an artifact
@@ -390,7 +438,8 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
 - The base class library and, for `training.json`, `operating-points.json` and `test-results.json`, System.Text.Json
   (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv` and `data/silver/silver.tsv`, and the two
-  development files; for `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the
+  development files plus the hard-shape development file `data/eval/shapes-dev/dev.tsv` (for `eval-shapes` only); for
+  `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the
   external treebank that the data tools fetch (the tool itself uses no network).
 
 ### Callers

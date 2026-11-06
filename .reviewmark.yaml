@@ -164,6 +164,7 @@ reviews:
       - "docs/evaluation/**/*.json"                                  # selection artifact and run-once results
       - "test/DemaConsulting.PartOfSpeech.Tests/ModelTrainer/ModelTrainerTests.cs"  # unit tests
       - "test/DemaConsulting.PartOfSpeech.Tests/ModelTrainer/HeldOutEvaluationTests.cs"  # unit tests (held-out)
+      - "test/DemaConsulting.PartOfSpeech.Tests/ModelTrainer/ShapesDevEvaluationTests.cs"  # unit tests (shapes development set)
 
   # PartOfSpeech-Tokenization Review (one per subsystem)
   - id: PartOfSpeech-Tokenization
@@ -420,7 +421,9 @@ reviews:
       - "tools/data/import_silver.py"                               # silver data derivation
       - "tools/data/fetch_ud_ewt.py"                                # UD English-EWT fetch (cache only)
       - "tools/data/build_lexicon.py"                               # lexicon build
+      - "tools/data/shapes_dev.py"                                  # hard-shape development set builder (blind labeling pipeline)
       - "tools/data/tests/test_common.py"                           # tests of the shared helpers
+      - "tools/data/tests/test_shapes_dev.py"                       # tests of the development set builder
       - "tools/data/tests/status-cases.tsv"                         # shared parity cases of the status cell
       - "tools/data/tests/test_masc.py"                             # tests of the MASC mapping
       - "tools/data/tests/test_silver_lexicon.py"                   # tests of the silver derivation and lexicon rules
