@@ -909,10 +909,10 @@ def withdrawn_findings(data_dir=None, current_rows=None, corpora=None, state=Non
                 findings.append("%s: no candidate of the detector %s covers the token" % (where, detector))
             if address(row) in current:
                 findings.append("%s: the token is also in a current correction table" % where)
-        errors, state = validate_against_corpora(valid, corpora)
+        errors, withdrawn_state = validate_against_corpora(valid, corpora)
         findings.extend(name + ": " + error for error in errors)
-        if state not in ("pending", "empty"):
-            findings.append("%s: the corpora hold the new value of the withdrawn tokens (state %s)" % (name, state))
+        if withdrawn_state not in ("pending", "empty"):
+            findings.append("%s: the corpora hold the new value of the withdrawn tokens (state %s)" % (name, withdrawn_state))
     return findings, counts
 
 

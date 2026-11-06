@@ -1007,6 +1007,20 @@ class WithdrawTests(Fixture):
         # Assert
         self.assertEqual(0, code, text)
 
+    def test_a_stale_input_hash_is_not_a_finding_for_any_of_several_withdrawn_tables_once_applied(self):
+        # Arrange: two withdrawn tables, both with stale input hashes
+        self.withdraw("--write")
+        stale = ["# input = %s sha256 %s" % (line.split(" ")[3], "0" * 64) if line.startswith("# input = ") else line
+                 for line in common.read_lines(self.withdrawn_path)]
+        common.write_text(self.withdrawn_path, stale)
+        second = os.path.join(self.folder, "withdrawn-mention-the-word-two.tsv")
+        common.write_text(second, ["# detector = mention-the-word-two" if line.startswith("# detector = ") else line for line in stale])
+        run(corrections.main, ["--data-dir", self.data, "apply", "--write"])
+        # Act
+        findings, _ = corrections.withdrawn_findings(self.data)
+        # Assert: the first table's state must not leak into the second one's provenance check
+        self.assertEqual([], [finding for finding in findings if "stale" in finding or "no '# input' line" in finding], findings)
+
     def test_validate_reports_a_withdrawn_token_that_is_also_in_a_current_table(self):
         # Arrange
         self.withdraw("--write")
