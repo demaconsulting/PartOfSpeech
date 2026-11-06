@@ -68,13 +68,14 @@ if (-not $skipPython) {
     deactivate
 }
 
-# [PROJECT-SPECIFIC] Python checks of the data tools and the staged corpus corrections (standard library only, no
-# network): every tool compiles, the unit tests of the correction tools pass, the staged tables are valid against the
-# corpora and equal to what the generator writes, and the conventions linter runs (report only: it does not fail on
-# violations that are left in the corpora yet; a later change adds --enforce). The virtual environment is left, so
-# `python` is the interpreter that the workflow or the developer provides (3.10 or later).
+# [PROJECT-SPECIFIC] Python checks of the data tools and the corpus corrections (standard library only, no network):
+# every tool compiles, the unit tests of the correction tools pass, the correction tables are valid against the corpora
+# (pending or applied) and equal to what the generator writes (in the applied state it reverses the rows in a temporary
+# copy first), and the conventions linter enforces the fix tier (a fix-tier violation fails the lint; the evaluation-only
+# STE set is shown and never counts) and reports the check tier without failing on it. The virtual environment is left,
+# so `python` is the interpreter that the workflow or the developer provides (3.10 or later).
 if (-not $skipPython) {
-    Write-Host "Linting: data tools and staged corrections..."
+    Write-Host "Linting: data tools and corpus corrections..."
     python -m compileall -q tools/data
     if ($LASTEXITCODE -ne 0) { $lintError = $true }
 
@@ -88,7 +89,11 @@ if (-not $skipPython) {
     python tools/data/make_corrections.py --check
     if ($LASTEXITCODE -ne 0) { $lintError = $true }
 
-    python tools/data/check_conventions.py
+    python tools/data/check_conventions.py --tier fix --enforce
+    if ($LASTEXITCODE -ne 0) { $lintError = $true }
+
+    # The check tier needs judgment: report only.
+    python tools/data/check_conventions.py --tier check
     if ($LASTEXITCODE -ne 0) { $lintError = $true }
 }
 
