@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
+<!-- cspell:ignore prenominal -->
 
 # Data
 

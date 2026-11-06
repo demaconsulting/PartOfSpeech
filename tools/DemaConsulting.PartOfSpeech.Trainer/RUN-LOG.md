@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify prenominal mkabl mkarm worktree worktrees isalpha -->
+<!-- cspell:ignore gamify prenominal mkabl mkarm worktree worktrees isalpha scorings -->
 
 # Trainer Run Log
 

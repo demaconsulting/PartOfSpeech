@@ -1,3 +1,4 @@
+<!-- cspell:ignore prenominal -->
 ## ModelTrainer
 
 ![Part Of Speech Structure](PartOfSpeechView.svg)
@@ -171,8 +172,9 @@ before any curve existed.
   a harmful error is an answered decision with the other one of the two tags. The curve gives, for every threshold of the
   grid, the answered decisions, the coverage, the harmful errors, the harmful errors per 1,000 answered and per 1,000
   decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 90, 11 and 101 harmful
-  errors on open dev, gold v2 dev and pooled for the model adopted after the pre-registered `prenominal-ing` follow-up; the
-  first retrained model of the corpus cleanup C had 103, 14 and 117, and the first freeze 94, 9 and 103). The constants of
+  errors on open dev, gold v2 dev and pooled for the model adopted after the pre-registered `prenominal-ing`
+  follow-up; the first retrained model of the corpus cleanup C had 103, 14 and 117, and the first freeze 94, 9 and
+  103). The constants of
   the command are the development figures of the embedded model (`RUN-LOG.md`, "Corpus cleanup C"); they were set to
   those of the adopted model once, to the figures that `thresholds` itself reported (it refused to write with the old
   constants), before its run that wrote the artifact. The reliability table
@@ -221,7 +223,8 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   `docs/evaluation/test-results.json.running` exists. There is no `--force`: a repeat needs that committed file to be
   deleted, which is visible in the history and must be recorded in the run log. That was done once, for the second
   evaluation of the model family (the model adopted after the `prenominal-ing` follow-up, a disclosed second look): the
-  record of the first retrained model was deleted on purpose before the run and stays in the history. Immediately before the first held-out
+  record of the first retrained model was deleted on purpose before the run and stays in the history. Immediately before
+  the first held-out
   token is scored, `evaluate` creates the lock file with `FileMode.CreateNew` (`DataGuard.AcquireRunLock`), so of two
   concurrent runs exactly one proceeds. The results file is written last, exclusively, and only then is the lock file
   removed. A run that is aborted after scoring began leaves the lock file behind on purpose; a stale lock blocks every

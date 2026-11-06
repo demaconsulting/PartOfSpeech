@@ -454,12 +454,12 @@ the mechanical file keeps its hash. `DroppedDetectorsLeaveNoCorrections` asserts
 flag rows and keeps its `disputed` marks, and the gate on given verdicts. `TableHeaderIsStrict` mutates the metadata
 lines of a valid table (each of the five lines removed, repeated or changed, an input line missing, malformed, unknown
 or repeated, an unknown metadata line) and asserts a finding for each, and runs `validate` on a file with removed lines.
-`WithdrawnRowsStayAsProvenance` withdraws the rows of one detector on the miniature data folder and asserts that the rows
-move byte for byte (a dry run writes nothing), that the remaining rows still apply while the withdrawn tokens keep the old
-value, that `withdraw` refuses the applied state, an existing table, a bad detector, a blank reason, a detector without rows
-and a row that would replace a mechanical row, that a span belongs to every token it covers, and that `validate` reports each
-defect of a withdrawn table (header lines, provenance, a token that no candidate of the detector covers, a token that is also
-in a current table, the new value in the corpus).
+`WithdrawnRowsStayAsProvenance` withdraws the rows of one detector on the miniature data folder and asserts that the
+rows move byte for byte (a dry run writes nothing), that the remaining rows still apply while the withdrawn tokens keep
+the old value, that `withdraw` refuses the applied state, an existing table, a bad detector, a blank reason, a detector
+without rows and a row that would replace a mechanical row, that a span belongs to every token it covers, and that
+`validate` reports each defect of a withdrawn table (header lines, provenance, a token that no candidate of the
+detector covers, a token that is also in a current table, the new value in the corpus).
 
 ### Platform Support
 

@@ -1,3 +1,4 @@
+<!-- cspell:ignore prenominal -->
 # Evaluation of the Embedded Model
 
 This folder is the record of how the embedded model of `DemaConsulting.PartOfSpeech` was measured and which
@@ -12,8 +13,8 @@ them and states what they do not show.
 > development data only and selected the one without them by a rule that was fixed before any training; its softmax
 > temperature was refit on development data, its two thresholds were selected on development data only, and it was then
 > evaluated on held-out data. **That is the second evaluation of the model family on these held-out sets** (the model
-> before the follow-up was evaluated once first and has its own record in the git history): a disclosed second look, and a
-> third look is not planned. **What can be compared with the earlier records:** the labels of the open test split changed
+> before the follow-up was evaluated once first and has its own record in the git history): a disclosed second look,
+> and a third look is not planned. **What can be compared with the earlier records:** the labels of the open test split
 > twice (with the corrections, and for the 17 withdrawn test rows), so its figures are not strictly comparable; the labels
 > of UD English-EWT, gold v2, the shape probe and the challenge set never changed (the correction tooling does not cover
 > them), so those four are the fair comparisons. The first pre-registered development gate on harmful errors failed on its
@@ -154,12 +155,12 @@ The embedded model is the third model with a held-out record: a model trained be
 were corrected (the earlier model), the first model after the corrections (the first cleanup model, which kept the
 `prenominal-ing` corrections), and the embedded one (the same data without them). The first two have their records in
 the git history, and the trainer run log has every figure side by side, section "Corpus cleanup C". The open test split
-is not a fair comparison across the three, because its labels changed twice (the corrections, and then 17 withdrawn test
-rows); the other four held-out sets have the same labels in all records. Key figures (harmful errors in 1,000 decisions at
-the reference point 0.45; the thresholds were 0.95 and 0.80 for the earlier and the embedded model and 0.90 and 0.85 for
-the first cleanup model):
+is not a fair comparison across the three, because its labels changed twice (the corrections, and then 17 withdrawn
+test rows); the other four held-out sets have the same labels in all records. Key figures (accuracy in percent and
+harmful errors in 1,000 decisions at the reference point 0.45; "first" is the first cleanup model; the thresholds were
+0.95 and 0.80 for the earlier and the embedded model and 0.90 and 0.85 for the first cleanup model):
 
-| Set | Accuracy (%), earlier | Accuracy (%), first cleanup | Accuracy (%), embedded | Harmful per 1,000, earlier | Harmful per 1,000, first cleanup | Harmful per 1,000, embedded |
+| Set | Accuracy earlier | Accuracy first | Accuracy embedded | Harmful earlier | Harmful first | Harmful embedded |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Open test split (labels changed, not comparable) | 96.10 | 96.46 | 96.53 | 20.6 | 20.6 | 18.7 |
 | Gold v2 test split | 94.57 | 94.34 | 94.37 | 24.6 | 31.0 | 29.9 |
