@@ -955,6 +955,58 @@ class WithdrawTests(Fixture):
                 self.assertEqual(1, code, (name, text))
                 self.assertIn(word, text)
 
+    def test_validate_reports_the_defects_of_the_input_provenance_of_a_withdrawn_table(self):
+        # Arrange
+        self.withdraw("--write")
+        original = common.read_lines(self.withdrawn_path)
+        inputs = [line for line in original if line.startswith("# input = ")]
+        self.assertTrue(inputs, "the fixture's withdrawn table has input lines")
+        first = inputs[0]
+        file_name = first.split(" ")[3]
+        other = "# input = open/other.tsv sha256 " + "0" * 64
+        stale = first[:-64] + "0" * 64
+        cases = {
+            "missing input line": ([line for line in original if line != first], "no '# input' line for the corpus file " + file_name),
+            "unknown input line": (original[:original.index(first)] + [other] + original[original.index(first):],
+                                   "'# input' names an unknown corpus file open/other.tsv"),
+            "repeated input line": (original[:original.index(first)] + [first] + original[original.index(first):],
+                                    "'# input' line for %s is repeated" % file_name),
+            "stale hash": ([stale if line == first else line for line in original],
+                           "stale, the corpus file %s has another SHA-256" % file_name),
+            "malformed input line": ([first[:-1] if line == first else line for line in original], "malformed line"),
+        }
+        # Act and Assert
+        for name, (lines, message) in cases.items():
+            with self.subTest(case=name):
+                common.write_text(self.withdrawn_path, lines)
+                code, text = run(corrections.main, ["--data-dir", self.data, "validate"])
+                self.assertEqual(1, code, (name, text))
+                self.assertIn("withdrawn-mention-the-word.tsv: " + message, text)
+
+    def test_the_input_provenance_of_a_withdrawn_table_is_accepted_when_it_is_complete(self):
+        # Arrange
+        self.withdraw("--write")
+        # Act: the pending state (hashes are compared), then the applied state (the corpus files have other hashes by design)
+        findings_pending, _ = corrections.withdrawn_findings(self.data)
+        run(corrections.main, ["--data-dir", self.data, "apply", "--write"])
+        findings_applied, _ = corrections.withdrawn_findings(self.data)
+        # Assert
+        self.assertEqual([], findings_pending)
+        self.assertEqual([], findings_applied)
+
+    def test_a_stale_input_hash_of_a_withdrawn_table_is_not_a_finding_once_the_corrections_are_applied(self):
+        # Arrange
+        self.withdraw("--write")
+        original = common.read_lines(self.withdrawn_path)
+        first = next(line for line in original if line.startswith("# input = "))
+        common.write_text(self.withdrawn_path, ["# input = %s sha256 %s" % (first.split(" ")[3], "0" * 64) if line == first else line
+                                               for line in original])
+        # Act
+        run(corrections.main, ["--data-dir", self.data, "apply", "--write"])
+        code, text = run(corrections.main, ["--data-dir", self.data, "validate"])
+        # Assert
+        self.assertEqual(0, code, text)
+
     def test_validate_reports_a_withdrawn_token_that_is_also_in_a_current_table(self):
         # Arrange
         self.withdraw("--write")

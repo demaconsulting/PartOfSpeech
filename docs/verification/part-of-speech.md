@@ -461,7 +461,9 @@ rows move byte for byte (a dry run writes nothing), that the remaining rows stil
 the old value, that `withdraw` refuses the applied state, an existing table, a bad detector, a blank reason, a detector
 without rows and a row that would replace a mechanical row, that a span belongs to every token it covers, and that
 `validate` reports each defect of a withdrawn table (header lines, provenance, a token that no candidate of the
-detector covers, a token that is also in a current table, the new value in the corpus).
+detector covers, a token that is also in a current table, the new value in the corpus), mutates its `# input` lines (one
+missing, unknown, repeated, malformed or with a stale hash) and asserts a finding for each, and asserts that a complete
+table is accepted in the pending and in the applied state (where the corpus files have other hashes by design).
 
 ### Platform Support
 

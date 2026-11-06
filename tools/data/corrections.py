@@ -363,21 +363,60 @@ def adjudicated_findings(data_dir=None, rows=None, state=None, header=None):
         state = validate_against_corpora([row for row in rows if row_error(row) is None], load_corpora(data_dir))[1]
     listed, header_findings = adjudicated_header(header)
     findings.extend(header_findings)
+    findings.extend(input_state_findings(ADJUDICATED_TABLE, listed, data_dir, state))
+    return findings
+
+
+def input_state_findings(table, listed, data_dir, state):
+    """Messages for the `# input` lines of a table (`listed` = {corpus file: SHA-256}) against the corpus files of a data folder.
+
+    There must be one line for every corpus file that exists; and, only in the pending state (`state` is not "applied"), its hash is
+    that of the corpus file as it is (a stale table is a finding): once the corrections are applied the corpus files have, by
+    design, other hashes. Used for `adjudicated.tsv` and for the `withdrawn-<detector>.tsv` tables.
+    """
+    findings = []
     base = data_dir or common.DATA
     for key, relative in CORPUS_FILES.items():
         corpus_path = os.path.join(base, *relative.split("/"))
         if not os.path.exists(corpus_path):
             continue
         if relative not in listed:
-            findings.append("%s: no '# input' line for the corpus file %s" % (ADJUDICATED_TABLE, relative))
+            findings.append("%s: no '# input' line for the corpus file %s" % (table, relative))
         elif state != "applied" and listed[relative] != common.sha256_file(corpus_path):
             # Once the corrections are applied the corpus files have, by design, other hashes.
-            findings.append("%s: stale, the corpus file %s has another SHA-256 than the '# input' line" % (ADJUDICATED_TABLE, relative))
+            findings.append("%s: stale, the corpus file %s has another SHA-256 than the '# input' line" % (table, relative))
     return findings
 
 
 ADJUDICATED_HEADER_KEYS = ("corpus", "license", "kind", "columns", "generator")
 INPUT_LINE_RE = re.compile(r"^# input = (\S+) sha256 ([0-9a-f]{64})$")
+
+
+def is_input_line(line):
+    """True for a metadata line that claims to be an `# input` line (well-formed or not)."""
+    return line.startswith("# input")
+
+
+def input_lines(table, lines):
+    """(listed, findings) of the `# input = <file> sha256 <hash>` lines among `lines`: `listed` is {corpus file: SHA-256}.
+
+    A line must be well formed and name a known corpus file (see `CORPUS_FILES`) once; the missing and the stale lines are
+    `input_state_findings`. Used for `adjudicated.tsv` and for the `withdrawn-<detector>.tsv` tables.
+    """
+    findings = []
+    listed = {}
+    known = {relative for relative in CORPUS_FILES.values()}
+    for line in lines:
+        match = INPUT_LINE_RE.match(line)
+        if not match:
+            findings.append("%s: malformed line %r, expected '# input = <file> sha256 <64 hex digits>'" % (table, line))
+        elif match.group(1) not in known:
+            findings.append("%s: '# input' names an unknown corpus file %s" % (table, match.group(1)))
+        elif match.group(1) in listed:
+            findings.append("%s: '# input' line for %s is repeated" % (table, match.group(1)))
+        else:
+            listed[match.group(1)] = match.group(2)
+    return listed, findings
 
 
 def adjudicated_header(header):
@@ -388,9 +427,8 @@ def adjudicated_header(header):
     corpus file (a known file, no repeat); any other comment line is a finding.
     """
     findings = []
-    listed = {}
     seen = collections.Counter()
-    known = {relative for relative in CORPUS_FILES.values()}
+    inputs = []
     for line in header or []:
         key = line[2:].split(" = ", 1)[0] if line.startswith("# ") and " = " in line else None
         if key in ADJUDICATED_HEADER_KEYS:
@@ -404,18 +442,12 @@ def adjudicated_header(header):
                 findings.append("%s: the '# license' line does not start with 'CC0-1.0 '" % ADJUDICATED_TABLE)
             if key == "generator" and not value.startswith("tools/data/adjudicate.py"):
                 findings.append("%s: the '# generator' line does not name tools/data/adjudicate.py" % ADJUDICATED_TABLE)
-        elif key == "input" or line.startswith("# input"):
-            match = INPUT_LINE_RE.match(line)
-            if not match:
-                findings.append("%s: malformed line %r, expected '# input = <file> sha256 <64 hex digits>'" % (ADJUDICATED_TABLE, line))
-            elif match.group(1) not in known:
-                findings.append("%s: '# input' names an unknown corpus file %s" % (ADJUDICATED_TABLE, match.group(1)))
-            elif match.group(1) in listed:
-                findings.append("%s: '# input' line for %s is repeated" % (ADJUDICATED_TABLE, match.group(1)))
-            else:
-                listed[match.group(1)] = match.group(2)
+        elif key == "input" or is_input_line(line):
+            inputs.append(line)
         else:
             findings.append("%s: unknown metadata line %r" % (ADJUDICATED_TABLE, line))
+    listed, input_findings = input_lines(ADJUDICATED_TABLE, inputs)
+    findings.extend(input_findings)
     for key in ADJUDICATED_HEADER_KEYS:
         if seen[key] != 1:
             findings.append("%s: the '# %s' line is %s" % (ADJUDICATED_TABLE, key, "missing" if not seen[key] else "repeated"))
@@ -766,7 +798,7 @@ def validate_overlay(data_dir=None):
     errors.extend(validate_exceptions_against_corpora(valid_exceptions, corpora))
     if ADJUDICATED_TABLE in counts:
         errors.extend(adjudicated_findings(data_dir, state=state))
-    withdrawn_errors, withdrawn_counts = withdrawn_findings(data_dir, [row for _, rows in found for row in rows], corpora)
+    withdrawn_errors, withdrawn_counts = withdrawn_findings(data_dir, [row for _, rows in found for row in rows], corpora, state)
     errors.extend(withdrawn_errors)
     counts.update(withdrawn_counts)
     return errors, state, counts
@@ -800,15 +832,18 @@ def detector_rows(rows, candidates, detector):
     return [row for row in rows if has_valid_index(row) and address(row) in covered]
 
 
-def withdrawn_findings(data_dir=None, current_rows=None, corpora=None):
+def withdrawn_findings(data_dir=None, current_rows=None, corpora=None, state=None):
     """(findings, counts) of the `withdrawn-<detector>.tsv` tables: rows taken out of `adjudicated.tsv` that stay as provenance.
 
     A withdrawn table is never applied. Its header names each of `corpus`, `license` (CC0-1.0), `kind`
-    (`withdrawn corrections`), `columns`, `generator`, `detector` (the detector of the file name) and a non-empty `reason` once;
+    (`withdrawn corrections`), `columns`, `generator`, `detector` (the detector of the file name) and a non-empty `reason` once,
+    then one well-formed `# input = <file> sha256 <hash>` line per corpus file, as `adjudicated.tsv` does (no unknown or repeated
+    file, none missing, and in the pending state the hash of the corpus file as it is: see `input_state_findings`);
     its rows are valid, sorted decisions of the adjudication, covered by a candidate of the detector, and their address is in
     no current correction table; and the corpora hold the OLD value of every token (`old_tag`, `old_status`) in the pending and
     in the applied state alike, because a withdrawn row is not a correction of the corpora. `current_rows` are the rows of the
-    correction tables (read from the folder when not given).
+    correction tables (read from the folder when not given); `state` is the state of the corpora against those rows (computed
+    when not given).
     """
     names = withdrawn_names(data_dir)
     if not names:
@@ -821,6 +856,8 @@ def withdrawn_findings(data_dir=None, current_rows=None, corpora=None):
             if os.path.exists(path):
                 current_rows.extend(read_table(path, "corrections")[1])
     corpora = corpora if corpora is not None else load_corpora(data_dir)
+    if state is None:
+        state = validate_against_corpora([row for row in current_rows if row_error(row) is None], corpora)[1]
     current = {address(row) for row in current_rows if has_valid_index(row)}
     candidates_path = os.path.join(folder, CANDIDATES_TABLE)
     candidates = read_table(candidates_path, "candidates")[1] if os.path.exists(candidates_path) else []
@@ -834,6 +871,7 @@ def withdrawn_findings(data_dir=None, current_rows=None, corpora=None):
             continue
         counts[name] = len(rows)
         seen = collections.Counter()
+        inputs = []
         for line in header:
             key = line[2:].split(" = ", 1)[0] if line.startswith("# ") and " = " in line else None
             if key in WITHDRAWN_HEADER_KEYS:
@@ -847,10 +885,17 @@ def withdrawn_findings(data_dir=None, current_rows=None, corpora=None):
                     findings.append("%s: '# detector' is %r, expected %s" % (name, value, detector))
                 if key == "reason" and not value.strip():
                     findings.append("%s: the '# reason' line is empty" % name)
-            elif not INPUT_LINE_RE.match(line):
+            elif key == "input" or is_input_line(line):
+                inputs.append(line)
+            else:
                 findings.append("%s: unknown metadata line %r" % (name, line))
         findings.extend("%s: the '# %s' line is %s" % (name, key, "missing" if not seen[key] else "repeated")
                         for key in WITHDRAWN_HEADER_KEYS if seen[key] != 1)
+        # The input provenance is checked as for adjudicated.tsv: one well-formed line per corpus file, no unknown or repeated
+        # file, and (while the corpora are pending) the hash of the corpus file as it is.
+        listed, input_findings = input_lines(name, inputs)
+        findings.extend(input_findings)
+        findings.extend(input_state_findings(name, listed, data_dir, state))
         findings.extend(name + ": " + problem for problem in table_errors(rows))
         valid = [row for row in rows if row_error(row) is None]
         covered = {address(row) for row in detector_rows(valid, candidates, detector)}

@@ -80,7 +80,8 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   an adjudicated row replaces the mechanical row of the same token (the mechanical row stays in its file and is ignored
   by the validator and by the application). Adjudicated rows that were withdrawn on purpose (`corrections.py withdraw`:
   the 878 rows of the detector `prenominal-ing`, after the pre-registered follow-up of the trainer run log) stay in
-  `withdrawn-<detector>.tsv` as provenance; that table is never applied, and the validator requires the old value in the
+  `withdrawn-<detector>.tsv` as provenance; that table is never applied, the validator checks its header and its `# input`
+  lines as those of `adjudicated.tsv`, and requires the old value in the
   corpora for every row of it, in both states. A table is valid against the corpora when all of its rows in effect match
   them before the application or all after it (a mixture is an error, and a second application is refused). The
   corpora, the lexicon and the weights are built from the corrected files, and the tables stay as the provenance of the

@@ -641,7 +641,9 @@ the labels the importers wrote (and the mechanical rows changed) for these token
   corrections were reversed first: `apply --write --reverse`, then withdrawn, then `apply --write` again; no corpus file is
   edited by hand). It refuses when a withdrawn row would replace a mechanical row (none does). `corrections.py validate` and
   `make_corrections.py --check` read every `withdrawn-<detector>.tsv`: a well-formed header (`kind = withdrawn corrections`,
-  the `detector` and a `reason`), rows that are valid adjudicated decisions covered by a candidate of the detector, no token that
+  the `detector` and a `reason`, and the `# input` lines of `adjudicated.tsv`, validated by the same rules: one well-formed line
+  per corpus file, none missing, unknown or repeated, and, in the pending state, the hash of the corpus file as it is),
+  rows that are valid adjudicated decisions covered by a candidate of the detector, no token that
   is also in a current table, and the old value of every token in the corpora **in both states**, because a withdrawn row is not
   a correction. The file is not part of the effective rows (9,285 before; now 8,407: 2,222 mechanical rows in effect and 6,185
   adjudicated; 3 mechanical rows are still superseded). The check tier of the linter is unchanged at 298 violations and the fix

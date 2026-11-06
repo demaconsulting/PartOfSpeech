@@ -580,8 +580,8 @@ sections:
         title: >-
           The adjudicated rows of one detector shall be withdrawable from `adjudicated.tsv` into a
           `withdrawn-<detector>.tsv` table byte for byte, only while the corpora are in the pending state, and a
-          withdrawn table shall be valid only when its header, its rows and the old value of every token in the corpora
-          (in both states) are sound.
+          withdrawn table shall be valid only when its header (including the input provenance lines, validated as those of
+          `adjudicated.tsv`), its rows and the old value of every token in the corpora (in both states) are sound.
         tags: [system]
         justification: |
           A later decision may take decided rows out of the corrections (the pre-registered follow-up withdrew the rows
@@ -598,6 +598,9 @@ sections:
           - test_withdraw_refuses_rows_that_replace_a_mechanical_row
           - test_a_row_of_a_detector_with_a_span_belongs_to_every_token_of_the_span
           - test_validate_reports_the_defects_of_a_withdrawn_table
+          - test_validate_reports_the_defects_of_the_input_provenance_of_a_withdrawn_table
+          - test_the_input_provenance_of_a_withdrawn_table_is_accepted_when_it_is_complete
+          - test_a_stale_input_hash_of_a_withdrawn_table_is_not_a_finding_once_the_corrections_are_applied
           - test_validate_reports_a_withdrawn_token_that_is_also_in_a_current_table
 
       - id: PartOfSpeech-Data-CandidatesAddressTokens
