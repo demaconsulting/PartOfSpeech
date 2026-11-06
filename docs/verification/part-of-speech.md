@@ -151,7 +151,7 @@ are information for reviewers, not acceptance values:
   instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
-- The embedded weights are 477,899 bytes (1,077,990 uncompressed) and the embedded lexicon 639,617 bytes (1,625,974
+- The embedded weights are 478,835 bytes (1,080,650 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
   uncompressed); the package is larger because both resources are embedded once per target framework (the package size
   is stated, approximately, in the "Package size" item of the design document `part-of-speech.md`).
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
@@ -454,6 +454,12 @@ the mechanical file keeps its hash. `DroppedDetectorsLeaveNoCorrections` asserts
 flag rows and keeps its `disputed` marks, and the gate on given verdicts. `TableHeaderIsStrict` mutates the metadata
 lines of a valid table (each of the five lines removed, repeated or changed, an input line missing, malformed, unknown
 or repeated, an unknown metadata line) and asserts a finding for each, and runs `validate` on a file with removed lines.
+`WithdrawnRowsStayAsProvenance` withdraws the rows of one detector on the miniature data folder and asserts that the rows
+move byte for byte (a dry run writes nothing), that the remaining rows still apply while the withdrawn tokens keep the old
+value, that `withdraw` refuses the applied state, an existing table, a bad detector, a blank reason, a detector without rows
+and a row that would replace a mechanical row, that a span belongs to every token it covers, and that `validate` reports each
+defect of a withdrawn table (header lines, provenance, a token that no candidate of the detector covers, a token that is also
+in a current table, the new value in the corpus).
 
 ### Platform Support
 

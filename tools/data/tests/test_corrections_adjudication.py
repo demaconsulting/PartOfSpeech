@@ -813,6 +813,159 @@ class SupersessionTests(Fixture):
         self.assertFalse(os.path.exists(os.path.join(self.folder, "adjudicated.tsv")))
 
 
+# ---------------------------------------------------------------- withdrawn rows
+
+class WithdrawTests(Fixture):
+    """`corrections.py withdraw`: the rows of one detector leave adjudicated.tsv and stay as provenance."""
+
+    SNOWBALL = corrections.Correction("open", "train", "d2", "t3", "3", "snowball", "NOUN", "NOUN", "disputed", "disputed+mentioned",
+                                      "llm:opus+sol:b001")
+    LEFT = corrections.Correction("open", "train", "d1", "t2", "3", "left", "VERB", "VERB", "unchecked", "disputed", "llm:opus+sol:b002")
+    REASON = "the follow-up selected the arm without these rows"
+
+    def setUp(self):
+        super().setUp()
+        self.adjudicated_path = os.path.join(self.folder, "adjudicated.tsv")
+        self.withdrawn_path = os.path.join(self.folder, "withdrawn-mention-the-word.tsv")
+        self.write_adjudicated([self.SNOWBALL, self.LEFT])
+
+    def write_adjudicated(self, rows):
+        common.write_text(self.adjudicated_path, adjudicate.table_lines(rows, corrections.load_corpora(self.data), self.data))
+
+    def withdraw(self, *extra, detector="mention-the-word", reason=None):
+        return run(corrections.main, ["--data-dir", self.data, "withdraw", "--detector", detector,
+                                      "--reason", self.REASON if reason is None else reason, *extra])
+
+    def test_a_dry_run_reports_the_counts_and_writes_nothing(self):
+        # Arrange
+        before = common.sha256_file(self.adjudicated_path)
+        # Act
+        code, text = self.withdraw()
+        # Assert
+        self.assertEqual(0, code, text)
+        self.assertIn("1 rows leave adjudicated.tsv (open/train 1); 1 stay", text)
+        self.assertIn("nothing written", text)
+        self.assertEqual(before, common.sha256_file(self.adjudicated_path))
+        self.assertFalse(os.path.exists(self.withdrawn_path))
+
+    def test_write_moves_the_rows_byte_for_byte_and_the_overlay_stays_valid(self):
+        # Arrange
+        original = common.read_lines(self.adjudicated_path)
+        row_line = "\t".join(self.SNOWBALL)
+        # Act
+        code, text = self.withdraw("--write")
+        code_valid, text_valid = run(corrections.main, ["--data-dir", self.data, "validate"])
+        # Assert
+        self.assertEqual((0, 0), (code, code_valid), text + text_valid)
+        kept = common.read_lines(self.adjudicated_path)
+        withdrawn = common.read_lines(self.withdrawn_path)
+        self.assertEqual([line for line in original if line != row_line], kept)
+        self.assertEqual([row_line], [line for line in withdrawn if not line.startswith("# ")])
+        self.assertIn("# detector = mention-the-word", withdrawn)
+        self.assertIn("# reason = " + self.REASON, withdrawn)
+        self.assertIn("# kind = withdrawn corrections", withdrawn)
+        self.assertEqual([line for line in original if line.startswith("# input = ")],
+                         [line for line in withdrawn if line.startswith("# input = ")])
+        self.assertIn("withdrawn-mention-the-word.tsv 1 rows", text_valid)
+
+    def test_the_withdrawn_tokens_keep_the_old_value_when_the_remaining_rows_are_applied(self):
+        # Arrange
+        self.withdraw("--write")
+        # Act
+        code_apply, _ = run(corrections.main, ["--data-dir", self.data, "apply", "--write"])
+        code_valid, text_valid = run(corrections.main, ["--data-dir", self.data, "validate"])
+        sentences = common.read_corpus(os.path.join(self.data, "open", "train.tsv"))[1]
+        cells = {s["sent_id"]: s["rows"] for s in sentences}
+        # Assert
+        self.assertEqual((0, 0), (code_apply, code_valid), text_valid)
+        self.assertEqual("disputed", cells["t3"][3][2])        # the snowball row stays unapplied
+        self.assertEqual("disputed", cells["t2"][3][2])        # the remaining row is applied
+        self.assertIn("applied", text_valid)
+
+    def test_withdraw_refuses_in_the_applied_state_and_when_the_table_exists(self):
+        # Arrange
+        run(corrections.main, ["--data-dir", self.data, "apply", "--write"])
+        # Act
+        code_applied, text_applied = self.withdraw("--write")
+        run(corrections.main, ["--data-dir", self.data, "apply", "--write", "--reverse"])
+        self.withdraw("--write")
+        code_again, text_again = self.withdraw("--write")
+        # Assert
+        self.assertEqual(1, code_applied)
+        self.assertIn("applied state", text_applied)
+        self.assertEqual(1, code_again)
+        self.assertIn("exists already", text_again)
+
+    def test_withdraw_refuses_a_bad_detector_a_blank_reason_and_a_detector_without_rows(self):
+        # Arrange and Act
+        bad_detector = self.withdraw(detector="Not A Detector")
+        blank = self.withdraw(reason=" ")
+        none = self.withdraw(detector="infinitive-to")
+        # Assert
+        for (code, text), word in ((bad_detector, "not a detector"), (blank, "reason"), (none, "no adjudicated row")):
+            self.assertEqual(1, code)
+            self.assertIn(word, text)
+        self.assertFalse(os.path.exists(self.withdrawn_path))
+
+    def test_withdraw_refuses_rows_that_replace_a_mechanical_row(self):
+        # Arrange: an adjudicated row for `out` (the mechanical row of rule out-of) that a candidate of another detector covers
+        replacing = corrections.Correction("open", "train", "d1", "t1", "2", "out", "ADV", "INTJ", "unanimous", "unanimous", "llm:opus+sol:b003")
+        self.write_adjudicated([replacing, self.LEFT])
+        corrections.write_table(os.path.join(self.folder, "candidates.tsv"), "candidates",
+                                ["# columns = " + ", ".join(corrections.COLUMNS["candidates"])],
+                                [cand("open", "train", "d1", "t1", 2, "out", "ADV", "unanimous", "out-of-after-verb")])
+        # Act
+        code, text = self.withdraw(detector="out-of-after-verb", reason=self.REASON)
+        # Assert
+        self.assertEqual(1, code)
+        self.assertIn("replace mechanical rows", text)
+
+    def test_a_row_of_a_detector_with_a_span_belongs_to_every_token_of_the_span(self):
+        # Arrange
+        rows = [self.SNOWBALL._replace(token_index=str(index)) for index in (3, 4)]
+        candidates = [cand("open", "train", "d2", "t3", 3, "snowball", "NOUN", "disputed", "mention-quoted", span=2),
+                      cand("open", "train", "d2", "t3", 3, "snowball", "NOUN", "disputed", "mention-the-word")]
+        # Act and Assert
+        self.assertEqual(rows, corrections.detector_rows(rows, candidates, "mention-quoted"))
+        self.assertEqual(rows[:1], corrections.detector_rows(rows, candidates, "mention-the-word"))
+        self.assertEqual([], corrections.detector_rows(rows, candidates, "infinitive-to"))
+
+    def test_validate_reports_the_defects_of_a_withdrawn_table(self):
+        # Arrange
+        self.withdraw("--write")
+        original = common.read_lines(self.withdrawn_path)
+        row_line = "\t".join(self.SNOWBALL)
+        cases = {
+            "no reason": ([line for line in original if not line.startswith("# reason = ")], "'# reason' line is missing"),
+            "empty reason": ([("# reason = " if line.startswith("# reason = ") else line) for line in original], "'# reason' line is empty"),
+            "wrong detector": ([line.replace("= mention-the-word", "= other") for line in original], "'# detector' is"),
+            "wrong kind": ([line.replace("withdrawn corrections", "corrections") for line in original], "'# kind' is"),
+            "unknown metadata": (original[:-1] + ["# note = x", original[-1]], "unknown metadata line"),
+            "foreign provenance": ([line.replace("llm:opus+sol:b001", "llm:other:run") for line in original], "provenance"),
+            "no candidate of the detector": ([("\t".join(self.LEFT) if line == row_line else line) for line in original],
+                                             "no candidate of the detector"),
+            "new value in the corpus": ([line.replace("NOUN\tNOUN\tdisputed\tdisputed+mentioned", "NOUN\tNOUN\tdisputed+mentioned\tdisputed")
+                                         if line == row_line else line for line in original], "hold the new value"),
+        }
+        # Act and Assert
+        for name, (lines, word) in cases.items():
+            with self.subTest(case=name):
+                common.write_text(self.withdrawn_path, lines)
+                code, text = run(corrections.main, ["--data-dir", self.data, "validate"])
+                self.assertEqual(1, code, (name, text))
+                self.assertIn(word, text)
+
+    def test_validate_reports_a_withdrawn_token_that_is_also_in_a_current_table(self):
+        # Arrange
+        self.withdraw("--write")
+        self.write_adjudicated([self.SNOWBALL._replace(provenance="llm:opus+sol:b009"), self.LEFT])
+        # Act
+        code, text = run(corrections.main, ["--data-dir", self.data, "validate"])
+        # Assert
+        self.assertEqual(1, code)
+        self.assertIn("also in a current correction table", text)
+
+
 # ---------------------------------------------------------------- the whole pipeline on the fixture
 
 class PipelineTests(Fixture):
