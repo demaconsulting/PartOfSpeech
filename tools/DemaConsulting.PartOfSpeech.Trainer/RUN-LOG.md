@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify -->
+<!-- cspell:ignore gamify prenominal -->
 
 # Trainer Run Log
 
@@ -1275,6 +1275,150 @@ Documents and tests changed with this decision (no model, setting or weight): th
 state, the design and verification documents state the applied state, the new requirement `PartOfSpeech-Data-CorrectionsApplied`
 with its test `PartOfSpeech_DataCorrections_Rows_AreApplied`, and the README, user guide and packed API reference no longer say that the
 embedded model was evaluated on held-out data.
+
+## Corpus cleanup C: owner decision after the dev-only diagnosis
+
+This section is written and committed **before** `thresholds` or `evaluate` is run for the retrained model, so that the git history
+shows the order: gates (pre-registered), gate result (G2 failed), diagnosis (development data only), owner decision (this commit),
+and only then the held-out commands.
+
+**G2 failed as pre-registered, and it stays recorded as FAILED.** The gate was a point-estimate rule on the single shipped seed of
+each model. On that seed the harmful noun-verb errors per 1,000 decisions rose from 20.59 to 23.06 on the relabeled open dev
+(+2.47) and from 21.87 to 23.41 on UD-EWT dev (+1.55). Nothing in the gate text, the verdicts or the results sections above is
+changed by this section, and no gate is restated, re-interpreted or altered.
+
+**The decision is the owner's.** After the failure a diagnosis on development data only was run (below). The owner of the
+repository then accepted the retrained model on the basis of that diagnosis (option 1: accept the full cleanup, held-out
+evaluation of the retrained model). This is an **owner decision, not a restated gate**: G2 is not re-defined as passed, it is
+not replaced by a different test, and no tolerance was added to it. The decision overrides the stop rule of the
+pre-registration for the held-out step only, and the owner's reason is that the rise lies within the seed noise of the training
+while the agreement gain is real. The consequence is accepted knowingly: a real rise of about +1 harmful error per 1,000
+decisions is **not excluded** by the diagnosis. Nothing about the training, the weights, the lexicon, `training.json` or the
+data changes with this decision.
+
+### Diagnosis (development data only)
+
+The full write-up (`DIAGNOSIS.md` with its scripts and outputs) lives in a session folder outside the repository, so it is not
+part of the record; **the key tables are copied below**, and that file name is only a pointer. The diagnosis is post hoc: it was
+designed after the G2 failure had been seen.
+
+Method.
+
+- **Arms.** OLD is `a94abd0` (the data, lexicon and `training.json` before the cleanup), NEW is this branch at `02dac97`. Each arm's
+  trainer was built in its own scratch worktree, so each uses its own lexicon and corpora. The shipped `training.json` settings were
+  used unchanged (sources open x2, MASC, silver >= 80, restriction `history`, predicted history, 6 epochs, 19 hash bits, minimum
+  count 1, pruning 8, scale 8); only the shuffle seed changes. The temperature is refit on the arm's own open dev for every run,
+  exactly as the shipped model's `calibrate` did.
+- **Seeds.** 5 per arm: 20260101 (the shipped seed), 11, 12, 13, 14 (11 and 12 are the E0 seeds of this log; 13 and 14 are new).
+- **Acceptance test.** The runs at the shipped seed reproduce the figures of the gate table exactly (open dev 92 of 4,468 old and
+  103 of 4,467 new; UD-EWT dev 100 of 4,573 and 107 of 4,570; UD agreement 23,227 and 23,338), and the weights of those runs are
+  byte-identical to the shipped `weights.bin` of both arms.
+- **Scoring.** The runtime decoder (`Tagger.Load`) through the scratch tool of the pre-registration, against each arm's own
+  library; definitions as in the pre-registration (decision, harmful at confidence >= 0.45, per 1,000 decisions). The old arm is
+  scored on the **new** (relabeled) open dev labels, and both arms on the UD-EWT dev mapped view. Only open dev and UD-EWT dev were
+  read; no held-out file and no gold v2 dev.
+- **Statistics.** Sample standard deviation over the 5 seeds; Welch t interval for the difference of the means (independent
+  shuffles, so unpaired); a combined bootstrap (2,000 replicates, seed 20261104) that resamples documents (shared by both arms) and
+  the 5 seeds with replacement within each arm, then takes the difference of the arm means.
+
+Seed table (per-seed values; counts in brackets; the shipped seed is the first column).
+
+| Metric | Arm | 20260101 | 11 | 12 | 13 | 14 | mean ± sd |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| UD-EWT dev agreement % | OLD | 92.361 (23,227) | 92.218 (23,191) | 92.302 (23,212) | 92.146 (23,173) | 92.254 (23,200) | 92.256 ± 0.082 |
+| | NEW | 92.803 (23,338) | 92.711 (23,315) | 92.655 (23,301) | 92.695 (23,311) | 92.747 (23,324) | 92.722 ± 0.056 |
+| Open dev harmful / 1k (relabeled) | OLD | 20.591 (92/4,468) | 20.143 (90) | 21.486 (96) | 20.367 (91) | 22.605 (101) | 21.038 ± 1.013 |
+| | NEW | 23.058 (103/4,467) | 21.491 (96) | 21.939 (98) | 22.386 (100) | 22.610 (101) | 22.297 ± 0.605 |
+| UD-EWT dev harmful / 1k | OLD | 21.867 (100/4,573) | 22.305 (102) | 20.774 (95) | 24.054 (110) | 21.867 (100) | 22.174 ± 1.194 |
+| | NEW | 23.414 (107/4,570) | 23.195 (106) | 23.632 (108) | 22.101 (101) | 22.976 (105) | 23.063 ± 0.591 |
+| Open dev accuracy % (relabeled, context) | OLD | 96.054 | 96.016 | 95.952 | 96.020 | 95.936 | 95.996 ± 0.050 |
+| | NEW | 96.375 | 96.325 | 96.367 | 96.371 | 96.298 | 96.347 ± 0.034 |
+
+Difference table (NEW minus OLD, mean of 5 seeds; both interval types; where the shipped-seed difference falls among the 25
+seed-pair differences).
+
+| Metric | Mean difference | Welch t 95% (df) | Seed + document bootstrap 95% | Contains 0? | Shipped-seed difference | Rank of 25 | Pairs >= shipped / <= 0 |
+| --- | ---: | --- | --- | --- | ---: | --- | --- |
+| UD agreement (points) | +0.466 | [+0.362, +0.570] (7.1) | [+0.303, +0.624] | no (better) | +0.441 | 15 | 64% / 0% |
+| Open harmful / 1k | +1.258 | [-0.008, +2.525] (6.5), p = 0.051 | [-1.021, +3.433] | yes (barely for Welch) | +2.467 | 3 | 12% / 12% |
+| UD harmful / 1k | +0.890 | [-0.577, +2.357] (5.9), p = 0.187 | [-1.594, +3.236] | yes | +1.546 | 7 | 32% / 24% |
+| Open accuracy (points) | +0.351 | [+0.288, +0.415] (7.0) | [+0.216, +0.486] | no (better) | +0.320 | 17 | 68% / 0% |
+
+Reading. The shipped open-dev pair is a large draw (rank 3 of 25; 12% of the seed pairs are as large, 12% are at or below 0) and
+the shipped UD pair a middling one (rank 7 of 25). The standard deviation over seeds of one arm (0.6 to 1.2 per 1,000, 3 to 5
+errors) is as large as the shipped difference. The agreement gain on UD-EWT dev (+0.47 points) and the open dev accuracy gain
+(+0.35 points) are positive in all 25 seed pairs. The diagnosis does **not** show that the harmful rate is unchanged: both mean
+differences are positive (+1.26, +0.89), the Welch interval on open dev only just contains 0, and 5 seeds give low power (the
+standard error of the open-dev difference is about 0.55 per 1,000). The honest reading is a change of 0 to about +2.5 harmful
+errors per 1,000 decisions (0 to about 11 errors on open dev), best estimate about +1 per 1,000, next to a clear gain in agreement.
+
+Error diff at the shipped seeds (old scored on the new labels). A new error is wrong in the new and right in the old model, a
+fixed error the reverse.
+
+| Set | New errors | Fixed | Both wrong | Old total | New total |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Open dev | 24 | 13 | 79 | 92 | 103 |
+| UD-EWT dev | 28 | 21 | 79 | 100 | 107 |
+| Pooled | 52 | 34 | 158 | 192 | 210 |
+
+Pattern findings (all post hoc and uncorrected, hypotheses only).
+
+- The new errors are diffuse. 48 new-error forms: 9 (19%) have a training token whose tag a correction changed, against 8 of 33 fixed
+  forms (24%) and 546 of 5,169 (11%) of all dev gold noun and verb forms: about 80% of the new errors are on forms no correction
+  touched. None of the 24 new open-dev errors is on a relabeled dev token (79 of 8,353 gold noun and verb tokens, 0.9%, were
+  relabeled), so the relabeling of the dev file cannot explain the G2a rise (the UD labels did not change at all).
+- Churn is symmetric across seeds: tokens with a harmful error in at least 3 more of the five new-arm models than of the five old-arm
+  models number 11 on open dev, the reverse 12; on UD 16 and 12. Mean harmful errors per model over five seeds: open 94.0 old and
+  99.6 new, UD 101.4 old and 105.4 new. The same form can churn in both directions (`look` is a new error twice and a fixed one
+  once on UD).
+- Direction: the new errors are 30 gold VERB answered NOUN and 22 gold NOUN answered VERB, the fixed ones 12 and 22 (Fisher p =
+  0.050). The new model tends to lose base-form verbs against nouns (`look`, `reply`, `type`, `focus`, `worry`, `move`, `mind`).
+  Of nine pattern tests, the only one with p < 0.05 is "after a determiner, adjective, number or possessive" (15 new against 3
+  fixed, p = 0.031); it does not survive a correction for nine tests.
+- The only rule with an association is `adj:prenominal-ing` (the adjudicated ADJ>VERB and ADJ>NOUN moves of -ing words, 645 of the
+  5,640 changed training tags): present in 7 of 48 new-error forms against 113 of 5,169 dev noun and verb forms (enrichment 6.67,
+  Fisher p = 0.0001), but 3 of 33 fixed-error forms (new against fixed p = 0.35). The enrichment is confounded with morphology (the
+  rule touches only -ing words): conditional on -ing forms, 7 of 15 touched forms are new errors (p = 0.058) against 3 of 11 fixed
+  (25% base rate). So the association is **weak and confounded**; touched -ing forms are over-represented among errors of both kinds.
+  Every other rule has at most one error form (`adj:no-detector` 3 new, 3 fixed; `adj:propn-boundary` 1 and 1).
+
+Prenominal-ing ablation (**exploratory, post hoc, not adopted**: a test of the one hypothesis the error diff suggested, with
+nothing chosen by it). The 861 correction rows of `adj:prenominal-ing` that touch development or training data (MASC 518, silver
+170, open train 151, open dev 22; the 17 open-test rows were excluded, so no held-out file was touched or needed) were reversed in
+a scratch worktree, the lexicon rebuilt (339,819 entries) and the same five seeds trained and scored on the same new dev labels.
+The ablated model is not committed and was not used for anything.
+
+| Metric | ABL per seed (20260101, 11, 12, 13, 14) | ABL mean ± sd | OLD mean | NEW mean | ABL − NEW (Welch 95%; bootstrap 95%) | ABL − OLD (Welch 95%; bootstrap 95%) |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| UD agreement % | 92.711, 92.779, 92.683, 92.616, 92.747 | 92.707 ± 0.063 | 92.256 | 92.722 | −0.015 ([−0.102, +0.071]; [−0.156, +0.112]) | +0.451 ([+0.344, +0.558]; [+0.283, +0.628]) |
+| Open harmful / 1k | 20.148 (90), 21.939 (98), 21.491 (96), 22.386 (100), 20.148 (90) | 21.222 ± 1.031 | 21.038 | 22.297 | −1.075 ([−2.360, +0.211]; [−3.315, +1.256]) | +0.184 ([−1.307, +1.675]; [−2.270, +2.528]) |
+| UD harmful / 1k | 22.538 (103), 23.851 (109), 20.788 (95), 21.663 (99), 22.101 (101) | 22.188 ± 1.133 | 22.174 | 23.063 | −0.875 ([−2.272, +0.521]; [−3.145, +1.552]) | +0.015 ([−1.683, +1.713]; [−2.614, +2.749]) |
+| Open accuracy % | 96.348, 96.329, 96.302, 96.298, 96.352 | 96.326 ± 0.025 | 95.996 | 96.347 | −0.021 ([−0.065, +0.023]; [−0.105, +0.065]) | +0.330 ([+0.269, +0.391]; [+0.186, +0.464]) |
+
+Without the `prenominal-ing` corrections the harmful rate returns to the old level (open 21.22 against 21.04, UD 22.19 against
+22.17) and the accuracy gain stays, but the difference to the new model is within noise (both intervals contain 0), so this is
+consistent with a small `prenominal-ing` effect and does not establish one. The ablation is **not adopted**.
+
+Caveats (as in the diagnosis).
+
+- Post hoc: designed after the G2 failure had been seen; the pattern and rule tests are uncorrected and generate hypotheses only.
+- Five seeds per arm is little: the Welch degrees of freedom are about 6 to 8, the open-dev interval is borderline and a real rise of
+  about +1 per 1,000 (4 to 6 errors) is **not excluded**. The shuffle seed is one source of variance; the lexicon and data also
+  differ between the arms, and the documents are covered by the bootstrap, which resamples the five observed seeds (a coarse
+  distribution), so the Welch interval is the primary statement.
+- The decision sets of the two arms differ slightly (the lexicon candidates), so rates rather than counts are compared, as in the
+  gates. The corpora have no lemma column; form statistics use the lower-cased form. The error diff uses one seed pair, so its
+  token-level patterns are descriptive.
+
+### Decision and order of the following steps
+
+The owner accepted the retrained model on the basis of the diagnosis above: the harmful-rate rise at the shipped seed is within the
+seed noise, the agreement gain is real (+0.47 points on UD-EWT dev, Welch [+0.36, +0.57]), and the gain in open dev accuracy is
+real too. **This is an owner decision.** G2 remains FAILED as pre-registered; no gate text, verdict or threshold was altered; the
+diagnosis did not replace a gate. The held-out step is therefore run for the retrained model as a new record and not as an erratum
+of the earlier one: first `thresholds` (development data only, with the two frozen harmful counts of `Program.cs` set to the
+retrained model's development figures), then `evaluate` exactly once, with no tuning of anything. G4 (the build) can become green
+once the held-out record is reissued; the G4 row above keeps its original FAIL text and is annotated when that has happened.
 
 ## Run table
 
