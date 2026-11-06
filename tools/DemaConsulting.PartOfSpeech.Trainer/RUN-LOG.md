@@ -1173,6 +1173,74 @@ same SHA-256 for all five files); a second `apply` is refused; `make_corrections
 reverses the rows in a temporary copy and regenerates); the fix-tier linter finds 0 violations over all sources including the
 STE set; the check tier has 298 (the counts above).
 
+## Corpus cleanup C: results of the development gates (retrained model; verdict: G2 failed, stop rule applies)
+
+Procedure (exactly the pre-registered one; no option other than `--update-config` was used). `dotnet build -c Release` of the
+trainer (the project reference embeds the rebuilt lexicon), `train` with the shipped `training.json` (temperature still 6.727,
+irrelevant for the fit), `calibrate --update-config` (open dev with the corrected labels: minimum NLL at **T = 6.583**, was 6.727;
+ECE 0.222%, NLL 0.12232; gold v2 dev at that T: NLL 0.2589, ECE 2.41%), then `train --update-config --label "C retrained (frozen)"`
+(this wrote the weights, the `imageSha256` and the run-table row below), and `train --check` twice (both exit 0, the same image
+SHA-256). The library was rebuilt so that it embeds the new weights, and a second copy of the scratch tool (`dump-new`) was built
+from that tree.
+
+| Model | Old (a94abd0) | New (corpus cleanup C) |
+| --- | --- | --- |
+| Rows / weights | 119,632 / 290,862 | 116,448 / 281,682 |
+| Image (uncompressed) | 1,111,898 bytes | 1,077,990 bytes (1,053 KB) |
+| `weights.bin` (deflated) | 492,971 bytes (481 KB) | 477,899 bytes (467 KB) |
+| `imageSha256` | `68673a9ff48fea494991a82b6106b42e3cd63f9ef0c8c3fde4fc80477060f32a` | `dca810e400d6e5cf27cdbb126db810c4ead6aaa07bb410709f3cedb515da339d` |
+| Temperature | 6.727 | 6.583 |
+| Lexicon | 262,667 spellings / 339,880 entries (641,418 bytes) | 262,635 / 339,823 (639,617 bytes) |
+| Training | 6,285,552 steps, 7.8 s | 6,285,552 steps, 5.3 s (peak working set 271 MB) |
+
+Gate table (development data only; all figures from the scratch harness of the pre-registration, bootstrap by document, 1,000
+resamples, seed 20261104, 95% percentile intervals, differences paired):
+
+| Gate | Old model | New model | New minus old (paired) | Verdict |
+| --- | --- | --- | --- | --- |
+| **G1** UD-EWT dev agreement (mapped, 25,148 tokens) | 23,227 correct, 92.361 [91.803, 92.881] | 23,338 correct, **92.803** [92.252, 93.312] | **+0.441** [+0.243, +0.628] points | **PASS** (92.803 >= 92.361) |
+| **G2a** harmful per 1k, open dev, relabeled | 92 of 4,468 = **20.59** [15.62, 25.96] | 103 of 4,467 = **23.06** [17.53, 29.07] | +2.47 [0.00, +5.26] | **FAIL** (23.06 > 20.59) |
+| **G2b** harmful per 1k, UD-EWT dev | 100 of 4,573 = **21.87** [18.03, 26.19] | 107 of 4,570 = **23.41** [18.77, 28.59] | +1.55 [-1.50, +4.93] | **FAIL** (23.41 > 21.87) |
+| **G3** `check_conventions.py --tier fix --enforce` | - | exit 0, 0 violations in open train, dev, test, MASC, silver and STE | - | **PASS** |
+| **G4** `build.ps1` | - | not final, see below | - | open |
+
+Check tier (report only, unchanged by the gate): 298 = open train 95, dev 12, test 17, MASC 66, silver 106, STE 2 (251
+`be-participle-adj-not-gradable`, 26 `be-aux-passive`, 13 `infinitive-to`, 4 `be-passive-agent`, 2 `no-all-degree`, 2 `out-of-phrasal`).
+
+**Verdict.** G1 and G3 pass; **G2 fails on both of its parts** by the pre-registered point-estimate rule. The stop rule applies:
+nothing is tuned or re-selected, `thresholds` and `evaluate` were not run, and no held-out file was read. The frozen figures
+`FrozenOpenHarmful` and `FrozenGoldHarmful` of `thresholds` (Program.cs) are not changed. The failure is stated plainly; the
+interval of the paired difference of G2a touches 0 (lower bound 0.000) and that of G2b contains 0, and the 11 and 7 extra harmful
+errors are of the size that the seed spread of E0 showed on the old dev labels (106 to 113 harmful for three seeds of one
+configuration), but the gate was fixed as a point-estimate rule and is reported as failed, not re-interpreted.
+
+Informational figures (no gate; same harness or `eval`):
+
+| Set | Old model | New model |
+| --- | --- | --- |
+| Open dev, own labels: accuracy | 96.07% (old labels), 96.05% [95.24, 96.61] on the relabeled dev | **96.37%** [95.60, 96.89]; paired difference on the relabeled dev +0.320 [+0.173, +0.462] points |
+| Open dev: ambiguous-token accuracy, NLL, ECE | 95.28%, 0.1328, 0.35% (old labels) | 95.64% (17,628 tokens), 0.1223, 0.22% |
+| Gold v2 dev (labels unchanged; 2,017 targets) | 95.34%, harmful 9 of 611 = 14.7 per 1k, NLL 0.2423, ECE 2.37% | 94.99%, harmful 14 of 611 = 22.9 per 1k, NLL 0.2589, ECE 2.41% |
+| Pooled harmful, open dev + gold v2 dev | 103 of 5,095 = 20.2 per 1k (old labels) | 117 of 5,078 = 23.0 per 1k |
+| Gold outside the decoder's candidates (open dev) | 40 | 33 |
+
+Where the extra harmful errors are (diagnostic, development data only, no model or setting is chosen with it). On the relabeled
+open dev 79 harmful errors are shared by both models, 13 occur only in the old and 24 only in the new model (new: 13 gold VERB
+answered NOUN and 11 gold NOUN answered VERB, among them `dabbling` 2, `feeding`, `nibble`, `hit`, `use`, `worry`, `move`, `mind`);
+both models keep the same hard types (`pay`, `learning`, `diving`, `swimming`, `foraging`, `check`, `mash`, `gamify`). On UD-EWT dev
+79 are shared, 21 only old, 28 only new (17 gold VERB answered NOUN, e.g. `reply` 3, `look` 2, `focus`, `rip`, `type`, `cancel`;
+11 the other way). The retrained model loses mostly on base-form verbs against nouns (`reply`, `look`, `type`) on UD. The corrections
+moved many conventions at once (ADJ>VERB 1,034, NOUN>PROPN 644, VERB>AUX 540, ADV>ADJ 467, PRON>DET 305 of the 9,285 changes);
+whether any of them explains the loss was not tested, and nothing here is used to retune.
+
+Consequences recorded for the pull request. (1) The held-out record (`docs/evaluation/test-results.*`, `operating-points.json`,
+`confidence-thresholds.md`) still describes the old model and the old dev files; the tests that pin it
+(`PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs`, two `OperatingPointsFile_Load_CommittedSelection_*` tests)
+therefore fail on this branch by design, and G4 cannot be green until the held-out record is reissued or the model is not the
+shipped one. (2) The development gates being failed, reissuing it is not authorized by the pre-registration. (3) The golden
+hashes of the small trainer runs (`ModelTrainerTests`) and the size figures of the documents were re-pinned to the retrained
+files; they carry no judgment.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
@@ -1237,3 +1305,4 @@ Every row is one run, scored on open dev and gold v2 dev only, at the run's own 
 | E7 final-candidate (S=8 prune 8 h19 6ep, T fitted) | sources=open:2,masc:1,silver:1 epochs=6 hashBits=19 minCount=1 prune=8 S=8 T=6.727 restriction=History history=Predicted seed=20260101 | 96.07 | 95.28 | 94 | 21.0 | 95.34 | 9 | 20.2 | 0.1328 | 0.35 | 119632 | 290862 | 1086 | 481 | 7.2 |
 | E8 M1 (glossary features, hints unused) | eval g_m1.bin | 95.85 | 94.94 | 111 | 24.8 | 95.19 | 9 | 23.6 | 0.1339 | 0.35 | 111046 | 266201 | 997 | - | 0.0 |
 | F final (frozen config, T=6.727) | sources=open:2,masc:1,silver:1 epochs=6 hashBits=19 minCount=1 prune=8 S=8 T=6.727 restriction=History history=Predicted seed=20260101 | 96.07 | 95.28 | 94 | 21.0 | 95.34 | 9 | 20.2 | 0.1328 | 0.35 | 119632 | 290862 | 1086 | 481 | 7.8 |
+| C retrained (frozen) | sources=open:2,masc:1,silver:1 epochs=6 hashBits=19 minCount=1 prune=8 S=8 T=6.583 restriction=History history=Predicted seed=20260101 | 96.37 | 95.64 | 103 | 23.1 | 94.99 | 14 | 23.0 | 0.1223 | 0.22 | 116448 | 281682 | 1053 | 467 | 5.4 |
