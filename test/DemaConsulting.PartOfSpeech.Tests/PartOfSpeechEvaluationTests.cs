@@ -43,6 +43,11 @@ public class PartOfSpeechEvaluationTests
     private const string EvaluationReadmePath = "docs/evaluation/README.md";
 
     /// <summary>
+    ///     The disclosure paragraph that the generated reports carry.
+    /// </summary>
+    private const string DisclosurePath = "docs/evaluation/disclosure.md";
+
+    /// <summary>
     ///     The source of the namespace reference that is packed with the library.
     /// </summary>
     private const string NamespaceDocPath = "src/DemaConsulting.PartOfSpeech/NamespaceDoc.cs";
@@ -83,7 +88,7 @@ public class PartOfSpeechEvaluationTests
     /// </summary>
     private static readonly string[] RecordFiles =
     {
-        EvaluationReadmePath, SelectionReportPath, OperatingPointsPath, ReportPath, ResultsPath
+        EvaluationReadmePath, DisclosurePath, SelectionReportPath, OperatingPointsPath, ReportPath, ResultsPath
     };
 
     /// <summary>

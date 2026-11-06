@@ -945,10 +945,46 @@ public class HeldOutEvaluationTests
         var report = EvaluationReport.RenderDev(first);
         Assert.Contains(OperatingPointRule.Id, report, StringComparison.Ordinal);
         Assert.Contains("## Selected operating points", report, StringComparison.Ordinal);
-        Assert.Contains(EvaluationReport.SecondLookNotice + "\n\n## Model and data\n", report, StringComparison.Ordinal);
-        Assert.DoesNotContain("\r", report, StringComparison.Ordinal);
+        Assert.Contains("the only thresholds that the held-out evaluation applies.\n\n## Model and data\n", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("second look", report, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("\n\n\n", report, StringComparison.Ordinal);
+
+        // A disclosure is placed directly after the introduction and before the first section; no disclosure leaves the rest unchanged
+        const string Notice = "A fixture notice that belongs to one evaluation.";
+        var disclosed = EvaluationReport.RenderDev(first, Notice);
+        Assert.Contains(Notice + "\n\n## Model and data\n", disclosed, StringComparison.Ordinal);
+        Assert.Equal(report, disclosed.Replace(Notice + "\n\n", string.Empty));
+        Assert.Equal(report, EvaluationReport.RenderDev(first, "  \n"));
+        Assert.DoesNotContain("\r", report, StringComparison.Ordinal);
         Assert.EndsWith("|\n", report, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Validates that the disclosure file is read as one paragraph whose line breaks collapse to single spaces, and that a missing or
+    ///     blank file means no notice.
+    /// </summary>
+    [Fact]
+    public void EvaluationReport_ReadDisclosure_CollapsesLineBreaksAndTreatsMissingOrBlankAsNone()
+    {
+        // Arrange
+        var folder = Path.Combine(Path.GetTempPath(), "pos-disclosure-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var wrapped = Path.Combine(folder, "wrapped.md");
+            File.WriteAllText(wrapped, "First line of the notice,\r\n  second line, third\nline.\n\n");
+            var blank = Path.Combine(folder, "blank.md");
+            File.WriteAllText(blank, " \r\n\t\n");
+
+            // Act and Assert
+            Assert.Equal("First line of the notice, second line, third line.", EvaluationReport.ReadDisclosure(wrapped));
+            Assert.Null(EvaluationReport.ReadDisclosure(blank));
+            Assert.Null(EvaluationReport.ReadDisclosure(Path.Combine(folder, "missing.md")));
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
     }
 
     /// <summary>
@@ -1240,7 +1276,7 @@ public class HeldOutEvaluationTests
 
         // The report is deterministic, has one summary for each set and contains no treebank word, sentence id or document
         var selection = Selection();
-        string Render()
+        string Render(string? disclosure = null)
         {
             var results = new ResultsData { ModelImageSha256 = ModelHash, SelectionSha256 = "dd", RuleId = OperatingPointRule.Id, Resamples = 50, Seed = 1, Runtime = "fixture runtime", TokensPerSecond = 12345 };
             results.Inputs.Add(new InputRecord { Name = "fixture", Sha256 = "ee" });
@@ -1249,7 +1285,7 @@ public class HeldOutEvaluationTests
                 results.Sets.Add(EvaluationReport.Summarize(name, tokens, selection.SelectedPoints, 50, 1));
             }
 
-            return EvaluationReport.RenderResults(results, scores);
+            return EvaluationReport.RenderResults(results, scores, disclosure);
         }
 
         var report = Render();
@@ -1260,9 +1296,17 @@ public class HeldOutEvaluationTests
         Assert.EndsWith("|\n", report, StringComparison.Ordinal);
         Assert.DoesNotContain("\r", report, StringComparison.Ordinal);
         Assert.Contains("## Operating points on the held-out sets", report, StringComparison.Ordinal);
-        Assert.Contains(EvaluationReport.SecondLookNotice + "\n\n## Run\n", report, StringComparison.Ordinal);
+        Assert.Contains("never merged into a headline number.\n\n## Run\n", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("second look", report, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("12,345 tokens per second", report, StringComparison.Ordinal);
         Assert.Contains(HeldOutEvaluator.Names.UdMapped, report, StringComparison.Ordinal);
+
+        // A disclosure is placed directly after the introduction and before the run section; no disclosure leaves the rest unchanged
+        const string Notice = "A fixture notice that belongs to one evaluation.";
+        var disclosed = Render(Notice);
+        Assert.Contains("never merged into a headline number.\n\n" + Notice + "\n\n## Run\n", disclosed, StringComparison.Ordinal);
+        Assert.Equal(report, disclosed.Replace(Notice + "\n\n", string.Empty));
+        Assert.Equal(report, Render(string.Empty));
 
         // Every set and view has its table of precision and recall by tag, with intervals
         foreach (var (name, _) in EvaluationReport.Views(scores))
@@ -1596,20 +1640,24 @@ public class HeldOutEvaluationTests
     }
 
     /// <summary>
-    ///     Validates that the committed evaluation reports carry the second-look notice at the position where the generator puts it,
-    ///     so that a regeneration is byte-consistent with the committed text and each record discloses the context on its own.
+    ///     Validates that the committed evaluation reports carry the committed disclosure (<c>docs/evaluation/disclosure.md</c>) at the
+    ///     position where the generator puts it, exactly once, so that a regeneration is byte-consistent with the committed text and
+    ///     each record discloses the context on its own.
     /// </summary>
     [Theory]
     [InlineData("docs/evaluation/test-results.md", "## Run\n")]
     [InlineData("docs/evaluation/confidence-thresholds.md", "## Model and data\n")]
-    public void DataGuard_CommittedReports_CarrySecondLookNoticeWhereGeneratorPutsIt(string path, string nextHeading)
+    public void DataGuard_CommittedReports_CarryCommittedDisclosureWhereGeneratorPutsIt(string path, string nextHeading)
     {
         // Arrange
         var report = File.ReadAllText(DataFiles.Repository(path)).Replace("\r\n", "\n");
+        var disclosure = EvaluationReport.ReadDisclosure(DataFiles.Repository("docs/evaluation/disclosure.md"));
 
         // Act and Assert
-        Assert.Contains("\n\n" + EvaluationReport.SecondLookNotice + "\n\n" + nextHeading, report, StringComparison.Ordinal);
-        Assert.Equal(2, report.Split(EvaluationReport.SecondLookNotice).Length);
+        Assert.NotNull(disclosure);
+        Assert.False(string.IsNullOrWhiteSpace(disclosure));
+        Assert.Contains("\n\n" + disclosure + "\n\n" + nextHeading, report, StringComparison.Ordinal);
+        Assert.Equal(2, report.Split(disclosure).Length);
     }
 
     /// <summary>

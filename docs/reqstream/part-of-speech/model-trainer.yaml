@@ -368,18 +368,24 @@ sections:
 
           - id: PartOfSpeech-ModelTrainer-EvaluationReport-SecondLookNotice
             title: >-
-              Each standalone evaluation record (the Markdown report of the development selection and the Markdown
-              report of the held-out run) shall state that it belongs to the second held-out evaluation of the model
-              family (a disclosed second look) and point to the run log, the text being generated and not typed.
+              The Markdown report of the development selection and the Markdown report of the held-out run shall carry,
+              directly after their introduction, the disclosure paragraph that is read from the committed file
+              `docs/evaluation/disclosure.md` (which for the embedded model states that the record belongs to the
+              second held-out evaluation of the model family, a disclosed second look, and points to the run log),
+              and shall carry no notice when the file is missing or blank, the text being read and not typed into the
+              renderer.
             justification: |
               A record is read on its own. A held-out result that does not say that the held-out sets were already
-              seen once for the sibling model would read as a first look at unseen data. The notice is part of the
-              generated Markdown only, so the JSON artifacts and their pinned hashes do not change, and the committed
-              reports carry the text at the position where a regeneration puts it.
+              seen once for the sibling model would read as a first look at unseen data. The text describes one model
+              and one evaluation, so it lives in a reviewable file that must be revised or removed for any later
+              evaluation of a different model, and the generic renderer cannot give a later record a stale claim. The
+              notice is part of the generated Markdown only, so the JSON artifacts and their pinned hashes do not
+              change, and the committed reports carry the text at the position where a regeneration puts it.
             tests:
               - HeldOutEvaluator_Score_FixtureSets_ViewsAndReports
               - DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent
-              - DataGuard_CommittedReports_CarrySecondLookNoticeWhereGeneratorPutsIt
+              - EvaluationReport_ReadDisclosure_CollapsesLineBreaksAndTreatsMissingOrBlankAsNone
+              - DataGuard_CommittedReports_CarryCommittedDisclosureWhereGeneratorPutsIt
 
           - id: PartOfSpeech-ModelTrainer-EvaluationReport-JsonComplete
             title: >-

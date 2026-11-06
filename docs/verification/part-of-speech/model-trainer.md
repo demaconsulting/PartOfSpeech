@@ -165,7 +165,8 @@ same results or a treebank word into a report, or lets a stop condition pass.
   fails only the coverage floor is skipped), `OperatingPointRule_Select_BoundariesAndNone_AreNotRelaxed` (a target and a
   floor met exactly qualify, a hair above does not, none qualifies, nothing answered never qualifies) and
   `DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent` (the selection, its report and its artifact are
-  deterministic and consistent with the rule; the report carries the second-look notice).
+  deterministic and consistent with the rule; the report carries a given disclosure after its introduction and none
+  otherwise).
 - **Held-out metrics and reports**: `HeldOutSets_ParseProbe_Rows_BracesRemovedAndValidated`,
   `HeldOutSets_ParseProbe_NegativeOrNonNumericTargetIndex_ThrowsDataError` (a negative, signed, fractional, empty,
   non-numeric or overflowing target index is an `InvalidDataException` that names the row, never an index error),
@@ -181,10 +182,12 @@ same results or a treebank word into a report, or lets a stop condition pass.
   `EvaluationReport_Tripwires_EachConditionFiresAlone` (each stop condition fires alone, at its boundary),
   `HeldOutEvaluator_Score_FixtureSets_ViewsAndReports` (every view of every set, the judgment equal to the development
   judgment, a deterministic report with a tag table for every view and without any treebank word, sentence id or
-  document, and the second-look notice between the introduction and the run section),
-  `DataGuard_CommittedReports_CarrySecondLookNoticeWhereGeneratorPutsIt` (a theory over the two committed Markdown
-  reports: each has the generated notice exactly once, in the position of the generator, so a regeneration is
-  byte-consistent),
+  document, and a given disclosure between the introduction and the run section, none when it is null or blank),
+  `EvaluationReport_ReadDisclosure_CollapsesLineBreaksAndTreatsMissingOrBlankAsNone` (the disclosure file is one
+  paragraph with its line breaks collapsed; a missing or blank file means no notice),
+  `DataGuard_CommittedReports_CarryCommittedDisclosureWhereGeneratorPutsIt` (a theory over the two committed Markdown
+  reports: each has the text of the committed `docs/evaluation/disclosure.md` exactly once, in the position of the
+  generator, so a regeneration is byte-consistent),
   `HeldOutEvaluator_Throughput_Fixture_IsPositive`, `EvaluationReport_WriteDump_Tokens_HeaderAndRows` and
   `OperatingPointsFile_FormatResults_RoundTrip`.
 - **Command-line safety**: `OutputGuard_EnsureExplicitOutput_ExperimentWithoutOutput_Throws` (a theory: no output and an

@@ -29,6 +29,7 @@ them and states what they do not show.
 | [operating-points.json](operating-points.json) | The selection as data. The `evaluate` command refuses to read a held-out file without it. |
 | [test-results.md](test-results.md) | The one held-out run of the embedded model, every set and view, and the hashes of the inputs. |
 | [test-results.json](test-results.json) | The same results as data; it is also the marker that the run was done. |
+| [disclosure.md](disclosure.md) | The one paragraph that both generated reports carry after their introduction (here: the disclosed second look). The `thresholds` and `evaluate` commands read it; a missing or blank file means no notice. It describes the embedded model and this evaluation only, so it must be revised or removed before an evaluation of a different model is rendered. |
 
 ## How the Evaluation Was Done
 
