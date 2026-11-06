@@ -3,7 +3,8 @@
   python tools/data/tests/run_trx.py [--out artifacts/python-data-tools.trx] [--pattern "test_corrections_*.py"]
 
 The discovery is the one of `python -m unittest discover -s tools/data/tests -p PATTERN`; the exit code is 0 when every test passed
-(a skipped test is neither a pass nor a failure) and 1 otherwise. The TRX is written in both cases. A test result is named by the
+(a skipped test is neither a pass nor a failure) and 1 otherwise, also when the pattern finds no test (nothing is written then:
+empty evidence must not look like a pass). The TRX is written in both other cases. A test result is named by the
 method name (`testName`), which is what a requirement lists under `tests:`; the class is `<module>.<class>`.
 """
 import argparse
@@ -113,6 +114,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
     sys.path.insert(0, HERE)
     suite = unittest.defaultTestLoader.discover(HERE, pattern=args.pattern, top_level_dir=HERE)
+    if suite.countTestCases() == 0:
+        # No evidence is better than empty evidence: a pattern that finds nothing must not look like a pass.
+        print("error: no tests found for the pattern %r in %s; no TRX written" % (args.pattern, HERE), file=sys.stderr)
+        return 1
     result = unittest.TextTestRunner(resultclass=Recorder, verbosity=1).run(suite)
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     tree = ElementTree.ElementTree(trx_element(result.records))
