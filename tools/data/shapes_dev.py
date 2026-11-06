@@ -21,8 +21,9 @@ Commands (all take `--work W`; `--data-dir D` replaces the repository's data fol
 
   python tools/data/shapes_dev.py --work W exclusions [--check ID_OR_URL ...]   # used-document index W/exclusions.tsv; checks the draft
   python tools/data/shapes_dev.py --work W tokenize [--cmd "COMMAND PREFIX"]    # shells out to the C# trainer command shapes-tokenize
-  python tools/data/shapes_dev.py --work W candidates [--no-ud] [--target 120] [--over 1.6] [--lemma-cap 4]
-                                                                                # position and lexicon pre-selection + leakage filters
+  python tools/data/shapes_dev.py --work W candidates [--no-ud] [--target 120] [--over 1.6] [--shape-over SHAPE=FACTOR ...]
+                                                     [--lemma-cap 4] [--shape-lemma-cap SHAPE=N ...] [--control-pool 100]
+                                                                                # cleanliness, position and lexicon pre-selection + leakage filters
   python tools/data/shapes_dev.py --work W export [--size 150] [--rows 3500]    # blind batches, private/key.tsv, batches/status.tsv
   python tools/data/shapes_dev.py --work W check-batches                        # 3 columns, tokens equal the key, no leak
   python tools/data/shapes_dev.py --work W validate-output --batch b001 --model opus   # (or --all); updates batches/status.tsv
@@ -38,9 +39,29 @@ The tokenizer command is `dotnet run -c Release --project tools/DemaConsulting.P
 separated by single spaces) per output line, in the same order. The tokens therefore follow the corpus convention by
 construction. The data test of the repository asserts that the library tokenizer reproduces every stored token.
 
-Decision rule (pre-registered in data/eval/shapes-dev/README.md before any label was seen; see `decide_item`). For the judged
+Cleanliness filter (candidate stage, real sentences only; see `noise_reason` for the exact rules; counts are reported per rule as
+`noise-<rule>` in private/candidates-report.md). A sentence is dropped when it does not start with an upper-case letter or end in
+`.`, `!` or `?`; has a character outside ASCII letters, digits, space and `. , ; : ' " ( ) ? ! $ % & / # + = -`; has slash or doubled
+punctuation junk, a broken hyphen word, a stray apostrophe or a lone lower-case letter; has unbalanced brackets or quotes; is a list
+item or citation; repeats a word or a token trigram three times; is all capitals or a title (more than half of the words capitalized);
+is a short caption without a clause; or has a lower-case alphabetic word that is in no word list (every lower-cased word form of
+open/train.tsv and masc/masc.tsv, read only as a spelling list, plus the lexicon spellings; capitalized non-initial tokens, tokens with
+a digit and abbreviations are exempt).
+
+Shape pre-selection (positions and lexicon only, never the class): n-measure needs the target (lower case) right after a digit number,
+`half` or a number word (not `several`), no label word (`No.`, `Type`, `Section` ...) before the number, and no noun-capable word (or
+adjective plus noun-capable word) after the target, so `two machine guns` and `1860 forest planting` do not qualify; units
+and quantity nouns come first. v-after-modal needs a modal or `to` right before the target. Per shape at most ceil(target * over)
+targets (`--shape-over SHAPE=FACTOR` replaces the factor of a thin shape) with at most `--lemma-cap` per lemma; per shape `--control-pool`
+control candidates from the lemmas of that shape's targets, at most 2 per lemma.
+
+Decision rule (pre-registered in data/eval/shapes-dev/README.md before any label was seen; see `decide_item` and `frame_mismatch`). For the judged
 word (the target): different tags -> drop the sentence (counted per shape); the same tag but a class other than the intended one
-(the shape's class for a `target`, the other class for a `control`) -> drop, counted as `class-mismatch`; otherwise keep. Every
+(the shape's class for a `target`, the other class for a `control`) -> drop, counted as `class-mismatch`; the intended class but a
+target outside the frame of its shape (only for a `target`, by the tags both labelers gave the neighbor tokens: n-compound-head needs
+NOUN or PROPN before; n-measure needs NUM before and no NOUN, PROPN or ADJ+noun after; n-subject-initial and v-imperative-initial need
+token 0, where the class Noun is enough because the shape tests the noun reading in a verb-biased position; v-after-modal needs AUX or
+PART before) -> drop, counted as `frame-mismatch`; otherwise keep. Every
 other token: the same tag -> that tag, `unanimous`; different tags -> `disputed`, the tag written is the one of the first labeler
 (the `opus` tagger), a fixed tie-break; flags only where both agree. The target is never disputed. Confidence is recorded and unused.
 
@@ -81,6 +102,7 @@ TARGET_PER_SHAPE = 120
 OVER_COLLECT = 1.6
 LEMMA_CAP = 4
 CONTROL_LEMMA_CAP = 2
+CONTROL_POOL = 100             # control candidates per shape (the final set keeps those whose lemma a kept target of the shape has)
 AUTHORED_SHARE = 0.30
 CONTROLS = 100
 MIN_TOKENS, MAX_TOKENS = 3, 30
@@ -123,10 +145,16 @@ CONJUNCTIONS = frozenset("and or but nor if when while that which because althou
 FOLLOWING_ADVERBS = frozenset("not never always only all both each any also then".split())
 NUMBER_WORDS = frozenset("one two three four five six seven eight nine ten eleven twelve fifteen twenty thirty forty fifty sixty "
                          "seventy eighty ninety hundred thousand million".split())
-QUANTITY_WORDS = frozenset("another several few many couple dozen half".split())
+QUANTITY_WORDS = frozenset(["half"])        # `several`, `few`, `many`, `another` are not numbers: no measure frame
+LABEL_WORDS = frozenset("no no. type section figure fig fig. table step para paragraph chapter part item number article page rule class "
+                        "grade form title appendix model mark mil series volume vol vol. line group".split())
 UNITS = frozenset("pound ounce cup drop pinch load round turn step inch foot yard mile gallon pint quart bushel degree stone "
-                  "dose pack bar piece slice sheet roll box bag can jar head bunch handful teaspoon tablespoon".split())
+                  "dose pack bar piece slice sheet roll box bag can jar head bunch handful teaspoon tablespoon second minute point "
+                  "shot pass cut count bolt strip stroke grain pair set bundle batch bale block case chain rod link mark mil dash "
+                  "stick tray pan sack cord ton gram barrel share bit lot fold strand span lap tier layer coat".split())
+QUANTITY_OF = frozenset("of per each apiece long wide deep high thick apart".split())   # a counted noun right before these is a quantity
 BASE_FORM_SHAPES = ("v-imperative-initial", "v-after-modal")
+FUNCTION_WORDS = DETERMINERS | PREPOSITIONS | AUXILIARIES | CONJUNCTIONS | OBJECT_PRONOUNS | frozenset("not to as so than too only also".split())
 
 
 # ---------------------------------------------------------------- small helpers
@@ -355,6 +383,133 @@ def _command_tokenize(args):
     return 0
 
 
+# ---------------------------------------------------------------- sentence cleanliness (candidate stage)
+
+# Pre-registered rules of the cleanliness filter (they drop OCR and extraction noise, titles, fragments and list items before any
+# shape rule or labeler sees a sentence). The first rule that fires names the drop reason (`noise-<rule>`).
+NOISE_RULES = ("start-end", "chars", "junk", "brackets", "enumeration", "citation", "repeat", "caps", "title", "short", "no-verb", "oov")
+ALLOWED_CHARS = re.compile(r"[A-Za-z0-9 .,;:'\"()?!$%&/#+=\-]*")            # printable ASCII without `* [ ] { } < > @ ^ _ ~ | \ `` and controls
+JUNK_PUNCT = ("'/", "!/", ":'", "./", "/.", ",,", "..", ";;", "::", " ,", " ;", " :", "( ", " )", "--", "/ ", " /")
+ENUMERATION = re.compile(r"^(?:\(?[A-Za-z0-9]{1,3}\)|[0-9]{1,3}[.)]|[A-Za-z]\.|[IVXivx]{2,4}\.)\s")
+HYPHEN_JUNK = re.compile(r"(?:(?<=\s)-\S|\S-(?=\s))")                         # ` -nitrogen`, `Husband- Callers` (a broken word)
+INNER_LABEL = re.compile(r"(?:^|\s)\((?:[a-z]|\d{1,2}|[ivx]{2,4})\)(?:\s|$)|\s\d{1,2}\.\s+[a-z]|\s\d{1,3}\.$")
+INITIALS = re.compile(r"(?<![A-Za-z.])[A-Z]\.\s")
+END_RE = re.compile(r"[.!?][\"')]?$")
+TITLE_SHARE = 0.5
+TITLE_MIN_WORDS = 4
+MIN_WORDS = 5
+
+
+def vocabulary_of(data_dir, lex=None):
+    """The spelling list of the OOV rule: every lower-cased word form in open/train.tsv and masc/masc.tsv plus the lexicon spellings.
+
+    The two training sets are read only as a word list (never as sentences to select from).
+    """
+    vocab = set(lex if lex is not None else lexicon_of(data_dir))
+    for parts in (("open", "train.tsv"), ("masc", "masc.tsv")):
+        path = os.path.join(data_dir, *parts)
+        if os.path.exists(path):
+            for sentence in common.read_corpus(path)[1]:
+                vocab.update(row[0].lower() for row in sentence["rows"])
+    return vocab
+
+
+def is_alpha_word(token):
+    """A token of letters only, possibly with inner hyphens or apostrophes (`water-tight`, `n't` stripped of its apostrophe)."""
+    return re.fullmatch(r"[A-Za-z]+(?:['-][A-Za-z]+)*", token.lstrip("'")) is not None
+
+
+def oov_tokens(tokens, vocab):
+    """The tokens that make a sentence suspect: alphabetic, spelled lower case in no word list.
+
+    Skipped: tokens with a digit or other non-letter, capitalized tokens that are not sentence initial (names, acronyms), and
+    abbreviations that end with a period. A hyphenated token is fine when it, or every part of it, is a known word.
+    """
+    found = []
+    seen_word = False
+    for token in tokens:
+        first, seen_word = not seen_word, seen_word or is_word(token)
+        if not is_alpha_word(token):
+            continue
+        if token[:1].isupper() and not first:
+            continue
+        low = token.lower().lstrip("'")
+        if low in vocab or all(part in vocab for part in re.split(r"[-']", low) if part):
+            continue
+        found.append(token)
+    return found
+
+
+def clause_evidence(tokens, lex):
+    """A short sentence is a clause, not a caption: an auxiliary, a word listed only as a verb, or an imperative start (a word
+    listed as a verb followed by a determiner, a pronoun or a preposition)."""
+    for i, token in enumerate(tokens):
+        low = token.lower()
+        if low in AUXILIARIES or (has_tag(lex, low, "VERB") and not has_tag(lex, low, "NOUN") and not has_tag(lex, low, "ADJ")):
+            return True
+    if len(tokens) >= 2 and has_tag(lex, tokens[0], "VERB"):
+        following = tokens[1].lower()
+        return following in DETERMINERS or following in PREPOSITIONS or following in OBJECT_PRONOUNS
+    return False
+
+
+def noise_reason(text, tokens, lex, vocab):
+    """The rule of NOISE_RULES (a string) that rejects a real sentence as noisy, or None when it is clean.
+
+    start-end    does not start with an upper-case letter, or does not end with `.`, `!` or `?` (a closing quote or bracket may follow)
+    chars        a character outside ASCII letters, digits, space and `. , ; : ' " ( ) ? ! $ % & / # + = -` (so also non-ASCII text,
+                 replacement characters and the degree sign: ASCII only keeps the OCR damage out; en and em dashes are dropped too)
+    junk         slash-punctuation junk (`'/`, `!/`, `:'`, `./`, `/.`), doubled or space-separated punctuation, a broken hyphen word
+                 (` -x`, `x- `), an apostrophe that does not follow a letter or digit, a lone lower-case letter other than `a`
+    brackets     unbalanced brackets or an odd number of double quotes
+    enumeration  starts as a list label (`(a)`, `1.`, `a.`, `ii.`) or holds an inner label such as ` (a) `, ` (2) `, ` (iv) `, ` 2. x`,
+                 or ends in a number and a period (a list item or a page number)
+    citation     an initial such as `M. ` (a reference list entry or a name line)
+    repeat       the same word twice in a row, or one token trigram three times
+    caps         at least three all-capital words that are more than half of the words
+    title        at least TITLE_MIN_WORDS words and more than TITLE_SHARE of them capitalized
+    short        fewer than MIN_WORDS alphabetic words and no clause evidence (see `clause_evidence`: a caption or a fragment)
+    no-verb      none of the tokens is listed as a verb or an auxiliary in the lexicon (a title or caption)
+    oov          a lower-case alphabetic token in no word list (see `oov_tokens`)
+    """
+    if not text[:1].isupper() or not END_RE.search(text):
+        return "start-end"
+    if not ALLOWED_CHARS.fullmatch(text):
+        return "chars"
+    if (any(junk in text for junk in JUNK_PUNCT) or re.search(r"(?<![A-Za-z0-9])'", text) or HYPHEN_JUNK.search(text)
+            or any(len(t) == 1 and t.islower() and t != "a" and t.isalpha() for t in tokens)):
+        return "junk"
+    depth = 0
+    for ch in text:
+        depth += (ch == "(") - (ch == ")")
+        if depth < 0:
+            break
+    if depth != 0 or text.count('"') % 2:
+        return "brackets"
+    if ENUMERATION.match(text) or INNER_LABEL.search(text):
+        return "enumeration"
+    if INITIALS.search(text):
+        return "citation"
+    lows = [t.lower() for t in tokens]
+    if any(a == b and is_alpha_word(a) for a, b in zip(lows, lows[1:])):
+        return "repeat"
+    if any(count >= 3 for count in collections.Counter(zip(lows, lows[1:], lows[2:])).values()):
+        return "repeat"
+    alpha = [t for t in tokens if is_alpha_word(t)]
+    upper = [t for t in alpha if len(t) >= 2 and t.isupper()]
+    if len(upper) >= 3 and 2 * len(upper) > len(alpha):
+        return "caps"
+    if len(alpha) >= TITLE_MIN_WORDS and sum(t[:1].isupper() for t in alpha) > TITLE_SHARE * len(alpha):
+        return "title"
+    if len(alpha) < MIN_WORDS and not clause_evidence(tokens, lex):
+        return "short"
+    if not any(has_tag(lex, t, "VERB") or has_tag(lex, t, "AUX") for t in alpha):
+        return "no-verb"
+    if oov_tokens(tokens, vocab):
+        return "oov"
+    return None
+
+
 # ---------------------------------------------------------------- lexicon and shape heuristics
 
 def lexicon_of(data_dir):
@@ -369,6 +524,11 @@ def is_noun_verb(lex, token):
     """The spelling is listed with both NOUN and VERB in the lexicon (the words the shapes are about)."""
     tags = lex.get(token.lower())
     return bool(tags) and "NOUN" in tags and "VERB" in tags
+
+
+def is_target_word(lex, token):
+    """A word the shapes can be about: listed with both NOUN and VERB, and no function word (`a`, `must`, `will`, `no` are listed so)."""
+    return is_noun_verb(lex, token) and token.lower() not in FUNCTION_WORDS and is_word(token)
 
 
 def is_word(token):
@@ -389,8 +549,40 @@ def lemma_of(token, lex):
 
 
 def is_quantity(token):
+    """A number written with digits (a fraction, a decimal) or a number word (one ... twenty, hundred ...) or `half`."""
     low = token.lower()
     return common.is_number(token) or low in NUMBER_WORDS or low in QUANTITY_WORDS
+
+
+def noun_capable(lex, token):
+    """The token may be a noun or a name: listed as a noun in the lexicon, or capitalized (a proper-looking word), and a real word."""
+    return is_word(token) and (has_tag(lex, token, "NOUN") or has_tag(lex, token, "PROPN") or token[:1].isupper())
+
+
+def measure_frame(tokens, i, lex):
+    """True when the word at `i` stands in a quantity frame: right after a number or number word, and not itself a modifier.
+
+    Required: a digit number, `half` or a number word (not `several`) right before the word, with no determiner before the number
+    (`The four functions`, `these five forces` are counted nouns of a definite phrase, no measure); a lower-case word that is a unit
+    or quantity noun (UNITS) or is followed by one of QUANTITY_OF (`2 sets of`, `3 per`, `4 feet long`; `one` only counts before a
+    unit, since `one end of` is no measure). Not a measure: a label before the number (`No. 2`,
+    `Type 3`, `Section 4`), a word that a following noun-capable word (or adjective plus noun-capable word) would continue as a
+    compound (`two machine guns`, `1860 forest planting`).
+    """
+    token = tokens[i]
+    if i < 1 or not is_quantity(tokens[i - 1]) or token != token.lower():
+        return False
+    if i >= 2 and (tokens[i - 2].lower() in LABEL_WORDS or tokens[i - 2].lower() in DETERMINERS):
+        return False
+    nxt = tokens[i + 1] if i + 1 < len(tokens) else ""
+    if lemma_of(token, lex) not in UNITS and (nxt.lower() not in QUANTITY_OF or tokens[i - 1].lower() == "one"):
+        return False
+    if nxt:
+        if noun_capable(lex, nxt):
+            return False
+        if has_tag(lex, nxt, "ADJ") and i + 2 < len(tokens) and noun_capable(lex, tokens[i + 2]):
+            return False
+    return True
 
 
 def follows_like_verb(lex, token):
@@ -409,7 +601,7 @@ def shape_hits(tokens, lex):
     n = len(tokens)
     for i, token in enumerate(tokens):
         low = token.lower()
-        if not is_noun_verb(lex, low) or not is_word(token):
+        if not is_target_word(lex, low):
             continue
         prev = tokens[i - 1] if i >= 1 else None
         nxt = tokens[i + 1] if i + 1 < n else None
@@ -421,12 +613,10 @@ def shape_hits(tokens, lex):
             if (nlow in DETERMINERS or nlow in PREPOSITIONS or nlow in OBJECT_PRONOUNS or nlow in FOLLOWING_ADVERBS
                     or is_quantity(nxt)) and nlow not in AUXILIARIES and lemma_of(token, lex) == low:
                 hits.setdefault("v-imperative-initial", i)
-        if i >= 1 and (is_quantity(prev) or (lemma_of(token, lex) in UNITS and plow in ("a", "an", "per", "each", "every"))):
+        if measure_frame(tokens, i, lex):
             hits.setdefault("n-measure", i)
-        if i >= 1 and (plow in MODALS or plow == "to" or (i >= 2 and plow in FOLLOWING_ADVERBS
-                                                           and (tokens[i - 2].lower() in MODALS or tokens[i - 2].lower() == "to"))):
-            if lemma_of(token, lex) == low:
-                hits.setdefault("v-after-modal", i)
+        if i >= 1 and (plow in MODALS or plow == "to") and lemma_of(token, lex) == low:
+            hits.setdefault("v-after-modal", i)
         if (i >= 1 and has_tag(lex, plow, "NOUN") and is_word(prev) and plow not in DETERMINERS | PREPOSITIONS | AUXILIARIES | OBJECT_PRONOUNS
                 and (nxt is None or follows_like_verb(lex, nxt))):
             before = tokens[i - 2].lower() if i >= 2 else None
@@ -444,7 +634,7 @@ def control_hits(tokens, lex, shape, lemmas):
     """
     found = []
     for i, token in enumerate(tokens):
-        if lemma_of(token, lex) not in lemmas or not is_noun_verb(lex, token) or not is_word(token):
+        if lemma_of(token, lex) not in lemmas or not is_target_word(lex, token):
             continue
         prev = tokens[i - 1].lower() if i >= 1 else ""
         nxt = tokens[i + 1].lower() if i + 1 < len(tokens) else ""
@@ -481,15 +671,22 @@ class LeakageFilter:
 
 
 def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE, over=OVER_COLLECT, lemma_cap=LEMMA_CAP,
-                       seed=SEED, tokens_override=None, filt=None):
+                       seed=SEED, tokens_override=None, filt=None, shape_over=None, control_pool=CONTROL_POOL, clean=True, vocab=None,
+                       shape_lemma_cap=None):
     """(candidate rows, report lines): the candidates of every shape from the real text and the authored sentences.
 
-    Real sentences are scanned in document and line order; a sentence that is too short or too long, a duplicate, equal to a
-    training or evaluation sentence, or sharing a word 5-gram with the probe is dropped, and a document with
-    DOCUMENT_KEY_HITS sentences that are also in a training or evaluation set is rejected as a whole (a mirror or a reprint).
+    Real sentences are scanned in document and line order; a sentence that is too short or too long, noisy (`noise_reason`, when
+    `clean`), a duplicate, equal to a training or evaluation sentence, or sharing a word 5-gram with the probe is dropped, and a
+    document with DOCUMENT_KEY_HITS sentences that are also in a training or evaluation set is rejected as a whole (a mirror or a
+    reprint). Per shape at most ceil(target * factor) targets are taken (`over`, or the factor of `shape_over[shape]`) and, per lemma,
+    `lemma_cap`; controls: `control_pool` per shape from the lemmas of the shape's targets, at most CONTROL_LEMMA_CAP per lemma.
     """
+    shape_over = shape_over or {}
+    shape_lemma_cap = shape_lemma_cap or {}
     tokens_of = tokens_override if tokens_override is not None else read_tokens(work)
     lex = lexicon_of(data_dir)
+    if clean and vocab is None:
+        vocab = vocabulary_of(data_dir, lex)
     filt = filt or LeakageFilter(data_dir, include_ud)
     draft = {row["source_id"]: row for row in read_draft(work)}
     index = exclusion_index(data_dir)
@@ -500,6 +697,7 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
     seen_keys = set()
     pools = {shape: [] for shape in SHAPES}          # (rank, row dict) of the targets
     all_sentences = []                               # (source_id, line, text, tokens) of the accepted real sentences
+    considered = 0
     for source_id in sorted(documents):
         if source_id not in draft:
             problems.append("text/%s.txt has no row in sources-draft.tsv" % source_id)
@@ -513,13 +711,17 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
             rejected[source_id] = "%d sentences are also in a training or evaluation set" % hits
             continue
         for number, text in documents[source_id]:
+            considered += 1
             if text not in tokens_of or tokens_of[text][0] != 1:
                 drops["not-one-sentence-or-not-tokenized"] += 1
                 continue
             toks = tokens_of[text][1]
             key = sent_key_of(text)
+            noise = noise_reason(text, toks, lex, vocab) if clean and MIN_TOKENS <= len(toks) <= MAX_TOKENS else None
             if not MIN_TOKENS <= len(toks) <= MAX_TOKENS:
                 drops["length"] += 1
+            elif noise:
+                drops["noise-" + noise] += 1
             elif key in seen_keys:
                 drops["duplicate"] += 1
             elif filt.key_hit(text):
@@ -535,29 +737,30 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
                                                                                 origin="real", source_id=source_id, line=number, text=text,
                                                                                 tokens=toks)))
     rows = []
-    limit = int(math.ceil(target * over))
+    limits = {shape: int(math.ceil(target * shape_over.get(shape, over))) for shape in SHAPES}
+    pool_sizes = {shape: len(pools[shape]) for shape in SHAPES}
     chosen_lemmas = {shape: set() for shape in SHAPES}
     for shape in SHAPES:
         counts = collections.Counter()
-        for _, row in sorted(pools[shape], key=lambda item: item[0]):
-            if sum(counts.values()) >= limit:
+        for _, row in sorted(pools[shape], key=lambda item: (preference(shape, item[1], lex), item[0])):
+            if sum(counts.values()) >= limits[shape]:
                 break
-            if counts[row["lemma"]] < lemma_cap:
+            if counts[row["lemma"]] < shape_lemma_cap.get(shape, lemma_cap):
                 counts[row["lemma"]] += 1
                 rows.append(row)
         chosen_lemmas[shape] = set(counts)
-    control_pool = {shape: [] for shape in SHAPES}
+
+    control_rows = {shape: [] for shape in SHAPES}
     for source_id, number, text, toks in all_sentences:
         for shape in SHAPES:
             for i in control_hits(toks, lex, shape, chosen_lemmas[shape]):
-                control_pool[shape].append((rank_of(seed, "control", shape, sent_key_of(text)),
+                control_rows[shape].append((rank_of(seed, "control", shape, sent_key_of(text)),
                                             dict(shape=shape, role="control", target=i, lemma=lemma_of(toks[i], lex), origin="real",
                                                  source_id=source_id, line=number, text=text, tokens=toks)))
-    control_limit = int(math.ceil(CONTROLS * over / len(SHAPES)))
     for shape in SHAPES:
         counts = collections.Counter()
-        for _, row in sorted(control_pool[shape], key=lambda item: item[0]):
-            if sum(counts.values()) >= control_limit:
+        for _, row in sorted(control_rows[shape], key=lambda item: item[0]):
+            if sum(counts.values()) >= control_pool:
                 break
             if counts[row["lemma"]] < CONTROL_LEMMA_CAP:
                 counts[row["lemma"]] += 1
@@ -569,7 +772,8 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
                              rank_of(seed, r["shape"], r["role"], sent_key_of(r["text"]))))
     for number, row in enumerate(rows, 1):
         row["cand_id"] = "c%05d" % number
-    return rows, candidate_report(rows, drops, rejected, problems, target, draft, documents)
+    report = candidate_report(rows, drops, rejected, problems, limits, draft, documents, considered, len(all_sentences), pool_sizes, target)
+    return rows, report
 
 
 def authored_candidates(work, lex, tokens_of, filt):
@@ -595,27 +799,61 @@ def authored_candidates(work, lex, tokens_of, filt):
     return rows, problems
 
 
-def candidate_report(rows, drops, rejected, problems, target, draft, documents):
+def preference(shape, row, lex):
+    """Sort class of a target candidate before its seeded rank: a measure target whose lemma is a unit or quantity noun comes first."""
+    return 0 if shape != "n-measure" or row["lemma"] in UNITS else 1
+
+
+def candidate_report(rows, drops, rejected, problems, limits, draft, documents, considered=0, clean=0, pool_sizes=None, target=TARGET_PER_SHAPE):
     lines = ["# Candidates", "", "Counts only; no text of any evaluation set.", ""]
     lines += ["documents with text: %d, listed in the draft: %d, rejected: %d" % (len(documents), len(draft), len(rejected))]
     for source_id, reason in sorted(rejected.items()):
         lines.append("- rejected %s: %s" % (source_id, reason))
-    lines += ["", "sentences dropped before the shape rules: " + (", ".join("%s %d" % item for item in sorted(drops.items())) or "none"), ""]
-    lines += ["| shape | target real | target authored | control real | control authored | shortfall of real targets |",
-              "| --- | --- | --- | --- | --- | --- |"]
+    noise = sum(count for reason, count in drops.items() if reason.startswith("noise-"))
+    lines += ["", "sentences considered: %d, clean and kept for the shape rules: %d" % (considered, clean),
+              "sentences dropped before the shape rules: " + (", ".join("%s %d" % item for item in sorted(drops.items())) or "none"),
+              "of which noise (cleanliness filter): %d" % noise, ""]
+    lines += ["| shape | pool (real hits) | target limit | target real | target authored | control real | control authored | "
+              "real targets below the target of %d |" % target, "| --- | --- | --- | --- | --- | --- | --- | --- |"]
     for shape in SHAPES:
         count = collections.Counter((r["role"], r["origin"]) for r in rows if r["shape"] == shape)
-        short = max(0, int(math.ceil(target * OVER_COLLECT)) - count[("target", "real")])
-        lines.append("| %s | %d | %d | %d | %d | %d |" % (shape, count[("target", "real")], count[("target", "authored")],
-                                                         count[("control", "real")], count[("control", "authored")], short))
+        short = max(0, min(limits[shape], target) - count[("target", "real")])
+        lines.append("| %s | %s | %d | %d | %d | %d | %d | %d |" % (shape, (pool_sizes or {}).get(shape, "-"), limits[shape], count[("target", "real")],
+                                                                    count[("target", "authored")], count[("control", "real")],
+                                                                    count[("control", "authored")], short))
     if problems:
         lines += [""] + ["- PROBLEM: " + p for p in problems]
     return lines
 
 
+def parse_shape_option(values, option, cast, minimum):
+    """{shape: value} of repeated `SHAPE=VALUE` options; an unknown shape or a value below `minimum` is an error."""
+    result = {}
+    for value in values or ():
+        shape, _, number = value.partition("=")
+        if shape not in SHAPES or not number:
+            raise ValueError("%s needs SHAPE=VALUE with a shape of %s: %r" % (option, ", ".join(SHAPES), value))
+        result[shape] = cast(number)
+        if result[shape] < minimum:
+            raise ValueError("%s value must be at least %s: %r" % (option, minimum, value))
+    return result
+
+
+def parse_shape_over(values):
+    """{shape: factor} of repeated `--shape-over SHAPE=FACTOR` options (factor of at least 1)."""
+    return parse_shape_option(values, "--shape-over", float, 1)
+
+
+def parse_shape_lemma_cap(values):
+    """{shape: cap} of repeated `--shape-lemma-cap SHAPE=N` options (at least 1)."""
+    return parse_shape_option(values, "--shape-lemma-cap", int, 1)
+
+
 def _command_candidates(args):
     work = adjudicate.Work(args.work)
-    rows, report = collect_candidates(work, args.data_dir, not args.no_ud, args.target, args.over, args.lemma_cap, args.seed)
+    rows, report = collect_candidates(work, args.data_dir, not args.no_ud, args.target, args.over, args.lemma_cap, args.seed,
+                                      shape_over=parse_shape_over(args.shape_over), control_pool=args.control_pool,
+                                      shape_lemma_cap=parse_shape_lemma_cap(args.shape_lemma_cap))
     for line in report:
         print(line)
     common.write_text(work.private_file("candidates-report.md"), report)
@@ -800,6 +1038,48 @@ def decide_item(item, opus, sol):
     return "keep", "", opus.tag
 
 
+def vote_tag(votes, index):
+    """The tag of the token at `index` when both labelers agree on it: '' when there is no such token, '?' when they differ."""
+    opus, sol = votes
+    if index < 0 or index not in opus:
+        return ""
+    return opus[index].tag if opus[index].tag == sol[index].tag else "?"
+
+
+def frame_mismatch(item, opus, sol):
+    """True when the judged word of a kept target item is not in the frame of its shape (pre-registered; uses only the tags
+    that BOTH labelers gave the neighbor tokens; a neighbor they disagree on never satisfies a frame).
+
+    n-compound-head       the token before is NOUN or PROPN (the target is the head of a compound)
+    n-measure             the token before is NUM; the token after is not NOUN or PROPN, nor an ADJ that a NOUN or PROPN follows
+                          (the target is the measure noun, not a modifier of what follows)
+    n-subject-initial     the target is token 0 (the class Noun is then enough: a sentence-initial word that both labelers call a
+                          noun is a noun where the position favors a verb, the confusion this shape tests)
+    v-imperative-initial  the target is token 0 (a verb at the start of the sentence is an instruction)
+    v-after-modal         the token before is AUX (a modal) or PART (`to`)
+
+    Controls have no frame, only the class. `opus` and `sol` map a token index to its Vote.
+    """
+    if item["role"] != "target":
+        return False
+    shape, i = item["shape"], item["target"]
+    votes = (opus, sol)
+    if shape in ("n-subject-initial", "v-imperative-initial"):
+        return i != 0
+    if shape == "n-compound-head":
+        return vote_tag(votes, i - 1) not in ("NOUN", "PROPN")
+    if shape == "v-after-modal":
+        return vote_tag(votes, i - 1) not in ("AUX", "PART")
+    if shape == "n-measure":
+        if vote_tag(votes, i - 1) != "NUM":
+            return True
+        after = vote_tag(votes, i + 1)
+        if after in ("NOUN", "PROPN", "?"):
+            return True
+        return after == "ADJ" and vote_tag(votes, i + 2) in ("NOUN", "PROPN", "?")
+    return False
+
+
 def decide_token(opus, sol):
     """(tag, status cell) of a token that is not the judged word: agreed -> `unanimous`; else `disputed` with the first labeler's tag."""
     flags = adjudicate.effective_flags((), opus, sol)
@@ -830,6 +1110,8 @@ def run_decisions(work, candidates):
         opus, sol = (batch_votes[model][opaque] for model in adjudicate.MODELS)
         target = cand["target"]
         outcome, reason, agreed = decide_item(cand, opus[target], sol[target])
+        if outcome == "keep" and frame_mismatch(cand, opus, sol):
+            outcome, reason = "drop", "frame-mismatch"
         if cand["sent_key"] not in rows:
             rows[cand["sent_key"]] = [(i,) + decide_token(opus[i], sol[i]) for i in range(len(sentences[cand["sent_key"]][2]))]
         disputed = sum(1 for _, _, status in rows[cand["sent_key"]] if common.base_status(status) == "disputed")
@@ -844,14 +1126,14 @@ def run_decisions(work, candidates):
 
 
 def decide_report(items, incomplete):
-    lines = ["# Decisions", "", "| shape | role | items | kept | target-disagreement | class-mismatch | incomplete sentences |",
-             "| --- | --- | --- | --- | --- | --- | --- |"]
+    lines = ["# Decisions", "", "| shape | role | items | kept | target-disagreement | class-mismatch | frame-mismatch | incomplete sentences |",
+             "| --- | --- | --- | --- | --- | --- | --- | --- |"]
     for shape in SHAPES:
         for role in ROLES:
             members = [i for i in items if i["shape"] == shape and i["role"] == role]
             count = collections.Counter(i["reason"] or "kept" for i in members)
-            lines.append("| %s | %s | %d | %d | %d | %d | |" % (shape, role, len(members), count["kept"], count["target-disagreement"],
-                                                               count["class-mismatch"]))
+            lines.append("| %s | %s | %d | %d | %d | %d | %d | |" % (shape, role, len(members), count["kept"], count["target-disagreement"],
+                                                                   count["class-mismatch"], count["frame-mismatch"]))
     lines += ["", "incomplete sentences (not decided): %d" % len(incomplete),
               "disputed non-target tokens in kept items: %d" % sum(i["disputed_tokens"] for i in items if i["outcome"] == "keep")]
     return lines
@@ -1029,7 +1311,8 @@ def authored_room(real, share):
     return int(math.floor(real * share / (1.0 - share) + 1e-9))
 
 
-def select_items(items, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_CAP, share=AUTHORED_SHARE, controls=CONTROLS):
+def select_items(items, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_CAP, share=AUTHORED_SHARE, controls=CONTROLS,
+                 shape_lemma_cap=None):
     """(targets, controls): the kept items chosen for the set.
 
     Per shape: real targets in seeded rank order up to `per_shape` (at most `lemma_cap` per lemma), then authored ones up to the
@@ -1046,7 +1329,7 @@ def select_items(items, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_C
 
     targets = []
     for shape in SHAPES:
-        taker = Taker(lemma_cap, used)
+        taker = Taker((shape_lemma_cap or {}).get(shape, lemma_cap), used)
         real = taker.take(ordered(shape, "target", "real"), per_shape)
         authored = taker.take(ordered(shape, "target", "authored"), min(per_shape - len(real), authored_room(len(real), share)))
         targets += real + authored
@@ -1126,11 +1409,12 @@ def sources_rows(draft, built):
     return rows
 
 
-def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_CAP, share=AUTHORED_SHARE, controls=CONTROLS):
+def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_CAP, share=AUTHORED_SHARE, controls=CONTROLS,
+          shape_lemma_cap=None):
     """Write dev.tsv and sources.tsv into `out_dir`; returns (sentences, report lines)."""
     items, tagged = read_decided(work)
     draft = read_draft(work)
-    targets, chosen = select_items(items, seed, per_shape, lemma_cap, share, controls)
+    targets, chosen = select_items(items, seed, per_shape, lemma_cap, share, controls, shape_lemma_cap)
     order = {shape: n for n, shape in enumerate(SHAPES)}
     selected = sorted(targets + chosen, key=lambda i: (order[i["shape"]], ROLES.index(i["role"]), rank_of(seed, "order", i["cand_id"])))
     text_of = {c["cand_id"]: c["text"] for c in read_candidates(work)}
@@ -1153,7 +1437,8 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
 def _command_build(args):
     work = adjudicate.Work(args.work)
     out_dir = args.out_dir or os.path.join(args.data_dir, "eval", "shapes-dev")
-    built, report = build(work, out_dir, args.seed, args.per_shape, args.lemma_cap, args.share, args.controls)
+    built, report = build(work, out_dir, args.seed, args.per_shape, args.lemma_cap, args.share, args.controls,
+                          parse_shape_lemma_cap(args.shape_lemma_cap))
     adjudicate._print(report)
     common.write_text(work.private_file("build-report.md"), report)
     return 0
@@ -1182,9 +1467,10 @@ def report_lines(out_dir, work=None):
     if work is not None and os.path.exists(work.private_file("decided.tsv")):
         items, _ = read_decided(work)
         drops = collections.Counter((i["shape"], i["reason"]) for i in items if i["outcome"] == "drop")
-        lines += ["", "| shape | dropped: target disagreement | dropped: class mismatch |", "| --- | --- | --- |"]
+        lines += ["", "| shape | dropped: target disagreement | dropped: class mismatch | dropped: frame mismatch |", "| --- | --- | --- | --- |"]
         for shape in SHAPES:
-            lines.append("| %s | %d | %d |" % (shape, drops[(shape, "target-disagreement")], drops[(shape, "class-mismatch")]))
+            lines.append("| %s | %d | %d | %d |" % (shape, drops[(shape, "target-disagreement")], drops[(shape, "class-mismatch")],
+                                                   drops[(shape, "frame-mismatch")]))
     return lines
 
 
@@ -1210,6 +1496,11 @@ def main(argv=None):
     candidates.add_argument("--target", type=int, default=TARGET_PER_SHAPE)
     candidates.add_argument("--over", type=float, default=OVER_COLLECT)
     candidates.add_argument("--lemma-cap", type=int, default=LEMMA_CAP)
+    candidates.add_argument("--shape-over", action="append", default=None, metavar="SHAPE=FACTOR",
+                            help="over-collection factor of one shape (repeatable); a thin shape takes its whole pool with a large factor")
+    candidates.add_argument("--shape-lemma-cap", action="append", default=None, metavar="SHAPE=N",
+                            help="lemma cap of one shape (repeatable), replacing --lemma-cap for a thin shape")
+    candidates.add_argument("--control-pool", type=int, default=CONTROL_POOL, help="control candidates per shape (default %(default)s)")
     candidates.add_argument("--seed", type=int, default=SEED)
     export = sub.add_parser("export", help="write the blind batches, the key and status.tsv")
     export.add_argument("--size", type=int, default=adjudicate.BATCH_SENTENCES)
@@ -1238,6 +1529,8 @@ def main(argv=None):
     build_parser.add_argument("--seed", type=int, default=SEED)
     build_parser.add_argument("--per-shape", type=int, default=TARGET_PER_SHAPE)
     build_parser.add_argument("--lemma-cap", type=int, default=LEMMA_CAP)
+    build_parser.add_argument("--shape-lemma-cap", action="append", default=None, metavar="SHAPE=N",
+                              help="lemma cap of one shape (repeatable); use the same values as the candidates command")
     build_parser.add_argument("--share", type=float, default=AUTHORED_SHARE, help="largest authored share of a shape and of the controls")
     build_parser.add_argument("--controls", type=int, default=CONTROLS)
     report = sub.add_parser("report", help="counts of the built set for the README")

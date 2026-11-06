@@ -24,6 +24,7 @@ LEXICON = {
     "stop": "NOUN VERB", "stops": "NOUN VERB", "pound": "NOUN VERB", "pounds": "NOUN VERB", "pump": "NOUN VERB", "pumps": "NOUN VERB",
     "mix": "NOUN VERB", "leak": "NOUN VERB", "test": "NOUN VERB", "tests": "NOUN VERB", "opens": "VERB", "add": "VERB", "fails": "VERB",
     "the": "DET", "a": "DET", "of": "ADP", "to": "ADP PART", "and": "CCONJ", "must": "AUX", "is": "AUX VERB", "full": "ADJ",
+    "machine": "NOUN VERB", "guns": "NOUN", "forest": "NOUN VERB", "planting": "NOUN VERB", "long": "ADJ", "in": "ADP",
 }
 
 
@@ -174,9 +175,98 @@ class HeuristicTests(MiniFolder):
         self.assertEqual([2], noun_shape)
         self.assertEqual([1], verb_shape)
 
+    def test_measure_needs_a_quantity_frame_and_is_not_a_modifier_or_a_label_target(self):
+        self.assertEqual(2, self.hits("Add 2 pounds of oil to the tank .")["n-measure"])
+        self.assertEqual(2, self.hits("Add two pounds ." )["n-measure"])
+        self.assertEqual(2, self.hits("Add half pound .")["n-measure"])
+        self.assertNotIn("n-measure", self.hits("Two machine guns fired ."))                # a compound: `machine` modifies `guns`
+        self.assertNotIn("n-measure", self.hits("In 1860 forest planting began ."))
+        self.assertNotIn("n-measure", self.hits("Several pounds of oil are needed ."))      # `several` is not a number
+        self.assertNotIn("n-measure", self.hits("Replace the Pound with 2 Pounds ."))       # a capitalized word is no measure
+        lex = common.read_lexicon(os.path.join(self.data, "lexicon", "lexicon.tsv"))
+        self.assertFalse(sd.measure_frame(["See", "Type", "2", "pounds", "now"], 3, lex))   # a label before the number
+        self.assertFalse(sd.measure_frame(["Use", "No.", "2", "pounds", "now"], 3, lex))
+        self.assertFalse(sd.measure_frame(["Use", "the", "2", "pounds", "now"], 3, lex))    # a determiner before the number
+        self.assertFalse(sd.measure_frame(["Use", "2", "pumps", "now"], 2, lex))            # neither a unit nor followed by `of`/`per`
+        self.assertTrue(sd.measure_frame(["Use", "2", "pumps", "of", "oil"], 2, lex))
+        self.assertTrue(sd.measure_frame(["Use", "2", "pumps", "per", "tank"], 2, lex))
+        self.assertFalse(sd.measure_frame(["Use", "2", "pounds", "full", "tank"], 2, lex))  # adjective + noun after
+        self.assertTrue(sd.measure_frame(["Use", "2", "pounds", "full", "."], 2, lex))
+        self.assertTrue(sd.measure_frame(["Use", "1/2", "pound"], 2, lex))
+
+    def test_modal_needs_the_modal_or_to_right_before_the_word(self):
+        self.assertEqual(2, self.hits("They must check it .")["v-after-modal"])
+        self.assertEqual(3, self.hits("They want to check it .")["v-after-modal"])
+        self.assertNotIn("v-after-modal", self.hits("They must always check it ."))
+
+
+class NoiseFilterTests(MiniFolder):
+    """The cleanliness filter of the candidate stage."""
+
+    def setUp(self):
+        super().setUp()
+        self.lex = common.read_lexicon(os.path.join(self.data, "lexicon", "lexicon.tsv"))
+        self.vocab = set(self.lex) | set("they it open close while then keep are not water supply from sealed some oil rown want".split())
+
+    def reason(self, text):
+        return sd.noise_reason(text, simple_tokens(text), self.lex, self.vocab)
+
+    def test_a_clean_sentence_passes(self):
+        self.assertIsNone(self.reason("They check the oil level daily while the pump is full."))
+        self.assertIsNone(self.reason("They open the valve (not the tank) and check it."))
+        self.assertIsNone(self.reason("Check the tank."))                                   # an imperative is a clause
+
+    def test_start_end_and_characters(self):
+        self.assertEqual("start-end", self.reason("they check the oil level daily while the pump is full."))
+        self.assertEqual("start-end", self.reason("They check the oil level daily while the pump is full"))
+        self.assertIsNone(self.reason('They check "the oil level daily while the pump is full."'))
+        self.assertEqual("chars", self.reason("They check the oil level daily while the pump is 90\u00b0."))
+        self.assertEqual("chars", self.reason("They check the oil level daily while the pump is \ufffdfull."))
+        self.assertEqual("chars", self.reason("They check the oil level \u2014 daily while the pump is full."))
+
+    def test_junk_brackets_enumerations_citations_repeats_and_capitals(self):
+        self.assertEqual("junk", self.reason("They check the oil level daily while the pump is full!/ ."))
+        self.assertEqual("junk", self.reason("They check the oil level daily while the pump is 2!/, full."))
+        self.assertEqual("junk", self.reason("They check the 'oil level daily while the pump is full."))
+        self.assertEqual("junk", self.reason("They check the oil level daily while the pump is full ,and open."))
+        self.assertEqual("junk", self.reason("They check the oil -level daily while the pump is full."))
+        self.assertEqual("junk", self.reason("They check the oil level x daily while the pump is full."))
+        self.assertEqual("brackets", self.reason("They check the oil level daily while (the pump is full."))
+        self.assertEqual("brackets", self.reason('They check the "oil level daily while the pump is full.'))
+        self.assertEqual("start-end", self.reason("(a) They check the oil level daily while the pump is full."))
+        self.assertEqual("enumeration", self.reason("A. They check the oil level daily while the pump is full."))
+        self.assertEqual("enumeration", self.reason("II. They check the oil level daily while the pump is full."))
+        self.assertEqual("enumeration", self.reason("They check (a) the oil level daily while the pump is full."))
+        self.assertEqual("citation", self.reason("They check the oil level daily, J. Smith, while the pump is full."))
+        self.assertEqual("repeat", self.reason("They check the the oil level daily while the pump is full."))
+        self.assertEqual("repeat", self.reason("They check the oil, check the oil, check the oil level while the pump is full."))
+        self.assertEqual("caps", self.reason("THE OIL LEVEL DAILY WHILE the PUMP IS FULL."))
+
+    def test_titles_captions_and_missing_verbs(self):
+        self.assertEqual("title", self.reason("Pressure Relief Valve Oil Tank Level Check."))
+        self.assertEqual("short", self.reason("Oil tank level."))
+        self.assertEqual("no-verb", self.reason("The oil tank and the pressure valve of the daily relief."))
+
+    def test_unknown_lower_case_words_reject_but_names_numbers_and_hyphen_parts_do_not(self):
+        self.assertEqual("oov", self.reason("They check the oil level daily while the rowwn pump is full."))
+        self.assertIsNone(self.reason("They check the oil level daily while the Xqzvt pump is full."))     # capitalized, not initial
+        self.assertIsNone(self.reason("They check the oil level daily while the pump is full of 12qz."))   # a digit token
+        self.assertIsNone(self.reason("They check the oil-tank level daily while the pump is full."))      # every part is known
+        self.assertEqual(["rowwn"], sd.oov_tokens(simple_tokens("They check the rowwn pump."), self.vocab))
+        self.assertEqual(["Zzzz"], sd.oov_tokens(["Zzzz", "pump"], self.vocab))                            # initial position is checked
+        self.assertEqual([], sd.oov_tokens(["pump", "Zzzz"], self.vocab))
+
+    def test_vocabulary_holds_the_word_forms_of_the_training_sets_and_the_lexicon(self):
+        vocab = sd.vocabulary_of(self.data)
+        self.assertIn("water", vocab)                  # open/train.tsv
+        self.assertIn("unrelated", vocab)              # masc/masc.tsv
+        self.assertIn("valve", vocab)                  # lexicon
+        self.assertNotIn("gasket", vocab)
+
 
 class CandidateTests(MiniFolder):
     def collect(self, documents, authored=None, **options):
+        options.setdefault("clean", False)         # the fixture sentences are token-spaced, not real text: the noise filter has its own tests
         self.write_draft(sorted(documents))
         for source_id, sentences in documents.items():
             self.write_text_doc(source_id, sentences)
@@ -228,11 +318,63 @@ class CandidateTests(MiniFolder):
         self.assertEqual(2, mine[0]["target"])
         self.assertTrue(any("does not contain the lemma 'seal'" in line for line in report))
 
+    def test_noise_filter_drops_are_counted_and_the_survivors_reported(self):
+        vocab = set(LEXICON) | {"when"}
+        good = "The pressure switch opens when the tank is full."
+        bad = "The pressure switch opens when the rown tank is full."
+        rows, report = self.collect({"doc-a": [good, bad]}, clean=True, vocab=vocab)
+        self.assertEqual({good}, {r["text"] for r in rows})
+        self.assertTrue(any("noise-oov 1" in line for line in report))
+        self.assertTrue(any("clean and kept for the shape rules: 1" in line for line in report))
+        rows, report = self.collect({"doc-a": [good, bad]}, clean=False)
+        self.assertEqual({good, bad}, {r["text"] for r in rows})
+
+    def test_shape_over_replaces_the_factor_of_one_shape_and_the_control_pool_caps_controls(self):
+        sentences = ["Add %d pounds of oil ." % n for n in range(2, 14)]
+        rows, _ = self.collect({"doc-a": sentences}, target=2, over=1.0, lemma_cap=100)
+        self.assertEqual(2, sum(1 for r in rows if r["shape"] == "n-measure" and r["role"] == "target"))
+        rows, _ = self.collect({"doc-a": sentences}, target=2, over=1.0, lemma_cap=100, shape_over={"n-measure": 3.0})
+        self.assertEqual(6, sum(1 for r in rows if r["shape"] == "n-measure" and r["role"] == "target"))
+        sentences = (["Add %d pounds of oil ." % n for n in (2, 3, 4)] + ["Add %d drops of oil ." % n for n in (2, 3, 4)]
+                     + ["They must pound the nail %d ." % n for n in range(4)] + ["They must drop the nail %d ." % n for n in range(4)])
+        controls = lambda **o: [r for r in self.collect({"doc-a": sentences}, lemma_cap=100, **o)[0]
+                                if r["shape"] == "n-measure" and r["role"] == "control"]
+        self.assertEqual(sd.CONTROL_POOL, 100)
+        self.assertEqual(4, len(controls()))                         # the whole pool would be 8; at most 2 per lemma (pound, drop)
+        self.assertEqual(3, len(controls(control_pool=3)))
+        self.assertEqual({"pound", "drop"}, {r["lemma"] for r in controls()})
+
+    def test_shape_lemma_cap_replaces_the_lemma_cap_of_one_shape(self):
+        sentences = ["Add %d pounds of oil ." % n for n in range(2, 10)]
+        rows, _ = self.collect({"doc-a": sentences}, lemma_cap=2, shape_over={"n-measure": 9.0})
+        self.assertEqual(2, sum(1 for r in rows if r["shape"] == "n-measure" and r["role"] == "target"))
+        rows, _ = self.collect({"doc-a": sentences}, lemma_cap=2, shape_over={"n-measure": 9.0}, shape_lemma_cap={"n-measure": 5})
+        self.assertEqual(5, sum(1 for r in rows if r["shape"] == "n-measure" and r["role"] == "target"))
+        self.assertEqual({"n-measure": 5}, sd.parse_shape_lemma_cap(["n-measure=5"]))
+        with self.assertRaises(ValueError):
+            sd.parse_shape_lemma_cap(["n-measure=0"])
+
+    def test_shape_over_option_parsing(self):
+        self.assertEqual({"n-measure": 3.0, "n-subject-initial": 99.0}, sd.parse_shape_over(["n-measure=3", "n-subject-initial=99"]))
+        for bad in ("n-measure", "x=3", "n-measure=0.5"):
+            with self.assertRaises(ValueError):
+                sd.parse_shape_over([bad])
+
+    def test_candidates_command_accepts_the_new_options(self):
+        self.write_draft(["doc-a"])
+        self.write_text_doc("doc-a", DOCUMENT)
+        common.write_text(os.path.join(self.root, "tokens.tsv"), ["text\tsentences\ttokens"] + ["%s\t1\t%s" % (t, " ".join(simple_tokens(t)))
+                                                                                          for t in DOCUMENT])
+        code, output = self.cli("candidates", "--no-ud", "--shape-over", "n-measure=3", "--shape-over", "v-after-modal=2", "--control-pool", "10")
+        self.assertEqual(0, code, output)
+        self.assertIn("| n-measure |", output)
+        self.assertIn("target limit", output)
+
     def test_text_without_a_draft_row_is_a_problem(self):
         self.write_draft(["doc-a"])
         self.write_text_doc("doc-a", DOCUMENT)
         self.write_text_doc("doc-b", DOCUMENT)
-        rows, report = sd.collect_candidates(self.work, self.data, include_ud=False, tokens_override=self.tokens_for(DOCUMENT))
+        rows, report = sd.collect_candidates(self.work, self.data, include_ud=False, tokens_override=self.tokens_for(DOCUMENT), clean=False)
         self.assertTrue(any("doc-b.txt has no row" in line for line in report))
 
     def test_a_listed_document_is_skipped(self):
@@ -283,7 +425,7 @@ class PipelineTests(MiniFolder):
         for shape, rows in authored.items():
             self.write_authored(shape, rows)
         texts = DOCUMENT + [r[2] for rows in authored.values() for r in rows]
-        self.candidates, _ = sd.collect_candidates(self.work, self.data, include_ud=False, tokens_override=self.tokens_for(texts))
+        self.candidates, _ = sd.collect_candidates(self.work, self.data, include_ud=False, tokens_override=self.tokens_for(texts), clean=False)
         sd.write_candidates(self.work, self.candidates)
 
     def tag_batches(self, model, rule):
@@ -301,8 +443,12 @@ class PipelineTests(MiniFolder):
     @staticmethod
     def basic_rule(model, sid, index, token):
         low = token.lower()
+        if re.fullmatch(r"\d+", token):
+            return "NUM"
         if not token.isalnum():
             return "PUNCT"
+        if low in ("of", "to", "in", "at"):
+            return "ADP"
         if low in ("the", "a"):
             return "DET"
         if low in ("must", "is", "do", "not"):
@@ -373,6 +519,21 @@ class PipelineTests(MiniFolder):
         self.assertEqual(("keep", "VERB"), (kept["outcome"], kept["agreed_tag"]))
         control = by_shape[("v-after-modal", "control", "stop")]
         self.assertEqual("class-mismatch", control["reason"])           # the fake taggers call every `stop` a VERB: not the intended noun
+
+    def test_frame_mismatch_drops_an_item_whose_neighbor_tag_is_outside_the_frame_and_is_reported(self):
+        def rule(model, sid, index, token):
+            return "ADJ" if token == "pressure" else self.basic_rule(model, sid, index, token)    # `pressure` is no noun: no compound
+        self.export_and_tag(rule)
+        items, rows = self.decided()
+        by_shape = {(i["shape"], i["role"], i["lemma"]): i for i in items}
+        switch = by_shape[("n-compound-head", "target", "switch")]
+        self.assertEqual(("drop", "frame-mismatch", "NOUN"), (switch["outcome"], switch["reason"], switch["agreed_tag"]))
+        pound = by_shape[("n-measure", "target", "pound")]                                       # `2` is a NUM, `of` follows
+        self.assertEqual("keep", pound["outcome"])
+        self.assertEqual("keep", by_shape[("v-after-modal", "target", "check")]["outcome"])      # `must` is an AUX
+        output = self.cli("decide")[1]
+        self.assertIn("frame-mismatch", output)
+        self.assertRegex(output, r"\| n-compound-head \| target \| \d+ \| \d+ \| \d+ \| \d+ \| [1-9]\d* \|")
 
     def test_non_target_disagreement_is_disputed_with_the_first_labelers_tag_and_flags_need_both(self):
         def opus_rule(model, sid, index, token):
@@ -518,6 +679,12 @@ class SelectionTests(unittest.TestCase):
 
     def test_authored_room(self):
         self.assertEqual(3, sd.authored_room(8, 0.30))
+
+    def test_a_shape_lemma_cap_replaces_the_lemma_cap_for_that_shape_only(self):
+        targets, _ = sd.select_items(self.pool(), per_shape=20, lemma_cap=4, share=0.30, controls=10, shape_lemma_cap={"n-measure": 6})
+        real = lambda shape: [i for i in targets if i["shape"] == shape and i["origin"] == "real"]
+        self.assertEqual(10, len(real("n-measure")))                        # l0 six times + l6..l9 once each
+        self.assertEqual(8, len(real("n-compound-head")))
         self.assertEqual(0, sd.authored_room(2, 0.30))
         self.assertEqual(51, sd.authored_room(120, 0.30))
 
@@ -558,6 +725,56 @@ class SentenceRuleTests(unittest.TestCase):
         self.assertEqual(("keep", "", "PROPN"), sd.decide_item(control, vote("PROPN", "high", ()), vote("PROPN", "high", ())))
         self.assertEqual(("NOUN", "disputed+mentioned"), sd.decide_token(vote("NOUN", "high", ("mentioned",)), vote("ADJ", "low", ("mentioned",))))
         self.assertEqual(("NOUN", "unanimous"), sd.decide_token(vote("NOUN", "high", ("mentioned",)), vote("NOUN", "low", ())))
+
+
+class FrameTests(unittest.TestCase):
+    """The post-label frame validation (`frame_mismatch`): only the tags both labelers gave the neighbor tokens count."""
+
+    @staticmethod
+    def votes(tags, other=None):
+        vote = adjudicate.Vote
+        first = {i: vote(t, "high", ()) for i, t in enumerate(tags)}
+        second = {i: vote(t, "high", ()) for i, t in enumerate(other or tags)}
+        return first, second
+
+    def mismatch(self, shape, target, tags, other=None, role="target"):
+        opus, sol = self.votes(tags, other)
+        return sd.frame_mismatch({"shape": shape, "role": role, "target": target}, opus, sol)
+
+    def test_compound_head_needs_a_noun_or_name_before(self):
+        self.assertFalse(self.mismatch("n-compound-head", 1, ["NOUN", "NOUN", "VERB"]))
+        self.assertFalse(self.mismatch("n-compound-head", 1, ["PROPN", "NOUN", "VERB"]))
+        self.assertTrue(self.mismatch("n-compound-head", 1, ["ADJ", "NOUN", "VERB"]))
+        self.assertTrue(self.mismatch("n-compound-head", 0, ["NOUN", "VERB"]))                 # nothing before
+
+    def test_measure_needs_a_number_before_and_no_modifier_use(self):
+        self.assertFalse(self.mismatch("n-measure", 1, ["NUM", "NOUN", "ADP", "NOUN"]))
+        self.assertFalse(self.mismatch("n-measure", 1, ["NUM", "NOUN", "PUNCT"]))
+        self.assertFalse(self.mismatch("n-measure", 1, ["NUM", "NOUN"]))                       # at the end
+        self.assertFalse(self.mismatch("n-measure", 1, ["NUM", "NOUN", "ADJ", "PUNCT"]))       # `4 feet long`
+        self.assertTrue(self.mismatch("n-measure", 1, ["DET", "NOUN", "ADP"]))
+        self.assertTrue(self.mismatch("n-measure", 1, ["NUM", "NOUN", "NOUN"]))                # `two machine guns`
+        self.assertTrue(self.mismatch("n-measure", 1, ["NUM", "NOUN", "PROPN"]))
+        self.assertTrue(self.mismatch("n-measure", 1, ["NUM", "NOUN", "ADJ", "NOUN"]))
+        self.assertTrue(self.mismatch("n-measure", 0, ["NOUN", "ADP"]))
+
+    def test_initial_shapes_need_index_zero_and_the_modal_shape_an_aux_or_part_before(self):
+        self.assertFalse(self.mismatch("n-subject-initial", 0, ["NOUN", "VERB"]))
+        self.assertTrue(self.mismatch("n-subject-initial", 1, ["DET", "NOUN", "VERB"]))
+        self.assertFalse(self.mismatch("v-imperative-initial", 0, ["VERB", "DET", "NOUN"]))
+        self.assertTrue(self.mismatch("v-imperative-initial", 2, ["ADV", "ADV", "VERB"]))
+        self.assertFalse(self.mismatch("v-after-modal", 1, ["AUX", "VERB"]))
+        self.assertFalse(self.mismatch("v-after-modal", 1, ["PART", "VERB"]))
+        self.assertTrue(self.mismatch("v-after-modal", 1, ["ADP", "VERB"]))
+        self.assertTrue(self.mismatch("v-after-modal", 1, ["PRON", "VERB"]))
+
+    def test_a_neighbor_the_labelers_disagree_on_never_satisfies_a_frame_and_controls_have_none(self):
+        self.assertTrue(self.mismatch("n-compound-head", 1, ["NOUN", "NOUN"], ["ADJ", "NOUN"]))
+        self.assertTrue(self.mismatch("v-after-modal", 1, ["AUX", "VERB"], ["ADP", "VERB"]))
+        self.assertTrue(self.mismatch("n-measure", 1, ["NUM", "NOUN", "NOUN"], ["NUM", "NOUN", "ADP"]))
+        self.assertTrue(self.mismatch("n-measure", 1, ["NUM", "NOUN", "ADJ", "NOUN"], ["NUM", "NOUN", "ADJ", "ADV"]))
+        for shape in sd.SHAPES:
+            self.assertFalse(self.mismatch(shape, 1, ["ADP", "NOUN", "NOUN"], role="control"))
 
 
 class LeakageExtensionTests(MiniFolder):
