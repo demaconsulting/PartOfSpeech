@@ -2383,7 +2383,7 @@ him	PRON	unanimous
 # source_id = tatoeba-11830818
 # text = These crumbling ghettos, crisscrossed by narrow lanes, clogged with vendors and traffic are suffocating in the fumes from tanneries and rubber factories tucked in among the crowded dwellings.
 These	DET	unanimous
-crumbling	VERB	unanimous
+crumbling	ADJ	unanimous
 ghettos	NOUN	unanimous
 ,	PUNCT	unanimous
 crisscrossed	VERB	unanimous
@@ -6556,7 +6556,7 @@ cut	VERB	unanimous
 # text = Modals are helping verbs that express possibility, ability, duty, permission or advisability.
 Modals	NOUN	unanimous
 are	VERB	unanimous
-helping	NOUN	disputed
+helping	ADJ	disputed
 verbs	NOUN	unanimous
 that	PRON	disputed
 express	VERB	unanimous
@@ -8038,7 +8038,7 @@ cases	NOUN	unanimous
 there	PRON	unanimous
 is	VERB	unanimous
 a	DET	unanimous
-helping	NOUN	unanimous
+helping	ADJ	unanimous
 verb	NOUN	unanimous
 ,	PUNCT	unanimous
 such	ADJ	unanimous
@@ -16013,7 +16013,7 @@ the	DET	unanimous
 floor	NOUN	unanimous
 and	CCONJ	unanimous
 the	DET	unanimous
-underlying	VERB	unanimous
+underlying	ADJ	unanimous
 passage	NOUN	unanimous
 ceiling	NOUN	unanimous
 could	AUX	unanimous
@@ -16087,7 +16087,7 @@ with	ADP	unanimous
 small	ADJ	unanimous
 ,	PUNCT	unanimous
 clear	ADJ	unanimous
-spiraling	VERB	disputed
+spiraling	ADJ	disputed
 crystals	NOUN	unanimous
 off	ADP	disputed
 the	DET	unanimous
@@ -16353,7 +16353,7 @@ Yosemite	PROPN	unanimous
 Museum	PROPN	unanimous
 Gallery	PROPN	unanimous
 hosts	VERB	unanimous
-rotating	VERB	unanimous
+rotating	ADJ	unanimous
 exhibits	NOUN	unanimous
 during	ADP	unanimous
 the	DET	unanimous
@@ -17185,7 +17185,7 @@ lightning	NOUN	unanimous
 (	PUNCT	unanimous
 and	CCONJ	unanimous
 the	DET	unanimous
-resulting	VERB	unanimous
+resulting	ADJ	unanimous
 thunder	NOUN	unanimous
 )	PUNCT	unanimous
 is	VERB	unanimous
@@ -17323,7 +17323,7 @@ leaders	NOUN	unanimous
 give	VERB	unanimous
 lightning	NOUN	unanimous
 its	DET	unanimous
-flickering	VERB	unanimous
+flickering	ADJ	unanimous
 appearance	NOUN	unanimous
 and	CCONJ	unanimous
 normally	ADV	unanimous
@@ -17752,7 +17752,7 @@ hours	NOUN	unanimous
 # source_id = nws-jetstream-tsunamis-detection-warning-and-forecasting
 # text = The resulting forecasts, combined with historical tsunami information and additional seismic analysis, help the warning center scientists make decisions about adjusting and cancelling messages.
 The	DET	unanimous
-resulting	VERB	unanimous
+resulting	ADJ	unanimous
 forecasts	NOUN	unanimous
 ,	PUNCT	unanimous
 combined	VERB	unanimous
@@ -18878,7 +18878,7 @@ April	PROPN	unanimous
 # source_id = usgs-featured-story-chronic-wasting-disease-can-science-save-our-dear-deer
 # text = Chronic wasting disease may have long-term negative effects on white-tailed deer, a highly visible and economically valuable keystone species...
 Chronic	ADJ	unanimous
-wasting	NOUN	unanimous
+wasting	ADJ	unanimous
 disease	NOUN	unanimous
 may	AUX	unanimous
 have	VERB	unanimous
@@ -18944,7 +18944,7 @@ science	NOUN	unanimous
 to	PART	disputed
 balance	VERB	unanimous
 the	DET	unanimous
-competing	VERB	disputed
+competing	ADJ	disputed
 demands	NOUN	unanimous
 of	ADP	unanimous
 resource	NOUN	unanimous
@@ -25428,7 +25428,7 @@ especially	ADV	unchecked
 those	PRON	unchecked
 of	ADP	unchecked
 the	DET	unchecked
-ruminating	ADJ	disputed
+ruminating	ADJ	unchecked
 kind	NOUN	unchecked
 ,	PUNCT	unchecked
 the	DET	unchecked
@@ -27529,7 +27529,7 @@ fall	VERB	unchecked
 victims	NOUN	unchecked
 to	ADP	unchecked
 the	DET	unchecked
-awaiting	VERB	unchecked
+awaiting	ADJ	unchecked
 ladies	NOUN	unchecked
 ,	PUNCT	unchecked
 with	ADP	unchecked
@@ -29909,7 +29909,7 @@ pitiful	ADJ	unchecked
 to	PART	unchecked
 see	VERB	unchecked
 the	DET	unchecked
-starving	VERB	unchecked
+starving	ADJ	unchecked
 creatures	NOUN	unchecked
 come	VERB	unchecked
 into	ADP	unchecked
@@ -31062,7 +31062,7 @@ Templestowe	PROPN	unchecked
 Out	ADV	unchecked
 with	ADP	unchecked
 the	DET	unchecked
-prating	VERB	unchecked
+prating	ADJ	unchecked
 villain	NOUN	unchecked
 !	PUNCT	unchecked
 "	PUNCT	unchecked
@@ -31795,7 +31795,7 @@ it	PRON	unchecked
 frowning	VERB	unchecked
 --	PUNCT	unchecked
 the	DET	unchecked
-looming	VERB	unchecked
+looming	ADJ	unchecked
 shapes	NOUN	unchecked
 of	ADP	unchecked
 the	DET	unchecked
@@ -32149,7 +32149,7 @@ was	VERB	unchecked
 over	ADV	unchecked
 ,	PUNCT	unchecked
 the	DET	unchecked
-gathering	VERB	unchecked
+gathering	ADJ	unchecked
 quiet	NOUN	unchecked
 was	AUX	unchecked
 pierced	VERB	unchecked

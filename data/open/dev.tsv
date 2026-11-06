@@ -1334,7 +1334,7 @@ and	CCONJ	unanimous
 schoolteachers	NOUN	unanimous
 survey	VERB	unanimous
 the	DET	unanimous
-aging	VERB	disputed
+aging	ADJ	disputed
 school	NOUN	unanimous
 building	NOUN	unanimous
 and	CCONJ	unanimous
@@ -10146,7 +10146,7 @@ same	ADJ	unanimous
 period	NOUN	unanimous
 ,	PUNCT	unanimous
 an	DET	unanimous
-increasing	VERB	disputed
+increasing	ADJ	disputed
 number	NOUN	unanimous
 of	ADP	unanimous
 farmers	NOUN	unanimous
@@ -10202,7 +10202,7 @@ that	DET	unanimous
 heroin	NOUN	unanimous
 flows	VERB	unanimous
 through	ADP	unanimous
-neighboring	ADJ	disputed
+neighboring	ADJ	unanimous
 Thailand	PROPN	unanimous
 on	ADP	unanimous
 its	DET	unanimous
@@ -15292,7 +15292,7 @@ creeping	VERB	disputed
 ,	PUNCT	unanimous
 crawling	VERB	disputed
 ,	PUNCT	unanimous
-buzzing	VERB	disputed
+buzzing	ADJ	disputed
 creatures	NOUN	unanimous
 to	PART	unanimous
 live	VERB	unanimous
@@ -15689,7 +15689,7 @@ identified	VERB	unanimous
 removal	NOUN	unanimous
 of	ADP	unanimous
 the	DET	unanimous
-remaining	VERB	disputed
+remaining	ADJ	disputed
 features	NOUN	unanimous
 of	ADP	unanimous
 that	DET	unanimous
@@ -16109,7 +16109,7 @@ The	DET	unanimous
 radar	NOUN	unanimous
 has	VERB	disputed
 two	NUM	unanimous
-operating	NOUN	unanimous
+operating	ADJ	unanimous
 modes	NOUN	unanimous
 :	PUNCT	unanimous
 short	ADJ	unanimous
@@ -16330,7 +16330,7 @@ only	ADV	unanimous
 one-two	NUM	unanimous
 feet	NOUN	unanimous
 of	ADP	unanimous
-rushing	VERB	disputed
+rushing	ADJ	disputed
 water	NOUN	unanimous
 to	PART	unanimous
 carry	VERB	unanimous
@@ -18269,7 +18269,7 @@ decreased	VERB	unanimous
 compared	VERB	unanimous
 to	ADP	unanimous
 the	DET	unanimous
-preceding	ADJ	disputed
+preceding	ADJ	unanimous
 century	NOUN	unanimous
 which	PRON	unanimous
 could	AUX	unanimous
@@ -18758,7 +18758,7 @@ James	PROPN	unanimous
 # source_id = usgs-featured-story-usgs-field-crews-document-isaias-effects-along-atlantic-coas
 # text = In neighboring Maryland, Delaware and the District of Columbia, with up to six inches of rain forecast for the area, 29 USGS staffers were in the field.
 In	ADP	unanimous
-neighboring	ADJ	disputed
+neighboring	ADJ	unanimous
 Maryland	PROPN	unanimous
 ,	PUNCT	unanimous
 Delaware	PROPN	unanimous
@@ -19141,7 +19141,7 @@ the	DET	unanimous
 middle	NOUN	unanimous
 of	ADP	unanimous
 an	DET	unanimous
-existing	VERB	unanimous
+existing	ADJ	unanimous
 mule	NOUN	unanimous
 deer	NOUN	unanimous
 corridor	NOUN	unanimous
@@ -20551,7 +20551,7 @@ However	ADV	unchecked
 the	DET	unchecked
 potential	NOUN	unchecked
 for	ADP	unchecked
-diving	NOUN	disputed
+diving	NOUN	unchecked
 duck	NOUN	unchecked
 species	NOUN	unchecked
 to	PART	unchecked
@@ -23666,7 +23666,7 @@ carbon	NOUN	unchecked
 is	VERB	unchecked
 high	ADJ	unchecked
 in	ADP	unchecked
-illuminating	NOUN	unchecked
+illuminating	ADJ	unchecked
 value	NOUN	unchecked
 .	PUNCT	unchecked
 
@@ -23702,14 +23702,14 @@ are	AUX	unchecked
 characterized	VERB	unchecked
 by	ADP	unchecked
 a	DET	unchecked
-humming	VERB	unchecked
+humming	ADJ	unchecked
 noise	NOUN	unchecked
 due	ADJ	unchecked
 to	ADP	unchecked
 the	DET	unchecked
 effect	NOUN	unchecked
 of	ADP	unchecked
-alternating	VERB	unchecked
+alternating	ADJ	unchecked
 current	NOUN	unchecked
 upon	ADP	unchecked
 the	DET	unchecked
@@ -23752,7 +23752,7 @@ is	AUX	unchecked
 emitted	VERB	unchecked
 by	ADP	unchecked
 the	DET	unchecked
-glowing	VERB	unchecked
+glowing	ADJ	unchecked
 end	NOUN	unchecked
 of	ADP	unchecked
 the	DET	unchecked
@@ -24167,7 +24167,7 @@ eyes	NOUN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
 the	DET	unchecked
-diffusing	NOUN	unchecked
+diffusing	ADJ	unchecked
 media	NOUN	unchecked
 whether	SCONJ	unchecked
 glass	NOUN	unchecked
@@ -25965,7 +25965,7 @@ quickly	ADV	unchecked
 without	ADP	unchecked
 making	VERB	unchecked
 a	DET	unchecked
-splashing	ADJ	disputed
+splashing	ADJ	unchecked
 swoop	NOUN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
@@ -26533,7 +26533,7 @@ he	PRON	unchecked
 held	VERB	unchecked
 up	ADV	unchecked
 a	DET	unchecked
-trembling	VERB	unchecked
+trembling	ADJ	unchecked
 hand	NOUN	unchecked
 .	PUNCT	unchecked
 
@@ -27493,7 +27493,7 @@ organs	NOUN	unchecked
 It	PRON	unchecked
 has	VERB	unchecked
 a	DET	unchecked
-sucking	NOUN	unchecked
+sucking	ADJ	unchecked
 mouth	NOUN	unchecked
 ,	PUNCT	unchecked
 which	PRON	unchecked
@@ -27794,7 +27794,7 @@ well	ADV	unchecked
 They	PRON	unchecked
 have	VERB	unchecked
 no	DET	unchecked
-biting	NOUN	unchecked
+biting	ADJ	unchecked
 claws	NOUN	unchecked
 ,	PUNCT	unchecked
 merely	ADV	unchecked
@@ -28043,7 +28043,7 @@ there	ADV	unchecked
 either	CCONJ	unchecked
 in	ADP	unchecked
 his	DET	unchecked
-butterfly-hunting	NOUN	disputed
+butterfly-hunting	NOUN	unchecked
 days	NOUN	unchecked
 or	CCONJ	unchecked
 later	ADV	unchecked
@@ -30783,7 +30783,7 @@ water	NOUN	unchecked
 do	VERB	unchecked
 all	DET	unchecked
 the	DET	unchecked
-supporting	NOUN	unchecked
+supporting	ADJ	unchecked
 business	NOUN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked

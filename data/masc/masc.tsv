@@ -552,7 +552,7 @@ PM	NOUN	ptb	FW
 # text = Plus Justifying Comics as a Legitimate Object of Study Parts I & II .
 # genre = blog
 Plus	CCONJ	ptb	CC
-Justifying	VERB	ptb	VBG
+Justifying	ADJ	ptb	VBG
 Comics	NOUN	disputed	NNS
 as	ADP	ptb	IN
 a	DET	ptb	DT
@@ -3518,7 +3518,7 @@ O'Donnell	PROPN	ptb	NNP
 and	CCONJ	ptb	CC
 her	DET	ptb	PRP$
 little	ADJ	ptb	JJ
-orcling	NOUN	ptb	VBG
+orcling	ADJ	ptb	VBG
 hordes	NOUN	ptb	NNS
 make	VERB	ptb	VBP
 huge	ADJ	ptb	JJ
@@ -9692,7 +9692,7 @@ County	PROPN	ptb	NNP
 have	VERB	ptb	VBP
 any	DET	ptb	DT
 single	ADJ	ptb	JJ
-distinguishing	ADJ	disputed	JJ
+distinguishing	ADJ	ptb	JJ
 feature	NOUN	ptb	NN
 derived	VERB	ptb	VBN
 from	ADP	ptb	IN
@@ -11632,7 +11632,7 @@ through	ADP	ptb	IN
 the	DET	ptb	DT
 wine	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-producing	VERB	ptb	NN
+producing	NOUN	ptb	NN
 counties	NOUN	ptb	NNS
 one	NUM	ptb	CD
 by	ADP	ptb	IN
@@ -16287,7 +16287,7 @@ what	PRON	ptb	WP
 is	VERB	ptb	VBZ
 the	DET	ptb	DT
 real	ADJ	ptb	JJ
-marketing	NOUN	ptb	VBG
+marketing	ADJ	ptb	VBG
 value	NOUN	ptb	NN
 ?	PUNCT	ptb	.
 
@@ -16513,7 +16513,7 @@ was	VERB	ptb	VBD
 of	ADV	ptb	RB
 course	ADV	ptb	RB
 a	DET	ptb	DT
-trending	VERB	ptb	VBG
+trending	ADJ	ptb	VBG
 topic	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 that	DET	ptb	DT
@@ -17177,7 +17177,7 @@ buildings	NOUN	ptb	NNS
 were	AUX	ptb	VBD
 constructed	VERB	ptb	VBN
 atop	ADP	ptb	IN
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 ones	NOUN	ptb	NNS
 like	ADP	ptb	IN
 so	ADV	ptb	RB
@@ -17228,7 +17228,7 @@ This	DET	ptb	DT
 photograph	NOUN	ptb	NN
 of	ADP	ptb	IN
 the	DET	ptb	DT
-dueling	VERB	ptb	VBG
+dueling	ADJ	ptb	VBG
 signs	NOUN	ptb	NNS
 for	ADP	ptb	IN
 the	DET	ptb	DT
@@ -17722,7 +17722,7 @@ through	ADP	ptb	IN
 my	DET	ptb	PRP$
 beautiful	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
-vacationing	VERB	ptb	VBG
+vacationing	ADJ	ptb	VBG
 wife	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -17988,7 +17988,7 @@ cover	VERB	ptb	VB
 her	DET	ptb	PRP$
 scars	NOUN	ptb	NNS
 with	ADP	ptb	IN
-flowering	ADJ	disputed	VBG
+flowering	ADJ	ptb	VBG
 seeds	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -19888,7 +19888,7 @@ Sunday	PROPN	ptb	NNP
 afternoon	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 the	DET	ptb	DT
-waiting	NOUN	ptb	VBG
+waiting	ADJ	ptb	VBG
 list	NOUN	ptb	NN
 was	VERB	ptb	VBD
 an	DET	ptb	DT
@@ -20266,7 +20266,7 @@ you	PRON	ptb	PRP
 # genre = blog
 I	PRON	ptb	PRP
 stopped	VERB	ptb	VBD
-eating	VERB	ptb	VBG
+eating	ADJ	ptb	VBG
 halfway	NOUN	ptb	NN
 through	ADV	ptb	RP
 ,	PUNCT	ptb	,
@@ -24132,7 +24132,7 @@ circadian	ADJ	ptb	JJ
 system	NOUN	ptb	NN
 generates	VERB	ptb	VBZ
 an	DET	ptb	DT
-alerting	ADJ	disputed	VBG
+alerting	ADJ	ptb	VBG
 signal	NOUN	ptb	NN
 in	ADP	ptb	IN
 opposition	NOUN	ptb	NN
@@ -27815,7 +27815,7 @@ party	NOUN	ptb	NN
 a	DET	ptb	DT
 fascinating	ADJ	ptb	JJ
 -	PUNCT	ptb	HYPH
-sounding	ADJ	disputed	VBG
+sounding	ADJ	ptb	VBG
 lecture	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 a	DET	ptb	DT
@@ -28347,7 +28347,7 @@ loads	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 time	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-consuming	ADJ	ptb	NN
+consuming	NOUN	ptb	NN
 extracurriculars	NOUN	ptb	NNS
 have	AUX	ptb	VBP
 always	ADV	ptb	RB
@@ -28868,7 +28868,7 @@ about	ADP	ptb	IN
 some	DET	ptb	DT
 forward	ADJ	ptb	JJ
 -	PUNCT	ptb	HYPH
-thinking	ADJ	disputed	VBG
+thinking	ADJ	ptb	VBG
 artist	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
 types	NOUN	ptb	NNS
@@ -30100,7 +30100,7 @@ cultivated	VERB	ptb	VBN
 by	ADP	ptb	IN
 forward	ADJ	ptb	JJ
 -	PUNCT	ptb	HYPH
-thinking	VERB	ptb	VBG
+thinking	ADJ	ptb	VBG
 groups	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 intrepid	ADJ	ptb	JJ
@@ -30811,7 +30811,7 @@ great	ADJ	ptb	JJ
 bridge	NOUN	ptb	NN
 to	ADP	ptb	IN
 the	DET	ptb	DT
-surrounding	VERB	ptb	VBG
+surrounding	ADJ	ptb	VBG
 neighborhood	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -32043,7 +32043,7 @@ really	ADV	ptb	RB
 just	ADV	ptb	RB
 flag	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-waving	NOUN	disputed	NN
+waving	NOUN	ptb	NN
 propaganda	NOUN	ptb	NN
 ?	PUNCT	ptb	.
 
@@ -32236,7 +32236,7 @@ touch	NOUN	ptb	NN
 # text = Every decaying city in America has D's firmly in control , and has forever .
 # genre = blog
 Every	DET	ptb	DT
-decaying	VERB	ptb	VBG
+decaying	ADJ	ptb	VBG
 city	NOUN	ptb	NN
 in	ADP	ptb	IN
 America	PROPN	ptb	NNP
@@ -34402,7 +34402,7 @@ square	NOUN	ptb	NN
 feet	NOUN	ptb	NNS
 of	ADP	ptb	IN
 CO2	NOUN	ptb	NN
-consuming	VERB	ptb	VBG
+consuming	ADJ	ptb	VBG
 plants	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -34652,7 +34652,7 @@ the	DET	ptb	DT
 climate	NOUN	ptb	NN
 but	CCONJ	ptb	CC
 the	DET	ptb	DT
-burgeoning	ADJ	disputed	VBG
+burgeoning	ADJ	ptb	VBG
 consultancy	NOUN	ptb	NN
 industry	NOUN	ptb	NN
 "	PUNCT	ptb	"
@@ -35992,7 +35992,7 @@ young	ADJ	ptb	JJ
 adult	NOUN	ptb	NN
 time	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-travelling	VERB	ptb	NN
+travelling	NOUN	ptb	NN
 Vampire	NOUN	ptb	NN
 TV	NOUN	ptb	NN
 show	NOUN	ptb	NN
@@ -36084,7 +36084,7 @@ have	VERB	ptb	VB
 a	DET	ptb	DT
 level	NOUN	ptb	NN
 of	ADP	ptb	IN
-bubbling	VERB	ptb	VBG
+bubbling	ADJ	ptb	VBG
 popularity	NOUN	ptb	NN
 via	ADP	ptb	IN
 books	NOUN	ptb	NNS
@@ -36660,7 +36660,7 @@ I	PRON	ptb	PRP
 was	VERB	ptb	VBD
 on	ADP	ptb	IN
 the	DET	ptb	DT
-trading	NOUN	ptb	VBG
+trading	ADJ	ptb	VBG
 floor	NOUN	ptb	NN
 working	VERB	ptb	VBG
 with	ADP	ptb	IN
@@ -37806,7 +37806,7 @@ the	DET	ptb	DT
 experience	NOUN	ptb	NN
 into	ADP	ptb	IN
 the	DET	ptb	DT
-defining	ADJ	disputed	VBG
+defining	ADJ	ptb	VBG
 event	NOUN	ptb	NN
 of	ADP	ptb	IN
 my	DET	ptb	PRP$
@@ -38873,7 +38873,7 @@ wide	ADJ	ptb	JJ
 range	NOUN	ptb	NN
 of	ADP	ptb	IN
 services	NOUN	ptb	NNS
-including	ADP	ptb	VBG
+including	VERB	ptb	VBG
 energy	NOUN	ptb	NN
 services	NOUN	ptb	NNS
 in	ADP	ptb	IN
@@ -39449,7 +39449,7 @@ that	SCONJ	ptb	IN
 we	PRON	ptb	PRP
 need	VERB	ptb	VBP
 some	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 countries	NOUN	ptb	NNS
 with	ADP	ptb	IN
 an	DET	ptb	DT
@@ -41009,7 +41009,7 @@ them	PRON	ptb	PRP
 I	PRON	ptb	PRP
 have	AUX	ptb	VBP
 attached	VERB	ptb	VBN
-talking	NOUN	ptb	VBG
+talking	ADJ	ptb	VBG
 points	NOUN	ptb	NNS
 regarding	ADP	ptb	VBG
 the	DET	ptb	DT
@@ -41110,7 +41110,7 @@ we	PRON	ptb	PRP
 will	AUX	ptb	MD
 also	ADV	ptb	RB
 identify	VERB	ptb	VB
-existing	ADJ	disputed	VBG
+existing	ADJ	ptb	VBG
 bills	NOUN	ptb	NNS
 that	PRON	ptb	WDT
 we	PRON	ptb	PRP
@@ -41293,7 +41293,7 @@ and	CCONJ	ptb	CC
 costs	NOUN	ptb	NNS
 related	VERB	ptb	VBN
 to	ADP	ptb	IN
-interconnecting	VERB	ptb	VBG
+interconnecting	ADJ	ptb	VBG
 facilities	NOUN	ptb	NNS
 with	ADP	ptb	IN
 investor	NOUN	ptb	NN
@@ -41615,7 +41615,7 @@ Issue	NOUN	ptb	NN
 # text = Ambiguous Ratemaking Authority
 # genre = email
 Ambiguous	ADJ	ptb	JJ
-Ratemaking	NOUN	ptb	VBG
+Ratemaking	ADJ	ptb	VBG
 Authority	NOUN	ptb	NN
 
 # sent_id = masc:written/email/enron/175841#87
@@ -41643,7 +41643,7 @@ for	ADP	ptb	IN
 the	DET	ptb	DT
 costs	NOUN	ptb	NNS
 of	ADP	ptb	IN
-purchasing	VERB	ptb	NN
+purchasing	NOUN	ptb	NN
 power	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -41685,7 +41685,7 @@ California	PROPN	ptb	NNP
 Ambiguous	ADJ	ptb	JJ
 Regulatory	ADJ	ptb	JJ
 Authority	NOUN	ptb	NN
-Regarding	ADP	ptb	VBG
+Regarding	VERB	ptb	VBG
 Contract	NOUN	ptb	NN
 "	PUNCT	ptb	"
 Prudence	NOUN	ptb	NN
@@ -41818,7 +41818,7 @@ ratepayers	NOUN	ptb	NNS
 the	DET	ptb	DT
 costs	NOUN	ptb	NNS
 of	ADP	ptb	IN
-purchasing	VERB	ptb	NN
+purchasing	NOUN	ptb	NN
 power	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -41928,7 +41928,7 @@ electronic	ADJ	ptb	JJ
 copies	NOUN	ptb	NNS
 of	ADP	ptb	IN
 the	DET	ptb	DT
-talking	NOUN	ptb	VBG
+talking	ADJ	ptb	VBG
 points	NOUN	ptb	NNS
 related	ADJ	ptb	JJ
 to	ADP	ptb	IN
@@ -42152,7 +42152,7 @@ on	ADP	ptb	IN
 line	NOUN	ptb	NN
 to	PART	ptb	TO
 meet	VERB	ptb	VB
-peaking	VERB	ptb	VBG
+peaking	ADJ	ptb	VBG
 summer	NOUN	ptb	NN
 demand	NOUN	ptb	NN
 .	PUNCT	ptb	.
@@ -42906,7 +42906,7 @@ some	DET	ptb	DT
 portion	NOUN	ptb	NN
 of	ADP	ptb	IN
 their	DET	ptb	PRP$
-existing	ADJ	disputed	VBG
+existing	ADJ	ptb	VBG
 debt	NOUN	ptb	NN
 in	ADP	ptb	IN
 recognition	NOUN	ptb	NN
@@ -43161,7 +43161,7 @@ and	CCONJ	ptb	CC
 better	ADV	ptb	RBR
 respond	VERB	ptb	VB
 to	ADP	ptb	IN
-emerging	VERB	ptb	VBG
+emerging	ADJ	ptb	VBG
 market	NOUN	ptb	NN
 requirements	NOUN	ptb	NNS
 .	PUNCT	ptb	.
@@ -44190,7 +44190,7 @@ stolen	VERB	ptb	VBN
 from	ADP	ptb	IN
 its	DET	ptb	PRP$
 "	PUNCT	ptb	"
-hiding	NOUN	ptb	VBG
+hiding	ADJ	ptb	VBG
 place	NOUN	ptb	NN
 "	PUNCT	ptb	"
 under	ADP	ptb	IN
@@ -49900,7 +49900,7 @@ Wilson	PROPN	ptb	NNP
 I	PRON	ptb	PRP
 am	VERB	ptb	VBP
 a	DET	ptb	DT
-dying	VERB	ptb	VBG
+dying	ADJ	ptb	VBG
 woman	NOUN	ptb	NN
 who	PRON	ptb	WP
 have	AUX	ptb	VBP
@@ -52757,7 +52757,7 @@ is	AUX	ptb	VBZ
 working	VERB	ptb	VBG
 with	ADP	ptb	IN
 a	DET	ptb	DT
-consulting	NOUN	ptb	VBG
+consulting	ADJ	ptb	VBG
 firm	NOUN	ptb	NN
 in	ADP	ptb	IN
 Nigeria	PROPN	ptb	NNP
@@ -52833,7 +52833,7 @@ charges	NOUN	ptb	NNS
 as	ADV	ptb	RB
 well	ADV	ptb	RB
 as	ADP	ptb	IN
-processing	NOUN	ptb	VBG
+processing	ADJ	ptb	VBG
 fees	NOUN	ptb	NNS
 have	AUX	ptb	VBP
 been	AUX	ptb	VBN
@@ -52918,7 +52918,7 @@ Department	NOUN	ptb	NN
 for	ADP	ptb	IN
 the	DET	ptb	DT
 Security	NOUN	ptb	NN
-Keeping	ADJ	disputed	VBG
+Keeping	ADJ	ptb	VBG
 Fee	NOUN	disputed	NN
 of	ADP	ptb	IN
 the	DET	ptb	DT
@@ -52951,7 +52951,7 @@ pay	VERB	ptb	VB
 for	ADP	ptb	IN
 the	DET	ptb	DT
 Security	NOUN	ptb	NN
-Keeping	VERB	disputed	VBG
+Keeping	VERB	ptb	VBG
 charges	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 but	CCONJ	ptb	CC
@@ -53161,7 +53161,7 @@ payment	NOUN	ptb	NN
 for	ADP	ptb	IN
 the	DET	ptb	DT
 Security	NOUN	ptb	NN
-Keeping	NOUN	ptb	VBG
+Keeping	VERB	ptb	VBG
 Fees	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -58017,7 +58017,7 @@ Febian	PROPN	ptb	NNP
 # text = an aging widow suffering from long time illness .
 # genre = email
 an	DET	ptb	DT
-aging	VERB	ptb	VBG
+aging	ADJ	ptb	VBG
 widow	NOUN	ptb	NN
 suffering	VERB	ptb	VBG
 from	ADP	ptb	IN
@@ -59555,7 +59555,7 @@ today	ADV	ptb	NN
 Only	ADV	ptb	RB
 the	DET	ptb	DT
 lowest	ADJ	ptb	JJS
-bidding	VERB	ptb	NN
+bidding	NOUN	ptb	NN
 vendor	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
@@ -63562,7 +63562,7 @@ mt	NOUN	ptb	NNS
 of	ADP	ptb	IN
 high	ADJ	ptb	JJ
 grade	NOUN	ptb	NN
-coking	NOUN	ptb	VBG
+coking	ADJ	ptb	VBG
 coal	NOUN	ptb	NN
 into	ADP	ptb	IN
 its	DET	ptb	PRP$
@@ -63586,7 +63586,7 @@ of	ADP	ptb	IN
 180,000	NUM	ptb	CD
 mt	NOUN	ptb	NNS
 of	ADP	ptb	IN
-coking	NOUN	ptb	VBG
+coking	ADJ	ptb	VBG
 coal	NOUN	ptb	NN
 at	ADP	ptb	IN
 FOB	PROPN	ptb	NNP
@@ -64302,7 +64302,7 @@ With	ADP	ptb	IN
 His	DET	ptb	PRP$
 Brain	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-Boosting	NOUN	disputed	NN
+Boosting	NOUN	ptb	NN
 Techniques	NOUN	ptb	NNS
 
 # sent_id = masc:written/email/spam/Fastest_Reader#14
@@ -64547,7 +64547,7 @@ Time	PROPN	ptb	NNP
 Warner	PROPN	ptb	NNP
 book	NOUN	ptb	NN
 Super	ADJ	ptb	JJ
-Reading	PROPN	ptb	NN
+Reading	NOUN	ptb	NN
 Secrets	NOUN	ptb	NNS
 is	VERB	ptb	VBZ
 in	ADP	ptb	IN
@@ -64598,7 +64598,7 @@ Who	PRON	ptb	WP
 RSQUOs	VERB	ptb	VBZ
 Who	PRON	ptb	WP
 Among	ADP	ptb	IN
-Emerging	PROPN	ptb	VBG
+Emerging	ADJ	ptb	VBG
 Leaders	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 2,000	NUM	ptb	CD
@@ -65045,7 +65045,7 @@ here	ADV	ptb	RB
 # text = The Publishing Committee selected you as a potential candidate based not only upon your current standing , but focusing as well on criteria from executive and professional directories , associations , and trade journals .
 # genre = email
 The	DET	ptb	DT
-Publishing	PROPN	ptb	NN
+Publishing	NOUN	ptb	NN
 Committee	NOUN	ptb	NN
 selected	VERB	ptb	VBD
 you	PRON	ptb	PRP
@@ -65978,7 +65978,7 @@ To	PART	ptb	TO
 view	VERB	ptb	VB
 the	DET	ptb	DT
 full	ADJ	ptb	JJ
-Spring	PROPN	ptb	NN
+Spring	NOUN	ptb	NN
 Trend	NOUN	ptb	NN
 Report	NOUN	ptb	NN
 by	ADP	ptb	IN
@@ -66045,14 +66045,14 @@ from	ADP	ptb	IN
 the	DET	ptb	DT
 tech	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-toting	VERB	ptb	NN
+toting	NOUN	ptb	NN
 career	NOUN	ptb	NN
 woman	NOUN	ptb	NN
 to	ADP	ptb	IN
 the	DET	ptb	DT
 photo	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-snapping	VERB	ptb	NN
+snapping	NOUN	ptb	NN
 fashionista	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 bags	NOUN	ptb	NNS
@@ -71590,7 +71590,7 @@ practices	NOUN	ptb	NNS
 to	PART	ptb	TO
 make	VERB	ptb	VB
 your	DET	ptb	PRP$
-advertising	NOUN	ptb	VBG
+advertising	ADJ	ptb	VBG
 dollars	NOUN	ptb	NNS
 stretch	VERB	ptb	VB
 
@@ -71967,7 +71967,7 @@ immediate	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
 money	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-saving	VERB	ptb	NN
+saving	NOUN	ptb	NN
 impact	NOUN	ptb	NN
 to	ADP	ptb	IN
 your	DET	ptb	PRP$
@@ -72122,7 +72122,7 @@ conferences	NOUN	ptb	NNS
 provide	VERB	ptb	VBP
 money	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-saving	NOUN	disputed	NN
+saving	NOUN	ptb	NN
 tactics	NOUN	ptb	NNS
 you	PRON	ptb	PRP
 can	AUX	ptb	MD
@@ -74595,7 +74595,7 @@ unlocking	VERB	ptb	VBG
 your	DET	ptb	PRP$
 Online	ADJ	ptb	JJ
 Internet	NOUN	ptb	NN
-Banking	NOUN	disputed	NN
+Banking	NOUN	ptb	NN
 account	NOUN	ptb	NN
 please	INTJ	ptb	UH
 click	VERB	ptb	VB
@@ -75276,7 +75276,7 @@ Subject	NOUN	ptb	NN
 SHTP	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 the	DET	ptb	DT
-selling	NOUN	ptb	VBG
+selling	ADJ	ptb	VBG
 pressure	NOUN	ptb	NN
 is	VERB	ptb	VBZ
 over	ADV	ptb	RP
@@ -75296,7 +75296,7 @@ to	PART	ptb	TO
 say	VERB	ptb	VB
 that	SCONJ	ptb	IN
 the	DET	ptb	DT
-selling	NOUN	ptb	VBG
+selling	ADJ	ptb	VBG
 pressure	NOUN	ptb	NN
 is	VERB	ptb	VBZ
 over	ADV	ptb	RP
@@ -75510,10 +75510,10 @@ Anatrim	PROPN	ptb	NNP
 the	DET	ptb	DT
 ground	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-breaking	NOUN	disputed	NN
+breaking	NOUN	ptb	NN
 pound	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-melting	VERB	ptb	NN
+melting	NOUN	ptb	NN
 blend	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 you	PRON	ptb	PRP
@@ -75941,9 +75941,9 @@ all	ADV	ptb	DT
 -	PUNCT	ptb	HYPH
 natural	ADJ	ptb	JJ
 appetite	NOUN	ptb	NN
-suppressing	VERB	ptb	VBG
+suppressing	ADJ	ptb	VBG
 energy	NOUN	ptb	NN
-boosting	VERB	ptb	VBG
+boosting	ADJ	ptb	VBG
 product	NOUN	ptb	NN
 now	ADV	ptb	RB
 !	PUNCT	ptb	.
@@ -76262,7 +76262,7 @@ to	ADP	ptb	IN
 the	DET	ptb	DT
 composing	ADJ	ptb	VBG
 or	CCONJ	ptb	CC
-viewing	NOUN	ptb	VBG
+viewing	ADJ	ptb	VBG
 character	NOUN	ptb	NN
 sets	NOUN	ptb	NNS
 .	PUNCT	ptb	.
@@ -76584,7 +76584,7 @@ lower	ADJ	ptb	JJR
 128	NUM	ptb	CD
 for	ADP	ptb	IN
 all	DET	ptb	DT
-incoming	ADJ	disputed	JJ
+incoming	ADJ	ptb	JJ
 messages	NOUN	ptb	NNS
 in	ADP	ptb	IN
 the	DET	ptb	DT
@@ -76604,7 +76604,7 @@ character	NOUN	ptb	NN
 set	NOUN	ptb	NN
 of	ADP	ptb	IN
 the	DET	ptb	DT
-receiving	VERB	ptb	VBG
+receiving	ADJ	ptb	VBG
 Pine	PROPN	ptb	NNP
 is	VERB	ptb	VBZ
 US-ASCII	PROPN	ptb	NNP
@@ -77193,7 +77193,7 @@ it	PRON	ptb	PRP
 default	VERB	ptb	VB
 at	ADP	ptb	IN
 the	DET	ptb	DT
-receiving	VERB	ptb	VBG
+receiving	ADJ	ptb	VBG
 end	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -77714,7 +77714,7 @@ Dan	PROPN	ptb	NNP
 Schlitt	PROPN	ptb	NNP
 School	NOUN	ptb	NN
 of	ADP	ptb	IN
-Engineering	PROPN	ptb	NN
+Engineering	NOUN	ptb	NN
 Computer	NOUN	ptb	NN
 Systems	NOUN	ptb	NNS
 dan@ee-mail.engr.ccny.cuny.edu	X	ptb	ADD
@@ -78573,7 +78573,7 @@ being	AUX	ptb	VBG
 developed	VERB	ptb	VBN
 by	ADP	ptb	IN
 the	DET	ptb	DT
-working	NOUN	ptb	VBG
+working	ADJ	ptb	VBG
 group	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -78856,7 +78856,7 @@ all	PRON	ptb	DT
 ,	PUNCT	ptb	,
 if	SCONJ	ptb	IN
 the	DET	ptb	DT
-working	NOUN	ptb	VBG
+working	ADJ	ptb	VBG
 group	NOUN	ptb	NN
 is	AUX	ptb	VBZ
 still	ADV	ptb	RB
@@ -80264,7 +80264,7 @@ appending	VERB	ptb	VBG
 material	NOUN	ptb	NN
 to	ADP	ptb	IN
 an	DET	ptb	DT
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 label	NOUN	ptb	NN
 is	VERB	ptb	VBZ
 the	DET	ptb	DT
@@ -80357,7 +80357,7 @@ that	SCONJ	ptb	IN
 one	NUM	ptb	CD
 of	ADP	ptb	IN
 the	DET	ptb	DT
-guiding	VERB	ptb	VBG
+guiding	ADJ	ptb	VBG
 principles	NOUN	ptb	NNS
 is	VERB	ptb	VBZ
 to	PART	ptb	TO
@@ -81584,9 +81584,9 @@ that	SCONJ	ptb	IN
 we	PRON	ptb	PRP
 get	VERB	ptb	VBP
 math	NOUN	ptb	NN
-including	VERB	disputed	VBG
+including	VERB	ptb	VBG
 text	NOUN	ptb	NN
-including	VERB	disputed	VBG
+including	VERB	ptb	VBG
 math	NOUN	ptb	NN
 etc	X	ptb	FW
 .	PUNCT	ptb	.
@@ -84116,7 +84116,7 @@ of	ADP	ptb	IN
 why	ADV	ptb	WRB
 a	DET	ptb	DT
 prefix	NOUN	ptb	NN
-embellishing	NOUN	ptb	VBG
+embellishing	ADJ	ptb	VBG
 operator	NOUN	ptb	NN
 sometimes	ADV	ptb	RB
 "	PUNCT	ptb	"
@@ -84368,7 +84368,7 @@ of	ADP	ptb	IN
 the	DET	ptb	DT
 Oscar	PROPN	ptb	NNP
 -	PUNCT	ptb	HYPH
-winning	VERB	ptb	VBG
+winning	ADJ	ptb	VBG
 documentary	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -84486,7 +84486,7 @@ loud	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
 clear	ADJ	ptb	JJ
 and	CCONJ	ptb	CC
-dissenting	VERB	ptb	VBG
+dissenting	ADJ	ptb	VBG
 voices	NOUN	ptb	NNS
 like	ADP	ptb	IN
 Mr.	PROPN	ptb	NNP
@@ -85523,7 +85523,7 @@ week	NOUN	ptb	NN
 to	ADP	ptb	IN
 10	NUM	ptb	CD
 days	NOUN	ptb	NNS
-waiting	NOUN	ptb	VBG
+waiting	ADJ	ptb	VBG
 period	NOUN	ptb	NN
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
@@ -87911,7 +87911,7 @@ as	ADP	ptb	IN
 a	DET	ptb	DT
 pencil	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-stabbing	VERB	ptb	VBG
+stabbing	ADJ	ptb	VBG
 thug	NOUN	ptb	NN
 is	VERB	ptb	VBZ
 exactly	ADV	ptb	RB
@@ -89611,7 +89611,7 @@ next	ADJ	ptb	JJ
 project	NOUN	ptb	NN
 has	VERB	ptb	VBZ
 the	DET	ptb	DT
-working	ADJ	disputed	VBG
+working	ADJ	ptb	VBG
 title	NOUN	ptb	NN
 "	PUNCT	ptb	"
 Fahrenheit	PROPN	ptb	NNP
@@ -89684,7 +89684,7 @@ the	DET	ptb	DT
 previous	ADJ	ptb	JJ
 record	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-holding	VERB	ptb	VBG
+holding	ADJ	ptb	VBG
 documentary	NOUN	ptb	NN
 :	PUNCT	ptb	:
 "	PUNCT	ptb	"
@@ -90026,7 +90026,7 @@ applicable	ADJ	ptb	JJ
 only	ADV	ptb	RB
 during	ADP	ptb	IN
 the	DET	ptb	DT
-breeding	NOUN	ptb	VBG
+breeding	ADJ	ptb	VBG
 season	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 which	PRON	ptb	WP
@@ -90307,7 +90307,7 @@ then	ADV	ptb	RB
 upon	ADP	ptb	IN
 smelling	VERB	ptb	VBG
 the	DET	ptb	DT
-returning	VERB	ptb	VBG
+returning	ADJ	ptb	VBG
 patroller	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 be	AUX	ptb	VB
@@ -90540,7 +90540,7 @@ be	AUX	ptb	VB
 refilled	VERB	ptb	VBN
 at	ADP	ptb	IN
 a	DET	ptb	DT
-filling	NOUN	ptb	VBG
+filling	ADJ	ptb	VBG
 station	NOUN	ptb	NN
 each	DET	ptb	DT
 morning	NOUN	ptb	NN
@@ -91572,7 +91572,7 @@ grippers	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 emulating	VERB	ptb	VBG
 the	DET	ptb	DT
-grasping	NOUN	ptb	VBG
+grasping	ADJ	ptb	VBG
 power	NOUN	ptb	NN
 of	ADP	ptb	IN
 the	DET	ptb	DT
@@ -91684,7 +91684,7 @@ behind	ADP	ptb	IN
 them	PRON	ptb	PRP
 to	PART	ptb	TO
 mark	VERB	ptb	VB
-returning	NOUN	ptb	VBG
+returning	ADJ	ptb	VBG
 paths	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 while	SCONJ	ptb	IN
@@ -94022,7 +94022,7 @@ the	DET	ptb	DT
 nest	NOUN	ptb	NN
 mound	NOUN	ptb	NN
 ,	PUNCT	ptb	,
-taking	VERB	ptb	VBG
+taking	ADJ	ptb	VBG
 measurements	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -94088,7 +94088,7 @@ task	NOUN	ptb	NN
 switching	NOUN	ptb	NN
 in	ADP	ptb	IN
 the	DET	ptb	DT
-patrolling	NOUN	ptb	VBG
+patrolling	ADJ	ptb	VBG
 behavior	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 assume	VERB	ptb	VB
@@ -94396,7 +94396,7 @@ switched	VERB	ptb	VBN
 to	ADP	ptb	IN
 $$$$	SYM	ptb	SYM
 the	DET	ptb	DT
-foraging	NOUN	ptb	VBG
+foraging	ADJ	ptb	VBG
 behavior	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -94780,7 +94780,7 @@ forage_age	NOUN	ptb	NN
 refers	VERB	ptb	VBZ
 to	ADP	ptb	IN
 the	DET	ptb	DT
-starting	NOUN	ptb	VBG
+starting	ADJ	ptb	VBG
 age	NOUN	ptb	NN
 at	ADP	ptb	IN
 which	PRON	ptb	WP
@@ -95614,7 +95614,7 @@ C	NOUN	ptb	NN
 as	ADP	ptb	IN
 a	DET	ptb	DT
 chromatic	ADJ	ptb	JJ
-passing	NOUN	ptb	VBG
+passing	ADJ	ptb	VBG
 tone	NOUN	ptb	NN
 between	ADP	ptb	IN
 D♭	NOUN	ptb	NN
@@ -95858,7 +95858,7 @@ begin	VERB	ptb	VB
 with	ADP	ptb	IN
 ,	PUNCT	ptb	,
 the	DET	ptb	DT
-opening	ADJ	disputed	JJ
+opening	ADJ	ptb	JJ
 motive	NOUN	ptb	NN
 in	ADP	ptb	IN
 the	DET	ptb	DT
@@ -95995,7 +95995,7 @@ two	NUM	ptb	CD
 instances	NOUN	ptb	NNS
 of	ADP	ptb	IN
 this	DET	ptb	DT
-opening	NOUN	ptb	JJ
+opening	ADJ	ptb	JJ
 motive	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 shown	VERB	ptb	VBN
@@ -96213,7 +96213,7 @@ step	NOUN	ptb	NN
 consists	VERB	ptb	VBZ
 of	ADP	ptb	IN
 two	NUM	ptb	CD
-ascending	VERB	ptb	VBG
+ascending	ADJ	ptb	VBG
 fourths	NOUN	ptb	NNS
 ;	PUNCT	ptb	,
 indeed	ADV	ptb	RB
@@ -96232,7 +96232,7 @@ in	ADV	ptb	RP
 "	PUNCT	ptb	"
 with	ADP	ptb	IN
 the	DET	ptb	DT
-intervening	VERB	ptb	VBG
+intervening	ADJ	ptb	VBG
 fourth	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -96654,7 +96654,7 @@ meter	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-accompanying	VERB	ptb	VBG
+accompanying	ADJ	ptb	VBG
 chords	NOUN	ptb	NNS
 in	ADP	ptb	IN
 the	DET	ptb	DT
@@ -97070,7 +97070,7 @@ as	ADP	ptb	IN
 a	DET	ptb	DT
 dominant	ADJ	ptb	JJ
 -	PUNCT	ptb	HYPH
-functioning	VERB	ptb	VBG
+functioning	ADJ	ptb	VBG
 tone	NOUN	ptb	NN
 at	ADV	ptb	RB
 all	ADV	ptb	RB
@@ -98241,7 +98241,7 @@ whole	ADJ	ptb	JJ
 step	NOUN	ptb	NN
 by	ADP	ptb	IN
 the	DET	ptb	DT
-intervening	VERB	ptb	VBG
+intervening	ADJ	ptb	VBG
 fourth	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -98468,7 +98468,7 @@ also	ADV	ptb	RB
 serves	VERB	ptb	VBZ
 as	ADP	ptb	IN
 the	DET	ptb	DT
-closing	ADJ	disputed	VBG
+closing	ADJ	ptb	VBG
 section	NOUN	ptb	NN
 of	ADP	ptb	IN
 the	DET	ptb	DT
@@ -100543,7 +100543,7 @@ establish	VERB	ptb	VB
 the	DET	ptb	DT
 intensity	NOUN	ptb	NN
 of	ADP	ptb	IN
-clashing	VERB	ptb	VBG
+clashing	ADJ	ptb	VBG
 colors	NOUN	ptb	NNS
 ;	PUNCT	ptb	,
 white	NOUN	ptb	NN
@@ -100898,7 +100898,7 @@ became	VERB	ptb	VBD
 a	DET	ptb	DT
 way	NOUN	ptb	NN
 of	ADP	ptb	IN
-distinguishing	VERB	ptb	VBG
+distinguishing	ADJ	ptb	VBG
 oneself	NOUN	ptb	NN
 from	ADP	ptb	IN
 the	DET	ptb	DT
@@ -102474,7 +102474,7 @@ as	ADP	ptb	IN
 one	NUM	ptb	CD
 of	ADP	ptb	IN
 the	DET	ptb	DT
-founding	ADJ	disputed	VBG
+founding	ADJ	ptb	VBG
 fathers	NOUN	ptb	NNS
 of	ADP	ptb	IN
 sexology	NOUN	ptb	NN
@@ -106073,7 +106073,7 @@ of	ADP	ptb	IN
 Youngstown	PROPN	ptb	NNP
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-surrounding	VERB	ptb	JJ
+surrounding	ADJ	ptb	JJ
 area	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 it	PRON	ptb	PRP
@@ -106297,7 +106297,7 @@ affected	VERB	ptb	VBD
 Youngstown	PROPN	ptb	NNP
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-surrounding	VERB	ptb	JJ
+surrounding	ADJ	ptb	JJ
 area	NOUN	ptb	NN
 more	ADV	ptb	RBR
 than	SCONJ	ptb	IN
@@ -107255,7 +107255,7 @@ USWA	PROPN	ptb	NNP
 had	VERB	ptb	VBD
 much	ADV	ptb	RB
 more	ADJ	ptb	JJR
-lobbying	NOUN	ptb	VBG
+lobbying	ADJ	ptb	VBG
 power	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 but	CCONJ	ptb	CC
@@ -107834,7 +107834,7 @@ in	ADP	ptb	IN
 other	ADJ	ptb	JJ
 steel	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-exporting	VERB	ptb	NN
+exporting	NOUN	ptb	NN
 countries	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
@@ -109280,7 +109280,7 @@ generally	ADV	ptb	RB
 better	ADJ	ptb	JJR
 than	ADP	ptb	IN
 in	ADP	ptb	IN
-surrounding	ADJ	disputed	VBG
+surrounding	ADJ	ptb	VBG
 towns	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 but	CCONJ	ptb	CC
@@ -109368,7 +109368,7 @@ low	ADJ	ptb	JJ
 in	ADP	ptb	IN
 comparison	NOUN	ptb	NN
 with	ADP	ptb	IN
-surrounding	VERB	ptb	VBG
+surrounding	ADJ	ptb	VBG
 towns	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
@@ -110815,7 +110815,7 @@ is	AUX	ptb	VBZ
 seen	VERB	ptb	VBN
 as	ADP	ptb	IN
 the	DET	ptb	DT
-unifying	ADJ	disputed	VBG
+unifying	ADJ	ptb	VBG
 force	NOUN	ptb	NN
 behind	ADP	ptb	IN
 the	DET	ptb	DT
@@ -113720,7 +113720,7 @@ found	VERB	ptb	VBD
 serenity	NOUN	ptb	NN
 in	ADP	ptb	IN
 the	DET	ptb	DT
-booming	ADJ	disputed	VBG
+booming	ADJ	ptb	VBG
 music	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -124117,7 +124117,7 @@ man	NOUN	ptb	NN
 stormed	VERB	ptb	VBD
 through	ADP	ptb	IN
 the	DET	ptb	DT
-sliding	NOUN	ptb	VBG
+sliding	ADJ	ptb	VBG
 door	NOUN	ptb	NN
 again	ADV	ptb	RB
 .	PUNCT	ptb	.
@@ -124222,7 +124222,7 @@ manner	NOUN	ptb	NN
 you	PRON	ptb	PRP
 call	VERB	ptb	VBP
 "	PUNCT	ptb	"
-rocking	VERB	ptb+mentioned	NN
+rocking	NOUN	ptb	NN
 out	NOUN	ptb	NN
 "	PUNCT	ptb	"
 ?	PUNCT	ptb	.
@@ -125344,7 +125344,7 @@ celebrated	VERB	ptb	VBD
 Pt	NOUN	ptb	NN
 4	NUM	ptb	CD
 :	PUNCT	ptb	:
-Babbling	VERB	disputed	VBG
+Babbling	VERB	ptb	VBG
 Freedom	NOUN	disputed	NN
 
 # sent_id = masc:written/ficlets/1400#299
@@ -128705,7 +128705,7 @@ towel	NOUN	ptb	NN
 close	ADV	ptb	RB
 to	ADP	ptb	IN
 her	DET	ptb	PRP$
-shivering	VERB	ptb	VBG
+shivering	ADJ	ptb	VBG
 body	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -129067,7 +129067,7 @@ Audrey	PROPN	ptb	NNP
 # genre = ficlets
 Below	ADP	ptb	IN
 the	DET	ptb	DT
-Burning	ADJ	disputed	VBG
+Burning	ADJ	ptb	VBG
 Sky	NOUN	disputed	NN
 
 # sent_id = masc:written/ficlets/1400#591
@@ -129109,7 +129109,7 @@ looking	VERB	ptb	VBG
 down	ADV	ptb	RP
 at	ADP	ptb	IN
 the	DET	ptb	DT
-smoldering	VERB	ptb	VBG
+smoldering	ADJ	ptb	VBG
 ruins	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 the	DET	ptb	DT
@@ -130825,7 +130825,7 @@ Saturn	PROPN	ptb	NNP
 reflect	VERB	ptb	VB
 in	ADP	ptb	IN
 his	DET	ptb	PRP$
-widening	VERB	ptb	VBG
+widening	ADJ	ptb	VBG
 eyes	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -132510,7 +132510,7 @@ wonderful	ADJ	ptb	JJ
 More	ADV	ptb	JJR
 Important	ADJ	ptb	JJ
 than	ADP	ptb	IN
-Flying	VERB	ptb	VBG
+Flying	ADJ	ptb	VBG
 Monkeys	NOUN	ptb	NNS
 
 # sent_id = masc:written/ficlets/1401#178
@@ -132843,7 +132843,7 @@ bit	NOUN	ptb	NN
 more	ADV	ptb	RBR
 important	ADJ	ptb	JJ
 than	ADP	ptb	IN
-flying	VERB	ptb	VBG
+flying	ADJ	ptb	VBG
 monkeys	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
@@ -133227,7 +133227,7 @@ quite	ADV	ptb	RB
 as	ADV	ptb	RB
 important	ADJ	ptb	JJ
 as	ADP	ptb	IN
-flying	VERB	ptb	VBG
+flying	ADJ	ptb	VBG
 monkeys	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 "	PUNCT	ptb	"
@@ -135753,7 +135753,7 @@ then	ADV	ptb	RB
 a	DET	ptb	DT
 very	ADV	ptb	RB
 professional	ADJ	ptb	JJ
-looking	ADJ	disputed	VBG
+looking	ADJ	ptb	VBG
 waiter	NOUN	ptb	NN
 walks	VERB	ptb	VBZ
 up	ADP	ptb	IN
@@ -137287,7 +137287,7 @@ its	DET	ptb	PRP$
 contents	NOUN	ptb	NNS
 onto	ADP	ptb	IN
 the	DET	ptb	DT
-pearling	NOUN	ptb	VBG
+pearling	ADJ	ptb	VBG
 areas	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -137763,7 +137763,7 @@ was	AUX	ptb	VBD
 startled	VERB	ptb	VBN
 by	ADP	ptb	IN
 his	DET	ptb	PRP$
-snapping	VERB	ptb	VBG
+snapping	ADJ	ptb	VBG
 fingers	NOUN	ptb	NNS
 ...	PUNCT	ptb	.
 
@@ -142573,7 +142573,7 @@ strange	ADJ	ptb	JJ
 # genre = ficlets
 Suddenly	ADV	ptb	RB
 a	DET	ptb	DT
-warbling	VERB	ptb	VBG
+warbling	ADJ	ptb	VBG
 chatter	NOUN	ptb	NN
 echoed	VERB	ptb	VBD
 from	ADP	ptb	IN
@@ -143157,7 +143157,7 @@ out	ADP	ptb	IN
 of	ADP	ptb	IN
 her	DET	ptb	PRP$
 furious	ADJ	ptb	JJ
-strutting	ADJ	disputed	VBG
+strutting	ADJ	ptb	VBG
 pace	NOUN	ptb	NN
 down	ADP	ptb	IN
 the	DET	ptb	DT
@@ -146543,7 +146543,7 @@ authority	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 free	ADJ	ptb	JJ
 from	ADP	ptb	IN
-pestering	VERB	ptb	VBG
+pestering	ADJ	ptb	VBG
 humans	NOUN	ptb	NNS
 who	PRON	ptb	WP
 had	VERB	ptb	VBD
@@ -147701,7 +147701,7 @@ she	PRON	ptb	PRP
 heard	VERB	ptb	VBD
 footsteps	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
-running	ADJ	disputed	VBG
+running	ADJ	ptb	VBG
 footsteps	NOUN	ptb	NNS
 actually	ADV	ptb	RB
 .	PUNCT	ptb	.
@@ -149864,7 +149864,7 @@ and	CCONJ	ptb	CC
 making	VERB	ptb	VBG
 the	DET	ptb	DT
 funny	ADJ	ptb	JJ
-beeping	NOUN	disputed	NN
+beeping	NOUN	ptb	NN
 noise	NOUN	ptb	NN
 at	ADP	ptb	IN
 the	DET	ptb	DT
@@ -151378,7 +151378,7 @@ lonely	ADJ	ptb	JJ
 with	ADP	ptb	IN
 just	ADV	ptb	RB
 the	DET	ptb	DT
-hissing	VERB	ptb	VBG
+hissing	ADJ	ptb	VBG
 wind	NOUN	ptb	NN
 for	ADP	ptb	IN
 company	NOUN	ptb	NN
@@ -151664,7 +151664,7 @@ occasionally	ADV	ptb	RB
 it	PRON	ptb	PRP
 uttered	VERB	ptb	VBD
 a	DET	ptb	DT
-lamenting	VERB	ptb	VBG
+lamenting	ADJ	ptb	VBG
 phrase	NOUN	ptb	NN
 in	ADP	ptb	IN
 some	DET	ptb	DT
@@ -151877,7 +151877,7 @@ of	ADP	ptb	IN
 the	DET	ptb	DT
 blood	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-curdling	ADJ	ptb	NN
+curdling	NOUN	ptb	NN
 screams	NOUN	ptb	NNS
 that	PRON	ptb	WDT
 came	VERB	ptb	VBD
@@ -152578,7 +152578,7 @@ back	ADV	ptb	RB
 one	NUM	ptb	CD
 of	ADP	ptb	IN
 her	DET	ptb	PRP$
-escaping	VERB	ptb	VBG
+escaping	ADJ	ptb	VBG
 curls	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -157766,7 +157766,7 @@ the	DET	ptb	DT
 rhythm	NOUN	ptb	NN
 of	ADP	ptb	IN
 her	DET	ptb	PRP$
-moving	VERB	ptb	VBG
+moving	ADJ	ptb	VBG
 hand	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 his	DET	ptb	PRP$
@@ -159369,7 +159369,7 @@ and	CCONJ	ptb	CC
 the	DET	ptb	DT
 light	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-catching	NOUN	disputed	NN
+catching	NOUN	ptb	NN
 haze	NOUN	ptb	NN
 from	ADP	ptb	IN
 who	PRON	ptb	PRP
@@ -159853,7 +159853,7 @@ features	NOUN	ptb	NNS
 even	ADV	ptb	RB
 in	ADP	ptb	IN
 that	DET	ptb	DT
-distorting	VERB	ptb	JJ
+distorting	ADJ	ptb	JJ
 light	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -159963,7 +159963,7 @@ night	NOUN	ptb	NN
 by	ADP	ptb	IN
 flesh	NOUN	ptb	NN
 and	CCONJ	ptb	CC
-flashing	VERB	ptb	JJ
+flashing	ADJ	ptb	JJ
 lights	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -160052,7 +160052,7 @@ need	VERB	ptb	VBP
 to	PART	ptb	TO
 file	VERB	ptb	VB
 a	DET	ptb	DT
-missing	ADJ	ptb	VBG
+missing	VERB	ptb	VBG
 persons	NOUN	ptb	NNS
 report	NOUN	ptb	NN
 .	PUNCT	ptb	.
@@ -161502,7 +161502,7 @@ glared	VERB	ptb	VBD
 at	ADP	ptb	IN
 me	PRON	ptb	PRP
 with	ADP	ptb	IN
-gleaming	VERB	ptb	VBG
+gleaming	ADJ	ptb	VBG
 eyes	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -161585,7 +161585,7 @@ Glancing	VERB	ptb	VBG
 back	ADV	ptb	RB
 at	ADP	ptb	IN
 that	DET	ptb	DT
-gleaming	VERB	ptb	VBG
+gleaming	ADJ	ptb	VBG
 glare	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 I	PRON	ptb	PRP
@@ -161925,7 +161925,7 @@ small	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
 like	ADP	ptb	IN
 a	DET	ptb	DT
-hunting	ADJ	disputed	VBG
+hunting	ADJ	ptb	VBG
 cat	NOUN	ptb	NN
 RSQUOs	PART	ptb	POS
 .	PUNCT	ptb	.
@@ -164503,7 +164503,7 @@ light	NOUN	ptb	NN
 came	VERB	ptb	VBD
 from	ADP	ptb	IN
 a	DET	ptb	DT
-dying	VERB	ptb	VBG
+dying	ADJ	ptb	VBG
 candle	NOUN	ptb	NN
 on	ADP	ptb	IN
 the	DET	ptb	DT
@@ -164781,7 +164781,7 @@ for	ADP	ptb	IN
 your	DET	ptb	PRP$
 confidence	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-inspiring	ADJ	ptb	NN
+inspiring	NOUN	ptb	NN
 tales	NOUN	ptb	NNS
 of	ADP	ptb	IN
 experience	NOUN	ptb	NN
@@ -166340,7 +166340,7 @@ describe	VERB	ptb	VB
 as	ADP	ptb	IN
 an	DET	ptb	DT
 "	PUNCT	ptb	"
-appraising	ADJ	disputed	VBG
+appraising	ADJ	ptb	VBG
 glance	NOUN	ptb	NN
 "	PUNCT	ptb	"
 .	PUNCT	ptb	.
@@ -166678,7 +166678,7 @@ out	ADV	ptb	RP
 a	DET	ptb	DT
 fat	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
-dripping	VERB	ptb	JJ
+dripping	ADJ	ptb	JJ
 leech	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -171082,7 +171082,7 @@ at	ADP	ptb	IN
 her	DET	ptb	PRP$
 full	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
-hanging	VERB	ptb	VBG
+hanging	ADJ	ptb	VBG
 breasts	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -172926,7 +172926,7 @@ scaled	ADJ	ptb	JJ
 skin	NOUN	ptb	NN
 stretched	VERB	ptb	VBN
 across	ADP	ptb	IN
-rippling	VERB	ptb	VBG
+rippling	ADJ	ptb	VBG
 muscles	NOUN	ptb	NNS
 leapt	VERB	ptb	VBD
 on	ADP	ptb	IN
@@ -173017,7 +173017,7 @@ thing	NOUN	ptb	NN
 with	ADP	ptb	IN
 countless	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
-writhing	VERB	ptb	VBG
+writhing	ADJ	ptb	VBG
 tentacles	NOUN	ptb	NNS
 fell	VERB	ptb	VBD
 against	ADP	ptb	IN
@@ -173078,7 +173078,7 @@ clothing	NOUN	ptb	NN
 # genre = fiction
 Then	ADV	ptb	RB
 a	DET	ptb	DT
-looming	VERB	ptb	VBG
+looming	ADJ	ptb	VBG
 shape	NOUN	ptb	NN
 to	ADP	ptb	IN
 my	DET	ptb	PRP$
@@ -173167,7 +173167,7 @@ I	PRON	ptb	PRP
 slipped	VERB	ptb	VBD
 past	ADP	ptb	IN
 the	DET	ptb	DT
-waving	VERB	ptb	VBG
+waving	ADJ	ptb	VBG
 monstrosity	NOUN	ptb	NN
 that	PRON	ptb	WDT
 had	AUX	ptb	VBD
@@ -173497,7 +173497,7 @@ and	CCONJ	ptb	CC
 squeezed	VERB	ptb	VBD
 between	ADP	ptb	IN
 two	NUM	ptb	CD
-dancing	VERB	ptb	VBG
+dancing	ADJ	ptb	VBG
 nymphs	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 getting	VERB	ptb	VBG
@@ -173695,7 +173695,7 @@ several	ADJ	ptb	JJ
 feet	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 a	DET	ptb	DT
-growing	VERB	ptb	VBG
+growing	ADJ	ptb	VBG
 puddle	NOUN	ptb	NN
 of	ADP	ptb	IN
 dark	ADJ	ptb	JJ
@@ -174428,7 +174428,7 @@ grasshopper	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 drew	VERB	ptb	VBD
 a	DET	ptb	DT
-gleaming	VERB	ptb	VBG
+gleaming	ADJ	ptb	VBG
 knife	NOUN	ptb	NN
 in	ADP	ptb	IN
 midair	NOUN	ptb	NN
@@ -175383,7 +175383,7 @@ tendons	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 muscle	NOUN	ptb	NN
 and	CCONJ	ptb	CC
-blushing	VERB	ptb	VBG
+blushing	ADJ	ptb	VBG
 skin	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -176579,7 +176579,7 @@ assumed	VERB	ptb	VBD
 a	DET	ptb	DT
 long	ADV	ptb	RB
 -	PUNCT	ptb	HYPH
-suffering	ADJ	ptb	VBG
+suffering	VERB	ptb	VBG
 aspect	NOUN	ptb	NN
 of	ADP	ptb	IN
 authoritative	ADJ	ptb	JJ
@@ -178354,7 +178354,7 @@ had	AUX	ptb	VBD
 sunk	VERB	ptb	VBN
 into	ADP	ptb	IN
 the	DET	ptb	DT
-waiting	VERB	ptb	VBG
+waiting	ADJ	ptb	VBG
 hands	NOUN	ptb	NNS
 of	ADP	ptb	IN
 the	DET	ptb	DT
@@ -178836,7 +178836,7 @@ with	ADP	ptb	IN
 this	DET	ptb	DT
 demanding	ADJ	ptb	VBG
 ,	PUNCT	ptb	,
-pleading	ADJ	disputed	VBG
+pleading	ADJ	ptb	VBG
 interrogation	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -179543,7 +179543,7 @@ walked	VERB	ptb	VBD
 home	ADV	ptb	RB
 under	ADP	ptb	IN
 the	DET	ptb	DT
-spreading	VERB	ptb	VBG
+spreading	ADJ	ptb	VBG
 maples	NOUN	ptb	NNS
 with	ADP	ptb	IN
 a	DET	ptb	DT
@@ -179781,7 +179781,7 @@ breeze	NOUN	ptb	NN
 that	PRON	ptb	WDT
 scattered	VERB	ptb	VBD
 the	DET	ptb	DT
-warning	NOUN	ptb	VBG
+warning	ADJ	ptb	VBG
 plume	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -180019,7 +180019,7 @@ bonfire	NOUN	ptb	NN
 A	DET	ptb	DT
 mass	NOUN	ptb	NN
 of	ADP	ptb	IN
-flaming	VERB	ptb	VBG
+flaming	ADJ	ptb	VBG
 wood	NOUN	ptb	NN
 stood	VERB	ptb	VBD
 before	ADP	ptb	IN
@@ -180117,7 +180117,7 @@ quench	VERB	ptb	VB
 the	DET	ptb	DT
 hewn	ADJ	ptb	VBN
 ,	PUNCT	ptb	,
-burning	VERB	ptb	VBG
+burning	ADJ	ptb	VBG
 logs	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 but	CCONJ	ptb	CC
@@ -180253,11 +180253,11 @@ in	ADP	ptb	IN
 a	DET	ptb	DT
 great	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
-swirling	VERB	ptb	VBG
+swirling	ADJ	ptb	VBG
 eddy	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 a	DET	ptb	DT
-burning	VERB	ptb	VBG
+burning	ADJ	ptb	VBG
 brand	NOUN	ptb	NN
 that	PRON	ptb	WDT
 rose	VERB	ptb	VBD
@@ -180504,7 +180504,7 @@ the	DET	ptb	DT
 toes	NOUN	ptb	NNS
 of	ADP	ptb	IN
 the	DET	ptb	DT
-slumbering	VERB	ptb	VBG
+slumbering	ADJ	ptb	VBG
 giants	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -185309,7 +185309,7 @@ I	PRON	ptb	PRP
 shall	AUX	ptb	MD
 soothe	VERB	ptb	VB
 my	DET	ptb	PRP$
-quarreling	VERB	ptb	VBG
+quarreling	ADJ	ptb	VBG
 selves	NOUN	ptb	NNS
 with	ADP	ptb	IN
 a	DET	ptb	DT
@@ -186068,7 +186068,7 @@ who	PRON	ptb	WP
 regularly	ADV	ptb	RB
 watch	VERB	ptb	VBP
 A	DET	ptb	DT
-Wandering	PROPN	ptb	VBG
+Wandering	ADJ	ptb	VBG
 Star	NOUN	ptb	NN
 Called	VERB	ptb	VBN
 Love	NOUN	ptb	NN
@@ -186291,7 +186291,7 @@ to	PART	ptb	TO
 compare	VERB	ptb	VB
 mannequins	NOUN	ptb	NNS
 to	ADP	ptb	IN
-living	ADJ	disputed	VBG
+living	ADJ	ptb	VBG
 models	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -187102,7 +187102,7 @@ metal	NOUN	ptb	NN
 threads	NOUN	ptb	NNS
 in	ADP	ptb	IN
 the	DET	ptb	DT
-fluttering	VERB	ptb	VBG
+fluttering	ADJ	ptb	VBG
 pesos	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -187296,7 +187296,7 @@ with	ADP	ptb	IN
 a	DET	ptb	DT
 stack	NOUN	ptb	NN
 of	ADP	ptb	IN
-glistening	ADJ	disputed	VBG
+glistening	ADJ	ptb	VBG
 stopboxes	NOUN	ptb	NNS
 containing	VERB	ptb	VBG
 sushi	NOUN	ptb	NN
@@ -192968,7 +192968,7 @@ the	DET	ptb	DT
 window	NOUN	ptb	NN
 at	ADP	ptb	IN
 the	DET	ptb	DT
-passing	VERB	ptb	VBG
+passing	ADJ	ptb	VBG
 traffic	NOUN	ptb	NN
 push	NOUN	ptb	NN
 through	ADP	ptb	IN
@@ -193560,7 +193560,7 @@ one	NUM	ptb	CD
 of	ADP	ptb	IN
 the	DET	ptb	DT
 few	ADJ	ptb	JJ
-remaining	VERB	ptb	VBG
+remaining	ADJ	ptb	VBG
 examples	NOUN	ptb	NNS
 of	ADP	ptb	IN
 a	DET	ptb	DT
@@ -194658,7 +194658,7 @@ out	ADV	ptb	RP
 a	DET	ptb	DT
 gadget	NOUN	ptb	NN
 with	ADP	ptb	IN
-blinking	VERB	ptb	VBG
+blinking	ADJ	ptb	VBG
 lights	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 was	AUX	ptb	VBD
@@ -197448,7 +197448,7 @@ metaphors	NOUN	ptb	NNS
 about	ADP	ptb	IN
 life	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-giving	NOUN	disputed	NN
+giving	NOUN	ptb	NN
 substances	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 how	ADV	ptb	WRB
@@ -197995,7 +197995,7 @@ elegant	ADJ	ptb	JJ
 rooms	NOUN	ptb	NNS
 down	ADP	ptb	IN
 the	DET	ptb	DT
-branching	VERB	ptb	VBG
+branching	ADJ	ptb	VBG
 hallways	NOUN	ptb	NNS
 ;	PUNCT	ptb	,
 music	NOUN	ptb	NN
@@ -198516,7 +198516,7 @@ way	NOUN	ptb	NN
 # text = The accompanying bottle of wine was a nice touch .
 # genre = fiction
 The	DET	ptb	DT
-accompanying	VERB	ptb	VBG
+accompanying	ADJ	ptb	VBG
 bottle	NOUN	ptb	NN
 of	ADP	ptb	IN
 wine	NOUN	ptb	NN
@@ -204428,7 +204428,7 @@ search	NOUN	ptb	NN
 of	ADP	ptb	IN
 my	DET	ptb	PRP$
 two	NUM	ptb	CD
-adjoining	ADJ	disputed	VBG
+adjoining	ADJ	ptb	VBG
 rooms	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 the	DET	ptb	DT
@@ -207145,7 +207145,7 @@ chattered	VERB	ptb	VBD
 away	ADV	ptb	RP
 with	ADP	ptb	IN
 the	DET	ptb	DT
-approaching	VERB	ptb	VBG
+approaching	ADJ	ptb	VBG
 psi	NOUN	ptb	NN
 relay	NOUN	ptb	NN
 on	ADP	ptb	IN
@@ -207794,7 +207794,7 @@ of	ADP	ptb	IN
 all	DET	ptb	DT
 of	ADP	ptb	IN
 the	DET	ptb	DT
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 regulations	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -208046,7 +208046,7 @@ S.	PROPN	ptb	NNP
 would	AUX	ptb	MD
 make	VERB	ptb	VB
 some	DET	ptb	DT
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 requirements	NOUN	ptb	NNS
 unnecessary	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
@@ -208074,7 +208074,7 @@ on	ADP	ptb	IN
 top	NOUN	ptb	NN
 of	ADP	ptb	IN
 the	DET	ptb	DT
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 ones	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 we	PRON	ptb	PRP
@@ -208086,7 +208086,7 @@ should	AUX	ptb	MD
 eliminate	VERB	ptb	VB
 those	DET	ptb	DT
 unnecessary	ADJ	ptb	JJ
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 requirements	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -208526,7 +208526,7 @@ planning	NOUN	ptb	NN
 # text = The existing program establishes a cap on SO2 emissions to ensure that the environmental goal is met , and employs an innovative market - based allowance trading program to achieve the goal at lowest cost .
 # genre = govt-docs
 The	DET	ptb	DT
-existing	ADJ	disputed	VBG
+existing	ADJ	ptb	VBG
 program	NOUN	ptb	NN
 establishes	VERB	ptb	VBZ
 a	DET	ptb	DT
@@ -209361,7 +209361,7 @@ the	DET	ptb	DT
 complex	ADJ	ptb	JJ
 web	NOUN	ptb	NN
 of	ADP	ptb	IN
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 regulations	NOUN	ptb	NNS
 which	PRON	ptb	WP
 currently	ADV	ptb	RB
@@ -209628,7 +209628,7 @@ a	DET	ptb	DT
 variety	NOUN	ptb	NN
 of	ADP	ptb	IN
 emissions	NOUN	ptb	NNS
-including	ADP	ptb	VBG
+including	VERB	ptb	VBG
 SO2	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 NOx	NOUN	ptb	NN
@@ -209712,7 +209712,7 @@ does	AUX	ptb	VBZ
 not	PART	ptb	RB
 end	VERB	ptb	VB
 with	ADP	ptb	IN
-existing	VERB	ptb	JJ
+existing	ADJ	ptb	JJ
 regulations	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -209771,7 +209771,7 @@ when	SCONJ	ptb	WRB
 full	ADJ	ptb	JJ
 implementation	NOUN	ptb	NN
 of	ADP	ptb	IN
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 regulations	NOUN	ptb	NNS
 such	ADJ	ptb	IN
 as	ADP	ptb	IN
@@ -209859,7 +209859,7 @@ also	ADV	ptb	RB
 needed	VERB	ptb	VBN
 to	PART	ptb	TO
 reduce	VERB	ptb	VB
-continuing	VERB	ptb	VBG
+continuing	ADJ	ptb	VBG
 damage	NOUN	ptb	NN
 from	ADP	ptb	IN
 acid	NOUN	ptb	NN
@@ -210128,7 +210128,7 @@ from	ADP	ptb	IN
 sources	NOUN	ptb	NNS
 outside	ADP	ptb	IN
 the	DET	ptb	DT
-petitioning	VERB	ptb	VBG
+petitioning	ADJ	ptb	VBG
 state	NOUN	ptb	NN
 's	PART	ptb	POS
 borders	NOUN	ptb	NNS
@@ -210139,7 +210139,7 @@ borders	NOUN	ptb	NNS
 # text = The petitioning state is entitled to relief if EPA finds that the sources are significantly contributing to the petitioning state 's nonattainment problem .
 # genre = govt-docs
 The	DET	ptb	DT
-petitioning	VERB	ptb	VBG
+petitioning	ADJ	ptb	VBG
 state	NOUN	ptb	NN
 is	AUX	ptb	VBZ
 entitled	VERB	ptb	VBN
@@ -210156,7 +210156,7 @@ significantly	ADV	ptb	RB
 contributing	VERB	ptb	VBG
 to	ADP	ptb	IN
 the	DET	ptb	DT
-petitioning	VERB	ptb	VBG
+petitioning	ADJ	ptb	VBG
 state	NOUN	ptb	NN
 's	PART	ptb	POS
 nonattainment	NOUN	ptb	NN
@@ -210432,7 +210432,7 @@ for	ADP	ptb	IN
 companies	NOUN	ptb	NNS
 which	PRON	ptb	WP
 face	VERB	ptb	VBP
-differing	ADJ	disputed	VBG
+differing	ADJ	ptb	VBG
 requirements	NOUN	ptb	NNS
 when	SCONJ	ptb	WRB
 operations	NOUN	ptb	NNS
@@ -211528,7 +211528,7 @@ The	DET	ptb	DT
 NEP	PROPN	ptb	NNP
 goals	NOUN	ptb	NNS
 of	ADP	ptb	IN
-increasing	VERB	ptb	VBG
+increasing	ADJ	ptb	VBG
 energy	NOUN	ptb	NN
 supplies	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
@@ -211798,7 +211798,7 @@ scheme	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 integration	NOUN	ptb	NN
 with	ADP	ptb	IN
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 programs	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -211987,7 +211987,7 @@ reduce	VERB	ptb	VB
 the	DET	ptb	DT
 amount	NOUN	ptb	NN
 of	ADP	ptb	IN
-generating	NOUN	ptb	VBG
+generating	ADJ	ptb	VBG
 capacity	NOUN	ptb	NN
 available	ADJ	ptb	JJ
 to	PART	ptb	TO
@@ -212523,7 +212523,7 @@ new	ADJ	ptb	JJ
 program	NOUN	ptb	NN
 with	ADP	ptb	IN
 the	DET	ptb	DT
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 Clean	PROPN	ptb	NNP
 Air	PROPN	ptb	NNP
 Act	PROPN	ptb	NNP
@@ -212543,7 +212543,7 @@ approach	NOUN	ptb	NN
 would	AUX	ptb	MD
 make	VERB	ptb	VB
 some	DET	ptb	DT
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 provisions	NOUN	ptb	NNS
 of	ADP	ptb	IN
 the	DET	ptb	DT
@@ -212769,7 +212769,7 @@ such	ADJ	ptb	IN
 as	ADP	ptb	IN
 coordination	NOUN	ptb	NN
 with	ADP	ptb	IN
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 state	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 regional	ADJ	ptb	JJ
@@ -212854,7 +212854,7 @@ CO2	NOUN	ptb	NN
 from	ADP	ptb	IN
 the	DET	ptb	DT
 electricity	NOUN	ptb	NN
-generating	NOUN	ptb	VBG
+generating	ADJ	ptb	VBG
 sector	NOUN	ptb	NN
 alone	ADV	ptb	RB
 would	AUX	ptb	MD
@@ -213377,7 +213377,7 @@ grow	VERB	ptb	VB
 exponentially	ADV	ptb	RB
 in	ADP	ptb	IN
 the	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 world	NOUN	ptb	NN
 in	ADP	ptb	IN
 the	DET	ptb	DT
@@ -213413,7 +213413,7 @@ carbon	NOUN	ptb	NN
 emissions	NOUN	ptb	NNS
 in	ADP	ptb	IN
 the	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 world	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -214555,7 +214555,7 @@ by	ADP	ptb	IN
 OCE	PROPN	ptb	NNP
 of	ADP	ptb	IN
 an	DET	ptb	DT
-impending	ADJ	disputed	VBG
+impending	ADJ	ptb	VBG
 request	NOUN	ptb	NN
 for	ADP	ptb	IN
 access	NOUN	ptb	NN
@@ -215821,7 +215821,7 @@ Service	PROPN	ptb	NNP
 's	PART	ptb	POS
 authority	NOUN	ptb	NN
 under	ADP	ptb	IN
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 law	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -216374,7 +216374,7 @@ reducing	VERB	ptb	VBG
 the	DET	ptb	DT
 amount	NOUN	ptb	NN
 of	ADP	ptb	IN
-supporting	VERB	ptb	VBG
+supporting	ADJ	ptb	VBG
 evidence	NOUN	ptb	NN
 the	DET	ptb	DT
 Postal	PROPN	ptb	NNP
@@ -216436,7 +216436,7 @@ services	NOUN	ptb	NNS
 or	CCONJ	ptb	CC
 changes	NOUN	ptb	NNS
 in	ADP	ptb	IN
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 services	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 that	PRON	ptb	WDT
@@ -216888,7 +216888,7 @@ would	AUX	ptb	MD
 not	PART	ptb	RB
 change	VERB	ptb	VB
 any	DET	ptb	DT
-existing	ADJ	disputed	VBG
+existing	ADJ	ptb	VBG
 rate	NOUN	ptb	NN
 or	CCONJ	ptb	CC
 fee	NOUN	ptb	NN
@@ -216941,7 +216941,7 @@ rules	NOUN	ptb	NNS
 specify	VERB	ptb	VBP
 limited	ADJ	ptb	JJ
 required	ADJ	ptb	VBN
-supporting	VERB	ptb	VBG
+supporting	ADJ	ptb	VBG
 information	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 allow	VERB	ptb	VBP
@@ -217387,7 +217387,7 @@ Authority	NOUN	ptb	NN
 No	DET	ptb	DT
 provision	NOUN	ptb	NN
 in	ADP	ptb	IN
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 law	NOUN	ptb	NN
 explicitly	ADV	ptb	RB
 authorizes	VERB	ptb	VBZ
@@ -218511,7 +218511,7 @@ presort	NOUN	ptb	NN
 discounts	NOUN	ptb	NNS
 based	VERB	ptb	VBN
 on	ADP	ptb	IN
-processing	NOUN	ptb	VBG
+processing	ADJ	ptb	VBG
 costs	NOUN	ptb	NNS
 bypassed	VERB	ptb	VBN
 because	ADP	ptb	IN
@@ -218563,7 +218563,7 @@ May	PROPN	ptb	NNP
 # genre = govt-docs
 PRC	PROPN	ptb	NNP
 decision	NOUN	ptb	NN
-approving	VERB	ptb	VBG
+approving	ADJ	ptb	VBG
 settlement	NOUN	ptb	NN
 agreement	NOUN	ptb	NN
 transmitted	VERB	ptb	VBN
@@ -218756,7 +218756,7 @@ December	PROPN	ptb	NNP
 # genre = govt-docs
 PRC	PROPN	ptb	NNP
 decision	NOUN	ptb	NN
-approving	VERB	ptb	VBG
+approving	ADJ	ptb	VBG
 settlement	NOUN	ptb	NN
 agreement	NOUN	ptb	NN
 transmitted	VERB	ptb	VBN
@@ -218850,7 +218850,7 @@ September	PROPN	ptb	NNP
 # genre = govt-docs
 PRC	PROPN	ptb	NNP
 decision	NOUN	ptb	NN
-approving	VERB	ptb	NN
+approving	NOUN	ptb	NN
 request	NOUN	ptb	NN
 transmitted	VERB	ptb	VBN
 to	ADP	ptb	IN
@@ -219460,7 +219460,7 @@ the	DET	ptb	DT
 size	NOUN	ptb	NN
 of	ADP	ptb	IN
 the	DET	ptb	DT
-traveling	VERB	ptb	VBG
+traveling	ADJ	ptb	VBG
 party	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -219621,7 +219621,7 @@ live	ADV	ptb	RB
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-traveling	VERB	ptb	VBG
+traveling	ADJ	ptb	VBG
 party	NOUN	ptb	NN
 returned	VERB	ptb	VBD
 to	ADP	ptb	TO
@@ -220014,7 +220014,7 @@ over	ADP	ptb	IN
 the	DET	ptb	DT
 still	ADV	ptb	RB
 -	PUNCT	ptb	:
-smoldering	VERB	ptb	VBG
+smoldering	ADJ	ptb	VBG
 Pentagon	PROPN	ptb	NNP
 .	PUNCT	ptb	.
 
@@ -220286,7 +220286,7 @@ victims	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 stanch	VERB	ptb	VB
 the	DET	ptb	DT
-flowing	VERB	ptb	VBG
+flowing	ADJ	ptb	VBG
 losses	NOUN	ptb	NNS
 to	ADP	ptb	TO
 the	DET	ptb	DT
@@ -222773,7 +222773,7 @@ Lodhi	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-visiting	VERB	ptb	VBG
+visiting	ADJ	ptb	VBG
 head	NOUN	ptb	NN
 of	ADP	ptb	IN
 Pakistan	PROPN	ptb	NNP
@@ -223444,7 +223444,7 @@ Tommy	PROPN	ptb	NNP
 Franks	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 the	DET	ptb	DT
-commanding	VERB	ptb	VBG
+commanding	ADJ	ptb	VBG
 general	NOUN	ptb	NN
 of	ADP	ptb	IN
 Central	PROPN	ptb	NNP
@@ -223494,7 +223494,7 @@ Afghanistan	PROPN	ptb	NNP
 # text = The existing Infinite Resolve options did not , in his view , amount to such a plan .
 # genre = govt-docs
 The	DET	ptb	DT
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 Infinite	PROPN	ptb	NNP
 Resolve	PROPN	ptb	NNP
 options	NOUN	ptb	NNS
@@ -225132,7 +225132,7 @@ others	PRON	ptb	NNS
 ,	PUNCT	ptb	,
 were	VERB	ptb	VBD
 in	ADP	ptb	IN
-briefing	NOUN	ptb	JJ
+briefing	ADJ	ptb	JJ
 materials	NOUN	ptb	NNS
 for	ADP	ptb	IN
 the	DET	ptb	DT
@@ -225967,7 +225967,7 @@ Tommy	PROPN	ptb	NNP
 Franks	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 the	DET	ptb	DT
-commanding	ADJ	disputed	VBG
+commanding	ADJ	ptb	VBG
 general	NOUN	ptb	NN
 of	ADP	ptb	IN
 Central	PROPN	ptb	NNP
@@ -227122,7 +227122,7 @@ successful	ADJ	ptb	JJ
 and	CCONJ	ptb	CC
 almost	ADV	ptb	RB
 all	DET	ptb	DT
-remaining	VERB	ptb	VBG
+remaining	ADJ	ptb	VBG
 al	PROPN	ptb	NNP
 Qaeda	PROPN	ptb	NNP
 forces	NOUN	ptb	NNS
@@ -227220,7 +227220,7 @@ soldiers	NOUN	ptb	NNS
 backed	VERB	ptb	VBN
 by	ADP	ptb	IN
 the	DET	ptb	DT
-striking	NOUN	ptb	VBG
+striking	ADJ	ptb	VBG
 power	NOUN	ptb	NN
 of	ADP	ptb	IN
 U.S.	PROPN	ptb	NNP
@@ -228904,7 +228904,7 @@ understand	VERB	ptb	VB
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
 manage	VERB	ptb	VB
-evolving	VERB	ptb	VBG
+evolving	ADJ	ptb	VBG
 risks	NOUN	ptb	NNS
 within	ADP	ptb	IN
 a	DET	ptb	DT
@@ -229010,7 +229010,7 @@ avoided	VERB	ptb	VBN
 ,	PUNCT	ptb	,
 there	PRON	ptb	EX
 were	VERB	ptb	VBD
-warning	NOUN	ptb	VBG
+warning	ADJ	ptb	VBG
 signs	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -229255,7 +229255,7 @@ in	ADP	ptb	IN
 the	DET	ptb	DT
 self	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-correcting	VERB	ptb	VBG
+correcting	ADJ	ptb	VBG
 nature	NOUN	ptb	NN
 of	ADP	ptb	IN
 the	DET	ptb	DT
@@ -229579,7 +229579,7 @@ in	ADP	ptb	IN
 the	DET	ptb	DT
 face	NOUN	ptb	NN
 of	ADP	ptb	IN
-mounting	VERB	ptb	VBG
+mounting	ADJ	ptb	VBG
 troubles	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 often	ADV	ptb	RB
@@ -229938,7 +229938,7 @@ investment	NOUN	ptb	NN
 banks	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 bank	NOUN	ptb	NN
-holding	NOUN	ptb	VBG
+holding	VERB	ptb	VBG
 companies	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 which	PRON	ptb	WP
@@ -230663,7 +230663,7 @@ reports	NOUN	ptb	NNS
 available	ADJ	ptb	JJ
 to	ADP	ptb	IN
 the	DET	ptb	DT
-investing	VERB	ptb	VBG
+investing	ADJ	ptb	VBG
 public	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -231299,7 +231299,7 @@ in	ADP	ptb	IN
 response	NOUN	ptb	NN
 to	ADP	ptb	IN
 the	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 crisis	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 not	PART	ptb	RB
@@ -232310,7 +232310,7 @@ The	DET	ptb	DT
 report	NOUN	ptb	NN
 catalogues	VERB	ptb	VBZ
 the	DET	ptb	DT
-rising	VERB	ptb	VBG
+rising	ADJ	ptb	VBG
 incidence	NOUN	ptb	NN
 of	ADP	ptb	IN
 mortgage	NOUN	ptb	NN
@@ -232322,7 +232322,7 @@ in	ADP	ptb	IN
 an	DET	ptb	DT
 environment	NOUN	ptb	NN
 of	ADP	ptb	IN
-collapsing	VERB	ptb	VBG
+collapsing	ADJ	ptb	VBG
 lending	NOUN	ptb	NN
 standards	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
@@ -233030,7 +233030,7 @@ meltdown	NOUN	ptb	NN
 # genre = govt-docs
 We	PRON	ptb	PRP
 conclude	VERB	ptb	VBP
-collapsing	VERB	ptb	VBG
+collapsing	ADJ	ptb	VBG
 mortgage	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
 lending	NOUN	ptb	NN
@@ -233292,7 +233292,7 @@ failed	VERB	ptb	VBD
 to	PART	ptb	TO
 build	VERB	ptb	VB
 the	DET	ptb	DT
-retaining	NOUN	ptb	VBG
+retaining	ADJ	ptb	VBG
 wall	NOUN	ptb	NN
 before	SCONJ	ptb	IN
 it	PRON	ptb	PRP
@@ -234068,7 +234068,7 @@ RSQUOs	PART	ptb	POS
 collapse	NOUN	ptb	NN
 would	AUX	ptb	MD
 trigger	VERB	ptb	VB
-cascading	VERB	ptb	VBG
+cascading	ADJ	ptb	VBG
 losses	NOUN	ptb	NNS
 throughout	ADP	ptb	IN
 the	DET	ptb	DT
@@ -234507,7 +234507,7 @@ became	VERB	ptb	VBD
 THERE	PRON	ptb	EX
 ARE	VERB	ptb	VBP
 MANY	ADJ	ptb	JJ
-COMPETING	VERB	ptb	VBG
+COMPETING	ADJ	ptb	VBG
 VIEWS	NOUN	ptb	NNS
 as	ADP	ptb	IN
 to	ADP	ptb	IN
@@ -236550,7 +236550,7 @@ could	AUX	ptb	MD
 see	VERB	ptb	VB
 was	VERB	ptb	VBD
 the	DET	ptb	DT
-blinking	VERB	ptb	VBG
+blinking	ADJ	ptb	VBG
 wing	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
 tip	NOUN	ptb	NN
@@ -239421,7 +239421,7 @@ out	ADV	ptb	RP
 Oh	INTJ	ptb	UH
 ,	PUNCT	ptb	,
 my	DET	ptb	PRP$
-baking	VERB	ptb	VBG
+baking	ADJ	ptb	VBG
 yak	NOUN	ptb	NN
 !	PUNCT	ptb	.
 "	PUNCT	ptb	"
@@ -241752,7 +241752,7 @@ was	VERB	ptb	VBD
 to	PART	ptb	TO
 replace	VERB	ptb	VB
 the	DET	ptb	DT
-aging	VERB	ptb	VBG
+aging	ADJ	ptb	VBG
 CP$$M	PROPN	ptb	NNP
 operating	ADJ	ptb	VBG
 system	NOUN	ptb	NN
@@ -242366,7 +242366,7 @@ control	NOUN	ptb	NN
 screen	NOUN	ptb	NN
 have	VERB	ptb	VB
 a	DET	ptb	DT
-dancing	VERB	ptb	VBG
+dancing	ADJ	ptb	VBG
 paper	NOUN	ptb	NN
 clip	NOUN	ptb	NN
 on	ADP	ptb	IN
@@ -244552,7 +244552,7 @@ the	DET	ptb	DT
 neighbor	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 his	DET	ptb	PRP$
-sobbing	VERB	ptb	VBG
+sobbing	ADJ	ptb	VBG
 wife	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -244713,7 +244713,7 @@ fire	NOUN	ptb	NN
 # genre = jokes
 Meanwhile	ADV	ptb	RB
 the	DET	ptb	DT
-burning	VERB	ptb	VBG
+burning	ADJ	ptb	VBG
 drapes	NOUN	ptb	NNS
 had	AUX	ptb	VBD
 spread	VERB	ptb	VBN
@@ -244740,7 +244740,7 @@ fire	NOUN	ptb	NN
 department	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-arriving	VERB	ptb	VBG
+arriving	ADJ	ptb	VBG
 fire	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
 truck	NOUN	ptb	NN
@@ -244763,7 +244763,7 @@ street	NOUN	ptb	NN
 # text = The rising ladder tore out the overhead wires and put out the electricity and disconnected the telephones in a ten - square city block area .
 # genre = jokes
 The	DET	ptb	DT
-rising	VERB	ptb	VBG
+rising	ADJ	ptb	VBG
 ladder	NOUN	ptb	NN
 tore	VERB	ptb	VBD
 out	ADV	ptb	RP
@@ -249473,7 +249473,7 @@ to	ADP	ptb	IN
 a	DET	ptb	DT
 very	ADV	ptb	RB
 sleepy	ADJ	ptb	JJ
-looking	ADJ	disputed	VBG
+looking	ADJ	ptb	VBG
 gentleman	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 in	ADP	ptb	IN
@@ -249512,7 +249512,7 @@ Dunn	PROPN	ptb	NNP
 To	ADP	ptb	IN
 which	PRON	ptb	WP
 the	DET	ptb	DT
-wakening	VERB	ptb	VBG
+wakening	ADJ	ptb	VBG
 gentleman	NOUN	ptb	NN
 replied	VERB	ptb	VBD
 ,	PUNCT	ptb	,
@@ -250364,7 +250364,7 @@ Need	VERB	ptb	VB
 That	DET	ptb	DT
 Porsche	PROPN	ptb	NNP
 After	ADP	ptb	IN
-Thinning	VERB	ptb	VBG
+Thinning	ADJ	ptb	VBG
 Hair	NOUN	disputed	NN
 And	CCONJ	ptb	CC
 Mid-Life	ADJ	ptb	JJ
@@ -251125,7 +251125,7 @@ proclaimed	VERB	ptb	VBD
 ......	PUNCT	ptb	,
 "	PUNCT	ptb	"
 A	DET	ptb	DT
-grazing	VERB	ptb	VBG
+grazing	ADJ	ptb	VBG
 Mace	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 how	ADV	ptb	WRB
@@ -252024,7 +252024,7 @@ raced	VERB	ptb	VBD
 faster	ADV	ptb	RBR
 towards	ADP	ptb	IN
 his	DET	ptb	PRP$
-screaming	VERB	ptb	VBG
+screaming	ADJ	ptb	VBG
 wife	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -254414,7 +254414,7 @@ attention	NOUN	ptb	NN
 of	ADP	ptb	IN
 my	DET	ptb	PRP$
 automated	ADJ	ptb	VBN
-answering	NOUN	ptb	VBG
+answering	ADJ	ptb	VBG
 service	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -255466,7 +255466,7 @@ cats	NOUN	ptb	NNS
 ;	PUNCT	ptb	,
 the	DET	ptb	DT
 two	NUM	ptb	CD
-opposing	VERB	ptb	VBG
+opposing	ADJ	ptb	VBG
 forces	NOUN	ptb	NNS
 will	AUX	ptb	MD
 cause	VERB	ptb	VB
@@ -256380,7 +256380,7 @@ Masterson	PROPN	ptb	NNP
 # text = Pistol Packing Momma !
 # genre = jokes
 Pistol	NOUN	ptb	NN
-Packing	VERB	ptb	VBG
+Packing	ADJ	ptb	VBG
 Momma	PROPN	ptb	NNP
 !	PUNCT	ptb	.
 
@@ -262119,7 +262119,7 @@ said	VERB	ptb	VBD
 one	NUM	ptb	CD
 of	ADP	ptb	IN
 the	DET	ptb	DT
-losing	VERB	ptb	VBG
+losing	ADJ	ptb	VBG
 players	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -264781,7 +264781,7 @@ the	DET	ptb	DT
 range	NOUN	ptb	NN
 when	SCONJ	ptb	WRB
 a	DET	ptb	DT
-passing	VERB	ptb	VBG
+passing	ADJ	ptb	VBG
 tourist	NOUN	ptb	NN
 said	VERB	ptb	VBD
 ,	PUNCT	ptb	,
@@ -264923,7 +264923,7 @@ his	DET	ptb	PRP$
 back	NOUN	ptb	NN
 to	ADP	ptb	IN
 the	DET	ptb	DT
-approaching	VERB	ptb	VBG
+approaching	ADJ	ptb	VBG
 cat	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -267228,7 +267228,7 @@ Responsibility	NOUN	ptb	NN
 You	PRON	ptb	PRP
 ,	PUNCT	ptb	,
 The	DET	ptb	DT
-Whining	ADJ	disputed	VBG
+Whining	ADJ	ptb	VBG
 Sex	NOUN	disputed	NN
 
 # sent_id = masc:written/jokes/jokes5#20
@@ -274432,7 +274432,7 @@ chair	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 pounds	VERB	ptb	VBZ
 the	DET	ptb	DT
-whistling	VERB	ptb	VBG
+whistling	ADJ	ptb	VBG
 tea	NOUN	ptb	NN
 kettle	NOUN	ptb	NN
 flatter	ADJ	ptb	JJR
@@ -276224,7 +276224,7 @@ antecedents	NOUN	ptb	NNS
 Writing	VERB	ptb	VBG
 carefully	ADV	ptb	RB
 ,	PUNCT	ptb	,
-dangling	ADJ	disputed	VBG
+dangling	ADJ	ptb	VBG
 participles	NOUN	ptb	NNS
 must	AUX	ptb	MD
 be	AUX	ptb	VB
@@ -276249,7 +276249,7 @@ a	DET	ptb	DT
 sentence	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 a	DET	ptb	DT
-linking	NOUN	ptb	VBG
+linking	ADJ	ptb	VBG
 verb	NOUN	ptb	NN
 is	VERB	ptb	VBZ
 .	PUNCT	ptb	.
@@ -276474,7 +276474,7 @@ asked	VERB	ptb	VBD
 That	PRON	ptb	DT
 is	VERB	ptb	VBZ
 the	DET	ptb	DT
-talking	ADJ	disputed	VBG
+talking	ADJ	ptb	VBG
 clock	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 "	PUNCT	ptb	"
@@ -278079,7 +278079,7 @@ symbolic	ADJ	ptb	JJ
 revenge	NOUN	ptb	NN
 on	ADP	ptb	IN
 her	DET	ptb	PRP$
-philandering	VERB	ptb	VBG
+philandering	ADJ	ptb	VBG
 husband	NOUN	ptb	NN
 while	ADP	ptb	IN
 advancing	VERB	ptb	VBG
@@ -279677,7 +279677,7 @@ Washington	PROPN	ptb	NNP
 Post	PROPN	ptb	NNP
 emphasize	VERB	ptb	VBP
 the	DET	ptb	DT
-deteriorating	VERB	ptb	VBG
+deteriorating	ADJ	ptb	VBG
 situation	NOUN	ptb	NN
 there	ADV	ptb	RB
 .	PUNCT	ptb	.
@@ -280035,7 +280035,7 @@ year	NOUN	ptb	NN
 Much	ADJ	ptb	JJ
 of	ADP	ptb	IN
 the	DET	ptb	DT
-continuing	VERB	ptb	VBG
+continuing	ADJ	ptb	VBG
 Diana	PROPN	ptb	NNP
 coverage	NOUN	ptb	NN
 is	AUX	ptb	VBZ
@@ -280134,7 +280134,7 @@ Le	PROPN	ptb	NNP
 Figaro	PROPN	ptb	NNP
 says	VERB	ptb	VBZ
 a	DET	ptb	DT
-dying	VERB	ptb	VBG
+dying	ADJ	ptb	VBG
 Diana	PROPN	ptb	NNP
 gave	VERB	ptb	VBD
 two	NUM	ptb	CD
@@ -280226,7 +280226,7 @@ social	ADJ	ptb	JJ
 structure	NOUN	ptb	NN
 of	ADP	ptb	IN
 this	DET	ptb	DT
-collapsing	VERB	ptb	VBG
+collapsing	ADJ	ptb	VBG
 city	NOUN	ptb	NN
 's	PART	ptb	POS
 poor	ADJ	ptb	JJ
@@ -280574,7 +280574,7 @@ poll	NOUN	ptb	NN
 about	ADP	ptb	IN
 American	ADJ	ptb	JJ
 attitudes	NOUN	ptb	NNS
-concerning	ADP	ptb	VBG
+concerning	VERB	ptb	VBG
 abortion	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -281037,7 +281037,7 @@ one	NUM	ptb	CD
 for	ADP	ptb	IN
 gene	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-cloning	NOUN	ptb	VBG
+cloning	ADJ	ptb	VBG
 research	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -282519,7 +282519,7 @@ then	ADV	ptb	RB
 part	NOUN	ptb	NN
 of	ADP	ptb	IN
 the	DET	ptb	DT
-decaying	VERB	ptb	VBG
+decaying	ADJ	ptb	VBG
 Ottoman	PROPN	ptb	NNP
 Empire	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
@@ -283104,7 +283104,7 @@ food	NOUN	ptb	NN
 to	PART	ptb	TO
 feed	VERB	ptb	VB
 the	DET	ptb	DT
-growing	VERB	ptb	VBG
+growing	ADJ	ptb	VBG
 Arab	PROPN	ptb	NNP
 population	NOUN	ptb	NN
 .	PUNCT	ptb	.
@@ -284263,7 +284263,7 @@ as	ADP	ptb	IN
 the	DET	ptb	DT
 development	NOUN	ptb	NN
 of	ADP	ptb	IN
-functioning	VERB	ptb	VBG
+functioning	ADJ	ptb	VBG
 eyelids	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 creases	NOUN	ptb	NNS
@@ -290069,7 +290069,7 @@ drink	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 drinkable	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
-running	VERB	ptb+mentioned	NN
+running	NOUN	ptb	NN
 water	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 stream	NOUN	ptb	NN
@@ -290514,7 +290514,7 @@ better	ADV	ptb	RBR
 with	ADP	ptb	IN
 Arabic	PROPN	ptb	NNP
 -	PUNCT	ptb	HYPH
-speaking	VERB	ptb	VBG
+speaking	ADJ	ptb	VBG
 settlers	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -290620,7 +290620,7 @@ place	NOUN	ptb	NN
 to	PART	ptb	TO
 hunt	VERB	ptb	VB
 for	ADP	ptb	IN
-Puzzling	PROPN	ptb	VBG
+Puzzling	ADJ	ptb	VBG
 Pronouns	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -291297,7 +291297,7 @@ ready	ADJ	ptb	JJ
 and	CCONJ	ptb	CC
 unembarrassed	ADJ	ptb	JJ
 by	ADP	ptb	IN
-hampering	ADJ	disputed	VBG
+hampering	ADJ	ptb	VBG
 bedclothes	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 for	ADP	ptb	IN
@@ -297139,7 +297139,7 @@ with	ADP	ptb	IN
 popular	ADJ	ptb	JJ
 word	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-processing	NOUN	ptb	VBG
+processing	ADJ	ptb	VBG
 programs	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -298359,7 +298359,7 @@ pet	NOUN	ptb	NN
 end	VERB	ptb	VBP
 with	ADP	ptb	IN
 "	PUNCT	ptb	``
-Petting	NOUN	ptb+mentioned	NN
+Petting	NOUN	ptb	NN
 Party	NOUN	ptb	NN
 (	PUNCT	ptb	-LRB-
 coll.	ADJ	ptb	JJ
@@ -300053,7 +300053,7 @@ endears	VERB	ptb	VBZ
 him	PRON	ptb	PRP
 to	ADP	ptb	TO
 many	ADJ	ptb	JJ
-working	VERB	ptb	VBG
+working	ADJ	ptb	VBG
 lexicographers	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -304786,7 +304786,7 @@ found	ADJ	ptb	VBN
 skills	NOUN	ptb	NNS
 in	ADP	ptb	IN
 a	DET	ptb	DT
-burgeoning	VERB	ptb	VBG
+burgeoning	ADJ	ptb	VBG
 industry	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -305020,7 +305020,7 @@ adding	VERB	ptb	VBG
 fuel	NOUN	ptb	NN
 to	ADP	ptb	TO
 our	DET	ptb	PRP$
-thriving	ADJ	disputed	VBG
+thriving	ADJ	ptb	VBG
 economy	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -305137,7 +305137,7 @@ human	ADJ	ptb	JJ
 needs	NOUN	ptb	NNS
 of	ADP	ptb	IN
 our	DET	ptb	PRP$
-changing	VERB	ptb	VBG
+changing	ADJ	ptb	VBG
 society	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -308246,7 +308246,7 @@ John	PROPN	ptb	NNP
 H.	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 a	DET	ptb	DT
-recovering	VERB	ptb	VBG
+recovering	ADJ	ptb	VBG
 alcoholic	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 rebuilding	VERB	ptb	VBG
@@ -308641,7 +308641,7 @@ is	VERB	ptb	VBZ
 a	DET	ptb	DT
 fund	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-raising	NOUN	ptb	VBG
+raising	ADJ	ptb	VBG
 appeal	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -309137,7 +309137,7 @@ wide	ADJ	ptb	JJ
 range	NOUN	ptb	NN
 of	ADP	ptb	IN
 programs	NOUN	ptb	NNS
-including	ADP	ptb	VBG
+including	VERB	ptb	VBG
 community	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
 based	ADJ	ptb	VBN
@@ -311060,7 +311060,7 @@ an	DET	ptb	DT
 Inaugural	ADJ	ptb	JJ
 fund	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-raising	NOUN	ptb	VBG
+raising	ADJ	ptb	VBG
 event	NOUN	ptb	NN
 :	PUNCT	ptb	:
 The	DET	ptb	DT
@@ -311517,7 +311517,7 @@ one	NUM	ptb	CD
 our	CCONJ	ptb	CC
 two	NUM	ptb	CD
 extra	ADJ	ptb	JJ
-returning	VERB	ptb	VBG
+returning	ADJ	ptb	VBG
 campers	NOUN	ptb	NNS
 squeezed	VERB	ptb	VBN
 in	ADV	ptb	RB
@@ -313209,7 +313209,7 @@ asked	VERB	ptb	VBN
 about	ADP	ptb	IN
 our	DET	ptb	PRP$
 board	NOUN	ptb	NN
-giving	NOUN	ptb	VBG
+giving	ADJ	ptb	VBG
 level	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 we	PRON	ptb	PRP
@@ -314171,7 +314171,7 @@ several	ADJ	ptb	JJ
 of	ADP	ptb	IN
 our	DET	ptb	PRP$
 youth	NOUN	ptb	NN
-serving	VERB	ptb	VBG
+serving	ADJ	ptb	VBG
 organizations	NOUN	ptb	NNS
 to	PART	ptb	TO
 join	VERB	ptb	VB
@@ -314402,7 +314402,7 @@ coordinating	ADJ	ptb	VBG
 planning	ADJ	ptb	VBG
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
-convening	NOUN	ptb	VBG
+convening	ADJ	ptb	VBG
 agency	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -314529,7 +314529,7 @@ corporation	NOUN	ptb	NN
 might	AUX	ptb	MD
 consider	VERB	ptb	VB
 becoming	VERB	ptb	VBG
-sustaining	ADJ	disputed	VBG
+sustaining	ADJ	ptb	VBG
 supporters	NOUN	ptb	NNS
 of	ADP	ptb	IN
 MCCOY	PROPN	ptb	NNP
@@ -315034,7 +315034,7 @@ to	PART	ptb	TO
 build	VERB	ptb	VB
 a	DET	ptb	DT
 "	PUNCT	ptb	''
-Caring	PROPN	ptb	JJ
+Caring	ADJ	ptb	JJ
 Neighborhood	NOUN	ptb	NN
 with	ADP	ptb	IN
 Youth	PROPN	ptb	NN
@@ -315200,7 +315200,7 @@ of	ADP	ptb	IN
 becoming	VERB	ptb	VBG
 productive	ADJ	ptb	JJ
 and	CCONJ	ptb	CC
-contributing	VERB	ptb	JJ
+contributing	ADJ	ptb	JJ
 members	NOUN	ptb	NNS
 of	ADP	ptb	IN
 adult	ADJ	ptb	JJ
@@ -317691,7 +317691,7 @@ goal	NOUN	ptb	NN
 of	ADP	ptb	IN
 having	VERB	ptb	VBG
 550	NUM	ptb	CD
-mentoring	NOUN	ptb	VBG
+mentoring	ADJ	ptb	VBG
 relationships	NOUN	ptb	NNS
 by	ADP	ptb	IN
 the	DET	ptb	DT
@@ -318053,7 +318053,7 @@ to	PART	ptb	TO
 make	VERB	ptb	VB
 positive	ADJ	ptb	JJ
 choices	NOUN	ptb	NNS
-concerning	ADP	ptb	VBG
+concerning	VERB	ptb	VBG
 alcohol	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 tobacco	NOUN	ptb	NN
@@ -319118,7 +319118,7 @@ more	ADJ	ptb	JJR
 adventures	NOUN	ptb	NNS
 ?	PUNCT	ptb	,
 great	ADJ	ptb	JJ
-paddling	NOUN	ptb	VBG
+paddling	ADJ	ptb	VBG
 destinations	NOUN	ptb	NNS
 from	ADP	ptb	IN
 Long	PROPN	ptb	NNP
@@ -319459,7 +319459,7 @@ to	ADP	ptb	IN
 sight	NOUN	ptb	NN
 of	ADP	ptb	IN
 a	DET	ptb	DT
-diving	VERB	ptb	VBG
+diving	ADJ	ptb	VBG
 dolphin	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 you	PRON	ptb	PRP
@@ -320466,7 +320466,7 @@ Wrapping	VERB	ptb	VBG
 Paper	NOUN	ptb	NN
 Collection	NOUN	ptb	NN
 and	CCONJ	ptb	CC
-matching	ADJ	disputed	JJ
+matching	ADJ	ptb	JJ
 gift	NOUN	ptb	NN
 tags	NOUN	ptb	NNS
 .	PUNCT	ptb	.
@@ -320505,7 +320505,7 @@ wildlife	NOUN	ptb	NN
 # text = The wrapping paper and matching gift cards feature delightful holiday wildlife images that will come in handy for wrapping your last minute presents .
 # genre = letters
 The	DET	ptb	DT
-wrapping	NOUN	ptb	JJ
+wrapping	ADJ	ptb	JJ
 paper	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 matching	ADJ	ptb	JJ
@@ -320588,7 +320588,7 @@ you	PRON	ptb	PRP
 use	VERB	ptb	VB
 the	DET	ptb	DT
 attractive	ADJ	ptb	JJ
-wrapping	NOUN	ptb	JJ
+wrapping	ADJ	ptb	JJ
 paper	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 gift	NOUN	ptb	NN
@@ -325191,7 +325191,7 @@ the	DET	ptb	DT
 AT&T	NOUN	ptb	NN
 One	NUM	ptb	CD
 Rate	NOUN	ptb	NN
-Calling	PROPN	ptb	NN
+Calling	NOUN	ptb	NN
 Card	NOUN	ptb	NN
 Plan	NOUN	ptb	NN
 .	PUNCT	ptb	.
@@ -325474,7 +325474,7 @@ of	ADP	ptb	IN
 a	DET	ptb	DT
 slow	ADV	ptb	RB
 -	PUNCT	ptb	HYPH
-acting	VERB	ptb	VBG
+acting	ADJ	ptb	VBG
 poison	NOUN	ptb	NN
 spread	VERB	ptb	VBN
 in	ADP	ptb	IN
@@ -325536,7 +325536,7 @@ Plains	PROPN	ptb	NNPS
 targeting	VERB	ptb	VBG
 two	NUM	ptb	CD
 million	NUM	ptb	CD
-migrating	VERB	ptb	VBG
+migrating	ADJ	ptb	VBG
 blackbirds	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 threatening	VERB	ptb	VBG
@@ -327161,7 +327161,7 @@ __	SYM	ptb	SYM
 This	DET	ptb	DT
 award	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-winning	NOUN	disputed	NN
+winning	NOUN	ptb	NN
 style	NOUN	ptb	NN
 is	VERB	ptb	VBZ
 evident	ADJ	ptb	JJ
@@ -327208,7 +327208,7 @@ RSQUOs	PART	ptb	POS
 most	ADV	ptb	RBS
 awe	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-inspiring	NOUN	disputed	NN
+inspiring	NOUN	ptb	NN
 creations	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -327341,7 +327341,7 @@ Platte	PROPN	ptb	NNP
 River	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 our	DET	ptb	PRP$
-Living	PROPN	ptb	VBG
+Living	ADJ	ptb	VBG
 Oceans	NOUN	ptb	NNS
 Program	NOUN	ptb	NN
 and	CCONJ	ptb	CC
@@ -330683,7 +330683,7 @@ we	PRON	ptb	PRP
 insist	VERB	ptb	VBP
 they	PRON	ptb	PRP
 enforce	VERB	ptb	VBP
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 laws	NOUN	ptb	NNS
 to	PART	ptb	TO
 prevent	VERB	ptb	VB
@@ -331446,7 +331446,7 @@ HUMAN	ADJ	ptb	JJ
 RESOURCES	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 SOLICITATION	NOUN	ptb	NN
-LICENSING	PROPN	ptb	NN
+LICENSING	NOUN	ptb	NN
 BRANCH	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 BY	ADP	ptb	IN
@@ -331830,7 +331830,7 @@ dog	NOUN	ptb	NN
 a	DET	ptb	DT
 wet	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
-starving	ADJ	disputed	VBG
+starving	ADJ	ptb	VBG
 kitten	NOUN	ptb	NN
 .	PUNCT	ptb	,
 homeless	ADJ	ptb	JJ
@@ -332122,7 +332122,7 @@ harpoons	NOUN	ptb	NNS
 And	CCONJ	ptb	CC
 now	ADV	ptb	RB
 ,	PUNCT	ptb	,
-growing	VERB	ptb	VBG
+growing	ADJ	ptb	VBG
 numbers	NOUN	ptb	NNS
 of	ADP	ptb	IN
 dolphins	NOUN	ptb	NNS
@@ -332356,7 +332356,7 @@ source	NOUN	ptb	NN
 protect	VERB	ptb	VB
 sea	NOUN	ptb	NN
 turtle	NOUN	ptb	NN
-nesting	NOUN	ptb	VBG
+nesting	ADJ	ptb	VBG
 beaches	NOUN	ptb	NNS
 from	ADP	ptb	IN
 development	NOUN	ptb	NN
@@ -334185,7 +334185,7 @@ children	NOUN	ptb	NNS
 clean	ADJ	ptb	JJ
 water	NOUN	ptb	NN
 ,	PUNCT	ptb	,
-thriving	VERB	ptb	VBG
+thriving	ADJ	ptb	VBG
 grassland	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 wetlands	NOUN	ptb	NNS
@@ -334519,7 +334519,7 @@ full	ADJ	ptb	JJ
 color	NOUN	ptb	NN
 photographs	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
-compelling	ADJ	ptb	VBG
+compelling	VERB	ptb	VBG
 features	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 updates	NOUN	ptb	NNS
@@ -334537,7 +334537,7 @@ accomplish	VERB	ptb	VB
 this	DET	ptb	DT
 award	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-winning	NOUN	disputed	NN
+winning	NOUN	ptb	NN
 publication	NOUN	ptb	NN
 alone	ADV	ptb	RB
 is	VERB	ptb	VBZ
@@ -335243,7 +335243,7 @@ we	PRON	ptb	PRP
 RSQUOll	AUX	ptb	MD
 escalate	VERB	ptb	VB
 our	DET	ptb	PRP$
-trailblazing	ADJ	ptb	NN
+trailblazing	NOUN	ptb	NN
 program	NOUN	ptb	NN
 to	PART	ptb	TO
 find	VERB	ptb	VB
@@ -335323,7 +335323,7 @@ of	ADP	ptb	IN
 animals	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 including	ADP	ptb	VBG
-whooping	ADJ	disputed	VBG
+whooping	ADJ	ptb	VBG
 cranes	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 giant	ADJ	ptb	JJ
@@ -335716,7 +335716,7 @@ table	NOUN	ptb	NN
 photography	NOUN	ptb	NN
 book	NOUN	ptb	NN
 ,	PUNCT	ptb	,
-Living	PROPN	ptb	VBG
+Living	ADJ	ptb	VBG
 Planet	NOUN	ptb	NN
 Preserving	VERB	ptb	VBG
 Edens	NOUN	ptb	NNS
@@ -337428,7 +337428,7 @@ single	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
 umbrella	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-carrying	VERB	ptb	VBG
+carrying	ADJ	ptb	VBG
 individual	NOUN	ptb	NN
 up	ADP	ptb	IN
 the	DET	ptb	DT
@@ -337634,7 +337634,7 @@ bagpiper	NOUN	ptb	NN
 again	ADV	ptb	RB
 plays	VERB	ptb	VBZ
 "	PUNCT	ptb	"
-Amazing	PROPN	ptb	VBG
+Amazing	ADJ	ptb	VBG
 Grace	PROPN	ptb	NN
 "	PUNCT	ptb	"
 as	SCONJ	ptb	IN
@@ -342456,7 +342456,7 @@ print	NOUN	ptb	NN
 position	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-receeding	VERB	ptb	VBG
+receeding	ADJ	ptb	VBG
 tide	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 it	PRON	ptb	PRP
@@ -345937,7 +345937,7 @@ Jack	PROPN	ptb	NNP
 Sparrow	PROPN	ptb	NNP
 is	VERB	ptb	VBZ
 a	DET	ptb	DT
-dying	VERB	ptb	VBG
+dying	ADJ	ptb	VBG
 breed	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -351299,12 +351299,12 @@ Kraken	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-reeking	ADJ	disputed	VBG
+reeking	ADJ	ptb	VBG
 odor	NOUN	ptb	NN
 of	ADP	ptb	IN
 a	DET	ptb	DT
 thousand	NUM	ptb	CD
-rotting	VERB	ptb	VBG
+rotting	ADJ	ptb	VBG
 corpses	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -352335,7 +352335,7 @@ feeling	VERB	ptb	VBG
 what	DET	ptb	WDT
 ...	PUNCT	ptb	,
 small	ADJ	ptb	JJ
-fleeting	ADJ	ptb	VBG
+fleeting	VERB	ptb	VBG
 joy	NOUN	ptb	NN
 life	NOUN	ptb	NN
 brings	VERB	ptb	VBZ
@@ -356157,7 +356157,7 @@ contains	VERB	ptb	VBZ
 the	DET	ptb	DT
 still	ADV	ptb	RB
 -	PUNCT	ptb	HYPH
-beating	VERB	ptb	VBG
+beating	ADJ	ptb	VBG
 heart	NOUN	ptb	NN
 o'	ADP	ptb	IN
 Davy	PROPN	ptb	NNP
@@ -365644,7 +365644,7 @@ most	ADV	ptb	RBS
 serious	ADJ	ptb	JJ
 allegations	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
-including	ADP	ptb	VBG
+including	VERB	ptb	VBG
 Chang	PROPN	ptb	NNP
 's	PART	ptb	POS
 claim	NOUN	ptb	NN
@@ -366117,7 +366117,7 @@ or	CCONJ	ptb	CC
 the	DET	ptb	DT
 subject	NOUN	ptb	NN
 of	ADP	ptb	IN
-conflicting	ADJ	disputed	VBG
+conflicting	ADJ	ptb	VBG
 accounts	NOUN	ptb	NNS
 by	ADP	ptb	IN
 different	ADJ	ptb	JJ
@@ -366804,7 +366804,7 @@ in	ADP	ptb	IN
 this	DET	ptb	DT
 oil	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-producing	VERB	ptb	NN
+producing	NOUN	ptb	NN
 sultanate	NOUN	ptb	NN
 for	ADP	ptb	IN
 two	NUM	ptb	CD
@@ -367934,7 +367934,7 @@ use	VERB	ptb	VB
 its	DET	ptb	PRP$
 cell	NOUN	ptb	NN
 phone	NOUN	ptb	NN
-operating	NOUN	ptb	VBG
+operating	ADJ	ptb	VBG
 system	NOUN	ptb	NN
 have	AUX	ptb	VBP
 struggled	VERB	ptb	VBN
@@ -367960,7 +367960,7 @@ which	PRON	ptb	WP
 has	AUX	ptb	VBZ
 developed	VERB	ptb	VBN
 a	DET	ptb	DT
-competing	VERB	ptb	VBG
+competing	ADJ	ptb	VBG
 software	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -372673,7 +372673,7 @@ improper	ADJ	ptb	JJ
 accusations	NOUN	ptb	NNS
 in	ADP	ptb	IN
 his	DET	ptb	PRP$
-closing	NOUN	ptb	JJ
+closing	ADJ	ptb	JJ
 argument	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -372817,7 +372817,7 @@ case	NOUN	ptb	NN
 the	DET	ptb	DT
 court	NOUN	ptb	NN
 showed	VERB	ptb	VBD
-continuing	VERB	ptb	VBG
+continuing	ADJ	ptb	VBG
 uneasiness	NOUN	ptb	NN
 with	ADP	ptb	IN
 the	DET	ptb	DT
@@ -373361,7 +373361,7 @@ McGinniss	PROPN	ptb	NNP
 '	PART	ptb	POS
 best	ADV	ptb	RBS
 -	PUNCT	ptb	HYPH
-selling	ADJ	disputed	VBG
+selling	ADJ	ptb	VBG
 book	NOUN	ptb	NN
 "	PUNCT	ptb	"
 Blind	ADJ	ptb	JJ
@@ -374790,7 +374790,7 @@ key	ADJ	ptb	JJ
 provisions	NOUN	ptb	NNS
 of	ADP	ptb	IN
 the	DET	ptb	DT
-existing	ADJ	disputed	VBG
+existing	ADJ	ptb	VBG
 Clean	PROPN	ptb	NNP
 Air	PROPN	ptb	NNP
 Act	PROPN	ptb	NNP
@@ -374839,7 +374839,7 @@ the	DET	ptb	DT
 need	NOUN	ptb	NN
 for	ADP	ptb	IN
 many	ADJ	ptb	JJ
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 rules	NOUN	ptb	NNS
 will	AUX	ptb	MD
 disappear	VERB	ptb	VB
@@ -376401,7 +376401,7 @@ medal	NOUN	ptb	NN
 because	ADP	ptb	IN
 of	ADP	ptb	IN
 the	DET	ptb	DT
-ensuing	VERB	ptb	VBG
+ensuing	ADJ	ptb	VBG
 judging	NOUN	ptb	NN
 controversy	NOUN	ptb	NN
 .	PUNCT	ptb	.
@@ -378856,7 +378856,7 @@ critical	ADJ	ptb	JJ
 to	ADP	ptb	IN
 meeting	VERB	ptb	VBG
 that	DET	ptb	DT
-growing	VERB	ptb	VBG
+growing	ADJ	ptb	VBG
 demand	NOUN	ptb	NN
 .	PUNCT	ptb	.
 "	PUNCT	ptb	"
@@ -378880,7 +378880,7 @@ as	SCONJ	ptb	IN
 both	CCONJ	ptb	CC
 the	DET	ptb	DT
 high	ADJ	ptb	JJ
-operating	NOUN	ptb	VBG
+operating	ADJ	ptb	VBG
 costs	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 depreciation	NOUN	ptb	NN
@@ -379029,7 +379029,7 @@ a	DET	ptb	DT
 testament	NOUN	ptb	NN
 to	ADP	ptb	IN
 advanced	ADJ	ptb	JJ
-manufacturing	NOUN	ptb	VBG
+manufacturing	ADJ	ptb	VBG
 technology	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -379105,7 +379105,7 @@ fabrication	NOUN	ptb	NN
 Throughout	ADP	ptb	IN
 the	DET	ptb	DT
 500	NUM	ptb	CD
-processing	NOUN	ptb	VBG
+processing	ADJ	ptb	VBG
 steps	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 which	PRON	ptb	WP
@@ -379182,7 +379182,7 @@ of	ADP	ptb	IN
 the	DET	ptb	DT
 hundreds	NOUN	ptb	NNS
 of	ADP	ptb	IN
-processing	NOUN	ptb	VBG
+processing	ADJ	ptb	VBG
 machines	NOUN	ptb	NNS
 is	VERB	ptb	VBZ
 self	NOUN	ptb	NN
@@ -379392,7 +379392,7 @@ job	NOUN	ptb	NN
 at	ADP	ptb	IN
 bottom	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-dwelling	VERB	ptb	NN
+dwelling	NOUN	ptb	NN
 Vanderbilt	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 the	DET	ptb	DT
@@ -381408,7 +381408,7 @@ move	VERB	ptb	VB
 on	ADV	ptb	RP
 to	ADP	ptb	IN
 assisted	ADJ	ptb	VBN
-living	NOUN	ptb	VBG
+living	ADJ	ptb	VBG
 facilities	NOUN	ptb	NNS
 within	ADP	ptb	IN
 the	DET	ptb	DT
@@ -381761,7 +381761,7 @@ D.C.	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-Behring	PROPN	ptb	VBG
+Behring	ADJ	ptb	VBG
 Center	PROPN	ptb	NNP
 of	ADP	ptb	IN
 the	DET	ptb	DT
@@ -382906,7 +382906,7 @@ Prize	PROPN	ptb	NNP
 winner	NOUN	ptb	NN
 "	PUNCT	ptb	"
 The	DET	ptb	DT
-Amazing	PROPN	ptb	VBG
+Amazing	ADJ	ptb	VBG
 Adventures	NOUN	ptb	NNS
 of	ADP	ptb	IN
 Kavalier	PROPN	ptb	NNP
@@ -383264,7 +383264,7 @@ markets	NOUN	ptb	NNS
 # text = With rising demand for the firm , oil - rich fish came pirate fishing fleets eager to cash in on its popularity -- even if it meant skirting catch limits and environmental regulations .
 # genre = newspaper
 With	ADP	ptb	IN
-rising	VERB	ptb	VBG
+rising	ADJ	ptb	VBG
 demand	NOUN	ptb	NN
 for	ADP	ptb	IN
 the	DET	ptb	DT
@@ -383902,7 +383902,7 @@ partly	ADV	ptb	RB
 financed	VERB	ptb	VBN
 by	ADP	ptb	IN
 the	DET	ptb	DT
-fishing	NOUN	ptb	VBG
+fishing	ADJ	ptb	VBG
 industry	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -384367,7 +384367,7 @@ issues	NOUN	ptb	NNS
 # text = Some working chefs say they routinely review conservation group Web sites , government reports and industry sources .
 # genre = newspaper
 Some	DET	ptb	DT
-working	VERB	ptb	VBG
+working	ADJ	ptb	VBG
 chefs	NOUN	ptb	NNS
 say	VERB	ptb	VBP
 they	PRON	ptb	PRP
@@ -384898,7 +384898,7 @@ turning	VERB	ptb	VBG
 psychology	NOUN	ptb	NN
 into	ADP	ptb	IN
 a	DET	ptb	DT
-prescribing	ADJ	disputed	VBG
+prescribing	ADJ	ptb	VBG
 profession	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -385693,7 +385693,7 @@ this	PRON	ptb	DT
 ?	PUNCT	ptb	,
 "	PUNCT	ptb	"
 another	DET	ptb	DT
-commanding	ADJ	disputed	VBG
+commanding	ADJ	ptb	VBG
 officer	NOUN	ptb	NN
 asked	VERB	ptb	VBD
 Karnes	PROPN	ptb	NNP
@@ -386099,7 +386099,7 @@ Tinian	PROPN	ptb	NNP
 Island	PROPN	ptb	NNP
 was	VERB	ptb	VBD
 the	DET	ptb	DT
-staging	NOUN	ptb	VBG
+staging	ADJ	ptb	VBG
 area	NOUN	ptb	NN
 where	ADV	ptb	WRB
 the	DET	ptb	DT
@@ -386449,7 +386449,7 @@ of	ADP	ptb	IN
 Wendover	PROPN	ptb	NNP
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-surrounding	VERB	ptb	VBG
+surrounding	ADJ	ptb	VBG
 Bonneville	PROPN	ptb	NNP
 Salt	PROPN	ptb	NNP
 Flats	PROPN	ptb	NNPS
@@ -386739,7 +386739,7 @@ and	CCONJ	ptb	CC
 his	DET	ptb	PRP$
 staff	NOUN	ptb	NN
 read	VERB	ptb	VBD
-outgoing	ADJ	disputed	JJ
+outgoing	ADJ	ptb	JJ
 mail	NOUN	ptb	NN
 to	PART	ptb	TO
 make	VERB	ptb	VB
@@ -388525,7 +388525,7 @@ Minister	PROPN	ptb	NNP
 said	VERB	ptb	VBD
 during	ADP	ptb	IN
 the	DET	ptb	DT
-launching	NOUN	ptb	VBG
+launching	ADJ	ptb	VBG
 ceremony	NOUN	ptb	NN
 "	PUNCT	ptb	''
 we	PRON	ptb	PRP
@@ -388759,7 +388759,7 @@ million	NUM	ptb	CD
 # genre = newspaper
 The	DET	ptb	DT
 thrift	NOUN	ptb	NN
-holding	NOUN	ptb	VBG
+holding	ADJ	ptb	VBG
 company	NOUN	ptb	NN
 said	VERB	ptb	VBD
 it	PRON	ptb	PRP
@@ -388847,7 +388847,7 @@ Preferences	PROPN	ptb	NNPS
 for	ADP	ptb	IN
 imports	NOUN	ptb	NNS
 from	ADP	ptb	IN
-developing	ADJ	disputed	VBG
+developing	ADJ	ptb	VBG
 nations	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -388966,7 +388966,7 @@ the	DET	ptb	DT
 Philippines	PROPN	ptb	NNP
 and	CCONJ	ptb	CC
 other	ADJ	ptb	JJ
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 nations	NOUN	ptb	NNS
 covered	VERB	ptb	VBN
 by	ADP	ptb	IN
@@ -389267,7 +389267,7 @@ Stronach	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 founder	NOUN	ptb	NN
 and	CCONJ	ptb	CC
-controlling	ADJ	disputed	VBG
+controlling	ADJ	ptb	VBG
 shareholder	NOUN	ptb	NN
 of	ADP	ptb	IN
 Magna	PROPN	ptb	NNP
@@ -390430,7 +390430,7 @@ DIALING	VERB	ptb	VBG
 brings	VERB	ptb	VBZ
 callers	NOUN	ptb	NNS
 a	DET	ptb	DT
-growing	VERB	ptb	VBG
+growing	ADJ	ptb	VBG
 number	NOUN	ptb	NN
 of	ADP	ptb	IN
 services	NOUN	ptb	NNS
@@ -390570,7 +390570,7 @@ Telegraph	PROPN	ptb	NNP
 Co.	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 noting	VERB	ptb	VBG
-growing	VERB	ptb	VBG
+growing	ADJ	ptb	VBG
 interest	NOUN	ptb	NN
 in	ADP	ptb	IN
 use	NOUN	ptb	NN
@@ -390875,7 +390875,7 @@ concerns	NOUN	ptb	NNS
 # genre = newspaper
 Concerned	VERB	ptb	VBN
 about	ADP	ptb	IN
-shrinking	VERB	ptb	VBG
+shrinking	ADJ	ptb	VBG
 landfills	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
@@ -391196,7 +391196,7 @@ Corp.	PROPN	ptb	NNP
 and	CCONJ	ptb	CC
 its	DET	ptb	PRP$
 principal	ADJ	ptb	JJ
-operating	ADJ	disputed	VBG
+operating	ADJ	ptb	VBG
 unit	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 Fidelity	PROPN	ptb	NNP
@@ -391358,7 +391358,7 @@ Sept.	PROPN	ptb	NNP
 In	ADP	ptb	IN
 addition	NOUN	ptb	NN
 ,	PUNCT	ptb	,
-operating	NOUN	ptb	VBG
+operating	ADJ	ptb	VBG
 results	NOUN	ptb	NNS
 were	AUX	ptb	VBD
 hit	VERB	ptb	VBN
@@ -391468,7 +391468,7 @@ concern	NOUN	ptb	NN
 said	VERB	ptb	VBD
 profit	NOUN	ptb	NN
 from	ADP	ptb	IN
-continuing	VERB	ptb	VBG
+continuing	ADJ	ptb	VBG
 lines	NOUN	ptb	NNS
 fell	VERB	ptb	VBD
 10	NUM	ptb	CD
@@ -392634,7 +392634,7 @@ an	DET	ptb	DT
 insurance	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 financial-services	NOUN	ptb	NNS
-holding	NOUN	ptb	VBG
+holding	ADJ	ptb	VBG
 company	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -393303,7 +393303,7 @@ to	ADP	ptb	TO
 terms	NOUN	ptb	NNS
 of	ADP	ptb	IN
 the	DET	ptb	DT
-surviving	VERB	ptb	VBG
+surviving	ADJ	ptb	VBG
 company	NOUN	ptb	NN
 's	PART	ptb	POS
 debt	NOUN	ptb	NN
@@ -394036,7 +394036,7 @@ the	DET	ptb	DT
 receipt	NOUN	ptb	NN
 of	ADP	ptb	IN
 any	DET	ptb	DT
-competing	VERB	ptb	VBG
+competing	ADJ	ptb	VBG
 bids	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -394087,7 +394087,7 @@ and	CCONJ	ptb	CC
 Unicorp	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 a	DET	ptb	DT
-holding	NOUN	ptb	VBG
+holding	ADJ	ptb	VBG
 company	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 are	AUX	ptb	VBP
@@ -394627,7 +394627,7 @@ music	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 information	NOUN	ptb	NN
 and	CCONJ	ptb	CC
-advertising	NOUN	ptb	VBG
+advertising	ADJ	ptb	VBG
 service	NOUN	ptb	NN
 which	PRON	ptb	WDT
 simulates	VERB	ptb	VBZ
@@ -394678,7 +394678,7 @@ it	PRON	ptb	PRP
 is	AUX	ptb	VBZ
 seeking	VERB	ptb	VBG
 other	ADJ	ptb	JJ
-financing	NOUN	ptb	VBG
+financing	ADJ	ptb	VBG
 sources	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 waivers	NOUN	ptb	NNS
@@ -394697,7 +394697,7 @@ said	VERB	ptb	VBD
 that	SCONJ	ptb	IN
 because	ADP	ptb	IN
 of	ADP	ptb	IN
-softening	VERB	ptb	VBG
+softening	ADJ	ptb	VBG
 sales	NOUN	ptb	NNS
 it	PRON	ptb	PRP
 is	VERB	ptb	VBZ
@@ -394713,7 +394713,7 @@ $	SYM	ptb	$
 3	NUM	ptb	CD
 million	NUM	ptb	CD
 in	ADP	ptb	IN
-working	NOUN	ptb	VBG
+working	ADJ	ptb	VBG
 capital	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -395335,7 +395335,7 @@ at	ADP	ptb	IN
 the	DET	ptb	DT
 mobile	ADJ	ptb	JJ
 home	NOUN	ptb	NN
-financing	NOUN	ptb	VBG
+financing	ADJ	ptb	VBG
 subsidiary	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 which	PRON	ptb	WDT
@@ -395544,7 +395544,7 @@ Peoria	PROPN	ptb	NNP
 Ill.	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 bank	NOUN	ptb	NN
-holding	NOUN	ptb	VBG
+holding	ADJ	ptb	VBG
 company	NOUN	ptb	NN
 in	ADP	ptb	IN
 January	PROPN	ptb	NNP
@@ -397448,7 +397448,7 @@ cereal	NOUN	ptb	NN
 division	NOUN	ptb	NN
 realized	VERB	ptb	VBD
 higher	ADJ	ptb	JJR
-operating	NOUN	ptb	VBG
+operating	ADJ	ptb	VBG
 profit	NOUN	ptb	NN
 on	ADP	ptb	IN
 volume	NOUN	ptb	NN
@@ -399986,7 +399986,7 @@ pattern	NOUN	ptb	NN
 thresholds	NOUN	ptb	NNS
 change	VERB	ptb	VBP
 with	ADP	ptb	IN
-increasing	VERB	ptb	VBG
+increasing	ADJ	ptb	VBG
 valley	NOUN	ptb	NN
 slope	NOUN	ptb	NN
 ,	PUNCT	ptb	,
@@ -400068,7 +400068,7 @@ Pattern	NOUN	ptb	NN
 low	ADJ	ptb	JJ
 -	PUNCT	ptb	HYPH
 sinuosity	NOUN	ptb	NN
-meandering	ADJ	disputed	VBG
+meandering	ADJ	ptb	VBG
 channel	NOUN	ptb	NN
 with	ADP	ptb	IN
 large	ADJ	ptb	JJ
@@ -400108,7 +400108,7 @@ chutes	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 but	CCONJ	ptb	CC
 a	DET	ptb	DT
-meandering	VERB	ptb	VBG
+meandering	ADJ	ptb	VBG
 thalweg	NOUN	ptb	NN
 can	AUX	ptb	MD
 be	AUX	ptb	VB
@@ -400171,7 +400171,7 @@ the	DET	ptb	DT
 sinuosity	NOUN	ptb	NN
 of	ADP	ptb	IN
 a	DET	ptb	DT
-meandering	ADJ	disputed	VBG
+meandering	ADJ	ptb	VBG
 channel	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 but	CCONJ	ptb	CC
@@ -400384,7 +400384,7 @@ important	ADJ	ptb	JJ
 and	CCONJ	ptb	CC
 therefore	ADV	ptb	RB
 ,	PUNCT	ptb	,
-anastomosing	VERB	ptb	VBG
+anastomosing	ADJ	ptb	VBG
 reaches	NOUN	ptb	NNS
 of	ADP	ptb	IN
 a	DET	ptb	DT
@@ -400505,7 +400505,7 @@ material	NOUN	ptb	NN
 # genre = non-fiction
 Map	NOUN	ptb	NN
 of	ADP	ptb	IN
-anastomosing	VERB	ptb	VBG
+anastomosing	ADJ	ptb	VBG
 channels	NOUN	ptb	NNS
 of	ADP	ptb	IN
 Ovens	PROPN	ptb	NNP
@@ -400691,7 +400691,7 @@ of	ADP	ptb	IN
 east	NOUN	ptb	NN
 ?	PUNCT	ptb	HYPH
 west	NOUN	ptb	NN
-flowing	VERB	ptb	VBG
+flowing	ADJ	ptb	VBG
 channels	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -400701,7 +400701,7 @@ channels	NOUN	ptb	NNS
 # genre = non-fiction
 South	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-flowing	VERB	ptb	VBG
+flowing	ADJ	ptb	VBG
 streams	NOUN	ptb	NNS
 exhibit	VERB	ptb	VBP
 paired	VERB	ptb	VBN
@@ -400710,7 +400710,7 @@ while	SCONJ	ptb	IN
 east	NOUN	ptb	NN
 ?	PUNCT	ptb	HYPH
 west	NOUN	ptb	NN
-trending	VERB	ptb	VBG
+trending	ADJ	ptb	VBG
 streams	NOUN	ptb	NNS
 contain	VERB	ptb	VBP
 extensive	ADJ	ptb	JJ
@@ -401380,7 +401380,7 @@ structures	NOUN	ptb	NNS
 # text = In subsiding basins , they are also closely related to active tectonics .
 # genre = non-fiction
 In	ADP	ptb	IN
-subsiding	VERB	ptb	VBG
+subsiding	ADJ	ptb	VBG
 basins	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 they	PRON	ptb	PRP
@@ -402539,7 +402539,7 @@ high	ADJ	ptb	JJ
 -	PUNCT	ptb	HYPH
 sediment	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-transporting	VERB	ptb	NN
+transporting	NOUN	ptb	NN
 tributary	NOUN	ptb	NN
 may	AUX	ptb	MD
 build	VERB	ptb	VB
@@ -402663,7 +402663,7 @@ For	ADP	ptb	IN
 example	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 with	ADP	ptb	IN
-increasing	VERB	ptb	VBG
+increasing	ADJ	ptb	VBG
 slope	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 a	DET	ptb	DT
@@ -402684,7 +402684,7 @@ sinuous	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
 a	DET	ptb	DT
-meandering	ADJ	disputed	VBG
+meandering	ADJ	ptb	VBG
 channel	NOUN	ptb	NN
 will	AUX	ptb	MD
 braid	VERB	ptb	VB
@@ -402695,7 +402695,7 @@ braid	VERB	ptb	VB
 # text = With decreasing slope , a braided channel will meander and a meandering channel will straighten .
 # genre = non-fiction
 With	ADP	ptb	IN
-decreasing	VERB	ptb	VBG
+decreasing	ADJ	ptb	VBG
 slope	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 a	DET	ptb	DT
@@ -402705,7 +402705,7 @@ will	AUX	ptb	MD
 meander	VERB	ptb	VB
 and	CCONJ	ptb	CC
 a	DET	ptb	DT
-meandering	VERB	ptb	VBG
+meandering	ADJ	ptb	VBG
 channel	NOUN	ptb	NN
 will	AUX	ptb	MD
 straighten	VERB	ptb	VB
@@ -404295,13 +404295,13 @@ a	DET	ptb	DT
 circular	ADJ	ptb	JJ
 self	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-reinforcing	ADJ	ptb	NN
+reinforcing	NOUN	ptb	NN
 relationship	NOUN	ptb	NN
 resembling	VERB	ptb	VBG
 a	DET	ptb	DT
 self	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-fulfilling	ADJ	ptb	NN
+fulfilling	NOUN	ptb	NN
 prophecy	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -404495,7 +404495,7 @@ way	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-resulting	VERB	ptb	VBG
+resulting	ADJ	ptb	VBG
 ambiguity	NOUN	ptb	NN
 opens	VERB	ptb	VBZ
 the	DET	ptb	DT
@@ -404607,7 +404607,7 @@ characteristics	NOUN	ptb	NNS
 that	PRON	ptb	WDT
 make	VERB	ptb	VBP
 the	DET	ptb	DT
-resulting	VERB	ptb	VBG
+resulting	ADJ	ptb	VBG
 circumstances	NOUN	ptb	NNS
 "	PUNCT	ptb	"
 weak	ADJ	ptb	JJ
@@ -404632,7 +404632,7 @@ actions	NOUN	ptb	NNS
 that	PRON	ptb	WDT
 fill	VERB	ptb	VBP
 the	DET	ptb	DT
-resulting	VERB	ptb	VBG
+resulting	ADJ	ptb	VBG
 void	NOUN	ptb	NN
 in	ADP	ptb	IN
 the	DET	ptb	DT
@@ -406927,7 +406927,7 @@ no	DET	ptb	DT
 explicit	ADJ	ptb	JJ
 rules	NOUN	ptb	NNS
 or	CCONJ	ptb	CC
-operating	NOUN	ptb	VBG
+operating	VERB	ptb	VBG
 procedures	NOUN	ptb	NNS
 exist	VERB	ptb	VBP
 there	PRON	ptb	EX
@@ -408211,7 +408211,7 @@ be	AUX	ptb	VB
 retained	VERB	ptb	VBN
 in	ADP	ptb	IN
 the	DET	ptb	DT
-sponsoring	VERB	ptb	VBG
+sponsoring	ADJ	ptb	VBG
 company	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 or	CCONJ	ptb	CC
@@ -408631,7 +408631,7 @@ on	ADV	ptb	RP
 # genre = non-fiction
 If	SCONJ	ptb	IN
 that	DET	ptb	DT
-organising	NOUN	ptb	VBG
+organising	ADJ	ptb	VBG
 structure	NOUN	ptb	NN
 is	AUX	ptb	VBZ
 lacking	VERB	ptb	VBG
@@ -409488,7 +409488,7 @@ this	DET	ptb	DT
 whole	ADJ	ptb	JJ
 self	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-constructing	VERB	ptb	VBG
+constructing	ADJ	ptb	VBG
 system	NOUN	ptb	NN
 a	DET	ptb	DT
 wider	ADJ	ptb	JJR
@@ -410153,7 +410153,7 @@ is	VERB	ptb	VBZ
 not	PART	ptb	RB
 outside	ADP	ptb	IN
 that	DET	ptb	DT
-propagating	VERB	ptb	VBG
+propagating	ADJ	ptb	VBG
 organization	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -410165,7 +410165,7 @@ The	DET	ptb	DT
 know-how	NOUN	ptb	NN
 is	VERB	ptb	VBZ
 the	DET	ptb	DT
-propagating	VERB	ptb	VBG
+propagating	ADJ	ptb	VBG
 organization	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -410681,7 +410681,7 @@ a	DET	ptb	DT
 slightly	ADV	ptb	RB
 different	ADJ	ptb	JJ
 context	NOUN	ptb	NN
-concerning	ADP	ptb	VBG
+concerning	VERB	ptb	VBG
 activation	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 inhibition	NOUN	ptb	NN
@@ -411166,7 +411166,7 @@ a	DET	ptb	DT
 bacterium	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-incoming	ADJ	disputed	JJ
+incoming	ADJ	ptb	JJ
 molecule	NOUN	ptb	NN
 is	VERB	ptb	VBZ
 a	DET	ptb	DT
@@ -411603,7 +411603,7 @@ autonomous	ADJ	ptb	JJ
 agents	NOUN	ptb	NNS
 in	ADP	ptb	IN
 the	DET	ptb	DT
-coevolving	VERB	ptb	VBG
+coevolving	ADJ	ptb	VBG
 system	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -411845,7 +411845,7 @@ autonomous	ADJ	ptb	JJ
 agent	NOUN	ptb	NN
 as	ADP	ptb	IN
 a	DET	ptb	DT
-reproducing	VERB	ptb	VBG
+reproducing	ADJ	ptb	VBG
 system	NOUN	ptb	NN
 that	PRON	ptb	WDT
 does	VERB	ptb	VBZ
@@ -411883,7 +411883,7 @@ agents	NOUN	ptb	NNS
 # text = All living cells are .
 # genre = non-fiction
 All	DET	ptb	DT
-living	ADJ	disputed	VBG
+living	ADJ	ptb	VBG
 cells	NOUN	ptb	NNS
 are	VERB	ptb	VBP
 .	PUNCT	ptb	.
@@ -411925,7 +411925,7 @@ Watch	VERB	ptb	VB
 a	DET	ptb	DT
 pair	NOUN	ptb	NN
 of	ADP	ptb	IN
-nesting	VERB	ptb	VBG
+nesting	ADJ	ptb	VBG
 birds	NOUN	ptb	NNS
 build	VERB	ptb	VB
 their	DET	ptb	PRP$
@@ -413099,7 +413099,7 @@ the	DET	ptb	DT
 molecular-sensing	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 hypothesis-testing	NOUN	ptb	NN
-churning	VERB	ptb	VBG
+churning	ADJ	ptb	VBG
 concerns	NOUN	ptb	NNS
 of	ADP	ptb	IN
 the	DET	ptb	DT
@@ -413711,7 +413711,7 @@ ought	AUX	ptb	MD
 # genre = non-fiction
 The	DET	ptb	DT
 efforts	NOUN	ptb	NNS
-following	ADP	ptb	VBG
+following	VERB	ptb	VBG
 Hume	PROPN	ptb	NNP
 to	PART	ptb	TO
 understand	VERB	ptb	VB
@@ -413902,7 +413902,7 @@ all	DET	ptb	DT
 be	AUX	ptb	VB
 born	VERB	ptb	VBN
 with	ADP	ptb	IN
-differing	VERB	ptb	VBG
+differing	ADJ	ptb	VBG
 abilities	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 endowments	NOUN	ptb	NNS
@@ -416913,7 +416913,7 @@ main	ADJ	ptb	JJ
 building	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 a	DET	ptb	DT
-curving	VERB	ptb	JJ
+curving	ADJ	ptb	JJ
 wall	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
 like	ADJ	ptb	JJ
@@ -417553,7 +417553,7 @@ flat	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
 resembled	VERB	ptb	VBD
 a	DET	ptb	DT
-billowing	VERB	ptb	VBG
+billowing	ADJ	ptb	VBG
 nun	NOUN	ptb	NN
 RSQUOs	PART	ptb	POS
 coif	NOUN	ptb	NN
@@ -420035,7 +420035,7 @@ single	ADJ	ptb	JJ
 or	CCONJ	ptb	CC
 a	DET	ptb	DT
 double	ADJ	ptb	JJ
-swelling	VERB	ptb	NN
+swelling	NOUN	ptb	NN
 curve	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 or	CCONJ	ptb	CC
@@ -421187,7 +421187,7 @@ Pantheon	PROPN	ptb	NN
 ,	PUNCT	ptb	,
 descending	VERB	ptb	VBG
 the	DET	ptb	DT
-spiraling	VERB	ptb	JJ
+spiraling	ADJ	ptb	JJ
 vortex	NOUN	ptb	NN
 of	ADP	ptb	IN
 Wright	PROPN	ptb	NNP
@@ -422037,7 +422037,7 @@ in	ADP	ptb	IN
 the	DET	ptb	DT
 low	ADJ	ptb	JJ
 -	PUNCT	ptb	HYPH
-lying	VERB	ptb	VBG
+lying	ADJ	ptb	VBG
 building	NOUN	ptb	NN
 is	AUX	ptb	VBZ
 shingled	VERB	ptb	JJ
@@ -423475,11 +423475,11 @@ patio	NOUN	ptb	NN
 # text = The sliding wall recalls the disappearing windows in Mies van der Rohe RSQUOs Tugendhat House , but the resemblance ends here .
 # genre = non-fiction
 The	DET	ptb	DT
-sliding	VERB	ptb	VBG
+sliding	ADJ	ptb	VBG
 wall	NOUN	ptb	NN
 recalls	VERB	ptb	VBZ
 the	DET	ptb	DT
-disappearing	VERB	ptb	VBG
+disappearing	ADJ	ptb	VBG
 windows	NOUN	ptb	NNS
 in	ADP	ptb	IN
 Mies	PROPN	ptb	NNP
@@ -425263,7 +425263,7 @@ artificial	ADJ	ptb	JJ
 weathering	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 no	DET	ptb	DT
-aging	NOUN	ptb	VBG
+aging	ADJ	ptb	VBG
 effect	NOUN	ptb	NN
 no	DET	ptb	DT
 simulated	ADJ	ptb	VBN
@@ -425544,14 +425544,14 @@ building	NOUN	ptb	NN
 slides	VERB	ptb	VBZ
 under	ADP	ptb	IN
 an	DET	ptb	DT
-adjoining	ADJ	disputed	VBG
+adjoining	ADJ	ptb	VBG
 bridge	NOUN	ptb	NN
 ;	PUNCT	ptb	,
 another	PRON	ptb	DT
 emerges	VERB	ptb	VBZ
 from	ADP	ptb	IN
 a	DET	ptb	DT
-reflecting	NOUN	ptb	VBG
+reflecting	ADJ	ptb	VBG
 pool	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -425768,7 +425768,7 @@ works	NOUN	ptb	NNS
 of	ADP	ptb	IN
 a	DET	ptb	DT
 selected	ADJ	ptb	VBN
-living	ADJ	disputed	VBG
+living	ADJ	ptb	VBG
 artist	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -425880,7 +425880,7 @@ sheets	NOUN	ptb	NNS
 simply	ADV	ptb	RB
 follow	VERB	ptb	VBP
 the	DET	ptb	DT
-churning	VERB	ptb	VBG
+churning	ADJ	ptb	VBG
 surfaces	NOUN	ptb	NNS
 like	ADP	ptb	IN
 shingles	NOUN	ptb	NNS
@@ -425944,7 +425944,7 @@ familiar	ADJ	ptb	JJ
 elements	NOUN	ptb	NNS
 such	ADJ	ptb	IN
 as	ADP	ptb	IN
-coping	NOUN	ptb	VBG
+coping	ADJ	ptb	VBG
 strips	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 fascias	NOUN	ptb	NNS
@@ -425983,7 +425983,7 @@ are	VERB	ptb	VBP
 only	ADV	ptb	RB
 swirling	ADJ	ptb	VBG
 and	CCONJ	ptb	CC
-twisting	VERB	ptb	VBG
+twisting	ADJ	ptb	VBG
 planes	NOUN	ptb	NNS
 of	ADP	ptb	IN
 metal	NOUN	ptb	NN
@@ -426039,7 +426039,7 @@ savvy	NOUN	ptb	NN
 # genre = non-fiction
 Although	SCONJ	ptb	IN
 sophisticated	ADJ	ptb	JJ
-building	NOUN	ptb	VBG
+building	ADJ	ptb	VBG
 techniques	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 innovative	ADJ	ptb	JJ
@@ -426237,7 +426237,7 @@ accidental	ADJ	ptb	JJ
 # genre = non-fiction
 But	CCONJ	ptb	CC
 his	DET	ptb	PRP$
-colliding	VERB	ptb	VBG
+colliding	ADJ	ptb	VBG
 forms	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 agitated	ADJ	ptb	VBN
@@ -429002,7 +429002,7 @@ effect	NOUN	ptb	NN
 of	ADP	ptb	IN
 lipid	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-lowering	NOUN	disputed	NN
+lowering	NOUN	ptb	NN
 therapy	NOUN	ptb	NN
 on	ADP	ptb	IN
 adverse	ADJ	ptb	JJ
@@ -429024,7 +429024,7 @@ disease	NOUN	ptb	NN
 Whether	SCONJ	ptb	IN
 lipid	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-lowering	NOUN	disputed	NN
+lowering	NOUN	ptb	NN
 therapy	NOUN	ptb	NN
 would	AUX	ptb	MD
 provide	VERB	ptb	VB
@@ -429168,7 +429168,7 @@ endpoints	NOUN	ptb	NNS
 included	VERB	ptb	VBD
 stroke	NOUN	ptb	NN
 ,	PUNCT	ptb	,
-worsening	VERB	ptb	VBG
+worsening	ADJ	ptb	VBG
 heart	NOUN	ptb	NN
 failure	NOUN	ptb	NN
 ,	PUNCT	ptb	,
@@ -429352,7 +429352,7 @@ cell	NOUN	ptb	NN
 proliferation	NOUN	ptb	NN
 might	AUX	ptb	MD
 destabilize	VERB	ptb	VB
-healing	VERB	ptb	VBG
+healing	ADJ	ptb	VBG
 plaque	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -429388,7 +429388,7 @@ initiation	NOUN	ptb	NN
 of	ADP	ptb	IN
 lipid	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-lowing	NOUN	disputed	NN
+lowing	NOUN	ptb	NN
 therapy	NOUN	ptb	NN
 after	ADP	ptb	IN
 coronary	ADJ	ptb	JJ
@@ -429840,7 +429840,7 @@ suggest	VERB	ptb	VBP
 that	SCONJ	ptb	IN
 lipid	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-lowering	NOUN	disputed	NN
+lowering	NOUN	ptb	NN
 agents	NOUN	ptb	NNS
 exert	VERB	ptb	VBP
 short	ADJ	ptb	JJ
@@ -432528,7 +432528,7 @@ these	DET	ptb	DT
 functions	NOUN	ptb	NNS
 in	ADP	ptb	IN
 the	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 CNS	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 GABA	PROPN	ptb	NNP
@@ -433023,7 +433023,7 @@ sites	NOUN	ptb	NNS
 outside	ADP	ptb	IN
 of	ADP	ptb	IN
 the	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 CNS	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 in	ADP	ptb	IN
@@ -433627,7 +433627,7 @@ Leica	PROPN	ptb	NNP
 model	NOUN	ptb	NN
 MZFL	PROPN	ptb	NNP
 III	NUM	ptb	CD
-dissecting	NOUN	ptb	VBG
+dissecting	ADJ	ptb	VBG
 scope	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 a	DET	ptb	DT
@@ -434976,7 +434976,7 @@ science	NOUN	ptb	NN
 between	ADP	ptb	IN
 developed	ADJ	ptb	VBN
 and	CCONJ	ptb	CC
-developing	ADJ	disputed	VBG
+developing	ADJ	ptb	VBG
 countries	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 asserting	VERB	ptb	VBG
@@ -434999,7 +434999,7 @@ scientific	ADJ	ptb	JJ
 community	NOUN	ptb	NN
 in	ADP	ptb	IN
 the	DET	ptb	DT
-developing	ADJ	disputed	VBG
+developing	ADJ	ptb	VBG
 countries	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 but	CCONJ	ptb	CC
@@ -435073,7 +435073,7 @@ between	ADP	ptb	IN
 the	DET	ptb	DT
 developed	ADJ	ptb	VBN
 and	CCONJ	ptb	CC
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 worlds	NOUN	ptb	NNS
 actually	ADV	ptb	RB
 remaining	VERB	ptb	VBG
@@ -435107,7 +435107,7 @@ reveals	VERB	ptb	VBZ
 important	ADJ	ptb	JJ
 advances	NOUN	ptb	NNS
 in	ADP	ptb	IN
-developing	ADJ	disputed	VBG
+developing	ADJ	ptb	VBG
 countries	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -435488,7 +435488,7 @@ In	ADP	ptb	IN
 contrast	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 the	DET	ptb	DT
-decreasing	VERB	ptb	VBG
+decreasing	ADJ	ptb	VBG
 trends	NOUN	ptb	NNS
 in	ADP	ptb	IN
 the	DET	ptb	DT
@@ -435541,7 +435541,7 @@ relative	ADJ	ptb	JJ
 impact	NOUN	ptb	NN
 of	ADP	ptb	IN
 such	ADJ	ptb	JJ
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 regions	NOUN	ptb	NNS
 as	ADP	ptb	IN
 Latin	PROPN	ptb	NNP
@@ -435693,7 +435693,7 @@ that	SCONJ	ptb	IN
 publications	NOUN	ptb	NNS
 from	ADP	ptb	IN
 such	ADJ	ptb	JJ
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 regions	NOUN	ptb	NNS
 as	ADP	ptb	IN
 Latin	PROPN	ptb	NNP
@@ -436026,7 +436026,7 @@ scientific	ADJ	ptb	JJ
 researchers	NOUN	ptb	NNS
 in	ADP	ptb	IN
 the	DET	ptb	DT
-developing	ADJ	disputed	VBG
+developing	ADJ	ptb	VBG
 world	NOUN	ptb	NN
 who	PRON	ptb	WP
 independently	ADV	ptb	RB
@@ -436220,7 +436220,7 @@ published	VERB	ptb	VBN
 locally	ADV	ptb	RB
 in	ADP	ptb	IN
 the	DET	ptb	DT
-developing	ADJ	disputed	VBG
+developing	ADJ	ptb	VBG
 world	NOUN	ptb	NN
 is	AUX	ptb	VBZ
 overlooked	VERB	ptb	VBN
@@ -436335,7 +436335,7 @@ be	VERB	ptb	VB
 unconcerned	ADJ	ptb	JJ
 about	ADP	ptb	IN
 the	DET	ptb	DT
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 gap	NOUN	ptb	NN
 highlighted	VERB	ptb	VBN
 by	ADP	ptb	IN
@@ -436401,7 +436401,7 @@ insight	NOUN	ptb	NN
 of	ADP	ptb	IN
 scientists	NOUN	ptb	NNS
 from	ADP	ptb	IN
-developing	ADJ	disputed	VBG
+developing	ADJ	ptb	VBG
 regions	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -436425,7 +436425,7 @@ scientific	ADJ	ptb	JJ
 input	NOUN	ptb	NN
 from	ADP	ptb	IN
 those	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 regions	NOUN	ptb	NNS
 that	PRON	ptb	WDT
 are	VERB	ptb	VBP
@@ -436447,7 +436447,7 @@ also	ADV	ptb	RB
 critical	ADJ	ptb	JJ
 for	ADP	ptb	IN
 the	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 world	NOUN	ptb	NN
 to	PART	ptb	TO
 promote	VERB	ptb	VB
@@ -436491,7 +436491,7 @@ priority	NOUN	ptb	NN
 areas	NOUN	ptb	NNS
 for	ADP	ptb	IN
 the	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 nations	NOUN	ptb	NNS
 can	AUX	ptb	MD
 actually	ADV	ptb	RB
@@ -436526,7 +436526,7 @@ those	DET	ptb	DT
 regions	NOUN	ptb	NNS
 of	ADP	ptb	IN
 the	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 world	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 but	CCONJ	ptb	CC
@@ -436566,7 +436566,7 @@ scientific	ADJ	ptb	JJ
 input	NOUN	ptb	NN
 from	ADP	ptb	IN
 those	DET	ptb	DT
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 regions	NOUN	ptb	NNS
 that	PRON	ptb	WDT
 are	VERB	ptb	VBP
@@ -436669,7 +436669,7 @@ scientific	ADJ	ptb	JJ
 productivity	NOUN	ptb	NN
 of	ADP	ptb	IN
 many	ADJ	ptb	JJ
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 nations	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 corrected	VERB	ptb	VBN
@@ -436696,7 +436696,7 @@ an	DET	ptb	DT
 excellent	ADJ	ptb	JJ
 investment	NOUN	ptb	NN
 by	ADP	ptb	IN
-developing	VERB	ptb	VBG
+developing	ADJ	ptb	VBG
 nations	NOUN	ptb	NNS
 in	ADP	ptb	IN
 terms	NOUN	ptb	NNS
@@ -436889,7 +436889,7 @@ one	PRON	ptb	PRP
 must	AUX	ptb	MD
 understand	VERB	ptb	VB
 the	DET	ptb	DT
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 health	NOUN	ptb	NN
 risks	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
@@ -437965,7 +437965,7 @@ for	ADP	ptb	IN
 min	NOUN	ptb	NNS
 in	ADP	ptb	IN
 a	DET	ptb	DT
-loading	NOUN	ptb	VBG
+loading	ADJ	ptb	VBG
 buffer	NOUN	ptb	NN
 comprising	VERB	ptb	VBG
 1	NUM	ptb	CD
@@ -440513,7 +440513,7 @@ member	NOUN	ptb	NN
 of	ADP	ptb	IN
 this	DET	ptb	DT
 famous	ADJ	ptb	JJ
-ruling	VERB	ptb	VBG
+ruling	ADJ	ptb	VBG
 clan	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -441301,7 +441301,7 @@ Turks	PROPN	ptb	NNPS
 The	DET	ptb	DT
 Ottomans	PROPN	ptb	NNPS
 were	VERB	ptb	VBD
-roving	ADJ	disputed	VBG
+roving	ADJ	ptb	VBG
 invaders	NOUN	ptb	NNS
 who	PRON	ptb	WP
 came	VERB	ptb	VBD
@@ -444089,7 +444089,7 @@ was	AUX	ptb	VBD
 shored	VERB	ptb	VBN
 up	ADV	ptb	RP
 by	ADP	ptb	IN
-retaining	NOUN	ptb	VBG
+retaining	ADJ	ptb	VBG
 walls	NOUN	ptb	NNS
 made	VERB	ptb	VBN
 with	ADP	ptb	IN
@@ -445845,7 +445845,7 @@ in	ADP	ptb	IN
 Palestine	PROPN	ptb	NNP
 led	VERB	ptb	VBD
 to	ADP	ptb	TO
-increasing	VERB	ptb	VBG
+increasing	ADJ	ptb	VBG
 strife	NOUN	ptb	NN
 ;	PUNCT	ptb	,
 by	ADP	ptb	IN
@@ -446342,7 +446342,7 @@ above	ADP	ptb	IN
 the	DET	ptb	DT
 ebbing	ADJ	ptb	VBG
 and	CCONJ	ptb	CC
-flowing	VERB	ptb	VBG
+flowing	ADJ	ptb	VBG
 concerns	NOUN	ptb	NNS
 of	ADP	ptb	IN
 present	ADJ	ptb	JJ
@@ -447071,7 +447071,7 @@ faith	NOUN	ptb	NN
 Additional	ADJ	ptb	JJ
 pressures	NOUN	ptb	NNS
 from	ADP	ptb	IN
-arriving	VERB	ptb	VBG
+arriving	ADJ	ptb	VBG
 miners	NOUN	ptb	NNS
 pushed	VERB	ptb	VBD
 the	DET	ptb	DT
@@ -447430,7 +447430,7 @@ City	PROPN	ptb	NNP
 were	VERB	ptb	VBD
 among	ADP	ptb	IN
 the	DET	ptb	DT
-burgeoning	VERB	ptb	VBG
+burgeoning	ADJ	ptb	VBG
 metropolises	NOUN	ptb	NNS
 of	ADP	ptb	IN
 the	DET	ptb	DT
@@ -447892,7 +447892,7 @@ electricity	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
 a	DET	ptb	DT
-growing	VERB	ptb	VBG
+growing	ADJ	ptb	VBG
 population	NOUN	ptb	NN
 ?	PUNCT	ptb	,
 many	ADJ	ptb	JJ
@@ -447927,7 +447927,7 @@ halt	NOUN	ptb	NN
 # text = The growing competition in rail transport resulted in Union Pacific buying the Los Angeles ? Salt Lake line .
 # genre = travel-guides
 The	DET	ptb	DT
-growing	VERB	ptb	VBG
+growing	ADJ	ptb	VBG
 competition	NOUN	ptb	NN
 in	ADP	ptb	IN
 rail	NOUN	ptb	NN
@@ -448602,7 +448602,7 @@ Las	PROPN	ptb	NNP
 Vegas	PROPN	ptb	NNP
 nurtured	VERB	ptb	VBD
 a	DET	ptb	DT
-growing	VERB	ptb	VBG
+growing	ADJ	ptb	VBG
 sense	NOUN	ptb	NN
 that	SCONJ	ptb	IN
 it	PRON	ptb	PRP
@@ -449359,7 +449359,7 @@ RSQUOs	PART	ptb	POS
 demolition	NOUN	ptb	NN
 of	ADP	ptb	IN
 the	DET	ptb	DT
-existing	VERB	ptb	VBG
+existing	ADJ	ptb	VBG
 properties	NOUN	ptb	NNS
 started	VERB	ptb	VBD
 a	DET	ptb	DT
@@ -452235,7 +452235,7 @@ intensive	ADJ	ptb	JJ
 off	ADP	ptb	IN
 -	PUNCT	ptb	HYPH
 track	NOUN	ptb	NN
-betting	NOUN	ptb	VBG
+betting	VERB	ptb	VBG
 system	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
@@ -452350,7 +452350,7 @@ center	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
 signature	NOUN	ptb	NN
-soaring	ADJ	disputed	JJ
+soaring	ADJ	ptb	JJ
 architecture	NOUN	ptb	NN
 are	VERB	ptb	VBP
 on	ADP	ptb	IN
@@ -453156,7 +453156,7 @@ Dining	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 Entertainment	NOUN	ptb	NN
 &	CCONJ	ptb	CC
-Shopping	PROPN	ptb	NN
+Shopping	NOUN	ptb	NN
 Directory	NOUN	ptb	NN
 "	PUNCT	ptb	"
 in	ADP	ptb	IN
@@ -454166,7 +454166,7 @@ to	PART	ptb	TO
 entertain	VERB	ptb	VB
 and	CCONJ	ptb	CC
 instruct	VERB	ptb	VB
-visiting	VERB	ptb	VBG
+visiting	ADJ	ptb	VBG
 tourists	NOUN	ptb	NNS
 ;	PUNCT	ptb	,
 prices	NOUN	ptb	NNS
@@ -454302,7 +454302,7 @@ up	ADV	ptb	RP
 HKTA	PROPN	ptb	NNP
 RSQUOs	PART	ptb	POS
 "	PUNCT	ptb	"
-Shopping	PROPN	ptb	NN
+Shopping	NOUN	ptb	NN
 Guide	NOUN	ptb	NN
 to	ADP	ptb	IN
 Consumer	NOUN	ptb	NN
@@ -454637,7 +454637,7 @@ to	PART	ptb	TO
 consult	VERB	ptb	VB
 the	DET	ptb	DT
 "	PUNCT	ptb	"
-Shopping	PROPN	ptb	NN
+Shopping	NOUN	ptb	NN
 Guide	NOUN	ptb	NN
 to	ADP	ptb	IN
 Jewellery	PROPN	ptb	NN
@@ -455732,7 +455732,7 @@ where	ADV	ptb	WRB
 both	CCONJ	ptb	CC
 local	ADJ	ptb	JJ
 and	CCONJ	ptb	CC
-visiting	VERB	ptb	VBG
+visiting	ADJ	ptb	VBG
 groups	NOUN	ptb	NNS
 perform	VERB	ptb	VBP
 .	PUNCT	ptb	.
@@ -455958,7 +455958,7 @@ and	CCONJ	ptb	CC
 the	DET	ptb	DT
 elaborate	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
-glittering	ADJ	disputed	VBG
+glittering	ADJ	ptb	VBG
 costumes	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -456644,7 +456644,7 @@ an	DET	ptb	DT
 air	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
 conditioned	ADJ	ptb	VBN
-floating	VERB	ptb	VBG
+floating	ADJ	ptb	VBG
 nightclub	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -456868,7 +456868,7 @@ into	ADP	ptb	IN
 smaller	ADJ	ptb	JJR
 segments	NOUN	ptb	NNS
 of	ADP	ptb	IN
-varying	VERB	ptb	VBG
+varying	ADJ	ptb	VBG
 difficulty	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -457065,7 +457065,7 @@ runs	VERB	ptb	VBZ
 a	DET	ptb	DT
 "	PUNCT	ptb	"
 Come	VERB	ptb	VBN
-Horseracing	PROPN	ptb	NN
+Horseracing	NOUN	ptb	NN
 Tour	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 "	PUNCT	ptb	"
@@ -457263,7 +457263,7 @@ when	SCONJ	ptb	WRB
 accompanied	VERB	ptb	VBN
 by	ADP	ptb	IN
 a	DET	ptb	DT
-paying	VERB	ptb	VBG
+paying	ADJ	ptb	VBG
 adult	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -457579,7 +457579,7 @@ through	ADP	ptb	IN
 an	DET	ptb	DT
 ever	ADV	ptb	RB
 -	PUNCT	ptb	HYPH
-changing	VERB	ptb	VBG
+changing	ADJ	ptb	VBG
 obstacle	NOUN	ptb	NN
 course	NOUN	ptb	NN
 of	ADP	ptb	IN
@@ -457591,7 +457591,7 @@ craft	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
-soaring	ADJ	disputed	VBG
+soaring	ADJ	ptb	VBG
 skyline	NOUN	ptb	NN
 of	ADP	ptb	IN
 Hong	PROPN	ptb	NNP
@@ -458535,7 +458535,7 @@ Hong	PROPN	ptb	NNP
 Kong	PROPN	ptb	NNP
 RSQUOs	PART	ptb	POS
 last	ADJ	ptb	JJ
-surviving	VERB	ptb	VBG
+surviving	ADJ	ptb	VBG
 rickshaws	NOUN	ptb	NNS
 ?	PUNCT	ptb	,
 however	ADV	ptb	RB
@@ -458858,7 +458858,7 @@ the	DET	ptb	DT
 top	NOUN	ptb	NN
 of	ADP	ptb	IN
 a	DET	ptb	DT
-sloping	ADJ	disputed	JJ
+sloping	ADJ	ptb	JJ
 driveway	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 the	DET	ptb	DT
@@ -459560,7 +459560,7 @@ private	ADJ	ptb	JJ
 salute	NOUN	ptb	NN
 for	ADP	ptb	IN
 a	DET	ptb	DT
-visiting	VERB	ptb	VBG
+visiting	ADJ	ptb	VBG
 tycoon	NOUN	ptb	NN
 ,	PUNCT	ptb	,
 an	DET	ptb	DT
@@ -460061,7 +460061,7 @@ short	ADJ	ptb	JJ
 Aberdeen	PROPN	ptb	NNP
 RSQUOs	PART	ptb	POS
 theatrical	ADJ	ptb	JJ
-floating	VERB	ptb	VBG
+floating	ADJ	ptb	VBG
 restaurants	NOUN	ptb	NNS
 have	AUX	ptb	VBP
 been	VERB	ptb	VBN
@@ -462049,7 +462049,7 @@ Temple	PROPN	ptb	NNP
 with	ADP	ptb	IN
 long	ADV	ptb	RB
 -	PUNCT	ptb	HYPH
-burning	VERB	ptb	VBG
+burning	ADJ	ptb	VBG
 incense	NOUN	ptb	NN
 coils	NOUN	ptb	NNS
 hanging	VERB	ptb	VBG
@@ -462293,7 +462293,7 @@ looks	VERB	ptb	VBZ
 down	ADP	ptb	IN
 on	ADP	ptb	IN
 a	DET	ptb	DT
-burgeoning	VERB	ptb	JJ
+burgeoning	ADJ	ptb	JJ
 town	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -463893,7 +463893,7 @@ Japan	PROPN	ptb	NNP
 were	VERB	ptb	VBD
 not	PART	ptb	RB
 on	ADP	ptb	IN
-speaking	NOUN	ptb	VBG
+speaking	ADJ	ptb	VBG
 terms	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 so	ADV	disputed	RB
@@ -464149,7 +464149,7 @@ skyline	NOUN	ptb	NN
 with	ADP	ptb	IN
 new	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
-glittering	VERB	ptb	JJ
+glittering	ADJ	ptb	JJ
 hotels	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
 highrise	ADJ	ptb	JJ
@@ -464732,7 +464732,7 @@ the	DET	ptb	DT
 building	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 an	DET	ptb	DT
-adjoining	VERB	ptb	JJ
+adjoining	ADJ	ptb	JJ
 college	NOUN	ptb	NN
 were	AUX	ptb	VBD
 destroyed	VERB	ptb	VBN
@@ -465264,7 +465264,7 @@ much	ADV	ptb	RB
 revered	VERB	ptb	VBN
 in	ADP	ptb	IN
 the	DET	ptb	DT
-surrounding	VERB	ptb	JJ
+surrounding	ADJ	ptb	JJ
 area	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -465404,7 +465404,7 @@ miss	VERB	ptb	VB
 the	DET	ptb	DT
 eye	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-popping	ADJ	ptb	NN
+popping	NOUN	ptb	NN
 Lisboa	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
 which	PRON	ptb	WP
@@ -466543,7 +466543,7 @@ irrigates	VERB	ptb	VBZ
 the	DET	ptb	DT
 carefully	ADV	ptb	RB
 tended	VERB	ptb	VBN
-surrounding	VERB	disputed	VBG
+surrounding	VERB	ptb	VBG
 farmlands	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 creating	VERB	ptb	VBG
@@ -466700,7 +466700,7 @@ narrow	ADJ	ptb	JJ
 streets	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
 and	CCONJ	ptb	CC
-winding	ADJ	ptb	VBG
+winding	VERB	ptb	VBG
 alleyways	NOUN	ptb	NNS
 may	AUX	ptb	MD
 not	PART	ptb	RB
@@ -467939,7 +467939,7 @@ of	ADP	ptb	IN
 China	PROPN	ptb	NNP
 RSQUOs	PART	ptb	POS
 highest	ADJ	ptb	JJS
-grossing	ADJ	disputed	VBG
+grossing	ADJ	ptb	VBG
 industries	NOUN	ptb	NNS
 .	PUNCT	ptb	.
 
@@ -471536,7 +471536,7 @@ won	VERB	ptb	VBD
 the	DET	ptb	DT
 King	PROPN	ptb	NN
 of	ADP	ptb	IN
-Fling	PROPN	ptb	NN
+Fling	NOUN	ptb	NN
 Catapult	NOUN	ptb	NN
 contest	NOUN	ptb	NN
 !	PUNCT	ptb	.
@@ -471889,7 +471889,7 @@ on	ADP	ptb	IN
 crazy	ADJ	ptb	JJ
 white	ADJ	ptb	JJ
 shirted	ADJ	ptb	JJ
-climbing	VERB	ptb	VBG
+climbing	ADJ	ptb	VBG
 guy	NOUN	ptb	NN
 in	ADP	ptb	IN
 Arcade	NOUN	ptb	NN
@@ -472123,7 +472123,7 @@ foresighting	NOUN	ptb	NN
 At	ADP	ptb	IN
 Helsinki	PROPN	ptb	NNP
 ,	PUNCT	ptb	,
-consultating	VERB	ptb	VBG
+consultating	ADJ	ptb	VBG
 case	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -472831,7 +472831,7 @@ of	ADP	ptb	IN
 my	DET	ptb	PRP$
 job	NOUN	ptb	NN
 --	PUNCT	ptb	,
-giving	VERB	ptb	VBG
+giving	ADJ	ptb	VBG
 bonuses	NOUN	ptb	NNS
 
 # sent_id = masc:written/twitter/tweets1#294
@@ -474485,7 +474485,7 @@ Reading	VERB	ptb	VBG
 Community	NOUN	ptb	NN
 superbug	NOUN	ptb	NN
 a	DET	ptb	DT
-growing	VERB	ptb	VBG
+growing	ADJ	ptb	VBG
 menace	NOUN	ptb	NN
 at	ADP	ptb	IN
 News-Medical.Net	X	ptb	ADD
@@ -475735,7 +475735,7 @@ front	ADJ	ptb	JJ
 door	NOUN	ptb	NN
 in	ADP	ptb	IN
 a	DET	ptb	DT
-sleeping	NOUN	ptb	VBG
+sleeping	ADJ	ptb	VBG
 bag	NOUN	ptb	NN
 .	PUNCT	ptb	.
 I	PRON	ptb	PRP
@@ -477564,7 +477564,7 @@ zdrowie	X	ptb+foreign	FW
 # text = the continuing misnomer of " above the fold " . I actually know one designer who designed a picket sign stating " There is No Fold "
 # genre = twitter
 the	DET	ptb	DT
-continuing	VERB	ptb	VBG
+continuing	ADJ	ptb	VBG
 misnomer	NOUN	ptb	NN
 of	ADP	ptb	IN
 "	PUNCT	ptb	"
@@ -477992,7 +477992,7 @@ gym	NOUN	ptb	NN
 # genre = twitter
 reporting	VERB	ptb	VBG
 a	DET	ptb	DT
-phishing	NOUN	ptb	VBG
+phishing	ADJ	ptb	VBG
 email	NOUN	ptb	NN
 targeting	VERB	ptb	VBG
 customers	NOUN	ptb	NNS
@@ -478110,7 +478110,7 @@ there	PRON	ptb	EX
 s	VERB	ptb	VBZ
 burglaries	NOUN	ptb	NNS
 ,	PUNCT	ptb	,
-spiralling	VERB	ptb	VBG
+spiralling	ADJ	ptb	VBG
 interest	NOUN	ptb	NN
 rates	NOUN	ptb	NNS
 and	CCONJ	ptb	CC
@@ -479442,7 +479442,7 @@ script	NOUN	ptb	NN
 of	ADP	ptb	IN
 "	PUNCT	ptb	"
 The	DET	ptb	DT
-Diving	PROPN	ptb	VBG
+Diving	ADJ	ptb	VBG
 Bell	NOUN	ptb	NN
 and	CCONJ	ptb	CC
 the	DET	ptb	DT
@@ -480366,7 +480366,7 @@ the	DET	ptb	DT
 muddy	ADJ	ptb	JJ
 ,	PUNCT	ptb	,
 sloppy	ADJ	ptb	JJ
-freezing	ADJ	disputed	JJ
+freezing	ADJ	ptb	JJ
 rain	NOUN	ptb	NN
 doing	VERB	ptb	VBG
 disaster	NOUN	ptb	NN
@@ -481379,7 +481379,7 @@ Cafe	NOUN	ptb	NN
 to	ADP	ptb	IN
 Arcade	NOUN	ptb	NN
 Fire	NOUN	ptb	NN
-String	NOUN	disputed	NN
+String	NOUN	ptb	NN
 Quartet	NOUN	disputed	NN
 tribute	NOUN	ptb	NN
 to	ADP	ptb	IN
@@ -481503,7 +481503,7 @@ wait	VERB	ptb	VB
 # text = MS Licensing Essentials : this just had to be the most boring training sessions I 'm ever going to attend this year . No wait a min , all time !
 # genre = twitter
 MS	NOUN	ptb	NN
-Licensing	PROPN	ptb	NN
+Licensing	NOUN	ptb	NN
 Essentials	NOUN	ptb	NNS
 :	PUNCT	ptb	:
 this	PRON	ptb	DT
@@ -484454,7 +484454,7 @@ beater	NOUN	ptb	NN
 Also	ADV	ptb	RB
 still	ADV	ptb	RB
 putting	VERB	ptb	VBG
-finishing	NOUN	ptb	JJ
+finishing	ADJ	ptb	JJ
 touches	NOUN	ptb	NNS
 to	ADP	ptb	IN
 my	DET	ptb	PRP$
@@ -486872,7 +486872,7 @@ RT	NOUN	ptb	NN
 @physorg_com	X	ptb	ADD
 Researchers	NOUN	ptb	NNS
 study	VERB	ptb	VBP
-signaling	NOUN	ptb	VBG
+signaling	ADJ	ptb	VBG
 networks	NOUN	ptb	NNS
 that	PRON	ptb	WDT
 set	VERB	ptb	VBP
@@ -487751,7 +487751,7 @@ of	ADP	ptb	IN
 indie	ADJ	ptb	JJ
 bookstore	NOUN	ptb	NN
 -	PUNCT	ptb	HYPH
-loving	ADJ	disputed	VBG
+loving	ADJ	ptb	VBG
 homosexuals	NOUN	ptb	NNS
 &	CCONJ	ptb	CC
 their	DET	ptb	PRP$
@@ -490527,7 +490527,7 @@ MLM	PROPN	ptb	NNP
 Internet	NOUN	ptb	NN
 Formula	NOUN	ptb	NN
 Attraction	NOUN	ptb	NN
-Marketing	NOUN	disputed	NN
+Marketing	NOUN	ptb	NN
 Norbert	PROPN	ptb	NNP
 Orlewicz	PROPN	ptb	NNP
 |	SYM	ptb	NFP
@@ -490773,7 +490773,7 @@ E-mailers	NOUN	ptb	NNS
 lose	VERB	ptb	VBP
 sight	NOUN	ptb	NN
 of	ADP	ptb	IN
-tracking	NOUN	ptb	VBG
+tracking	VERB	ptb	VBG
 Adotas	PROPN	ptb	NNP
 http:$$$$bit.ly$$IbaZW	X	ptb	ADD
 
@@ -497070,7 +497070,7 @@ an	DET	ptb	DT
 overly	ADV	ptb	RB
 excited	ADJ	ptb	VBN
 ,	PUNCT	ptb	,
-babbling	ADJ	disputed	VBG
+babbling	ADJ	ptb	VBG
 email	NOUN	ptb	NN
 .	PUNCT	ptb	.
 
@@ -497112,7 +497112,7 @@ decide	VERB	ptb	VBP
 to	PART	ptb	TO
 take	VERB	ptb	VB
 a	DET	ptb	DT
-running	NOUN	ptb	VBG
+running	ADJ	ptb	VBG
 back	NOUN	ptb	NN
 with	ADP	ptb	IN
 the	DET	ptb	DT
@@ -497645,7 +497645,7 @@ Music	NOUN	ptb	NN
 Video	NOUN	ptb	NN
 Saw	NOUN	ptb	NN
 IV	NUM	ptb	CD
-Marketing	NOUN	disputed	NN
+Marketing	NOUN	ptb	NN
 Sense	NOUN	disputed	NN
 http:$$$$bit.ly$$13Zj35	X	ptb	ADD
 
@@ -498778,7 +498778,7 @@ http:$$$$tr.im$$iQEC	X	ptb	ADD
 # text = Inbound Marketing Summit : San Francisco CA : April 28 - 29th : http:$$$$tr.im$$gY4b By @chrisbrogan @dmscott and @pgillin
 # genre = twitter
 Inbound	ADJ	ptb	JJ
-Marketing	PROPN	ptb	NN
+Marketing	NOUN	ptb	NN
 Summit	NOUN	ptb	NN
 :	PUNCT	ptb	:
 San	PROPN	ptb	NNP
@@ -499225,7 +499225,7 @@ that	ADV	ptb	RB
 much	ADJ	ptb	JJ
 of	ADP	ptb	IN
 a	DET	ptb	DT
-running	NOUN	ptb	VBG
+running	ADJ	ptb	VBG
 geek	NOUN	ptb	NN
 ...	PUNCT	ptb	,
 my	DET	ptb	PRP$
@@ -500178,7 +500178,7 @@ love	VERB	ptb	VBP
 Papa	PROPN	ptb	NNP
 was	VERB	ptb	VBD
 a	DET	ptb	DT
-rolling	ADJ	disputed	VBG
+rolling	ADJ	ptb	VBG
 stone	NOUN	disputed	NN
 --	PUNCT	ptb	,
 but	CCONJ	ptb	CC

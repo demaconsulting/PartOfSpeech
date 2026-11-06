@@ -1433,7 +1433,7 @@ the	DET	silver	D:100
 lake	NOUN	silver	N:100
 with	ADP	silver	P:100
 the	DET	silver	D:100
-receding	VERB	silver	J:72
+receding	ADJ	silver	J:72
 water	NOUN	silver	N:100
 ,	PUNCT	silver	-
 but	CCONJ	silver	C:100
@@ -4630,7 +4630,7 @@ kinds	NOUN	silver	N:100
 of	ADP	silver	P:100
 sources	NOUN	silver	N:100
 form	VERB	silver	V:100
-intersecting	VERB	silver	J:70
+intersecting	ADJ	silver	J:70
 circles	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -6501,7 +6501,7 @@ until	SCONJ	silver	C:99
 I	PRON	silver	R:100
 got	VERB	silver	V:100
 within	ADP	silver	P:97
-hailing	NOUN	silver	V:100
+hailing	VERB	silver	V:100
 distance	NOUN	silver	N:100
 ,	PUNCT	silver	-
 and	CCONJ	silver	C:100
@@ -7764,7 +7764,7 @@ explain	VERB	silver	V:100
 the	DET	silver	D:100
 better	ADJ	silver	J:100
 "	PUNCT	silver	-
-keeping	NOUN	silver	V:54
+keeping	VERB	silver	V:54
 qualities	NOUN	silver	N:100
 "	PUNCT	silver	-
 of	ADP	silver	P:100
@@ -15000,7 +15000,7 @@ cash	VERB	silver	V:98
 in	ADV	silver	B:99
 on	ADP	silver	P:100
 the	DET	silver	D:100
-emerging	VERB	silver	J:99
+emerging	ADJ	silver	J:99
 punk	NOUN	silver	N:91
 scene	NOUN	silver	N:100
 .	PUNCT	silver	-
@@ -16339,7 +16339,7 @@ water	NOUN	silver	N:100
 flows	VERB	silver	V:100
 from	ADP	silver	P:100
 a	DET	silver	D:100
-gushing	VERB	silver	J:97
+gushing	ADJ	silver	J:97
 well	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -21606,7 +21606,7 @@ baby	NOUN	silver	N:100
 ,	PUNCT	silver	-
 in	ADP	silver	P:100
 rich	ADJ	silver	J:100
-swaddling	NOUN	silver	V:100
+swaddling	VERB	silver	V:100
 bands	NOUN	silver	N:100
 ,	PUNCT	silver	-
 with	ADP	silver	P:100
@@ -22298,7 +22298,7 @@ the	DET	silver	D:100
 winter	NOUN	silver	N:100
 ,	PUNCT	silver	-
 and	CCONJ	silver	C:100
-deepening	VERB	silver	J:96
+deepening	ADJ	silver	J:96
 snows	NOUN	silver	N:100
 ,	PUNCT	silver	-
 when	ADV	silver	B:100
@@ -25450,7 +25450,7 @@ of	ADP	silver	P:100
 many	ADJ	silver	J:83
 of	ADP	silver	P:100
 the	DET	silver	D:100
-succeeding	ADJ	disputed	J:100
+succeeding	ADJ	silver	J:100
 incidents	NOUN	silver	N:100
 of	ADP	silver	P:100
 our	DET	silver	D:100
@@ -25538,7 +25538,7 @@ politics	NOUN	silver	N:100
 He	PRON	silver	R:100
 leads	VERB	silver	V:100
 a	DET	silver	D:100
-thinking	VERB	silver	J:99
+thinking	ADJ	silver	J:99
 nation	NOUN	silver	N:100
 ,	PUNCT	silver	-
 not	PART	silver	O:100
@@ -26828,7 +26828,7 @@ light	ADJ	silver	J:79
 ,	PUNCT	silver	-
 under	ADP	silver	P:100
 the	DET	silver	D:100
-changing	VERB	silver	J:90
+changing	ADJ	silver	J:90
 sky	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -27475,7 +27475,7 @@ because	SCONJ	silver	C:100
 ,	PUNCT	silver	-
 beneath	ADP	silver	P:100
 a	DET	silver	D:100
-glowing	ADJ	disputed	J:99
+glowing	ADJ	silver	J:99
 sun	NOUN	silver	N:100
 ,	PUNCT	silver	-
 bright	ADJ	silver	J:100
@@ -28610,7 +28610,7 @@ ginger	NOUN	silver	N:97
 The	DET	silver	D:100
 musician	NOUN	silver	N:100
 warbles	VERB	silver	V:98
-running	ADJ	silver	V:89
+running	VERB	silver	V:89
 cadences	NOUN	silver	N:100
 on	ADP	silver	P:100
 a	DET	silver	D:100
@@ -28792,7 +28792,7 @@ oil	NOUN	silver	N:100
 prices	NOUN	silver	N:100
 and	CCONJ	silver	C:100
 the	DET	silver	D:100
-rising	VERB	silver	J:96
+rising	ADJ	silver	J:96
 cost	NOUN	silver	N:100
 of	ADP	silver	P:100
 living	NOUN	silver	N:98
@@ -29656,7 +29656,7 @@ in	ADP	silver	P:100
 those	DET	silver	D:100
 soft	ADJ	silver	J:100
 and	CCONJ	silver	C:100
-lingering	VERB	disputed	V:78
+lingering	VERB	silver	V:78
 accents	NOUN	silver	N:100
 ,	PUNCT	silver	-
 indescribably	ADV	silver	B:100
@@ -36271,7 +36271,7 @@ the	DET	silver	D:100
 foliage	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
-weeping	ADJ	disputed	J:81
+weeping	ADJ	silver	J:81
 willows	NOUN	silver	N:100
 were	VERB	silver	V:77
 herons	NOUN	silver	N:100
@@ -36628,7 +36628,7 @@ wood-house	_	masked	?
 ,	PUNCT	silver	-
 in	ADP	silver	P:100
 the	DET	silver	D:100
-waning	VERB	silver	J:98
+waning	ADJ	silver	J:98
 light	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -40307,7 +40307,7 @@ living	ADJ	silver	J:100
 form	NOUN	silver	N:100
 ,	PUNCT	silver	-
 a	DET	silver	D:100
-breathing	VERB	silver	J:95
+breathing	ADJ	silver	J:95
 curse	NOUN	silver	N:100
 to	ADP	silver	P:100
 thee	PRON	silver	R:100
@@ -42959,7 +42959,7 @@ in	ADP	silver	P:100
 order	NOUN	silver	N:98
 to	PART	silver	T:100
 prevent	VERB	silver	V:100
-impending	ADJ	disputed	J:98
+impending	ADJ	silver	J:98
 ruin	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -47280,7 +47280,7 @@ brought	VERB	silver	V:100
 us	PRON	silver	R:100
 to	ADP	silver	P:100
 good	ADJ	silver	J:92
-anchoring	NOUN	silver	V:100
+anchoring	VERB	silver	V:100
 ground	NOUN	silver	N:100
 ere	ADP	silver	P:95
 nightfall	NOUN	silver	N:100
@@ -48832,7 +48832,7 @@ of	ADP	silver	P:100
 alighting	VERB	silver	V:100
 in	ADP	silver	P:100
 this	DET	silver	D:100
-bewildering	ADJ	silver	V:100
+bewildering	VERB	silver	V:100
 city	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -49364,7 +49364,7 @@ kinds	NOUN	silver	N:100
 of	ADP	silver	P:100
 hulling	NOUN	silver	N:63
 and	CCONJ	silver	C:100
-separating	NOUN	silver	V:100
+separating	VERB	silver	V:100
 machines	NOUN	silver	N:100
 now	ADV	silver	B:100
 in	ADP	silver	P:99
@@ -49443,7 +49443,7 @@ scrutinised	VERB	silver	V:100
 the	DET	silver	D:100
 stranger	NOUN	silver	N:100
 with	ADP	silver	P:100
-lowering	ADJ	disputed	J:98
+lowering	ADJ	silver	J:98
 brow	NOUN	silver	N:100
 ,	PUNCT	silver	-
 for	_	masked	C:95
@@ -55282,7 +55282,7 @@ were	AUX	silver	A:96
 compensating	VERB	silver	V:100
 for	ADP	silver	P:100
 the	DET	silver	D:100
-staffing	NOUN	silver	V:100
+staffing	VERB	silver	V:100
 cuts	NOUN	silver	N:94
 by	ADP	silver	P:100
 speeding	VERB	silver	V:100
@@ -55787,7 +55787,7 @@ at	ADP	silver	P:100
 the	DET	silver	D:100
 swords	NOUN	silver	N:100
 with	ADP	silver	P:100
-burning	ADJ	disputed	J:87
+burning	ADJ	silver	J:87
 eyes	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -56902,7 +56902,7 @@ the	DET	silver	D:100
 lamp	NOUN	silver	N:100
 ,	PUNCT	silver	-
 an	DET	silver	D:100
-approaching	VERB	silver	J:96
+approaching	ADJ	silver	J:96
 step	NOUN	silver	N:100
 on	ADP	silver	P:100
 the	DET	silver	D:100
@@ -57569,7 +57569,7 @@ fertile	ADJ	silver	J:100
 lands	NOUN	silver	N:100
 ,	PUNCT	silver	-
 and	CCONJ	silver	C:100
-increasing	VERB	silver	J:93
+increasing	ADJ	silver	J:93
 wealth	NOUN	silver	N:100
 ,	PUNCT	silver	-
 have	AUX	silver	A:100
@@ -57991,7 +57991,7 @@ about	ADV	silver	B:91
 400	NUM	silver	-
 pages	NOUN	silver	N:100
 ,	PUNCT	silver	-
-excluding	ADP	silver	V:100
+excluding	VERB	silver	V:100
 tables	NOUN	silver	N:100
 and	CCONJ	silver	C:100
 appendices	NOUN	silver	N:100
@@ -62960,7 +62960,7 @@ upon	ADP	silver	P:100
 the	DET	silver	D:100
 distribution	NOUN	silver	N:100
 of	ADP	silver	P:100
-surrounding	VERB	silver	J:99
+surrounding	ADJ	silver	J:99
 particles	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -63310,7 +63310,7 @@ time	NOUN	silver	N:100
 and	CCONJ	silver	C:100
 with	ADP	silver	P:100
 the	DET	silver	D:100
-existing	ADJ	disputed	J:100
+existing	ADJ	silver	J:100
 means	NOUN	silver	N:100
 of	ADP	silver	P:100
 traveling	_	masked	V:47
@@ -63488,7 +63488,7 @@ tone	NOUN	silver	N:100
 # source_id = gutenberg-64458
 # text = The blazing eyes and white , uncovered fangs of the dogs told so plainly of their fell intention of reducing him and his valise to a condition resembling desiccated codfish , that anyone might have been frightened .
 The	DET	silver	D:100
-blazing	ADJ	disputed	J:90
+blazing	ADJ	silver	J:90
 eyes	NOUN	silver	N:100
 and	CCONJ	silver	C:100
 white	ADJ	silver	J:100
@@ -64411,7 +64411,7 @@ boat	NOUN	silver	N:100
 Whoever	PRON	silver	R:100
 catches	VERB	silver	V:100
 the	DET	silver	D:100
-returning	VERB	silver	J:93
+returning	ADJ	silver	J:93
 ball	NOUN	silver	N:100
 ,	PUNCT	silver	-
 has	VERB	silver	V:78
@@ -64834,7 +64834,7 @@ backed	VERB	silver	V:97
 by	ADP	silver	P:100
 explosions	NOUN	silver	N:100
 of	ADP	silver	P:100
-varying	ADJ	disputed	J:100
+varying	ADJ	silver	J:100
 degrees	NOUN	silver	N:100
 of	ADP	silver	P:100
 heaviness	NOUN	silver	N:100
@@ -64990,7 +64990,7 @@ for	ADP	silver	P:100
 ever	ADV	silver	B:100
 in	ADP	silver	P:100
 her	DET	silver	D:100
-floating	VERB	silver	J:99
+floating	ADJ	silver	J:99
 towers	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -66678,7 +66678,7 @@ The	DET	silver	D:100
 sickness	NOUN	silver	N:100
 of	ADP	silver	P:100
 her	DET	silver	D:100
-surviving	VERB	silver	J:100
+surviving	ADJ	silver	J:100
 attendant	NOUN	silver	N:100
 has	AUX	silver	A:100
 latterly	ADV	silver	B:100
@@ -66845,7 +66845,7 @@ before	SCONJ	silver	C:86
 it	PRON	silver	R:100
 reached	VERB	silver	V:100
 its	DET	silver	D:100
-culminating	VERB	disputed	V:100
+culminating	VERB	silver	V:100
 point	NOUN	silver	N:100
 ,	PUNCT	silver	-
 he	PRON	silver	R:100
@@ -69353,7 +69353,7 @@ closed	VERB	silver	V:98
 ,	PUNCT	silver	-
 and	CCONJ	silver	C:100
 a	DET	silver	D:100
-whirling	VERB	disputed	V:57
+whirling	VERB	silver	V:57
 round	NOUN	silver	N:100
 of	ADP	silver	P:100
 confused	ADJ	silver	J:100
@@ -69817,7 +69817,7 @@ flew	VERB	silver	V:100
 off	ADV	silver	B:100
 with	ADP	silver	P:100
 a	DET	silver	D:100
-marauding	VERB	silver	J:98
+marauding	ADJ	silver	J:98
 flock	NOUN	silver	N:100
 of	ADP	silver	P:100
 his	DET	silver	D:100
@@ -70270,7 +70270,7 @@ beauty	NOUN	silver	N:100
 physical	ADJ	silver	J:98
 vigour	NOUN	silver	N:100
 and	CCONJ	silver	C:100
-becoming	ADJ	silver	V:81
+becoming	VERB	silver	V:81
 dress	NOUN	silver	N:86
 .	PUNCT	silver	-
 
@@ -73465,7 +73465,7 @@ her	PRON	silver	R:100
 a	DET	silver	D:100
 smoke	NOUN	silver	N:100
 and	CCONJ	silver	C:100
-flickering	VERB	silver	J:95
+flickering	ADJ	silver	J:95
 blaze	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -73531,7 +73531,7 @@ order	NOUN	silver	N:99
 to	PART	silver	T:100
 escape	VERB	silver	V:100
 a	DET	silver	D:100
-parting	NOUN	silver	J:98
+parting	ADJ	silver	J:98
 scene	NOUN	silver	N:100
 with	ADP	silver	P:100
 -	PUNCT	silver	-
@@ -73956,14 +73956,14 @@ The	DET	silver	D:100
 emancipation	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
-working	NOUN	silver	J:84
+working	ADJ	silver	J:84
 class	NOUN	silver	N:100
 is	VERB	silver	V:100
 the	DET	silver	D:100
 work	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
-working	NOUN	silver	J:90
+working	ADJ	silver	J:90
 class	NOUN	silver	N:100
 itself	PRON	silver	R:100
 .	PUNCT	silver	-
@@ -75216,7 +75216,7 @@ that	PRON	silver	R:100
 of	ADP	silver	P:100
 either	_	masked	C:100
 a	DET	silver	D:100
-working	ADJ	disputed	J:96
+working	ADJ	silver	J:96
 man	NOUN	silver	N:100
 ,	PUNCT	silver	-
 or	CCONJ	silver	C:100
@@ -79778,7 +79778,7 @@ model	NOUN	silver	N:100
 for	ADP	silver	P:100
 the	DET	silver	D:100
 self-respecting	ADJ	silver	J:100
-working	ADJ	disputed	J:75
+working	ADJ	silver	J:75
 girl	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
@@ -82007,7 +82007,7 @@ animals	NOUN	silver	N:100
 of	ADP	silver	P:100
 our	DET	silver	D:100
 small	ADJ	silver	J:99
-exploring	NOUN	silver	V:100
+exploring	VERB	silver	V:100
 party	NOUN	silver	N:100
 were	VERB	silver	V:97
 upon	ADP	silver	P:100
@@ -84354,7 +84354,7 @@ bear	VERB	silver	V:100
 her	PRON	silver	R:100
 through	ADP	silver	P:99
 the	DET	silver	D:100
-raging	VERB	silver	J:97
+raging	ADJ	silver	J:97
 tempest	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -84804,7 +84804,7 @@ leave-taking	NOUN	silver	N:100
 He	PRON	silver	R:100
 knew	VERB	silver	V:100
 the	DET	silver	D:100
-inebriating	ADJ	silver	V:100
+inebriating	VERB	silver	V:100
 sweetness	NOUN	silver	N:100
 of	ADP	silver	P:100
 popular	ADJ	silver	J:100
@@ -87561,7 +87561,7 @@ wearily	ADV	silver	B:100
 she	PRON	silver	R:100
 entered	VERB	silver	V:100
 the	DET	silver	D:100
-waiting	VERB	silver	J:92
+waiting	ADJ	silver	J:92
 canoe	NOUN	silver	N:100
 and	CCONJ	silver	C:100
 resumed	VERB	silver	V:100
@@ -89121,7 +89121,7 @@ impeded	ADJ	silver	J:54
 Autographic	ADJ	silver	J:100
 facsimiles	NOUN	silver	N:100
 for	ADP	silver	P:100
-visiting	NOUN	silver	V:68
+visiting	VERB	silver	V:68
 cards	NOUN	silver	N:100
 are	VERB	silver	V:98
 affectations	NOUN	silver	N:100
@@ -89162,7 +89162,7 @@ shone	VERB	silver	V:100
 brightly	ADV	silver	B:100
 on	ADP	silver	P:100
 the	DET	silver	D:100
-glistening	VERB	silver	J:97
+glistening	ADJ	silver	J:97
 snow	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -91258,7 +91258,7 @@ the	DET	silver	D:100
 soil	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
-neighbouring	ADJ	disputed	J:100
+neighbouring	ADJ	silver	J:100
 islands	NOUN	silver	N:100
 is	VERB	silver	V:100
 an	DET	silver	D:100
@@ -92104,7 +92104,7 @@ interval	NOUN	silver	N:100
 # text = A few smouldering chips alone remained of the fire in the centre of the hut .
 A	DET	silver	D:100
 few	ADJ	silver	J:83
-smouldering	VERB	silver	J:92
+smouldering	ADJ	silver	J:92
 chips	NOUN	silver	N:100
 alone	ADV	silver	B:100
 remained	VERB	silver	V:100
@@ -92323,7 +92323,7 @@ new	ADJ	silver	J:100
 Hall	_	masked	N:100
 ,	PUNCT	silver	-
 with	ADP	silver	P:100
-connecting	VERB	disputed	V:100
+connecting	VERB	silver	V:100
 passages	NOUN	silver	N:100
 ,	PUNCT	silver	-
 at	ADP	silver	P:100
@@ -93132,7 +93132,7 @@ sparse	ADJ	silver	J:100
 exceptions	NOUN	silver	N:100
 ,	PUNCT	silver	-
 drug	NOUN	silver	N:100
-trafficking	NOUN	silver	V:100
+trafficking	VERB	silver	V:100
 gangs	NOUN	silver	N:100
 tend	VERB	silver	V:100
 to	PART	silver	T:100
@@ -95175,7 +95175,7 @@ a	DET	silver	D:100
 female	NOUN	silver	N:99
 in	ADP	silver	P:100
 a	DET	silver	D:100
-reclining	NOUN	disputed	N:91
+reclining	NOUN	silver	N:91
 posture	NOUN	silver	N:100
 ,	PUNCT	silver	-
 her	DET	silver	D:100
@@ -95328,7 +95328,7 @@ did	VERB	silver	V:62
 with	ADP	silver	P:100
 tender	ADJ	silver	J:100
 and	CCONJ	silver	C:100
-protecting	ADJ	disputed	J:98
+protecting	ADJ	silver	J:98
 love	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -96960,7 +96960,7 @@ the	DET	silver	D:100
 affairs	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
-intending	VERB	disputed	V:100
+intending	VERB	silver	V:100
 builder	NOUN	silver	N:100
 ,	PUNCT	silver	-
 as	SCONJ	silver	C:99
@@ -98398,7 +98398,7 @@ the	DET	silver	D:100
 guns	NOUN	silver	N:100
 at	ADP	silver	P:100
 the	DET	silver	D:100
-surrounding	ADJ	disputed	J:100
+surrounding	ADJ	silver	J:100
 country	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -101419,7 +101419,7 @@ who	PRON	silver	R:100
 kept	VERB	silver	V:100
 up	ADV	silver	B:98
 a	DET	silver	D:100
-droning	NOUN	disputed	N:93
+droning	NOUN	silver	N:93
 chant	NOUN	silver	N:99
 the	DET	silver	D:100
 whole	ADJ	silver	J:100
@@ -102946,7 +102946,7 @@ power	NOUN	silver	N:100
 to	PART	silver	T:100
 calm	VERB	silver	V:99
 the	DET	silver	D:100
-whelming	VERB	disputed	V:100
+whelming	VERB	silver	V:100
 tide	NOUN	silver	N:100
 of	ADP	silver	P:100
 sorrow	NOUN	silver	N:100
@@ -103606,7 +103606,7 @@ never	ADV	silver	B:100
 a	DET	silver	D:100
 sign	NOUN	silver	N:100
 of	ADP	silver	P:100
-sporting	NOUN	silver	J:95
+sporting	ADJ	silver	J:95
 tools	NOUN	silver	N:100
 ,	PUNCT	silver	-
 not	PART	silver	O:100
@@ -107825,7 +107825,7 @@ well	ADV	silver	B:100
 pleased	ADJ	silver	J:97
 to	PART	silver	T:100
 see	VERB	silver	V:100
-returning	VERB	silver	J:93
+returning	ADJ	silver	J:93
 consciousness	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -108069,7 +108069,7 @@ River	_	masked	N:100
 # source_id = gutenberg-78456
 # text = A winding sheet of snow on the earth , purple black heavens , and stars shining out gloriously in the frosty atmosphere met his gaze .
 A	DET	silver	D:100
-winding	NOUN	silver	J:82
+winding	ADJ	silver	J:82
 sheet	NOUN	silver	N:100
 of	ADP	silver	P:100
 snow	NOUN	silver	N:100
@@ -109025,7 +109025,7 @@ hair	NOUN	silver	N:100
 # source_id = tatoeba-11455171
 # text = The working ants love the flowers and take them home , one petal at a time .
 The	DET	silver	D:100
-working	NOUN	silver	J:70
+working	ADJ	silver	J:70
 ants	NOUN	silver	N:100
 love	VERB	silver	V:100
 the	DET	silver	D:100
@@ -113183,7 +113183,7 @@ dress	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
 Roman	ADJ	silver	J:99
-working	ADJ	disputed	J:75
+working	ADJ	silver	J:75
 man	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -113713,7 +113713,7 @@ flight	NOUN	silver	N:100
 and	CCONJ	silver	C:100
 their	DET	silver	D:100
 long	ADJ	silver	J:100
-lingering	VERB	silver	N:62
+lingering	NOUN	silver	N:62
 note	NOUN	silver	N:100
 sounded	VERB	silver	V:100
 faint	ADJ	silver	J:100
@@ -113765,7 +113765,7 @@ thwarted	VERB	silver	V:99
 and	CCONJ	silver	C:100
 this	DET	silver	D:100
 calm	ADJ	silver	J:99
-smiling	ADJ	disputed	J:87
+smiling	ADJ	silver	J:87
 contempt	NOUN	silver	N:100
 for	ADP	silver	P:100
 her	DET	silver	D:100
@@ -114330,7 +114330,7 @@ one	PRON	silver	R:100@s
 feet	NOUN	silver	N:100
 in	ADP	silver	P:100
 the	DET	silver	D:100
-surging	VERB	silver	J:99
+surging	ADJ	silver	J:99
 stream	NOUN	silver	N:100
 ,	PUNCT	silver	-
 running	VERB	silver	V:100
@@ -115458,7 +115458,7 @@ I	PRON	silver	R:100
 rise	VERB	silver	V:100
 with	ADP	silver	P:100
 each	DET	silver	D:99
-passing	VERB	silver	J:78
+passing	ADJ	silver	J:78
 day	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -116902,7 +116902,7 @@ than	ADP	silver	P:75
 to	PART	silver	T:100
 indulge	VERB	silver	V:100
 a	DET	silver	D:100
-sinning	VERB	silver	J:95
+sinning	ADJ	silver	J:95
 sense	NOUN	silver	N:100
 or	CCONJ	silver	C:100
 consciousness	NOUN	silver	N:100
@@ -117536,7 +117536,7 @@ have	AUX	silver	A:100
 told	VERB	silver	V:100
 in	ADP	silver	P:100
 the	DET	silver	D:100
-preceding	VERB	silver	J:100
+preceding	ADJ	silver	J:100
 chapter	NOUN	silver	N:100
 ,	PUNCT	silver	-
 concerned	VERB	silver	V:100
@@ -118307,7 +118307,7 @@ his	DET	silver	D:100
 shoulder	NOUN	silver	N:100
 toward	ADP	silver	P:100
 the	DET	silver	D:100
-smoking	VERB	silver	J:93
+smoking	ADJ	silver	J:93
 mountains	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -123738,7 +123738,7 @@ seller	NOUN	silver	N:100
 commiserating	VERB	silver	V:100
 over	ADP	silver	P:100
 the	DET	silver	D:100
-rising	VERB	silver	J:95
+rising	ADJ	silver	J:95
 cost	NOUN	silver	N:100
 of	ADP	silver	P:100
 produce	NOUN	silver	N:100
@@ -124061,7 +124061,7 @@ marked	ADJ	silver	J:100
 difference	NOUN	silver	N:100
 which	PRON	silver	R:100
 finds	VERB	silver	V:100
-corresponding	VERB	silver	J:100
+corresponding	ADJ	silver	J:100
 expression	NOUN	silver	N:100
 in	ADP	silver	P:100
 politics	NOUN	silver	N:100
@@ -125026,7 +125026,7 @@ were	AUX	silver	A:96
 pointed	VERB	silver	V:89
 at	ADP	silver	P:100
 the	DET	silver	D:100
-receding	VERB	silver	J:62
+receding	ADJ	silver	J:62
 trucks	NOUN	silver	N:100
 full	ADJ	silver	J:63
 of	ADP	silver	P:100
@@ -128143,7 +128143,7 @@ fries	NOUN	silver	N:100
 # text = " The burning mountain is angry to-night , " said Wallulah , at last .
 "	PUNCT	silver	-
 The	DET	silver	D:100
-burning	VERB	silver	J:94
+burning	ADJ	silver	J:94
 mountain	NOUN	silver	N:100
 is	VERB	silver	V:98
 angry	ADJ	silver	J:100
@@ -128473,7 +128473,7 @@ Economy	_	masked	N:100
 # source_id = gutenberg-3814
 # text = The rising author found his market value in America low-priced , and his curiosity as to how it felt to be ill and penniless was satisfied .
 The	DET	silver	D:100
-rising	ADJ	disputed	J:92
+rising	ADJ	silver	J:92
 author	NOUN	silver	N:100
 found	VERB	silver	V:100
 his	DET	silver	D:100
@@ -128519,7 +128519,7 @@ leave	VERB	silver	V:100
 cards	NOUN	silver	N:100
 with	ADP	silver	P:100
 narrow	ADJ	silver	J:100
-mourning	NOUN	silver	J:72
+mourning	ADJ	silver	J:72
 borders	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -128676,7 +128676,7 @@ in	ADP	silver	P:100
 thrall	NOUN	silver	N:67
 all	DET	silver	D:97
 the	DET	silver	D:100
-reading	NOUN	disputed	N:98
+reading	NOUN	silver	N:98
 public	NOUN	silver	N:100
 who	PRON	silver	R:100
 liked	VERB	silver	V:100
@@ -128757,7 +128757,7 @@ downward	ADV	silver	B:98
 ,	PUNCT	silver	-
 and	CCONJ	silver	C:100
 refute	VERB	silver	V:100
-erring	VERB	silver	J:84
+erring	ADJ	silver	J:84
 reason	NOUN	silver	N:100
 with	ADP	silver	P:100
 the	DET	silver	D:100
@@ -129751,7 +129751,7 @@ possible	ADJ	silver	J:99
 ,	PUNCT	silver	-
 select	VERB	silver	V:100
 a	DET	silver	D:100
-standing	VERB	silver	J:88
+standing	ADJ	silver	J:88
 sapling	NOUN	silver	N:100
 for	ADP	silver	P:100
 the	DET	silver	D:100
@@ -131396,7 +131396,7 @@ folds	NOUN	silver	N:100
 ,	PUNCT	silver	-
 through	ADP	silver	P:100
 whose	DET	silver	D:100
-yawning	ADJ	disputed	J:53
+yawning	ADJ	silver	J:53
 fissures	NOUN	silver	N:100
 and	CCONJ	silver	C:100
 ruptured	VERB	silver	V:100
@@ -131523,7 +131523,7 @@ their	DET	silver	D:100
 perches	NOUN	silver	N:100
 upon	ADP	silver	P:100
 various	ADJ	silver	J:73
-wandering	VERB	silver	J:80
+wandering	ADJ	silver	J:80
 flocks	NOUN	silver	N:100
 of	ADP	silver	P:100
 vagrant	ADJ	silver	J:99
@@ -134483,7 +134483,7 @@ us	PRON	silver	R:100
 # source_id = gutenberg-32539
 # text = The falling off during the last year mentioned , has been owing to the state of our foreign exchanges being against the interests of the mint .
 The	DET	silver	D:100
-falling	NOUN	silver	J:59
+falling	ADJ	silver	J:59
 off	NOUN	silver	N:73
 during	ADP	silver	P:100
 the	DET	silver	D:100
@@ -136660,7 +136660,7 @@ half	ADJ	silver	J:93
 billion	NOUN	silver	N:93
 people	NOUN	silver	N:100
 in	ADP	silver	P:100
-developing	VERB	silver	J:81
+developing	ADJ	silver	J:81
 countries	NOUN	silver	N:100
 do	AUX	silver	A:94
 not	PART	silver	O:100
@@ -137581,7 +137581,7 @@ declarative	ADJ	silver	J:94
 of	ADP	silver	P:100
 the	DET	silver	D:100
 internal	ADJ	silver	J:99
-actuating	VERB	silver	J:86
+actuating	ADJ	silver	J:86
 causes	NOUN	silver	N:100
 ,	PUNCT	silver	-
 that	SCONJ	silver	C:100
@@ -142125,7 +142125,7 @@ appeared	VERB	silver	V:100
 of	ADP	silver	P:100
 a	DET	silver	D:100
 rich	ADJ	silver	J:100
-glowing	ADJ	disputed	J:96
+glowing	ADJ	silver	J:96
 bronze	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -143644,7 +143644,7 @@ Lumsden	PROPN	silver	?
 broke	VERB	silver	V:100
 through	ADP	silver	P:98
 the	DET	silver	D:100
-surrounding	VERB	silver	J:100
+surrounding	ADJ	silver	J:100
 crowd	NOUN	silver	N:100
 and	CCONJ	silver	C:100
 started	VERB	silver	V:100
@@ -144743,7 +144743,7 @@ fell	VERB	silver	V:100
 in	ADV	silver	B:64
 with	ADP	silver	P:100
 a	DET	silver	D:100
-recruiting	NOUN	silver	V:100
+recruiting	VERB	silver	V:100
 party	NOUN	silver	N:100
 at	ADP	silver	P:100
 Coventry	_	masked	N:100
@@ -145034,7 +145034,7 @@ nothing	PRON	silver	R:98
 Some	DET	silver	D:99
 morning	NOUN	silver	N:100
 the	DET	silver	D:100
-floating	ADJ	disputed	J:99
+floating	ADJ	silver	J:99
 opinion	NOUN	silver	N:100
 suddenly	ADV	silver	B:100
 crystallized	VERB	silver	V:99
@@ -146256,7 +146256,7 @@ the	DET	silver	D:100
 best	NOUN	silver	N:96
 of	ADP	silver	P:100
 my	DET	silver	D:100
-stammering	VERB	disputed	V:100
+stammering	VERB	silver	V:100
 ability	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -148255,7 +148255,7 @@ narrow	ADJ	silver	J:100
 streets	NOUN	silver	N:100
 while	SCONJ	silver	C:99
 the	DET	silver	D:100
-adjoining	ADJ	disputed	J:100
+adjoining	ADJ	silver	J:100
 houses	NOUN	silver	N:100
 were	AUX	silver	A:98
 enveloped	VERB	silver	V:100
@@ -148833,7 +148833,7 @@ together	ADV	silver	B:100
 ,	PUNCT	silver	-
 on	ADP	silver	P:100
 long	ADJ	silver	J:96
-drooping	VERB	silver	J:77
+drooping	ADJ	silver	J:77
 stalks	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -149597,7 +149597,7 @@ their	DET	silver	D:100
 cocked	ADJ	silver	V:100
 hats	NOUN	silver	N:100
 ,	PUNCT	silver	-
-flowing	ADJ	disputed	J:94
+flowing	ADJ	silver	J:94
 wigs	NOUN	silver	N:100
 ,	PUNCT	silver	-
 laced	ADJ	silver	J:96
@@ -151765,7 +151765,7 @@ move	VERB	silver	V:99
 but	CCONJ	silver	C:99
 stood	VERB	silver	V:100
 with	ADP	silver	P:100
-rising	VERB	silver	J:98
+rising	ADJ	silver	J:98
 color	NOUN	silver	N:100
 ,	PUNCT	silver	-
 trying	VERB	silver	V:100
@@ -151975,7 +151975,7 @@ spatulas	NOUN	silver	N:100
 continuously	ADV	silver	B:100
 stir	VERB	silver	V:100
 a	DET	silver	D:100
-brimming	ADJ	disputed	J:98
+brimming	ADJ	silver	J:98
 wok	NOUN	silver	N:100
 of	ADP	silver	P:100
 shredded	ADJ	silver	J:99
@@ -152276,7 +152276,7 @@ fire	NOUN	silver	N:100
 glowed	VERB	silver	V:100
 red	ADJ	silver	J:99
 with	ADP	silver	P:100
-burning	ADJ	disputed	J:67
+burning	ADJ	silver	J:67
 heat	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -153285,7 +153285,7 @@ anywhere	ADV	silver	B:100
 # source_id = tatoeba-11521299
 # text = The living matter more than the dead .
 The	DET	silver	D:100
-living	ADJ	silver	N:61
+living	NOUN	silver	N:61
 matter	NOUN	silver	N:62
 more	ADV	silver	B:99
 than	ADP	silver	P:100
@@ -154416,7 +154416,7 @@ principles	NOUN	silver	N:100
 in	ADP	silver	P:100
 mind	NOUN	silver	N:100
 ,	PUNCT	silver	-
-including	ADP	silver	V:100
+including	VERB	silver	V:100
 energy	NOUN	silver	N:100
 efficiency	NOUN	silver	N:100
 ,	PUNCT	silver	-
@@ -157299,7 +157299,7 @@ idea	NOUN	silver	N:100
 that	SCONJ	silver	C:100
 all	DET	silver	D:99
 the	DET	silver	D:100
-conflicting	ADJ	disputed	J:100
+conflicting	ADJ	silver	J:100
 passions	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
@@ -157456,7 +157456,7 @@ going	VERB	silver	V:100
 straight	ADV	silver	B:100
 into	ADP	silver	P:100
 the	DET	silver	D:100
-adjoining	ADJ	disputed	J:100
+adjoining	ADJ	silver	J:100
 room	NOUN	silver	N:100
 ,	PUNCT	silver	-
 where	ADV	silver	B:81
@@ -158252,7 +158252,7 @@ for	ADP	silver	P:100
 wrong-doing	_	masked	?
 ,	PUNCT	silver	-
 a	DET	silver	D:100
-desponding	ADJ	silver	V:100
+desponding	VERB	silver	V:100
 conviction	NOUN	silver	N:100
 that	SCONJ	silver	C:100
 repentance	NOUN	silver	N:100
@@ -158913,7 +158913,7 @@ glows	VERB	silver	V:100
 with	ADP	silver	P:100
 diamonds	NOUN	silver	N:100
 and	CCONJ	silver	C:100
-sparkling	ADJ	disputed	J:98
+sparkling	ADJ	silver	J:98
 eyes	NOUN	silver	N:100
 !	PUNCT	silver	-
 !	PUNCT	silver	-
@@ -169667,7 +169667,7 @@ with	ADP	silver	P:100
 a	DET	silver	D:100
 doubt	NOUN	silver	N:100
 of	ADP	silver	P:100
-waking	ADJ	disputed	J:99
+waking	ADJ	silver	J:99
 reality	NOUN	silver	N:100
 ,	PUNCT	silver	-
 that	PRON	silver	R:97
@@ -172156,7 +172156,7 @@ You	PRON	silver	R:100
 can	AUX	silver	A:99
 smell	VERB	silver	V:100
 the	DET	silver	D:100
-coming	VERB	silver	J:72
+coming	ADJ	silver	J:72
 storm	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -173640,7 +173640,7 @@ ring	NOUN	silver	N:100
 of	ADP	silver	P:100
 soft	ADJ	silver	J:100
 ,	PUNCT	silver	-
-glowing	ADJ	disputed	J:92
+glowing	ADJ	silver	J:92
 rose	NOUN	silver	N:100
 edged	VERB	silver	V:100
 the	DET	silver	D:100
@@ -176486,7 +176486,7 @@ the	DET	silver	D:100
 throb	NOUN	silver	N:100
 of	ADP	silver	P:100
 an	DET	silver	D:100
-approaching	VERB	silver	J:92
+approaching	ADJ	silver	J:92
 propeller	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -176552,7 +176552,7 @@ hours	NOUN	silver	N:100
 ,	PUNCT	silver	-
 or	CCONJ	silver	C:100
 the	DET	silver	D:100
-rising	VERB	silver	J:88
+rising	ADJ	silver	J:88
 tide	NOUN	silver	N:100
 would	AUX	silver	A:100
 overwhelm	VERB	silver	V:100
@@ -177839,7 +177839,7 @@ earnestly	ADV	silver	B:100
 passionately	ADV	silver	B:100
 ,	PUNCT	silver	-
 with	ADP	silver	P:100
-blazing	ADJ	disputed	J:98
+blazing	ADJ	silver	J:98
 eyes	NOUN	silver	N:100
 ,	PUNCT	silver	-
 flushed	VERB	silver	V:100
@@ -181831,7 +181831,7 @@ weight	NOUN	silver	N:100
 # source_id = gutenberg-4597
 # text = Any suffering thing , whether it was animal , man , woman , or child , was sure of his sympathy and aid .
 Any	DET	silver	D:100
-suffering	VERB	silver	J:82
+suffering	ADJ	silver	J:82
 thing	NOUN	silver	N:100
 ,	PUNCT	silver	-
 whether	SCONJ	silver	C:100
@@ -184584,7 +184584,7 @@ about	ADP	silver	P:94
 the	DET	silver	D:100
 encampments	NOUN	silver	N:100
 like	ADP	silver	P:100
-starving	ADJ	disputed	J:96
+starving	ADJ	silver	J:96
 wolves	NOUN	silver	N:100
 ,	PUNCT	silver	-
 picking	VERB	silver	V:99
@@ -184828,7 +184828,7 @@ heaping	VERB	silver	V:100
 ashes	NOUN	silver	N:100
 upon	ADP	silver	P:100
 the	DET	silver	D:100
-dying	VERB	silver	J:90
+dying	ADJ	silver	J:90
 embers	NOUN	silver	N:100
 of	ADP	silver	P:100
 their	DET	silver	D:100
@@ -185841,7 +185841,7 @@ the	DET	silver	D:100
 Jonas	PROPN	silver	?
 of	ADP	silver	P:100
 the	DET	silver	D:100
-intervening	ADJ	disputed	J:100
+intervening	ADJ	silver	J:100
 time	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -187041,7 +187041,7 @@ in	ADP	silver	P:100
 the	DET	silver	D:100
 ribs	NOUN	silver	N:100
 the	DET	silver	D:100
-suffering	VERB	silver	J:98
+suffering	ADJ	silver	J:98
 boy	NOUN	silver	N:100
 groaned	VERB	silver	V:100
 aloud	ADV	silver	B:100
@@ -189191,7 +189191,7 @@ It	PRON	silver	R:100
 had	AUX	silver	A:100
 lost	VERB	silver	V:100
 its	DET	silver	D:100
-rallying	NOUN	silver	J:60
+rallying	ADJ	silver	J:60
 power	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -193785,7 +193785,7 @@ modern	ADJ	silver	J:100
 mourning	NOUN	silver	N:100
 ;	PUNCT	silver	-
 for	ADP	silver	P:100
-shrouding	NOUN	silver	V:100
+shrouding	VERB	silver	V:100
 crape	NOUN	silver	N:100
 and	CCONJ	silver	C:100
 darkened	ADJ	silver	J:100
@@ -197006,7 +197006,7 @@ slaves	NOUN	silver	N:100
 ,	PUNCT	silver	-
 are	VERB	silver	V:99
 the	DET	silver	D:100
-labouring	ADJ	disputed	J:97
+labouring	ADJ	silver	J:97
 classes	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -199377,7 +199377,7 @@ looked	VERB	silver	V:100
 at	ADP	silver	P:100
 him	PRON	silver	R:100
 with	ADP	silver	P:100
-glistening	VERB	silver	J:93
+glistening	ADJ	silver	J:93
 eyes	NOUN	silver	N:100
 ,	PUNCT	silver	-
 and	CCONJ	silver	C:100
@@ -199671,7 +199671,7 @@ quiet	ADJ	silver	J:99
 graves	NOUN	silver	N:100
 amid	ADP	silver	P:100
 the	DET	silver	D:100
-surrounding	VERB	silver	J:99
+surrounding	ADJ	silver	J:99
 turmoil	NOUN	silver	N:100
 of	ADP	silver	P:100
 life	NOUN	silver	N:100
@@ -201233,7 +201233,7 @@ sick-bed	_	masked	?
 came	VERB	silver	V:100
 a	DET	silver	D:100
 low	ADJ	silver	J:100
-sobbing	VERB	disputed	V:54
+sobbing	VERB	silver	V:54
 moan	NOUN	silver	N:99
 .	PUNCT	silver	-
 
@@ -205834,7 +205834,7 @@ clear	ADJ	silver	J:100
 views	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
-shelving	NOUN	disputed	N:83
+shelving	NOUN	silver	N:83
 granite	NOUN	silver	N:100
 slopes	NOUN	silver	N:100
 ,	PUNCT	silver	-
@@ -208490,7 +208490,7 @@ Each	DET	silver	D:99
 year	NOUN	silver	N:100
 ,	PUNCT	silver	-
 three	ADJ	silver	J:96
-emerging	VERB	silver	J:99
+emerging	ADJ	silver	J:99
 artists	NOUN	silver	N:100
 receive	VERB	silver	V:100
 a	DET	silver	D:100
@@ -209780,7 +209780,7 @@ years	NOUN	silver	N:100
 later	ADV	silver	B:100
 ,	PUNCT	silver	-
 in	ADP	silver	P:100
-failing	VERB	silver	J:99
+failing	ADJ	silver	J:99
 health	NOUN	silver	N:100
 ,	PUNCT	silver	-
 he	PRON	silver	R:100
@@ -214279,7 +214279,7 @@ mixed	ADJ	silver	J:95
 Tuesday	_	masked	N:100
 as	SCONJ	silver	C:79
 the	DET	silver	D:100
-worsening	VERB	silver	J:76
+worsening	ADJ	silver	J:76
 coronavirus	NOUN	silver	N:100
 pandemic	NOUN	silver	N:100
 around	ADP	silver	P:100
@@ -216911,7 +216911,7 @@ were	AUX	silver	A:91
 waiting	VERB	silver	V:89
 with	ADP	silver	P:100
 a	DET	silver	D:100
-yearning	ADJ	silver	N:99
+yearning	NOUN	silver	N:99
 look	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -219419,7 +219419,7 @@ First	ADJ	silver	J:89
 Nations	_	masked	N:100
 history	NOUN	silver	N:100
 ,	PUNCT	silver	-
-including	ADP	silver	V:100
+including	VERB	silver	V:100
 millions	NOUN	silver	N:100
 of	ADP	silver	P:100
 a	DET	silver	D:100
@@ -219464,7 +219464,7 @@ but	CCONJ	silver	C:99
 not	PART	silver	O:100
 for	ADP	silver	P:100
 the	DET	silver	D:100
-paying	VERB	silver	J:68
+paying	ADJ	silver	J:68
 public	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -219745,7 +219745,7 @@ is	AUX	silver	A:88
 saved	VERB	silver	V:67
 from	ADP	silver	P:100
 the	DET	silver	D:100
-contaminating	VERB	silver	J:98
+contaminating	ADJ	silver	J:98
 effect	NOUN	silver	N:100
 of	ADP	silver	P:100
 participation	NOUN	silver	N:100
@@ -220197,7 +220197,7 @@ as	ADP	silver	P:97
 part	NOUN	silver	N:100
 of	ADP	silver	P:100
 a	DET	silver	D:100
-growing	VERB	silver	J:99
+growing	ADJ	silver	J:99
 awareness	NOUN	silver	N:100
 in	ADP	silver	P:100
 the	DET	silver	D:100
@@ -222240,7 +222240,7 @@ and	CCONJ	silver	C:100
 descends	VERB	silver	V:100
 in	ADP	silver	P:100
 a	DET	silver	D:100
-tumbling	VERB	silver	N:93
+tumbling	NOUN	silver	N:93
 cascade	NOUN	silver	N:100
 at	ADP	silver	P:100
 an	DET	silver	D:100
@@ -224176,10 +224176,10 @@ greater	ADJ	silver	J:100
 staircase	NOUN	silver	N:100
 ,	PUNCT	silver	-
 left	VERB	silver	V:100
-gaping	ADJ	disputed	J:100
+gaping	ADJ	silver	J:100
 rooms	NOUN	silver	N:100
 and	CCONJ	silver	C:100
-sounding	VERB	silver	J:89
+sounding	ADJ	silver	J:89
 passages	NOUN	silver	N:100
 behind	ADV	silver	B:54
 .	PUNCT	silver	-
@@ -224517,7 +224517,7 @@ perhaps	ADV	silver	B:100
 a	DET	silver	D:100
 hundredfold	ADJ	silver	J:99
 the	DET	silver	D:100
-working	NOUN	silver	J:88
+working	ADJ	silver	J:88
 powers	NOUN	silver	N:100
 of	ADP	silver	P:100
 every	DET	silver	D:100
@@ -225373,7 +225373,7 @@ over	ADV	silver	B:78
 # text = With the gathering night came a cyclone .
 With	ADP	silver	P:100
 the	DET	silver	D:100
-gathering	VERB	silver	N:78
+gathering	NOUN	silver	N:78
 night	NOUN	silver	N:100
 came	VERB	silver	V:100
 a	DET	silver	D:100
@@ -227304,7 +227304,7 @@ the	DET	silver	D:100
 landlord	NOUN	silver	N:100
 ,	PUNCT	silver	-
 with	ADP	silver	P:100
-staring	VERB	silver	J:90
+staring	ADJ	silver	J:90
 eyes	NOUN	silver	N:100
 fixed	ADJ	silver	J:70
 on	ADP	silver	P:99
@@ -229821,7 +229821,7 @@ every	DET	silver	D:100
 step	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
-approaching	VERB	silver	J:56
+approaching	ADJ	silver	J:56
 savages	NOUN	silver	N:99
 could	AUX	silver	A:100
 be	AUX	silver	A:99
@@ -230449,7 +230449,7 @@ destruction	NOUN	silver	N:100
 # source_id = gutenberg-11327
 # text = The rising tide of national enthusiasm and exaltation that this occasioned flooded popular literature .
 The	DET	silver	D:100
-rising	VERB	silver	J:66
+rising	ADJ	silver	J:66
 tide	NOUN	silver	N:100
 of	ADP	silver	P:100
 national	ADJ	silver	J:98
@@ -232267,7 +232267,7 @@ her	DET	silver	D:100
 hand	NOUN	silver	N:100
 into	ADP	silver	P:100
 the	DET	silver	D:100
-scalding	ADJ	silver	V:100
+scalding	VERB	silver	V:100
 starch	NOUN	silver	N:100
 to	PART	silver	T:100
 wring	VERB	silver	V:100
@@ -234091,7 +234091,7 @@ and	CCONJ	silver	C:100
 it	PRON	silver	R:100
 behoves	VERB	silver	V:100
 the	DET	silver	D:100
-intending	VERB	disputed	V:100
+intending	VERB	silver	V:100
 bridegroom	NOUN	silver	N:100
 to	PART	silver	T:100
 take	VERB	silver	V:100
@@ -235245,7 +235245,7 @@ by	ADP	silver	P:100
 investigation	NOUN	silver	N:100
 of	ADP	silver	P:100
 their	DET	silver	D:100
-existing	VERB	silver	J:100
+existing	ADJ	silver	J:100
 remains	NOUN	silver	N:99
 .	PUNCT	silver	-
 
@@ -239243,7 +239243,7 @@ fiction	NOUN	silver	N:100
 writers	NOUN	silver	N:100
 have	AUX	silver	A:100
 imagined	VERB	silver	V:100
-cloaking	NOUN	silver	V:100
+cloaking	VERB	silver	V:100
 devices	NOUN	silver	N:100
 that	PRON	silver	R:100
 could	AUX	silver	A:100
@@ -239462,7 +239462,7 @@ Edward	PROPN	silver	?
 Bruce	PROPN	silver	?
 ,	PUNCT	silver	-
 the	DET	silver	D:100
-whelming	VERB	disputed	V:100
+whelming	VERB	silver	V:100
 sweep	NOUN	silver	N:100
 of	ADP	silver	P:100
 his	DET	silver	D:100
@@ -240182,7 +240182,7 @@ turned	VERB	silver	V:100
 and	CCONJ	silver	C:100
 delivered	VERB	silver	V:100
 a	DET	silver	D:100
-scattering	NOUN	disputed	N:75
+scattering	NOUN	silver	N:75
 fire	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -240249,7 +240249,7 @@ that	SCONJ	silver	C:99
 the	DET	silver	D:100
 plague	NOUN	silver	N:100
 of	ADP	silver	P:100
-begging	VERB	silver	N:54
+begging	NOUN	silver	N:54
 urchins	NOUN	silver	N:100
 ,	PUNCT	silver	-
 to	PART	silver	T:100
@@ -242912,7 +242912,7 @@ collaboration	NOUN	silver	N:100
 with	ADP	silver	P:100
 smallholders	NOUN	silver	N:100
 ,	PUNCT	silver	-
-including	ADP	silver	V:100
+including	VERB	silver	V:100
 tenant	NOUN	silver	N:100
 farming	NOUN	silver	N:65
 and	CCONJ	silver	C:100
@@ -253412,7 +253412,7 @@ of	ADP	silver	P:100
 the	DET	silver	D:100
 dangers	NOUN	silver	N:100
 of	ADP	silver	P:100
-overweening	ADJ	silver	V:52
+overweening	VERB	silver	V:52
 confidence	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -254428,7 +254428,7 @@ the	DET	silver	D:100
 shelter	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
-projecting	VERB	silver	J:99
+projecting	ADJ	silver	J:99
 story	NOUN	silver	N:100
 ,	PUNCT	silver	-
 and	CCONJ	silver	C:100
@@ -254749,7 +254749,7 @@ that	PRON	silver	R:99
 left	VERB	silver	V:100
 by	ADP	silver	P:100
 the	DET	silver	D:100
-flying	VERB	silver	J:82
+flying	ADJ	silver	J:82
 train	NOUN	silver	N:100
 ,	PUNCT	silver	-
 was	AUX	silver	A:93
@@ -256685,7 +256685,7 @@ in	ADP	silver	P:100
 the	DET	silver	D:100
 mixed	ADJ	silver	J:100
 and	CCONJ	silver	C:100
-blundering	ADJ	silver	V:100
+blundering	VERB	silver	V:100
 address	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -260190,7 +260190,7 @@ was	AUX	silver	A:89
 telling	VERB	silver	V:98
 on	ADP	silver	P:100
 his	DET	silver	D:100
-failing	VERB	silver	J:97
+failing	ADJ	silver	J:97
 health	NOUN	silver	N:100
 ,	PUNCT	silver	-
 and	CCONJ	silver	C:100
@@ -262629,7 +262629,7 @@ There	PRON	silver	R:92
 are	VERB	silver	V:100
 some	DET	silver	D:100
 few	ADJ	silver	J:98
-remaining	VERB	silver	J:100
+remaining	ADJ	silver	J:100
 facts	NOUN	silver	N:100
 to	ADP	silver	P:100
 which	PRON	silver	R:100
@@ -263406,7 +263406,7 @@ the	DET	silver	D:100
 campfires	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
-opposing	VERB	silver	J:100
+opposing	ADJ	silver	J:100
 forces	NOUN	silver	N:100
 ,	PUNCT	silver	-
 where	ADV	silver	B:76
@@ -265320,7 +265320,7 @@ at	ADP	silver	P:100
 the	DET	silver	D:100
 sound	NOUN	silver	N:100
 of	ADP	silver	P:100
-approaching	VERB	silver	J:70
+approaching	ADJ	silver	J:70
 footsteps	NOUN	silver	N:100
 ,	PUNCT	silver	-
 but	CCONJ	silver	C:100
@@ -271913,7 +271913,7 @@ begin	VERB	silver	V:100
 as	ADP	silver	P:100
 clerks	NOUN	silver	N:100
 in	ADP	silver	P:100
-existing	VERB	silver	J:100
+existing	ADJ	silver	J:100
 firms	NOUN	silver	N:100
 ,	PUNCT	silver	-
 and	CCONJ	silver	C:100
@@ -275855,7 +275855,7 @@ his	DET	silver	D:100
 second	ADJ	silver	J:75
 at	ADP	silver	P:100
 the	DET	silver	D:100
-approaching	VERB	silver	J:94
+approaching	ADJ	silver	J:94
 duel	NOUN	silver	N:100
 ,	PUNCT	silver	-
 a	DET	silver	D:100
@@ -276431,7 +276431,7 @@ hand	NOUN	silver	N:100
 and	CCONJ	silver	C:100
 a	DET	silver	D:100
 sudden	ADJ	silver	J:99
-dashing	ADJ	disputed	J:88
+dashing	ADJ	silver	J:88
 charge	NOUN	silver	N:100
 on	ADP	silver	P:100
 the	DET	silver	D:100
@@ -276572,7 +276572,7 @@ Was	VERB	silver	V:95
 it	PRON	silver	R:100
 to	ADP	silver	P:100
 a	DET	silver	D:100
-dying	VERB	silver	J:98
+dying	ADJ	silver	J:98
 man	NOUN	silver	N:100
 who	PRON	silver	R:100
 gave	VERB	silver	V:100
@@ -277474,7 +277474,7 @@ meeting	VERB	silver	V:100
 half	ADJ	silver	J:83
 way	NOUN	silver	N:100
 an	DET	silver	D:100
-approaching	VERB	silver	J:65
+approaching	ADJ	silver	J:65
 avalanche	NOUN	silver	N:100
 of	ADP	silver	P:100
 worldwide	ADJ	silver	J:100
@@ -277483,7 +277483,7 @@ destined	ADJ	silver	J:91
 to	PART	silver	T:100
 modify	VERB	silver	V:100
 the	DET	silver	D:100
-existing	VERB	silver	J:100
+existing	ADJ	silver	J:100
 order	NOUN	silver	N:100
 of	ADP	silver	P:100
 society	NOUN	silver	N:100
@@ -277890,7 +277890,7 @@ But	CCONJ	silver	C:96
 at	ADP	silver	P:100
 length	NOUN	silver	N:100
 the	DET	silver	D:100
-closing	VERB	silver	J:98
+closing	ADJ	silver	J:98
 evening	NOUN	silver	N:100
 ,	PUNCT	silver	-
 accompanied	VERB	silver	V:95
@@ -281825,7 +281825,7 @@ so	ADV	silver	B:82
 that	SCONJ	silver	C:87
 through	ADP	silver	P:100
 their	DET	silver	D:100
-fostering	NOUN	disputed	N:76
+fostering	NOUN	silver	N:76
 care	NOUN	silver	N:100
 the	DET	silver	D:100
 natives	NOUN	silver	N:100
@@ -282409,7 +282409,7 @@ going	VERB	silver	V:99
 out	ADV	silver	B:100
 to	ADP	silver	P:100
 the	DET	silver	D:100
-adjoining	VERB	silver	J:100
+adjoining	ADJ	silver	J:100
 room	NOUN	silver	N:100
 .	PUNCT	silver	-
 
@@ -284941,7 +284941,7 @@ curiously	ADV	silver	B:100
 confused	ADJ	silver	J:98
 chaos	NOUN	silver	N:100
 of	ADP	silver	P:100
-conflicting	ADJ	disputed	J:96
+conflicting	ADJ	silver	J:96
 authority	NOUN	silver	N:100
 ;	PUNCT	silver	-
 in	ADP	silver	P:100
@@ -287420,7 +287420,7 @@ windows	NOUN	silver	N:100
 -	PUNCT	silver	-
 -	PUNCT	silver	-
 the	DET	silver	D:100
-glistening	VERB	silver	J:97
+glistening	ADJ	silver	J:97
 roof	NOUN	silver	N:100
 of	ADP	silver	P:100
 the	DET	silver	D:100
@@ -290825,7 +290825,7 @@ copyright	NOUN	silver	N:100
 Did	AUX	silver	A:99
 not	PART	silver	O:100
 each	DET	silver	D:100
-advancing	VERB	silver	J:57
+advancing	ADJ	silver	J:57
 year	NOUN	silver	N:100
 bring	VERB	silver	V:100
 them	PRON	silver	R:100
@@ -292604,7 +292604,7 @@ No	DET	silver	D:99
 stray	ADJ	silver	J:95
 pig	NOUN	silver	N:100
 ,	PUNCT	silver	-
-wandering	VERB	silver	J:98
+wandering	ADJ	silver	J:98
 sheep	NOUN	silver	N:100
 ,	PUNCT	silver	-
 or	CCONJ	silver	C:100
@@ -293600,7 +293600,7 @@ lame	ADJ	silver	J:90
 from	ADP	silver	P:100
 a	DET	silver	D:100
 "	PUNCT	silver	-
-travelling	VERB	silver	N:87
+travelling	NOUN	silver	N:87
 show	NOUN	silver	N:100
 "	PUNCT	silver	-
 the	DET	silver	D:100
@@ -293790,7 +293790,7 @@ But	CCONJ	silver	C:98
 however	ADV	silver	B:70
 well	ADV	silver	B:99
 the	DET	silver	D:100
-suffering	VERB	silver	J:98
+suffering	ADJ	silver	J:98
 wife	NOUN	silver	N:100
 might	AUX	silver	A:100
 succeed	VERB	silver	V:100
@@ -293803,7 +293803,7 @@ wounded	ADJ	silver	J:99
 affection	NOUN	silver	N:100
 from	ADP	silver	P:100
 her	DET	silver	D:100
-inquiring	ADJ	disputed	J:82
+inquiring	ADJ	silver	J:82
 family	NOUN	silver	N:100
 ,	PUNCT	silver	-
 she	PRON	silver	R:100

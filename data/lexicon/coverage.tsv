@@ -1,10 +1,10 @@
 # Coverage of data/lexicon/lexicon.tsv (written by tools/data/check_lexicon.py)
 # section summary: summary, file, tokens, covered, percent, nondisputed_tokens, nondisputed_covered, nondisputed_percent, unknown_spelling_tokens
 # section miss: miss, file, spelling, gold_tag, tokens, nondisputed_tokens
-summary	open/train	209224	209089	99.935	201096	201095	100.000	1600
-summary	open/dev	26232	26199	99.874	25291	25271	99.921	593
-summary	open/test	26185	26144	99.843	25197	25174	99.909	554
-summary	masc/masc	386445	385904	99.860	385729	385205	99.864	9076
+summary	open/train	209224	209089	99.935	201131	201130	100.000	1599
+summary	open/dev	26232	26199	99.874	25297	25277	99.921	593
+summary	open/test	26185	26144	99.843	25198	25175	99.909	554
+summary	masc/masc	386445	385902	99.859	385828	385302	99.864	9078
 miss	open/train	remember	NOUN	4	0
 miss	open/train	record	ADJ	3	0
 miss	open/train	-ing	NOUN	2	0

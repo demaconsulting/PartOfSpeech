@@ -6,7 +6,7 @@ License: CC-BY-4.0
 
 License: CC-BY-3.0-US
 
-A lexicon that maps a lower-case spelling to the UPOS tags the spelling may carry: 262,635 spellings, 339,823
+A lexicon that maps a lower-case spelling to the UPOS tags the spelling may carry: 262,635 spellings, 339,819
 spelling-tag entries (1.294 tags per spelling), 4.2 MiB as TSV. A tagger uses it to restrict the tags it considers for
 a known word. It is built reproducibly from open dictionary tables, a short list of closed-class words and the tags
 attested in the training corpora. The files carry attribution obligations (CC BY 4.0 for the Open English WordNet
@@ -62,12 +62,12 @@ The thresholds were chosen on the development split from the sweep below (train 
 | K (open train) | M (MASC) | Spellings | Tags per spelling | Dev coverage, all tokens % | Dev coverage, non-disputed % |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 0 | 0 | 258,278 | 1.290 | 99.748 | 99.838 |
-| 1 | 0 | 261,235 | 1.292 | 99.836 | 99.893 |
+| 1 | 0 | 261,236 | 1.292 | 99.836 | 99.893 |
 | 2 | 0 | 258,867 | 1.291 | 99.821 | 99.881 |
-| 1 | 1 | 266,200 | 1.295 | 99.870 | 99.917 |
+| 1 | 1 | 266,201 | 1.295 | 99.870 | 99.917 |
 | **1** | **2** | **262,635** | **1.294** | **99.874** | **99.921** |
-| 1 | 3 | 261,995 | 1.293 | 99.870 | 99.917 |
-| 1 | 5 | 261,631 | 1.293 | 99.863 | 99.909 |
+| 1 | 3 | 261,996 | 1.293 | 99.870 | 99.917 |
+| 1 | 5 | 261,632 | 1.293 | 99.863 | 99.909 |
 
 Rules alone (K = 0, M = 0) reach 99.748 percent on dev (99.838 on non-disputed tokens); attestation is what lifts the
 non-disputed dev coverage above the 99.9 percent gate.
@@ -89,8 +89,8 @@ data tests implement them identically. The comparison is by `lower()` of the tok
 
 The package does not contain `lexicon.tsv`; it embeds a compiled binary form, `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`
 (format `POSL`, version 2, little endian, raw Deflate payload; the header checksum covers the stored bytes and the reader
-requires the Deflate stream to be complete). It is 639,617 bytes for the committed lexicon (262,635
-spellings, 339,823 entries, 225 distinct tag masks) against 4,452,405 bytes of TSV. The spellings are stored sorted by
+requires the Deflate stream to be complete). It is 639,711 bytes for the committed lexicon (262,635
+spellings, 339,819 entries, 225 distinct tag masks) against 4,452,392 bytes of TSV. The spellings are stored sorted by
 UTF-8 bytes in blocks of 16: the first spelling of a block whole and the others front-coded against their predecessor,
 each with the index of its tag mask in a palette. A lookup is exact (no hash collisions), searches the block heads by
 binary search and scans one block; it allocates nothing. The assembly contains the resource once per target framework,
@@ -116,10 +116,10 @@ open train and open dev are covered (`python tools/data/check_lexicon.py` exits 
 
 | File | Tokens | Covered % (all tokens) | Non-disputed tokens | Covered % (non-disputed) | Unknown-spelling tokens |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| open train | 209,224 | 99.935 | 201,096 | 99.9995 | 1,600 |
-| open dev | 26,232 | 99.874 | 25,291 | **99.921** | 593 |
-| open test | 26,185 | 99.843 | 25,197 | 99.909 | 554 |
-| masc | 386,445 | 99.860 | 385,729 | 99.864 | 9,076 |
+| open train | 209,224 | 99.935 | 201,131 | 100.000 | 1,599 |
+| open dev | 26,232 | 99.874 | 25,297 | **99.921** | 593 |
+| open test | 26,185 | 99.843 | 25,198 | 99.909 | 554 |
+| masc | 386,445 | 99.859 | 385,828 | 99.864 | 9,078 |
 
 - **Train is covered by construction** (every non-disputed training tag is added to the lexicon) except one token:
   `1st` as an adverb, which the digit rule does not cover. Dev is the gate, but the attestation thresholds were tuned on it, so test is the only unbiased report. The all-token

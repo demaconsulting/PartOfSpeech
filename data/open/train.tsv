@@ -2061,7 +2061,7 @@ Tom	PROPN	unanimous
 slowly	ADV	unanimous
 veered	VERB	unanimous
 into	ADP	unanimous
-oncoming	ADJ	disputed
+oncoming	ADJ	unanimous
 traffic	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -3457,17 +3457,17 @@ I	PRON	unanimous
 am	VERB	unanimous
 not	PART	unanimous
 a	DET	unanimous
-thinking	NOUN	disputed
+thinking	ADJ	disputed
 machine	NOUN	unanimous
 ;	PUNCT	unanimous
 I	PRON	unanimous
 'm	VERB	disputed
 a	DET	unanimous
-feeling	NOUN	disputed
+feeling	ADJ	disputed
 machine	NOUN	unanimous
 with	ADP	unanimous
 a	DET	unanimous
-thinking	NOUN	unanimous
+thinking	ADJ	unanimous
 extension	NOUN	unanimous
 that	PRON	disputed
 sometimes	ADV	unanimous
@@ -3543,7 +3543,7 @@ could	AUX	unanimous
 really	ADV	unanimous
 use	VERB	unanimous
 a	DET	unanimous
-helping	NOUN	unanimous
+helping	ADJ	unanimous
 hand	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -6203,7 +6203,7 @@ Computer-monitor	NOUN	unanimous
 images	NOUN	unanimous
 complete	ADJ	unanimous
 with	ADP	unanimous
-accompanying	VERB	disputed
+accompanying	ADJ	disputed
 audios	NOUN	unanimous
 came	VERB	unanimous
 alive	ADJ	disputed
@@ -7179,7 +7179,7 @@ vandalized	VERB	unanimous
 property	NOUN	unanimous
 belonging	VERB	unanimous
 to	ADP	unanimous
-ruling	VERB	unanimous
+ruling	ADJ	unanimous
 party	NOUN	unanimous
 supporters	NOUN	unanimous
 .	PUNCT	unanimous
@@ -8635,7 +8635,7 @@ have	AUX	unanimous
 been	AUX	disputed
 deployed	VERB	unanimous
 in	ADP	unanimous
-operating	NOUN	disputed
+operating	ADJ	disputed
 suites	NOUN	unanimous
 around	ADP	unanimous
 the	DET	unanimous
@@ -9532,7 +9532,7 @@ in	ADP	unanimous
 a	DET	unanimous
 new	ADJ	unanimous
 18-count	ADJ	unanimous
-superseding	VERB	disputed
+superseding	ADJ	disputed
 indictment	NOUN	unanimous
 of	ADP	unanimous
 violating	VERB	unanimous
@@ -12204,7 +12204,7 @@ turbo-charged	ADJ	unanimous
 "	PUNCT	unanimous
 version	NOUN	unanimous
 of	ADP	unanimous
-existing	VERB	disputed
+existing	ADJ	disputed
 treatments	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -13824,7 +13824,7 @@ accretion	NOUN	unanimous
 disk	NOUN	unanimous
 ,	PUNCT	unanimous
 a	DET	unanimous
-swirling	VERB	disputed
+swirling	ADJ	disputed
 mass	NOUN	unanimous
 of	ADP	unanimous
 dust	NOUN	unanimous
@@ -15086,7 +15086,7 @@ their	DET	unanimous
 fleece	NOUN	unanimous
 are	VERB	unanimous
 a	DET	unanimous
-growing	VERB	unanimous
+growing	ADJ	unanimous
 segment	NOUN	unanimous
 of	ADP	unanimous
 the	DET	unanimous
@@ -19984,7 +19984,7 @@ there	ADV	unanimous
 Bangladesh	PROPN	unanimous
 is	VERB	unanimous
 a	DET	unanimous
-developing	VERB	disputed
+developing	ADJ	disputed
 country	NOUN	unanimous
 with	ADP	unanimous
 a	DET	unanimous
@@ -20732,7 +20732,7 @@ government	NOUN	unanimous
 # source_id = tatoeba-11822442
 # text = All preceding narrations are so intermixed with fable, that philosophers ought to abandon them in a great measure, to the embellishment of the poet and orator.
 All	DET	unanimous
-preceding	ADJ	disputed
+preceding	ADJ	unanimous
 narrations	NOUN	unanimous
 are	VERB	unanimous
 so	ADV	unanimous
@@ -21578,7 +21578,7 @@ garbled	ADJ	unanimous
 facts	NOUN	unanimous
 ,	PUNCT	unanimous
 or	CCONJ	unanimous
-lying	VERB	disputed
+lying	ADJ	disputed
 statistics	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -23508,7 +23508,7 @@ Look	VERB	unanimous
 It	PRON	unanimous
 's	VERB	unanimous
 a	DET	unanimous
-truck-shipping	NOUN	unanimous
+truck-shipping	ADJ	unanimous
 truck	NOUN	unanimous
 shipping	VERB	unanimous
 shipping	NOUN	disputed
@@ -25805,7 +25805,7 @@ until	SCONJ	unanimous
 the	DET	unanimous
 dew	NOUN	unanimous
 and	CCONJ	unanimous
-growing	VERB	disputed
+growing	ADJ	disputed
 cold	NOUN	disputed
 drove	VERB	unanimous
 them	PRON	unanimous
@@ -26335,7 +26335,7 @@ coal	NOUN	unanimous
 mining	NOUN	unanimous
 were	VERB	disputed
 from	ADP	unanimous
-coal-mining	NOUN	unanimous
+coal-mining	ADJ	unanimous
 regions	NOUN	unanimous
 ,	PUNCT	unanimous
 and	CCONJ	unanimous
@@ -27827,7 +27827,7 @@ in	ADP	unanimous
 the	DET	unanimous
 face	NOUN	unanimous
 of	ADP	unanimous
-dwindling	VERB	disputed
+dwindling	ADJ	disputed
 oil	NOUN	unanimous
 revenues	NOUN	unanimous
 .	PUNCT	unanimous
@@ -28959,7 +28959,7 @@ people	NOUN	unanimous
 living	VERB	unanimous
 in	ADP	unanimous
 the	DET	unanimous
-developing	VERB	unanimous
+developing	ADJ	unanimous
 world	NOUN	unanimous
 are	VERB	disputed
 unregistered	ADJ	disputed
@@ -29513,7 +29513,7 @@ which	PRON	unanimous
 then	ADV	unanimous
 softens	VERB	unanimous
 the	DET	unanimous
-surrounding	VERB	unanimous
+surrounding	ADJ	unanimous
 ice	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -29692,7 +29692,7 @@ partly	ADV	unanimous
 because	ADP	disputed
 of	ADP	unanimous
 the	DET	unanimous
-growing	VERB	disputed
+growing	ADJ	disputed
 number	NOUN	unanimous
 of	ADP	unanimous
 e-learning	NOUN	unanimous
@@ -33841,7 +33841,7 @@ adaptation	NOUN	unanimous
 and	CCONJ	unanimous
 mitigation	NOUN	unanimous
 for	ADP	unanimous
-developing	VERB	unanimous
+developing	ADJ	unanimous
 countries	NOUN	unanimous
 by	ADP	unanimous
 2020	NUM	unanimous
@@ -35568,7 +35568,7 @@ icy	ADJ	unanimous
 bodies	NOUN	unanimous
 that	PRON	unanimous
 develop	VERB	unanimous
-glowing	VERB	unanimous
+glowing	ADJ	unanimous
 tails	NOUN	unanimous
 when	SCONJ	unanimous
 near	ADP	disputed
@@ -40990,7 +40990,7 @@ open	VERB	unanimous
 a	DET	unanimous
 gallery	NOUN	unanimous
 for	ADP	unanimous
-emerging	VERB	unanimous
+emerging	ADJ	unanimous
 artists	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -46817,7 +46817,7 @@ an	DET	unanimous
 ascending	ADJ	disputed
 and	CCONJ	unanimous
 a	DET	unanimous
-descending	VERB	disputed
+descending	ADJ	disputed
 trail	NOUN	unanimous
 .	PUNCT	unanimous
 "	PUNCT	unanimous
@@ -50496,7 +50496,7 @@ of	ADP	unanimous
 The	DET	disputed
 Practice	NOUN	disputed
 in	ADP	unanimous
-Writing	PROPN	disputed
+Writing	NOUN	disputed
 Studies	NOUN	disputed
 at	ADP	unanimous
 Duke	PROPN	unanimous
@@ -51846,7 +51846,7 @@ it	PRON	disputed+mentioned
 's	NOUN	disputed
 ,	PUNCT	unanimous
 and	CCONJ	unanimous
-going	VERB	disputed+mentioned
+going	NOUN	disputed
 to	PART	disputed+mentioned
 becomes	VERB	unanimous
 gonna	NOUN	disputed
@@ -55261,7 +55261,7 @@ man	NOUN	unanimous
 # text = With each passing day, they each become more and more suspicious of each other.
 With	ADP	unanimous
 each	DET	unanimous
-passing	VERB	disputed
+passing	ADJ	disputed
 day	NOUN	unanimous
 ,	PUNCT	unanimous
 they	PRON	unanimous
@@ -66269,7 +66269,7 @@ such	ADJ	unanimous
 comparatives	NOUN	unanimous
 follow	VERB	unanimous
 a	DET	unanimous
-mirroring	VERB	disputed
+mirroring	ADJ	disputed
 structure	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -70739,7 +70739,7 @@ expression	NOUN	unanimous
 # source_id = voa-5505668
 # text = A shrinking violet describes someone who is very shy.
 A	DET	unanimous
-shrinking	ADJ	disputed
+shrinking	ADJ	unanimous
 violet	NOUN	unanimous
 describes	VERB	unanimous
 someone	PRON	unanimous
@@ -74558,7 +74558,7 @@ use	VERB	unanimous
 the	DET	unanimous
 term	NOUN	unanimous
 "	PUNCT	unanimous
-breaking	VERB	disputed+mentioned
+breaking	ADJ	disputed
 news	NOUN	unanimous+mentioned
 "	PUNCT	unanimous
 to	PART	unanimous
@@ -75294,7 +75294,7 @@ let	VERB	unanimous
 talk	VERB	unanimous
 about	ADP	unanimous
 another	DET	unanimous
-flying	ADJ	disputed
+flying	ADJ	unanimous
 insect	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -77901,7 +77901,7 @@ government	NOUN	unanimous
 improve	VERB	unanimous
 nutrition	NOUN	unanimous
 in	ADP	unanimous
-existing	ADJ	disputed
+existing	ADJ	unanimous
 food	NOUN	unanimous
 programs	NOUN	unanimous
 ,	PUNCT	unanimous
@@ -78223,7 +78223,7 @@ of	ADP	unanimous
 the	DET	unanimous
 most	ADV	unanimous
 common	ADJ	unanimous
-linking	NOUN	unanimous
+linking	ADJ	unanimous
 verbs	NOUN	unanimous
 is	VERB	unanimous
 the	DET	unanimous
@@ -78841,7 +78841,7 @@ The	DET	unanimous
 office	NOUN	unanimous
 noted	VERB	unanimous
 the	DET	unanimous
-growing	VERB	disputed
+growing	ADJ	disputed
 evidence	NOUN	unanimous
 that	SCONJ	unanimous
 people	NOUN	unanimous
@@ -81750,7 +81750,7 @@ there	PRON	unanimous
 is	VERB	unanimous
 evidence	NOUN	unanimous
 of	ADP	unanimous
-increasing	VERB	disputed
+increasing	ADJ	disputed
 concern	NOUN	unanimous
 among	ADP	unanimous
 Americans	NOUN	unanimous
@@ -82049,7 +82049,7 @@ neighborhood	NOUN	unanimous
 # source_id = voa-6555555
 # text = The dangling participle has lost its point of connection with the sentence.
 The	DET	unanimous
-dangling	VERB	unanimous
+dangling	ADJ	unanimous
 participle	NOUN	unanimous
 has	AUX	unanimous
 lost	VERB	unanimous
@@ -82940,7 +82940,7 @@ and	CCONJ	unanimous
 hope	VERB	unanimous
 that	SCONJ	unanimous
 my	DET	unanimous
-sleeping	VERB	disputed
+sleeping	ADJ	disputed
 self	NOUN	unanimous
 comes	VERB	unanimous
 to	ADP	unanimous
@@ -84000,7 +84000,7 @@ beach	NOUN	unanimous
 So	ADV	unanimous
 ,	PUNCT	unanimous
 bringing	VERB	unanimous
-sand-digging	NOUN	unanimous
+sand-digging	ADJ	unanimous
 tools	NOUN	unanimous
 --	PUNCT	unanimous
 like	ADP	unanimous
@@ -85233,7 +85233,7 @@ can	AUX	unanimous
 not	PART	unanimous
 have	VERB	unanimous
 two	NUM	unanimous
-conflicting	VERB	unanimous
+conflicting	ADJ	unanimous
 things	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -89030,7 +89030,7 @@ mean	VERB	unanimous
 either	CCONJ	unanimous
 wood	NOUN	unanimous
 from	ADP	unanimous
-standing	VERB	disputed
+standing	ADJ	disputed
 trees	NOUN	unanimous
 or	CCONJ	unanimous
 wood	NOUN	unanimous
@@ -91027,7 +91027,7 @@ It	PRON	unanimous
 would	AUX	unanimous
 permit	VERB	unanimous
 any	DET	unanimous
-qualifying	VERB	unanimous
+qualifying	ADJ	unanimous
 migrant	NOUN	unanimous
 who	PRON	unanimous
 entered	VERB	unanimous
@@ -97255,7 +97255,7 @@ election	NOUN	unanimous
 campaign	NOUN	unanimous
 to	ADP	unanimous
 a	DET	unanimous
-sporting	ADJ	disputed
+sporting	ADJ	unanimous
 competition	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -104776,7 +104776,7 @@ to	PART	unanimous
 establish	VERB	unanimous
 a	DET	unanimous
 good	ADJ	unanimous
-working	NOUN	disputed
+working	ADJ	disputed
 relationship	NOUN	unanimous
 with	ADP	unanimous
 Congress	PROPN	unanimous
@@ -106832,7 +106832,7 @@ on	ADP	unanimous
 Mars	PROPN	unanimous
 adds	VERB	unanimous
 to	ADP	unanimous
-existing	VERB	unanimous
+existing	ADJ	unanimous
 evidence	NOUN	unanimous
 that	SCONJ	unanimous
 the	DET	unanimous
@@ -108013,7 +108013,7 @@ MDI	PROPN	disputed
 )	PUNCT	unanimous
 and	CCONJ	unanimous
 the	DET	unanimous
-surrounding	ADJ	disputed
+surrounding	ADJ	unanimous
 area	NOUN	unanimous
 grew	VERB	unanimous
 .	PUNCT	unanimous
@@ -108175,7 +108175,7 @@ East-side	ADJ	unanimous
 crews	NOUN	unanimous
 primarily	ADV	unanimous
 rehabilitated	VERB	unanimous
-existing	VERB	unanimous
+existing	ADJ	unanimous
 trails	NOUN	unanimous
 constructed	VERB	unanimous
 by	ADP	unanimous
@@ -108965,7 +108965,7 @@ Lakes	NOUN	unanimous
 and	CCONJ	unanimous
 ponds	NOUN	unanimous
 add	VERB	unanimous
-shimmering	VERB	unanimous
+shimmering	ADJ	unanimous
 contrast	NOUN	unanimous
 to	ADP	unanimous
 Acadia	PROPN	unanimous
@@ -110241,7 +110241,7 @@ material	NOUN	unanimous
 ,	PUNCT	unanimous
 and	CCONJ	unanimous
 the	DET	unanimous
-accompanying	VERB	unanimous
+accompanying	ADJ	unanimous
 loss	NOUN	unanimous
 of	ADP	unanimous
 soil	NOUN	unanimous
@@ -110781,7 +110781,7 @@ continued	ADJ	unanimous
 attention	NOUN	unanimous
 in	ADP	unanimous
 the	DET	unanimous
-coming	ADJ	disputed
+coming	ADJ	unanimous
 years	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -111915,7 +111915,7 @@ Chisos	ADJ	disputed
 Indians	NOUN	unanimous
 ,	PUNCT	unanimous
 a	DET	unanimous
-hunting-gathering-farming	ADJ	disputed
+hunting-gathering-farming	ADJ	unanimous
 band	NOUN	unanimous
 ,	PUNCT	unanimous
 were	VERB	unanimous
@@ -112208,7 +112208,7 @@ wax	NOUN	unanimous
 manufacturing	NOUN	disputed
 operation	NOUN	unanimous
 and	CCONJ	unanimous
-accompanying	VERB	disputed
+accompanying	ADJ	disputed
 village	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -112514,7 +112514,7 @@ it	PRON	unanimous
 was	VERB	unanimous
 primarily	ADV	unanimous
 a	DET	unanimous
-soaring	VERB	disputed
+soaring	ADJ	disputed
 creature	NOUN	unanimous
 controlling	VERB	unanimous
 its	DET	unanimous
@@ -115502,7 +115502,7 @@ at	ADP	unanimous
 feet	NOUN	unanimous
 above	ADP	unanimous
 the	DET	unanimous
-surrounding	VERB	unanimous
+surrounding	ADJ	unanimous
 landscape	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -116281,7 +116281,7 @@ programs	NOUN	unanimous
 ,	PUNCT	unanimous
 which	PRON	unanimous
 disrupted	VERB	unanimous
-functioning	VERB	disputed
+functioning	ADJ	disputed
 ecosystems	NOUN	unanimous
 ,	PUNCT	unanimous
 today	NOUN	disputed
@@ -118629,7 +118629,7 @@ that	PRON	unanimous
 are	VERB	disputed
 free	ADJ	unanimous
 of	ADP	unanimous
-surrounding	VERB	unanimous
+surrounding	ADJ	unanimous
 underbrush	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -119355,7 +119355,7 @@ the	DET	unanimous
 presence	NOUN	unanimous
 of	ADP	unanimous
 the	DET	unanimous
-remaining	VERB	disputed
+remaining	ADJ	disputed
 fisheries	NOUN	unanimous
 on	ADP	unanimous
 Isle	PROPN	unanimous
@@ -120032,7 +120032,7 @@ surface	NOUN	unanimous
 Younger	ADJ	unanimous
 than	ADP	disputed
 the	DET	unanimous
-surrounding	VERB	unanimous
+surrounding	ADJ	unanimous
 monzogranite	NOUN	unanimous
 ,	PUNCT	unanimous
 dikes	NOUN	unanimous
@@ -120044,7 +120044,7 @@ rock	NOUN	unanimous
 was	AUX	disputed
 pushed	VERB	unanimous
 into	ADP	unanimous
-existing	VERB	unanimous
+existing	ADJ	unanimous
 joint	NOUN	unanimous
 fractures	NOUN	unanimous
 .	PUNCT	unanimous
@@ -120072,7 +120072,7 @@ protective	ADJ	unanimous
 branches	NOUN	unanimous
 of	ADP	unanimous
 a	DET	unanimous
-neighboring	ADJ	disputed
+neighboring	ADJ	unanimous
 shrub	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -124267,7 +124267,7 @@ factors	NOUN	unanimous
 # source_id = nps-sagu-environmentalfactors
 # text = With increasing urbanization, Saguaro is experiencing ecological changes brought on by its interface with the city of Tucson.
 With	ADP	unanimous
-increasing	VERB	disputed
+increasing	ADJ	disputed
 urbanization	NOUN	unanimous
 ,	PUNCT	unanimous
 Saguaro	PROPN	unanimous
@@ -126934,7 +126934,7 @@ change	NOUN	unanimous
 is	AUX	disputed
 resulting	VERB	unanimous
 in	ADP	unanimous
-changing	VERB	disputed
+changing	ADJ	disputed
 weather	NOUN	disputed
 patterns	NOUN	unanimous
 that	PRON	disputed
@@ -130431,7 +130431,7 @@ in	ADP	unanimous
 burned	VERB	unanimous
 down	ADV	unanimous
 the	DET	unanimous
-decaying	VERB	unanimous
+decaying	ADJ	unanimous
 hotel	NOUN	unanimous
 ,	PUNCT	unanimous
 and	CCONJ	unanimous
@@ -130463,7 +130463,7 @@ undoubtedly	ADV	unanimous
 important	ADJ	unanimous
 to	ADP	unanimous
 the	DET	unanimous
-developing	VERB	disputed
+developing	ADJ	disputed
 artist	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -133407,7 +133407,7 @@ the	DET	unanimous
 Sun	PROPN	unanimous
 ,	PUNCT	unanimous
 its	DET	unanimous
-radiating	VERB	disputed
+radiating	ADJ	disputed
 energy	NOUN	unanimous
 is	VERB	unanimous
 much	ADV	unanimous
@@ -134427,7 +134427,7 @@ the	DET	unanimous
 and	CCONJ	unanimous
 these	DET	unanimous
 automated	ADJ	unanimous
-observing	NOUN	disputed
+observing	ADJ	disputed
 systems	NOUN	unanimous
 can	AUX	unanimous
 only	ADV	unanimous
@@ -134659,7 +134659,7 @@ Atlanta	PROPN	unanimous
 # source_id = nws-jetstream-cwsus
 # text = The ensuing investigation suggested that Air Traffic Controllers needed a better way to receive timely weather information, and the CWSU program was born.
 The	DET	unanimous
-ensuing	VERB	unanimous
+ensuing	ADJ	unanimous
 investigation	NOUN	unanimous
 suggested	VERB	unanimous
 that	SCONJ	unanimous
@@ -137174,7 +137174,7 @@ Edward	PROPN	unanimous
 Appleton	PROPN	unanimous
 named	VERB	unanimous
 that	DET	unanimous
-conducting	VERB	unanimous
+conducting	ADJ	unanimous
 layer	NOUN	unanimous
 the	DET	unanimous
 (	PUNCT	unanimous
@@ -137283,7 +137283,7 @@ spots	NOUN	unanimous
 can	AUX	unanimous
 fill	VERB	unanimous
 with	ADP	unanimous
-rushing	VERB	disputed
+rushing	ADJ	disputed
 water	NOUN	unanimous
 during	ADP	unanimous
 very	ADV	unanimous
@@ -137952,7 +137952,7 @@ to	PART	unanimous
 enter	VERB	unanimous
 ,	PUNCT	unanimous
 the	DET	unanimous
-cooling	VERB	disputed
+cooling	ADJ	disputed
 temperature	NOUN	unanimous
 results	VERB	unanimous
 in	ADP	unanimous
@@ -138014,7 +138014,7 @@ protection	NOUN	unanimous
 between	ADP	unanimous
 you	PRON	unanimous
 and	CCONJ	unanimous
-flying	VERB	disputed
+flying	ADJ	disputed
 debris	NOUN	unanimous
 as	SCONJ	unanimous
 possible	ADJ	unanimous
@@ -140013,7 +140013,7 @@ Deep	PROPN	unanimous
 South	PROPN	unanimous
 ,	PUNCT	unanimous
 near	ADP	unanimous
-freezing	ADJ	disputed
+freezing	NOUN	disputed
 temperatures	NOUN	unanimous
 can	AUX	unanimous
 be	AUX	disputed
@@ -141234,7 +141234,7 @@ spectrum	NOUN	unanimous
 All	DET	disputed
 of	ADP	unanimous
 the	DET	unanimous
-outgoing	ADJ	disputed
+outgoing	ADJ	unanimous
 energy	NOUN	unanimous
 emitted	VERB	unanimous
 by	ADP	unanimous
@@ -141745,7 +141745,7 @@ can	AUX	unanimous
 evaporate	VERB	unanimous
 into	ADP	unanimous
 the	DET	unanimous
-surrounding	ADJ	disputed
+surrounding	ADJ	unanimous
 air	NOUN	unanimous
 ,	PUNCT	unanimous
 even	ADV	disputed
@@ -144384,7 +144384,7 @@ Pacific	PROPN	unanimous
 plate	NOUN	disputed
 meets	VERB	unanimous
 its	DET	unanimous
-surrounding	VERB	unanimous
+surrounding	ADJ	unanimous
 plates	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -145554,7 +145554,7 @@ next	ADJ	disputed
 begin	VERB	unanimous
 to	PART	unanimous
 show	VERB	unanimous
-increasing	VERB	unanimous
+increasing	ADJ	unanimous
 variations	NOUN	unanimous
 in	ADP	unanimous
 forecasts	NOUN	unanimous
@@ -145949,7 +145949,7 @@ and	CCONJ	unanimous
 preparedness	NOUN	unanimous
 graphics	NOUN	unanimous
 with	ADP	unanimous
-corresponding	VERB	unanimous
+corresponding	ADJ	unanimous
 text	NOUN	unanimous
 to	PART	unanimous
 help	VERB	unanimous
@@ -150869,7 +150869,7 @@ to	PART	unanimous
 care	VERB	unanimous
 for	ADP	unanimous
 military	ADJ	unanimous
-working	NOUN	disputed
+working	ADJ	disputed
 dogs	NOUN	unanimous
 in	ADP	unanimous
 the	DET	unanimous
@@ -151894,7 +151894,7 @@ The	DET	unanimous
 cells	NOUN	unanimous
 of	ADP	unanimous
 all	DET	unanimous
-living	VERB	unanimous
+living	ADJ	unanimous
 things	NOUN	unanimous
 include	VERB	unanimous
 DNA	NOUN	unanimous
@@ -152512,7 +152512,7 @@ one	NUM	unanimous
 year	NOUN	unanimous
 ,	PUNCT	unanimous
 a	DET	unanimous
-lingering	ADJ	disputed
+lingering	ADJ	unanimous
 homesickness	NOUN	unanimous
 had	VERB	unanimous
 her	PRON	unanimous
@@ -152621,7 +152621,7 @@ long	ADV	unanimous
 provided	VERB	unanimous
 estimates	NOUN	unanimous
 of	ADP	unanimous
-remaining	VERB	disputed
+remaining	ADJ	disputed
 coal	NOUN	unanimous
 resources	NOUN	unanimous
 ,	PUNCT	unanimous
@@ -152941,7 +152941,7 @@ loss	NOUN	unanimous
 pesticide	NOUN	unanimous
 exposure	NOUN	unanimous
 and	CCONJ	unanimous
-shifting	VERB	disputed
+shifting	ADJ	disputed
 markets	NOUN	unanimous
 and	CCONJ	unanimous
 consumer	NOUN	unanimous
@@ -152966,7 +152966,7 @@ being	AUX	unanimous
 planted	VERB	unanimous
 to	PART	unanimous
 meet	VERB	unanimous
-growing	VERB	disputed
+growing	ADJ	disputed
 demands	NOUN	unanimous
 ,	PUNCT	unanimous
 often	ADV	unanimous
@@ -153407,7 +153407,7 @@ is	AUX	disputed
 usually	ADV	unanimous
 produced	VERB	unanimous
 from	ADP	unanimous
-smoldering	VERB	disputed
+smoldering	ADJ	disputed
 fires	NOUN	unanimous
 ,	PUNCT	unanimous
 the	DET	unanimous
@@ -162539,7 +162539,7 @@ network	NOUN	unanimous
 of	ADP	unanimous
 several	ADJ	unanimous
 hundred	NUM	unanimous
-existing	VERB	unanimous
+existing	ADJ	unanimous
 streamgages	NOUN	unanimous
 in	ADP	unanimous
 the	DET	unanimous
@@ -162889,7 +162889,7 @@ State	PROPN	disputed
 were	AUX	disputed
 linked	VERB	unanimous
 to	ADP	unanimous
-overflowing	VERB	disputed
+overflowing	ADJ	disputed
 rivers	NOUN	unanimous
 ,	PUNCT	unanimous
 which	PRON	unanimous
@@ -162897,7 +162897,7 @@ surged	VERB	unanimous
 through	ADP	unanimous
 Missouri	PROPN	unanimous
 and	CCONJ	unanimous
-surrounding	VERB	unanimous
+surrounding	ADJ	unanimous
 States	NOUN	unanimous
 after	ADP	disputed
 a	DET	unanimous
@@ -163197,7 +163197,7 @@ is	AUX	unanimous
 filled	VERB	unanimous
 with	ADP	unanimous
 energy	NOUN	unanimous
-producing	VERB	disputed
+producing	ADJ	disputed
 cells	NOUN	unanimous
 that	PRON	unanimous
 heat	VERB	unanimous
@@ -163259,7 +163259,7 @@ the	DET	unanimous
 U.S.	PROPN	unanimous
 meeting	VERB	unanimous
 the	DET	unanimous
-growing	VERB	unanimous
+growing	ADJ	unanimous
 need	NOUN	unanimous
 for	ADP	unanimous
 renewable	ADJ	unanimous
@@ -163865,7 +163865,7 @@ water	NOUN	unanimous
 is	VERB	unanimous
 present	ADJ	unanimous
 in	ADP	unanimous
-varying	VERB	disputed
+varying	ADJ	disputed
 amounts	NOUN	unanimous
 that	PRON	unanimous
 change	VERB	unanimous
@@ -164422,7 +164422,7 @@ damage	NOUN	unanimous
 or	CCONJ	unanimous
 to	PART	unanimous
 reinforce	VERB	unanimous
-existing	VERB	unanimous
+existing	ADJ	unanimous
 structures	NOUN	unanimous
 to	PART	unanimous
 withstand	VERB	unanimous
@@ -165671,7 +165671,7 @@ coverage	NOUN	unanimous
 # source_id = usgs-nr-inflation-reduction-act-accelerates-usgs-effort-collect-high
 # text = The resulting data and digital elevation models (DEMs) will be made available for public use on The National Map website and can be downloaded via the 3DEP LidarExplorer here.
 The	DET	unanimous
-resulting	VERB	unanimous
+resulting	ADJ	unanimous
 data	NOUN	unanimous
 and	CCONJ	unanimous
 digital	ADJ	unanimous
@@ -166434,7 +166434,7 @@ the	DET	unanimous
 riverbed	NOUN	unanimous
 and	CCONJ	unanimous
 the	DET	unanimous
-surrounding	ADJ	disputed
+surrounding	ADJ	unanimous
 topography	NOUN	unanimous
 .	PUNCT	unanimous
 
@@ -170175,7 +170175,7 @@ production	NOUN	unchecked
 quantities	NOUN	unchecked
 ,	PUNCT	unchecked
 in	ADP	unchecked
-descending	ADJ	disputed
+descending	ADJ	unchecked
 order	NOUN	unchecked
 ,	PUNCT	unchecked
 were	VERB	unchecked
@@ -170657,7 +170657,7 @@ form	NOUN	unchecked
 of	ADP	unchecked
 rain	NOUN	unchecked
 ,	PUNCT	unchecked
-freezing	VERB	unchecked
+freezing	ADJ	unchecked
 rain	NOUN	unchecked
 ,	PUNCT	unchecked
 sleet	NOUN	unchecked
@@ -171915,7 +171915,7 @@ capabilities	NOUN	unchecked
 EarthViews	PROPN	unchecked
 is	VERB	unchecked
 a	DET	unchecked
-continuing	VERB	unchecked
+continuing	ADJ	unchecked
 series	NOUN	unchecked
 in	ADP	unchecked
 which	PRON	unchecked
@@ -172753,7 +172753,7 @@ against	ADP	unchecked
 a	DET	unchecked
 landscape	NOUN	unchecked
 of	ADP	unchecked
-standing	VERB	unchecked
+standing	ADJ	unchecked
 rocks	NOUN	unchecked
 above	ADP	unchecked
 it	PRON	unchecked
@@ -174207,7 +174207,7 @@ by	ADP	unchecked
 terrain	NOUN	unchecked
 where	ADV	unchecked
 the	DET	unchecked
-underlying	ADJ	disputed
+underlying	ADJ	unchecked
 rock	NOUN	unchecked
 can	AUX	unchecked
 be	AUX	unchecked
@@ -176485,7 +176485,7 @@ along	ADP	unchecked
 mid-ocean	ADJ	unchecked
 rifts	NOUN	unchecked
 (	PUNCT	unchecked
-spreading	VERB	disputed
+spreading	VERB	unchecked
 ridges	NOUN	unchecked
 )	PUNCT	unchecked
 .	PUNCT	unchecked
@@ -176782,7 +176782,7 @@ cubic	ADJ	unchecked
 feet	NOUN	unchecked
 per	ADP	unchecked
 second	NOUN	unchecked
-beginning	VERB	disputed
+beginning	VERB	unchecked
 Friday	PROPN	unchecked
 ,	PUNCT	unchecked
 May	PROPN	unchecked
@@ -177263,7 +177263,7 @@ in	ADP	unchecked
 Connecticut	PROPN	unchecked
 and	CCONJ	unchecked
 an	DET	unchecked
-emerging	VERB	unchecked
+emerging	ADJ	unchecked
 hazard	NOUN	unchecked
 in	ADP	unchecked
 central	ADJ	unchecked
@@ -178942,7 +178942,7 @@ will	AUX	unchecked
 add	VERB	unchecked
 to	ADP	unchecked
 the	DET	unchecked
-existing	VERB	unchecked
+existing	ADJ	unchecked
 volcano	NOUN	unchecked
 monitoring	NOUN	unchecked
 system	NOUN	unchecked
@@ -180010,7 +180010,7 @@ potential	NOUN	unchecked
 of	ADP	unchecked
 Iowa	PROPN	unchecked
 and	CCONJ	unchecked
-surrounding	VERB	unchecked
+surrounding	ADJ	unchecked
 areas	NOUN	unchecked
 ,	PUNCT	unchecked
 "	PUNCT	unchecked
@@ -182572,7 +182572,7 @@ these	DET	unchecked
 potential	ADJ	unchecked
 biases	NOUN	unchecked
 in	ADP	unchecked
-existing	VERB	unchecked
+existing	ADJ	unchecked
 fisheries	NOUN	unchecked
 acoustic	ADJ	unchecked
 surveys	NOUN	unchecked
@@ -184297,7 +184297,7 @@ whether	SCONJ	unchecked
 their	DET	unchecked
 estimates	NOUN	unchecked
 of	ADP	unchecked
-spawning	NOUN	disputed
+spawning	NOUN	unchecked
 population	NOUN	unchecked
 size	NOUN	unchecked
 were	VERB	unchecked
@@ -187310,7 +187310,7 @@ up	ADV	unchecked
 under	ADP	unchecked
 a	DET	unchecked
 great	ADJ	unchecked
-over-hanging	VERB	unchecked
+over-hanging	ADJ	unchecked
 tree	NOUN	unchecked
 by	ADP	unchecked
 the	DET	unchecked
@@ -187929,7 +187929,7 @@ up	ADV	unchecked
 # source_id = gutenberg-108
 # text = The droning sound swelled louder upon our ears until it became one long, deep wail of distress.
 The	DET	unchecked
-droning	VERB	unchecked
+droning	ADJ	unchecked
 sound	NOUN	unchecked
 swelled	VERB	unchecked
 louder	ADV	disputed
@@ -189558,7 +189558,7 @@ the	DET	unchecked
 conversation	NOUN	unchecked
 of	ADP	unchecked
 the	DET	unchecked
-trysting	VERB	unchecked
+trysting	ADJ	unchecked
 pair	NOUN	unchecked
 could	AUX	unchecked
 not	PART	unchecked
@@ -192695,7 +192695,7 @@ heads	NOUN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
 white	ADJ	unchecked
-glistening	VERB	unchecked
+glistening	ADJ	unchecked
 sand	NOUN	unchecked
 beneath	ADP	unchecked
 our	DET	unchecked
@@ -194789,7 +194789,7 @@ the	DET	unchecked
 consequence	NOUN	unchecked
 of	ADP	unchecked
 your	DET	unchecked
-marrying	VERB	unchecked
+marrying	NOUN	unchecked
 Mr.	PROPN	unchecked
 Martin	PROPN	unchecked
 .	PUNCT	unchecked
@@ -198101,7 +198101,7 @@ the	DET	unchecked
 streams	NOUN	unchecked
 and	CCONJ	unchecked
 the	DET	unchecked
-sparkling	ADJ	disputed
+sparkling	ADJ	unchecked
 lake	NOUN	unchecked
 ,	PUNCT	unchecked
 all	PRON	disputed
@@ -198444,7 +198444,7 @@ without	ADP	unchecked
 the	DET	unchecked
 distracting	ADJ	unchecked
 and	CCONJ	unchecked
-varying	ADJ	disputed
+varying	ADJ	unchecked
 attentions	NOUN	unchecked
 of	ADP	unchecked
 strangers	NOUN	unchecked
@@ -198991,7 +198991,7 @@ obtuse	ADJ	unchecked
 # source_id = gutenberg-18452
 # text = The drooping cap is also lacey with a network, and the spores drip mucus and then dry up, in the meantime spreading around a carrion-like, fetid smell.
 The	DET	unchecked
-drooping	VERB	unchecked
+drooping	ADJ	unchecked
 cap	NOUN	unchecked
 is	VERB	unchecked
 also	ADV	unchecked
@@ -199891,7 +199891,7 @@ down	ADV	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
 the	DET	unchecked
-shifting	VERB	unchecked
+shifting	ADJ	unchecked
 clouds	NOUN	unchecked
 let	VERB	unchecked
 the	DET	unchecked
@@ -202192,7 +202192,7 @@ Bob	PROPN	unchecked
 rose	VERB	unchecked
 with	ADP	unchecked
 a	DET	unchecked
-bleeding	VERB	unchecked
+bleeding	ADJ	unchecked
 nose	NOUN	unchecked
 ,	PUNCT	unchecked
 wiped	VERB	unchecked
@@ -203120,7 +203120,7 @@ nose	NOUN	unchecked
 gave	VERB	unchecked
 him	PRON	unchecked
 a	DET	unchecked
-varying	VERB	unchecked
+varying	ADJ	unchecked
 description	NOUN	unchecked
 of	ADP	unchecked
 the	DET	unchecked
@@ -205909,7 +205909,7 @@ into	ADP	unchecked
 # source_id = gutenberg-24564
 # text = The projecting part of the first cuneiform bone which supports the great toe I was obliged to divide with a saw.
 The	DET	unchecked
-projecting	VERB	unchecked
+projecting	ADJ	unchecked
 part	NOUN	unchecked
 of	ADP	unchecked
 the	DET	unchecked
@@ -206215,7 +206215,7 @@ and	CCONJ	unchecked
 curdy	ADJ	unchecked
 ,	PUNCT	unchecked
 the	DET	unchecked
-exhausting	NOUN	unchecked
+exhausting	ADJ	unchecked
 syringe	NOUN	unchecked
 of	ADP	unchecked
 Mr.	PROPN	unchecked
@@ -206855,7 +206855,7 @@ them	PRON	unchecked
 as	ADP	unchecked
 backgrounds	NOUN	unchecked
 for	ADP	unchecked
-flowering	VERB	unchecked
+flowering	ADJ	unchecked
 plants	NOUN	unchecked
 ,	PUNCT	unchecked
 mass	VERB	unchecked
@@ -207453,7 +207453,7 @@ come	VERB	unchecked
 to	PART	unchecked
 revive	VERB	unchecked
 the	DET	unchecked
-withering	VERB	unchecked
+withering	ADJ	unchecked
 hopes	NOUN	unchecked
 of	ADP	unchecked
 those	PRON	unchecked
@@ -212494,7 +212494,7 @@ heart	NOUN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
 a	DET	unchecked
-smoldering	VERB	unchecked
+smoldering	ADJ	unchecked
 flame	NOUN	unchecked
 of	ADP	unchecked
 jealousy	NOUN	unchecked
@@ -213038,7 +213038,7 @@ effect	NOUN	unchecked
 there	PRON	unchecked
 is	VERB	unchecked
 a	DET	unchecked
-binding	ADJ	disputed
+binding	ADJ	unchecked
 power	NOUN	unchecked
 which	PRON	unchecked
 constrains	VERB	unchecked
@@ -213501,7 +213501,7 @@ that	DET	unchecked
 wonderful	ADJ	unchecked
 transformation	NOUN	unchecked
 of	ADP	unchecked
-creeping	VERB	unchecked
+creeping	ADJ	unchecked
 worm	NOUN	unchecked
 into	ADP	unchecked
 a	DET	unchecked
@@ -217670,7 +217670,7 @@ boat	NOUN	unchecked
 No	DET	unchecked
 party	NOUN	unchecked
 of	ADP	unchecked
-marauding	VERB	unchecked
+marauding	ADJ	unchecked
 Indians	NOUN	unchecked
 had	AUX	unchecked
 swooped	VERB	unchecked
@@ -219935,7 +219935,7 @@ everywhere	ADV	unchecked
 crowds	NOUN	unchecked
 of	ADP	unchecked
 the	DET	unchecked
-surrounding	ADJ	disputed
+surrounding	ADJ	unchecked
 royalties	NOUN	unchecked
 swooped	VERB	unchecked
 down	ADV	unchecked
@@ -220043,7 +220043,7 @@ serious	ADJ	unchecked
 --	PUNCT	unchecked
 during	ADP	unchecked
 the	DET	unchecked
-ensuing	VERB	unchecked
+ensuing	ADJ	unchecked
 years	NOUN	unchecked
 ,	PUNCT	unchecked
 the	DET	unchecked
@@ -220786,7 +220786,7 @@ We	PRON	unchecked
 learn	VERB	unchecked
 from	ADP	unchecked
 the	DET	unchecked
-preceding	ADJ	disputed
+preceding	ADJ	unchecked
 statements	NOUN	unchecked
 that	SCONJ	unchecked
 no	DET	unchecked
@@ -220970,7 +220970,7 @@ iron	NOUN	unchecked
 # text = In the trembling bell, Fig.
 In	ADP	unchecked
 the	DET	unchecked
-trembling	ADJ	disputed
+trembling	ADJ	unchecked
 bell	NOUN	unchecked
 ,	PUNCT	unchecked
 Fig	NOUN	unchecked
@@ -222373,7 +222373,7 @@ the	DET	unchecked
 shattered	ADJ	unchecked
 frame	NOUN	unchecked
 and	CCONJ	unchecked
-hacking	ADJ	disputed
+hacking	ADJ	unchecked
 cough	NOUN	unchecked
 ;	PUNCT	unchecked
 but	CCONJ	unchecked
@@ -223423,7 +223423,7 @@ sea-beach	NOUN	unchecked
 # source_id = gutenberg-42369
 # text = The Reciprocating Engine.
 The	DET	unchecked
-Reciprocating	ADJ	disputed
+Reciprocating	ADJ	unchecked
 Engine	NOUN	unchecked
 .	PUNCT	unchecked
 
@@ -225375,7 +225375,7 @@ to	ADP	unchecked
 her	DET	unchecked
 ears	NOUN	unchecked
 in	ADP	unchecked
-laughing	VERB	unchecked
+laughing	ADJ	unchecked
 cadence	NOUN	unchecked
 and	CCONJ	unchecked
 filled	VERB	unchecked
@@ -228103,7 +228103,7 @@ edge	NOUN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
 some	DET	unchecked
-living	ADJ	disputed
+living	ADJ	unchecked
 thing	NOUN	unchecked
 broke	VERB	unchecked
 from	ADP	unchecked
@@ -229355,7 +229355,7 @@ tea	NOUN	unchecked
 pot	NOUN	unchecked
 and	CCONJ	unchecked
 this	DET	unchecked
-freezing	NOUN	unchecked
+freezing	ADJ	unchecked
 mixture	NOUN	unchecked
 into	ADP	unchecked
 another	PRON	unchecked
@@ -234894,7 +234894,7 @@ interposed	VERB	unchecked
 a	DET	unchecked
 harsh	ADJ	unchecked
 and	CCONJ	unchecked
-jeering	ADJ	disputed
+jeering	ADJ	unchecked
 voice	NOUN	unchecked
 .	PUNCT	unchecked
 
@@ -236780,7 +236780,7 @@ little	ADJ	unchecked
 denser	ADJ	unchecked
 than	ADP	unchecked
 the	DET	unchecked
-surrounding	VERB	unchecked
+surrounding	ADJ	unchecked
 dark	NOUN	unchecked
 ,	PUNCT	unchecked
 which	PRON	unchecked
@@ -239647,7 +239647,7 @@ two	NUM	unchecked
 Apostles	NOUN	unchecked
 prophesied	VERB	unchecked
 the	DET	unchecked
-impending	ADJ	disputed
+impending	ADJ	unchecked
 ruin	NOUN	unchecked
 of	ADP	unchecked
 Jerusalem	PROPN	unchecked
@@ -240887,7 +240887,7 @@ He	PRON	unchecked
 climbed	VERB	unchecked
 up	ADP	unchecked
 some	DET	unchecked
-rising	ADJ	disputed
+rising	ADJ	unchecked
 ground	NOUN	unchecked
 ,	PUNCT	unchecked
 and	CCONJ	unchecked
@@ -242922,7 +242922,7 @@ this	DET	unchecked
 grim	ADJ	unchecked
 melancholy	NOUN	unchecked
 and	CCONJ	unchecked
-narrowing	VERB	unchecked
+narrowing	ADJ	unchecked
 concentration	NOUN	unchecked
 of	ADP	unchecked
 desire	NOUN	unchecked
@@ -243097,7 +243097,7 @@ and	CCONJ	unchecked
 he	PRON	unchecked
 listened	VERB	unchecked
 with	ADP	unchecked
-growing	VERB	unchecked
+growing	ADJ	unchecked
 excitement	NOUN	unchecked
 and	CCONJ	unchecked
 delight	NOUN	unchecked
@@ -243683,7 +243683,7 @@ through	ADP	unchecked
 a	DET	unchecked
 thick	ADJ	unchecked
 ,	PUNCT	unchecked
-muffling	ADJ	disputed
+muffling	ADJ	unchecked
 medium	NOUN	unchecked
 ,	PUNCT	unchecked
 hoarse	ADJ	unchecked
@@ -243922,7 +243922,7 @@ chief	NOUN	unchecked
 # text = After the preceding investigation, there appears to be no difficulty in refuting the sociological theory, far too prevalent, according to which the entire human race has passed through a primitive period of promiscuity followed by hetaïrism.
 After	ADP	unchecked
 the	DET	unchecked
-preceding	ADJ	disputed
+preceding	ADJ	unchecked
 investigation	NOUN	unchecked
 ,	PUNCT	unchecked
 there	PRON	unchecked
@@ -244323,7 +244323,7 @@ by	ADP	unchecked
 mere	ADJ	unchecked
 melting	NOUN	unchecked
 with	ADP	unchecked
-boiling	VERB	unchecked
+boiling	ADJ	unchecked
 water	NOUN	unchecked
 .	PUNCT	unchecked
 
@@ -244818,7 +244818,7 @@ formed	VERB	unchecked
 But	CCONJ	unchecked
 in	ADP	unchecked
 the	DET	unchecked
-growing	VERB	unchecked
+growing	ADJ	unchecked
 light	NOUN	unchecked
 evidences	NOUN	unchecked
 appear	VERB	unchecked
@@ -245301,7 +245301,7 @@ forest	NOUN	unchecked
 # text = The ordinary fighting soldier, who has been over the top half a dozen times, is a man of peace compared with certain ferocious persons of academic distinction.
 The	DET	unchecked
 ordinary	ADJ	unchecked
-fighting	NOUN	unchecked
+fighting	ADJ	unchecked
 soldier	NOUN	unchecked
 ,	PUNCT	unchecked
 who	PRON	unchecked
@@ -245430,7 +245430,7 @@ its	DET	unchecked
 policy	NOUN	unchecked
 ,	PUNCT	unchecked
 the	DET	unchecked
-governing	VERB	unchecked
+governing	ADJ	unchecked
 body	NOUN	unchecked
 in	ADP	unchecked
 Germany	PROPN	unchecked
@@ -246136,7 +246136,7 @@ of	ADP	unchecked
 water	NOUN	unchecked
 nearly	ADV	unchecked
 at	ADP	unchecked
-boiling	NOUN	unchecked
+boiling	ADJ	unchecked
 heat	NOUN	unchecked
 .	PUNCT	unchecked
 
@@ -250195,7 +250195,7 @@ of	ADP	unchecked
 mind	NOUN	unchecked
 on	ADP	unchecked
 the	DET	unchecked
-circulating	NOUN	unchecked
+circulating	ADJ	unchecked
 system	NOUN	unchecked
 ;	PUNCT	unchecked
 loss	NOUN	unchecked
@@ -250725,7 +250725,7 @@ other	ADJ	unchecked
 portions	NOUN	unchecked
 of	ADP	unchecked
 the	DET	unchecked
-supporting	ADJ	disputed
+supporting	ADJ	unchecked
 truss	NOUN	unchecked
 ,	PUNCT	unchecked
 reservoirs	NOUN	unchecked
@@ -255417,7 +255417,7 @@ rare	ADJ	unchecked
 ,	PUNCT	unchecked
 roaring	ADJ	unchecked
 ,	PUNCT	unchecked
-scrambling	ADJ	disputed
+scrambling	ADJ	unchecked
 times	NOUN	unchecked
 .	PUNCT	unchecked
 
@@ -256839,7 +256839,7 @@ country	NOUN	unchecked
 # text = Long, drooping moustaches, the colour of ripe corn, framed with their points the square block of his shaved chin.
 Long	ADJ	unchecked
 ,	PUNCT	unchecked
-drooping	VERB	unchecked
+drooping	ADJ	unchecked
 moustaches	NOUN	unchecked
 ,	PUNCT	unchecked
 the	DET	unchecked

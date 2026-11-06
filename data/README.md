@@ -8,7 +8,7 @@ that produce and check it are in [`tools/data/`](../tools/data/README.md); the t
 formats and every mapping table are in [CONVENTIONS.md](CONVENTIONS.md) (normative). At run time the library uses only the
 lexicon and the trained weights, which are embedded in the package in compact binary forms: the lexicon is generated from
 `lexicon/lexicon.tsv` (see [lexicon/README.md](lexicon/README.md), "Embedded Form"), and the weights
-(`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 477,899 bytes compressed, 1,077,990 bytes uncompressed) are
+(`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 478,835 bytes compressed, 1,080,650 bytes uncompressed) are
 trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC and silver
 corpora with settings that were selected on the two development sets only (the run log is
 [RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not
@@ -120,7 +120,9 @@ by design; the UD check applies only when the cache is present, so a run without
 
 - **Corrections.** [corrections/](corrections/README.md) holds the label corrections that follow
   [CONVENTIONS.md](CONVENTIONS.md) as small tables (one row per token: address, old and new tag and status, provenance).
-  They are **applied**: `open/`, `masc/` and `silver/` carry the corrected labels (9,285 effective rows), and the lexicon and
+  They are **applied**: `open/`, `masc/` and `silver/` carry the corrected labels (8,407 effective rows; 878 adjudicated
+  `prenominal-ing` rows are withdrawn and kept as provenance only, see
+  [corrections/README.md](corrections/README.md#withdrawn-rows)), and the lexicon and
   the weights are built from them. The tables stay as the provenance of every change; a second application is refused and
   the `--check` of the generator reverses the rows in a temporary copy to prove that the tables are still the generator's
   output. `mechanical.tsv`, `candidates.tsv` and `exceptions.tsv` are
