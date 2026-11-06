@@ -76,6 +76,6 @@ rejected because the compiler needs the library, the library build has four targ
 should build with nothing to run. The weights resource is generated the same way by the unit `ModelTrainer`
 (`train` writes `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`; `train --check`, run by `build.ps1` and the CI
 build, and a unit test fail when the committed binary is not what the committed corpora and `training.json` produce).
-The package contains each resource once per target framework: the lexicon resource is 639,617 bytes (1,625,974
-uncompressed) and the weights resource 477,899 bytes (1,077,990 uncompressed, 116,448 rows, 281,682 weights, 19 hash
+The package contains each resource once per target framework: the lexicon resource is 639,711 bytes (1,626,269
+uncompressed) and the weights resource 478,835 bytes (1,080,650 uncompressed, 116,662 rows, 282,426 weights, 19 hash
 bits, scale 1/8), which is why the package is several MB (see "Package size" in the system design).

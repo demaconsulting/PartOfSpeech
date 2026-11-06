@@ -45,7 +45,7 @@ used as a length or an index (`sharedPrefixBytes`, `suffixLength`, `maskIndex` a
 `BinaryFormat.ReadVarintInt32`, so a value above 2^31-1 is reported as `InvalidDataException` and never wraps to a
 negative number.
 
-For the committed lexicon the file is 639,617 bytes (262,635 spellings, 339,823 entries, 225 masks, 16 spellings per
+For the committed lexicon the file is 639,711 bytes (262,635 spellings, 339,819 entries, 225 masks, 16 spellings per
 block, Deflate). The change from version 1 to version 2 (the checksum covers the stored bytes) did not change the
 size: only the version and checksum fields differ.
 
@@ -56,7 +56,7 @@ the last byte of its Deflate data removed and the stored length adjusted; see th
 #### Key Methods
 
 - **`Load(Stream)` and `Load(byte[])`**: `BinaryFormat.ReadHeader` and `ReadPayload` (with the maximum payload length
-  `MaxPayloadLength`, 16 MiB, which is far above the 1,625,934 bytes of the committed lexicon; the stored-bytes
+  `MaxPayloadLength`, 16 MiB, which is far above the 1,626,229 bytes of the committed lexicon; the stored-bytes
   checksum and the strict Deflate validation are described in the `BinaryFormat` design), then the header fields
   (tag count
   17, block shift 1 to 8, block count equal to the ceiling formula, reserved field zero), the palette and block index,

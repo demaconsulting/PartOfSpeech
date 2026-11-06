@@ -187,7 +187,7 @@ public class LexiconTests
         Assert.Throws<InvalidDataException>(() => LexiconWriter.FromTsv(wrong));
         Assert.Equal(2, entries.Count);
         Assert.Equal(262635, committed.Count);
-        Assert.Equal(339823, committed.Sum(e => e.Value.Count));
+        Assert.Equal(339819, committed.Sum(e => e.Value.Count));
     }
 
     /// <summary>

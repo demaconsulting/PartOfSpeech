@@ -272,13 +272,13 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | Hash bits | 19 | 18 was borderline, 19 is tied with 22 |
 | Pruning | minimum count 1, magnitude threshold 8 units | largest tied threshold; the next is not tied |
 | Quantization | `quantScale` 8 (scale 1/8) | tied with the unpruned scale 16; scale 4 is not tied |
-| Temperature | 6.583 | minimum log-likelihood on open development data |
+| Temperature | 6.442 | minimum log-likelihood on open development data |
 
-The result is a file of 116,448 rows and 281,682 weights, 1,077,990 bytes uncompressed and 477,899 bytes compressed;
+The result is a file of 116,662 rows and 282,426 weights, 1,080,650 bytes uncompressed and 478,835 bytes compressed;
 training takes about 5 to 14 seconds on one thread (6,285,552 steps), and the check about 15 seconds. Development
-results through the real decoder: open development 96.37% accuracy (95.64% on lexicon-ambiguous tokens), gold
-development 94.99% (without the `to` and `not` targets, which follow another convention and are reported
-separately), harmful errors 23.0 per 1,000 noun-verb decisions pooled, calibration error 0.22% (open) and 2.41% (gold).
+results through the real decoder: open development 96.38% accuracy (95.68% on lexicon-ambiguous tokens), gold
+development 95.24% (without the `to` and `not` targets, which follow another convention and are reported
+separately), harmful errors 20.0 per 1,000 noun-verb decisions pooled, calibration error 0.26% (open) and 1.99% (gold).
 These are development figures; they say nothing about held-out data.
 
 ### Glossary Decision

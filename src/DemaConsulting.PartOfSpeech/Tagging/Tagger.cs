@@ -132,7 +132,7 @@ public sealed class Tagger
     ///     Loading reads the whole stream into memory and decompresses and validates the whole file before it returns,
     ///     so do it once and share the tagger across threads. The stream is read from its current position to its end
     ///     and is not closed; the tagger keeps no reference to it, so it may be disposed as soon as this method has
-    ///     returned. The first tagger of the process also loads the embedded lexicon (639,617 bytes compressed, 262,635
+    ///     returned. The first tagger of the process also loads the embedded lexicon (639,711 bytes compressed, 262,635
     ///     spellings), which later taggers reuse. See
     ///     [Default model and loading cost](../../DemaConsulting.PartOfSpeech.md#default-model-and-loading-cost).
     /// </remarks>
