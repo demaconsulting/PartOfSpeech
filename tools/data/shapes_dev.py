@@ -322,7 +322,7 @@ def run_tokenizer(texts, command):
         source, target = os.path.join(folder, "in.txt"), os.path.join(folder, "out.tsv")
         common.write_text(source, texts)
         flags = getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0)
-        completed = subprocess.run(list(command) + ["shapes-tokenize", "--in", source, "--out", target], creationflags=flags)
+        completed = subprocess.run(list(command) + ["shapes-tokenize", "--in", source, "--out", target], creationflags=flags, timeout=1800)
         if completed.returncode != 0:
             raise RuntimeError("the tokenizer command failed with exit code %d" % completed.returncode)
         lines = common.read_lines(target)

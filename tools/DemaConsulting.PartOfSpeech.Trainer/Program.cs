@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Text;
 
 namespace DemaConsulting.PartOfSpeech.Trainer;
 
@@ -9,7 +10,8 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 /// <remarks>
 ///     <para>
 ///         Commands: <c>train</c> (train, write the weights file, or with <c>--check</c> verify that the committed file is
-///         current), <c>eval</c> (score a weights file on the development sets), <c>calibrate</c> (choose the softmax
+///         current), <c>eval</c> (score a weights file on the development sets), <c>eval-shapes</c> (score a weights file on the
+///         hard-shape development set), <c>shapes-tokenize</c> (tokenize a text file for building that set), <c>calibrate</c> (choose the softmax
 ///         temperature on the open development split), <c>compare</c> (paired bootstrap of two weights files) and
 ///         <c>glossary-probe</c> (simulated glossaries on the open development split) and <c>glossary-eval</c> (the dev-only
 ///         evaluation of the <c>Glossary</c> API), <c>thresholds</c> (the development-only confidence curve and operating points)
@@ -20,7 +22,9 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///     <para>
 ///         The program only parses arguments and does I/O and printing; the engine is in <c>Training/</c> and
 ///         <c>Evaluation/</c>, which the tests compile and exercise directly. Every command except <c>evaluate</c> reads
-///         nothing but the two development files (see <see cref="DataGuard"/>); <c>evaluate</c> reads the held-out sets
+///         nothing but the two development files (see <see cref="DataGuard"/>), except <c>eval-shapes</c>, which reads the
+///         hard-shape development file, and <c>shapes-tokenize</c>, which reads and writes only the two files it is given;
+///         <c>evaluate</c> reads the held-out sets
 ///         only through the guarded readers and only with a selection artifact that is valid for the frozen model.
 ///     </para>
 /// </remarks>
@@ -49,6 +53,7 @@ internal static class Program
         "--config", "--output", "--weights", "--label", "--log", "--epochs", "--hash-bits", "--min-count", "--prune", "--scale",
         "--seed", "--temperature", "--restrict", "--history", "--source", "--max-sentences", "--mask-disputed", "--silver-min",
         "--sample-permille", "--checkpoints", "--a", "--b", "--resamples", "--m0-output", "--m1-output", "--dump-dir", "--ud-cache",
+        "--in", "--out",
     };
 
     /// <summary>
@@ -104,6 +109,14 @@ Commands:
       development split before the run is written and scored, so confidence-based metrics are comparable.
   eval --weights FILE [--temperature T] [--label TEXT] [--log FILE]
       Scores a weights file on the development sets (open dev, gold v2 dev) through the real decoder.
+  eval-shapes [--weights FILE] [--label TEXT]
+      Scores a weights file (default: the embedded model) on the hard-shape development set through the real decoder and
+      prints Markdown: per shape the target-token accuracy, harmful errors and harmful errors per 1,000 noun-verb decisions,
+      and the control accuracy. Reads the shapes development file only; it is a development set, never a held-out figure.
+  shapes-tokenize --in FILE --out FILE
+      Tokenizes a text file with the library tokenizer, one sentence per line: each output line is the sentence, the number
+      of sentences the tokenizer found and the tokens separated by single spaces, tab separated. Reads and writes only the two
+      files (used by tools/data/shapes_dev.py to build the shapes development set); no repository data is read.
   calibrate --weights FILE [--config FILE] [--update-config]
       Chooses the softmax temperature that minimizes the log-likelihood on the open development split.
   compare --a FILE --b FILE [--resamples N] [--seed N]
@@ -157,6 +170,10 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
                     return Train(line, root);
                 case "eval":
                     return Eval(line, root);
+                case "eval-shapes":
+                    return EvalShapes(line, root);
+                case "shapes-tokenize":
+                    return ShapesTokenize(line);
                 case "calibrate":
                     return Calibrate(line, root);
                 case "compare":
@@ -362,6 +379,53 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
 
         var dev = DevData.Load(root);
         Report(line.Value("--label") ?? Path.GetFileName(path), "eval " + Path.GetFileName(path), file, 0, 0, dev, line.Value("--log"), root);
+        return 0;
+    }
+
+    /// <summary>
+    ///     Runs the <c>eval-shapes</c> command: scores a weights file on the hard-shape development set and prints the Markdown report.
+    /// </summary>
+    /// <param name="line">The parsed command line.</param>
+    /// <param name="root">The repository root.</param>
+    /// <returns>The exit code.</returns>
+    private static int EvalShapes(CommandLine line, string root)
+    {
+        var path = line.Value("--weights") ?? Path.Combine(root, DefaultWeights.Replace('/', Path.DirectorySeparatorChar));
+        var file = File.ReadAllBytes(path);
+        var items = DevSets.ReadShapesDev(root, out var datasetSha256);
+        var result = ShapesDevEvaluator.Evaluate(DevEvaluator.CreateTagger(file), items);
+        foreach (var text in ShapesDevReport.Render(line.Value("--label") ?? Path.GetFileName(path), datasetSha256, result, ModelBuilder.Sha256Hex(file)))
+        {
+            Console.WriteLine(text);
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    ///     Runs the <c>shapes-tokenize</c> command: tokenizes the lines of a text file with the library tokenizer.
+    /// </summary>
+    /// <param name="line">The parsed command line.</param>
+    /// <returns>The exit code.</returns>
+    /// <exception cref="InvalidDataException">An input line contains a tab character.</exception>
+    private static int ShapesTokenize(CommandLine line)
+    {
+        var input = RequireValue(line, "--in");
+        var output = RequireValue(line, "--out");
+        var result = new StringBuilder();
+        foreach (var text in File.ReadAllLines(input, Encoding.UTF8))
+        {
+            if (text.Contains('\t'))
+            {
+                throw new InvalidDataException($"{input}: a sentence contains a tab character.");
+            }
+
+            var sentences = Tokenizer.Tokenize(text);
+            var tokens = sentences.SelectMany(s => s.Tokens).Select(t => t.Text);
+            result.Append(text).Append('\t').Append(sentences.Count.ToString(CultureInfo.InvariantCulture)).Append('\t').Append(string.Join(" ", tokens)).Append('\n');
+        }
+
+        File.WriteAllText(output, result.ToString(), new UTF8Encoding(false));
         return 0;
     }
 

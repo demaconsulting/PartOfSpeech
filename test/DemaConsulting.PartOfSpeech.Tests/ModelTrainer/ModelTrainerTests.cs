@@ -715,6 +715,7 @@ public class ModelTrainerTests
     [InlineData("data/eval/shapes/probe.tsv")]
     [InlineData("data/eval/ste-challenge/test.tsv")]
     [InlineData("data/open/train.tsv")]
+    [InlineData("data/eval/shapes-dev/dev.tsv")]
     [InlineData("data/open/../open/test.tsv")]
     public void DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused(string relativePath)
     {
@@ -750,6 +751,7 @@ public class ModelTrainerTests
     [InlineData("data/eval/gold-v2/dev.tsv")]
     [InlineData("data/eval/shapes/probe.tsv")]
     [InlineData("data/eval/ste-challenge/anything.tsv")]
+    [InlineData("data/eval/shapes-dev/dev.tsv")]
     [InlineData("cache/ud-ewt/en_ewt-ud-train.conllu")]
     public void DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused(string path)
     {

@@ -11,7 +11,9 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///         The selection of every setting uses development data only. The held-out sets (the open test split, the gold v2
 ///         test split, the shape probe, the challenge set and the external treebank) are evaluated once, by the
 ///         <c>evaluate</c> command, and only behind a validated development selection: a rule in a document is easy to
-///         forget, so the rule is code. The development readers accept an allow-list of two files; the held-out readers
+///         forget, so the rule is code. The development readers accept an allow-list of two files; the hard-shape development
+///         file has its own guard (<see cref="ShapesDevelopmentFile"/>) that only the <c>eval-shapes</c> command uses. The
+///         held-out readers
 ///         take a <see cref="SelectedOperatingPoints"/> as a required parameter, and that object exists only for the frozen
 ///         model, the committed development files and the pre-registered rule. Training inputs are checked against a
 ///         deny-list that refuses the held-out and the development files, because training on them would invalidate the
@@ -32,6 +34,14 @@ internal static class DataGuard
         "data/open/dev.tsv",
         "data/eval/gold-v2/dev.tsv",
     };
+
+    /// <summary>
+    ///     The hard-shape development file, relative to the repository root with forward slashes. It is a third development
+    ///     file with its own guard (<see cref="EnsureShapesDevelopmentFile"/>); it is deliberately not in
+    ///     <see cref="DevelopmentFiles"/>, so no command that reads "the two development files" can reach it by accident, and
+    ///     it is not a held-out file (<see cref="HeldOutFiles"/>), so <c>evaluate</c> never reads it.
+    /// </summary>
+    public const string ShapesDevelopmentFile = "data/eval/shapes-dev/dev.tsv";
 
     /// <summary>
     ///     The held-out files of the repository that the <c>evaluate</c> command may read, in the order of <see cref="HeldOutSet"/>.
@@ -169,6 +179,26 @@ internal static class DataGuard
 
         throw new InvalidOperationException(
             $"'{path}' is not a development file. Development evaluation reads only {string.Join(" and ", DevelopmentFiles)}; held-out sets are read only by the evaluate command, behind a validated development selection.");
+    }
+
+    /// <summary>
+    ///     Resolves the hard-shape development file, which must be exactly <see cref="ShapesDevelopmentFile"/>.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="path">The path that was asked for, absolute or relative to the working directory.</param>
+    /// <returns>The full path of the hard-shape development file.</returns>
+    /// <exception cref="InvalidOperationException"><paramref name="path"/> is not the hard-shape development file.</exception>
+    public static string EnsureShapesDevelopmentFile(string repositoryRoot, string path)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        ArgumentNullException.ThrowIfNull(path);
+        var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar)));
+        if (string.Equals(Path.GetFullPath(path), allowedFull, StringComparison.OrdinalIgnoreCase))
+        {
+            return allowedFull;
+        }
+
+        throw new InvalidOperationException($"'{path}' is not the shapes development file {ShapesDevelopmentFile}; the shapes evaluation reads that file only.");
     }
 
     /// <summary>
@@ -625,6 +655,27 @@ internal static class DevSets
     /// <returns>The sentences; no token is masked, so every token is judged.</returns>
     public static List<TrainingSentence> ParseOpenDev(IEnumerable<string> lines, string origin) =>
         CorpusReader.Parse(lines, new SourceConfig { Name = "dev", MaskDisputed = false }, origin);
+
+    /// <summary>
+    ///     Reads the hard-shape development set.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="sha256">Receives the SHA-256 of the file as 64 lower-case hexadecimal digits.</param>
+    /// <returns>The items in file order.</returns>
+    /// <exception cref="FileNotFoundException">The file does not exist.</exception>
+    /// <exception cref="InvalidDataException">The file does not announce a development split or is malformed.</exception>
+    public static List<ShapesDevItem> ReadShapesDev(string repositoryRoot, out string sha256)
+    {
+        var path = DataGuard.EnsureShapesDevelopmentFile(repositoryRoot, Path.Combine(repositoryRoot, DataGuard.ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar)));
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException($"The shapes development set {path} does not exist.", path);
+        }
+
+        DataGuard.EnsureDevelopmentHeader(File.ReadLines(path, Encoding.UTF8).Take(20), path);
+        sha256 = ModelBuilder.Sha256Hex(File.ReadAllBytes(path));
+        return ShapesDevSets.Parse(File.ReadLines(path, Encoding.UTF8), path);
+    }
 
     /// <summary>
     ///     Reads the gold v2 development split.

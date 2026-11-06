@@ -21,6 +21,8 @@ dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- <co
 | `train` | Train with `training.json` (plus experiment overrides) and write the weights file (default: the embedded resource). |
 | `train --check` | Retrain with the committed configuration and compare the **uncompressed image** with the committed file and with `imageSha256`. Exit code 1 if stale. |
 | `eval --weights FILE` | Score a weights file on the two development sets through the real decoder (`Tagger.Load`). |
+| `eval-shapes [--weights FILE] [--label TEXT]` | Score a weights file (default: the embedded model) on the hard-shape development set `data/eval/shapes-dev/dev.tsv` through the real decoder and print Markdown: per shape the target-token accuracy (with a 95% Wilson interval), harmful errors and harmful errors per 1,000 noun-verb decisions, and the control accuracy (the same spelling in the other class), plus a pooled row. Reads the shapes development file only (its own guard); appends no run-log row. |
+| `shapes-tokenize --in FILE --out FILE` | Tokenize a text file, one sentence per line, with the library tokenizer: each output line is `sentence TAB sentences found TAB tokens` (tokens separated by single spaces). Reads and writes only the two files; it is the tokenizer of `tools/data/shapes_dev.py`, so the development set follows the corpus tokenization by construction. |
 | `calibrate --weights FILE` | Choose the softmax temperature that minimizes the log-likelihood on the open development split. |
 | `compare --a FILE --b FILE` | Paired bootstrap by document (1,000 resamples, fixed seed) of the difference between two weights files. |
 | `glossary-probe --weights FILE` | Simulated glossaries on the open development split: score boost versus hard constraint. |
@@ -70,10 +72,16 @@ SHA-256 of the image with a pinned value on every target framework.
 ## Development data and the held-out gate
 
 Every setting is selected on the two development sets (`data/open/dev.tsv`, `data/eval/gold-v2/dev.tsv`). Every command
-except `evaluate` reads those two files and nothing else: evaluation accepts exactly those two paths, and training accepts
-only files below the repository's `data` folder (after the path is made absolute and links are resolved) and refuses
+except `evaluate` and `eval-shapes` reads those two files and nothing else: evaluation accepts exactly those two paths, and
+training accepts only files below the repository's `data` folder (after the path is made absolute and links are resolved) and refuses
 held-out and development files there (`Evaluation/DevSets.cs`, tested). The held-out sets are read by `evaluate` only, and
 only with a committed selection artifact that is valid for the frozen model.
+
+The hard-shape development set (`data/eval/shapes-dev/dev.tsv`) is a third development file with a guard of its own:
+`eval-shapes` reads it through `DataGuard.EnsureShapesDevelopmentFile` and a header that announces a `dev split`. It is not in
+the two-file allow-list, so no other command can read it, it is not a held-out file, so `evaluate` never reads it, and
+training refuses it like every other development file. It is for selecting settings (for example the context-feature work),
+never a held-out figure; the shape probe stays evaluation only.
 
 ### Held-out evaluation
 
