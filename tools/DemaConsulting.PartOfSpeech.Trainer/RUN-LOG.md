@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify prenominal -->
+<!-- cspell:ignore gamify prenominal mkabl mkarm worktree worktrees isalpha -->
 
 # Trainer Run Log
 
@@ -1585,6 +1585,171 @@ are not a comparison of the models.
   different shares of the decisions.
 - **What is not shown.** The held-out evaluation did not tune anything and no test figure was used to change a threshold, the
   model or a setting. The shape probe weakness of the earlier record (stop condition fired) persists and is slightly larger.
+
+## Corpus cleanup C: pre-registered `prenominal-ing` follow-up
+
+This section is written and committed **before any training of the follow-up arms**, together with the frozen item list of the
+compound-head measure (`tools/DemaConsulting.PartOfSpeech.Trainer/prenominal-ing/`), so the git history shows the order:
+pre-registration (this commit), then training and scoring, then the results section. It changes no gate, no verdict, no weight, no
+lexicon, no `training.json` and no data of the branch. The owner decision behind it: run the pre-registered `-ing` follow-up on the
+same branch (the diagnosis above found one weak, post hoc association with the `prenominal-ing` corrections).
+
+### Disclosure (read first)
+
+- **The held-out sets have been seen once for this model.** The held-out evaluation of commit `58da737` (open test, gold v2 test,
+  shape probe, STE challenge set, UD-EWT test) was run once for the model of commit `dca810e4...339d`. Everything here is
+  **development data only** (open dev, UD-EWT dev); no held-out file is evaluated, scored or inspected by this follow-up. If an arm
+  other than FULL were ever adopted, a second held-out evaluation of that model would be a **disclosed second look** at sets already
+  seen for the sibling model, and would carry that label.
+- **The primary figures of FULL and NO-ING are already partly known.** NO-ING is built exactly like the ablation arm of the
+  diagnosis (same rows, same builder logic, same seeds), and FULL is the diagnosis arm NEW (the data, lexicon and weights have not
+  changed since `02dac97`; later commits changed only prose). Both were scored on the dev sets in the diagnosis, whose tables (above)
+  gave a mean difference of about -1.1 harmful per 1,000 on open dev and about -0.9 on UD-EWT dev (ablation minus new), i.e. about
+  -1.0 pooled, so the primary comparison is **foreseeable** and is expected to reproduce. What is new here: (1) a rule fixed in
+  advance, (2) the compound-head measure and its constraint, built from gold labels before any run of this follow-up and **not
+  computed on any earlier prediction file**, (3) a negative-control arm, (4) the reproduction itself. The hypothesis came from a
+  post hoc look at dev data, so even a clear dev result is evidence of the dev-selection kind and nothing more.
+- Open dev and UD-EWT dev have been used many times in this log (calibration, selection, the diagnosis). They are development
+  data; the selection here is made on them by the rule below and on nothing else.
+
+### Arms
+
+Every arm: 5 seeds, the **same seeds as the diagnosis** (20260101, 11, 12, 13, 14); the shipped `training.json` settings unchanged
+(sources open x2, MASC, silver >= 80, restriction `history`, predicted history, 6 epochs, 19 hash bits, minimum count 1, pruning 8,
+scale 8; only the shuffle seed changes); `train --seed S --calibrate --output <scratch file>`, i.e. the softmax temperature is refit
+for each run on the arm's own open dev (minimum NLL, as the shipped model's `calibrate` did, and as in the diagnosis; it never
+changes a chosen tag). Each arm has its own scratch worktree, its own corpora, its own rebuilt lexicon and its own trainer build.
+OLD is **not** an arm here. 3 arms x 5 seeds = 15 runs; no other run, seed or setting is trained for this follow-up.
+
+| Arm | Definition |
+| --- | --- |
+| **FULL** | The current branch data, lexicon and `training.json` (nothing removed). The diagnosis arm NEW. |
+| **NO-ING** | FULL minus every effective row of `data/corrections/adjudicated.tsv` whose detector is `prenominal-ing` (below). The tokens of those rows keep their pre-cleanup labels (tag and status cell) in whichever split the row belongs to. `mechanical.tsv` is unchanged (no mechanical row is touched; no removed row supersedes one: checked, 0). |
+| **NO-CTRL** (negative control) | FULL minus a comparable-sized set of `adjudicated.tsv` rows of **one unrelated detector**, `propn-boundary` (below), built the same way. |
+
+**Detector of a row.** A row of `adjudicated.tsv` carries detector X when a row of `data/corrections/candidates.tsv` with
+`candidate_rule` X covers its token (the candidate's `token_index` up to `token_index + span_length - 1`). A row covered by several
+candidate rows carries every one of their rules and belongs to each of them (168 of the 7,063 rows have more than one detector; 1,958
+have none: dependents and tagger-flagged tokens). This is the definition of the diagnosis builder (`mkabl.py`).
+
+**Rows removed (re-counted exactly on this branch, `mkarm.py --count-only`).** The 17 (`prenominal-ing`) and 12 (`propn-boundary`) rows
+of **open test** are **left out** of the removal: the held-out file is neither read for scoring nor reversed; open test is not a
+training, calibration or scoring file, so the arms differ from FULL in open train, open dev, MASC and silver only.
+
+| Detector | Open train | Open dev | Open test (left out) | MASC | Silver | Total with open test | **Removed (without open test)** |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `prenominal-ing` (NO-ING) | 151 | 22 | 17 | 518 | 170 | 878 | **861** |
+| `propn-boundary` (NO-CTRL) | 152 | 19 | 12 | 563 | 0 | 746 | **734** |
+
+(The diagnosis counted the same 861 `prenominal-ing` rows: 518 + 170 + 151 + 22. 8 of them carry a second detector,
+`mention-quoted` 6 and `mention-the-word` 2; the two removal sets share 0 rows.)
+
+**Choice of the control detector (made now, by row count and by morphology only, before any training).** The window of the brief is
+861 +- 25% = 646 to 1,076 rows. The adjudicated-row counts per detector (rows removed, i.e. without open test; all detectors counted
+with the definition above): `foreign-token` 1,076 (+25.0%: at the edge of the window), `prenominal-ing` 861, `propn-boundary` **734
+(-14.7%)**, `mention-quoted` 626 (-27.3%, outside), `prenominal-ed` 429, `be-participle-adj-not-gradable` 328, `mention-the-word` 214,
+`language-name` 199, and fewer below. The two detectors inside the window are `foreign-token` and `propn-boundary`; **`propn-boundary`
+is the closest to 861** (|734 - 861| = 127 against |1,076 - 861| = 215) and it is not related to -ing morphology (it moves a
+capitalization/name boundary, mostly NOUN against PROPN; `prenominal-ed` is excluded as the morphological sibling in any case). It is
+chosen on these two facts only. Limit stated in advance: the control removes corrections of a different kind (NOUN/PROPN) than the
+tested one (ADJ/VERB/NOUN of -ing words), so it shows what removing an arbitrary comparable set does to the noun-verb figures, not
+what removing a verb/adjective set would do.
+
+**How an arm is built (scratch worktrees only; the main working tree, `weights.bin`, `lexicon.*` and `data/` are never written).**
+
+1. `git worktree add <scratch>\wt-<arm> <this commit>` (detached) for each arm; for NO-ING and NO-CTRL the git-ignored
+   `tools/data/cache/wordsense` of the main tree is copied into the worktree (the lexicon builder needs the pinned WordSense forms).
+2. NO-ING and NO-CTRL: `python tools/DemaConsulting.PartOfSpeech.Trainer/prenominal-ing/mkarm.py --worktree <wt> --detector
+   prenominal-ing|propn-boundary` rewrites, in the worktree only, `adjudicated.tsv` to the rows of the set (open test left out) and
+   `mechanical.tsv` to its header; then `python tools/data/corrections.py apply --write --reverse` in the worktree restores exactly
+   those tokens (the tool reads the open test file only as part of its checks of the addresses; it is not modified and no row of it
+   is in the set).
+3. **The lexicon is rebuilt from the arm's own corpora**: `python tools/data/build_lexicon.py` (open train and MASC attestation; it
+   writes the arm's `data/lexicon/lexicon.tsv`), then `LexiconCompiler` (the arm's `lexicon.bin`), then `dotnet build -c Release` of
+   the arm's trainer (the project reference embeds the arm's lexicon and library). For FULL nothing is rebuilt.
+4. Training: `train --seed S --calibrate --output <scratch>\<arm>-s<S>.bin` with the arm's own trainer. A scoring tool (the
+   `Dump` tool of the diagnosis: `Tagger.Load`, `MaxAlternatives` limit) is built against **each arm's own library**, so every arm
+   is decoded with its own weights and its own lexicon.
+
+**Scoring sets (all arms alike).** Every arm is scored on **FULL's relabeled open dev labels** (the committed `data/open/dev.tsv`,
+like for like, as in the diagnosis; the arm's own open dev, which differs in 22 labels for NO-ING and 19 for NO-CTRL, is used only for
+the temperature refit) and on UD-EWT dev (the mapped view, `tools/data/cache/ud-ewt/ud_dev.tsv`, 25,148 tokens). Nothing else is
+read for scoring.
+
+**Definitions (those of E0 and of the diagnosis).** A decision is a gold NOUN or VERB token with both tags among the decoder's
+candidates; a harmful error is a chosen tag that is the other of NOUN and VERB with confidence >= 0.45; rates are per 1,000
+decisions; UD-EWT agreement is the share of tokens whose chosen tag equals the mapped gold tag. **Pooled harmful rate of a run** =
+(harmful errors on open dev + harmful errors on UD-EWT dev) / (decisions on open dev + decisions on UD-EWT dev) x 1,000, computed per
+run (the decision counts differ slightly per arm because the lexicon candidates differ).
+
+### The dev compound-head measure (frozen)
+
+Built before any training of this follow-up, by the committed script `prenominal-ing/build_items.py`, from the committed
+`data/open/dev.tsv` (sha256 `31c9048de0824867fab6d7a9f56bedbe36f8e4282bbcc4ffcedde84f1b4cbf91`, the relabeled dev) and FULL's
+committed `data/lexicon/lexicon.tsv` (sha256 `bcd7ea4538c77b6fea7bcb0b0df710cd85d49726811cd433b330ba95e910f614`) **only**: gold labels,
+the form and the lexicon, no prediction of any model, and no test or held-out data. The item list is the same for all arms. It is
+committed as `prenominal-ing/items-open-dev.tsv` (sha256 `c2ca9d9b5f2a2cc65e0fa3ed3a5f2c1b247797f0f3230b749db2e78ca2e57ea8`); `build_items.py --check`
+rebuilds it byte for byte.
+
+The rule (exactly): let `form` be the NFC form lower-cased, `plain` mean that it is purely alphabetic (`str.isalpha`) with at least 4
+letters, `tags` its lexicon tags (a form not in the lexicon is not an item) and `next` the gold tag of the following token of the same
+sentence.
+
+- **Compound item**: `plain`, gold NOUN, `next` in {NOUN, PROPN}, and `tags` contain NOUN and VERB. Class `compound-ing` if the form
+  ends in `ing`, else `compound-zero` (zero-derived noun/verb forms such as `water`, `storm`, `report`). This is the "-ing or
+  zero-derived modifier directly before a noun head that is labeled NOUN" of the brief (a determiner or a number cannot qualify: the
+  token must be gold NOUN and lexicon NOUN+VERB).
+- **Control item (class `verbal-ing`)**: `plain`, gold VERB, the form ends in `ing`, `tags` contain ADJ, NOUN and VERB (the signature
+  that the lexicon builder gives to the gerund/participle of a verb: base verbs such as `bring` or `sing` are not items). No
+  condition on the next token.
+
+Counts of the frozen list: **248 compound items (41 `compound-ing`, 207 `compound-zero`)** and **384 `verbal-ing` items**, 632 in
+all.
+
+Metrics, per run, with the chosen tag of the runtime decoder (`Tagger.Tag`, the tag of the token; no confidence condition and no
+candidate condition): **compound-head NOUN accuracy** = share of the 248 compound items whose chosen tag is NOUN (the two classes
+are also reported separately, descriptively); **verbal-ing VERB accuracy** = share of the 384 control items whose chosen tag is VERB.
+
+### Selection rule (fixed now; applied exactly as written; nothing is tuned afterwards)
+
+Candidates are **FULL and NO-ING**. NO-CTRL is **not** a candidate winner: it is reported for context only (it is evidence about
+whether removing *any* comparable set of rows lowers the harmful rates). The statistics below are computed from the per-run values of
+the 5 seeds of each arm.
+
+- **Primary.** The mean over the 5 seeds of the **pooled harmful noun-verb rate** (harmful errors summed over open dev and UD-EWT
+  dev divided by decisions summed over both sets, x 1,000, computed per run). Lower wins.
+- **Constraints** (on the winner). (C1) The winner's mean UD-EWT dev agreement is within **0.15 points** of the best candidate
+  arm's mean agreement (the higher of FULL and NO-ING). (C2) The winner's mean compound-head NOUN accuracy is within **2 points** of
+  the best candidate arm's mean (the higher of FULL and NO-ING).
+- **Tie-break.** If the primary difference between FULL and the lowest candidate arm is **under 0.5 per 1,000**, the winner is
+  **FULL**, the convention-consistent default.
+- **Reading.** The lowest-primary candidate is the provisional winner. If it is FULL, FULL is selected. If it is NO-ING, NO-ING is
+  selected only when the primary difference is at least 0.5 per 1,000 **and** C1 and C2 both hold; otherwise FULL is selected. FULL
+  is the default in every case not listed for NO-ING. (Literal reading, stated for the case the rule did not foresee: if FULL has the
+  lowest primary but would itself fail C1 or C2 against NO-ING, FULL is still selected, because the rule has no route that selects
+  the arm with the higher primary; the constraint check is reported either way.)
+- **Shipped seed.** The shipped seed stays **20260101** whichever arm wins; nothing here selects a seed.
+- **Reported but not part of the rule** (descriptive): per arm mean +- sample standard deviation (n = 5) and the per-seed values of
+  every metric; differences against FULL with a Welch t 95% interval and a combined seed + document bootstrap (2,000 replicates, seed
+  20261104, resampling documents shared by the arms and the 5 seeds within each arm); the item-class breakdown of the compound
+  measure; the harmful rates per set. Reading aid for the control (does not change the selection): if NO-CTRL's mean pooled rate
+  lies below FULL's by at least half of NO-ING's reduction, the report says that the NO-ING reduction is not specific to -ing rows;
+  otherwise that a comparable removal does not match it.
+
+### Procedure, acceptance test and stop rule
+
+1. The three arms are trained and scored through the real runtime decoder (`Tagger.Load`), 15 runs, one heavy process at a time.
+2. **Acceptance test (before the rule is applied).** FULL at the shipped seed 20260101 must reproduce the committed model's dev
+   numbers (open dev 103 harmful of 4,467 decisions, UD-EWT dev 107 of 4,570, UD-EWT agreement 23,338 of 25,148 = 92.803%), its
+   weights must be **byte-identical** to the committed `weights.bin`, and the five FULL seeds must reproduce the diagnosis arm NEW
+   (UD agreement 92.803, 92.711, 92.655, 92.695, 92.747). NO-ING is expected to reproduce the diagnosis ablation arm (UD
+   agreement 92.711, 92.779, 92.683, 92.616, 92.747; open harmful 90, 98, 96, 100, 90; UD harmful 103, 109, 95, 99, 101). If the
+   FULL acceptance fails, the follow-up stops and is reported as failed without a selection; a NO-ING or NO-CTRL arm that differs
+   from the diagnosis is reported as a deviation (the build is deterministic, so this would mean a construction defect).
+3. The rule above is applied to the numbers, the table and the verdict are recorded in this log (a section "Results and selection
+   (dev only)"), and nothing is adopted: the committed data, lexicon, weights and `training.json` stay as they are. Adopting NO-ING,
+   if it is selected, is a separate step with its own record and, for the held-out sets, a disclosed second look.
+4. `evaluate` and `thresholds` are not run; no held-out file is evaluated.
 
 ## Run table
 
