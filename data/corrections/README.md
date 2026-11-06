@@ -6,9 +6,10 @@
 License: CC0-1.0
 
 Label corrections for the open corpus, MASC and the silver data that follow the conventions of
-[CONVENTIONS.md](../CONVENTIONS.md), staged as small tables instead of edits of the corpus files. **Nothing in this folder
-has been applied yet:** the corpora under `open/`, `masc/` and `silver/` are exactly the importer output, and a later change
-applies the rows and regenerates everything that depends on the labels (the lexicon, the weights, the evaluation record).
+[CONVENTIONS.md](../CONVENTIONS.md), kept as small tables next to the corpus files. **The rows are applied:** the corpora under
+`open/`, `masc/` and `silver/` carry them (`corrections.py apply --write`), and the lexicon, the weights and the evaluation record
+were regenerated from the corrected labels. The tables stay as provenance: they describe the corpora as the importers wrote them,
+and they stay valid against the corrected files (see _States and Apply_).
 
 The rows are labels and addresses of tokens: the labels and the selection are dedicated under CC0-1.0, like the corpus labels.
 Token forms of MASC rows and the short context excerpts in `candidates.tsv` are MASC text, which stays under its own license
@@ -119,9 +120,10 @@ with the corpora, so the pending and the applied state are decided on them.
 `python tools/data/corrections.py apply` prints what would change (a dry run); `--write` edits the corpus files in place, line
 by line, so that comment lines such as `# genre = ...` and every other column survive, and the header gains the line `# status
 flags = ...` when the first flag appears. `apply --write --reverse` restores the files byte for byte. A table that does not match
-is refused. Applying is exercised only on test fixtures and on in-memory copies of the committed corpora until the corrections
-are merged. `make_corrections.py --check` regenerates the tables and compares them with the committed files; it is meaningful only
-in the pending state, because the tables describe the corpora before the application.
+is refused; a second `apply` is refused too (the corpora are then in the applied state). `make_corrections.py --check` regenerates
+the tables and compares them with the committed files in both states: while the rows are pending it regenerates from the corpora as
+they are, once they are applied it reverses the rows in a temporary copy of the data folder first (the tables describe the corpora
+before the application), and it refuses to rewrite the tables in the applied state.
 
 ## Commands
 
