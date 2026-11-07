@@ -49,7 +49,7 @@ Commands (all take `--work W`; `--data-dir D` replaces the repository's data fol
   python tools/data/shapes_dev.py --work W candidates [--no-ud] [--target 120] [--over 1.6] [--shape-over SHAPE=FACTOR ...]
                                                      [--lemma-cap 4] [--shape-lemma-cap SHAPE=N ...] [--control-pool 100]
                                                      [--round NAME] [--only-shapes SHAPE[,SHAPE]] [--no-controls] [--compound-strict]
-                                                                                # cleanliness, position and lexicon pre-selection + leakage filters
+                                                     [--controls-only [--shape-max SHAPE=N ...]]       # hard tranche, with --round                                                                                # cleanliness, position and lexicon pre-selection + leakage filters
   python tools/data/shapes_dev.py --work W export [--size 150] [--rows 3500] [--round NAME]   # blind batches, private/key.tsv, batches/status.tsv
   python tools/data/shapes_dev.py --work W check-batches [--round NAME]         # 3 columns, tokens equal the key, no leak
   python tools/data/shapes_dev.py --work W validate-output --batch b001 --model opus [--round NAME]   # (or --all); updates batches/status.tsv
@@ -98,7 +98,12 @@ sentences of the same document (`near-standard-tranche`). For every shape:
 class, 2 per lemma, lemma of a chosen target of the shape, by seeded rank) up to the control cap. Quota gate of the hard tranche (floor / cap
 per shape: n-compound-head 80/100, v-imperative-initial 70/100, v-after-modal 80/100, n-subject-initial 40/100, n-measure 0/0; controls 50/60; no
 authored sentence): a miss below a floor refuses the build (exit code 1, nothing written) unless `--allow-short`. A round (`--round h2`) can add
-the next-hardest block of a shape that is below its floor; it works like the rounds of the standard tranche. The hard build reads the exclusion
+the next-hardest block of a shape that is below its floor; it works like the rounds of the standard tranche. A controls-only round
+(`candidates --tranche hard --round NAME --controls-only --control-pool N`, with `--only-shapes` the shapes wanted) adds more controls without
+any target: the lemmas are those of the targets that `build` selects from the decided earlier work areas today (`build_control_room`:
+`select_items_hard` itself, same caps and lemma cap) and a lemma gets at most the controls (2 per lemma) that the build still takes for it,
+so the target selection of the build cannot change; the usual exclusions apply (earlier candidates, standard tranche, held-out filter, excluded
+sources). The hard build reads the exclusion
 record fail-closed and never rewrites it. `sample --tranche hard` draws the hand-check sample from the targets the build would take, at least half
 of each shape's items with q < 0.5 (`--low-q-share`). `report --tranche hard` adds the q-band table (labeled, kept by both labelers and built
 items per band and shape).
@@ -1126,7 +1131,7 @@ def lemma_counts_of(works, shapes=SHAPES):
 def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE, over=OVER_COLLECT, lemma_cap=LEMMA_CAP,
                        seed=SEED, tokens_override=None, filt=None, shape_over=None, control_pool=CONTROL_POOL, clean=True, vocab=None,
                        shape_lemma_cap=None, only_shapes=None, controls=True, compound_strict=False, exclude_keys=None,
-                       exclude_lines=None, lemma_existing=None, prefix="", hard=None):
+                       exclude_lines=None, lemma_existing=None, prefix="", hard=None, control_room=None):
     """(candidate rows, report lines): the candidates of every shape from the real text and the authored sentences.
 
     Real sentences are scanned in document and line order; a sentence that is too short or too long, noisy (`noise_reason`, when
@@ -1146,6 +1151,10 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
     targets are ordered by q ascending (ties by the seeded rank), at most `lemma_cap` per lemma and the budget of the shape (None = all);
     every candidate row carries q (3 decimals; a control has none); the authored sentences are not used. Standard-profile behavior and
     output are untouched when `hard` is None.
+
+    Controls-only round (hard tranche; `control_room` = {shape: {lemma: n}}, see `build_control_room`): no target candidate is written;
+    the controls come from the lemmas of `control_room` of the shape, at most n per lemma (n = the controls that the build still takes for
+    the lemma), `control_pool` per shape, by the seeded rank. The target selection of the build cannot change: no target is added.
     """
     shapes = tuple(only_shapes) if only_shapes else (HARD_SHAPES if hard else SHAPES)
     compound_strict = compound_strict or hard is not None
@@ -1216,7 +1225,7 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
                 all_sentences.append((source_id, number, text, toks))
     band_sizes = {shape: 0 for shape in shapes}
     frame_sizes = {shape: 0 for shape in shapes}
-    for source_id, number, text, toks in all_sentences:
+    for source_id, number, text, toks in (all_sentences if control_room is None else ()):
         for shape, i in shape_hits(toks, lex, compound_strict):
             if shape not in shapes:
                 continue
@@ -1232,7 +1241,9 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
             pools[shape].append((rank_of(seed, "hard", shape, sent_key_of(text)) if hard is not None else rank_of(seed, shape, sent_key_of(text)),
                                  row))
     rows = []
-    if hard is not None:
+    if control_room is not None:
+        limits = {shape: 0 for shape in shapes}
+    elif hard is not None:
         limits = {shape: hard.budgets[shape] for shape in shapes}
     else:
         limits = {shape: int(math.ceil(target * shape_over.get(shape, over))) for shape in shapes}
@@ -1255,6 +1266,8 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
                 counts[row["lemma"]] += 1
                 rows.append(row)
         chosen_lemmas[shape] = set(counts)
+    if control_room is not None:
+        chosen_lemmas = {shape: {lemma for lemma, room in control_room.get(shape, {}).items() if room > 0} for shape in SHAPES}
 
     control_rows = {shape: [] for shape in shapes}
     for source_id, number, text, toks in (all_sentences if controls else ()):
@@ -1268,7 +1281,7 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
         for _, row in sorted(control_rows[shape], key=lambda item: item[0]):
             if sum(counts.values()) >= control_pool:
                 break
-            if counts[row["lemma"]] < CONTROL_LEMMA_CAP:
+            if counts[row["lemma"]] < (CONTROL_LEMMA_CAP if control_room is None else min(CONTROL_LEMMA_CAP, control_room[shape][row["lemma"]])):
                 counts[row["lemma"]] += 1
                 rows.append(row)
     if hard is not None:
@@ -1421,24 +1434,50 @@ def earlier_exclusions(work):
     return keys, lines, lemma_counts_of(works)
 
 
+def build_control_room(work, seed=SEED, caps=None, lemma_cap=LEMMA_CAP, shape_lemma_cap=None):
+    """{shape: {lemma: n}} for a controls-only round: the lemmas of the targets that the build selects from the decided items of the
+    earlier work areas (the root and the rounds before this one), and n = the controls (at most CONTROL_LEMMA_CAP per lemma) that the
+    build can still take for the lemma, which is CONTROL_LEMMA_CAP less the controls it already takes. The selection is `select_items_hard`
+    itself (same caps, lemma cap and seed as `build`), so the lemma sets are those of the current build; a work area without decided.tsv
+    contributes nothing."""
+    items = []
+    for earlier in earlier_works(work):
+        if os.path.exists(earlier.private_file("decided.tsv")):
+            items += read_decided(earlier)[0]
+    targets, chosen = select_items_hard(items, seed, caps, lemma_cap, HARD_CONTROL_MAX, shape_lemma_cap)
+    taken = collections.Counter((i["shape"], i["lemma"]) for i in chosen)
+    room = {shape: {} for shape in HARD_SHAPES}
+    for item in targets:
+        room[item["shape"]][item["lemma"]] = max(0, CONTROL_LEMMA_CAP - taken[(item["shape"], item["lemma"])])
+    return room
+
+
 def _command_candidates(args):
     work = open_work(args)
     only = parse_only_shapes(args.only_shapes)
     keys, lines, existing = earlier_exclusions(work)
     name = getattr(work, "name", None)
     hard = None
+    room = None
     if args.tranche == "hard":
         if args.shape_over:
             raise ValueError("--shape-over is a standard-tranche option; the hard tranche uses --budget")
         hard = HardRule(read_hmm(work), StandardTranche(args.data_dir), parse_budget(args.budget))
     elif args.budget:
         raise ValueError("--budget needs --tranche hard")
+    if args.controls_only:
+        if hard is None or not name:
+            raise ValueError("--controls-only needs --tranche hard and --round NAME")
+        if args.no_controls or args.budget:
+            raise ValueError("--controls-only writes controls only: it takes neither --no-controls nor --budget")
+        room = build_control_room(work, args.seed, hard_caps(args), args.lemma_cap, parse_shape_lemma_cap(args.shape_lemma_cap))
     pool = args.control_pool if args.control_pool is not None else (HARD_CONTROL_POOL if hard else CONTROL_POOL)
     rows, report = collect_candidates(work, args.data_dir, not args.no_ud, args.target, args.over, args.lemma_cap, args.seed,
                                       shape_over=parse_shape_over(args.shape_over), control_pool=pool,
                                       shape_lemma_cap=parse_shape_lemma_cap(args.shape_lemma_cap), only_shapes=only,
                                       controls=not args.no_controls, compound_strict=args.compound_strict, exclude_keys=keys,
-                                      exclude_lines=lines, lemma_existing=existing, prefix=name + "-" if name else "", hard=hard)
+                                      exclude_lines=lines, lemma_existing=existing, prefix=name + "-" if name else "", hard=hard,
+                                      control_room=room)
     for line in report:
         print(line)
     common.write_text(work.private_file("candidates-report.md"), report)
@@ -2434,6 +2473,10 @@ def main(argv=None):
     candidates.add_argument("--seed", type=int, default=SEED)
     candidates.add_argument("--only-shapes", default=None, metavar="SHAPE[,SHAPE]", help="pre-select only these shapes")
     candidates.add_argument("--no-controls", action="store_true", help="write no control candidates")
+    candidates.add_argument("--controls-only", action="store_true",
+                            help="hard tranche, with --round: write only controls, for the lemmas of the targets the build selects today "
+                                 "(from the decided earlier rounds; uses --shape-max and --shape-lemma-cap like build); no target is added")
+    candidates.add_argument("--shape-max", action="append", default=None, metavar="SHAPE=N", help="with --controls-only: as in the build")
     candidates.add_argument("--compound-strict", action="store_true",
                             help="n-compound-head: the token before the head must be a noun-like modifier (see noun_like_modifier); always on in the hard tranche")
     candidates.add_argument("--budget", action="append", default=None, metavar="SHAPE=N|all",

@@ -440,6 +440,54 @@ class HardPipelineTests(HardFolder):
         self.assertTrue(all(r["cand_id"].startswith("h2-c") for r in rows))
         self.assertTrue(min(float(r["q"]) for r in rows) >= max(float(r["q"]) for r in sd.read_candidates(self.work)))
 
+    def test_a_controls_only_round_reads_the_lemmas_and_the_room_of_the_current_build(self):
+        self.prepare()
+        items, _ = sd.read_all_decided(self.work)
+        targets, chosen = sd.select_items_hard(items)
+        room = sd.build_control_room(sd.RoundWork(self.root, "h3"))
+        self.assertEqual(set(sd.HARD_SHAPES), set(room))
+        taken = {}
+        for item in chosen:
+            taken[(item["shape"], item["lemma"])] = taken.get((item["shape"], item["lemma"]), 0) + 1
+        for shape in sd.HARD_SHAPES:
+            self.assertEqual({i["lemma"] for i in targets if i["shape"] == shape}, set(room[shape]))
+            for lemma, n in room[shape].items():
+                self.assertEqual(max(0, sd.CONTROL_LEMMA_CAP - taken.get((shape, lemma), 0)), n)
+        self.assertTrue(room["v-after-modal"])
+
+    def test_the_controls_only_collector_writes_no_target_and_obeys_the_lemma_room(self):
+        room = {"v-after-modal": {"check": 1, "test": 0, "stop": 2}}
+        rows, report = self.collect(control_room=room, control_pool=10, only_shapes=sd.HARD_SHAPES)
+        self.assertTrue(rows)
+        self.assertEqual({"control"}, {r["role"] for r in rows})
+        self.assertEqual({("v-after-modal", "check"), ("v-after-modal", "stop")}, {(r["shape"], r["lemma"]) for r in rows})
+        self.assertTrue(all(r["q"] == "" for r in rows))
+        self.assertIn("| v-after-modal | 0 | 0 | 0 | 0 | 0 | - | - | 0 | 2 |", "\n".join(report))
+        rows, _ = self.collect(control_room=room, control_pool=1, only_shapes=sd.HARD_SHAPES)
+        self.assertEqual(1, len(rows))                                                   # the pool per shape
+        self.assertEqual([], self.collect(control_room={}, control_pool=10)[0])          # no lemma, no control
+
+    def test_the_controls_only_round_repeats_no_earlier_candidate_and_adds_no_target(self):
+        self.prepare()
+        before = sd.read_all_decided(self.work)[0]
+        code, output = self.hard_cli("candidates", "--no-ud", "--round", "h3", "--controls-only", "--control-pool", "5", "--lemma-cap", "9")
+        self.assertEqual(0, code, output)
+        rows = sd.read_candidates(sd.RoundWork(self.root, "h3"))
+        self.assertEqual(set(), {r["role"] for r in rows} - {"control"})
+        self.assertEqual(set(), {r["sent_key"] for r in rows} & {r["sent_key"] for r in sd.read_candidates(self.work)})
+        self.assertTrue(all(r["cand_id"].startswith("h3-c") for r in rows))
+        self.assertEqual(len(before), len(sd.read_all_decided(self.work)[0]))
+
+    def test_controls_only_needs_the_hard_tranche_a_round_and_nothing_else_that_selects_targets(self):
+        with self.assertRaises(ValueError):
+            self.hard_cli("candidates", "--no-ud", "--controls-only")
+        with self.assertRaises(ValueError):
+            self.cli("candidates", "--no-ud", "--round", "h3", "--controls-only")
+        with self.assertRaises(ValueError):
+            self.hard_cli("candidates", "--no-ud", "--round", "h3", "--controls-only", "--no-controls")
+        with self.assertRaises(ValueError):
+            self.hard_cli("candidates", "--no-ud", "--round", "h3", "--controls-only", "--budget", "v-after-modal=3")
+
 
 class QuotaGateTests(unittest.TestCase):
     @staticmethod
