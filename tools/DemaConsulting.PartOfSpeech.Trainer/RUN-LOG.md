@@ -2242,7 +2242,7 @@ section below.
 **The pre-registered selection rule (the inputs table and the numbered rule below) was written before any label of the hard
 tranche existed and before its candidates were generated.** The frozen pre-registration is PR #11 commit `7a1aa4d`, amended once by PR #11
 commit `7e3ecb0` (the `n-subject-initial` cap, rule 9, before labeling). Commits of a PR are retrievable from the PR's head ref
-(`refs/pull/<n>/head`) after a squash merge, for example `git fetch origin pull/10/head`. The sections "Rounds actually run" and the baseline sections
+(`refs/pull/<n>/head`) after a squash merge: the PR #11 commits come from `git fetch origin pull/11/head` (the PR #10 commits from `pull/10/head`). The sections "Rounds actually run" and the baseline sections
 after it were added after labeling; they do not change the rule. The hard tranche
 (`data/eval/shapes-dev/hard.tsv`, [README](../../data/eval/shapes-dev/README.md#hard-tranche) has the same rule) holds the
 contested cases of `n-compound-head`, `n-subject-initial`, `v-imperative-initial` and `v-after-modal` (`n-measure` has no hard

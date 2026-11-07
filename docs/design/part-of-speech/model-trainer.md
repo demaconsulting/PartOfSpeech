@@ -192,9 +192,11 @@ or near-duplicate overlaps, never to choose, weight or frame a candidate. `build
 committed exclusion record `data/eval/shapes-dev/excluded-sources.tsv` lists (by id or normalized URL), and a set that
 misses a quota (120 targets per shape, 100 controls, lemma caps, 30% authored share) unless `--allow-short` is given.
 The record is required for both profiles and read fail-closed: a missing file, a zero-byte file, a file without the header
-and a malformed row are errors, and `exclusions`, `candidates`, `decide` and `build` refuse before they do anything else;
+and a malformed row are errors, and `exclusions`, `candidates`, `decide`, `sample`, `build` and `report` refuse before
+they do anything else;
 a file that holds only the header is valid and means that nothing is excluded. The optional work-folder
-`excluded-sources.tsv` only adds rows, so it may be absent only because the committed record exists.
+`excluded-sources.tsv` only adds rows, so it may be absent only because the committed record exists; every consumer uses
+the union of both tables (by id and normalized URL), so the committed record alone drops the decided items of a source.
 The hard tranche (`shapes_dev.py --tranche hard`) is selected by a rule that is independent of the PartOfSpeech model:
 the numbers of the WordSense Basic classifier (HMM tagger plus cue model) from the standalone harness
 `tools/data/hmm-tags` (not in the solution, no reference to this library, a pinned DLL outside the repository), the

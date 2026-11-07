@@ -32,10 +32,13 @@ that sources.tsv, which lists only the used documents, stays a table of the shar
 
 Fail-closed exclusions. The committed record is required for both profiles and is read by the tool itself (`read_committed_exclusions`,
 strictly): a missing file, a zero-byte file, a file without the exact header and a malformed row are errors, and `exclusions`, `candidates`,
-`decide` and `build` refuse (exit code 1) before they do anything else. A file that holds only the header is valid: it records that nothing is
+`decide`, `sample`, `build` and `report` refuse (exit code 1) before they do anything else. A file that holds only the header is valid: it records that nothing is
 excluded (a first standard build starts from such a file; `build` writes the record, header only when nothing is excluded, and never
 deletes it). W/excluded-sources.tsv stays optional, but only because the committed record must exist: it adds rows and never replaces
-the record. The record is indexed with the used documents, so `candidates` rejects a document whose id or normalized URL it lists even when
+the record. Every consumer of the exclusions (`decide`, `read_decided`, the lemma counts, `sample`, `build`, `report`) uses the merged
+exclusions (`merged_excluded_sources`: the committed record united with W/excluded-sources.tsv when it exists, by id and by normalized URL
+through the URL of the draft row), so a work folder without the optional file still drops the items of a committed exclusion. The record is
+indexed with the used documents, so `candidates` rejects a document whose id or normalized URL it lists even when
 W/excluded-sources.tsv lacks it. `build` refuses (exit code 1, nothing written) when a chosen sentence or a used source row has an id or
 normalized URL listed in the committed record or in W/excluded-sources.tsv. The written record is the union of the committed rows and the
 W rows; a committed row is never dropped or changed, an id in both tables with a different URL, or a duplicate id within one table, is an
@@ -199,7 +202,7 @@ EXCLUDED_OUTPUT_COLUMNS = ("source_id", "url", "reason", "decided")
 EXCLUDED_OUTPUT_FILE = "excluded-sources.tsv"
 EXCLUDED_OUTPUT_PATH = "data/eval/shapes-dev/excluded-sources.tsv"
 EXCLUDED_REASON = "excluded-source"
-EXCLUSION_COMMANDS = ("exclusions", "candidates", "decide", "build")      # the commands that load the committed exclusion record (required)
+EXCLUSION_COMMANDS = ("exclusions", "candidates", "decide", "sample", "build", "report")      # the commands that load the committed exclusion record (required)
 SHAPES = ("n-compound-head", "n-subject-initial", "v-imperative-initial", "n-measure", "v-after-modal")
 SHAPE_CLASS = {shape: ("Noun" if shape.startswith("n-") else "Verb") for shape in SHAPES}
 OTHER_CLASS = {"Noun": "Verb", "Verb": "Noun"}
@@ -528,6 +531,35 @@ def read_excluded_rows(work):
 def read_excluded_sources(work):
     """{source_id: reason} of W/excluded-sources.tsv (empty when the file is missing)."""
     return {source_id: reason for source_id, reason, _ in read_excluded_rows(work)}
+
+
+def merged_excluded_sources(work, data_dir=None):
+    """{source_id: reason} of every excluded document: the committed record (fail closed: `read_committed_exclusions` raises ValueError
+    when it is missing or malformed) united with W/excluded-sources.tsv when that file exists.
+
+    The union is by id and by normalized URL: a source of the work folder's sources-draft.tsv whose URL is listed in either table is
+    excluded too, under the reason of the row that lists the URL. Every consumer of the exclusions (`decide`, `read_decided`, the lemma
+    counts, `sample`, `report`) uses this union, so a work folder without excluded-sources.tsv still drops the committed exclusions.
+    `data_dir` is the data folder of the committed record (`common.DATA` when None)."""
+    committed = read_committed_exclusions(data_dir or common.DATA)
+    draft_urls = {row["source_id"]: row["url"] for row in read_draft(work)}
+    rows = [(source_id, url, reason, decided) for source_id, url, reason, decided in committed]
+    known = {row[0] for row in rows}
+    for source_id, reason, decided in read_excluded_rows(work):
+        if source_id not in known:
+            rows.append((source_id, draft_urls.get(source_id, ""), reason, decided))
+    excluded = {}
+    for source_id, _, reason, _ in rows:
+        excluded[source_id] = reason
+    lookup = {("id", source_id): source_id for source_id in excluded}
+    for source_id, url, _, _ in rows:
+        if url:
+            lookup[("url", common.normalize_url(url))] = source_id
+    for source_id, url in draft_urls.items():
+        hit = common.excluded_match(lookup, source_id, url)
+        if hit and source_id not in excluded:
+            excluded[source_id] = excluded[hit]
+    return excluded
 
 
 def excluded_output_rows(work, draft, tranche="standard"):
@@ -1167,13 +1199,15 @@ class LeakageFilter:
         return leakage.gram_overlap(text, self.held_out, leakage.PROBE_GRAM_WORDS)
 
 
-def lemma_counts_of(works, shapes=SHAPES):
-    """Counter {(shape, lemma): n} of the targets of earlier work areas: the kept targets when decided.tsv exists, else the candidates."""
+def lemma_counts_of(works, shapes=SHAPES, data_dir=None):
+    """Counter {(shape, lemma): n} of the targets of earlier work areas: the kept targets when decided.tsv exists, else the candidates.
+
+    Sources of the merged exclusions (`merged_excluded_sources`: the committed record and the work file) do not count."""
     counts = collections.Counter()
     for earlier in works:
-        excluded = read_excluded_sources(earlier)
+        excluded = merged_excluded_sources(earlier, data_dir)
         if os.path.exists(earlier.private_file("decided.tsv")):
-            items, _ = read_decided(earlier)
+            items, _ = read_decided(earlier, data_dir)
             members = [i for i in items if i["outcome"] == "keep"]
         elif os.path.exists(work_path(earlier, "candidates.tsv")):
             members = [i for i in read_candidates(earlier) if i["source_id"] not in excluded]
@@ -1477,7 +1511,7 @@ def parse_only_shapes(value):
     return tuple(dict.fromkeys(shapes))
 
 
-def earlier_exclusions(work):
+def earlier_exclusions(work, data_dir=None):
     """(sentence keys, {(source_id, line)}, Counter {(shape, lemma): kept}) of the root and the earlier rounds of `work`."""
     keys, lines = set(), set()
     works = earlier_works(work)
@@ -1486,10 +1520,10 @@ def earlier_exclusions(work):
             keys.add(row["sent_key"])
             if row["origin"] == "real":
                 lines.add((row["source_id"], int(row["line"])))
-    return keys, lines, lemma_counts_of(works)
+    return keys, lines, lemma_counts_of(works, data_dir=data_dir)
 
 
-def build_control_room(work, seed=SEED, caps=None, lemma_cap=LEMMA_CAP, shape_lemma_cap=None):
+def build_control_room(work, seed=SEED, caps=None, lemma_cap=LEMMA_CAP, shape_lemma_cap=None, data_dir=None):
     """{shape: {lemma: n}} for a controls-only round: the lemmas of the targets that the build selects from the decided items of the
     earlier work areas (the root and the rounds before this one), and n = the controls (at most CONTROL_LEMMA_CAP per lemma) that the
     build can still take for the lemma, which is CONTROL_LEMMA_CAP less the controls it already takes. The selection is `select_items_hard`
@@ -1498,7 +1532,7 @@ def build_control_room(work, seed=SEED, caps=None, lemma_cap=LEMMA_CAP, shape_le
     items = []
     for earlier in earlier_works(work):
         if os.path.exists(earlier.private_file("decided.tsv")):
-            items += read_decided(earlier)[0]
+            items += read_decided(earlier, data_dir)[0]
     targets, chosen = select_items_hard(items, seed, caps, lemma_cap, HARD_CONTROL_MAX, shape_lemma_cap)
     taken = collections.Counter((i["shape"], i["lemma"]) for i in chosen)
     room = {shape: {} for shape in HARD_SHAPES}
@@ -1510,7 +1544,7 @@ def build_control_room(work, seed=SEED, caps=None, lemma_cap=LEMMA_CAP, shape_le
 def _command_candidates(args):
     work = open_work(args)
     only = parse_only_shapes(args.only_shapes)
-    keys, lines, existing = earlier_exclusions(work)
+    keys, lines, existing = earlier_exclusions(work, args.data_dir)
     name = getattr(work, "name", None)
     hard = None
     room = None
@@ -1525,7 +1559,7 @@ def _command_candidates(args):
             raise ValueError("--controls-only needs --tranche hard and --round NAME")
         if args.no_controls or args.budget:
             raise ValueError("--controls-only writes controls only: it takes neither --no-controls nor --budget")
-        room = build_control_room(work, args.seed, hard_caps(args), args.lemma_cap, parse_shape_lemma_cap(args.shape_lemma_cap))
+        room = build_control_room(work, args.seed, hard_caps(args), args.lemma_cap, parse_shape_lemma_cap(args.shape_lemma_cap), args.data_dir)
     pool = args.control_pool if args.control_pool is not None else (HARD_CONTROL_POOL if hard else CONTROL_POOL)
     rows, report = collect_candidates(work, args.data_dir, not args.no_ud, args.target, args.over, args.lemma_cap, args.seed,
                                       shape_over=parse_shape_over(args.shape_over), control_pool=pool,
@@ -1804,15 +1838,16 @@ def decide_token(opus, sol):
     return opus.tag, common.format_status(base, flags)
 
 
-def run_decisions(work, candidates, lex=None):
+def run_decisions(work, candidates, lex=None, data_dir=None):
     """(items, rows, incomplete): `items` is [dict of ITEM_COLUMNS], `rows` the token rows of every decided sentence.
 
     Only sentences of batches that both models completed and validated are decided; the others are `incomplete`
-    (sentence keys). An item whose sentence was decided is `keep` or `drop` with a reason. `lex` is the lexicon for the base form
+    (sentence keys). An item whose sentence was decided is `keep` or `drop` with a reason; an item of a source of the merged exclusions
+    (`merged_excluded_sources`: the committed record and the work file) is a `drop`. `lex` is the lexicon for the base form
     rule of `frame_mismatch` (v-imperative-initial, v-after-modal).
     """
     key = read_key(work)
-    excluded = read_excluded_sources(work)
+    excluded = merged_excluded_sources(work, data_dir)
     by_key = {record["sent_key"]: record for record in key}
     sentences = unique_sentences(candidates)
     votes = {}
@@ -1864,7 +1899,7 @@ def decide_report(items, incomplete):
 
 def _command_decide(args):
     work = open_work(args)
-    items, rows, incomplete = run_decisions(work, read_candidates(work), lexicon_of(args.data_dir))
+    items, rows, incomplete = run_decisions(work, read_candidates(work), lexicon_of(args.data_dir), args.data_dir)
     report = decide_report(items, incomplete)
     columns = HARD_ITEM_COLUMNS if items and "q" in items[0] else ITEM_COLUMNS
     adjudicate.write_rows(work.private_file("decided.tsv"), columns, [[i[c] for c in columns] for i in items])
@@ -1874,10 +1909,12 @@ def _command_decide(args):
     return 0
 
 
-def read_decided(work):
-    """([item dict], {sent_key: [(form, tag, status)]}) of private/decided.tsv and decided-rows.tsv."""
+def read_decided(work, data_dir=None):
+    """([item dict], {sent_key: [(form, tag, status)]}) of private/decided.tsv and decided-rows.tsv.
+
+    An item of a source of the merged exclusions (`merged_excluded_sources`) is a `drop` whatever the stored outcome."""
     _, records = adjudicate.read_records(work.private_file("decided.tsv"))
-    excluded = read_excluded_sources(work)
+    excluded = merged_excluded_sources(work, data_dir)
     for record in records:
         record["target"] = int(record["target"])
         record["disputed_tokens"] = int(record["disputed_tokens"])
@@ -1905,14 +1942,14 @@ def read_all_candidates(work):
     return found
 
 
-def read_all_decided(work):
+def read_all_decided(work, data_dir=None):
     """([item], {sent_key: rows}) merged over the root and every round that has decided items (the root alone when none has)."""
     works = all_works(work, "decided.tsv")
     if not works:
-        return read_decided(adjudicate.Work(getattr(work, "base", work.root)))
+        return read_decided(adjudicate.Work(getattr(work, "base", work.root)), data_dir)
     items, rows, seen = [], {}, set()
     for member in works:
-        member_items, member_rows = read_decided(member)
+        member_items, member_rows = read_decided(member, data_dir)
         for item in member_items:
             if item["cand_id"] in seen:
                 raise ValueError("candidate id %s is decided in two rounds" % item["cand_id"])
@@ -1992,7 +2029,7 @@ def sample_lines(sample, sentences, prefix="R"):
 
 def _command_sample(args):
     work = adjudicate.Work(args.work)
-    items, _ = read_all_decided(work)
+    items, _ = read_all_decided(work, args.data_dir)
     sentences = unique_sentences(read_all_candidates(work))
     if args.tranche == "hard":
         targets, _ = select_items_hard(items, args.seed, hard_caps(args), args.lemma_cap, HARD_CONTROL_MAX,
@@ -2350,7 +2387,7 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
     fail-closed and never rewrites it; its quotas are the pre-registered floors and caps (`hard` = dict with optional floors, caps,
     control_min, control_max; see `quota_problems_hard`) instead of the exact per-shape counts, and `per_shape`, `share` and `controls` are unused.
     """
-    items, tagged = read_all_decided(work)
+    items, tagged = read_all_decided(work, data_dir)
     draft = read_draft(work)
     hard = hard or {}
     if tranche == "hard":
@@ -2455,10 +2492,11 @@ def band_lines(sentences, items):
     return lines
 
 
-def report_lines(out_dir, work=None, tranche="standard"):
+def report_lines(out_dir, work=None, tranche="standard", data_dir=None):
     """Markdown counts of the built set for the README: per shape real and authored targets and controls, documents, drops.
 
-    The hard tranche reads hard.tsv, lists the shapes of HARD_SHAPES and n-measure, and adds the q-band table (`band_lines`)."""
+    The hard tranche reads hard.tsv, lists the shapes of HARD_SHAPES and n-measure, and adds the q-band table (`band_lines`).
+    The drop counts use the merged exclusions (`merged_excluded_sources`, `data_dir` is the data folder of the committed record)."""
     _, sentences = common.read_corpus(os.path.join(out_dir, TRANCHE_FILES[tranche][0]))
     count = collections.Counter()
     for sentence in sentences:
@@ -2476,7 +2514,7 @@ def report_lines(out_dir, work=None, tranche="standard"):
     lines += ["", "- sentences: %d, tokens: %d, disputed tokens: %d, source documents: %d (authored pseudo-document included)"
               % (len(sentences), tokens, disputed, len(documents))]
     if work is not None and all_works(work, "decided.tsv"):
-        items, _ = read_all_decided(work)
+        items, _ = read_all_decided(work, data_dir)
         drops = collections.Counter((i["shape"], i["reason"]) for i in items if i["outcome"] == "drop")
         lines += ["", "| shape | dropped: target disagreement | dropped: class mismatch | dropped: frame mismatch |", "| --- | --- | --- | --- |"]
         for shape in SHAPES:
@@ -2494,7 +2532,7 @@ def report_lines(out_dir, work=None, tranche="standard"):
 
 def _command_report(args):
     out_dir = args.out_dir or os.path.join(args.data_dir, "eval", "shapes-dev")
-    adjudicate._print(report_lines(out_dir, adjudicate.Work(args.work), args.tranche))
+    adjudicate._print(report_lines(out_dir, adjudicate.Work(args.work), args.tranche, args.data_dir))
     return 0
 
 

@@ -470,8 +470,10 @@ not change the keys, a probe row without a sentence column is an error, the buil
 hashes, a build that uses a source listed in the committed or the work-folder exclusion table (by id or by URL under
 another id) is refused with nothing written, the committed rows are kept in the written record, `check_licenses.py`
 reports an excluded id or URL in `dev.tsv` or `sources.tsv` and a missing, zero-byte, header-less or malformed record (a
-header-only record is valid), the build and the `candidates`, `decide` and `exclusions` commands refuse a missing, zero-byte
-or header-less committed record in both profiles, and a missed quota
+header-only record is valid), the build and the `candidates`, `decide`, `sample`, `report` and `exclusions` commands
+refuse a missing, zero-byte or header-less committed record in both profiles, the decided items of a source that only the
+committed record excludes (the work-folder table absent) are dropped by `decide`, the lemma counts, `sample`, `report` and
+the build, and a missed quota
 (targets per shape, controls, lemma caps, authored share) refuses the build unless `--allow-short` is given. The extended
 `Leakage_Report_RecordsNoOverlaps` requires `shapes-dev` and `shapes-dev-hard` among the evaluation sets of every
 training set.
