@@ -236,7 +236,8 @@ order: `# shape = <id>` (one of `n-compound-head`, `n-subject-initial`, `v-imper
 not; a disputed token carries the first labeler's tag) with the usual flags. Normative rules: the judged word is tagged
 NOUN, PROPN or VERB; for a `target` its class is the class of the shape (`n-*` Noun, `v-*` Verb) and for a `control` the other
 class; the judged word is never `disputed`; `origin = authored` only for the sentences of the document `shapes-dev-authored`.
-`sources.tsv` has the 12 columns of the gold v2 source table, and `leakage-report.tsv` holds counts only
+`sources.tsv` has the 12 columns of the gold v2 source table and lists the used documents only; `excluded-sources.tsv` records the
+documents that were dropped after sourcing (`source_id, url, reason, decided`); `leakage-report.tsv` holds counts only
 (`evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, probe_5gram_sentences`).
 
 **Corrections overlay** (`data/corrections/`, specified in full in its `README.md`). Corrections to the labels of the open

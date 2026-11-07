@@ -718,14 +718,18 @@ sections:
         title: >-
           Every source document of the hard-shape development set shall be listed with a US federal-work or
           public-domain license basis (or as the pseudo-document that the project wrote), with its sentence count, and
-          no source row shall name FAA material.
+          no source row shall name FAA material; a document that was dropped after it was sourced shall be recorded in
+          the excluded-sources table with its URL, reason and decision date, and shall not be a used document.
         tags: [system]
         justification: |
           The development set is built from the text of real documents, so each document needs a recorded basis for its
-          use. The project owner excluded FAA material, and the check refuses it in the source table.
+          use. The project owner excluded FAA material, and the check refuses it in the source table. The source table
+          lists only used documents and has a fixed format, so the documents that the owner dropped (for example because
+          their authorship is not clearly federal) are recorded in a table of their own.
         tests:
           - PartOfSpeech_ShapesDev_Sources_ListEveryDocumentWithItsCount
           - PartOfSpeech_ShapesDev_Sources_AreOpenAndHaveNoFaaMaterial
+          - PartOfSpeech_ShapesDev_ExcludedSources_AreRecordedAndAbsentFromTheSet
           - PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl
           - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
 

@@ -1262,6 +1262,53 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
+    ///     Proves that the record of the excluded source documents of the hard-shape development set is well formed and that
+    ///     no excluded document, and none of its URLs, is a used document of the set (the source table lists used documents only).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_ExcludedSources_AreRecordedAndAbsentFromTheSet()
+    {
+        // Arrange: the excluded documents and the used documents (in the sentences and in the source table)
+        var excluded = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/excluded-sources.tsv"));
+        var sources = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/sources.tsv"));
+        var usedIds = new HashSet<string>(sources.Column("source_id"), StringComparer.Ordinal);
+        usedIds.UnionWith(DataFiles.ReadCorpus(DataFiles.Data(ShapesDevCorpus)).Select(sentence => sentence.SourceId));
+        var usedUrls = new HashSet<string>(sources.Column("url"), StringComparer.Ordinal);
+
+        // Act: find malformed rows and excluded documents that are used
+        var problems = new List<string>();
+        foreach (var row in excluded.Rows)
+        {
+            var id = excluded.Cell(row, "source_id");
+            if (id.Length == 0 || usedIds.Contains(id))
+            {
+                problems.Add($"{id}: the id is empty or the document is used by the set");
+            }
+
+            if (!IsWellFormedUrl(excluded.Cell(row, "url")) || usedUrls.Contains(excluded.Cell(row, "url")))
+            {
+                problems.Add($"{id}: the URL is not a well-formed HTTPS URL or is a used document");
+            }
+
+            if (excluded.Cell(row, "reason").Length == 0)
+            {
+                problems.Add($"{id}: the reason is empty");
+            }
+
+            if (!DateTime.TryParseExact(excluded.Cell(row, "decided"), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+            {
+                problems.Add($"{id}: the decision date is not yyyy-MM-dd");
+            }
+        }
+
+        // Assert: the columns are the documented ones, the ids are unique and no problem was found
+        Assert.Equal(new[] { "source_id", "url", "reason", "decided" }, excluded.Columns);
+        Assert.Equal(excluded.Rows.Count, excluded.Column("source_id").Distinct(StringComparer.Ordinal).Count());
+        Assert.NotEmpty(excluded.Rows);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
     ///     Proves that the committed leakage report of the hard-shape development set covers every other evaluation set and
     ///     records no document overlap, no exact sentence overlap and no shared word 5-gram with the shape probe.
     /// </summary>

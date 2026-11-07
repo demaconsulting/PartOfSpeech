@@ -448,7 +448,9 @@ shape and for the controls and that the origin agrees with the authored pseudo-d
 `Tokens_AreReproducedByTheTokenizer` asserts that `Tokenizer.Tokenize` yields one sentence with the stored tokens for
 every sentence; `Sources_ListEveryDocumentWithItsCount` asserts that the table lists exactly the documents with the counts
 of the file; `Sources_AreOpenAndHaveNoFaaMaterial` asserts a US federal-work, public-domain or project-written basis for
-every row and no FAA mention in any cell; `LeakageReport_RecordsNoOverlapWithOtherEvaluationSets` asserts that the
+every row and no FAA mention in any cell; `ExcludedSources_AreRecordedAndAbsentFromTheSet` asserts that
+`excluded-sources.tsv` (the documents dropped after sourcing: id, URL, reason, decision date) is well formed and that none
+of its documents or URLs is used by the set; `LeakageReport_RecordsNoOverlapWithOtherEvaluationSets` asserts that the
 committed report names every other evaluation set once with the sentence count of the file and no document overlap, no
 exact overlap and no shared probe word 5-gram; `Sentences_AreDisjointFromTheOtherEvaluationSets` asserts, by reading the
 evaluation files, that no document and no sentence is shared. Each fails when a file is missing or empty. The extended
