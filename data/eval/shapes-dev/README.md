@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore usfs usbm ncwm nltk -->
+<!-- cspell:ignore usfs usbm ncwm nltk fcda usbr -->
 
 # Shapes Development Set
 
@@ -10,6 +10,10 @@ the lexicon, in one of five hard sentence shapes: 600 target items (120 for each
 in the other class). Every token has a Universal POS tag from two blind model labelers. It is the **development** set for
 the sentence-context work: use it to select settings and to compare variants. **Development only**: never train on it and
 never report it as a held-out figure (the [shape probe](../shapes/README.md) stays the held-out evaluation).
+
+A second file, `hard.tsv`, is the **hard tranche**: 460 real sentences (400 target items and 60 controls) of the contested cases
+of four of the five shapes, built by a pre-registered, model-independent rule (see [Hard Tranche](#hard-tranche)). Everything
+above and below this paragraph that gives a count describes the standard tranche (`dev.tsv`) unless it says otherwise.
 
 ## Source and Provenance
 
@@ -58,6 +62,9 @@ never report it as a held-out figure (the [shape probe](../shapes/README.md) sta
 | `sources.tsv` | the 62 documents that the sentences come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used |
 | `excluded-sources.tsv` | the documents that were dropped after they were sourced: `source_id`, `url`, `reason`, `decided` (see [Excluded Sources](#excluded-sources)) |
 | `leakage-report.tsv` | counts of the set against every other evaluation set (documents, exact sentences, near duplicates, shared probe word 5-grams); no sentence text |
+| `hard.tsv` | the 460 sentences of the hard tranche, same block format (see [Hard Tranche](#hard-tranche)); ids `shapes-dev-hard-NNNN` |
+| `hard-sources.tsv` | the 99 documents of the hard tranche, same columns as `sources.tsv` |
+| `hard-leakage-report.tsv` | counts of the hard tranche against every other evaluation set, the standard tranche included (shared documents are reported, not gated) |
 
 Each sentence block has the comments `sent_id`, `source_id`, `text`, `shape`, `role` (`target` or `control`), `target` (the
 zero-based index of the judged word), `lemma` and `origin` (`real` or `authored`), then one row `form`, `upos`, `status`
@@ -228,7 +235,7 @@ left to gain are:
 
 The set was not made harder on purpose: choosing items by the errors of the shipped model would bias it against that model.
 A second, harder tranche is chosen by model-independent criteria and is described in [Hard Tranche](#hard-tranche); its
-selection rule is pre-registered there.
+selection rule is pre-registered there and its headroom is stated there too.
 
 ## Hard Tranche
 
@@ -292,6 +299,119 @@ The rule (`python tools/data/shapes_dev.py --tranche hard`; the docstring of the
     one), with a leniency control; the gate is 95% precision.
 12. **Leftovers are not reused.** Labeled candidates of the standard tranche that are not in `dev.tsv` are not reused, because
     their labels were seen.
+
+### Rounds Actually Run
+
+- **Main round:** all 2,258 candidate sentences (2,320 candidates: 400, 846, 574 and 300 targets for `n-compound-head`,
+  `n-subject-initial`, `v-imperative-initial` and `v-after-modal`, plus 50 control candidates per shape; 16 blind batches).
+- **Round `h2`:** the next 200 `v-after-modal` candidates (no controls), run because that shape kept only 77 targets, below its
+  floor of 80. This is the round that rule 4 provides for.
+- **Round `h3`:** a controls-only round, 149 sentences (152 control candidates, 38 per shape), run because the controls of the
+  first two rounds were 45, below the floor of 50. The pre-registration did not name this round. It applies rule 6 (the other-class
+  sentences of the chosen target lemmas, at most 2 per lemma) and the controls floor of rule 9, it adds no target, and it was
+  prepared and exported before any `h3` label existed.
+
+No other round ran, and no candidate was relabeled or added after the labels were seen.
+
+### Outcome
+
+Both blind labelers tagged every sentence of the three rounds; the build (`python tools/data/shapes_dev.py --work <work-folder>
+--tranche hard build`, at commit `5d3abb5`; the defaults are the floors, caps and lemma caps of rule 9) wrote 460 sentences, 7,936
+tokens and no authored sentence (79 tokens that are not a judged word are disputed between the labelers; the judged word never
+is). `n-measure` has zero items.
+
+| Shape | Target items | Controls | Authored | Targets with q < 0.5 |
+| --- | ---: | ---: | ---: | ---: |
+| `n-compound-head` | 100 | 15 | 0 | 100 of 100 |
+| `n-subject-initial` | 100 | 15 | 0 | 24 of 100 |
+| `v-imperative-initial` | 100 | 15 | 0 | 65 of 100 |
+| `n-measure` | 0 | 0 | 0 | - |
+| `v-after-modal` | 100 | 15 | 0 | 71 of 100 |
+| all shapes | 400 | 60 | 0 | 260 of 400 |
+
+Dropped sentences (targets and controls of all rounds): the two labelers disagreed on the judged word, agreed on the other
+class (class mismatch), or the sentence did not fit the frame after labeling (frame mismatch; the base-form and nominal-gerund
+rules of the standard tranche).
+
+| Shape | Target disagreement | Class mismatch | Frame mismatch |
+| --- | ---: | ---: | ---: |
+| `n-compound-head` | 0 | 274 | 19 |
+| `n-subject-initial` | 25 | 389 | 121 |
+| `v-imperative-initial` | 14 | 226 | 35 |
+| `n-measure` | 0 | 0 | 0 |
+| `v-after-modal` | 8 | 331 | 8 |
+
+The q bands of the labeled targets, of the targets both labelers kept, and of the built items (hardest first, so a shape with a
+larger kept pool than its cap loses its least contested items):
+
+| Shape | q band | Labeled | Kept by both labelers | Built |
+| --- | --- | ---: | ---: | ---: |
+| `n-compound-head` | [0.10, 0.30) | 298 | 82 | 82 |
+| `n-compound-head` | [0.30, 0.50) | 102 | 34 | 18 |
+| `n-subject-initial` | [0.10, 0.30) | 161 | 10 | 10 |
+| `n-subject-initial` | [0.30, 0.50) | 106 | 14 | 14 |
+| `n-subject-initial` | [0.50, 0.70) | 106 | 29 | 29 |
+| `n-subject-initial` | [0.70, 0.90) | 219 | 93 | 47 |
+| `n-subject-initial` | [0.90, 0.97) | 254 | 174 | 0 |
+| `v-imperative-initial` | [0.10, 0.30) | 131 | 40 | 38 |
+| `v-imperative-initial` | [0.30, 0.50) | 70 | 28 | 27 |
+| `v-imperative-initial` | [0.50, 0.70) | 95 | 55 | 35 |
+| `v-imperative-initial` | [0.70, 0.90) | 134 | 88 | 0 |
+| `v-imperative-initial` | [0.90, 0.97) | 144 | 98 | 0 |
+| `v-after-modal` | [0.10, 0.30) | 166 | 30 | 27 |
+| `v-after-modal` | [0.30, 0.50) | 133 | 45 | 44 |
+| `v-after-modal` | [0.50, 0.70) | 156 | 73 | 29 |
+| `v-after-modal` | [0.70, 0.90) | 45 | 19 | 0 |
+| `v-after-modal` | [0.90, 0.97) | 0 | 0 | 0 |
+
+(`n-compound-head` has no row above q 0.5 because 400 candidates, its budget, were all below 0.4.) The kept pools before the cap
+were 116 (`n-compound-head`), 320 (`n-subject-initial`), 309 (`v-imperative-initial`) and 167 (`v-after-modal`), against
+a cap of 100 each: `n-compound-head` lost 16 items at the cap, `n-subject-initial` 220, `v-imperative-initial` 209 and
+`v-after-modal` 67. The controls are 15 per shape (the quota split of 60).
+
+**Documents:** 99 documents (460 sentences), 43 of them also in the standard tranche (a shared document is allowed; no sentence is
+shared) and 56 only here (308 sentences). Families by documents: usda 27, army 16, nasa 14, navy 11, usfs 9, usbm 6, phs 5, fcda 4,
+usbr 4, noaa 2, nist 1; `phs`, `fcda`, `usbr`, `noaa` and `nist` are new families against the standard tranche. The
+license basis of every document is quoted in `hard-sources.tsv`; the two excluded NIST handbooks are not used.
+
+**Selection harness:** the WordSense Basic classifier numbers come from the harness `tools/data/hmm-tags` (a standalone program
+outside the solution) run on the pinned DLL: WordSense commit `6530de1928baf30f9a14446a54bfb5dd5f67b41c`,
+`DemaConsulting.WordSense.dll` SHA-256 `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf`, `hmm.tsv` SHA-256
+`3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c` (inputs table above). The voters were not run (no diagnostic).
+q is in no committed file.
+
+### Hand Check of the Hard Tranche
+
+`claude-sonnet-5.5` (a model review, not a human review) judged 60 target items shown without q: 15 per
+shape, at least half with q < 0.5, drawn from the decided pool of kept targets (before the cap). Result: 58 correct, 0 incorrect and 2
+unclear, so the precision is 58 of 60 = 96.7% counted strictly (100% of the decided items). The two unclear items are
+`n-subject-initial` fragments that read either as an imperative or as a noun-compound heading. The leniency control (4 items whose
+tag was swapped on purpose) was judged incorrect 4 times of 4, so the reviewer did not accept wrong tags. The gate (95%) passed.
+
+### Headroom of the Hard Tranche
+
+The shipped model is measured on it in the trainer [run log](../../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md),
+section "Shapes development set: hard tranche baseline of the shipped model", which holds the figures. The headroom (100% minus
+the target accuracy) there is 32.0% for `n-compound-head`, 27.0% for `n-subject-initial`, 55.0% for `v-imperative-initial`
+and 22.0% for `v-after-modal` (34.0% over the four shapes, 136 of 400 target errors), against 3.7% on the standard tranche. The
+hard tranche therefore leaves room to show a gain where the standard tranche does not.
+
+### Limits of the Hard Tranche
+
+- **Less contested than asked for in `n-subject-initial`:** most items are in the q 0.5 to 0.9 range (76 of 100) and only 24 have
+  q < 0.5, so this shape is not a pure-disagreement set; `n-compound-head` (100 of 100) and `v-after-modal` (71) are, and
+  `v-imperative-initial` has 65. The very confident disagreements (q < 0.10) are outside the band by rule 5.
+- **No `n-measure`:** zero items; the Basic classifier is confident on 154 of 171 measure frames, so there are no hard cases.
+- **Another model family, not independent of the conventions:** the WordSense Basic classifier is a different model family from
+  the PartOfSpeech perceptron, but both follow public part-of-speech conventions, so the tranche is "contested for the Basic
+  classifier", not "intrinsically hard".
+- **Selection and labels interact:** the band keeps a sentence only if both labelers also agree on its class, and the large
+  class-mismatch drops show how many contested candidates are not true instances of the shape.
+- **Hand check:** a model review of 60 tokens, drawn from the decided pool and not from the 400 built items alone, so it estimates the
+  precision of the kept pool; two unclear items; no human reviewed any label.
+- **Controls:** 60 real sentences, 15 per shape, chosen for lemmas of kept targets.
+- **Same text family as the standard tranche:** 43 documents are shared, so the two tranches are one family, not two independent
+  samples; the narrow-domain limit below applies to both.
 
 ## Known Limits
 

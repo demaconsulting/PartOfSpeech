@@ -227,6 +227,12 @@ reported as a held-out result.
   shipped model"); every variant is compared with it. The model scores higher on the development set (96.3%) than on
   the held-out probe (89.64%), so the room to show a gain is small; the run log has the headroom per shape and explains
   why the set was not made harder.
+- **The hard tranche** (`hard.tsv`, [README](../../data/eval/shapes-dev/README.md#hard-tranche): 460 sentences of the
+  contested cases of four shapes, chosen by a pre-registered rule that uses another model family's numbers and no
+  PartOfSpeech output) has its own shipped-model baseline and headroom in the
+  [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: hard tranche
+  baseline of the shipped model"). It is for development only, like the standard tranche. Selection used numeric output
+  of the WordSense Basic classifier (the same owner; nothing copied).
 
 ## Reproduce the Results
 

@@ -2292,6 +2292,64 @@ Rule (`python tools/data/shapes_dev.py --tranche hard`):
 12. **Leftovers are not reused:** labeled standard-tranche candidates that are not in `dev.tsv` are not used, because their
     labels were seen.
 
+### Rounds actually run
+
+The main round labeled all 2,258 candidate sentences. Round `h2` (the next 200 `v-after-modal` candidates) ran because that
+shape kept 77 targets, below its floor of 80. Round `h3` (a controls-only round, 149 sentences) ran because the controls were
+45, below the floor of 50; the pre-registration did not name it, it applies rule 6 and the controls floor, adds no target, and was
+exported before any `h3` label existed. Both blind labelers tagged every sentence; the hand check passed the 95% gate. The
+outcome (counts, drops, q bands, documents, hand check, limits) is in the
+[README](../../data/eval/shapes-dev/README.md#hard-tranche); the baseline is in the next section.
+
+## Shapes development set: hard tranche baseline of the shipped model
+
+The built hard tranche (`data/eval/shapes-dev/hard.tsv`, 400 target items and 60 controls, 0 authored; `n-measure` has zero
+items) was scored once with the shipped model after the build. These are development figures: they select settings, nothing is
+trained on the file and none is a held-out result. The standard-tranche figures in the section above are unchanged: the standard
+part of this run's output equals that baseline (same file hash, same table).
+
+Command (run once from the repository root, below normal priority; it reads only the two development files and the embedded
+weights and appends no row to the run table):
+
+```text
+dotnet run --no-build -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eval-shapes --tranche both --label "shipped model baseline"
+```
+
+| Input | SHA-256 |
+| --- | --- |
+| `data/eval/shapes-dev/hard.tsv` | `c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22` |
+| `data/eval/shapes-dev/dev.tsv` | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
+| shipped weights, uncompressed image (`imageSha256` of `training.json`) | `a0d45458308f78dbe74669e563ea236a0a7b4688638d690dd0995ac4de988da3` |
+
+Hard tranche (output of the command, the heading level is lowered by one):
+
+| shape | target items | target accuracy | 95% interval | noun-verb decisions | harmful errors | harmful per 1,000 decisions | control items | control accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| n-compound-head | 100 | 68.0% | [58.3%, 76.3%] | 100 | 28 | 280.0 | 15 | 100.0% |
+| n-subject-initial | 100 | 73.0% | [63.6%, 80.7%] | 100 | 16 | 160.0 | 15 | 93.3% |
+| v-imperative-initial | 100 | 45.0% | [35.6%, 54.8%] | 100 | 44 | 440.0 | 15 | 93.3% |
+| n-measure | 0 | - | - | 0 | 0 | - | 0 | - |
+| v-after-modal | 100 | 78.0% | [68.9%, 85.0%] | 100 | 19 | 190.0 | 15 | 100.0% |
+| all shapes | 400 | 66.0% | [61.2%, 70.5%] | 400 | 107 | 267.5 | 60 | 96.7% |
+
+Both tranches combined (standard `dev.tsv` plus `hard.tsv`):
+
+| shape | target items | target accuracy | 95% interval | noun-verb decisions | harmful errors | harmful per 1,000 decisions | control items | control accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| n-compound-head | 220 | 81.8% | [76.2%, 86.4%] | 220 | 34 | 154.5 | 28 | 96.4% |
+| n-subject-initial | 220 | 85.5% | [80.2%, 89.5%] | 220 | 19 | 86.4 | 27 | 85.2% |
+| v-imperative-initial | 220 | 72.3% | [66.0%, 77.8%] | 220 | 50 | 227.3 | 46 | 97.8% |
+| n-measure | 120 | 99.2% | [95.4%, 99.9%] | 120 | 0 | 0.0 | 14 | 100.0% |
+| v-after-modal | 220 | 89.1% | [84.3%, 92.6%] | 220 | 21 | 95.5 | 45 | 100.0% |
+| all shapes | 1000 | 84.2% | [81.8%, 86.3%] | 1000 | 124 | 124.0 | 160 | 96.3% |
+
+### Headroom of the hard tranche
+
+Headroom is 100% minus the target accuracy (derived from the hard table above, not a new measurement): 32.0% for
+`n-compound-head`, 27.0% for `n-subject-initial`, 55.0% for `v-imperative-initial` and 22.0% for `v-after-modal`; 34.0% over
+the four shapes (136 of 400 target errors), against 3.7% on the standard tranche. The 95% intervals of a shape are 16 to 19
+points wide, so a difference of a few items between variants is inside the interval.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
