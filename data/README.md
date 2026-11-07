@@ -99,7 +99,10 @@ set, and UD English-EWT train, dev and test when the git-ignored cache is presen
    percent contained in the training 6-grams of a set.
 4. **Shapes development set against every other evaluation set:** the same document and sentence rules apply, and no
    sentence may share a word 5-gram with the shape probe (the probe's short sentences escape the near-duplicate rule). The
-   counts are in `eval/shapes-dev/leakage-report.tsv`; no evaluation text is printed or stored.
+   counts are in `eval/shapes-dev/leakage-report.tsv`; no evaluation text is printed or stored. The builder of the set applies
+   the same exclusion while it builds, and sees the held-out sets only through `leakage.held_out_overlap_keys()`, an opaque set of
+   hashes of sentence keys and probe 5-grams (the probe's `sentence` column only, never its labels, shapes, lemmas or targets),
+   used to exclude overlaps and never to select, weight or frame a candidate.
 
 **Result** (`python tools/data/check_leakage.py`; the committed `leakage-report.tsv` has every pair; UD English-EWT was
 fetched and included in this run): **0 document overlaps and 0 exact sentence overlaps** for every pair of training and

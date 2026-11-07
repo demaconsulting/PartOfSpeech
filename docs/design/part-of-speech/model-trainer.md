@@ -176,7 +176,16 @@ The hard-shape development set (`data/eval/shapes-dev/dev.tsv`) is a third devel
 two-file allow-list: `DataGuard.EnsureShapesDevelopmentFile` compares full paths against that one file and the reader
 requires a development-split header, so a command that reads "the two development files" cannot reach it, the held-out
 list does not contain it (so `evaluate` cannot open it) and the training deny-list refuses it (folder `eval`, file name
-`dev.tsv`). The shape probe, which shares the shapes, stays a held-out file and is never read to build or tune the set.
+`dev.tsv`). Both guards, `EnsureDevelopmentFile` for the two standard files and `EnsureShapesDevelopmentFile` for this
+one, canonicalize the requested path (symbolic links and junctions resolved) and require it to equal the canonical
+repository root plus the allowed relative file, so a link at or below the data folder is refused. A possible follow-up is
+to verify the manifest hash of a development file before each selection read. The shape probe, which shares the shapes,
+stays a held-out file. The builder `tools/data/shapes_dev.py` never reads it: construction sees the held-out sets, the
+probe included, only through `leakage.held_out_overlap_keys()`, an opaque set of hashed sentence keys and hashed probe
+word 5-grams built from the `sentence` column alone (no label, shape, lemma or target), and uses it only to exclude exact
+or near-duplicate overlaps, never to choose, weight or frame a candidate. `build` also refuses a used document that the
+committed exclusion record `data/eval/shapes-dev/excluded-sources.tsv` lists (by id or normalized URL), and a set that
+misses a quota (120 targets per shape, 100 controls, lemma caps, 30% authored share) unless `--allow-short` is given.
 
 ### Confidence Thresholds
 
