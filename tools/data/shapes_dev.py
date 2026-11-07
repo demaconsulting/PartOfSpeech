@@ -81,7 +81,8 @@ word (the target): different tags -> drop the sentence (counted per shape); the 
 target outside the frame of its shape (only for a `target`, by the tags both labelers gave the neighbor tokens: n-compound-head needs
 NOUN or PROPN before; n-measure needs NUM before and no NOUN, PROPN or ADJ+noun after; n-subject-initial and v-imperative-initial need
 token 0, where the class Noun is enough because the shape tests the noun reading in a verb-biased position; v-after-modal needs AUX or
-PART before) -> drop, counted as `frame-mismatch`; otherwise keep. Every
+PART before; v-imperative-initial and v-after-modal also need the base form: the lower-cased surface form of the target equals its
+`base_form_of` (a gerund such as `Avoiding`, a past form or a third person form is no base form)) -> drop, counted as `frame-mismatch`; otherwise keep. Every
 other token: the same tag -> that tag, `unanimous`; different tags -> `disputed`, the tag written is the one of the first labeler
 (the `opus` tagger), a fixed tie-break; flags only where both agree. The target is never disputed. Confidence is recorded and unused.
 
@@ -642,6 +643,30 @@ def lemma_of(token, lex):
             stem = low[:-len(suffix)] + replacement
             if is_noun_verb(lex, stem):
                 return stem
+    return low
+
+
+def base_form_of(token, lex):
+    """The lower-case base form of a token: `lemma_of` (plural and third person to a listed noun-verb base), and an `-ing` or `-ed`
+    form reduced to a stem the lexicon lists as a VERB (`Operating` -> operate, `stopped` -> stop, `tried` -> try); a word that is
+    none of these is its own base form (`Wring`, `Bring`, `Ring`: the stem `wr`, `br`, `r` is no word; `Process`, `Pass`, `Focus`).
+    A stem has at least two letters; a past form of a verb in `-ee` (`agreed`) is not recognized, so that `feed`, `need`, `seed` are bases.
+    Irregular forms (`ran`, `wrote`) have no lemma in the lexicon and count as base forms."""
+    low = token.lower()
+    lemma = lemma_of(token, lex)
+    if lemma != low:
+        return lemma
+    stems = []
+    if low.endswith("ing") and len(low) > 4:
+        stem = low[:-3]
+        stems = [stem, stem + "e"] + ([stem[:-1]] if stem[-1] == stem[-2] else [])
+    elif low.endswith("ed") and len(low) > 3:
+        stem = low[:-2]
+        stems = [stem] + ([stem + "e"] if not stem.endswith("e") else []) + ([stem[:-1]] if stem[-1] == stem[-2] else [])
+        stems += [stem[:-1] + "y"] if stem.endswith("i") else []
+    for stem in stems:
+        if len(stem) >= 2 and has_tag(lex, stem, "VERB"):
+            return stem
     return low
 
 
@@ -1239,7 +1264,7 @@ def vote_tag(votes, index):
     return opus[index].tag if opus[index].tag == sol[index].tag else "?"
 
 
-def frame_mismatch(item, opus, sol):
+def frame_mismatch(item, opus, sol, form=None, lex=None):
     """True when the judged word of a kept target item is not in the frame of its shape (pre-registered; uses only the tags
     that BOTH labelers gave the neighbor tokens; a neighbor they disagree on never satisfies a frame).
 
@@ -1248,8 +1273,14 @@ def frame_mismatch(item, opus, sol):
                           (the target is the measure noun, not a modifier of what follows)
     n-subject-initial     the target is token 0 (the class Noun is then enough: a sentence-initial word that both labelers call a
                           noun is a noun where the position favors a verb, the confusion this shape tests)
-    v-imperative-initial  the target is token 0 (a verb at the start of the sentence is an instruction)
-    v-after-modal         the token before is AUX (a modal) or PART (`to`)
+    v-imperative-initial  the target is token 0 (a verb at the start of the sentence is an instruction) and is in the base form
+    v-after-modal         the token before is AUX (a modal) or PART (`to`) and the target is in the base form
+
+    Base form rule (v-imperative-initial and v-after-modal only; deterministic, from the surface form `form` and the lexicon `lex`): the
+    lower-cased surface form must equal its base form (`base_form_of`: no listed noun-verb stem behind an `-s` or `-es` ending, no
+    listed VERB stem behind an `-ing` or `-ed` ending). `Wring`, `Bring`, `Ring`, `Process`, `Pass`, `Focus` pass; `Avoiding`,
+    `Operating`, `Standing`, `Opened`, `Checks` fail. An instruction starts with the base form, not a gerund subject; after a modal
+    or `to` the base form (`be`, `check`) is the only verb form. The rule is skipped when `form` or `lex` is not given.
 
     Controls have no frame, only the class. `opus` and `sol` map a token index to its Vote.
     """
@@ -1257,6 +1288,8 @@ def frame_mismatch(item, opus, sol):
         return False
     shape, i = item["shape"], item["target"]
     votes = (opus, sol)
+    if shape in ("v-imperative-initial", "v-after-modal") and form is not None and lex is not None and form.lower() != base_form_of(form, lex):
+        return True
     if shape in ("n-subject-initial", "v-imperative-initial"):
         return i != 0
     if shape == "n-compound-head":
@@ -1280,11 +1313,12 @@ def decide_token(opus, sol):
     return opus.tag, common.format_status(base, flags)
 
 
-def run_decisions(work, candidates):
+def run_decisions(work, candidates, lex=None):
     """(items, rows, incomplete): `items` is [dict of ITEM_COLUMNS], `rows` the token rows of every decided sentence.
 
     Only sentences of batches that both models completed and validated are decided; the others are `incomplete`
-    (sentence keys). An item whose sentence was decided is `keep` or `drop` with a reason.
+    (sentence keys). An item whose sentence was decided is `keep` or `drop` with a reason. `lex` is the lexicon for the base form
+    rule of `frame_mismatch` (v-imperative-initial, v-after-modal).
     """
     key = read_key(work)
     by_key = {record["sent_key"]: record for record in key}
@@ -1303,7 +1337,7 @@ def run_decisions(work, candidates):
         opus, sol = (batch_votes[model][opaque] for model in adjudicate.MODELS)
         target = cand["target"]
         outcome, reason, agreed = decide_item(cand, opus[target], sol[target])
-        if outcome == "keep" and frame_mismatch(cand, opus, sol):
+        if outcome == "keep" and frame_mismatch(cand, opus, sol, sentences[cand["sent_key"]][2][target], lex):
             outcome, reason = "drop", "frame-mismatch"
         if cand["sent_key"] not in rows:
             rows[cand["sent_key"]] = [(i,) + decide_token(opus[i], sol[i]) for i in range(len(sentences[cand["sent_key"]][2]))]
@@ -1334,7 +1368,7 @@ def decide_report(items, incomplete):
 
 def _command_decide(args):
     work = open_work(args)
-    items, rows, incomplete = run_decisions(work, read_candidates(work))
+    items, rows, incomplete = run_decisions(work, read_candidates(work), lexicon_of(args.data_dir))
     report = decide_report(items, incomplete)
     adjudicate.write_rows(work.private_file("decided.tsv"), ITEM_COLUMNS, [[i[c] for c in ITEM_COLUMNS] for i in items])
     adjudicate.write_rows(work.private_file("decided-rows.tsv"), ROW_COLUMNS, rows)

@@ -778,6 +778,52 @@ class FrameTests(unittest.TestCase):
         for shape in sd.SHAPES:
             self.assertFalse(self.mismatch(shape, 1, ["ADP", "NOUN", "NOUN"], role="control"))
 
+    LEX = {w: tuple(t.split()) for w, t in {
+        "avoid": "VERB", "operate": "VERB NOUN", "stand": "VERB NOUN", "open": "VERB ADJ", "stop": "VERB NOUN", "try": "VERB NOUN",
+        "check": "VERB NOUN", "checks": "NOUN VERB", "pass": "VERB NOUN", "process": "VERB NOUN", "focus": "VERB NOUN", "be": "AUX VERB",
+        "bring": "VERB", "wring": "VERB", "ring": "VERB NOUN", "feed": "VERB NOUN", "fee": "NOUN", "need": "VERB NOUN", "r": "NOUN",
+        "br": "NOUN", "wr": "NOUN", "ne": "NOUN", "fe": "NOUN", "focu": "NOUN", "name": "NOUN VERB", "named": "VERB",
+    }.items()}
+
+    def base_mismatch(self, shape, forms, target, tags):
+        opus, sol = self.votes(tags)
+        return sd.frame_mismatch({"shape": shape, "role": "target", "target": target}, opus, sol, forms[target], self.LEX)
+
+    def test_base_form_of_reduces_ing_ed_and_s_forms_to_a_listed_stem_and_keeps_real_base_forms(self):
+        def base(word):
+            return sd.base_form_of(word, self.LEX)
+        self.assertEqual("avoid", base("Avoiding"))
+        self.assertEqual("operate", base("Operating"))             # stem + e
+        self.assertEqual("stop", base("stopped"))                  # doubled consonant
+        self.assertEqual("try", base("tried"))
+        self.assertEqual("name", base("named"))
+        self.assertEqual("check", base("Checks"))                  # lemma_of: third person form
+        self.assertEqual("be", base("being"))
+        for word in ("Wring", "Bring", "Ring", "Process", "Pass", "Focus", "Feed", "Need", "be", "Check"):
+            self.assertEqual(word.lower(), base(word), word)
+
+    def test_the_base_form_rule_drops_gerund_past_and_third_person_targets_of_the_imperative_and_modal_shapes(self):
+        for word in ("Wring", "Bring", "Ring", "Process", "Pass", "Focus", "Check"):
+            self.assertFalse(self.base_mismatch("v-imperative-initial", [word, "the", "valve"], 0, ["VERB", "DET", "NOUN"]), word)
+        for word in ("Avoiding", "Operating", "Standing", "Opened", "Checks"):
+            self.assertTrue(self.base_mismatch("v-imperative-initial", [word, "the", "valve"], 0, ["VERB", "DET", "NOUN"]), word)
+        for word in ("be", "check", "pass", "focus"):
+            self.assertFalse(self.base_mismatch("v-after-modal", ["must", word], 1, ["AUX", "VERB"]), word)
+        for word in ("avoiding", "opened", "checks", "being"):
+            self.assertTrue(self.base_mismatch("v-after-modal", ["must", word], 1, ["AUX", "VERB"]), word)
+        self.assertTrue(self.base_mismatch("v-after-modal", ["to", "avoiding"], 1, ["PART", "VERB"]))
+
+    def test_the_base_form_rule_is_only_for_the_two_verb_shapes_targets_and_given_a_form_and_a_lexicon(self):
+        opus, sol = self.votes(["NOUN", "VERB"])
+        noun_shape = {"shape": "n-subject-initial", "role": "target", "target": 0}
+        self.assertFalse(sd.frame_mismatch(noun_shape, opus, sol, "Operating", self.LEX))          # a gerund subject is the noun case
+        opus, sol = self.votes(["VERB", "DET"])
+        control = {"shape": "v-imperative-initial", "role": "control", "target": 0}
+        self.assertFalse(sd.frame_mismatch(control, opus, sol, "Avoiding", self.LEX))
+        target = {"shape": "v-imperative-initial", "role": "target", "target": 0}
+        self.assertFalse(sd.frame_mismatch(target, opus, sol))
+        self.assertTrue(sd.frame_mismatch(target, opus, sol, "Avoiding", self.LEX))
+
 
 class RoundTests(MiniFolder):
     """Incremental rounds: W/rounds/NAME next to the root, shared inputs in W, merged by build, sample and report."""
