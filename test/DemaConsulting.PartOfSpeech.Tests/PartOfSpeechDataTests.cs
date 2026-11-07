@@ -46,6 +46,43 @@ public class PartOfSpeechDataTests
     private const string ShapesDevCorpus = ShapesDevFolder + "/dev.tsv";
 
     /// <summary>
+    ///     The corpus file of the hard tranche of the hard-shape development set, relative to the data folder.
+    /// </summary>
+    private const string ShapesDevHardCorpus = ShapesDevFolder + "/hard.tsv";
+
+    /// <summary>
+    ///     The source table of the hard tranche, relative to the data folder.
+    /// </summary>
+    private const string ShapesDevHardSources = ShapesDevFolder + "/hard-sources.tsv";
+
+    /// <summary>
+    ///     The most targets of one lemma in a shape of the hard tranche.
+    /// </summary>
+    private const int ShapesDevHardLemmaCap = 4;
+
+    /// <summary>
+    ///     The floor of the controls of the hard tranche.
+    /// </summary>
+    private const int ShapesDevHardControlFloor = 50;
+
+    /// <summary>
+    ///     The cap of the controls of the hard tranche.
+    /// </summary>
+    private const int ShapesDevHardControlCap = 60;
+
+    /// <summary>
+    ///     The floor and the cap of the targets of every shape of the hard tranche (n-measure has none: zero items).
+    /// </summary>
+    private static readonly Dictionary<string, (int Floor, int Cap)> ShapesDevHardTargetQuotas = new(StringComparer.Ordinal)
+    {
+        ["n-compound-head"] = (80, 100),
+        ["n-subject-initial"] = (40, 100),
+        ["v-imperative-initial"] = (70, 100),
+        ["n-measure"] = (0, 0),
+        ["v-after-modal"] = (80, 100)
+    };
+
+    /// <summary>
     ///     The most target items that a shape of the development set holds.
     /// </summary>
     private const int ShapesDevMaxTargetsPerShape = 120;
@@ -85,7 +122,7 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static readonly string[] EvaluationCorpora =
     {
-        "open/dev.tsv", "open/test.tsv", "eval/ste-challenge/test.tsv", ShapesDevCorpus
+        "open/dev.tsv", "open/test.tsv", "eval/ste-challenge/test.tsv", ShapesDevCorpus, ShapesDevHardCorpus
     };
 
     /// <summary>
@@ -103,7 +140,7 @@ public class PartOfSpeechDataTests
     private static readonly (string Table, string IdColumn)[] SourceTables =
     {
         ("open/sources.tsv", "source_id"), ("eval/gold-v2/sources.tsv", "doc_id"), ("silver/sources.tsv", "source_id"),
-        (ShapesDevFolder + "/sources.tsv", "source_id")
+        (ShapesDevFolder + "/sources.tsv", "source_id"), (ShapesDevHardSources, "source_id")
     };
 
     /// <summary>
@@ -124,7 +161,7 @@ public class PartOfSpeechDataTests
         {
             "## Source and Provenance", "**Source:**", "**How produced:**", "**Labels:**", "**Sentences:**", "`sources.tsv`",
             "## Labeling and Decision Rule", "## Hand Check", "model review, not a human review", "## Sources", "## Known Limits",
-            "## Use"
+            "## Use", "## Hard Tranche", "### Hand Check of the Hard Tranche"
         },
         ["eval/gold-v2"] = new[] { "## Source and Provenance", "**Source:**", "**Labels:**", "**Sentences:**", "`sources.tsv`" },
         ["eval/ste-challenge"] = new[] { "## Source and Provenance", "**Source:**", "**Sentences:**", "**Tags:**" },
@@ -1058,8 +1095,8 @@ public class PartOfSpeechDataTests
             var evaluationSets = rows.Where(row => row[0] == training).Select(row => row[1]).Distinct(StringComparer.Ordinal);
             var expected = new[]
             {
-                "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test",
-                "ud-ewt-train"
+                "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-hard", "shapes-probe", "ste-challenge", "ud-ewt-dev",
+                "ud-ewt-test", "ud-ewt-train"
             };
             Assert.Empty(expected.Except(evaluationSets));
         }
@@ -1429,6 +1466,36 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
+    ///     Proves that the selection of the hard tranche of the hard-shape development set is independent of the PartOfSpeech
+    ///     model: neither the builder (<c>shapes_dev.py</c>) nor the harness of the other model's numbers (<c>tools/data/hmm-tags</c>)
+    ///     names a weights file, a decoder, a tagger or the shapes evaluation, the harness has no reference to this library, and
+    ///     the harness is not part of the solution (so no build or CI step needs its binary).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevHard_Selection_UsesNoPartOfSpeechModel()
+    {
+        // Arrange: the sources of the selection pipeline
+        var forbidden = new[] { "weights.bin", "Resources/weights", "PerceptronModel", "FeatureExtractor", "PartOfSpeechTagger", "ITagger", "eval-shapes", "ShapesDevEvaluator" };
+        var folder = DataFiles.Repository("tools/data/hmm-tags");
+        var sources = new List<string> { DataFiles.Repository("tools/data/shapes_dev.py") };
+        sources.AddRange(Directory.GetFiles(folder).Where(file => file.EndsWith(".cs", StringComparison.Ordinal) || file.EndsWith(".csproj", StringComparison.Ordinal)));
+
+        // Act
+        var found = sources
+            .SelectMany(file => forbidden.Where(word => File.ReadAllText(file).Contains(word, StringComparison.Ordinal)).Select(word => $"{Path.GetFileName(file)}: {word}"))
+            .ToList();
+        var project = File.ReadAllText(Directory.GetFiles(folder, "*.csproj").Single());
+        var solution = File.ReadAllText(DataFiles.Repository("PartOfSpeech.slnx"));
+
+        // Assert
+        Assert.Empty(found);
+        Assert.DoesNotContain("ProjectReference", project, StringComparison.Ordinal);
+        Assert.DoesNotContain("DemaConsulting.PartOfSpeech", project, StringComparison.Ordinal);
+        Assert.DoesNotContain("hmm-tags", solution, StringComparison.Ordinal);
+        Assert.DoesNotContain("DemaConsulting.PartOfSpeech", File.ReadAllText(Path.Combine(folder, "Program.cs")), StringComparison.Ordinal);
+    }
+
+    /// <summary>
     ///     Proves that the committed leakage report of the hard-shape development set covers every other evaluation set and
     ///     records no document overlap, no exact sentence overlap and no shared word 5-gram with the shape probe.
     /// </summary>
@@ -1460,17 +1527,18 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
-    ///     Proves, reading the evaluation files themselves, that the hard-shape development set shares no document and no
-    ///     sentence (of any length) with the open dev and test sets, gold v2, the challenge set or the shape probe.
+    ///     Proves, reading the evaluation files themselves, that the hard-shape development set (both tranches taken as one
+    ///     family, so a document that both tranches use is not counted against it) shares no document and no sentence (of
+    ///     any length) with the open dev and test sets, gold v2, the challenge set or the shape probe.
     /// </summary>
     [Fact]
     public void PartOfSpeech_ShapesDev_Sentences_AreDisjointFromTheOtherEvaluationSets()
     {
-        // Arrange: the documents and sentence keys of the development set and of every other evaluation set
-        var dev = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevCorpus)).ToList();
+        // Arrange: the documents and sentence keys of the development set (both tranches) and of every other evaluation set
+        var dev = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevCorpus)).Concat(DataFiles.ReadCorpus(DataFiles.Data(ShapesDevHardCorpus))).ToList();
         var documents = new HashSet<string>(dev.Select(sentence => sentence.SourceId), StringComparer.Ordinal);
         var keys = new HashSet<string>(dev.Select(sentence => DataFiles.SentenceKey(sentence.Text)), StringComparer.Ordinal);
-        var others = EvaluationItems().Where(item => item.Set != ShapesDevCorpus).ToList();
+        var others = EvaluationItems().Where(item => item.Set != ShapesDevCorpus && item.Set != ShapesDevHardCorpus).ToList();
 
         // Act: find the shared documents and sentences
         var problems = others
@@ -1479,8 +1547,270 @@ public class PartOfSpeechDataTests
             .ToList();
 
         // Assert: the sets are not empty and nothing is shared
-        Assert.True(dev.Count > 100);
+        Assert.True(dev.Count > 1000);
         Assert.True(others.Count > 5000);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the header of the hard tranche announces a dev split, its development-only use and the hard tranche,
+    ///     and that no comment of the file carries the numbers that the selection used (no <c>q</c> and no tagger output).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevHard_Header_AnnouncesDevSplitAndCarriesNoSelectionNumbers()
+    {
+        // Arrange: the comment lines of the file
+        var lines = File.ReadAllLines(DataFiles.Data(ShapesDevHardCorpus));
+        var header = lines.TakeWhile(line => line.Length > 0).ToList();
+        var itemKeys = lines.Where(line => line.StartsWith("# ", StringComparison.Ordinal))
+            .Select(line => line[2..].Split(new[] { " = " }, 2, StringSplitOptions.None)[0])
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(key => key, StringComparer.Ordinal)
+            .ToList();
+
+        // Act: find the corpus and use lines
+        var corpus = header.FirstOrDefault(line => line.StartsWith("# corpus = ", StringComparison.Ordinal));
+        var use = header.FirstOrDefault(line => line.StartsWith("# use = ", StringComparison.Ordinal));
+
+        // Assert: dev split, hard tranche, development only, and only the documented comment keys
+        Assert.NotNull(corpus);
+        Assert.Contains("dev split", corpus, StringComparison.Ordinal);
+        Assert.Contains("hard tranche", corpus, StringComparison.Ordinal);
+        Assert.NotNull(use);
+        Assert.Contains("development only", use, StringComparison.Ordinal);
+        Assert.Equal(
+            new[] { "columns", "corpus", "judged word", "lemma", "license", "origin", "role", "selection", "sent_id", "shape", "source_id", "status", "status flags", "target", "text", "use" },
+            itemKeys);
+    }
+
+    /// <summary>
+    ///     Proves that every item of the hard tranche has a known shape, role and lemma, that the judged word carries the class
+    ///     of its role and is never disputed, that no item is authored, and that the controls pair with a lemma of a target of
+    ///     the same shape.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevHard_Items_AreWellFormedRealAndNeverDisputed()
+    {
+        // Arrange: the items and the sentences of the file, in the same order
+        var items = ShapesDevHardItems();
+        var sentences = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevHardCorpus)).ToList();
+        Assert.Equal(items.Count, sentences.Count);
+
+        // Act: compare the tag and the status of the judged word with the shape and the role, and find the controls without a target lemma
+        var problems = new List<string>();
+        for (var i = 0; i < items.Count; i++)
+        {
+            var item = items[i];
+            var token = sentences[i].Tokens[item.Target];
+            var shapeClass = ShapesDevSets.ClassOfShape(item.Shape);
+            var wanted = item.IsTarget ? shapeClass : OtherClass(shapeClass);
+            if (ClassOfTag(token[1]) != wanted)
+            {
+                problems.Add($"{item.Id}: the judged word '{token[0]}' is {token[1]}, expected the class {wanted}");
+            }
+
+            if (DataFiles.BaseStatus(token[2]) == "disputed")
+            {
+                problems.Add($"{item.Id}: the judged word '{token[0]}' is disputed");
+            }
+
+            if (item.Origin == ShapesDevSets.AuthoredOrigin || item.SourceId == ShapesDevSets.AuthoredSourceId)
+            {
+                problems.Add($"{item.Id}: the hard tranche has no authored sentence");
+            }
+        }
+
+        foreach (var shape in ShapesDevSets.Shapes)
+        {
+            var targetLemmas = new HashSet<string>(items.Where(item => item.Shape == shape && item.IsTarget).Select(item => item.Lemma), StringComparer.OrdinalIgnoreCase);
+            problems.AddRange(items
+                .Where(item => item.Shape == shape && !item.IsTarget && !targetLemmas.Contains(item.Lemma))
+                .Select(item => $"{shape}: control {item.Id} has the lemma '{item.Lemma}' of no target of the shape"));
+        }
+
+        // Assert: both roles are present, every shape is known and no problem was found
+        Assert.Contains(items, item => item.IsTarget);
+        Assert.Contains(items, item => !item.IsTarget);
+        Assert.All(items, item => Assert.Contains(item.Shape, ShapesDevSets.Shapes));
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the committed hard tranche meets its documented quotas: targets per shape between the floor and the
+    ///     cap (80/40/70/0/80 and 100/100/100/0/100 for compound, subject-initial, imperative, measure, modal), no n-measure
+    ///     item, 50 to 60 controls, at most four targets per lemma and shape, and at most two controls per lemma and shape.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevHard_Quotas_AreMetByTheCommittedTranche()
+    {
+        // Arrange: the items
+        var items = ShapesDevHardItems();
+        var problems = new List<string>();
+
+        // Act: check the floor, the cap and the lemma cap of every shape
+        foreach (var shape in ShapesDevSets.Shapes)
+        {
+            var (floor, cap) = ShapesDevHardTargetQuotas[shape];
+            var targets = items.Where(item => item.Shape == shape && item.IsTarget).ToList();
+            if (targets.Count < floor || targets.Count > cap)
+            {
+                problems.Add($"{shape}: {targets.Count} targets, expected {floor} to {cap}");
+            }
+
+            problems.AddRange(targets.GroupBy(item => item.Lemma, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > ShapesDevHardLemmaCap)
+                .Select(group => $"{shape}: the lemma '{group.Key}' has {group.Count()} targets, the cap is {ShapesDevHardLemmaCap}"));
+        }
+
+        var controls = items.Where(item => !item.IsTarget).ToList();
+        if (controls.Count < ShapesDevHardControlFloor || controls.Count > ShapesDevHardControlCap)
+        {
+            problems.Add($"controls: {controls.Count}, expected {ShapesDevHardControlFloor} to {ShapesDevHardControlCap}");
+        }
+
+        problems.AddRange(controls.GroupBy(item => (item.Shape, Lemma: item.Lemma.ToLowerInvariant()))
+            .Where(group => group.Count() > ShapesDevControlLemmaCap)
+            .Select(group => $"controls: {group.Key.Shape} lemma '{group.Key.Lemma}' has {group.Count()} controls, the cap is {ShapesDevControlLemmaCap}"));
+
+        // Assert: no quota is missed and n-measure has no item
+        Assert.DoesNotContain(items, item => item.Shape == "n-measure");
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the library tokenizer reproduces the stored tokens of every sentence of the hard tranche: one sentence,
+    ///     the same tokens.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevHard_Tokens_AreReproducedByTheTokenizer()
+    {
+        // Arrange: the sentences of the file
+        var sentences = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevHardCorpus)).ToList();
+
+        // Act: tokenize the text of every sentence and compare with the stored tokens
+        var problems = new List<string>();
+        foreach (var sentence in sentences)
+        {
+            var tokenized = Tokenizer.Tokenize(sentence.Text);
+            var actual = tokenized.SelectMany(part => part.Tokens).Select(token => token.Text).ToArray();
+            var stored = sentence.Tokens.Select(token => token[0]).ToArray();
+            if (tokenized.Count != 1 || !actual.SequenceEqual(stored, StringComparer.Ordinal))
+            {
+                problems.Add($"{sentence.SentenceId}: the tokenizer gives {tokenized.Count} sentence(s) and {actual.Length} tokens, the file has {stored.Length}");
+            }
+        }
+
+        // Assert: the set is not empty and every sentence is reproduced
+        Assert.True(sentences.Count > 100);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the source table of the hard tranche lists exactly the documents of its sentences with their counts,
+    ///     that every document has a US federal-work or public-domain basis, that no row mentions FAA material, and that no
+    ///     excluded document (by id or normalized URL) is used.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevHard_Sources_AreListedOpenAndNotExcluded()
+    {
+        // Arrange: the documents of the sentences, the rows of the table and the exclusions
+        var counts = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevHardCorpus))
+            .GroupBy(sentence => sentence.SourceId, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        var table = DataFiles.ReadTable(DataFiles.Data(ShapesDevHardSources));
+        var excluded = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/excluded-sources.tsv"));
+        var excludedIds = new HashSet<string>(excluded.Column("source_id"), StringComparer.Ordinal);
+        var excludedUrls = new HashSet<string>(excluded.Column("url").Select(NormalizeUrl), StringComparer.Ordinal);
+        var faa = new Regex(@"faa\.gov|\bFAA\b|Federal Aviation", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var openBases = new[] { "US federal government work", "US public domain" };
+
+        // Act: compare the listed documents and counts with the sentences and look at every row
+        var listed = table.Rows.ToDictionary(row => table.Cell(row, "source_id"), row => table.Cell(row, "sentences"), StringComparer.Ordinal);
+        var problems = counts.Keys.Except(listed.Keys).Select(document => "not listed: " + document)
+            .Concat(listed.Keys.Except(counts.Keys).Select(document => "listed but unused: " + document))
+            .Concat(counts.Where(count => listed.TryGetValue(count.Key, out var cell) && cell != count.Value.ToString(CultureInfo.InvariantCulture))
+                .Select(count => $"count of {count.Key} differs from the table"))
+            .ToList();
+        foreach (var row in table.Rows)
+        {
+            var id = table.Cell(row, "source_id");
+            if (!openBases.Any(basis => table.Cell(row, "license_basis").StartsWith(basis, StringComparison.Ordinal)))
+            {
+                problems.Add($"{id}: the license basis is not a US federal work or US public domain");
+            }
+
+            if (row.Any(cell => faa.IsMatch(cell)))
+            {
+                problems.Add($"{id}: the row mentions FAA material");
+            }
+
+            if (excludedIds.Contains(id) || excludedUrls.Contains(NormalizeUrl(table.Cell(row, "url"))))
+            {
+                problems.Add($"{id}: the document is excluded");
+            }
+        }
+
+        // Assert: the rows are unique, the table has documents and no problem was found
+        Assert.Equal(table.Rows.Count, listed.Count);
+        Assert.True(counts.Count > 10);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the committed leakage report of the hard tranche covers every other evaluation set, records no exact
+    ///     sentence overlap, no same-document near duplicate and no shared word 5-gram with the shape probe, and that its
+    ///     standard-tranche row reports shared documents (allowed) with no exact or near-duplicate sentence.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevHard_LeakageReport_RecordsNoOverlapAndSharedDocumentsWithTheStandardTranche()
+    {
+        // Arrange: read the report (evaluation set, dev sentences, documents, exact, near duplicates, probe 5-grams)
+        var rows = File.ReadLines(DataFiles.Data(ShapesDevFolder + "/hard-leakage-report.tsv"))
+            .Where(line => line.Length > 0 && !DataFiles.IsComment(line))
+            .Select(line => line.Split('\t'))
+            .ToList();
+        var expected = new[]
+        {
+            "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train"
+        };
+        var sentenceCount = ShapesDevHardItems().Count.ToString(CultureInfo.InvariantCulture);
+
+        // Act: find the rows that report an overlap (the documents of the standard tranche are shared on purpose)
+        var overlaps = rows.Where(row => row[3] != "0" || row[4] != "0" || (row[0] != "shapes-dev" && row[2] != "0")).Select(row => row[0]).ToList();
+        var probe = rows.Single(row => row[0] == "shapes-probe");
+
+        // Assert: every set is reported once, with the sentence count of the file, and nothing overlaps
+        Assert.All(rows, row => Assert.Equal(6, row.Length));
+        Assert.Equal(expected, rows.Select(row => row[0]).OrderBy(name => name, StringComparer.Ordinal));
+        Assert.All(rows, row => Assert.Equal(sentenceCount, row[1]));
+        Assert.Empty(overlaps);
+        Assert.Equal("0", probe[5]);
+    }
+
+    /// <summary>
+    ///     Proves, reading the evaluation files themselves, that the hard tranche shares no sentence (of any length) with the
+    ///     standard tranche, the open dev and test sets, gold v2, the challenge set or the shape probe, and no document with
+    ///     any of them except the standard tranche (a shared document is allowed there).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevHard_Sentences_AreDisjointFromTheOtherEvaluationSets()
+    {
+        // Arrange: the documents and sentence keys of the hard tranche and of every other evaluation set
+        var hard = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevHardCorpus)).ToList();
+        var documents = new HashSet<string>(hard.Select(sentence => sentence.SourceId), StringComparer.Ordinal);
+        var keys = new HashSet<string>(hard.Select(sentence => DataFiles.SentenceKey(sentence.Text)), StringComparer.Ordinal);
+        var others = EvaluationItems().Where(item => item.Set != ShapesDevHardCorpus).ToList();
+
+        // Act: find the shared sentences (any set) and the shared documents (any set but the standard tranche)
+        var problems = others
+            .Where(item => keys.Contains(DataFiles.SentenceKey(item.Text)) || (item.Set != ShapesDevCorpus && documents.Contains(item.Document)))
+            .Select(item => $"{item.Set}: {item.Document} shares a sentence or a document with the hard tranche")
+            .ToList();
+
+        // Assert: the sets are not empty, the tranches share documents by design and nothing else is shared
+        Assert.True(hard.Count > 100);
+        Assert.True(others.Count > 5000);
+        Assert.Contains(others, item => item.Set == ShapesDevCorpus && documents.Contains(item.Document));
         Assert.Empty(problems.Take(ShownProblems));
     }
 
@@ -2143,6 +2473,12 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static List<ShapesDevItem> ShapesDevItems() =>
         ShapesDevSets.Parse(File.ReadAllLines(DataFiles.Data(ShapesDevCorpus)), ShapesDevCorpus);
+
+    /// <summary>
+    ///     Reads and validates the items of the hard tranche with the parser of the trainer.
+    /// </summary>
+    private static List<ShapesDevItem> ShapesDevHardItems() =>
+        ShapesDevSets.Parse(File.ReadAllLines(DataFiles.Data(ShapesDevHardCorpus)), ShapesDevHardCorpus);
 
     /// <summary>
     ///     Reads the sets, documents and sentences of all evaluation sets.

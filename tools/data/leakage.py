@@ -11,6 +11,8 @@ Evaluation sets whose sentences and documents no training file may contain:
   shapes-dev                 data/eval/shapes-dev/dev.tsv       (hard-shape development set; corpus format; required, so a
                                                                  missing file fails loudly; `shapes_dev.py` builds it and passes
                                                                  `shapes_dev=False` because the set does not exist yet)
+  shapes-dev-hard            data/eval/shapes-dev/hard.tsv      (the hard tranche of that set, same format; required, so a
+                                                                 missing file fails loudly; `shapes_dev=False` leaves both tranches out)
   ud-ewt-dev, ud-ewt-test, ud-ewt-train   tools/data/cache/ud-ewt/*.conllu, only when the git-ignored cache is present
                                           (never committed; only the match result is reported)
 
@@ -37,6 +39,10 @@ DOCUMENT_KEY_LENGTH = 25
 
 # The label of the hard-shape development set among the evaluation sets, and the word n-gram length of the probe gate.
 SHAPES_DEV_LABEL = "shapes-dev"
+SHAPES_DEV_HARD_LABEL = "shapes-dev-hard"
+SHAPES_DEV_LABELS = (SHAPES_DEV_LABEL, SHAPES_DEV_HARD_LABEL)
+# data/eval/shapes-dev/hard.tsv is committed: a missing hard tranche file fails loudly like every other required set.
+HARD_TRANCHE_REQUIRED = True
 PROBE_GRAM_WORDS = 5
 
 
@@ -60,7 +66,8 @@ def corpus_sets():
     sets = {}
     for label, parts in (("open-dev", ("open", "dev.tsv")), ("open-test", ("open", "test.tsv")),
                          ("ste-challenge", ("eval", "ste-challenge", "test.tsv")),
-                         (SHAPES_DEV_LABEL, ("eval", "shapes-dev", "dev.tsv"))):
+                         (SHAPES_DEV_LABEL, ("eval", "shapes-dev", "dev.tsv")),
+                         (SHAPES_DEV_HARD_LABEL, ("eval", "shapes-dev", "hard.tsv"))):
         path = os.path.join(common.DATA, *parts)
         if os.path.exists(path):
             sets[label] = [(s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]
@@ -160,7 +167,8 @@ def ud_sets():
     return sets
 
 
-REQUIRED_EVALUATION_SETS = ("open-dev", "open-test", "ste-challenge", "gold-v2", "shapes-probe", SHAPES_DEV_LABEL)
+REQUIRED_EVALUATION_SETS = (("open-dev", "open-test", "ste-challenge", "gold-v2", "shapes-probe", SHAPES_DEV_LABEL)
+                            + ((SHAPES_DEV_HARD_LABEL,) if HARD_TRANCHE_REQUIRED else ()))
 
 
 def require_sets(sets, required, kind):
@@ -173,7 +181,7 @@ def require_sets(sets, required, kind):
 def evaluation_sets(include_ud=True, shapes_dev=True):
     """{label: [(document id, text)]} of every evaluation set; a missing required set is a loud failure.
 
-    `shapes_dev=False` leaves the hard-shape development set out (and does not require it): the builder of that set
+    `shapes_dev=False` leaves the hard-shape development set (both tranches) out (and does not require them): the builder of that set
     (shapes_dev.py) checks its candidates against all the other sets through `held_out_overlap_keys` only, and a stale earlier build must not count.
     """
     sets = {}
@@ -181,8 +189,9 @@ def evaluation_sets(include_ud=True, shapes_dev=True):
     sets.update(table_sets())
     required = REQUIRED_EVALUATION_SETS
     if not shapes_dev:
-        sets.pop(SHAPES_DEV_LABEL, None)
-        required = tuple(label for label in required if label != SHAPES_DEV_LABEL)
+        for label in SHAPES_DEV_LABELS:
+            sets.pop(label, None)
+        required = tuple(label for label in required if label not in SHAPES_DEV_LABELS)
     require_sets(sets, required, "evaluation")
     if include_ud:
         sets.update(ud_sets())

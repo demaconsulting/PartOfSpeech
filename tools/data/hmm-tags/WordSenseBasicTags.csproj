@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Standalone harness (not in PartOfSpeech.slnx, so build.ps1, lint.ps1 and CI never build it): tags tokenized sentences with the
+       WordSense Basic classifier (HMM tagger plus cue model) and writes the part-of-speech mass of every token. It references a
+       pinned COPY of the built DemaConsulting.WordSense.dll that lives outside this repository (pass -p:WordSenseDll=PATH), and it
+       does not reference the PartOfSpeech library or any of its model files. See README.md. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>WordSenseBasicTags</AssemblyName>
+    <RootNamespace>WordSenseBasicTags</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <UseAppHost>false</UseAppHost>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="DemaConsulting.WordSense" Condition="'$(WordSenseDll)' != ''">
+      <HintPath>$(WordSenseDll)</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="RequireWordSenseDll" BeforeTargets="BeforeBuild" Condition="'$(WordSenseDll)' == '' Or !Exists('$(WordSenseDll)')">
+    <Error Text="Pass the pinned copy of DemaConsulting.WordSense.dll: dotnet run -c Release --project tools/data/hmm-tags -p:WordSenseDll=PATH -- --in FILE --out FILE --wordsense-commit SHA" />
+  </Target>
+
+</Project>

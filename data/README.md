@@ -24,7 +24,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [masc/](masc/README.md) | MASC written genres, Penn trees mapped to UPOS | 22,829 | 386,445 | 11.6 MB | CC-BY-3.0-US |
 | [silver/](silver/README.md) | BERT silver: Tatoeba and Gutenberg text, model labels mapped to UPOS | 13,971 | 242,699 | 8.5 MB | CC0-1.0 labels; CC0/PD sentences |
 | [eval/shapes/](eval/shapes/README.md) | noun/verb shape probe (evaluation) | 560 | | 0.06 MB | CC0-1.0 |
-| [eval/shapes-dev/](eval/shapes-dev/README.md) | hard-shape development set from US federal-government text (development only) | 700 | 12,279 | 0.5 MB | CC0-1.0 labels; US federal-work sentences |
+| [eval/shapes-dev/](eval/shapes-dev/README.md) | hard-shape development set from US federal-government text (development only): standard tranche `dev.tsv` (700 sentences, 12,279 tokens) and hard tranche `hard.tsv` (460 sentences, 7,936 tokens) | 1,160 | 20,215 | 0.8 MB | CC0-1.0 labels; US federal-work sentences |
 | [eval/gold-v2/](eval/gold-v2/README.md) | single-target gold tokens (evaluation) | 5,072 | | 2.4 MB | CC0-1.0 labels; PD sentences |
 | [eval/ste-challenge/](eval/ste-challenge/README.md) | simplified-technical-English challenge set (evaluation) | 32 | 272 | 0.01 MB | CC0-1.0 |
 | [eval/ud-ewt/](eval/ud-ewt/README.md) | UD English-EWT: fetch documentation only, **no data** | | | | CC BY-SA 4.0, never committed |
@@ -102,7 +102,12 @@ set, and UD English-EWT train, dev and test when the git-ignored cache is presen
    counts are in `eval/shapes-dev/leakage-report.tsv`; no evaluation text is printed or stored. The builder of the set applies
    the same exclusion while it builds, and sees the held-out sets only through `leakage.held_out_overlap_keys()`, an opaque set of
    hashes of sentence keys and probe 5-grams (the probe's `sentence` column only, never its labels, shapes, lemmas or targets),
-   used to exclude overlaps and never to select, weight or frame a candidate.
+   used to exclude overlaps and never to select, weight or frame a candidate. The hard tranche (`eval/shapes-dev/hard.tsv`) is
+   an evaluation set of its own in this check (label `shapes-dev-hard`, counts in `eval/shapes-dev/hard-leakage-report.tsv`) and
+   is also checked against the standard tranche: the two tranches are one family and may share a source document (reported, not
+   gated), but no sentence of one equals a sentence of the other, and no same-document near duplicate is allowed. The selection of
+   the hard tranche used numeric output of the WordSense Basic classifier (same owner, run unmodified); nothing of WordSense text,
+   labels or data is copied.
 
 **Result** (`python tools/data/check_leakage.py`; the committed `leakage-report.tsv` has every pair; UD English-EWT was
 fetched and included in this run): **0 document overlaps and 0 exact sentence overlaps** for every pair of training and

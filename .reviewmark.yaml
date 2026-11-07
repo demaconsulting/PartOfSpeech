@@ -22,6 +22,7 @@ needs-review:
   - "docs/sysml2/**/*.sysml"     # SysML2 architecture model
   - "tools/data/**/*.py"         # Build-time Python tools of the data assets, and their tests
   - "tools/data/README.md"       # Documentation of the data tools
+  - "tools/data/hmm-tags/README.md"  # Standalone WordSense Basic tagging harness (not in the solution)
   - "tools/data/tests/status-cases.tsv"  # Shared parity cases of the corpus status cell (Python and C# tests)
   - "tools/data/tests/corrections-cases.tsv"  # Shared row cases of the corrections overlay (Python and C# tests)
   - "tools/data/tests/candidate-cases.tsv"  # Shared candidate row cases of the overlay (Python and C# tests)
@@ -422,8 +423,11 @@ reviews:
       - "tools/data/fetch_ud_ewt.py"                                # UD English-EWT fetch (cache only)
       - "tools/data/build_lexicon.py"                               # lexicon build
       - "tools/data/shapes_dev.py"                                  # shapes dev set builder (blind labeling)
+      - "tools/data/hmm-tags/README.md"                             # hard tranche harness: usage, format, pinned build
+      - "tools/data/hmm-tags/Program.cs"                            # hard tranche harness: WordSense Basic tags
       - "tools/data/tests/test_common.py"                           # tests of the shared helpers
       - "tools/data/tests/test_shapes_dev.py"                       # tests of the development set builder
+      - "tools/data/tests/test_shapes_dev_hard.py"                  # tests of the hard tranche
       - "tools/data/tests/status-cases.tsv"                         # shared parity cases of the status cell
       - "tools/data/tests/test_masc.py"                             # tests of the MASC mapping
       - "tools/data/tests/test_silver_lexicon.py"                   # tests of the silver derivation and lexicon rules

@@ -23,7 +23,7 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///         The program only parses arguments and does I/O and printing; the engine is in <c>Training/</c> and
 ///         <c>Evaluation/</c>, which the tests compile and exercise directly. Every command except <c>evaluate</c> reads
 ///         nothing but the two development files (see <see cref="DataGuard"/>), except <c>eval-shapes</c>, which reads the
-///         hard-shape development file, and <c>shapes-tokenize</c>, which reads and writes only the two files it is given
+///         two files of the hard-shape development set (its tranches), and <c>shapes-tokenize</c>, which reads and writes only the two files it is given
 ///         (both outside the data folder of the repository);
 ///         <c>evaluate</c> reads the held-out sets
 ///         only through the guarded readers and only with a selection artifact that is valid for the frozen model.
@@ -54,7 +54,7 @@ internal static class Program
         "--config", "--output", "--weights", "--label", "--log", "--epochs", "--hash-bits", "--min-count", "--prune", "--scale",
         "--seed", "--temperature", "--restrict", "--history", "--source", "--max-sentences", "--mask-disputed", "--silver-min",
         "--sample-permille", "--checkpoints", "--a", "--b", "--resamples", "--m0-output", "--m1-output", "--dump-dir", "--ud-cache",
-        "--in", "--out",
+        "--in", "--out", "--tranche",
     };
 
     /// <summary>
@@ -110,10 +110,12 @@ Commands:
       development split before the run is written and scored, so confidence-based metrics are comparable.
   eval --weights FILE [--temperature T] [--label TEXT] [--log FILE]
       Scores a weights file on the development sets (open dev, gold v2 dev) through the real decoder.
-  eval-shapes [--weights FILE] [--label TEXT]
+  eval-shapes [--weights FILE] [--label TEXT] [--tranche standard|hard|both]
       Scores a weights file (default: the embedded model) on the hard-shape development set through the real decoder and
       prints Markdown: per shape the target-token accuracy, harmful errors and harmful errors per 1,000 noun-verb decisions,
-      and the control accuracy. Reads the shapes development file only; it is a development set, never a held-out figure.
+      and the control accuracy. The standard tranche (dev.tsv) and the hard tranche (hard.tsv) each get a section, and a third
+      section pools both (default --tranche both; a missing hard file is then noted, not scored; --tranche hard needs the file).
+      Reads the shapes development files only; they are development sets, never a held-out figure.
   shapes-tokenize --in FILE --out FILE
       Tokenizes a text file with the library tokenizer, one sentence per line: each output line is the sentence, the number
       of sentences the tokenizer found and the tokens separated by single spaces, tab separated. Reads and writes only the two
@@ -393,9 +395,50 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
     {
         var path = line.Value("--weights") ?? Path.Combine(root, DefaultWeights.Replace('/', Path.DirectorySeparatorChar));
         var file = File.ReadAllBytes(path);
-        var items = DevSets.ReadShapesDev(root, out var datasetSha256);
-        var result = ShapesDevEvaluator.Evaluate(DevEvaluator.CreateTagger(file), items);
-        foreach (var text in ShapesDevReport.Render(line.Value("--label") ?? Path.GetFileName(path), datasetSha256, result, ModelBuilder.Sha256Hex(file)))
+        var which = line.Value("--tranche") ?? "both";
+        if (which is not ("both" or "standard" or "hard"))
+        {
+            throw new InvalidOperationException("--tranche must be standard, hard or both.");
+        }
+
+        var label = line.Value("--label") ?? Path.GetFileName(path);
+        var tagger = DevEvaluator.CreateTagger(file);
+        var weightsSha256 = ModelBuilder.Sha256Hex(file);
+        var items = new List<ShapesDevItem>();
+        string standardSha256 = string.Empty, hardSha256 = string.Empty;
+        if (which != "hard")
+        {
+            items.AddRange(DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out standardSha256));
+        }
+
+        // The hard tranche is read when it is asked for or present; a missing file is an error only for an explicit --tranche hard
+        var hardPresent = which == "hard" || (which == "both" && DevSets.ShapesDevExists(root, ShapesDevTranche.Hard));
+        if (hardPresent)
+        {
+            items.AddRange(DevSets.ReadShapesDev(root, ShapesDevTranche.Hard, out hardSha256));
+        }
+
+        var results = ShapesDevEvaluator.EvaluateTranches(tagger, items);
+        List<string> lines;
+        if (which == "hard")
+        {
+            lines = ShapesDevReport.RenderHard(label, hardSha256, results.Hard, weightsSha256);
+        }
+        else if (hardPresent)
+        {
+            lines = ShapesDevReport.RenderTranches(label, standardSha256, hardSha256, results, weightsSha256);
+        }
+        else
+        {
+            lines = ShapesDevReport.Render(label, standardSha256, results.Standard, weightsSha256);
+            if (which == "both")
+            {
+                lines.Add(string.Empty);
+                lines.Add($"- The hard tranche {DataGuard.ShapesDevelopmentHardFile} is not present; only the standard tranche is scored.");
+            }
+        }
+
+        foreach (var text in lines)
         {
             Console.WriteLine(text);
         }

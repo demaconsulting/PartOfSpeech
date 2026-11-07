@@ -697,6 +697,35 @@ sections:
           - PartOfSpeech_ShapesDev_Quotas_AreMetByTheCommittedSet
           - PartOfSpeech_ShapesDev_Tokens_AreReproducedByTheTokenizer
 
+      - id: PartOfSpeech-Data-ShapesDevHardTranche
+        title: >-
+          The hard tranche of the hard-shape development set (`hard.tsv`) shall use the format of the standard tranche
+          and announce a dev split and the hard tranche without any selection number in the file; every item shall name
+          its shape, role, judged word and a real origin (no authored sentence), the judged word shall carry the class
+          that the shape and the role ask for and never be disputed, every shape shall hold between its floor and cap of
+          target items (compound 80 to 100, subject-initial 40 to 100, imperative 70 to 100, measure 0 to 0, modal 80 to
+          100) with no more than 4 per lemma, the tranche shall hold 50 to 60 controls with no more than 2 per lemma and
+          shape, its sentences shall be disjoint from the standard tranche and every other evaluation set (a source
+          document may be shared with the standard tranche only), its leakage report shall record that, and the library
+          tokenizer shall reproduce the stored tokens.
+        tags: [system]
+        justification: |
+          The hard tranche is a development set like the standard tranche, but it holds the contested cases and is
+          small, so a mislabeled judged word, a shape below its floor or an overfull lemma would steer the selection of
+          the context-feature work. The floors and caps are the quota gate that was pre-registered with the rule; the
+          data tests check them on the committed file. The two tranches are one family of documents, so a shared
+          document is allowed and reported, but a shared sentence would let the standard tranche score the hard
+          tranche's items twice, and the held-out sets stay apart from both.
+        children:
+          - PartOfSpeech-ModelTrainer-ShapesDevTranches
+        tests:
+          - PartOfSpeech_ShapesDevHard_Header_AnnouncesDevSplitAndCarriesNoSelectionNumbers
+          - PartOfSpeech_ShapesDevHard_Items_AreWellFormedRealAndNeverDisputed
+          - PartOfSpeech_ShapesDevHard_Quotas_AreMetByTheCommittedTranche
+          - PartOfSpeech_ShapesDevHard_Tokens_AreReproducedByTheTokenizer
+          - PartOfSpeech_ShapesDevHard_LeakageReport_RecordsNoOverlapAndSharedDocumentsWithTheStandardTranche
+          - PartOfSpeech_ShapesDevHard_Sentences_AreDisjointFromTheOtherEvaluationSets
+
       - id: PartOfSpeech-Data-ShapesDevIndependent
         title: >-
           No document, exact sentence or shared word 5-gram of the shape probe shall be common to the hard-shape
@@ -719,6 +748,8 @@ sections:
           - PartOfSpeech_ShapesDev_Sentences_AreDisjointFromTheOtherEvaluationSets
           - PartOfSpeech_ShapesDev_LeakageReport_RecordsNoOverlapWithOtherEvaluationSets
           - PartOfSpeech_ShapesDev_Builder_SeesHeldOutSetsOnlyThroughOpaqueKeys
+          - PartOfSpeech_ShapesDevHard_Sentences_AreDisjointFromTheOtherEvaluationSets
+          - PartOfSpeech_ShapesDevHard_LeakageReport_RecordsNoOverlapAndSharedDocumentsWithTheStandardTranche
 
       - id: PartOfSpeech-Data-ShapesDevSourcesAreOpen
         title: >-
@@ -740,8 +771,26 @@ sections:
           - PartOfSpeech_ShapesDev_Sources_AreOpenAndHaveNoFaaMaterial
           - PartOfSpeech_ShapesDev_ExcludedSources_AreRecordedAndAbsentFromTheSet
           - PartOfSpeech_ShapesDev_ExcludedSources_NothingUsedMatchesByIdOrNormalizedUrl
+          - PartOfSpeech_ShapesDevHard_Sources_AreListedOpenAndNotExcluded
           - PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl
           - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
+
+      - id: PartOfSpeech-Data-ShapesDevHardSelectionIndependent
+        title: >-
+          The selection of the hard tranche of the hard-shape development set shall use no part of the PartOfSpeech
+          model: the builder and the harness that supplies the numbers of another model family shall name no weights
+          file, decoder, tagger or shapes evaluation, the harness shall have no reference to this library and shall not
+          be part of the solution, and the gold of the tranche shall come only from two blind labelers.
+        tags: [system]
+        justification: |
+          A development tranche that was chosen where the tagger errs would measure the tagger against its own mistakes
+          and make every later comparison with it optimistic or circular. The hard tranche is chosen by the contested
+          band of the WordSense Basic classifier (HMM tagger plus cue model), which is a different model family, so the
+          selection must be provably free of this library's model. The harness needs a binary that is not committed, so
+          it stays out of the solution, and no build, lint or CI step needs it. The data test scans the sources of the
+          pipeline; the rule itself is recorded in the README of the data set before any label of the tranche exists.
+        tests:
+          - PartOfSpeech_ShapesDevHard_Selection_UsesNoPartOfSpeechModel
 
       - id: PartOfSpeech-Data-LexiconTrainCoverage
         title: >-
@@ -855,6 +904,7 @@ sections:
           - PartOfSpeech-ModelTrainer-GlossaryExperiment
           - PartOfSpeech-ModelTrainer-GlossaryEvaluation
           - PartOfSpeech-ModelTrainer-ShapesDevEvaluation
+          - PartOfSpeech-ModelTrainer-ShapesDevTranches
           - PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
         tests:
           - PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora
