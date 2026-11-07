@@ -1429,6 +1429,36 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
+    ///     Proves that the selection of the hard tranche of the hard-shape development set is independent of the PartOfSpeech
+    ///     model: neither the builder (<c>shapes_dev.py</c>) nor the harness of the other model's numbers (<c>tools/data/hmm-tags</c>)
+    ///     names a weights file, a decoder, a tagger or the shapes evaluation, the harness has no reference to this library, and
+    ///     the harness is not part of the solution (so no build or CI step needs its binary).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevHard_Selection_UsesNoPartOfSpeechModel()
+    {
+        // Arrange: the sources of the selection pipeline
+        var forbidden = new[] { "weights.bin", "Resources/weights", "PerceptronModel", "FeatureExtractor", "PartOfSpeechTagger", "ITagger", "eval-shapes", "ShapesDevEvaluator" };
+        var folder = DataFiles.Repository("tools/data/hmm-tags");
+        var sources = new List<string> { DataFiles.Repository("tools/data/shapes_dev.py") };
+        sources.AddRange(Directory.GetFiles(folder).Where(file => file.EndsWith(".cs", StringComparison.Ordinal) || file.EndsWith(".csproj", StringComparison.Ordinal)));
+
+        // Act
+        var found = sources
+            .SelectMany(file => forbidden.Where(word => File.ReadAllText(file).Contains(word, StringComparison.Ordinal)).Select(word => $"{Path.GetFileName(file)}: {word}"))
+            .ToList();
+        var project = File.ReadAllText(Directory.GetFiles(folder, "*.csproj").Single());
+        var solution = File.ReadAllText(DataFiles.Repository("PartOfSpeech.slnx"));
+
+        // Assert
+        Assert.Empty(found);
+        Assert.DoesNotContain("ProjectReference", project, StringComparison.Ordinal);
+        Assert.DoesNotContain("DemaConsulting.PartOfSpeech", project, StringComparison.Ordinal);
+        Assert.DoesNotContain("hmm-tags", solution, StringComparison.Ordinal);
+        Assert.DoesNotContain("DemaConsulting.PartOfSpeech", File.ReadAllText(Path.Combine(folder, "Program.cs")), StringComparison.Ordinal);
+    }
+
+    /// <summary>
     ///     Proves that the committed leakage report of the hard-shape development set covers every other evaluation set and
     ///     records no document overlap, no exact sentence overlap and no shared word 5-gram with the shape probe.
     /// </summary>

@@ -87,13 +87,13 @@ public class ShapesDevEvaluationTests
     /// <summary>
     ///     Creates the temporary repository root of a reader test and writes the development file into it.
     /// </summary>
-    private static string TempRoot(IEnumerable<string>? lines)
+    private static string TempRoot(IEnumerable<string>? lines, string file = "dev.tsv")
     {
         var root = Path.Combine(Path.GetTempPath(), "shapes-dev-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(root, "data", "eval", "shapes-dev"));
         if (lines != null)
         {
-            System.IO.File.WriteAllText(Path.Combine(root, "data", "eval", "shapes-dev", "dev.tsv"), string.Join("\n", lines) + "\n");
+            System.IO.File.WriteAllText(Path.Combine(root, "data", "eval", "shapes-dev", file), string.Join("\n", lines) + "\n");
         }
 
         return root;
@@ -321,6 +321,231 @@ public class ShapesDevEvaluationTests
     }
 
     /// <summary>
+    ///     Validates that the tranche of an item is the tranche of the file that was read, and that no comment in the file can set it.
+    /// </summary>
+    [Fact]
+    public void ShapesDevSets_Parse_Tranche_IsGivenByTheCallerAndNotByTheContent()
+    {
+        // Arrange: a block that claims to be of the hard tranche in a comment
+        var lines = File(CompoundHead("s1"));
+        var claimed = File(Sentence("s2", "n-compound-head", "target", 1, new[] { "The", "cat", "sleeps" }, new[] { "DET", "NOUN", "VERB" }, lemma: "cat"));
+        claimed.Insert(claimed.Count - 3, "# tranche = hard");
+
+        // Act
+        var byDefault = ShapesDevSets.Parse(lines, "fixture");
+        var hard = ShapesDevSets.Parse(lines, "fixture", ShapesDevTranche.Hard);
+        var comment = ShapesDevSets.Parse(claimed, "fixture");
+
+        // Assert
+        Assert.Equal(ShapesDevTranche.Standard, byDefault[0].Tranche);
+        Assert.Equal(ShapesDevTranche.Hard, hard[0].Tranche);
+        Assert.Equal(ShapesDevTranche.Standard, comment[0].Tranche);
+    }
+
+    /// <summary>
+    ///     Validates that each tranche is read from its own file, with its own SHA-256, and marks its items.
+    /// </summary>
+    [Fact]
+    public void DevSets_ReadShapesDev_EachTranche_ReadsItsOwnFileAndMarksItems()
+    {
+        // Arrange: a fake repository with a different number of sentences in the two files
+        var standardLines = File(CompoundHead("s1"), CompoundHead("s2"));
+        var hardLines = File(CompoundHead("h1"));
+        var root = TempRoot(standardLines);
+        System.IO.File.WriteAllText(Path.Combine(root, "data", "eval", "shapes-dev", "hard.tsv"), string.Join("\n", hardLines) + "\n");
+        try
+        {
+            // Act
+            var standard = DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out var standardSha);
+            var hard = DevSets.ReadShapesDev(root, ShapesDevTranche.Hard, out var hardSha);
+            var unchanged = DevSets.ReadShapesDev(root, out var defaultSha);
+
+            // Assert
+            Assert.Equal(new[] { "s1", "s2" }, standard.Select(i => i.Id));
+            Assert.All(standard, i => Assert.Equal(ShapesDevTranche.Standard, i.Tranche));
+            Assert.Equal(new[] { "h1" }, hard.Select(i => i.Id));
+            Assert.All(hard, i => Assert.Equal(ShapesDevTranche.Hard, i.Tranche));
+            Assert.NotEqual(standardSha, hardSha);
+            Assert.Equal(ModelBuilder.Sha256Hex(System.IO.File.ReadAllBytes(Path.Combine(root, "data", "eval", "shapes-dev", "hard.tsv"))), hardSha);
+            Assert.Equal(standardSha, defaultSha);
+            Assert.Equal(2, unchanged.Count);
+            Assert.True(DevSets.ShapesDevExists(root, ShapesDevTranche.Hard));
+            Assert.Equal("data/eval/shapes-dev/hard.tsv", DevSets.ShapesDevFileOf(ShapesDevTranche.Hard));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that a missing hard file is reported as such (and known to be missing) while the standard file is still read, and that
+    ///     a hard file whose header does not announce a development split is refused.
+    /// </summary>
+    [Fact]
+    public void DevSets_ReadShapesDev_HardMissingOrWrongHeader_ThrowsAndStandardStillReads()
+    {
+        // Arrange
+        var root = TempRoot(File(CompoundHead()));
+        try
+        {
+            // Act / Assert: missing hard file
+            Assert.False(DevSets.ShapesDevExists(root, ShapesDevTranche.Hard));
+            Assert.Throws<FileNotFoundException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Hard, out _));
+            Assert.Single(DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out _));
+
+            // Assert: a hard file with a held-out looking header
+            var wrong = File(CompoundHead());
+            wrong[0] = "# corpus = fixture hard-shape set, test split";
+            System.IO.File.WriteAllText(Path.Combine(root, "data", "eval", "shapes-dev", "hard.tsv"), string.Join("\n", wrong) + "\n");
+            Assert.Contains("development split", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Hard, out _)).Message);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that the evaluator summarizes per tranche and combined, gives the hard tranche zero counts when it has no items, and
+    ///     keeps the plain summary of all items unchanged.
+    /// </summary>
+    [Fact]
+    public void ShapesDevEvaluator_SummarizeTranches_PerTrancheAndCombined()
+    {
+        // Arrange
+        var items = new List<ShapesDevItem>
+        {
+            Item("a", "n-compound-head", "target", "cat", "Noun"),
+            Item("b", "n-compound-head", "control", "cat", "Verb"),
+            Item("c", "n-compound-head", "target", "cat", "Noun", tranche: ShapesDevTranche.Hard),
+            Item("d", "v-after-modal", "target", "dog", "Verb", tranche: ShapesDevTranche.Hard),
+        };
+        var outcomes = new List<Outcome>
+        {
+            new("d", true, 0.9, 0.9, true, true, false),
+            new("d", true, 0.9, 0.9, true, true, false),
+            new("d", false, 0.9, 0.1, true, true, true),
+            new("d", true, 0.9, 0.9, true, true, false),
+        };
+
+        // Act
+        var results = ShapesDevEvaluator.SummarizeTranches(items, outcomes);
+        var standardOnly = ShapesDevEvaluator.SummarizeTranches(items.Take(2).ToList(), outcomes.Take(2).ToList());
+
+        // Assert
+        Assert.Equal((1, 1, 0, 1, 1), (results.Standard.Pooled.TargetItems, results.Standard.Pooled.TargetCorrect, results.Standard.Pooled.HarmfulErrors, results.Standard.Pooled.ControlItems, results.Standard.Pooled.ControlCorrect));
+        Assert.Equal((2, 1, 1, 0), (results.Hard.Pooled.TargetItems, results.Hard.Pooled.TargetCorrect, results.Hard.Pooled.HarmfulErrors, results.Hard.Pooled.ControlItems));
+        Assert.Equal(1, results.Hard.Shapes[0].TargetItems);
+        Assert.Equal(0, results.Hard.Shapes[3].TargetItems);
+        Assert.Equal((3, 2, 1, 1), (results.Combined.Pooled.TargetItems, results.Combined.Pooled.TargetCorrect, results.Combined.Pooled.HarmfulErrors, results.Combined.Pooled.ControlItems));
+        Assert.Equal(results.Combined.Pooled.TargetItems, results.Standard.Pooled.TargetItems + results.Hard.Pooled.TargetItems);
+        Assert.Equal(0, standardOnly.Hard.Pooled.TargetItems);
+        Assert.Equal(standardOnly.Standard.Pooled.TargetItems, standardOnly.Combined.Pooled.TargetItems);
+        Assert.Throws<ArgumentException>(() => ShapesDevEvaluator.SummarizeTranches(items, outcomes.Take(3).ToList()));
+        Assert.Equal(3, ShapesDevEvaluator.Summarize(items, outcomes).Pooled.TargetItems);
+    }
+
+    /// <summary>
+    ///     Validates that a tiny tagger is scored once per item and per tranche through the real decoder.
+    /// </summary>
+    [Fact]
+    public void ShapesDevEvaluator_EvaluateTranches_TinyTagger_ScoresEachTrancheAndCombined()
+    {
+        // Arrange: "cat" is called a noun and "dog" a verb, both words possible as either
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 40).Word("dog", Upos.Verb, 40).Build(temperature: 1f, scale: 0.1f);
+        var tagger = TinyModels.CreateTagger(weights, TinyModels.CreateLexicon("cat NOUN VERB", "dog NOUN VERB"), new TaggerOptions { MaxAlternatives = 16 });
+        var items = new List<ShapesDevItem>
+        {
+            Item("a", "n-compound-head", "target", "cat", "Noun"),
+            Item("b", "n-compound-head", "target", "dog", "Noun", tranche: ShapesDevTranche.Hard),
+            Item("c", "v-after-modal", "target", "dog", "Verb", tranche: ShapesDevTranche.Hard),
+        };
+
+        // Act
+        var results = ShapesDevEvaluator.EvaluateTranches(tagger, items);
+
+        // Assert
+        Assert.Equal((1, 1, 0), (results.Standard.Pooled.TargetItems, results.Standard.Pooled.TargetCorrect, results.Standard.Pooled.HarmfulErrors));
+        Assert.Equal((2, 1, 1), (results.Hard.Pooled.TargetItems, results.Hard.Pooled.TargetCorrect, results.Hard.Pooled.HarmfulErrors));
+        Assert.Equal((3, 2, 1), (results.Combined.Pooled.TargetItems, results.Combined.Pooled.TargetCorrect, results.Combined.Pooled.HarmfulErrors));
+        Assert.Equal(ShapesDevEvaluator.Evaluate(tagger, items).Pooled.TargetCorrect, results.Combined.Pooled.TargetCorrect);
+    }
+
+    /// <summary>
+    ///     Validates the three sections of the tranche report: the standard section is exactly what the plain report writes, the hard
+    ///     section and the combined table follow, an empty shape shows dashes, and two renderings give the same bytes.
+    /// </summary>
+    [Fact]
+    public void ShapesDevReport_RenderTranches_StandardUnchangedThenHardThenCombined()
+    {
+        // Arrange
+        var items = new List<ShapesDevItem>
+        {
+            Item("a", "n-measure", "target", "pound", "Noun"),
+            Item("b", "n-measure", "control", "pound", "Verb"),
+            Item("c", "v-after-modal", "target", "dog", "Verb", tranche: ShapesDevTranche.Hard),
+            Item("d", "v-after-modal", "control", "dog", "Noun", tranche: ShapesDevTranche.Hard),
+        };
+        var outcomes = new List<Outcome>
+        {
+            new("d", true, 0.9, 0.9, true, true, false),
+            new("d", true, 0.9, 0.9, true, true, false),
+            new("d", true, 0.9, 0.9, true, true, false),
+            new("d", false, 0.9, 0.1, true, true, true),
+        };
+        var results = ShapesDevEvaluator.SummarizeTranches(items, outcomes);
+        var (standardSha, hardSha, weightsSha) = (new string('a', 64), new string('c', 64), new string('b', 64));
+
+        // Act
+        var report = ShapesDevReport.RenderTranches("model.bin", standardSha, hardSha, results, weightsSha);
+        var again = ShapesDevReport.RenderTranches("model.bin", standardSha, hardSha, ShapesDevEvaluator.SummarizeTranches(items, outcomes), weightsSha);
+        var plain = ShapesDevReport.Render("model.bin", standardSha, results.Standard, weightsSha);
+        var hardOnly = ShapesDevReport.RenderHard("model.bin", hardSha, results.Hard, weightsSha);
+
+        // Assert: deterministic, the standard section is the plain report byte for byte, then the two other sections
+        Assert.Equal(report, again);
+        Assert.Equal(plain, report.Take(plain.Count));
+        Assert.Equal(string.Empty, report[plain.Count]);
+        var headings = report.Where(l => l.StartsWith("## ", StringComparison.Ordinal)).ToList();
+        Assert.Equal(
+            new[]
+            {
+                "## Shapes development set: model.bin",
+                "## Shapes development set, hard tranche: model.bin",
+                "## Shapes development set, standard and hard tranche combined: model.bin",
+            },
+            headings);
+        Assert.Contains($"- Development file SHA-256: `{hardSha}`.", report);
+        Assert.Contains($"- Development files SHA-256: standard `{standardSha}`, hard `{hardSha}`.", report);
+        Assert.Equal(3, report.Count(l => l.StartsWith("| all shapes", StringComparison.Ordinal)));
+        Assert.Equal(1, report.Count(l => l.StartsWith("| n-measure | 0 | - | - | 0 | 0 | - | 0 | - |", StringComparison.Ordinal)));          // the hard tranche has no n-measure items
+        Assert.Equal(1, report.Count(l => l.StartsWith("| v-after-modal | 0 | - |", StringComparison.Ordinal)));                            // the standard tranche has no modal items
+        Assert.Contains("| v-after-modal | 1 | 100.0% | [20.7%, 100.0%] | 1 | 0 | 0.0 | 1 | 0.0% |", report);
+        Assert.Contains(report, l => l.StartsWith("| all shapes | 2 | 100.0% |", StringComparison.Ordinal));
+        Assert.Equal("## Shapes development set, hard tranche: model.bin", hardOnly[0]);
+        Assert.Equal(hardOnly, report.Skip(plain.Count + 1).Take(hardOnly.Count));
+    }
+
+    /// <summary>
+    ///     Validates that the plain report (the standard section) has no tranche in its heading and keeps its dashes for an empty set.
+    /// </summary>
+    [Fact]
+    public void ShapesDevReport_Render_StandardSection_HasNoTrancheNameInItsHeading()
+    {
+        // Arrange
+        var results = ShapesDevEvaluator.SummarizeTranches(new List<ShapesDevItem>(), new List<Outcome>());
+
+        // Act
+        var plain = ShapesDevReport.Render("m", string.Empty, results.Standard);
+
+        // Assert: the plain report has no tranche in its heading, whatever the other sections say
+        Assert.Equal("## Shapes development set: m", plain[0]);
+        Assert.DoesNotContain(plain, l => l.Contains("tranche", StringComparison.Ordinal));
+        Assert.Contains("| all shapes | 0 | - | - | 0 | 0 | - | 0 | - |", plain);
+    }
+
+    /// <summary>
     ///     Validates that the evaluator reports the accuracy, the harmful errors and the control accuracy of a tiny tagger by shape and pooled.
     /// </summary>
     [Fact]
@@ -427,18 +652,20 @@ public class ShapesDevEvaluationTests
     }
 
     /// <summary>
-    ///     Validates the guard theories of the third development file: only its own guard admits it, and the two-file allow-list is unchanged.
+    ///     Validates the guard theories of the files of the hard-shape development set: only its own guard admits them, and the two-file allow-list is unchanged.
     /// </summary>
     [Theory]
     [InlineData("data/eval/shapes-dev/dev.tsv")]
     [InlineData("data/eval/shapes-dev/../shapes-dev/dev.tsv")]
+    [InlineData("data/eval/shapes-dev/hard.tsv")]
+    [InlineData("data/eval/shapes-dev/../shapes-dev/hard.tsv")]
     public void DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted(string relativePath)
     {
         // Arrange / Act
         var resolved = DataGuard.EnsureShapesDevelopmentFile(DataFiles.RepositoryRoot, DataFiles.Repository(relativePath));
 
         // Assert
-        Assert.EndsWith(Path.Combine("data", "eval", "shapes-dev", "dev.tsv"), resolved, StringComparison.OrdinalIgnoreCase);
+        Assert.EndsWith(Path.Combine("data", "eval", "shapes-dev", relativePath.EndsWith("hard.tsv", StringComparison.Ordinal) ? "hard.tsv" : "dev.tsv"), resolved, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -450,6 +677,9 @@ public class ShapesDevEvaluationTests
     [InlineData("data/open/test.tsv")]
     [InlineData("data/eval/shapes/probe.tsv")]
     [InlineData("data/eval/shapes-dev/sources.tsv")]
+    [InlineData("data/eval/shapes-dev/hard-sources.tsv")]
+    [InlineData("data/eval/shapes-dev/hard-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/hard.tsv.bak")]
     [InlineData("data/eval/shapes-dev/README.md")]
     public void DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused(string relativePath)
     {
@@ -458,11 +688,14 @@ public class ShapesDevEvaluationTests
     }
 
     /// <summary>
-    ///     Validates that a symbolic link or junction replacing the shapes development file, or the folder that holds it, is refused,
-    ///     while the real file in the same fake repository is admitted.
+    ///     Validates that a symbolic link or junction replacing a file of the shapes development set (either tranche), or the folder that holds it, is
+    ///     refused, while the real file in the same fake repository is admitted.
     /// </summary>
-    [Fact]
-    public void DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused()
+    /// <param name="allowedFile">The allowed file, relative to the repository root with forward slashes.</param>
+    [Theory]
+    [InlineData("data/eval/shapes-dev/dev.tsv")]
+    [InlineData("data/eval/shapes-dev/hard.tsv")]
+    public void DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused(string allowedFile)
     {
 #if NET6_0_OR_GREATER
         // Arrange: two fake repositories, one with a link as the file and one with a link as the folder
@@ -470,7 +703,7 @@ public class ShapesDevEvaluationTests
         var fileRepo = Path.Combine(temp, "file-repo");
         var folderRepo = Path.Combine(temp, "folder-repo");
         var realRepo = Path.Combine(temp, "real-repo");
-        var relative = DataGuard.ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar);
+        var relative = allowedFile.Replace('/', Path.DirectorySeparatorChar);
         try
         {
             var other = Path.Combine(temp, "other");
@@ -519,7 +752,7 @@ public class ShapesDevEvaluationTests
         }
 #else
         // Links are resolved only on .NET 6 and later, which is where the trainer runs
-        Assert.Skip("Link resolution needs .NET 6 or later.");
+        Assert.Skip("Link resolution needs .NET 6 or later: " + allowedFile);
 #endif
     }
 
@@ -682,22 +915,26 @@ public class ShapesDevEvaluationTests
 #endif
 
     /// <summary>
-    ///     Validates that the shapes development file is a development file of its own: not in the two-file allow-list, not a held-out file and not trainable.
+    ///     Validates that each file of the shapes development set is a development file of its own: not in the two-file allow-list, not a held-out file and not trainable.
     /// </summary>
     [Fact]
     public void DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt()
     {
-        // Arrange
-        var path = DataFiles.Repository(DataGuard.ShapesDevelopmentFile);
-
-        // Act / Assert
-        Assert.DoesNotContain(DataGuard.ShapesDevelopmentFile, DataGuard.DevelopmentFiles);
-        Assert.DoesNotContain(DataGuard.ShapesDevelopmentFile, DataGuard.HeldOutFiles);
+        // Arrange / Act / Assert: the list of the set is exactly the two tranches, the other allow-lists did not grow
+        Assert.Equal(new[] { "data/eval/shapes-dev/dev.tsv", "data/eval/shapes-dev/hard.tsv" }, DataGuard.ShapesDevelopmentFiles);
+        Assert.Equal(DataGuard.ShapesDevelopmentFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.Standard]);
+        Assert.Equal(DataGuard.ShapesDevelopmentHardFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.Hard]);
         Assert.Equal(new[] { "data/open/dev.tsv", "data/eval/gold-v2/dev.tsv" }, DataGuard.DevelopmentFiles);
         Assert.Equal(4, DataGuard.HeldOutFiles.Count);
-        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureDevelopmentFile(DataFiles.RepositoryRoot, path));
-        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureTrainable(DataFiles.RepositoryRoot, path));
-        Assert.Throws<InvalidOperationException>(() => CorpusReader.ReadFile(DataFiles.RepositoryRoot, path, new SourceConfig { Name = "t" }));
+        foreach (var file in DataGuard.ShapesDevelopmentFiles)
+        {
+            var path = DataFiles.Repository(file);
+            Assert.DoesNotContain(file, DataGuard.DevelopmentFiles);
+            Assert.DoesNotContain(file, DataGuard.HeldOutFiles);
+            Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureDevelopmentFile(DataFiles.RepositoryRoot, path));
+            Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureTrainable(DataFiles.RepositoryRoot, path));
+            Assert.Throws<InvalidOperationException>(() => CorpusReader.ReadFile(DataFiles.RepositoryRoot, path, new SourceConfig { Name = "t" }));
+        }
     }
 
     /// <summary>
@@ -735,6 +972,7 @@ public class ShapesDevEvaluationTests
 
         // Act / Assert: refused inside the data folder
         Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureOutsideData(root, DataFiles.Repository(DataGuard.ShapesDevelopmentFile)));
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureOutsideData(root, DataFiles.Repository(DataGuard.ShapesDevelopmentHardFile)));
         Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureOutsideData(root, Path.Combine(dataFolder, "new-output.txt")));
         Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureOutsideData(root, dataFolder));
         Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureOutsideData(root, detour));
@@ -747,6 +985,6 @@ public class ShapesDevEvaluationTests
     /// <summary>
     ///     Creates an item with a one-word sentence for the evaluator tests.
     /// </summary>
-    private static ShapesDevItem Item(string id, string shape, string role, string word, string goldClass, string origin = "real") =>
-        new(id, origin == "real" ? "doc-a" : "shapes-dev-authored", new[] { word }, 0, goldClass, shape, role, word, origin);
+    private static ShapesDevItem Item(string id, string shape, string role, string word, string goldClass, string origin = "real", ShapesDevTranche tranche = ShapesDevTranche.Standard) =>
+        new(id, origin == "real" ? "doc-a" : "shapes-dev-authored", new[] { word }, 0, goldClass, shape, role, word, origin, tranche);
 }

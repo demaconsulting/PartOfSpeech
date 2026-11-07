@@ -11,9 +11,9 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///         The selection of every setting uses development data only. The held-out sets (the open test split, the gold v2
 ///         test split, the shape probe, the challenge set and the external treebank) are evaluated once, by the
 ///         <c>evaluate</c> command, and only behind a validated development selection: a rule in a document is easy to
-///         forget, so the rule is code. The development readers accept an allow-list of two files; the hard-shape development
-///         file has its own guard (<see cref="ShapesDevelopmentFile"/>) that only the <c>eval-shapes</c> command uses. The
-///         held-out readers
+///         forget, so the rule is code. The development readers accept an allow-list of two files; the two files of the
+///         hard-shape development set (its tranches) have their own guard (<see cref="EnsureShapesDevelopmentFile"/>) that only the
+///         <c>eval-shapes</c> command uses. The held-out readers
 ///         take a <see cref="SelectedOperatingPoints"/> as a required parameter, and that object exists only for the frozen
 ///         model, the committed development files and the pre-registered rule. Training inputs are checked against a
 ///         deny-list that refuses the held-out and the development files, because training on them would invalidate the
@@ -42,6 +42,24 @@ internal static class DataGuard
     ///     it is not a held-out file (<see cref="HeldOutFiles"/>), so <c>evaluate</c> never reads it.
     /// </summary>
     public const string ShapesDevelopmentFile = "data/eval/shapes-dev/dev.tsv";
+
+    /// <summary>
+    ///     The hard tranche of the hard-shape development set, relative to the repository root with forward slashes. It is
+    ///     the second file of the same set (the standard tranche is <see cref="ShapesDevelopmentFile"/>), cut from the same
+    ///     federal documents with a different, pre-registered selection, and it shares the guard of the first file
+    ///     (<see cref="EnsureShapesDevelopmentFile"/>): it is not in <see cref="DevelopmentFiles"/> or <see cref="HeldOutFiles"/>,
+    ///     and below the <c>eval</c> folder, so the training deny-list refuses it.
+    /// </summary>
+    public const string ShapesDevelopmentHardFile = "data/eval/shapes-dev/hard.tsv";
+
+    /// <summary>
+    ///     The two files of the hard-shape development set that the shapes guard admits, in the order of <see cref="ShapesDevTranche"/>.
+    /// </summary>
+    public static readonly IReadOnlyList<string> ShapesDevelopmentFiles = new[]
+    {
+        ShapesDevelopmentFile,
+        ShapesDevelopmentHardFile,
+    };
 
     /// <summary>
     ///     The held-out files of the repository that the <c>evaluate</c> command may read, in the order of <see cref="HeldOutSet"/>.
@@ -189,7 +207,7 @@ internal static class DataGuard
     }
 
     /// <summary>
-    ///     Resolves the hard-shape development file, which must be exactly <see cref="ShapesDevelopmentFile"/>.
+    ///     Resolves a hard-shape development file, which must be exactly <see cref="ShapesDevelopmentFile"/> or <see cref="ShapesDevelopmentHardFile"/>.
     /// </summary>
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <param name="path">The path that was asked for, absolute or relative to the working directory.</param>
@@ -198,20 +216,24 @@ internal static class DataGuard
     ///     The file and every folder on its way must be real: a symbolic link or junction that replaces any of them is refused
     ///     (where the runtime supports links), so that the written path cannot lead to other content.
     /// </remarks>
-    /// <exception cref="InvalidOperationException"><paramref name="path"/> is not the hard-shape development file, or a link lies on its way.</exception>
+    /// <exception cref="InvalidOperationException"><paramref name="path"/> is not a file of the hard-shape development set, or a link lies on its way.</exception>
     public static string EnsureShapesDevelopmentFile(string repositoryRoot, string path)
     {
         ArgumentNullException.ThrowIfNull(repositoryRoot);
         ArgumentNullException.ThrowIfNull(path);
-        var relative = ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar);
-        var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, relative));
-        if (!string.Equals(Path.GetFullPath(path), allowedFull, StringComparison.OrdinalIgnoreCase))
+        var full = Path.GetFullPath(path);
+        foreach (var allowed in ShapesDevelopmentFiles)
         {
-            throw new InvalidOperationException($"'{path}' is not the shapes development file {ShapesDevelopmentFile}; the shapes evaluation reads that file only.");
+            var relative = allowed.Replace('/', Path.DirectorySeparatorChar);
+            var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, relative));
+            if (string.Equals(full, allowedFull, StringComparison.OrdinalIgnoreCase))
+            {
+                EnsureNoLink(repositoryRoot, relative, allowedFull, path, $"the shapes development file {allowed}");
+                return allowedFull;
+            }
         }
 
-        EnsureNoLink(repositoryRoot, relative, allowedFull, path, $"the shapes development file {ShapesDevelopmentFile}");
-        return allowedFull;
+        throw new InvalidOperationException($"'{path}' is not a shapes development file; the shapes evaluation reads only {string.Join(" and ", ShapesDevelopmentFiles)}.");
     }
 
     /// <summary>
@@ -715,16 +737,45 @@ internal static class DevSets
         CorpusReader.Parse(lines, new SourceConfig { Name = "dev", MaskDisputed = false }, origin);
 
     /// <summary>
-    ///     Reads the hard-shape development set.
+    ///     Gets the path of a tranche of the hard-shape development set, relative to the repository root with forward slashes.
+    /// </summary>
+    /// <param name="tranche">The tranche.</param>
+    /// <returns>The relative path of its file.</returns>
+    public static string ShapesDevFileOf(ShapesDevTranche tranche) => DataGuard.ShapesDevelopmentFiles[(int)tranche];
+
+    /// <summary>
+    ///     Tells whether the file of a tranche of the hard-shape development set exists (through the shapes guard).
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="tranche">The tranche.</param>
+    /// <returns><c>true</c> when the file exists.</returns>
+    /// <exception cref="InvalidOperationException">A link lies on the way to the file.</exception>
+    public static bool ShapesDevExists(string repositoryRoot, ShapesDevTranche tranche) =>
+        File.Exists(DataGuard.EnsureShapesDevelopmentFile(repositoryRoot, Path.Combine(repositoryRoot, ShapesDevFileOf(tranche).Replace('/', Path.DirectorySeparatorChar))));
+
+    /// <summary>
+    ///     Reads the standard tranche of the hard-shape development set.
     /// </summary>
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <param name="sha256">Receives the SHA-256 of the file as 64 lower-case hexadecimal digits.</param>
     /// <returns>The items in file order.</returns>
     /// <exception cref="FileNotFoundException">The file does not exist.</exception>
     /// <exception cref="InvalidDataException">The file does not announce a development split or is malformed.</exception>
-    public static List<ShapesDevItem> ReadShapesDev(string repositoryRoot, out string sha256)
+    public static List<ShapesDevItem> ReadShapesDev(string repositoryRoot, out string sha256) =>
+        ReadShapesDev(repositoryRoot, ShapesDevTranche.Standard, out sha256);
+
+    /// <summary>
+    ///     Reads one tranche of the hard-shape development set; every item carries the tranche that the file stands for.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="tranche">The tranche: the file read is the one of the tranche, so the tranche of an item cannot be set by the file content.</param>
+    /// <param name="sha256">Receives the SHA-256 of the file as 64 lower-case hexadecimal digits.</param>
+    /// <returns>The items in file order.</returns>
+    /// <exception cref="FileNotFoundException">The file does not exist.</exception>
+    /// <exception cref="InvalidDataException">The file does not announce a development split or is malformed.</exception>
+    public static List<ShapesDevItem> ReadShapesDev(string repositoryRoot, ShapesDevTranche tranche, out string sha256)
     {
-        var path = DataGuard.EnsureShapesDevelopmentFile(repositoryRoot, Path.Combine(repositoryRoot, DataGuard.ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar)));
+        var path = DataGuard.EnsureShapesDevelopmentFile(repositoryRoot, Path.Combine(repositoryRoot, ShapesDevFileOf(tranche).Replace('/', Path.DirectorySeparatorChar)));
         if (!File.Exists(path))
         {
             throw new FileNotFoundException($"The shapes development set {path} does not exist.", path);
@@ -732,7 +783,7 @@ internal static class DevSets
 
         DataGuard.EnsureDevelopmentHeader(File.ReadLines(path, Encoding.UTF8).Take(20), path);
         sha256 = ModelBuilder.Sha256Hex(File.ReadAllBytes(path));
-        return ShapesDevSets.Parse(File.ReadLines(path, Encoding.UTF8), path);
+        return ShapesDevSets.Parse(File.ReadLines(path, Encoding.UTF8), path, tranche);
     }
 
     /// <summary>
