@@ -1,0 +1,12 @@
+# Leakage report of the hard-shape development set (tools/data/check_leakage.py); counts only
+# UD English-EWT checked in this run: yes (counts only; nothing from UD is stored)
+# probe_5gram_sentences = development sentences that share a word 5-gram with a shape probe sentence (gated, no probe text is stored)
+# columns = evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, probe_5gram_sentences
+open-dev	700	0	0	0	-
+open-test	700	0	0	0	-
+ste-challenge	700	0	0	0	-
+gold-v2	700	0	0	0	-
+shapes-probe	700	0	0	0	0
+ud-ewt-dev	700	0	0	0	-
+ud-ewt-test	700	0	0	0	-
+ud-ewt-train	700	0	0	0	-
