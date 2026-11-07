@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk -->
 
 # Trainer Run Log
 
@@ -2234,8 +2234,61 @@ a gain is small: a variant can win at most 22 target errors here (8 for `n-compo
 `n-subject-initial`, 2 for `v-after-modal`, and 1 for `n-measure`, which is saturated), and a difference of a few items is
 inside the 95% intervals above. The set was intentionally **not** made harder: choosing items by the errors of this model
 would bias the set against that model (and against any variant that shares its errors), so the comparison would no longer be
-fair. A follow-up may add a harder tranche that is chosen by model-independent criteria, such as
-disagreement between an HMM tagger and the voters, or the ambiguity of the lexicon entry of the judged word.
+fair. A harder tranche that is chosen by model-independent criteria is built next; its selection rule is pre-registered in the
+section below.
+
+## Shapes development set: hard tranche, pre-registered selection rule
+
+**Written before any label of the hard tranche exists and before its candidates were generated.** The hard tranche
+(`data/eval/shapes-dev/hard.tsv`, [README](../../data/eval/shapes-dev/README.md#hard-tranche) has the same rule) holds the
+contested cases of `n-compound-head`, `n-subject-initial`, `v-imperative-initial` and `v-after-modal` (`n-measure` has no hard
+cases and stays at zero items). It is a development set: the figures that it produces select settings and are never held-out
+results. The rule is model-independent: no PartOfSpeech weight file, prediction, error or score takes part in the selection.
+
+| Input | Value |
+| --- | --- |
+| Text | 123 federal documents, 60,297 sentences (63 documents of the standard tranche without the two excluded NIST handbooks, plus 60 newly sourced documents) |
+| Selection signal | the WordSense Basic classifier (HMM tagger plus cue model), another project's model family |
+| WordSense commit | `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (read only) |
+| `DemaConsulting.WordSense.dll` SHA-256 | `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
+| `hmm.tsv` SHA-256 (noun and verb mass of every token) | `3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c` |
+| `tokens.tsv` SHA-256 (harness input) | `197d68f161bb1e05357caa74ed0a53a85c38a675e491c82f2365450b9294c328` |
+
+Rule (`python tools/data/shapes_dev.py --tranche hard`):
+
+1. **Inputs:** real text, library tokens, the lexicon, the committed `dev.tsv` (exclusion only) and `hmm.tsv`.
+2. **Candidate filters:** unchanged (cleanliness, length 3 to 30, duplicates, the held-out filter only through
+   `leakage.held_out_overlap_keys`, excluded sources, document key hits), plus: not a standard-tranche sentence (exact key, or
+   a sentence of at least 10 words with 80% or more of its word 6-grams in the standard sentences of the same document).
+3. **Frame:** the unchanged `shape_hits` frame (`n-compound-head` strict); the lexicon ambiguity (noun and verb listed, not a
+   function word) is part of it.
+4. **Contested band:** q is the mass of the shape's class (Noun for `n-*`, Verb for `v-*`) that the Basic classifier gives the
+   target. Eligible if 0.10 <= q < 0.97; q < 0.5 is the pure-disagreement part and is reported. Order by q ascending, ties by the
+   seeded rank, at most 4 candidates per lemma. Budgets: `n-compound-head` 400, `v-after-modal` 300, `v-imperative-initial` and
+   `n-subject-initial` all; a round `h2` takes the next block only for a shape below its floor.
+5. **Why a band and not pure disagreement:** on the 1,825 labeled standard candidates, where the Basic classifier disagrees
+   with the shape's class, the two blind labelers agree with the shape's class in only 1% to 21% of the cases
+   (`n-compound-head` 8%, `n-subject-initial` 1%, `v-imperative-initial` 5%, `v-after-modal` 21%). Very confident
+   disagreements are mostly not true instances of the shape, and filling a shape from them would need about 1,500 labeled
+   sentences per shape; the real pools with q < 0.5 are 668, 275, 220 and 189 (same order). Disagreement (q < 0.5) is inside the
+   band, very confident disagreement (q < 0.10) is outside it. Band and budgets were chosen after looking at how the standard
+   tranche's labels distribute over the Basic classifier's q (yield only), never at a PartOfSpeech result, and are fixed before
+   any label of this tranche exists (project owner's decision).
+6. **Controls:** real other-class sentences of the lemmas of the chosen targets (hard or not, no band), at most 2 per lemma,
+   50 candidates per shape, labeled blind.
+7. **Gold:** unchanged: two blind labelers (`claude-opus-5.5`, `gpt-6.1-sol`); target disagreement and class mismatch are
+   dropped; frame, base-form and nominal-gerund rules as in the standard tranche; q and the classifier's answer are never shown to a
+   labeler.
+8. **No authored sentences;** `n-measure` is omitted (zero items, `-` in reports).
+9. **Quota gate** (floor and cap): `n-compound-head` 80 and 100, `v-imperative-initial` 70 and 100, `v-after-modal` 80 and 100,
+   `n-subject-initial` 40 and 60, `n-measure` 0 and 0; controls 50 and 60; lemma cap 4 (controls 2). Below a floor `build`
+   refuses unless `--allow-short`; a miss is disclosed, not padded.
+10. **No PartOfSpeech model in the selection** (a data test asserts it); voters (spaCy, NLTK) are not part of the rule and may
+    only be descriptive diagnostics after the build.
+11. **Hand check:** 60 targets (15 per shape, at least half with q < 0.5) by `claude-sonnet-5.5` (a model review), with a
+    leniency control; gate 95% precision.
+12. **Leftovers are not reused:** labeled standard-tranche candidates that are not in `dev.tsv` are not used, because their
+    labels were seen.
 
 ## Run table
 

@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore usfs usbm ncwm -->
+<!-- cspell:ignore usfs usbm ncwm nltk -->
 
 # Shapes Development Set
 
@@ -227,8 +227,69 @@ left to gain are:
 | all shapes | 3.7% | 22 |
 
 The set was not made harder on purpose: choosing items by the errors of the shipped model would bias it against that model.
-A harder tranche, chosen by model-independent criteria (for example disagreement between an HMM tagger and the voters, or
-the ambiguity of the lexicon entry), may follow.
+A second, harder tranche is chosen by model-independent criteria and is described in [Hard Tranche](#hard-tranche); its
+selection rule is pre-registered there.
+
+## Hard Tranche
+
+A second development file, `hard.tsv`, holds the contested cases of four shapes (`n-compound-head`, `n-subject-initial`,
+`v-imperative-initial`, `v-after-modal`; `n-measure` has no hard cases and stays at zero items). It is built from the same kind of
+federal documents, labeled by the same two blind model labelers, and is for development only, like `dev.tsv`.
+
+**This section was written before any label of the tranche exists**, and before the candidates were generated. It is the
+pre-registered selection rule; counts, drops and results are added after the build, and the rule is not changed by them.
+
+Inputs of the selection:
+
+| Input | Value |
+| --- | --- |
+| Text | 123 federal documents, 60,297 sentences (63 documents of the standard tranche's work folder without the two excluded NIST handbooks, plus 60 newly sourced documents) |
+| Classifier of the selection signal | the WordSense Basic classifier (HMM tagger plus cue model), a different model family from another project |
+| WordSense commit | `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (read only; never modified) |
+| `DemaConsulting.WordSense.dll` SHA-256 | `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
+| `hmm.tsv` SHA-256 (the classifier's noun and verb mass for every token of the text) | `3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c` |
+| `tokens.tsv` SHA-256 (the harness input) | `197d68f161bb1e05357caa74ed0a53a85c38a675e491c82f2365450b9294c328` |
+
+The rule (`python tools/data/shapes_dev.py --tranche hard`; the docstring of the tool has the same text):
+
+1. **Inputs.** Real text of the sourced documents, library tokens, the lexicon, the committed `dev.tsv` (for exclusion) and
+   `hmm.tsv`. No PartOfSpeech tagger, weight file, prediction, error or score is read, by the tool or by the harness; a data test
+   asserts it.
+2. **Candidate filters.** Unchanged from the standard tranche: cleanliness, length 3 to 30 tokens, duplicates, the held-out
+   filter (only through `leakage.held_out_overlap_keys`), excluded sources and document key hits. In addition, a candidate is not
+   a standard-tranche sentence: its sentence key is not in `dev.tsv`, and a sentence of at least 10 words does not have 80% or more
+   of its word 6-grams in the standard sentences of the same document.
+3. **Frame.** The unchanged `shape_hits` position and lexicon frame of each shape (`n-compound-head` always strict). The lexicon
+   ambiguity of the target word (listed as noun and verb, not a function word) is part of the frame.
+4. **Contested band.** q is the mass that the WordSense Basic classifier gives the shape's class (Noun for `n-*`, Verb for
+   `v-*`) at the target. A candidate is eligible if 0.10 <= q < 0.97. The part with q < 0.5 is pure disagreement with the shape's
+   class and is reported separately. Candidates are ordered by q ascending (hardest first), ties by the seeded rank, at most 4
+   per lemma. Budgets of written candidates: `n-compound-head` 400, `v-after-modal` 300, `v-imperative-initial` and
+   `n-subject-initial` all. A second round (`h2`) takes the next block only for a shape that ends below its floor.
+5. **Why a band and not pure disagreement.** On the 1,825 labeled candidates of the standard tranche, where the Basic
+   classifier disagrees with the shape's class, the two blind labelers agree with the shape's class in only 1% to 21% of the
+   cases (`n-compound-head` 8%, `n-subject-initial` 1%, `v-imperative-initial` 5%, `v-after-modal` 21%). Very confident
+   disagreements are mostly not true instances of the shape (an imperative that looks like a subject-initial noun, an adjective
+   before the head, and so on), and filling a shape from them would need on the order of 1,500 labeled sentences per shape. The
+   real pools of candidates with q < 0.5 are 668, 275, 220 and 189 (in the order above). So disagreement (q < 0.5) is inside the
+   band and very confident disagreement (q < 0.10) is outside it. The band and the budgets were chosen after looking at how the
+   standard tranche's labels distribute over the Basic classifier's q (yield only), never at a PartOfSpeech result; they are
+   fixed before any label of this tranche exists. This was the project owner's decision.
+6. **Controls.** Real sentences of the other class for the lemmas of the chosen targets of the shape (hard or not; no band),
+   at most 2 per lemma and 50 candidates per shape, labeled blind like the targets.
+7. **Gold.** Unchanged: two blind labelers (`claude-opus-5.5`, `gpt-6.1-sol`), agreement, target disagreement and class mismatch
+   dropped, and the frame, base-form and nominal-gerund rules of the standard tranche. q and the classifier's answer are never
+   shown to a labeler and never change a label.
+8. **No authored sentences.** `n-measure` is omitted (no hard cases); zero items is valid and appears as `-` in reports.
+9. **Quota gate** (floor and cap per shape): `n-compound-head` 80 and 100, `v-imperative-initial` 70 and 100, `v-after-modal` 80
+   and 100, `n-subject-initial` 40 and 60, `n-measure` 0 and 0; controls 50 and 60; at most 4 items per lemma (controls 2).
+   Below a floor `build` refuses unless `--allow-short`; a miss is disclosed and never padded.
+10. **No PartOfSpeech model in the selection.** The voters (spaCy, NLTK) are not part of the rule; they may be used afterwards
+    as descriptive diagnostics only.
+11. **Hand check.** 60 targets (15 per shape, at least half with q < 0.5) by `claude-sonnet-5.5` (a model review, not a human
+    one), with a leniency control; the gate is 95% precision.
+12. **Leftovers are not reused.** Labeled candidates of the standard tranche that are not in `dev.tsv` are not reused, because
+    their labels were seen.
 
 ## Known Limits
 
