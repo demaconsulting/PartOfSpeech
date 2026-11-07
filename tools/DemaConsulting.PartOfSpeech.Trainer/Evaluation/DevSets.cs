@@ -11,7 +11,9 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///         The selection of every setting uses development data only. The held-out sets (the open test split, the gold v2
 ///         test split, the shape probe, the challenge set and the external treebank) are evaluated once, by the
 ///         <c>evaluate</c> command, and only behind a validated development selection: a rule in a document is easy to
-///         forget, so the rule is code. The development readers accept an allow-list of two files; the held-out readers
+///         forget, so the rule is code. The development readers accept an allow-list of two files; the hard-shape development
+///         file has its own guard (<see cref="ShapesDevelopmentFile"/>) that only the <c>eval-shapes</c> command uses. The
+///         held-out readers
 ///         take a <see cref="SelectedOperatingPoints"/> as a required parameter, and that object exists only for the frozen
 ///         model, the committed development files and the pre-registered rule. Training inputs are checked against a
 ///         deny-list that refuses the held-out and the development files, because training on them would invalidate the
@@ -32,6 +34,14 @@ internal static class DataGuard
         "data/open/dev.tsv",
         "data/eval/gold-v2/dev.tsv",
     };
+
+    /// <summary>
+    ///     The hard-shape development file, relative to the repository root with forward slashes. It is a third development
+    ///     file with its own guard (<see cref="EnsureShapesDevelopmentFile"/>); it is deliberately not in
+    ///     <see cref="DevelopmentFiles"/>, so no command that reads "the two development files" can reach it by accident, and
+    ///     it is not a held-out file (<see cref="HeldOutFiles"/>), so <c>evaluate</c> never reads it.
+    /// </summary>
+    public const string ShapesDevelopmentFile = "data/eval/shapes-dev/dev.tsv";
 
     /// <summary>
     ///     The held-out files of the repository that the <c>evaluate</c> command may read, in the order of <see cref="HeldOutSet"/>.
@@ -150,7 +160,12 @@ internal static class DataGuard
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <param name="path">The path that was asked for, absolute or relative to the working directory.</param>
     /// <returns>The full path of the development file.</returns>
-    /// <exception cref="InvalidOperationException"><paramref name="path"/> is not one of <see cref="DevelopmentFiles"/>.</exception>
+    /// <remarks>
+    ///     Like <see cref="EnsureShapesDevelopmentFile"/>, the canonical path of the file (every symbolic link or junction
+    ///     resolved, where the runtime supports links) must equal the canonical repository root plus the allowed relative file;
+    ///     a link at or below the data folder is refused.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException"><paramref name="path"/> is not one of <see cref="DevelopmentFiles"/>, or a link lies on its way.</exception>
     public static string EnsureDevelopmentFile(string repositoryRoot, string path)
     {
         ArgumentNullException.ThrowIfNull(repositoryRoot);
@@ -160,15 +175,63 @@ internal static class DataGuard
         var full = Path.GetFullPath(path);
         foreach (var allowed in DevelopmentFiles)
         {
-            var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, allowed.Replace('/', Path.DirectorySeparatorChar)));
+            var relative = allowed.Replace('/', Path.DirectorySeparatorChar);
+            var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, relative));
             if (string.Equals(full, allowedFull, StringComparison.OrdinalIgnoreCase))
             {
+                EnsureNoLink(repositoryRoot, relative, allowedFull, path, $"the development file {allowed}");
                 return allowedFull;
             }
         }
 
         throw new InvalidOperationException(
             $"'{path}' is not a development file. Development evaluation reads only {string.Join(" and ", DevelopmentFiles)}; held-out sets are read only by the evaluate command, behind a validated development selection.");
+    }
+
+    /// <summary>
+    ///     Resolves the hard-shape development file, which must be exactly <see cref="ShapesDevelopmentFile"/>.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="path">The path that was asked for, absolute or relative to the working directory.</param>
+    /// <returns>The full path of the hard-shape development file.</returns>
+    /// <remarks>
+    ///     The file and every folder on its way must be real: a symbolic link or junction that replaces any of them is refused
+    ///     (where the runtime supports links), so that the written path cannot lead to other content.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException"><paramref name="path"/> is not the hard-shape development file, or a link lies on its way.</exception>
+    public static string EnsureShapesDevelopmentFile(string repositoryRoot, string path)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        ArgumentNullException.ThrowIfNull(path);
+        var relative = ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar);
+        var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, relative));
+        if (!string.Equals(Path.GetFullPath(path), allowedFull, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"'{path}' is not the shapes development file {ShapesDevelopmentFile}; the shapes evaluation reads that file only.");
+        }
+
+        EnsureNoLink(repositoryRoot, relative, allowedFull, path, $"the shapes development file {ShapesDevelopmentFile}");
+        return allowedFull;
+    }
+
+    /// <summary>
+    ///     Refuses a development file whose canonical path is not the canonical repository root plus the allowed relative file.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="relative">The allowed file, relative to the repository root.</param>
+    /// <param name="allowedFull">The full path of the allowed file.</param>
+    /// <param name="path">The path that was asked for, for the message.</param>
+    /// <param name="description">The description of the file for the message.</param>
+    /// <exception cref="InvalidOperationException">The file or a folder at or below the data folder is a link.</exception>
+    private static void EnsureNoLink(string repositoryRoot, string relative, string allowedFull, string path, string description)
+    {
+        // Links in the repository root itself are tolerated; a link at or below the data folder moves the canonical path away from the expected one
+        var comparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        var expected = Path.Combine(Canonicalize(repositoryRoot), relative);
+        if (!string.Equals(Canonicalize(allowedFull), expected, comparison))
+        {
+            throw new InvalidOperationException($"'{path}' goes through a link; {description} must be a real file below real folders.");
+        }
     }
 
     /// <summary>
@@ -218,6 +281,31 @@ internal static class DataGuard
         }
 
         return Path.GetFullPath(directory);
+    }
+
+    /// <summary>
+    ///     Checks that a file given to a general-purpose command lies outside the data folder of the repository, links resolved, so
+    ///     that the command can never read or overwrite training, development or held-out data.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="path">The file, absolute or relative to the working directory.</param>
+    /// <returns>The full path of the file.</returns>
+    /// <exception cref="InvalidOperationException">The path is the data folder or lies inside it, as written or after link resolution.</exception>
+    public static string EnsureOutsideData(string repositoryRoot, string path)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        ArgumentNullException.ThrowIfNull(path);
+        var dataRoot = Path.Combine(repositoryRoot, "data");
+        var same = string.Equals(
+            Path.GetFullPath(dataRoot).TrimEnd(Path.DirectorySeparatorChar),
+            Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar),
+            Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+        if (same || RelativeTo(Canonicalize(dataRoot), Canonicalize(path)) != null || RelativeTo(Path.GetFullPath(dataRoot), Path.GetFullPath(path)) != null)
+        {
+            throw new InvalidOperationException($"'{path}' is inside the data folder of the repository; this command reads and writes files outside it only.");
+        }
+
+        return Path.GetFullPath(path);
     }
 
     /// <summary>
@@ -625,6 +713,27 @@ internal static class DevSets
     /// <returns>The sentences; no token is masked, so every token is judged.</returns>
     public static List<TrainingSentence> ParseOpenDev(IEnumerable<string> lines, string origin) =>
         CorpusReader.Parse(lines, new SourceConfig { Name = "dev", MaskDisputed = false }, origin);
+
+    /// <summary>
+    ///     Reads the hard-shape development set.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="sha256">Receives the SHA-256 of the file as 64 lower-case hexadecimal digits.</param>
+    /// <returns>The items in file order.</returns>
+    /// <exception cref="FileNotFoundException">The file does not exist.</exception>
+    /// <exception cref="InvalidDataException">The file does not announce a development split or is malformed.</exception>
+    public static List<ShapesDevItem> ReadShapesDev(string repositoryRoot, out string sha256)
+    {
+        var path = DataGuard.EnsureShapesDevelopmentFile(repositoryRoot, Path.Combine(repositoryRoot, DataGuard.ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar)));
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException($"The shapes development set {path} does not exist.", path);
+        }
+
+        DataGuard.EnsureDevelopmentHeader(File.ReadLines(path, Encoding.UTF8).Take(20), path);
+        sha256 = ModelBuilder.Sha256Hex(File.ReadAllBytes(path));
+        return ShapesDevSets.Parse(File.ReadLines(path, Encoding.UTF8), path);
+    }
 
     /// <summary>
     ///     Reads the gold v2 development split.

@@ -9,7 +9,7 @@ namespace DemaConsulting.PartOfSpeech.Tests;
 /// <summary>
 ///     System-level tests of the committed data and licensing artifacts: the third-party notice and its packaging, the
 ///     licenses and provenance of the data, the staged corpus corrections, the Universal POS tags, the separation of
-///     training and evaluation data, and the lexicon. The tests read the files of the working copy and need no network.
+///     training and evaluation data, the hard-shape development set, and the lexicon. The tests read the files of the working copy and need no network.
 ///     Each test proves one obligation of one requirement; a test that finds no file or no row fails instead of passing
 ///     on nothing.
 /// </summary>
@@ -36,6 +36,46 @@ public class PartOfSpeechDataTests
     private const string MascLicenseBasis = "CC BY 3.0 US";
 
     /// <summary>
+    ///     The folder of the hard-shape development set, relative to the data folder.
+    /// </summary>
+    private const string ShapesDevFolder = "eval/shapes-dev";
+
+    /// <summary>
+    ///     The corpus file of the hard-shape development set, relative to the data folder.
+    /// </summary>
+    private const string ShapesDevCorpus = ShapesDevFolder + "/dev.tsv";
+
+    /// <summary>
+    ///     The most target items that a shape of the development set holds.
+    /// </summary>
+    private const int ShapesDevMaxTargetsPerShape = 120;
+
+    /// <summary>
+    ///     The number of controls of the development set.
+    /// </summary>
+    private const int ShapesDevControls = 100;
+
+    /// <summary>
+    ///     The most targets of one lemma in a shape (12 for n-measure, see <see cref="ShapesDevMeasureLemmaCap"/>).
+    /// </summary>
+    private const int ShapesDevLemmaCap = 4;
+
+    /// <summary>
+    ///     The most targets of one lemma in the n-measure shape, whose units repeat.
+    /// </summary>
+    private const int ShapesDevMeasureLemmaCap = 12;
+
+    /// <summary>
+    ///     The most controls of one lemma in a shape.
+    /// </summary>
+    private const int ShapesDevControlLemmaCap = 2;
+
+    /// <summary>
+    ///     The largest share of authored sentences that a shape, or the controls, of the development set may have.
+    /// </summary>
+    private const double ShapesDevMaxAuthoredShare = 0.30;
+
+    /// <summary>
     ///     The training corpora, relative to the data folder.
     /// </summary>
     private static readonly string[] TrainingCorpora = { "open/train.tsv", "masc/masc.tsv", "silver/silver.tsv" };
@@ -45,7 +85,7 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static readonly string[] EvaluationCorpora =
     {
-        "open/dev.tsv", "open/test.tsv", "eval/ste-challenge/test.tsv"
+        "open/dev.tsv", "open/test.tsv", "eval/ste-challenge/test.tsv", ShapesDevCorpus
     };
 
     /// <summary>
@@ -53,7 +93,7 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static readonly string[] LicensedFolders =
     {
-        "open", "masc", "silver", "eval/shapes", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections"
+        "open", "masc", "silver", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections"
     };
 
     /// <summary>
@@ -62,7 +102,8 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static readonly (string Table, string IdColumn)[] SourceTables =
     {
-        ("open/sources.tsv", "source_id"), ("eval/gold-v2/sources.tsv", "doc_id"), ("silver/sources.tsv", "source_id")
+        ("open/sources.tsv", "source_id"), ("eval/gold-v2/sources.tsv", "doc_id"), ("silver/sources.tsv", "source_id"),
+        (ShapesDevFolder + "/sources.tsv", "source_id")
     };
 
     /// <summary>
@@ -78,6 +119,12 @@ public class PartOfSpeechDataTests
         ["eval/shapes"] = new[]
         {
             "## Source and Provenance", "**Source:**", "**How produced (by the WordSense project):**", "**License:**"
+        },
+        [ShapesDevFolder] = new[]
+        {
+            "## Source and Provenance", "**Source:**", "**How produced:**", "**Labels:**", "**Sentences:**", "`sources.tsv`",
+            "## Labeling and Decision Rule", "## Hand Check", "model review, not a human review", "## Sources", "## Known Limits",
+            "## Use"
         },
         ["eval/gold-v2"] = new[] { "## Source and Provenance", "**Source:**", "**Labels:**", "**Sentences:**", "`sources.tsv`" },
         ["eval/ste-challenge"] = new[] { "## Source and Provenance", "**Source:**", "**Sentences:**", "**Tags:**" },
@@ -282,7 +329,7 @@ public class PartOfSpeechDataTests
         }
 
         // Assert: every folder was checked and no problem was found
-        Assert.Equal(8, LicensedFolders.Length);
+        Assert.Equal(9, LicensedFolders.Length);
         Assert.Empty(problems);
     }
 
@@ -470,7 +517,7 @@ public class PartOfSpeechDataTests
             .Select(name => "missing: data/" + name));
 
         // Assert: every folder was checked and no problem was found
-        Assert.Equal(8, ReadmeStatements.Count);
+        Assert.Equal(9, ReadmeStatements.Count);
         Assert.Empty(problems);
     }
 
@@ -1011,13 +1058,430 @@ public class PartOfSpeechDataTests
             var evaluationSets = rows.Where(row => row[0] == training).Select(row => row[1]).Distinct(StringComparer.Ordinal);
             var expected = new[]
             {
-                "gold-v2", "open-dev", "open-test", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train"
+                "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test",
+                "ud-ewt-train"
             };
             Assert.Empty(expected.Except(evaluationSets));
         }
 
         Assert.All(rows, row => Assert.Equal(6, row.Length));
         Assert.Empty(overlaps);
+    }
+
+    /// <summary>
+    ///     Proves that the header of the hard-shape development set announces a dev split and its development-only use, which
+    ///     is what the development guard of the trainer accepts.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Header_AnnouncesDevSplit()
+    {
+        // Arrange: the header comments of the file (up to the first blank line)
+        var header = File.ReadLines(DataFiles.Data(ShapesDevCorpus)).TakeWhile(line => line.Length > 0).ToList();
+
+        // Act: find the corpus and use lines
+        var corpus = header.FirstOrDefault(line => line.StartsWith("# corpus = ", StringComparison.Ordinal));
+        var use = header.FirstOrDefault(line => line.StartsWith("# use = ", StringComparison.Ordinal));
+
+        // Assert: the corpus line names the dev split and the use line says development only
+        Assert.NotNull(corpus);
+        Assert.Contains("dev split", corpus, StringComparison.Ordinal);
+        Assert.NotNull(use);
+        Assert.Contains("development only", use, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Proves that every item of the hard-shape development set has a known shape, role, origin and lemma, that every
+    ///     shape holds between one and 120 target items, that the controls pair with a lemma of a target of the same shape,
+    ///     and that every sentence has exactly one item.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Items_HaveShapeRoleTargetAndLemma()
+    {
+        // Arrange: parse the file with the format rules of the trainer (known comments, target index, no repeated id)
+        var items = ShapesDevItems();
+
+        // Act: count the targets and controls of every shape and find the controls without a target lemma
+        var problems = new List<string>();
+        foreach (var shape in ShapesDevSets.Shapes)
+        {
+            var targets = items.Where(item => item.Shape == shape && item.IsTarget).ToList();
+            var controls = items.Where(item => item.Shape == shape && !item.IsTarget).ToList();
+            if (targets.Count < 1 || targets.Count > ShapesDevMaxTargetsPerShape)
+            {
+                problems.Add($"{shape}: {targets.Count} target items, expected 1 to {ShapesDevMaxTargetsPerShape}");
+            }
+
+            var targetLemmas = new HashSet<string>(targets.Select(item => item.Lemma), StringComparer.OrdinalIgnoreCase);
+            problems.AddRange(controls
+                .Where(item => !targetLemmas.Contains(item.Lemma))
+                .Select(item => $"{shape}: control {item.Id} has the lemma '{item.Lemma}' of no target of the shape"));
+        }
+
+        // Assert: the set has controls and no problem was found
+        Assert.True(items.Count > 100);
+        Assert.Contains(items, item => !item.IsTarget);
+        Assert.All(items, item => Assert.Contains(item.Shape, ShapesDevSets.Shapes));
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the judged word of every item of the hard-shape development set is tagged with the class that its
+    ///     role asks for (the class of the shape for a target, the other class for a control) and that no judged word is
+    ///     disputed, reading the tags and statuses of the file directly.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Targets_MatchShapeClassAndAreNeverDisputed()
+    {
+        // Arrange: the items and the sentences of the file, in the same order
+        var items = ShapesDevItems();
+        var sentences = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevCorpus)).ToList();
+        Assert.Equal(items.Count, sentences.Count);
+
+        // Act: compare the tag and the status of the judged word with the shape and the role
+        var problems = new List<string>();
+        for (var i = 0; i < items.Count; i++)
+        {
+            var item = items[i];
+            var token = sentences[i].Tokens[item.Target];
+            var tagClass = ClassOfTag(token[1]);
+            var shapeClass = ShapesDevSets.ClassOfShape(item.Shape);
+            var wanted = item.IsTarget ? shapeClass : OtherClass(shapeClass);
+            if (tagClass != wanted)
+            {
+                problems.Add($"{item.Id}: the judged word '{token[0]}' is {token[1]}, expected the class {wanted}");
+            }
+
+            if (DataFiles.BaseStatus(token[2]) == "disputed")
+            {
+                problems.Add($"{item.Id}: the judged word '{token[0]}' is disputed");
+            }
+        }
+
+        // Assert: both roles are present and no problem was found
+        Assert.Contains(items, item => item.IsTarget);
+        Assert.Contains(items, item => !item.IsTarget);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that no shape of the hard-shape development set, and not the controls, has more than 30 percent authored
+    ///     sentences, and that authored sentences are exactly those of the authored pseudo-document.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Authored_ShareIsCappedPerShapeAndForControls()
+    {
+        // Arrange: the items
+        var items = ShapesDevItems();
+
+        // Act: compute the authored share of every shape (targets) and of the controls
+        var groups = ShapesDevSets.Shapes
+            .Select(shape => (Name: $"targets of {shape}", Items: items.Where(item => item.Shape == shape && item.IsTarget).ToList()))
+            .Append((Name: "controls", Items: items.Where(item => !item.IsTarget).ToList()))
+            .ToList();
+        var tooMany = groups
+            .Where(group => group.Items.Count(item => item.Origin == ShapesDevSets.AuthoredOrigin) > ShapesDevMaxAuthoredShare * group.Items.Count)
+            .Select(group => group.Name)
+            .ToList();
+        var mismatched = items
+            .Where(item => (item.Origin == ShapesDevSets.AuthoredOrigin) != (item.SourceId == ShapesDevSets.AuthoredSourceId))
+            .Select(item => item.Id)
+            .ToList();
+
+        // Assert: every group is non-empty, within the cap, and the origin agrees with the document
+        Assert.All(groups, group => Assert.NotEmpty(group.Items));
+        Assert.Empty(tooMany);
+        Assert.Empty(mismatched);
+    }
+
+    /// <summary>
+    ///     Proves that the library tokenizer reproduces the stored tokens of every sentence of the hard-shape development
+    ///     set: one sentence, the same tokens.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Tokens_AreReproducedByTheTokenizer()
+    {
+        // Arrange: the sentences of the file
+        var sentences = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevCorpus)).ToList();
+
+        // Act: tokenize the text of every sentence and compare with the stored tokens
+        var problems = new List<string>();
+        foreach (var sentence in sentences)
+        {
+            var tokenized = Tokenizer.Tokenize(sentence.Text);
+            var actual = tokenized.SelectMany(part => part.Tokens).Select(token => token.Text).ToArray();
+            var stored = sentence.Tokens.Select(token => token[0]).ToArray();
+            if (tokenized.Count != 1 || !actual.SequenceEqual(stored, StringComparer.Ordinal))
+            {
+                problems.Add($"{sentence.SentenceId}: the tokenizer gives {tokenized.Count} sentence(s) and {actual.Length} tokens, the file has {stored.Length}");
+            }
+        }
+
+        // Assert: the set is not empty and every sentence is reproduced
+        Assert.True(sentences.Count > 100);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the source table of the hard-shape development set lists exactly the documents of the sentences, with
+    ///     the number of sentences that each document contributes.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Sources_ListEveryDocumentWithItsCount()
+    {
+        // Arrange: the documents of the sentences and the rows of the table
+        var counts = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevCorpus))
+            .GroupBy(sentence => sentence.SourceId, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        var table = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/sources.tsv"));
+
+        // Act: compare the listed documents and counts with the sentences
+        var listed = table.Rows.ToDictionary(row => table.Cell(row, "source_id"), row => table.Cell(row, "sentences"), StringComparer.Ordinal);
+        var problems = counts.Keys.Except(listed.Keys).Select(document => "not listed: " + document)
+            .Concat(listed.Keys.Except(counts.Keys).Select(document => "listed but unused: " + document))
+            .Concat(counts.Where(count => listed.TryGetValue(count.Key, out var cell) && cell != count.Value.ToString(CultureInfo.InvariantCulture))
+                .Select(count => $"count of {count.Key} differs from the table"))
+            .ToList();
+
+        // Assert: the rows are unique, the set has documents and the table matches the file
+        Assert.Equal(table.Rows.Count, listed.Count);
+        Assert.True(counts.Count > 10);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that every source document of the hard-shape development set has a US federal-work or public-domain basis
+    ///     (or is the pseudo-document that the project wrote) and that no source row mentions FAA material.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Sources_AreOpenAndHaveNoFaaMaterial()
+    {
+        // Arrange: the rows of the table and the pattern of FAA material
+        var table = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/sources.tsv"));
+        var faa = new Regex(@"faa\.gov|\bFAA\b|Federal Aviation", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var openBases = new[] { "US federal government work", "US public domain", "Written by the project" };
+
+        // Act: find the rows with another basis and the rows that mention FAA material
+        var problems = new List<string>();
+        foreach (var row in table.Rows)
+        {
+            var id = table.Cell(row, "source_id");
+            if (!openBases.Any(basis => table.Cell(row, "license_basis").StartsWith(basis, StringComparison.Ordinal)))
+            {
+                problems.Add($"{id}: the license basis is not a US federal work, US public domain or project-written");
+            }
+
+            if (row.Any(cell => faa.IsMatch(cell)))
+            {
+                problems.Add($"{id}: the row mentions FAA material");
+            }
+        }
+
+        // Assert: the table is not empty and no problem was found
+        Assert.True(table.Rows.Count > 10);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the record of the excluded source documents of the hard-shape development set is well formed and that
+    ///     no excluded document, and none of its URLs, is a used document of the set (the source table lists used documents only).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_ExcludedSources_AreRecordedAndAbsentFromTheSet()
+    {
+        // Arrange: the excluded documents and the used documents (in the sentences and in the source table)
+        var excluded = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/excluded-sources.tsv"));
+        var sources = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/sources.tsv"));
+        var usedIds = new HashSet<string>(sources.Column("source_id"), StringComparer.Ordinal);
+        usedIds.UnionWith(DataFiles.ReadCorpus(DataFiles.Data(ShapesDevCorpus)).Select(sentence => sentence.SourceId));
+        var usedUrls = new HashSet<string>(sources.Column("url"), StringComparer.Ordinal);
+
+        // Act: find malformed rows and excluded documents that are used
+        var problems = new List<string>();
+        foreach (var row in excluded.Rows)
+        {
+            var id = excluded.Cell(row, "source_id");
+            if (id.Length == 0 || usedIds.Contains(id))
+            {
+                problems.Add($"{id}: the id is empty or the document is used by the set");
+            }
+
+            if (!IsWellFormedUrl(excluded.Cell(row, "url")) || usedUrls.Contains(excluded.Cell(row, "url")))
+            {
+                problems.Add($"{id}: the URL is not a well-formed HTTPS URL or is a used document");
+            }
+
+            if (excluded.Cell(row, "reason").Length == 0)
+            {
+                problems.Add($"{id}: the reason is empty");
+            }
+
+            if (!DateTime.TryParseExact(excluded.Cell(row, "decided"), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+            {
+                problems.Add($"{id}: the decision date is not yyyy-MM-dd");
+            }
+        }
+
+        // Assert: the columns are the documented ones, the ids are unique and no problem was found
+        Assert.Equal(new[] { "source_id", "url", "reason", "decided" }, excluded.Columns);
+        Assert.Equal(excluded.Rows.Count, excluded.Column("source_id").Distinct(StringComparer.Ordinal).Count());
+        Assert.NotEmpty(excluded.Rows);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the exclusion record is fail-closed for the committed files: it lists the NIST handbooks that the owner
+    ///     dropped, and no row of the source table and no source document of any sentence of the set has an excluded id or an
+    ///     excluded URL (compared by host without <c>www.</c> and path without a trailing slash).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_ExcludedSources_NothingUsedMatchesByIdOrNormalizedUrl()
+    {
+        // Arrange: the excluded ids and normalized URLs, and the used documents of the table and of the sentences
+        var excluded = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/excluded-sources.tsv"));
+        var excludedIds = new HashSet<string>(excluded.Column("source_id"), StringComparer.Ordinal);
+        var excludedUrls = new HashSet<string>(excluded.Column("url").Select(NormalizeUrl), StringComparer.Ordinal);
+        var sources = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/sources.tsv"));
+        var sentenceDocuments = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevCorpus)).Select(sentence => sentence.SourceId).Distinct(StringComparer.Ordinal);
+
+        // Act: find the used documents that an exclusion matches
+        var problems = new List<string>();
+        problems.AddRange(sources.Rows
+            .Where(row => excludedIds.Contains(sources.Cell(row, "source_id")) || excludedUrls.Contains(NormalizeUrl(sources.Cell(row, "url"))))
+            .Select(row => "source row " + sources.Cell(row, "source_id")));
+        problems.AddRange(sentenceDocuments.Where(excludedIds.Contains).Select(id => "sentences of " + id));
+
+        // Assert: the NIST handbooks are recorded as excluded and nothing excluded is used
+        Assert.Contains("nist-hb44-2024", excludedIds);
+        Assert.Contains("nist-hb130-2024", excludedIds);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the committed hard-shape development set meets the documented quotas: exactly 120 targets per shape,
+    ///     no lemma over its cap (4; 12 for n-measure), exactly 100 controls with at most two per lemma and shape, and an
+    ///     authored share of at most 30 percent in every shape and in the controls.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Quotas_AreMetByTheCommittedSet()
+    {
+        // Arrange: the items
+        var items = ShapesDevItems();
+        var problems = new List<string>();
+
+        // Act: check the target quota, the lemma caps and the authored share of every shape
+        foreach (var shape in ShapesDevSets.Shapes)
+        {
+            var targets = items.Where(item => item.Shape == shape && item.IsTarget).ToList();
+            if (targets.Count != ShapesDevMaxTargetsPerShape)
+            {
+                problems.Add($"{shape}: {targets.Count} targets, expected {ShapesDevMaxTargetsPerShape}");
+            }
+
+            var cap = shape == "n-measure" ? ShapesDevMeasureLemmaCap : ShapesDevLemmaCap;
+            problems.AddRange(targets.GroupBy(item => item.Lemma, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > cap)
+                .Select(group => $"{shape}: the lemma '{group.Key}' has {group.Count()} targets, the cap is {cap}"));
+            if (targets.Count(item => item.Origin == ShapesDevSets.AuthoredOrigin) > ShapesDevMaxAuthoredShare * targets.Count)
+            {
+                problems.Add($"{shape}: more than {ShapesDevMaxAuthoredShare:P0} of the targets are authored");
+            }
+        }
+
+        // Act: check the control total, the lemma cap per shape and the authored share of the controls
+        var controls = items.Where(item => !item.IsTarget).ToList();
+        if (controls.Count != ShapesDevControls)
+        {
+            problems.Add($"controls: {controls.Count}, expected {ShapesDevControls}");
+        }
+
+        problems.AddRange(controls.GroupBy(item => (item.Shape, Lemma: item.Lemma.ToLowerInvariant()))
+            .Where(group => group.Count() > ShapesDevControlLemmaCap)
+            .Select(group => $"controls: {group.Key.Shape} lemma '{group.Key.Lemma}' has {group.Count()} controls, the cap is {ShapesDevControlLemmaCap}"));
+        if (controls.Count(item => item.Origin == ShapesDevSets.AuthoredOrigin) > ShapesDevMaxAuthoredShare * controls.Count)
+        {
+            problems.Add($"controls: more than {ShapesDevMaxAuthoredShare:P0} are authored");
+        }
+
+        // Assert: no quota is missed
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the builder of the hard-shape development set reaches the held-out sets only through the opaque
+    ///     exclusion keys: its source names no probe file and uses only the key functions of the leakage module, and the
+    ///     leakage module reads the probe through its sentence column only.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Builder_SeesHeldOutSetsOnlyThroughOpaqueKeys()
+    {
+        // Arrange: the sources of the builder and of the leakage module
+        var builder = File.ReadAllText(DataFiles.Repository("tools/data/shapes_dev.py"));
+        var leakage = File.ReadAllText(DataFiles.Repository("tools/data/leakage.py"));
+
+        // Act: find the members of the leakage module that the builder uses
+        var used = Regex.Matches(builder, @"\bleakage\.(\w+)").Cast<Match>().Select(match => match.Groups[1].Value).Distinct().OrderBy(name => name, StringComparer.Ordinal).ToArray();
+
+        // Assert: no probe path, only the opaque-key members, and the probe is read through the sentence column alone
+        Assert.DoesNotContain("probe.tsv", builder, StringComparison.Ordinal);
+        Assert.Equal(new[] { "PROBE_GRAM_WORDS", "gram_overlap", "held_out_overlap_keys", "key_overlap", "require_sets" }, used);
+        Assert.Contains("sentence_column(path)", leakage, StringComparison.Ordinal);
+        Assert.DoesNotContain("_tsv_rows(probe", leakage, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Proves that the committed leakage report of the hard-shape development set covers every other evaluation set and
+    ///     records no document overlap, no exact sentence overlap and no shared word 5-gram with the shape probe.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_LeakageReport_RecordsNoOverlapWithOtherEvaluationSets()
+    {
+        // Arrange: read the report (evaluation set, dev sentences, documents, exact, near duplicates, probe 5-grams)
+        var rows = File.ReadLines(DataFiles.Data(ShapesDevFolder + "/leakage-report.tsv"))
+            .Where(line => line.Length > 0 && !DataFiles.IsComment(line))
+            .Select(line => line.Split('\t'))
+            .ToList();
+        var expected = new[]
+        {
+            "gold-v2", "open-dev", "open-test", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train"
+        };
+
+        // Act: find the sets that the report misses and the rows that report an overlap
+        var sets = rows.Select(row => row[0]).ToList();
+        var overlaps = rows.Where(row => row[2] != "0" || row[3] != "0").Select(row => row[0]).ToList();
+        var probe = rows.Single(row => row[0] == "shapes-probe");
+        var sentenceCount = ShapesDevItems().Count.ToString(CultureInfo.InvariantCulture);
+
+        // Assert: every set is reported once, with the sentence count of the file, and nothing overlaps
+        Assert.All(rows, row => Assert.Equal(6, row.Length));
+        Assert.Equal(expected, sets.OrderBy(name => name, StringComparer.Ordinal));
+        Assert.All(rows, row => Assert.Equal(sentenceCount, row[1]));
+        Assert.Empty(overlaps);
+        Assert.Equal("0", probe[5]);
+    }
+
+    /// <summary>
+    ///     Proves, reading the evaluation files themselves, that the hard-shape development set shares no document and no
+    ///     sentence (of any length) with the open dev and test sets, gold v2, the challenge set or the shape probe.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Sentences_AreDisjointFromTheOtherEvaluationSets()
+    {
+        // Arrange: the documents and sentence keys of the development set and of every other evaluation set
+        var dev = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevCorpus)).ToList();
+        var documents = new HashSet<string>(dev.Select(sentence => sentence.SourceId), StringComparer.Ordinal);
+        var keys = new HashSet<string>(dev.Select(sentence => DataFiles.SentenceKey(sentence.Text)), StringComparer.Ordinal);
+        var others = EvaluationItems().Where(item => item.Set != ShapesDevCorpus).ToList();
+
+        // Act: find the shared documents and sentences
+        var problems = others
+            .Where(item => documents.Contains(item.Document) || keys.Contains(DataFiles.SentenceKey(item.Text)))
+            .Select(item => $"{item.Set}: {item.Document} shares a document or sentence with the development set")
+            .ToList();
+
+        // Assert: the sets are not empty and nothing is shared
+        Assert.True(dev.Count > 100);
+        Assert.True(others.Count > 5000);
+        Assert.Empty(problems.Take(ShownProblems));
     }
 
     /// <summary>
@@ -1552,6 +2016,21 @@ public class PartOfSpeechDataTests
         Uri.TryCreate(text, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps && !text.Any(char.IsWhiteSpace);
 
     /// <summary>
+    ///     Normalizes a URL like the data tools: the host in lower case without <c>www.</c> and the path without a query,
+    ///     fragment or trailing slash; the empty string for a text that is not an absolute URL.
+    /// </summary>
+    private static string NormalizeUrl(string text)
+    {
+        if (!Uri.TryCreate(text.Trim(), UriKind.Absolute, out var uri))
+        {
+            return string.Empty;
+        }
+
+        var host = uri.Host.ToLowerInvariant();
+        return (host.StartsWith("www.", StringComparison.Ordinal) ? host.Substring(4) : host) + uri.AbsolutePath.TrimEnd('/');
+    }
+
+    /// <summary>
     ///     Reads the rows of the checksum manifest: path, bytes, SHA-256, lines and sentences.
     /// </summary>
     private static List<string[]> ReadManifest() =>
@@ -1636,6 +2115,34 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static List<string> LexiconRows() =>
         File.ReadLines(DataFiles.Data("lexicon/lexicon.tsv")).Where(line => line.Length > 0 && !DataFiles.IsComment(line)).ToList();
+
+    /// <summary>
+    ///     Gets the noun-verb class of a Universal POS tag.
+    /// </summary>
+    /// <param name="tag">The tag name.</param>
+    /// <returns><c>Noun</c> for NOUN and PROPN, <c>Verb</c> for VERB, otherwise <c>other</c>.</returns>
+    private static string ClassOfTag(string tag)
+    {
+        if (tag == "NOUN" || tag == "PROPN")
+        {
+            return "Noun";
+        }
+
+        return tag == "VERB" ? "Verb" : "other";
+    }
+
+    /// <summary>
+    ///     Gets the other class of the noun-verb pair.
+    /// </summary>
+    /// <param name="goldClass">The class, <c>Noun</c> or <c>Verb</c>.</param>
+    /// <returns>The other class.</returns>
+    private static string OtherClass(string goldClass) => goldClass == "Noun" ? "Verb" : "Noun";
+
+    /// <summary>
+    ///     Reads and validates the items of the hard-shape development set with the parser of the trainer.
+    /// </summary>
+    private static List<ShapesDevItem> ShapesDevItems() =>
+        ShapesDevSets.Parse(File.ReadAllLines(DataFiles.Data(ShapesDevCorpus)), ShapesDevCorpus);
 
     /// <summary>
     ///     Reads the sets, documents and sentences of all evaluation sets.

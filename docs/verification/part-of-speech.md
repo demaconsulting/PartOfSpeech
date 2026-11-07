@@ -396,8 +396,8 @@ and not just the project file. The reasons for a license file instead of an expr
 ### Data and Licensing
 
 **Tests**: the `PartOfSpeech_ThirdPartyNotices_*`, `PartOfSpeech_DataLicensing_*`, `PartOfSpeech_DataProvenance_*`,
-`PartOfSpeech_DataCorrections_*`, `PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*`
-and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
+`PartOfSpeech_DataCorrections_*`, `PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*`,
+`PartOfSpeech_ShapesDev_*` and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
 
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
 and fails when a file is missing or empty.
@@ -433,6 +433,45 @@ replacement of the mechanical row); it fails when the table is missing or empty.
 sentence. The tests do not depend on the tools; the unit tests of the tools, the validation of the tables, the check that
 the generator reproduces the mechanical tables and a report-only conventions linter pass run in `lint.ps1` (see the
 Verification Approach).
+
+The hard-shape development set (`data/eval/shapes-dev/`) is covered by the existing tests (its folder is among the
+licensed folders, its README among the provenance statements, its source table among the source tables, its corpus among
+the evaluation corpora, so the tag set, rejoin, manifest, document and sentence tests read it) and by the
+`PartOfSpeech_ShapesDev_*` tests, which read the committed files:
+`Header_AnnouncesDevSplit` asserts the `dev split` and development-only header lines;
+`Items_HaveShapeRoleTargetAndLemma` parses the file with the trainer's parser and asserts that every shape holds 1 to 120
+target items, that controls exist and that every control has the lemma of a target of its shape;
+`Quotas_AreMetByTheCommittedSet` asserts exactly 120 targets per shape, no lemma over its cap (4; 12 for n-measure),
+exactly 100 controls with at most 2 per lemma and shape, and at most 30% authored sentences per shape and for the
+controls (the quota gate of `shapes_dev.py build`, applied to the committed file);
+`Targets_MatchShapeClassAndAreNeverDisputed` reads the tags and statuses directly and asserts the class that the shape
+and the role ask for (NOUN or PROPN for a noun shape, VERB for a verb shape, the other class for a control) and that no
+judged word is `disputed`; `Authored_ShareIsCappedPerShapeAndForControls` asserts at most 30% authored sentences for every
+shape and for the controls and that the origin agrees with the authored pseudo-document;
+`Tokens_AreReproducedByTheTokenizer` asserts that `Tokenizer.Tokenize` yields one sentence with the stored tokens for
+every sentence; `Sources_ListEveryDocumentWithItsCount` asserts that the table lists exactly the documents with the counts
+of the file; `Sources_AreOpenAndHaveNoFaaMaterial` asserts a US federal-work, public-domain or project-written basis for
+every row and no FAA mention in any cell; `ExcludedSources_AreRecordedAndAbsentFromTheSet` asserts that
+`excluded-sources.tsv` (the documents dropped after sourcing: id, URL, reason, decision date) is well formed and that none
+of its documents or URLs is used by the set; `ExcludedSources_NothingUsedMatchesByIdOrNormalizedUrl` asserts that the
+record lists `nist-hb44-2024` and `nist-hb130-2024` and that no source row and no sentence document of the set has an
+excluded id or an excluded URL (compared by lower-case host without `www.` and path without a trailing slash; the same
+rule as `check_licenses.py` and the builder, which refuse a match, and fail when the record is missing or malformed);
+`LeakageReport_RecordsNoOverlapWithOtherEvaluationSets` asserts that the
+committed report names every other evaluation set once with the sentence count of the file and no document overlap, no
+exact overlap and no shared probe word 5-gram; `Sentences_AreDisjointFromTheOtherEvaluationSets` asserts, by reading the
+evaluation files, that no document and no sentence is shared; `Builder_SeesHeldOutSetsOnlyThroughOpaqueKeys` asserts that
+the source of `shapes_dev.py` names no probe file and uses only `held_out_overlap_keys`, `key_overlap`, `gram_overlap`,
+`require_sets` and `PROBE_GRAM_WORDS` of the leakage module, and that the probe is read through `sentence_column` only.
+Each fails when a file is missing or empty. The developer-run Python tests (`tools/data/tests/test_shapes_dev.py`) add
+the construction-time evidence: a probe whose id, shape, lemma, gold and target columns hold garbage (invalid UTF-8
+included) gives the same key set and the same candidates and report as a correct one, the braces around the target do
+not change the keys, a probe row without a sentence column is an error, the builder holds only a frozen set of integer
+hashes, a build that uses a source listed in the committed or the work-folder exclusion table (by id or by URL under
+another id) is refused with nothing written, the committed rows are kept in the written record, `check_licenses.py`
+reports an excluded id or URL in `dev.tsv` or `sources.tsv` and a missing or malformed record, and a missed quota
+(targets per shape, controls, lemma caps, authored share) refuses the build unless `--allow-short` is given. The extended
+`Leakage_Report_RecordsNoOverlaps` requires `shapes-dev` among the evaluation sets of every training set.
 
 ### Adjudication Tool
 

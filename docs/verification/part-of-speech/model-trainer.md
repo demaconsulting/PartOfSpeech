@@ -5,8 +5,9 @@ This document describes the unit-level verification strategy for the `ModelTrain
 
 ### Verification Approach
 
-The unit is verified by unit tests in `ModelTrainer/ModelTrainerTests.cs` and `ModelTrainer/HeldOutEvaluationTests.cs` (the
-held-out gate, the confidence curve and the held-out evaluation). The engine files of the tool (everything under
+The unit is verified by unit tests in `ModelTrainer/ModelTrainerTests.cs`, `ModelTrainer/HeldOutEvaluationTests.cs` (the
+held-out gate, the confidence curve and the held-out evaluation) and `ModelTrainer/ShapesDevEvaluationTests.cs` (the
+hard-shape development evaluation). The engine files of the tool (everything under
 `Training/` and `Evaluation/` and `RunLog.cs`) use only the base class library and are compiled into the test project by
 source links, so the tests run the real trainer code on every target framework of the test project, including .NET
 Framework; only `Program.cs` (the console) is not linked, and `ConfigFile.cs` and `OperatingPointsFile.cs`
@@ -73,7 +74,9 @@ differently from the pre-registered text, or the held-out evaluation opens a fil
 another model, rule or development file), runs after a results file exists, writes a dump inside the repository, accepts
 a malformed probe or treebank row, selects an operating point that does not meet the pre-registered target and floor (or
 relaxes them when none qualifies), computes a tally that disagrees with the metrics, renders a different report for the
-same results or a treebank word into a report, or lets a stop condition pass.
+same results or a treebank word into a report, or lets a stop condition pass, or the shapes development evaluation reads
+a file other than its own, accepts an item whose judged word is missing, disputed, outside its sentence or in the wrong
+class for its shape and role, or renders different text for the same results.
 
 ### Test Scenarios
 
@@ -109,6 +112,9 @@ same results or a treebank word into a report, or lets a stop condition pass.
   `ModelTrainer_Train_RestrictionAndHistoryModes_ChangeTheImage`.
 - **Development-only selection**: `DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused` (a theory over the held-out
   files, a training file and a dotted detour), `DataGuard_EnsureDevelopmentFile_DevelopmentFile_Admitted`,
+  `DataGuard_EnsureDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused` (in a temporary fake repository, for each of the
+  two files: a real file is admitted, and a link as the file, as its folder or as the `data` folder is refused; links as
+  in the training test below; skipped where none can be made and on .NET Framework),
   `DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused` (also in other spellings of the path),
   `DataGuard_EnsureTrainable_TrainingCorpus_Admitted`, `DataGuard_EnsureTrainable_PathOutsideDataRoot_Refused` (a dotted
   detour or a path outside the `data` folder), `CorpusReader_LoadSources_RootedPathOutsideData_Refused` (a rooted source
@@ -240,3 +246,32 @@ same results or a treebank word into a report, or lets a stop condition pass.
   `GlossaryEvaluation_UsesOnlyDevData_NoPathParameterAndNoFileAccess` (the entry point takes no path, and the sources use
   no file API and name no data file). The measured results are not asserted anywhere; they are recorded in section E9 of
   the run log.
+- **Shapes development evaluation** (`ModelTrainer/ShapesDevEvaluationTests.cs`; synthetic fixtures and a tiny tagger,
+  the committed development file is never read by these tests):
+  `ShapesDevSets_Parse_ValidFile_ReturnsItems` (shape, role, target, lemma, origin and gold class of every sentence, a
+  PROPN target counts as a noun, an authored sentence), `ShapesDevSets_Parse_DisputedNonTargetAndFlags_Accepted`,
+  `ShapesDevSets_Parse_MissingTarget_Throws`, `ShapesDevSets_Parse_WrongClassForShapeAndRole_Throws` (a theory: a noun
+  in a verb shape, a verb in a noun shape, a control in the shape's own class, an adjective or an auxiliary as the judged
+  word), `ShapesDevSets_Parse_DisputedTarget_Throws`, `ShapesDevSets_Parse_TargetNotATokenIndex_Throws` (outside the
+  sentence, negative, not a number), `ShapesDevSets_Parse_UnknownShapeRoleOriginOrDuplicateId_Throws`,
+  `ShapesDevSets_Parse_AuthoredOriginAndDocumentMismatch_Throws`, `ShapesDevSets_Parse_UnknownTag_Throws` (the shared
+  corpus reader's check) and `ShapesDevSets_Shapes_AreTheFiveHardShapesWithTheirClasses`;
+  `ShapesDevEvaluator_Evaluate_TinyTagger_ReportsPerShapeCounts` (a tagger with known weights: accuracy, a harmful error
+  and the decision count of a target, the control accuracy, the authored counts and the pooled row),
+  `ShapesDevEvaluator_Summarize_GroupsByShapeAndRoleAndRefusesBadInput` (a harmful flag on a control does not count, a shape
+  without items has zero counts, a length mismatch and an unknown shape are refused),
+  `ShapesDevReport_Render_SameResult_IsDeterministicMarkdown` (the same lines twice, the table, the dashes of an empty
+  shape, the two hashes), `ShapesDevReport_Interval_KnownCounts_MatchesWilsonScore` (hand-computed intervals) and
+  `Tokenizer_Tokenize_ShapesSentences_ReproducesStoredTokens` (the library tokenizer, which `shapes-tokenize` runs,
+  gives the stored tokens of sentences with clitics, quotes and a final period) and
+  `DataGuard_EnsureOutsideData_InsideDataFolder_RefusedAndOutsideAdmitted` (a path in the data folder, the folder itself,
+  a dotted detour and the committed development file are refused; a temporary folder is admitted).
+- **The shapes development file is development only**: `DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted`
+  (also through a dotted detour), `DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused` (the two development files,
+  a held-out file, the other files of its folder),
+  `DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused` (a link as the file or as its folder is
+  refused, the real file admitted), `DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt` (not in the
+  two-file allow-list, not in the held-out list, refused by `EnsureDevelopmentFile` and for training),
+  `DevSets_ReadShapesDev_HeaderWithoutDevSplit_Throws` and `DevSets_ReadShapesDev_MissingAndValidFile_ThrowsAndReads` (in
+  a temporary fake repository), and the two theories of the development-only selection with the shapes development file
+  added to their rows.

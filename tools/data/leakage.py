@@ -4,8 +4,13 @@ Evaluation sets whose sentences and documents no training file may contain:
 
   open-dev, open-test        data/open/{dev,test}.tsv
   gold-v2                    data/eval/gold-v2/{dev,test}.tsv   (column `sentence`; document column `doc_id`)
-  shapes-probe               data/eval/shapes/probe.tsv         (column `sentence`; target braces are ignored by the key)
+  shapes-probe               data/eval/shapes/probe.tsv         (held out; only the `sentence` column is read, by `sentence_column`; the
+                                                                 braces around the target word are removed; labels, shapes, lemmas and
+                                                                 targets are skipped unread)
   ste-challenge              data/eval/ste-challenge/test.tsv
+  shapes-dev                 data/eval/shapes-dev/dev.tsv       (hard-shape development set; corpus format; required, so a
+                                                                 missing file fails loudly; `shapes_dev.py` builds it and passes
+                                                                 `shapes_dev=False` because the set does not exist yet)
   ud-ewt-dev, ud-ewt-test, ud-ewt-train   tools/data/cache/ud-ewt/*.conllu, only when the git-ignored cache is present
                                           (never committed; only the match result is reported)
 
@@ -16,7 +21,9 @@ document is excluded; a short match is a sentence that merely recurs in unrelate
 dropped from its training document. Either way the evaluation data is never touched.
 """
 import csv
+import hashlib
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,6 +34,10 @@ csv.field_size_limit(1 << 24)
 # A matching sentence key of at least this many alphanumeric characters excludes its whole training document;
 # a shorter one drops only the sentence.
 DOCUMENT_KEY_LENGTH = 25
+
+# The label of the hard-shape development set among the evaluation sets, and the word n-gram length of the probe gate.
+SHAPES_DEV_LABEL = "shapes-dev"
+PROBE_GRAM_WORDS = 5
 
 
 def _tsv_rows(path):
@@ -48,15 +59,76 @@ def corpus_sets():
     """{label: [(source_id, sentence text)]} of the committed evaluation sets that use the shared corpus format."""
     sets = {}
     for label, parts in (("open-dev", ("open", "dev.tsv")), ("open-test", ("open", "test.tsv")),
-                         ("ste-challenge", ("eval", "ste-challenge", "test.tsv"))):
+                         ("ste-challenge", ("eval", "ste-challenge", "test.tsv")),
+                         (SHAPES_DEV_LABEL, ("eval", "shapes-dev", "dev.tsv"))):
         path = os.path.join(common.DATA, *parts)
         if os.path.exists(path):
             sets[label] = [(s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]
     return sets
 
 
+def sentence_column(path, name="sentence"):
+    """The texts of the column `name` of a tab-separated table, and nothing else of the table.
+
+    Used for the held-out shape probe, whose labels, shapes, lemmas and targets must never be read: the table is read as bytes,
+    the header line is the only other line that is decoded, and the fields before and after the column are skipped by position
+    (never decoded, never parsed, whatever they contain). A comment line starts with `# `. The braces that mark the target
+    word are removed from the sentence. A row without the column, or an invalid sentence, is an error, never a silent skip.
+    """
+    with open(path, "rb") as handle:
+        lines = [line.rstrip(b"\r") for line in handle.read().split(b"\n")]
+    names, header_seen, texts = None, False, []
+    for line in lines:
+        if line.startswith(b"# columns = "):
+            names = line[len(b"# columns = "):].decode("utf-8").split(" ")
+            header_seen = True
+        elif line == b"" or line.startswith(b"# "):
+            continue
+        elif not header_seen:
+            names = line.decode("utf-8").split("\t")
+            header_seen = True
+        else:
+            if names is None or name not in names:
+                raise ValueError("%s: no column %s" % (os.path.basename(path), name))
+            start = 0
+            for _ in range(names.index(name)):
+                tab = line.find(b"\t", start)
+                if tab < 0:
+                    raise ValueError("%s: a row has no column %s" % (os.path.basename(path), name))
+                start = tab + 1
+            end = line.find(b"\t", start)
+            text = line[start:] if end < 0 else line[start:end]
+            texts.append(text.decode("utf-8").replace("{", "").replace("}", ""))
+    return texts
+
+
+def probe_path():
+    return os.path.join(common.DATA, "eval", "shapes", "probe.tsv")
+
+
+def probe_sentences():
+    """The sentence texts of the held-out shape probe (target braces removed); [] when the file is missing.
+
+    Fails closed: a probe with no data row, or with a sentence that has no letter or digit (an empty cell), is a SystemExit (exit code 1),
+    because an empty or truncated probe would register as present while contributing no key to the filter.
+    """
+    path = probe_path()
+    if not os.path.exists(path):
+        return []
+    texts = sentence_column(path)
+    if not texts:
+        raise SystemExit("shapes probe has no data rows: " + os.path.basename(path))
+    empty = [n for n, text in enumerate(texts, 1) if not common.key(text)]
+    if empty:
+        raise SystemExit("shapes probe has an empty sentence in row(s) %s: %s" % (", ".join(map(str, empty[:10])), os.path.basename(path)))
+    return texts
+
+
 def table_sets():
-    """{label: [(document id, sentence text)]} of the committed evaluation sets that are plain tables."""
+    """{label: [(document id, sentence text)]} of the committed evaluation sets that are plain tables.
+
+    The probe has no document ids that matter here; its items get the synthetic ids `shapes-probe:N`.
+    """
     sets = {}
     gold = []
     for name in ("dev.tsv", "test.tsv"):
@@ -65,9 +137,8 @@ def table_sets():
             gold += [(row["doc_id"], row["sentence"]) for row in _tsv_rows(path)]
     if gold:
         sets["gold-v2"] = gold
-    path = os.path.join(common.DATA, "eval", "shapes", "probe.tsv")
-    if os.path.exists(path):
-        sets["shapes-probe"] = [(row["id"], row["sentence"]) for row in _tsv_rows(path)]
+    if os.path.exists(probe_path()):
+        sets["shapes-probe"] = [("shapes-probe:%d" % n, text) for n, text in enumerate(probe_sentences(), 1)]
     return sets
 
 
@@ -89,7 +160,7 @@ def ud_sets():
     return sets
 
 
-REQUIRED_EVALUATION_SETS = ("open-dev", "open-test", "ste-challenge", "gold-v2", "shapes-probe")
+REQUIRED_EVALUATION_SETS = ("open-dev", "open-test", "ste-challenge", "gold-v2", "shapes-probe", SHAPES_DEV_LABEL)
 
 
 def require_sets(sets, required, kind):
@@ -99,20 +170,82 @@ def require_sets(sets, required, kind):
         raise SystemExit("missing committed %s sets: %s" % (kind, ", ".join(missing)))
 
 
-def evaluation_sets(include_ud=True):
+def evaluation_sets(include_ud=True, shapes_dev=True):
+    """{label: [(document id, text)]} of every evaluation set; a missing required set is a loud failure.
+
+    `shapes_dev=False` leaves the hard-shape development set out (and does not require it): the builder of that set
+    (shapes_dev.py) checks its candidates against all the other sets through `held_out_overlap_keys` only, and a stale earlier build must not count.
+    """
     sets = {}
     sets.update(corpus_sets())
     sets.update(table_sets())
-    require_sets(sets, REQUIRED_EVALUATION_SETS, "evaluation")
+    required = REQUIRED_EVALUATION_SETS
+    if not shapes_dev:
+        sets.pop(SHAPES_DEV_LABEL, None)
+        required = tuple(label for label in required if label != SHAPES_DEV_LABEL)
+    require_sets(sets, required, "evaluation")
     if include_ud:
         sets.update(ud_sets())
     return sets
 
 
-def evaluation_keys(include_ud=True):
+def words(text):
+    """Lower-case alphanumeric words of a text (the units of the word n-grams)."""
+    return re.findall(r"[a-z0-9]+", common.nfc(text).lower())
+
+
+def stable_hash(kind, text):
+    """A 64-bit hash of `kind` and `text` that is the same in every process (the built-in hash() is salted per process)."""
+    return int.from_bytes(hashlib.blake2b((kind + ":" + text).encode("utf-8"), digest_size=8).digest(), "big")
+
+
+def key_hash(text):
+    """The hash of the sentence key of a text, or None when the text has no letter or digit (never a match)."""
+    k = common.key(text)
+    return stable_hash("key", k) if k else None
+
+
+def gram_hashes(text, n=PROBE_GRAM_WORDS):
+    """The set of hashes of the word n-grams of a text (hashes, so that a set of them never holds readable text)."""
+    w = words(text)
+    return {stable_hash("gram", " ".join(w[i:i + n])) for i in range(len(w) - n + 1)}
+
+
+def held_out_overlap_keys(include_ud=True, n=PROBE_GRAM_WORDS):
+    """The only view of the held-out sets that building a development set may have: an opaque frozen set of hashes.
+
+    It holds the hashed sentence keys of every evaluation set but the hard-shape development set, and the hashed word
+    `n`-grams of the shape probe sentences. It holds no label, shape, lemma, target, document id or readable text: the probe is
+    read through `sentence_column` (the sentence column only). The set is an exclusion filter for candidates, tested with
+    `key_overlap` and `gram_overlap`; it is never used to choose, weight or frame a candidate. A probe sentence with fewer
+    than `n` words has no n-gram (its sentence key covers it).
+    """
+    found = set()
+    for label, items in evaluation_sets(include_ud, shapes_dev=False).items():
+        for _, text in items:
+            h = key_hash(text)
+            if h is not None:
+                found.add(h)
+            if label == "shapes-probe":
+                found |= gram_hashes(text, n)
+    return frozenset(found)
+
+
+def key_overlap(text, keys):
+    """True when the sentence key of a text is in the opaque key set."""
+    h = key_hash(text)
+    return h is not None and h in keys
+
+
+def gram_overlap(text, keys, n=PROBE_GRAM_WORDS):
+    """True when a word n-gram of a text is in the opaque key set."""
+    return not gram_hashes(text, n).isdisjoint(keys)
+
+
+def evaluation_keys(include_ud=True, shapes_dev=True):
     """({key: label}, {document id: label}) over all evaluation sets (keys of every length, never the empty key)."""
     keys, documents = {}, {}
-    for label, items in evaluation_sets(include_ud).items():
+    for label, items in evaluation_sets(include_ud, shapes_dev).items():
         for doc, text in items:
             k = common.key(text)
             if k and k not in keys:

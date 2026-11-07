@@ -187,7 +187,7 @@ Source: UD English-EWT labels; [UD, PROPN](https://universaldependencies.org/u/p
 
 ### Corpus Block Format
 
-The open corpus, MASC, the silver data and the STE challenge set share one format (UTF-8, no BOM, LF newlines, NFC,
+The open corpus, MASC, the silver data, the STE challenge set and the shapes development set share one format (UTF-8, no BOM, LF newlines, NFC,
 final newline). A file starts with header comment lines, then a blank line, then one block per sentence:
 
 ```text
@@ -227,6 +227,18 @@ final newline). A file starts with header comment lines, then a blank line, then
 The shape probe and gold v2 keep the column sets of their source (see `data/eval/*/README.md`). `lexicon.tsv` is
 `spelling TAB TAG TAG ...` (see `data/lexicon/README.md`). All TSV files may start with comment lines (hash and space). The
 `MANIFEST.tsv` lists size and SHA-256 of every data file except Markdown.
+
+**Shapes development set** (`data/eval/shapes-dev/dev.tsv`, specified in its `README.md`). The corpus block format with a header
+that announces a dev split (`# corpus = ... dev split`) and these extra comment lines after `text` in every block, in this
+order: `# shape = <id>` (one of `n-compound-head`, `n-subject-initial`, `v-imperative-initial`, `n-measure`,
+`v-after-modal`), `# role = target | control`, `# target = <n>` (the 0-based index of the judged word among the token rows),
+`# lemma = <lemma>` and `# origin = real | authored`. The status is `unanimous | disputed` (the two blind labelers agree or
+not; a disputed token carries the first labeler's tag) with the usual flags. Normative rules: the judged word is tagged
+NOUN, PROPN or VERB; for a `target` its class is the class of the shape (`n-*` Noun, `v-*` Verb) and for a `control` the other
+class; the judged word is never `disputed`; `origin = authored` only for the sentences of the document `shapes-dev-authored`.
+`sources.tsv` has the 12 columns of the gold v2 source table and lists the used documents only; `excluded-sources.tsv` records the
+documents that were dropped after sourcing (`source_id, url, reason, decided`); `leakage-report.tsv` holds counts only
+(`evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, probe_5gram_sentences`).
 
 **Corrections overlay** (`data/corrections/`, specified in full in its `README.md`). Corrections to the labels of the open
 corpus, MASC and the silver data are rows of three tables; the rows are applied to the corpus files (`corrections.py apply

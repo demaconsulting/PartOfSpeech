@@ -674,6 +674,75 @@ sections:
         tests:
           - PartOfSpeech_Leakage_Report_RecordsNoOverlaps
 
+      - id: PartOfSpeech-Data-ShapesDevWellFormed
+        title: >-
+          Every item of the hard-shape development set shall name its shape, role, judged word and origin, the judged
+          word shall carry the class that the shape and the role ask for and never be disputed, every shape shall hold
+          exactly 120 target items with no more than 4 per lemma (12 for n-measure), the set shall hold exactly 100
+          controls with no more than 2 per lemma and shape, no shape and not the controls shall have more than 30%
+          authored sentences, and the library tokenizer shall reproduce the stored tokens.
+        tags: [system]
+        justification: |
+          The development set selects the settings of the context-feature work, so a mislabeled judged word, a shape
+          that is out of balance or an authored top-up that dominates a shape would steer the selection. The format
+          rules and the quotas that the builder gates are checked on the committed file itself, and the tokens must be
+          those of the library, because the tagger is measured on the tokens that it would produce itself.
+        children:
+          - PartOfSpeech-ModelTrainer-ShapesDevEvaluation
+        tests:
+          - PartOfSpeech_ShapesDev_Header_AnnouncesDevSplit
+          - PartOfSpeech_ShapesDev_Items_HaveShapeRoleTargetAndLemma
+          - PartOfSpeech_ShapesDev_Targets_MatchShapeClassAndAreNeverDisputed
+          - PartOfSpeech_ShapesDev_Authored_ShareIsCappedPerShapeAndForControls
+          - PartOfSpeech_ShapesDev_Quotas_AreMetByTheCommittedSet
+          - PartOfSpeech_ShapesDev_Tokens_AreReproducedByTheTokenizer
+
+      - id: PartOfSpeech-Data-ShapesDevIndependent
+        title: >-
+          No document, exact sentence or shared word 5-gram of the shape probe shall be common to the hard-shape
+          development set and any training set or any other evaluation set, the committed report of the development set
+          shall record that, and its builder shall see the held-out sets, the shape probe included, only through an
+          opaque set of hashed sentence keys and probe 5-grams, used only to exclude overlaps.
+        tags: [system]
+        justification: |
+          A development set that shares text with the training data would reward memorizing, and one that shares text
+          with the held-out sets would make the held-out figures depend on settings that were chosen with them in view.
+          The shape probe has short sentences that the near-duplicate rule does not see, so a shared word 5-gram is
+          refused too. The builder may read only the sentence column of the probe, as hashes, to exclude an overlap; it
+          never reads a probe label, shape, lemma or target and never uses the probe to select, weight or frame a
+          candidate, so the probe stays an independent measure. The existing document and sentence tests exclude shared
+          text with the training sets, because they read the development set as an evaluation corpus.
+        tests:
+          - PartOfSpeech_Leakage_Documents_TrainingAndEvaluationAreDisjoint
+          - PartOfSpeech_Leakage_Sentences_TrainingAndEvaluationAreDisjoint
+          - PartOfSpeech_Leakage_Report_RecordsNoOverlaps
+          - PartOfSpeech_ShapesDev_Sentences_AreDisjointFromTheOtherEvaluationSets
+          - PartOfSpeech_ShapesDev_LeakageReport_RecordsNoOverlapWithOtherEvaluationSets
+          - PartOfSpeech_ShapesDev_Builder_SeesHeldOutSetsOnlyThroughOpaqueKeys
+
+      - id: PartOfSpeech-Data-ShapesDevSourcesAreOpen
+        title: >-
+          Every source document of the hard-shape development set shall be listed with a US federal-work or
+          public-domain license basis (or as the pseudo-document that the project wrote), with its sentence count, and
+          no source row shall name FAA material; a document that was dropped after it was sourced shall be recorded in
+          the excluded-sources table with its URL, reason and decision date, and no source row and no sentence document
+          shall have an id or normalized URL that the table lists.
+        tags: [system]
+        justification: |
+          The development set is built from the text of real documents, so each document needs a recorded basis for its
+          use. The project owner excluded FAA material, and the check refuses it in the source table. The source table
+          lists only used documents and has a fixed format, so the documents that the owner dropped (for example because
+          their authorship is not clearly federal) are recorded in a table of their own. The exclusion is fail-closed:
+          the builder and the license check read that table and refuse a match, so a later rebuild cannot bring a
+          dropped document back.
+        tests:
+          - PartOfSpeech_ShapesDev_Sources_ListEveryDocumentWithItsCount
+          - PartOfSpeech_ShapesDev_Sources_AreOpenAndHaveNoFaaMaterial
+          - PartOfSpeech_ShapesDev_ExcludedSources_AreRecordedAndAbsentFromTheSet
+          - PartOfSpeech_ShapesDev_ExcludedSources_NothingUsedMatchesByIdOrNormalizedUrl
+          - PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl
+          - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
+
       - id: PartOfSpeech-Data-LexiconTrainCoverage
         title: >-
           The lexicon shall allow the gold tag for at least 99.9% of the non-disputed tokens of the training set.
@@ -785,6 +854,8 @@ sections:
           - PartOfSpeech-ModelTrainer-DevMetrics
           - PartOfSpeech-ModelTrainer-GlossaryExperiment
           - PartOfSpeech-ModelTrainer-GlossaryEvaluation
+          - PartOfSpeech-ModelTrainer-ShapesDevEvaluation
+          - PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
         tests:
           - PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora
 

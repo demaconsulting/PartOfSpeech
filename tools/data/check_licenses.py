@@ -5,7 +5,7 @@
 Checks (exit code 1 on any finding):
   1. no *.conllu file anywhere in the repository data and tools folders (outside the git-ignored cache), and no path under
      data/ containing semcor, brown, ewt or ud-ewt except the fetch-only documentation data/eval/ud-ewt/README.md;
-  2. the source tables (open, gold v2, silver) contain no row that mentions a share-alike, no-derivatives or
+  2. the source tables (open, gold v2, silver, shapes-dev) contain no row that mentions a share-alike, no-derivatives or
      non-commercial license, a Creative Commons BY-family license other than CC0, or Wikipedia; the MASC source table
      (a CC BY 3.0 US corpus) must record exactly that license for every document;
   3. every data folder README declares `License: <id>` with an id from the allowed set (the staged corrections folder included);
@@ -13,7 +13,9 @@ Checks (exit code 1 on any finding):
      belongs to a document that a source table lists (for MASC: with the CC BY 3.0 US class, because the token forms and
      context excerpts of MASC rows are MASC text); and no label, id, reason or provenance cell mentions a restricted license
      (the token, hint and context cells are corpus text and are covered by the document check). The corrections README must link
-     the MASC attribution file, which must exist.
+     the MASC attribution file, which must exist;
+  5. the hard-shape development set (when its folder exists) has a well-formed exclusion record eval/shapes-dev/excluded-sources.tsv,
+     and neither its sources.tsv nor the source_id of any sentence of its dev.tsv matches an excluded id or normalized URL.
 """
 import os
 import re
@@ -25,9 +27,12 @@ import common
 FORBIDDEN_TEXT = re.compile(r"share-?alike|by-sa|by-nc|by-nd|non-?commercial|no-?derivat|cc by|wikipedia|creativecommons\.org/licenses/by", re.I)
 FORBIDDEN_PATH = re.compile(r"semcor|brown|ewt", re.I)
 ALLOWED_LICENSES = {"CC0-1.0", "CC-BY-3.0-US", "CC-BY-4.0", "Public-Domain", "MIT"}
-SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv")
+SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv")
 MASC_LICENSE = "CC BY 3.0 US"
-READMES = ("open", "masc", "silver", "eval/shapes", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections")
+# The hard-shape development set takes no FAA material (host, publisher or handbook); see data/eval/shapes-dev/README.md.
+FAA_TEXT = re.compile(r"faa\.gov|\bFAA\b|Federal Aviation", re.I)
+FAA_TABLES = ("eval/shapes-dev/sources.tsv",)
+READMES = ("open", "masc", "silver", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections")
 ALLOWED_PATHS = {"data/eval/ud-ewt/README.md"}
 CORRECTION_SOURCES = {"open": "open/sources.tsv", "masc": "masc/sources.tsv", "silver": "silver/sources.tsv"}
 CORRECTION_TEXT_COLUMNS = frozenset(("token", "hint", "context"))  # corpus text: covered by the check of the document
@@ -127,6 +132,38 @@ def corrections_findings(base=None):
     return findings
 
 
+def excluded_source_findings(base=None):
+    """Findings of the fail-closed exclusion record data/eval/shapes-dev/excluded-sources.tsv.
+
+    When the shapes-dev folder exists the record must exist and be well formed, and no row of its sources.tsv and no `source_id`
+    of its dev.tsv may have an id or a normalized URL that the record lists."""
+    base = base or common.DATA
+    folder = os.path.join(base, "eval", "shapes-dev")
+    if not os.path.isdir(folder):
+        return []
+    try:
+        lookup = common.excluded_lookup(common.read_excluded_table(os.path.join(folder, "excluded-sources.tsv")))
+    except ValueError as error:
+        return ["eval/shapes-dev/excluded-sources.tsv: " + str(error)]
+    findings = []
+    path = os.path.join(folder, "sources.tsv")
+    if os.path.exists(path):
+        for line in common.read_lines(path):
+            cells = line.split("\t")
+            if not line or line.startswith("#") or cells[0] == "source_id":
+                continue
+            hit = common.excluded_match(lookup, cells[0], cells[3] if len(cells) > 3 else "")
+            if hit:
+                findings.append("eval/shapes-dev/sources.tsv: row %s uses the excluded source %s" % (cells[0], hit))
+    path = os.path.join(folder, "dev.tsv")
+    if os.path.exists(path):
+        for source_id in sorted({s["source_id"] for s in common.read_corpus(path)[1]}):
+            hit = common.excluded_match(lookup, source_id)
+            if hit:
+                findings.append("eval/shapes-dev/dev.tsv: sentences of %s use the excluded source %s" % (source_id, hit))
+    return findings
+
+
 def main():
     findings = []
     for top in (common.DATA, common.TOOLS):
@@ -147,8 +184,12 @@ def main():
                 match = FORBIDDEN_TEXT.search(line)
                 if match:
                     findings.append("%s: row mentions '%s': %s" % (table, match.group(0), line[:80]))
+                faa = FAA_TEXT.search(line) if table in FAA_TABLES else None
+                if faa:
+                    findings.append("%s: row mentions FAA material ('%s'): %s" % (table, faa.group(0), line[:80]))
         print("%-28s %6d rows scanned" % (table, rows))
     findings.extend(masc_findings())
+    findings.extend(excluded_source_findings())
     findings.extend(corrections_findings())
     pattern = re.compile(r"^License: (\S+)", re.M)
     for folder in READMES:

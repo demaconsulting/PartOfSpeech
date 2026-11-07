@@ -4,8 +4,9 @@
 
 Training sets: data/open/train.tsv, data/masc/masc.tsv, data/silver/silver.tsv.
 Evaluation sets: data/open/{dev,test}.tsv, data/eval/gold-v2, data/eval/shapes/probe.tsv, data/eval/ste-challenge,
-and UD English-EWT train/dev/test when the git-ignored cache is present (fetch it with fetch_ud_ewt.py; nothing
-from UD is ever committed or written to the report except counts).
+data/eval/shapes-dev/dev.tsv (the hard-shape development set; required), and UD English-EWT train/dev/test when the
+git-ignored cache is present (fetch it with fetch_ud_ewt.py; nothing from UD is ever committed or written to the report
+except counts).
 
 Rules (the same two rules the C# test applies):
   1. documents: the source ids of a training set are disjoint from the document ids of every evaluation set
@@ -15,6 +16,12 @@ Rules (the same two rules the C# test applies):
      training data, see leakage.py).
 Near duplicates are reported, not gated: an evaluation sentence of at least 10 words whose word 6-grams are at least 80%
 contained in the training word 6-grams of a set. Exit code 1 on any document or sentence overlap.
+
+Second section (the hard-shape development set against every other evaluation set; written to
+data/eval/shapes-dev/leakage-report.tsv, counts only): document ids, exact sentence keys and (for the shape probe only)
+shared word 5-grams are gated; near duplicates (the same 10-word, 80% 6-gram rule) are reported. The development set
+exists to select settings, so it must share neither text nor wording with the held-out sets. Only counts and the ids of
+the failing development sentences are printed; no text of any evaluation set is ever printed or stored.
 
 Data removal, not evaluation removal, is the remedy: the importers (import_masc.py, import_silver.py) drop training
 documents (long matches) or sentences (short matches) that overlap an evaluation set and list them in their
@@ -83,10 +90,49 @@ def check(include_ud):
     return rows, failures, bool(leakage.ud_sets()) if include_ud else False
 
 
+def dev_check(include_ud):
+    """Hard-shape development set against every other evaluation set: (rows, failures, failing sentence ids).
+
+    A row is (evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences,
+    probe_5gram_sentences). Documents, exact keys and (for the shape probe) shared word 5-grams are gated; near
+    duplicates are reported. The 5-gram column is `-` for every set but the probe. Only counts and the ids of the
+    development sentences that fail (a shared document, an exact sentence or a shared probe 5-gram) are returned; nothing of an evaluation set (the probe especially) is returned.
+    """
+    path = os.path.join(common.DATA, "eval", "shapes-dev", "dev.tsv")
+    if not os.path.exists(path):
+        raise SystemExit("missing committed development set: data/eval/shapes-dev/dev.tsv")
+    dev = [(s["sent_id"], s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]  # (sentence id, document id, text)
+    dev_docs = {doc for _, doc, _ in dev}
+    probe_grams = leakage.held_out_overlap_keys(include_ud, leakage.PROBE_GRAM_WORDS)
+    rows, failing = [], []
+    for label, items in leakage.evaluation_sets(include_ud, shapes_dev=False).items():
+        docs = set() if label.startswith("ud-ewt") else {doc for doc, _ in items}
+        keys = {common.key(text) for _, text in items} - {""}
+        grams = set()
+        for _, text in items:
+            grams |= shingles(text)
+        exact = near = probe = 0
+        for sent_id, doc, text in dev:
+            hit = common.key(text) in keys
+            shared_doc = doc in docs
+            exact += hit
+            sh = shingles(text)
+            if len(words(text)) >= NEAR_MIN_WORDS and sh and len(sh & grams) / len(sh) >= NEAR_THRESHOLD:
+                near += 1
+            shared = label == "shapes-probe" and leakage.gram_overlap(text, probe_grams, leakage.PROBE_GRAM_WORDS)
+            probe += shared
+            if hit or shared or shared_doc:
+                failing.append(sent_id)
+        rows.append((label, len(dev), len(dev_docs & docs), exact, near, probe if label == "shapes-probe" else "-"))
+    failures = sum(row[2] + row[3] + (row[5] if row[5] != "-" else 0) for row in rows)
+    return rows, failures, sorted(set(failing))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--no-ud", action="store_true", help="ignore the UD cache even when present")
-    parser.add_argument("--write-report", action="store_true", help="write data/leakage-report.tsv")
+    parser.add_argument("--write-report", action="store_true",
+                        help="write data/leakage-report.tsv and data/eval/shapes-dev/leakage-report.tsv")
     args = parser.parse_args()
     rows, failures, ud_checked = check(not args.no_ud)
     lines = ["# Leakage report (tools/data/check_leakage.py); rules in data/README.md section Leakage check",
@@ -96,12 +142,26 @@ def main():
         lines.append("\t".join(str(c) for c in row))
     for line in lines[1:2] + [""] + lines[3:]:
         print(line)
+    dev_rows, dev_failures, failing = dev_check(not args.no_ud)
+    dev_lines = ["# Leakage report of the hard-shape development set (tools/data/check_leakage.py); counts only",
+                 "# UD English-EWT checked in this run: %s (counts only; nothing from UD is stored)" % ("yes" if ud_checked else "no"),
+                 "# probe_5gram_sentences = development sentences that share a word 5-gram with a shape probe sentence (gated, no probe text is stored)",
+                 "# columns = evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, probe_5gram_sentences"]
+    dev_lines += ["\t".join(str(c) for c in row) for row in dev_rows]
+    print()
+    for line in dev_lines[1:2] + dev_lines[3:]:
+        print(line)
     if args.write_report:
         common.write_text(os.path.join(common.DATA, "leakage-report.tsv"), lines)
+        common.write_text(os.path.join(common.DATA, "eval", "shapes-dev", "leakage-report.tsv"), dev_lines)
+    if dev_failures:
+        print("DEV LEAKAGE FOUND: %d overlaps; remove these development sentences and rebuild: %s" % (dev_failures, ", ".join(failing[:50])))
     if failures:
         print("LEAKAGE FOUND: %d document or exact sentence overlaps" % failures)
+    if failures or dev_failures:
         sys.exit(1)
-    print("no document or exact sentence overlap between training and evaluation sets")
+    print("no document or exact sentence overlap between training and evaluation sets, "
+          "and none between the development set and the other evaluation sets")
 
 
 if __name__ == "__main__":

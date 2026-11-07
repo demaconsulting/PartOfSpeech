@@ -123,6 +123,72 @@ def key(text):
     return "".join(ch for ch in nfc(text).lower() if ch.isalnum())
 
 
+# ---------------------------------------------------------------- excluded sources (fail-closed licensing exclusions)
+
+EXCLUDED_SOURCES_COLUMNS = ("source_id", "url", "reason", "decided")
+
+
+def normalize_url(url):
+    """host (lower case, no `www.`) and path (no query, fragment or trailing slash); the empty string for a text that is no URL."""
+    match = re.match(r"^[a-z][a-z0-9+.-]*://([^/?#]+)([^?#]*)", url.strip(), re.I)
+    if not match:
+        return ""
+    host = match.group(1).lower()
+    host = host[4:] if host.startswith("www.") else host
+    return host + match.group(2).rstrip("/")
+
+
+def is_http_url(url):
+    """True for an `http://` or `https://` URL with a host (any case of the scheme). A record's URL must be one; any other scheme is not.
+
+    Matching stays scheme-agnostic (`normalize_url`): a document is matched by host and path whatever its scheme, so the check is a
+    separate validation of what a record may list, never a narrowing of what is rejected."""
+    return re.match(r"^https?://", url.strip(), re.I) is not None and normalize_url(url) != ""
+
+
+def read_excluded_table(path):
+    """[(source_id, url, reason, decided)] of a committed `excluded-sources.tsv`; a missing or malformed file is a ValueError.
+
+    The header is `source_id url reason decided` (tab separated), every cell of every row is filled, `url` is an http(s) URL and
+    `decided` is a `YYYY-MM-DD` date. The table is the fail-closed record of documents the project must not use.
+    """
+    if not os.path.exists(path):
+        raise ValueError("missing exclusion table: " + os.path.basename(os.path.dirname(path)) + "/" + os.path.basename(path))
+    lines = [line for line in read_lines(path) if line.strip() != ""]
+    if not lines or tuple(lines[0].split("\t")) != EXCLUDED_SOURCES_COLUMNS:
+        raise ValueError("%s: the header must be %s" % (path, "\\t".join(EXCLUDED_SOURCES_COLUMNS)))
+    rows = []
+    seen = set()
+    for number, line in enumerate(lines[1:], 2):
+        cells = line.split("\t")
+        if len(cells) != len(EXCLUDED_SOURCES_COLUMNS) or not all(c.strip() for c in cells):
+            raise ValueError("%s, line %d: every row needs source_id, url, reason and decided" % (path, number))
+        if not is_http_url(cells[1]) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", cells[3]):
+            raise ValueError("%s, line %d: url must be an http(s) URL and decided a YYYY-MM-DD date" % (path, number))
+        if cells[0] in seen:
+            raise ValueError("%s, line %d: duplicate source_id %s" % (path, number, cells[0]))
+        seen.add(cells[0])
+        rows.append(tuple(cells))
+    return rows
+
+
+def excluded_lookup(rows):
+    """{("id", source_id) | ("url", normalized url): source_id} over rows of `read_excluded_table`."""
+    lookup = {}
+    for source_id, url, _, _ in rows:
+        lookup[("id", source_id)] = source_id
+        lookup[("url", normalize_url(url))] = source_id
+    return lookup
+
+
+def excluded_match(lookup, source_id, url=""):
+    """The excluded source id that a document's id or URL matches, else None."""
+    if ("id", source_id) in lookup:
+        return lookup[("id", source_id)]
+    normalized = normalize_url(url) if url else ""
+    return lookup.get(("url", normalized)) if normalized else None
+
+
 # ---------------------------------------------------------------- corpus block format
 
 def check_row(origin, line_number, cells):
