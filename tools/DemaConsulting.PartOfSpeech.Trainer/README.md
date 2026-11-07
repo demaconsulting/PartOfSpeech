@@ -80,7 +80,9 @@ only with a committed selection artifact that is valid for the frozen model.
 The hard-shape development set has two files, the standard tranche (`data/eval/shapes-dev/dev.tsv`) and the hard tranche
 (`data/eval/shapes-dev/hard.tsv`), and they are development files with a guard of their own:
 `eval-shapes` reads them through `DataGuard.EnsureShapesDevelopmentFile` (an allow-list of exactly those two paths, links refused)
-and a header that announces a `dev split`; the tranche of an item is the file it was read from, never a comment. They are not in
+and a header that announces a `dev split`; the tranche of an item is the file it was read from, never a comment. The reader also
+checks that the corpus header and the sentence ids belong to the tranche of the file (the hard tranche says `hard tranche` and its
+ids start with `shapes-dev-hard-`; the standard tranche does neither), so a copy of one file at the path of the other is refused. They are not in
 the two-file allow-list, so no other command can read them, they are not held-out files, so `evaluate` never reads them, and
 training refuses them like every other development file (both lie below the `eval` folder). They are for selecting settings (for example the context-feature work),
 never a held-out figure; the shape probe stays evaluation only.

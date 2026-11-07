@@ -678,6 +678,16 @@ internal sealed class GoldTarget
 internal static class DevSets
 {
     /// <summary>
+    ///     The prefix of the sentence ids of the hard tranche of the hard-shape development set; no id of the standard tranche starts with it.
+    /// </summary>
+    private const string ShapesDevHardIdPrefix = "shapes-dev-hard-";
+
+    /// <summary>
+    ///     The phrase that the corpus comment of the hard tranche carries and that the corpus comment of the standard tranche does not.
+    /// </summary>
+    private const string ShapesDevHardMarker = "hard tranche";
+
+    /// <summary>
     ///     The class that a UPOS tag has in the gold v2 set (the table of <c>data/CONVENTIONS.md</c>).
     /// </summary>
     /// <param name="tag">The tag.</param>
@@ -772,7 +782,7 @@ internal static class DevSets
     /// <param name="sha256">Receives the SHA-256 of the file as 64 lower-case hexadecimal digits.</param>
     /// <returns>The items in file order.</returns>
     /// <exception cref="FileNotFoundException">The file does not exist.</exception>
-    /// <exception cref="InvalidDataException">The file does not announce a development split or is malformed.</exception>
+    /// <exception cref="InvalidDataException">The file does not announce a development split or the tranche it is read as (corpus header, sentence id prefix), or is malformed.</exception>
     public static List<ShapesDevItem> ReadShapesDev(string repositoryRoot, ShapesDevTranche tranche, out string sha256)
     {
         var path = DataGuard.EnsureShapesDevelopmentFile(repositoryRoot, Path.Combine(repositoryRoot, ShapesDevFileOf(tranche).Replace('/', Path.DirectorySeparatorChar)));
@@ -781,9 +791,50 @@ internal static class DevSets
             throw new FileNotFoundException($"The shapes development set {path} does not exist.", path);
         }
 
-        DataGuard.EnsureDevelopmentHeader(File.ReadLines(path, Encoding.UTF8).Take(20), path);
+        var header = File.ReadLines(path, Encoding.UTF8).Take(20).ToList();
+        DataGuard.EnsureDevelopmentHeader(header, path);
+        EnsureShapesDevTrancheHeader(header, tranche, path);
         sha256 = ModelBuilder.Sha256Hex(File.ReadAllBytes(path));
-        return ShapesDevSets.Parse(File.ReadLines(path, Encoding.UTF8), path, tranche);
+        var items = ShapesDevSets.Parse(File.ReadLines(path, Encoding.UTF8), path, tranche);
+        var bad = items.Find(item => item.Id.StartsWith(ShapesDevHardIdPrefix, StringComparison.Ordinal) != (tranche == ShapesDevTranche.Hard));
+        if (bad != null)
+        {
+            throw new InvalidDataException($"{path}: the sentence id '{bad.Id}' does not belong to the {(tranche == ShapesDevTranche.Hard ? "hard" : "standard")} tranche (hard ids start with '{ShapesDevHardIdPrefix}'); refusing to read it.");
+        }
+
+        return items;
+    }
+
+    /// <summary>
+    ///     Checks that the corpus comment of a file of the hard-shape development set announces the tranche that the file stands for, so that
+    ///     a copy of the standard file at the hard path (or the other way round) is refused instead of reported as the wrong tranche.
+    /// </summary>
+    /// <param name="lines">The leading lines of the file; only the leading comment lines are inspected.</param>
+    /// <param name="tranche">The tranche the file is read as.</param>
+    /// <param name="origin">The name of the file for the message.</param>
+    /// <exception cref="InvalidDataException">The corpus comment does not match the tranche.</exception>
+    private static void EnsureShapesDevTrancheHeader(IEnumerable<string> lines, ShapesDevTranche tranche, string origin)
+    {
+        var claimsHard = false;
+        foreach (var line in lines)
+        {
+            if (!line.StartsWith("#", StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            if (line.StartsWith("# corpus", StringComparison.Ordinal) && line.Contains(ShapesDevHardMarker, StringComparison.Ordinal))
+            {
+                claimsHard = true;
+            }
+        }
+
+        if (claimsHard != (tranche == ShapesDevTranche.Hard))
+        {
+            throw new InvalidDataException(tranche == ShapesDevTranche.Hard
+                ? $"{origin} does not announce itself as the hard tranche ('{ShapesDevHardMarker}') in its corpus header; refusing to read it as the hard tranche."
+                : $"{origin} announces itself as the hard tranche in its corpus header; refusing to read it as the standard tranche.");
+        }
     }
 
     /// <summary>

@@ -79,6 +79,16 @@ public class ShapesDevEvaluationTests
     }
 
     /// <summary>
+    ///     Joins the header of the hard tranche (its corpus comment carries the hard tranche marker) and blocks.
+    /// </summary>
+    private static List<string> HardFile(params string[][] blocks)
+    {
+        var lines = File(blocks);
+        lines[0] = "# corpus = fixture hard-shape development set, hard tranche (UPOS), dev split";
+        return lines;
+    }
+
+    /// <summary>
     ///     A valid compound-head sentence: the judged word <c>cat</c> is a noun at index 1.
     /// </summary>
     private static string[] CompoundHead(string id = "s1", string source = "doc-a", string origin = "real") =>
@@ -350,7 +360,7 @@ public class ShapesDevEvaluationTests
     {
         // Arrange: a fake repository with a different number of sentences in the two files
         var standardLines = File(CompoundHead("s1"), CompoundHead("s2"));
-        var hardLines = File(CompoundHead("h1"));
+        var hardLines = HardFile(CompoundHead("shapes-dev-hard-0001"));
         var root = TempRoot(standardLines);
         System.IO.File.WriteAllText(Path.Combine(root, "data", "eval", "shapes-dev", "hard.tsv"), string.Join("\n", hardLines) + "\n");
         try
@@ -363,7 +373,7 @@ public class ShapesDevEvaluationTests
             // Assert
             Assert.Equal(new[] { "s1", "s2" }, standard.Select(i => i.Id));
             Assert.All(standard, i => Assert.Equal(ShapesDevTranche.Standard, i.Tranche));
-            Assert.Equal(new[] { "h1" }, hard.Select(i => i.Id));
+            Assert.Equal(new[] { "shapes-dev-hard-0001" }, hard.Select(i => i.Id));
             Assert.All(hard, i => Assert.Equal(ShapesDevTranche.Hard, i.Tranche));
             Assert.NotEqual(standardSha, hardSha);
             Assert.Equal(ModelBuilder.Sha256Hex(System.IO.File.ReadAllBytes(Path.Combine(root, "data", "eval", "shapes-dev", "hard.tsv"))), hardSha);
@@ -404,6 +414,70 @@ public class ShapesDevEvaluationTests
         {
             Directory.Delete(root, true);
         }
+    }
+
+    /// <summary>
+    ///     Validates that a file of one tranche cannot be read as the other: a standard-header file at the hard path, a hard-header file at
+    ///     the standard path, and sentence ids of the wrong tranche are refused, while correct files are accepted.
+    /// </summary>
+    [Fact]
+    public void DevSets_ReadShapesDev_FileOfTheOtherTranche_Throws()
+    {
+        // Arrange: the standard file at the hard path; the hard file at the standard path; right header but the other tranche's ids
+        var standardLines = File(CompoundHead("shapes-dev-0001"));
+        var hardLines = HardFile(CompoundHead("shapes-dev-hard-0001"));
+        var root = TempRoot(hardLines);
+        var hardPath = Path.Combine(root, "data", "eval", "shapes-dev", "hard.tsv");
+        var standardPath = Path.Combine(root, "data", "eval", "shapes-dev", "dev.tsv");
+        try
+        {
+            // Act / Assert: hard header at the standard path
+            Assert.Contains("hard tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out _)).Message);
+
+            // Standard header at the hard path
+            System.IO.File.WriteAllText(hardPath, string.Join("\n", standardLines) + "\n");
+            Assert.Contains("does not announce itself as the hard tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Hard, out _)).Message);
+
+            // Ids of the other tranche behind the right header
+            System.IO.File.WriteAllText(hardPath, string.Join("\n", HardFile(CompoundHead("shapes-dev-0001"))) + "\n");
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Hard, out _)).Message);
+            System.IO.File.WriteAllText(standardPath, string.Join("\n", File(CompoundHead("shapes-dev-hard-0001"))) + "\n");
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out _)).Message);
+
+            // Correct files are accepted
+            System.IO.File.WriteAllText(hardPath, string.Join("\n", hardLines) + "\n");
+            System.IO.File.WriteAllText(standardPath, string.Join("\n", standardLines) + "\n");
+            Assert.Single(DevSets.ReadShapesDev(root, ShapesDevTranche.Hard, out _));
+            Assert.Single(DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out _));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that the committed files of both tranches are accepted by the tranche-aware reader.
+    /// </summary>
+    [Fact]
+    public void DevSets_ReadShapesDev_CommittedFiles_AreAccepted()
+    {
+        // Arrange: the repository root is the folder above data/ (found from the test assembly folder)
+        var root = AppContext.BaseDirectory;
+        while (root != null && !System.IO.File.Exists(Path.Combine(root, "data", "eval", "shapes-dev", "hard.tsv")))
+        {
+            root = Path.GetDirectoryName(root);
+        }
+
+        Assert.NotNull(root);
+
+        // Act
+        var standard = DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out _);
+        var hard = DevSets.ReadShapesDev(root, ShapesDevTranche.Hard, out _);
+
+        // Assert
+        Assert.NotEmpty(standard);
+        Assert.NotEmpty(hard);
     }
 
     /// <summary>
