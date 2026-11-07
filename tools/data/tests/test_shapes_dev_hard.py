@@ -517,12 +517,6 @@ class HardPipelineTests(HardFolder):
         self.write_work_exclusions([("doc-gone", "not public domain", "2026-11-06")])      # a work row without a draft URL: id only, no conflict
         common.write_text(record, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-gone\thttps://example.gov/doc-gone\tolder\t2026-11-01"])
         self.assertEqual(0, self.hard_cli("build", "--out-dir", out, "--allow-short")[0])
-        with self.assertRaises(sd.ExcludedSourceError):
-            sd.merge_excluded_rows([("x", "https://example.gov/a", "r", "d")], [["x", "https://example.gov/b", "r", "d"]], id_only_ok=True)
-        self.assertEqual([["x", "https://example.gov/a", "r", "d"]],
-                         sd.merge_excluded_rows([("x", "https://example.gov/a", "r", "d")], [["x", "", "r", "d"]], id_only_ok=True))
-        with self.assertRaises(sd.ExcludedSourceError):                                      # the standard profile has no id-only rows
-            sd.merge_excluded_rows([("x", "https://example.gov/a", "r", "d")], [["x", "", "r", "d"]])
 
     def test_only_shapes_of_the_hard_tranche_must_be_hard_shapes(self):
         self.assertEqual(("v-after-modal",), sd.parse_only_shapes("v-after-modal", sd.HARD_SHAPES))
@@ -547,9 +541,9 @@ class HardPipelineTests(HardFolder):
         out = os.path.join(self.temp, "out")
         draft = sd.read_draft(self.work)
         built = [{"source_id": "doc-b"}]
-        w_rows = [["doc-b", "", "not public domain", ""]]                                   # an id-only row of the work folder
-        self.assertEqual(1, len(sd.excluded_problems(self.work, draft, built, [], w_rows)))
-        self.assertEqual([], sd.excluded_problems(self.work, draft, [{"source_id": "doc-a"}], [], w_rows))
+        id_only = sd.Exclusions([("doc-b", "", "not public domain", "")], [], [], {"doc-b": "not public domain"})      # an id-only row of the work folder
+        self.assertEqual(1, len(id_only.problems(draft, built)))
+        self.assertEqual([], id_only.problems(draft, [{"source_id": "doc-a"}]))
         self.write_work_exclusions([("doc-b", "not public domain", "2026-11-06")])        # decided items of it are dropped, never built
         code, output = self.hard_cli("build", "--out-dir", out, "--allow-short")
         self.assertEqual(0, code, output)
@@ -563,7 +557,7 @@ class HardPipelineTests(HardFolder):
         self.assertEqual(0, code, output)                                                   # the committed URL excludes it by the draft URL
         _, sentences = common.read_corpus(os.path.join(out, "hard.tsv"))
         self.assertFalse(any(s["source_id"] == "doc-b" for s in sentences))
-        self.assertEqual(1, len(sd.excluded_problems(self.work, draft, built, sd.read_committed_exclusions(self.data), [])))   # the backstop
+        self.assertEqual(1, len(sd.load_exclusions(self.work, self.data).problems(draft, built)))   # the backstop
 
     def test_sample_takes_at_least_half_of_each_shape_from_low_q_and_report_has_the_band_table(self):
         self.prepare()
@@ -655,6 +649,71 @@ class HardPipelineTests(HardFolder):
         self.assertEqual(set(), {r["sent_key"] for r in rows} & {r["sent_key"] for r in sd.read_candidates(self.work)})
         self.assertTrue(all(r["cand_id"].startswith("h3-c") for r in rows))
         self.assertEqual(len(before), len(sd.read_all_decided(self.work)[0]))
+
+    def test_a_url_exclusion_under_another_id_is_honored_by_every_hard_command(self):
+        self.prepare()
+        out = os.path.join(self.temp, "out")
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        controls = ("candidates", "--no-ud", "--round", "h3", "--controls-only", "--control-pool", "5", "--lemma-cap", "9")
+        self.assertEqual(0, self.hard_cli(*controls)[0])
+        before = {i["cand_id"] for i in sd.read_all_decided(self.work, self.data)[0] if i["source_id"] == "doc-b"}
+        self.assertTrue(before)
+        common.write_text(record, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "other-id\thttps://www.example.gov/doc-b/\tr\t2026-11-06"])
+        code, output = self.hard_cli(*controls)                                                            # controls-only round
+        self.assertEqual(0, code, output)
+        self.assertNotIn("doc-b", {r["source_id"] for r in sd.read_candidates(sd.RoundWork(self.root, "h3"))})
+        self.assertRegex(output, r"excluded-source [1-9]\d*")
+        code, output = self.hard_cli("candidates", "--no-ud", "--lemma-cap", "9", "--only-shapes", "v-after-modal", "--budget", "v-after-modal=all",
+                                     "--no-controls", "--round", "h2")                                      # a target round
+        self.assertEqual(0, code, output)
+        self.assertNotIn("doc-b", {r["source_id"] for r in sd.read_candidates(sd.RoundWork(self.root, "h2"))})
+        self.assertRegex(output, r"excluded-source [1-9]\d*")
+        mine = [i for i in sd.read_decided(self.work, self.data)[0] if i["source_id"] == "doc-b"]           # the stored `keep` is overridden
+        self.assertEqual(before, {i["cand_id"] for i in mine})
+        self.assertTrue(all((i["outcome"], i["reason"]) == ("drop", sd.EXCLUDED_REASON) for i in mine))
+        self.assertEqual(0, self.hard_cli("decide")[0])
+        mine = [i for i in sd.read_decided(self.work, self.data)[0] if i["source_id"] == "doc-b"]
+        self.assertTrue(mine and all((i["outcome"], i["reason"]) == ("drop", sd.EXCLUDED_REASON) for i in mine))
+        self.assertEqual(0, self.hard_cli("sample", "--per-shape", "4", "--controls", "1")[0])
+        _, keys = adjudicate.read_records(os.path.join(self.root, "private", "review-sample-key.tsv"))
+        self.assertFalse({k["cand_id"] for k in keys} & before)
+        code, output = self.hard_cli("build", "--out-dir", out, "--allow-short")
+        self.assertEqual(0, code, output)
+        _, sentences = common.read_corpus(os.path.join(out, "hard.tsv"))
+        self.assertTrue(sentences and "doc-b" not in {s["source_id"] for s in sentences})
+        code, report = self.hard_cli("report", "--out-dir", out)
+        self.assertEqual(0, code)
+        self.assertIn("dropped: excluded source", report)
+        code, output = self.hard_cli("candidates", "--no-ud", "--lemma-cap", "9", "--budget", "v-after-modal=all")      # the root
+        self.assertEqual(0, code, output)
+        self.assertNotIn("doc-b", {r["source_id"] for r in sd.read_candidates(self.work)})
+        self.assertRegex(output, r"excluded-source [1-9]\d*")
+
+    def test_the_controls_only_collector_drops_a_document_excluded_by_its_url_under_another_id(self):
+        room = {"v-after-modal": {"check": 1, "test": 0, "stop": 2}}
+        rows, _ = self.collect(control_room=room, control_pool=10, only_shapes=sd.HARD_SHAPES)
+        self.assertIn("doc-b", {r["source_id"] for r in rows})                           # the controls come from doc-b without the exclusion
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        common.write_text(record, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "other-id\thttps://www.example.gov/doc-b/\tr\t2026-11-06"])
+        rows, report = self.collect(control_room=room, control_pool=10, only_shapes=sd.HARD_SHAPES)
+        self.assertEqual([], rows)
+        self.assertTrue(any("excluded-source" in line for line in report))
+
+    def test_a_same_id_different_url_conflict_is_refused_by_every_hard_command_and_by_both_profiles(self):
+        self.prepare()
+        out = os.path.join(self.temp, "out")
+        self.write_work_exclusions([("doc-b", "not public domain", "2026-11-06")])
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        common.write_text(record, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-b\thttps://example.gov/another-document\tolder\t2026-11-01"])
+        commands = [("exclusions",), ("candidates", "--no-ud", "--lemma-cap", "9"), ("candidates", "--no-ud", "--round", "h2"),
+                    ("candidates", "--no-ud", "--round", "h3", "--controls-only", "--control-pool", "5"), ("decide",), ("sample",),
+                    ("report",), ("build", "--out-dir", out, "--allow-short")]
+        for tranche in ("hard", "standard"):
+            for command in commands:
+                self.assert_refused(("--tranche", tranche) + command)
+        self.assertFalse(os.path.exists(out))
+        self.assertFalse(os.path.exists(os.path.join(self.root, "rounds")))
+        self.assertEqual(0, self.hard_cli("status")[0])                                    # a command without exclusions is not blocked
 
     def test_controls_only_needs_the_hard_tranche_a_round_and_nothing_else_that_selects_targets(self):
         with self.assertRaises(ValueError):

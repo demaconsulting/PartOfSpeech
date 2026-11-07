@@ -505,7 +505,9 @@ count, a `|` in a token, a `#` token that is data), the contested band (the lowe
 the order (hardest first), the lemma cap and the budget, the standard-tranche exclusion (an exact key and a
 same-document near duplicate, with their reasons), controls without a band, the quota gate (floors, caps, authored
 items), the build (`hard.tsv`, `hard-sources.tsv`, ids, no rewrite of the exclusion record, refusal of an excluded
-source), the hand-check sample (at least half from q below 0.5), the q-band table, rounds, and `check_leakage.py` and
+source), the exclusions (every command, both profiles and every round, honors a document listed by URL under another
+source id and refuses one id with two different URLs in the committed and work-folder tables, leaving the work folder
+unchanged), the hand-check sample (at least half from q below 0.5), the q-band table, rounds, and `check_leakage.py` and
 `check_licenses.py` on a hard tranche (a shared document with the standard tranche is allowed, an exact or near
 duplicate of it fails). One regression test builds the standard profile on a fixture and compares the bytes with hashes
 taken before the hard profile existed; an optional one rebuilds the committed standard files from their work folder

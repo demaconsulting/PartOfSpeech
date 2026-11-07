@@ -30,19 +30,23 @@ another round (`candidates --round NAME`) that skips the excluded documents. `bu
 data/eval/shapes-dev/excluded-sources.tsv (source_id, url from the draft, reason, decided; one row per excluded document), so
 that sources.tsv, which lists only the used documents, stays a table of the shared 12-column format.
 
-Fail-closed exclusions. The committed record is required for both profiles and is read by the tool itself (`read_committed_exclusions`,
-strictly): a missing file, a zero-byte file, a file without the exact header and a malformed row are errors, and `exclusions`, `candidates`,
-`decide`, `sample`, `build` and `report` refuse (exit code 1) before they do anything else. A file that holds only the header is valid: it records that nothing is
-excluded (a first standard build starts from such a file; `build` writes the record, header only when nothing is excluded, and never
-deletes it). W/excluded-sources.tsv stays optional, but only because the committed record must exist: it adds rows and never replaces
-the record. Every consumer of the exclusions (`decide`, `read_decided`, the lemma counts, `sample`, `build`, `report`) uses the merged
-exclusions (`merged_excluded_sources`: the committed record united with W/excluded-sources.tsv when it exists, by id and by normalized URL
-through the URL of the draft row), so a work folder without the optional file still drops the items of a committed exclusion. The record is
-indexed with the used documents, so `candidates` rejects a document whose id or normalized URL it lists even when
+Fail-closed exclusions. One function reads the exclusion files, `load_exclusions` (it calls the strict reader of the committed record and the
+reader of W/excluded-sources.tsv, validates both and merges them), and every command gets its exclusions only through it: `exclusions`,
+`candidates` (every round, `--controls-only` included), `decide`, `sample`, `report` and `build` (both profiles) call it before they do
+anything else (exit code 1, nothing written), and `read_decided`, `lemma_counts_of` and `collect_candidates` call it again for their data.
+The committed record is required for both profiles and is read strictly: a missing file, a zero-byte file, a file without the exact
+header, a malformed row, a URL that is not http(s) and a duplicate id are errors. A file that holds only the header is valid: it records
+that nothing is excluded (a first standard build starts from such a file; `build` writes the record, header only when nothing is excluded,
+and never deletes it). W/excluded-sources.tsv stays optional, but only because the committed record must exist: it adds rows and never
+replaces the record; a duplicate id in it, or a non-http(s) draft URL of one of its documents, is an error. An id in both tables with a
+different normalized URL (the URL of a W row is the one of its draft row; a row without a draft URL excludes by id only) is an error
+(ExcludedSourceError): the owner gives the second document another id. The union is by id and by normalized URL, so a document of the
+draft whose URL is listed in either table is excluded whatever its own id: `candidates` drops its sentences (reason `excluded-source`),
+`decide` and `read_decided` mark its items `drop`, so they never reach the lemma counts, the review sample, dev.tsv or hard.tsv. The
+record is also indexed with the used documents, so `candidates` rejects a document whose id or normalized URL it lists even when
 W/excluded-sources.tsv lacks it. `build` refuses (exit code 1, nothing written) when a chosen sentence or a used source row has an id or
-normalized URL listed in the committed record or in W/excluded-sources.tsv. The written record is the union of the committed rows and the
-W rows; a committed row is never dropped or changed, an id in both tables with a different URL, or a duplicate id within one table, is an
-error (exit code 1, nothing written).
+normalized URL listed in the committed record or in W/excluded-sources.tsv. The written standard record is the union of the committed rows
+and the W rows; a committed row is never dropped or changed.
 
 Quota gate. `build` refuses (exit code 1, nothing written) unless every shape has exactly `--per-shape` targets (default 120), there are
 exactly `--controls` controls (default 100), no lemma exceeds its cap (`--lemma-cap` 4, `--shape-lemma-cap`, controls 2 per lemma) and no
@@ -203,7 +207,7 @@ EXCLUDED_OUTPUT_COLUMNS = ("source_id", "url", "reason", "decided")
 EXCLUDED_OUTPUT_FILE = "excluded-sources.tsv"
 EXCLUDED_OUTPUT_PATH = "data/eval/shapes-dev/excluded-sources.tsv"
 EXCLUDED_REASON = "excluded-source"
-EXCLUSION_COMMANDS = ("exclusions", "candidates", "decide", "sample", "build", "report")      # the commands that load the committed exclusion record (required)
+EXCLUSION_COMMANDS = ("exclusions", "candidates", "decide", "sample", "build", "report")      # the commands that call `load_exclusions` first
 SHAPES = ("n-compound-head", "n-subject-initial", "v-imperative-initial", "n-measure", "v-after-modal")
 SHAPE_CLASS = {shape: ("Noun" if shape.startswith("n-") else "Verb") for shape in SHAPES}
 OTHER_CLASS = {"Noun": "Verb", "Verb": "Noun"}
@@ -449,8 +453,10 @@ def gutenberg_ids(text):
     return found
 
 
-def exclusion_index(data_dir):
-    """{(kind, value): origin} over the documents of the sources and excluded-documents tables (kind `id` or `url`)."""
+def exclusion_index(data_dir, exclusions):
+    """{(kind, value): origin} over the documents of the sources and excluded-documents tables and of `exclusions` (kind `id` or `url`).
+
+    `exclusions` is the result of `load_exclusions`: the committed record and W/excluded-sources.tsv, merged and validated."""
     index = {}
     for table in USED_SOURCE_TABLES:
         path = os.path.join(data_dir, *table.split("/"))
@@ -472,18 +478,21 @@ def exclusion_index(data_dir):
                 index.setdefault(("id", found), table)
     for document in EXTRA_DOCUMENTS:
         index.setdefault(("id", document), "built-in")
-    for source_id, url, _, _ in read_committed_exclusions(data_dir):
-        index.setdefault(("id", source_id), EXCLUDED_OUTPUT_PATH)
-        index.setdefault(("url", normalize_url(url)), EXCLUDED_OUTPUT_PATH)
+    for source_id, url, _, _ in exclusions.rows:
+        origin = EXCLUDED_OUTPUT_PATH if source_id in exclusions.committed_ids else "W/" + EXCLUDED_SOURCES_FILE
+        index.setdefault(("id", source_id), origin)
+        if url:
+            index.setdefault(("url", normalize_url(url)), origin)
     return index
 
 
-def read_committed_exclusions(data_dir):
+def _read_committed_exclusions(data_dir):
     """[(source_id, url, reason, decided)] of the committed data/eval/shapes-dev/excluded-sources.tsv, for both profiles.
 
-    Fail closed: a missing file, a zero-byte file, a file without the exact header and a malformed row are a ValueError (see
-    `common.read_excluded_table`); a file that holds only the header is the valid record of "nothing is excluded" ([]). The record is
-    never read leniently and a missing record is never taken as an empty one (a first standard build starts from a header-only file)."""
+    Only `load_exclusions` calls this. Fail closed: a missing file, a zero-byte file, a file without the exact header and a malformed
+    row are a ValueError (see `common.read_excluded_table`); a file that holds only the header is the valid record of "nothing is
+    excluded" ([]). The record is never read leniently and a missing record is never taken as an empty one (a first standard build
+    starts from a header-only file)."""
     path = os.path.join(data_dir, *EXCLUDED_OUTPUT_PATH.split("/")[1:])
     return common.read_excluded_table(path)
 
@@ -499,11 +508,11 @@ def document_rejection(index, source_id, url=""):
     return None
 
 
-def read_excluded_rows(work):
+def _read_work_exclusions(work):
     """[(source_id, reason, decided)] of W/excluded-sources.tsv (empty when the file is missing), in file order.
 
-    The work-folder file is optional because the committed record (`read_committed_exclusions`, required) is the fail-closed one:
-    every command that uses the exclusions (`exclusions`, `candidates`, `decide`, `build`) refuses first when that record is missing.
+    Only `load_exclusions` calls this. The work-folder file is optional because the committed record is the fail-closed one:
+    `load_exclusions` reads that record first and refuses when it is missing.
 
     The header is `source_id<TAB>reason` with an optional third column `decided` (the date of the owner's decision, `YYYY-MM-DD`);
     `decided` is "" when the column is absent. `build` requires it, because it is written to data/eval/shapes-dev/excluded-sources.tsv."""
@@ -530,60 +539,96 @@ def read_excluded_rows(work):
     return rows
 
 
-def read_excluded_sources(work):
-    """{source_id: reason} of W/excluded-sources.tsv (empty when the file is missing)."""
-    return {source_id: reason for source_id, reason, _ in read_excluded_rows(work)}
+class Exclusions:
+    """The merged, validated exclusions of one work folder: what `load_exclusions` returns and every command uses.
+
+    `rows` [(source_id, url, reason, decided)] sorted by id: the committed rows as stored, then the rows of W/excluded-sources.tsv that
+    the committed record lacks (url from the draft row of the document, "" when the draft has none: an id-only exclusion);
+    `committed_ids` the ids of the committed rows; `work_rows` [(source_id, reason, decided)] of W/excluded-sources.tsv in file order;
+    `reasons` {source_id: reason}: every excluded id, plus every document of the draft whose normalized URL is the URL of a row."""
+
+    def __init__(self, rows, committed_ids, work_rows, reasons):
+        self.rows = rows
+        self.committed_ids = frozenset(committed_ids)
+        self.work_rows = work_rows
+        self.reasons = reasons
+        lookup = {("id", row[0]): row[0] for row in rows}
+        lookup.update({("url", common.normalize_url(row[1])): row[0] for row in rows if row[1]})
+        self.lookup = lookup
+
+    def match(self, source_id, url=""):
+        """The excluded source id that a document's id or URL matches, else None."""
+        return common.excluded_match(self.lookup, source_id, url)
+
+    def problems(self, draft, built):
+        """[message] for every built source or used source row whose id or URL is excluded."""
+        urls = {row["source_id"]: row["url"] for row in draft}
+        found = []
+        for source_id in sorted({s["source_id"] for s in built} - {AUTHORED_ID}):
+            hit = self.match(source_id, urls.get(source_id, ""))
+            if hit:
+                found.append("sentences of %s are chosen, but %s is excluded" % (source_id, hit))
+        for row in sources_rows(draft, built):
+            hit = self.match(row[0], row[3])
+            if hit and not any(p.startswith("sentences of %s " % row[0]) for p in found):
+                found.append("source row %s is used, but %s is excluded" % (row[0], hit))
+        return found
+
+    def output_rows(self, draft, tranche="standard"):
+        """The rows of the committed excluded-sources.tsv that `build` writes: the committed rows and the rows of W, sorted.
+
+        The standard tranche raises ValueError for a row of W that has no draft row (no URL) or no decided date. The hard tranche never
+        writes the record, so it needs neither: its rows only feed the refusal lookup."""
+        if tranche != "hard":
+            urls = {row["source_id"]: row["url"] for row in draft}
+            for source_id, _, decided in self.work_rows:
+                if not urls.get(source_id):
+                    raise ValueError("excluded source %s has no url in sources-draft.tsv" % source_id)
+                if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", decided):
+                    raise ValueError("excluded source %s needs a `decided` date (YYYY-MM-DD) in excluded-sources.tsv" % source_id)
+        return [list(row) for row in self.rows]
 
 
-def merged_excluded_sources(work, data_dir=None):
-    """{source_id: reason} of every excluded document: the committed record (fail closed: `read_committed_exclusions` raises ValueError
-    when it is missing or malformed) united with W/excluded-sources.tsv when that file exists.
+def load_exclusions(work, data_dir=None):
+    """The one place that reads the exclusion files: `Exclusions` of the committed record united with W/excluded-sources.tsv.
 
-    The union is by id and by normalized URL: a source of the work folder's sources-draft.tsv whose URL is listed in either table is
-    excluded too, under the reason of the row that lists the URL. Every consumer of the exclusions (`decide`, `read_decided`, the lemma
-    counts, `sample`, `report`) uses this union, so a work folder without excluded-sources.tsv still drops the committed exclusions.
-    `data_dir` is the data folder of the committed record (`common.DATA` when None)."""
-    committed = read_committed_exclusions(data_dir or common.DATA)
+    Every command that uses exclusions (`exclusions`, `candidates` with `--round` and `--controls-only`, `decide`, `sample`, `report`,
+    `build`, both profiles) gets them only through here, directly or through `read_decided`, `lemma_counts_of` and `collect_candidates`.
+    Fail closed (ValueError, ExcludedSourceError for the conflicts), before anything is written:
+    - the committed record is required and strictly read (missing, zero-byte, wrong header, malformed row, URL that is not http(s),
+      duplicate id: see `common.read_excluded_table`); a header-only record is valid;
+    - W/excluded-sources.tsv is optional and adds rows (duplicate id, missing cell: see `_read_work_exclusions`); the URL of such a row
+      is the one of its sources-draft.tsv row and must be an http(s) URL when there is one (a row without draft URL excludes by id only);
+    - an id in both tables with a different normalized URL is a conflict (ExcludedSourceError): keeping either would silently drop the
+      exclusion of the other document, so the owner must give the second document another id.
+    The union is by id and by normalized URL: a document of the draft whose URL is listed in either table is excluded too, under the
+    reason of the row that lists the URL, whatever its own id. `data_dir` is the data folder of the committed record (`common.DATA` when None)."""
+    committed = _read_committed_exclusions(data_dir or common.DATA)
+    work_rows = _read_work_exclusions(work)
     draft_urls = {row["source_id"]: row["url"] for row in read_draft(work)}
-    rows = [(source_id, url, reason, decided) for source_id, url, reason, decided in committed]
-    known = {row[0] for row in rows}
-    for source_id, reason, decided in read_excluded_rows(work):
-        if source_id not in known:
-            rows.append((source_id, draft_urls.get(source_id, ""), reason, decided))
-    excluded = {}
-    for source_id, _, reason, _ in rows:
-        excluded[source_id] = reason
-    lookup = {("id", source_id): source_id for source_id in excluded}
-    for source_id, url, _, _ in rows:
-        if url:
-            lookup[("url", common.normalize_url(url))] = source_id
+    kept = {row[0]: row for row in committed}
+    rows = [tuple(row) for row in committed]
+    problems = []
+    for source_id, reason, decided in work_rows:
+        url = draft_urls.get(source_id, "")
+        if url and not common.is_http_url(url):
+            problems.append("%s: the url in sources-draft.tsv is not an http(s) URL: %s" % (source_id, url))
+        elif source_id not in kept:
+            rows.append((source_id, url, reason, decided))
+        elif url and common.normalize_url(url) != common.normalize_url(kept[source_id][1]):
+            problems.append("%s is excluded as %s in the committed table but as %s in W/%s"
+                            % (source_id, kept[source_id][1], url, EXCLUDED_SOURCES_FILE))
+    if problems:
+        raise ExcludedSourceError("conflicting or malformed exclusion rows:\n  " + "\n  ".join(problems[:20]))
+    rows.sort()
+    reasons = {row[0]: row[2] for row in rows}
+    lookup = {("id", row[0]): row[0] for row in rows}
+    lookup.update({("url", common.normalize_url(row[1])): row[0] for row in rows if row[1]})
     for source_id, url in draft_urls.items():
         hit = common.excluded_match(lookup, source_id, url)
-        if hit and source_id not in excluded:
-            excluded[source_id] = excluded[hit]
-    return excluded
-
-
-def excluded_output_rows(work, draft, tranche="standard"):
-    """The rows of the committed excluded-sources.tsv: source_id, url (from the draft), reason, decided; [] when nothing is excluded.
-
-    Raises ValueError for an excluded document that has no draft row (no URL) or no decided date. The hard tranche never writes the
-    record, so it needs neither: its rows only feed the refusal lookup, with the draft URL when there is one and "" (match by id
-    only) when the excluded document was removed from the hard inputs."""
-    urls = {row["source_id"]: row["url"] for row in draft}
-    rows = []
-    for source_id, reason, decided in sorted(read_excluded_rows(work)):
-        if tranche == "hard":
-            rows.append([source_id, urls.get(source_id, ""), reason, decided])
-            continue
-        if source_id not in urls or not urls[source_id]:
-            raise ValueError("excluded source %s has no url in sources-draft.tsv" % source_id)
-        if not common.is_http_url(urls[source_id]):
-            raise ValueError("excluded source %s needs an http(s) url in sources-draft.tsv" % source_id)
-        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", decided):
-            raise ValueError("excluded source %s needs a `decided` date (YYYY-MM-DD) in excluded-sources.tsv" % source_id)
-        rows.append([source_id, urls[source_id], reason, decided])
-    return rows
+        if hit and source_id not in reasons:
+            reasons[source_id] = reasons[hit]
+    return Exclusions(rows, kept, work_rows, reasons)
 
 
 def read_draft(work):
@@ -608,7 +653,7 @@ def read_draft(work):
 
 def _command_exclusions(args):
     work = adjudicate.Work(args.work)
-    index = exclusion_index(args.data_dir)
+    index = exclusion_index(args.data_dir, load_exclusions(work, args.data_dir))
     rows = sorted((kind, value, origin) for (kind, value), origin in index.items())
     adjudicate.write_rows(shared_path(work, "exclusions.tsv"), ("kind", "value", "origin"), rows)
     print("%d entries (%d ids, %d urls) written to exclusions.tsv" % (len(rows), sum(r[0] == "id" for r in rows), sum(r[0] == "url" for r in rows)))
@@ -1214,10 +1259,10 @@ class LeakageFilter:
 def lemma_counts_of(works, shapes=SHAPES, data_dir=None):
     """Counter {(shape, lemma): n} of the targets of earlier work areas: the kept targets when decided.tsv exists, else the candidates.
 
-    Sources of the merged exclusions (`merged_excluded_sources`: the committed record and the work file) do not count."""
+    Sources of the merged exclusions (`load_exclusions`: the committed record and the work file) do not count."""
     counts = collections.Counter()
     for earlier in works:
-        excluded = merged_excluded_sources(earlier, data_dir)
+        excluded = load_exclusions(earlier, data_dir).reasons
         if os.path.exists(earlier.private_file("decided.tsv")):
             items, _ = read_decided(earlier, data_dir)
             members = [i for i in items if i["outcome"] == "keep"]
@@ -1273,9 +1318,10 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
         vocab = vocabulary_of(data_dir, lex)
     filt = filt or LeakageFilter(data_dir, include_ud)
     draft = {row["source_id"]: row for row in read_draft(work)}
-    index = exclusion_index(data_dir)
+    exclusions = load_exclusions(work, data_dir)          # the merged committed and work-folder exclusions: the only source of them
+    index = exclusion_index(data_dir, exclusions)
     documents = read_documents(work)
-    excluded = read_excluded_sources(work)
+    excluded = exclusions.reasons                          # by id or by normalized URL (through the draft row of the document)
     drops = collections.Counter()
     rejected = {}
     problems = []
@@ -1865,11 +1911,11 @@ def run_decisions(work, candidates, lex=None, data_dir=None):
 
     Only sentences of batches that both models completed and validated are decided; the others are `incomplete`
     (sentence keys). An item whose sentence was decided is `keep` or `drop` with a reason; an item of a source of the merged exclusions
-    (`merged_excluded_sources`: the committed record and the work file) is a `drop`. `lex` is the lexicon for the base form
+    (`load_exclusions`: the committed record and the work file) is a `drop`. `lex` is the lexicon for the base form
     rule of `frame_mismatch` (v-imperative-initial, v-after-modal).
     """
     key = read_key(work)
-    excluded = merged_excluded_sources(work, data_dir)
+    excluded = load_exclusions(work, data_dir).reasons
     by_key = {record["sent_key"]: record for record in key}
     sentences = unique_sentences(candidates)
     votes = {}
@@ -1934,9 +1980,9 @@ def _command_decide(args):
 def read_decided(work, data_dir=None):
     """([item dict], {sent_key: [(form, tag, status)]}) of private/decided.tsv and decided-rows.tsv.
 
-    An item of a source of the merged exclusions (`merged_excluded_sources`) is a `drop` whatever the stored outcome."""
+    An item of a source of the merged exclusions (`load_exclusions`) is a `drop` whatever the stored outcome."""
     _, records = adjudicate.read_records(work.private_file("decided.tsv"))
-    excluded = merged_excluded_sources(work, data_dir)
+    excluded = load_exclusions(work, data_dir).reasons
     for record in records:
         record["target"] = int(record["target"])
         record["disputed_tokens"] = int(record["disputed_tokens"])
@@ -2362,46 +2408,6 @@ def quota_problems_hard(targets, controls_chosen, floors=None, caps=None, contro
     return problems
 
 
-def merge_excluded_rows(committed, w_rows, id_only_ok=False):
-    """The sorted union of the committed exclusion rows and the work-folder rows; a committed row is never dropped or changed.
-
-    An id in both tables with the same normalized URL keeps the committed row (the committed reason and decided date stand). An id
-    in both with a different URL is a conflict, and it raises ExcludedSourceError: keeping one URL would silently erase the
-    exclusion of the other, so the owner must resolve it (use another id for the second document). This holds for both profiles.
-    `id_only_ok` (the hard tranche) treats an empty URL as an id-only exclusion, which conflicts with nothing: a work row of a document
-    that is not in the hard inputs has no draft URL.
-    """
-    merged = {row[0]: list(row) for row in committed}
-    conflicts = []
-    for row in w_rows:
-        kept = merged.get(row[0])
-        if kept is None:
-            merged[row[0]] = list(row)
-        elif id_only_ok and not (kept[1] and row[1]):
-            continue
-        elif common.normalize_url(kept[1]) != common.normalize_url(row[1]):
-            conflicts.append("%s is excluded as %s in the committed table but as %s in W/excluded-sources.tsv" % (row[0], kept[1], row[1]))
-    if conflicts:
-        raise ExcludedSourceError("conflicting exclusion rows (same id, different URL):\n  " + "\n  ".join(conflicts[:20]))
-    return sorted(merged.values())
-
-
-def excluded_problems(work, draft, built, committed, w_rows):
-    """[message] for every built source or used source row whose id or URL is in the committed or the work-folder exclusion table."""
-    lookup = common.excluded_lookup(list(committed) + [tuple(r) for r in w_rows])
-    urls = {row["source_id"]: row["url"] for row in draft}
-    problems = []
-    for source_id in sorted({s["source_id"] for s in built} - {AUTHORED_ID}):
-        hit = common.excluded_match(lookup, source_id, urls.get(source_id, ""))
-        if hit:
-            problems.append("sentences of %s are chosen, but %s is excluded" % (source_id, hit))
-    for row in sources_rows(draft, built):
-        hit = common.excluded_match(lookup, row[0], row[3])
-        if hit and not any(p.startswith("sentences of %s " % row[0]) for p in problems):
-            problems.append("source row %s is used, but %s is excluded" % (row[0], hit))
-    return problems
-
-
 def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_CAP, share=AUTHORED_SHARE, controls=CONTROLS,
           shape_lemma_cap=None, allow_short=False, data_dir=None, tranche="standard", hard=None):
     """Write dev.tsv and sources.tsv (hard.tsv and hard-sources.tsv for the hard tranche) into `out_dir`; returns (sentences, report lines).
@@ -2434,9 +2440,9 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
     unknown = sorted({s["source_id"] for s in built} - {r["source_id"] for r in draft} - {AUTHORED_ID})
     if unknown:
         raise ValueError("no source row for: " + ", ".join(unknown))
-    committed = read_committed_exclusions(data_dir or common.DATA)
-    w_rows = excluded_output_rows(work, draft, tranche)
-    refused = excluded_problems(work, draft, built, committed, w_rows)
+    exclusions = load_exclusions(work, data_dir)          # the merged exclusions (a conflict or malformed row refuses before anything is written)
+    excluded = exclusions.output_rows(draft, tranche)
+    refused = exclusions.problems(draft, built)
     if refused:
         raise ExcludedSourceError("excluded sources are used:\n  " + "\n  ".join(refused[:20]))
     if tranche == "hard":
@@ -2446,7 +2452,6 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
         short = quota_problems(targets, chosen, per_shape, lemma_cap, share, controls, shape_lemma_cap)
     if short and not allow_short:
         raise QuotaError("quotas not met (pass --allow-short to build anyway):\n  " + "\n  ".join(short[:20]))
-    excluded = merge_excluded_rows(committed, w_rows, id_only_ok=tranche == "hard")        # a conflict refuses before anything is written
     dev_name, sources_name = TRANCHE_FILES[tranche]
     common.write_corpus(os.path.join(out_dir, dev_name), common.with_flag_documentation(HEADERS[tranche], built), built)
     adjudicate.write_rows(os.path.join(out_dir, sources_name), SOURCE_COLUMNS, sources_rows(draft, built))
@@ -2523,7 +2528,7 @@ def report_lines(out_dir, work=None, tranche="standard", data_dir=None):
     """Markdown counts of the built set for the README: per shape real and authored targets and controls, documents, drops.
 
     The hard tranche reads hard.tsv, lists the shapes of HARD_SHAPES and n-measure, and adds the q-band table (`band_lines`).
-    The drop counts use the merged exclusions (`merged_excluded_sources`, `data_dir` is the data folder of the committed record)."""
+    The drop counts use the merged exclusions (`load_exclusions`, `data_dir` is the data folder of the committed record)."""
     _, sentences = common.read_corpus(os.path.join(out_dir, TRANCHE_FILES[tranche][0]))
     count = collections.Counter()
     for sentence in sentences:
@@ -2658,8 +2663,8 @@ def main(argv=None):
         common.DATA = args.data_dir
     if args.command in EXCLUSION_COMMANDS:
         try:
-            read_committed_exclusions(args.data_dir)                       # fail closed: a missing or malformed committed record refuses
-        except ValueError as error:
+            load_exclusions(adjudicate.Work(args.work), args.data_dir)      # fail closed, before the command does anything: a missing or
+        except ValueError as error:                                         # malformed record or a conflicting row (ExcludedSourceError)
             print("%s refused: %s" % (args.command, error), file=sys.stderr)
             return 1
     return commands[args.command](args)
