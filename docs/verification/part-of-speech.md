@@ -397,7 +397,7 @@ and not just the project file. The reasons for a license file instead of an expr
 
 **Tests**: the `PartOfSpeech_ThirdPartyNotices_*`, `PartOfSpeech_DataLicensing_*`, `PartOfSpeech_DataProvenance_*`,
 `PartOfSpeech_DataCorrections_*`, `PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*`,
-`PartOfSpeech_ShapesDev_*` and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
+`PartOfSpeech_ShapesDev_*`, `PartOfSpeech_ShapesDevHard_*` and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
 
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
 and fails when a file is missing or empty.
@@ -471,9 +471,28 @@ hashes, a build that uses a source listed in the committed or the work-folder ex
 another id) is refused with nothing written, the committed rows are kept in the written record, `check_licenses.py`
 reports an excluded id or URL in `dev.tsv` or `sources.tsv` and a missing or malformed record, and a missed quota
 (targets per shape, controls, lemma caps, authored share) refuses the build unless `--allow-short` is given. The extended
-`Leakage_Report_RecordsNoOverlaps` requires `shapes-dev` among the evaluation sets of every training set.
+`Leakage_Report_RecordsNoOverlaps` requires `shapes-dev` and `shapes-dev-hard` among the evaluation sets of every
+training set.
 
-The hard tranche (`hard.tsv`) tooling is covered without its data.
+The hard tranche (`hard.tsv`) is covered by the same existing tests (its source table is among the source tables and its
+corpus among the evaluation corpora) and by the `PartOfSpeech_ShapesDevHard_*` data tests, which read the committed files:
+`Header_AnnouncesDevSplitAndCarriesNoSelectionNumbers` asserts the `dev split`, `hard tranche` and development-only header
+lines and that the file has no comment key beyond the documented ones (so no q and no tagger output);
+`Items_AreWellFormedRealAndNeverDisputed` parses the file with the trainer's parser and asserts the class of the judged
+word for its role, that no judged word is `disputed`, that no item is authored, and that every control has the lemma of
+a target of its shape; `Quotas_AreMetByTheCommittedTranche` asserts 80/40/70/0/80 to 100/100/100/0/100 targets per
+shape
+(compound, subject-initial, imperative, measure, modal; no `n-measure` item), 50 to 60 controls, at most 4 targets per
+lemma and shape and at most 2 controls per lemma and shape (the quota gate of `shapes_dev.py --tranche hard build`);
+`Tokens_AreReproducedByTheTokenizer` asserts one tokenized sentence with the stored tokens;
+`Sources_AreListedOpenAndNotExcluded` asserts that `hard-sources.tsv` lists exactly the documents of the file with their
+counts, a US federal-work or public-domain basis for every row, no FAA mention, and no excluded id or normalized URL;
+`LeakageReport_RecordsNoOverlapAndSharedDocumentsWithTheStandardTranche` asserts that `hard-leakage-report.tsv` names
+every other evaluation set and the standard tranche once, with no exact or near-duplicate overlap, no shared probe word
+5-gram and no document overlap except with the standard tranche; `Sentences_AreDisjointFromTheOtherEvaluationSets`
+asserts, by reading the files, that no sentence is shared with any other evaluation set (the standard tranche included)
+and no document except with the standard tranche (and that the tranches do share documents, which is allowed); the
+standard `Sentences_AreDisjointFromTheOtherEvaluationSets` treats both tranches as one family.
 `PartOfSpeech_ShapesDevHard_Selection_UsesNoPartOfSpeechModel` scans `shapes_dev.py` and the harness
 `tools/data/hmm-tags` for a weights file, a decoder, a tagger or the shapes evaluation, asserts that the harness has no
 project reference and no reference to this library, and that the solution does not contain it. The developer-run Python
