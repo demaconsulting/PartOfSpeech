@@ -219,6 +219,11 @@ the ambiguity of the lexicon entry), may follow.
 - **Controls are real text** and few (12 to 31 for each shape) because a control must pair with a lemma of a kept target.
 - **`n-measure` is thin:** few real measure frames survive the position filter, so the shape takes at most 12 targets per
   lemma (4 for the others) and favors units and quantity nouns.
+- **Number-word vocabulary of the `n-measure` pre-selection:** the candidate filter knows the number words one to twelve,
+  fifteen, twenty, thirty to ninety, hundred, thousand and million; it omits thirteen, fourteen and sixteen to nineteen.
+  This limits only the candidate pre-selection, not the gold labels: frames with an omitted number word (`sixteen pounds`)
+  were not pre-selected as `n-measure` candidates. The labeled candidates were generated with this vocabulary, so it is
+  kept as is; a changed vocabulary would change a rerun of `candidates` and the set would no longer be reproducible from it.
 - **Narrow domain:** federal publications on agriculture, forestry, first aid, ordnance and aerospace;
   the sentence length and vocabulary are those of technical prose, not of dialogue or news.
 - **Model labels:** two models, no human review; the hand check is a model review of 60 tokens.

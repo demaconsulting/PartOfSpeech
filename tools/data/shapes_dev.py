@@ -63,7 +63,8 @@ open/train.tsv and masc/masc.tsv, read only as a spelling list, plus the lexicon
 a digit and abbreviations are exempt).
 
 Shape pre-selection (positions and lexicon only, never the class): n-measure needs the target (lower case) right after a digit number,
-`half` or a number word (not `several`), no label word (`No.`, `Type`, `Section` ...) before the number, and no noun-capable word (or
+`half` or a number word (one to twelve, fifteen, twenty, thirty to ninety, hundred, thousand, million; not `several`, and not thirteen,
+fourteen or sixteen to nineteen), no label word (`No.`, `Type`, `Section` ...) before the number, and no noun-capable word (or
 adjective plus noun-capable word) after the target, so `two machine guns` and `1860 forest planting` do not qualify; units
 and quantity nouns come first. v-after-modal needs a modal or `to` right before the target. Per shape at most ceil(target * over)
 targets (`--shape-over SHAPE=FACTOR` replaces the factor of a thin shape) with at most `--lemma-cap` per lemma; per shape `--control-pool`
@@ -187,6 +188,9 @@ AUXILIARIES = MODALS | frozenset("is are was were be been being am has have had 
 OBJECT_PRONOUNS = frozenset("it them him her us you me one".split())
 CONJUNCTIONS = frozenset("and or but nor if when while that which because although".split())
 FOLLOWING_ADVERBS = frozenset("not never always only all both each any also then".split())
+# The number words of the n-measure pre-selection: one to twelve, fifteen, twenty, the tens thirty to ninety, hundred, thousand and
+# million. thirteen, fourteen and sixteen to nineteen are NOT in the set (a known limit: the labeled candidates were generated with
+# this vocabulary, so changing it would make the built set irreproducible from `candidates`).
 NUMBER_WORDS = frozenset("one two three four five six seven eight nine ten eleven twelve fifteen twenty thirty forty fifty sixty "
                          "seventy eighty ninety hundred thousand million".split())
 QUANTITY_WORDS = frozenset(["half"])        # `several`, `few`, `many`, `another` are not numbers: no measure frame
@@ -736,7 +740,7 @@ def base_form_of(token, lex):
 
 
 def is_quantity(token):
-    """A number written with digits (a fraction, a decimal) or a number word (one ... twenty, hundred ...) or `half`."""
+    """A number written with digits (a fraction, a decimal) or a number word of NUMBER_WORDS or `half`."""
     low = token.lower()
     return common.is_number(token) or low in NUMBER_WORDS or low in QUANTITY_WORDS
 
@@ -1665,6 +1669,12 @@ def authored_room(real, share):
     return int(math.floor(real * share / (1.0 - share) + 1e-9))
 
 
+def control_quotas(controls):
+    """The control quota of each shape: they sum to `controls` exactly, the remainder goes to the first shapes in SHAPES order."""
+    base, extra = divmod(max(0, controls), len(SHAPES))
+    return {shape: base + (1 if n < extra else 0) for n, shape in enumerate(SHAPES)}
+
+
 def select_items(items, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_CAP, share=AUTHORED_SHARE, controls=CONTROLS,
                  shape_lemma_cap=None):
     """(targets, controls): the kept items chosen for the set.
@@ -1693,10 +1703,10 @@ def select_items(items, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_C
         return [i for i in ordered(shape, "control", origin) if i["lemma"] in lemmas[shape]]
 
     chosen = []
-    quota = int(math.ceil(controls / float(len(SHAPES))))
+    quotas = control_quotas(controls)
     takers = {shape: Taker(CONTROL_LEMMA_CAP, used) for shape in SHAPES}
     for shape in SHAPES:
-        chosen += takers[shape].take(control_pool(shape, "real"), quota)
+        chosen += takers[shape].take(control_pool(shape, "real"), quotas[shape])
     for shape in SHAPES:                      # fill from any shape when a shape had fewer real controls than its quota
         chosen += takers[shape].take(control_pool(shape, "real"), max(0, controls - len(chosen)))
     real_count = len(chosen)

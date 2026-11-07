@@ -774,6 +774,30 @@ class SelectionTests(unittest.TestCase):
         keys = [i["sent_key"] for i in targets + controls]
         self.assertEqual(len(keys), len(set(keys)))
 
+    def test_control_quotas_sum_to_the_requested_total_with_the_remainder_first(self):
+        self.assertEqual({shape: 20 for shape in sd.SHAPES}, sd.control_quotas(100))
+        for controls in (0, 1, 4, 6, 7, 99, 101):
+            quotas = sd.control_quotas(controls)
+            self.assertEqual(controls, sum(quotas.values()))
+            self.assertLessEqual(max(quotas.values()) - min(quotas.values()), 1)
+        self.assertEqual([1, 0, 0, 0, 0], [sd.control_quotas(1)[shape] for shape in sd.SHAPES])
+        self.assertEqual([2, 1, 1, 1, 1], [sd.control_quotas(6)[shape] for shape in sd.SHAPES])
+
+    def test_the_controls_never_exceed_the_requested_total(self):
+        for controls in (1, 6, 7):
+            _, chosen = sd.select_items(self.pool(), per_shape=20, lemma_cap=4, share=0.30, controls=controls)
+            self.assertLessEqual(len(chosen), controls)
+        _, chosen = sd.select_items(self.pool(), per_shape=20, lemma_cap=4, share=0.30, controls=1)
+        self.assertEqual(1, len(chosen))
+        self.assertEqual(sd.SHAPES[0], chosen[0]["shape"])
+
+    def test_the_number_words_are_the_documented_set(self):
+        documented = set("one two three four five six seven eight nine ten eleven twelve fifteen twenty thirty forty fifty sixty "
+                         "seventy eighty ninety hundred thousand million".split())
+        self.assertEqual(documented, set(sd.NUMBER_WORDS))
+        for omitted in "thirteen fourteen sixteen seventeen eighteen nineteen".split():    # a known limit, documented in the README
+            self.assertNotIn(omitted, sd.NUMBER_WORDS)
+
     def test_authored_room(self):
         self.assertEqual(3, sd.authored_room(8, 0.30))
 
