@@ -23,16 +23,17 @@ Commands (all take `--work W`; `--data-dir D` replaces the repository's data fol
   python tools/data/shapes_dev.py --work W tokenize [--cmd "COMMAND PREFIX"]    # shells out to the C# trainer command shapes-tokenize
   python tools/data/shapes_dev.py --work W candidates [--no-ud] [--target 120] [--over 1.6] [--shape-over SHAPE=FACTOR ...]
                                                      [--lemma-cap 4] [--shape-lemma-cap SHAPE=N ...] [--control-pool 100]
+                                                     [--round NAME] [--only-shapes SHAPE[,SHAPE]] [--no-controls] [--compound-strict]
                                                                                 # cleanliness, position and lexicon pre-selection + leakage filters
-  python tools/data/shapes_dev.py --work W export [--size 150] [--rows 3500]    # blind batches, private/key.tsv, batches/status.tsv
-  python tools/data/shapes_dev.py --work W check-batches                        # 3 columns, tokens equal the key, no leak
-  python tools/data/shapes_dev.py --work W validate-output --batch b001 --model opus   # (or --all); updates batches/status.tsv
-  python tools/data/shapes_dev.py --work W status
-  python tools/data/shapes_dev.py --work W decide                               # the pre-registered decision rule
-  python tools/data/shapes_dev.py --work W sample [--per-shape 12] [--controls 4]   # review sample for the precision gate
+  python tools/data/shapes_dev.py --work W export [--size 150] [--rows 3500] [--round NAME]   # blind batches, private/key.tsv, batches/status.tsv
+  python tools/data/shapes_dev.py --work W check-batches [--round NAME]         # 3 columns, tokens equal the key, no leak
+  python tools/data/shapes_dev.py --work W validate-output --batch b001 --model opus [--round NAME]   # (or --all); updates batches/status.tsv
+  python tools/data/shapes_dev.py --work W status [--round NAME]
+  python tools/data/shapes_dev.py --work W decide [--round NAME]                # the pre-registered decision rule
+  python tools/data/shapes_dev.py --work W sample [--per-shape 12] [--controls 4]   # review sample for the precision gate (all rounds)
   python tools/data/shapes_dev.py --work W review-result --verdicts FILE ...     # precision of the model review; STOP below 95%
-  python tools/data/shapes_dev.py --work W build [--out-dir D]                  # dev.tsv and sources.tsv
-  python tools/data/shapes_dev.py --work W report [--out-dir D]                 # counts for the README
+  python tools/data/shapes_dev.py --work W build [--out-dir D]                  # dev.tsv and sources.tsv (the root and every round)
+  python tools/data/shapes_dev.py --work W report [--out-dir D]                 # counts for the README (the root and every round)
 
 The tokenizer command is `dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- shapes-tokenize --in FILE
 --out FILE` (the default of `tokenize`): one sentence per input line; one line `text<TAB>sentences<TAB>tokens` (tokens
@@ -54,6 +55,25 @@ adjective plus noun-capable word) after the target, so `two machine guns` and `1
 and quantity nouns come first. v-after-modal needs a modal or `to` right before the target. Per shape at most ceil(target * over)
 targets (`--shape-over SHAPE=FACTOR` replaces the factor of a thin shape) with at most `--lemma-cap` per lemma; per shape `--control-pool`
 control candidates from the lemmas of that shape's targets, at most 2 per lemma.
+
+Compound modifier rule (`--compound-strict`, only for the n-compound-head pattern; off by default so that the candidates of round 1 and 2
+stay reproducible; round 3 uses it). The token before the target must be noun-like (see `noun_like_modifier`): the lexicon lists a NOUN
+reading and no ADJ, ADV, DET, PRON, NUM, ADP, AUX, PART, CCONJ, SCONJ or INTJ reading; it is no number word, digit number or function word; and
+a word ending in `-ing` or `-ed` must be listed as a noun (NOUN or PROPN) only, since a participle modifies the head like an adjective.
+Rationale: in round 2 the labelers called the word before the target an adjective in most of the frame-mismatch drops.
+
+Rounds (incremental labeling, so extra real candidates of chosen shapes can be added without touching labeled items or ids). The root of
+the work folder is round 0; `--round NAME` (letters, digits, `-`, `_`) selects the folder W/rounds/NAME with its own candidates.tsv, batches/
+(with out/opus and out/sol), and private/ (key.tsv, decided.tsv, ...); tokens.tsv, text/, authored/ and sources-draft.tsv stay shared in W.
+`candidates --round NAME` drops every sentence whose key, and every (source_id, line), is already in the candidates of the root and of the
+earlier rounds (natural name order: r2 before r10), so no sentence is labeled twice; takes `--only-shapes A,B` (only those shapes) and
+`--no-controls`; skips authored rows of other shapes; and prefers new lemmas: a lemma that already has `--lemma-cap` kept targets (decided
+items; candidates when the earlier round is not decided) of the shape in earlier rounds gets no candidate, a lemma that has some comes after
+the new lemmas. Candidate ids carry the round name (`r3-c00001`) and the opaque batch ids and the batch shuffle use a seed derived from the
+round name and avoid every id already in an earlier key, so ids never collide. `export`, `check-batches`, `validate-output`, `status` and
+`decide` take `--round NAME` and work on that folder only. `sample`, `build` and `report` ignore `--round` and merge the decided items of the
+root and of every round folder under W/rounds (a folder without decided.tsv is skipped; the root keeps its old behavior when no round exists):
+the lemma cap, the authored cap and the selection run across the union. Hand check: generate the sample after every round is decided.
 
 Decision rule (pre-registered in data/eval/shapes-dev/README.md before any label was seen; see `decide_item` and `frame_mismatch`). For the judged
 word (the target): different tags -> drop the sentence (counted per shape); the same tag but a class other than the intended one
@@ -88,6 +108,8 @@ import leakage
 # ---------------------------------------------------------------- constants
 
 SEED = 20261110
+ROUNDS_DIR = "rounds"
+ROUND_NAME_RE = re.compile(r"[A-Za-z0-9_-]+")
 SHAPES = ("n-compound-head", "n-subject-initial", "v-imperative-initial", "n-measure", "v-after-modal")
 SHAPE_CLASS = {shape: ("Noun" if shape.startswith("n-") else "Verb") for shape in SHAPES}
 OTHER_CLASS = {"Noun": "Verb", "Verb": "Noun"}
@@ -155,6 +177,8 @@ UNITS = frozenset("pound ounce cup drop pinch load round turn step inch foot yar
 QUANTITY_OF = frozenset("of per each apiece long wide deep high thick apart".split())   # a counted noun right before these is a quantity
 BASE_FORM_SHAPES = ("v-imperative-initial", "v-after-modal")
 FUNCTION_WORDS = DETERMINERS | PREPOSITIONS | AUXILIARIES | CONJUNCTIONS | OBJECT_PRONOUNS | frozenset("not to as so than too only also".split())
+MODIFIER_BLOCKING_TAGS = frozenset("ADJ ADV DET PRON NUM ADP AUX PART CCONJ SCONJ INTJ".split())   # a reading that makes a word no plain noun modifier
+NOUN_ONLY_TAGS = frozenset(("NOUN", "PROPN"))
 
 
 # ---------------------------------------------------------------- small helpers
@@ -187,7 +211,80 @@ def intended_class(shape, role):
 
 
 def work_path(work, *parts):
+    """A path of the folder the work object stands for (the root, or one round folder)."""
     return os.path.join(work.root, *parts)
+
+
+def shared_path(work, *parts):
+    """A path of the shared inputs (sources-draft.tsv, text/, authored/, tokens.tsv): always the root of the work folder."""
+    return os.path.join(getattr(work, "base", work.root), *parts)
+
+
+class RoundWork(adjudicate.Work):
+    """The work area of one labeling round: W/rounds/NAME holds its candidates.tsv, batches/ and private/ (`base` is W)."""
+
+    def __init__(self, base, name):
+        if not ROUND_NAME_RE.fullmatch(name):
+            raise ValueError("a round name has letters, digits, '-' and '_' only: %r" % name)
+        super().__init__(os.path.join(base, ROUNDS_DIR, name))
+        self.base = base
+        self.name = name
+
+
+def open_work(args):
+    """The Work of `--work`, or the RoundWork of `--round NAME` when the command line names a round."""
+    name = getattr(args, "round", None)
+    return RoundWork(args.work, name) if name else adjudicate.Work(args.work)
+
+
+def natural_key(name):
+    """Sort key of a round name that orders numbers by value (r2 before r10)."""
+    return [(0, int(part), "") if part.isdigit() else (1, 0, part) for part in re.split(r"(\d+)", name) if part]
+
+
+def round_names(base):
+    """The names of the round folders under W/rounds, in natural order."""
+    folder = os.path.join(base, ROUNDS_DIR)
+    if not os.path.isdir(folder):
+        return []
+    return sorted((n for n in os.listdir(folder) if os.path.isdir(os.path.join(folder, n)) and ROUND_NAME_RE.fullmatch(n)), key=natural_key)
+
+
+def all_works(work, only_existing=None):
+    """[Work]: the root of the work folder, then every round folder in natural order; `only_existing` is a file name in private/
+    that a work must have (for example `decided.tsv`)."""
+    base = getattr(work, "base", work.root)
+    works = [adjudicate.Work(base)] + [RoundWork(base, n) for n in round_names(base)]
+    if only_existing:
+        works = [w for w in works if os.path.exists(w.private_file(only_existing))]
+    return works
+
+
+def earlier_works(work):
+    """[Work] whose candidates a new round must not repeat: the root and the rounds before this one (natural order).
+
+    Empty for the root itself (no earlier round) and when a folder has no candidates.tsv.
+    """
+    name = getattr(work, "name", None)
+    if not name:
+        return []
+    base = work.base
+    found = [adjudicate.Work(base)] + [RoundWork(base, other) for other in round_names(base) if natural_key(other) < natural_key(name)]
+    return [w for w in found if os.path.exists(work_path(w, "candidates.tsv"))]
+
+
+def round_seed(seed, name):
+    """The seed of the batch shuffle and the opaque ids of a round: the plain seed for the root, a hash of seed and name otherwise."""
+    return seed if not name else int(rank_of(seed, "round", name)[:12], 16)
+
+
+def assign_round_ids(keys, seed, avoid):
+    """{key: opaque id} like adjudicate.assign_ids, but never an id of `avoid` (the ids of the earlier rounds)."""
+    ordered = sorted(keys)
+    numbers = random.Random(seed).sample(range(1 << 24), len(ordered) + len(avoid))
+    free = ["s%06x" % n for n in numbers]
+    free = [i for i in free if i not in avoid][:len(ordered)]
+    return dict(zip(ordered, free))
 
 
 def read_plain_tsv(path, columns):
@@ -262,7 +359,7 @@ def document_rejection(index, source_id, url=""):
 
 def read_draft(work):
     """[source row dict] of W/sources-draft.tsv (empty when the file is missing); `doc_id` is accepted for the first column header."""
-    path = work_path(work, "sources-draft.tsv")
+    path = shared_path(work, "sources-draft.tsv")
     if not os.path.exists(path):
         return []
     lines = [line for line in common.read_lines(path) if line.strip() != ""]
@@ -284,7 +381,7 @@ def _command_exclusions(args):
     work = adjudicate.Work(args.work)
     index = exclusion_index(args.data_dir)
     rows = sorted((kind, value, origin) for (kind, value), origin in index.items())
-    adjudicate.write_rows(work_path(work, "exclusions.tsv"), ("kind", "value", "origin"), rows)
+    adjudicate.write_rows(shared_path(work, "exclusions.tsv"), ("kind", "value", "origin"), rows)
     print("%d entries (%d ids, %d urls) written to exclusions.tsv" % (len(rows), sum(r[0] == "id" for r in rows), sum(r[0] == "url" for r in rows)))
     rejected = 0
     for value in args.check or ():
@@ -303,7 +400,7 @@ def _command_exclusions(args):
 
 def read_documents(work):
     """{source_id: [(line number, sentence)]} of W/text/*.txt (one sentence per line; empty lines skipped)."""
-    folder = work_path(work, "text")
+    folder = shared_path(work, "text")
     documents = {}
     if os.path.isdir(folder):
         for name in sorted(os.listdir(folder)):
@@ -315,7 +412,7 @@ def read_documents(work):
 
 def read_authored(work):
     """[(shape, lemma, role, sentence)] of W/authored/<shape>.tsv in shape and file order."""
-    folder = work_path(work, "authored")
+    folder = shared_path(work, "authored")
     found = []
     for shape in SHAPES:
         path = os.path.join(folder, shape + ".tsv")
@@ -330,7 +427,7 @@ def read_authored(work):
 
 def read_tokens(work):
     """{sentence text: (sentence count, [tokens])} of W/tokens.tsv (empty when `tokenize` has not run)."""
-    path = work_path(work, "tokens.tsv")
+    path = shared_path(work, "tokens.tsv")
     if not os.path.exists(path):
         return {}
     _, records = adjudicate.read_records(path)
@@ -378,7 +475,7 @@ def _command_tokenize(args):
         command = [part.strip('"') for part in shlex.split(args.cmd, posix=os.name != "nt")] if args.cmd else default_tokenizer_command()
         known.update(run_tokenizer(missing, command))
     rows = [(text, count, " ".join(tokens)) for text, (count, tokens) in sorted(known.items())]
-    adjudicate.write_rows(work_path(work, "tokens.tsv"), ("text", "sentences", "tokens"), rows)
+    adjudicate.write_rows(shared_path(work, "tokens.tsv"), ("text", "sentences", "tokens"), rows)
     print("%d sentences, %d newly tokenized; written to tokens.tsv" % (len(texts), len(missing)))
     return 0
 
@@ -592,10 +689,25 @@ def follows_like_verb(lex, token):
             or has_tag(lex, low, "VERB") or has_tag(lex, low, "AUX"))
 
 
-def shape_hits(tokens, lex):
+def noun_like_modifier(lex, token):
+    """True when `token` can be the noun modifier of a compound (the `--compound-strict` rule on the token before the head).
+
+    Lexicon only: a NOUN reading; no reading in MODIFIER_BLOCKING_TAGS (adjective, adverb, determiner, pronoun, number, preposition,
+    auxiliary or modal, particle, conjunction, interjection); not a digit number, a number word or a function word; a word that ends in
+    `-ing` or `-ed` only when it is listed as a noun (NOUN, PROPN) and nothing else (a participle modifies like an adjective).
+    """
+    low = token.lower()
+    tags = lex.get(low, frozenset())
+    if "NOUN" not in tags or tags & MODIFIER_BLOCKING_TAGS or common.is_number(token) or low in NUMBER_WORDS or low in FUNCTION_WORDS:
+        return False
+    return not (low.endswith(("ing", "ed")) and not tags <= NOUN_ONLY_TAGS)
+
+
+def shape_hits(tokens, lex, compound_strict=False):
     """[(shape, index)]: where the tokens match the position and lexicon pattern of a shape (at most one index per shape).
 
     The patterns only pre-select candidates (plan 2.4); the class of the judged word is decided by the two labelers.
+    `compound_strict` adds the `noun_like_modifier` test on the token before the head of an n-compound-head hit.
     """
     hits = {}
     n = len(tokens)
@@ -618,7 +730,7 @@ def shape_hits(tokens, lex):
         if i >= 1 and (plow in MODALS or plow == "to") and lemma_of(token, lex) == low:
             hits.setdefault("v-after-modal", i)
         if (i >= 1 and has_tag(lex, plow, "NOUN") and is_word(prev) and plow not in DETERMINERS | PREPOSITIONS | AUXILIARIES | OBJECT_PRONOUNS
-                and (nxt is None or follows_like_verb(lex, nxt))):
+                and (nxt is None or follows_like_verb(lex, nxt)) and (not compound_strict or noun_like_modifier(lex, prev))):
             before = tokens[i - 2].lower() if i >= 2 else None
             if before is not None and (before in DETERMINERS or before in PREPOSITIONS or before in CONJUNCTIONS
                                        or before in AUXILIARIES or not is_word(tokens[i - 2])):
@@ -670,9 +782,25 @@ class LeakageFilter:
         return bool(leakage.ngrams(text, leakage.PROBE_NGRAM) & self.probe)
 
 
+def lemma_counts_of(works, shapes=SHAPES):
+    """Counter {(shape, lemma): n} of the targets of earlier work areas: the kept targets when decided.tsv exists, else the candidates."""
+    counts = collections.Counter()
+    for earlier in works:
+        if os.path.exists(earlier.private_file("decided.tsv")):
+            items, _ = read_decided(earlier)
+            members = [i for i in items if i["outcome"] == "keep"]
+        elif os.path.exists(work_path(earlier, "candidates.tsv")):
+            members = read_candidates(earlier)
+        else:
+            continue
+        counts.update((i["shape"], i["lemma"]) for i in members if i["role"] == "target" and i["shape"] in shapes)
+    return counts
+
+
 def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE, over=OVER_COLLECT, lemma_cap=LEMMA_CAP,
                        seed=SEED, tokens_override=None, filt=None, shape_over=None, control_pool=CONTROL_POOL, clean=True, vocab=None,
-                       shape_lemma_cap=None):
+                       shape_lemma_cap=None, only_shapes=None, controls=True, compound_strict=False, exclude_keys=None,
+                       exclude_lines=None, lemma_existing=None, prefix=""):
     """(candidate rows, report lines): the candidates of every shape from the real text and the authored sentences.
 
     Real sentences are scanned in document and line order; a sentence that is too short or too long, noisy (`noise_reason`, when
@@ -680,7 +808,16 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
     document with DOCUMENT_KEY_HITS sentences that are also in a training or evaluation set is rejected as a whole (a mirror or a
     reprint). Per shape at most ceil(target * factor) targets are taken (`over`, or the factor of `shape_over[shape]`) and, per lemma,
     `lemma_cap`; controls: `control_pool` per shape from the lemmas of the shape's targets, at most CONTROL_LEMMA_CAP per lemma.
+
+    Rounds: `only_shapes` limits the shapes; `controls=False` writes no controls; `compound_strict` applies `noun_like_modifier`;
+    `exclude_keys` (sentence keys) and `exclude_lines` ((source_id, line)) are sentences of earlier work areas that are dropped
+    (`already-in-earlier-round`); `lemma_existing` {(shape, lemma): n} are the kept targets of earlier work areas: a lemma at the cap
+    gets no candidate and a lemma below it comes after the new lemmas; `prefix` (`r3-`) starts every candidate id.
     """
+    shapes = tuple(only_shapes) if only_shapes else SHAPES
+    exclude_keys = exclude_keys or frozenset()
+    exclude_lines = exclude_lines or frozenset()
+    lemma_existing = lemma_existing or {}
     shape_over = shape_over or {}
     shape_lemma_cap = shape_lemma_cap or {}
     tokens_of = tokens_override if tokens_override is not None else read_tokens(work)
@@ -720,6 +857,8 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
             noise = noise_reason(text, toks, lex, vocab) if clean and MIN_TOKENS <= len(toks) <= MAX_TOKENS else None
             if not MIN_TOKENS <= len(toks) <= MAX_TOKENS:
                 drops["length"] += 1
+            elif key in exclude_keys or (source_id, number) in exclude_lines:
+                drops["already-in-earlier-round"] += 1
             elif noise:
                 drops["noise-" + noise] += 1
             elif key in seen_keys:
@@ -732,32 +871,38 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
                 seen_keys.add(key)
                 all_sentences.append((source_id, number, text, toks))
     for source_id, number, text, toks in all_sentences:
-        for shape, i in shape_hits(toks, lex):
+        for shape, i in shape_hits(toks, lex, compound_strict):
+            if shape not in shapes:
+                continue
             pools[shape].append((rank_of(seed, shape, sent_key_of(text)), dict(shape=shape, role="target", target=i, lemma=lemma_of(toks[i], lex),
                                                                                 origin="real", source_id=source_id, line=number, text=text,
                                                                                 tokens=toks)))
     rows = []
-    limits = {shape: int(math.ceil(target * shape_over.get(shape, over))) for shape in SHAPES}
-    pool_sizes = {shape: len(pools[shape]) for shape in SHAPES}
+    limits = {shape: int(math.ceil(target * shape_over.get(shape, over))) for shape in shapes}
+    pool_sizes = {shape: len(pools[shape]) for shape in shapes}
     chosen_lemmas = {shape: set() for shape in SHAPES}
-    for shape in SHAPES:
+    for shape in shapes:
         counts = collections.Counter()
-        for _, row in sorted(pools[shape], key=lambda item: (preference(shape, item[1], lex), item[0])):
+        cap = shape_lemma_cap.get(shape, lemma_cap)
+        ranked = sorted(pools[shape], key=lambda item: (preference(shape, item[1], lex), lemma_existing.get((shape, item[1]["lemma"]), 0) > 0, item[0]))
+        for _, row in ranked:
             if sum(counts.values()) >= limits[shape]:
                 break
-            if counts[row["lemma"]] < shape_lemma_cap.get(shape, lemma_cap):
+            if lemma_existing.get((shape, row["lemma"]), 0) >= cap:
+                continue
+            if counts[row["lemma"]] < cap:
                 counts[row["lemma"]] += 1
                 rows.append(row)
         chosen_lemmas[shape] = set(counts)
 
-    control_rows = {shape: [] for shape in SHAPES}
-    for source_id, number, text, toks in all_sentences:
-        for shape in SHAPES:
+    control_rows = {shape: [] for shape in shapes}
+    for source_id, number, text, toks in (all_sentences if controls else ()):
+        for shape in shapes:
             for i in control_hits(toks, lex, shape, chosen_lemmas[shape]):
                 control_rows[shape].append((rank_of(seed, "control", shape, sent_key_of(text)),
                                             dict(shape=shape, role="control", target=i, lemma=lemma_of(toks[i], lex), origin="real",
                                                  source_id=source_id, line=number, text=text, tokens=toks)))
-    for shape in SHAPES:
+    for shape in shapes:
         counts = collections.Counter()
         for _, row in sorted(control_rows[shape], key=lambda item: item[0]):
             if sum(counts.values()) >= control_pool:
@@ -765,19 +910,24 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
             if counts[row["lemma"]] < CONTROL_LEMMA_CAP:
                 counts[row["lemma"]] += 1
                 rows.append(row)
-    authored_rows, authored_problems = authored_candidates(work, lex, tokens_of, filt)
+    authored_rows, authored_problems = authored_candidates(work, lex, tokens_of, filt, exclude_keys)
+    authored_rows = [r for r in authored_rows if r["shape"] in shapes and (controls or r["role"] == "target")]
     problems += authored_problems
     rows += authored_rows
     rows.sort(key=lambda r: (SHAPES.index(r["shape"]), ROLES.index(r["role"]), ORIGINS.index(r["origin"]),
                              rank_of(seed, r["shape"], r["role"], sent_key_of(r["text"]))))
     for number, row in enumerate(rows, 1):
-        row["cand_id"] = "c%05d" % number
-    report = candidate_report(rows, drops, rejected, problems, limits, draft, documents, considered, len(all_sentences), pool_sizes, target)
+        row["cand_id"] = "%sc%05d" % (prefix, number)
+    report = candidate_report(rows, drops, rejected, problems, limits, draft, documents, considered, len(all_sentences), pool_sizes, target,
+                              shapes)
     return rows, report
 
 
-def authored_candidates(work, lex, tokens_of, filt):
-    """(rows, problems) of the authored sentences: the target is the first token whose lemma is the lemma of the row."""
+def authored_candidates(work, lex, tokens_of, filt, exclude_keys=frozenset()):
+    """(rows, problems) of the authored sentences: the target is the first token whose lemma is the lemma of the row.
+
+    A sentence whose key is in `exclude_keys` (already a candidate of an earlier round) is skipped without a problem.
+    """
     rows, problems, seen = [], [], set()
     for shape, lemma, role, sentence in read_authored(work):
         if sentence not in tokens_of or tokens_of[sentence][0] != 1:
@@ -785,6 +935,8 @@ def authored_candidates(work, lex, tokens_of, filt):
             continue
         toks = tokens_of[sentence][1]
         key = sent_key_of(sentence)
+        if key in exclude_keys:
+            continue
         if not MIN_TOKENS <= len(toks) <= MAX_TOKENS or key in seen or filt.key_hit(sentence) or filt.probe_hit(sentence):
             problems.append("authored %s: sentence %s is too short or long, a duplicate, or equals or shares wording with an existing set"
                             % (shape, key))
@@ -804,7 +956,8 @@ def preference(shape, row, lex):
     return 0 if shape != "n-measure" or row["lemma"] in UNITS else 1
 
 
-def candidate_report(rows, drops, rejected, problems, limits, draft, documents, considered=0, clean=0, pool_sizes=None, target=TARGET_PER_SHAPE):
+def candidate_report(rows, drops, rejected, problems, limits, draft, documents, considered=0, clean=0, pool_sizes=None, target=TARGET_PER_SHAPE,
+                     shapes=SHAPES):
     lines = ["# Candidates", "", "Counts only; no text of any evaluation set.", ""]
     lines += ["documents with text: %d, listed in the draft: %d, rejected: %d" % (len(documents), len(draft), len(rejected))]
     for source_id, reason in sorted(rejected.items()):
@@ -815,7 +968,7 @@ def candidate_report(rows, drops, rejected, problems, limits, draft, documents, 
               "of which noise (cleanliness filter): %d" % noise, ""]
     lines += ["| shape | pool (real hits) | target limit | target real | target authored | control real | control authored | "
               "real targets below the target of %d |" % target, "| --- | --- | --- | --- | --- | --- | --- | --- |"]
-    for shape in SHAPES:
+    for shape in shapes:
         count = collections.Counter((r["role"], r["origin"]) for r in rows if r["shape"] == shape)
         short = max(0, min(limits[shape], target) - count[("target", "real")])
         lines.append("| %s | %s | %d | %d | %d | %d | %d | %d |" % (shape, (pool_sizes or {}).get(shape, "-"), limits[shape], count[("target", "real")],
@@ -849,16 +1002,44 @@ def parse_shape_lemma_cap(values):
     return parse_shape_option(values, "--shape-lemma-cap", int, 1)
 
 
+def parse_only_shapes(value):
+    """The tuple of shapes of `--only-shapes A,B` (None when not given); an unknown shape is an error."""
+    if not value:
+        return None
+    shapes = tuple(part.strip() for part in value.split(",") if part.strip())
+    unknown = [s for s in shapes if s not in SHAPES]
+    if unknown or not shapes:
+        raise ValueError("--only-shapes needs shapes of %s: %r" % (", ".join(SHAPES), value))
+    return tuple(dict.fromkeys(shapes))
+
+
+def earlier_exclusions(work):
+    """(sentence keys, {(source_id, line)}, Counter {(shape, lemma): kept}) of the root and the earlier rounds of `work`."""
+    keys, lines = set(), set()
+    works = earlier_works(work)
+    for earlier in works:
+        for row in read_candidates(earlier):
+            keys.add(row["sent_key"])
+            if row["origin"] == "real":
+                lines.add((row["source_id"], int(row["line"])))
+    return keys, lines, lemma_counts_of(works)
+
+
 def _command_candidates(args):
-    work = adjudicate.Work(args.work)
+    work = open_work(args)
+    only = parse_only_shapes(args.only_shapes)
+    keys, lines, existing = earlier_exclusions(work)
+    name = getattr(work, "name", None)
     rows, report = collect_candidates(work, args.data_dir, not args.no_ud, args.target, args.over, args.lemma_cap, args.seed,
                                       shape_over=parse_shape_over(args.shape_over), control_pool=args.control_pool,
-                                      shape_lemma_cap=parse_shape_lemma_cap(args.shape_lemma_cap))
+                                      shape_lemma_cap=parse_shape_lemma_cap(args.shape_lemma_cap), only_shapes=only,
+                                      controls=not args.no_controls, compound_strict=args.compound_strict, exclude_keys=keys,
+                                      exclude_lines=lines, lemma_existing=existing, prefix=name + "-" if name else "")
     for line in report:
         print(line)
     common.write_text(work.private_file("candidates-report.md"), report)
     write_candidates(work, rows)
-    print("%d candidates written to candidates.tsv" % len(rows))
+    print("%d candidates written to %scandidates.tsv" % (len(rows), "rounds/%s/" % name if name else ""))
     return 0
 
 
@@ -908,14 +1089,23 @@ def make_batches(sentences, seed=SEED, size=adjudicate.BATCH_SENTENCES, budget=a
 
 
 def _command_export(args):
-    work = adjudicate.Work(args.work)
+    work = open_work(args)
+    name = getattr(work, "name", None)
     sentences = unique_sentences(read_candidates(work))
     stale = [m for m in adjudicate.MODELS if os.path.isdir(work.out(m)) and os.listdir(work.out(m))]
     if stale and not args.force:
         print("refusing to export: tagger outputs exist under batches/out (they belong to the previous export); remove them or use --force")
         return 1
-    ids = adjudicate.assign_ids(sentences, args.seed)
-    batches = make_batches(sentences, args.seed, args.size, args.rows)
+    seed = round_seed(args.seed, name)
+    if name:
+        avoid = set()
+        for earlier in all_works(work):
+            if earlier.root != work.root and os.path.exists(earlier.private_file("key.tsv")):
+                avoid.update(record["opaque_id"] for record in read_key(earlier))
+        ids = assign_round_ids(sentences, seed, avoid)
+    else:
+        ids = adjudicate.assign_ids(sentences, seed)
+    batches = make_batches(sentences, seed, args.size, args.rows)
     if os.path.isdir(work.batches):
         for name in os.listdir(work.batches):
             if name.endswith(".tsv") and adjudicate.BATCH_RE.match(name[:-4]):
@@ -930,6 +1120,9 @@ def _command_export(args):
         adjudicate.write_batch(work.batch_file(name), rows)
     adjudicate.write_rows(work.private_file("key.tsv"), KEY_COLUMNS, key_rows)
     adjudicate.write_status(work, collections.OrderedDict((name, adjudicate.new_status_record(name)) for name, _ in batches))
+    if getattr(work, "name", None):
+        for model in adjudicate.MODELS:
+            os.makedirs(work.out(model), exist_ok=True)
     print("%d batches, %d sentences, %d token rows" % (len(batches), len(sentences), sum(len(s[2]) for s in sentences.values())))
     return 0
 
@@ -978,7 +1171,7 @@ def check_batches(work, sentences, budget=adjudicate.BATCH_ROWS):
 
 
 def _command_check_batches(args):
-    work = adjudicate.Work(args.work)
+    work = open_work(args)
     errors = check_batches(work, unique_sentences(read_candidates(work)), args.rows)
     for message in errors[:args.limit]:
         print("  " + message)
@@ -987,7 +1180,7 @@ def _command_check_batches(args):
 
 
 def _command_validate_output(args):
-    work = adjudicate.Work(args.work)
+    work = open_work(args)
     if not args.batch and not args.all:
         raise ValueError("give --batch BNNN or --all")
     models = (args.model,) if args.model else adjudicate.MODELS
@@ -1008,7 +1201,7 @@ def _command_validate_output(args):
 
 
 def _command_status(args):
-    work = adjudicate.Work(args.work)
+    work = open_work(args)
     status = adjudicate.read_status(work)
     counts = collections.Counter()
     for record in status.values():
@@ -1017,9 +1210,9 @@ def _command_status(args):
     print("%d batches" % len(status))
     for name, count in sorted(counts.items()):
         print("  %-16s %d" % (name, count))
-    for label, name in (("sources-draft", "sources-draft.tsv"), ("tokens", "tokens.tsv"), ("candidates", "candidates.tsv"),
-                        ("decided items", os.path.join("private", "decided.tsv"))):
-        print("  %-16s %s" % (label, "present" if os.path.exists(work_path(work, name)) else "missing"))
+    for label, path in (("sources-draft", shared_path(work, "sources-draft.tsv")), ("tokens", shared_path(work, "tokens.tsv")),
+                        ("candidates", work_path(work, "candidates.tsv")), ("decided items", work.private_file("decided.tsv"))):
+        print("  %-16s %s" % (label, "present" if os.path.exists(path) else "missing"))
     return 0
 
 
@@ -1140,7 +1333,7 @@ def decide_report(items, incomplete):
 
 
 def _command_decide(args):
-    work = adjudicate.Work(args.work)
+    work = open_work(args)
     items, rows, incomplete = run_decisions(work, read_candidates(work))
     report = decide_report(items, incomplete)
     adjudicate.write_rows(work.private_file("decided.tsv"), ITEM_COLUMNS, [[i[c] for c in ITEM_COLUMNS] for i in items])
@@ -1161,6 +1354,39 @@ def read_decided(work):
     for record in row_records:
         rows[record["sent_key"]].append((int(record["index"]), record["form"], record["tag"], record["status"]))
     return records, {key: [cells[1:] for cells in sorted(cells_list)] for key, cells_list in rows.items()}
+
+
+def read_all_candidates(work):
+    """[candidate dict] of the root and of every round under W/rounds (the root alone when no round has candidates)."""
+    works = [w for w in all_works(work) if os.path.exists(work_path(w, "candidates.tsv"))]
+    if not works:
+        return read_candidates(adjudicate.Work(getattr(work, "base", work.root)))
+    found, seen = [], set()
+    for member in works:
+        for row in read_candidates(member):
+            if row["cand_id"] in seen:
+                raise ValueError("candidate id %s is used in two rounds" % row["cand_id"])
+            seen.add(row["cand_id"])
+            found.append(row)
+    return found
+
+
+def read_all_decided(work):
+    """([item], {sent_key: rows}) merged over the root and every round that has decided items (the root alone when none has)."""
+    works = all_works(work, "decided.tsv")
+    if not works:
+        return read_decided(adjudicate.Work(getattr(work, "base", work.root)))
+    items, rows, seen = [], {}, set()
+    for member in works:
+        member_items, member_rows = read_decided(member)
+        for item in member_items:
+            if item["cand_id"] in seen:
+                raise ValueError("candidate id %s is decided in two rounds" % item["cand_id"])
+            seen.add(item["cand_id"])
+            items.append(item)
+        for key, tagged in member_rows.items():
+            rows.setdefault(key, tagged)
+    return items, rows
 
 
 # ---------------------------------------------------------------- review sample (the precision gate)
@@ -1211,8 +1437,8 @@ def sample_lines(sample, sentences, prefix="R"):
 
 def _command_sample(args):
     work = adjudicate.Work(args.work)
-    items, _ = read_decided(work)
-    sentences = unique_sentences(read_candidates(work))
+    items, _ = read_all_decided(work)
+    sentences = unique_sentences(read_all_candidates(work))
     sample = build_sample(items, args.seed, args.per_shape, args.controls)
     lines, keys = sample_lines(sample, sentences)
     common.write_text(work.private_file("review-sample.md"), lines)
@@ -1412,12 +1638,12 @@ def sources_rows(draft, built):
 def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_CAP, share=AUTHORED_SHARE, controls=CONTROLS,
           shape_lemma_cap=None):
     """Write dev.tsv and sources.tsv into `out_dir`; returns (sentences, report lines)."""
-    items, tagged = read_decided(work)
+    items, tagged = read_all_decided(work)
     draft = read_draft(work)
     targets, chosen = select_items(items, seed, per_shape, lemma_cap, share, controls, shape_lemma_cap)
     order = {shape: n for n, shape in enumerate(SHAPES)}
     selected = sorted(targets + chosen, key=lambda i: (order[i["shape"]], ROLES.index(i["role"]), rank_of(seed, "order", i["cand_id"])))
-    text_of = {c["cand_id"]: c["text"] for c in read_candidates(work)}
+    text_of = {c["cand_id"]: c["text"] for c in read_all_candidates(work)}
     built = []
     for number, item in enumerate(selected, 1):
         item = dict(item, text=text_of[item["cand_id"]])
@@ -1464,8 +1690,8 @@ def report_lines(out_dir, work=None):
     documents = {s["source_id"] for s in sentences}
     lines += ["", "- sentences: %d, tokens: %d, disputed tokens: %d, source documents: %d (authored pseudo-document included)"
               % (len(sentences), tokens, disputed, len(documents))]
-    if work is not None and os.path.exists(work.private_file("decided.tsv")):
-        items, _ = read_decided(work)
+    if work is not None and all_works(work, "decided.tsv"):
+        items, _ = read_all_decided(work)
         drops = collections.Counter((i["shape"], i["reason"]) for i in items if i["outcome"] == "drop")
         lines += ["", "| shape | dropped: target disagreement | dropped: class mismatch | dropped: frame mismatch |", "| --- | --- | --- | --- |"]
         for shape in SHAPES:
@@ -1502,6 +1728,10 @@ def main(argv=None):
                             help="lemma cap of one shape (repeatable), replacing --lemma-cap for a thin shape")
     candidates.add_argument("--control-pool", type=int, default=CONTROL_POOL, help="control candidates per shape (default %(default)s)")
     candidates.add_argument("--seed", type=int, default=SEED)
+    candidates.add_argument("--only-shapes", default=None, metavar="SHAPE[,SHAPE]", help="pre-select only these shapes")
+    candidates.add_argument("--no-controls", action="store_true", help="write no control candidates")
+    candidates.add_argument("--compound-strict", action="store_true",
+                            help="n-compound-head: the token before the head must be a noun-like modifier (see noun_like_modifier)")
     export = sub.add_parser("export", help="write the blind batches, the key and status.tsv")
     export.add_argument("--size", type=int, default=adjudicate.BATCH_SENTENCES)
     export.add_argument("--rows", type=int, default=adjudicate.BATCH_ROWS)
@@ -1516,8 +1746,8 @@ def main(argv=None):
     validate.add_argument("--all", action="store_true")
     validate.add_argument("--no-count", action="store_true")
     validate.add_argument("--limit", type=int, default=5)
-    sub.add_parser("status", help="batch states and the presence of the pipeline files")
-    sub.add_parser("decide", help="apply the decision rule; write private/decided.tsv and decided-rows.tsv")
+    status_parser = sub.add_parser("status", help="batch states and the presence of the pipeline files")
+    decide_parser = sub.add_parser("decide", help="apply the decision rule; write private/decided.tsv and decided-rows.tsv")
     sample = sub.add_parser("sample", help="the review sample for the precision gate")
     sample.add_argument("--seed", type=int, default=SEED)
     sample.add_argument("--per-shape", type=int, default=12)
@@ -1535,6 +1765,9 @@ def main(argv=None):
     build_parser.add_argument("--controls", type=int, default=CONTROLS)
     report = sub.add_parser("report", help="counts of the built set for the README")
     report.add_argument("--out-dir", default=None)
+    for round_parser in (candidates, export, check, validate, status_parser, decide_parser):
+        round_parser.add_argument("--round", default=None, metavar="NAME",
+                                  help="work in W/rounds/NAME instead of the root of the work folder (shared inputs stay in W)")
     args = parser.parse_args(argv)
     commands = {"exclusions": _command_exclusions, "tokenize": _command_tokenize, "candidates": _command_candidates,
                 "export": _command_export, "check-batches": _command_check_batches, "validate-output": _command_validate_output,

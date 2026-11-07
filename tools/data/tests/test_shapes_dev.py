@@ -3,6 +3,7 @@
 Run: python -m unittest discover -s tools/data/tests -p "test_shapes_dev.py"   (developer-run; the pipeline needs no model or network)
 """
 import contextlib
+import collections
 import io
 import os
 import re
@@ -25,6 +26,7 @@ LEXICON = {
     "mix": "NOUN VERB", "leak": "NOUN VERB", "test": "NOUN VERB", "tests": "NOUN VERB", "opens": "VERB", "add": "VERB", "fails": "VERB",
     "the": "DET", "a": "DET", "of": "ADP", "to": "ADP PART", "and": "CCONJ", "must": "AUX", "is": "AUX VERB", "full": "ADJ",
     "machine": "NOUN VERB", "guns": "NOUN", "forest": "NOUN VERB", "planting": "NOUN VERB", "long": "ADJ", "in": "ADP",
+    "light": "ADJ NOUN",
 }
 
 
@@ -775,6 +777,194 @@ class FrameTests(unittest.TestCase):
         self.assertTrue(self.mismatch("n-measure", 1, ["NUM", "NOUN", "ADJ", "NOUN"], ["NUM", "NOUN", "ADJ", "ADV"]))
         for shape in sd.SHAPES:
             self.assertFalse(self.mismatch(shape, 1, ["ADP", "NOUN", "NOUN"], role="control"))
+
+
+class RoundTests(MiniFolder):
+    """Incremental rounds: W/rounds/NAME next to the root, shared inputs in W, merged by build, sample and report."""
+
+    ROOT_LINES = ["The oil pump opens the valve.", "The tank seal fails the test."]
+    MORE_LINES = ["The oil pump opens the valve.",            # line 1: the same sentence as in the root
+                  "The tank seal fails the check.",           # line 2: another sentence on a line the root used
+                  "The oil pump fails the test.",             # lemma `pump` has a candidate in the root
+                  "The oil check opens the valve.",
+                  "The light switch opens the valve."]        # `light` has an adjective reading
+    ROUND_OPTIONS = ("candidates", "--no-ud", "--round", "r2", "--only-shapes", "n-compound-head", "--no-controls")
+
+    def setUp(self):
+        super().setUp()
+        self.write_draft(["doc-a"])
+        self.write_text_doc("doc-a", self.ROOT_LINES)
+        self.write_tokens(self.ROOT_LINES)
+        self.assertEqual(0, self.cli("candidates", "--no-ud")[0])
+        self.root_rows = sd.read_candidates(self.work)
+        self.write_text_doc("doc-a", self.MORE_LINES)
+        self.write_tokens(self.MORE_LINES)
+        self.r2 = sd.RoundWork(self.root, "r2")
+
+    def write_tokens(self, texts):
+        common.write_text(os.path.join(self.root, "tokens.tsv"), ["text\tsentences\ttokens"] + ["%s\t1\t%s" % (t, " ".join(simple_tokens(t)))
+                                                                                          for t in texts])
+
+    def round_texts(self, *options):
+        code, output = self.cli(*(self.ROUND_OPTIONS + options))
+        self.assertEqual(0, code, output)
+        return {r["text"] for r in sd.read_candidates(self.r2)}, output
+
+    def tag(self, work):
+        for name in sorted(adjudicate.read_status(work)):
+            for model in adjudicate.MODELS:
+                out = []
+                for sid, index, token in adjudicate.read_batch(work.batch_file(name)):
+                    tag = PipelineTests.basic_rule(model, sid, int(index), adjudicate.unescape_cell(token))
+                    out.append((sid, index, token, "VERB" if tag == "VERB" else tag, "high", "-"))
+                adjudicate.write_rows(os.path.join(work.out(model), name + ".tsv"), adjudicate.OUTPUT_HEADER, out)
+
+    def test_a_round_skips_sentences_and_lines_of_the_root_and_writes_into_its_own_folder(self):
+        before = common.read_lines(os.path.join(self.root, "candidates.tsv"))
+        texts, output = self.round_texts()
+        self.assertEqual({"The oil pump fails the test.", "The oil check opens the valve.", "The light switch opens the valve."}, texts)
+        self.assertIn("already-in-earlier-round 2", output)                      # line 1 by its key, line 2 by its (document, line)
+        self.assertIn("candidates written to rounds/r2/candidates.tsv", output)
+        self.assertEqual(before, common.read_lines(os.path.join(self.root, "candidates.tsv")))
+        rows = sd.read_candidates(self.r2)
+        self.assertEqual({"n-compound-head"}, {r["shape"] for r in rows})
+        self.assertEqual({"target"}, {r["role"] for r in rows})
+        self.assertTrue(all(re.fullmatch(r"r2-c\d{5}", r["cand_id"]) for r in rows))
+        self.assertTrue(os.path.exists(os.path.join(self.root, "rounds", "r2", "private", "candidates-report.md")))
+
+    def test_new_lemmas_come_before_lemmas_that_the_earlier_rounds_have_and_a_lemma_at_the_cap_gets_none(self):
+        texts, _ = self.round_texts("--target", "2", "--over", "1")
+        self.assertEqual({"The oil check opens the valve.", "The light switch opens the valve."}, texts)    # `pump` is left for later
+        texts, _ = self.round_texts("--lemma-cap", "1")
+        self.assertNotIn("The oil pump fails the test.", texts)                  # the root already has one `pump` target
+        self.assertEqual(2, len(texts))
+
+    def test_kept_targets_of_a_decided_round_count_against_the_lemma_cap_not_its_candidates(self):
+        self.assertEqual(0, self.cli("export")[0])
+        self.tag(self.work)
+        self.assertEqual(0, self.cli("validate-output", "--all")[0])
+        self.assertEqual(0, self.cli("decide")[0])
+        counts = sd.lemma_counts_of([self.work])
+        self.assertEqual(1, counts[("n-compound-head", "pump")])
+        self.assertEqual(1, counts[("n-compound-head", "seal")])
+
+    def test_compound_strict_needs_a_noun_like_modifier(self):
+        texts, _ = self.round_texts()
+        self.assertIn("The light switch opens the valve.", texts)
+        texts, _ = self.round_texts("--compound-strict")
+        self.assertEqual({"The oil pump fails the test.", "The oil check opens the valve."}, texts)
+        lex = common.read_lexicon(os.path.join(self.data, "lexicon", "lexicon.tsv"))
+        tokens = simple_tokens("The light switch opens the valve.")
+        self.assertEqual(2, dict(sd.shape_hits(tokens, lex))["n-compound-head"])
+        self.assertNotIn("n-compound-head", dict(sd.shape_hits(tokens, lex, compound_strict=True)))
+        self.assertEqual(2, dict(sd.shape_hits(simple_tokens("The oil pump opens the valve."), lex, compound_strict=True))["n-compound-head"])
+
+    def test_noun_like_modifier_rule(self):
+        lex = {"oil": frozenset(["NOUN"]), "level": frozenset(["NOUN", "VERB"]), "light": frozenset(["ADJ", "NOUN"]),
+               "firing": frozenset(["NOUN"]), "building": frozenset(["NOUN", "VERB"]), "heated": frozenset(["NOUN", "VERB"]),
+               "one": frozenset(["NOUN", "NUM"]), "can": frozenset(["NOUN", "AUX", "VERB"]), "far": frozenset(["NOUN", "ADV"]),
+               "this": frozenset(["NOUN", "DET"]), "run": frozenset(["VERB"]), "the": frozenset(["DET"]), "2": frozenset(["NOUN"]),
+               "Army": frozenset(["PROPN"])}
+        for good in ("oil", "Oil", "level", "firing"):
+            self.assertTrue(sd.noun_like_modifier(lex, good), good)
+        for bad in ("light", "building", "heated", "one", "can", "far", "this", "run", "the", "2", "unknown", "Army"):
+            self.assertFalse(sd.noun_like_modifier(lex, bad), bad)
+
+    def test_round_option_parsing_names_and_order(self):
+        self.assertEqual(("n-measure", "v-after-modal"), sd.parse_only_shapes("n-measure,v-after-modal"))
+        self.assertIsNone(sd.parse_only_shapes(None))
+        for bad in ("x", "n-measure,x", ","):
+            with self.assertRaises(ValueError):
+                sd.parse_only_shapes(bad)
+        with self.assertRaises(ValueError):
+            sd.RoundWork(self.root, "../x")
+        names = ["r10", "r2", "r1", "b"]
+        self.assertEqual(["b", "r1", "r2", "r10"], sorted(names, key=sd.natural_key))
+        for name in ("r1", "r2", "r10"):
+            os.makedirs(os.path.join(self.root, "rounds", name, "private"))
+        self.assertEqual(["r1", "r2", "r10"], sd.round_names(self.root))
+        for name in ("r1", "r2", "r10"):                                             # `candidates.tsv` makes a round count as earlier
+            common.write_text(os.path.join(self.root, "rounds", name, "candidates.tsv"), ["x"])
+        self.assertEqual(["r1", "r2"], [getattr(w, "name", "root") for w in sd.earlier_works(sd.RoundWork(self.root, "r10"))][1:])
+        self.assertEqual([], sd.earlier_works(self.work))
+
+    def test_round_ids_never_use_an_earlier_id_and_are_deterministic(self):
+        keys = ["k%d" % n for n in range(50)]
+        first = sd.assign_round_ids(keys, 7, set())
+        again = sd.assign_round_ids(keys, 7, set())
+        self.assertEqual(first, again)
+        avoid = set(sorted(first.values())[:20])
+        second = sd.assign_round_ids(keys, 7, avoid)
+        self.assertEqual(50, len(set(second.values())))
+        self.assertFalse(avoid & set(second.values()))
+        self.assertNotEqual(sd.round_seed(5, "r2"), sd.round_seed(5, "r3"))
+        self.assertEqual(5, sd.round_seed(5, None))
+
+    def test_round_pipeline_exports_checks_decides_and_leaves_the_root_alone(self):
+        self.assertEqual(0, self.cli("export")[0])
+        root_batches = sorted(os.listdir(self.work.batches))
+        self.assertEqual(0, self.cli(*self.ROUND_OPTIONS)[0])
+        code, output = self.cli("export", "--round", "r2")
+        self.assertEqual(0, code, output)
+        for model in adjudicate.MODELS:
+            self.assertTrue(os.path.isdir(self.r2.out(model)) and not os.listdir(self.r2.out(model)))
+        self.assertEqual(root_batches, sorted(os.listdir(self.work.batches)))
+        root_ids = {k["opaque_id"] for k in sd.read_key(self.work)}
+        round_ids = {k["opaque_id"] for k in sd.read_key(self.r2)}
+        self.assertTrue(round_ids and not root_ids & round_ids)
+        self.assertEqual(0, self.cli("check-batches", "--round", "r2")[0])
+        self.assertEqual(0, self.cli("check-batches")[0])
+        self.tag(self.work)
+        self.tag(self.r2)
+        code, output = self.cli("validate-output", "--all", "--round", "r2")
+        self.assertEqual(0, code, output)
+        self.assertIn("opus ok", self.cli("status", "--round", "r2")[1])
+        self.assertEqual(0, self.cli("validate-output", "--all")[0])
+        code, output = self.cli("export", "--round", "r2")
+        self.assertEqual(1, code)                                                    # tagger outputs of the round are protected
+        self.assertIn("refusing to export", output)
+        self.assertEqual(0, self.cli("decide", "--round", "r2")[0])
+        self.assertTrue(os.path.exists(self.r2.private_file("decided.tsv")))
+        self.assertFalse(os.path.exists(self.work.private_file("decided.tsv")))
+        items, _ = sd.read_decided(self.r2)
+        by_lemma = {i["lemma"]: i for i in items}
+        self.assertEqual("keep", by_lemma["pump"]["outcome"])
+        self.assertEqual("class-mismatch", by_lemma["check"]["reason"])             # the fake taggers call `check` a verb
+
+    def test_build_sample_and_report_merge_the_root_and_the_rounds(self):
+        self.assertEqual(0, self.cli("export")[0])
+        self.assertEqual(0, self.cli(*self.ROUND_OPTIONS)[0])
+        self.assertEqual(0, self.cli("export", "--round", "r2")[0])
+        self.tag(self.work)
+        self.tag(self.r2)
+        self.assertEqual(0, self.cli("decide")[0])
+        self.assertEqual(0, self.cli("decide", "--round", "r2")[0])
+        out = os.path.join(self.temp, "out")
+        code, output = self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--lemma-cap", "1")
+        self.assertEqual(0, code, output)
+        _, sentences = common.read_corpus(os.path.join(out, "dev.tsv"))
+        lemmas = collections.Counter(s["comments"]["lemma"] for s in sentences if s["comments"]["role"] == "target")
+        self.assertEqual({"pump": 1, "seal": 1, "switch": 1}, dict(lemmas))         # the lemma cap runs across the root and the round
+        self.assertIn("The light switch opens the valve.", {s["text"] for s in sentences})
+        code, output = self.cli("sample", "--per-shape", "12", "--controls", "0")
+        self.assertEqual(0, code)
+        _, keys = adjudicate.read_records(os.path.join(self.root, "private", "review-sample-key.tsv"))
+        self.assertEqual(4, len(keys))
+        self.assertEqual(2, sum(1 for k in keys if k["cand_id"].startswith("r2-")))   # the sample draws from both folders
+        with open(os.path.join(self.root, "private", "review-sample.md"), encoding="utf-8") as handle:
+            self.assertIn("The light [[switch]] opens the valve .", handle.read())
+        code, report = self.cli("report", "--out-dir", out)
+        self.assertEqual(0, code)
+        self.assertIn("| n-compound-head | 0 | 1 | 0 |", report)                       # the class mismatch of `check` counts in the report
+
+    def test_without_rounds_the_union_is_the_root_alone(self):
+        self.assertEqual(0, self.cli("export")[0])
+        self.tag(self.work)
+        self.assertEqual(0, self.cli("decide")[0])
+        items, rows = sd.read_all_decided(self.work)
+        self.assertEqual(sd.read_decided(self.work), (items, rows))
+        self.assertEqual([r["cand_id"] for r in self.root_rows], [r["cand_id"] for r in sd.read_all_candidates(self.work)])
+        self.assertTrue(all(re.fullmatch(r"c\d{5}", r["cand_id"]) for r in self.root_rows))
 
 
 class LeakageExtensionTests(MiniFolder):
