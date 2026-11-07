@@ -2169,6 +2169,46 @@ was measured on a busy machine and the three are not a comparison of the models.
   model or a setting. The three stop conditions fired again as in both earlier records and are findings, not tuned.
   Any further held-out evaluation would be a third look and is not planned.
 
+## Shapes development set: baseline of the shipped model
+
+The shapes development set (`data/eval/shapes-dev/dev.tsv`, [README](../../data/eval/shapes-dev/README.md)) is the development
+set for the context-feature work: sentence-level context features, a two-pass decoder and word clusters. This section is the
+dev baseline of the shipped model for that work: the figures below are what every variant is compared with. They are
+development figures only; the set is for selecting settings, nothing is trained on it, and none of them is a held-out result
+(the shape probe stays the held-out measurement).
+
+Command (run once from the repository root, below normal priority; it reads only the development file and the embedded
+weights and appends no row to the run table):
+
+```text
+dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eval-shapes --label "shipped model baseline"
+```
+
+| Input | SHA-256 |
+| --- | --- |
+| `data/eval/shapes-dev/dev.tsv` | `1db4c15e8e043491295dbd07cb485270836fdaa2d1233eb7d778adb355093881` |
+| `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (the file) | `439d4af5329b44d3a226b823b20b3afa54dab0ef8e7247f1333135bb96a14092` |
+| shipped weights, uncompressed image (`imageSha256` of `training.json`) | `a0d45458308f78dbe74669e563ea236a0a7b4688638d690dd0995ac4de988da3` |
+
+Output of the command (the heading level is lowered by one):
+
+### Shapes development set: shipped model baseline
+
+- Items: 600 target items and 100 control items; authored: 0 target items (0.0%) and 0 control items (0.0%).
+- Development file SHA-256: `1db4c15e8e043491295dbd07cb485270836fdaa2d1233eb7d778adb355093881`.
+- Weights file SHA-256: `439d4af5329b44d3a226b823b20b3afa54dab0ef8e7247f1333135bb96a14092`.
+- Scoring: the judged word of every item through the real decoder with all alternatives; a noun-verb decision is a target whose candidates include both classes; a harmful error is a swapped class with a confidence of at least 0.45.
+- The set is for development: it selects settings and is never a held-out figure.
+
+| shape | target items | target accuracy | 95% interval | noun-verb decisions | harmful errors | harmful per 1,000 decisions | control items | control accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| n-compound-head | 120 | 93.3% | [87.4%, 96.6%] | 120 | 6 | 50.0 | 13 | 92.3% |
+| n-subject-initial | 120 | 95.8% | [90.6%, 98.2%] | 120 | 3 | 25.0 | 13 | 76.9% |
+| v-imperative-initial | 120 | 95.0% | [89.5%, 97.7%] | 120 | 6 | 50.0 | 35 | 100.0% |
+| n-measure | 120 | 99.2% | [95.4%, 99.9%] | 120 | 0 | 0.0 | 15 | 100.0% |
+| v-after-modal | 120 | 98.3% | [94.1%, 99.5%] | 120 | 2 | 16.7 | 24 | 100.0% |
+| all shapes | 600 | 96.3% | [94.5%, 97.6%] | 600 | 17 | 28.3 | 100 | 96.0% |
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
