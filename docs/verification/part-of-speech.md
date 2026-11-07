@@ -396,8 +396,8 @@ and not just the project file. The reasons for a license file instead of an expr
 ### Data and Licensing
 
 **Tests**: the `PartOfSpeech_ThirdPartyNotices_*`, `PartOfSpeech_DataLicensing_*`, `PartOfSpeech_DataProvenance_*`,
-`PartOfSpeech_DataCorrections_*`, `PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*`
-and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
+`PartOfSpeech_DataCorrections_*`, `PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*`,
+`PartOfSpeech_ShapesDev_*` and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
 
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
 and fails when a file is missing or empty.
@@ -433,6 +433,26 @@ replacement of the mechanical row); it fails when the table is missing or empty.
 sentence. The tests do not depend on the tools; the unit tests of the tools, the validation of the tables, the check that
 the generator reproduces the mechanical tables and a report-only conventions linter pass run in `lint.ps1` (see the
 Verification Approach).
+
+The hard-shape development set (`data/eval/shapes-dev/`) is covered by the existing tests (its folder is among the
+licensed folders, its README among the provenance statements, its source table among the source tables, its corpus among
+the evaluation corpora, so the tag set, rejoin, manifest, document and sentence tests read it) and by the
+`PartOfSpeech_ShapesDev_*` tests, which read the committed files:
+`Header_AnnouncesDevSplit` asserts the `dev split` and development-only header lines;
+`Items_HaveShapeRoleTargetAndLemma` parses the file with the trainer's parser and asserts that every shape holds 1 to 120
+target items, that controls exist and that every control has the lemma of a target of its shape;
+`Targets_MatchShapeClassAndAreNeverDisputed` reads the tags and statuses directly and asserts the class that the shape
+and the role ask for (NOUN or PROPN for a noun shape, VERB for a verb shape, the other class for a control) and that no
+judged word is `disputed`; `Authored_ShareIsCappedPerShapeAndForControls` asserts at most 30% authored sentences for every
+shape and for the controls and that the origin agrees with the authored pseudo-document;
+`Tokens_AreReproducedByTheTokenizer` asserts that `Tokenizer.Tokenize` yields one sentence with the stored tokens for
+every sentence; `Sources_ListEveryDocumentWithItsCount` asserts that the table lists exactly the documents with the counts
+of the file; `Sources_AreOpenAndHaveNoFaaMaterial` asserts a US federal-work, public-domain or project-written basis for
+every row and no FAA mention in any cell; `LeakageReport_RecordsNoOverlapWithOtherEvaluationSets` asserts that the
+committed report names every other evaluation set once with the sentence count of the file and no document overlap, no
+exact overlap and no shared probe word 5-gram; `Sentences_AreDisjointFromTheOtherEvaluationSets` asserts, by reading the
+evaluation files, that no document and no sentence is shared. Each fails when a file is missing or empty. The extended
+`Leakage_Report_RecordsNoOverlaps` requires `shapes-dev` among the evaluation sets of every training set.
 
 ### Adjudication Tool
 

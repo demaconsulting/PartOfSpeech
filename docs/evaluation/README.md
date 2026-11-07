@@ -205,6 +205,27 @@ The four rules that map the treebank tags before scoring:
 The report states how many words the mapping changed. Both views are reported so that the effect of the mapping is
 visible.
 
+## Development versus Held-Out Sets
+
+The sets above are held-out evaluation sets: nothing was chosen on them. One more set exists for the opposite purpose, the
+[shapes development set](../../data/eval/shapes-dev/README.md): 700 real sentences from US federal-government documents,
+labeled by two blind models, with a judged word in each (600 target items, 120 for each of five hard shapes, and 100
+controls). It is the set on which variants of the tagger (sentence-level context features, a two-pass decoder, word
+clusters) are compared and settings are selected, so a figure from it is optimistic by construction and is never
+reported as a held-out result.
+
+- **Five shapes, not seven.** The shape probe has seven shape ids. The development set uses the four that the limitations
+  above name as the weak ones (`n-compound-head`, `n-subject-initial`, `v-imperative-initial`, `n-measure`) and a fifth,
+  `v-after-modal` (a base verb after a modal or `to`), which is frequent in manuals and procedures. `n-obj-light` and
+  `n-modifier` are not covered. The definitions are the probe's; no probe sentence is used or imitated, and a leakage check
+  keeps the two sets apart.
+- **Selection only here.** The trainer reads the file only through its own development guard (`eval-shapes`). It is never
+  trained on, and the shape probe stays held-out evaluation only: it is not tuned on, and a variant is judged on it only
+  after the settings were fixed on the development sets.
+- **The baseline** of the shipped model on the development set, per shape, is in the
+  [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: baseline of the
+  shipped model"); every variant is compared with it.
+
 ## Reproduce the Results
 
 Run everything from the repository root with the .NET SDK. The commands are slow and heavy; run them at below-normal
@@ -218,6 +239,12 @@ dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- thr
 
 It writes `confidence-thresholds.md` and `operating-points.json`, and refuses to write when the 0.45 row of the curve
 does not reproduce the development figures of the frozen model.
+
+The development set of the shapes is scored (and prints Markdown, with no run-table row) with:
+
+```text
+dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eval-shapes [--weights FILE] [--label TEXT]
+```
 
 The UD English-EWT run is local. The treebank is licensed CC BY-SA 4.0, so it is never committed: the files go into a
 git-ignored cache and only aggregate figures and tag-level confusion enter a report. You need Python 3.10 or later (no

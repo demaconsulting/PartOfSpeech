@@ -112,12 +112,18 @@ The lexicon also uses the part-of-speech data of the Moby Part-of-Speech List (M
 
 ### The open English part-of-speech corpus (CC0 1.0)
 
-`data/open/` and the evaluation sets in `data/eval/` are copies, reduced to Universal POS tags, of data of the WordSense
-project (<https://github.com/demaconsulting/WordSense>). The annotations and the selection are dedicated to the public
-domain under CC0 1.0 (<https://creativecommons.org/publicdomain/zero/1.0/>). The sentences are not CC0 as a whole: they
+`data/open/` and the evaluation sets in `data/eval/` other than `shapes-dev/` are copies, reduced to Universal POS tags,
+of data of the WordSense project (<https://github.com/demaconsulting/WordSense>). The annotations and the selection are
+dedicated to the public domain under CC0 1.0 (<https://creativecommons.org/publicdomain/zero/1.0/>). The sentences are
+not CC0 as a whole: they
 are public domain in the United States (Project Gutenberg books published 1930 or earlier, and works of US federal
 agencies), come from the CC0 export of Tatoeba, or are project-written. The license basis of every document is in
 `data/open/sources.tsv`.
+
+The development set `data/eval/shapes-dev/` is not a copy of WordSense data: this project built it from text of US
+federal government documents (Army, Navy, Bureau of Mines, Department of Agriculture, Forest Service, NASA and NIST
+publications; 17 U.S.C. 105). Its annotations and its selection are dedicated to the public domain under CC0 1.0, and
+the license basis of every document is quoted in `data/eval/shapes-dev/sources.tsv`.
 
 Language models wrote the tags, and no human has reviewed them. In the owner's position, GitHub claims no ownership of
 model outputs, so the repository owner, who prompted their creation, holds the rights in them and dedicates them to the

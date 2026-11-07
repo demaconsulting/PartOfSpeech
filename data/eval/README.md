@@ -8,12 +8,17 @@ was produced.
 | Folder | What | Size | License |
 | --- | --- | --- | --- |
 | `shapes/` | noun versus verb shape probe | 560 sentences | CC0-1.0 (labels model-written) |
+| `shapes-dev/` | hard-shape **development** set: real US federal-government sentences, five shapes, controls | 700 sentences | CC0-1.0 labels (model-written), US federal-work sentences |
 | `gold-v2/` | single-target gold tokens from public-domain documents | 5,072 tokens | CC0-1.0 labels, public-domain sentences |
 | `ste-challenge/` | simplified-technical-English challenge set | 32 sentences, 272 tokens | CC0-1.0 |
 | `ud-ewt/` | UD English-EWT: **fetch script and documentation only, no data** | | CC BY-SA 4.0, never committed |
 
 The open corpus dev and test splits (`../open/`) are also evaluation data. The leakage rules that keep every training
 document and sentence out of these sets are in [../README.md](../README.md).
+
+**Development versus held-out.** `shapes-dev/` is the one set here that is for selection: variants of the tagger are compared
+on it, so a figure from it is never a held-out result. The shape probe (`shapes/`) and the other sets stay evaluation only.
+Nothing is trained on any of them.
 
 ## Results and Reproduction
 

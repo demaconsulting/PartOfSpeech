@@ -533,8 +533,8 @@ sections:
               index, lemma and origin of every sentence) and refuse a sentence whose judged word is missing, outside
               the sentence, disputed, not a noun or verb, or in the wrong class for its shape and role; shall score the
               judged word of every item through the real decoder and report, per shape and pooled, the target-token
-              accuracy, the harmful errors and the harmful errors per 1,000 noun-verb decisions and the control accuracy;
-              and shall render the same Markdown for the same results.
+              accuracy, the harmful errors and the harmful errors per 1,000 noun-verb decisions and the control
+              accuracy; and shall render the same Markdown for the same results.
             justification: |
               The hard-shape set is the development measure for the noun-verb confusions that the held-out error
               analysis found, so a malformed item must stop the run instead of shifting a figure, the figures must come

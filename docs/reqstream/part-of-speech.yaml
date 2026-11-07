@@ -674,6 +674,61 @@ sections:
         tests:
           - PartOfSpeech_Leakage_Report_RecordsNoOverlaps
 
+      - id: PartOfSpeech-Data-ShapesDevWellFormed
+        title: >-
+          Every item of the hard-shape development set shall name its shape, role, judged word and origin, the judged
+          word shall carry the class that the shape and the role ask for and never be disputed, no shape shall hold more
+          than 120 target items, no shape and not the controls shall have more than 30% authored sentences, and the
+          library tokenizer shall reproduce the stored tokens.
+        tags: [system]
+        justification: |
+          The development set selects the settings of the context-feature work, so a mislabeled judged word, a shape
+          that is out of balance or an authored top-up that dominates a shape would steer the selection. The format
+          rules are checked on the committed file itself, and the tokens must be those of the library, because the
+          tagger is measured on the tokens that it would produce itself.
+        children:
+          - PartOfSpeech-ModelTrainer-ShapesDevEvaluation
+        tests:
+          - PartOfSpeech_ShapesDev_Header_AnnouncesDevSplit
+          - PartOfSpeech_ShapesDev_Items_HaveShapeRoleTargetAndLemma
+          - PartOfSpeech_ShapesDev_Targets_MatchShapeClassAndAreNeverDisputed
+          - PartOfSpeech_ShapesDev_Authored_ShareIsCappedPerShapeAndForControls
+          - PartOfSpeech_ShapesDev_Tokens_AreReproducedByTheTokenizer
+
+      - id: PartOfSpeech-Data-ShapesDevIndependent
+        title: >-
+          No document, exact sentence or shared word 5-gram of the shape probe shall be common to the hard-shape
+          development set and any training set or any other evaluation set, and the committed report of the
+          development set shall record that.
+        tags: [system]
+        justification: |
+          A development set that shares text with the training data would reward memorizing, and one that shares text
+          with the held-out sets would make the held-out figures depend on settings that were chosen with them in view.
+          The shape probe has short sentences that the near-duplicate rule does not see, so a shared word 5-gram is
+          refused too. The existing document and sentence tests exclude shared text with the training sets, because
+          they read the development set as an evaluation corpus.
+        tests:
+          - PartOfSpeech_Leakage_Documents_TrainingAndEvaluationAreDisjoint
+          - PartOfSpeech_Leakage_Sentences_TrainingAndEvaluationAreDisjoint
+          - PartOfSpeech_Leakage_Report_RecordsNoOverlaps
+          - PartOfSpeech_ShapesDev_Sentences_AreDisjointFromTheOtherEvaluationSets
+          - PartOfSpeech_ShapesDev_LeakageReport_RecordsNoOverlapWithOtherEvaluationSets
+
+      - id: PartOfSpeech-Data-ShapesDevSourcesAreOpen
+        title: >-
+          Every source document of the hard-shape development set shall be listed with a US federal-work or
+          public-domain license basis (or as the pseudo-document that the project wrote), with its sentence count, and
+          no source row shall name FAA material.
+        tags: [system]
+        justification: |
+          The development set is built from the text of real documents, so each document needs a recorded basis for its
+          use. The project owner excluded FAA material, and the check refuses it in the source table.
+        tests:
+          - PartOfSpeech_ShapesDev_Sources_ListEveryDocumentWithItsCount
+          - PartOfSpeech_ShapesDev_Sources_AreOpenAndHaveNoFaaMaterial
+          - PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl
+          - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
+
       - id: PartOfSpeech-Data-LexiconTrainCoverage
         title: >-
           The lexicon shall allow the gold tag for at least 99.9% of the non-disputed tokens of the training set.
