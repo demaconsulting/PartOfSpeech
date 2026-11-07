@@ -53,13 +53,16 @@ reported as `InvalidOperationException` or `InvalidDataException`).
 For each sentence the decoder performs these steps (the detail is in _TagDecoder Design_):
 
 1. `FeatureExtractor` folds every token once into the per-thread workspace and computes everything that does not depend
-   on tags (18 of the 22 feature buckets).
-2. For token _i_ the extractor adds the four features that use the two previous tags, the weights of all 22 buckets
-   are summed per tag as integers, and the lexicon lookup gives the tags that the token may take.
+   on tags (18 of the 22 base feature buckets, plus the buckets of the feature groups that the model names).
+2. For token _i_ the extractor adds the four features that use the two previous tags (and the history features of the
+   groups), the weights of all buckets are summed per tag as integers, and the lexicon lookup gives the tags that the
+   token may take.
 3. The candidates are the tags that the lexicon and the shape rules allow, intersected with the allowed set of the
    token's `TokenConstraint`; if that is empty the constraint wins. Soft adjustments are added to the real scores.
 4. The best candidate (lowest tag number on a tie) becomes the tag, the softmax over the candidates at the model
    temperature gives the confidence and the ranked alternatives, and the tag enters the history for the next token.
+   A model with the right preview group runs steps 2 to 4 twice: the first pass only chooses tags, the second pass
+   sees them for the next two tokens and produces the result.
 
 This design keeps one decision procedure in one place: restriction, constraints and confidence all work on the same
 candidate set, so a constraint can never produce a tag that the confidence does not describe.
@@ -101,13 +104,17 @@ it):
   them as arguments, so a trainer can pass gold or predicted history.
 
 **Contract with the Trainer.** The trainer reuses `FeatureExtractor` unchanged, so that training and decoding
-see identical buckets, and writes weights with `PerceptronModelWriter` using `FeatureExtractor.FeatureSetVersion`
-(currently 1). Any change of the template set, the hash or the fold requires a new feature set version; readers refuse
-a weights file of another version. The trainer also chooses `hashBits` (18 to 24; the shipped model uses 19), the
+see identical buckets, and writes weights with `PerceptronModelWriter` using the feature set version that
+`FeatureExtractor.FeatureSetVersionFor` gives for the groups of context features it trained with: 1 without a group
+(the shipped model), 2 with at least one, together with the group mask in the header. The decoder takes the groups from
+the weights file, so a model is always scored with the features it was trained with. Any change of the template set,
+the hash, the fold or a group requires a new feature set version; readers refuse a weights file of an unknown version or
+mask. The trainer also chooses `hashBits` (18 to 24; the shipped model uses 19), the
 temperature (fitted for 17 tags) and the weight scale (the shipped model uses 1/8). The byte layouts are in
 _ModelStorage_ (`POSW` and `POSL`). The feature set was not extended for glossary support: a trained "glossary says X"
-feature (feature set version 2) was measured on development data and rejected in favor of score boosts of
-`TokenConstraint.Prefer` (see _ModelTrainer Design_, _Glossary Decision_), so version 1 stays.
+feature was measured on development data and rejected in favor of score boosts of
+`TokenConstraint.Prefer` (see _ModelTrainer Design_, _Glossary Decision_), so the glossary does not change the feature
+set.
 
 **Thread safety.** `Tagger`, `TagDecoder`, `Lexicon` and `PerceptronModel` hold read-only data, and so does a
 `Glossary` after it was created. All per-call scratch

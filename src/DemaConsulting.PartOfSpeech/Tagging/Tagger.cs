@@ -156,7 +156,7 @@ public sealed class Tagger
     {
         ArgumentNullException.ThrowIfNull(weights);
         var maxAlternatives = ValidateOptions(options);
-        return new Tagger(PerceptronModel.Load(weights, FeatureExtractor.FeatureSetVersion), EmbeddedModel.Lexicon, maxAlternatives);
+        return new Tagger(PerceptronModel.Load(weights), EmbeddedModel.Lexicon, maxAlternatives);
     }
 
     /// <summary>
@@ -190,7 +190,7 @@ public sealed class Tagger
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(lexicon);
         var maxAlternatives = ValidateOptions(options);
-        return new Tagger(PerceptronModel.Load(weights, FeatureExtractor.FeatureSetVersion), Lexicon.Load(lexicon), maxAlternatives);
+        return new Tagger(PerceptronModel.Load(weights), Lexicon.Load(lexicon), maxAlternatives);
     }
 
     /// <summary>

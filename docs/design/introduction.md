@@ -85,8 +85,9 @@ build-time tool that trains the embedded weights) and three subsystems:
 `Tokenization` (text to sentences and tokens), `ModelStorage` (the binary formats of the weights and the lexicon and the
 embedded lexicon and weights) and `Tagging` (features, decoding, constraints, glossaries and the public `Tagger`). The dependencies
 between them have no unit-level call cycle, but the subsystem graph is not acyclic: `Tagging` uses `Tokenization`,
-`ModelStorage` and `Upos`; `ModelStorage` uses `Upos` and, for one constant (`EmbeddedModel` reads
-`FeatureExtractor.FeatureSetVersion`), `Tagging`; `Tokenization` uses nothing else. `ModelTrainer` is not part of the
+`ModelStorage` and `Upos`; `ModelStorage` uses `Upos` and, for constants (`PerceptronModel` and its writer read the
+feature set versions and the known feature groups of `FeatureExtractor`), `Tagging`; `Tokenization` uses nothing else.
+`ModelTrainer` is not part of the
 runtime: it uses `Tagging` (the feature extractor, the decoder), `ModelStorage` (the weights writer and reader, the
 lexicon) and `Upos` through `InternalsVisibleTo`, and nothing in the library uses it. Each unit is one class or a few
 tightly coupled files, as listed in the folder layout below. The Trainer is a software unit although it is a build-time

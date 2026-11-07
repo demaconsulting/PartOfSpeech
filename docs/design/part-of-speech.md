@@ -26,9 +26,11 @@ subsystems:
 Relationships (the unit-level call graph has no cycle): `Tagger` uses `Tokenizer`, `TagDecoder`, `EmbeddedModel`,
 `TokenConstraint` and `Glossary`; `Glossary` uses `Tokenizer`, `FeatureExtractor`, `TokenConstraint` and `UposSet`;
 `TagDecoder`
-uses `FeatureExtractor`, `PerceptronModel`, `Lexicon` and `UposSet`; `FeatureExtractor` uses `Upos`; `Lexicon` and
-`PerceptronModel` use `BinaryFormat` and `UposSet`; `EmbeddedModel` uses `Lexicon`, `PerceptronModel` and the constant
-`FeatureExtractor.FeatureSetVersion`; `Tokenizer` uses `SentenceSplitter`; and `ModelTrainer` uses `FeatureExtractor`,
+uses `FeatureExtractor`, `PerceptronModel`, `Lexicon` and `UposSet`; `FeatureExtractor` uses `Upos`, `UposSet` and
+`Lexicon` (the lookups of the feature groups); `Lexicon` and
+`PerceptronModel` use `BinaryFormat` and `UposSet`; `PerceptronModel` and `PerceptronModelWriter` also use the constants
+and the group type of `FeatureExtractor` (the feature set versions and the known groups); `EmbeddedModel` uses `Lexicon`
+and `PerceptronModel`; `Tokenizer` uses `SentenceSplitter`; and `ModelTrainer` uses `FeatureExtractor`,
 `Lexicon`, `PerceptronModel`, `PerceptronModelWriter`, `BinaryFormat` and `Upos` to train, and `Tagger`, `TagDecoder`
 and `TokenConstraint` to score a weights file and to run the glossary experiment through the real decoder, and `Glossary`
 to run the glossary evaluation through the real tagger, while nothing

@@ -22,8 +22,8 @@ use. It is an internal static class.
 #### Key Methods
 
 - **`Lexicon`** (property): returns the embedded lexicon, loading it on the first access with `Lexicon.Load`.
-- **`Weights`** (property): returns the embedded weights loaded with `PerceptronModel.Load` and the feature set version
-  of `FeatureExtractor`; never `null`.
+- **`Weights`** (property): returns the embedded weights loaded with `PerceptronModel.Load` (any supported feature set;
+  the shipped model has no feature group); never `null`.
 - **`OpenResource(string name)`** (internal): opens a manifest resource of the assembly; `null` when it does not exist.
   The tests use it to compare the embedded bytes with the committed file and the training configuration.
 
@@ -32,14 +32,13 @@ Postcondition of both properties: repeated calls return the same object.
 #### Error Handling
 
 A missing lexicon or weights resource throws `InvalidOperationException` (the package is broken and nothing can be tagged
-correctly); a corrupt resource, or weights of another feature set, throws `InvalidDataException` from the reader. The
+correctly); a corrupt resource, or weights of an unsupported feature set, throws `InvalidDataException` from the
+reader. The
 failure is cached by the `Lazy`, so every later access fails the same way. Exceptions are not caught here.
 
 #### Dependencies
 
 - **Lexicon** and **PerceptronModel** (same subsystem) to read the resources.
-- **FeatureExtractor** (Tagging) for the constant `FeatureSetVersion` only. This is the one dependency from
-  ModelStorage to Tagging; it is a constant and creates no call cycle.
 - Base class library (`Lazy<T>`, manifest resources).
 
 #### Callers

@@ -51,4 +51,14 @@ the kinds listed below) is accepted.
   declared"),
   `PerceptronModel_Load_PayloadLengthAboveMaximum_Throws` (a declared payload length above 256 MiB is refused before
   inflation) and
-  `PerceptronModelWriter_Compile_InvalidRows_Throw` (wrong vector length, the weight -32768 and a repeated bucket).
+  `PerceptronModelWriter_Compile_InvalidRows_Throw` (wrong vector length, the weight -32768 and a repeated bucket),
+  `PerceptronModel_Load_UnknownGroupBit_Throws` (a mask with bit 4, a high bit or all bits is refused by every way of
+  loading and by the image, and the writer refuses it) and `PerceptronModel_Load_FeatureSetDisagreesWithMask_Throws`
+  (groups under feature set 1, no groups under feature set 2 and feature set 3 are refused).
+- **Feature groups**: `PerceptronModel_Load_FeatureGroups_RoundTripsMask` (each single group, two and all four: the mask
+  is little endian at offset 40 with feature set 2 and a zero reserved range, the reader returns it, and the
+  uncompressed image keeps it), `PerceptronModel_Load_OldFileWithoutMask_LoadsAsNoGroups` (a file written without the
+  mask parameter equals one with an explicit zero mask and one with the header patched to the layout before the mask;
+  all load as feature set 1 without groups, also the way earlier callers ask for it) and
+  `PerceptronModel_Load_FileWithGroups_FailsTheChecksOfAnOldReader` (a file with groups is refused when the feature set
+  1 is expected, and the range that an old reader requires to be zero is not zero).

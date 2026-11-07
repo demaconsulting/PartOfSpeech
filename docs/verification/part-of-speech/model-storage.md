@@ -44,4 +44,8 @@ load back with the same content.
   instance under parallel access, not literally the first access.
 - **Weights writer and reader round trip**: `ModelStorage_WeightsWriterAndReader_RoundTrip` loads a Deflate weights file
   and a tiny lexicon from streams and asserts the summed weights of a feature bucket, the temperature, the scale and the
-  spelling and entry counts.
+  spelling and entry counts; `ModelStorage_WeightsWriterAndReader_FeatureGroupsRoundTrip` does the same for a weights
+  file with feature groups and asserts the mask, the feature set number 2 and the header position of the mask.
+- **The embedded weights have no feature group**: `ModelStorage_EmbeddedWeights_HaveNoFeatureGroups` asserts feature set
+  1, a zero mask and zero header bytes from offset 40 on in the committed weights file, and the loaded model without
+  groups.

@@ -81,6 +81,6 @@ internal static class EmbeddedModel
     {
         using var stream = OpenResource(WeightsResourceName)
             ?? throw new InvalidOperationException($"The embedded resource '{WeightsResourceName}' is missing from the assembly.");
-        return PerceptronModel.Load(stream, FeatureExtractor.FeatureSetVersion);
+        return PerceptronModel.Load(stream);
     }
 }

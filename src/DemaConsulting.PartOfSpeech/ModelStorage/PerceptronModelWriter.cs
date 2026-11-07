@@ -20,9 +20,10 @@ internal static class PerceptronModelWriter
     /// <param name="featureSetVersion">The feature set version of the extractor that the weights belong to.</param>
     /// <param name="rows">The occupied buckets with a 17-element weight vector each; zero rows are skipped; buckets must be unique.</param>
     /// <param name="compress">Whether to store the payload as raw Deflate.</param>
+    /// <param name="featureGroups">The mask of the feature groups that the weights were trained with, stored at header offset 40 (0 for none: the file is then byte-identical to one written without this parameter); only known group bits are allowed.</param>
     /// <returns>The file bytes.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="rows"/> is <c>null</c>.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">A numeric parameter or a bucket is out of range.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">A numeric parameter, a bucket or a group bit is out of range.</exception>
     /// <exception cref="ArgumentException">A weight vector has the wrong length, a weight is -32768 or a bucket repeats.</exception>
     public static byte[] Compile(
         int hashBits,
@@ -30,9 +31,15 @@ internal static class PerceptronModelWriter
         float scale,
         int featureSetVersion,
         IEnumerable<KeyValuePair<int, short[]>> rows,
-        bool compress)
+        bool compress,
+        uint featureGroups = 0)
     {
         ArgumentNullException.ThrowIfNull(rows);
+        if ((featureGroups & ~FeatureExtractor.KnownGroupsMask) != 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(featureGroups), featureGroups, "The feature group mask has bits that are not defined.");
+        }
+
         if (hashBits < PerceptronModel.MinHashBits || hashBits > PerceptronModel.MaxHashBits)
         {
             throw new ArgumentOutOfRangeException(nameof(hashBits), hashBits, "hashBits must be between 18 and 24.");
@@ -143,6 +150,7 @@ internal static class PerceptronModelWriter
         BinaryFormat.WriteUInt32(file, 28, (uint)payload.Length);
         BinaryFormat.WriteUInt32(file, 32, (uint)stored.Length);
         BinaryFormat.WriteUInt32(file, 36, BinaryFormat.Fnv1a(stored, 0, stored.Length));
+        BinaryFormat.WriteUInt32(file, PerceptronModel.GroupMaskOffset, featureGroups);
         Buffer.BlockCopy(stored, 0, file, PerceptronModel.HeaderLength, stored.Length);
         return file;
     }
@@ -157,6 +165,7 @@ internal static class PerceptronModelWriter
     /// <param name="featureSetVersion">The feature set version of the extractor that the weights belong to.</param>
     /// <param name="rows">The occupied buckets with a 17-element weight vector each.</param>
     /// <param name="compress">Whether to store the payload as raw Deflate.</param>
+    /// <param name="featureGroups">The mask of the feature groups that the weights were trained with (0 for none).</param>
     /// <exception cref="ArgumentNullException"><paramref name="output"/> or <paramref name="rows"/> is <c>null</c>.</exception>
     public static void Write(
         Stream output,
@@ -165,10 +174,11 @@ internal static class PerceptronModelWriter
         float scale,
         int featureSetVersion,
         IEnumerable<KeyValuePair<int, short[]>> rows,
-        bool compress)
+        bool compress,
+        uint featureGroups = 0)
     {
         ArgumentNullException.ThrowIfNull(output);
-        var file = Compile(hashBits, temperature, scale, featureSetVersion, rows, compress);
+        var file = Compile(hashBits, temperature, scale, featureSetVersion, rows, compress, featureGroups);
         output.Write(file, 0, file.Length);
     }
 }

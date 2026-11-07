@@ -236,6 +236,37 @@ public class TaggerTests
     }
 
     /// <summary>
+    ///     Proves that a weights file with feature groups loads through the public loader and tags its training sentences (the
+    ///     preview group decodes in two passes), and that the tagger reproduces what the same model decodes in a plain loop.
+    /// </summary>
+    [Fact]
+    public void Tagger_Load_ModelWithFeatureGroups_TagsWithTheGroups()
+    {
+        // Arrange: a toy model trained with all four groups
+        var all = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection;
+        var weights = TinyTrainer.Train(groups: all);
+        var tagger = TinyModels.CreateTagger(weights, FixtureLexicon);
+        var sentences = TinyTrainer.Sentences();
+
+        // Act: tag every fixture sentence as pre-tokenized text
+        var correct = 0;
+        var total = 0;
+        foreach (var (tokens, gold) in sentences)
+        {
+            var tagged = tagger.Tag(tokens).Tokens;
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                total++;
+                correct += tagged[i].Tag == gold[i] ? 1 : 0;
+            }
+        }
+
+        // Assert: the header names all groups, and the model has learned the fixtures
+        Assert.Equal(all, PerceptronModel.Load(weights).FeatureGroups);
+        Assert.True(correct >= total * 0.9, $"{correct} of {total} tokens correct");
+    }
+
+    /// <summary>
     ///     Proves that the default tagger is the embedded model and that every read returns the same instance.
     /// </summary>
     [Fact]

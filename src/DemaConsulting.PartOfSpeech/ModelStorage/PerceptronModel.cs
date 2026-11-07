@@ -16,6 +16,13 @@ namespace DemaConsulting.PartOfSpeech;
 ///         <see cref="Load(byte[], int)"/> validates the whole file, so <see cref="AddScores"/> cannot fail on
 ///         malformed data.
 ///     </para>
+///     <para>
+///         The header carries the set of feature groups of the model as a mask at offset 40 (see
+///         <see cref="FeatureGroups"/>). The format version stays 2: a file without groups is byte-identical to one written
+///         before the mask existed, and this build reads those files. A build from before the mask existed rejects a file with
+///         groups twice (its feature set is 2 and its reserved bytes are not zero), so an old reader fails loudly instead
+///         of tagging with the wrong features.
+///     </para>
 /// </remarks>
 internal sealed class PerceptronModel
 {
@@ -28,6 +35,11 @@ internal sealed class PerceptronModel
     ///     The length of the fixed header in bytes.
     /// </summary>
     public const int HeaderLength = 48;
+
+    /// <summary>
+    ///     The offset of the feature group mask (a little-endian <c>uint32</c>) in the header; the bytes after it are reserved and zero.
+    /// </summary>
+    public const int GroupMaskOffset = 40;
 
     /// <summary>
     ///     The format version that this build reads and writes.
@@ -85,16 +97,18 @@ internal sealed class PerceptronModel
     /// <param name="hashBits">The bucket space exponent.</param>
     /// <param name="temperature">The softmax temperature.</param>
     /// <param name="scale">The weight scale.</param>
+    /// <param name="featureGroups">The feature groups of the header.</param>
     /// <param name="occupancy">The occupancy bit set.</param>
     /// <param name="rankBase">The rank table.</param>
     /// <param name="rowStart">The row starts.</param>
     /// <param name="tags">The tag of every weight.</param>
     /// <param name="weights">The weights.</param>
-    private PerceptronModel(int hashBits, float temperature, float scale, ulong[] occupancy, int[] rankBase, int[] rowStart, byte[] tags, short[] weights)
+    private PerceptronModel(int hashBits, float temperature, float scale, FeatureGroups featureGroups, ulong[] occupancy, int[] rankBase, int[] rowStart, byte[] tags, short[] weights)
     {
         HashBits = hashBits;
         Temperature = temperature;
         Scale = scale;
+        FeatureGroups = featureGroups;
         _occupancy = occupancy;
         _rankBase = rankBase;
         _rowStart = rowStart;
@@ -118,6 +132,11 @@ internal sealed class PerceptronModel
     public float Scale { get; }
 
     /// <summary>
+    ///     Gets the groups of context features that the model was trained with (<see cref="FeatureGroups.None"/> for the 22 base templates).
+    /// </summary>
+    public FeatureGroups FeatureGroups { get; }
+
+    /// <summary>
     ///     Gets the number of occupied buckets.
     /// </summary>
     public int RowCount => _rowStart.Length - 1;
@@ -126,6 +145,28 @@ internal sealed class PerceptronModel
     ///     Gets the total number of non-zero weights.
     /// </summary>
     public int WeightCount => _weights.Length;
+
+    /// <summary>
+    ///     Loads and validates a weights file, whatever feature groups it was trained with.
+    /// </summary>
+    /// <param name="stream">A stream positioned at the start of the file; it is read to its end.</param>
+    /// <returns>The model.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="stream"/> is <c>null</c>.</exception>
+    /// <exception cref="InvalidDataException">The file is not a valid weights file of a supported version and feature set.</exception>
+    public static PerceptronModel Load(Stream stream) => Load(BinaryFormat.ReadAllBytes(stream));
+
+    /// <summary>
+    ///     Loads and validates a weights file held in memory, whatever feature groups it was trained with.
+    /// </summary>
+    /// <remarks>
+    ///     Accepted are feature set 1 with no group (mask 0) and feature set 2 with a non-zero mask of known groups.
+    ///     Any other combination is rejected.
+    /// </remarks>
+    /// <param name="file">The whole file.</param>
+    /// <returns>The model.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="file"/> is <c>null</c>.</exception>
+    /// <exception cref="InvalidDataException">The file is not a valid weights file of a supported version and feature set.</exception>
+    public static PerceptronModel Load(byte[] file) => Load(file, -1);
 
     /// <summary>
     ///     Loads and validates a weights file.
@@ -141,8 +182,13 @@ internal sealed class PerceptronModel
     /// <summary>
     ///     Loads and validates a weights file held in memory.
     /// </summary>
+    /// <remarks>
+    ///     The file must have exactly the expected feature set version; the group mask of the header must agree with it
+    ///     (see <see cref="Load(byte[])"/>). Passing <see cref="FeatureExtractor.FeatureSetVersion"/> therefore accepts only
+    ///     models without groups.
+    /// </remarks>
     /// <param name="file">The whole file.</param>
-    /// <param name="expectedFeatureSetVersion">The feature set version of the extractor that will use the weights.</param>
+    /// <param name="expectedFeatureSetVersion">The feature set version of the extractor that will use the weights, or a negative number to accept every supported version.</param>
     /// <returns>The model.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="file"/> is <c>null</c>.</exception>
     /// <exception cref="InvalidDataException">The file is not a valid weights file of a supported version and feature set.</exception>
@@ -153,10 +199,16 @@ internal sealed class PerceptronModel
         // Header: identity first, then the numeric fields that size the payload
         var flags = BinaryFormat.ReadHeader(file, Magic, HeaderLength, FormatVersion, Kind);
         var featureSet = BinaryFormat.ReadUInt16(file, 8);
-        if (featureSet != expectedFeatureSetVersion)
+        if (expectedFeatureSetVersion >= 0 && featureSet != expectedFeatureSetVersion)
         {
             throw new InvalidDataException(
                 $"Feature set mismatch: the weights were trained with feature set {featureSet} but this build uses {expectedFeatureSetVersion}.");
+        }
+
+        if (featureSet != FeatureExtractor.FeatureSetVersion && featureSet != FeatureExtractor.GroupsFeatureSetVersion)
+        {
+            throw new InvalidDataException(
+                $"Feature set mismatch: the weights were trained with feature set {featureSet} but this build supports {FeatureExtractor.FeatureSetVersion} and {FeatureExtractor.GroupsFeatureSetVersion}.");
         }
 
         if (file[10] != UposExtensions.Count)
@@ -182,7 +234,8 @@ internal sealed class PerceptronModel
         var payloadLength = BinaryFormat.ReadInt32Field(file, 28, "payload length");
         var storedLength = BinaryFormat.ReadInt32Field(file, 32, "stored length");
         var checksum = BinaryFormat.ReadUInt32(file, 36);
-        for (var i = 40; i < HeaderLength; i++)
+        var featureGroups = ReadFeatureGroups(file, featureSet);
+        for (var i = 44; i < HeaderLength; i++)
         {
             if (file[i] != 0)
             {
@@ -197,7 +250,32 @@ internal sealed class PerceptronModel
 
         // Payload: verified bytes, then the four columnar sections
         var payload = BinaryFormat.ReadPayload(file, HeaderLength, flags, payloadLength, MaxPayloadLength, storedLength, checksum, Kind);
-        return Build(payload, hashBits, temperature, scale, rowCount, weightCount);
+        return Build(payload, hashBits, temperature, scale, featureGroups, rowCount, weightCount);
+    }
+
+    /// <summary>
+    ///     Reads the group mask of the header and checks it against the feature set version.
+    /// </summary>
+    /// <param name="file">The whole file.</param>
+    /// <param name="featureSet">The feature set version of the header (1 or 2).</param>
+    /// <returns>The groups.</returns>
+    /// <exception cref="InvalidDataException">The mask has an unknown bit, is not zero for feature set 1, or is zero for feature set 2.</exception>
+    private static FeatureGroups ReadFeatureGroups(byte[] file, int featureSet)
+    {
+        var mask = BinaryFormat.ReadUInt32(file, GroupMaskOffset);
+        if ((mask & ~FeatureExtractor.KnownGroupsMask) != 0)
+        {
+            throw new InvalidDataException($"Invalid weights file: the feature group mask 0x{mask:X} has bits that this build does not know.");
+        }
+
+        var groups = (FeatureGroups)mask;
+        if (featureSet != FeatureExtractor.FeatureSetVersionFor(groups))
+        {
+            throw new InvalidDataException(
+                $"Invalid weights file: feature set {featureSet} does not match the feature group mask 0x{mask:X} (feature set {FeatureExtractor.FeatureSetVersion} has no group, feature set {FeatureExtractor.GroupsFeatureSetVersion} at least one).");
+        }
+
+        return groups;
     }
 
     /// <summary>
@@ -207,17 +285,18 @@ internal sealed class PerceptronModel
     ///     The Deflate bytes differ between runtimes, but the uncompressed form is deterministic, so the trainer tool
     ///     compares this form to decide whether a committed weights file is current (the same method as
     ///     <see cref="Lexicon.ToUncompressedImage(byte[])"/> uses for the lexicon). The checksum of the uncompressed form
-    ///     covers the payload, which is what the stored bytes of that form are. The file must be valid and use the
-    ///     feature set of this build, because a stale feature set is exactly what a staleness check must report.
+    ///     covers the payload, which is what the stored bytes of that form are. The file must be valid and use a feature
+    ///     set that this build supports (1 without groups, 2 with groups), because a stale feature set is exactly what a
+    ///     staleness check must report. The group mask is part of the header and is kept.
     /// </remarks>
     /// <param name="file">The whole file.</param>
     /// <returns>The uncompressed file image.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="file"/> is <c>null</c>.</exception>
-    /// <exception cref="InvalidDataException">The file is not a valid weights file of a supported version and of the feature set of this build.</exception>
+    /// <exception cref="InvalidDataException">The file is not a valid weights file of a supported version and feature set.</exception>
     public static byte[] ToUncompressedImage(byte[] file)
     {
         // Validate completely first so a damaged file never produces a plausible-looking image
-        _ = Load(file, FeatureExtractor.FeatureSetVersion);
+        _ = Load(file);
 
         // Re-read the verified payload and rebuild the header for the uncompressed form
         var flags = BinaryFormat.ReadHeader(file, Magic, HeaderLength, FormatVersion, Kind);
@@ -271,11 +350,12 @@ internal sealed class PerceptronModel
     /// <param name="hashBits">The bucket space exponent.</param>
     /// <param name="temperature">The softmax temperature.</param>
     /// <param name="scale">The weight scale.</param>
+    /// <param name="featureGroups">The feature groups of the header.</param>
     /// <param name="rowCount">The declared number of rows.</param>
     /// <param name="weightCount">The declared number of weights.</param>
     /// <returns>The model.</returns>
     /// <exception cref="InvalidDataException">A column violates the format rules.</exception>
-    private static PerceptronModel Build(byte[] payload, int hashBits, float temperature, float scale, int rowCount, int weightCount)
+    private static PerceptronModel Build(byte[] payload, int hashBits, float temperature, float scale, FeatureGroups featureGroups, int rowCount, int weightCount)
     {
         // Section A: bucket gaps. The first bucket is gap - 1 so that a gap is never zero
         var occupancy = new ulong[(int)(((1L << hashBits) + 63) >> 6)];
@@ -361,6 +441,6 @@ internal sealed class PerceptronModel
             running += BinaryFormat.PopCount(occupancy[i]);
         }
 
-        return new PerceptronModel(hashBits, temperature, scale, occupancy, rankBase, rowStart, tags, weights);
+        return new PerceptronModel(hashBits, temperature, scale, featureGroups, occupancy, rankBase, rowStart, tags, weights);
     }
 }

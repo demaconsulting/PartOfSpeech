@@ -1,6 +1,6 @@
 package PartOfSpeech {
     part def FeatureExtractor {
-        doc /* The single definition of the 22 hashed features of a token, shared by decoding and the later trainer. */
+        doc /* The single definition of the hashed features of a token, shared by decoding and the trainer: 22 base templates plus four switchable feature groups (position, clause, right preview, inflection) that a model names in its weights file. */
 
         comment sourceRef /* Source: src/DemaConsulting.PartOfSpeech/Tagging/FeatureExtractor.cs */
         comment testRef /* Test: test/DemaConsulting.PartOfSpeech.Tests/Tagging/FeatureExtractorTests.cs */

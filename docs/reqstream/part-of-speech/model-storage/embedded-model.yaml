@@ -22,8 +22,8 @@ sections:
 
               - id: PartOfSpeech-ModelStorage-EmbeddedModel-Weights
                 title: >-
-                  The package shall contain trained weights that load as a model of the feature set of the library, and
-                  every access shall return the same loaded model.
+                  The package shall contain trained weights that load as a model of the feature set of the library
+                  (the embedded model has no feature group), and every access shall return the same loaded model.
                 justification: |
                   The embedded weights are what the default tagger scores with; weights that are missing or built for
                   another feature set would make the default tagger fail or give wrong tags, and loading them again for
@@ -31,6 +31,7 @@ sections:
                 tests:
                   - EmbeddedModel_Weights_IsPresentAndLoads
                   - EmbeddedModel_Weights_SecondAccess_ReturnsSameInstance
+                  - ModelStorage_EmbeddedWeights_HaveNoFeatureGroups
 
               - id: PartOfSpeech-ModelStorage-EmbeddedModel-ThreadSafe
                 title: >-

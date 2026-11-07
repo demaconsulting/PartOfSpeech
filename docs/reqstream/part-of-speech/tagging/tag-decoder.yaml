@@ -81,14 +81,47 @@ sections:
               - id: PartOfSpeech-Tagging-TagDecoder-NoAllocation
                 title: >-
                   Decoding a sentence shall allocate only the memory of its results, in an amount proportional to the
-                  number of tokens.
+                  number of tokens, also for a model with feature groups.
                 justification: |
                   Scratch memory that is allocated per sentence adds garbage collection to every request; only the
                   result
                   that the caller keeps needs new memory.
                 tests:
                   - TagDecoder_Decode_DoesNotAllocateInHotPath
+                  - TagDecoder_Decode_AllGroups_DoesNotAllocateInHotPath
                   - Lexicon_AllowedTags_KnownTokenShapes_DoNotAllocate
+
+              - id: PartOfSpeech-Tagging-TagDecoder-FeatureGroups
+                title: >-
+                  The decoder shall extract the feature groups that the weights file names (and no others), shall use
+                  the same lexicon facts for the groups and for the allowed tags, shall feed the tags that it chose
+                  into the history features of the groups, and for every set of groups shall choose the tags that a
+                  plain decoder over the string-based reference features chooses.
+                justification: |
+                  A model is only valid for the features it was trained with, and the groups come from the weights
+                  header, so the decoder must follow the header and nothing else.
+                tests:
+                  - TagDecoder_Decode_ClauseCues_ImperativeBeforeDeterminer
+                  - TagDecoder_Decode_ClauseCues_ClauseStateFollowsChosenTags
+                  - TagDecoder_Decode_PositionCues_UsePositionInSentence
+                  - TagDecoder_Decode_Inflection_SeparatesVerbStemFromLookalike
+                  - TagDecoder_Decode_MatchesReferenceDecoder
+
+              - id: PartOfSpeech-Tagging-TagDecoder-RightPreview
+                title: >-
+                  A model with the right preview group shall be decoded in two passes: a first pass that chooses tags
+                  without the preview features (and without probabilities), applying the constraints, and a second
+                  pass that sees those tags for the next two tokens and produces the result; a model whose weights
+                  have no preview weights shall decode exactly as without the group, and the result shall be the same
+                  for every repetition and every thread.
+                justification: |
+                  The preview lets the decoder use the right-hand context; the first pass must be the decode of the
+                  same weights without the group, so that one weights table serves both passes, and the result must
+                  not depend on timing.
+                tests:
+                  - TagDecoder_Decode_RightPreview_SecondPassSeesFirstPassTags
+                  - TagDecoder_Decode_RightPreview_WithoutPreviewWeights_EqualsOnePass
+                  - TagDecoder_Decode_RightPreview_IsDeterministic
 
               - id: PartOfSpeech-Tagging-TagDecoder-EmptyInput
                 title: A sentence without tokens shall give an empty result.

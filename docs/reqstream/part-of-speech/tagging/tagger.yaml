@@ -40,9 +40,9 @@ sections:
 
               - id: PartOfSpeech-Tagging-Tagger-Load
                 title: >-
-                  A tagger shall be created from a weights stream, with the embedded lexicon or with a lexicon stream,
-                  and
-                  a null stream or options that are out of range shall be refused.
+                  A tagger shall be created from a weights stream (of a model with or without feature groups), with the
+                  embedded lexicon or with a lexicon stream, and a null stream or options that are out of range shall
+                  be refused.
                 justification: |
                   Callers choose their own weights and may bring a lexicon of their own; bad arguments are programming
                   errors to report at creation time.
@@ -50,6 +50,7 @@ sections:
                   - Tagger_Load_NullStreams_Throw
                   - Tagger_Load_InvalidOptions_Throw
                   - Tagger_Load_CustomLexicon_IsUsed
+                  - Tagger_Load_ModelWithFeatureGroups_TagsWithTheGroups
 
               - id: PartOfSpeech-Tagging-Tagger-Default
                 title: >-

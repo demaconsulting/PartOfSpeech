@@ -279,7 +279,7 @@ internal static class PerceptronTrainer
                     continue;
                 }
 
-                var offset = i * FeatureExtractor.StaticFeatureCount;
+                var offset = i * workspace.StaticStride;
                 for (var k = 0; k < workspace.StaticCount[i]; k++)
                 {
                     counts[workspace.StaticBuckets[offset + k]]++;

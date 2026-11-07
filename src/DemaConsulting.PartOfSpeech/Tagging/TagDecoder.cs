@@ -12,6 +12,13 @@ namespace DemaConsulting.PartOfSpeech;
 ///         scores into probabilities with a softmax at the temperature stored in the model.
 ///     </para>
 ///     <para>
+///         The groups of context features of the model (<see cref="PerceptronModel.FeatureGroups"/>) decide which extra
+///         features the decoder extracts. A model with the <see cref="FeatureGroups.RightPreview"/> group is decoded in two passes:
+///         the first pass chooses tags with the same rules but without the preview features (and without probabilities);
+///         the second pass decodes again with the first-pass tags of the next two tokens as features and produces the result.
+///         Constraints apply in both passes. A model without that group is decoded in one pass, exactly as before the groups existed.
+///     </para>
+///     <para>
 ///         The decoder is immutable and thread-safe: its model and lexicon are read-only and the scratch memory is a
 ///         per-thread <see cref="DecoderWorkspace"/> that is reused, so decoding allocates only the result arrays (one
 ///         array of tokens and one flat array of alternatives per sentence).
@@ -46,6 +53,11 @@ internal sealed class TagDecoder
     private readonly double _scale;
 
     /// <summary>
+    ///     The groups of context features of the model.
+    /// </summary>
+    private readonly FeatureGroups _groups;
+
+    /// <summary>
     ///     Initializes a new instance of the <see cref="TagDecoder"/> class.
     /// </summary>
     /// <param name="model">The perceptron weights.</param>
@@ -59,6 +71,7 @@ internal sealed class TagDecoder
         _lexicon = lexicon;
         _temperature = model.Temperature;
         _scale = model.Scale;
+        _groups = model.FeatureGroups;
     }
 
     /// <summary>
@@ -95,6 +108,7 @@ internal sealed class TagDecoder
 
         // Fold and hash all tokens once; the features that do not depend on tags are ready after this
         var workspace = GetWorkspace();
+        workspace.Configure(_groups, _lexicon);
         workspace.Begin(count);
         for (var i = 0; i < count; i++)
         {
@@ -108,20 +122,53 @@ internal sealed class TagDecoder
         var slots = Math.Min(maxAlternatives, UposExtensions.Count - 1);
         var alternatives = slots > 0 ? new TagScore[count * slots] : null;
 
+        // With the right preview group the sentence is decoded twice: the first pass (without the preview features) only
+        // chooses tags, the second pass sees them for the two tokens ahead and produces the result
+        if ((_groups & FeatureGroups.RightPreview) != 0)
+        {
+            PreviewPass(workspace, count, snapshot);
+        }
+
         var previous1 = FeatureExtractor.StartTag1;
         var previous2 = FeatureExtractor.StartTag2;
         for (var i = 0; i < count; i++)
         {
             var constraint = snapshot == null ? default : snapshot[i];
-            var best = DecodeToken(workspace, i, previous1, previous2, constraint, slots, alternatives, out var confidence, out var alternativeCount);
+            var best = DecodeToken(workspace, i, previous1, previous2, constraint, slots, alternatives, false, out var confidence, out var alternativeCount);
             result[i] = new TaggedToken(tokens[i].Text, tokens[i].Start, (Upos)best, confidence, alternatives, i * slots, alternativeCount, !constraint.IsNone);
 
             // The decision becomes history for the next two tokens, like any other decision
+            FeatureExtractor.Advance(workspace, i, best);
             previous2 = previous1;
             previous1 = best;
         }
 
         return result;
+    }
+
+    /// <summary>
+    ///     Runs the first decoding pass of the right preview group: chooses a tag for every token without the preview
+    ///     features, stores the tags in the workspace and starts the second pass.
+    /// </summary>
+    /// <param name="workspace">The prepared workspace.</param>
+    /// <param name="count">The number of tokens.</param>
+    /// <param name="constraints">The resolved constraints, or <c>null</c>.</param>
+    private void PreviewPass(DecoderWorkspace workspace, int count, TokenConstraint[]? constraints)
+    {
+        FeatureExtractor.StartPass(workspace, false);
+        var previous1 = FeatureExtractor.StartTag1;
+        var previous2 = FeatureExtractor.StartTag2;
+        for (var i = 0; i < count; i++)
+        {
+            var constraint = constraints == null ? default : constraints[i];
+            var best = DecodeToken(workspace, i, previous1, previous2, constraint, 0, null, true, out _, out _);
+            workspace.Preview[i] = best;
+            FeatureExtractor.Advance(workspace, i, best);
+            previous2 = previous1;
+            previous1 = best;
+        }
+
+        FeatureExtractor.StartPass(workspace, true);
     }
 
     /// <summary>
@@ -191,6 +238,7 @@ internal sealed class TagDecoder
     /// <param name="constraint">The constraint of the token.</param>
     /// <param name="slots">The number of alternative slots per token.</param>
     /// <param name="alternatives">The flat alternatives array, or <c>null</c> when no alternatives are requested.</param>
+    /// <param name="choiceOnly">Whether only the tag is wanted (the first pass of the right preview group): the probabilities are not computed.</param>
     /// <param name="confidence">Receives the probability of the chosen tag.</param>
     /// <param name="alternativeCount">Receives the number of alternatives written for the token.</param>
     /// <returns>The chosen tag ordinal.</returns>
@@ -202,6 +250,7 @@ internal sealed class TagDecoder
         TokenConstraint constraint,
         int slots,
         TagScore[]? alternatives,
+        bool choiceOnly,
         out double confidence,
         out int alternativeCount)
     {
@@ -247,6 +296,13 @@ internal sealed class TagDecoder
         }
 
         // Softmax over the candidates at the model temperature (shifted by the maximum for numeric stability)
+        if (choiceOnly)
+        {
+            confidence = 0;
+            alternativeCount = 0;
+            return best;
+        }
+
         var sum = 0.0;
         for (var tag = 0; tag < UposExtensions.Count; tag++)
         {
@@ -290,11 +346,23 @@ internal sealed class TagDecoder
     /// <returns>The allowed tags.</returns>
     private UposSet AllowedTags(DecoderWorkspace workspace, int index)
     {
-        // The lexicon key is the lower-cased folded token, which follows the folded form in the character buffer
-        var length = workspace.Length[index];
-        var lowerStart = workspace.Start[index] + length;
-        var known = _lexicon.TryGetTags(workspace.Chars, lowerStart, length, workspace.LexiconScratch, out var tags);
+        // The groups that read the lexicon already looked every token up when the sentence was prepared
         var flags = workspace.Flags[index];
+        bool known;
+        UposSet tags;
+        if (workspace.LexCached)
+        {
+            known = workspace.LexKnown[index] != 0;
+            tags = UposSet.FromMask(workspace.LexMask[index]);
+        }
+        else
+        {
+            // The lexicon key is the lower-cased folded token, which follows the folded form in the character buffer
+            var length = workspace.Length[index];
+            var lowerStart = workspace.Start[index] + length;
+            known = _lexicon.TryGetTags(workspace.Chars, lowerStart, length, workspace.LexiconScratch, out tags);
+        }
+
         return Lexicon.AllowedTags(
             known,
             tags,

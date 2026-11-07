@@ -31,8 +31,8 @@ result types: `Tagger.cs`, `TaggerOptions.cs`, `TaggedSentence.cs`, `TaggedToken
 #### Key Methods
 
 - **`Load(Stream weights, TaggerOptions? options = null)`**: validates the arguments and options, loads the weights with
-  `PerceptronModel.Load` (expecting `FeatureExtractor.FeatureSetVersion`) and uses the embedded lexicon. The stream is
-  read to its end and not closed.
+  `PerceptronModel.Load` (any supported feature set: with or without feature groups) and uses the embedded lexicon. The
+  stream is read to its end and not closed.
 - **`Load(Stream weights, Stream lexicon, TaggerOptions? options = null)`**: the same with a caller-supplied `POSL`
   lexicon.
 - **`Tag(string text)`**: `Tokenizer.Tokenize`, then one `Tag(Sentence)` per sentence; an empty text gives an empty list.
