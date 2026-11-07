@@ -121,9 +121,11 @@ agencies), come from the CC0 export of Tatoeba, or are project-written. The lice
 `data/open/sources.tsv`.
 
 The development set `data/eval/shapes-dev/` is not a copy of WordSense data: this project built it from text of US
-federal government documents (Army, Navy, Bureau of Mines, Department of Agriculture, Forest Service, NASA and NIST
+federal government documents (Army, Navy, Bureau of Mines, Department of Agriculture, Forest Service and NASA
 publications; 17 U.S.C. 105). Its annotations and its selection are dedicated to the public domain under CC0 1.0, and
-the license basis of every document is quoted in `data/eval/shapes-dev/sources.tsv`.
+the license basis of every document is quoted in `data/eval/shapes-dev/sources.tsv`. Two NIST handbooks that were used
+first were dropped because their text is not clearly authored by the US government
+(`data/eval/shapes-dev/excluded-sources.tsv`); none of their text is in the set.
 
 Language models wrote the tags, and no human has reviewed them. In the owner's position, GitHub claims no ownership of
 model outputs, so the repository owner, who prompted their creation, holds the rights in them and dedicates them to the
