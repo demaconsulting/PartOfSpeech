@@ -864,6 +864,83 @@ class HardLeakageAndLicenseTests(HardFolder):
         self.assertIn("eval/shapes-dev/hard-sources.tsv", check_licenses.FAA_TABLES)
 
 
+class RequiredFilesFailClosedTests(base.MiniFolder):
+    """check_licenses.main fails closed: every required table and corpus that is missing is a FINDING (exit 1, no traceback); the hard
+    tranche's two files are optional only while leakage.HARD_TRANCHE_REQUIRED is False."""
+
+    STANDARD = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv", "masc/sources.tsv",
+                "eval/shapes-dev/dev.tsv")
+    HARD = ("eval/shapes-dev/hard-sources.tsv", "eval/shapes-dev/hard.tsv")
+
+    def write_data(self):
+        super().write_data()
+        folder = os.path.join(self.data, "eval", "shapes-dev")
+        row = ["doc-a", "us-government", "T", "https://example.gov/doc-a", "A", "1990", "US federal government work (17 U.S.C. 105): test",
+               "https://example.gov/terms", "2026-11-01", "a" * 64, "b" * 64, "1"]
+        for path in (os.path.join(self.data, "eval", "gold-v2", "sources.tsv"), os.path.join(self.data, "silver", "sources.tsv"),
+                     os.path.join(folder, "sources.tsv"), os.path.join(folder, "hard-sources.tsv")):
+            base.table_file(path, sd.SOURCE_COLUMNS, [row])
+        extra = [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]]
+        for name in ("dev.tsv", "hard.tsv"):
+            base.corpus_file(os.path.join(folder, name), [("doc-a", "A brand new dev sentence about nothing in particular .")], extra)
+        base.table_file(os.path.join(folder, "excluded-sources.tsv"), common.EXCLUDED_SOURCES_COLUMNS, [])
+
+    def run_main(self, required=True):
+        out = io.StringIO()
+        with mock.patch.object(leakage, "HARD_TRANCHE_REQUIRED", required), contextlib.redirect_stdout(out):
+            with self.assertRaises(SystemExit) as raised:                      # any other exception (a traceback) fails the test
+                check_licenses.main()
+        self.assertEqual(1, raised.exception.code)                             # the fixture has no READMEs: other findings always exist
+        return [line[len("FINDING: "):] for line in out.getvalue().splitlines() if line.startswith("FINDING: ")]
+
+    def missing(self, findings):
+        return sorted(f for f in findings if f.startswith("missing required file"))
+
+    def remove(self, relative):
+        os.remove(os.path.join(self.data, *relative.split("/")))
+
+    def test_the_complete_fixture_has_no_missing_file_finding_in_either_flag_state(self):
+        for required in (True, False):
+            self.assertEqual([], self.missing(self.run_main(required)))
+        self.assertEqual([], check_licenses.required_file_findings(self.data))
+
+    def test_each_missing_required_file_is_one_finding_and_never_a_traceback(self):
+        for relative in self.STANDARD + self.HARD:
+            for required in (True, False):
+                if relative in self.HARD and not required:
+                    continue
+                with self.subTest(relative=relative, required=required):
+                    path = os.path.join(self.data, *relative.split("/"))
+                    with open(path, "rb") as handle:
+                        content = handle.read()
+                    os.remove(path)
+                    try:
+                        self.assertEqual(["missing required file: data/" + relative], self.missing(self.run_main(required)))
+                    finally:
+                        with open(path, "wb") as handle:
+                            handle.write(content)
+
+    def test_a_missing_hard_file_is_skipped_silently_while_the_tranche_is_optional(self):
+        for relative in self.HARD:
+            self.remove(relative)
+        self.assertEqual([], self.missing(self.run_main(False)))
+        self.assertEqual(sorted("missing required file: data/" + r for r in self.HARD), self.missing(self.run_main(True)))
+
+    def test_every_required_file_missing_at_once_yields_findings_only(self):
+        for relative in self.STANDARD + self.HARD:
+            self.remove(relative)
+        expected = sorted("missing required file: data/" + r for r in self.STANDARD + self.HARD)
+        self.assertEqual(expected, self.missing(self.run_main(True)))
+        self.assertEqual(sorted("missing required file: data/" + r for r in self.STANDARD), self.missing(self.run_main(False)))
+
+    def test_a_present_hard_table_is_scanned_even_while_the_tranche_is_optional(self):
+        base.table_file(os.path.join(self.data, "eval", "shapes-dev", "hard-sources.tsv"), sd.SOURCE_COLUMNS,
+                        [["doc-a", "us-government", "T", "https://example.gov/doc-a", "A", "1990", "CC BY-SA 4.0", "https://example.gov/terms",
+                          "2026-11-01", "a" * 64, "b" * 64, "1"]])
+        found = self.run_main(False)
+        self.assertTrue(any(f.startswith("eval/shapes-dev/hard-sources.tsv: row mentions") for f in found), found)
+
+
 class IndependenceTests(unittest.TestCase):
     """The selection of the hard tranche uses no PartOfSpeech model: no weights file, decoder, prediction or score."""
 
