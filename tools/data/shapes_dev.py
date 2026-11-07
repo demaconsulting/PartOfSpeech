@@ -96,7 +96,7 @@ sentences of the same document (`near-standard-tranche`). For every shape:
 
 `build --tranche hard` takes the kept real targets in the same order (q ascending, lemma cap 4) up to the cap per shape, and controls (other
 class, 2 per lemma, lemma of a chosen target of the shape, by seeded rank) up to the control cap. Quota gate of the hard tranche (floor / cap
-per shape: n-compound-head 80/100, v-imperative-initial 70/100, v-after-modal 80/100, n-subject-initial 40/60, n-measure 0/0; controls 50/60; no
+per shape: n-compound-head 80/100, v-imperative-initial 70/100, v-after-modal 80/100, n-subject-initial 40/100, n-measure 0/0; controls 50/60; no
 authored sentence): a miss below a floor refuses the build (exit code 1, nothing written) unless `--allow-short`. A round (`--round h2`) can add
 the next-hardest block of a shape that is below its floor; it works like the rounds of the standard tranche. The hard build reads the exclusion
 record fail-closed and never rewrites it. `sample --tranche hard` draws the hand-check sample from the targets the build would take, at least half
@@ -220,7 +220,7 @@ DISAGREE_Q = 0.5                                 # q below this is the pure-disa
 BAND_EDGES = (BAND_MIN, 0.30, 0.50, 0.70, 0.90, BAND_MAX)
 HARD_BUDGETS = {"n-compound-head": 400, "n-subject-initial": None, "v-imperative-initial": None, "v-after-modal": 300}   # None = all
 HARD_FLOORS = {"n-compound-head": 80, "n-subject-initial": 40, "v-imperative-initial": 70, "n-measure": 0, "v-after-modal": 80}
-HARD_CAPS = {"n-compound-head": 100, "n-subject-initial": 60, "v-imperative-initial": 100, "n-measure": 0, "v-after-modal": 100}
+HARD_CAPS = {"n-compound-head": 100, "n-subject-initial": 100, "v-imperative-initial": 100, "n-measure": 0, "v-after-modal": 100}
 HARD_CONTROL_MIN, HARD_CONTROL_MAX = 50, 60
 HARD_CONTROL_POOL = 50                           # control candidates per shape
 NEAR_STANDARD_WORDS = 10                         # a sentence of at least this many words ...
@@ -2474,7 +2474,7 @@ def main(argv=None):
                               help="hard tranche: floor of a shape (default n-compound-head 80, n-subject-initial 40, v-imperative-initial 70, "
                                    "n-measure 0, v-after-modal 80)")
     build_parser.add_argument("--shape-max", action="append", default=None, metavar="SHAPE=N",
-                              help="hard tranche: cap of a shape (default 100, n-subject-initial 60, n-measure 0)")
+                              help="hard tranche: cap of a shape (default 100, n-measure 0)")
     build_parser.add_argument("--control-min", type=int, default=None, help="hard tranche: floor of the controls (default %d)" % HARD_CONTROL_MIN)
     build_parser.add_argument("--control-max", type=int, default=None, help="hard tranche: cap of the controls (default %d)" % HARD_CONTROL_MAX)
     build_parser.add_argument("--allow-short", action="store_true",

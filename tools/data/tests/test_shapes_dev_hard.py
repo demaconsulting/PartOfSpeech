@@ -418,7 +418,7 @@ class QuotaGateTests(unittest.TestCase):
     def test_the_pre_registered_numbers(self):
         self.assertEqual({"n-compound-head": 80, "n-subject-initial": 40, "v-imperative-initial": 70, "n-measure": 0, "v-after-modal": 80},
                          sd.HARD_FLOORS)
-        self.assertEqual({"n-compound-head": 100, "n-subject-initial": 60, "v-imperative-initial": 100, "n-measure": 0, "v-after-modal": 100},
+        self.assertEqual({"n-compound-head": 100, "n-subject-initial": 100, "v-imperative-initial": 100, "n-measure": 0, "v-after-modal": 100},
                          sd.HARD_CAPS)
         self.assertEqual((50, 60), (sd.HARD_CONTROL_MIN, sd.HARD_CONTROL_MAX))
         self.assertEqual((0.10, 0.97), (sd.BAND_MIN, sd.BAND_MAX))

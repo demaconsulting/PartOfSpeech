@@ -2281,8 +2281,10 @@ Rule (`python tools/data/shapes_dev.py --tranche hard`):
    labeler.
 8. **No authored sentences;** `n-measure` is omitted (zero items, `-` in reports).
 9. **Quota gate** (floor and cap): `n-compound-head` 80 and 100, `v-imperative-initial` 70 and 100, `v-after-modal` 80 and 100,
-   `n-subject-initial` 40 and 60, `n-measure` 0 and 0; controls 50 and 60; lemma cap 4 (controls 2). Below a floor `build`
-   refuses unless `--allow-short`; a miss is disclosed, not padded.
+   `n-subject-initial` 40 and 100, `n-measure` 0 and 0; controls 50 and 60; lemma cap 4 (controls 2). Below a floor `build`
+   refuses unless `--allow-short`; a miss is disclosed, not padded. Amendment before any label existed: the
+   `n-subject-initial` cap was raised from 60 to 100 after the new documents enlarged the pool (846 candidates against the
+   254 expected); written before labeling started.
 10. **No PartOfSpeech model in the selection** (a data test asserts it); voters (spaCy, NLTK) are not part of the rule and may
     only be descriptive diagnostics after the build.
 11. **Hand check:** 60 targets (15 per shape, at least half with q < 0.5) by `claude-sonnet-5.5` (a model review), with a
