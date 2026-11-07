@@ -398,6 +398,26 @@ class CandidateTests(MiniFolder):
         with open(path, "w", encoding="utf-8", newline="") as handle:
             handle.write("source_id\treason\r\ndoc-b\tCRLF file\r\n")
         self.assertEqual({"doc-b": "CRLF file"}, sd.read_excluded_sources(self.work))
+        common.write_text(path, ["source_id\treason\tdecided", "doc-c\tr\t2026-11-06", "doc-b\tq\t2026-11-05"])
+        self.assertEqual([("doc-c", "r", "2026-11-06"), ("doc-b", "q", "2026-11-05")], sd.read_excluded_rows(self.work))
+        self.assertEqual({"doc-c": "r", "doc-b": "q"}, sd.read_excluded_sources(self.work))
+        common.write_text(path, ["source_id\treason\tdecided", "doc-b\tq\t"])
+        with self.assertRaises(ValueError):
+            sd.read_excluded_rows(self.work)
+
+    def test_the_excluded_output_rows_carry_the_draft_url_and_need_a_known_document_and_a_date(self):
+        path = os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE)
+        draft = [dict(zip(sd.SOURCE_COLUMNS, self.source_row(i))) for i in ("doc-a", "doc-b")]
+        self.assertEqual([], sd.excluded_output_rows(self.work, draft))
+        common.write_text(path, ["source_id\treason\tdecided", "doc-b\tr b\t2026-11-06", "doc-a\tr a\t2026-11-05"])
+        self.assertEqual([["doc-a", "https://example.gov/doc-a", "r a", "2026-11-05"], ["doc-b", "https://example.gov/doc-b", "r b", "2026-11-06"]],
+                         sd.excluded_output_rows(self.work, draft))
+        common.write_text(path, ["source_id\treason\tdecided", "doc-z\tr\t2026-11-06"])
+        with self.assertRaises(ValueError):                                         # no draft row, so no url
+            sd.excluded_output_rows(self.work, draft)
+        common.write_text(path, ["source_id\treason", "doc-b\tr"])
+        with self.assertRaises(ValueError):                                         # no decided date
+            sd.excluded_output_rows(self.work, draft)
 
     def test_candidates_skip_every_sentence_of_an_excluded_document_and_count_the_drop(self):
         common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason", "doc-b\tnot clearly public domain"])
@@ -608,6 +628,7 @@ class PipelineTests(MiniFolder):
         _, source_rows = adjudicate.read_records(os.path.join(out, "sources.tsv"))
         ids = {r["source_id"] for r in source_rows}
         self.assertEqual({s["source_id"] for s in sentences}, ids)
+        self.assertFalse(os.path.exists(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE)))        # nothing excluded, no record file
         authored = next(r for r in source_rows if r["source_id"] == sd.AUTHORED_ID)
         self.assertEqual("project-written", authored["family"])
         self.assertTrue(authored["license_basis"].startswith("Written by the project"))
@@ -633,7 +654,8 @@ class PipelineTests(MiniFolder):
         out = os.path.join(self.temp, "out")
         self.assertEqual(0, self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5")[0])
         self.assertIn("doc-b", {s["source_id"] for s in common.read_corpus(os.path.join(out, "dev.tsv"))[1]})
-        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason", "doc-b\tnot clearly public domain"])
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE),
+                          ["source_id\treason\tdecided", "doc-b\tnot clearly public domain\t2026-11-06"])
         items, _ = sd.read_decided(self.work)                                       # the stored `keep` is overridden when read
         mine = [i for i in items if i["source_id"] == "doc-b"]
         self.assertTrue(mine and all((i["outcome"], i["reason"]) == ("drop", sd.EXCLUDED_REASON) for i in mine))
@@ -646,6 +668,10 @@ class PipelineTests(MiniFolder):
         self.assertTrue(sentences and "doc-b" not in {s["source_id"] for s in sentences})
         _, sources = adjudicate.read_records(os.path.join(out, "sources.tsv"))
         self.assertNotIn("doc-b", {r["source_id"] for r in sources})
+        header, excluded = adjudicate.read_records(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE))        # the record of the exclusion
+        self.assertEqual(list(sd.EXCLUDED_OUTPUT_COLUMNS), list(header))
+        self.assertEqual([{"source_id": "doc-b", "url": "https://example.gov/doc-b", "reason": "not clearly public domain",
+                           "decided": "2026-11-06"}], [dict(r) for r in excluded])
         self.assertEqual(0, self.cli("sample", "--per-shape", "12", "--controls", "0")[0])
         with open(os.path.join(self.root, "private", "review-sample.md"), encoding="utf-8") as handle:
             self.assertNotIn("oil tank before use", handle.read())

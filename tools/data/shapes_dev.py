@@ -16,8 +16,9 @@ Input layout of the work folder W (`--work W`):
   W/authored/<shape>.tsv       authored top-up sentences of a shape: header `lemma<TAB>role<TAB>sentence`, role `target` or
                                `control` (a control uses the lemma in the class other than the shape's class)
   W/tokens.tsv                 written by `tokenize`: the tokens of every sentence (the corpus tokenization of the library)
-  W/excluded-sources.tsv       optional; documents that must not be in the set: header `source_id<TAB>reason`, one row per document
-                               (a document the owner dropped after its text was sourced or even labeled)
+  W/excluded-sources.tsv       optional; documents that must not be in the set: header `source_id<TAB>reason<TAB>decided`, one row per
+                               document (a document the owner dropped after its text was sourced or even labeled; `decided` is the
+                               date of the decision, YYYY-MM-DD, required by `build`; the two-column header is read by the other commands)
 
 Excluded sources (W/excluded-sources.tsv). `candidates` (every round) skips every sentence of an excluded document (drop reason
 `excluded-source`, one count per sentence; the document is not a rejected document, it is no candidate source at all). Items of an excluded
@@ -25,7 +26,9 @@ document that are already decided (in the root or in a round folder) are treated
 their labels were: `decide` writes them so, and `read_decided` (the reader that `sample`, `build`, `report` and the lemma counts of later
 rounds use) overrides a stored `keep`, so they never reach dev.tsv or sources.tsv, no review sample, and no lemma cap. `decide` reports them
 in its `excluded-source` column and `report` in the table `dropped: excluded source` per shape and role. Replacement candidates come from
-another round (`candidates --round NAME`) that skips the excluded documents.
+another round (`candidates --round NAME`) that skips the excluded documents. `build` also writes the committed record
+data/eval/shapes-dev/excluded-sources.tsv (source_id, url from the draft, reason, decided; one row per excluded document), so
+that sources.tsv, which lists only the used documents, stays a table of the shared 12-column format.
 
 Commands (all take `--work W`; `--data-dir D` replaces the repository's data folder, for tests):
 
@@ -125,6 +128,9 @@ ROUNDS_DIR = "rounds"
 ROUND_NAME_RE = re.compile(r"[A-Za-z0-9_-]+")
 EXCLUDED_SOURCES_FILE = "excluded-sources.tsv"
 EXCLUDED_COLUMNS = ("source_id", "reason")
+EXCLUDED_DECIDED_COLUMN = "decided"
+EXCLUDED_OUTPUT_COLUMNS = ("source_id", "url", "reason", "decided")
+EXCLUDED_OUTPUT_FILE = "excluded-sources.tsv"
 EXCLUDED_REASON = "excluded-source"
 SHAPES = ("n-compound-head", "n-subject-initial", "v-imperative-initial", "n-measure", "v-after-modal")
 SHAPE_CLASS = {shape: ("Noun" if shape.startswith("n-") else "Verb") for shape in SHAPES}
@@ -373,22 +379,48 @@ def document_rejection(index, source_id, url=""):
     return None
 
 
-def read_excluded_sources(work):
-    """{source_id: reason} of W/excluded-sources.tsv (empty when the file is missing); the header must be `source_id<TAB>reason`."""
+def read_excluded_rows(work):
+    """[(source_id, reason, decided)] of W/excluded-sources.tsv (empty when the file is missing), in file order.
+
+    The header is `source_id<TAB>reason` with an optional third column `decided` (the date of the owner's decision, `YYYY-MM-DD`);
+    `decided` is "" when the column is absent. `build` requires it, because it is written to data/eval/shapes-dev/excluded-sources.tsv."""
     path = shared_path(work, EXCLUDED_SOURCES_FILE)
     if not os.path.exists(path):
-        return {}
-    excluded = {}
+        return []
     with open(path, "r", encoding="utf-8", newline="") as handle:        # hand-written: CRLF (a Windows editor) is accepted
         lines = [line for line in handle.read().replace("\r\n", "\n").split("\n") if line.strip() != ""]
-    if not lines or tuple(lines[0].split("\t")) != EXCLUDED_COLUMNS:
-        raise ValueError("%s: the header must be %s" % (path, "\\t".join(EXCLUDED_COLUMNS)))
+    header = tuple(lines[0].split("\t")) if lines else ()
+    dated = header == EXCLUDED_COLUMNS + (EXCLUDED_DECIDED_COLUMN,)
+    if header != EXCLUDED_COLUMNS and not dated:
+        raise ValueError("%s: the header must be %s, optionally followed by \\t%s"
+                         % (path, "\\t".join(EXCLUDED_COLUMNS), EXCLUDED_DECIDED_COLUMN))
+    rows = []
     for number, line in enumerate(lines[1:], 2):
-        cells = line.split("\t")
-        if len(cells) != len(EXCLUDED_COLUMNS) or not cells[0].strip() or not cells[1].strip():
-            raise ValueError("%s, line %d: every row needs a source_id and a reason" % (path, number))
-        excluded[cells[0].strip()] = cells[1].strip()
-    return excluded
+        cells = [cell.strip() for cell in line.split("\t")]
+        if len(cells) != len(header) or not all(cells):
+            raise ValueError("%s, line %d: every row needs a source_id, a reason%s" % (path, number, " and a decided date" if dated else ""))
+        rows.append((cells[0], cells[1], cells[2] if dated else ""))
+    return rows
+
+
+def read_excluded_sources(work):
+    """{source_id: reason} of W/excluded-sources.tsv (empty when the file is missing)."""
+    return {source_id: reason for source_id, reason, _ in read_excluded_rows(work)}
+
+
+def excluded_output_rows(work, draft):
+    """The rows of the committed excluded-sources.tsv: source_id, url (from the draft), reason, decided; [] when nothing is excluded.
+
+    Raises ValueError for an excluded document that has no draft row (no URL) or no decided date."""
+    urls = {row["source_id"]: row["url"] for row in draft}
+    rows = []
+    for source_id, reason, decided in sorted(read_excluded_rows(work)):
+        if source_id not in urls or not urls[source_id]:
+            raise ValueError("excluded source %s has no url in sources-draft.tsv" % source_id)
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", decided):
+            raise ValueError("excluded source %s needs a `decided` date (YYYY-MM-DD) in excluded-sources.tsv" % source_id)
+        rows.append([source_id, urls[source_id], reason, decided])
+    return rows
 
 
 def read_draft(work):
@@ -1750,9 +1782,16 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
     unknown = sorted({s["source_id"] for s in built} - {r["source_id"] for r in draft} - {AUTHORED_ID})
     if unknown:
         raise ValueError("no source row for: " + ", ".join(unknown))
+    excluded = excluded_output_rows(work, draft)
     common.write_corpus(os.path.join(out_dir, "dev.tsv"), common.with_flag_documentation(HEADER, built), built)
     adjudicate.write_rows(os.path.join(out_dir, "sources.tsv"), SOURCE_COLUMNS, sources_rows(draft, built))
     report = ["# Build", "", "%d sentences written to dev.tsv" % len(built)]
+    target = os.path.join(out_dir, EXCLUDED_OUTPUT_FILE)
+    if excluded:
+        adjudicate.write_rows(target, EXCLUDED_OUTPUT_COLUMNS, excluded)
+        report.append("%d excluded documents written to %s" % (len(excluded), EXCLUDED_OUTPUT_FILE))
+    elif os.path.exists(target):
+        os.remove(target)
     return built, report
 
 
