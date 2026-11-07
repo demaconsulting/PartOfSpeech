@@ -2186,7 +2186,7 @@ dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eva
 
 | Input | SHA-256 |
 | --- | --- |
-| `data/eval/shapes-dev/dev.tsv` | `1db4c15e8e043491295dbd07cb485270836fdaa2d1233eb7d778adb355093881` |
+| `data/eval/shapes-dev/dev.tsv` | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
 | `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (the file) | `439d4af5329b44d3a226b823b20b3afa54dab0ef8e7247f1333135bb96a14092` |
 | shipped weights, uncompressed image (`imageSha256` of `training.json`) | `a0d45458308f78dbe74669e563ea236a0a7b4688638d690dd0995ac4de988da3` |
 
@@ -2195,7 +2195,7 @@ Output of the command (the heading level is lowered by one):
 ### Shapes development set: shipped model baseline
 
 - Items: 600 target items and 100 control items; authored: 0 target items (0.0%) and 0 control items (0.0%).
-- Development file SHA-256: `1db4c15e8e043491295dbd07cb485270836fdaa2d1233eb7d778adb355093881`.
+- Development file SHA-256: `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290`.
 - Weights file SHA-256: `439d4af5329b44d3a226b823b20b3afa54dab0ef8e7247f1333135bb96a14092`.
 - Scoring: the judged word of every item through the real decoder with all alternatives; a noun-verb decision is a target whose candidates include both classes; a harmful error is a swapped class with a confidence of at least 0.45.
 - The set is for development: it selects settings and is never a held-out figure.
@@ -2203,11 +2203,39 @@ Output of the command (the heading level is lowered by one):
 | shape | target items | target accuracy | 95% interval | noun-verb decisions | harmful errors | harmful per 1,000 decisions | control items | control accuracy |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | n-compound-head | 120 | 93.3% | [87.4%, 96.6%] | 120 | 6 | 50.0 | 13 | 92.3% |
-| n-subject-initial | 120 | 95.8% | [90.6%, 98.2%] | 120 | 3 | 25.0 | 13 | 76.9% |
-| v-imperative-initial | 120 | 95.0% | [89.5%, 97.7%] | 120 | 6 | 50.0 | 35 | 100.0% |
-| n-measure | 120 | 99.2% | [95.4%, 99.9%] | 120 | 0 | 0.0 | 15 | 100.0% |
-| v-after-modal | 120 | 98.3% | [94.1%, 99.5%] | 120 | 2 | 16.7 | 24 | 100.0% |
+| n-subject-initial | 120 | 95.8% | [90.6%, 98.2%] | 120 | 3 | 25.0 | 12 | 75.0% |
+| v-imperative-initial | 120 | 95.0% | [89.5%, 97.7%] | 120 | 6 | 50.0 | 31 | 100.0% |
+| n-measure | 120 | 99.2% | [95.4%, 99.9%] | 120 | 0 | 0.0 | 14 | 100.0% |
+| v-after-modal | 120 | 98.3% | [94.1%, 99.5%] | 120 | 2 | 16.7 | 30 | 100.0% |
 | all shapes | 600 | 96.3% | [94.5%, 97.6%] | 600 | 17 | 28.3 | 100 | 96.0% |
+
+The set was rebuilt without the two NIST handbooks (the project owner dropped them; see the
+[README](../../data/eval/shapes-dev/README.md#excluded-sources)) and this baseline was measured again on the rebuilt file. The
+baseline on the earlier file (which contained them) gave the same target figures; only the control items differ.
+
+### Headroom
+
+Headroom is what is left to gain on the set: 100% minus the target accuracy, and the same as a count of target errors. The
+counts are the number of target items times the headroom (a figure derived from the table above, not a new measurement); the
+harmful errors and the control errors are as above.
+
+| shape | target items | headroom (100% minus target accuracy) | target errors | harmful errors | control items | control errors |
+| --- | --- | --- | --- | --- | --- | --- |
+| n-compound-head | 120 | 6.7% | 8 | 6 | 13 | 1 |
+| n-subject-initial | 120 | 4.2% | 5 | 3 | 12 | 3 |
+| v-imperative-initial | 120 | 5.0% | 6 | 6 | 31 | 0 |
+| n-measure | 120 | 0.8% | 1 | 0 | 14 | 0 |
+| v-after-modal | 120 | 1.7% | 2 | 2 | 30 | 0 |
+| all shapes | 600 | 3.7% | 22 | 17 | 100 | 4 |
+
+The shipped model scores higher on this set than on the held-out shape probe: 96.3% target accuracy here against 89.64%
+on the probe (the figure in the [evaluation record](../../docs/evaluation/README.md), section "Earlier Models", column "Accuracy embedded"). So the room to show
+a gain is small: a variant can win at most 22 target errors here (8 for `n-compound-head`, 6 for `v-imperative-initial`, 5 for
+`n-subject-initial`, 2 for `v-after-modal`, and 1 for `n-measure`, which is saturated), and a difference of a few items is
+inside the 95% intervals above. The set was intentionally **not** made harder: choosing items by the errors of this model
+would bias the set against that model (and against any variant that shares its errors), so the comparison would no longer be
+fair. A follow-up may add a harder tranche that is chosen by model-independent criteria, such as
+disagreement between an HMM tagger and the voters, or the ambiguity of the lexicon entry of the judged word.
 
 ## Run table
 

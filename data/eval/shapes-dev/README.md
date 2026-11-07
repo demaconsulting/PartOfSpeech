@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore usfs usbm -->
+<!-- cspell:ignore usfs usbm ncwm -->
 
 # Shapes Development Set
 
@@ -189,6 +189,26 @@ punctuation; has no slash or doubled punctuation junk, broken hyphen word, stray
 quote, list item or citation, repeated word or trigram; is not all capitals or a title; is not a short caption; and has
 no lower-case word that appears in no word list (the spellings of the open and MASC corpora and the lexicon, read as a
 spelling list only), which removes most OCR errors. The length is 3 to 30 tokens.
+
+## Headroom
+
+The shipped model already scores high here (the baseline is in the trainer
+[run log](../../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md), section "Shapes development set: baseline of the
+shipped model", which is the source of these figures). The headroom (100% minus the target accuracy) and the target errors
+left to gain are:
+
+| Shape | Headroom | Target errors |
+| --- | ---: | ---: |
+| `n-compound-head` | 6.7% | 8 |
+| `n-subject-initial` | 4.2% | 5 |
+| `v-imperative-initial` | 5.0% | 6 |
+| `n-measure` | 0.8% | 1 |
+| `v-after-modal` | 1.7% | 2 |
+| all shapes | 3.7% | 22 |
+
+The set was not made harder on purpose: choosing items by the errors of the shipped model would bias it against that model.
+A harder tranche, chosen by model-independent criteria (for example disagreement between an HMM tagger and the voters, or
+the ambiguity of the lexicon entry), may follow.
 
 ## Known Limits
 

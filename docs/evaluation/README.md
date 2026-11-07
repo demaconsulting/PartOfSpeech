@@ -224,7 +224,9 @@ reported as a held-out result.
   after the settings were fixed on the development sets.
 - **The baseline** of the shipped model on the development set, per shape, is in the
   [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: baseline of the
-  shipped model"); every variant is compared with it.
+  shipped model"); every variant is compared with it. The model scores higher on the development set (96.3%) than on
+  the held-out probe (89.64%), so the room to show a gain is small; the run log has the headroom per shape and explains
+  why the set was not made harder.
 
 ## Reproduce the Results
 
