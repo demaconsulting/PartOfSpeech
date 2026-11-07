@@ -5,6 +5,7 @@ open-train	open-dev	1489	0	0	2
 open-train	open-test	1501	0	0	4
 open-train	ste-challenge	32	0	0	0
 open-train	shapes-dev	700	0	0	0
+open-train	shapes-dev-hard	460	0	0	0
 open-train	gold-v2	5072	0	0	7
 open-train	shapes-probe	560	0	0	0
 open-train	ud-ewt-dev	2001	0	0	0
@@ -14,6 +15,7 @@ masc	open-dev	1489	0	0	0
 masc	open-test	1501	0	0	0
 masc	ste-challenge	32	0	0	0
 masc	shapes-dev	700	0	0	0
+masc	shapes-dev-hard	460	0	0	0
 masc	gold-v2	5072	0	0	0
 masc	shapes-probe	560	0	0	0
 masc	ud-ewt-dev	2001	0	0	0
@@ -23,6 +25,7 @@ silver	open-dev	1489	0	0	0
 silver	open-test	1501	0	0	0
 silver	ste-challenge	32	0	0	0
 silver	shapes-dev	700	0	0	0
+silver	shapes-dev-hard	460	0	0	0
 silver	gold-v2	5072	0	0	1
 silver	shapes-probe	560	0	0	0
 silver	ud-ewt-dev	2001	0	0	0

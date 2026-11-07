@@ -266,12 +266,23 @@ class for its shape and role, or renders different text for the same results.
   gives the stored tokens of sentences with clitics, quotes and a final period) and
   `DataGuard_EnsureOutsideData_InsideDataFolder_RefusedAndOutsideAdmitted` (a path in the data folder, the folder itself,
   a dotted detour and the committed development file are refused; a temporary folder is admitted).
-- **The shapes development file is development only**: `DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted`
-  (also through a dotted detour), `DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused` (the two development files,
-  a held-out file, the other files of its folder),
-  `DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused` (a link as the file or as its folder is
-  refused, the real file admitted), `DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt` (not in the
-  two-file allow-list, not in the held-out list, refused by `EnsureDevelopmentFile` and for training),
-  `DevSets_ReadShapesDev_HeaderWithoutDevSplit_Throws` and `DevSets_ReadShapesDev_MissingAndValidFile_ThrowsAndReads` (in
-  a temporary fake repository), and the two theories of the development-only selection with the shapes development file
-  added to their rows.
+- **Shapes development tranches** (same file, synthetic fixtures):
+  `ShapesDevSets_Parse_Tranche_IsGivenByTheCallerAndNotByTheContent` (a `# tranche` comment in a file does not mark an
+  item), `DevSets_ReadShapesDev_EachTranche_ReadsItsOwnFileAndMarksItems` (two files in a fake repository, own SHA-256
+  and item marks, the old two-argument reader still reads the standard file),
+  `DevSets_ReadShapesDev_HardMissingOrWrongHeader_ThrowsAndStandardStillReads`,
+  `ShapesDevEvaluator_SummarizeTranches_PerTrancheAndCombined` (the combined counts are the sums, the hard tranche has
+  zero counts without items), `ShapesDevEvaluator_EvaluateTranches_TinyTagger_ScoresEachTrancheAndCombined`,
+  `ShapesDevReport_RenderTranches_StandardUnchangedThenHardThenCombined` (the standard section is the plain report byte
+  for byte, the three headings, the hashes, a shape without items shows dashes, two renderings are equal) and
+  `ShapesDevReport_Render_StandardSection_HasNoTrancheNameInItsHeading`.
+- **The shapes development files are development only**:
+  `DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted` (both files, also through a dotted detour),
+  `DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused` (the two development files, a held-out file, the other
+  files of its folder, the tables and report of the hard tranche),
+  `DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused` (a theory over both files: a link as the
+  file or as its folder is refused, the real file admitted), `DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt`
+  (for each file: not in the two-file allow-list, not in the held-out list, refused by `EnsureDevelopmentFile` and for
+  training), `DevSets_ReadShapesDev_HeaderWithoutDevSplit_Throws` and
+  `DevSets_ReadShapesDev_MissingAndValidFile_ThrowsAndReads` (in a temporary fake repository), and the two theories of
+  the development-only selection with the shapes development files added to their rows.

@@ -23,6 +23,13 @@ shared word 5-grams are gated; near duplicates (the same 10-word, 80% 6-gram rul
 exists to select settings, so it must share neither text nor wording with the held-out sets. Only counts and the ids of
 the failing development sentences are printed; no text of any evaluation set is ever printed or stored.
 
+Third section (the hard tranche data/eval/shapes-dev/hard.tsv, when the file exists; required once leakage.HARD_TRANCHE_REQUIRED is True;
+written to data/eval/shapes-dev/hard-leakage-report.tsv): the same checks against every evaluation set that is not a tranche of the
+development set, plus a `shapes-dev` row for the standard tranche. The two tranches are cut from the same federal documents, so a shared
+document is reported there and not gated; an exact sentence and a same-document near duplicate (at least 10 words, at least 80% of the word
+6-grams in the standard sentences of the same document) are gated. The training sets are checked against hard.tsv in the first section like
+against any evaluation set (label `shapes-dev-hard`).
+
 Data removal, not evaluation removal, is the remedy: the importers (import_masc.py, import_silver.py) drop training
 documents (long matches) or sentences (short matches) that overlap an evaluation set and list them in their
 excluded-documents.tsv and dropped-sentences.tsv.
@@ -90,17 +97,23 @@ def check(include_ud):
     return rows, failures, bool(leakage.ud_sets()) if include_ud else False
 
 
-def dev_check(include_ud):
-    """Hard-shape development set against every other evaluation set: (rows, failures, failing sentence ids).
+def dev_check(include_ud, tranche="standard"):
+    """A tranche of the hard-shape development set against every other evaluation set: (rows, failures, failing sentence ids).
 
     A row is (evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences,
     probe_5gram_sentences). Documents, exact keys and (for the shape probe) shared word 5-grams are gated; near
     duplicates are reported. The 5-gram column is `-` for every set but the probe. Only counts and the ids of the
     development sentences that fail (a shared document, an exact sentence or a shared probe 5-gram) are returned; nothing of an evaluation set (the probe especially) is returned.
+
+    The hard tranche (`tranche="hard"`, data/eval/shapes-dev/hard.tsv) is checked the same way against every set that is not a tranche of
+    the development set, and gets one more row, `shapes-dev` (the standard tranche): both tranches are cut from the same federal documents, so
+    a shared document is allowed (counted in the row, not gated), but an exact sentence and a near duplicate (a sentence of at least 10 words
+    with at least 80% of its word 6-grams in the standard sentences of its own document) are gated and name the hard sentence.
     """
-    path = os.path.join(common.DATA, "eval", "shapes-dev", "dev.tsv")
+    name = "hard.tsv" if tranche == "hard" else "dev.tsv"
+    path = os.path.join(common.DATA, "eval", "shapes-dev", name)
     if not os.path.exists(path):
-        raise SystemExit("missing committed development set: data/eval/shapes-dev/dev.tsv")
+        raise SystemExit("missing committed development set: data/eval/shapes-dev/" + name)
     dev = [(s["sent_id"], s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]  # (sentence id, document id, text)
     dev_docs = {doc for _, doc, _ in dev}
     probe_grams = leakage.held_out_overlap_keys(include_ud, leakage.PROBE_GRAM_WORDS)
@@ -125,14 +138,49 @@ def dev_check(include_ud):
                 failing.append(sent_id)
         rows.append((label, len(dev), len(dev_docs & docs), exact, near, probe if label == "shapes-probe" else "-"))
     failures = sum(row[2] + row[3] + (row[5] if row[5] != "-" else 0) for row in rows)
+    if tranche == "hard":
+        standard_path = os.path.join(common.DATA, "eval", "shapes-dev", "dev.tsv")
+        if not os.path.exists(standard_path):
+            raise SystemExit("missing committed development set: data/eval/shapes-dev/dev.tsv")
+        standard = [(s["source_id"], s["text"]) for s in common.read_corpus(standard_path)[1]]
+        standard_keys = {common.key(text) for _, text in standard} - {""}
+        standard_grams = {}
+        for doc, text in standard:
+            standard_grams.setdefault(doc, set()).update(shingles(text))
+        exact = near = 0
+        for sent_id, doc, text in dev:
+            hit = common.key(text) in standard_keys
+            sh = shingles(text)
+            close = len(words(text)) >= NEAR_MIN_WORDS and bool(sh) and len(sh & standard_grams.get(doc, set())) / len(sh) >= NEAR_THRESHOLD
+            exact += hit
+            near += close
+            if hit or close:
+                failing.append(sent_id)
+        rows.append((leakage.SHAPES_DEV_LABEL, len(dev), len(dev_docs & {doc for doc, _ in standard}), exact, near, "-"))
+        failures += exact + near
     return rows, failures, sorted(set(failing))
+
+
+def hard_tranche_present():
+    """True when the hard tranche is checked: its file exists, or HARD_TRANCHE_REQUIRED (then a missing file fails loudly in dev_check)."""
+    return leakage.HARD_TRANCHE_REQUIRED or os.path.exists(os.path.join(common.DATA, "eval", "shapes-dev", "hard.tsv"))
+
+
+def tranche_lines(title, rows, ud_checked, extra=()):
+    lines = ["# Leakage report of %s (tools/data/check_leakage.py); counts only" % title,
+             "# UD English-EWT checked in this run: %s (counts only; nothing from UD is stored)" % ("yes" if ud_checked else "no"),
+             "# probe_5gram_sentences = development sentences that share a word 5-gram with a shape probe sentence (gated, no probe text is stored)"]
+    lines += list(extra)
+    lines.append("# columns = evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, probe_5gram_sentences")
+    return lines + ["\t".join(str(c) for c in row) for row in rows]
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--no-ud", action="store_true", help="ignore the UD cache even when present")
     parser.add_argument("--write-report", action="store_true",
-                        help="write data/leakage-report.tsv and data/eval/shapes-dev/leakage-report.tsv")
+                        help="write data/leakage-report.tsv, data/eval/shapes-dev/leakage-report.tsv and (hard tranche present) "
+                             "data/eval/shapes-dev/hard-leakage-report.tsv")
     args = parser.parse_args()
     rows, failures, ud_checked = check(not args.no_ud)
     lines = ["# Leakage report (tools/data/check_leakage.py); rules in data/README.md section Leakage check",
@@ -143,17 +191,26 @@ def main():
     for line in lines[1:2] + [""] + lines[3:]:
         print(line)
     dev_rows, dev_failures, failing = dev_check(not args.no_ud)
-    dev_lines = ["# Leakage report of the hard-shape development set (tools/data/check_leakage.py); counts only",
-                 "# UD English-EWT checked in this run: %s (counts only; nothing from UD is stored)" % ("yes" if ud_checked else "no"),
-                 "# probe_5gram_sentences = development sentences that share a word 5-gram with a shape probe sentence (gated, no probe text is stored)",
-                 "# columns = evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, probe_5gram_sentences"]
-    dev_lines += ["\t".join(str(c) for c in row) for row in dev_rows]
+    dev_lines = tranche_lines("the hard-shape development set", dev_rows, ud_checked)
     print()
     for line in dev_lines[1:2] + dev_lines[3:]:
         print(line)
+    hard_lines = []
+    if hard_tranche_present():
+        hard_rows, hard_failures, hard_failing = dev_check(not args.no_ud, "hard")
+        hard_lines = tranche_lines("the hard tranche of the hard-shape development set", hard_rows, ud_checked,
+                                   ["# shapes-dev row = the standard tranche: documents are shared on purpose (reported, not gated); exact sentences and "
+                                    "same-document near duplicates are gated"])
+        print()
+        for line in hard_lines[1:2] + hard_lines[4:]:
+            print(line)
+        dev_failures += hard_failures
+        failing += ["hard:" + sent_id for sent_id in hard_failing]
     if args.write_report:
         common.write_text(os.path.join(common.DATA, "leakage-report.tsv"), lines)
         common.write_text(os.path.join(common.DATA, "eval", "shapes-dev", "leakage-report.tsv"), dev_lines)
+        if hard_lines:
+            common.write_text(os.path.join(common.DATA, "eval", "shapes-dev", "hard-leakage-report.tsv"), hard_lines)
     if dev_failures:
         print("DEV LEAKAGE FOUND: %d overlaps; remove these development sentences and rebuild: %s" % (dev_failures, ", ".join(failing[:50])))
     if failures:

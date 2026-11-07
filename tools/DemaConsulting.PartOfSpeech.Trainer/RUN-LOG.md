@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk -->
 
 # Trainer Run Log
 
@@ -2234,8 +2234,125 @@ a gain is small: a variant can win at most 22 target errors here (8 for `n-compo
 `n-subject-initial`, 2 for `v-after-modal`, and 1 for `n-measure`, which is saturated), and a difference of a few items is
 inside the 95% intervals above. The set was intentionally **not** made harder: choosing items by the errors of this model
 would bias the set against that model (and against any variant that shares its errors), so the comparison would no longer be
-fair. A follow-up may add a harder tranche that is chosen by model-independent criteria, such as
-disagreement between an HMM tagger and the voters, or the ambiguity of the lexicon entry of the judged word.
+fair. A harder tranche that is chosen by model-independent criteria is built next; its selection rule is pre-registered in the
+section below.
+
+## Shapes development set: hard tranche, pre-registered selection rule
+
+**The pre-registered selection rule (the inputs table and the numbered rule below) was written before any label of the hard
+tranche existed and before its candidates were generated.** The frozen pre-registration is PR #11 commit `7a1aa4d`, amended once by PR #11
+commit `7e3ecb0` (the `n-subject-initial` cap, rule 9, before labeling). Commits of a PR are retrievable from the PR's head ref
+(`refs/pull/<n>/head`) after a squash merge: the PR #11 commits come from `git fetch origin pull/11/head` (the PR #10 commits from `pull/10/head`). The sections "Rounds actually run" and the baseline sections
+after it were added after labeling; they do not change the rule. The hard tranche
+(`data/eval/shapes-dev/hard.tsv`, [README](../../data/eval/shapes-dev/README.md#hard-tranche) has the same rule) holds the
+contested cases of `n-compound-head`, `n-subject-initial`, `v-imperative-initial` and `v-after-modal` (`n-measure` has no hard
+cases and stays at zero items). It is a development set: the figures that it produces select settings and are never held-out
+results. The rule is model-independent: no PartOfSpeech weight file, prediction, error or score takes part in the selection.
+
+| Input | Value |
+| --- | --- |
+| Text | 123 federal documents, 60,297 sentences (63 documents of the standard tranche without the two excluded NIST handbooks, plus 60 newly sourced documents) |
+| Selection signal | the WordSense Basic classifier (HMM tagger plus cue model), another project's model family |
+| WordSense commit | `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (read only) |
+| `DemaConsulting.WordSense.dll` SHA-256 | `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
+| `hmm.tsv` SHA-256 (noun and verb mass of every token) | `3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c` |
+| `tokens.tsv` SHA-256 (harness input) | `197d68f161bb1e05357caa74ed0a53a85c38a675e491c82f2365450b9294c328` |
+
+Rule (`python tools/data/shapes_dev.py --tranche hard`):
+
+1. **Inputs:** real text, library tokens, the lexicon, the committed `dev.tsv` (exclusion only) and `hmm.tsv`.
+2. **Candidate filters:** unchanged (cleanliness, length 3 to 30, duplicates, the held-out filter only through
+   `leakage.held_out_overlap_keys`, excluded sources, document key hits), plus: not a standard-tranche sentence (exact key, or
+   a sentence of at least 10 words with 80% or more of its word 6-grams in the standard sentences of the same document).
+3. **Frame:** the unchanged `shape_hits` frame (`n-compound-head` strict); the lexicon ambiguity (noun and verb listed, not a
+   function word) is part of it.
+4. **Contested band:** q is the mass of the shape's class (Noun for `n-*`, Verb for `v-*`) that the Basic classifier gives the
+   target. Eligible if 0.10 <= q < 0.97; q < 0.5 is the pure-disagreement part and is reported. Order by q ascending, ties by the
+   seeded rank, at most 4 candidates per lemma. Budgets: `n-compound-head` 400, `v-after-modal` 300, `v-imperative-initial` and
+   `n-subject-initial` all; a round `h2` takes the next block only for a shape below its floor.
+5. **Why a band and not pure disagreement:** on the 1,825 labeled standard candidates, where the Basic classifier disagrees
+   with the shape's class, the two blind labelers agree with the shape's class in only 1% to 21% of the cases
+   (`n-compound-head` 8%, `n-subject-initial` 1%, `v-imperative-initial` 5%, `v-after-modal` 21%). Very confident
+   disagreements are mostly not true instances of the shape, and filling a shape from them would need about 1,500 labeled
+   sentences per shape; the real pools with q < 0.5 are 668, 275, 220 and 189 (same order). Disagreement (q < 0.5) is inside the
+   band, very confident disagreement (q < 0.10) is outside it. Band and budgets were chosen after looking at how the standard
+   tranche's labels distribute over the Basic classifier's q (yield only), never at a PartOfSpeech result, and are fixed before
+   any label of this tranche exists (project owner's decision).
+6. **Controls:** real other-class sentences of the lemmas of the chosen targets (hard or not, no band), at most 2 per lemma,
+   50 candidates per shape, labeled blind.
+7. **Gold:** unchanged: two blind labelers (`claude-opus-5.5`, `gpt-6.1-sol`); target disagreement and class mismatch are
+   dropped; frame, base-form and nominal-gerund rules as in the standard tranche; q and the classifier's answer are never shown to a
+   labeler.
+8. **No authored sentences;** `n-measure` is omitted (zero items, `-` in reports).
+9. **Quota gate** (floor and cap): `n-compound-head` 80 and 100, `v-imperative-initial` 70 and 100, `v-after-modal` 80 and 100,
+   `n-subject-initial` 40 and 100, `n-measure` 0 and 0; controls 50 and 60; lemma cap 4 (controls 2). Below a floor `build`
+   refuses unless `--allow-short`; a miss is disclosed, not padded. Amendment before any label existed: the
+   `n-subject-initial` cap was raised from 60 to 100 after the new documents enlarged the pool (846 candidates against the
+   254 expected); written before labeling started.
+10. **No PartOfSpeech model in the selection** (a data test asserts it); voters (spaCy, NLTK) are not part of the rule and may
+    only be descriptive diagnostics after the build.
+11. **Hand check:** 60 targets (15 per shape, at least half with q < 0.5) by `claude-sonnet-5.5` (a model review), with a
+    leniency control; gate 95% precision.
+12. **Leftovers are not reused:** labeled standard-tranche candidates that are not in `dev.tsv` are not used, because their
+    labels were seen.
+
+### Rounds actually run
+
+The main round labeled all 2,258 candidate sentences. Round `h2` (the next 200 `v-after-modal` candidates) ran because that
+shape kept 77 targets, below its floor of 80. Round `h3` (a controls-only round, 149 sentences) ran because the controls were
+45, below the floor of 50; the pre-registration did not name it, it applies rule 6 and the controls floor, adds no target, and was
+exported before any `h3` label existed. Both blind labelers tagged every sentence; the hand check passed the 95% gate. The
+outcome (counts, drops, q bands, documents, hand check, limits) is in the
+[README](../../data/eval/shapes-dev/README.md#hard-tranche); the baseline is in the next section.
+
+## Shapes development set: hard tranche baseline of the shipped model
+
+The built hard tranche (`data/eval/shapes-dev/hard.tsv`, 400 target items and 60 controls, 0 authored; `n-measure` has zero
+items) was scored once with the shipped model after the build. These are development figures: they select settings, nothing is
+trained on the file and none is a held-out result. The standard-tranche figures in the section above are unchanged: the standard
+part of this run's output equals that baseline (same file hash, same table).
+
+Command (run once from the repository root, below normal priority; it reads only the two development files and the embedded
+weights and appends no row to the run table):
+
+```text
+dotnet run --no-build -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eval-shapes --tranche both --label "shipped model baseline"
+```
+
+| Input | SHA-256 |
+| --- | --- |
+| `data/eval/shapes-dev/hard.tsv` | `c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22` |
+| `data/eval/shapes-dev/dev.tsv` | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
+| shipped weights, uncompressed image (`imageSha256` of `training.json`) | `a0d45458308f78dbe74669e563ea236a0a7b4688638d690dd0995ac4de988da3` |
+
+Hard tranche (output of the command, the heading level is lowered by one):
+
+| shape | target items | target accuracy | 95% interval | noun-verb decisions | harmful errors | harmful per 1,000 decisions | control items | control accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| n-compound-head | 100 | 68.0% | [58.3%, 76.3%] | 100 | 28 | 280.0 | 15 | 100.0% |
+| n-subject-initial | 100 | 73.0% | [63.6%, 80.7%] | 100 | 16 | 160.0 | 15 | 93.3% |
+| v-imperative-initial | 100 | 45.0% | [35.6%, 54.8%] | 100 | 44 | 440.0 | 15 | 93.3% |
+| n-measure | 0 | - | - | 0 | 0 | - | 0 | - |
+| v-after-modal | 100 | 78.0% | [68.9%, 85.0%] | 100 | 19 | 190.0 | 15 | 100.0% |
+| all shapes | 400 | 66.0% | [61.2%, 70.5%] | 400 | 107 | 267.5 | 60 | 96.7% |
+
+Both tranches combined (standard `dev.tsv` plus `hard.tsv`):
+
+| shape | target items | target accuracy | 95% interval | noun-verb decisions | harmful errors | harmful per 1,000 decisions | control items | control accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| n-compound-head | 220 | 81.8% | [76.2%, 86.4%] | 220 | 34 | 154.5 | 28 | 96.4% |
+| n-subject-initial | 220 | 85.5% | [80.2%, 89.5%] | 220 | 19 | 86.4 | 27 | 85.2% |
+| v-imperative-initial | 220 | 72.3% | [66.0%, 77.8%] | 220 | 50 | 227.3 | 46 | 97.8% |
+| n-measure | 120 | 99.2% | [95.4%, 99.9%] | 120 | 0 | 0.0 | 14 | 100.0% |
+| v-after-modal | 220 | 89.1% | [84.3%, 92.6%] | 220 | 21 | 95.5 | 45 | 100.0% |
+| all shapes | 1000 | 84.2% | [81.8%, 86.3%] | 1000 | 124 | 124.0 | 160 | 96.3% |
+
+### Headroom of the hard tranche
+
+Headroom is 100% minus the target accuracy (derived from the hard table above, not a new measurement): 32.0% for
+`n-compound-head`, 27.0% for `n-subject-initial`, 55.0% for `v-imperative-initial` and 22.0% for `v-after-modal`; 34.0% over
+the four shapes (136 of 400 target errors), against 3.7% on the standard tranche. The 95% intervals of a shape are 16 to 19
+points wide, so a difference of a few items between variants is inside the interval.
 
 ## Run table
 

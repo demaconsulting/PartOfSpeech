@@ -4,6 +4,7 @@ Run: python -m unittest discover -s tools/data/tests -p "test_shapes_dev.py"   (
 """
 import contextlib
 import collections
+import hashlib
 import io
 import os
 import re
@@ -87,6 +88,7 @@ class MiniFolder(unittest.TestCase):
                           "masc:written/x\tblog\tCC BY 3.0 US\t1\t7"])
         common.write_text(os.path.join(d, "silver", "excluded-documents.tsv"), ["# columns = document_id, set, matching_sentences, part",
                           "gutenberg-7194\topen-build\t-\tspike-selection"])
+        common.write_text(os.path.join(d, "eval", "shapes-dev", "excluded-sources.tsv"), ["\t".join(common.EXCLUDED_SOURCES_COLUMNS)])      # header only: nothing excluded
 
     def source_row(self, source_id, url="https://example.gov/%s", sentences="0"):
         return [source_id, "us-government", "Manual " + source_id, url % source_id if "%s" in url else url, "Agency", "1990",
@@ -111,6 +113,27 @@ class MiniFolder(unittest.TestCase):
             code = sd.main(["--work", self.root, "--data-dir", self.data] + list(args))
         return code, out.getvalue()
 
+    def snapshot(self):
+        """{relative path: SHA-256} of every file of the work folder."""
+        found = {}
+        for folder, _, names in os.walk(self.root):
+            for name in names:
+                path = os.path.join(folder, name)
+                with open(path, "rb") as handle:
+                    found[os.path.relpath(path, self.root)] = hashlib.sha256(handle.read()).hexdigest()
+        return found
+
+    def assert_refused(self, args, text="conflicting"):
+        """The command line `args` exits 1 with `text` on stderr and leaves the work folder byte for byte as it was."""
+        before = self.snapshot()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, _ = self.cli(*args)
+        self.assertEqual(1, code, args)
+        self.assertIn("refused", err.getvalue(), args)
+        self.assertIn(text, err.getvalue(), args)
+        self.assertEqual(before, self.snapshot(), args)
+
 
 # One real document with sentences for every shape and a few that nothing matches.
 DOCUMENT = [
@@ -126,7 +149,7 @@ DOCUMENT = [
 
 class ExclusionTests(MiniFolder):
     def test_index_rejects_known_ids_and_urls_and_accepts_new_documents(self):
-        index = sd.exclusion_index(self.data)
+        index = sd.exclusion_index(self.data, sd.load_exclusions(self.work, self.data))
         self.assertIn("listed", sd.document_rejection(index, "gutenberg-1023"))
         self.assertIsNotNone(sd.document_rejection(index, "other-id", "http://gutenberg.org/ebooks/1023/"))      # the same book, another URL
         self.assertIsNotNone(sd.document_rejection(index, "x", "https://www.gutenberg.org/cache/epub/1023/pg1023.txt?x=1#y"))
@@ -456,44 +479,49 @@ class CandidateTests(MiniFolder):
         self.assertEqual([], rows)
         self.assertTrue(any("rejected gutenberg-1023" in line for line in report))
 
+    def loaded(self):
+        return sd.load_exclusions(self.work, self.data)
+
     def test_an_excluded_source_is_read_from_its_file_and_a_bad_file_is_an_error(self):
-        self.assertEqual({}, sd.read_excluded_sources(self.work))
+        self.assertEqual({}, self.loaded().reasons)
         path = os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE)
         common.write_text(path, ["source_id\treason", "doc-b\tnot clearly public domain", "", "doc-c\tother reason"])
-        self.assertEqual({"doc-b": "not clearly public domain", "doc-c": "other reason"}, sd.read_excluded_sources(self.work))
+        self.assertEqual({"doc-b": "not clearly public domain", "doc-c": "other reason"}, self.loaded().reasons)
         common.write_text(path, ["id\treason", "doc-b\tx"])
         with self.assertRaises(ValueError):
-            sd.read_excluded_sources(self.work)
+            self.loaded()
         common.write_text(path, ["source_id\treason", "doc-b\t "])
         with self.assertRaises(ValueError):
-            sd.read_excluded_sources(self.work)
+            self.loaded()
         with open(path, "w", encoding="utf-8", newline="") as handle:
             handle.write("source_id\treason\r\ndoc-b\tCRLF file\r\n")
-        self.assertEqual({"doc-b": "CRLF file"}, sd.read_excluded_sources(self.work))
+        self.assertEqual({"doc-b": "CRLF file"}, self.loaded().reasons)
         common.write_text(path, ["source_id\treason\tdecided", "doc-c\tr\t2026-11-06", "doc-b\tq\t2026-11-05"])
-        self.assertEqual([("doc-c", "r", "2026-11-06"), ("doc-b", "q", "2026-11-05")], sd.read_excluded_rows(self.work))
-        self.assertEqual({"doc-c": "r", "doc-b": "q"}, sd.read_excluded_sources(self.work))
+        self.assertEqual([("doc-c", "r", "2026-11-06"), ("doc-b", "q", "2026-11-05")], self.loaded().work_rows)
+        self.assertEqual({"doc-c": "r", "doc-b": "q"}, self.loaded().reasons)
         common.write_text(path, ["source_id\treason\tdecided", "doc-b\tq\t"])
         with self.assertRaises(ValueError):
-            sd.read_excluded_rows(self.work)
+            self.loaded()
 
     def test_the_excluded_output_rows_carry_the_draft_url_and_need_a_known_document_and_a_date(self):
         path = os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE)
-        draft = [dict(zip(sd.SOURCE_COLUMNS, self.source_row(i))) for i in ("doc-a", "doc-b")]
-        self.assertEqual([], sd.excluded_output_rows(self.work, draft))
+        self.write_draft(["doc-a", "doc-b"])
+        draft = sd.read_draft(self.work)
+        self.assertEqual([], self.loaded().output_rows(draft))
         common.write_text(path, ["source_id\treason\tdecided", "doc-b\tr b\t2026-11-06", "doc-a\tr a\t2026-11-05"])
         self.assertEqual([["doc-a", "https://example.gov/doc-a", "r a", "2026-11-05"], ["doc-b", "https://example.gov/doc-b", "r b", "2026-11-06"]],
-                         sd.excluded_output_rows(self.work, draft))
+                         self.loaded().output_rows(draft))
         common.write_text(path, ["source_id\treason\tdecided", "doc-z\tr\t2026-11-06"])
         with self.assertRaises(ValueError):                                         # no draft row, so no url
-            sd.excluded_output_rows(self.work, draft)
+            self.loaded().output_rows(draft)
         common.write_text(path, ["source_id\treason", "doc-b\tr"])
         with self.assertRaises(ValueError):                                         # no decided date
-            sd.excluded_output_rows(self.work, draft)
+            self.loaded().output_rows(draft)
         common.write_text(path, ["source_id\treason\tdecided", "doc-b\tr\t2026-11-06"])
-        draft[1]["url"] = "ftp://example.gov/doc-b"
-        with self.assertRaises(ValueError):                                         # a url that is no http(s) URL is no record
-            sd.excluded_output_rows(self.work, draft)
+        common.write_text(os.path.join(self.root, "sources-draft.tsv"),
+                          ["\t".join(sd.SOURCE_COLUMNS), "\t".join(self.source_row("doc-b", "ftp://example.gov/doc-b"))])
+        with self.assertRaises(sd.ExcludedSourceError):                             # a url that is no http(s) URL is no record
+            self.loaded()
 
     def test_candidates_skip_every_sentence_of_an_excluded_document_and_count_the_drop(self):
         common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason", "doc-b\tnot clearly public domain"])
@@ -531,6 +559,14 @@ class TokenizerInterfaceTests(MiniFolder):
 def shlex_quote(text):
     import shlex
     return shlex.quote(text) if os.name != "nt" else '"%s"' % text
+
+
+GOLDEN_STANDARD_HASHES = {
+    "candidates": "20a5d4ff2c2442e3dc3530ec45e2bf08881e68c580590476ce7c09f0ed44e6fc",
+    "dev": "0651494b10b68dd5bf8e0b680ee7e06521516162cd7ff3e091b0875f292c8e7a",
+    "sources": "068d811ff14cca28890685e3daf6599d461ce5f20e7b6a64dc7c7057977b5782",
+    "decided": "54f33af7fe7311d9db5399895ef44aa1f4ad7d0aac7023652067df2ae419c6ee",
+}
 
 
 class PipelineTests(MiniFolder):
@@ -704,7 +740,7 @@ class PipelineTests(MiniFolder):
         _, source_rows = adjudicate.read_records(os.path.join(out, "sources.tsv"))
         ids = {r["source_id"] for r in source_rows}
         self.assertEqual({s["source_id"] for s in sentences}, ids)
-        self.assertFalse(os.path.exists(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE)))        # nothing excluded, no record file
+        self.assertEqual([], adjudicate.read_records(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE))[1])        # nothing excluded: a header-only record file
         authored = next(r for r in source_rows if r["source_id"] == sd.AUTHORED_ID)
         self.assertEqual("project-written", authored["family"])
         self.assertTrue(authored["license_basis"].startswith("Written by the project"))
@@ -715,6 +751,22 @@ class PipelineTests(MiniFolder):
         self.assertEqual(0, code)
         self.assertIn("| v-after-modal |", report)
         self.assertIn("dropped: class mismatch", report)
+
+    def test_standard_profile_outputs_are_byte_identical_to_the_golden_hashes(self):
+        """Regression guard of the hard-tranche work: the standard profile (the default) writes exactly the bytes it wrote before.
+
+        The hashes were taken from the code of main (17a9cf9), before the `--tranche hard` profile existed.
+        """
+        self.export_and_tag()
+        self.decided()
+        out = os.path.join(self.temp, "golden-out")
+        self.assertEqual(0, self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--allow-short")[0])
+        found = {}
+        for label, path in (("candidates", os.path.join(self.root, "candidates.tsv")), ("dev", os.path.join(out, "dev.tsv")),
+                            ("sources", os.path.join(out, "sources.tsv")), ("decided", os.path.join(self.root, "private", "decided.tsv"))):
+            with open(path, "rb") as handle:
+                found[label] = common.sha256_bytes(handle.read())
+        self.assertEqual(GOLDEN_STANDARD_HASHES, found)
 
     def test_decided_items_of_an_excluded_source_are_dropped_everywhere_and_never_built(self):
         second = ["Check the oil tank before use .", "Flow stops at the tank ."]
@@ -787,37 +839,148 @@ class PipelineTests(MiniFolder):
             code, output = self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--allow-short", *options)
         return code, output, err.getvalue()
 
-    def test_build_refuses_a_source_listed_in_the_committed_exclusion_table_by_id_or_by_url(self):
+    def refused(self, command, *options):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, _ = self.cli(*(list(options) + [command]))
+        return code, err.getvalue()
+
+    def test_a_missing_committed_record_is_refused_by_every_command_that_loads_it(self):
+        self.add_second_document()
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        out = os.path.join(self.temp, "out")
+        os.remove(record)
+        with self.assertRaises(ValueError) as caught:
+            sd.load_exclusions(self.work, self.data)
+        self.assertIn("missing exclusion table", str(caught.exception))
+        with self.assertRaises(ValueError):
+            sd.build(self.work, out, controls=4, share=0.5, allow_short=True)
+        for tranche in ("standard", "hard"):
+            for command in sd.EXCLUSION_COMMANDS:
+                code, error = self.refused(command, "--tranche", tranche)
+                self.assertEqual(1, code, (tranche, command))
+                self.assertIn("%s refused" % command, error)
+                self.assertIn("missing exclusion table", error)
+        self.assertFalse(os.path.exists(out))
+        self.assertFalse(os.path.exists(record))                                            # a refusal never creates the record
+        self.assertEqual(0, self.cli("status")[0])                                          # commands that read no exclusion are not blocked
+
+    def test_a_header_only_record_is_accepted_and_zero_byte_blank_or_headerless_records_are_refused(self):
+        self.add_second_document()
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        out = os.path.join(self.temp, "out")
+        self.assertEqual([], sd.load_exclusions(self.work, self.data).rows)                 # the fixture's record is header only
+        self.assertEqual(0, self.run_build(out)[0])
+        _, excluded = adjudicate.read_records(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE))   # the standard build writes it, header only, never deletes
+        self.assertEqual([], excluded)
+        shutil.rmtree(out)
+        for content in ("", "\n", "doc-b\thttps://example.gov/doc-b\tnot public domain\t2026-11-06\n", "source_id\treason\tdecided\n"):
+            with open(record, "w", encoding="utf-8", newline="") as handle:
+                handle.write(content)
+            with self.assertRaises(ValueError, msg=repr(content)):
+                sd.load_exclusions(self.work, self.data)
+            for command in sd.EXCLUSION_COMMANDS:
+                self.assertEqual(1, self.refused(command)[0], (command, content))
+            code, _, error = self.run_build(out)
+            self.assertEqual(1, code)
+            self.assertIn("refused", error)
+            self.assertFalse(os.path.exists(os.path.join(out, "dev.tsv")))
+
+    def test_the_work_folder_exclusions_are_optional_when_the_committed_record_exists(self):
+        self.assertFalse(os.path.exists(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE)))
+        self.assertEqual({}, sd.load_exclusions(self.work, self.data).reasons)
+        self.assertEqual([], sd.load_exclusions(self.work, self.data).rows)
+        self.assertEqual(0, self.cli("exclusions")[0])
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), [])           # a zero-byte work file is still refused
+        with self.assertRaises(ValueError):
+            sd.load_exclusions(self.work, self.data)
+
+    def test_a_source_listed_in_the_committed_exclusion_table_by_id_or_by_url_is_never_built(self):
         self.add_second_document()
         out = os.path.join(self.temp, "out")
         self.assertEqual(0, self.run_build(out)[0])                                        # doc-b is used without an exclusion
+        self.assertIn("doc-b", {s["source_id"] for s in common.read_corpus(os.path.join(out, "dev.tsv"))[1]})
         shutil.rmtree(out)
         for row in (["doc-b", "https://example.gov/other", "not public domain", "2026-11-06"],
                     ["doc-z", "https://www.example.gov/doc-b/", "same document, other id", "2026-11-06"]):
             self.write_committed_exclusions(row)
-            code, _, error = self.run_build(out)
-            self.assertEqual(1, code)
-            self.assertIn("excluded", error)
-            self.assertIn("doc-b", error)
-            self.assertFalse(os.path.exists(os.path.join(out, "dev.tsv")))                  # nothing is written
-            with self.assertRaises(sd.ExcludedSourceError):
-                sd.build(self.work, out, controls=4, share=0.5, allow_short=True)
+            self.assertEqual({"doc-b": row[2]}, {k: v for k, v in sd.load_exclusions(self.work, self.data).reasons.items() if k == "doc-b"})
+            self.assertEqual(0, self.run_build(out)[0])                                     # the decided doc-b items are dropped, not built
+            _, sentences = common.read_corpus(os.path.join(out, "dev.tsv"))
+            self.assertTrue(sentences and "doc-b" not in {s["source_id"] for s in sentences})
+            shutil.rmtree(out)
+        # the refusal of the build stays as the backstop for a built sentence of an excluded source
+        built = [{"source_id": "doc-b"}]
+        draft = sd.read_draft(self.work)
+        problems = sd.load_exclusions(self.work, self.data).problems(draft, built)
+        self.assertTrue(any("doc-b" in p and "excluded" in p for p in problems))
+
+    def test_the_committed_record_alone_excludes_a_source_in_decide_sample_report_lemma_counts_and_build(self):
+        second = ["Check the oil tank before use .", "Flow stops at the tank ."]
+        self.write_draft(["doc-a", "doc-b"])
+        self.write_text_doc("doc-b", second)
+        self.candidates, _ = sd.collect_candidates(self.work, self.data, include_ud=False, tokens_override=self.tokens_for(DOCUMENT + second),
+                                                   clean=False)
+        sd.write_candidates(self.work, self.candidates)
+        self.export_and_tag()
+        before_all = {i["cand_id"] for i in self.decided()[0] if i["source_id"] == "doc-b"}
+        before = {i["cand_id"] for i in self.decided()[0] if i["source_id"] == "doc-b" and i["outcome"] == "keep"}
+        self.assertTrue(before)
+        out = os.path.join(self.temp, "out")
+        self.assertEqual(0, self.run_build(out)[0])
+        self.assertIn("doc-b", {s["source_id"] for s in common.read_corpus(os.path.join(out, "dev.tsv"))[1]})
+        shutil.rmtree(out)
+        self.write_committed_exclusions(["doc-b", "https://example.gov/doc-b", "committed only", "2026-11-06"])
+        self.assertFalse(os.path.exists(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE)))       # the work file is absent
+        self.assertEqual({"doc-b": "committed only"}, sd.load_exclusions(self.work, self.data).reasons)
+        self.assertEqual({}, {k: v for k, v in sd.load_exclusions(self.work, self.data).reasons.items() if k != "doc-b"})
+        code, output = self.cli("decide")                                                           # decide drops them
+        self.assertEqual(0, code)
+        self.assertIn("excluded-source |", output)
+        items, _ = sd.read_decided(self.work)
+        mine = [i for i in items if i["source_id"] == "doc-b"]
+        self.assertEqual(sorted(before_all), sorted(i["cand_id"] for i in mine if i["reason"] == sd.EXCLUDED_REASON and i["outcome"] == "drop"))
+        self.assertEqual(0, sum(n for (shape, lemma), n in sd.lemma_counts_of([self.work]).items() if lemma in ("stops", "tank")))
+        self.assertEqual(0, self.cli("sample", "--per-shape", "12", "--controls", "0")[0])
+        with open(os.path.join(self.root, "private", "review-sample.md"), encoding="utf-8") as handle:
+            self.assertNotIn("oil tank before use", handle.read())
+        self.assertEqual(0, self.run_build(out)[0])
+        _, sentences = common.read_corpus(os.path.join(out, "dev.tsv"))
+        self.assertTrue(sentences and "doc-b" not in {s["source_id"] for s in sentences})
+        code, report = self.cli("report", "--out-dir", out)
+        self.assertEqual(0, code)
+        counted = 0
+        for line in report.splitlines():
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            if len(cells) == 3 and cells[1] in sd.ROLES and cells[2].isdigit():
+                counted += int(cells[2])
+        self.assertEqual(len(mine), counted)
+        for tranche in ("standard", "hard"):                                                       # a missing record refuses sample and report
+            for command in ("sample", "report"):
+                os.remove(os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv"))
+                code, error = self.refused(command, "--tranche", tranche)
+                self.assertEqual(1, code, (tranche, command))
+                self.assertIn("%s refused" % command, error)
+                self.write_committed_exclusions(["doc-b", "https://example.gov/doc-b", "committed only", "2026-11-06"])
 
     def test_the_builder_indexes_the_committed_exclusion_table_and_keeps_its_rows(self):
         self.add_second_document()
         self.write_committed_exclusions(["doc-b", "https://example.gov/doc-b", "not public domain", "2026-11-06"])
-        self.assertIn(("id", "doc-b"), sd.exclusion_index(self.data))
-        self.assertIn(("url", "example.gov/doc-b"), sd.exclusion_index(self.data))
+        exclusions = sd.load_exclusions(self.work, self.data)
+        self.assertIn(("id", "doc-b"), sd.exclusion_index(self.data, exclusions))
+        self.assertIn(("url", "example.gov/doc-b"), sd.exclusion_index(self.data, exclusions))
         rows, report = sd.collect_candidates(self.work, self.data, include_ud=False, tokens_override=self.tokens_for(
             DOCUMENT + ["Check the oil tank before use .", "Flow stops at the tank ."]), clean=False)
         self.assertNotIn("doc-b", {r["source_id"] for r in rows})                            # not a candidate source, W lists nothing
-        self.assertTrue(any("rejected doc-b" in line for line in report))
+        self.assertTrue(any("excluded-source 2" in line for line in report))                  # the committed exclusion drops its sentences
+        self.assertFalse(any("rejected doc-b" in line for line in report))
         common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason\tdecided"])      # W lists nothing
         out = os.path.join(self.temp, "out")
-        self.assertEqual(1, self.run_build(out)[0])                                         # doc-b items are still decided: refused
+        self.assertEqual(0, self.run_build(out)[0])                                         # doc-b items are decided `keep` but dropped when read
+        self.assertNotIn("doc-b", {s["source_id"] for s in common.read_corpus(os.path.join(out, "dev.tsv"))[1]})
         common.write_text(os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv"), ["bad header"])
         with self.assertRaises(ValueError):
-            sd.read_committed_exclusions(self.data)
+            sd.load_exclusions(self.work, self.data)
 
     def test_the_written_exclusion_record_keeps_the_committed_rows_that_the_work_folder_lacks(self):
         self.write_committed_exclusions(["doc-gone", "https://example.gov/doc-gone", "dropped earlier", "2026-11-01"])
@@ -849,7 +1012,63 @@ class PipelineTests(MiniFolder):
         self.assertIn("another-document", error)
         self.assertFalse(os.path.exists(os.path.join(out, "dev.tsv")))                      # nothing is written
         with self.assertRaises(sd.ExcludedSourceError):
-            sd.merge_excluded_rows([("doc-b", "https://example.gov/a", "r", "2026-11-01")], [["doc-b", "https://example.gov/b", "r", "2026-11-02"]])
+            sd.load_exclusions(self.work, self.data)
+
+    def test_a_url_exclusion_under_another_id_is_honored_by_decide_sample_report_and_build(self):
+        self.add_second_document()
+        before = {i["cand_id"] for i in sd.read_decided(self.work)[0] if i["source_id"] == "doc-b"}
+        self.assertTrue(before)
+        out = os.path.join(self.temp, "out")
+        self.assertEqual(0, self.run_build(out)[0])                                         # doc-b is used without an exclusion
+        self.assertIn("doc-b", {s["source_id"] for s in common.read_corpus(os.path.join(out, "dev.tsv"))[1]})
+        shutil.rmtree(out)
+        self.write_committed_exclusions(["doc-z", "https://www.example.gov/doc-b/", "same document, other id", "2026-11-06"])
+        mine = [i for i in sd.read_decided(self.work)[0] if i["source_id"] == "doc-b"]      # the stored `keep` is overridden when read
+        self.assertEqual(before, {i["cand_id"] for i in mine})
+        self.assertTrue(all((i["outcome"], i["reason"]) == ("drop", sd.EXCLUDED_REASON) for i in mine))
+        self.assertEqual(0, self.cli("decide")[0])
+        mine = [i for i in sd.read_decided(self.work)[0] if i["source_id"] == "doc-b"]
+        self.assertEqual(before, {i["cand_id"] for i in mine})
+        self.assertTrue(all((i["outcome"], i["reason"]) == ("drop", sd.EXCLUDED_REASON) for i in mine))
+        self.assertEqual(0, self.cli("sample", "--per-shape", "12", "--controls", "0")[0])
+        with open(os.path.join(self.root, "private", "review-sample.md"), encoding="utf-8") as handle:
+            self.assertNotIn("oil tank before use", handle.read())
+        self.assertEqual(0, self.run_build(out)[0])
+        _, sentences = common.read_corpus(os.path.join(out, "dev.tsv"))
+        self.assertTrue(sentences and "doc-b" not in {s["source_id"] for s in sentences})
+        _, excluded = adjudicate.read_records(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE))
+        self.assertEqual(["doc-z"], [r["source_id"] for r in excluded])
+        code, report = self.cli("report", "--out-dir", out)
+        self.assertEqual(0, code)
+        counted = 0
+        for line in report.splitlines():
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            if len(cells) == 3 and cells[1] in sd.ROLES and cells[2].isdigit():
+                counted += int(cells[2])
+        self.assertEqual(len(mine), counted)
+
+    def test_a_same_id_different_url_conflict_is_refused_by_every_command_in_both_profiles(self):
+        self.add_second_document()
+        out = os.path.join(self.temp, "out")
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason\tdecided", "doc-b\tnot public domain\t2026-11-06"])
+        self.write_committed_exclusions(["doc-b", "https://example.gov/another-document", "committed URL exclusion", "2026-11-01"])
+        commands = [("exclusions",), ("candidates", "--no-ud"), ("candidates", "--no-ud", "--round", "r2"), ("decide",), ("decide", "--round", "r2"),
+                    ("sample",), ("report",), ("build", "--out-dir", out, "--allow-short"),
+                    ("candidates", "--no-ud", "--round", "h3", "--controls-only")]
+        for tranche in ("standard", "hard"):
+            for command in commands:
+                self.assert_refused(("--tranche", tranche) + command)
+        self.assertFalse(os.path.exists(out))
+        self.assertFalse(os.path.exists(os.path.join(self.root, "rounds")))
+        self.assertFalse(os.path.exists(os.path.join(self.root, "exclusions.tsv")))
+        with self.assertRaises(sd.ExcludedSourceError):                                     # the function itself fails closed, for any consumer
+            sd.load_exclusions(self.work, self.data)
+        with self.assertRaises(sd.ExcludedSourceError):
+            sd.read_decided(self.work, self.data)
+        with self.assertRaises(sd.ExcludedSourceError):
+            sd.lemma_counts_of([self.work], data_dir=self.data)
+        with self.assertRaises(sd.ExcludedSourceError):
+            sd.collect_candidates(self.work, self.data, include_ud=False, tokens_override={}, clean=False)
 
     def test_a_duplicate_id_within_one_exclusion_table_is_an_error(self):
         self.add_second_document()
@@ -857,7 +1076,7 @@ class PipelineTests(MiniFolder):
         common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE),
                           ["source_id\treason\tdecided", "doc-b\tone\t2026-11-06", "doc-b\ttwo\t2026-11-06"])
         with self.assertRaises(ValueError):
-            sd.read_excluded_rows(self.work)
+            sd.load_exclusions(self.work, self.data)
         code, _, error = self.run_build(out)
         self.assertEqual(1, code)
         self.assertIn("duplicate source_id doc-b", error)
@@ -865,7 +1084,7 @@ class PipelineTests(MiniFolder):
         self.write_committed_exclusions(["doc-b", "https://example.gov/doc-b", "one", "2026-11-06"],
                                         ["doc-b", "https://example.gov/doc-c", "two", "2026-11-06"])
         with self.assertRaises(ValueError):
-            sd.read_committed_exclusions(self.data)
+            sd.load_exclusions(self.work, self.data)
         code, _, error = self.run_build(out)
         self.assertEqual(1, code)
         self.assertIn("duplicate source_id doc-b", error)
@@ -1237,6 +1456,25 @@ class RoundTests(MiniFolder):
         self.assertIn("excluded-source %d" % len(self.MORE_LINES), output)
         self.assertEqual([], sd.read_candidates(self.r2))
 
+    def test_a_url_exclusion_under_another_id_drops_the_document_of_every_candidate_round_and_a_conflict_is_refused(self):
+        path = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        common.write_text(path, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-z\thttps://www.example.gov/doc-a/\tsame document, other id\t2026-11-06"])
+        code, output = self.cli(*self.ROUND_OPTIONS)                                # a round
+        self.assertEqual(0, code, output)
+        self.assertIn("excluded-source %d" % len(self.MORE_LINES), output)
+        self.assertEqual([], sd.read_candidates(self.r2))
+        self.assertNotIn("rejected doc-a", output)                                  # the exclusion, not the used-documents index, drops it
+        code, output = self.cli("candidates", "--no-ud")                            # the root
+        self.assertEqual(0, code, output)
+        self.assertIn("excluded-source %d" % len(self.MORE_LINES), output)
+        self.assertEqual([], sd.read_candidates(self.work))
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason\tdecided", "doc-a\tr\t2026-11-06"])
+        common.write_text(path, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-a\thttps://example.gov/another-document\tr\t2026-11-06"])
+        before = common.read_lines(os.path.join(self.root, "candidates.tsv"))
+        self.assert_refused(self.ROUND_OPTIONS)                                     # same id, other URL: refused, nothing written
+        self.assert_refused(("candidates", "--no-ud"))
+        self.assertEqual(before, common.read_lines(os.path.join(self.root, "candidates.tsv")))
+
     def test_compound_strict_needs_a_noun_like_modifier(self):
         texts, _ = self.round_texts()
         self.assertIn("The light switch opens the valve.", texts)
@@ -1366,6 +1604,10 @@ class LeakageExtensionTests(MiniFolder):
             leakage.evaluation_sets(include_ud=False)
         self.assertNotIn("shapes-dev", leakage.evaluation_sets(include_ud=False, shapes_dev=False))
         self.write_dev([("doc-z", "A brand new dev sentence about nothing in particular .")])
+        with self.assertRaises(SystemExit):                                  # the hard tranche file is required as well
+            leakage.evaluation_sets(include_ud=False)
+        corpus_file(os.path.join(self.data, "eval", "shapes-dev", "hard.tsv"), [("doc-h", "Another brand new hard sentence about nothing .")],
+                    [["# shape = v-after-modal", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]])
         self.assertIn("shapes-dev", leakage.evaluation_sets(include_ud=False))
 
     def test_held_out_keys_are_an_opaque_set_of_hashes_and_short_text_has_no_gram(self):
@@ -1403,6 +1645,24 @@ class LeakageExtensionTests(MiniFolder):
         rows, failures, failing = check_leakage.dev_check(include_ud=False)
         self.assertEqual(["s2"], failing)
         self.assertEqual(1, failures)
+
+
+class StandardRebuildTests(unittest.TestCase):
+    """Optional regression check: rebuild the committed standard tranche from its original work folder and compare the bytes.
+
+    Needs the work folder of the standard tranche (outside the repository): set SHAPES_DEV_STANDARD_WORK to it; skipped otherwise.
+    """
+
+    @unittest.skipUnless(os.environ.get("SHAPES_DEV_STANDARD_WORK"), "set SHAPES_DEV_STANDARD_WORK to the standard tranche's work folder")
+    def test_the_standard_profile_rebuilds_the_committed_files_byte_for_byte(self):
+        committed = os.path.join(common.DATA, "eval", "shapes-dev")
+        with tempfile.TemporaryDirectory() as out:
+            with contextlib.redirect_stdout(io.StringIO()):
+                code = sd.main(["--work", os.environ["SHAPES_DEV_STANDARD_WORK"], "build", "--out-dir", out, "--shape-lemma-cap", "n-measure=12"])
+            self.assertEqual(0, code)
+            for name in ("dev.tsv", "sources.tsv", "excluded-sources.tsv"):
+                with open(os.path.join(out, name), "rb") as made, open(os.path.join(committed, name), "rb") as stored:
+                    self.assertEqual(stored.read(), made.read(), name)
 
 
 class QuotaUnitTests(unittest.TestCase):
@@ -1461,8 +1721,8 @@ class ExclusionRecordGateTests(MiniFolder):
         table_file(os.path.join(folder, "excluded-sources.tsv"), common.EXCLUDED_SOURCES_COLUMNS,
                    [[i, u, "not public domain", "2026-11-06"] for i, u in excluded])
 
-    def test_a_clean_set_has_no_finding_and_a_missing_folder_is_not_checked(self):
-        self.assertEqual([], check_licenses.excluded_source_findings(self.data))
+    def test_a_clean_set_has_no_finding_and_a_header_only_record_is_valid(self):
+        self.assertEqual([], check_licenses.excluded_source_findings(self.data))                 # the fixture's record is header only
         self.write_set()
         self.assertEqual([], check_licenses.excluded_source_findings(self.data))
 
@@ -1492,6 +1752,18 @@ class ExclusionRecordGateTests(MiniFolder):
             self.assertEqual(1, len(found), lines)
             self.assertIn("excluded-sources.tsv", found[0])
         os.remove(path)
+        self.assertIn("missing exclusion table", check_licenses.excluded_source_findings(self.data)[0])
+
+    def test_a_zero_byte_blank_or_headerless_record_is_a_finding_and_a_missing_folder_too(self):
+        self.write_set()
+        path = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        for content in ("", "\n\n", "doc-x\thttps://example.gov/x\tr\t2026-11-06\n"):
+            with open(path, "w", encoding="utf-8", newline="") as handle:
+                handle.write(content)
+            found = check_licenses.excluded_source_findings(self.data)
+            self.assertEqual(1, len(found), repr(content))
+            self.assertIn("excluded-sources.tsv", found[0])
+        shutil.rmtree(os.path.join(self.data, "eval", "shapes-dev"))
         self.assertIn("missing exclusion table", check_licenses.excluded_source_findings(self.data)[0])
 
 

@@ -5,7 +5,7 @@
 Checks (exit code 1 on any finding):
   1. no *.conllu file anywhere in the repository data and tools folders (outside the git-ignored cache), and no path under
      data/ containing semcor, brown, ewt or ud-ewt except the fetch-only documentation data/eval/ud-ewt/README.md;
-  2. the source tables (open, gold v2, silver, shapes-dev) contain no row that mentions a share-alike, no-derivatives or
+  2. the source tables (open, gold v2, silver, shapes-dev and, when it exists, the hard tranche's hard-sources.tsv) contain no row that mentions a share-alike, no-derivatives or
      non-commercial license, a Creative Commons BY-family license other than CC0, or Wikipedia; the MASC source table
      (a CC BY 3.0 US corpus) must record exactly that license for every document;
   3. every data folder README declares `License: <id>` with an id from the allowed set (the staged corrections folder included);
@@ -14,8 +14,11 @@ Checks (exit code 1 on any finding):
      context excerpts of MASC rows are MASC text); and no label, id, reason or provenance cell mentions a restricted license
      (the token, hint and context cells are corpus text and are covered by the document check). The corrections README must link
      the MASC attribution file, which must exist;
-  5. the hard-shape development set (when its folder exists) has a well-formed exclusion record eval/shapes-dev/excluded-sources.tsv,
-     and neither its sources.tsv nor the source_id of any sentence of its dev.tsv matches an excluded id or normalized URL.
+  5. the hard-shape development set has a required, well-formed exclusion record eval/shapes-dev/excluded-sources.tsv (missing, zero-byte
+     or headerless is a finding; header-only is valid), and neither its sources.tsv nor the source_id of any sentence of its dev.tsv
+     matches an excluded id or normalized URL; the same for the hard tranche (hard-sources.tsv and hard.tsv), which shares the record.
+  6. fail closed: every source table and corpus above must exist (missing is a finding, not a skip or a traceback); the two files of the hard
+     tranche are required while leakage.HARD_TRANCHE_REQUIRED is True and skipped when missing while it is False.
 """
 import os
 import re
@@ -23,15 +26,23 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
+import leakage
 
 FORBIDDEN_TEXT = re.compile(r"share-?alike|by-sa|by-nc|by-nd|non-?commercial|no-?derivat|cc by|wikipedia|creativecommons\.org/licenses/by", re.I)
 FORBIDDEN_PATH = re.compile(r"semcor|brown|ewt", re.I)
 ALLOWED_LICENSES = {"CC0-1.0", "CC-BY-3.0-US", "CC-BY-4.0", "Public-Domain", "MIT"}
-SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv")
+SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv",
+                 "eval/shapes-dev/hard-sources.tsv")
+HARD_SOURCES_TABLE = "eval/shapes-dev/hard-sources.tsv"   # scanned when it exists; a missing one fails once leakage.HARD_TRANCHE_REQUIRED is True
+HARD_CORPUS = "eval/shapes-dev/hard.tsv"                  # likewise
+HARD_FILES = (HARD_SOURCES_TABLE, HARD_CORPUS)            # optional only while leakage.HARD_TRANCHE_REQUIRED is False
+# Every table and corpus whose absence is a finding (the hard tranche's two files only while the tranche is required); each consumer below
+# skips a file that is missing, because required_file_findings reports it once.
+REQUIRED_FILES = SOURCE_TABLES + ("masc/sources.tsv", "eval/shapes-dev/dev.tsv", HARD_CORPUS)
 MASC_LICENSE = "CC BY 3.0 US"
-# The hard-shape development set takes no FAA material (host, publisher or handbook); see data/eval/shapes-dev/README.md.
+# The hard-shape development set (both tranches) takes no FAA material (host, publisher or handbook); see data/eval/shapes-dev/README.md.
 FAA_TEXT = re.compile(r"faa\.gov|\bFAA\b|Federal Aviation", re.I)
-FAA_TABLES = ("eval/shapes-dev/sources.tsv",)
+FAA_TABLES = ("eval/shapes-dev/sources.tsv", HARD_SOURCES_TABLE)
 READMES = ("open", "masc", "silver", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections")
 ALLOWED_PATHS = {"data/eval/ud-ewt/README.md"}
 CORRECTION_SOURCES = {"open": "open/sources.tsv", "masc": "masc/sources.tsv", "silver": "silver/sources.tsv"}
@@ -40,13 +51,31 @@ MASC_ATTRIBUTION_LINK = "](../masc/ATTRIBUTION.md)"
 MASC_ATTRIBUTION_FILE = "masc/ATTRIBUTION.md"
 
 
+def required_file_findings(base=None):
+    """Fail closed: a missing required source table or corpus is a finding, never a skip and never a traceback.
+
+    The two files of the hard tranche (hard-sources.tsv, hard.tsv) are required while leakage.HARD_TRANCHE_REQUIRED is True and optional
+    (skipped when missing, scanned when present) while it is False. The READMEs are checked separately in main."""
+    base = base or common.DATA
+    findings = []
+    for table in REQUIRED_FILES:
+        if table in HARD_FILES and not leakage.HARD_TRANCHE_REQUIRED:
+            continue
+        if not os.path.isfile(os.path.join(base, *table.split("/"))):
+            findings.append("missing required file: data/" + table)
+    return findings
+
+
 def masc_findings():
     """MASC is CC BY 3.0 US as a whole, so its source table is checked for exactly that license class (and for no
     other restricted text) instead of being scanned with FORBIDDEN_TEXT, which refuses every CC BY license."""
     findings = []
     rows = 0
     restricted = re.compile(r"share-?alike|by-sa|by-nc|by-nd|non-?commercial|no-?derivat|wikipedia", re.I)
-    for line in common.read_lines(os.path.join(common.DATA, "masc", "sources.tsv")):
+    masc_table = os.path.join(common.DATA, "masc", "sources.tsv")
+    if not os.path.isfile(masc_table):
+        return findings                                           # reported by required_file_findings
+    for line in common.read_lines(masc_table):
         if not line or line.startswith("#"):
             continue
         rows += 1
@@ -65,7 +94,8 @@ def listed_documents(base):
     documents = {}
     for source, table in CORRECTION_SOURCES.items():
         ids = set()
-        for line in common.read_lines(os.path.join(base, *table.split("/"))):
+        table_path = os.path.join(base, *table.split("/"))
+        for line in (common.read_lines(table_path) if os.path.isfile(table_path) else ()):   # a missing table: required_file_findings
             if not line or line.startswith("#"):
                 continue
             cells = line.split("\t")
@@ -135,32 +165,33 @@ def corrections_findings(base=None):
 def excluded_source_findings(base=None):
     """Findings of the fail-closed exclusion record data/eval/shapes-dev/excluded-sources.tsv.
 
-    When the shapes-dev folder exists the record must exist and be well formed, and no row of its sources.tsv and no `source_id`
-    of its dev.tsv may have an id or a normalized URL that the record lists."""
+    The record is required (the hard-shape development set is a required data set): a missing folder or file, a zero-byte file, a file
+    without the header and a malformed row are findings; a file that holds only the header is valid (nothing excluded). No row of the
+    sources.tsv and hard-sources.tsv and no `source_id` of the dev.tsv and hard.tsv may have an id or a normalized URL that the record lists."""
     base = base or common.DATA
     folder = os.path.join(base, "eval", "shapes-dev")
-    if not os.path.isdir(folder):
-        return []
     try:
         lookup = common.excluded_lookup(common.read_excluded_table(os.path.join(folder, "excluded-sources.tsv")))
     except ValueError as error:
         return ["eval/shapes-dev/excluded-sources.tsv: " + str(error)]
     findings = []
-    path = os.path.join(folder, "sources.tsv")
-    if os.path.exists(path):
-        for line in common.read_lines(path):
-            cells = line.split("\t")
-            if not line or line.startswith("#") or cells[0] == "source_id":
-                continue
-            hit = common.excluded_match(lookup, cells[0], cells[3] if len(cells) > 3 else "")
-            if hit:
-                findings.append("eval/shapes-dev/sources.tsv: row %s uses the excluded source %s" % (cells[0], hit))
-    path = os.path.join(folder, "dev.tsv")
-    if os.path.exists(path):
-        for source_id in sorted({s["source_id"] for s in common.read_corpus(path)[1]}):
-            hit = common.excluded_match(lookup, source_id)
-            if hit:
-                findings.append("eval/shapes-dev/dev.tsv: sentences of %s use the excluded source %s" % (source_id, hit))
+    for name in ("sources.tsv", "hard-sources.tsv"):
+        path = os.path.join(folder, name)
+        if os.path.isfile(path):
+            for line in common.read_lines(path):
+                cells = line.split("\t")
+                if not line or line.startswith("#") or cells[0] == "source_id":
+                    continue
+                hit = common.excluded_match(lookup, cells[0], cells[3] if len(cells) > 3 else "")
+                if hit:
+                    findings.append("eval/shapes-dev/%s: row %s uses the excluded source %s" % (name, cells[0], hit))
+    for name in ("dev.tsv", "hard.tsv"):
+        path = os.path.join(folder, name)
+        if os.path.isfile(path):
+            for source_id in sorted({s["source_id"] for s in common.read_corpus(path)[1]}):
+                hit = common.excluded_match(lookup, source_id)
+                if hit:
+                    findings.append("eval/shapes-dev/%s: sentences of %s use the excluded source %s" % (name, source_id, hit))
     return findings
 
 
@@ -175,8 +206,11 @@ def main():
                     findings.append("conllu file: " + relative)
                 if top == common.DATA and relative not in ALLOWED_PATHS and FORBIDDEN_PATH.search(relative):
                     findings.append("restricted corpus name in path: " + relative)
+    findings.extend(required_file_findings())
     for table in SOURCE_TABLES:
         path = os.path.join(common.DATA, *table.split("/"))
+        if not os.path.isfile(path):
+            continue        # required: reported by required_file_findings; optional (hard tranche while not required): skipped
         rows = 0
         for line in common.read_lines(path):
             if line and not line.startswith("#"):

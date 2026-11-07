@@ -4,6 +4,27 @@ using System.Text;
 namespace DemaConsulting.PartOfSpeech.Trainer;
 
 /// <summary>
+///     The tranche of the hard-shape development set an item belongs to: the standard tranche (<c>dev.tsv</c>) or the hard
+///     tranche (<c>hard.tsv</c>, selected by a pre-registered rule that favors the contested cases).
+/// </summary>
+/// <remarks>
+///     The tranche of an item is the file it was read from (see <see cref="DevSets.ReadShapesDev(string, ShapesDevTranche, out string)"/>);
+///     no comment in a file can set it. The values are the indexes of <see cref="DataGuard.ShapesDevelopmentFiles"/>.
+/// </remarks>
+internal enum ShapesDevTranche
+{
+    /// <summary>
+    ///     The standard tranche, <c>data/eval/shapes-dev/dev.tsv</c>.
+    /// </summary>
+    Standard = 0,
+
+    /// <summary>
+    ///     The hard tranche, <c>data/eval/shapes-dev/hard.tsv</c>.
+    /// </summary>
+    Hard = 1,
+}
+
+/// <summary>
 ///     One judged word of the hard-shape development set: a sentence, the index of the word, its gold class and the shape it was chosen for.
 /// </summary>
 internal sealed class ShapesDevItem
@@ -20,7 +41,8 @@ internal sealed class ShapesDevItem
     /// <param name="role">The role, <c>target</c> or <c>control</c>.</param>
     /// <param name="lemma">The lemma of the judged word.</param>
     /// <param name="origin">The origin, <c>real</c> or <c>authored</c>.</param>
-    public ShapesDevItem(string id, string sourceId, string[] tokens, int target, string goldClass, string shape, string role, string lemma, string origin)
+    /// <param name="tranche">The tranche of the file the item was read from.</param>
+    public ShapesDevItem(string id, string sourceId, string[] tokens, int target, string goldClass, string shape, string role, string lemma, string origin, ShapesDevTranche tranche = ShapesDevTranche.Standard)
     {
         Id = id;
         SourceId = sourceId;
@@ -31,7 +53,13 @@ internal sealed class ShapesDevItem
         Role = role;
         Lemma = lemma;
         Origin = origin;
+        Tranche = tranche;
     }
+
+    /// <summary>
+    ///     Gets the tranche of the file the item was read from.
+    /// </summary>
+    public ShapesDevTranche Tranche { get; }
 
     /// <summary>
     ///     Gets the sentence id of the corpus.
@@ -154,9 +182,10 @@ internal static class ShapesDevSets
     /// </summary>
     /// <param name="lines">The lines, without line terminators.</param>
     /// <param name="origin">The origin of the lines for error messages.</param>
-    /// <returns>The items in file order.</returns>
+    /// <param name="tranche">The tranche the lines were read from (the file decides it, not the content).</param>
+    /// <returns>The items in file order, each marked with <paramref name="tranche"/>.</returns>
     /// <exception cref="InvalidDataException">A row, a comment or a judged word breaks a rule of the format.</exception>
-    public static List<ShapesDevItem> Parse(IEnumerable<string> lines, string origin)
+    public static List<ShapesDevItem> Parse(IEnumerable<string> lines, string origin, ShapesDevTranche tranche = ShapesDevTranche.Standard)
     {
         ArgumentNullException.ThrowIfNull(lines);
         ArgumentNullException.ThrowIfNull(origin);
@@ -177,7 +206,7 @@ internal static class ShapesDevSets
                 throw new InvalidDataException($"{origin}: sentence id {sentences[i].SentenceId} is used twice.");
             }
 
-            items.Add(CreateItem(sentences[i], blocks[i], origin));
+            items.Add(CreateItem(sentences[i], blocks[i], origin, tranche));
         }
 
         return items;
@@ -228,8 +257,9 @@ internal static class ShapesDevSets
     /// <param name="sentence">The sentence as the corpus reader read it.</param>
     /// <param name="block">The comments and status cells of the sentence.</param>
     /// <param name="origin">The origin for error messages.</param>
+    /// <param name="tranche">The tranche of the file.</param>
     /// <returns>The item.</returns>
-    private static ShapesDevItem CreateItem(TrainingSentence sentence, Block block, string origin)
+    private static ShapesDevItem CreateItem(TrainingSentence sentence, Block block, string origin, ShapesDevTranche tranche)
     {
         var id = sentence.SentenceId;
         string Comment(string name) =>
@@ -267,7 +297,7 @@ internal static class ShapesDevSets
         }
 
         var goldClass = ReadTargetClass(sentence, target, shape, role, block, origin);
-        return new ShapesDevItem(id, sentence.SourceId, sentence.Tokens, target, goldClass, shape, role, Comment("lemma"), sourceOrigin);
+        return new ShapesDevItem(id, sentence.SourceId, sentence.Tokens, target, goldClass, shape, role, Comment("lemma"), sourceOrigin, tranche);
     }
 
     /// <summary>
@@ -476,6 +506,40 @@ internal sealed class ShapesDevResult
 }
 
 /// <summary>
+///     The results of a tagger on both tranches of the hard-shape development set: per tranche and over all items.
+/// </summary>
+internal sealed class ShapesDevTrancheResults
+{
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ShapesDevTrancheResults"/> class.
+    /// </summary>
+    /// <param name="standard">The results of the standard tranche.</param>
+    /// <param name="hard">The results of the hard tranche.</param>
+    /// <param name="combined">The results over the items of both tranches.</param>
+    public ShapesDevTrancheResults(ShapesDevResult standard, ShapesDevResult hard, ShapesDevResult combined)
+    {
+        Standard = standard;
+        Hard = hard;
+        Combined = combined;
+    }
+
+    /// <summary>
+    ///     Gets the results of the standard tranche.
+    /// </summary>
+    public ShapesDevResult Standard { get; }
+
+    /// <summary>
+    ///     Gets the results of the hard tranche.
+    /// </summary>
+    public ShapesDevResult Hard { get; }
+
+    /// <summary>
+    ///     Gets the results over the items of both tranches.
+    /// </summary>
+    public ShapesDevResult Combined { get; }
+}
+
+/// <summary>
 ///     Runs a weights file through the real decoder on the hard-shape development set and summarizes the outcomes per shape.
 /// </summary>
 /// <remarks>
@@ -516,6 +580,40 @@ internal static class ShapesDevEvaluator
     /// <returns>The results.</returns>
     public static ShapesDevResult Evaluate(Tagger tagger, IReadOnlyList<ShapesDevItem> items) =>
         Summarize(items, Judge(tagger, items));
+
+    /// <summary>
+    ///     Tags every item once and summarizes the outcomes per tranche and over both tranches together.
+    /// </summary>
+    /// <param name="tagger">The tagger.</param>
+    /// <param name="items">The items of the tranches that were read.</param>
+    /// <returns>The results of the standard tranche, the hard tranche and the combined items.</returns>
+    public static ShapesDevTrancheResults EvaluateTranches(Tagger tagger, IReadOnlyList<ShapesDevItem> items) =>
+        SummarizeTranches(items, Judge(tagger, items));
+
+    /// <summary>
+    ///     Summarizes the outcomes of the items per tranche and combined.
+    /// </summary>
+    /// <param name="items">The items.</param>
+    /// <param name="outcomes">The outcome of every item, in the same order.</param>
+    /// <returns>The results: the items of the standard tranche, those of the hard tranche (zero counts without items) and all items.</returns>
+    /// <exception cref="ArgumentException">The lists differ in length or an item has an unknown shape.</exception>
+    public static ShapesDevTrancheResults SummarizeTranches(IReadOnlyList<ShapesDevItem> items, IReadOnlyList<Outcome> outcomes)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(outcomes);
+        if (items.Count != outcomes.Count)
+        {
+            throw new ArgumentException("There must be one outcome per item.", nameof(outcomes));
+        }
+
+        ShapesDevResult Of(ShapesDevTranche tranche)
+        {
+            var index = Enumerable.Range(0, items.Count).Where(i => items[i].Tranche == tranche).ToList();
+            return Summarize(index.Select(i => items[i]).ToList(), index.Select(i => outcomes[i]).ToList());
+        }
+
+        return new ShapesDevTrancheResults(Of(ShapesDevTranche.Standard), Of(ShapesDevTranche.Hard), Summarize(items, outcomes));
+    }
 
     /// <summary>
     ///     Summarizes the outcomes of the items per shape (target accuracy, harmful errors and control accuracy).
@@ -621,12 +719,68 @@ internal static class ShapesDevReport
     {
         ArgumentNullException.ThrowIfNull(label);
         ArgumentNullException.ThrowIfNull(datasetSha256);
-        ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(weightsSha256);
+        return RenderSection(label, string.Empty, datasetSha256.Length > 0 ? $"- Development file SHA-256: `{datasetSha256}`." : string.Empty, result, weightsSha256);
+    }
+
+    /// <summary>
+    ///     Renders the report of the hard tranche alone.
+    /// </summary>
+    /// <param name="label">The label of the run (for example the weights file name).</param>
+    /// <param name="hardSha256">The SHA-256 of the hard development file, or an empty text for none.</param>
+    /// <param name="result">The results of the hard tranche.</param>
+    /// <param name="weightsSha256">The SHA-256 of the weights file, or an empty text for none.</param>
+    /// <returns>The lines of the Markdown report, without line terminators.</returns>
+    public static List<string> RenderHard(string label, string hardSha256, ShapesDevResult result, string weightsSha256 = "")
+    {
+        ArgumentNullException.ThrowIfNull(label);
+        ArgumentNullException.ThrowIfNull(hardSha256);
+        ArgumentNullException.ThrowIfNull(weightsSha256);
+        return RenderSection(label, "hard tranche", hardSha256.Length > 0 ? $"- Development file SHA-256: `{hardSha256}`." : string.Empty, result, weightsSha256);
+    }
+
+    /// <summary>
+    ///     Renders the report of both tranches: the standard section (the same lines <see cref="Render"/> writes for it), the hard section and
+    ///     the combined section, each with the table of every shape.
+    /// </summary>
+    /// <param name="label">The label of the run (for example the weights file name).</param>
+    /// <param name="standardSha256">The SHA-256 of the standard development file, or an empty text for none.</param>
+    /// <param name="hardSha256">The SHA-256 of the hard development file, or an empty text for none.</param>
+    /// <param name="results">The results per tranche and combined.</param>
+    /// <param name="weightsSha256">The SHA-256 of the weights file, or an empty text for none.</param>
+    /// <returns>The lines of the Markdown report, without line terminators; the sections are separated by an empty line.</returns>
+    public static List<string> RenderTranches(string label, string standardSha256, string hardSha256, ShapesDevTrancheResults results, string weightsSha256 = "")
+    {
+        ArgumentNullException.ThrowIfNull(label);
+        ArgumentNullException.ThrowIfNull(standardSha256);
+        ArgumentNullException.ThrowIfNull(hardSha256);
+        ArgumentNullException.ThrowIfNull(results);
+        ArgumentNullException.ThrowIfNull(weightsSha256);
+        var lines = Render(label, standardSha256, results.Standard, weightsSha256);
+        lines.Add(string.Empty);
+        lines.AddRange(RenderSection(label, "hard tranche", hardSha256.Length > 0 ? $"- Development file SHA-256: `{hardSha256}`." : string.Empty, results.Hard, weightsSha256));
+        lines.Add(string.Empty);
+        var both = standardSha256.Length > 0 && hardSha256.Length > 0 ? $"- Development files SHA-256: standard `{standardSha256}`, hard `{hardSha256}`." : string.Empty;
+        lines.AddRange(RenderSection(label, "standard and hard tranche combined", both, results.Combined, weightsSha256));
+        return lines;
+    }
+
+    /// <summary>
+    ///     Renders one section: heading, item counts, the file hashes, the scoring note and the table.
+    /// </summary>
+    /// <param name="label">The label of the run.</param>
+    /// <param name="tranche">The name of the tranche for the heading, or an empty text for the plain heading of the standard tranche.</param>
+    /// <param name="datasetLine">The line that names the development file hashes, or an empty text for none.</param>
+    /// <param name="result">The results.</param>
+    /// <param name="weightsSha256">The SHA-256 of the weights file, or an empty text for none.</param>
+    /// <returns>The lines of the section.</returns>
+    private static List<string> RenderSection(string label, string tranche, string datasetLine, ShapesDevResult result, string weightsSha256)
+    {
+        ArgumentNullException.ThrowIfNull(result);
         var pooled = result.Pooled;
         var lines = new List<string>
         {
-            "## Shapes development set: " + label,
+            "## Shapes development set" + (tranche.Length > 0 ? ", " + tranche : string.Empty) + ": " + label,
             string.Empty,
             string.Format(
                 CultureInfo.InvariantCulture,
@@ -638,11 +792,10 @@ internal static class ShapesDevReport
                 pooled.AuthoredControls,
                 Share(pooled.AuthoredControls, pooled.ControlItems)),
         };
-        if (datasetSha256.Length > 0)
+        if (datasetLine.Length > 0)
         {
-            lines.Add($"- Development file SHA-256: `{datasetSha256}`.");
+            lines.Add(datasetLine);
         }
-
         if (weightsSha256.Length > 0)
         {
             lines.Add($"- Weights file SHA-256: `{weightsSha256}`.");

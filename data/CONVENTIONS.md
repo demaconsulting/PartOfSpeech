@@ -239,6 +239,10 @@ class; the judged word is never `disputed`; `origin = authored` only for the sen
 `sources.tsv` has the 12 columns of the gold v2 source table and lists the used documents only; `excluded-sources.tsv` records the
 documents that were dropped after sourcing (`source_id, url, reason, decided`); `leakage-report.tsv` holds counts only
 (`evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, probe_5gram_sentences`).
+The **hard tranche** is the file `data/eval/shapes-dev/hard.tsv` in the same format (ids `shapes-dev-hard-NNNN`; header says
+`hard tranche` and `dev split`; no `origin = authored`; no `n-measure` item; no selection number such as q in the file), with
+`hard-sources.tsv` (same columns as `sources.tsv`) and `hard-leakage-report.tsv` (same columns, plus a row for the standard tranche
+whose document count may be above zero: the tranches may share a source document, never a sentence).
 
 **Corrections overlay** (`data/corrections/`, specified in full in its `README.md`). Corrections to the labels of the open
 corpus, MASC and the silver data are rows of three tables; the rows are applied to the corpus files (`corrections.py apply

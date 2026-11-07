@@ -127,6 +127,13 @@ the license basis of every document is quoted in `data/eval/shapes-dev/sources.t
 first were dropped because their text is not clearly authored by the US government
 (`data/eval/shapes-dev/excluded-sources.tsv`); none of their text is in the set.
 
+The hard tranche of that set (`data/eval/shapes-dev/hard.tsv`) uses the same kind of text: 99 documents of the
+federal families Army, Navy, Bureau of Mines, Department of Agriculture, Forest Service and NASA, plus Bureau of Standards
+(NIST), Bureau of Reclamation, Federal Civil Defense Administration, Public Health Service and NOAA publications (17
+U.S.C. 105; 43 documents are also in the standard tranche). The license basis of every document is quoted in
+`data/eval/shapes-dev/hard-sources.tsv`. Numeric output of the WordSense Basic classifier (same owner, run unmodified)
+helped to choose which sentences to label; no WordSense text, label or data is copied.
+
 Language models wrote the tags, and no human has reviewed them. In the owner's position, GitHub claims no ownership of
 model outputs, so the repository owner, who prompted their creation, holds the rights in them and dedicates them to the
 public domain under CC0 1.0. That is the owner's position, not legal advice or a warranty.
