@@ -30,8 +30,12 @@ another round (`candidates --round NAME`) that skips the excluded documents. `bu
 data/eval/shapes-dev/excluded-sources.tsv (source_id, url from the draft, reason, decided; one row per excluded document), so
 that sources.tsv, which lists only the used documents, stays a table of the shared 12-column format.
 
-Fail-closed exclusions. The committed record is read by the tool itself (`read_committed_exclusions`, strictly: a malformed file is an
-error) and indexed with the used documents, so `candidates` rejects a document whose id or normalized URL it lists even when
+Fail-closed exclusions. The committed record is required for both profiles and is read by the tool itself (`read_committed_exclusions`,
+strictly): a missing file, a zero-byte file, a file without the exact header and a malformed row are errors, and `exclusions`, `candidates`,
+`decide` and `build` refuse (exit code 1) before they do anything else. A file that holds only the header is valid: it records that nothing is
+excluded (a first standard build starts from such a file; `build` writes the record, header only when nothing is excluded, and never
+deletes it). W/excluded-sources.tsv stays optional, but only because the committed record must exist: it adds rows and never replaces
+the record. The record is indexed with the used documents, so `candidates` rejects a document whose id or normalized URL it lists even when
 W/excluded-sources.tsv lacks it. `build` refuses (exit code 1, nothing written) when a chosen sentence or a used source row has an id or
 normalized URL listed in the committed record or in W/excluded-sources.tsv. The written record is the union of the committed rows and the
 W rows; a committed row is never dropped or changed, an id in both tables with a different URL, or a duplicate id within one table, is an
@@ -148,7 +152,7 @@ round name and avoid every id already in an earlier key, so ids never collide. `
 root and of every round folder under W/rounds (a folder without decided.tsv is skipped; the root keeps its old behavior when no round exists):
 the lemma cap, the authored cap and the selection run across the union. Hand check: generate the sample after every round is decided.
 
-Decision rule (the core was committed in this docstring, commit 88bafc2, before any label existed: target disagreement drops the sentence, class-mismatch, and a disputed non-target token takes the tag of the first labeler; the cleanliness filters, frame validation, base-form and nominal-gerund rules were added later and only remove items; see "Honest record of the order" in data/eval/shapes-dev/README.md; see `decide_item` and `frame_mismatch`). For the judged
+Decision rule (the rule core was written in this docstring before any label existed: target disagreement drops the sentence, class-mismatch, and a disputed non-target token takes the tag of the first labeler; the cleanliness filters, frame validation, base-form and nominal-gerund rules were added later and only remove items; see "Honest record of the order" in data/eval/shapes-dev/README.md; see `decide_item` and `frame_mismatch`). For the judged
 word (the target): different tags -> drop the sentence (counted per shape); the same tag but a class other than the intended one
 (the shape's class for a `target`, the other class for a `control`) -> drop, counted as `class-mismatch`; the intended class but a
 target outside the frame of its shape (only for a `target`, by the tags both labelers gave the neighbor tokens: n-compound-head needs
@@ -195,6 +199,7 @@ EXCLUDED_OUTPUT_COLUMNS = ("source_id", "url", "reason", "decided")
 EXCLUDED_OUTPUT_FILE = "excluded-sources.tsv"
 EXCLUDED_OUTPUT_PATH = "data/eval/shapes-dev/excluded-sources.tsv"
 EXCLUDED_REASON = "excluded-source"
+EXCLUSION_COMMANDS = ("exclusions", "candidates", "decide", "build")      # the commands that load the committed exclusion record (required)
 SHAPES = ("n-compound-head", "n-subject-initial", "v-imperative-initial", "n-measure", "v-after-modal")
 SHAPE_CLASS = {shape: ("Noun" if shape.startswith("n-") else "Verb") for shape in SHAPES}
 OTHER_CLASS = {"Noun": "Verb", "Verb": "Noun"}
@@ -469,11 +474,13 @@ def exclusion_index(data_dir):
 
 
 def read_committed_exclusions(data_dir):
-    """[(source_id, url, reason, decided)] of the committed data/eval/shapes-dev/excluded-sources.tsv ([] before the first build).
+    """[(source_id, url, reason, decided)] of the committed data/eval/shapes-dev/excluded-sources.tsv, for both profiles.
 
-    A malformed file is a ValueError (see `common.read_excluded_table`): the record is never read leniently."""
+    Fail closed: a missing file, a zero-byte file, a file without the exact header and a malformed row are a ValueError (see
+    `common.read_excluded_table`); a file that holds only the header is the valid record of "nothing is excluded" ([]). The record is
+    never read leniently and a missing record is never taken as an empty one (a first standard build starts from a header-only file)."""
     path = os.path.join(data_dir, *EXCLUDED_OUTPUT_PATH.split("/")[1:])
-    return common.read_excluded_table(path) if os.path.exists(path) else []
+    return common.read_excluded_table(path)
 
 
 def document_rejection(index, source_id, url=""):
@@ -489,6 +496,9 @@ def document_rejection(index, source_id, url=""):
 
 def read_excluded_rows(work):
     """[(source_id, reason, decided)] of W/excluded-sources.tsv (empty when the file is missing), in file order.
+
+    The work-folder file is optional because the committed record (`read_committed_exclusions`, required) is the fail-closed one:
+    every command that uses the exclusions (`exclusions`, `candidates`, `decide`, `build`) refuses first when that record is missing.
 
     The header is `source_id<TAB>reason` with an optional third column `decided` (the date of the owner's decision, `YYYY-MM-DD`);
     `decided` is "" when the column is absent. `build` requires it, because it is written to data/eval/shapes-dev/excluded-sources.tsv."""
@@ -2381,11 +2391,8 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
     if tranche == "hard":
         return built, report
     target = os.path.join(out_dir, EXCLUDED_OUTPUT_FILE)
-    if excluded:
-        adjudicate.write_rows(target, EXCLUDED_OUTPUT_COLUMNS, excluded)
-        report.append("%d excluded documents written to %s" % (len(excluded), EXCLUDED_OUTPUT_FILE))
-    elif os.path.exists(target):
-        os.remove(target)
+    adjudicate.write_rows(target, EXCLUDED_OUTPUT_COLUMNS, excluded)                    # a header-only file when nothing is excluded: never absent
+    report.append("%d excluded documents written to %s" % (len(excluded), EXCLUDED_OUTPUT_FILE))
     return built, report
 
 
@@ -2584,6 +2591,12 @@ def main(argv=None):
                 "build": _command_build, "report": _command_report}
     if args.data_dir != common.DATA:
         common.DATA = args.data_dir
+    if args.command in EXCLUSION_COMMANDS:
+        try:
+            read_committed_exclusions(args.data_dir)                       # fail closed: a missing or malformed committed record refuses
+        except ValueError as error:
+            print("%s refused: %s" % (args.command, error), file=sys.stderr)
+            return 1
     return commands[args.command](args)
 
 

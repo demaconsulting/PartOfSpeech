@@ -191,6 +191,10 @@ word 5-grams built from the `sentence` column alone (no label, shape, lemma or t
 or near-duplicate overlaps, never to choose, weight or frame a candidate. `build` also refuses a used document that the
 committed exclusion record `data/eval/shapes-dev/excluded-sources.tsv` lists (by id or normalized URL), and a set that
 misses a quota (120 targets per shape, 100 controls, lemma caps, 30% authored share) unless `--allow-short` is given.
+The record is required for both profiles and read fail-closed: a missing file, a zero-byte file, a file without the header
+and a malformed row are errors, and `exclusions`, `candidates`, `decide` and `build` refuse before they do anything else;
+a file that holds only the header is valid and means that nothing is excluded. The optional work-folder
+`excluded-sources.tsv` only adds rows, so it may be absent only because the committed record exists.
 The hard tranche (`shapes_dev.py --tranche hard`) is selected by a rule that is independent of the PartOfSpeech model:
 the numbers of the WordSense Basic classifier (HMM tagger plus cue model) from the standalone harness
 `tools/data/hmm-tags` (not in the solution, no reference to this library, a pinned DLL outside the repository), the
@@ -464,7 +468,8 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
 - The base class library and, for `training.json`, `operating-points.json` and `test-results.json`, System.Text.Json
   (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv` and `data/silver/silver.tsv`, and the two
-  development files plus the hard-shape development file `data/eval/shapes-dev/dev.tsv` (for `eval-shapes` only); for
+  development files plus the two hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche) and
+  `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` only); for
   `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the
   external treebank that the data tools fetch (the tool itself uses no network).
 

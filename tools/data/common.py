@@ -147,15 +147,19 @@ def is_http_url(url):
 
 
 def read_excluded_table(path):
-    """[(source_id, url, reason, decided)] of a committed `excluded-sources.tsv`; a missing or malformed file is a ValueError.
+    """[(source_id, url, reason, decided)] of a committed `excluded-sources.tsv`; a missing, empty or malformed file is a ValueError.
 
     The header is `source_id url reason decided` (tab separated), every cell of every row is filled, `url` is an http(s) URL and
-    `decided` is a `YYYY-MM-DD` date. The table is the fail-closed record of documents the project must not use.
+    `decided` is a `YYYY-MM-DD` date. A file that holds only the header is the valid record of "nothing is excluded"; a zero-byte
+    file, a blank file and a file without the header are errors, never an empty record. The table is the fail-closed record of
+    documents the project must not use.
     """
     if not os.path.exists(path):
         raise ValueError("missing exclusion table: " + os.path.basename(os.path.dirname(path)) + "/" + os.path.basename(path))
     lines = [line for line in read_lines(path) if line.strip() != ""]
-    if not lines or tuple(lines[0].split("\t")) != EXCLUDED_SOURCES_COLUMNS:
+    if not lines:
+        raise ValueError("%s: the exclusion table is empty (it needs at least the header %s)" % (path, "\\t".join(EXCLUDED_SOURCES_COLUMNS)))
+    if tuple(lines[0].split("\t")) != EXCLUDED_SOURCES_COLUMNS:
         raise ValueError("%s: the header must be %s" % (path, "\\t".join(EXCLUDED_SOURCES_COLUMNS)))
     rows = []
     seen = set()

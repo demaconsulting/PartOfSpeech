@@ -87,6 +87,7 @@ class MiniFolder(unittest.TestCase):
                           "masc:written/x\tblog\tCC BY 3.0 US\t1\t7"])
         common.write_text(os.path.join(d, "silver", "excluded-documents.tsv"), ["# columns = document_id, set, matching_sentences, part",
                           "gutenberg-7194\topen-build\t-\tspike-selection"])
+        common.write_text(os.path.join(d, "eval", "shapes-dev", "excluded-sources.tsv"), ["\t".join(common.EXCLUDED_SOURCES_COLUMNS)])      # header only: nothing excluded
 
     def source_row(self, source_id, url="https://example.gov/%s", sentences="0"):
         return [source_id, "us-government", "Manual " + source_id, url % source_id if "%s" in url else url, "Agency", "1990",
@@ -712,7 +713,7 @@ class PipelineTests(MiniFolder):
         _, source_rows = adjudicate.read_records(os.path.join(out, "sources.tsv"))
         ids = {r["source_id"] for r in source_rows}
         self.assertEqual({s["source_id"] for s in sentences}, ids)
-        self.assertFalse(os.path.exists(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE)))        # nothing excluded, no record file
+        self.assertEqual([], adjudicate.read_records(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE))[1])        # nothing excluded: a header-only record file
         authored = next(r for r in source_rows if r["source_id"] == sd.AUTHORED_ID)
         self.assertEqual("project-written", authored["family"])
         self.assertTrue(authored["license_basis"].startswith("Written by the project"))
@@ -810,6 +811,64 @@ class PipelineTests(MiniFolder):
         with contextlib.redirect_stderr(err):
             code, output = self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--allow-short", *options)
         return code, output, err.getvalue()
+
+    def refused(self, command, *options):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, _ = self.cli(*(list(options) + [command]))
+        return code, err.getvalue()
+
+    def test_a_missing_committed_record_is_refused_by_every_command_that_loads_it(self):
+        self.add_second_document()
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        out = os.path.join(self.temp, "out")
+        os.remove(record)
+        with self.assertRaises(ValueError) as caught:
+            sd.read_committed_exclusions(self.data)
+        self.assertIn("missing exclusion table", str(caught.exception))
+        with self.assertRaises(ValueError):
+            sd.exclusion_index(self.data)
+        with self.assertRaises(ValueError):
+            sd.build(self.work, out, controls=4, share=0.5, allow_short=True)
+        for tranche in ("standard", "hard"):
+            for command in sd.EXCLUSION_COMMANDS:
+                code, error = self.refused(command, "--tranche", tranche)
+                self.assertEqual(1, code, (tranche, command))
+                self.assertIn("%s refused" % command, error)
+                self.assertIn("missing exclusion table", error)
+        self.assertFalse(os.path.exists(out))
+        self.assertFalse(os.path.exists(record))                                            # a refusal never creates the record
+        self.assertEqual(0, self.cli("status")[0])                                          # commands that read no exclusion are not blocked
+
+    def test_a_header_only_record_is_accepted_and_zero_byte_blank_or_headerless_records_are_refused(self):
+        self.add_second_document()
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        out = os.path.join(self.temp, "out")
+        self.assertEqual([], sd.read_committed_exclusions(self.data))                       # the fixture's record is header only
+        self.assertEqual(0, self.run_build(out)[0])
+        _, excluded = adjudicate.read_records(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE))   # the standard build writes it, header only, never deletes
+        self.assertEqual([], excluded)
+        shutil.rmtree(out)
+        for content in ("", "\n", "doc-b\thttps://example.gov/doc-b\tnot public domain\t2026-11-06\n", "source_id\treason\tdecided\n"):
+            with open(record, "w", encoding="utf-8", newline="") as handle:
+                handle.write(content)
+            with self.assertRaises(ValueError, msg=repr(content)):
+                sd.read_committed_exclusions(self.data)
+            for command in sd.EXCLUSION_COMMANDS:
+                self.assertEqual(1, self.refused(command)[0], (command, content))
+            code, _, error = self.run_build(out)
+            self.assertEqual(1, code)
+            self.assertIn("refused", error)
+            self.assertFalse(os.path.exists(os.path.join(out, "dev.tsv")))
+
+    def test_the_work_folder_exclusions_are_optional_when_the_committed_record_exists(self):
+        self.assertFalse(os.path.exists(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE)))
+        self.assertEqual({}, sd.read_excluded_sources(self.work))
+        self.assertEqual([], sd.read_committed_exclusions(self.data))
+        self.assertEqual(0, self.cli("exclusions")[0])
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), [])           # a zero-byte work file is still refused
+        with self.assertRaises(ValueError):
+            sd.read_excluded_sources(self.work)
 
     def test_build_refuses_a_source_listed_in_the_committed_exclusion_table_by_id_or_by_url(self):
         self.add_second_document()
@@ -1507,8 +1566,8 @@ class ExclusionRecordGateTests(MiniFolder):
         table_file(os.path.join(folder, "excluded-sources.tsv"), common.EXCLUDED_SOURCES_COLUMNS,
                    [[i, u, "not public domain", "2026-11-06"] for i, u in excluded])
 
-    def test_a_clean_set_has_no_finding_and_a_missing_folder_is_not_checked(self):
-        self.assertEqual([], check_licenses.excluded_source_findings(self.data))
+    def test_a_clean_set_has_no_finding_and_a_header_only_record_is_valid(self):
+        self.assertEqual([], check_licenses.excluded_source_findings(self.data))                 # the fixture's record is header only
         self.write_set()
         self.assertEqual([], check_licenses.excluded_source_findings(self.data))
 
@@ -1538,6 +1597,18 @@ class ExclusionRecordGateTests(MiniFolder):
             self.assertEqual(1, len(found), lines)
             self.assertIn("excluded-sources.tsv", found[0])
         os.remove(path)
+        self.assertIn("missing exclusion table", check_licenses.excluded_source_findings(self.data)[0])
+
+    def test_a_zero_byte_blank_or_headerless_record_is_a_finding_and_a_missing_folder_too(self):
+        self.write_set()
+        path = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        for content in ("", "\n\n", "doc-x\thttps://example.gov/x\tr\t2026-11-06\n"):
+            with open(path, "w", encoding="utf-8", newline="") as handle:
+                handle.write(content)
+            found = check_licenses.excluded_source_findings(self.data)
+            self.assertEqual(1, len(found), repr(content))
+            self.assertIn("excluded-sources.tsv", found[0])
+        shutil.rmtree(os.path.join(self.data, "eval", "shapes-dev"))
         self.assertIn("missing exclusion table", check_licenses.excluded_source_findings(self.data)[0])
 
 

@@ -14,9 +14,9 @@ Checks (exit code 1 on any finding):
      context excerpts of MASC rows are MASC text); and no label, id, reason or provenance cell mentions a restricted license
      (the token, hint and context cells are corpus text and are covered by the document check). The corrections README must link
      the MASC attribution file, which must exist;
-  5. the hard-shape development set (when its folder exists) has a well-formed exclusion record eval/shapes-dev/excluded-sources.tsv,
-     and neither its sources.tsv nor the source_id of any sentence of its dev.tsv matches an excluded id or normalized URL; the same for
-     the hard tranche (hard-sources.tsv and hard.tsv), which shares the record.
+  5. the hard-shape development set has a required, well-formed exclusion record eval/shapes-dev/excluded-sources.tsv (missing, zero-byte
+     or headerless is a finding; header-only is valid), and neither its sources.tsv nor the source_id of any sentence of its dev.tsv
+     matches an excluded id or normalized URL; the same for the hard tranche (hard-sources.tsv and hard.tsv), which shares the record.
 """
 import os
 import re
@@ -139,12 +139,11 @@ def corrections_findings(base=None):
 def excluded_source_findings(base=None):
     """Findings of the fail-closed exclusion record data/eval/shapes-dev/excluded-sources.tsv.
 
-    When the shapes-dev folder exists the record must exist and be well formed, and no row of its sources.tsv and no `source_id`
-    of its dev.tsv may have an id or a normalized URL that the record lists."""
+    The record is required (the hard-shape development set is a required data set): a missing folder or file, a zero-byte file, a file
+    without the header and a malformed row are findings; a file that holds only the header is valid (nothing excluded). No row of the
+    sources.tsv and hard-sources.tsv and no `source_id` of the dev.tsv and hard.tsv may have an id or a normalized URL that the record lists."""
     base = base or common.DATA
     folder = os.path.join(base, "eval", "shapes-dev")
-    if not os.path.isdir(folder):
-        return []
     try:
         lookup = common.excluded_lookup(common.read_excluded_table(os.path.join(folder, "excluded-sources.tsv")))
     except ValueError as error:

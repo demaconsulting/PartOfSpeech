@@ -2,9 +2,12 @@
 
 Run: python -m unittest discover -s tools/data/tests -p "test_shapes_dev_hard.py"   (developer-run; no model, no network)
 """
+import contextlib
 import hashlib
+import io
 import os
 import re
+import shutil
 import sys
 import unittest
 
@@ -339,6 +342,27 @@ class HardPipelineTests(HardFolder):
         self.label()
         self.assertEqual(0, self.hard_cli("validate-output", "--all")[0])
         self.assertEqual(0, self.hard_cli("decide")[0])
+
+    def test_the_hard_profile_refuses_a_missing_or_empty_committed_record_and_accepts_a_header_only_one(self):
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        out = os.path.join(self.temp, "out")
+        self.prepare()                                                                       # header-only record: every command runs
+        self.assertEqual(0, self.hard_cli("build", "--out-dir", out, "--allow-short")[0])
+        shutil.rmtree(out)
+        for content in (None, "", "doc-b\thttps://example.gov/doc-b\tnot public domain\t2026-11-06\n"):    # missing, zero-byte, headerless
+            if content is None:
+                os.remove(record)
+            else:
+                with open(record, "w", encoding="utf-8", newline="") as handle:
+                    handle.write(content)
+            for command in ("candidates", "decide", "build"):
+                err = io.StringIO()
+                with contextlib.redirect_stderr(err):
+                    code, _ = self.hard_cli(command, *(("--allow-short",) if command == "build" else ()), *(("--out-dir", out) if command == "build" else ()))
+                self.assertEqual(1, code, (command, content))
+                self.assertIn("%s refused" % command, err.getvalue())
+            self.assertFalse(os.path.exists(os.path.join(out, "hard.tsv")))
+        self.assertFalse(os.path.exists(os.path.join(out, "excluded-sources.tsv")))                  # the hard build never writes the record
 
     def test_candidates_carry_q_and_the_batches_never_show_it(self):
         self.assertEqual(0, self.hard_cli("candidates", "--no-ud", "--lemma-cap", "9")[0])
