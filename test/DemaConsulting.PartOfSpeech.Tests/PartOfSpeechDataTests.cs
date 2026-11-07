@@ -51,6 +51,26 @@ public class PartOfSpeechDataTests
     private const int ShapesDevMaxTargetsPerShape = 120;
 
     /// <summary>
+    ///     The number of controls of the development set.
+    /// </summary>
+    private const int ShapesDevControls = 100;
+
+    /// <summary>
+    ///     The most targets of one lemma in a shape (12 for n-measure, see <see cref="ShapesDevMeasureLemmaCap"/>).
+    /// </summary>
+    private const int ShapesDevLemmaCap = 4;
+
+    /// <summary>
+    ///     The most targets of one lemma in the n-measure shape, whose units repeat.
+    /// </summary>
+    private const int ShapesDevMeasureLemmaCap = 12;
+
+    /// <summary>
+    ///     The most controls of one lemma in a shape.
+    /// </summary>
+    private const int ShapesDevControlLemmaCap = 2;
+
+    /// <summary>
     ///     The largest share of authored sentences that a shape, or the controls, of the development set may have.
     /// </summary>
     private const double ShapesDevMaxAuthoredShare = 0.30;
@@ -1309,6 +1329,106 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
+    ///     Proves that the exclusion record is fail-closed for the committed files: it lists the NIST handbooks that the owner
+    ///     dropped, and no row of the source table and no source document of any sentence of the set has an excluded id or an
+    ///     excluded URL (compared by host without <c>www.</c> and path without a trailing slash).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_ExcludedSources_NothingUsedMatchesByIdOrNormalizedUrl()
+    {
+        // Arrange: the excluded ids and normalized URLs, and the used documents of the table and of the sentences
+        var excluded = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/excluded-sources.tsv"));
+        var excludedIds = new HashSet<string>(excluded.Column("source_id"), StringComparer.Ordinal);
+        var excludedUrls = new HashSet<string>(excluded.Column("url").Select(NormalizeUrl), StringComparer.Ordinal);
+        var sources = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/sources.tsv"));
+        var sentenceDocuments = DataFiles.ReadCorpus(DataFiles.Data(ShapesDevCorpus)).Select(sentence => sentence.SourceId).Distinct(StringComparer.Ordinal);
+
+        // Act: find the used documents that an exclusion matches
+        var problems = new List<string>();
+        problems.AddRange(sources.Rows
+            .Where(row => excludedIds.Contains(sources.Cell(row, "source_id")) || excludedUrls.Contains(NormalizeUrl(sources.Cell(row, "url"))))
+            .Select(row => "source row " + sources.Cell(row, "source_id")));
+        problems.AddRange(sentenceDocuments.Where(excludedIds.Contains).Select(id => "sentences of " + id));
+
+        // Assert: the NIST handbooks are recorded as excluded and nothing excluded is used
+        Assert.Contains("nist-hb44-2024", excludedIds);
+        Assert.Contains("nist-hb130-2024", excludedIds);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the committed hard-shape development set meets the documented quotas: exactly 120 targets per shape,
+    ///     no lemma over its cap (4; 12 for n-measure), exactly 100 controls with at most two per lemma and shape, and an
+    ///     authored share of at most 30 percent in every shape and in the controls.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Quotas_AreMetByTheCommittedSet()
+    {
+        // Arrange: the items
+        var items = ShapesDevItems();
+        var problems = new List<string>();
+
+        // Act: check the target quota, the lemma caps and the authored share of every shape
+        foreach (var shape in ShapesDevSets.Shapes)
+        {
+            var targets = items.Where(item => item.Shape == shape && item.IsTarget).ToList();
+            if (targets.Count != ShapesDevMaxTargetsPerShape)
+            {
+                problems.Add($"{shape}: {targets.Count} targets, expected {ShapesDevMaxTargetsPerShape}");
+            }
+
+            var cap = shape == "n-measure" ? ShapesDevMeasureLemmaCap : ShapesDevLemmaCap;
+            problems.AddRange(targets.GroupBy(item => item.Lemma, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > cap)
+                .Select(group => $"{shape}: the lemma '{group.Key}' has {group.Count()} targets, the cap is {cap}"));
+            if (targets.Count(item => item.Origin == ShapesDevSets.AuthoredOrigin) > ShapesDevMaxAuthoredShare * targets.Count)
+            {
+                problems.Add($"{shape}: more than {ShapesDevMaxAuthoredShare:P0} of the targets are authored");
+            }
+        }
+
+        // Act: check the control total, the lemma cap per shape and the authored share of the controls
+        var controls = items.Where(item => !item.IsTarget).ToList();
+        if (controls.Count != ShapesDevControls)
+        {
+            problems.Add($"controls: {controls.Count}, expected {ShapesDevControls}");
+        }
+
+        problems.AddRange(controls.GroupBy(item => (item.Shape, Lemma: item.Lemma.ToLowerInvariant()))
+            .Where(group => group.Count() > ShapesDevControlLemmaCap)
+            .Select(group => $"controls: {group.Key.Shape} lemma '{group.Key.Lemma}' has {group.Count()} controls, the cap is {ShapesDevControlLemmaCap}"));
+        if (controls.Count(item => item.Origin == ShapesDevSets.AuthoredOrigin) > ShapesDevMaxAuthoredShare * controls.Count)
+        {
+            problems.Add($"controls: more than {ShapesDevMaxAuthoredShare:P0} are authored");
+        }
+
+        // Assert: no quota is missed
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the builder of the hard-shape development set reaches the held-out sets only through the opaque
+    ///     exclusion keys: its source names no probe file and uses only the key functions of the leakage module, and the
+    ///     leakage module reads the probe through its sentence column only.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDev_Builder_SeesHeldOutSetsOnlyThroughOpaqueKeys()
+    {
+        // Arrange: the sources of the builder and of the leakage module
+        var builder = File.ReadAllText(DataFiles.Repository("tools/data/shapes_dev.py"));
+        var leakage = File.ReadAllText(DataFiles.Repository("tools/data/leakage.py"));
+
+        // Act: find the members of the leakage module that the builder uses
+        var used = Regex.Matches(builder, @"\bleakage\.(\w+)").Cast<Match>().Select(match => match.Groups[1].Value).Distinct().OrderBy(name => name, StringComparer.Ordinal).ToArray();
+
+        // Assert: no probe path, only the opaque-key members, and the probe is read through the sentence column alone
+        Assert.DoesNotContain("probe.tsv", builder, StringComparison.Ordinal);
+        Assert.Equal(new[] { "PROBE_GRAM_WORDS", "gram_overlap", "held_out_overlap_keys", "key_overlap", "require_sets" }, used);
+        Assert.Contains("sentence_column(path)", leakage, StringComparison.Ordinal);
+        Assert.DoesNotContain("_tsv_rows(probe", leakage, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     ///     Proves that the committed leakage report of the hard-shape development set covers every other evaluation set and
     ///     records no document overlap, no exact sentence overlap and no shared word 5-gram with the shape probe.
     /// </summary>
@@ -1894,6 +2014,21 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static bool IsWellFormedUrl(string text) =>
         Uri.TryCreate(text, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps && !text.Any(char.IsWhiteSpace);
+
+    /// <summary>
+    ///     Normalizes a URL like the data tools: the host in lower case without <c>www.</c> and the path without a query,
+    ///     fragment or trailing slash; the empty string for a text that is not an absolute URL.
+    /// </summary>
+    private static string NormalizeUrl(string text)
+    {
+        if (!Uri.TryCreate(text.Trim(), UriKind.Absolute, out var uri))
+        {
+            return string.Empty;
+        }
+
+        var host = uri.Host.ToLowerInvariant();
+        return (host.StartsWith("www.", StringComparison.Ordinal) ? host.Substring(4) : host) + uri.AbsolutePath.TrimEnd('/');
+    }
 
     /// <summary>
     ///     Reads the rows of the checksum manifest: path, bytes, SHA-256, lines and sentences.

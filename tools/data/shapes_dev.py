@@ -30,6 +30,15 @@ another round (`candidates --round NAME`) that skips the excluded documents. `bu
 data/eval/shapes-dev/excluded-sources.tsv (source_id, url from the draft, reason, decided; one row per excluded document), so
 that sources.tsv, which lists only the used documents, stays a table of the shared 12-column format.
 
+Fail-closed exclusions. The committed record is read by the tool itself (`read_committed_exclusions`, strictly: a malformed file is an
+error) and indexed with the used documents, so `candidates` rejects a document whose id or normalized URL it lists even when
+W/excluded-sources.tsv lacks it. `build` refuses (exit code 1, nothing written) when a chosen sentence or a used source row has an id or
+normalized URL listed in the committed record or in W/excluded-sources.tsv; the committed rows are kept in the written record.
+
+Quota gate. `build` refuses (exit code 1, nothing written) unless every shape has exactly `--per-shape` targets (default 120), there are
+exactly `--controls` controls (default 100), no lemma exceeds its cap (`--lemma-cap` 4, `--shape-lemma-cap`, controls 2 per lemma) and no
+shape or the control stratum exceeds the authored share (`--share`, 30%). `--allow-short` builds anyway and lists the misses as warnings.
+
 Commands (all take `--work W`; `--data-dir D` replaces the repository's data folder, for tests):
 
   python tools/data/shapes_dev.py --work W exclusions [--check ID_OR_URL ...]   # used-document index W/exclusions.tsv; checks the draft
@@ -45,7 +54,7 @@ Commands (all take `--work W`; `--data-dir D` replaces the repository's data fol
   python tools/data/shapes_dev.py --work W decide [--round NAME]                # the decision rule
   python tools/data/shapes_dev.py --work W sample [--per-shape 12] [--controls 4]   # review sample for the precision gate (all rounds)
   python tools/data/shapes_dev.py --work W review-result --verdicts FILE ...     # precision of the model review; STOP below 95%
-  python tools/data/shapes_dev.py --work W build [--out-dir D]                  # dev.tsv and sources.tsv (the root and every round)
+  python tools/data/shapes_dev.py --work W build [--out-dir D] [--shape-lemma-cap SHAPE=N ...] [--allow-short]   # dev.tsv and sources.tsv (root and rounds)
   python tools/data/shapes_dev.py --work W report [--out-dir D]                 # counts for the README (the root and every round)
 
 The tokenizer command is `dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- shapes-tokenize --in FILE
@@ -103,8 +112,10 @@ other token: the same tag -> that tag, `unanimous`; different tags -> `disputed`
 (the `opus` tagger), a fixed tie-break; flags only where both agree. The target is never disputed. Confidence is recorded and unused.
 
 Blindness: a batch file has exactly three columns `id, token_index, token`; the opaque id is unrelated to the sentence, its shape,
-its source or its order. The key lives in private/ and the taggers are never pointed to it. The shape probe is read only inside
-`leakage.probe_ngrams` to build the hashed 5-gram set of the leakage gate; no probe text is ever printed or stored.
+its source or its order. The key lives in private/ and the taggers are never pointed to it. The held-out sets, the shape probe
+among them, are seen only as the opaque hash set `leakage.held_out_overlap_keys()` (hashed sentence keys of the evaluation sets and hashed
+word 5-grams of the probe sentences; the probe is read through its sentence column only, never its labels, shapes, lemmas or targets).
+The set is used only to exclude exact or near-duplicate overlaps, never to choose, weight or frame a candidate; no probe text is printed or stored.
 """
 import argparse
 import collections
@@ -132,6 +143,7 @@ EXCLUDED_COLUMNS = ("source_id", "reason")
 EXCLUDED_DECIDED_COLUMN = "decided"
 EXCLUDED_OUTPUT_COLUMNS = ("source_id", "url", "reason", "decided")
 EXCLUDED_OUTPUT_FILE = "excluded-sources.tsv"
+EXCLUDED_OUTPUT_PATH = "data/eval/shapes-dev/excluded-sources.tsv"
 EXCLUDED_REASON = "excluded-source"
 SHAPES = ("n-compound-head", "n-subject-initial", "v-imperative-initial", "n-measure", "v-after-modal")
 SHAPE_CLASS = {shape: ("Noun" if shape.startswith("n-") else "Verb") for shape in SHAPES}
@@ -331,12 +343,7 @@ def read_plain_tsv(path, columns):
 
 def normalize_url(url):
     """host (lower case, no `www.`) and path (no query, fragment or trailing slash); the empty string for a text that is no URL."""
-    match = re.match(r"^[a-z][a-z0-9+.-]*://([^/?#]+)([^?#]*)", url.strip(), re.I)
-    if not match:
-        return ""
-    host = match.group(1).lower()
-    host = host[4:] if host.startswith("www.") else host
-    return host + match.group(2).rstrip("/")
+    return common.normalize_url(url)
 
 
 def gutenberg_ids(text):
@@ -369,7 +376,18 @@ def exclusion_index(data_dir):
                 index.setdefault(("id", found), table)
     for document in EXTRA_DOCUMENTS:
         index.setdefault(("id", document), "built-in")
+    for source_id, url, _, _ in read_committed_exclusions(data_dir):
+        index.setdefault(("id", source_id), EXCLUDED_OUTPUT_PATH)
+        index.setdefault(("url", normalize_url(url)), EXCLUDED_OUTPUT_PATH)
     return index
+
+
+def read_committed_exclusions(data_dir):
+    """[(source_id, url, reason, decided)] of the committed data/eval/shapes-dev/excluded-sources.tsv ([] before the first build).
+
+    A malformed file is a ValueError (see `common.read_excluded_table`): the record is never read leniently."""
+    path = os.path.join(data_dir, *EXCLUDED_OUTPUT_PATH.split("/")[1:])
+    return common.read_excluded_table(path) if os.path.exists(path) else []
 
 
 def document_rejection(index, source_id, url=""):
@@ -855,10 +873,15 @@ def control_hits(tokens, lex, shape, lemmas):
 # ---------------------------------------------------------------- candidates
 
 class LeakageFilter:
-    """Keys of every training and evaluation set (and the hashed probe 5-grams) that a sentence of the new set must not equal or share."""
+    """The exclusion filter of the candidates: sentences that equal a training or evaluation sentence, or share a word 5-gram with the probe.
+
+    The held-out sets (the shape probe included) are seen only as the opaque hash set `leakage.held_out_overlap_keys()`; the filter
+    removes exact and near-duplicate overlaps and never chooses, weights or frames a candidate.
+    """
 
     def __init__(self, data_dir, include_ud=True):
-        self.keys = set(leakage.evaluation_keys(include_ud, shapes_dev=False)[0])
+        self.held_out = leakage.held_out_overlap_keys(include_ud)
+        self.train = set()
         trains = {}
         for label, parts in (("open-train", ("open", "train.tsv")), ("masc", ("masc", "masc.tsv")), ("silver", ("silver", "silver.tsv"))):
             path = os.path.join(data_dir, *parts)
@@ -866,14 +889,13 @@ class LeakageFilter:
                 trains[label] = [(s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]
         leakage.require_sets(trains, ("open-train", "masc", "silver"), "training")
         for items in trains.values():
-            self.keys |= {common.key(text) for _, text in items} - {""}
-        self.probe = leakage.probe_ngrams(leakage.PROBE_NGRAM)
+            self.train |= {common.key(text) for _, text in items} - {""}
 
     def key_hit(self, text):
-        return common.key(text) in self.keys
+        return common.key(text) in self.train or leakage.key_overlap(text, self.held_out)
 
     def probe_hit(self, text):
-        return bool(leakage.ngrams(text, leakage.PROBE_NGRAM) & self.probe)
+        return leakage.gram_overlap(text, self.held_out, leakage.PROBE_GRAM_WORDS)
 
 
 def lemma_counts_of(works, shapes=SHAPES):
@@ -1773,9 +1795,66 @@ def sources_rows(draft, built):
     return rows
 
 
+class QuotaError(ValueError):
+    """The built set does not meet the requested quotas (and `--allow-short` is not given)."""
+
+
+class ExcludedSourceError(ValueError):
+    """A chosen sentence or a used source row is a document listed in an exclusion table."""
+
+
+def quota_problems(targets, controls_chosen, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_CAP, share=AUTHORED_SHARE, controls=CONTROLS,
+                   shape_lemma_cap=None):
+    """[message] of every quota the chosen items miss: the target total per shape, the control total, the per-lemma caps and the authored share."""
+    problems = []
+    caps = shape_lemma_cap or {}
+    for shape in SHAPES:
+        members = [i for i in targets if i["shape"] == shape]
+        if len(members) != per_shape:
+            problems.append("%s: %d targets, requested %d" % (shape, len(members), per_shape))
+        cap = caps.get(shape, lemma_cap)
+        for lemma, n in sorted(collections.Counter(i["lemma"] for i in members).items()):
+            if n > cap:
+                problems.append("%s: lemma '%s' has %d targets, the cap is %d" % (shape, lemma, n, cap))
+        authored = sum(1 for i in members if i["origin"] == "authored")
+        if members and authored > share * len(members) + 1e-9:
+            problems.append("%s: %d of %d targets are authored, the share cap is %.0f%%" % (shape, authored, len(members), 100 * share))
+    if len(controls_chosen) != controls:
+        problems.append("controls: %d, requested %d" % (len(controls_chosen), controls))
+    for (shape, lemma), n in sorted(collections.Counter((i["shape"], i["lemma"]) for i in controls_chosen).items()):
+        if n > CONTROL_LEMMA_CAP:
+            problems.append("controls: %s lemma '%s' has %d controls, the cap is %d" % (shape, lemma, n, CONTROL_LEMMA_CAP))
+    authored = sum(1 for i in controls_chosen if i["origin"] == "authored")
+    if controls_chosen and authored > share * len(controls_chosen) + 1e-9:
+        problems.append("controls: %d of %d are authored, the share cap is %.0f%%" % (authored, len(controls_chosen), 100 * share))
+    return problems
+
+
+def excluded_problems(work, draft, built, committed, w_rows):
+    """[message] for every built source or used source row whose id or URL is in the committed or the work-folder exclusion table."""
+    lookup = common.excluded_lookup(list(committed) + [tuple(r) for r in w_rows])
+    urls = {row["source_id"]: row["url"] for row in draft}
+    problems = []
+    for source_id in sorted({s["source_id"] for s in built} - {AUTHORED_ID}):
+        hit = common.excluded_match(lookup, source_id, urls.get(source_id, ""))
+        if hit:
+            problems.append("sentences of %s are chosen, but %s is excluded" % (source_id, hit))
+    for row in sources_rows(draft, built):
+        hit = common.excluded_match(lookup, row[0], row[3])
+        if hit and not any(p.startswith("sentences of %s " % row[0]) for p in problems):
+            problems.append("source row %s is used, but %s is excluded" % (row[0], hit))
+    return problems
+
+
 def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_CAP, share=AUTHORED_SHARE, controls=CONTROLS,
-          shape_lemma_cap=None):
-    """Write dev.tsv and sources.tsv into `out_dir`; returns (sentences, report lines)."""
+          shape_lemma_cap=None, allow_short=False, data_dir=None):
+    """Write dev.tsv and sources.tsv into `out_dir`; returns (sentences, report lines).
+
+    Fail-closed gates, before anything is written: a chosen sentence or used source row whose id or URL is in the committed
+    data/eval/shapes-dev/excluded-sources.tsv or in W/excluded-sources.tsv raises ExcludedSourceError; a missed quota (targets per
+    shape, controls, lemma caps, authored share) raises QuotaError unless `allow_short` (then the report lists it as a warning).
+    The committed exclusion table can only grow: its rows are kept in the written table.
+    """
     items, tagged = read_all_decided(work)
     draft = read_draft(work)
     targets, chosen = select_items(items, seed, per_shape, lemma_cap, share, controls, shape_lemma_cap)
@@ -1792,10 +1871,20 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
     unknown = sorted({s["source_id"] for s in built} - {r["source_id"] for r in draft} - {AUTHORED_ID})
     if unknown:
         raise ValueError("no source row for: " + ", ".join(unknown))
-    excluded = excluded_output_rows(work, draft)
+    committed = read_committed_exclusions(data_dir or common.DATA)
+    w_rows = excluded_output_rows(work, draft)
+    refused = excluded_problems(work, draft, built, committed, w_rows)
+    if refused:
+        raise ExcludedSourceError("excluded sources are used:\n  " + "\n  ".join(refused[:20]))
+    short = quota_problems(targets, chosen, per_shape, lemma_cap, share, controls, shape_lemma_cap)
+    if short and not allow_short:
+        raise QuotaError("quotas not met (pass --allow-short to build anyway):\n  " + "\n  ".join(short[:20]))
+    w_ids = {row[0] for row in w_rows}
+    excluded = sorted(w_rows + [list(row) for row in committed if row[0] not in w_ids])
     common.write_corpus(os.path.join(out_dir, "dev.tsv"), common.with_flag_documentation(HEADER, built), built)
     adjudicate.write_rows(os.path.join(out_dir, "sources.tsv"), SOURCE_COLUMNS, sources_rows(draft, built))
     report = ["# Build", "", "%d sentences written to dev.tsv" % len(built)]
+    report += ["WARNING (allowed by --allow-short): " + p for p in short]
     target = os.path.join(out_dir, EXCLUDED_OUTPUT_FILE)
     if excluded:
         adjudicate.write_rows(target, EXCLUDED_OUTPUT_COLUMNS, excluded)
@@ -1808,8 +1897,12 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
 def _command_build(args):
     work = adjudicate.Work(args.work)
     out_dir = args.out_dir or os.path.join(args.data_dir, "eval", "shapes-dev")
-    built, report = build(work, out_dir, args.seed, args.per_shape, args.lemma_cap, args.share, args.controls,
-                          parse_shape_lemma_cap(args.shape_lemma_cap))
+    try:
+        built, report = build(work, out_dir, args.seed, args.per_shape, args.lemma_cap, args.share, args.controls,
+                              parse_shape_lemma_cap(args.shape_lemma_cap), args.allow_short, args.data_dir)
+    except (QuotaError, ExcludedSourceError) as error:
+        print("build refused: %s" % error, file=sys.stderr)
+        return 1
     adjudicate._print(report)
     common.write_text(work.private_file("build-report.md"), report)
     return 0
@@ -1913,6 +2006,8 @@ def main(argv=None):
                               help="lemma cap of one shape (repeatable); use the same values as the candidates command")
     build_parser.add_argument("--share", type=float, default=AUTHORED_SHARE, help="largest authored share of a shape and of the controls")
     build_parser.add_argument("--controls", type=int, default=CONTROLS)
+    build_parser.add_argument("--allow-short", action="store_true",
+                              help="build although a quota (targets per shape, controls, lemma caps, authored share) is not met; the report lists it")
     report = sub.add_parser("report", help="counts of the built set for the README")
     report.add_argument("--out-dir", default=None)
     for round_parser in (candidates, export, check, validate, status_parser, decide_parser):

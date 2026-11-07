@@ -103,7 +103,7 @@ def dev_check(include_ud):
         raise SystemExit("missing committed development set: data/eval/shapes-dev/dev.tsv")
     dev = [(s["sent_id"], s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]  # (sentence id, document id, text)
     dev_docs = {doc for _, doc, _ in dev}
-    probe_grams = leakage.probe_ngrams(leakage.PROBE_NGRAM)
+    probe_grams = leakage.held_out_overlap_keys(include_ud, leakage.PROBE_GRAM_WORDS)
     rows, failing = [], []
     for label, items in leakage.evaluation_sets(include_ud, shapes_dev=False).items():
         docs = set() if label.startswith("ud-ewt") else {doc for doc, _ in items}
@@ -119,7 +119,7 @@ def dev_check(include_ud):
             sh = shingles(text)
             if len(words(text)) >= NEAR_MIN_WORDS and sh and len(sh & grams) / len(sh) >= NEAR_THRESHOLD:
                 near += 1
-            shared = label == "shapes-probe" and bool(leakage.ngrams(text, leakage.PROBE_NGRAM) & probe_grams)
+            shared = label == "shapes-probe" and leakage.gram_overlap(text, probe_grams, leakage.PROBE_GRAM_WORDS)
             probe += shared
             if hit or shared or shared_doc:
                 failing.append(sent_id)

@@ -15,6 +15,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import adjudicate
 import check_leakage
+import check_licenses
 import common
 import leakage
 import shapes_dev as sd
@@ -301,6 +302,51 @@ class CandidateTests(MiniFolder):
         self.assertNotIn(copy, [r["text"] for r in rows])
         self.assertTrue(any("probe-5gram 1" in line for line in report))
         self.assertFalse(any("gasket" in line for line in report))
+
+    PROBE_SENTENCE = b"Seal the pump housing with the gasket compound before fitting ."
+
+    def write_probe_bytes(self, id_cell, shape_cell, lemma_cell, gold_cell, target_cell, sentence=PROBE_SENTENCE):
+        path = os.path.join(self.data, "eval", "shapes", "probe.tsv")
+        row = b"\t".join((id_cell, shape_cell, lemma_cell, gold_cell, target_cell, sentence))
+        with open(path, "wb") as handle:
+            handle.write(b"id\tshape\tlemma\tgold\ttarget_index\tsentence\n" + row + b"\n")
+
+    def test_probe_labels_shapes_lemmas_and_targets_are_never_read_so_garbage_columns_change_nothing(self):
+        documents = {"doc-a": DOCUMENT + ["Then seal the pump housing with sealant before use ."]}
+        self.write_probe_bytes(b"p1", b"x", b"seal", b"Verb", b"0")
+        keys_a = leakage.held_out_overlap_keys(include_ud=False)
+        rows_a, report_a = self.collect(documents)
+        self.write_probe_bytes(b"\xff\xfe\x00'\"#{", b"shape\x80\xfe", b"\xc3\x28 lemma", b"\x00\x01\x02", b"not-a-number")
+        self.assertEqual(keys_a, leakage.held_out_overlap_keys(include_ud=False))
+        rows_b, report_b = self.collect(documents)
+        self.assertEqual(rows_a, rows_b)
+        self.assertEqual(report_a, report_b)
+        self.assertTrue(any("probe-5gram 1" in line for line in report_b))
+
+    def test_braces_around_the_probe_target_do_not_change_the_keys(self):
+        self.write_probe_bytes(b"p1", b"x", b"seal", b"Verb", b"0")
+        plain = leakage.held_out_overlap_keys(include_ud=False)
+        self.write_probe_bytes(b"p1", b"x", b"seal", b"Verb", b"0", b"{Seal} the pump housing with the {gasket} compound before fitting .")
+        self.assertEqual(plain, leakage.held_out_overlap_keys(include_ud=False))
+
+    def test_a_probe_row_without_the_sentence_column_is_an_error_not_a_skip(self):
+        path = os.path.join(self.data, "eval", "shapes", "probe.tsv")
+        with open(path, "wb") as handle:
+            handle.write(b"id\tshape\tlemma\tgold\ttarget_index\tsentence\np1\tx\n")
+        with self.assertRaises(ValueError):
+            leakage.held_out_overlap_keys(include_ud=False)
+
+    def test_the_builder_sees_the_held_out_sets_only_through_the_opaque_key_function(self):
+        import ast
+        with open(sd.__file__, encoding="utf-8") as handle:
+            source = handle.read()
+        used = {node.attr for node in ast.walk(ast.parse(source)) if isinstance(node, ast.Attribute)
+                and isinstance(node.value, ast.Name) and node.value.id == "leakage"}
+        self.assertEqual({"held_out_overlap_keys", "key_overlap", "gram_overlap", "require_sets", "PROBE_GRAM_WORDS"}, used)
+        self.assertNotIn("probe.tsv", source)
+        filt = sd.LeakageFilter(self.data, include_ud=False)
+        self.assertIsInstance(filt.held_out, frozenset)
+        self.assertTrue(all(isinstance(k, int) for k in filt.held_out))
 
     def test_lemma_cap_and_duplicates(self):
         sentences = ["The oil pump %s the tank ." % w for w in ("opens", "fails", "opens")]       # one duplicate sentence
@@ -616,7 +662,7 @@ class PipelineTests(MiniFolder):
         self.export_and_tag()
         self.decided()
         out = os.path.join(self.temp, "out")
-        code, output = self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5")
+        code, output = self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--allow-short")
         self.assertEqual(0, code, output)
         header, sentences = common.read_corpus(os.path.join(out, "dev.tsv"))
         self.assertTrue(any(line.startswith("# corpus") and "dev split" in line for line in header))
@@ -652,7 +698,7 @@ class PipelineTests(MiniFolder):
         before = {i["cand_id"]: i for i in items if i["source_id"] == "doc-b"}
         self.assertTrue(any(i["outcome"] == "keep" for i in before.values()))
         out = os.path.join(self.temp, "out")
-        self.assertEqual(0, self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5")[0])
+        self.assertEqual(0, self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--allow-short")[0])
         self.assertIn("doc-b", {s["source_id"] for s in common.read_corpus(os.path.join(out, "dev.tsv"))[1]})
         common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE),
                           ["source_id\treason\tdecided", "doc-b\tnot clearly public domain\t2026-11-06"])
@@ -663,7 +709,7 @@ class PipelineTests(MiniFolder):
         self.assertTrue(any(i["outcome"] == "keep" for i in items if i["source_id"] == "doc-a"))
         self.assertEqual(0, sum(1 for i in sd.read_all_decided(self.work)[0] if i["source_id"] == "doc-b" and i["outcome"] == "keep"))
         self.assertEqual(0, sum(n for (shape, lemma), n in sd.lemma_counts_of([self.work]).items() if lemma in ("stops", "tank")))
-        self.assertEqual(0, self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5")[0])
+        self.assertEqual(0, self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--allow-short")[0])
         _, sentences = common.read_corpus(os.path.join(out, "dev.tsv"))
         self.assertTrue(sentences and "doc-b" not in {s["source_id"] for s in sentences})
         _, sources = adjudicate.read_records(os.path.join(out, "sources.tsv"))
@@ -691,12 +737,89 @@ class PipelineTests(MiniFolder):
         self.assertIn("excluded-source |", output)
         self.assertTrue(all(i["reason"] == sd.EXCLUDED_REASON for i in sd.read_decided(self.work)[0] if i["source_id"] == "doc-b"))
 
+    def add_second_document(self):
+        second = ["Check the oil tank before use .", "Flow stops at the tank ."]
+        self.write_draft(["doc-a", "doc-b"])
+        self.write_text_doc("doc-b", second)
+        self.candidates, _ = sd.collect_candidates(self.work, self.data, include_ud=False, tokens_override=self.tokens_for(DOCUMENT + second),
+                                                   clean=False)
+        sd.write_candidates(self.work, self.candidates)
+        self.export_and_tag()
+        self.decided()
+
+    def write_committed_exclusions(self, *rows):
+        path = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        common.write_text(path, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS)] + ["\t".join(r) for r in rows])
+
+    def run_build(self, out, *options):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, output = self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--allow-short", *options)
+        return code, output, err.getvalue()
+
+    def test_build_refuses_a_source_listed_in_the_committed_exclusion_table_by_id_or_by_url(self):
+        self.add_second_document()
+        out = os.path.join(self.temp, "out")
+        self.assertEqual(0, self.run_build(out)[0])                                        # doc-b is used without an exclusion
+        shutil.rmtree(out)
+        for row in (["doc-b", "https://example.gov/other", "not public domain", "2026-11-06"],
+                    ["doc-z", "https://www.example.gov/doc-b/", "same document, other id", "2026-11-06"]):
+            self.write_committed_exclusions(row)
+            code, _, error = self.run_build(out)
+            self.assertEqual(1, code)
+            self.assertIn("excluded", error)
+            self.assertIn("doc-b", error)
+            self.assertFalse(os.path.exists(os.path.join(out, "dev.tsv")))                  # nothing is written
+            with self.assertRaises(sd.ExcludedSourceError):
+                sd.build(self.work, out, controls=4, share=0.5, allow_short=True)
+
+    def test_the_builder_indexes_the_committed_exclusion_table_and_keeps_its_rows(self):
+        self.add_second_document()
+        self.write_committed_exclusions(["doc-b", "https://example.gov/doc-b", "not public domain", "2026-11-06"])
+        self.assertIn(("id", "doc-b"), sd.exclusion_index(self.data))
+        self.assertIn(("url", "example.gov/doc-b"), sd.exclusion_index(self.data))
+        rows, report = sd.collect_candidates(self.work, self.data, include_ud=False, tokens_override=self.tokens_for(
+            DOCUMENT + ["Check the oil tank before use .", "Flow stops at the tank ."]), clean=False)
+        self.assertNotIn("doc-b", {r["source_id"] for r in rows})                            # not a candidate source, W lists nothing
+        self.assertTrue(any("rejected doc-b" in line for line in report))
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason\tdecided"])      # W lists nothing
+        out = os.path.join(self.temp, "out")
+        self.assertEqual(1, self.run_build(out)[0])                                         # doc-b items are still decided: refused
+        common.write_text(os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv"), ["bad header"])
+        with self.assertRaises(ValueError):
+            sd.read_committed_exclusions(self.data)
+
+    def test_the_written_exclusion_record_keeps_the_committed_rows_that_the_work_folder_lacks(self):
+        self.write_committed_exclusions(["doc-gone", "https://example.gov/doc-gone", "dropped earlier", "2026-11-01"])
+        self.export_and_tag()
+        self.decided()
+        out = os.path.join(self.temp, "out")
+        self.assertEqual(0, self.run_build(out)[0])
+        _, excluded = adjudicate.read_records(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE))
+        self.assertEqual(["doc-gone"], [r["source_id"] for r in excluded])
+
+    def test_build_refuses_a_missed_quota_unless_short_is_allowed(self):
+        self.export_and_tag()
+        self.decided()
+        out = os.path.join(self.temp, "out")
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, _ = self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5")
+        self.assertEqual(1, code)
+        self.assertIn("--allow-short", err.getvalue())
+        self.assertIn("targets, requested 120", err.getvalue())
+        self.assertFalse(os.path.exists(os.path.join(out, "dev.tsv")))
+        code, output, _ = self.run_build(out)
+        self.assertEqual(0, code)
+        self.assertIn("WARNING (allowed by --allow-short)", output)
+        self.assertTrue(os.path.exists(os.path.join(out, "dev.tsv")))
+
     def test_build_is_deterministic(self):
         self.export_and_tag()
         self.decided()
         first, second = os.path.join(self.temp, "o1"), os.path.join(self.temp, "o2")
-        self.assertEqual(0, self.cli("build", "--out-dir", first, "--controls", "4", "--share", "0.5")[0])
-        self.assertEqual(0, self.cli("build", "--out-dir", second, "--controls", "4", "--share", "0.5")[0])
+        self.assertEqual(0, self.cli("build", "--out-dir", first, "--controls", "4", "--share", "0.5", "--allow-short")[0])
+        self.assertEqual(0, self.cli("build", "--out-dir", second, "--controls", "4", "--share", "0.5", "--allow-short")[0])
         for name in ("dev.tsv", "sources.tsv"):
             with open(os.path.join(first, name), "rb") as a, open(os.path.join(second, name), "rb") as b:
                 self.assertEqual(a.read(), b.read())
@@ -1133,7 +1256,7 @@ class RoundTests(MiniFolder):
         self.assertEqual(0, self.cli("decide")[0])
         self.assertEqual(0, self.cli("decide", "--round", "r2")[0])
         out = os.path.join(self.temp, "out")
-        code, output = self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--lemma-cap", "1")
+        code, output = self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--lemma-cap", "1", "--allow-short")
         self.assertEqual(0, code, output)
         _, sentences = common.read_corpus(os.path.join(out, "dev.tsv"))
         lemmas = collections.Counter(s["comments"]["lemma"] for s in sentences if s["comments"]["role"] == "target")
@@ -1172,12 +1295,16 @@ class LeakageExtensionTests(MiniFolder):
         self.write_dev([("doc-z", "A brand new dev sentence about nothing in particular .")])
         self.assertIn("shapes-dev", leakage.evaluation_sets(include_ud=False))
 
-    def test_probe_ngrams_are_hashes_of_the_probe_and_short_text_has_none(self):
-        grams = leakage.probe_ngrams(5)
-        self.assertTrue(grams)
-        self.assertTrue(all(isinstance(g, int) for g in grams))
-        self.assertEqual(set(), leakage.ngrams("too short here", 5))
-        self.assertTrue(leakage.ngrams("then SEAL the pump housing with sealant", 5) & grams)
+    def test_held_out_keys_are_an_opaque_set_of_hashes_and_short_text_has_no_gram(self):
+        keys = leakage.held_out_overlap_keys(include_ud=False)
+        self.assertIsInstance(keys, frozenset)
+        self.assertTrue(keys and all(isinstance(k, int) for k in keys))
+        self.assertEqual(set(), leakage.gram_hashes("too short here", 5))
+        self.assertTrue(leakage.gram_overlap("then SEAL the pump housing with sealant", keys, 5))
+        self.assertTrue(leakage.key_overlap("Remove the cover, before you start the work!", keys))       # the key ignores case and punctuation
+        self.assertFalse(leakage.key_overlap("A brand new sentence .", keys))
+        self.assertFalse(leakage.key_overlap("...", keys))                                              # no letter or digit: never a match
+        self.assertEqual(leakage.stable_hash("gram", "a b c d e"), leakage.stable_hash("gram", "a b c d e"))
 
     def test_dev_check_counts_overlaps_and_names_only_the_failing_dev_sentence(self):
         self.write_dev([("doc-z", "A brand new dev sentence about nothing in particular ."),
@@ -1203,6 +1330,93 @@ class LeakageExtensionTests(MiniFolder):
         rows, failures, failing = check_leakage.dev_check(include_ud=False)
         self.assertEqual(["s2"], failing)
         self.assertEqual(1, failures)
+
+
+class QuotaUnitTests(unittest.TestCase):
+    @staticmethod
+    def items(shape, role, lemmas, origin="real"):
+        return [dict(shape=shape, role=role, lemma=lemma, origin=origin) for lemma in lemmas]
+
+    def full(self):
+        targets = [i for n, shape in enumerate(sd.SHAPES) for i in self.items(shape, "target", ["a%d" % n, "b%d" % n, "c%d" % n, "d%d" % n])]
+        controls = self.items(sd.SHAPES[0], "control", ["x", "x", "y", "y"])
+        return targets, controls
+
+    def problems(self, targets, controls, **options):
+        options = dict(dict(per_shape=4, lemma_cap=1, share=0.25, controls=4), **options)
+        return sd.quota_problems(targets, controls, **options)
+
+    def test_a_set_that_meets_every_quota_has_no_problem(self):
+        targets, controls = self.full()
+        self.assertEqual([], self.problems(targets, controls, lemma_cap=1))
+
+    def test_a_short_shape_and_a_short_control_total_are_reported(self):
+        targets, controls = self.full()
+        found = self.problems(targets[1:], controls[:3])
+        self.assertTrue(any(p.startswith("n-compound-head: 3 targets, requested 4") for p in found))
+        self.assertTrue(any(p.startswith("controls: 3, requested 4") for p in found))
+
+    def test_a_lemma_over_its_cap_and_a_shape_cap_are_reported(self):
+        targets, controls = self.full()
+        targets[1]["lemma"] = targets[0]["lemma"]
+        self.assertTrue(any("lemma 'a0' has 2 targets, the cap is 1" in p for p in self.problems(targets, controls)))
+        self.assertEqual([], self.problems(targets, controls, shape_lemma_cap={"n-compound-head": 2}))
+        controls[2]["lemma"] = "x"
+        self.assertTrue(any("controls: n-compound-head lemma 'x' has 3 controls, the cap is 2" in p for p in self.problems(targets, controls)))
+
+    def test_the_authored_share_of_a_shape_and_of_the_controls_is_capped(self):
+        targets, controls = self.full()
+        targets[0]["origin"] = "authored"                                  # 1 of 4 = 25%: allowed at share 0.25
+        self.assertEqual([], self.problems(targets, controls))
+        targets[1]["origin"] = "authored"
+        self.assertTrue(any("n-compound-head: 2 of 4 targets are authored" in p for p in self.problems(targets, controls)))
+        targets[1]["origin"] = "real"
+        controls[0]["origin"] = controls[1]["origin"] = "authored"
+        self.assertTrue(any("controls: 2 of 4 are authored" in p for p in self.problems(targets, controls)))
+
+
+class ExclusionRecordGateTests(MiniFolder):
+    """check_licenses.excluded_source_findings on a fixture shapes-dev folder."""
+
+    def write_set(self, source_id="doc-a", url="https://example.gov/doc-a", excluded=(("doc-x", "https://example.gov/doc-x"),)):
+        folder = os.path.join(self.data, "eval", "shapes-dev")
+        extra = [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]]
+        corpus_file(os.path.join(folder, "dev.tsv"), [(source_id, "A brand new dev sentence about nothing in particular .")], extra)
+        row = [source_id, "us-government", "T", url, "A", "1990", "US federal government work (17 U.S.C. 105): test", "https://example.gov/terms",
+               "2026-11-01", "a" * 64, "b" * 64, "1"]
+        table_file(os.path.join(folder, "sources.tsv"), sd.SOURCE_COLUMNS, [row])
+        table_file(os.path.join(folder, "excluded-sources.tsv"), common.EXCLUDED_SOURCES_COLUMNS,
+                   [[i, u, "not public domain", "2026-11-06"] for i, u in excluded])
+
+    def test_a_clean_set_has_no_finding_and_a_missing_folder_is_not_checked(self):
+        self.assertEqual([], check_licenses.excluded_source_findings(self.data))
+        self.write_set()
+        self.assertEqual([], check_licenses.excluded_source_findings(self.data))
+
+    def test_an_excluded_id_in_dev_or_sources_is_a_finding(self):
+        self.write_set("doc-x", "https://example.gov/doc-y")
+        found = check_licenses.excluded_source_findings(self.data)
+        self.assertTrue(any(f.startswith("eval/shapes-dev/dev.tsv:") and "doc-x" in f for f in found))
+        self.assertTrue(any(f.startswith("eval/shapes-dev/sources.tsv:") and "doc-x" in f for f in found))
+
+    def test_an_excluded_url_in_the_sources_is_a_finding_even_under_another_id(self):
+        self.write_set("doc-a", "https://www.example.gov/doc-x/")
+        found = check_licenses.excluded_source_findings(self.data)
+        self.assertEqual(1, len(found))
+        self.assertIn("sources.tsv: row doc-a uses the excluded source doc-x", found[0])
+
+    def test_a_missing_or_malformed_record_is_a_finding_when_the_folder_exists(self):
+        self.write_set()
+        path = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        for lines in (["source_id\turl\treason"], ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-x\tnot a url\tr\t2026-11-06"],
+                      ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-x\thttps://example.gov/x\tr\tyesterday"],
+                      ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-x\thttps://example.gov/x\t\t2026-11-06"]):
+            common.write_text(path, lines)
+            found = check_licenses.excluded_source_findings(self.data)
+            self.assertEqual(1, len(found), lines)
+            self.assertIn("excluded-sources.tsv", found[0])
+        os.remove(path)
+        self.assertIn("missing exclusion table", check_licenses.excluded_source_findings(self.data)[0])
 
 
 if __name__ == "__main__":
