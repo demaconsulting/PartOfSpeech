@@ -10,11 +10,14 @@ eval/gold-v2/sources.tsv	886502	0f5e84194e64459393dfea7c466c1d7efb4e8f43603f1048
 eval/gold-v2/test.tsv	922745	11b4a38e2cb1154d063d503b289c4a40ae1ba0c7009b92bf4a069a4dc3317cfb	3047	-
 eval/shapes-dev/dev.tsv	426221	bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290	12279	700
 eval/shapes-dev/excluded-sources.tsv	629	918340bc1f5fb28829f48f6084b151372dda82b8dfbec814fc8f4ac9fcdbea94	3	-
+eval/shapes-dev/hard-leakage-report.tsv	832	c530dc708ce21367eab4a6a70a8bfe9c7fe2eeb6cb61980c2a41b4609aaf7c78	9	-
+eval/shapes-dev/hard-sources.tsv	93781	fd21313ff50068f9637c1504b059c7de45f83ec6d1d9b81ce46499ae17d8ee12	100	-
+eval/shapes-dev/hard.tsv	282782	c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22	7936	460
 eval/shapes-dev/leakage-report.tsv	632	db1c9e2f6c30c9bbf7cd328aa4f524c2aaa57d46f96e9b40069a0a7044d447c1	8	-
 eval/shapes-dev/sources.tsv	54050	b88b1f75a376bf1e105160f835a7ad061d7391d7abd08b59471282d51907ad46	63	-
 eval/shapes/probe.tsv	58492	5d1ebe3a7fd64c20aeb1388c95c2fff2d97792f9761375bed8b52740e0d89105	561	-
 eval/ste-challenge/test.tsv	11858	7593d2ca261984c7c347f130d1d1f639b85515a4d74f39ece3fc60577a2e3aaf	272	32
-leakage-report.tsv	1108	ad0fb38b5bd4f873c1fdfc2d29b7eaacc5f5d8b7895911874939301167c7d8cf	27	-
+leakage-report.tsv	1209	eff28a0a95555e3ba96a7f02f01a2ecd437d67f0822f616bc0c89b1774ed7225	30	-
 lexicon/closed-class.tsv	9435	73b7edf3fcaec5af21b5722a83b279ee78e66cb6e3cd2b71a4e625336dc945ca	331	-
 lexicon/coverage.tsv	8587	3441f0d947f9f4ed7457b635cb9679ca477429ee9212c2dfb6d1dfdf62d1f572	268	-
 lexicon/lexicon.tsv	4452392	def08a681d82594d57dc8dfe44155b5966d316896acc78f7dd54f04d2f78d3cc	262635	-

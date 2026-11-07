@@ -1390,6 +1390,10 @@ class LeakageExtensionTests(MiniFolder):
             leakage.evaluation_sets(include_ud=False)
         self.assertNotIn("shapes-dev", leakage.evaluation_sets(include_ud=False, shapes_dev=False))
         self.write_dev([("doc-z", "A brand new dev sentence about nothing in particular .")])
+        with self.assertRaises(SystemExit):                                  # the hard tranche file is required as well
+            leakage.evaluation_sets(include_ud=False)
+        corpus_file(os.path.join(self.data, "eval", "shapes-dev", "hard.tsv"), [("doc-h", "Another brand new hard sentence about nothing .")],
+                    [["# shape = v-after-modal", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]])
         self.assertIn("shapes-dev", leakage.evaluation_sets(include_ud=False))
 
     def test_held_out_keys_are_an_opaque_set_of_hashes_and_short_text_has_no_gram(self):

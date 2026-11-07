@@ -576,13 +576,9 @@ class HardLeakageAndLicenseTests(HardFolder):
         self.assertEqual(set(), {"shapes-dev", "shapes-dev-hard"} & set(kept))
         self.assertEqual(("shapes-dev", "shapes-dev-hard"), leakage.SHAPES_DEV_LABELS)
 
-    def test_a_missing_hard_file_is_tolerated_until_the_flag_requires_it(self):
-        self.assertFalse(leakage.HARD_TRANCHE_REQUIRED)
-        self.assertNotIn("shapes-dev-hard", leakage.REQUIRED_EVALUATION_SETS)
-        self.assertFalse(check_leakage.hard_tranche_present())
-        saved = leakage.HARD_TRANCHE_REQUIRED
-        leakage.HARD_TRANCHE_REQUIRED = True
-        self.addCleanup(setattr, leakage, "HARD_TRANCHE_REQUIRED", saved)
+    def test_a_missing_hard_file_fails_loudly_because_the_hard_tranche_is_required(self):
+        self.assertTrue(leakage.HARD_TRANCHE_REQUIRED)
+        self.assertIn("shapes-dev-hard", leakage.REQUIRED_EVALUATION_SETS)
         self.assertTrue(check_leakage.hard_tranche_present())
         with self.assertRaises(SystemExit):
             check_leakage.dev_check(include_ud=False, tranche="hard")

@@ -11,9 +11,8 @@ Evaluation sets whose sentences and documents no training file may contain:
   shapes-dev                 data/eval/shapes-dev/dev.tsv       (hard-shape development set; corpus format; required, so a
                                                                  missing file fails loudly; `shapes_dev.py` builds it and passes
                                                                  `shapes_dev=False` because the set does not exist yet)
-  shapes-dev-hard            data/eval/shapes-dev/hard.tsv      (the hard tranche of that set, same format; required once
-                                                                 HARD_TRANCHE_REQUIRED is True, which the commit that adds the file sets;
-                                                                 `shapes_dev=False` leaves both tranches out)
+  shapes-dev-hard            data/eval/shapes-dev/hard.tsv      (the hard tranche of that set, same format; required, so a
+                                                                 missing file fails loudly; `shapes_dev=False` leaves both tranches out)
   ud-ewt-dev, ud-ewt-test, ud-ewt-train   tools/data/cache/ud-ewt/*.conllu, only when the git-ignored cache is present
                                           (never committed; only the match result is reported)
 
@@ -42,9 +41,8 @@ DOCUMENT_KEY_LENGTH = 25
 SHAPES_DEV_LABEL = "shapes-dev"
 SHAPES_DEV_HARD_LABEL = "shapes-dev-hard"
 SHAPES_DEV_LABELS = (SHAPES_DEV_LABEL, SHAPES_DEV_HARD_LABEL)
-# False until data/eval/shapes-dev/hard.tsv is committed: the hard tranche is checked when its file exists, and a missing file is
-# not a failure yet. The commit that adds hard.tsv sets this to True, from then on a missing file fails loudly like every other set.
-HARD_TRANCHE_REQUIRED = False
+# data/eval/shapes-dev/hard.tsv is committed: a missing hard tranche file fails loudly like every other required set.
+HARD_TRANCHE_REQUIRED = True
 PROBE_GRAM_WORDS = 5
 
 
