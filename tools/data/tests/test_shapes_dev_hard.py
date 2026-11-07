@@ -350,6 +350,43 @@ class HardPipelineTests(HardFolder):
         self.assertFalse(os.path.exists(os.path.join(out, "hard.tsv")))
         self.assertEqual(before, common.read_lines(record))
 
+    def write_work_exclusions(self, rows):
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason\tdecided"] + ["\t".join(r) for r in rows])
+
+    def test_the_hard_build_needs_no_draft_row_or_url_for_an_excluded_source_that_is_not_used(self):
+        self.prepare()
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        common.write_text(record, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "nist-gone\thttps://example.gov/nist-gone\tnot public domain\t2026-11-06"])
+        self.write_work_exclusions([("nist-gone", "not public domain", "2026-11-06"), ("nist-other", "not public domain", "2026-11-06")])
+        before = common.read_lines(record)
+        out = os.path.join(self.temp, "out")
+        code, output = self.hard_cli("build", "--out-dir", out, "--allow-short")
+        self.assertEqual(0, code, output)
+        self.assertTrue(os.path.exists(os.path.join(out, "hard.tsv")))
+        self.assertEqual(before, common.read_lines(record))
+        self.assertEqual(0, self.hard_cli("report", "--out-dir", out)[0])
+
+    def test_the_hard_build_refuses_a_chosen_source_excluded_by_the_committed_url_or_the_work_rows_without_a_url(self):
+        self.prepare()
+        out = os.path.join(self.temp, "out")
+        draft = sd.read_draft(self.work)
+        built = [{"source_id": "doc-b"}]
+        w_rows = [["doc-b", "", "not public domain", ""]]                                   # an id-only row of the work folder
+        self.assertEqual(1, len(sd.excluded_problems(self.work, draft, built, [], w_rows)))
+        self.assertEqual([], sd.excluded_problems(self.work, draft, [{"source_id": "doc-a"}], [], w_rows))
+        self.write_work_exclusions([("doc-b", "not public domain", "2026-11-06")])        # decided items of it are dropped, never built
+        code, output = self.hard_cli("build", "--out-dir", out, "--allow-short")
+        self.assertEqual(0, code, output)
+        _, sentences = common.read_corpus(os.path.join(out, "hard.tsv"))
+        self.assertFalse(any(s["source_id"] == "doc-b" for s in sentences))
+        os.remove(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE))
+        os.remove(os.path.join(out, "hard.tsv"))
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")      # another id, the URL of the chosen document
+        common.write_text(record, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "other-id\thttps://www.example.gov/doc-b/\tr\t2026-11-06"])
+        code, _ = self.hard_cli("build", "--out-dir", out, "--allow-short")
+        self.assertEqual(1, code)
+        self.assertFalse(os.path.exists(os.path.join(out, "hard.tsv")))
+
     def test_sample_takes_at_least_half_of_each_shape_from_low_q_and_report_has_the_band_table(self):
         self.prepare()
         out = os.path.join(self.temp, "out")

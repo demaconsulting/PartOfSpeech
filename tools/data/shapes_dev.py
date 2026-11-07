@@ -509,13 +509,18 @@ def read_excluded_sources(work):
     return {source_id: reason for source_id, reason, _ in read_excluded_rows(work)}
 
 
-def excluded_output_rows(work, draft):
+def excluded_output_rows(work, draft, tranche="standard"):
     """The rows of the committed excluded-sources.tsv: source_id, url (from the draft), reason, decided; [] when nothing is excluded.
 
-    Raises ValueError for an excluded document that has no draft row (no URL) or no decided date."""
+    Raises ValueError for an excluded document that has no draft row (no URL) or no decided date. The hard tranche never writes the
+    record, so it needs neither: its rows only feed the refusal lookup, with the draft URL when there is one and "" (match by id
+    only) when the excluded document was removed from the hard inputs."""
     urls = {row["source_id"]: row["url"] for row in draft}
     rows = []
     for source_id, reason, decided in sorted(read_excluded_rows(work)):
+        if tranche == "hard":
+            rows.append([source_id, urls.get(source_id, ""), reason, decided])
+            continue
         if source_id not in urls or not urls[source_id]:
             raise ValueError("excluded source %s has no url in sources-draft.tsv" % source_id)
         if not common.is_http_url(urls[source_id]):
@@ -2272,7 +2277,7 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
     if unknown:
         raise ValueError("no source row for: " + ", ".join(unknown))
     committed = read_committed_exclusions(data_dir or common.DATA)
-    w_rows = excluded_output_rows(work, draft)
+    w_rows = excluded_output_rows(work, draft, tranche)
     refused = excluded_problems(work, draft, built, committed, w_rows)
     if refused:
         raise ExcludedSourceError("excluded sources are used:\n  " + "\n  ".join(refused[:20]))
