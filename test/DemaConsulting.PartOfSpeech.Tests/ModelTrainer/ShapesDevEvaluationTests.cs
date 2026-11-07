@@ -496,6 +496,30 @@ public class ShapesDevEvaluationTests
     }
 
     /// <summary>
+    ///     Validates that the path guard of <c>shapes-tokenize</c> refuses every path inside the data folder (also through a dotted
+    ///     detour and for the folder itself) and admits a path outside the repository.
+    /// </summary>
+    [Fact]
+    public void DataGuard_EnsureOutsideData_InsideDataFolder_RefusedAndOutsideAdmitted()
+    {
+        // Arrange
+        var root = DataFiles.RepositoryRoot;
+        var dataFolder = Path.Combine(root, "data");
+        var detour = Path.Combine(root, "tools", "..", "data", "x.txt");
+        var temporary = Path.Combine(Path.GetTempPath(), "shapes-tokenize-guard", "in.txt");
+
+        // Act / Assert: refused inside the data folder
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureOutsideData(root, DataFiles.Repository(DataGuard.ShapesDevelopmentFile)));
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureOutsideData(root, Path.Combine(dataFolder, "new-output.txt")));
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureOutsideData(root, dataFolder));
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureOutsideData(root, detour));
+
+        // Assert: admitted outside the repository, and next to the data folder
+        Assert.Equal(Path.GetFullPath(temporary), DataGuard.EnsureOutsideData(root, temporary));
+        Assert.Equal(Path.GetFullPath(Path.Combine(root, "database.txt")), DataGuard.EnsureOutsideData(root, Path.Combine(root, "database.txt")));
+    }
+
+    /// <summary>
     ///     Creates an item with a one-word sentence for the evaluator tests.
     /// </summary>
     private static ShapesDevItem Item(string id, string shape, string role, string word, string goldClass, string origin = "real") =>

@@ -23,7 +23,8 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///         The program only parses arguments and does I/O and printing; the engine is in <c>Training/</c> and
 ///         <c>Evaluation/</c>, which the tests compile and exercise directly. Every command except <c>evaluate</c> reads
 ///         nothing but the two development files (see <see cref="DataGuard"/>), except <c>eval-shapes</c>, which reads the
-///         hard-shape development file, and <c>shapes-tokenize</c>, which reads and writes only the two files it is given;
+///         hard-shape development file, and <c>shapes-tokenize</c>, which reads and writes only the two files it is given
+///         (both outside the data folder of the repository);
 ///         <c>evaluate</c> reads the held-out sets
 ///         only through the guarded readers and only with a selection artifact that is valid for the frozen model.
 ///     </para>
@@ -173,7 +174,7 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
                 case "eval-shapes":
                     return EvalShapes(line, root);
                 case "shapes-tokenize":
-                    return ShapesTokenize(line);
+                    return ShapesTokenize(line, root);
                 case "calibrate":
                     return Calibrate(line, root);
                 case "compare":
@@ -406,12 +407,15 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
     ///     Runs the <c>shapes-tokenize</c> command: tokenizes the lines of a text file with the library tokenizer.
     /// </summary>
     /// <param name="line">The parsed command line.</param>
+    /// <param name="root">The repository root.</param>
     /// <returns>The exit code.</returns>
     /// <exception cref="InvalidDataException">An input line contains a tab character.</exception>
-    private static int ShapesTokenize(CommandLine line)
+    /// <exception cref="InvalidOperationException">An input or output path lies inside the data folder of the repository.</exception>
+    private static int ShapesTokenize(CommandLine line, string root)
     {
-        var input = RequireValue(line, "--in");
-        var output = RequireValue(line, "--out");
+        // Path guard: the command must never read or overwrite repository data (training, development or held-out files)
+        var input = DataGuard.EnsureOutsideData(root, RequireValue(line, "--in"));
+        var output = DataGuard.EnsureOutsideData(root, RequireValue(line, "--out"));
         var result = new StringBuilder();
         foreach (var text in File.ReadAllLines(input, Encoding.UTF8))
         {

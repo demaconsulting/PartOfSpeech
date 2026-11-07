@@ -126,7 +126,8 @@ target framework, including .NET Framework.
   Evaluation_.
 - **Commands** (`Program.cs`): `train` (with experiment overrides, `--check`, `--update-config`, `--eval`, `--log`,
   `--calibrate`, `--checkpoints`), `eval`, `eval-shapes` (the hard-shape development set; `--weights`, `--label`),
-  `shapes-tokenize` (`--in`, `--out`; the library tokenizer over a text file, no repository data), `calibrate`, `compare`,
+  `shapes-tokenize` (`--in`, `--out`; the library tokenizer over a text file; `DataGuard.EnsureOutsideData` refuses a
+  path inside the repository's data folder, so no repository data), `calibrate`, `compare`,
   `glossary-probe`, `glossary-experiment` and
   `glossary-eval` (`--seed`, `--resamples`; it takes no weights or data path and appends no run-log row), `thresholds`
   (development data only) and `evaluate` (the one held-out run; see _Held-Out Evaluation_); the exit

@@ -251,6 +251,31 @@ internal static class DataGuard
     }
 
     /// <summary>
+    ///     Checks that a file given to a general-purpose command lies outside the data folder of the repository, links resolved, so
+    ///     that the command can never read or overwrite training, development or held-out data.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="path">The file, absolute or relative to the working directory.</param>
+    /// <returns>The full path of the file.</returns>
+    /// <exception cref="InvalidOperationException">The path is the data folder or lies inside it, as written or after link resolution.</exception>
+    public static string EnsureOutsideData(string repositoryRoot, string path)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        ArgumentNullException.ThrowIfNull(path);
+        var dataRoot = Path.Combine(repositoryRoot, "data");
+        var same = string.Equals(
+            Path.GetFullPath(dataRoot).TrimEnd(Path.DirectorySeparatorChar),
+            Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar),
+            Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+        if (same || RelativeTo(Canonicalize(dataRoot), Canonicalize(path)) != null || RelativeTo(Path.GetFullPath(dataRoot), Path.GetFullPath(path)) != null)
+        {
+            throw new InvalidOperationException($"'{path}' is inside the data folder of the repository; this command reads and writes files outside it only.");
+        }
+
+        return Path.GetFullPath(path);
+    }
+
+    /// <summary>
     ///     Gets the path of the lock file of a held-out run: the results file name with the suffix <c>.running</c>, next to it.
     /// </summary>
     /// <param name="resultsPath">The full path of the results file.</param>

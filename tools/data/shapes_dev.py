@@ -29,7 +29,7 @@ Commands (all take `--work W`; `--data-dir D` replaces the repository's data fol
   python tools/data/shapes_dev.py --work W check-batches [--round NAME]         # 3 columns, tokens equal the key, no leak
   python tools/data/shapes_dev.py --work W validate-output --batch b001 --model opus [--round NAME]   # (or --all); updates batches/status.tsv
   python tools/data/shapes_dev.py --work W status [--round NAME]
-  python tools/data/shapes_dev.py --work W decide [--round NAME]                # the pre-registered decision rule
+  python tools/data/shapes_dev.py --work W decide [--round NAME]                # the decision rule
   python tools/data/shapes_dev.py --work W sample [--per-shape 12] [--controls 4]   # review sample for the precision gate (all rounds)
   python tools/data/shapes_dev.py --work W review-result --verdicts FILE ...     # precision of the model review; STOP below 95%
   python tools/data/shapes_dev.py --work W build [--out-dir D]                  # dev.tsv and sources.tsv (the root and every round)
@@ -75,7 +75,7 @@ round name and avoid every id already in an earlier key, so ids never collide. `
 root and of every round folder under W/rounds (a folder without decided.tsv is skipped; the root keeps its old behavior when no round exists):
 the lemma cap, the authored cap and the selection run across the union. Hand check: generate the sample after every round is decided.
 
-Decision rule (pre-registered in data/eval/shapes-dev/README.md before any label was seen; see `decide_item` and `frame_mismatch`). For the judged
+Decision rule (the core was committed in this docstring, commit 88bafc2, before any label existed: target disagreement drops the sentence, class-mismatch, and a disputed non-target token takes the tag of the first labeler; the cleanliness filters, frame validation, base-form and nominal-gerund rules were added later and only remove items; see "Honest record of the order" in data/eval/shapes-dev/README.md; see `decide_item` and `frame_mismatch`). For the judged
 word (the target): different tags -> drop the sentence (counted per shape); the same tag but a class other than the intended one
 (the shape's class for a `target`, the other class for a `control`) -> drop, counted as `class-mismatch`; the intended class but a
 target outside the frame of its shape (only for a `target`, by the tags both labelers gave the neighbor tokens: n-compound-head needs
@@ -485,7 +485,7 @@ def _command_tokenize(args):
 
 # ---------------------------------------------------------------- sentence cleanliness (candidate stage)
 
-# Pre-registered rules of the cleanliness filter (they drop OCR and extraction noise, titles, fragments and list items before any
+# Rules of the cleanliness filter (added after the first labels were seen; they only remove items: they drop OCR and extraction noise, titles, fragments and list items before any
 # shape rule or labeler sees a sentence). The first rule that fires names the drop reason (`noise-<rule>`).
 NOISE_RULES = ("start-end", "chars", "junk", "brackets", "enumeration", "citation", "repeat", "caps", "title", "short", "no-verb", "oov")
 ALLOWED_CHARS = re.compile(r"[A-Za-z0-9 .,;:'\"()?!$%&/#+=\-]*")            # printable ASCII without `* [ ] { } < > @ ^ _ ~ | \ `` and controls
@@ -1276,7 +1276,7 @@ def possible_gerund(form, lex):
 
 
 def frame_mismatch(item, opus, sol, form=None, lex=None):
-    """True when the judged word of a kept target item is not in the frame of its shape (pre-registered; uses only the tags
+    """True when the judged word of a kept target item is not in the frame of its shape (a later, remove-only rule; uses only the tags
     that BOTH labelers gave the neighbor tokens; a neighbor they disagree on never satisfies a frame).
 
     n-compound-head       the token before is NOUN or PROPN (the target is the head of a compound)

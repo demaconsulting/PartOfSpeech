@@ -91,8 +91,9 @@ Candidates that the decision rule dropped (counted per shape):
 
 ## Labeling and Decision Rule
 
-The rule is **pre-registered** in the docstring of `tools/data/shapes_dev.py` (the commit that added the builder came before
-any label existed); this section restates it. Both labelers tag every token of a sentence blind: they see no shape, no
+The core of the rule (rules 1 and 2 and the treatment of disputed tokens) was committed in the docstring of `tools/data/shapes_dev.py`
+(commit `88bafc2`) before any label existed; rules 3 to 5 and the cleaning filters came later (see the honest record of the order
+below); this section restates the whole rule. Both labelers tag every token of a sentence blind: they see no shape, no
 source, no intended class and no other labeler's answer, only the tokens under an opaque id. The labeling ran in three rounds
 of candidates: round 1 was **superseded** and archived (OCR noise and weak shape fidelity; its pool had only 57 controls),
 round 2 rebuilt the pool with the cleaning filter, and round 3 added compound-head candidates only. Sentences are never labeled twice.

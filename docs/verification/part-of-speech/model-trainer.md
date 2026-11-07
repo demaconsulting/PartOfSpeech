@@ -260,7 +260,9 @@ class for its shape and role, or renders different text for the same results.
   `ShapesDevReport_Render_SameResult_IsDeterministicMarkdown` (the same lines twice, the table, the dashes of an empty
   shape, the two hashes), `ShapesDevReport_Interval_KnownCounts_MatchesWilsonScore` (hand-computed intervals) and
   `Tokenizer_Tokenize_ShapesSentences_ReproducesStoredTokens` (the library tokenizer, which `shapes-tokenize` runs,
-  gives the stored tokens of sentences with clitics, quotes and a final period).
+  gives the stored tokens of sentences with clitics, quotes and a final period) and
+  `DataGuard_EnsureOutsideData_InsideDataFolder_RefusedAndOutsideAdmitted` (a path in the data folder, the folder itself,
+  a dotted detour and the committed development file are refused; a temporary folder is admitted).
 - **The shapes development file is development only**: `DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted`
   (also through a dotted detour), `DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused` (the two development files,
   a held-out file, the other files of its folder), `DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt` (not in the
