@@ -15,7 +15,7 @@ import leakage
 import make_manifest
 
 CORPORA = (("open", "train.tsv"), ("open", "dev.tsv"), ("open", "test.tsv"), ("masc", "masc.tsv"),
-           ("silver", "silver.tsv"), ("eval", "ste-challenge", "test.tsv"))
+           ("silver", "silver.tsv"), ("eval", "ste-challenge", "test.tsv"), ("eval", "shapes-dev", "dev.tsv"))
 
 
 class CommittedDataTests(unittest.TestCase):
