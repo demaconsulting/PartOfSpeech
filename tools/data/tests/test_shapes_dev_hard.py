@@ -2,6 +2,7 @@
 
 Run: python -m unittest discover -s tools/data/tests -p "test_shapes_dev_hard.py"   (developer-run; no model, no network)
 """
+import hashlib
 import os
 import re
 import sys
@@ -91,10 +92,15 @@ class HardFolder(base.MiniFolder):
             return found
         return (0.5, 0.5) if base.LEXICON.get(token.lower()) == "NOUN VERB" else (0.0, 0.0)
 
-    def write_hmm(self, texts, sentences=None, meta=True):
+    def write_hmm(self, texts, sentences=None, meta=True, commit=None, dll=None, input_sha=None):
+        """hmm.tsv of the fixture; a header value left None is the pre-registered pin / the SHA-256 of the current tokens.tsv."""
         lines = []
         if meta:
-            lines = [sd.HMM_MAGIC + ": fixture", "# wordsense_commit = " + "c" * 40, "# wordsense_dll_sha256 = " + "d" * 64,
+            if input_sha is None:
+                with open(os.path.join(self.root, "tokens.tsv"), "rb") as handle:
+                    input_sha = hashlib.sha256(handle.read()).hexdigest()
+            lines = [sd.HMM_MAGIC + ": fixture", "# wordsense_commit = " + (commit or sd.HARD_WORDSENSE_COMMIT),
+                     "# wordsense_dll_sha256 = " + (dll or sd.HARD_WORDSENSE_DLL_SHA256), "# input_sha256 = " + input_sha,
                      "# sentences = %d" % len(sentences if sentences is not None else texts)]
         for text in (sentences if sentences is not None else texts):
             cells = []
@@ -118,7 +124,7 @@ class HardFolder(base.MiniFolder):
 class HmmFileTests(HardFolder):
     def test_the_header_and_the_cells_are_read_and_a_token_may_contain_a_pipe(self):
         table = sd.read_hmm(self.work)
-        self.assertEqual("c" * 40, table.meta["wordsense_commit"])
+        self.assertEqual(sd.HARD_WORDSENSE_COMMIT, table.meta["wordsense_commit"])
         tokens = base.simple_tokens(FRAME_DOC[0])
         self.assertAlmostEqual(0.6, table.q(tokens, 2, "Noun"))
         self.assertAlmostEqual(0.4, table.q(tokens, 2, "Verb"))
@@ -130,7 +136,7 @@ class HmmFileTests(HardFolder):
     def test_a_missing_file_a_wrong_header_and_a_wrong_count_are_errors(self):
         path = os.path.join(self.root, sd.HMM_FILE)
         lines = common.read_lines(path)
-        lines[3] = "# sentences = %d" % (len(self.texts) + 5)
+        lines[4] = "# sentences = %d" % (len(self.texts) + 5)
         common.write_text(path, lines)
         with self.assertRaises(ValueError) as caught:
             sd.read_hmm(self.work)
@@ -144,17 +150,64 @@ class HmmFileTests(HardFolder):
         self.assertIn("hmm-tags", str(caught.exception))
 
     def test_a_sentence_without_tags_is_an_error_and_never_a_default(self):
-        self.write_hmm(self.texts, sentences=self.texts[:1] + self.texts[2:])
+        with self.assertRaises(ValueError) as caught:
+            sd.read_hmm(self.work).mass(["never", "tagged", "here"])
+        self.assertIn("no tags", str(caught.exception))
+        self.write_hmm(self.texts, sentences=self.texts[:1] + self.texts[2:])      # a file with fewer sentences than tokens.tsv: refused
         with self.assertRaises(ValueError) as caught:
             self.collect()
-        self.assertIn("no tags", str(caught.exception))
+        self.assertIn("sentences", str(caught.exception))
 
     def test_a_sentence_that_starts_with_a_hash_token_is_data_not_a_header(self):
-        lines = common.read_lines(os.path.join(self.root, sd.HMM_FILE))
-        lines.append("#|Noun|0.000|0.000\t2|Noun|0.000|0.000")
-        lines[3] = "# sentences = %d" % (len(self.texts) + 1)
-        common.write_text(os.path.join(self.root, sd.HMM_FILE), lines)
-        self.assertEqual(0.0, sd.read_hmm(self.work).q(["#", "2"], 0, "Noun"))
+        self.write_tokens(self.texts + ["# 2 ."])
+        self.write_hmm(self.texts + ["# 2 ."])
+        table = sd.read_hmm(self.work)
+        self.assertEqual(0.0, table.q(["#", "2", "."], 0, "Noun"))
+
+    def test_the_pinned_classifier_is_required_and_there_is_no_override(self):
+        for options, name in (({"commit": "c" * 40}, "wordsense_commit"), ({"dll": "d" * 64}, "wordsense_dll_sha256"),
+                              ({"commit": sd.HARD_WORDSENSE_COMMIT[:-1] + "0"}, "wordsense_commit")):
+            self.write_hmm(self.texts, **options)
+            with self.assertRaises(ValueError) as caught:
+                sd.read_hmm(self.work)
+            self.assertIn(name, str(caught.exception))
+            self.assertIn("pre-registered", str(caught.exception))
+            with self.assertRaises(ValueError):
+                self.collect()
+        self.write_hmm(self.texts)
+        self.assertEqual(sd.HARD_WORDSENSE_DLL_SHA256, sd.read_hmm(self.work).meta["wordsense_dll_sha256"])
+
+    def test_the_input_hash_must_be_that_of_the_current_tokens_file(self):
+        self.write_hmm(self.texts, input_sha="0" * 64)
+        with self.assertRaises(ValueError) as caught:
+            sd.read_hmm(self.work)
+        self.assertIn("input_sha256", str(caught.exception))
+        self.write_hmm(self.texts)
+        sd.read_hmm(self.work)                                                      # the matching hash is accepted
+        self.write_tokens(self.texts + ["Extra words here ."])                       # tokens.tsv grew after hmm-tags ran: tag again
+        with self.assertRaises(ValueError) as caught:
+            sd.read_hmm(self.work)
+        self.assertIn("input_sha256", str(caught.exception))
+        with self.assertRaises(ValueError):
+            self.collect()
+        os.remove(os.path.join(self.root, "tokens.tsv"))
+        with self.assertRaises(ValueError) as caught:
+            sd.read_hmm(self.work)
+        self.assertIn("tokens.tsv", str(caught.exception))
+
+    def test_a_header_without_the_input_hash_is_refused(self):
+        path = os.path.join(self.root, sd.HMM_FILE)
+        common.write_text(path, [line for line in common.read_lines(path) if not line.startswith("# input_sha256")])
+        with self.assertRaises(ValueError) as caught:
+            sd.read_hmm(self.work)
+        self.assertIn("input_sha256", str(caught.exception))
+
+    def test_the_sentence_count_is_that_of_the_single_sentence_rows_of_tokens(self):
+        header = "text\tsentences\ttokens\n"
+        raw = (header + "a b\t1\ta b\nc d. E f.\t2\tc d . E f .\nempty\t1\t\ng\t1\tg\n").encode("utf-8")
+        self.assertEqual(2, sd.tagged_sentence_count(raw))
+        with self.assertRaises(ValueError):
+            sd.tagged_sentence_count(b"a\tb\n")
 
 
 class SelectionRuleTests(HardFolder):
@@ -210,8 +263,8 @@ class SelectionRuleTests(HardFolder):
     def test_the_report_lists_the_provenance_and_the_band_table(self):
         _, report = self.collect(lemma_cap=9)
         text = "\n".join(report)
-        self.assertIn("WordSense commit " + "c" * 40, text)
-        self.assertIn("DLL sha256 " + "d" * 64, text)
+        self.assertIn("WordSense commit " + sd.HARD_WORDSENSE_COMMIT, text)
+        self.assertIn("DLL sha256 " + sd.HARD_WORDSENSE_DLL_SHA256, text)
         self.assertRegex(text, r"\| v-after-modal \| \d+ \| \d+ \| 300 \| ")
         self.assertRegex(text, r"\| n-subject-initial \| \d+ \| \d+ \| all \| ")
 

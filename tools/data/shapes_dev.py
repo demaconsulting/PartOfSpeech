@@ -73,7 +73,10 @@ and stays valid with zero items). It has its own work folder W (for example W/ha
 
   W/hmm.tsv                    written by the harness tools/data/hmm-tags (see its README): the part-of-speech probability mass of every
                                token from the WordSense Basic classifier (HMM tagger plus cue model), with the WordSense commit and the SHA-256 of
-                               the DLL that ran in its header; a sentence is found by its token sequence, a missing sentence is an error
+                               the DLL that ran in its header; a sentence is found by its token sequence, a missing sentence is an error.
+                               `read_hmm` refuses a file whose commit or DLL SHA-256 is not the pinned one (6530de19..., b96e0055...), whose
+                               input_sha256 is not the SHA-256 of the current W/tokens.tsv (exact: a tokens.tsv that gained rows needs a new
+                               hmm-tags run), or whose sentence count is not that of the single-sentence rows of tokens.tsv; no override
 
 Selection rule (pre-registered; it is model-independent: no PartOfSpeech model file, decoder, prediction, error or score is read by this
 tool or by the harness, only the lexicon, the text and the WordSense Basic numbers). A sentence is a candidate when it passes the unchanged
@@ -220,6 +223,8 @@ TRANCHE_FILES = {"standard": ("dev.tsv", "sources.tsv"), "hard": ("hard.tsv", "h
 TRANCHE_ID = {"standard": "shapes-dev-%04d", "hard": "shapes-dev-hard-%04d"}
 HMM_FILE = "hmm.tsv"
 HMM_MAGIC = "# hmm-tags 1"
+HARD_WORDSENSE_COMMIT = "6530de1928baf30f9a14446a54bfb5dd5f67b41c"    # the classifier the hard-tranche rule is pre-registered on (README)
+HARD_WORDSENSE_DLL_SHA256 = "b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf"
 HARD_SHAPES = ("n-compound-head", "n-subject-initial", "v-imperative-initial", "v-after-modal")   # n-measure has no hard cases
 BAND_MIN, BAND_MAX = 0.10, 0.97                  # eligible iff BAND_MIN <= q < BAND_MAX (q = Basic model mass of the shape's class)
 DISAGREE_Q = 0.5                                 # q below this is the pure-disagreement part of the band
@@ -693,7 +698,15 @@ def parse_hmm_cell(cell):
 
 
 def read_hmm(work):
-    """The HmmTable of W/hmm.tsv; the header (`# hmm-tags 1`, wordsense_commit, wordsense_dll_sha256, sentences) is checked."""
+    """The HmmTable of W/hmm.tsv. The hard rule is pre-registered on one classifier and one input, so the header is checked, not just read:
+
+    - `# hmm-tags 1` magic; `wordsense_commit` == HARD_WORDSENSE_COMMIT (6530de1928baf30f9a14446a54bfb5dd5f67b41c) and
+      `wordsense_dll_sha256` == HARD_WORDSENSE_DLL_SHA256 (b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf): a different
+      classifier build can give a different tranche and is refused (there is no override);
+    - `input_sha256` == SHA-256 of the bytes of the current W/tokens.tsv, which is exactly what tools/data/hmm-tags hashes (its --in file). The
+      check is exact on purpose: when tokenize adds rows to tokens.tsv, hmm-tags has to run again on the new file, so the tags and the tokens
+      the selector reads are always of one input;
+    - `sentences` == the number of lines of the file == the number of single-sentence rows with tokens in tokens.tsv (what hmm-tags tags)."""
     path = shared_path(work, HMM_FILE)
     if not os.path.exists(path):
         raise ValueError("%s is missing: run tools/data/hmm-tags on tokens.tsv (see its README)" % path)
@@ -711,12 +724,43 @@ def read_hmm(work):
             cells = [parse_hmm_cell(cell) for cell in line.split("\t")]
             rows[tuple(c[0] for c in cells)] = [(c[1], c[2], c[3]) for c in cells]
             count += 1
-    for needed in ("wordsense_commit", "wordsense_dll_sha256", "sentences"):
+    for needed in ("wordsense_commit", "wordsense_dll_sha256", "input_sha256", "sentences"):
         if needed not in meta:
             raise ValueError("%s: the header has no %s" % (path, needed))
     if meta["sentences"] != str(count):
         raise ValueError("%s: the header says %s sentences, the file has %d" % (path, meta["sentences"], count))
+    for name, pinned in (("wordsense_commit", HARD_WORDSENSE_COMMIT), ("wordsense_dll_sha256", HARD_WORDSENSE_DLL_SHA256)):
+        if meta[name] != pinned:
+            raise ValueError("%s: %s is %s, the hard tranche is pre-registered on %s: run tools/data/hmm-tags with the pinned WordSense build"
+                             % (path, name, meta[name], pinned))
+    tokens_path = shared_path(work, "tokens.tsv")
+    if not os.path.exists(tokens_path):
+        raise ValueError("%s is missing: hmm.tsv cannot be checked against its input" % tokens_path)
+    with open(tokens_path, "rb") as handle:
+        raw = handle.read()
+    digest = hashlib.sha256(raw).hexdigest()
+    if meta["input_sha256"] != digest:
+        raise ValueError("%s: input_sha256 %s is not the SHA-256 of the current tokens.tsv (%s): run tools/data/hmm-tags again on tokens.tsv"
+                         % (path, meta["input_sha256"], digest))
+    tokenized = tagged_sentence_count(raw)
+    if tokenized != count:
+        raise ValueError("%s: %d sentences, tokens.tsv has %d single-sentence rows with tokens" % (path, count, tokenized))
     return HmmTable(meta, rows)
+
+
+def tagged_sentence_count(raw):
+    """The number of sentences tools/data/hmm-tags tags from the bytes of a tokens.tsv: rows with a sentence count of 1 and at least one token."""
+    lines = re.split(r"\r\n|\r|\n", raw.decode("utf-8"))
+    if lines and lines[-1] == "":
+        lines.pop()                                  # File.ReadAllLines has no empty last line
+    if not lines or lines[0] != "\t".join(("text", "sentences", "tokens")):
+        raise ValueError("tokens.tsv: not a tokens table (header `text<TAB>sentences<TAB>tokens` expected)")
+    count = 0
+    for line in lines[1:]:
+        cells = line.split("\t")
+        if len(cells) == 3 and cells[1] == "1" and cells[2].replace(" ", ""):
+            count += 1
+    return count
 
 
 def alnum_words(text):
