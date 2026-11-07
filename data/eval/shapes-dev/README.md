@@ -23,9 +23,11 @@ above and below this paragraph that gives a count describes the standard tranche
   shares part of these documents on purpose; no sentence is shared), and no sentence is in a training or evaluation set.
   Nothing was written for this set: all 700 sentences are real text (0 authored). Two documents that were first used were
   dropped later (see [Excluded Sources](#excluded-sources)).
-- **How produced:** `python tools/data/shapes_dev.py --work <work-folder> build --shape-lemma-cap n-measure=12`, with the builder as
-  merged by PR #10 (merge commit `17a9cf9` on main; the current standard profile rebuilds the committed files byte for byte, see
-  `StandardRebuildTests`).
+- **How produced:** `python tools/data/shapes_dev.py --work <work-folder> build --shape-lemma-cap n-measure=12` at PR #10 commit
+  `43300948ecc5c76360e9284c951b119e8a63ff36` (squashed into PR #10 merge commit `17a9cf9` on main); the labeling rounds ran at PR #10
+  commit `57420f577b9f81ea25304475af85ee9bdae12f94`. The current standard profile rebuilds the committed files byte for byte (see
+  `StandardRebuildTests`). A squash merge makes the commits of a PR unreachable from main, but they stay retrievable from the PR's head
+  ref (`refs/pull/<n>/head`), for example `git fetch origin pull/10/head`.
   The global `--work` argument (a folder outside the repository, required) comes before the command; `--shape-lemma-cap
   n-measure=12` is the cap that the `candidates` runs also used, and the other options keep their defaults (`--per-shape 120`,
   `--lemma-cap 4`, `--controls 100`, `--share 0.30`, `--out-dir` the repository's `data/eval/shapes-dev`). The work folder is not
@@ -130,8 +132,8 @@ documents are in the second table instead, whatever their labels were):
 
 ## Labeling and Decision Rule
 
-The core of the rule (rules 1 and 2 and the treatment of disputed tokens) was written in the docstring of `tools/data/shapes_dev.py`
-before any label existed; rules 3 to 5 and the cleaning filters came later (see the honest record of the order
+The core of the rule (rules 1 and 2 and the treatment of disputed tokens) was committed in the docstring of `tools/data/shapes_dev.py`
+(PR #10 commit `88bafc2`) before any label existed; rules 3 to 5 and the cleaning filters came later (see the honest record of the order
 below); this section restates the whole rule. Both labelers tag every token of a sentence blind: they see no shape, no
 source, no intended class and no other labeler's answer, only the tokens under an opaque id. The labeling ran in three rounds
 of candidates: round 1 was **superseded** and archived (OCR noise and weak shape fidelity; its pool had only 57 controls),
@@ -155,10 +157,11 @@ Otherwise the item is kept. For every other token: the same tag gives that tag w
 status `disputed` and the tag of the first labeler (a fixed tie-break); flags are kept only where both agree. The judged
 word is never disputed. Labeler confidence is recorded in the work folder and not used.
 
-Honest record of the order: rules 1 and 2 and the treatment of disputed tokens were written before any label was seen.
+Honest record of the order: rules 1 and 2 and the treatment of disputed tokens were committed (PR #10 commit `88bafc2`) before any label was seen.
 Rules 3, 4 and 5 and the cleaning filters were added later, after labels of an earlier round had been seen, because the
 frame-mismatch and gerund cases showed up there. They only remove items; no label was changed, and every change is in
-the history of `shapes_dev.py` (the PR that added the standard tranche is #10, merge commit `17a9cf9` on main).
+the history of `shapes_dev.py` (the PR that added the standard tranche is #10, squash merge commit `17a9cf9` on main; its own commits
+are retrievable as described under "How produced").
 
 ## Hand Check
 
@@ -248,10 +251,10 @@ A second development file, `hard.tsv`, holds the contested cases of four shapes 
 federal documents, labeled by the same two blind model labelers, and is for development only, like `dev.tsv`.
 
 **The pre-registered selection rule (the inputs table and the rule below) was written before any label of the tranche existed**,
-and before the candidates were generated. The frozen pre-registration is recorded in the RUN-LOG section "Shapes development set: hard
-tranche, pre-registered selection rule" (`tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md`): the rule core was written before any
-label; the later additions and the one amendment (the `n-subject-initial` cap, rule 9, before labeling) are recorded in that section.
-The sections "Rounds Actually Run", "Outcome" and the ones after it were added after
+and before the candidates were generated. The frozen pre-registration is PR #11 commit `7a1aa4d`, amended once by PR #11 commit `7e3ecb0` (the
+`n-subject-initial` cap, rule 9, before labeling); the RUN-LOG section "Shapes development set: hard tranche, pre-registered selection
+rule" (`tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md`) records the same rule. If PR #11 is squash-merged, these commits stay
+retrievable from `refs/pull/11/head` (see "How produced" of the standard tranche). The sections "Rounds Actually Run", "Outcome" and the ones after it were added after
 labeling; they do not change the rule.
 
 Inputs of the selection:
@@ -324,7 +327,7 @@ No other round ran, and no candidate was relabeled or added after the labels wer
 ### Outcome
 
 Both blind labelers tagged every sentence of the three rounds; the build (`python tools/data/shapes_dev.py --work <work-folder>
---tranche hard build`; the defaults are the floors, caps and lemma caps of rule 9) wrote 460 sentences, 7,936
+--tranche hard build`, at PR #11 commit `5d3abb5`; the defaults are the floors, caps and lemma caps of rule 9) wrote 460 sentences, 7,936
 tokens and no authored sentence (79 tokens that are not a judged word are disputed between the labelers; the judged word never
 is). `n-measure` has zero items.
 
