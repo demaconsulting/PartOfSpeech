@@ -533,6 +533,14 @@ def shlex_quote(text):
     return shlex.quote(text) if os.name != "nt" else '"%s"' % text
 
 
+GOLDEN_STANDARD_HASHES = {
+    "candidates": "20a5d4ff2c2442e3dc3530ec45e2bf08881e68c580590476ce7c09f0ed44e6fc",
+    "dev": "0651494b10b68dd5bf8e0b680ee7e06521516162cd7ff3e091b0875f292c8e7a",
+    "sources": "068d811ff14cca28890685e3daf6599d461ce5f20e7b6a64dc7c7057977b5782",
+    "decided": "54f33af7fe7311d9db5399895ef44aa1f4ad7d0aac7023652067df2ae419c6ee",
+}
+
+
 class PipelineTests(MiniFolder):
     """export, check-batches, validate-output, decide, sample, build and report on the fixture, with fake taggers."""
 
@@ -715,6 +723,22 @@ class PipelineTests(MiniFolder):
         self.assertEqual(0, code)
         self.assertIn("| v-after-modal |", report)
         self.assertIn("dropped: class mismatch", report)
+
+    def test_standard_profile_outputs_are_byte_identical_to_the_golden_hashes(self):
+        """Regression guard of the hard-tranche work: the standard profile (the default) writes exactly the bytes it wrote before.
+
+        The hashes were taken from the code of main (17a9cf9), before the `--tranche hard` profile existed.
+        """
+        self.export_and_tag()
+        self.decided()
+        out = os.path.join(self.temp, "golden-out")
+        self.assertEqual(0, self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5", "--allow-short")[0])
+        found = {}
+        for label, path in (("candidates", os.path.join(self.root, "candidates.tsv")), ("dev", os.path.join(out, "dev.tsv")),
+                            ("sources", os.path.join(out, "sources.tsv")), ("decided", os.path.join(self.root, "private", "decided.tsv"))):
+            with open(path, "rb") as handle:
+                found[label] = common.sha256_bytes(handle.read())
+        self.assertEqual(GOLDEN_STANDARD_HASHES, found)
 
     def test_decided_items_of_an_excluded_source_are_dropped_everywhere_and_never_built(self):
         second = ["Check the oil tank before use .", "Flow stops at the tank ."]
@@ -1403,6 +1427,24 @@ class LeakageExtensionTests(MiniFolder):
         rows, failures, failing = check_leakage.dev_check(include_ud=False)
         self.assertEqual(["s2"], failing)
         self.assertEqual(1, failures)
+
+
+class StandardRebuildTests(unittest.TestCase):
+    """Optional regression check: rebuild the committed standard tranche from its original work folder and compare the bytes.
+
+    Needs the work folder of the standard tranche (outside the repository): set SHAPES_DEV_STANDARD_WORK to it; skipped otherwise.
+    """
+
+    @unittest.skipUnless(os.environ.get("SHAPES_DEV_STANDARD_WORK"), "set SHAPES_DEV_STANDARD_WORK to the standard tranche's work folder")
+    def test_the_standard_profile_rebuilds_the_committed_files_byte_for_byte(self):
+        committed = os.path.join(common.DATA, "eval", "shapes-dev")
+        with tempfile.TemporaryDirectory() as out:
+            with contextlib.redirect_stdout(io.StringIO()):
+                code = sd.main(["--work", os.environ["SHAPES_DEV_STANDARD_WORK"], "build", "--out-dir", out, "--shape-lemma-cap", "n-measure=12"])
+            self.assertEqual(0, code)
+            for name in ("dev.tsv", "sources.tsv", "excluded-sources.tsv"):
+                with open(os.path.join(out, name), "rb") as made, open(os.path.join(committed, name), "rb") as stored:
+                    self.assertEqual(stored.read(), made.read(), name)
 
 
 class QuotaUnitTests(unittest.TestCase):

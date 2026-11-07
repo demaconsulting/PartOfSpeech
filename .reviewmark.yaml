@@ -427,6 +427,7 @@ reviews:
       - "tools/data/hmm-tags/Program.cs"                            # harness of the hard tranche: WordSense Basic tags per token
       - "tools/data/tests/test_common.py"                           # tests of the shared helpers
       - "tools/data/tests/test_shapes_dev.py"                       # tests of the development set builder
+      - "tools/data/tests/test_shapes_dev_hard.py"                  # tests of the hard tranche (selection rule, quota gate, checks)
       - "tools/data/tests/status-cases.tsv"                         # shared parity cases of the status cell
       - "tools/data/tests/test_masc.py"                             # tests of the MASC mapping
       - "tools/data/tests/test_silver_lexicon.py"                   # tests of the silver derivation and lexicon rules
