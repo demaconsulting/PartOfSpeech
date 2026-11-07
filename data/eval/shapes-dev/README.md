@@ -19,7 +19,8 @@ above and below this paragraph that gives a count describes the standard tranche
 
 - **Source:** the sentences are text of 62 documents that are US federal government works (17 U.S.C. 105): Army, Navy,
   Bureau of Mines, Department of Agriculture, Forest Service and NASA publications, quoted per document in
-  `sources.tsv`. No document is in any other file of this repository, and no sentence is in a training or evaluation set.
+  `sources.tsv`. No document is in any other file of this repository except `hard-sources.tsv` (the hard tranche
+  shares part of these documents on purpose; no sentence is shared), and no sentence is in a training or evaluation set.
   Nothing was written for this set: all 700 sentences are real text (0 authored). Two documents that were first used were
   dropped later (see [Excluded Sources](#excluded-sources)).
 - **How produced:** `python tools/data/shapes_dev.py --work <work-folder> build --shape-lemma-cap n-measure=12` at commit
