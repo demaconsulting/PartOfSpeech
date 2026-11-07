@@ -782,7 +782,7 @@ class FrameTests(unittest.TestCase):
         "avoid": "VERB", "operate": "VERB NOUN", "stand": "VERB NOUN", "open": "VERB ADJ", "stop": "VERB NOUN", "try": "VERB NOUN",
         "check": "VERB NOUN", "checks": "NOUN VERB", "pass": "VERB NOUN", "process": "VERB NOUN", "focus": "VERB NOUN", "be": "AUX VERB",
         "bring": "VERB", "wring": "VERB", "ring": "VERB NOUN", "feed": "VERB NOUN", "fee": "NOUN", "need": "VERB NOUN", "r": "NOUN",
-        "br": "NOUN", "wr": "NOUN", "ne": "NOUN", "fe": "NOUN", "focu": "NOUN", "name": "NOUN VERB", "named": "VERB",
+        "br": "NOUN", "wr": "NOUN", "ne": "NOUN", "fe": "NOUN", "focu": "NOUN", "name": "NOUN VERB", "named": "VERB", "clear": "VERB ADJ",
     }.items()}
 
     def base_mismatch(self, shape, forms, target, tags):
@@ -813,10 +813,25 @@ class FrameTests(unittest.TestCase):
             self.assertTrue(self.base_mismatch("v-after-modal", ["must", word], 1, ["AUX", "VERB"]), word)
         self.assertTrue(self.base_mismatch("v-after-modal", ["to", "avoiding"], 1, ["PART", "VERB"]))
 
+    def test_the_nominal_gerund_rule_drops_ing_forms_of_a_verb_in_the_noun_shapes_only(self):
+        cases = (("n-subject-initial", ["Operating", "is", "x"], 0, ["NOUN", "AUX", "ADJ"]),
+                 ("n-compound-head", ["land", "clearing"], 1, ["NOUN", "NOUN"]),
+                 ("n-measure", ["2", "stopping"], 1, ["NUM", "NOUN"]))
+        for shape, forms, target, tags in cases:
+            self.assertTrue(self.base_mismatch(shape, forms, target, tags), shape)
+            plain = list(forms)
+            plain[target] = "Ring" if target == 0 else "ring"          # no verb stem behind the -ing ending: kept
+            self.assertFalse(self.base_mismatch(shape, plain, target, tags), shape)
+        opus, sol = self.votes(["NOUN", "NOUN"])
+        control = {"shape": "n-compound-head", "role": "control", "target": 1}
+        self.assertFalse(sd.frame_mismatch(control, opus, sol, "clearing", self.LEX))              # controls are untouched
+        self.assertFalse(self.base_mismatch("v-after-modal", ["must", "Wring"], 1, ["AUX", "VERB"]))
+
     def test_the_base_form_rule_is_only_for_the_two_verb_shapes_targets_and_given_a_form_and_a_lexicon(self):
         opus, sol = self.votes(["NOUN", "VERB"])
         noun_shape = {"shape": "n-subject-initial", "role": "target", "target": 0}
-        self.assertFalse(sd.frame_mismatch(noun_shape, opus, sol, "Operating", self.LEX))          # a gerund subject is the noun case
+        self.assertFalse(sd.frame_mismatch(noun_shape, opus, sol, "Operation", self.LEX))
+        self.assertFalse(sd.frame_mismatch(noun_shape, opus, sol, "Operating"))                    # skipped without a lexicon
         opus, sol = self.votes(["VERB", "DET"])
         control = {"shape": "v-imperative-initial", "role": "control", "target": 0}
         self.assertFalse(sd.frame_mismatch(control, opus, sol, "Avoiding", self.LEX))

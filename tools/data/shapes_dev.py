@@ -82,7 +82,9 @@ target outside the frame of its shape (only for a `target`, by the tags both lab
 NOUN or PROPN before; n-measure needs NUM before and no NOUN, PROPN or ADJ+noun after; n-subject-initial and v-imperative-initial need
 token 0, where the class Noun is enough because the shape tests the noun reading in a verb-biased position; v-after-modal needs AUX or
 PART before; v-imperative-initial and v-after-modal also need the base form: the lower-cased surface form of the target equals its
-`base_form_of` (a gerund such as `Avoiding`, a past form or a third person form is no base form)) -> drop, counted as `frame-mismatch`; otherwise keep. Every
+`base_form_of` (a gerund such as `Avoiding`, a past form or a third person form is no base form); the noun shapes n-subject-initial,
+n-compound-head and n-measure drop a target whose lower-cased surface form ends in `ing` and has a verb stem by `base_form_of` that
+differs from it (a possible nominal gerund, which data/CONVENTIONS.md does not decide)) -> drop, counted as `frame-mismatch`; otherwise keep. Every
 other token: the same tag -> that tag, `unanimous`; different tags -> `disputed`, the tag written is the one of the first labeler
 (the `opus` tagger), a fixed tie-break; flags only where both agree. The target is never disputed. Confidence is recorded and unused.
 
@@ -1264,6 +1266,15 @@ def vote_tag(votes, index):
     return opus[index].tag if opus[index].tag == sol[index].tag else "?"
 
 
+NOMINAL_GERUND_SHAPES = ("n-subject-initial", "n-compound-head", "n-measure")
+
+
+def possible_gerund(form, lex):
+    """True when the lower-cased `form` ends in `ing` and `base_form_of` finds a verb stem that differs from it (an -ing form of a verb)."""
+    low = form.lower()
+    return low.endswith("ing") and base_form_of(form, lex) != low
+
+
 def frame_mismatch(item, opus, sol, form=None, lex=None):
     """True when the judged word of a kept target item is not in the frame of its shape (pre-registered; uses only the tags
     that BOTH labelers gave the neighbor tokens; a neighbor they disagree on never satisfies a frame).
@@ -1282,6 +1293,11 @@ def frame_mismatch(item, opus, sol, form=None, lex=None):
     `Operating`, `Standing`, `Opened`, `Checks` fail. An instruction starts with the base form, not a gerund subject; after a modal
     or `to` the base form (`be`, `check`) is the only verb form. The rule is skipped when `form` or `lex` is not given.
 
+    Nominal gerund rule (n-subject-initial, n-compound-head and n-measure only; same inputs): the target is dropped when its lower-cased
+    surface form ends in `ing` and `base_form_of` finds a verb stem that differs from the surface form (`possible_gerund`: `Reloading`,
+    `Testing`, `clearing`). data/CONVENTIONS.md has no rule for a nominal gerund, so the gold of such a target is not decidable. A genuine
+    noun that is also an -ing form of a listed verb (`building`) is lost too, accepted. `Wring`, `Ring`, `Spring` pass (no verb stem).
+
     Controls have no frame, only the class. `opus` and `sol` map a token index to its Vote.
     """
     if item["role"] != "target":
@@ -1289,6 +1305,8 @@ def frame_mismatch(item, opus, sol, form=None, lex=None):
     shape, i = item["shape"], item["target"]
     votes = (opus, sol)
     if shape in ("v-imperative-initial", "v-after-modal") and form is not None and lex is not None and form.lower() != base_form_of(form, lex):
+        return True
+    if shape in NOMINAL_GERUND_SHAPES and form is not None and lex is not None and possible_gerund(form, lex):
         return True
     if shape in ("n-subject-initial", "v-imperative-initial"):
         return i != 0
