@@ -55,7 +55,7 @@ internal static class GlossaryProbe
         ArgumentNullException.ThrowIfNull(open);
         ArgumentNullException.ThrowIfNull(lexicon);
         var tagger = DevEvaluator.CreateTagger(weights);
-        var temperature = PerceptronModel.Load(weights, FeatureExtractor.FeatureSetVersion).Temperature;
+        var temperature = PerceptronModel.Load(weights).Temperature;
         var eligible = EligibleTypes(open, lexicon);
 
         var lines = new List<string>

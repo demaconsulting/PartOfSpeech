@@ -71,6 +71,14 @@ internal sealed class EpochReport
 ///         The class is stateless, and a training run is deterministic: the corpora, the configuration, the
 ///         lexicon and the library code determine every weight.
 ///     </para>
+///     <para>
+///         <b>Feature groups.</b> The groups of the configuration (<see cref="TrainingConfig.Features"/>) are trained with the
+///         shared <see cref="FeatureExtractor"/>: the workspace is configured with them, and every decision is reported to
+///         <see cref="FeatureExtractor.Advance"/> with the tag that becomes the history of the next token. With the
+///         <see cref="FeatureGroups.RightPreview"/> group every sentence is trained twice on the same weights, first without the
+///         preview features and then with the preview tags of <see cref="Jackknife"/>. Without a group none of this runs and
+///         the weights are those of the shipped training.
+///     </para>
 /// </remarks>
 internal static class PerceptronTrainer
 {
@@ -82,18 +90,39 @@ internal static class PerceptronTrainer
     /// <param name="sentences">The training sentences of one epoch; a repeated reference is a sentence that is seen several times per epoch.</param>
     /// <param name="onEpoch">Called after every epoch, or <c>null</c>.</param>
     /// <param name="glossary">The simulated glossary process of the dev-only glossary experiment (model M1), or <c>null</c> for the shipped feature set.</param>
+    /// <param name="previews">With the <c>rightPreview</c> group: the preview tags (<see cref="Upos"/> ordinals) of every distinct sentence that the second training pass reads, normally the jackknife tags of <see cref="Jackknife"/>; <c>null</c> computes them.</param>
     /// <returns>The trained perceptron.</returns>
-    /// <exception cref="ArgumentNullException">An argument other than <paramref name="onEpoch"/> and <paramref name="glossary"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentNullException">An argument other than <paramref name="onEpoch"/>, <paramref name="glossary"/> and <paramref name="previews"/> is <c>null</c>.</exception>
     /// <exception cref="InvalidDataException">The configuration is invalid.</exception>
-    public static AveragedPerceptron Train(TrainingConfig config, Lexicon lexicon, IReadOnlyList<TrainingSentence> sentences, Action<EpochReport>? onEpoch = null, GlossaryTraining? glossary = null)
+    /// <exception cref="ArgumentException"><paramref name="previews"/> lacks a sentence or has too few tags for one.</exception>
+    public static AveragedPerceptron Train(TrainingConfig config, Lexicon lexicon, IReadOnlyList<TrainingSentence> sentences, Action<EpochReport>? onEpoch = null, GlossaryTraining? glossary = null, IReadOnlyDictionary<TrainingSentence, int[]>? previews = null)
     {
         ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(lexicon);
         ArgumentNullException.ThrowIfNull(sentences);
         config.Validate();
 
+        // The feature groups of the run; the right preview group needs the first-pass tags of every sentence (without the group's features)
+        var groups = config.ResolveGroups();
+        if ((groups & FeatureGroups.RightPreview) != 0)
+        {
+            previews ??= Jackknife.Compute(config, lexicon, sentences);
+            foreach (var sentence in sentences)
+            {
+                if (!previews.TryGetValue(sentence, out var tags) || tags.Length < sentence.Tokens.Length)
+                {
+                    throw new ArgumentException($"The preview tags lack the sentence '{sentence.SentenceId}'.", nameof(previews));
+                }
+            }
+        }
+        else
+        {
+            previews = null;
+        }
+
         // Allowed tags of every token (once per distinct sentence), and the occurrence counts that the minimum count needs
         var workspace = new DecoderWorkspace();
+        workspace.Configure(groups, lexicon);
         var allowed = ComputeAllowed(sentences, lexicon, workspace, config.HashBits);
         var counts = config.MinCount > 1 ? CountFeatures(sentences, workspace, config.HashBits) : null;
 
@@ -105,7 +134,7 @@ internal static class PerceptronTrainer
             order[i] = i;
         }
 
-        var buckets = new int[FeatureExtractor.MaxFeatures + GlossaryFeatures.Count];
+        var buckets = new int[Math.Max(FeatureExtractor.BucketCapacity, FeatureExtractor.MaxFeatures + GlossaryFeatures.Count)];
         var scores = new int[UposExtensions.Count];
         for (var epoch = 1; epoch <= config.Epochs; epoch++)
         {
@@ -118,7 +147,7 @@ internal static class PerceptronTrainer
             {
                 var sentence = sentences[index];
                 var hints = glossary == null ? null : glossary.Draw(sentence, hintRandom!);
-                TrainSentence(config, perceptron, workspace, sentence, allowed[sentence], counts, hints, buckets, scores);
+                TrainSentence(config, perceptron, workspace, sentence, allowed[sentence], counts, hints, previews?[sentence], buckets, scores);
             }
 
             onEpoch?.Invoke(new EpochReport(epoch, perceptron.Steps - stepsBefore, perceptron.Mistakes - mistakesBefore, clock.Elapsed.TotalSeconds, perceptron));
@@ -128,7 +157,8 @@ internal static class PerceptronTrainer
     }
 
     /// <summary>
-    ///     Trains on one sentence: decodes it left to right and updates on every mistake against a gold tag.
+    ///     Trains on one sentence: decodes it left to right and updates on every mistake against a gold tag; with the right preview
+    ///     group the sentence is trained twice on the same weights, first without the preview features, then with them.
     /// </summary>
     /// <param name="config">The configuration.</param>
     /// <param name="perceptron">The weights.</param>
@@ -137,6 +167,7 @@ internal static class PerceptronTrainer
     /// <param name="allowed">The allowed-tag mask of every token of the sentence.</param>
     /// <param name="counts">The feature occurrence counts when a minimum count applies, otherwise <c>null</c>.</param>
     /// <param name="hints">The glossary hint of every token (-1 for none) in the glossary experiment, otherwise <c>null</c>.</param>
+    /// <param name="preview">The preview tags of the sentence for the second pass, or <c>null</c> without the right preview group.</param>
     /// <param name="buckets">The scratch buffer for the buckets of a token.</param>
     /// <param name="scores">The scratch buffer for the scores of a token.</param>
     private static void TrainSentence(
@@ -147,10 +178,44 @@ internal static class PerceptronTrainer
         int[] allowed,
         int[]? counts,
         int[]? hints,
+        int[]? preview,
         int[] buckets,
         int[] scores)
     {
         FeatureExtractor.Prepare(workspace, sentence.Tokens, config.HashBits);
+        TrainPass(config, perceptron, workspace, sentence, allowed, counts, hints, buckets, scores);
+        if (preview != null)
+        {
+            // The second pass sees the first-pass tags of the next two tokens; its history is its own
+            workspace.SetPreview(preview);
+            FeatureExtractor.StartPass(workspace, true);
+            TrainPass(config, perceptron, workspace, sentence, allowed, counts, hints, buckets, scores);
+        }
+    }
+
+    /// <summary>
+    ///     Trains one decoding pass over a prepared sentence.
+    /// </summary>
+    /// <param name="config">The configuration.</param>
+    /// <param name="perceptron">The weights.</param>
+    /// <param name="workspace">The workspace that holds the prepared sentence (in the state of the pass: preview on or off).</param>
+    /// <param name="sentence">The sentence.</param>
+    /// <param name="allowed">The allowed-tag mask of every token of the sentence.</param>
+    /// <param name="counts">The feature occurrence counts when a minimum count applies, otherwise <c>null</c>.</param>
+    /// <param name="hints">The glossary hint of every token (-1 for none) in the glossary experiment, otherwise <c>null</c>.</param>
+    /// <param name="buckets">The scratch buffer for the buckets of a token.</param>
+    /// <param name="scores">The scratch buffer for the scores of a token.</param>
+    private static void TrainPass(
+        TrainingConfig config,
+        AveragedPerceptron perceptron,
+        DecoderWorkspace workspace,
+        TrainingSentence sentence,
+        int[] allowed,
+        int[]? counts,
+        int[]? hints,
+        int[] buckets,
+        int[] scores)
+    {
         var previous1 = FeatureExtractor.StartTag1;
         var previous2 = FeatureExtractor.StartTag2;
         for (var i = 0; i < sentence.Tokens.Length; i++)
@@ -198,6 +263,9 @@ internal static class PerceptronTrainer
 
             previous2 = previous1;
             previous1 = config.History == HistoryMode.Gold && gold >= 0 ? gold : historyGuess;
+
+            // The decision is history for the clause state of the following tokens
+            FeatureExtractor.Advance(workspace, i, previous1);
         }
     }
 

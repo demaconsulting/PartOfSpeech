@@ -11,7 +11,8 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///     <para>
 ///         Commands: <c>train</c> (train, write the weights file, or with <c>--check</c> verify that the committed file is
 ///         current), <c>eval</c> (score a weights file on the development sets), <c>eval-shapes</c> (score a weights file on the
-///         hard-shape development set), <c>shapes-tokenize</c> (tokenize a text file for building that set), <c>calibrate</c> (choose the softmax
+///         hard-shape development set), <c>eval-arm</c> (the dev-only scoring of a trained arm of the context-feature experiment),
+///         <c>shapes-tokenize</c> (tokenize a text file for building that set), <c>calibrate</c> (choose the softmax
 ///         temperature on the open development split), <c>compare</c> (paired bootstrap of two weights files) and
 ///         <c>glossary-probe</c> (simulated glossaries on the open development split) and <c>glossary-eval</c> (the dev-only
 ///         evaluation of the <c>Glossary</c> API), <c>thresholds</c> (the development-only confidence curve and operating points)
@@ -23,7 +24,8 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///         The program only parses arguments and does I/O and printing; the engine is in <c>Training/</c> and
 ///         <c>Evaluation/</c>, which the tests compile and exercise directly. Every command except <c>evaluate</c> reads
 ///         nothing but the two development files (see <see cref="DataGuard"/>), except <c>eval-shapes</c>, which reads the
-///         two files of the hard-shape development set (its tranches), and <c>shapes-tokenize</c>, which reads and writes only the two files it is given
+///         two files of the hard-shape development set (its tranches), <c>eval-arm</c>, which reads the same development files and
+///         the mapped development table of the treebank cache (and no option names a data file), and <c>shapes-tokenize</c>, which reads and writes only the two files it is given
 ///         (both outside the data folder of the repository);
 ///         <c>evaluate</c> reads the held-out sets
 ///         only through the guarded readers and only with a selection artifact that is valid for the frozen model.
@@ -54,7 +56,7 @@ internal static class Program
         "--config", "--output", "--weights", "--label", "--log", "--epochs", "--hash-bits", "--min-count", "--prune", "--scale",
         "--seed", "--temperature", "--restrict", "--history", "--source", "--max-sentences", "--mask-disputed", "--silver-min",
         "--sample-permille", "--checkpoints", "--a", "--b", "--resamples", "--m0-output", "--m1-output", "--dump-dir", "--ud-cache",
-        "--in", "--out", "--tranche",
+        "--in", "--out", "--tranche", "--features", "--preview-folds", "--json",
     };
 
     /// <summary>
@@ -101,6 +103,7 @@ Commands:
         [--label TEXT] [--log FILE] [--checkpoints 4,6,8] [--calibrate]
         [--epochs N] [--hash-bits N] [--min-count N] [--prune N] [--scale S] [--seed N] [--temperature T]
         [--restrict none|history|full] [--history predicted|gold]
+        [--features none|F1,F2,F3,F4|positionCues,clauseCues,rightPreview,inflection] [--preview-folds N]
         [--source NAME:WEIGHT]... [--max-sentences N] [--sample-permille N] [--mask-disputed true|false] [--silver-min N]
       Trains and writes the weights (default: the embedded resource). With --check it retrains with the
       committed configuration and compares the uncompressed image with the committed file (exit 1 if stale);
@@ -108,6 +111,9 @@ Commands:
       experiments: they require --output so that the shipped weights are never overwritten, and are not allowed with
       --check. --calibrate fits the temperature of the run on the open
       development split before the run is written and scored, so confidence-based metrics are comparable.
+      --features selects the context feature groups (none, or any of positionCues=F1, clauseCues=F2, rightPreview=F3,
+      inflection=F4; the groups are stored in the weights header); rightPreview trains on jackknife preview tags of
+      --preview-folds folds (default 5) made by document hash. Both are experiment overrides.
   eval --weights FILE [--temperature T] [--label TEXT] [--log FILE]
       Scores a weights file on the development sets (open dev, gold v2 dev) through the real decoder.
   eval-shapes [--weights FILE] [--label TEXT] [--tranche standard|hard|both]
@@ -120,6 +126,12 @@ Commands:
       Tokenizes a text file with the library tokenizer, one sentence per line: each output line is the sentence, the number
       of sentences the tokenizer found and the tokens separated by single spaces, tab separated. Reads and writes only the two
       files (used by tools/data/shapes_dev.py to build the shapes development set); no repository data is read.
+  eval-arm --weights FILE --label TEXT --json FILE
+      Dev-only scoring of a trained weights file for the context-feature experiment: the shapes development set (standard and
+      hard tranche, per shape, with per-item outcomes of the target items), open dev, gold v2 dev, the mapped development part of
+      the treebank (local cache, pinned SHA-256), the size of the file and the single-thread throughput of the default tagger
+      (one warm-up pass and five timed passes over the open dev and treebank dev tokens, median). Writes the result as JSON to
+      --json. It reads no held-out set and accepts no data path; --weights and --json must lie outside data/ and tools/data/.
   calibrate --weights FILE [--config FILE] [--update-config]
       Chooses the softmax temperature that minimizes the log-likelihood on the open development split.
   compare --a FILE --b FILE [--resamples N] [--seed N]
@@ -175,6 +187,8 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
                     return Eval(line, root);
                 case "eval-shapes":
                     return EvalShapes(line, root);
+                case "eval-arm":
+                    return EvalArm(line, root);
                 case "shapes-tokenize":
                     return ShapesTokenize(line, root);
                 case "calibrate":
@@ -249,6 +263,16 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
         var label = line.Value("--label") ?? "run";
         var log = line.Value("--log");
         DevData? dev = null;
+
+        // The right preview group trains on the tags of fold models that did not see the sentence (see Jackknife); they come first
+        Dictionary<TrainingSentence, int[]>? previews = null;
+        if ((config.ResolveGroups() & FeatureGroups.RightPreview) != 0)
+        {
+            var jackknifeClock = Stopwatch.StartNew();
+            previews = Jackknife.Compute(config, lexicon, data, Console.WriteLine);
+            Console.WriteLine($"Jackknife of {config.PreviewFolds} folds finished in {jackknifeClock.Elapsed.TotalSeconds:0.0} s; peak working set {PeakMegabytes()} MB");
+        }
+
         var clock = Stopwatch.StartNew();
         var perceptron = PerceptronTrainer.Train(config, lexicon, data, report =>
         {
@@ -267,7 +291,7 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
 
                 Report($"{label}@ep{report.Epoch}", Describe(checkpointConfig) + $" epochs={report.Epoch}", file, 0, clock.Elapsed.TotalSeconds, dev, log, root);
             }
-        });
+        }, previews: previews);
         var trainSeconds = clock.Elapsed.TotalSeconds;
 
         // The image is what is compared and hashed; the committed file is the compressed form of the same payload
@@ -444,6 +468,76 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
         }
 
         return 0;
+    }
+
+    /// <summary>
+    ///     Runs the <c>eval-arm</c> command: scores a trained weights file on the development sets of the context-feature experiment
+    ///     and writes the result as JSON.
+    /// </summary>
+    /// <param name="line">The parsed command line.</param>
+    /// <param name="root">The repository root.</param>
+    /// <returns>The exit code.</returns>
+    /// <exception cref="InvalidOperationException">The weights or the result file lies in the data folder or the data tooling folder.</exception>
+    /// <exception cref="InvalidDataException">The weights are not a valid file, or a development input is missing or does not match its pin.</exception>
+    private static int EvalArm(CommandLine line, string root)
+    {
+        // The command has no data option at all; the only paths are the weights to read and the result to write, and neither may lie in a data folder
+        var weightsPath = DataGuard.EnsureArmFile(root, RequireValue(line, "--weights"));
+        var jsonPath = DataGuard.EnsureArmFile(root, RequireValue(line, "--json"));
+        var label = RequireValue(line, "--label");
+        var weights = File.ReadAllBytes(weightsPath);
+        var committed = ConfigFile.Load(Path.Combine(root, DefaultConfig.Replace('/', Path.DirectorySeparatorChar)));
+        var data = ArmEvaluationData.Load(root);
+        (data.Inputs.Commit, data.Inputs.Dirty) = GitState(root);
+        var echo = new ArmConfigEcho { PreviewFolds = committed.PreviewFolds, Epochs = committed.Epochs, Prune = committed.PruneThreshold };
+        var json = ArmEvaluation.Evaluate(weights, label, echo, data);
+        Directory.CreateDirectory(Path.GetDirectoryName(jsonPath)!);
+        File.WriteAllText(jsonPath, json, new UTF8Encoding(false));
+        Console.WriteLine($"Wrote {jsonPath} ({json.Length:N0} characters) for {label}.");
+        return 0;
+    }
+
+    /// <summary>
+    ///     Asks git for the commit of the repository and whether tracked files have uncommitted changes.
+    /// </summary>
+    /// <param name="root">The repository root.</param>
+    /// <returns>The commit and the dirty flag; <c>unknown</c> and dirty when git does not answer.</returns>
+    private static (string Commit, bool Dirty) GitState(string root)
+    {
+        var commit = RunGit(root, "rev-parse HEAD");
+        var status = RunGit(root, "status --porcelain --untracked-files=no");
+        return commit == null || status == null ? ("unknown", true) : (commit.Trim(), status.Trim().Length > 0);
+    }
+
+    /// <summary>
+    ///     Runs git in the repository and returns its output.
+    /// </summary>
+    /// <param name="root">The repository root.</param>
+    /// <param name="arguments">The arguments.</param>
+    /// <returns>The standard output, or <c>null</c> when git is missing or fails.</returns>
+    private static string? RunGit(string root, string arguments)
+    {
+        try
+        {
+            // Development tool: git is resolved from the PATH like in the shell of the person who runs the experiment
+#pragma warning disable S4036
+            var start = new ProcessStartInfo("git", arguments) { WorkingDirectory = root, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
+#pragma warning restore S4036
+            using var process = Process.Start(start);
+            if (process == null)
+            {
+                return null;
+            }
+
+            var output = process.StandardOutput.ReadToEnd();
+            process.StandardError.ReadToEnd();
+            process.WaitForExit();
+            return process.ExitCode == 0 ? output : null;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -803,7 +897,7 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
     /// <param name="root">The repository root.</param>
     private static void Report(string label, string settings, byte[] file, int deflatedBytes, double trainSeconds, DevData dev, string? log, string root)
     {
-        var model = PerceptronModel.Load(file, FeatureExtractor.FeatureSetVersion);
+        var model = PerceptronModel.Load(file);
         var tagger = DevEvaluator.CreateTagger(file);
         var summary = new RunSummary
         {
@@ -892,6 +986,18 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
         if (line.Value("--history") is { } history)
         {
             config.History = ParseEnum<HistoryMode>(history, "--history");
+            changed = true;
+        }
+
+        if (line.Value("--features") is { } features)
+        {
+            config.Features = TrainingConfig.ParseFeatureList(features);
+            changed = true;
+        }
+
+        if (line.Value("--preview-folds") is { } folds)
+        {
+            config.PreviewFolds = int.Parse(folds, CultureInfo.InvariantCulture);
             changed = true;
         }
 
@@ -1036,7 +1142,7 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
     private static string Describe(TrainingConfig config) =>
         string.Format(
             CultureInfo.InvariantCulture,
-            "sources={0} epochs={1} hashBits={2} minCount={3} prune={4} S={5} T={6} restriction={7} history={8} seed={9}",
+            "sources={0} epochs={1} hashBits={2} minCount={3} prune={4} S={5} T={6} restriction={7} history={8} seed={9}{10}",
             string.Join(",", config.Sources.Where(s => s.Weight > 0).Select(s => s.Name + ":" + s.Weight)),
             config.Epochs,
             config.HashBits,
@@ -1046,7 +1152,25 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
             config.Temperature,
             config.Restriction,
             config.History,
-            config.Seed);
+            config.Seed,
+            DescribeFeatures(config));
+
+    /// <summary>
+    ///     Describes the feature groups of a configuration for <see cref="Describe"/>; empty for the shipped feature set, so that its line does not change.
+    /// </summary>
+    /// <param name="config">The configuration.</param>
+    /// <returns>The text to append (with a leading space), or an empty string.</returns>
+    private static string DescribeFeatures(TrainingConfig config)
+    {
+        var groups = config.ResolveGroups();
+        if (groups == FeatureGroups.None)
+        {
+            return string.Empty;
+        }
+
+        var folds = (groups & FeatureGroups.RightPreview) != 0 ? $" previewFolds={config.PreviewFolds}" : string.Empty;
+        return " features=" + string.Join("+", TrainingConfig.NamesOf(groups)) + folds;
+    }
 
     /// <summary>
     ///     Gets the peak working set of the process in megabytes.

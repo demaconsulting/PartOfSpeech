@@ -108,6 +108,22 @@ internal sealed class TrainingConfig
     public const int MaxEpochs = 100;
 
     /// <summary>
+    ///     The default number of jackknife folds of the <c>rightPreview</c> group.
+    /// </summary>
+    public const int DefaultPreviewFolds = 5;
+
+    /// <summary>
+    ///     The names of the feature groups in the order of the bits of <see cref="FeatureGroups"/>: <c>positionCues</c> (F1),
+    ///     <c>clauseCues</c> (F2), <c>rightPreview</c> (F3) and <c>inflection</c> (F4).
+    /// </summary>
+    public static readonly IReadOnlyList<string> FeatureGroupNames = new[] { "positionCues", "clauseCues", "rightPreview", "inflection" };
+
+    /// <summary>
+    ///     The group names that the harness uses as short names, in the same order as <see cref="FeatureGroupNames"/>.
+    /// </summary>
+    private static readonly string[] FeatureGroupShortNames = { "F1", "F2", "F3", "F4" };
+
+    /// <summary>
     ///     Gets or sets the corpora to train on.
     /// </summary>
     public List<SourceConfig> Sources { get; set; } = new();
@@ -154,6 +170,17 @@ internal sealed class TrainingConfig
     public HistoryMode History { get; set; } = HistoryMode.Predicted;
 
     /// <summary>
+    ///     Gets or sets the names of the context feature groups that the model uses (<see cref="FeatureGroupNames"/>); empty is the shipped
+    ///     feature set. The file form leaves the member out while it is empty.
+    /// </summary>
+    public List<string> Features { get; set; } = new();
+
+    /// <summary>
+    ///     Gets or sets the number of jackknife folds of the <c>rightPreview</c> group (2 to 10); used only with that group.
+    /// </summary>
+    public int PreviewFolds { get; set; } = DefaultPreviewFolds;
+
+    /// <summary>
     ///     Gets or sets the softmax temperature stored in the weights file (chosen by <c>calibrate</c>, not by the training).
     /// </summary>
     public double Temperature { get; set; } = 1.0;
@@ -176,7 +203,123 @@ internal sealed class TrainingConfig
     {
         var copy = (TrainingConfig)MemberwiseClone();
         copy.Sources = Sources.Select(s => s.Clone()).ToList();
+        copy.Features = Features == null ? new List<string>() : new List<string>(Features);
         return copy;
+    }
+
+    /// <summary>
+    ///     Resolves the configured group names to the group flags of the feature extractor.
+    /// </summary>
+    /// <returns>The groups; <see cref="FeatureGroups.None"/> for the shipped feature set.</returns>
+    /// <exception cref="InvalidDataException">A name is unknown or repeated.</exception>
+    public FeatureGroups ResolveGroups() =>
+        TryResolveGroups(Features, out var groups, out var error)
+            ? groups
+            : throw new InvalidDataException("Invalid training configuration: " + error + ".");
+
+    /// <summary>
+    ///     Resolves group names (the canonical camel-case names, or <c>F1</c> to <c>F4</c>; case is ignored) to group flags.
+    /// </summary>
+    /// <param name="names">The names, or <c>null</c> (invalid).</param>
+    /// <param name="groups">Receives the groups when the names are valid.</param>
+    /// <param name="error">Receives what is wrong when they are not.</param>
+    /// <returns><c>true</c> when every name is known and none is given twice (by either spelling).</returns>
+    public static bool TryResolveGroups(IEnumerable<string>? names, out FeatureGroups groups, out string error)
+    {
+        groups = FeatureGroups.None;
+        error = string.Empty;
+        if (names == null)
+        {
+            error = "features must be a list of group names";
+            return false;
+        }
+
+        foreach (var name in names)
+        {
+            var index = name == null ? -1 : IndexOfGroup(name);
+            if (index < 0)
+            {
+                error = $"features names an unknown group '{name}' (known: {string.Join(", ", FeatureGroupNames)}, or F1 to F4)";
+                groups = FeatureGroups.None;
+                return false;
+            }
+
+            var flag = (FeatureGroups)(1u << index);
+            if ((groups & flag) != 0)
+            {
+                error = $"features names the group '{FeatureGroupNames[index]}' twice";
+                groups = FeatureGroups.None;
+                return false;
+            }
+
+            groups |= flag;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    ///     Gets the canonical names of a set of groups in the order of <see cref="FeatureGroupNames"/>.
+    /// </summary>
+    /// <param name="groups">The groups.</param>
+    /// <returns>The names; empty for <see cref="FeatureGroups.None"/>.</returns>
+    public static List<string> NamesOf(FeatureGroups groups)
+    {
+        var names = new List<string>();
+        for (var i = 0; i < FeatureGroupNames.Count; i++)
+        {
+            if (((uint)groups & (1u << i)) != 0)
+            {
+                names.Add(FeatureGroupNames[i]);
+            }
+        }
+
+        return names;
+    }
+
+    /// <summary>
+    ///     Parses the value of the <c>--features</c> option.
+    /// </summary>
+    /// <param name="text"><c>none</c> (no group), or group names separated by commas.</param>
+    /// <returns>The canonical names in the order of <see cref="FeatureGroupNames"/>, so that the order of the option does not matter.</returns>
+    /// <exception cref="ArgumentException">A name is unknown or repeated, or <c>none</c> is combined with a name.</exception>
+    public static List<string> ParseFeatureList(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var parts = text.Split(',').Select(p => p.Trim()).Where(p => p.Length > 0).ToList();
+        if (parts.Count == 0)
+        {
+            throw new ArgumentException("--features expects none or a comma-separated list of group names.");
+        }
+
+        if (parts.Any(p => string.Equals(p, "none", StringComparison.OrdinalIgnoreCase)))
+        {
+            return parts.Count == 1
+                ? new List<string>()
+                : throw new ArgumentException("--features: none cannot be combined with group names.");
+        }
+
+        return TryResolveGroups(parts, out var groups, out var error)
+            ? NamesOf(groups)
+            : throw new ArgumentException("--features: " + error + ".");
+    }
+
+    /// <summary>
+    ///     Finds the group that a name stands for.
+    /// </summary>
+    /// <param name="name">The name.</param>
+    /// <returns>The index into <see cref="FeatureGroupNames"/>, or -1.</returns>
+    private static int IndexOfGroup(string name)
+    {
+        for (var i = 0; i < FeatureGroupNames.Count; i++)
+        {
+            if (string.Equals(name, FeatureGroupNames[i], StringComparison.OrdinalIgnoreCase) || string.Equals(name, FeatureGroupShortNames[i], StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     /// <summary>
@@ -194,6 +337,8 @@ internal sealed class TrainingConfig
         Require(Temperature > 0 && Temperature < 1000 && !double.IsNaN(Temperature), "temperature must be greater than zero and below 1000");
         Require(Enum.IsDefined(typeof(RestrictionMode), Restriction), "restriction is not a known mode");
         Require(Enum.IsDefined(typeof(HistoryMode), History), "history is not a known mode");
+        Require(PreviewFolds >= 2 && PreviewFolds <= 10, "previewFolds must be between 2 and 10");
+        Require(TryResolveGroups(Features, out _, out var groupError), groupError);
         Require(Sources.Count > 0, "at least one source is needed");
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var source in Sources)

@@ -1934,7 +1934,397 @@ public class ModelTrainerTests
         }
     }
 
+    /// <summary>
+    ///     Creates the sentences of a synthetic corpus: <paramref name="documents"/> documents of <paramref name="perDocument"/> sentences each.
+    /// </summary>
+    private static List<TrainingSentence> Documents(int documents, int perDocument)
+    {
+        var sentences = new List<TrainingSentence>();
+        for (var d = 0; d < documents; d++)
+        {
+            for (var s = 0; s < perDocument; s++)
+            {
+                sentences.Add(new TrainingSentence($"doc{d}-s{s}", $"doc{d}", new[] { "The", "dog", "runs" }, new sbyte[] { (sbyte)Upos.Det, (sbyte)Upos.Noun, (sbyte)Upos.Verb }));
+            }
+        }
+
+        return sentences;
+    }
+
+    /// <summary>
+    ///     Creates the configuration of a small run with feature groups (three epochs, three jackknife folds).
+    /// </summary>
+    private static TrainingConfig GroupConfig(FeatureGroups groups, long seed = 7)
+    {
+        var config = SmallConfig(RestrictionMode.History, seed);
+        config.Features = TrainingConfig.NamesOf(groups);
+        config.PreviewFolds = 3;
+        config.Validate();
+        return config;
+    }
+
+    /// <summary>
+    ///     Validates the value of the <c>--features</c> option: <c>none</c>, short names and full names in any order and case, resolved to the canonical order.
+    /// </summary>
+    [Theory]
+    [InlineData("none", "")]
+    [InlineData("NONE", "")]
+    [InlineData("F1", "positionCues")]
+    [InlineData("F3,F1", "positionCues,rightPreview")]
+    [InlineData("inflection, clauseCues", "clauseCues,inflection")]
+    [InlineData("positionCues,clauseCues,rightPreview,inflection", "positionCues,clauseCues,rightPreview,inflection")]
+    [InlineData("INFLECTION,f1,rightPreview", "positionCues,rightPreview,inflection")]
+    public void TrainingConfig_ParseFeatureList_ValidValue_CanonicalOrder(string text, string expected)
+    {
+        // Arrange / Act
+        var names = TrainingConfig.ParseFeatureList(text);
+
+        // Assert
+        Assert.Equal(expected, string.Join(",", names));
+    }
+
+    /// <summary>
+    ///     Validates that an empty list, an unknown group (the skipped clusters group included), a group named twice by either spelling and
+    ///     <c>none</c> next to a group are usage errors.
+    /// </summary>
+    [Theory]
+    [InlineData("")]
+    [InlineData(",")]
+    [InlineData("F5")]
+    [InlineData("wordClusters")]
+    [InlineData("F1,F1")]
+    [InlineData("F1,positionCues")]
+    [InlineData("none,F1")]
+    [InlineData("F1,none")]
+    public void TrainingConfig_ParseFeatureList_InvalidValue_Throws(string text)
+    {
+        // Arrange / Act / Assert
+        Assert.Throws<ArgumentException>(() => TrainingConfig.ParseFeatureList(text));
+    }
+
+    /// <summary>
+    ///     Validates the defaults (no group, five folds), the resolution of the names to the flags of the extractor, the validation of the
+    ///     names and of the fold count, and that a clone does not share the list of groups.
+    /// </summary>
+    [Fact]
+    public void TrainingConfig_Features_DefaultsResolveValidateAndClone()
+    {
+        // Arrange
+        var config = SmallConfig();
+
+        // Act / Assert: the defaults are the shipped feature set
+        Assert.Empty(config.Features);
+        Assert.Equal(5, config.PreviewFolds);
+        Assert.Equal(FeatureGroups.None, config.ResolveGroups());
+
+        // Assert: names resolve to the flags in the order of the group bits
+        config.Features = new List<string> { "inflection", "F1", "rightPreview", "clauseCues" };
+        Assert.Equal(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection, config.ResolveGroups());
+        Assert.Equal(new[] { "positionCues", "clauseCues", "rightPreview", "inflection" }, TrainingConfig.NamesOf(config.ResolveGroups()));
+
+        // Assert: a clone has its own list
+        var clone = config.Clone();
+        clone.Features.Clear();
+        Assert.Equal(4, config.Features.Count);
+
+        // Assert: unknown and repeated names, and the fold count, are refused by Validate
+        foreach (var bad in new[] { new List<string> { "bogus" }, new List<string> { "F2", "clauseCues" }, new List<string> { "wordClusters" } })
+        {
+            config.Features = bad;
+            Assert.Throws<InvalidDataException>(() => config.Validate());
+            Assert.Throws<InvalidDataException>(() => config.ResolveGroups());
+        }
+
+        config.Features = new List<string>();
+        foreach (var folds in new[] { 1, 11, 0, -3 })
+        {
+            config.PreviewFolds = folds;
+            Assert.Throws<InvalidDataException>(() => config.Validate());
+        }
+
+        foreach (var folds in new[] { 2, 5, 10 })
+        {
+            config.PreviewFolds = folds;
+            config.Validate();
+        }
+    }
+
+    /// <summary>
+    ///     Validates that the encoded weights file carries the groups of the configuration: no group is the shipped format (feature set 1, mask 0),
+    ///     any group is feature set 2 with the mask in the header, and the loader reads the groups back.
+    /// </summary>
+    [Fact]
+    public void ModelBuilder_Encode_FeatureGroups_WritesMaskAndFeatureSetVersion()
+    {
+        // Arrange
+        var rows = new List<KeyValuePair<int, short[]>>();
+
+        // Act / Assert: no group
+        var none = ModelBuilder.Encode(rows, SmallConfig(), false);
+        Assert.Equal(1, BitConverter.ToUInt16(none, 8));
+        Assert.Equal(0u, BitConverter.ToUInt32(none, 40));
+        Assert.Equal(FeatureGroups.None, PerceptronModel.Load(none).FeatureGroups);
+
+        // Act / Assert: groups
+        foreach (var groups in new[] { FeatureGroups.PositionCues, FeatureGroups.RightPreview, FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection })
+        {
+            var file = ModelBuilder.Encode(rows, GroupConfig(groups), false);
+            Assert.Equal(2, BitConverter.ToUInt16(file, 8));
+            Assert.Equal((uint)groups, BitConverter.ToUInt32(file, 40));
+            Assert.Equal(groups, PerceptronModel.Load(file).FeatureGroups);
+            Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(file, FeatureExtractor.FeatureSetVersion));
+        }
+    }
+
+    /// <summary>
+    ///     Validates for every group and for the combinations of the experiment that the trainer's predictor gives the same tags as the runtime decoder
+    ///     for a model that the trainer made (including the two decoding passes of the right preview group).
+    /// </summary>
+    /// <param name="mask">The groups as the bits of the feature group flags: 1 position cues, 2 clause cues, 4 right preview, 8 inflection.</param>
+    [Theory]
+    [InlineData(1u)]
+    [InlineData(2u)]
+    [InlineData(4u)]
+    [InlineData(8u)]
+    [InlineData(15u)]
+    [InlineData(11u)]
+    public void ModelTrainer_Predict_FeatureGroups_MatchesTagDecoder(uint mask)
+    {
+        // Arrange: train the small run with the groups and load the same weights into the runtime decoder
+        var groups = (FeatureGroups)mask;
+        var config = GroupConfig(groups);
+        var corpus = SmallCorpus();
+        var rows = ModelBuilder.Rows(PerceptronTrainer.Train(config, EmbeddedModel.Lexicon, corpus), config);
+        var predictor = new QuantizedPredictor(HashBits, rows, groups);
+        var model = PerceptronModel.Load(ModelBuilder.Encode(rows, config, false));
+        var decoder = new TagDecoder(model, EmbeddedModel.Lexicon);
+
+        // Act / Assert: the model has the groups, and every token of every sentence gets the same tag
+        Assert.Equal(groups, model.FeatureGroups);
+        var compared = 0;
+        var correct = 0;
+        foreach (var sentence in corpus.Distinct())
+        {
+            var expected = predictor.Predict(sentence.Tokens, EmbeddedModel.Lexicon);
+            var actual = decoder.Decode(Tokenizer.CreateSentence(sentence.Tokens).TokenArray, null, 0);
+            Assert.Equal(expected, actual.Select(t => (int)t.Tag));
+            compared += expected.Length;
+            correct += expected.Where((tag, i) => tag == sentence.Gold[i]).Count();
+        }
+
+        Assert.True(compared > 2000);
+
+        // Assert: what the trainer learned is what the decoder executes (the training sentences are tagged mostly right)
+        Assert.True(correct > compared * 0.8, $"only {correct} of {compared} training tokens are right");
+    }
+
+    /// <summary>
+    ///     Validates that the two decoding passes of the right preview group are part of the predictor: the second pass reads the first-pass tags,
+    ///     so a model with a strong weight on the preview of the next token changes the tag of the token before it, as the runtime decoder does.
+    /// </summary>
+    [Fact]
+    public void QuantizedPredictor_RightPreview_SecondPassReadsFirstPassTags()
+    {
+        // Arrange: "dog" is a verb on its own; the preview feature "next tag is NOUN" makes the word before it a DET
+        var lexicon = DemaConsulting.PartOfSpeech.Lexicon.Load(TinyModels.CreateLexicon("the DET NOUN", "dog NOUN VERB"));
+        var rows = new Dictionary<int, short[]>();
+        void Add(int bucket, Upos tag, short weight)
+        {
+            if (!rows.TryGetValue(bucket, out var row))
+            {
+                row = new short[UposExtensions.Count];
+                rows[bucket] = row;
+            }
+
+            row[(int)tag] += weight;
+        }
+
+        Add(FeatureExtractor.ReferenceBucket(FeatureKind.Lower, "dog", null, HashBits), Upos.Verb, 100);
+        Add(FeatureExtractor.ReferenceBucket(FeatureKind.Lower, "the", null, HashBits), Upos.Noun, 30);
+        Add(FeatureExtractor.ReferenceBucketOfCodes(FeatureKind.Rt1, (uint)Upos.Verb, 0, HashBits), Upos.Det, 200);
+        var pairs = rows.OrderBy(r => r.Key).Select(r => new KeyValuePair<int, short[]>(r.Key, r.Value)).ToList();
+
+        // Act: the same weights without and with the group
+        var plain = new QuantizedPredictor(HashBits, pairs).Predict(new[] { "the", "dog" }, lexicon);
+        var previewed = new QuantizedPredictor(HashBits, pairs, FeatureGroups.RightPreview).Predict(new[] { "the", "dog" }, lexicon);
+
+        // Assert: without the group "the" stays a noun (its own weight); with it the first-pass tag of "dog" (a verb) turns "the" into a determiner
+        Assert.Equal(new[] { (int)Upos.Noun, (int)Upos.Verb }, plain);
+        Assert.Equal(new[] { (int)Upos.Det, (int)Upos.Verb }, previewed);
+    }
+
+    /// <summary>
+    ///     Validates the folds: they depend on the document id only (a document is never split, the order of the sentences and the seed do not matter),
+    ///     every fold is used, and the pinned values of the hash do not move.
+    /// </summary>
+    [Fact]
+    public void Jackknife_Partition_ByDocumentHash_NeverSplitsADocumentAndIsStable()
+    {
+        // Arrange: 60 documents of three sentences
+        var sentences = Documents(60, 3);
+
+        // Act
+        var folds = Jackknife.Partition(sentences, 5);
+        var reversed = Jackknife.Partition(Enumerable.Reverse(sentences).ToList(), 5);
+
+        // Assert: one fold per document, the same in any order, all folds used, a fold is a hash of the document id
+        Assert.Equal(sentences.Count, folds.Count);
+        foreach (var group in sentences.GroupBy(s => s.SourceId))
+        {
+            Assert.Single(group.Select(s => folds[s]).Distinct());
+            Assert.Equal(Jackknife.FoldOf(group.Key, 5), folds[group.First()]);
+        }
+
+        Assert.All(sentences, s => Assert.Equal(folds[s], reversed[s]));
+        Assert.Equal(Enumerable.Range(0, 5), folds.Values.Distinct().OrderBy(f => f));
+
+        // Assert: a sentence without a document id falls back to its sentence id; the fold count is at least two
+        Assert.Equal(Jackknife.FoldOf("lonely", 5), Jackknife.Partition(new[] { new TrainingSentence("lonely", string.Empty, new[] { "a" }, new sbyte[] { 0 }) }, 5).Values.Single());
+        Assert.Throws<ArgumentOutOfRangeException>(() => Jackknife.FoldOf("doc", 1));
+
+        // Assert: pinned folds (FNV-1a of the UTF-8 bytes modulo the fold count)
+        Assert.Equal(new[] { 3, 2, 0 }, new[] { Jackknife.FoldOf("doc-a", 5), Jackknife.FoldOf("doc-b", 5), Jackknife.FoldOf("tatoeba-10001852", 5) });
+    }
+
+    /// <summary>
+    ///     Validates the jackknife tags against an independent replay: every held-out sentence is tagged by the quantized weights of a model that was
+    ///     trained on the other folds without the right preview group (with the other groups of the run, the seed and the settings of the run), the
+    ///     folds do not depend on the seed, and a run is reproducible.
+    /// </summary>
+    [Fact]
+    public void Jackknife_Compute_TagsEachFoldWithAModelThatDidNotSeeIt()
+    {
+        // Arrange: the clause group (kept in the fold models) with the right preview group
+        var groups = FeatureGroups.ClauseCues | FeatureGroups.RightPreview;
+        var config = GroupConfig(groups);
+        var corpus = SmallCorpus();
+        var messages = new List<string>();
+
+        // Act
+        var tags = Jackknife.Compute(config, EmbeddedModel.Lexicon, corpus, messages.Add);
+        var again = Jackknife.Compute(config, EmbeddedModel.Lexicon, corpus);
+        var otherSeed = Jackknife.Compute(GroupConfig(groups, seed: 8), EmbeddedModel.Lexicon, corpus, null);
+
+        // Assert: every distinct sentence has one tag per token, one message per fold, and a run is reproducible
+        var distinct = corpus.Distinct().ToList();
+        Assert.Equal(distinct.Count, tags.Count);
+        Assert.All(distinct, s => Assert.Equal(s.Tokens.Length, tags[s].Length));
+        Assert.Equal(3, messages.Count);
+        Assert.All(distinct, s => Assert.Equal(tags[s], again[s]));
+
+        // Assert: the seed changes the models but not the folds (the sentences are the same, their tags may differ)
+        Assert.Equal(tags.Keys.OrderBy(s => s.SentenceId), otherSeed.Keys.OrderBy(s => s.SentenceId));
+        Assert.Contains(distinct, s => !tags[s].SequenceEqual(otherSeed[s]));
+
+        // Act / Assert: replay of every fold by hand
+        var foldOf = Jackknife.Partition(corpus, 3);
+        var foldConfig = GroupConfig(FeatureGroups.ClauseCues);
+        for (var fold = 0; fold < 3; fold++)
+        {
+            var training = corpus.Where(s => foldOf[s] != fold).ToList();
+            var foldRows = ModelBuilder.Rows(PerceptronTrainer.Train(foldConfig, EmbeddedModel.Lexicon, training), foldConfig);
+            var predictor = new QuantizedPredictor(HashBits, foldRows, FeatureGroups.ClauseCues);
+            foreach (var sentence in distinct.Where(s => foldOf[s] == fold))
+            {
+                Assert.Equal(predictor.Predict(sentence.Tokens, EmbeddedModel.Lexicon), tags[sentence]);
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Validates that sentences of fewer than two folds cannot be jackknifed.
+    /// </summary>
+    [Fact]
+    public void Jackknife_Compute_OneDocument_Throws()
+    {
+        // Arrange: one document is one fold
+        var config = GroupConfig(FeatureGroups.RightPreview);
+
+        // Act / Assert
+        Assert.Throws<InvalidDataException>(() => Jackknife.Compute(config, EmbeddedModel.Lexicon, Documents(1, 4)));
+    }
+
+    /// <summary>
+    ///     Validates the mixed training of the right preview group: every sentence is trained twice on one table (twice the steps of the arm without
+    ///     the group), the result does not depend on whether the preview tags are passed or computed, other tags give another model, and a missing
+    ///     sentence is refused.
+    /// </summary>
+    [Fact]
+    public void PerceptronTrainer_Train_RightPreview_TrainsBothPassesOnOneTable()
+    {
+        // Arrange
+        var corpus = SmallCorpus();
+        var plain = GroupConfig(FeatureGroups.None);
+        var preview = GroupConfig(FeatureGroups.RightPreview);
+        var previews = Jackknife.Compute(preview, EmbeddedModel.Lexicon, corpus);
+
+        // Act
+        var baseline = PerceptronTrainer.Train(plain, EmbeddedModel.Lexicon, corpus);
+        var computed = PerceptronTrainer.Train(preview, EmbeddedModel.Lexicon, corpus);
+        var given = PerceptronTrainer.Train(preview, EmbeddedModel.Lexicon, corpus, previews: previews);
+        var gold = corpus.Distinct().ToDictionary(s => s, s => s.Gold.Select(g => (int)g).ToArray());
+        var other = PerceptronTrainer.Train(preview, EmbeddedModel.Lexicon, corpus, previews: gold);
+
+        // Assert: two passes per sentence, the same model from the same tags, another model from other tags
+        Assert.Equal(2 * baseline.Steps, computed.Steps);
+        Assert.Equal(ModelBuilder.Build(computed, preview, false), ModelBuilder.Build(given, preview, false));
+        Assert.NotEqual(ModelBuilder.Build(computed, preview, false), ModelBuilder.Build(other, preview, false));
+        var incomplete = previews.Where(p => p.Key != corpus[0]).ToDictionary(p => p.Key, p => p.Value);
+        Assert.Throws<ArgumentException>(() => PerceptronTrainer.Train(preview, EmbeddedModel.Lexicon, corpus, previews: incomplete));
+    }
+
+    /// <summary>
+    ///     Validates that without a group the training is the shipped training: the explicit empty list, the default and a list of the preview
+    ///     tags that is not used give the same bytes as before the groups existed (the golden hash of the small run).
+    /// </summary>
+    [Fact]
+    public void PerceptronTrainer_Train_NoGroups_IsTheShippedTraining()
+    {
+        // Arrange
+        var config = SmallConfig(RestrictionMode.None);
+        config.Features = new List<string>();
+        config.PreviewFolds = 9;
+
+        // Act
+        var image = ModelBuilder.Sha256Hex(ModelBuilder.Build(PerceptronTrainer.Train(config, EmbeddedModel.Lexicon, SmallCorpus(), previews: new Dictionary<TrainingSentence, int[]>()), config, false));
+
+        // Assert
+        Assert.Equal(GoldenUnrestricted, image);
+    }
+
 #if NET8_0_OR_GREATER
+    /// <summary>
+    ///     Validates that the file form leaves the feature settings out while they are at their defaults (so the committed configuration keeps its
+    ///     form), writes them when a group is selected, reads them back and refuses an unknown group.
+    /// </summary>
+    [Fact]
+    public void ConfigFile_Features_OmittedByDefaultAndRoundTripped()
+    {
+        // Arrange
+        var config = SmallConfig();
+
+        // Act / Assert: the defaults are not written
+        var plain = ConfigFile.Format(config);
+        Assert.DoesNotContain("features", plain, StringComparison.Ordinal);
+        Assert.DoesNotContain("previewFolds", plain, StringComparison.Ordinal);
+
+        // Act / Assert: a group is written, with the fold count when the preview group is on, and read back
+        config.Features = new List<string> { "positionCues", "rightPreview" };
+        var text = ConfigFile.Format(config);
+        Assert.Contains("\"features\": [", text, StringComparison.Ordinal);
+        Assert.Contains("\"rightPreview\"", text, StringComparison.Ordinal);
+        Assert.Contains("\"previewFolds\": 5", text, StringComparison.Ordinal);
+        var parsed = ConfigFile.Parse(text);
+        Assert.Equal(new[] { "positionCues", "rightPreview" }, parsed.Features);
+        Assert.Equal(text, ConfigFile.Format(parsed));
+        config.Features = new List<string> { "inflection" };
+        Assert.DoesNotContain("previewFolds", ConfigFile.Format(config), StringComparison.Ordinal);
+
+        // Assert: a short or unknown name that the file form cannot carry is refused where the engine would meet it
+        Assert.Throws<InvalidDataException>(() => ConfigFile.Parse(text.Replace("positionCues", "bogus")));
+        Assert.Throws<InvalidDataException>(() => ConfigFile.Parse(text.Replace("\"previewFolds\": 5", "\"previewFolds\": 1")));
+    }
+
     /// <summary>
     ///     Validates that the committed configuration is valid, names the three corpora and is in the canonical form that the tool writes.
     /// </summary>

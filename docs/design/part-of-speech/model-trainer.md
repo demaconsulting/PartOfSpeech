@@ -24,11 +24,15 @@ target framework, including .NET Framework.
   sentences enter every epoch; 0 leaves it out), `MaskDisputed`, `MinSilverProbability`, `SamplePermille` and
   `MaxSentences`. The run has `Epochs`, `HashBits` (18 to 24), `MinCount`, `PruneThreshold`, `QuantScale` (a power of
   two; the file scale is its reciprocal, which is exact), `Seed`, `Restriction` (`None`, `History` or `Full`),
-  `History` (`Predicted` or `Gold`), `Temperature` and `ImageSha256`. There is no floating-point training setting:
+  `History` (`Predicted` or `Gold`), `Temperature` and `ImageSha256`, and the context feature groups: `Features` (a list
+  of group names, empty by default; `positionCues` (F1), `clauseCues` (F2), `rightPreview` (F3), `inflection` (F4);
+  `ResolveGroups` maps them to the `FeatureGroups` flags and `Validate` refuses an unknown or repeated name) and
+  `PreviewFolds` (2 to 10, default 5, used only with `rightPreview`). There is no floating-point training setting:
   the temperature is chosen once by the `calibrate` command and is only written into the file header.
 - **`training.json`** (`ConfigFile.cs`, System.Text.Json, strict: an unknown member or an out-of-range value is an error):
-  the committed selected configuration in canonical form, so that rewriting it makes no changes. The selected values are
-  in _Selection of the Shipped Model_ below.
+  the committed selected configuration in canonical form, so that rewriting it makes no changes (`features` and
+  `previewFolds` are written only while a group is selected, so the committed form of the shipped feature set does not
+  change). The selected values are in _Selection of the Shipped Model_ below.
 - **`TrainingSentence`** (`Training/CorpusReader.cs`): the tokens of a sentence, the gold tag of every token or "no
   signal" (a masked token), the marks of every token and the id of the sentence. The marks (`TokenMarks`: `Foreign`,
   `Mentioned`) come from the status cell of a corpus row, `status[+flag...]` (`CorpusStatus`, same file); the reader
@@ -39,6 +43,15 @@ target framework, including .NET Framework.
   mistakes.
 - **`DeterministicRandom`** (`Training/DeterministicRandom.cs`): SplitMix64 with a Fisher-Yates shuffle; the sequence for
   seed 0 is pinned by a test.
+- **`QuantizedPredictor`** (`Training/QuantizedPredictor.cs`): the trainer's own greedy predictor over quantized rows for
+  a set of feature groups (two decoding passes with the right preview group); a test proves that it gives the tags of
+  `TagDecoder` for every group.
+- **`Jackknife`** (`Training/Jackknife.cs`): the folds by document hash and the preview tags of the right preview group
+  (see _Context-Feature Experiment_).
+- **`ArmEvaluationData`**, **`ArmEvaluation`**, **`ArmConfigEcho`** and **`ArmInputs`** (`Evaluation/ArmEvaluation.cs`):
+  the development data of the command `eval-arm`, the scoring of one weights file and the hand-written JSON writer of
+  its result (see _Context-Feature Experiment_); `DevSets.ReadUdDev` reads the mapped development part of the external
+  treebank from the local cache.
 - **`DataGuard`** (`Evaluation/DevSets.cs`): the allow-list of the two development files, the deny-list for training
   sources, which works on the canonical path (absolute, with symbolic links and junctions resolved on .NET 6 and later)
   and requires a training source to lie below the `data` folder of the repository, and the held-out allow-list (the four
@@ -91,7 +104,8 @@ target framework, including .NET Framework.
   allowed tags of every token are computed once with `Lexicon.AllowedTags` (the same code that the decoder uses), and
   for every epoch the sentence order is shuffled with `DeterministicRandom` (continuing from the order of the previous
   epoch) and every sentence is decoded from left to right: `FeatureExtractor` gives the 22 buckets of the token (the
-  four history features use the two previous tags), the integer scores of the 17 tags are summed, the guess is made,
+  four history features use the two previous tags; the groups of the run add theirs, see below), the integer scores of
+  the 17 tags are summed, the guess is made,
   and on a mistake against a gold tag the weights of every feature are changed by +1 for the gold tag and -1 for the
   guessed tag, and the update is recorded as `t * delta` in `U`. A token without a training signal is only decoded: it
   is a step of the averaging (because it is decoded at run time) and it enters the history.
@@ -110,8 +124,10 @@ target framework, including .NET Framework.
 - **Minimum count**: when `MinCount` is above 1 a feature takes part in training only if it occurs often enough in the
   training signal.
 - **Building the file** (`ModelBuilder`): the rows go to `PerceptronModelWriter.Compile` (which orders the buckets) with
-  `hashBits`, the temperature, the scale and `FeatureExtractor.FeatureSetVersion`; `Build(..., compress: false)` gives
-  the uncompressed image that is compared and hashed, `compress: true` the committed file.
+  `hashBits`, the temperature, the scale, the feature set version of the groups of the configuration
+  (`FeatureExtractor.FeatureSetVersionFor`: 1 without a group, 2 with one) and the group mask (the header word at offset
+  40); `Build(..., compress: false)` gives the uncompressed image that is compared and hashed, `compress: true` the
+  committed file.
 - **`train --check`**: retrains with `training.json`, builds the uncompressed image and compares it with
   `PerceptronModel.ToUncompressedImage` of the committed file and with `imageSha256`; the status is `Current`, `Missing`,
   `Stale` or `Invalid`, and the exit code is 1 with the regeneration command in the message unless the file is current.
@@ -126,8 +142,12 @@ target framework, including .NET Framework.
 - **Glossary evaluation** (`GlossaryEvaluation`, `GlossaryEvaluationReport`): see _Glossary Evaluation_.
 - **Shapes development evaluation** (`ShapesDevSets`, `ShapesDevEvaluator`, `ShapesDevReport`): see _Shapes Development
   Evaluation_.
-- **Commands** (`Program.cs`): `train` (with experiment overrides, `--check`, `--update-config`, `--eval`, `--log`,
+- **Context features** (`PerceptronTrainer`, `Jackknife`, `QuantizedPredictor`, `ArmEvaluation`): see _Context-Feature
+  Experiment_.
+- **Commands** (`Program.cs`): `train` (with experiment overrides, among them `--features` and `--preview-folds`, `--check`,
+  `--update-config`, `--eval`, `--log`,
   `--calibrate`, `--checkpoints`), `eval`, `eval-shapes` (the hard-shape development set; `--weights`, `--label`, `--tranche`),
+  `eval-arm` (`--weights`, `--label`, `--json`; the dev-only scoring of a trained arm),
   `shapes-tokenize` (`--in`, `--out`; the library tokenizer over a text file; `DataGuard.EnsureOutsideData` refuses a
   path inside the repository's data folder, so no repository data), `calibrate`, `compare`,
   `glossary-probe`, `glossary-experiment` and
@@ -152,6 +172,12 @@ or the open training corpus changes, those values must be pinned again (a failin
 environmental inputs are the Unicode normalization and the culture-invariant case mapping and character classification
 of the few non-ASCII tokens of the corpora, which are stable by Unicode policy; any difference would surface as a
 failing `train --check` or golden test in the CI job of that system.
+
+With no feature group (no `features` in the configuration, no `--features` option or `--features none`) none of the
+group code runs and the training is the training of the shipped model: `train --check` reproduces the committed image,
+the calibrated run with the committed seed is byte-identical to the committed weights file, and the golden hashes of
+the small reference runs are unchanged. The jackknife is deterministic too: its folds depend on the document ids only,
+and the fold models are trained like any other run.
 
 ### Development-Only Selection
 
@@ -438,6 +464,52 @@ scores a weights file on it:
 - **Tokens**: the file stores tokens made by the library `Tokenizer`; the command `shapes-tokenize` runs it over a text
   file for `tools/data/shapes_dev.py`, which builds the set from sentences that two blind model taggers labeled.
 
+### Context-Feature Experiment
+
+The context feature groups (position cues F1, clause cues F2, right preview F3, inflection F4; their definitions are
+in `feature-extractor.md` and in the pre-registration section of `RUN-LOG.md`) are switches of the shared
+`FeatureExtractor`. The trainer is the side that trains them and measures them; the protocol (arms, seeds, metrics, guards
+and the selection rule) was fixed before any candidate model was trained and is recorded in `RUN-LOG.md`, and the
+harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-features/` (`arms.json`, `run_arms.ps1`,
+`analyze_arms.py`; frozen by the hashes in the run log, resumable: a run is complete when its JSON exists).
+
+- **Training with groups** (`PerceptronTrainer.Train`): the workspace is configured with the groups and the lexicon
+  (`DecoderWorkspace.Configure`) before a sentence is prepared, the buckets of a token are the base ones, the static
+  buckets of the groups and the history buckets (`BucketCapacity` elements), and `FeatureExtractor.Advance` is called
+  after every decision with the tag that becomes the history of the next token, exactly as the decoder does. The minimum
+  count and the pruning treat the static group features like the base ones; the history features of the groups are never
+  dropped. `QuantizedPredictor` takes the groups and decodes like `TagDecoder`, including the first and the second pass
+  of the right preview group, and the tests prove the equality for every group.
+- **Right preview** (`PerceptronTrainer`, `Jackknife`): every sentence is trained in two passes on one weight table,
+  the first without the preview features, the second with the preview tags of the sentence (the pass-2 history is its
+  own), so the table serves the first pass of the decoder as well and the file keeps the size of an arm without the
+  group. The
+  preview tags are the **jackknife** tags: the distinct sentences are split into `PreviewFolds` folds by the FNV-1a hash
+  of the document id (`source_id`, or the sentence id when there is none) modulo the number of folds, so a document is
+  never split and the same sentences share a fold in every run and for every seed; for each fold a model is trained on
+  the other folds without the right preview group (the other groups, the settings and the seed of the run) and tags its
+  fold with `QuantizedPredictor`, the quantized weights and the lexicon restriction, which is the first pass of the
+  decoder. The first pass at run time uses the final model and the training tags come from the fold models; that
+  mismatch is accepted. The tags are not cached: the fold models depend on the other groups of the arm and on the seed,
+  so no two runs of the experiment share them, and a run that fails is repeated from the start.
+- **`eval-arm`** (`ArmEvaluation`, `ArmEvaluationData`): scores one weights file through the real decoder (all 16
+  alternatives, `Metrics.Judge`) on the standard and the hard tranche of the shapes development set (per shape and
+  pooled; `items` lists `d`, `c` and `h` for every target item, which sum to the pooled decisions, correct and
+  harmful counts), on the open and the gold v2 development splits and on the mapped development part of the external
+  treebank (the file `ud_dev.tsv` of the local, git-ignored treebank cache below `tools/data/cache`, whose SHA-256 is
+  pinned in `DataGuard`; a missing or changed cache is an error with the fetch recipe, and judging uses the mapped tags
+  like the held-out view of the treebank), reads the size of the file and the groups from the header, and measures the
+  throughput. **Throughput**: tokens per second of the default tagger (a tagger loaded from the same file with default
+  options) on the calling thread only, over the tokens of the open development split followed by those of the
+  development part of the treebank, one `Tag(tokens)` call per sentence, after one warm-up pass that is not counted, as
+  the median of five timed passes over all sentences; it excludes tokenization, loading and the judged pass. The result
+  is one JSON object (schema 1, hand-written and deterministic except for the throughput) whose members are listed in
+  the interface contract at the top of `run_arms.ps1`; the command records the commit and a dirty flag from git. The
+  command has no data option; `--weights` and `--json` must lie outside `data/` and `tools/data/`
+  (`DataGuard.EnsureArmFile`), so no held-out file can be read as weights or overwritten by a result, and a test pins
+  that every held-out file is refused by the guards that the command uses and that its sources do not mention the
+  held-out readers.
+
 ### Error Handling
 
 Invalid configuration (an unknown member, an out-of-range value, no source, a source with weight above 16, a corpus
@@ -448,8 +520,10 @@ training source that lies outside the `data` folder after resolution, and a link
 negative, non-numeric or out-of-sentence target index throws `InvalidDataException`. A shapes development item whose
 judged word is missing, outside its sentence, disputed, not a noun or verb or in the wrong class for its shape and role,
 a header without `dev split`, and a missing file throw as well (`InvalidDataException`, `FileNotFoundException`), and a
-path other than the two shapes development files given to its guard throws `InvalidOperationException`. A held-out gate
-failure (no
+path other than the two shapes development files given to its guard throws `InvalidOperationException`. `eval-arm`
+refuses a weights or result file inside `data/` or `tools/data/` (`InvalidOperationException`), a missing, changed or
+non-development treebank table and a weights file that is not valid (`InvalidDataException`), all exit code 2. A
+held-out gate failure (no
 selection artifact, an artifact for another model, rule or development file, a held-out file that differs from its recorded
 hash or announces another set, a missing or unpinned treebank cache or a mapped table that differs from its pin, a
 malformed probe or treebank row, a missing development file or one that differs from the manifest hash, an artifact
@@ -465,8 +539,9 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
 
 ### Dependencies
 
-- **FeatureExtractor**, **DecoderWorkspace** and **Lexicon** (the same extraction and the same `AllowedTags` rules as at
-  run time), **PerceptronModel** (`Load`, `ToUncompressedImage`), **PerceptronModelWriter**, **BinaryFormat**
+- **FeatureExtractor**, **DecoderWorkspace** and **Lexicon** (the same extraction, the same feature groups and the same
+  `AllowedTags` rules as at run time), **PerceptronModel** (`Load`, `FeatureGroups`, `ToUncompressedImage`),
+  **PerceptronModelWriter** (with the group mask), **BinaryFormat**
   (header patching for the temperature), **Upos**; **Tagger**, **TagDecoder** and **TokenConstraint** for the evaluation
   and the glossary experiment through the real decoder; **Glossary** (with its builder, entry, options and match types)
   for the glossary evaluation through the real tagger. All of these are internal and reached through
@@ -475,9 +550,10 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
   (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv` and `data/silver/silver.tsv`, and the two
   development files plus the two hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche) and
-  `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` only); for
+  `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` and `eval-arm` only); for
   `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the
-  external treebank that the data tools fetch (the tool itself uses no network).
+  external treebank that the data tools fetch (the tool itself uses no network); `eval-arm` reads the mapped development
+  table of the same cache.
 
 ### Callers
 

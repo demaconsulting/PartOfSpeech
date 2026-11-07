@@ -289,7 +289,7 @@ internal static class GlossaryExperiment
     public static List<string> Run(HintedPredictor m0, HintedPredictor m1, byte[] m0File, IReadOnlyList<TrainingSentence> open, Lexicon lexicon, ulong seed)
     {
         var lines = new List<string>();
-        var temperature0 = PerceptronModel.Load(m0File, FeatureExtractor.FeatureSetVersion).Temperature;
+        var temperature0 = PerceptronModel.Load(m0File).Temperature;
         var eligible = GlossaryProbe.EligibleTypes(open, lexicon);
         lines.Add(string.Format(CultureInfo.InvariantCulture, "glossary experiment on the open development split: {0} eligible types, M0 temperature {1:0.###}", eligible.Count, temperature0));
 

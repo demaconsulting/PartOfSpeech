@@ -867,6 +867,8 @@ sections:
           - PartOfSpeech-ModelTrainer-ExactQuantization
           - PartOfSpeech-ModelTrainer-CheckDetectsStaleWeights
           - PartOfSpeech-ModelTrainer-ProtectsShippedWeights
+          - PartOfSpeech-ModelTrainer-FeatureGroups
+          - PartOfSpeech-ModelTrainer-Jackknife
         tests:
           - PartOfSpeech_Model_EmbeddedWeights_MatchTrainingConfig
           - PartOfSpeech_Model_EmbeddedWeights_SizeFiguresInDocs_AreCurrent
@@ -906,6 +908,8 @@ sections:
           - PartOfSpeech-ModelTrainer-ShapesDevEvaluation
           - PartOfSpeech-ModelTrainer-ShapesDevTranches
           - PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
+          - PartOfSpeech-ModelTrainer-ArmEvaluation
+          - PartOfSpeech-ModelTrainer-ArmEvaluationIsDevelopmentOnly
         tests:
           - PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora
 

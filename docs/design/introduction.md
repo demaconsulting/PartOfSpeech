@@ -152,8 +152,8 @@ The unit `ModelTrainer` is the tool project `tools/DemaConsulting.PartOfSpeech.T
 
 ```text
 tools/DemaConsulting.PartOfSpeech.Trainer/
-├── Program.cs                  — Command line (train, eval, calibrate, compare, glossary-probe, glossary-experiment,
-│                                 glossary-eval, thresholds, evaluate)
+├── Program.cs                  — Command line (train, eval, eval-shapes, eval-arm, calibrate, compare, glossary-probe,
+│                                 glossary-experiment, glossary-eval, thresholds, evaluate)
 ├── ConfigFile.cs               — Reads and writes training.json (System.Text.Json)
 ├── OperatingPointsFile.cs      — Reads and writes the selection and the results of the evaluation (System.Text.Json)
 ├── RunLog.cs                   — Formats the rows of the run log table
@@ -161,9 +161,12 @@ tools/DemaConsulting.PartOfSpeech.Trainer/
 ├── README.md                   — How to run it, the determinism contract, the held-out gate
 ├── RUN-LOG.md                  — The pre-registered rules, the dev-only run log, the glossary decisions and the
 │                                 protocol and outcome of the held-out evaluation
-├── Training/                   — Corpus reader, random generator, integer averaged perceptron, trainer, builder, predictor
+├── context-features/           — Harness of the context-feature experiment: arms, resumable driver, analysis script
+├── Training/                   — Corpus reader, random generator, integer averaged perceptron, trainer, jackknife folds,
+│                                 builder, predictor
 └── Evaluation/                 — Data guard, development and held-out sets, metrics, bootstrap, calibration, confidence
-                                  curve and selection, held-out evaluator, reports, glossary experiment and evaluation
+                                  curve and selection, held-out evaluator, reports, glossary experiment and evaluation,
+                                  scoring of a trained arm
 ```
 
 Further top-level folders hold files that are not software items and are therefore not part of the software

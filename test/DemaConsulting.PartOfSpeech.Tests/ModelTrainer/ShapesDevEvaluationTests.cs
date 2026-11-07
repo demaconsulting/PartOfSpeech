@@ -1056,6 +1056,335 @@ public class ShapesDevEvaluationTests
         Assert.Equal(Path.GetFullPath(Path.Combine(root, "database.txt")), DataGuard.EnsureOutsideData(root, Path.Combine(root, "database.txt")));
     }
 
+#if NET8_0_OR_GREATER
+    /// <summary>
+    ///     Builds the development data of the arm evaluation from small fixtures: two open sentences, two gold targets, one treebank sentence and four shapes items.
+    /// </summary>
+    private static ArmEvaluationData ArmData() =>
+        new()
+        {
+            Open = DevSets.ParseOpenDev(
+                new[]
+                {
+                    "# corpus = fixture, dev split",
+                    string.Empty,
+                    "# sent_id = o1",
+                    "# source_id = d1",
+                    "The\tDET\tunanimous",
+                    "cat\tNOUN\tunanimous",
+                    "runs\tVERB\tunanimous",
+                    string.Empty,
+                    "# sent_id = o2",
+                    "# source_id = d2",
+                    "Dogs\tNOUN\tunanimous",
+                    "sleep\tVERB\tunanimous",
+                },
+                "fixture"),
+            Gold = DevSets.ParseGoldDev(
+                new[]
+                {
+                    "# columns = id doc_id pos target sentence",
+                    "g1\tdoc-a\tNoun\t1\tThe cat sleeps",
+                    "g2\tdoc-b\tVerb\t1\tWe dog them",
+                },
+                "fixture"),
+            UdDev = HeldOutSets.ParseUd(
+                new[]
+                {
+                    "# sent_id = weblog-0001-0001",
+                    "The\tDET\tDET\t_",
+                    "cat\tNOUN\tNOUN\t_",
+                    "sleeps\tVERB\tVERB\t_",
+                },
+                "fixture"),
+            Shapes = new List<ShapesDevItem>
+            {
+                Item("a", "n-compound-head", "target", "cat", "Noun"),
+                Item("b", "n-compound-head", "control", "cat", "Verb"),
+                Item("c", "n-compound-head", "target", "cat", "Noun", tranche: ShapesDevTranche.Hard),
+                Item("d", "v-after-modal", "target", "dog", "Verb", tranche: ShapesDevTranche.Hard),
+            },
+            Inputs = new ArmInputs { DevSha256 = "s1", HardSha256 = "s2", UdDevSha256 = "s3", OpenDevSha256 = "s4", GoldDevSha256 = "s5", Commit = "abc123", Dirty = true },
+        };
+
+    /// <summary>
+    ///     Validates the result of <c>eval-arm</c>: valid JSON in schema 1 with every member of the contract, the groups of the weights header,
+    ///     counts that agree between the per-shape rows, the pooled rows and the per-item outcomes, the inputs that were given, and a label
+    ///     that survives escaping.
+    /// </summary>
+    [Fact]
+    public void ArmEvaluation_Evaluate_TinyWeights_WritesTheResultSchema()
+    {
+        // Arrange: a tiny model with two groups in its header, and the fixtures
+        var groups = FeatureGroups.PositionCues | FeatureGroups.RightPreview;
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 40).Word("dog", Upos.Verb, 40).Build(temperature: 1f, scale: 0.125f, compress: true, groups: groups);
+        var data = ArmData();
+        var echo = new ArmConfigEcho { PreviewFolds = 5, Epochs = 6, Prune = 8 };
+        const string Label = "arm \"x\"\\y\t1";
+
+        // Act
+        var text = ArmEvaluation.Evaluate(weights, Label, echo, data, timedPasses: 1);
+        using var document = System.Text.Json.JsonDocument.Parse(text);
+        var root = document.RootElement;
+
+        // Assert: one line of JSON that ends with a line feed, schema 1, the label and the groups of the header
+        Assert.EndsWith("}\n", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("\r", text, StringComparison.Ordinal);
+        Assert.Equal(1, root.GetProperty("schema").GetInt32());
+        Assert.Equal(Label, root.GetProperty("label").GetString());
+        Assert.Equal(new[] { "positionCues", "rightPreview" }, root.GetProperty("groups").EnumerateArray().Select(e => e.GetString()));
+        Assert.Equal(1.0, root.GetProperty("temperature").GetDouble());
+
+        // Assert: the echo of the configuration (groups, bucket space and scale from the header, the rest as given)
+        var config = root.GetProperty("config");
+        Assert.Equal(new[] { "positionCues", "rightPreview" }, config.GetProperty("features").EnumerateArray().Select(e => e.GetString()));
+        Assert.Equal((5, 6, TinyModels.HashBits, 8, 8), (config.GetProperty("previewFolds").GetInt32(), config.GetProperty("epochs").GetInt32(), config.GetProperty("hashBits").GetInt32(), config.GetProperty("quantScale").GetInt32(), config.GetProperty("prune").GetInt32()));
+
+        // Assert: the size of the file
+        var size = root.GetProperty("weights");
+        Assert.Equal(ModelBuilder.Sha256Hex(weights), size.GetProperty("sha256").GetString());
+        Assert.Equal(weights.Length, size.GetProperty("bytesDeflated").GetInt32());
+        Assert.Equal(PerceptronModel.ToUncompressedImage(weights).Length, size.GetProperty("bytesRaw").GetInt32());
+        Assert.True(size.GetProperty("rows").GetInt32() > 0);
+        Assert.True(size.GetProperty("weights").GetInt32() >= size.GetProperty("rows").GetInt32());
+
+        // Assert: the throughput counts the tokens of open dev (5) and treebank dev (3)
+        var throughput = root.GetProperty("throughput");
+        Assert.Equal(8, throughput.GetProperty("tokens").GetInt32());
+        Assert.Equal(1, throughput.GetProperty("passes").GetInt32());
+        Assert.True(throughput.GetProperty("tokensPerSecond").GetDouble() > 0);
+
+        // Assert: the metric blocks of the contract
+        var open = root.GetProperty("openDev");
+        Assert.Equal(5, open.GetProperty("tokens").GetInt32());
+        foreach (var name in new[] { "accuracy", "ambiguousAccuracy", "nounVerbDecisions", "harmful", "harmfulPer1k", "nll", "ece" })
+        {
+            Assert.True(open.TryGetProperty(name, out _), "openDev." + name);
+        }
+
+        var gold = root.GetProperty("goldDev");
+        Assert.Equal(2, gold.GetProperty("tokens").GetInt32());
+        Assert.False(gold.TryGetProperty("ambiguousAccuracy", out _));
+        foreach (var name in new[] { "accuracy", "nounVerbDecisions", "harmful", "harmfulPer1k", "nll", "ece" })
+        {
+            Assert.True(gold.TryGetProperty(name, out _), "goldDev." + name);
+        }
+
+        var ud = root.GetProperty("udDev");
+        Assert.Equal(3, ud.GetProperty("tokens").GetInt32());
+        foreach (var name in new[] { "accuracy", "decisions", "harmful", "harmfulPer1k" })
+        {
+            Assert.True(ud.TryGetProperty(name, out _), "udDev." + name);
+        }
+
+        // Assert: the tranches have their shapes (only those with items), pooled rows that add up, and the per-item outcomes of the target items
+        var shapes = root.GetProperty("shapes");
+        var standard = shapes.GetProperty("standard");
+        var hard = shapes.GetProperty("hard");
+        Assert.Equal(new[] { "n-compound-head" }, standard.GetProperty("shapes").EnumerateObject().Select(p => p.Name));
+        Assert.Equal(new[] { "n-compound-head", "v-after-modal" }, hard.GetProperty("shapes").EnumerateObject().Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal));
+        Assert.Equal((1, 1), (standard.GetProperty("pooled").GetProperty("targetItems").GetInt32(), standard.GetProperty("pooled").GetProperty("controlItems").GetInt32()));
+        var pooled = hard.GetProperty("pooled");
+        Assert.Equal(2, pooled.GetProperty("targetItems").GetInt32());
+        foreach (var name in new[] { "targetItems", "targetCorrect", "decisions", "harmful", "controlItems", "controlCorrect" })
+        {
+            Assert.Equal(
+                hard.GetProperty("shapes").EnumerateObject().Sum(p => p.Value.GetProperty(name).GetInt32()),
+                pooled.GetProperty(name).GetInt32());
+        }
+
+        foreach (var name in new[] { "targetAccuracy", "harmfulPer1k", "controlAccuracy" })
+        {
+            Assert.True(pooled.TryGetProperty(name, out _), "pooled." + name);
+        }
+
+        var items = root.GetProperty("items");
+        Assert.Equal(new[] { "c", "d" }, items.GetProperty("hard").EnumerateObject().Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal));
+        Assert.Equal(new[] { "a" }, items.GetProperty("standard").EnumerateObject().Select(p => p.Name));
+        Assert.Equal(pooled.GetProperty("decisions").GetInt32(), items.GetProperty("hard").EnumerateObject().Sum(p => p.Value.GetProperty("d").GetInt32()));
+        Assert.Equal(pooled.GetProperty("harmful").GetInt32(), items.GetProperty("hard").EnumerateObject().Sum(p => p.Value.GetProperty("h").GetInt32()));
+        Assert.Equal(pooled.GetProperty("targetCorrect").GetInt32(), items.GetProperty("hard").EnumerateObject().Sum(p => p.Value.GetProperty("c").GetInt32()));
+
+        // Assert: the inputs are the ones that were given
+        var inputs = root.GetProperty("inputs");
+        Assert.Equal(new[] { "s1", "s2", "s3", "s4", "s5", "abc123" }, new[] { "devSha256", "hardSha256", "udDevSha256", "openDevSha256", "goldDevSha256", "commit" }.Select(n => inputs.GetProperty(n).GetString()));
+        Assert.True(inputs.GetProperty("dirty").GetBoolean());
+
+        // Assert: the same weights and fixtures give the same result up to the measured throughput
+        var again = ArmEvaluation.Evaluate(weights, Label, echo, data, timedPasses: 1);
+        Assert.Equal(System.Text.RegularExpressions.Regex.Replace(text, "\"tokensPerSecond\":[^,]+", string.Empty), System.Text.RegularExpressions.Regex.Replace(again, "\"tokensPerSecond\":[^,]+", string.Empty));
+    }
+
+    /// <summary>
+    ///     Validates that an arm without groups echoes no preview fold count and that invalid weights and a missing timed pass are refused.
+    /// </summary>
+    [Fact]
+    public void ArmEvaluation_Evaluate_NoGroupsAndBadInput_BehavesAsSpecified()
+    {
+        // Arrange
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 40).Build(temperature: 1f, scale: 0.125f);
+        var echo = new ArmConfigEcho { PreviewFolds = 5, Epochs = 6, Prune = 8 };
+
+        // Act
+        using var document = System.Text.Json.JsonDocument.Parse(ArmEvaluation.Evaluate(weights, "base", echo, ArmData(), timedPasses: 1));
+
+        // Assert: no group, so no fold count
+        Assert.Empty(document.RootElement.GetProperty("groups").EnumerateArray());
+        Assert.Equal(0, document.RootElement.GetProperty("config").GetProperty("previewFolds").GetInt32());
+        Assert.Throws<InvalidDataException>(() => ArmEvaluation.Evaluate(new byte[16], "x", echo, ArmData(), timedPasses: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ArmEvaluation.Evaluate(weights, "x", echo, ArmData(), timedPasses: 0));
+    }
+#endif
+
+    /// <summary>
+    ///     Validates that the files of the arm evaluation (the weights it reads, the result it writes) must lie outside the data folder and the
+    ///     data tooling folder (which holds the treebank cache), whatever the spelling, so that a held-out file can neither be read as weights
+    ///     nor be overwritten by a result, while ordinary locations are admitted.
+    /// </summary>
+    /// <param name="relative">The path relative to the repository root.</param>
+    [Theory]
+    [InlineData("data/open/test.tsv")]
+    [InlineData("data/eval/gold-v2/test.tsv")]
+    [InlineData("data/eval/shapes/probe.tsv")]
+    [InlineData("data/eval/ste-challenge/test.tsv")]
+    [InlineData("data/open/dev.tsv")]
+    [InlineData("data/eval/shapes-dev/hard.tsv")]
+    [InlineData("data/new-result.json")]
+    [InlineData("tools/data/cache/ud-ewt/ud_test.tsv")]
+    [InlineData("tools/data/cache/ud-ewt/ud_dev.tsv")]
+    [InlineData("tools/data/cache/ud-ewt/en_ewt-ud-test.conllu")]
+    [InlineData("tools/data/new-result.json")]
+    [InlineData("tools/src/../data/cache/ud-ewt/ud_test.tsv")]
+    [InlineData("tools/../data/open/test.tsv")]
+    public void DataGuard_EnsureArmFile_DataFolders_Refused(string relative)
+    {
+        // Arrange / Act / Assert
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureArmFile(DataFiles.RepositoryRoot, DataFiles.Repository(relative)));
+    }
+
+    /// <summary>
+    ///     Validates that ordinary locations are admitted for the files of the arm evaluation: the shipped weights, a result next to the harness
+    ///     and a temporary file.
+    /// </summary>
+    [Fact]
+    public void DataGuard_EnsureArmFile_OrdinaryLocations_Admitted()
+    {
+        // Arrange
+        var root = DataFiles.RepositoryRoot;
+        var temporary = Path.Combine(Path.GetTempPath(), "arm-guard", "result.json");
+
+        // Act / Assert
+        Assert.Equal(Path.GetFullPath(temporary), DataGuard.EnsureArmFile(root, temporary));
+        Assert.Equal(Path.GetFullPath(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/weights.bin")), DataGuard.EnsureArmFile(root, DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/weights.bin")));
+        Assert.Equal(Path.GetFullPath(DataFiles.Repository("tools/database.json")), DataGuard.EnsureArmFile(root, DataFiles.Repository("tools/database.json")));
+    }
+
+    /// <summary>
+    ///     Pins that <c>eval-arm</c> cannot reach a held-out set: every held-out file and the test table of the treebank are refused by the
+    ///     development guards and by the arm guard, the development table of the treebank is another file with its own pin, and neither the
+    ///     source of the evaluation nor the source of the command mentions the held-out readers, the selection that opens them or the held-out
+    ///     file names; the command's only paths are its two guarded files and the loader of the development data takes the repository root only.
+    /// </summary>
+    [Fact]
+    public void ArmEvaluation_HeldOutSets_AreUnreachable()
+    {
+        // Arrange: the five held-out sets
+        var root = DataFiles.RepositoryRoot;
+        var heldOut = DataGuard.HeldOutFiles.Concat(new[] { DataGuard.UdCacheFolder + "/" + DataGuard.UdMappedFile }).ToList();
+        Assert.Equal(5, heldOut.Count);
+
+        // Act / Assert: no guard of a development or arm input admits one
+        foreach (var relative in heldOut)
+        {
+            var path = DataFiles.Repository(relative);
+            Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureDevelopmentFile(root, path));
+            Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureShapesDevelopmentFile(root, path));
+            Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureArmFile(root, path));
+        }
+
+        // Assert: the development table of the treebank is a different file and a different pin
+        Assert.NotEqual(DataGuard.UdMappedFile, DataGuard.UdDevMappedFile);
+        Assert.NotEqual(DataGuard.UdMappedSha256, DataGuard.UdDevMappedSha256);
+
+        // Assert: the sources do not mention the machinery of the held-out run
+        var forbidden = new[] { "HeldOutReader", "HeldOutFiles", "HeldOutData", "HeldOutSet.", "UdMappedFile", "UdMappedSha256", "SelectedOperatingPoints", "EnsureHeldOut", "ReadUd(" };
+        var engine = System.IO.File.ReadAllText(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/Evaluation/ArmEvaluation.cs"));
+        var program = System.IO.File.ReadAllText(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/Program.cs"));
+        var start = program.IndexOf("private static int EvalArm(", StringComparison.Ordinal);
+        var command = program.Substring(start, program.IndexOf("private static (string Commit, bool Dirty) GitState", StringComparison.Ordinal) - start);
+        foreach (var name in forbidden)
+        {
+            Assert.DoesNotContain(name, engine, StringComparison.Ordinal);
+            Assert.DoesNotContain(name, command, StringComparison.Ordinal);
+        }
+
+        // Assert: the command guards its two files, reads the development data through the one loader and has no data option
+        Assert.Equal(2, command.Split(new[] { "DataGuard.EnsureArmFile(" }, StringSplitOptions.None).Length - 1);
+        Assert.Contains("ArmEvaluationData.Load(root)", command, StringComparison.Ordinal);
+        Assert.DoesNotContain("--ud-cache", command, StringComparison.Ordinal);
+        var load = typeof(ArmEvaluationData).GetMethod(nameof(ArmEvaluationData.Load))!;
+        Assert.Equal(new[] { typeof(string) }, load.GetParameters().Select(p => p.ParameterType));
+        var evaluate = typeof(ArmEvaluation).GetMethod(nameof(ArmEvaluation.Evaluate))!;
+        Assert.Equal(new[] { typeof(byte[]), typeof(string), typeof(ArmConfigEcho), typeof(ArmEvaluationData), typeof(int) }, evaluate.GetParameters().Select(p => p.ParameterType));
+    }
+
+    /// <summary>
+    ///     Validates the reader of the development part of the treebank: a missing cache, a table with another hash and a cache that holds only the
+    ///     test table are all refused with the recipe, and the cached table of this machine, when present, is the pinned one.
+    /// </summary>
+    [Fact]
+    public void DevSets_ReadUdDev_MissingOrChangedTable_RefusedAndPinnedTableRead()
+    {
+        // Arrange: a fake repository root with an empty cache folder
+        var root = Path.Combine(Path.GetTempPath(), "ud-dev-" + Guid.NewGuid().ToString("N"));
+        var cache = Path.Combine(root, "tools", "data", "cache", "ud-ewt");
+        Directory.CreateDirectory(cache);
+        try
+        {
+            // Act / Assert: missing
+            var missing = Assert.Throws<InvalidDataException>(() => DevSets.ReadUdDev(root, out _));
+            Assert.Contains("fetch_ud_ewt.py", missing.Message, StringComparison.Ordinal);
+
+            // Act / Assert: a cache that holds the test table only is still a missing development table
+            System.IO.File.WriteAllText(Path.Combine(cache, DataGuard.UdMappedFile), "# cache file, never commit: test, convention-mapped\n");
+            Assert.Throws<InvalidDataException>(() => DevSets.ReadUdDev(root, out _));
+
+            // Act / Assert: another table in the place of the development table
+            System.IO.File.WriteAllText(Path.Combine(cache, DataGuard.UdDevMappedFile), "# cache file, never commit: dev, convention-mapped\n");
+            var changed = Assert.Throws<InvalidDataException>(() => DevSets.ReadUdDev(root, out _));
+            Assert.Contains("pinned SHA-256", changed.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+
+        // Assert: the table of this machine, when the (git-ignored) cache exists, is the pinned one and has the documented size
+        if (System.IO.File.Exists(DataFiles.Repository(DataGuard.UdCacheFolder + "/" + DataGuard.UdDevMappedFile)))
+        {
+            var sentences = DevSets.ReadUdDev(DataFiles.RepositoryRoot, out var sha);
+            Assert.Equal(DataGuard.UdDevMappedSha256, sha);
+            Assert.Equal(25148, sentences.Sum(s => s.Tokens.Length));
+        }
+    }
+
+    /// <summary>
+    ///     Validates the throughput measurement: it needs at least one timed pass and reports a positive rate.
+    /// </summary>
+    [Fact]
+    public void HeldOutEvaluator_Throughput_TimedPasses_AtLeastOneAndPositiveRate()
+    {
+        // Arrange
+        var tagger = TinyModels.CreateTagger(new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 40).Build(temperature: 1f, scale: 0.1f), TinyModels.CreateLexicon("cat NOUN VERB"));
+        var sentences = new List<string[]> { new[] { "The", "cat", "sleeps" } };
+
+        // Act / Assert
+        Assert.Throws<ArgumentOutOfRangeException>(() => HeldOutEvaluator.Throughput(tagger, sentences, 0));
+        Assert.True(HeldOutEvaluator.Throughput(tagger, sentences, 1) > 0);
+        Assert.True(HeldOutEvaluator.Throughput(tagger, sentences, 4) > 0);
+        Assert.True(HeldOutEvaluator.Throughput(tagger, sentences) > 0);
+    }
+
     /// <summary>
     ///     Creates an item with a one-word sentence for the evaluator tests.
     /// </summary>

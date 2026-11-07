@@ -129,18 +129,23 @@ internal static class HeldOutEvaluator
     }
 
     /// <summary>
-    ///     Measures the throughput of the default tagger in tokens per second: one warm-up pass, then the median of three timed passes.
+    ///     Measures the throughput of the default tagger in tokens per second: one warm-up pass, then the median of the timed passes.
     /// </summary>
     /// <param name="tagger">The tagger with the default options.</param>
     /// <param name="sentences">The sentences to tag.</param>
-    /// <returns>The tokens per second.</returns>
-    public static double Throughput(Tagger tagger, IReadOnlyList<string[]> sentences)
+    /// <param name="timedPasses">The number of timed passes (at least 1; the held-out run uses 3).</param>
+    /// <returns>The tokens per second (the middle value of the sorted rates, the upper one for an even count).</returns>
+    public static double Throughput(Tagger tagger, IReadOnlyList<string[]> sentences, int timedPasses = 3)
     {
         ArgumentNullException.ThrowIfNull(tagger);
         ArgumentNullException.ThrowIfNull(sentences);
+        if (timedPasses < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(timedPasses), timedPasses, "There must be at least one timed pass.");
+        }
         var tokens = sentences.Sum(s => (long)s.Length);
         var rates = new List<double>();
-        for (var pass = 0; pass < 4; pass++)
+        for (var pass = 0; pass <= timedPasses; pass++)
         {
             var clock = Stopwatch.StartNew();
             foreach (var sentence in sentences)
@@ -156,7 +161,7 @@ internal static class HeldOutEvaluator
         }
 
         rates.Sort();
-        return rates[1];
+        return rates[rates.Count / 2];
     }
 
     /// <summary>
