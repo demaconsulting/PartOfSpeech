@@ -473,6 +473,21 @@ reports an excluded id or URL in `dev.tsv` or `sources.tsv` and a missing or mal
 (targets per shape, controls, lemma caps, authored share) refuses the build unless `--allow-short` is given. The extended
 `Leakage_Report_RecordsNoOverlaps` requires `shapes-dev` among the evaluation sets of every training set.
 
+The hard tranche (`hard.tsv`) tooling is covered without its data.
+`PartOfSpeech_ShapesDevHard_Selection_UsesNoPartOfSpeechModel` scans `shapes_dev.py` and the harness
+`tools/data/hmm-tags` for a weights file, a decoder, a tagger or the shapes evaluation, asserts that the harness has no
+project reference and no reference to this library, and that the solution does not contain it. The developer-run Python
+tests `tools/data/tests/test_shapes_dev_hard.py` cover the pipeline on a miniature folder: the `hmm.tsv` reader (header,
+count, a `|` in a token, a `#` token that is data), the contested band (the lower edge inside, the upper edge outside),
+the order (hardest first), the lemma cap and the budget, the standard-tranche exclusion (an exact key and a
+same-document near duplicate, with their reasons), controls without a band, the quota gate (floors, caps, authored
+items), the build (`hard.tsv`, `hard-sources.tsv`, ids, no rewrite of the exclusion record, refusal of an excluded
+source), the hand-check sample (at least half from q below 0.5), the q-band table, rounds, and `check_leakage.py` and
+`check_licenses.py` on a hard tranche (a shared document with the standard tranche is allowed, an exact or near
+duplicate of it fails). One regression test builds the standard profile on a fixture and compares the bytes with hashes
+taken before the hard profile existed; an optional one rebuilds the committed standard files from their work folder
+(`SHAPES_DEV_STANDARD_WORK`).
+
 ### Adjudication Tool
 
 **Tests**: the Python unit tests named in the `PartOfSpeech-Adjudication-*` requirements

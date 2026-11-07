@@ -743,6 +743,23 @@ sections:
           - PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl
           - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
 
+      - id: PartOfSpeech-Data-ShapesDevHardSelectionIndependent
+        title: >-
+          The selection of the hard tranche of the hard-shape development set shall use no part of the PartOfSpeech
+          model: the builder and the harness that supplies the numbers of another model family shall name no weights
+          file, decoder, tagger or shapes evaluation, the harness shall have no reference to this library and shall not
+          be part of the solution, and the gold of the tranche shall come only from two blind labelers.
+        tags: [system]
+        justification: |
+          A development tranche that was chosen where the tagger errs would measure the tagger against its own mistakes
+          and make every later comparison with it optimistic or circular. The hard tranche is chosen by the contested
+          band of the WordSense Basic classifier (HMM tagger plus cue model), which is a different model family, so the
+          selection must be provably free of this library's model. The harness needs a binary that is not committed, so
+          it stays out of the solution, and no build, lint or CI step needs it. The data test scans the sources of the
+          pipeline; the rule itself is recorded in the README of the data set before any label of the tranche exists.
+        tests:
+          - PartOfSpeech_ShapesDevHard_Selection_UsesNoPartOfSpeechModel
+
       - id: PartOfSpeech-Data-LexiconTrainCoverage
         title: >-
           The lexicon shall allow the gold tag for at least 99.9% of the non-disputed tokens of the training set.
@@ -855,6 +872,7 @@ sections:
           - PartOfSpeech-ModelTrainer-GlossaryExperiment
           - PartOfSpeech-ModelTrainer-GlossaryEvaluation
           - PartOfSpeech-ModelTrainer-ShapesDevEvaluation
+          - PartOfSpeech-ModelTrainer-ShapesDevTranches
           - PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
         tests:
           - PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora

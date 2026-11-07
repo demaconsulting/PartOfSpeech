@@ -560,18 +560,40 @@ sections:
               - ShapesDevReport_Interval_KnownCounts_MatchesWilsonScore
               - Tokenizer_Tokenize_ShapesSentences_ReproducesStoredTokens
 
+          - id: PartOfSpeech-ModelTrainer-ShapesDevTranches
+            title: >-
+              The shapes development evaluation shall read the standard tranche and the hard tranche of the set from
+              their own files, mark every item with the tranche of its file (never by a comment), and report, per shape
+              and pooled, the standard tranche (in the same text as before), the hard tranche and both together, with a
+              shape without items shown by dashes.
+            justification: |
+              The hard tranche is selected differently from the standard one on purpose, so its figures must be read
+              separately: a pooled figure alone would hide that the hard tranche is where the headroom is. The standard
+              section keeps its text so that the recorded baseline stays comparable, the tranche of an item cannot be
+              forged by editing a file, and the zero-item shape (the hard tranche has no n-measure cases) must read as
+              absent, not as a perfect score.
+            tests:
+              - ShapesDevSets_Parse_Tranche_IsGivenByTheCallerAndNotByTheContent
+              - DevSets_ReadShapesDev_EachTranche_ReadsItsOwnFileAndMarksItems
+              - DevSets_ReadShapesDev_HardMissingOrWrongHeader_ThrowsAndStandardStillReads
+              - ShapesDevEvaluator_SummarizeTranches_PerTrancheAndCombined
+              - ShapesDevEvaluator_EvaluateTranches_TinyTagger_ScoresEachTrancheAndCombined
+              - ShapesDevReport_RenderTranches_StandardUnchangedThenHardThenCombined
+              - ShapesDevReport_Render_StandardSection_HasNoTrancheNameInItsHeading
+
           - id: PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
             title: >-
-              The hard-shape development file shall be readable only through its own guard (exactly that path, also
-              when it is spelled with a detour, refused when a link lies on its way, and a header that announces a
-              development split), shall not be in the
+              The two files of the hard-shape development set (the standard and the hard tranche) shall be readable only
+              through their own guard (exactly those two paths, also when spelled with a detour, refused when a link
+              lies on the way, and a header that announces a development split), shall not be in the
               two-file development allow-list or the held-out list, shall be refused for training, and no source of the
               trainer other than the guard shall name a held-out set.
             justification: |
               The set exists to select settings, so nothing may train on it, and it must never be mistaken for a
               held-out figure. Giving it a guard of its own keeps the statement that development evaluation reads the
               two development files true for every other command, and keeps the held-out gate unable to open it, so the
-              probe that shares its shapes stays evaluation only.
+              probe that shares its shapes stays evaluation only. The hard tranche is a second file of the same set and
+              gets the same guard, not a new rule.
             tests:
               - DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted
               - DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused
@@ -580,6 +602,7 @@ sections:
               - DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt
               - DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused
               - DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused
+              - DataGuard_EnsureOutsideData_InsideDataFolder_RefusedAndOutsideAdmitted
               - DevSets_ReadShapesDev_HeaderWithoutDevSplit_Throws
               - DevSets_ReadShapesDev_MissingAndValidFile_ThrowsAndReads
               - ModelTrainer_Sources_NoHeldOutPathLiterals
