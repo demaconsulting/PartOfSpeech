@@ -336,6 +336,25 @@ class CandidateTests(MiniFolder):
         with self.assertRaises(ValueError):
             leakage.held_out_overlap_keys(include_ud=False)
 
+    def test_an_empty_or_header_only_probe_or_an_empty_sentence_cell_fails_closed_in_every_path(self):
+        path = os.path.join(self.data, "eval", "shapes", "probe.tsv")
+        header = b"id\tshape\tlemma\tgold\ttarget_index\tsentence\n"
+        good = b"p1\tx\tseal\tVerb\t0\tSeal the pump housing with the gasket compound before fitting .\n"
+        fixtures = {"empty file": b"", "header only": header, "empty sentence cell": header + good + b"p2\tx\tseal\tVerb\t0\t\n",
+                    "braces only": header + good + b"p2\tx\tseal\tVerb\t0\t{}\n", "blank sentence": header + b"p1\tx\tseal\tVerb\t0\t  \n"}
+        for name, content in fixtures.items():
+            with open(path, "wb") as handle:
+                handle.write(content)
+            for call in (lambda: leakage.held_out_overlap_keys(include_ud=False), lambda: leakage.probe_sentences(),
+                         lambda: leakage.table_sets(), lambda: leakage.evaluation_sets(include_ud=False),
+                         lambda: leakage.evaluation_sets(include_ud=False, shapes_dev=False), lambda: check_leakage.check(False)):
+                with self.subTest(fixture=name), self.assertRaises(SystemExit) as raised:
+                    call()
+                self.assertIn("probe", str(raised.exception.code))
+        with open(path, "wb") as handle:                                                    # a probe with a sentence in every row is fine
+            handle.write(header + good)
+        self.assertTrue(leakage.held_out_overlap_keys(include_ud=False))
+
     def test_the_builder_sees_the_held_out_sets_only_through_the_opaque_key_function(self):
         import ast
         with open(sd.__file__, encoding="utf-8") as handle:
@@ -797,6 +816,49 @@ class PipelineTests(MiniFolder):
         self.assertEqual(0, self.run_build(out)[0])
         _, excluded = adjudicate.read_records(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE))
         self.assertEqual(["doc-gone"], [r["source_id"] for r in excluded])
+
+    def test_the_written_exclusion_record_is_the_union_and_a_conflicting_url_for_one_id_fails_the_build(self):
+        self.add_second_document()
+        out = os.path.join(self.temp, "out")
+        w_path = os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE)
+        common.write_text(w_path, ["source_id\treason\tdecided", "doc-b\tnot clearly public domain\t2026-11-06"])
+        self.write_committed_exclusions(["doc-gone", "https://example.gov/doc-gone", "dropped earlier", "2026-11-01"],
+                                        ["doc-b", "https://www.example.gov/doc-b/", "older reason", "2026-11-01"])
+        self.assertEqual(0, self.run_build(out)[0])                                         # same id, same normalized URL: the union
+        _, excluded = adjudicate.read_records(os.path.join(out, sd.EXCLUDED_OUTPUT_FILE))
+        self.assertEqual([("doc-b", "https://www.example.gov/doc-b/", "older reason", "2026-11-01"),
+                          ("doc-gone", "https://example.gov/doc-gone", "dropped earlier", "2026-11-01")],
+                         [(r["source_id"], r["url"], r["reason"], r["decided"]) for r in excluded])
+        shutil.rmtree(out)
+        self.write_committed_exclusions(["doc-b", "https://example.gov/another-document", "committed URL exclusion", "2026-11-01"])
+        code, _, error = self.run_build(out)                                                # same id, other URL: both would be lost
+        self.assertEqual(1, code)
+        self.assertIn("conflicting", error)
+        self.assertIn("doc-b", error)
+        self.assertIn("another-document", error)
+        self.assertFalse(os.path.exists(os.path.join(out, "dev.tsv")))                      # nothing is written
+        with self.assertRaises(sd.ExcludedSourceError):
+            sd.merge_excluded_rows([("doc-b", "https://example.gov/a", "r", "2026-11-01")], [["doc-b", "https://example.gov/b", "r", "2026-11-02"]])
+
+    def test_a_duplicate_id_within_one_exclusion_table_is_an_error(self):
+        self.add_second_document()
+        out = os.path.join(self.temp, "out")
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE),
+                          ["source_id\treason\tdecided", "doc-b\tone\t2026-11-06", "doc-b\ttwo\t2026-11-06"])
+        with self.assertRaises(ValueError):
+            sd.read_excluded_rows(self.work)
+        code, _, error = self.run_build(out)
+        self.assertEqual(1, code)
+        self.assertIn("duplicate source_id doc-b", error)
+        os.remove(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE))
+        self.write_committed_exclusions(["doc-b", "https://example.gov/doc-b", "one", "2026-11-06"],
+                                        ["doc-b", "https://example.gov/doc-c", "two", "2026-11-06"])
+        with self.assertRaises(ValueError):
+            sd.read_committed_exclusions(self.data)
+        code, _, error = self.run_build(out)
+        self.assertEqual(1, code)
+        self.assertIn("duplicate source_id doc-b", error)
+        self.assertFalse(os.path.exists(os.path.join(out, "dev.tsv")))
 
     def test_build_refuses_a_missed_quota_unless_short_is_allowed(self):
         self.export_and_tag()

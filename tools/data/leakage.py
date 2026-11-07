@@ -107,9 +107,21 @@ def probe_path():
 
 
 def probe_sentences():
-    """The sentence texts of the held-out shape probe (target braces removed); [] when the file is missing."""
+    """The sentence texts of the held-out shape probe (target braces removed); [] when the file is missing.
+
+    Fails closed: a probe with no data row, or with a sentence that has no letter or digit (an empty cell), is a SystemExit (exit code 1),
+    because an empty or truncated probe would register as present while contributing no key to the filter.
+    """
     path = probe_path()
-    return sentence_column(path) if os.path.exists(path) else []
+    if not os.path.exists(path):
+        return []
+    texts = sentence_column(path)
+    if not texts:
+        raise SystemExit("shapes probe has no data rows: " + os.path.basename(path))
+    empty = [n for n, text in enumerate(texts, 1) if not common.key(text)]
+    if empty:
+        raise SystemExit("shapes probe has an empty sentence in row(s) %s: %s" % (", ".join(map(str, empty[:10])), os.path.basename(path)))
+    return texts
 
 
 def table_sets():

@@ -150,12 +150,16 @@ def read_excluded_table(path):
     if not lines or tuple(lines[0].split("\t")) != EXCLUDED_SOURCES_COLUMNS:
         raise ValueError("%s: the header must be %s" % (path, "\\t".join(EXCLUDED_SOURCES_COLUMNS)))
     rows = []
+    seen = set()
     for number, line in enumerate(lines[1:], 2):
         cells = line.split("\t")
         if len(cells) != len(EXCLUDED_SOURCES_COLUMNS) or not all(c.strip() for c in cells):
             raise ValueError("%s, line %d: every row needs source_id, url, reason and decided" % (path, number))
         if not normalize_url(cells[1]) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", cells[3]):
             raise ValueError("%s, line %d: url must be an http(s) URL and decided a YYYY-MM-DD date" % (path, number))
+        if cells[0] in seen:
+            raise ValueError("%s, line %d: duplicate source_id %s" % (path, number, cells[0]))
+        seen.add(cells[0])
         rows.append(tuple(cells))
     return rows
 

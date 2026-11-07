@@ -33,7 +33,9 @@ that sources.tsv, which lists only the used documents, stays a table of the shar
 Fail-closed exclusions. The committed record is read by the tool itself (`read_committed_exclusions`, strictly: a malformed file is an
 error) and indexed with the used documents, so `candidates` rejects a document whose id or normalized URL it lists even when
 W/excluded-sources.tsv lacks it. `build` refuses (exit code 1, nothing written) when a chosen sentence or a used source row has an id or
-normalized URL listed in the committed record or in W/excluded-sources.tsv; the committed rows are kept in the written record.
+normalized URL listed in the committed record or in W/excluded-sources.tsv. The written record is the union of the committed rows and the
+W rows; a committed row is never dropped or changed, an id in both tables with a different URL, or a duplicate id within one table, is an
+error (exit code 1, nothing written).
 
 Quota gate. `build` refuses (exit code 1, nothing written) unless every shape has exactly `--per-shape` targets (default 120), there are
 exactly `--controls` controls (default 100), no lemma exceeds its cap (`--lemma-cap` 4, `--shape-lemma-cap`, controls 2 per lemma) and no
@@ -417,10 +419,14 @@ def read_excluded_rows(work):
         raise ValueError("%s: the header must be %s, optionally followed by \\t%s"
                          % (path, "\\t".join(EXCLUDED_COLUMNS), EXCLUDED_DECIDED_COLUMN))
     rows = []
+    seen = set()
     for number, line in enumerate(lines[1:], 2):
         cells = [cell.strip() for cell in line.split("\t")]
         if len(cells) != len(header) or not all(cells):
             raise ValueError("%s, line %d: every row needs a source_id, a reason%s" % (path, number, " and a decided date" if dated else ""))
+        if cells[0] in seen:
+            raise ValueError("%s, line %d: duplicate source_id %s" % (path, number, cells[0]))
+        seen.add(cells[0])
         rows.append((cells[0], cells[1], cells[2] if dated else ""))
     return rows
 
@@ -1830,6 +1836,26 @@ def quota_problems(targets, controls_chosen, per_shape=TARGET_PER_SHAPE, lemma_c
     return problems
 
 
+def merge_excluded_rows(committed, w_rows):
+    """The sorted union of the committed exclusion rows and the work-folder rows; a committed row is never dropped or changed.
+
+    An id in both tables with the same normalized URL keeps the committed row (the committed reason and decided date stand). An id
+    in both with a different URL is a conflict, and it raises ExcludedSourceError: keeping one URL would silently erase the
+    exclusion of the other, so the owner must resolve it (use another id for the second document).
+    """
+    merged = {row[0]: list(row) for row in committed}
+    conflicts = []
+    for row in w_rows:
+        kept = merged.get(row[0])
+        if kept is None:
+            merged[row[0]] = list(row)
+        elif common.normalize_url(kept[1]) != common.normalize_url(row[1]):
+            conflicts.append("%s is excluded as %s in the committed table but as %s in W/excluded-sources.tsv" % (row[0], kept[1], row[1]))
+    if conflicts:
+        raise ExcludedSourceError("conflicting exclusion rows (same id, different URL):\n  " + "\n  ".join(conflicts[:20]))
+    return sorted(merged.values())
+
+
 def excluded_problems(work, draft, built, committed, w_rows):
     """[message] for every built source or used source row whose id or URL is in the committed or the work-folder exclusion table."""
     lookup = common.excluded_lookup(list(committed) + [tuple(r) for r in w_rows])
@@ -1879,8 +1905,7 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
     short = quota_problems(targets, chosen, per_shape, lemma_cap, share, controls, shape_lemma_cap)
     if short and not allow_short:
         raise QuotaError("quotas not met (pass --allow-short to build anyway):\n  " + "\n  ".join(short[:20]))
-    w_ids = {row[0] for row in w_rows}
-    excluded = sorted(w_rows + [list(row) for row in committed if row[0] not in w_ids])
+    excluded = merge_excluded_rows(committed, w_rows)
     common.write_corpus(os.path.join(out_dir, "dev.tsv"), common.with_flag_documentation(HEADER, built), built)
     adjudicate.write_rows(os.path.join(out_dir, "sources.tsv"), SOURCE_COLUMNS, sources_rows(draft, built))
     report = ["# Build", "", "%d sentences written to dev.tsv" % len(built)]
@@ -1900,7 +1925,7 @@ def _command_build(args):
     try:
         built, report = build(work, out_dir, args.seed, args.per_shape, args.lemma_cap, args.share, args.controls,
                               parse_shape_lemma_cap(args.shape_lemma_cap), args.allow_short, args.data_dir)
-    except (QuotaError, ExcludedSourceError) as error:
+    except (QuotaError, ExcludedSourceError, ValueError) as error:
         print("build refused: %s" % error, file=sys.stderr)
         return 1
     adjudicate._print(report)
