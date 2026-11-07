@@ -160,7 +160,12 @@ internal static class DataGuard
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <param name="path">The path that was asked for, absolute or relative to the working directory.</param>
     /// <returns>The full path of the development file.</returns>
-    /// <exception cref="InvalidOperationException"><paramref name="path"/> is not one of <see cref="DevelopmentFiles"/>.</exception>
+    /// <remarks>
+    ///     Like <see cref="EnsureShapesDevelopmentFile"/>, the canonical path of the file (every symbolic link or junction
+    ///     resolved, where the runtime supports links) must equal the canonical repository root plus the allowed relative file;
+    ///     a link at or below the data folder is refused.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException"><paramref name="path"/> is not one of <see cref="DevelopmentFiles"/>, or a link lies on its way.</exception>
     public static string EnsureDevelopmentFile(string repositoryRoot, string path)
     {
         ArgumentNullException.ThrowIfNull(repositoryRoot);
@@ -170,9 +175,11 @@ internal static class DataGuard
         var full = Path.GetFullPath(path);
         foreach (var allowed in DevelopmentFiles)
         {
-            var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, allowed.Replace('/', Path.DirectorySeparatorChar)));
+            var relative = allowed.Replace('/', Path.DirectorySeparatorChar);
+            var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, relative));
             if (string.Equals(full, allowedFull, StringComparison.OrdinalIgnoreCase))
             {
+                EnsureNoLink(repositoryRoot, relative, allowedFull, path, $"the development file {allowed}");
                 return allowedFull;
             }
         }
@@ -198,20 +205,33 @@ internal static class DataGuard
         ArgumentNullException.ThrowIfNull(path);
         var relative = ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar);
         var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, relative));
-        var comparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
         if (!string.Equals(Path.GetFullPath(path), allowedFull, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException($"'{path}' is not the shapes development file {ShapesDevelopmentFile}; the shapes evaluation reads that file only.");
         }
 
+        EnsureNoLink(repositoryRoot, relative, allowedFull, path, $"the shapes development file {ShapesDevelopmentFile}");
+        return allowedFull;
+    }
+
+    /// <summary>
+    ///     Refuses a development file whose canonical path is not the canonical repository root plus the allowed relative file.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="relative">The allowed file, relative to the repository root.</param>
+    /// <param name="allowedFull">The full path of the allowed file.</param>
+    /// <param name="path">The path that was asked for, for the message.</param>
+    /// <param name="description">The description of the file for the message.</param>
+    /// <exception cref="InvalidOperationException">The file or a folder at or below the data folder is a link.</exception>
+    private static void EnsureNoLink(string repositoryRoot, string relative, string allowedFull, string path, string description)
+    {
         // Links in the repository root itself are tolerated; a link at or below the data folder moves the canonical path away from the expected one
+        var comparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
         var expected = Path.Combine(Canonicalize(repositoryRoot), relative);
         if (!string.Equals(Canonicalize(allowedFull), expected, comparison))
         {
-            throw new InvalidOperationException($"'{path}' goes through a link; the shapes development file {ShapesDevelopmentFile} must be a real file below real folders.");
+            throw new InvalidOperationException($"'{path}' goes through a link; {description} must be a real file below real folders.");
         }
-
-        return allowedFull;
     }
 
     /// <summary>

@@ -523,6 +523,99 @@ public class ShapesDevEvaluationTests
 #endif
     }
 
+    /// <summary>
+    ///     Validates that a symbolic link or junction replacing a standard development file, the folder that holds it, or the data
+    ///     folder is refused, while the real file in a fake repository is admitted.
+    /// </summary>
+    [Fact]
+    public void DataGuard_EnsureDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused()
+    {
+#if NET6_0_OR_GREATER
+        // Arrange
+        var temp = Path.Combine(Path.GetTempPath(), "pos-dev-links-" + Guid.NewGuid().ToString("N"));
+        var links = new List<string>();
+        try
+        {
+            var other = Path.Combine(temp, "other");
+            Directory.CreateDirectory(other);
+            System.IO.File.WriteAllText(Path.Combine(other, "dev.tsv"), "# fixture");
+            var created = 0;
+            var number = 0;
+            foreach (var allowed in DataGuard.DevelopmentFiles)
+            {
+                var relative = allowed.Replace('/', Path.DirectorySeparatorChar);
+                var parent = Path.GetDirectoryName(relative)!;
+
+                // A real repository admits the file
+                var realRepo = Path.Combine(temp, "real-" + number);
+                Directory.CreateDirectory(Path.Combine(realRepo, parent));
+                System.IO.File.WriteAllText(Path.Combine(realRepo, relative), "# fixture");
+                Assert.Equal(Path.Combine(realRepo, relative), DataGuard.EnsureDevelopmentFile(realRepo, Path.Combine(realRepo, relative)));
+
+                // A link as the file
+                var fileRepo = Path.Combine(temp, "file-" + number);
+                Directory.CreateDirectory(Path.Combine(fileRepo, parent));
+                if (TryCreateFileLink(Path.Combine(fileRepo, relative), Path.Combine(other, "dev.tsv")))
+                {
+                    created++;
+                    links.Add(Path.Combine(fileRepo, relative));
+                    Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureDevelopmentFile(fileRepo, Path.Combine(fileRepo, relative)));
+                }
+
+                // A link as the folder that holds the file
+                var folderRepo = Path.Combine(temp, "folder-" + number);
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(folderRepo, parent))!);
+                if (TryCreateDirectoryLink(Path.Combine(folderRepo, parent), other))
+                {
+                    created++;
+                    links.Add(Path.Combine(folderRepo, parent));
+                    Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureDevelopmentFile(folderRepo, Path.Combine(folderRepo, relative)));
+                }
+
+                // A link as the data folder
+                var dataRepo = Path.Combine(temp, "data-" + number);
+                Directory.CreateDirectory(dataRepo);
+                if (TryCreateDirectoryLink(Path.Combine(dataRepo, "data"), other))
+                {
+                    created++;
+                    links.Add(Path.Combine(dataRepo, "data"));
+                    Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureDevelopmentFile(dataRepo, Path.Combine(dataRepo, relative)));
+                }
+
+                number++;
+            }
+
+            if (created == 0)
+            {
+                Assert.Skip("Neither symbolic links nor junctions can be created here.");
+            }
+        }
+        finally
+        {
+            // Remove the links first: a recursive delete must not follow them into the targets
+            foreach (var link in links)
+            {
+                if (Directory.Exists(link))
+                {
+                    Directory.Delete(link, false);
+                }
+                else if (System.IO.File.Exists(link))
+                {
+                    System.IO.File.Delete(link);
+                }
+            }
+
+            if (Directory.Exists(temp))
+            {
+                Directory.Delete(temp, true);
+            }
+        }
+#else
+        // Links are resolved only on .NET 6 and later, which is where the trainer runs
+        Assert.Skip("Link resolution needs .NET 6 or later.");
+#endif
+    }
+
 #if NET6_0_OR_GREATER
     /// <summary>
     ///     Creates a symbolic link to a file when the system allows it.

@@ -150,7 +150,8 @@ sections:
           - id: PartOfSpeech-ModelTrainer-DevOnlySelection
             title: >-
               Development evaluation shall read only the two development files (also when the path is spelled with a
-              detour), a file that does not announce a development split shall be refused, training shall accept only
+              detour; a file or folder that is a symbolic link or junction at or below the data folder shall be
+              refused), a file that does not announce a development split shall be refused, training shall accept only
               files below the data folder of the repository (after the path is made absolute and symbolic links and
               junctions are resolved) and refuse held-out sets, evaluation folders and development files there, and no
               other source of the trainer than the guard shall name a held-out set.
@@ -164,6 +165,7 @@ sections:
             tests:
               - DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused
               - DataGuard_EnsureDevelopmentFile_DevelopmentFile_Admitted
+              - DataGuard_EnsureDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused
               - DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused
               - DataGuard_EnsureTrainable_TrainingCorpus_Admitted
               - DataGuard_EnsureTrainable_PathOutsideDataRoot_Refused
@@ -561,7 +563,8 @@ sections:
           - id: PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
             title: >-
               The hard-shape development file shall be readable only through its own guard (exactly that path, also
-              when it is spelled with a detour, and a header that announces a development split), shall not be in the
+              when it is spelled with a detour, refused when a link lies on its way, and a header that announces a
+              development split), shall not be in the
               two-file development allow-list or the held-out list, shall be refused for training, and no source of the
               trainer other than the guard shall name a held-out set.
             justification: |
@@ -572,6 +575,8 @@ sections:
             tests:
               - DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted
               - DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused
+              - DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused
+              - DataGuard_EnsureDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused
               - DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt
               - DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused
               - DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused

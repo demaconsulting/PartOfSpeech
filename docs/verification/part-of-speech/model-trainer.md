@@ -112,6 +112,9 @@ class for its shape and role, or renders different text for the same results.
   `ModelTrainer_Train_RestrictionAndHistoryModes_ChangeTheImage`.
 - **Development-only selection**: `DataGuard_EnsureDevelopmentFile_HeldOutOrOtherFile_Refused` (a theory over the held-out
   files, a training file and a dotted detour), `DataGuard_EnsureDevelopmentFile_DevelopmentFile_Admitted`,
+  `DataGuard_EnsureDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused` (in a temporary fake repository, for each of the
+  two files: a real file is admitted, and a link as the file, as its folder or as the `data` folder is refused; links as
+  in the training test below; skipped where none can be made and on .NET Framework),
   `DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused` (also in other spellings of the path),
   `DataGuard_EnsureTrainable_TrainingCorpus_Admitted`, `DataGuard_EnsureTrainable_PathOutsideDataRoot_Refused` (a dotted
   detour or a path outside the `data` folder), `CorpusReader_LoadSources_RootedPathOutsideData_Refused` (a rooted source
@@ -265,7 +268,9 @@ class for its shape and role, or renders different text for the same results.
   a dotted detour and the committed development file are refused; a temporary folder is admitted).
 - **The shapes development file is development only**: `DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted`
   (also through a dotted detour), `DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused` (the two development files,
-  a held-out file, the other files of its folder), `DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt` (not in the
+  a held-out file, the other files of its folder),
+  `DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused` (a link as the file or as its folder is
+  refused, the real file admitted), `DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt` (not in the
   two-file allow-list, not in the held-out list, refused by `EnsureDevelopmentFile` and for training),
   `DevSets_ReadShapesDev_HeaderWithoutDevSplit_Throws` and `DevSets_ReadShapesDev_MissingAndValidFile_ThrowsAndReads` (in
   a temporary fake repository), and the two theories of the development-only selection with the shapes development file
