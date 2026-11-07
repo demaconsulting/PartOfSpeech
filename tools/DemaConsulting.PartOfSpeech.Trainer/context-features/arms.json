@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "experiment": "context-features",
+  "note": "Arms of the pre-registered context-feature experiment. Every arm uses the shipped training.json settings; only the feature groups, the seed and the refit temperature differ. Group names are the values of the trainer option --features.",
+  "baseline": "BASE",
+  "primaryMetric": "shapes.hard.pooled.harmfulPer1k",
+  "seeds": [20260101, 11, 12, 13, 14],
+  "previewFolds": 5,
+  "groups": {
+    "F1": "positionCues",
+    "F2": "clauseCues",
+    "F3": "rightPreview",
+    "F4": "inflection"
+  },
+  "skipped": [
+    {
+      "id": "F5",
+      "group": "wordClusters",
+      "reason": "Not built: it needs a new embedded resource, a new binary format and a license review, and the only public-domain text available is about 0.5 million tokens, too little to add information beyond the lexicon."
+    }
+  ],
+  "arms": [
+    { "id": "BASE", "features": [] },
+    { "id": "F1", "features": ["positionCues"] },
+    { "id": "F2", "features": ["clauseCues"] },
+    { "id": "F3", "features": ["rightPreview"] },
+    { "id": "F4", "features": ["inflection"] },
+    { "id": "ALL", "features": ["positionCues", "clauseCues", "rightPreview", "inflection"] },
+    { "id": "ALL-minus-F1", "features": ["clauseCues", "rightPreview", "inflection"] },
+    { "id": "ALL-minus-F2", "features": ["positionCues", "rightPreview", "inflection"] },
+    { "id": "ALL-minus-F3", "features": ["positionCues", "clauseCues", "inflection"] },
+    { "id": "ALL-minus-F4", "features": ["positionCues", "clauseCues", "rightPreview"] }
+  ]
+}

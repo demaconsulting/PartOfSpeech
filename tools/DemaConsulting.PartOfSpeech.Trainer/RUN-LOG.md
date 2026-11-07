@@ -2354,6 +2354,171 @@ Headroom is 100% minus the target accuracy (derived from the hard table above, n
 the four shapes (136 of 400 target errors), against 3.7% on the standard tranche. The 95% intervals of a shape are 16 to 19
 points wide, so a difference of a few items between variants is inside the interval.
 
+## Context-feature experiment: pre-registration
+
+This section is written and committed **before any candidate model of the experiment is trained or evaluated**; the git
+history shows the order: this commit (plan, harness, analysis script, rule), then the feature code, then the arm runs, then a
+results section. Only the shipped model (the BASE arm) has been run: the baselines below. The harness is in
+`tools/DemaConsulting.PartOfSpeech.Trainer/context-features/` (`arms.json`, `run_arms.ps1`, `analyze_arms.py`) and is frozen by
+the hashes at the end; the SHA of this commit is recorded by the commit that follows it (a commit cannot contain its own SHA).
+
+### Goal
+
+Test whether sentence-level context features, added to the shared feature extractor behind switches, lower the harmful
+noun-verb errors of the tagger on the hard tranche of the shapes development set without costing the other development
+measures, size or speed. The hard tranche holds the contested cases of four shapes (`n-compound-head`, `n-subject-initial`,
+`v-imperative-initial`, `v-after-modal`) where the shipped model is weakest. Nothing is adopted unless the pre-registered rule
+below selects it.
+
+### Baselines (shipped model, seed 20260101; development data only)
+
+| Measure | Value |
+| --- | --- |
+| Hard tranche, all shapes (400 target items) | 66.0% target accuracy, 107 harmful, **267.5 harmful per 1k** |
+| `v-imperative-initial` | 45.0%, 440.0 per 1k |
+| `n-compound-head` | 68.0%, 280.0 per 1k |
+| `n-subject-initial` | 73.0%, 160.0 per 1k |
+| `v-after-modal` | 78.0%, 190.0 per 1k |
+| Standard tranche, all shapes (600 target items) | 96.3% target accuracy, 17 harmful, 28.3 per 1k |
+| Open dev (the adopted model's own labels) | 96.38% accuracy, 90 harmful of 4,451 decisions = 20.2 per 1k |
+| UD-EWT dev (mapped view, 25,148 tokens) | 92.71% agreement, 103 harmful of 4,570 decisions = 22.54 per 1k |
+| Gold v2 dev (recorded, not gated) | 95.24% accuracy, 11 harmful of 611 = 18.0 per 1k |
+| Weights | 478,835 bytes deflated, 1,080,650 raw, 116,662 rows |
+
+These are the sections above (the open dev and UD-EWT dev figures are those of the adoption section). The experiment compares
+arms by their own five-seed means: the BASE arm re-measures every figure at five seeds, and the guards below are relative to
+that BASE mean, not to the single-seed figures in this table. Single-thread throughput of the default tagger was recorded at
+315k to 894k tokens per second depending on machine load.
+
+### Feature groups
+
+The groups extend the 22 templates of the shipped extractor. Each is a switch (`FeatureGroups`, stored as a mask in the weights
+header; mask 0 is the shipped format). New feature kinds are appended, so BASE hashes do not move. The definitions below are
+binding; buffer sizes, hash seeds and similar details are not. A lexicon lookup is the one that the decoder already does (the
+cached tag set of a token); tokens not in the lexicon have an empty set.
+
+**Token class (used by F1 and F2).** First match in this order, from the lexicon tag set T of the token and its lower-cased form:
+`Punct` (no letter or digit); `Modal` (one of can, could, may, might, must, shall, should, will, would, cannot); `To` (`to`);
+`Num` (all digits, or NUM in T); `Det` (DET in T and none of NOUN, VERB, ADJ); `Pron` (PRON in T and none of NOUN, VERB, ADJ);
+`Adp` (ADP in T and none of NOUN, VERB, ADJ); `Conj` (CCONJ or SCONJ in T and none of NOUN, VERB, ADJ); `NounVerb` (NOUN and
+VERB in T); `NounOnly` (NOUN, no VERB); `VerbOnly` (VERB, no NOUN); `AdjAdv` (ADJ or ADV in T); `Other` (everything else,
+including unknown spellings). A token is **function-only** when T is not empty and has only DET, PRON, ADP, CCONJ, SCONJ, PART,
+AUX, PUNCT or SYM tags.
+
+- **F1 `positionCues`** (5 static features). `PosIdx` = min(i, 3). `FirstContent`: the index of the first token that is not
+  function-only (unknown spellings count as content), capped at 2, combined with whether the token is that token. `EndPos`:
+  the sentence terminal (`.`, `!`, `?`, `:`, other or none; a final closing quote or bracket is skipped) combined with `PosIdx`.
+  `LenBucket`: sentence length in tokens, buckets 1-3, 4-6, 7-10, 11-15, 16-25, 26+. `LenPos` = `LenBucket` x `PosIdx`.
+- **F2 `clauseCues`** (7 features). Static: `PrevClass1` and `NextClass1` (token class of i-1 and i+1, with a boundary marker),
+  `PrevNextClass` (the pair), `DetDist` (distance 1, 2, 3 or none to the nearest preceding Det, possessive or Num token within 3
+  tokens), `ModalDist` (distance 1, 2 or none to the nearest preceding Modal or To token within 2 tokens). History:
+  `ClauseState` (two bits from the predicted tags since the last clause boundary: a subject-like tag, DET, PRON, NOUN, PROPN or
+  NUM, was seen; a verb tag, VERB or AUX, was seen; a punctuation token among `, ; : ( --` or a predicted SCONJ or CCONJ resets
+  both bits) and `ClauseStatePrev` (`ClauseState` x the previous tag).
+- **F3 `rightPreview`** (4 features; absent in pass 1). A first greedy pass without F3 gives preview tags; the decoder then
+  decodes again with `Rt1` (preview tag of i+1), `Rt2` (preview tag of i+2), `RtPair` (both) and `RtPrev` (the previous tag of
+  this pass x `Rt1`); an end-of-sentence value is used past the end. Training uses **jackknife** preview tags: K = 5 folds by
+  hash of the document id (a document is never split, the same folds for every seed), fold models trained without F3 on the
+  arm's other groups with the shipped training settings and the run seed, decoding their held-out fold exactly as the runtime
+  pass 1 does. One weight table is trained on both modes (pass 1 without F3, pass 2 with the jackknife tags). Known and accepted
+  mismatch: the runtime pass 1 uses the final model, the training preview tags come from the fold models.
+- **F4 `inflection`** (2 features, only for tokens ending in `ing`, `ed`, `s`, `es` or `ies`). Stem candidates (at most 3
+  lexicon lookups, minimum stem length 2): `ing`: stem, stem + `e`, the undoubled final consonant; `ed`: the same and `ied` to
+  `y`; `s`: drop `s` (not after `ss`), drop `es`, `ies` to `y`. `StemKind` = suffix kind x whether some candidate has VERB in
+  the lexicon x whether some candidate has NOUN; `StemKindPrev` = `StemKind` x the previous tag.
+
+### F5 (word clusters): skipped
+
+F5 is not built. It needs a new embedded resource, a new binary format with loader and tests, and a license review of the
+derived data, and the only public-domain text available is about 0.5 million tokens, too little to add information beyond the
+lexicon. The mask bit stays reserved and the loader rejects it.
+
+### Arms and runs
+
+Every arm uses the shipped `training.json` settings (sources open x2, MASC, silver >= 80, restriction `history`,
+predicted history, 6 epochs, 19 hash bits, minimum count 1, pruning 8, scale 8); only the groups and the seed differ, and the
+temperature is refit on open dev for every run (`--calibrate`) as for the shipped model. Seeds: **20260101, 11, 12, 13, 14**
+(five per arm). **K = 5** jackknife folds for F3. Ten arms, 50 runs, run one at a time by `run_arms.ps1`:
+
+| Arm | Groups |
+| --- | --- |
+| BASE | none (the shipped feature set) |
+| F1, F2, F3, F4 | each alone |
+| ALL | F1 + F2 + F3 + F4 |
+| ALL-minus-F1, -F2, -F3, -F4 | ALL without the named group |
+
+The driver trains with `train --seed S --features <groups|none> [--preview-folds 5] --calibrate --output <file>`, then scores
+the file with the dev-only command `eval-arm`, which writes one JSON file per run (the interface contract and the schema are at
+the top of `run_arms.ps1`). It runs below normal priority with at most 8 runtime threads, requires at least 6 GB free on C:,
+and resumes after an interruption: a run is complete when its JSON exists. A run that fails without a result is repeated; no
+run is repeated or replaced because of its result, and no arm is dropped.
+
+### Metrics and the selection rule (fixed now; applied exactly as written; nothing is tuned afterwards)
+
+A harmful error is a swapped noun-verb class at confidence >= 0.45 on a noun-verb decision; rates are per 1,000 decisions
+(the definitions of E0 and of the shapes development set). All figures come from `analyze_arms.py` over the five seeds
+of every arm; spreads are sample standard deviations.
+
+- **Primary metric:** the mean over the five seeds of the pooled harmful per 1k on the hard tranche of the shapes development
+  set (four shapes, 400 target items). Lower is better.
+- **Guards** (arm against the BASE mean; all must hold): shapes-dev standard tranche harmful per 1k <= BASE + 5; open dev
+  harmful per 1k <= BASE + 1.5; UD-EWT dev harmful per 1k <= BASE + 1.5; UD-EWT dev accuracy >= BASE - 0.15 points; deflated
+  weights file size <= 2 x BASE; single-thread throughput >= 150,000 tokens per second (absolute; the median over the seeds).
+- **Rule.** Q = the arms other than BASE that pass every guard. If Q is empty, BASE stays. Otherwise m = the lowest primary in
+  Q, S = the arms of Q with primary <= 1.10 x m (within 10% relative), and the candidate is the arm of S with the fewest feature
+  groups (ties: the lowest primary; a remaining tie: the order of `arms.json`). The candidate ships only if the Welch 95%
+  t-interval (with the Welch degrees-of-freedom approximation) of its primary minus BASE lies **entirely below 0**; otherwise BASE stays
+  and nothing ships. There is no fallback to another arm.
+- **Reported, not gated:** hard and standard target and control accuracy, open dev and gold v2 dev accuracy, NLL and ECE,
+  temperature, rows, raw bytes, training seconds, the per-shape hard breakdown (mean and sd of accuracy and harmful per 1k),
+  and a paired bootstrap over the hard items of the candidate against BASE (2,000 resamples, seed 20261107, descriptive only).
+- **Acceptance test before the rule is applied.** The BASE arm at seed 20260101 must reproduce the baselines above (open dev
+  90 of 4,451, UD-EWT dev 103 of 4,570, hard 267.5 per 1k, standard 28.3 per 1k) and its weights must be byte-identical to the
+  shipped `weights.bin`; if not, the experiment stops without a selection.
+
+**BASE must be byte-identical with all switches off.** With every group off (no `--features` option, or `--features none`), the
+code of the feature work must give weights that are byte-identical to the shipped file (`train --check` exit 0, image
+`a0d45458...8da3`), and all existing tests must pass unchanged. A failure of this gate stops the work before any arm is run.
+
+### Limits stated in advance
+
+- Nine candidate arms are compared with a seed-only interval: it measures training noise, not the sampling of the 400 hard items
+  (their item-level interval is far wider; the bootstrap above shows it), and the lowest of nine is subject to selection bias.
+  The rule is applied as written regardless, and a win is described as development evidence of that kind.
+- The shapes development set has been used for baselines before this experiment; the groups were designed knowing which
+  shapes are weak, so the set is a development set for this selection and not an independent test of the idea.
+- F1 uses sentence-end and sentence-length cues that may not carry over to fragments (headings, list items) of real text; the
+  development sets contain few such inputs.
+
+### Held-out sets
+
+The held-out sets (open test, gold v2 test, shape probe, STE challenge set, UD-EWT test) are **never used for selection** and
+are not read by this experiment: the harness reads only the development files, and `eval-arm` has no path to a held-out file.
+The adoption section above says that a further held-out evaluation "would be a third look and is not planned". That sentence is
+the state when it was written and stays as it is. This experiment is a new work item that the project owner authorized, and it
+changes it only conditionally: **if and only if a winner qualifies under the rule**, one `evaluate` of the new model, with the
+committed record of the current model kept for a side-by-side comparison, is run once, and it is a **disclosed third look** at
+sets already seen for this model family (a new record, not an erratum, labeled as such in the disclosure and the evaluation
+README). If BASE stays, no held-out command is run and that sentence remains true.
+
+### Inputs frozen by this commit
+
+SHA-256 of the files as committed (line endings LF) and of the data they read:
+
+| File | SHA-256 |
+| --- | --- |
+| `context-features/analyze_arms.py` | `3d52825384b440c5786e1b241fc6f814e4e47a63f155414e0d6450107d33e494` |
+| `context-features/run_arms.ps1` | `26ba1c6ed281bdc86ac88522aaab76fd6490f10a753c5aa1dae96d83ff5995db` |
+| `context-features/arms.json` | `0aac43677f11b3cbfa37a020344b6276483edbf8af7eee840893a43520e9fad8` |
+| `tools/data/cache/ud-ewt/ud_dev.tsv` | `0fc0b4a371ef6d0437e01e396762cdb600d0d7ff0d725ead00ac9f3c41f82037` |
+| `data/eval/shapes-dev/dev.tsv` (standard tranche) | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
+| `data/eval/shapes-dev/hard.tsv` | `c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22` |
+| `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (the file) | `439d4af5329b44d3a226b823b20b3afa54dab0ef8e7247f1333135bb96a14092` |
+
+`analyze_arms.py --selftest` passes (the rule logic is tested on synthetic runs: the t quantile against published values, the
+guard boundaries, the 10% window, the fewest-groups tie-break, ties, the no-fallback case, missing runs). The repository code
+base of this experiment is `main` at `4709395`; the trainer commit that produced each result is recorded in its JSON.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
