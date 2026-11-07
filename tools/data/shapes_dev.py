@@ -16,6 +16,16 @@ Input layout of the work folder W (`--work W`):
   W/authored/<shape>.tsv       authored top-up sentences of a shape: header `lemma<TAB>role<TAB>sentence`, role `target` or
                                `control` (a control uses the lemma in the class other than the shape's class)
   W/tokens.tsv                 written by `tokenize`: the tokens of every sentence (the corpus tokenization of the library)
+  W/excluded-sources.tsv       optional; documents that must not be in the set: header `source_id<TAB>reason`, one row per document
+                               (a document the owner dropped after its text was sourced or even labeled)
+
+Excluded sources (W/excluded-sources.tsv). `candidates` (every round) skips every sentence of an excluded document (drop reason
+`excluded-source`, one count per sentence; the document is not a rejected document, it is no candidate source at all). Items of an excluded
+document that are already decided (in the root or in a round folder) are treated as dropped with the reason `excluded-source`, whatever
+their labels were: `decide` writes them so, and `read_decided` (the reader that `sample`, `build`, `report` and the lemma counts of later
+rounds use) overrides a stored `keep`, so they never reach dev.tsv or sources.tsv, no review sample, and no lemma cap. `decide` reports them
+in its `excluded-source` column and `report` in the table `dropped: excluded source` per shape and role. Replacement candidates come from
+another round (`candidates --round NAME`) that skips the excluded documents.
 
 Commands (all take `--work W`; `--data-dir D` replaces the repository's data folder, for tests):
 
@@ -113,6 +123,9 @@ import leakage
 SEED = 20261110
 ROUNDS_DIR = "rounds"
 ROUND_NAME_RE = re.compile(r"[A-Za-z0-9_-]+")
+EXCLUDED_SOURCES_FILE = "excluded-sources.tsv"
+EXCLUDED_COLUMNS = ("source_id", "reason")
+EXCLUDED_REASON = "excluded-source"
 SHAPES = ("n-compound-head", "n-subject-initial", "v-imperative-initial", "n-measure", "v-after-modal")
 SHAPE_CLASS = {shape: ("Noun" if shape.startswith("n-") else "Verb") for shape in SHAPES}
 OTHER_CLASS = {"Noun": "Verb", "Verb": "Noun"}
@@ -358,6 +371,24 @@ def document_rejection(index, source_id, url=""):
     if normalized and ("url", normalized) in index:
         return "url is listed in " + index[("url", normalized)]
     return None
+
+
+def read_excluded_sources(work):
+    """{source_id: reason} of W/excluded-sources.tsv (empty when the file is missing); the header must be `source_id<TAB>reason`."""
+    path = shared_path(work, EXCLUDED_SOURCES_FILE)
+    if not os.path.exists(path):
+        return {}
+    excluded = {}
+    with open(path, "r", encoding="utf-8", newline="") as handle:        # hand-written: CRLF (a Windows editor) is accepted
+        lines = [line for line in handle.read().replace("\r\n", "\n").split("\n") if line.strip() != ""]
+    if not lines or tuple(lines[0].split("\t")) != EXCLUDED_COLUMNS:
+        raise ValueError("%s: the header must be %s" % (path, "\\t".join(EXCLUDED_COLUMNS)))
+    for number, line in enumerate(lines[1:], 2):
+        cells = line.split("\t")
+        if len(cells) != len(EXCLUDED_COLUMNS) or not cells[0].strip() or not cells[1].strip():
+            raise ValueError("%s, line %d: every row needs a source_id and a reason" % (path, number))
+        excluded[cells[0].strip()] = cells[1].strip()
+    return excluded
 
 
 def read_draft(work):
@@ -813,11 +844,12 @@ def lemma_counts_of(works, shapes=SHAPES):
     """Counter {(shape, lemma): n} of the targets of earlier work areas: the kept targets when decided.tsv exists, else the candidates."""
     counts = collections.Counter()
     for earlier in works:
+        excluded = read_excluded_sources(earlier)
         if os.path.exists(earlier.private_file("decided.tsv")):
             items, _ = read_decided(earlier)
             members = [i for i in items if i["outcome"] == "keep"]
         elif os.path.exists(work_path(earlier, "candidates.tsv")):
-            members = read_candidates(earlier)
+            members = [i for i in read_candidates(earlier) if i["source_id"] not in excluded]
         else:
             continue
         counts.update((i["shape"], i["lemma"]) for i in members if i["role"] == "target" and i["shape"] in shapes)
@@ -855,6 +887,7 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
     draft = {row["source_id"]: row for row in read_draft(work)}
     index = exclusion_index(data_dir)
     documents = read_documents(work)
+    excluded = read_excluded_sources(work)
     drops = collections.Counter()
     rejected = {}
     problems = []
@@ -865,6 +898,10 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
     for source_id in sorted(documents):
         if source_id not in draft:
             problems.append("text/%s.txt has no row in sources-draft.tsv" % source_id)
+            continue
+        if source_id in excluded:
+            drops["excluded-source"] += len(documents[source_id])
+            considered += len(documents[source_id])
             continue
         reason = document_rejection(index, source_id, draft[source_id]["url"])
         if reason:
@@ -1339,6 +1376,7 @@ def run_decisions(work, candidates, lex=None):
     rule of `frame_mismatch` (v-imperative-initial, v-after-modal).
     """
     key = read_key(work)
+    excluded = read_excluded_sources(work)
     by_key = {record["sent_key"]: record for record in key}
     sentences = unique_sentences(candidates)
     votes = {}
@@ -1357,6 +1395,8 @@ def run_decisions(work, candidates, lex=None):
         outcome, reason, agreed = decide_item(cand, opus[target], sol[target])
         if outcome == "keep" and frame_mismatch(cand, opus, sol, sentences[cand["sent_key"]][2][target], lex):
             outcome, reason = "drop", "frame-mismatch"
+        if cand["source_id"] in excluded:
+            outcome, reason = "drop", EXCLUDED_REASON
         if cand["sent_key"] not in rows:
             rows[cand["sent_key"]] = [(i,) + decide_token(opus[i], sol[i]) for i in range(len(sentences[cand["sent_key"]][2]))]
         disputed = sum(1 for _, _, status in rows[cand["sent_key"]] if common.base_status(status) == "disputed")
@@ -1371,14 +1411,15 @@ def run_decisions(work, candidates, lex=None):
 
 
 def decide_report(items, incomplete):
-    lines = ["# Decisions", "", "| shape | role | items | kept | target-disagreement | class-mismatch | frame-mismatch | incomplete sentences |",
-             "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+    lines = ["# Decisions", "", "| shape | role | items | kept | target-disagreement | class-mismatch | frame-mismatch | excluded-source | incomplete sentences |",
+             "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for shape in SHAPES:
         for role in ROLES:
             members = [i for i in items if i["shape"] == shape and i["role"] == role]
             count = collections.Counter(i["reason"] or "kept" for i in members)
-            lines.append("| %s | %s | %d | %d | %d | %d | %d | |" % (shape, role, len(members), count["kept"], count["target-disagreement"],
-                                                                   count["class-mismatch"], count["frame-mismatch"]))
+            lines.append("| %s | %s | %d | %d | %d | %d | %d | %d | |" % (shape, role, len(members), count["kept"], count["target-disagreement"],
+                                                                         count["class-mismatch"], count["frame-mismatch"],
+                                                                         count[EXCLUDED_REASON]))
     lines += ["", "incomplete sentences (not decided): %d" % len(incomplete),
               "disputed non-target tokens in kept items: %d" % sum(i["disputed_tokens"] for i in items if i["outcome"] == "keep")]
     return lines
@@ -1398,9 +1439,12 @@ def _command_decide(args):
 def read_decided(work):
     """([item dict], {sent_key: [(form, tag, status)]}) of private/decided.tsv and decided-rows.tsv."""
     _, records = adjudicate.read_records(work.private_file("decided.tsv"))
+    excluded = read_excluded_sources(work)
     for record in records:
         record["target"] = int(record["target"])
         record["disputed_tokens"] = int(record["disputed_tokens"])
+        if record["source_id"] in excluded:
+            record["outcome"], record["reason"] = "drop", EXCLUDED_REASON
     _, row_records = adjudicate.read_records(work.private_file("decided-rows.tsv"))
     rows = collections.defaultdict(list)
     for record in row_records:
@@ -1749,6 +1793,11 @@ def report_lines(out_dir, work=None):
         for shape in SHAPES:
             lines.append("| %s | %d | %d | %d |" % (shape, drops[(shape, "target-disagreement")], drops[(shape, "class-mismatch")],
                                                    drops[(shape, "frame-mismatch")]))
+        lines += ["", "| shape | role | dropped: excluded source |", "| --- | --- | --- |"]
+        excluded_drops = collections.Counter((i["shape"], i["role"]) for i in items if i["reason"] == EXCLUDED_REASON)
+        for shape in SHAPES:
+            for role in ROLES:
+                lines.append("| %s | %s | %d |" % (shape, role, excluded_drops[(shape, role)]))
     return lines
 
 

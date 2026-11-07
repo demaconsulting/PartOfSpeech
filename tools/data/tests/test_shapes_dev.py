@@ -384,6 +384,29 @@ class CandidateTests(MiniFolder):
         self.assertEqual([], rows)
         self.assertTrue(any("rejected gutenberg-1023" in line for line in report))
 
+    def test_an_excluded_source_is_read_from_its_file_and_a_bad_file_is_an_error(self):
+        self.assertEqual({}, sd.read_excluded_sources(self.work))
+        path = os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE)
+        common.write_text(path, ["source_id\treason", "doc-b\tnot clearly public domain", "", "doc-c\tother reason"])
+        self.assertEqual({"doc-b": "not clearly public domain", "doc-c": "other reason"}, sd.read_excluded_sources(self.work))
+        common.write_text(path, ["id\treason", "doc-b\tx"])
+        with self.assertRaises(ValueError):
+            sd.read_excluded_sources(self.work)
+        common.write_text(path, ["source_id\treason", "doc-b\t "])
+        with self.assertRaises(ValueError):
+            sd.read_excluded_sources(self.work)
+        with open(path, "w", encoding="utf-8", newline="") as handle:
+            handle.write("source_id\treason\r\ndoc-b\tCRLF file\r\n")
+        self.assertEqual({"doc-b": "CRLF file"}, sd.read_excluded_sources(self.work))
+
+    def test_candidates_skip_every_sentence_of_an_excluded_document_and_count_the_drop(self):
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason", "doc-b\tnot clearly public domain"])
+        rows, report = self.collect({"doc-a": DOCUMENT, "doc-b": ["The oil pump fails the test .", "Flow stops at the tank ."]})
+        self.assertEqual({"doc-a"}, {r["source_id"] for r in rows})
+        self.assertTrue(any("excluded-source 2" in line for line in report))
+        self.assertFalse(any("rejected doc-b" in line for line in report))
+        self.assertTrue(any("sentences considered: %d" % (len(DOCUMENT) + 2) in line for line in report))
+
 
 class TokenizerInterfaceTests(MiniFolder):
     def test_tokenize_command_calls_the_tokenizer_and_caches_the_tokens(self):
@@ -595,6 +618,52 @@ class PipelineTests(MiniFolder):
         self.assertEqual(0, code)
         self.assertIn("| v-after-modal |", report)
         self.assertIn("dropped: class mismatch", report)
+
+    def test_decided_items_of_an_excluded_source_are_dropped_everywhere_and_never_built(self):
+        second = ["Check the oil tank before use .", "Flow stops at the tank ."]
+        self.write_draft(["doc-a", "doc-b"])
+        self.write_text_doc("doc-b", second)
+        texts = DOCUMENT + second
+        self.candidates, _ = sd.collect_candidates(self.work, self.data, include_ud=False, tokens_override=self.tokens_for(texts), clean=False)
+        sd.write_candidates(self.work, self.candidates)
+        self.export_and_tag()
+        items, _ = self.decided()
+        before = {i["cand_id"]: i for i in items if i["source_id"] == "doc-b"}
+        self.assertTrue(any(i["outcome"] == "keep" for i in before.values()))
+        out = os.path.join(self.temp, "out")
+        self.assertEqual(0, self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5")[0])
+        self.assertIn("doc-b", {s["source_id"] for s in common.read_corpus(os.path.join(out, "dev.tsv"))[1]})
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason", "doc-b\tnot clearly public domain"])
+        items, _ = sd.read_decided(self.work)                                       # the stored `keep` is overridden when read
+        mine = [i for i in items if i["source_id"] == "doc-b"]
+        self.assertTrue(mine and all((i["outcome"], i["reason"]) == ("drop", sd.EXCLUDED_REASON) for i in mine))
+        self.assertEqual(sorted(before), sorted(i["cand_id"] for i in mine))
+        self.assertTrue(any(i["outcome"] == "keep" for i in items if i["source_id"] == "doc-a"))
+        self.assertEqual(0, sum(1 for i in sd.read_all_decided(self.work)[0] if i["source_id"] == "doc-b" and i["outcome"] == "keep"))
+        self.assertEqual(0, sum(n for (shape, lemma), n in sd.lemma_counts_of([self.work]).items() if lemma in ("stops", "tank")))
+        self.assertEqual(0, self.cli("build", "--out-dir", out, "--controls", "4", "--share", "0.5")[0])
+        _, sentences = common.read_corpus(os.path.join(out, "dev.tsv"))
+        self.assertTrue(sentences and "doc-b" not in {s["source_id"] for s in sentences})
+        _, sources = adjudicate.read_records(os.path.join(out, "sources.tsv"))
+        self.assertNotIn("doc-b", {r["source_id"] for r in sources})
+        self.assertEqual(0, self.cli("sample", "--per-shape", "12", "--controls", "0")[0])
+        with open(os.path.join(self.root, "private", "review-sample.md"), encoding="utf-8") as handle:
+            self.assertNotIn("oil tank before use", handle.read())
+        code, report = self.cli("report", "--out-dir", out)
+        self.assertEqual(0, code)
+        self.assertIn("dropped: excluded source", report)
+        counted = collections.Counter()
+        for line in report.splitlines():
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            if len(cells) == 3 and cells[1] in sd.ROLES and cells[2].isdigit():
+                counted[(cells[0], cells[1])] += int(cells[2])
+        self.assertEqual(len(mine), sum(counted.values()))
+        self.assertEqual(sum(1 for i in mine if i["shape"] == "n-subject-initial" and i["role"] == "target"),
+                         counted[("n-subject-initial", "target")])
+        code, output = self.cli("decide")                                           # a new decision run writes them as dropped
+        self.assertEqual(0, code)
+        self.assertIn("excluded-source |", output)
+        self.assertTrue(all(i["reason"] == sd.EXCLUDED_REASON for i in sd.read_decided(self.work)[0] if i["source_id"] == "doc-b"))
 
     def test_build_is_deterministic(self):
         self.export_and_tag()
@@ -908,6 +977,19 @@ class RoundTests(MiniFolder):
         counts = sd.lemma_counts_of([self.work])
         self.assertEqual(1, counts[("n-compound-head", "pump")])
         self.assertEqual(1, counts[("n-compound-head", "seal")])
+
+    def test_a_round_skips_an_excluded_document_and_its_decided_kept_targets_no_longer_count_against_the_lemma_cap(self):
+        self.assertEqual(0, self.cli("export")[0])
+        self.tag(self.work)
+        self.assertEqual(0, self.cli("validate-output", "--all")[0])
+        self.assertEqual(0, self.cli("decide")[0])
+        self.assertEqual(1, sd.lemma_counts_of([self.work])[("n-compound-head", "pump")])
+        common.write_text(os.path.join(self.root, sd.EXCLUDED_SOURCES_FILE), ["source_id\treason", "doc-a\tnot clearly public domain"])
+        self.assertEqual(0, sum(sd.lemma_counts_of([self.work]).values()))
+        code, output = self.cli(*self.ROUND_OPTIONS)
+        self.assertEqual(0, code, output)
+        self.assertIn("excluded-source %d" % len(self.MORE_LINES), output)
+        self.assertEqual([], sd.read_candidates(self.r2))
 
     def test_compound_strict_needs_a_noun_like_modifier(self):
         texts, _ = self.round_texts()
