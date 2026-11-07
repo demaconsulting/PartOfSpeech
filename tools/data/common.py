@@ -138,6 +138,14 @@ def normalize_url(url):
     return host + match.group(2).rstrip("/")
 
 
+def is_http_url(url):
+    """True for an `http://` or `https://` URL with a host (any case of the scheme). A record's URL must be one; any other scheme is not.
+
+    Matching stays scheme-agnostic (`normalize_url`): a document is matched by host and path whatever its scheme, so the check is a
+    separate validation of what a record may list, never a narrowing of what is rejected."""
+    return re.match(r"^https?://", url.strip(), re.I) is not None and normalize_url(url) != ""
+
+
 def read_excluded_table(path):
     """[(source_id, url, reason, decided)] of a committed `excluded-sources.tsv`; a missing or malformed file is a ValueError.
 
@@ -155,7 +163,7 @@ def read_excluded_table(path):
         cells = line.split("\t")
         if len(cells) != len(EXCLUDED_SOURCES_COLUMNS) or not all(c.strip() for c in cells):
             raise ValueError("%s, line %d: every row needs source_id, url, reason and decided" % (path, number))
-        if not normalize_url(cells[1]) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", cells[3]):
+        if not is_http_url(cells[1]) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", cells[3]):
             raise ValueError("%s, line %d: url must be an http(s) URL and decided a YYYY-MM-DD date" % (path, number))
         if cells[0] in seen:
             raise ValueError("%s, line %d: duplicate source_id %s" % (path, number, cells[0]))

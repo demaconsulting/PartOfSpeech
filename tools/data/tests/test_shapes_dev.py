@@ -139,6 +139,13 @@ class ExclusionTests(MiniFolder):
         self.assertEqual("nist.gov/a/b", sd.normalize_url("HTTPS://WWW.NIST.gov/a/b/?q=1#f"))
         self.assertEqual("", sd.normalize_url("not a url"))
 
+    def test_only_http_and_https_urls_are_valid_record_urls_while_matching_stays_scheme_agnostic(self):
+        for url in ("http://example.gov/a", "HTTPS://Example.gov/a/", "  https://www.example.gov/a  "):
+            self.assertTrue(common.is_http_url(url), url)
+        for url in ("ftp://example.gov/a", "file://example.gov/a", "mailto:a@example.gov", "https://", "example.gov/a", ""):
+            self.assertFalse(common.is_http_url(url), url)
+        self.assertEqual("example.gov/a", sd.normalize_url("ftp://example.gov/a"))                  # a match ignores the scheme
+
     def test_command_writes_the_index_and_rejects_a_draft_document(self):
         self.write_draft(["gutenberg-1023", "army-fm"])
         code, output = self.cli("exclusions")
@@ -482,6 +489,10 @@ class CandidateTests(MiniFolder):
             sd.excluded_output_rows(self.work, draft)
         common.write_text(path, ["source_id\treason", "doc-b\tr"])
         with self.assertRaises(ValueError):                                         # no decided date
+            sd.excluded_output_rows(self.work, draft)
+        common.write_text(path, ["source_id\treason\tdecided", "doc-b\tr\t2026-11-06"])
+        draft[1]["url"] = "ftp://example.gov/doc-b"
+        with self.assertRaises(ValueError):                                         # a url that is no http(s) URL is no record
             sd.excluded_output_rows(self.work, draft)
 
     def test_candidates_skip_every_sentence_of_an_excluded_document_and_count_the_drop(self):
@@ -1471,6 +1482,9 @@ class ExclusionRecordGateTests(MiniFolder):
         self.write_set()
         path = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
         for lines in (["source_id\turl\treason"], ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-x\tnot a url\tr\t2026-11-06"],
+                      ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-x\tftp://example.gov/x\tr\t2026-11-06"],
+                      ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-x\tfile://example.gov/x\tr\t2026-11-06"],
+                      ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-x\thttps://\tr\t2026-11-06"],
                       ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-x\thttps://example.gov/x\tr\tyesterday"],
                       ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-x\thttps://example.gov/x\t\t2026-11-06"]):
             common.write_text(path, lines)

@@ -445,6 +445,8 @@ def excluded_output_rows(work, draft):
     for source_id, reason, decided in sorted(read_excluded_rows(work)):
         if source_id not in urls or not urls[source_id]:
             raise ValueError("excluded source %s has no url in sources-draft.tsv" % source_id)
+        if not common.is_http_url(urls[source_id]):
+            raise ValueError("excluded source %s needs an http(s) url in sources-draft.tsv" % source_id)
         if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", decided):
             raise ValueError("excluded source %s needs a `decided` date (YYYY-MM-DD) in excluded-sources.tsv" % source_id)
         rows.append([source_id, urls[source_id], reason, decided])
