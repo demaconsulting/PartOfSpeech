@@ -81,7 +81,8 @@ and stays valid with zero items). It has its own work folder W (for example W/ha
   W/hmm.tsv                    written by the harness tools/data/hmm-tags (see its README): the part-of-speech probability mass of every
                                token from the WordSense Basic classifier (HMM tagger plus cue model), with the WordSense commit and the SHA-256 of
                                the DLL that ran in its header; a sentence is found by its token sequence, a missing sentence is an error.
-                               `read_hmm` refuses a file whose commit or DLL SHA-256 is not the pinned one (6530de19..., b96e0055...), whose
+                               `read_hmm` refuses a file whose SHA-256 is not the pinned one (3014efd2..., the value in the README and RUN-LOG:
+                               edited pNoun or pVerb cells are refused), whose commit or DLL SHA-256 is not the pinned one (6530de19..., b96e0055...), whose
                                input_sha256 is not the SHA-256 of the current W/tokens.tsv (exact: a tokens.tsv that gained rows needs a new
                                hmm-tags run), or whose sentence count is not that of the single-sentence rows of tokens.tsv; no override
 
@@ -233,6 +234,7 @@ HMM_FILE = "hmm.tsv"
 HMM_MAGIC = "# hmm-tags 1"
 HARD_WORDSENSE_COMMIT = "6530de1928baf30f9a14446a54bfb5dd5f67b41c"    # the classifier the hard-tranche rule is pre-registered on (README)
 HARD_WORDSENSE_DLL_SHA256 = "b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf"
+HARD_HMM_SHA256 = "3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c"   # the bytes of the hard profile's hmm.tsv (README, RUN-LOG)
 HARD_SHAPES = ("n-compound-head", "n-subject-initial", "v-imperative-initial", "v-after-modal")   # n-measure has no hard cases
 BAND_MIN, BAND_MAX = 0.10, 0.97                  # eligible iff BAND_MIN <= q < BAND_MAX (q = Basic model mass of the shape's class)
 DISAGREE_Q = 0.5                                 # q below this is the pure-disagreement part of the band
@@ -739,9 +741,13 @@ def parse_hmm_cell(cell):
     return parts[0], parts[1], float(parts[2]), float(parts[3])
 
 
-def read_hmm(work):
-    """The HmmTable of W/hmm.tsv. The hard rule is pre-registered on one classifier and one input, so the header is checked, not just read:
+def read_hmm(work, expected_sha256=None):
+    """The HmmTable of W/hmm.tsv. The hard rule is pre-registered on one classifier and one input, so the file is checked, not just read:
 
+    - the SHA-256 of the bytes of the file == `expected_sha256` (HARD_HMM_SHA256, 3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c,
+      the value recorded in the README and RUN-LOG pre-registration, when None): the header names the classifier and the input, but only the
+      bytes pin the pNoun and pVerb cells that the band and the order of the candidates are computed from, so an edited file is refused first,
+      before it is parsed. The parameter is for tests with a fixture file; the pin of the hard profile has no override on the command line;
     - `# hmm-tags 1` magic; `wordsense_commit` == HARD_WORDSENSE_COMMIT (6530de1928baf30f9a14446a54bfb5dd5f67b41c) and
       `wordsense_dll_sha256` == HARD_WORDSENSE_DLL_SHA256 (b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf): a different
       classifier build can give a different tranche and is refused (there is no override);
@@ -752,6 +758,12 @@ def read_hmm(work):
     path = shared_path(work, HMM_FILE)
     if not os.path.exists(path):
         raise ValueError("%s is missing: run tools/data/hmm-tags on tokens.tsv (see its README)" % path)
+    pinned_bytes = HARD_HMM_SHA256 if expected_sha256 is None else expected_sha256
+    with open(path, "rb") as handle:
+        actual_bytes = hashlib.sha256(handle.read()).hexdigest()
+    if actual_bytes != pinned_bytes:
+        raise ValueError("%s: its SHA-256 is %s, the hard tranche is pre-registered on a file with SHA-256 %s: the file was edited or is another run"
+                         % (path, actual_bytes, pinned_bytes))
     meta, rows = {}, {}
     lines = common.read_lines(path)
     if not lines or not lines[0].startswith(HMM_MAGIC):
@@ -1246,6 +1258,9 @@ def collect_candidates(work, data_dir, include_ud=True, target=TARGET_PER_SHAPE,
     the lemma), `control_pool` per shape, by the seeded rank. The target selection of the build cannot change: no target is added.
     """
     shapes = tuple(only_shapes) if only_shapes else (HARD_SHAPES if hard else SHAPES)
+    if hard and not set(shapes) <= set(HARD_SHAPES):
+        raise ValueError("the hard tranche has no budget for %s: only_shapes must be of %s"
+                         % (", ".join(s for s in shapes if s not in HARD_SHAPES), ", ".join(HARD_SHAPES)))
     compound_strict = compound_strict or hard is not None
     exclude_keys = exclude_keys or frozenset()
     exclude_lines = exclude_lines or frozenset()
@@ -1500,14 +1515,17 @@ def parse_shape_lemma_cap(values):
     return parse_shape_option(values, "--shape-lemma-cap", int, 1)
 
 
-def parse_only_shapes(value):
-    """The tuple of shapes of `--only-shapes A,B` (None when not given); an unknown shape is an error."""
+def parse_only_shapes(value, allowed=None):
+    """The tuple of shapes of `--only-shapes A,B` (None when not given); a shape outside `allowed` (SHAPES when None) is an error.
+
+    The hard tranche passes HARD_SHAPES: it has budgets, floors and caps only for those shapes (n-measure has no hard cases)."""
     if not value:
         return None
+    allowed = SHAPES if allowed is None else allowed
     shapes = tuple(part.strip() for part in value.split(",") if part.strip())
-    unknown = [s for s in shapes if s not in SHAPES]
+    unknown = [s for s in shapes if s not in allowed]
     if unknown or not shapes:
-        raise ValueError("--only-shapes needs shapes of %s: %r" % (", ".join(SHAPES), value))
+        raise ValueError("--only-shapes needs shapes of %s: %r" % (", ".join(allowed), value))
     return tuple(dict.fromkeys(shapes))
 
 
@@ -1543,7 +1561,11 @@ def build_control_room(work, seed=SEED, caps=None, lemma_cap=LEMMA_CAP, shape_le
 
 def _command_candidates(args):
     work = open_work(args)
-    only = parse_only_shapes(args.only_shapes)
+    try:
+        only = parse_only_shapes(args.only_shapes, HARD_SHAPES if args.tranche == "hard" else None)
+    except ValueError as error:
+        print("candidates refused: %s" % error, file=sys.stderr)
+        return 1
     keys, lines, existing = earlier_exclusions(work, args.data_dir)
     name = getattr(work, "name", None)
     hard = None
@@ -2340,12 +2362,14 @@ def quota_problems_hard(targets, controls_chosen, floors=None, caps=None, contro
     return problems
 
 
-def merge_excluded_rows(committed, w_rows):
+def merge_excluded_rows(committed, w_rows, id_only_ok=False):
     """The sorted union of the committed exclusion rows and the work-folder rows; a committed row is never dropped or changed.
 
     An id in both tables with the same normalized URL keeps the committed row (the committed reason and decided date stand). An id
     in both with a different URL is a conflict, and it raises ExcludedSourceError: keeping one URL would silently erase the
-    exclusion of the other, so the owner must resolve it (use another id for the second document).
+    exclusion of the other, so the owner must resolve it (use another id for the second document). This holds for both profiles.
+    `id_only_ok` (the hard tranche) treats an empty URL as an id-only exclusion, which conflicts with nothing: a work row of a document
+    that is not in the hard inputs has no draft URL.
     """
     merged = {row[0]: list(row) for row in committed}
     conflicts = []
@@ -2353,6 +2377,8 @@ def merge_excluded_rows(committed, w_rows):
         kept = merged.get(row[0])
         if kept is None:
             merged[row[0]] = list(row)
+        elif id_only_ok and not (kept[1] and row[1]):
+            continue
         elif common.normalize_url(kept[1]) != common.normalize_url(row[1]):
             conflicts.append("%s is excluded as %s in the committed table but as %s in W/excluded-sources.tsv" % (row[0], kept[1], row[1]))
     if conflicts:
@@ -2384,7 +2410,8 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
     data/eval/shapes-dev/excluded-sources.tsv or in W/excluded-sources.tsv raises ExcludedSourceError; a missed quota (targets per
     shape, controls, lemma caps, authored share) raises QuotaError unless `allow_short` (then the report lists it as a warning).
     The committed exclusion table can only grow: its rows are kept in the written table. The hard tranche reads the exclusion record
-    fail-closed and never rewrites it; its quotas are the pre-registered floors and caps (`hard` = dict with optional floors, caps,
+    fail-closed and never rewrites it, but it validates the two tables for conflicting URLs like the standard tranche (an id-only row is
+    fine); its quotas are the pre-registered floors and caps (`hard` = dict with optional floors, caps,
     control_min, control_max; see `quota_problems_hard`) instead of the exact per-shape counts, and `per_shape`, `share` and `controls` are unused.
     """
     items, tagged = read_all_decided(work, data_dir)
@@ -2419,7 +2446,7 @@ def build(work, out_dir, seed=SEED, per_shape=TARGET_PER_SHAPE, lemma_cap=LEMMA_
         short = quota_problems(targets, chosen, per_shape, lemma_cap, share, controls, shape_lemma_cap)
     if short and not allow_short:
         raise QuotaError("quotas not met (pass --allow-short to build anyway):\n  " + "\n  ".join(short[:20]))
-    excluded = merge_excluded_rows(committed, w_rows) if tranche != "hard" else []        # a conflict refuses before anything is written
+    excluded = merge_excluded_rows(committed, w_rows, id_only_ok=tranche == "hard")        # a conflict refuses before anything is written
     dev_name, sources_name = TRANCHE_FILES[tranche]
     common.write_corpus(os.path.join(out_dir, dev_name), common.with_flag_documentation(HEADERS[tranche], built), built)
     adjudicate.write_rows(os.path.join(out_dir, sources_name), SOURCE_COLUMNS, sources_rows(draft, built))

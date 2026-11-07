@@ -271,7 +271,8 @@ Inputs of the selection:
 The rule (`python tools/data/shapes_dev.py --tranche hard`; the docstring of the tool has the same text):
 
 1. **Inputs.** Real text of the sourced documents, library tokens, the lexicon, the committed `dev.tsv` (for exclusion) and
-   `hmm.tsv`. No PartOfSpeech tagger, weight file, prediction, error or score is read, by the tool or by the harness; a data test
+   `hmm.tsv` (the tool refuses any `hmm.tsv` whose SHA-256 differs from the pinned value above, so edited mass cells cannot enter a
+   selection). No PartOfSpeech tagger, weight file, prediction, error or score is read, by the tool or by the harness; a data test
    asserts it.
 2. **Candidate filters.** Unchanged from the standard tranche: cleanliness, length 3 to 30 tokens, duplicates, the held-out
    filter (only through `leakage.held_out_overlap_keys`), excluded sources and document key hits. In addition, a candidate is not

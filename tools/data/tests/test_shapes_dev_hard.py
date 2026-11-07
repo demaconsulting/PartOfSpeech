@@ -10,7 +10,7 @@ import re
 import shutil
 import sys
 import unittest
-
+from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import adjudicate
@@ -21,6 +21,7 @@ import leakage
 import shapes_dev as sd
 import test_shapes_dev as base
 
+PRODUCTION_HMM_SHA256 = sd.HARD_HMM_SHA256        # read at import, before any test patches the pin
 NEAR_LONG = "Workers must check the gauge before they open the main supply valve and then close the relief line ."
 NEAR_CHANGED = "Workers must check the gauge before they open the main supply valve and then close the relief pipe ."
 
@@ -74,6 +75,9 @@ class HardFolder(base.MiniFolder):
 
     def setUp(self):
         super().setUp()
+        pin = mock.patch.object(sd, "HARD_HMM_SHA256", "0" * 64)       # the fixture's own hash is injected by pin_hmm(); the production pin is untouched
+        pin.start()
+        self.addCleanup(pin.stop)
         self.standard = [("doc-a", FRAME_DOC[0]), ("doc-b", NEAR_LONG)]
         extra = [["# shape = n-compound-head", "# role = target", "# target = 2", "# lemma = switch", "# origin = real"] for _ in self.standard]
         base.corpus_file(os.path.join(self.data, "eval", "shapes-dev", "dev.tsv"), self.standard, extra)
@@ -112,7 +116,12 @@ class HardFolder(base.MiniFolder):
                 cells.append("%s|Noun|%.3f|%.3f" % (token, noun, verb))
             lines.append("\t".join(cells))
         common.write_text(os.path.join(self.root, sd.HMM_FILE), lines)
+        self.pin_hmm()
 
+    def pin_hmm(self):
+        """Make the current bytes of the fixture's hmm.tsv the pinned ones (the test constant; the production pin is not used by the fixture)."""
+        with open(os.path.join(self.root, sd.HMM_FILE), "rb") as handle:
+            sd.HARD_HMM_SHA256 = hashlib.sha256(handle.read()).hexdigest()
     def rule(self, budgets=None):
         return sd.HardRule(sd.read_hmm(self.work), sd.StandardTranche(self.data), budgets)
 
@@ -136,11 +145,51 @@ class HmmFileTests(HardFolder):
             with self.assertRaises(ValueError):
                 sd.parse_hmm_cell(bad)
 
+    def test_the_bytes_of_hmm_are_pinned_and_an_edited_cell_is_refused(self):
+        self.assertEqual("3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c", PRODUCTION_HMM_SHA256)
+        readme = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "data", "eval", "shapes-dev", "README.md")
+        with open(readme, encoding="utf-8") as handle:
+            self.assertIn(PRODUCTION_HMM_SHA256, handle.read())                              # the pin is the pre-registered value
+        sd.read_hmm(self.work)                                                              # the fixture's own hash (the test constant): accepted
+        path = os.path.join(self.root, sd.HMM_FILE)
+        with open(path, "rb") as handle:
+            original = handle.read()
+        edited = original.replace(b"|Noun|0.600|0.400", b"|Noun|0.100|0.900", 1)             # an edited pNoun / pVerb cell, header untouched
+        self.assertNotEqual(original, edited)
+        with open(path, "wb") as handle:
+            handle.write(edited)
+        with self.assertRaises(ValueError) as caught:
+            sd.read_hmm(self.work)
+        self.assertIn("SHA-256", str(caught.exception))
+        self.assertIn(hashlib.sha256(original).hexdigest(), str(caught.exception))
+        with self.assertRaises(ValueError):
+            self.collect()
+        self.assertEqual(1, self.run_candidates_cli())
+        sd.read_hmm(self.work, expected_sha256=hashlib.sha256(edited).hexdigest())          # the parameter is the injection point of a fixture
+        with open(path, "wb") as handle:
+            handle.write(original)
+        sd.read_hmm(self.work)
+
+    def test_the_fixture_is_refused_by_the_production_pin(self):
+        sd.HARD_HMM_SHA256 = PRODUCTION_HMM_SHA256                                           # what a real run uses
+        with self.assertRaises(ValueError) as caught:
+            sd.read_hmm(self.work)
+        self.assertIn(PRODUCTION_HMM_SHA256, str(caught.exception))
+
+    def run_candidates_cli(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            try:
+                return sd.main(["--work", self.root, "--data-dir", self.data, "--tranche", "hard", "candidates", "--no-ud"])
+            except ValueError:
+                return 1
+
     def test_a_missing_file_a_wrong_header_and_a_wrong_count_are_errors(self):
         path = os.path.join(self.root, sd.HMM_FILE)
         lines = common.read_lines(path)
         lines[4] = "# sentences = %d" % (len(self.texts) + 5)
         common.write_text(path, lines)
+        self.pin_hmm()
         with self.assertRaises(ValueError) as caught:
             sd.read_hmm(self.work)
         self.assertIn("sentences", str(caught.exception))
@@ -201,6 +250,7 @@ class HmmFileTests(HardFolder):
     def test_a_header_without_the_input_hash_is_refused(self):
         path = os.path.join(self.root, sd.HMM_FILE)
         common.write_text(path, [line for line in common.read_lines(path) if not line.startswith("# input_sha256")])
+        self.pin_hmm()
         with self.assertRaises(ValueError) as caught:
             sd.read_hmm(self.work)
         self.assertIn("input_sha256", str(caught.exception))
@@ -446,6 +496,51 @@ class HardPipelineTests(HardFolder):
         self.assertTrue(os.path.exists(os.path.join(out, "hard.tsv")))
         self.assertEqual(before, common.read_lines(record))
         self.assertEqual(0, self.hard_cli("report", "--out-dir", out)[0])
+
+    def test_the_hard_build_refuses_one_id_with_two_urls_in_the_committed_and_the_work_table_even_when_it_is_not_selected(self):
+        self.prepare()
+        record = os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv")
+        out = os.path.join(self.temp, "out")
+        self.write_work_exclusions([("doc-c", "not public domain", "2026-11-06")])        # doc-c is in the draft (https://example.gov/doc-c) and has no item
+        common.write_text(record, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-c\thttps://www.example.gov/doc-c/\tolder\t2026-11-01"])
+        code, output = self.hard_cli("build", "--out-dir", out, "--allow-short")             # same id, same normalized URL: the union
+        self.assertEqual(0, code, output)
+        shutil.rmtree(out)
+        common.write_text(record, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-c\thttps://example.gov/another-document\tolder\t2026-11-01"])
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, _ = self.hard_cli("build", "--out-dir", out, "--allow-short")
+        self.assertEqual(1, code)
+        for text in ("conflicting", "doc-c", "another-document"):
+            self.assertIn(text, err.getvalue())
+        self.assertFalse(os.path.exists(os.path.join(out, "hard.tsv")))                      # nothing is written
+        self.write_work_exclusions([("doc-gone", "not public domain", "2026-11-06")])      # a work row without a draft URL: id only, no conflict
+        common.write_text(record, ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "doc-gone\thttps://example.gov/doc-gone\tolder\t2026-11-01"])
+        self.assertEqual(0, self.hard_cli("build", "--out-dir", out, "--allow-short")[0])
+        with self.assertRaises(sd.ExcludedSourceError):
+            sd.merge_excluded_rows([("x", "https://example.gov/a", "r", "d")], [["x", "https://example.gov/b", "r", "d"]], id_only_ok=True)
+        self.assertEqual([["x", "https://example.gov/a", "r", "d"]],
+                         sd.merge_excluded_rows([("x", "https://example.gov/a", "r", "d")], [["x", "", "r", "d"]], id_only_ok=True))
+        with self.assertRaises(sd.ExcludedSourceError):                                      # the standard profile has no id-only rows
+            sd.merge_excluded_rows([("x", "https://example.gov/a", "r", "d")], [["x", "", "r", "d"]])
+
+    def test_only_shapes_of_the_hard_tranche_must_be_hard_shapes(self):
+        self.assertEqual(("v-after-modal",), sd.parse_only_shapes("v-after-modal", sd.HARD_SHAPES))
+        self.assertEqual(("n-measure",), sd.parse_only_shapes("n-measure"))                  # a standard-tranche shape
+        for bad in ("n-measure", "v-after-modal,n-measure", "no-such-shape"):
+            with self.assertRaises(ValueError) as caught:
+                sd.parse_only_shapes(bad, sd.HARD_SHAPES)
+            self.assertIn("--only-shapes", str(caught.exception))
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, _ = self.hard_cli("candidates", "--no-ud", "--only-shapes", "n-measure")
+        self.assertEqual(1, code)
+        self.assertIn("candidates refused", err.getvalue())
+        self.assertIn("--only-shapes", err.getvalue())
+        self.assertFalse(os.path.exists(os.path.join(self.root, "candidates.tsv")))
+        with self.assertRaises(ValueError):                                                  # the collector refuses it too
+            self.collect(only_shapes=("n-measure",))
+        self.assertEqual(0, self.cli("candidates", "--no-ud", "--only-shapes", "n-measure")[0])    # the standard tranche still takes it
 
     def test_the_hard_build_refuses_a_chosen_source_excluded_by_the_committed_url_or_the_work_rows_without_a_url(self):
         self.prepare()
