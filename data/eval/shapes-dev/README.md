@@ -243,8 +243,10 @@ A second development file, `hard.tsv`, holds the contested cases of four shapes 
 `v-imperative-initial`, `v-after-modal`; `n-measure` has no hard cases and stays at zero items). It is built from the same kind of
 federal documents, labeled by the same two blind model labelers, and is for development only, like `dev.tsv`.
 
-**This section was written before any label of the tranche exists**, and before the candidates were generated. It is the
-pre-registered selection rule; counts, drops and results are added after the build, and the rule is not changed by them.
+**The pre-registered selection rule (the inputs table and the rule below) was written before any label of the tranche existed**,
+and before the candidates were generated. The frozen pre-registration is commit `7a1aa4d`, amended once by commit `7e3ecb0` (the
+`n-subject-initial` cap, before labeling). The sections "Rounds Actually Run", "Outcome" and the ones after it were added after
+labeling; they do not change the rule.
 
 Inputs of the selection:
 
@@ -383,7 +385,7 @@ q is in no committed file.
 ### Hand Check of the Hard Tranche
 
 `claude-sonnet-5.5` (a model review, not a human review) judged 60 target items shown without q: 15 per
-shape, at least half with q < 0.5, drawn from the decided pool of kept targets (before the cap). Result: 58 correct, 0 incorrect and 2
+shape, at least half with q < 0.5, drawn from the 400 target items of the capped build selection (all 60 sampled targets and the 4 control sentences are in `hard.tsv`). Result: 58 correct, 0 incorrect and 2
 unclear, so the precision is 58 of 60 = 96.7% counted strictly (100% of the decided items). The two unclear items are
 `n-subject-initial` fragments that read either as an imperative or as a noun-compound heading. The leniency control (4 items whose
 tag was swapped on purpose) was judged incorrect 4 times of 4, so the reviewer did not accept wrong tags. The gate (95%) passed.
@@ -391,10 +393,10 @@ tag was swapped on purpose) was judged incorrect 4 times of 4, so the reviewer d
 ### Headroom of the Hard Tranche
 
 The shipped model is measured on it in the trainer [run log](../../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md),
-section "Shapes development set: hard tranche baseline of the shipped model", which holds the figures. The headroom (100% minus
-the target accuracy) there is 32.0% for `n-compound-head`, 27.0% for `n-subject-initial`, 55.0% for `v-imperative-initial`
-and 22.0% for `v-after-modal` (34.0% over the four shapes, 136 of 400 target errors), against 3.7% on the standard tranche. The
-hard tranche therefore leaves room to show a gain where the standard tranche does not.
+section "Shapes development set: hard tranche baseline of the shipped model". The headroom (100% minus the target accuracy) per
+shape and over the four shapes, and the comparison with the standard tranche, are in its subsection
+[Headroom of the hard tranche](../../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md#headroom-of-the-hard-tranche); the
+figures are kept there only.
 
 ### Limits of the Hard Tranche
 
@@ -407,8 +409,8 @@ hard tranche therefore leaves room to show a gain where the standard tranche doe
   classifier", not "intrinsically hard".
 - **Selection and labels interact:** the band keeps a sentence only if both labelers also agree on its class, and the large
   class-mismatch drops show how many contested candidates are not true instances of the shape.
-- **Hand check:** a model review of 60 tokens, drawn from the decided pool and not from the 400 built items alone, so it estimates the
-  precision of the kept pool; two unclear items; no human reviewed any label.
+- **Hand check:** a model review of 60 tokens of the 400 built target items (15 per shape); two unclear items; no human reviewed
+  any label.
 - **Controls:** 60 real sentences, 15 per shape, chosen for lemmas of kept targets.
 - **Same text family as the standard tranche:** 43 documents are shared, so the two tranches are one family, not two independent
   samples; the narrow-domain limit below applies to both.

@@ -2239,7 +2239,10 @@ section below.
 
 ## Shapes development set: hard tranche, pre-registered selection rule
 
-**Written before any label of the hard tranche exists and before its candidates were generated.** The hard tranche
+**The pre-registered selection rule (the inputs table and the numbered rule below) was written before any label of the hard
+tranche existed and before its candidates were generated.** The frozen pre-registration is commit `7a1aa4d`, amended once by commit
+`7e3ecb0` (the `n-subject-initial` cap, rule 9, before labeling). The sections "Rounds actually run" and the baseline sections
+after it were added after labeling; they do not change the rule. The hard tranche
 (`data/eval/shapes-dev/hard.tsv`, [README](../../data/eval/shapes-dev/README.md#hard-tranche) has the same rule) holds the
 contested cases of `n-compound-head`, `n-subject-initial`, `v-imperative-initial` and `v-after-modal` (`n-measure` has no hard
 cases and stays at zero items). It is a development set: the figures that it produces select settings and are never held-out

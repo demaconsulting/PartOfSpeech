@@ -49,7 +49,8 @@ Commands (all take `--work W`; `--data-dir D` replaces the repository's data fol
   python tools/data/shapes_dev.py --work W candidates [--no-ud] [--target 120] [--over 1.6] [--shape-over SHAPE=FACTOR ...]
                                                      [--lemma-cap 4] [--shape-lemma-cap SHAPE=N ...] [--control-pool 100]
                                                      [--round NAME] [--only-shapes SHAPE[,SHAPE]] [--no-controls] [--compound-strict]
-                                                     [--controls-only [--shape-max SHAPE=N ...]]       # hard tranche, with --round                                                                                # cleanliness, position and lexicon pre-selection + leakage filters
+                                                     [--controls-only [--shape-max SHAPE=N ...]]       # hard tranche, with --round
+                                                     # candidates = cleanliness, position and lexicon pre-selection + leakage filters
   python tools/data/shapes_dev.py --work W export [--size 150] [--rows 3500] [--round NAME]   # blind batches, private/key.tsv, batches/status.tsv
   python tools/data/shapes_dev.py --work W check-batches [--round NAME]         # 3 columns, tokens equal the key, no leak
   python tools/data/shapes_dev.py --work W validate-output --batch b001 --model opus [--round NAME]   # (or --all); updates batches/status.tsv
