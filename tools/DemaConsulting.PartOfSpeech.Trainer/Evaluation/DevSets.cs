@@ -187,18 +187,31 @@ internal static class DataGuard
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <param name="path">The path that was asked for, absolute or relative to the working directory.</param>
     /// <returns>The full path of the hard-shape development file.</returns>
-    /// <exception cref="InvalidOperationException"><paramref name="path"/> is not the hard-shape development file.</exception>
+    /// <remarks>
+    ///     The file and every folder on its way must be real: a symbolic link or junction that replaces any of them is refused
+    ///     (where the runtime supports links), so that the written path cannot lead to other content.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException"><paramref name="path"/> is not the hard-shape development file, or a link lies on its way.</exception>
     public static string EnsureShapesDevelopmentFile(string repositoryRoot, string path)
     {
         ArgumentNullException.ThrowIfNull(repositoryRoot);
         ArgumentNullException.ThrowIfNull(path);
-        var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar)));
-        if (string.Equals(Path.GetFullPath(path), allowedFull, StringComparison.OrdinalIgnoreCase))
+        var relative = ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar);
+        var allowedFull = Path.GetFullPath(Path.Combine(repositoryRoot, relative));
+        var comparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        if (!string.Equals(Path.GetFullPath(path), allowedFull, StringComparison.OrdinalIgnoreCase))
         {
-            return allowedFull;
+            throw new InvalidOperationException($"'{path}' is not the shapes development file {ShapesDevelopmentFile}; the shapes evaluation reads that file only.");
         }
 
-        throw new InvalidOperationException($"'{path}' is not the shapes development file {ShapesDevelopmentFile}; the shapes evaluation reads that file only.");
+        // Links in the repository root itself are tolerated; a link at or below the data folder moves the canonical path away from the expected one
+        var expected = Path.Combine(Canonicalize(repositoryRoot), relative);
+        if (!string.Equals(Canonicalize(allowedFull), expected, comparison))
+        {
+            throw new InvalidOperationException($"'{path}' goes through a link; the shapes development file {ShapesDevelopmentFile} must be a real file below real folders.");
+        }
+
+        return allowedFull;
     }
 
     /// <summary>

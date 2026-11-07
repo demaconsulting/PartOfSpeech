@@ -1197,6 +1197,13 @@ class LeakageExtensionTests(MiniFolder):
         self.write_dev([("gutenberg-99", "A brand new dev sentence about nothing in particular .")])
         self.assertEqual(1, check_leakage.dev_check(include_ud=False)[1])
 
+    def test_a_shared_document_id_alone_names_the_failing_dev_sentence(self):
+        self.write_dev([("doc-z", "A brand new dev sentence about nothing in particular ."),
+                        ("gutenberg-99", "Another brand new dev sentence with no hit at all .")])
+        rows, failures, failing = check_leakage.dev_check(include_ud=False)
+        self.assertEqual(["s2"], failing)
+        self.assertEqual(1, failures)
+
 
 if __name__ == "__main__":
     unittest.main()

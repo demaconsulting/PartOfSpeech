@@ -1,3 +1,4 @@
+// cspell:ignore mklink
 using DemaConsulting.PartOfSpeech.Trainer;
 
 namespace DemaConsulting.PartOfSpeech.Tests.ModelTrainer;
@@ -455,6 +456,137 @@ public class ShapesDevEvaluationTests
         // Arrange / Act / Assert
         Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureShapesDevelopmentFile(DataFiles.RepositoryRoot, DataFiles.Repository(relativePath)));
     }
+
+    /// <summary>
+    ///     Validates that a symbolic link or junction replacing the shapes development file, or the folder that holds it, is refused,
+    ///     while the real file in the same fake repository is admitted.
+    /// </summary>
+    [Fact]
+    public void DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused()
+    {
+#if NET6_0_OR_GREATER
+        // Arrange: two fake repositories, one with a link as the file and one with a link as the folder
+        var temp = Path.Combine(Path.GetTempPath(), "pos-shapes-dev-" + Guid.NewGuid().ToString("N"));
+        var fileRepo = Path.Combine(temp, "file-repo");
+        var folderRepo = Path.Combine(temp, "folder-repo");
+        var realRepo = Path.Combine(temp, "real-repo");
+        var relative = DataGuard.ShapesDevelopmentFile.Replace('/', Path.DirectorySeparatorChar);
+        try
+        {
+            var other = Path.Combine(temp, "other");
+            Directory.CreateDirectory(other);
+            System.IO.File.WriteAllText(Path.Combine(other, "dev.tsv"), "# fixture");
+            foreach (var repo in new[] { fileRepo, realRepo })
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(repo, relative))!);
+            }
+
+            System.IO.File.WriteAllText(Path.Combine(realRepo, relative), "# fixture");
+            Directory.CreateDirectory(Path.Combine(folderRepo, "data", "eval"));
+            var fileLinked = TryCreateFileLink(Path.Combine(fileRepo, relative), Path.Combine(other, "dev.tsv"));
+            var folderLinked = TryCreateDirectoryLink(Path.Combine(folderRepo, "data", "eval", "shapes-dev"), other);
+            if (!fileLinked && !folderLinked)
+            {
+                Assert.Skip("Neither symbolic links nor junctions can be created here.");
+            }
+
+            // Act / Assert: the written path is the allowed one, but a link lies on its way
+            if (fileLinked)
+            {
+                Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureShapesDevelopmentFile(fileRepo, Path.Combine(fileRepo, relative)));
+            }
+
+            if (folderLinked)
+            {
+                Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureShapesDevelopmentFile(folderRepo, Path.Combine(folderRepo, relative)));
+            }
+
+            Assert.Equal(Path.Combine(realRepo, relative), DataGuard.EnsureShapesDevelopmentFile(realRepo, Path.Combine(realRepo, relative)));
+        }
+        finally
+        {
+            // Remove the links first: a recursive delete must not follow them into the targets
+            var folderLink = Path.Combine(folderRepo, "data", "eval", "shapes-dev");
+            if (Directory.Exists(folderLink))
+            {
+                Directory.Delete(folderLink, false);
+            }
+
+            if (Directory.Exists(temp))
+            {
+                Directory.Delete(temp, true);
+            }
+        }
+#else
+        // Links are resolved only on .NET 6 and later, which is where the trainer runs
+        Assert.Skip("Link resolution needs .NET 6 or later.");
+#endif
+    }
+
+#if NET6_0_OR_GREATER
+    /// <summary>
+    ///     Creates a symbolic link to a file when the system allows it.
+    /// </summary>
+    /// <param name="link">The path of the link.</param>
+    /// <param name="target">The file it points to.</param>
+    /// <returns><c>true</c> when the link was created.</returns>
+    private static bool TryCreateFileLink(string link, string target)
+    {
+        try
+        {
+            System.IO.File.CreateSymbolicLink(link, target);
+            return true;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or PlatformNotSupportedException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     Creates a symbolic link to a directory, or on Windows a junction (which needs no privilege) when that fails.
+    /// </summary>
+    /// <param name="link">The path of the link.</param>
+    /// <param name="target">The directory it points to.</param>
+    /// <returns><c>true</c> when the link was created.</returns>
+    private static bool TryCreateDirectoryLink(string link, string target)
+    {
+        try
+        {
+            Directory.CreateSymbolicLink(link, target);
+            return true;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or PlatformNotSupportedException)
+        {
+            return OperatingSystem.IsWindows() && TryCreateJunction(link, target);
+        }
+    }
+
+    /// <summary>
+    ///     Creates a directory junction with the command shell.
+    /// </summary>
+    /// <param name="link">The path of the junction.</param>
+    /// <param name="target">The directory it points to.</param>
+    /// <returns><c>true</c> when the junction was created.</returns>
+    private static bool TryCreateJunction(string link, string target)
+    {
+        var start = new System.Diagnostics.ProcessStartInfo("cmd.exe") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true };
+        start.ArgumentList.Add("/c");
+        start.ArgumentList.Add("mklink");
+        start.ArgumentList.Add("/J");
+        start.ArgumentList.Add(link);
+        start.ArgumentList.Add(target);
+        using var process = System.Diagnostics.Process.Start(start);
+        if (process == null)
+        {
+            return false;
+        }
+
+        process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        return process.ExitCode == 0;
+    }
+#endif
 
     /// <summary>
     ///     Validates that the shapes development file is a development file of its own: not in the two-file allow-list, not a held-out file and not trainable.

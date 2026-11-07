@@ -260,6 +260,7 @@ internal static class ShapesDevSets
             throw Fail(origin, id, $"the origin '{sourceOrigin}' does not match the document '{sentence.SourceId}'.");
         }
 
+        // NumberStyles.None admits digits only, so a negative index (or any sign) is refused here, before the array is indexed
         if (!int.TryParse(Comment("target"), NumberStyles.None, CultureInfo.InvariantCulture, out var target) || target >= sentence.Tokens.Length)
         {
             throw Fail(origin, id, "the target is not a token index of the sentence.");

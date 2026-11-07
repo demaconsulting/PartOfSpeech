@@ -96,12 +96,12 @@ def dev_check(include_ud):
     A row is (evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences,
     probe_5gram_sentences). Documents, exact keys and (for the shape probe) shared word 5-grams are gated; near
     duplicates are reported. The 5-gram column is `-` for every set but the probe. Only counts and the ids of the
-    development sentences that fail are returned; nothing of an evaluation set (the probe especially) is returned.
+    development sentences that fail (a shared document, an exact sentence or a shared probe 5-gram) are returned; nothing of an evaluation set (the probe especially) is returned.
     """
     path = os.path.join(common.DATA, "eval", "shapes-dev", "dev.tsv")
     if not os.path.exists(path):
         raise SystemExit("missing committed development set: data/eval/shapes-dev/dev.tsv")
-    dev = [(s["sent_id"], s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]
+    dev = [(s["sent_id"], s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]  # (sentence id, document id, text)
     dev_docs = {doc for _, doc, _ in dev}
     probe_grams = leakage.probe_ngrams(leakage.PROBE_NGRAM)
     rows, failing = [], []
@@ -112,15 +112,16 @@ def dev_check(include_ud):
         for _, text in items:
             grams |= shingles(text)
         exact = near = probe = 0
-        for sent_id, _, text in dev:
+        for sent_id, doc, text in dev:
             hit = common.key(text) in keys
+            shared_doc = doc in docs
             exact += hit
             sh = shingles(text)
             if len(words(text)) >= NEAR_MIN_WORDS and sh and len(sh & grams) / len(sh) >= NEAR_THRESHOLD:
                 near += 1
             shared = label == "shapes-probe" and bool(leakage.ngrams(text, leakage.PROBE_NGRAM) & probe_grams)
             probe += shared
-            if hit or shared:
+            if hit or shared or shared_doc:
                 failing.append(sent_id)
         rows.append((label, len(dev), len(dev_docs & docs), exact, near, probe if label == "shapes-probe" else "-"))
     failures = sum(row[2] + row[3] + (row[5] if row[5] != "-" else 0) for row in rows)
