@@ -165,7 +165,9 @@ public sealed class Tagger
     /// <remarks>
     ///     Both files are read completely, decompressed and validated before this method returns, and both streams may
     ///     be disposed afterwards (see <see cref="Load(Stream, TaggerOptions?)"/>). The lexicon is loaded for this
-    ///     tagger only; the embedded lexicon is not used.
+    ///     tagger only; the embedded lexicon is not used. The lexicon also feeds the features of a weights file with
+    ///     feature groups (the clause-cue, position and inflection features read it), so a lexicon that differs from
+    ///     the one the weights were trained with changes the features the model sees, not only the allowed tags.
     /// </remarks>
     /// <param name="weights">A stream that holds a <c>POSW</c> weights file, read from its current position to its end; it is not closed and may be disposed after this method returns.</param>
     /// <param name="lexicon">A stream that holds a <c>POSL</c> lexicon file, read from its current position to its end; it is not closed and may be disposed after this method returns.</param>

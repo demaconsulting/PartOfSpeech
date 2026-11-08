@@ -2527,6 +2527,12 @@ tree in all 50 result files) and scored by `eval-arm` on development data only. 
 committed `analyze_arms.py` over the per-run result files, copied unchanged. The selection rule was applied mechanically; the
 decision was not reconsidered. No held-out set was read by this experiment.
 
+**Pre-registration commit.** The pre-registration section was committed as `3a7623a1bf2e792b95f33a1d60fb809615d5f58f` (the
+pre-registration said that its SHA would be recorded after the fact; this is that record).
+
+**Pipeline smoke runs.** After the pre-registration and before the arm runs, one real-corpus ALL (all four groups) training run
+with seed 20260101 and its `eval-arm` scoring were made, for pipeline validation only: the timing and the memory use were read,
+the metrics were not read, and the output is excluded from the tables. It is not one of the 50 runs of the table.
 Outputs (kept outside the repository; the 50 per-run JSON files are not copied into it):
 
 | File | SHA-256 |
@@ -2726,6 +2732,9 @@ this one. F5 (word clusters) was not built (see the pre-registration).
   table), so confidence cuts such as the harmful limit 0.45 and the operating-point thresholds are not interchangeable between
   BASE and F2; the operating points are recomputed for the shipped model.
 - The training times and the throughput figures were measured on a loaded shared machine (see above) and vary by arm and run.
+- **The F3 jackknife folds by document only.** A sentence whose text appears in more than one document or corpus (for example
+  silver against open) can fall into different folds, so a small optimistic leak is possible for the arms with F3. F3 was not
+  selected and is not part of the shipped model.
 
 ## Context-feature experiment: adoption of the clause-cue model (written before any held-out command of this step)
 

@@ -401,6 +401,9 @@ using var lexicon = File.OpenRead("lexicon.posl");
 Tagger custom = Tagger.Load(File.OpenRead("model.posw"), lexicon);   // your own lexicon file
 ```
 
+A weights file with feature groups (the embedded model has the clause-cue group) also reads the lexicon to compute those
+features, so a custom lexicon changes the features the model sees, not only the allowed tags.
+
 The stream is read to its end and is not closed. `Load` throws `InvalidDataException` for a file that is damaged, is not
 a weights file, or is of a format or feature set version that this build does not read; `ArgumentNullException` for a
 `null` stream and `ArgumentOutOfRangeException` for options outside their range.

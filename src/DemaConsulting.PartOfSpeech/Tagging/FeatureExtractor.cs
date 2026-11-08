@@ -214,8 +214,8 @@ internal enum TokenClass : byte
 }
 
 /// <summary>
-///     Computes the hashed feature buckets of a token: the single feature definition that decoding and (in a later
-///     phase) training share.
+///     Computes the hashed feature buckets of a token: the single feature definition that decoding and training
+///     share.
 /// </summary>
 /// <remarks>
 ///     <para>
