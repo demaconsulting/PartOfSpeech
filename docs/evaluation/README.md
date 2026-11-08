@@ -9,7 +9,7 @@ them and states what they do not show.
 > embedded model. That model is the **clause-cue model**: the same data and settings as its predecessor (the NO-ING
 > model, trained on the corpora after their labels were corrected and without the 878 adjudicated `prenominal-ing`
 > corrections), with one switchable group of seven context features added to the feature extractor, the **clause cues**
-> (the classes of the neighbouring words, the distance to the nearest determiner or modal and the clause state; see the
+> (the classes of the neighboring words, the distance to the nearest determiner or modal and the clause state; see the
 > trainer run log, section "Context-feature experiment"). A pre-registered experiment compared nine variants with the
 > shipped feature set on development data only (five training seeds each) and selected this group by a rule that was fixed
 > before any variant was trained; its softmax temperature was refit on development data, its two thresholds were selected
@@ -167,34 +167,35 @@ the git history, and the trainer run log has every figure side by side, sections
 "Context-feature experiment". The open test split is not a fair comparison with the two oldest records, because its
 labels changed twice (the corrections, and then 17 withdrawn test rows); the other four held-out sets have the same
 labels in all records, and the open test split has the same labels in the last two. Key figures (accuracy in percent and
-harmful errors in 1,000 decisions at the reference point 0.45; "first" is the first cleanup model, "previous" the NO-ING
-model; the thresholds were 0.95 and 0.80 for the earlier and the previous model, 0.90 and 0.85 for the first cleanup
+harmful errors in 1,000 decisions at the reference point 0.45; "Acc." is accuracy and "Harm." harmful errors, "earl." the
+earlier model, "first" the first cleanup model, "prev." the previous (NO-ING) model and "emb." the embedded one; the
+thresholds were 0.95 and 0.80 for the earlier and the previous model, 0.90 and 0.85 for the first cleanup
 model and 0.95 and 0.75 for the embedded model):
 
-| Set | Accuracy earlier | Accuracy first | Accuracy previous | Accuracy embedded | Harmful earlier | Harmful first | Harmful previous | Harmful embedded |
+| Set | Acc. earl. | Acc. first | Acc. prev. | Acc. emb. | Harm. earl. | Harm. first | Harm. prev. | Harm. emb. |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Open test split (labels changed, not comparable with the first two) | 96.10 | 96.46 | 96.53 | 96.78 | 20.6 | 20.6 | 18.7 | 16.8 |
+| Open test split (labels changed) | 96.10 | 96.46 | 96.53 | 96.78 | 20.6 | 20.6 | 18.7 | 16.8 |
 | Gold v2 test split | 94.57 | 94.34 | 94.37 | 94.77 | 24.6 | 31.0 | 29.9 | 24.6 |
 | Shape probe | 89.11 | 87.50 | 89.64 | 91.25 | 86.3 | 93.5 | 86.3 | 66.5 |
 | Challenge set | 87.13 | 87.50 | 88.60 | 86.76 | 0.0 | 0.0 | 0.0 | 0.0 |
 | UD English-EWT, mapped | 92.30 | 92.97 | 92.85 | 93.19 | 16.5 | 18.8 | 17.9 | 15.9 |
 
-Against the previous model the embedded model has a higher accuracy on the open test split, gold v2, the shape probe and the
-treebank (+0.25, +0.40, +1.61 and +0.34 points) and fewer harmful noun-verb errors on all four (74 against 82 on the open test
-split, 23 against 28 on gold v2, 37 against 48 on the shape probe, 70 against 79 on the treebank), a lower log-loss on
-each of them and a lower gold v2 calibration error; it has a lower accuracy on the challenge set (-1.84 points, five of 272 tokens;
-a smoke test) and a slightly higher open test calibration error (0.23% against 0.20%). Against the earlier model, before
-the corrections, the harmful rate on gold v2 is now equal and those of the shape probe and the treebank are lower (the open test
-split is not comparable). The intervals of the records
-overlap on every set (the sets are small, and the differences are a few errors per set), so no one set proves a difference,
+Against the previous model the embedded model has a higher accuracy on the open test split, gold v2, the shape probe
+and the treebank (+0.25, +0.40, +1.61 and +0.34 points) and fewer harmful noun-verb errors on all four (74 against 82
+on the open test split, 23 against 28 on gold v2, 37 against 48 on the shape probe, 70 against 79 on the treebank), a
+lower log-loss on each of them and a lower gold v2 calibration error; it has a lower accuracy on the challenge set
+(-1.84 points, five of 272 tokens; a smoke test) and a slightly higher open test calibration error (0.23% against
+0.20%). Against the earlier model, before the corrections, the harmful rate on gold v2 is now equal and those of the
+shape probe and the treebank are lower (the open test split is not comparable). The intervals of the records overlap
+on every set (the sets are small, and the differences are a few errors per set), so no one set proves a difference,
 and the figures come from one training seed. The development evidence is of another kind: the five-seed means of the
-pre-registered experiment (a Welch interval over training seeds that excludes 0 for the primary measure, the hard tranche of the
-shapes development set, and a descriptive item bootstrap whose upper end is close to 0), while at the shipped seed the
-development open and gold v2 harmful counts were higher than the previous model's (100 against 90 and 16 against 11). The
-shape probe still fires its stop condition. The recommended thresholds are the strict 0.95 of the earlier models and a lower
-balanced 0.75 (the earlier and the previous model had 0.80), selected on development data by the same rule; the balanced
-point answers more (94% against 93% on the open test split) at a slightly higher harmful rate per answered decision
-(8.5 against 7.3).
+pre-registered experiment (a Welch interval over training seeds that excludes 0 for the primary measure, the hard
+tranche of the shapes development set, and a descriptive item bootstrap whose upper end is close to 0), while at the
+shipped seed the development open and gold v2 harmful counts were higher than the previous model's (100 against 90
+and 16 against 11). The shape probe still fires its stop condition. The recommended thresholds are the strict 0.95 of
+the earlier models and a lower balanced 0.75 (the earlier and the previous model had 0.80), selected on development
+data by the same rule; the balanced point answers more (94% against 93% on the open test split) at a slightly higher
+harmful rate per answered decision (8.5 against 7.3).
 
 ## Mapping to the Library Conventions
 
@@ -240,9 +241,9 @@ reported as a held-out result.
   after the settings were fixed on the development sets.
 - **The baseline** of the shipped model on the development set, per shape, is in the
   [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: baseline of the
-  shipped model"); every variant is compared with it. The baseline there is the one of the previous model; the embedded model
-  scores 96.8% on the standard tranche at its seed and 91.25% on the held-out probe, so the room to show a gain is small; the run log
-  has the headroom per shape and explains
+  shipped model"); every variant is compared with it. The baseline there is the one of the previous model; the embedded
+  model scores 96.8% on the standard tranche at its seed and 91.25% on the held-out probe, so the room to show a gain
+  is small; the run log has the headroom per shape and explains
   why the set was not made harder.
 - **The hard tranche** (`hard.tsv`, [README](../../data/eval/shapes-dev/README.md#hard-tranche): 460 sentences of the
   contested cases of four shapes, chosen by a pre-registered rule that uses another model family's numbers and no

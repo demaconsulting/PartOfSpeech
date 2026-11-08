@@ -79,8 +79,9 @@ list; use soft mode for a list that may be wrong. The measured cost is in sectio
 
 The model was selected on development data only, its confidence thresholds too, and it was then evaluated on held-out
 data several times over the model family (after the corpora had been corrected and the model retrained, again for the
-follow-up model, and now for the model that is embedded, a disclosed third look; the [trainer run log][link-run-log] has the
-decisions and the gates). The tagger is accurate on ordinary running text. Its most costly mistake is a harmful error: a
+follow-up model, and now for the model that is embedded, a disclosed third look; the [trainer run log][link-run-log]
+has the decisions and the gates). The tagger is accurate on ordinary running text. Its most costly mistake is a
+harmful error: a
 noun tagged as a verb, or a verb tagged as a noun. It makes some on every test set and noticeably more on short,
 technical and imperative sentences built to be hard, a limitation that is reported and was not tuned away. The labels of
 the test sets were written by language models, and the results come from one run.

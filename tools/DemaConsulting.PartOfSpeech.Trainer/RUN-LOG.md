@@ -2636,7 +2636,7 @@ Values are mean ± sample sd over the five seeds of an arm.
 
 #### Welch 95% interval of (arm - BASE)
 
-Difference of the means with the Welch-Satterthwaite t interval over the seeds (seeds measure training noise only).
+Difference of the means with the Welch t interval over the seeds (seeds measure training noise only).
 
 | arm | shapes.hard.pooled.harmfulPer1k | shapes.standard.pooled.harmfulPer1k | openDev.harmfulPer1k | udDev.harmfulPer1k | udDev.accuracy |
 | --- | --- | --- | --- | --- | --- |
@@ -2746,7 +2746,7 @@ The one `evaluate` of this step is run once; no second run is made after a resul
 result may be rerun without looking at results to tune). A held-out result that is worse than the previous model's is
 reported as it is, and nothing is selected, tuned or reverted because of it.
 
-### What changed
+### What changed in the clause-cue adoption
 
 - **Configuration.** `training.json` gains `"features": ["clauseCues"]` (the file form of the configuration omits the member
   while no group is selected, so earlier files kept their form). Then, as for every retrained model: `train --output <file>`
@@ -2799,7 +2799,7 @@ model's seed was a lucky draw on open dev (20.22 against its mean 21.30) and an 
 points lower at this seed. (4) The evidence for the selection is the pre-registered rule on development data: nine arms, a seed
 interval that excludes only training noise, and a paired item bootstrap with an upper end near 0 (see the caveats above).
 
-### `thresholds` result (development data only; committed before the held-out run)
+### Clause-cue model: `thresholds` result (development data only; committed before the held-out run)
 
 `thresholds` (rule `nv-pooled-dev-v1`, grid, targets and floors unchanged) gave, for the model image `ec3f090e...`, temperature
 9.514 and the dev files unchanged: **strict 0.95** (coverage 81.3% [79.9, 82.8], 3.2 harmful per 1,000 answered [1.1, 5.6], 13 of
@@ -2809,7 +2809,7 @@ interval that excludes only training noise, and a paired item bootstrap with an 
 revised for the third look before `thresholds` was run again (the generated development report carries it); that second run
 read the development files only and produced the same operating points.
 
-### Procedure of the held-out step (fixed now)
+### Clause-cue model: procedure of the held-out step (fixed now)
 
 1. The committed previous record (`docs/evaluation/test-results.md` and `.json`, `operating-points.json`,
    `confidence-thresholds.md`, `README.md`, `disclosure.md`) and the previous weights are copied outside the repository for the

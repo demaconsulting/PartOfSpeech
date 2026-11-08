@@ -615,10 +615,10 @@ sections:
               The trainer shall take the context feature groups of a model from the configuration (`features`, a list of
               group names, empty by default, and `previewFolds`, 2 to 10 with a default of 5) or from the options
               `--features` (`none`, or group names in the long or the short form, in any order and case) and
-              `--preview-folds`, refuse an unknown or repeated group, train the groups with the shared feature extractor,
-              write the groups as the mask of the weights header with the feature set version that follows from it, leave
-              the feature settings out of the file form of a configuration while they are at their defaults, and, with no
-              group, give the same bytes as the training did before the groups existed.
+              `--preview-folds`, refuse an unknown or repeated group, train the groups with the shared feature
+              extractor, write the groups as the mask of the weights header with the feature set version that follows
+              from it, leave the feature settings out of the file form of a configuration while they are at their
+              defaults, and, with no group, give the same bytes as the training did before the groups existed.
             justification: |
               The experiment on context features compares arms that differ only in their groups, so the groups are
               settings of the training like every other one, are checked where they are read, and are recorded in the
@@ -639,16 +639,16 @@ sections:
           - id: PartOfSpeech-ModelTrainer-Jackknife
             title: >-
               For the right preview group the trainer shall train every sentence in two passes on one weight table (the
-              first without the preview features, the second with the first-pass tags of the next two tokens), shall take
-              those tags from fold models that did not see the sentence (folds by the hash of the document id, so that a
-              document is never split and every seed has the same folds; fold models trained without the group on the
-              other groups, the settings and the seed of the run, and decoding their held-out fold with the quantized
-              weights and the lexicon restriction like the first pass of the decoder), and shall refuse sentences that
-              fill fewer than two folds or preview tags that miss a sentence.
+              first without the preview features, the second with the first-pass tags of the next two tokens), shall
+              take those tags from fold models that did not see the sentence (folds by the hash of the document id, so
+              that a document is never split and every seed has the same folds; fold models trained without the group
+              on the other groups, the settings and the seed of the run, and decoding their held-out fold with the
+              quantized weights and the lexicon restriction like the first pass of the decoder), and shall refuse
+              sentences that fill fewer than two folds or preview tags that miss a sentence.
             justification: |
-              A model that is trained on first-pass tags of its own training sentences sees tags that are better than the
-              ones it gets on new text. Fold models give tags of the quality that the runtime has, and the replay test
-              proves that the tags are what an independent run of the same fold models produces. One table for both
+              A model that is trained on first-pass tags of its own training sentences sees tags that are better than
+              the ones it gets on new text. Fold models give tags of the quality that the runtime has, and the replay
+              test proves that the tags are what an independent run of the same fold models produces. One table for both
               passes keeps the format and the size of the model, and the first pass stays usable at run time.
             tests:
               - Jackknife_Partition_ByDocumentHash_NeverSplitsADocumentAndIsStable
@@ -662,8 +662,8 @@ sections:
               hard tranche of the shapes development set (per shape and pooled, with the per-item outcomes of the target
               items), on the open and the gold v2 development splits and on the mapped development part of the external
               treebank (read from the local cache with a pinned SHA-256), measure the size of the file and the
-              single-thread throughput of the default tagger (one warm-up pass, five timed passes, the median), and write
-              one JSON result in schema 1 with the groups of the weights header and the hashes of the inputs.
+              single-thread throughput of the default tagger (one warm-up pass, five timed passes, the median), and
+              write one JSON result in schema 1 with the groups of the weights header and the hashes of the inputs.
             justification: |
               The experiment decides on figures that must come from one definition of a harmful error and from the same
               decoder that users run, for every arm in the same way. A fixed schema lets the analysis script read the
@@ -677,11 +677,11 @@ sections:
 
           - id: PartOfSpeech-ModelTrainer-ArmEvaluationIsDevelopmentOnly
             title: >-
-              The command `eval-arm` shall have no option that names a data file, shall read the development sets through
-              their guarded readers only, shall refuse a weights file or a result file inside the data folder or the data
-              tooling folder (which holds the treebank cache), and shall have no path to the held-out sets (the open and
-              gold v2 test splits, the shape probe, the challenge set and the test part of the treebank): their files are
-              refused by every guard it uses and its sources do not mention the held-out readers.
+              The command `eval-arm` shall have no option that names a data file, shall read the development sets
+              through their guarded readers only, shall refuse a weights file or a result file inside the data folder or
+              the data tooling folder (which holds the treebank cache), and shall have no path to the held-out sets
+              (the open and gold v2 test splits, the shape probe, the challenge set and the test part of the treebank):
+              their files are refused by every guard it uses and its sources do not mention the held-out readers.
             justification: |
               The experiment selects with development data, and the held-out sets have already been seen for the
               model family, so the command that is run fifty times must be structurally unable to read one or to

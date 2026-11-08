@@ -53,8 +53,9 @@ compiled word lexicon (639,711 bytes compressed) and the trained averaged-percep
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
-The model was selected on development data only and then evaluated on held-out data (a disclosed third look at those sets:
-earlier models of the family had been evaluated on them before), after the training corpora had been corrected and the model retrained. The
+The model was selected on development data only and then evaluated on held-out data (a disclosed third look at those
+sets: earlier models of the family had been evaluated on them before), after the training corpora had been corrected
+and the model retrained. The
 [evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the results
 and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to trust.
 

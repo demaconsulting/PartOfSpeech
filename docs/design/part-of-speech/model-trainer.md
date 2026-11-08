@@ -365,7 +365,7 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | Pruning | minimum count 1, magnitude threshold 8 units | largest tied threshold; the next is not tied |
 | Quantization | `quantScale` 8 (scale 1/8) | tied with the unpruned scale 16; scale 4 is not tied |
 | Temperature | 9.514 | minimum log-likelihood on open development data |
-| Feature groups | `clauseCues` | the context-feature experiment (`RUN-LOG.md`): pre-registered rule on five-seed means, hard shapes tranche |
+| Feature groups | `clauseCues` | the context-feature experiment (`RUN-LOG.md`): pre-registered rule, five seeds |
 
 The result is a file of 121,033 rows and 301,571 weights, 1,146,827 bytes uncompressed and 517,210 bytes compressed;
 training takes about 5 to 14 seconds on one thread (6,285,552 steps), and the check about 15 seconds. Development
