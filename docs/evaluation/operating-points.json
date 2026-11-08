@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "ruleId": "nv-pooled-dev-v1",
-  "modelImageSha256": "a0d45458308f78dbe74669e563ea236a0a7b4688638d690dd0995ac4de988da3",
-  "temperature": 6.442,
-  "devOpenAccuracyPercent": 96.37846904544068,
+  "modelImageSha256": "ec3f090eb318abc1bcf4dc8a88e401567e606932142178277d3ec387e0aa40f3",
+  "temperature": 9.514,
+  "devOpenAccuracyPercent": 96.65294297041781,
   "openDevDecisions": 4451,
   "goldDevDecisions": 611,
   "devFiles": [
@@ -39,20 +39,20 @@
       "maxHarmfulPer1000Answered": 5,
       "minCoveragePercent": 60,
       "threshold": 0.95,
-      "answered": 4141,
+      "answered": 4116,
       "harmful": 13,
-      "coveragePercent": 81.80561043065981,
-      "harmfulPer1000Answered": 3.13933832407631
+      "coveragePercent": 81.31173449229553,
+      "harmfulPer1000Answered": 3.1584062196307094
     },
     {
       "name": "balanced",
       "maxHarmfulPer1000Answered": 10,
       "minCoveragePercent": 85,
-      "threshold": 0.8,
-      "answered": 4675,
-      "harmful": 42,
-      "coveragePercent": 92.3548004741209,
-      "harmfulPer1000Answered": 8.983957219251337
+      "threshold": 0.75,
+      "answered": 4761,
+      "harmful": 47,
+      "coveragePercent": 94.05373370209404,
+      "harmfulPer1000Answered": 9.87187565637471
     }
   ]
 }

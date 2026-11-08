@@ -2727,6 +2727,104 @@ this one. F5 (word clusters) was not built (see the pre-registration).
   BASE and F2; the operating points are recomputed for the shipped model.
 - The training times and the throughput figures were measured on a loaded shared machine (see above) and vary by arm and run.
 
+## Context-feature experiment: adoption of the clause-cue model (written before any held-out command of this step)
+
+The pre-registered rule selected F2, and the project owner decided to ship it. This section records the adoption **before the
+held-out command of this step** (`evaluate` has not been run; git history shows the order: results, this adoption and the
+development figures, the deletion of the previous held-out record on purpose, the one `evaluate`, the evaluation record). No
+hyperparameter, source, corpus or seed changed: the shipped seed 20260101 stays.
+
+### Disclosure: the third look
+
+The held-out sets (open test, gold v2 test, shape probe, STE challenge set, UD-EWT test) were scored for the model before
+the label corrections, for the first retrained model (FULL) and for the adopted NO-ING model, which the adoption section above
+calls the second look of the family. The adoption section also said that "any further held-out evaluation would be a third
+look and is not planned"; that sentence is the state when it was written and stays as it is. This step is a new work item that
+the owner authorized, conditional on a winner of the pre-registered rule, and the evaluation after this section is a
+**disclosed third look** at sets that are no longer unseen for this family. The selection of F2 used development data only.
+The one `evaluate` of this step is run once; no second run is made after a result exists (an infrastructure failure without a
+result may be rerun without looking at results to tune). A held-out result that is worse than the previous model's is
+reported as it is, and nothing is selected, tuned or reverted because of it.
+
+### What changed
+
+- **Configuration.** `training.json` gains `"features": ["clauseCues"]` (the file form of the configuration omits the member
+  while no group is selected, so earlier files kept their form). Then, as for every retrained model: `train --output <file>`
+  (outside the repository), `calibrate --weights <file> --update-config` (the temperature is refit on the new open dev: **9.514**,
+  NLL 0.11274, ECE 0.241%; it was 6.442), `train --update-config` and `train --check` (exit 0). 121,033 rows, **301,571
+  weights, 1,146,827 bytes raw, 517,210 bytes deflated** (116,662 rows, 282,426 weights, 1,080,650 and 478,835 before),
+  `imageSha256` `ec3f090eb318abc1bcf4dc8a88e401567e606932142178277d3ec387e0aa40f3` (it was `a0d45458...8da3`), weights file
+  SHA-256 `72cc28cf10c556a617e8edb49d92d96148ed023874cfe834557ea5c6911b9672`. The header carries feature set 2 and the mask 2
+  (clause cues). **The new `weights.bin` is byte-identical to the weights of the F2 run of seed 20260101 in the experiment**
+  (same SHA-256), so the experiment's seed-20260101 figures are those of the shipped model.
+- **Tests and pins.** The embedded-model requirement that said "the embedded model has no feature group" now says that the
+  embedded model enables the clause-cue group (test renamed `ModelStorage_EmbeddedWeights_EnableTheClauseCueGroup`, which asserts
+  feature set 2, the mask and the zero reserved bytes); the two tests that load the embedded file with the base feature set
+  now use the mask-aware loader, and the configuration test checks that the groups of `training.json` equal the groups of the
+  header. The size figures of the documents were re-pinned. The two constants `FrozenOpenHarmful` and `FrozenGoldHarmful` of
+  the trainer (90 and 11) are set to the development figures of the shipped model (100 and 16), which `thresholds` reported
+  before it wrote anything (it refused with the old constants and wrote nothing); they only guard that the 0.45 row
+  reproduces the freeze figures.
+
+### Development figures of the shipped model (dev data only)
+
+Seed 20260101, scored by `eval-arm` through the real decoder (the old model is the weights file of commit `4709395`, SHA-256
+`439d4af5...4092`). The shapes development set is a development set for this selection and not an independent test.
+
+| Measure | Previous model (BASE) | Shipped model (F2) |
+| --- | --- | --- |
+| Hard tranche harmful per 1k (400 target items) | 267.5 (107) | 235.0 (94) |
+| Hard tranche target / control accuracy % | 66.00 / 96.67 | 69.50 / 98.33 |
+| Standard tranche harmful per 1k (600 target items) | 28.3 (17) | 16.7 (10) |
+| Standard tranche target / control accuracy % | 96.33 / 96.00 | 96.83 / 99.00 |
+| Open dev accuracy % (ambiguous %) | 96.38 (95.68) | 96.65 (95.98) |
+| Open dev harmful per 1k (of 4,451 decisions) | 20.22 (90) | **22.47 (100)** |
+| Open dev NLL, ECE % | 0.1222, 0.26 | 0.1127, 0.24 |
+| Gold v2 dev accuracy % | 95.24 | 94.84 |
+| Gold v2 dev harmful per 1k (of 611 decisions) | 18.00 (11) | **26.19 (16)** |
+| Gold v2 dev NLL, ECE % | 0.2601, 1.99 | 0.2577, 2.38 |
+| UD-EWT dev agreement % (25,148 tokens) | 92.711 | 92.950 |
+| UD-EWT dev harmful per 1k (of 4,570 decisions) | 22.54 (103) | 19.91 (91) |
+| Temperature | 6.442 | 9.514 |
+| Rows, weights | 116,662, 282,426 | 121,033, 301,571 |
+| Raw, deflated bytes | 1,080,650; 478,835 | 1,146,827; 517,210 |
+| Single-thread throughput, tokens per second (three alternating runs, median of five passes each; machine shared) | 747,790 to 1,059,991, median 816,220 | 779,638 to 843,284, median 833,252 |
+
+**What is worse (stated before the held-out evaluation).** (1) At the shipped seed the open dev harmful count is **10 higher**
+(100 against 90) and the gold v2 dev one 5 higher (16 against 11), where the five-seed means of the experiment have F2 below
+BASE on open dev (20.67 against 21.30, interval contains 0) and 2.3 above on gold v2 dev (23.2 against 20.9; not gated). The old
+model's seed was a lucky draw on open dev (20.22 against its mean 21.30) and an unlucky one on the hard tranche (267.5 against
+257.0), so the gaps at the shipped seed are not the gaps between the means. (2) The model is 38,375 bytes larger when deflated
+(+8.0%) and its calibrated temperature is higher (9.514), so the operating points move (below). (3) Gold v2 dev accuracy is 0.4
+points lower at this seed. (4) The evidence for the selection is the pre-registered rule on development data: nine arms, a seed
+interval that excludes only training noise, and a paired item bootstrap with an upper end near 0 (see the caveats above).
+
+### `thresholds` result (development data only; committed before the held-out run)
+
+`thresholds` (rule `nv-pooled-dev-v1`, grid, targets and floors unchanged) gave, for the model image `ec3f090e...`, temperature
+9.514 and the dev files unchanged: **strict 0.95** (coverage 81.3% [79.9, 82.8], 3.2 harmful per 1,000 answered [1.1, 5.6], 13 of
+4,116) and **balanced 0.75** (coverage 94.1% [93.4, 94.8], 9.9 [6.6, 13.6], 47 of 4,761). The previous model had strict 0.95
+(coverage 81.8%, 3.1 per 1,000, 13 of 4,141) and balanced 0.80 (coverage 92.4%, 9.0, 42 of 4,675). The pooled harmful count at 0.45 is 116 of
+5,062 decisions (22.9 per 1,000). The disclosure paragraph of the evaluation record (`docs/evaluation/disclosure.md`) was
+revised for the third look before `thresholds` was run again (the generated development report carries it); that second run
+read the development files only and produced the same operating points.
+
+### Procedure of the held-out step (fixed now)
+
+1. The committed previous record (`docs/evaluation/test-results.md` and `.json`, `operating-points.json`,
+   `confidence-thresholds.md`, `README.md`, `disclosure.md`) and the previous weights are copied outside the repository for the
+   comparison; they stay in git history (the previous record at `4709395`).
+2. Delete the previous `test-results.json` and `.md` (`evaluate` refuses to run while one exists) in a commit of its own, then
+   `evaluate --preflight` (scores nothing), then `evaluate --dump-dir <folder outside the repository>` **once**. The stop
+   conditions that fired in the earlier records (gold v2 `to`/`not`, UD-EWT raw gold outside the candidates, the shape probe's
+   harmful errors) may fire again; they are reported, not tuned.
+3. The previous model is shown beside the new one in this log and in `docs/evaluation/README.md`, from the previous record
+   (the old held-out figures are not recomputed: the previous model is not evaluated again). Open test is not strictly
+   comparable with the oldest record (its labels changed), but between the previous model and the shipped one every held-out
+   set has the same labels, so all five are fair comparisons. Intervals are the 95% percentile bootstrap over documents of each
+   record (1,000 resamples, seed 1); no paired interval between the models is computed, so overlapping intervals are not a test.
+   Nothing is claimed as an improvement unless the data show it.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

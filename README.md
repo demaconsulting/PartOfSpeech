@@ -50,7 +50,7 @@ foreach (TaggedSentence sentence in Tagger.Default.Tag("The cat sat on the mat. 
 
 `Tagger.Default` is a shared, thread-safe tagger that uses the model and the lexicon that are embedded in the package,
 so it needs no file and no download. The first read inflates and validates the embedded files once (the weights are
-478,835 bytes compressed and 1,080,650 bytes uncompressed, the lexicon 639,711 bytes compressed). To use other weights,
+517,210 bytes compressed and 1,146,827 bytes uncompressed, the lexicon 639,711 bytes compressed). To use other weights,
 create a tagger with `Tagger.Load(stream)`. The [user guide][link-user-guide] explains confidences and alternatives,
 constraints, glossaries and the tokenization conventions.
 

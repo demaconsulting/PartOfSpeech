@@ -151,10 +151,10 @@ public class ModelStorageTests
     }
 
     /// <summary>
-    ///     Proves that the committed weights file is the shipped feature set without groups: feature set 1, a zero group mask and zero reserved bytes at offset 40 on.
+    ///     Proves that the committed weights file is the shipped feature set with the clause-cue group and no other: feature set 2, the clause-cue mask at offset 40 and zero reserved bytes from offset 44 on.
     /// </summary>
     [Fact]
-    public void ModelStorage_EmbeddedWeights_HaveNoFeatureGroups()
+    public void ModelStorage_EmbeddedWeights_EnableTheClauseCueGroup()
     {
         // Arrange: the committed file
         var committed = File.ReadAllBytes(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/weights.bin"));
@@ -162,10 +162,11 @@ public class ModelStorageTests
         // Act: read the header fields and the loaded model
         var model = EmbeddedModel.Weights;
 
-        // Assert: the layout of the format without groups
-        Assert.Equal((ushort)1, BinaryFormat.ReadUInt16(committed, 8));
-        Assert.All(committed.Skip(40).Take(8), b => Assert.Equal(0, b));
-        Assert.Equal(FeatureGroups.None, model.FeatureGroups);
+        // Assert: the layout of the format with the clause-cue group only
+        Assert.Equal((ushort)2, BinaryFormat.ReadUInt16(committed, 8));
+        Assert.Equal((uint)FeatureGroups.ClauseCues, BinaryFormat.ReadUInt32(committed, PerceptronModel.GroupMaskOffset));
+        Assert.All(committed.Skip(44).Take(4), b => Assert.Equal(0, b));
+        Assert.Equal(FeatureGroups.ClauseCues, model.FeatureGroups);
     }
 
     /// <summary>

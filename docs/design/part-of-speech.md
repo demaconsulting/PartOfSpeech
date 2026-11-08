@@ -74,7 +74,7 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   changed twice, with the corrections and for the 17 withdrawn test rows, the labels of the other sets did not)
 - **Lexicon**: a table that maps a lower-case spelling to the Universal POS tags it may carry, with a coverage report;
   compiled into the embedded `POSL` file
-- **Weights**: the trained `POSW` file, 478,835 bytes compressed and 1,080,650 bytes uncompressed, with the training
+- **Weights**: the trained `POSW` file, 517,210 bytes compressed and 1,146,827 bytes uncompressed, with the training
   configuration `training.json` (which records the SHA-256 of the uncompressed image) and the run log `RUN-LOG.md` next
   to the trainer
 - **Checks**: the checksum manifest and the leakage report
@@ -301,7 +301,7 @@ of `RUN-LOG.md` next to the trainer and are not repeated here. See _Glossary Des
   coverage; coverage
   instrumentation slows the hot loops too much to prove it, so a run with coverage (CI) applies a relaxed gate (see the
   verification document)
-- **Package size**: the lexicon resource is 639,711 bytes and the weights resource 478,835 bytes (both already
+- **Package size**: the lexicon resource is 639,711 bytes and the weights resource 517,210 bytes (both already
   compressed), embedded once per target framework, so the four assemblies are about 1.2 to 1.5 MB each and the package
   (with the API reference and the XML documentation files) is about 5.3 MB (the exact size is not stated because it
   is not reproducible: the package holds timestamps and the SBOM)

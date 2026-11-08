@@ -48,8 +48,8 @@ The package targets .NET Standard 2.0 (and so runs on .NET Framework 4.8.1 and e
 public API under its `api/` folder, generated from the XML documentation of the library.
 
 **The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
-compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (478,835 bytes compressed,
-1,080,650 bytes uncompressed, about 0.5 MB and 1.1 MB). `Tagger.Default` returns a shared tagger that uses them, so the
+compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (517,210 bytes compressed,
+1,146,827 bytes uncompressed, about 0.5 MB and 1.1 MB). `Tagger.Default` returns a shared tagger that uses them, so the
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
@@ -404,7 +404,7 @@ TaggedSentence sentence = tagger.Tag("Dogs bark.")[0];
 
 `Tagger.Default` is the shared tagger that uses the weights and the lexicon that are embedded in the package. It is
 created on first use, so a program that only tokenizes pays nothing; the first read inflates and validates the two
-embedded files once (the weights: 478,835 bytes compressed, 1,080,650 bytes uncompressed; the lexicon: 639,711 bytes
+embedded files once (the weights: 517,210 bytes compressed, 1,146,827 bytes uncompressed; the lexicon: 639,711 bytes
 compressed, 1,626,269 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
 same thread-safe instance. A read does not fail in a released package; an `InvalidOperationException` or an
 `InvalidDataException` would mean that the package is broken.

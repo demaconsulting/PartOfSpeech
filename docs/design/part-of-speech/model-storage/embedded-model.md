@@ -23,7 +23,7 @@ use. It is an internal static class.
 
 - **`Lexicon`** (property): returns the embedded lexicon, loading it on the first access with `Lexicon.Load`.
 - **`Weights`** (property): returns the embedded weights loaded with `PerceptronModel.Load` (any supported feature set;
-  the shipped model has no feature group); never `null`.
+  the shipped model enables the clause-cue group); never `null`.
 - **`OpenResource(string name)`** (internal): opens a manifest resource of the assembly; `null` when it does not exist.
   The tests use it to compare the embedded bytes with the committed file and the training configuration.
 

@@ -251,8 +251,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     weights (the embedded lexicon is used unless you pass one as well).
 ///     </para>
 ///     <para>
-///     The embedded weights file (<c>weights.bin</c>) is 478,835 bytes compressed and 1,080,650 bytes uncompressed (about
-///     0.5 MB and 1.1 MB); it holds 116,662 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
+///     The embedded weights file (<c>weights.bin</c>) is 517,210 bytes compressed and 1,146,827 bytes uncompressed (about
+///     0.5 MB and 1.1 MB); it holds 121,033 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
 ///     bytes compressed and 1,626,269 bytes uncompressed and holds 262,635 spellings. Both files are stored as resources
 ///     of the assembly, so the package grows by their compressed sizes for each target framework. The first read of
 ///     <see cref="Tagger.Default"/> inflates and validates both files once in the process (tens of milliseconds on a

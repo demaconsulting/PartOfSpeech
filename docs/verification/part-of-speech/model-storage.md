@@ -46,6 +46,6 @@ load back with the same content.
   and a tiny lexicon from streams and asserts the summed weights of a feature bucket, the temperature, the scale and the
   spelling and entry counts; `ModelStorage_WeightsWriterAndReader_FeatureGroupsRoundTrip` does the same for a weights
   file with feature groups and asserts the mask, the feature set number 2 and the header position of the mask.
-- **The embedded weights have no feature group**: `ModelStorage_EmbeddedWeights_HaveNoFeatureGroups` asserts feature set
-  1, a zero mask and zero header bytes from offset 40 on in the committed weights file, and the loaded model without
-  groups.
+- **The embedded weights enable the clause-cue group**: `ModelStorage_EmbeddedWeights_EnableTheClauseCueGroup` asserts
+  feature set 2, the mask of the clause-cue group (and no other group) at header offset 40 and zero header bytes from
+  offset 44 on in the committed weights file, and the loaded model with exactly that group.

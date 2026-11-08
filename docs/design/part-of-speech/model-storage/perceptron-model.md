@@ -96,8 +96,8 @@ non-zero reserved bytes; so it never tags with the wrong features (not forward c
   committed file is current. Postcondition: the compressed and the plain form of the same weights give the same image.
   An invalid file throws `InvalidDataException`.
 
-Size note: the shipped model (selected on development data, see _ModelTrainer Design_) has 116,662 rows and 282,426
-weights at 19 hash bits and scale 1/8, which is 1,080,650 bytes uncompressed and 478,835 bytes with Deflate. The spike's
+Size note: the shipped model (selected on development data, see _ModelTrainer Design_) has 121,033 rows and 301,571
+weights at 19 hash bits and scale 1/8, which is 1,146,827 bytes uncompressed and 517,210 bytes with Deflate. The spike's
 sparse `int16` model, for comparison, had about 105,000 rows and 286,000 weights at 13 classes.
 
 #### Error Handling
