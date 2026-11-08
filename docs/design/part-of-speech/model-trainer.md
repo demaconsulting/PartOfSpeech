@@ -557,6 +557,18 @@ harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-featu
   that every held-out file is refused by the guards that the command uses and that its sources do not mention the
   held-out readers.
 
+### Imperative-Data Experiment
+
+The training source `imperative` (`data/imperative/imperative.tsv`) is configured with weight 0 and is added to a run with
+`--source imperative:1`, so the same trainer trains with and without it. The protocol (arms F2, F2+IMP and ALL+IMP, the
+reference arm ALL, five seeds, the primary measure on the hard tranche, the guards against the F2 mean with a size limit
+of 1.5 x F2, the selection rule without a fallback, and the acceptance tests) was fixed before any model of it was
+trained and is recorded in `RUN-LOG.md`. The harness is the frozen driver of the context-feature experiment, unchanged,
+with two runners in `tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/` (`runner-base.cmd`, and
+`runner-imp.cmd`, which appends the source option to the `train` command) and the analysis script
+`analyze_imperative.py`, which takes only the Welch interval from the frozen `analyze_arms.py` and is frozen by the
+hashes in the run log. The experiment reads development files only, like `eval-arm`.
+
 ### Error Handling
 
 Invalid configuration (an unknown member, an out-of-range value, no source, a source with weight above 16, a corpus

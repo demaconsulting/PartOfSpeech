@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
+<!-- cspell:ignore selftest allimp -->
 
 # Trainer
 
@@ -118,6 +119,22 @@ A model that is trained with the `rightPreview` group first trains one model per
 groups of the arm), decodes the held-out fold with each, and then trains once on both decoding modes; its `train` output
 prints one line per fold and the time of the jackknife, and the `Trained ... in X s` line is the time of the final training
 alone.
+
+### Imperative-data experiment
+
+The experiment on the training source `imperative` (900 imperative-initial sentences, `data/imperative/`) is pre-registered in
+`RUN-LOG.md` ("Imperative training data: pre-registration") and uses the frozen driver of the context-feature experiment
+unchanged, with one folder per arm and the `-Runner` option. `imperative-data/runner-base.cmd` starts `dotnet` at normal priority;
+`imperative-data/runner-imp.cmd` does the same and appends `--source imperative:1` to the `train` command (the arms F2+IMP and
+ALL+IMP). `imperative-data/analyze_imperative.py` runs the acceptance tests (F2 at the shipped seed equals the shipped weights, the
+imperative runs trained on exactly 900 more sentences, every run scored the frozen development files), prints the tables and the
+guards (size 1.5 x F2) and applies the selection rule; it takes only `welch_diff` from the frozen `analyze_arms.py` and checks its own
+logic on synthetic runs with `--selftest`. The runners and the script are frozen by the hashes in the run log.
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp -Arms F2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd
+python tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py --run F2=<runs>\f2 --run F2+IMP=<runs>\f2imp --run ALL+IMP=<runs>\allimp --out report.md --decision decision.json
+```
 
 ### Held-out evaluation
 

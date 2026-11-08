@@ -164,6 +164,7 @@ tools/DemaConsulting.PartOfSpeech.Trainer/
 │                                 context-feature experiment (pre-registration, results, adoption) and the protocol
 │                                 and outcome of the held-out evaluations
 ├── context-features/           — Harness of the context-feature experiment: arms, resumable driver, analysis script
+├── imperative-data/            — Harness of the imperative-data experiment: two runners, analysis script
 ├── prenominal-ing/             — Harness of the pre-registered `prenominal-ing` follow-up: arms and scoring scripts
 ├── Training/                   — Corpus reader, random generator, integer averaged perceptron, trainer, jackknife folds,
 │                                 builder, predictor

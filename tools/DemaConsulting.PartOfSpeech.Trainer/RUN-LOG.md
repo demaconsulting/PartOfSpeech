@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite -->
 
 # Trainer Run Log
 
@@ -3215,6 +3215,206 @@ amendment 1):
 - **No document group and no fold assignment changes** (0 of 9,576 documents change group, 0 of 48,790 sentences change fold,
   and the grouping of the library equals the independent computation). The jackknife preview tags, the trained weights and all
   results of the experiment are therefore identical with the corrected key, so nothing was re-run.
+
+## Imperative training data: pre-registration
+
+This section is written and committed **before any model of this experiment is trained or evaluated**. No `train --output`, no
+`eval-arm` and no other run has been made for any arm below: the only trainer command run since the data were registered is
+`train --check` (exit 0, image `ec3f090e...`, which shows that the weight-0 entry leaves the shipped model unchanged). The git
+history shows the order: the builder and the data rule (`100e747`, committed 2026-11-08 15:29 -0500, **before any label of the
+source existed**), the data and their registration with weight 0 (`3a703f5`, 17:32 -0500), this commit (the experiment design, the
+analysis script and the two runners), then the arm runs, then a results section. The SHA of this commit is recorded by the
+commit that follows it (a commit cannot contain its own SHA). The code base of the experiment is `main` at `5f9a9f0` plus those two
+commits; no source file of the trainer or the library changed in them (only `training.json`, the trainer README, data, tools of
+`tools/data`, tests and documents).
+
+### Imperative data: goal
+
+Test whether a targeted training source of 900 imperative-initial sentences (the source `imperative`, `data/imperative/`) lowers the
+harmful noun-verb errors of the tagger on the hard tranche of the shapes development set without costing the guarded measures,
+size or speed. Motive: **scarcity** (the imperative-initial frame is 15.8 per 1,000 sentences of the training mix and 55.2 per 1,000
+sentences of instructional federal text, a factor of 3.5; the count report `shape-count/REPORT.md` is kept outside the repository and
+its numbers are listed here) and **weakness** (the hard `v-imperative-initial` shape has 51.6% target accuracy at F2, the five-seed
+mean of the context-feature experiment, the weakest shape of the tranche). Nothing is adopted unless the rule below selects it.
+
+### The data (frozen)
+
+`data/imperative/imperative.tsv`: 900 sentences, 11,946 tokens, 351 distinct lemmas of the first word, 122 documents of US federal
+instructional text (army 69 documents / 643 sentences, USDA 36 / 166, navy 12 / 68, Forest Service 3 / 11, Bureau of Mines 1 / 7,
+Public Health Service 1 / 5; at most 6 sentences per lemma, at most 30 per document). Every sentence starts with an imperative verb
+in its base form (token 0 is VERB in every sentence); every token has a tag on which two blind model labelers (`claude-opus-5.5` and
+`gpt-6.1-sol`) agree; no human reviewed a label. The rule is the docstring of `tools/data/imperative_data.py` at `100e747`.
+
+| Fact | Value |
+| --- | --- |
+| Candidates / kept by the decision / in the file | 2,300 / 1,595 / 900 (693 class mismatch and 12 target disagreement dropped; 143 for a disputed token, 1 fix-tier violation, caps 58 + 131 + 362) |
+| Hand check (model review by `claude-sonnet-5.5`, seed 20261110, one draw) | target token 60/60 = 100.0% (gate 95%); whole sentence 59/60; token precision 99.87%; leniency controls accepted 0 of 4 |
+| Leakage | 0 document overlaps, 0 exact sentence overlaps and 0 near duplicates against every evaluation set (`check_leakage.py`, `leakage-report.tsv`) |
+| Lexicon | not rebuilt (`lexicon/lexicon.tsv` unchanged); 97.86% of the word tokens and 94.46% of the (spelling, tag) pairs are listed |
+| Configuration | `training.json` has the source `imperative` with `"weight": 0`; `train --check` exit 0, `imageSha256` unchanged |
+
+### Imperative data: arms and runs
+
+| Arm | Configuration | Driver arm | Runner |
+| --- | --- | --- | --- |
+| **F2** | the shipped configuration: feature group `clauseCues`, the current training mix (open x2, MASC, silver >= 80) | `F2` | `runner-base.cmd` |
+| **F2+IMP** | F2 plus the `imperative` source at weight 1 | `F2` | `runner-imp.cmd` |
+| **ALL+IMP** | all four feature groups plus the `imperative` source at weight 1 | `ALL` | `runner-imp.cmd` |
+| ALL (reference, reported, **not gated, never selected**) | all four feature groups, current mix (the ALL arm of the context-feature experiment, re-run on this code base) | `ALL` | `runner-base.cmd` |
+
+Seeds: **20260101, 11, 12, 13, 14** (the seeds and the order of `context-features/arms.json`), five runs per arm: 15 runs for the
+three arms, 20 with the reference arm. Every other setting is the shipped `training.json`; the temperature is refit on open dev
+for every run (`--calibrate`); `previewFolds` is 5 (the `ALL` arms train the jackknife of `rightPreview`). The mechanism is the
+frozen harness `context-features/run_arms.ps1`, unedited, with its `-Arms` and `-Runner` options, one folder per arm (the folders lie
+on C: outside the repository), one invocation at a time, in this order:
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2     -Arms F2  -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp  -Arms F2  -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\allimp -Arms ALL -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\all-ref -Arms ALL -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+```
+
+The harness takes the runner as the command that replaces `dotnet`, so the **only** difference between a base and an imperative run
+is the option `--source imperative:1`, which `runner-imp.cmd` appends to the `train` command (the driver calls the runner as
+`<runner> <trainer.dll> train ...`; the runner tests its second argument; `build` and `eval-arm` pass through unchanged). The driver
+trains with `train --seed S --features G [--preview-folds 5] --calibrate --output FILE [--source imperative:1]`, then scores the file
+with the dev-only command `eval-arm`; it is resumable (a run is complete when its JSON exists), requires at least 6 GB free on C:
+and uses at most 8 threads. A run that fails without a result is repeated; no run is repeated or replaced because of its result,
+and no arm is dropped. The reference arm is run last and does not influence the rule.
+
+**Deviation record (Normal priority).** The frozen driver starts `dotnet` at BelowNormal priority, which received almost no CPU
+on this machine in the earlier experiment (other sessions keep its cores saturated). As in that experiment, the runners start
+`dotnet` at Normal priority (`start "" /normal /wait /b dotnet %*`), which the project owner allowed; it changes the speed of the
+runs and nothing else (the driver script is unchanged; the runners propagate the exit code of `dotnet`, which was tested with a
+failing command). Consequence: the training times and the single-thread throughput are measured on a shared, loaded machine and
+are not comparable between arms or with earlier records; the throughput guard is an absolute floor far below the speeds recorded
+earlier (315k to 894k tokens per second), and the `ALL` arms are slower than `F2` by design.
+
+### Why a new analysis script
+
+The frozen `context-features/analyze_arms.py` cannot judge these arms: it requires a baseline arm without feature groups, it
+hard-codes the arm set of `arms.json` and it hard-codes a size guard of 2 x BASE, whereas this experiment has the baseline F2 (one
+group), the arms F2+IMP and ALL+IMP, and a size guard of 1.5 x F2. The frozen script and its `arms.json` are **not** edited. The new,
+versioned `imperative-data/analyze_imperative.py` is part of this pre-registration (its SHA-256 is below, `--selftest` passes). Its only
+use of the frozen script is the function `welch_diff` (the Welch-Satterthwaite 95% interval), loaded from the frozen file by path
+after the file's SHA-256 has been checked; every other function is its own. The self-test checks the t quantile of the frozen
+function against published values, the Welch case by hand, the six guards at their boundaries and just beyond (including the size
+guard at exactly 1.5 x the F2 mean, 1.5 x + 1 byte and 1.6 x), the 10% window (an arm at exactly 1.10 x the lowest is inside,
+at 1.105 x it is outside), the preference of F2+IMP over ALL+IMP, the case that only ALL+IMP passes, the nothing-qualifies case, a
+qualifying candidate whose interval contains 0, the no-fallback case, the reference arm that never enters the rule, missing runs and
+a missing arm, each acceptance test failing when its condition is broken, and the paired bootstrap. A mutation check (size limit,
+window and significance test changed) made the self-test fail as intended.
+
+### Imperative data: metrics and the selection rule (fixed now; applied exactly as written; nothing is tuned afterwards)
+
+A harmful error is a swapped noun-verb class at confidence >= 0.45 on a noun-verb decision; rates are per 1,000 decisions (the
+definitions of E0 and of the shapes development set). All figures come from `analyze_imperative.py` over the five seeds of every
+arm; spreads are sample standard deviations.
+
+- **Primary metric:** the mean over the five seeds of the pooled harmful per 1k on the **hard tranche** of the shapes development
+  set (`shapes.hard.pooled.harmfulPer1k`; four shapes, 400 target items). Lower is better.
+- **Secondary metric (reported, not gated):** the hard `v-imperative-initial` target accuracy
+  (`shapes.hard.shapes.v-imperative-initial.targetAccuracy`).
+- **Guards** (arm against the **F2 five-seed mean**; all must hold): shapes-dev standard tranche harmful per 1k <= F2 + 5; open dev
+  harmful per 1k <= F2 + 1.5; UD-EWT dev harmful per 1k <= F2 + 1.5; UD-EWT dev accuracy >= F2 - 0.15 points; deflated weights file size
+  <= **1.5 x F2**; single-thread throughput >= 150,000 tokens per second (absolute; the median over the seeds of the runs' medians).
+- **Rule.** Q = the arms F2+IMP and ALL+IMP that pass every guard. If Q is empty, F2 stays. Otherwise m = the lowest primary in Q,
+  S = the arms of Q with primary <= 1.10 x m (within 10% relative), and the candidate is the arm of S with the fewest feature groups
+  (so F2+IMP is preferred over ALL+IMP; ties: the lowest primary). The candidate ships only if the Welch 95% interval (Welch-Satterthwaite
+  degrees of freedom) of (candidate - F2) on the primary lies **entirely below 0** (its upper bound is below 0); otherwise F2 stays and
+  nothing ships. **There is no fallback** to the other arm. The reference arm ALL is never in Q.
+- **Reported, not gated:** hard and standard target and control accuracy, open dev and gold v2 dev accuracy, NLL and ECE, temperature,
+  rows, raw bytes, training seconds, the per-shape breakdown of both tranches (target accuracy and harmful per 1k: the hard shapes
+  `n-compound-head`, `n-subject-initial`, `v-imperative-initial`, `v-after-modal` and the shapes of the standard tranche, so a shift of
+  harm from `n-subject-initial` to `v-imperative-initial` is visible), the Welch interval of every arm against F2 for the secondary
+  metric, and a paired bootstrap over the hard items of each candidate against F2 (2,000 resamples, seed 20261108, descriptive only).
+
+### Acceptance tests (run before the rule is applied; a failure stops without a selection)
+
+`analyze_imperative.py` runs them first and makes no selection (exit code 1, no `decision.json`) if one fails:
+
+1. **F2 seed 20260101 is the shipped model.** Its weights SHA-256 (the `weights.sha256` of its result file, and the `.bin` file of the
+   run when present) equals that of `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, and its figures equal those of the
+   shipped model: hard tranche 235.0 harmful per 1k (94 of 400), standard tranche 16.7 (10 of 600), open dev 100 harmful of 4,451
+   decisions, UD-EWT dev 91 of 4,570 (the development figures of the clause-cue adoption section).
+2. **The source was really added.** From the line `Training on N sentences (...), sources=...` of the `<run>.train.txt` of every run:
+   every run of F2+IMP and ALL+IMP trained on exactly **900 more** sentences than the F2 run of the same seed (900 = the sentences of
+   `imperative.tsv` at weight 1) and lists `imperative:1` among its sources; every run of F2 and of the reference arm trained on the same
+   number of sentences as the F2 run of its seed and lists no `imperative` source.
+3. **Same inputs.** The `inputs.*Sha256` fields of all runs agree and equal the frozen hashes of the five development files
+   (the table below).
+
+The analysis script also checks the SHA-256 of every frozen file below (with CRLF normalized to LF) and stops if one differs.
+
+### What happens on each outcome
+
+- **F2 stays** (Q is empty, or the candidate's interval is not entirely below 0). The data source stays committed with weight 0, and
+  the results section records the analysis tables unchanged, the decision "F2 stays" and the caveats. No weights change, no
+  `thresholds`, no `evaluate`, no README accuracy change; the run log states that no held-out command was run (the held-out sets
+  stay unread by this experiment).
+- **A candidate ships.** An adoption section is written in this log **before any held-out command**: `training.json` gets
+  `imperative` at weight 1 (and, for ALL+IMP, the four feature groups and the preview folds), with the steps of the clause-cue adoption
+  (`train --output <file outside the repository>`, `calibrate --update-config`, `train --update-config`, `train --check`, copy to
+  `weights.bin`; the new `weights.bin` must be byte-identical to the winning run at seed 20260101); then `thresholds` (development data
+  only), and **one** `evaluate` of the new model as a **disclosed fourth look** at sets already seen by this model family (a new
+  record, not an erratum; no second run; results reported as produced), with the documents, tables and drift tests updated.
+- **An acceptance test fails.** The experiment stops without a selection; the cause is investigated and recorded, and any change
+  to the protocol is an amendment written before the affected runs are repeated, never a choice made on a result.
+- **A run is missing** (a command failed without a result): it is repeated; the analysis refuses to select with a missing run.
+
+### Imperative data: limits stated in advance
+
+- The seeds measure training noise only; the interval over the 400 hard items (the bootstrap) is far wider, so a win is development
+  evidence of that kind. Two candidate arms are compared (less selection bias than the nine arms of the earlier experiment, but
+  some).
+- The hard tranche is a development set that this project has used for baselines and for the earlier selection; it is not an
+  independent test of this idea. The source was built from the frame of the `v-imperative-initial` shape, so the shape is the
+  direct target of the data.
+- ALL+IMP also adds the three other feature groups; only F2 against F2+IMP isolates the effect of the data, which is why the
+  reference arm ALL is run and reported.
+- The data keep only sentences whose first word both labelers read as a verb: the source gives no counter-example, so a model that
+  trains on it can lean toward the verb reading of an ambiguous first word (`n-subject-initial` is watched through the diagnostics
+  and, indirectly, through the standard-tranche guard).
+- The text is instructional federal text of another register and era (mostly scans of 1940 to 1969 manuals, 71% Army) than the
+  development sets; the labels are model-written without human review (known residual error about 0.1% of tokens in the model review).
+- Throughput and training time are measured on a loaded shared machine at Normal priority (the deviation record above).
+
+### Imperative data: held-out sets
+
+The held-out sets (open test, gold v2 test, shape probe, STE challenge set, UD-EWT test) are never used for selection and are not
+read by this experiment: the harness reads only the development files, and `eval-arm` has no path to a held-out file. A held-out
+command is run if and only if a candidate ships (above).
+
+### Imperative data: inputs frozen by this commit
+
+SHA-256 of the files as committed (line endings LF; the two `.cmd` files are checked out with CRLF by `.gitattributes` and are
+hashed after normalizing to LF) and of the data they read:
+
+| File | SHA-256 |
+| --- | --- |
+| `context-features/run_arms.ps1` (frozen driver, unchanged) | `26ba1c6ed281bdc86ac88522aaab76fd6490f10a753c5aa1dae96d83ff5995db` |
+| `context-features/arms.json` (frozen arms and seeds, unchanged) | `0aac43677f11b3cbfa37a020344b6276483edbf8af7eee840893a43520e9fad8` |
+| `context-features/analyze_arms.py` (frozen; imported for `welch_diff` only) | `3d52825384b440c5786e1b241fc6f814e4e47a63f155414e0d6450107d33e494` |
+| `imperative-data/analyze_imperative.py` (new, versioned) | `c8a0a553ecdb636b0e28dea80a59d88aa7928a0dfaf61539bdcbae142065e0e1` |
+| `imperative-data/runner-base.cmd` | `549a2c6ed8d1eaf00b30551fae14e546c51023dd79fe3a77810f39a1fe79ff3e` |
+| `imperative-data/runner-imp.cmd` | `c60a7eac3ba369406710f7737926ac743c16346b7a9edd8d98bd8fea08b05f4b` |
+| `data/imperative/imperative.tsv` (900 sentences) | `218246df0c4ce739e6631a066e5296194d6773e09fc849cd64c1eb93516185ad` |
+| `data/imperative/sources.tsv` (122 documents) | `46ed6556224f2adcd73da7f8c8b026597a3a72f85dc7f6f8284231f003699df5` |
+| `data/imperative/excluded-documents.tsv` | `e3a6f73dda9a089f9c04f99fd5b8d674b68cddf80c7aefc6e493394dd240bfe8` |
+| `data/imperative/dropped-sentences.tsv` | `ff7667dbee716ed01fe2182c4497e301f48006ac63a18b560d347aeb22f2fddf` |
+| `data/eval/shapes-dev/dev.tsv` (standard tranche) | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
+| `data/eval/shapes-dev/hard.tsv` (hard tranche) | `c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22` |
+| `data/open/dev.tsv` | `8caa822515cee179093f068ff4ea7fa62714830d4c50de696bd4403037fc05c7` |
+| `data/eval/gold-v2/dev.tsv` | `ffb2f3afd3460523656f5528a66094bad507982b15eb2b4a9341cdb78ff117f5` |
+| `tools/data/cache/ud-ewt/ud_dev.tsv` | `0fc0b4a371ef6d0437e01e396762cdb600d0d7ff0d725ead00ac9f3c41f82037` |
+| `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (the shipped model; image `ec3f090eb318abc1bcf4dc8a88e401567e606932142178277d3ec387e0aa40f3`) | `72cc28cf10c556a617e8edb49d92d96148ed023874cfe834557ea5c6911b9672` |
+| `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` (with the weight-0 entry) | `3fbdd3dad34b86a422a2be854c6b9174842160d42b47d7d3bfc2d854e452652b` |
+
+The data-side commits are `100e747cb0b31deff4f10d89b426001bf8c95f16` (builder, rule and tests, before any label) and
+`3a703f52ad978ca040fc21252b67d1180d3b5019` (data, checks, documents and the weight-0 registration). `analyze_imperative.py --selftest`
+passes. The trainer commit that produced each result is recorded in its JSON (`inputs.commit`, with the dirty flag), and the folders of
+the runs lie outside the repository, as in the earlier experiment; their files are not part of the review set.
 
 ## Run table
 
