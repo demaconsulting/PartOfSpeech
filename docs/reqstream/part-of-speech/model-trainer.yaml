@@ -646,12 +646,13 @@ sections:
             title: >-
               For the right preview group the trainer shall train every sentence in two passes on one weight table (the
               first without the preview features, the second with the first-pass tags of the next two tokens), shall
-              take those tags from fold models that did not see the sentence (folds from groups of documents that share a
-              sentence key, the lower-case letters and digits of the text, directly or through other documents, so that
-              a document is never split and an exact duplicate sentence under two document ids never lands in two
-              folds; the fold of a group is the hash of its smallest document id, the same for every seed; fold models
-              trained without the group on the other groups, the settings and the seed of the run, and decoding their
-              held-out fold with the quantized weights and the lexicon restriction like the first pass of the decoder),
+              take those tags from fold models that did not see the sentence (folds from groups of documents that
+              share a sentence key, the lower-case letters and digits of the text, directly or through other
+              documents, so that a document is never split and an exact duplicate sentence under two document ids
+              never lands in two folds; the fold of a group is the hash of its smallest document id, the same for
+              every seed; fold models trained without the group on the other groups, the settings and the seed of
+              the run, and decoding their held-out fold with the quantized weights and the lexicon restriction like
+              the first pass of the decoder),
               and shall refuse sentences that fill fewer than two folds or preview tags that miss a sentence.
             justification: |
               A model that is trained on first-pass tags of its own training sentences sees tags that are better than
