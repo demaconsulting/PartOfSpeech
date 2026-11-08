@@ -2960,6 +2960,74 @@ opposite of the seed-20260101 development open and gold v2 harmful counts. The i
 differences is a significant one on its own; the experiment's own evidence is the pre-registered development rule, and this
 record adds a third, weaker look.
 
+## Context-feature experiment: amendment 1 (jackknife grouping)
+
+Dated 2026-11-07. This section is appended after the results, the adoption and the held-out record above, which are not
+edited, and it is committed **before any re-run it describes**; the git history shows the order: the fix of the jackknife
+(commit `f8ee48c`), this amendment, then the re-runs, then a results section for them. It changes the grouping of the
+jackknife folds and the set of arms that are run again. It does not change the arms, the seeds, the primary metric, the
+guards, the selection rule or the frozen harness files (`arms.json`, `run_arms.ps1`, `analyze_arms.py`), which keep the
+hashes of the pre-registration.
+
+### The defect
+
+The jackknife of the `rightPreview` group (F3) formed its five folds from the hash of the document id (`source_id`) only. An
+exact duplicate sentence under two document ids could therefore sit in two folds, and the fold model of the fold that held
+one copy out was trained on the other copy. The preview tags of that sentence were then better than the tags of new text,
+which is the optimism that the jackknife exists to remove. The results section above records this as a small optimistic
+leak of the F3-containing arms; the formal review of the pull request found that this does not meet the requirement that a
+fold model never sees the sentences that it tags. That caveat is superseded by this section: the defect is fixed and the
+affected arms are run again.
+
+Measurement of the training sources of `training.json` (open twice, MASC, silver at probability 80 or more), loaded by the
+trainer's own reader, with a sentence key of the lower-case letters and digits of the tokens (the key of the leakage
+check):
+
+| Measure | Value |
+| --- | --- |
+| Sentences of one epoch, with the source weights | 60,780 |
+| Distinct sentences (a repeat of the weight is one sentence) | 48,790 |
+| Distinct non-empty sentence keys | 47,999 |
+| Documents | 9,576 |
+| Sentences with an exact duplicate in another document | 608 (216 keys) |
+| Of those, in another fold than a duplicate (document-id folds) | 399 (113 keys) |
+
+Held-out sentences whose key occurs in the training set of their fold model, by fold (document-id folds): 43, 81, 134, 67
+and 74 (399 in all). Fold sizes in distinct sentences, folds 0 to 4: 8,329, 12,167, 8,768, 11,331 and 8,195.
+
+Connected components of the documents (two documents are joined when they share any sentence key): 9,471 components, of
+which 9,446 are one document and 25 hold two or more documents (130 documents). The largest holds 26 documents and 8,393
+sentences (17.2% of all distinct sentences); the next largest multi-document components hold 623 sentences (2 documents) and
+513 sentences (24 documents). The largest component is below the 25% bound that was set before the fix to decide that
+grouping is workable (above it, removing the duplicates of the held-out fold from the fold model training would have been
+proposed instead).
+
+### The fix
+
+Documents are joined by union-find when they share any non-empty normalized sentence key, so the folds are made from the
+connected components. The fold of a component is the FNV-1a hash of its smallest document id (ordinal order) modulo 5, the
+same for every seed, every order of the files and every set of feature groups. K = 5 and the rest of the jackknife (fold
+models without F3, on the other groups, the settings and the seed of the run, tagging their own fold like the first pass of
+the decoder) are unchanged. A document that shares no key with another one keeps the fold of its own id. After the fix no
+held-out sentence key occurs in the training set of its fold model (0 of 48,790), and the fold sizes in distinct sentences are
+15,765, 9,698, 7,424, 8,315 and 7,588: the largest component falls into fold 0, so the fold model of fold 0 is trained on
+33,025 sentences and the others on 39,092 to 41,366. That imbalance is accepted.
+
+### Scope of the re-runs
+
+- **Run again:** the five arms that contain F3: F3, ALL, ALL-minus-F1, ALL-minus-F2 and ALL-minus-F4. Five seeds each
+  (20260101, 11, 12, 13, 14), 25 runs, with the fixed jackknife and with everything else unchanged: the trainer settings,
+  the driver, the scoring, the primary metric, the guards and the selection rule of the pre-registration.
+- **Stand:** BASE, F1, F2, F4 and ALL-minus-F3. They use no jackknife, so their runs are not affected. The shipped model
+  (the F2 weights) and the held-out record of the shipped model are not affected either.
+- **Selection:** the corrected table (the five re-run arms and the five standing arms) is passed through the same rule,
+  unchanged. If an arm other than F2 would be selected, nothing ships and the decision goes to the project owner before any
+  held-out data is touched. If F2 is selected again, the shipped model stands.
+- **Superseded runs:** the earlier runs of the five F3-containing arms are kept outside the repository, and their figures
+  stay in the results section above as superseded; the corrected figures are recorded in a results section that follows
+  the re-runs.
+- **No held-out set** is read by the re-runs.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
