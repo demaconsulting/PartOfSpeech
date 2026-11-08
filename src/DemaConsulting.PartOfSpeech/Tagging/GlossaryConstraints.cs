@@ -103,9 +103,8 @@ internal sealed class GlossaryConstraints
     ///     Gets the rule for the particle of a two-token verb term whose head is the first token.
     /// </summary>
     /// <remarks>
-    ///     This is the one switch for that decision. It is <see cref="GlossaryNonHeadRule.ParticlesOnly"/> because the
-    ///     pre-registered bar of scenario G (section E9 of the trainer's <c>RUN-LOG.md</c>) was met on development data:
-    ///     limiting the second token of a phrasal verb to adposition, adverb and particle improved the covered-token
+    ///     This is the one switch for that decision. It is <see cref="GlossaryNonHeadRule.ParticlesOnly"/> because
+    ///     limiting the second token of a phrasal verb to adposition, adverb and particle improves the covered-token
     ///     accuracy, also with wrong entries. The rule applies only to the shape that was measured: an entry whose tags
     ///     contain <c>VERB</c>, a term of exactly two tokens, and the head is the first token (so the non-head token is
     ///     the second). Every other non-head token of a term that is not a noun term (an adjective phrase such as

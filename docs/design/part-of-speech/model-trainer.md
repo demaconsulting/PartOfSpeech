@@ -354,7 +354,8 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   "Earlier Model" table (a test compares the few it states; the earlier-model figures are copied from the trainer
   `RUN-LOG.md`, which is their record). The figures that the package documentation and the user guide
   quote are verified against the committed JSON by the system tests, not by this unit. The root `README.md` repeats the
-  current threshold figures of the generated reports and links to them; no test compares that copy.
+  held-out results and the threshold figures of the generated reports in two tables, checked by a system test, and links
+  to the evaluation record.
 
 ### Selection of the Shipped Model
 

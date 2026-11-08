@@ -970,6 +970,7 @@ sections:
           - PartOfSpeech-ModelTrainer-ConfidenceCurve
         tests:
           - PartOfSpeech_Evaluation_ConfidenceGuidance_MatchesTheCommittedFigures
+          - PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures
           - ApiMark_ConfidenceGuidanceDocumented
 
       - id: PartOfSpeech-Lib-ApiDocsPackaged

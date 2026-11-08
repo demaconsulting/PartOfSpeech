@@ -145,8 +145,7 @@ internal enum FeatureKind
 ///         before the groups existed. Bit 4 (value 16) is reserved for a later group and is rejected by the loader.
 ///     </para>
 ///     <para>
-///         The groups are defined in <see cref="FeatureExtractor"/> (the feature definitions) and fixed by the
-///         pre-registration section of <c>tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md</c>.
+///         The groups are defined in <see cref="FeatureExtractor"/> (the feature definitions).
 ///     </para>
 /// </remarks>
 [Flags]

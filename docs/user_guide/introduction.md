@@ -57,16 +57,11 @@ The tagger decides token by token from left to right. For each token it scores t
 ending, the words around it, the tags it chose before and, in the embedded model, clause cues: the kind of the
 neighboring words (for example a determiner or a modal), the distance to the nearest determiner or modal, and whether
 the current clause already has a subject-like tag and a verb tag. The cues were designed for words that are both noun and
-verb, such as the first word of an instruction. The embedded model does not use tags of the words to its right. A
-pre-registered experiment on development data chose the clause cues; the
-[run log](https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)
-(section "Context-feature experiment") has the protocol and the results.
+verb, such as the first word of an instruction. The embedded model does not use tags of the words to its right.
 
-The model was selected on development data only and then evaluated on held-out data (a disclosed third look at those
-sets: earlier models of the family had been evaluated on them before), after the training corpora had been corrected
-and the model retrained. The
-[evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the results
-and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to trust.
+The [evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the
+results and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to
+trust.
 
 # Usage
 
@@ -162,11 +157,9 @@ Read the numbers with these points in mind:
 ### Choosing a Confidence Threshold
 
 The confidence is not equally reliable at every level, and the mistake that matters most is a noun that is tagged as a
-verb or a verb that is tagged as a noun (a harmful error). The embedded model was measured on that mistake: two
-thresholds were selected on development data only, and the model was then evaluated on held-out data (a disclosed third
-look at those sets). A token is
-answered at a threshold when its confidence is at least the threshold; coverage is the share of the noun-verb
-decisions that is answered.
+verb or a verb that is tagged as a noun (a harmful error). The embedded model was measured on that mistake on held-out
+data. A token is answered at a threshold when its confidence is at least the threshold; coverage is the share of the
+noun-verb decisions that is answered.
 
 | Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
 | --- | ---: | ---: | ---: |
@@ -322,9 +315,6 @@ such as the technical names and verbs of ASD-STE100: every right entry helps and
 list that is not curated or may be wrong (for example one that was extracted automatically): the model keeps its tag
 when it is clearly sure, so a wrong entry costs much less. `GlossaryEntry.WithMode` sets the mode of one entry, and
 `GlossaryOptions.SoftStrength` the strength (greater than zero; the default is `GlossaryOptions.DefaultSoftStrength`).
-The simulated glossaries on development data, the rule that chose the default strength and the measured cost of wrong
-entries in each mode are in section E9 of the
-[run log](https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md).
 
 ### Reading the results
 

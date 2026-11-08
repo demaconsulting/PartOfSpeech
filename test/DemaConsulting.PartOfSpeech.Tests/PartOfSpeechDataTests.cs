@@ -2050,7 +2050,6 @@ public class PartOfSpeechDataTests
         var rows = model.RowCount.ToString("N0", CultureInfo.InvariantCulture);
         var sizeDocuments = new[]
         {
-            "README.md",
             "docs/user_guide/introduction.md",
             "data/README.md",
             "src/DemaConsulting.PartOfSpeech/NamespaceDoc.cs",

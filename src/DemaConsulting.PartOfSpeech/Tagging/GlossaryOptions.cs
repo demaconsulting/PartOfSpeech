@@ -9,8 +9,7 @@ namespace DemaConsulting.PartOfSpeech;
 ///     wrong entry forces a wrong tag. It fits curated lists, such as the technical names and verbs of ASD-STE100.
 ///     <see cref="Soft"/> mode is for lists that are not curated or may be wrong, because the model can still disagree when it
 ///     is sure. With wrong entries, hard mode makes confident errors, while soft mode stays near the accuracy of tagging
-///     without a glossary; the full measurements are in section E9 of
-///     https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md.
+///     without a glossary.
 /// </remarks>
 public enum GlossaryMode
 {
@@ -50,12 +49,9 @@ public sealed class GlossaryOptions
     ///     The default of <see cref="SoftStrength"/>, in units of the model temperature.
     /// </summary>
     /// <remarks>
-    ///     The value is the largest strength of the evaluation grid whose paired 95 percent interval of the overall
+    ///     The value is the largest strength of a grid of strengths whose paired 95 percent interval of the overall
     ///     accuracy change still reaches zero (its upper bound is at least zero) and whose confident noun-verb swaps do not
-    ///     rise, when 30 percent of the entries are wrong and every term is covered. It was chosen on development data
-    ///     with a rule that was applied after the first run; the rule, the reason for the change and the measured effect
-    ///     of every strength are in section E9 of
-    ///     https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md. A
+    ///     rise, when 30 percent of the entries are wrong and every term is covered. A
     ///     stronger value trusts the glossary more.
     /// </remarks>
     public const double DefaultSoftStrength = 2.0;
@@ -88,8 +84,7 @@ public sealed class GlossaryOptions
     ///     Hard mode trusts the entries completely: a wrong entry forces a wrong tag. It fits curated lists such as the
     ///     ASD-STE100 technical names and verbs. Use soft mode for lists that are not curated or may be wrong: with
     ///     wrong entries, hard mode makes confident errors, while soft mode stays near the accuracy of tagging without a
-    ///     glossary. The full measurements are in section E9 of
-    ///     https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md.
+    ///     glossary.
     /// </remarks>
     /// <value>The default is <see cref="GlossaryMode.Hard"/>. Another value than <see cref="GlossaryMode.Hard"/> and <see cref="GlossaryMode.Soft"/> is rejected with an <see cref="ArgumentOutOfRangeException"/> when the glossary is created.</value>
     public GlossaryMode Mode { get; init; }

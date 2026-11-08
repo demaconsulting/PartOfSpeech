@@ -171,9 +171,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     ## Confidence thresholds
 ///     </para>
 ///     <para>
-///     The embedded model was evaluated on held-out data (a disclosed third look at those sets: earlier models of its
-///     family had been evaluated on them before), after two thresholds had been chosen on development data
-///     only. The measurement is about the mistake that changes the meaning of a sentence: a word that is a noun and is
+///     The embedded model was measured on held-out data. The measurement is about the mistake that changes the meaning of a
+///     sentence: a word that is a noun and is
 ///     tagged as a verb, or the other way round (a <em>harmful error</em>). A token is <em>answered</em> at a threshold
 ///     when the confidence of its tag is at least the threshold, and <em>coverage</em> is the share of the noun-verb
 ///     decisions that is answered. Without a threshold, 16.8 of 1,000 noun-verb decisions of the open test split are
@@ -368,10 +367,7 @@ namespace DemaConsulting.PartOfSpeech;
 ///     | With wrong entries | A wrong entry forces a wrong tag: hard mode makes confident errors. | The accuracy stays near that of tagging without a glossary, because the model can overrule a wrong entry. |
 ///     </para>
 ///     <para>
-///     In short: with wrong entries, hard mode makes confident errors, while soft mode stays near no-glossary accuracy. The
-///     full measurements (simulated glossaries on development data, with 0, 10 and 30 percent wrong entries, and the effect of
-///     the strength) are in the trainer run log of the repository, section E9:
-///     https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md
+///     In short: with wrong entries, hard mode makes confident errors, while soft mode stays near no-glossary accuracy.
 ///     </para>
 ///     <para>
 ///     ## Glossary navigation

@@ -478,9 +478,7 @@ public sealed class GlossaryEntry
     /// <remarks>
     ///     In plain words: use it to say what one of the other words of the term is. Without it a non-head token of a noun term is only kept from being read as a verb or an auxiliary, the
     ///     second token of a two-token verb term whose head is the first word (the particle of a phrasal verb, see
-    ///     <see cref="WithHead(int)"/>) is limited to adposition, adverb and particle (this rule was chosen on
-    ///     development data, see section E9 of
-    ///     https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md), and every other token (for example
+    ///     <see cref="WithHead(int)"/>) is limited to adposition, adverb and particle, and every other token (for example
     ///     <c>it</c> in <c>take it apart</c>) is left to the
     ///     model. Use it to say exactly what a word of the term is, for
     ///     example that <c>up</c> in the phrasal verb <c>set up</c> is an adverb: <c>new GlossaryEntry("set up",

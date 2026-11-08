@@ -63,6 +63,11 @@ public class PartOfSpeechEvaluationTests
     private const string UserGuidePath = "docs/user_guide/introduction.md";
 
     /// <summary>
+    ///     The root README, which carries the tables of the held-out results and of the thresholds.
+    /// </summary>
+    private const string ReadmePath = "README.md";
+
+    /// <summary>
     ///     The FileAssert configuration.
     /// </summary>
     private const string FileAssertPath = ".fileassert.yaml";
@@ -273,6 +278,53 @@ public class PartOfSpeechEvaluationTests
     }
 
     /// <summary>
+    ///     Proves that the two tables of the root README equal the committed record: every row of the table of held-out
+    ///     results states the accuracy and the harmful-error rate of its set of <c>test-results.json</c>, and every row
+    ///     of the table of thresholds states the threshold of <c>operating-points.json</c> with the coverage and the
+    ///     harmful-error rate of its point on the open test split, formatted as the generated reports format them. The
+    ///     README cannot drift from the record without this test failing.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures()
+    {
+        // Arrange: the committed selection and results, and the rows of the two tables of the README
+        var selection = ReadText(OperatingPointsPath);
+        var results = ReadText(ResultsPath);
+        var readme = ReadText(ReadmePath);
+        var sets = Math.Max(0, results.IndexOf("\"sets\"", StringComparison.Ordinal));
+        var resultRows = ReadTable(readme, "| Set |");
+        var thresholdRows = ReadTable(readme, "| Threshold |");
+        var problems = new List<string>();
+
+        // Act: compare every cell of a row with the committed figure, formatted as the reports format it
+        foreach (var row in resultRows)
+        {
+            var set = NamedObject(results, row[0].Trim('`'), sets);
+            problems.AddRange(CompareRow(row, new[]
+            {
+                "`" + row[0].Trim('`') + "`",
+                NumberMember(results, "accuracy", set).ToString("F2", CultureInfo.InvariantCulture),
+                One(NumberMember(results, "harmfulPer1000", set))
+            }));
+        }
+
+        foreach (var row in thresholdRows)
+        {
+            var name = row[0].Trim('`');
+            var point = new GuidancePoint(selection, results, name);
+            problems.AddRange(CompareRow(row, new[]
+            {
+                "`" + name + "`", point.Threshold, One(point.TestCoverage), One(point.TestHarmful)
+            }));
+        }
+
+        // Assert: both tables exist, they name the sets and the points that the guidance relies on, and nothing differs
+        Assert.Contains(resultRows, row => row[0] == "`open-test`");
+        Assert.Equal(new[] { "`strict`", "`balanced`" }, thresholdRows.Select(row => row[0]).ToArray());
+        Assert.Empty(problems);
+    }
+
+    /// <summary>
     ///     Proves that the evaluation record contains no text of the external treebank (share-alike licensed, local use
     ///     only): no sentence id in the form of its identifiers, and, when the local cache of the pinned treebank is
     ///     present, none of its sentence ids and none of its sentences (of 25 or more characters).
@@ -404,6 +456,38 @@ public class PartOfSpeechEvaluationTests
     ///     Formats a figure without decimal places.
     /// </summary>
     private static string Whole(double value) => value.ToString("F0", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    ///     Reads the rows of a Markdown table: the cells of each row below the header that starts with a prefix, until
+    ///     the first line that is not a table row.
+    /// </summary>
+    private static List<string[]> ReadTable(string markdown, string headerPrefix)
+    {
+        var lines = markdown.Split('\n').ToList();
+        var header = lines.FindIndex(line => line.StartsWith(headerPrefix, StringComparison.Ordinal));
+        Assert.True(header >= 0, "The README has no table with the header " + headerPrefix);
+        return lines
+            .Skip(header + 2)
+            .TakeWhile(line => line.StartsWith("|", StringComparison.Ordinal))
+            .Select(line => line.Trim().Trim('|').Split('|').Select(cell => cell.Trim()).ToArray())
+            .ToList();
+    }
+
+    /// <summary>
+    ///     Lists the cells of a table row that differ from the expected ones.
+    /// </summary>
+    private static IEnumerable<string> CompareRow(string[] row, string[] expected)
+    {
+        if (row.Length != expected.Length)
+        {
+            return new[] { $"row {row[0]}: expected {expected.Length} cells, found {row.Length}" };
+        }
+
+        return row
+            .Select((cell, index) => (cell, index))
+            .Where(item => !string.Equals(item.cell, expected[item.index], StringComparison.Ordinal))
+            .Select(item => $"row {row[0]}, column {item.index + 1}: expected {expected[item.index]}, found {item.cell}");
+    }
 
     /// <summary>
     ///     Gets the part of a text from one marker up to the next marker after it.

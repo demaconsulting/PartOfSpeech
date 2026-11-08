@@ -304,6 +304,5 @@ deterministic; the new files equal the committed ones except for the throughput 
 
 Tests keep the copies of the figures honest. They check that the results name the embedded model and the committed
 selection, that the input hashes equal the data manifest, that the thresholds and figures in the package documentation
-and the user guide equal these files, and that no treebank sentence or sentence id is in this folder. The root README
-repeats the two thresholds with their development and open test figures; no test compares those copies, so check them
-when the record is reissued.
+and the user guide equal these files, that the two tables of the root README (the held-out results and the recommended
+thresholds) equal these files, and that no treebank sentence or sentence id is in this folder.

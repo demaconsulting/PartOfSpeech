@@ -317,6 +317,18 @@ the namespace page carries the heading, both thresholds, the advice and the link
 `TaggedToken.Confidence` links to the section, which proves the generated result and not only the source comment. It runs
 in `build.ps1` and in the CI build, immediately after the API reference is generated.
 
+### Root README Tables Equal the Record
+
+**Test**: `PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures` (in `PartOfSpeechEvaluationTests.cs`)
+
+Parses the two tables of the root `README.md` and compares them with the committed record: each row of the table of
+held-out results must state the accuracy (two decimals) and the harmful-error rate per 1,000 decisions (one decimal) of
+its set in `test-results.json`, and each row of the table of thresholds must state the threshold of
+`operating-points.json` (two decimals) with the coverage and the harmful-error rate per 1,000 answered decisions (one
+decimal each) of its point on the open test split in `test-results.json`. It also asserts that the open test split is in
+the first table and that the second table has exactly the two points `strict` and `balanced`. The README copy cannot
+drift from the record: a reissued evaluation fails this test until the README is updated.
+
 ### Glossary: Hard and Soft Entries
 
 **Tests**: `PartOfSpeech_Glossary_HardEntry_ForcesHeadTag`, `PartOfSpeech_Glossary_SoftEntry_PreferenceShiftsCloseDecision`,
