@@ -2519,6 +2519,214 @@ SHA-256 of the files as committed (line endings LF) and of the data they read:
 guard boundaries, the 10% window, the fewest-groups tie-break, ties, the no-fallback case, missing runs). The repository code
 base of this experiment is `main` at `4709395`; the trainer commit that produced each result is recorded in its JSON.
 
+## Context-feature experiment: results
+
+All 50 runs of the pre-registration above are complete (10 arms, five seeds each: 20260101, 11, 12, 13, 14; 0 runs repeated or
+skipped, no arm dropped). Every run was made by the frozen driver `run_arms.ps1` with the trainer of commit `a674d50` (clean
+tree in all 50 result files) and scored by `eval-arm` on development data only. The tables below are the output of the
+committed `analyze_arms.py` over the per-run result files, copied unchanged. The selection rule was applied mechanically; the
+decision was not reconsidered. No held-out set was read by this experiment.
+
+Outputs (kept outside the repository; the 50 per-run JSON files are not copied into it):
+
+| File | SHA-256 |
+| --- | --- |
+| `report.md` (the analysis below) | `CF5450F11B2961EF930D631745EA49EC97BF9CB10501E913FABA99DE3146C2B4` |
+| `decision.json` (per-arm values, intervals, guards, decision) | `777B6450DB23C0AFFB737E47257FAD667734964A9755A3FE65DFEC443797B756` |
+
+**Run machine.** The runs shared a machine with other sessions that kept its cores saturated. The frozen driver starts
+`dotnet` at BelowNormal priority, which received almost no CPU, so it was run with the driver's `-Runner` option and a
+one-line wrapper (`start /normal /wait /b dotnet`) that starts it at Normal priority (the owner allowed this); the frozen
+files were not edited. Training times therefore are not comparable between arms or with earlier records (the load varied
+during the run); throughput was measured single-threaded on the same loaded machine and varies strongly (see the spreads).
+
+### Analysis report (`analyze_arms.py`)
+
+Values are mean ± sample sd over the five seeds of an arm.
+
+#### Shapes development set
+
+| arm | hard harmful per 1k (primary) | hard target acc % | hard control acc % | standard harmful per 1k | standard target acc % | standard control acc % |
+| --- | --- | --- | --- | --- | --- | --- |
+| BASE | 257.0 ± 8.2 | 67.20 ± 1.02 | 96.33 ± 0.75 | 26.7 ± 3.9 | 96.37 ± 0.22 | 97.20 ± 0.84 |
+| F1 | 267.0 ± 10.2 | 65.75 ± 1.19 | 96.00 ± 1.49 | 23.0 ± 4.5 | 96.70 ± 0.27 | 97.80 ± 1.10 |
+| F2 | 234.0 ± 11.3 | 69.80 ± 1.39 | 98.00 ± 0.75 | 16.0 ± 3.5 | 97.23 ± 0.43 | 98.80 ± 0.45 |
+| F3 | 252.0 ± 7.4 | 67.25 ± 1.00 | 95.67 ± 0.91 | 26.7 ± 4.2 | 96.60 ± 0.38 | 96.60 ± 0.55 |
+| F4 | 247.5 ± 5.3 | 67.95 ± 0.74 | 95.33 ± 0.75 | 28.0 ± 1.8 | 96.30 ± 0.25 | 96.00 ± 1.00 |
+| ALL | 225.5 ± 11.2 | 70.40 ± 0.42 | 98.33 ± 0.00 | 13.3 ± 2.0 | 97.80 ± 0.14 | 99.00 ± 0.00 |
+| ALL-minus-F1 | 229.0 ± 12.1 | 69.65 ± 1.46 | 98.33 ± 0.00 | 13.3 ± 1.2 | 97.73 ± 0.19 | 98.60 ± 0.55 |
+| ALL-minus-F2 | 248.0 ± 4.8 | 68.30 ± 1.05 | 96.67 ± 1.18 | 22.0 ± 5.5 | 96.60 ± 0.51 | 98.00 ± 1.22 |
+| ALL-minus-F3 | 232.5 ± 12.5 | 69.95 ± 1.16 | 98.33 ± 0.00 | 12.7 ± 1.5 | 97.77 ± 0.38 | 99.00 ± 0.00 |
+| ALL-minus-F4 | 242.0 ± 15.0 | 68.20 ± 1.45 | 98.33 ± 0.00 | 12.3 ± 1.9 | 97.90 ± 0.22 | 98.60 ± 0.55 |
+
+#### Open dev and gold v2 dev
+
+| arm | open acc % | open ambiguous acc % | open harmful per 1k | open NLL | open ECE % | gold acc % | gold harmful per 1k | gold NLL | gold ECE % |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| BASE | 96.36 ± 0.03 | 95.65 ± 0.04 | 21.30 ± 1.03 | 0.1217 ± 0.0009 | 0.25 ± 0.09 | 95.08 ± 0.21 | 20.9 ± 3.1 | 0.2582 ± 0.0020 | 2.13 ± 0.13 |
+| F1 | 96.36 ± 0.02 | 95.66 ± 0.05 | 20.62 ± 0.75 | 0.1196 ± 0.0006 | 0.23 ± 0.05 | 94.98 ± 0.11 | 21.3 ± 4.0 | 0.2562 ± 0.0031 | 2.05 ± 0.23 |
+| F2 | 96.64 ± 0.05 | 95.98 ± 0.05 | 20.67 ± 1.02 | 0.1123 ± 0.0012 | 0.26 ± 0.02 | 94.98 ± 0.13 | 23.2 ± 2.1 | 0.2571 ± 0.0031 | 2.36 ± 0.09 |
+| F3 | 96.60 ± 0.05 | 95.99 ± 0.08 | 21.03 ± 0.59 | 0.1161 ± 0.0009 | 0.22 ± 0.05 | 95.14 ± 0.16 | 19.3 ± 0.7 | 0.2595 ± 0.0033 | 2.39 ± 0.27 |
+| F4 | 96.38 ± 0.02 | 95.69 ± 0.03 | 20.35 ± 0.72 | 0.1224 ± 0.0009 | 0.32 ± 0.12 | 95.13 ± 0.21 | 18.7 ± 4.1 | 0.2596 ± 0.0019 | 2.23 ± 0.11 |
+| ALL | 96.82 ± 0.03 | 96.24 ± 0.04 | 18.60 ± 0.40 | 0.1084 ± 0.0004 | 0.22 ± 0.04 | 95.27 ± 0.11 | 19.3 ± 2.4 | 0.2545 ± 0.0021 | 2.22 ± 0.14 |
+| ALL-minus-F1 | 96.81 ± 0.06 | 96.21 ± 0.06 | 19.32 ± 1.04 | 0.1088 ± 0.0010 | 0.28 ± 0.04 | 95.06 ± 0.18 | 22.6 ± 3.5 | 0.2569 ± 0.0022 | 2.22 ± 0.14 |
+| ALL-minus-F2 | 96.74 ± 0.04 | 96.20 ± 0.04 | 19.19 ± 0.76 | 0.1134 ± 0.0004 | 0.24 ± 0.05 | 95.24 ± 0.06 | 19.6 ± 2.0 | 0.2563 ± 0.0041 | 2.21 ± 0.19 |
+| ALL-minus-F3 | 96.67 ± 0.03 | 96.02 ± 0.06 | 19.46 ± 0.91 | 0.1116 ± 0.0005 | 0.26 ± 0.02 | 95.09 ± 0.08 | 21.9 ± 1.5 | 0.2561 ± 0.0025 | 2.15 ± 0.21 |
+| ALL-minus-F4 | 96.80 ± 0.02 | 96.22 ± 0.04 | 20.04 ± 0.73 | 0.1091 ± 0.0001 | 0.16 ± 0.06 | 95.08 ± 0.12 | 25.2 ± 2.5 | 0.2530 ± 0.0027 | 2.23 ± 0.27 |
+
+#### UD-EWT dev
+
+| arm | UD acc % | UD harmful per 1k |
+| --- | --- | --- |
+| BASE | 92.707 ± 0.063 | 22.19 ± 1.13 |
+| F1 | 92.615 ± 0.022 | 23.24 ± 1.94 |
+| F2 | 92.943 ± 0.059 | 19.91 ± 1.54 |
+| F3 | 92.961 ± 0.084 | 22.80 ± 1.59 |
+| F4 | 92.724 ± 0.041 | 20.74 ± 0.72 |
+| ALL | 92.986 ± 0.030 | 20.00 ± 1.43 |
+| ALL-minus-F1 | 93.007 ± 0.084 | 19.82 ± 0.86 |
+| ALL-minus-F2 | 92.957 ± 0.069 | 20.83 ± 1.24 |
+| ALL-minus-F3 | 92.885 ± 0.063 | 21.27 ± 0.97 |
+| ALL-minus-F4 | 93.004 ± 0.084 | 20.88 ± 0.92 |
+
+#### Model, speed and training
+
+| arm | temperature | rows | raw bytes | deflated bytes | tokens/s (1 thread) | train wall s |
+| --- | --- | --- | --- | --- | --- | --- |
+| BASE | 6.584 ± 0.101 | 116453 ± 279 | 1079088 ± 2577 | 478352 ± 936 | 722824 ± 203951 | 46.1 ± 11.5 |
+| F1 | 8.537 ± 0.000 | 126050 ± 292 | 1194629 ± 2083 | 534937 ± 885 | 699039 ± 88719 | 46.2 ± 16.7 |
+| F2 | 9.473 ± 0.091 | 120981 ± 221 | 1146923 ± 1964 | 517282 ± 696 | 693014 ± 114518 | 48.3 ± 13.4 |
+| F3 | 7.368 ± 0.072 | 124625 ± 268 | 1176037 ± 2089 | 524835 ± 775 | 523784 ± 103316 | 108.9 ± 46.8 |
+| F4 | 6.699 ± 0.122 | 115005 ± 166 | 1069022 ± 1777 | 474880 ± 697 | 672601 ± 98652 | 13.7 ± 4.0 |
+| ALL | 12.774 ± 0.151 | 132530 ± 239 | 1302897 ± 1388 | 599597 ± 581 | 333293 ± 55857 | 120.0 ± 39.3 |
+| ALL-minus-F1 | 10.557 ± 0.102 | 126754 ± 316 | 1225977 ± 1578 | 559047 ± 657 | 377821 ± 100586 | 140.6 ± 14.1 |
+| ALL-minus-F2 | 9.597 ± 0.114 | 132407 ± 150 | 1281749 ± 1383 | 580636 ± 463 | 480066 ± 104881 | 141.5 ± 37.7 |
+| ALL-minus-F3 | 11.561 ± 0.000 | 124517 ± 182 | 1200819 ± 1694 | 547134 ± 795 | 624965 ± 98422 | 30.6 ± 1.7 |
+| ALL-minus-F4 | 12.554 ± 0.121 | 134807 ± 195 | 1322271 ± 2182 | 606955 ± 970 | 435470 ± 63332 | 118.6 ± 6.1 |
+
+#### Hard tranche per shape: target accuracy %
+
+| arm | n-compound-head | n-subject-initial | v-imperative-initial | v-after-modal |
+| --- | --- | --- | --- | --- |
+| BASE | 65.2 ± 3.0 | 77.6 ± 3.9 | 45.8 ± 3.7 | 80.2 ± 2.8 |
+| F1 | 64.6 ± 0.5 | 67.6 ± 6.1 | 50.2 ± 3.0 | 80.6 ± 1.7 |
+| F2 | 62.2 ± 2.9 | 78.8 ± 2.3 | 51.6 ± 4.3 | 86.6 ± 1.5 |
+| F3 | 66.4 ± 1.5 | 73.4 ± 3.0 | 47.0 ± 3.1 | 82.2 ± 2.4 |
+| F4 | 66.6 ± 1.1 | 76.8 ± 2.2 | 47.6 ± 1.7 | 80.8 ± 1.5 |
+| ALL | 65.4 ± 2.9 | 73.0 ± 2.5 | 54.0 ± 1.2 | 89.2 ± 1.1 |
+| ALL-minus-F1 | 65.8 ± 1.5 | 75.0 ± 4.5 | 51.6 ± 2.6 | 86.2 ± 2.2 |
+| ALL-minus-F2 | 64.8 ± 3.2 | 71.2 ± 0.8 | 51.6 ± 1.1 | 85.6 ± 2.3 |
+| ALL-minus-F3 | 64.8 ± 3.9 | 73.6 ± 5.9 | 53.0 ± 3.7 | 88.4 ± 1.7 |
+| ALL-minus-F4 | 63.4 ± 2.9 | 72.4 ± 2.6 | 51.2 ± 4.0 | 85.8 ± 1.5 |
+
+#### Hard tranche per shape: harmful per 1k
+
+| arm | n-compound-head | n-subject-initial | v-imperative-initial | v-after-modal |
+| --- | --- | --- | --- | --- |
+| BASE | 310.0 ± 30.0 | 126.0 ± 36.5 | 416.0 ± 48.3 | 176.0 ± 20.7 |
+| F1 | 316.0 ± 11.4 | 194.0 ± 28.8 | 388.0 ± 23.9 | 170.0 ± 15.8 |
+| F2 | 332.0 ± 27.7 | 114.0 ± 19.5 | 386.0 ± 30.5 | 104.0 ± 11.4 |
+| F3 | 302.0 ± 13.0 | 136.0 ± 20.7 | 414.0 ± 25.1 | 156.0 ± 18.2 |
+| F4 | 300.0 ± 14.1 | 120.0 ± 14.1 | 402.0 ± 22.8 | 168.0 ± 19.2 |
+| ALL | 298.0 ± 28.6 | 162.0 ± 16.4 | 360.0 ± 20.0 | 82.0 ± 13.0 |
+| ALL-minus-F1 | 296.0 ± 11.4 | 144.0 ± 33.6 | 370.0 ± 23.5 | 106.0 ± 20.7 |
+| ALL-minus-F2 | 314.0 ± 39.1 | 174.0 ± 29.7 | 376.0 ± 15.2 | 128.0 ± 19.2 |
+| ALL-minus-F3 | 308.0 ± 43.8 | 156.0 ± 37.1 | 368.0 ± 29.5 | 98.0 ± 14.8 |
+| ALL-minus-F4 | 318.0 ± 27.7 | 164.0 ± 28.8 | 370.0 ± 36.7 | 116.0 ± 8.9 |
+
+#### Welch 95% interval of (arm - BASE)
+
+Difference of the means with the Welch-Satterthwaite t interval over the seeds (seeds measure training noise only).
+
+| arm | shapes.hard.pooled.harmfulPer1k | shapes.standard.pooled.harmfulPer1k | openDev.harmfulPer1k | udDev.harmfulPer1k | udDev.accuracy |
+| --- | --- | --- | --- | --- | --- |
+| F1 | +10.00 [-3.61, +23.61] | -3.67 [-9.81, +2.48] | -0.67 [-2.02, +0.67] | +1.05 [-1.37, +3.47] | -0.09 [-0.17, -0.02] |
+| F2 | -23.00 [-37.60, -8.40] | -10.67 [-16.06, -5.27] | -0.63 [-2.13, +0.87] | -2.28 [-4.28, -0.27] | +0.24 [+0.15, +0.32] |
+| F3 | -5.00 [-16.38, +6.38] | +0.00 [-5.96, +5.96] | -0.27 [-1.55, +1.02] | +0.61 [-1.44, +2.66] | +0.25 [+0.14, +0.36] |
+| F4 | -9.50 [-19.85, +0.85] | +1.33 [-3.46, +6.12] | -0.94 [-2.27, +0.38] | -1.44 [-2.87, -0.02] | +0.02 [-0.06, +0.10] |
+| ALL | -31.50 [-46.07, -16.93] | -13.33 [-18.15, -8.51] | -2.70 [-3.96, -1.43] | -2.19 [-4.09, -0.29] | +0.28 [+0.20, +0.36] |
+| ALL-minus-F1 | -28.00 [-43.40, -12.60] | -13.33 [-18.11, -8.56] | -1.98 [-3.49, -0.46] | -2.36 [-3.85, -0.88] | +0.30 [+0.19, +0.41] |
+| ALL-minus-F2 | -9.00 [-19.20, +1.20] | -4.67 [-11.71, +2.38] | -2.11 [-3.45, -0.77] | -1.36 [-3.09, +0.38] | +0.25 [+0.15, +0.35] |
+| ALL-minus-F3 | -24.50 [-40.35, -8.65] | -14.00 [-18.77, -9.23] | -1.84 [-3.27, -0.42] | -0.92 [-2.46, +0.63] | +0.18 [+0.09, +0.27] |
+| ALL-minus-F4 | -15.00 [-33.61, +3.61] | -14.33 [-19.13, -9.54] | -1.26 [-2.59, +0.08] | -1.31 [-2.83, +0.20] | +0.30 [+0.19, +0.41] |
+
+#### Guards against BASE
+
+Delta guards use the mean over the seeds; the throughput guard uses the median of the seeds' medians.
+
+| arm | standard harmful per 1k <= BASE + 5 | open dev harmful per 1k <= BASE + 1.5 | UD-EWT dev harmful per 1k <= BASE + 1.5 | UD-EWT dev accuracy >= BASE - 0.15 | deflated bytes <= 2 x BASE | tokens/s >= 150,000 | all guards |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F1 | PASS -3.67 | PASS -0.67 | PASS +1.05 | PASS -0.09 | PASS 1.12x | PASS 675998 | PASS |
+| F2 | PASS -10.67 | PASS -0.63 | PASS -2.28 | PASS +0.24 | PASS 1.08x | PASS 754719 | PASS |
+| F3 | PASS +0.00 | PASS -0.27 | PASS +0.61 | PASS +0.25 | PASS 1.10x | PASS 556779 | PASS |
+| F4 | PASS +1.33 | PASS -0.94 | PASS -1.44 | PASS +0.02 | PASS 0.99x | PASS 636980 | PASS |
+| ALL | PASS -13.33 | PASS -2.70 | PASS -2.19 | PASS +0.28 | PASS 1.25x | PASS 302032 | PASS |
+| ALL-minus-F1 | PASS -13.33 | PASS -1.98 | PASS -2.36 | PASS +0.30 | PASS 1.17x | PASS 421805 | PASS |
+| ALL-minus-F2 | PASS -4.67 | PASS -2.11 | PASS -1.36 | PASS +0.25 | PASS 1.21x | PASS 527898 | PASS |
+| ALL-minus-F3 | PASS -14.00 | PASS -1.84 | PASS -0.92 | PASS +0.18 | PASS 1.14x | PASS 659045 | PASS |
+| ALL-minus-F4 | PASS -14.33 | PASS -1.26 | PASS -1.31 | PASS +0.30 | PASS 1.27x | PASS 459080 | PASS |
+
+#### Selection rule
+
+Primary: mean hard harmful per 1k (lower is better); BASE mean 257.00.
+
+| arm | groups | primary | passes all guards |
+| --- | --- | --- | --- |
+| BASE | 0 | 257.00 ± 8.18 | - |
+| F1 | 1 | 267.00 ± 10.22 | yes |
+| F2 | 1 | 234.00 ± 11.26 | yes |
+| F3 | 1 | 252.00 ± 7.37 | yes |
+| F4 | 1 | 247.50 ± 5.30 | yes |
+| ALL | 4 | 225.50 ± 11.24 | yes |
+| ALL-minus-F1 | 3 | 229.00 ± 12.07 | yes |
+| ALL-minus-F2 | 3 | 248.00 ± 4.81 | yes |
+| ALL-minus-F3 | 3 | 232.50 ± 12.50 | yes |
+| ALL-minus-F4 | 3 | 242.00 ± 15.04 | yes |
+
+- Passing arms (Q): F1, F2, F3, F4, ALL, ALL-minus-F1, ALL-minus-F2, ALL-minus-F3, ALL-minus-F4
+- Lowest primary in Q: ALL (225.50); within 10% (primary <= 248.05): F2, F4, ALL, ALL-minus-F1, ALL-minus-F2, ALL-minus-F3, ALL-minus-F4
+- Candidate (fewest groups, then lowest primary): F2
+- Welch 95% interval of (F2 - BASE): -23.00 [-37.60, -8.40], df 7.30, p 0.0072
+
+**Decision: SHIP F2.** F2 ships: it has the fewest groups among the passing arms within 10% of the lowest primary, and the Welch
+95% interval of (arm - BASE) is [-37.60, -8.40], entirely below 0.
+
+#### Descriptive: paired item bootstrap of the candidate on the hard tranche (not part of the rule)
+
+F2 - BASE harmful per 1k: -23.00, 95% percentile interval [-44.50, -1.49] (2000 resamples of the items, seed 20261107, items
+averaged over the seeds).
+
+### Decision
+
+The pre-registered rule selected **F2 (`clauseCues`)**, one group of seven features. The rule is the only basis of the decision.
+It follows the owner's instruction to ship it, which the pre-registration made conditional on exactly this outcome, and
+the follow-up (adoption, thresholds, one held-out `evaluate` as a disclosed third look) is recorded in the sections after
+this one. F5 (word clusters) was not built (see the pre-registration).
+
+### Caveats (stated with the result)
+
+- **The shipped seed was an unlucky draw for BASE.** The BASE five-seed mean of the primary is 257.0 and the shipped seed
+  (20260101) gave 267.5, the highest of its five seeds. The gap between the old and the new model at the shipped seed
+  therefore is not the gap between the means; the same applies to every other measure, and a single seed also differs from the
+  mean in the other direction on some measures.
+- **Seeds measure training noise only.** The Welch interval does not include the sampling noise of the 400 hard items (the
+  descriptive paired bootstrap over the items is much wider and has an upper end close to 0).
+- **Nine candidate arms were compared**, so the lowest primary values are subject to winner's curse; the decision describes
+  development evidence only, on a set that was used for baselines before and that the groups were designed knowing.
+- **F1 hurt the hard tranche on its own** (its primary is above BASE, mainly on `n-subject-initial`), and **F3 and F4 alone
+  did not significantly improve** it (their Welch intervals contain 0).
+- **ALL had the lowest primary** (four groups, with a lower open dev harmful rate than F2 and the largest model and training
+  cost), but it is not selected: F2 is within 10% of it, has fewer groups, and the pre-registered tie-break takes the arm with
+  the fewest groups.
+- **The function-only set is lexicon-based**, as pre-registered, and that makes `FirstContent` coarse: many function words
+  have rare content readings in the lexicon (for example `the`, `a`, `of`, `in`, `to`, `is`, `it` are not function-only), so
+  the first token usually counts as content and the token classes are noisier than their names suggest. This affects F1 and F2
+  (F2 uses the token classes). It was implemented literally and was not tuned.
+- **The calibrated temperature of every arm with groups is higher than BASE** (F2 is the arm with 9.47 against 6.58; see the
+  table), so confidence cuts such as the harmful limit 0.45 and the operating-point thresholds are not interchangeable between
+  BASE and F2; the operating points are recomputed for the shipped model.
+- The training times and the throughput figures were measured on a loaded shared machine (see above) and vary by arm and run.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
