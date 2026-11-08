@@ -78,9 +78,9 @@ list; use soft mode for a list that may be wrong. The measured cost is in sectio
 ## Accuracy and Confidence
 
 The model was selected on development data only, its confidence thresholds too, and it was then evaluated on held-out
-data twice over the model family (after the corpora had been corrected and the model retrained, and again for the
-follow-up model that is embedded now, a disclosed second look; the [trainer run log][link-run-log] has the decisions and
-the gates). The tagger is accurate on ordinary running text. Its most costly mistake is a harmful error: a
+data several times over the model family (after the corpora had been corrected and the model retrained, again for the
+follow-up model, and now for the model that is embedded, a disclosed third look; the [trainer run log][link-run-log] has the
+decisions and the gates). The tagger is accurate on ordinary running text. Its most costly mistake is a harmful error: a
 noun tagged as a verb, or a verb tagged as a noun. It makes some on every test set and noticeably more on short,
 technical and imperative sentences built to be hard, a limitation that is reported and was not tuned away. The labels of
 the test sets were written by language models, and the results come from one run.
@@ -94,14 +94,15 @@ unknown. A rule checker should use the `strict` threshold; `balanced` suits cons
 show the result to a person. The thresholds were chosen on development data and measured on the held-out open test
 split:
 
-- `strict` (0.95) answers 81.8% of the noun-verb decisions on the development data with 3.1 harmful errors in 1,000
-  answered, and 83.8% with 3.5 in 1,000 on the open test split.
-- `balanced` (0.80) answers 92.4% with 9.0 in 1,000 on the development data, and 93.3% with 7.3 in 1,000 on the open
+- `strict` (0.95) answers 81.3% of the noun-verb decisions on the development data with 3.2 harmful errors in 1,000
+  answered, and 83.9% with 2.2 in 1,000 on the open test split.
+- `balanced` (0.75) answers 94.1% with 9.9 in 1,000 on the development data, and 94.1% with 8.5 in 1,000 on the open
   test split.
 
-The `strict` target (at most 5 harmful errors in 1,000 answered) was met on the development data and on the open test
-split by the point estimate (its 95% interval, 1.6 to 6.0, reaches above 5), and it is **exceeded on the held-out gold v2
-test split** (6.5 in 1,000 answered, five errors, 95% interval 1.4 to 13.3). A token with a single allowed tag has
+The `strict` target (at most 5 harmful errors in 1,000 answered) was met on the development data, on the open test
+split (its 95% interval is 0.6 to 4.3) and on the held-out gold v2 test split (no harmful error in 761 answered
+decisions), and it is **exceeded on the shape probe** (5.9 in 1,000 answered, two errors in 340). A token with a single
+allowed tag has
 confidence 1.0 without being a decision. The [user guide][link-user-guide] and
 the packed API reference have the details.
 

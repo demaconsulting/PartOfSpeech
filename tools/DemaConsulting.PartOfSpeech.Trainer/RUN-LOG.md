@@ -2825,6 +2825,132 @@ read the development files only and produced the same operating points.
    record (1,000 resamples, seed 1); no paired interval between the models is computed, so overlapping intervals are not a test.
    Nothing is claimed as an improvement unless the data show it.
 
+## Context-feature experiment: held-out evaluation of the shipped clause-cue model (disclosed third look; a new record, not an erratum)
+
+This is a **new** record for the shipped model. It does not correct or replace the earlier ones ("Outcome of the held-out run" and
+its errata, "Corpus cleanup C: held-out evaluation of the retrained model" for FULL, and "Corpus cleanup C: held-out evaluation of
+the adopted NO-ING model"), which stay as written. Order (git history): the results and the adoption record above, the shipped
+model with its development operating points (`thresholds`), the deletion of the previous record on purpose (`evaluate` refuses to
+run while a record exists; the previous record stays in git at `4709395` and was copied outside the repository first), the one
+`evaluate`, and this section with the documents after it.
+
+**This is the third look of the family at these held-out sets** (see the disclosure above; four models have now been scored on
+them in all). `evaluate --preflight` passed first (it scores nothing); `evaluate --dump-dir <folder outside the repository>` then ran
+**once** (Normal priority, at most 8 threads, the treebank from the git-ignored cache). It exited with 1 because of the stop
+conditions below (findings, not failures of the run) and the committed files are the output as produced. **No second `evaluate`
+run was made.** Nothing was selected, tuned or reverted because of any result. The previous model was not evaluated again: its
+figures below are those of its committed record.
+
+Stop conditions of the protocol: **the same three fired as in all earlier records** (previous model in brackets):
+
+- `shape-probe`: 37 harmful errors at 0.45 against a limit of 28 (5% of 560 rows) (48).
+- `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (the same); the `to`/`not` convention difference.
+- `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (the same). The primary mapped view is at 0.55% (138
+  words) (the same), under the limit.
+
+All other stop conditions held (the open test accuracy 96.78% against 96.65% on development; harmful rates per 1,000 answered at the strict
+(2.2) and balanced (8.5) points on open test below twice the pooled development rates (3.2 and 9.9); open test ECE 0.23%; open test gold
+outside the candidates 41 of 26,185 tokens).
+
+**What is comparable (stated plainly).** The previous model and the shipped one were scored on the same labels on all five held-out
+sets (the open test labels changed with the NO-ING adoption, not since), so all five are fair comparisons between them. Intervals are
+the 95% percentile bootstrap over documents of each record (1,000 resamples, seed 1); no paired interval between the models was
+computed, so overlapping intervals are not a test: the intervals overlap on every row below, so no single row proves a difference.
+The sets are small and the shipped model is one seed (see the caveats above: seeds are training noise, and the gaps at one seed are
+not the gaps between means).
+
+Accuracy and harmful errors at the harmful limit 0.45, previous model and shipped model:
+
+| Set | Model | Accuracy % | Ambiguous accuracy % | Decisions | Harmful | Harmful per 1,000 decisions | ECE % | NLL | Gold outside candidates |
+| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | ---: |
+| open-test | previous | 96.53 [96.12, 96.87] | 95.69 [95.30, 96.05] | 4,392 | 82 | 18.7 [14.0, 23.7] | 0.20 [0.17, 0.52] | 0.1161 [0.1013, 0.1320] | 41 |
+| | **shipped** | 96.78 [96.42, 97.09] | 96.02 [95.69, 96.34] | 4,392 | 74 | 16.8 [12.4, 21.6] | 0.23 [0.19, 0.50] | 0.1076 [0.0939, 0.1222] | 41 |
+| gold-v2-test | previous | 94.37 [93.55, 95.18] | 91.39 [90.11, 92.64] | 936 | 28 | 29.9 [19.0, 41.2] | 2.49 [2.02, 3.38] | 0.2497 [0.2052, 0.2989] | 12 |
+| | **shipped** | 94.77 [93.94, 95.53] | 92.06 [90.76, 93.21] | 936 | 23 | 24.6 [15.1, 36.1] | 1.90 [1.55, 2.89] | 0.2342 [0.1918, 0.2807] | 12 |
+| gold-v2-test-full-agreement | previous | 95.23 [94.36, 96.05] | 92.23 [90.85, 93.54] | 713 | 22 | 30.9 [18.9, 44.3] | 1.85 [1.43, 2.74] | 0.1971 [0.1557, 0.2424] | 5 |
+| | **shipped** | 95.62 [94.88, 96.37] | 92.93 [91.71, 94.18] | 713 | 15 | 21.0 [11.1, 32.6] | 1.49 [1.24, 2.46] | 0.1827 [0.1435, 0.2272] | 5 |
+| gold-v2-test-to-not (8 targets) | previous | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 55.64 [24.45, 87.44] | 6.9910 [1.9506, 12.0940] | 4 |
+| | **shipped** | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 52.65 [21.94, 87.25] | 6.9560 [1.8584, 12.0911] | 4 |
+| shape-probe (560 rows) | previous | 89.64 [87.14, 92.14] | 89.57 [87.07, 92.09] | 556 | 48 | 86.3 [63.1, 109.9] | 3.53 [2.84, 6.63] | 0.2704 [0.2143, 0.3291] | 0 |
+| | **shipped** | 91.25 [88.93, 93.39] | 91.19 [88.79, 93.37] | 556 | 37 | 66.5 [46.8, 86.2] | 2.47 [2.16, 5.32] | 0.2122 [0.1649, 0.2617] | 0 |
+| challenge-set (STE, 272 tokens) | previous | 88.60 [83.03, 93.65] | 89.90 [83.65, 94.79] | 86 | 0 | 0.0 | 6.25 [4.04, 11.47] | 0.3644 [0.2095, 0.5371] | 0 |
+| | **shipped** | 86.76 [80.55, 92.42] | 87.88 [81.37, 93.14] | 86 | 0 | 0.0 | 8.33 [4.23, 13.79] | 0.3815 [0.2087, 0.5689] | 0 |
+| ud-test-mapped (UD-EWT, primary view) | previous | 92.85 [92.33, 93.31] | 92.43 [91.83, 92.96] | 4,410 | 79 | 17.9 [13.9, 22.5] | 2.22 [1.90, 2.70] | 0.3025 [0.2770, 0.3373] | 138 |
+| | **shipped** | 93.19 [92.69, 93.64] | 92.84 [92.25, 93.40] | 4,410 | 70 | 15.9 [12.1, 20.0] | 2.08 [1.78, 2.52] | 0.2877 [0.2634, 0.3210] | 138 |
+| ud-test-raw (UD-EWT, raw tags) | previous | 88.92 [88.38, 89.40] | 88.18 [87.53, 88.74] | 4,007 | 79 | 19.7 [15.3, 24.8] | 6.15 [5.75, 6.67] | 0.6191 [0.5849, 0.6607] | 484 |
+| | **shipped** | 89.25 [88.73, 89.72] | 88.56 [87.90, 89.15] | 4,007 | 70 | 17.5 [13.3, 22.1] | 5.99 [5.62, 6.48] | 0.6019 [0.5677, 0.6417] | 484 |
+
+**What is worse (stated plainly).** On the **challenge set** (32 sentences, 272 tokens) the shipped model has a lower accuracy
+(86.76 against 88.60), a higher calibration error and a higher log-loss; the set is a smoke test and the difference is five tokens. The **open test ECE** is 0.03
+points higher (0.23 against 0.20), well inside the intervals. The previous model's **development** open and gold v2 harmful counts
+were lower at this seed (see the adoption section), which the held-out sets do not repeat; nothing is concluded from that either way.
+The shape probe still fires its stop condition (37 harmful errors against a limit of 28) and remains the weakest set (66.5 harmful
+errors per 1,000 decisions): the model helps there, it does not remove the weakness.
+
+Operating points on the held-out sets (the thresholds selected on development data: previous strict 0.95 and balanced 0.80; shipped
+strict 0.95 and balanced 0.75; the reference point is 0.45):
+
+| Set | Point | Previous: coverage % | Previous: harmful per 1,000 answered | Previous: harmful of answered | Shipped: coverage % | Shipped: harmful per 1,000 answered | Shipped: harmful of answered |
+| --- | --- | ---: | --- | --- | ---: | --- | --- |
+| open-test | reference 0.45 | 99.7 | 18.7 [14.1, 23.8] | 82 of 4,381 | 99.7 | 16.9 [12.4, 21.7] | 74 of 4,381 |
+| open-test | strict | 83.8 | 3.5 [1.6, 6.0] | 13 of 3,682 | 83.9 | 2.2 [0.6, 4.3] | 8 of 3,687 |
+| open-test | balanced | 93.3 | 7.3 [4.5, 10.4] | 30 of 4,097 | 94.1 | 8.5 [5.4, 11.4] | 35 of 4,135 |
+| gold-v2-test | reference 0.45 | 99.8 | 30.0 [19.1, 41.3] | 28 of 934 | 99.9 | 24.6 [15.2, 36.1] | 23 of 935 |
+| gold-v2-test | strict | 82.2 | 6.5 [1.4, 13.3] | 5 of 769 | 81.3 | 0.0 [0.0, 0.0] | 0 of 761 |
+| gold-v2-test | balanced | 91.9 | 9.3 [3.4, 16.5] | 8 of 860 | 92.4 | 10.4 [4.4, 17.6] | 9 of 865 |
+| gold-v2-test-full-agreement | reference 0.45 | 99.9 | 30.9 [18.9, 44.3] | 22 of 712 | 99.9 | 21.1 [11.2, 32.7] | 15 of 712 |
+| gold-v2-test-full-agreement | strict | 82.5 | 5.1 [0.0, 10.9] | 3 of 588 | 80.8 | 0.0 [0.0, 0.0] | 0 of 576 |
+| gold-v2-test-full-agreement | balanced | 91.4 | 7.7 [1.7, 15.0] | 5 of 652 | 92.7 | 10.6 [3.3, 19.0] | 7 of 661 |
+| shape-probe | reference 0.45 | 98.0 | 88.1 [64.3, 112.1] | 48 of 545 | 98.2 | 67.8 [48.1, 87.3] | 37 of 546 |
+| shape-probe | strict | 60.6 | 11.9 [2.8, 24.0] | 4 of 337 | 61.2 | 5.9 [0.0, 14.8] | 2 of 340 |
+| shape-probe | balanced | 77.5 | 37.1 [19.0, 55.8] | 16 of 431 | 82.0 | 21.9 [8.8, 34.1] | 10 of 456 |
+| challenge-set | reference 0.45 | 100.0 | 0.0 [0.0, 0.0] | 0 of 86 | 100.0 | 0.0 [0.0, 0.0] | 0 of 86 |
+| challenge-set | strict | 70.9 | 0.0 [0.0, 0.0] | 0 of 61 | 67.4 | 0.0 [0.0, 0.0] | 0 of 58 |
+| challenge-set | balanced | 80.2 | 0.0 [0.0, 0.0] | 0 of 69 | 84.9 | 0.0 [0.0, 0.0] | 0 of 73 |
+| ud-test-mapped | reference 0.45 | 99.5 | 18.0 [14.1, 22.6] | 79 of 4,389 | 99.2 | 16.0 [12.2, 20.2] | 70 of 4,375 |
+| ud-test-mapped | strict | 79.3 | 2.6 [1.1, 4.4] | 9 of 3,497 | 77.5 | 2.6 [1.1, 4.6] | 9 of 3,417 |
+| ud-test-mapped | balanced | 89.8 | 6.6 [4.1, 9.5] | 26 of 3,961 | 91.3 | 8.2 [5.4, 11.5] | 33 of 4,028 |
+| ud-test-raw | reference 0.45 | 99.5 | 19.8 [15.4, 24.9] | 79 of 3,986 | 99.1 | 17.6 [13.5, 22.3] | 70 of 3,972 |
+| ud-test-raw | strict | 80.2 | 2.8 [1.2, 4.8] | 9 of 3,214 | 77.8 | 2.9 [1.2, 5.1] | 9 of 3,116 |
+| ud-test-raw | balanced | 90.0 | 7.2 [4.5, 10.6] | 26 of 3,607 | 91.2 | 9.0 [5.9, 12.7] | 33 of 3,656 |
+
+(The two balanced thresholds differ, so a balanced row compares two different operating points: the shipped balanced point answers
+more and makes more harmful errors per 1,000 answered on every set that has any except the shape probe, the cost that its
+development selection accepted within the development target of 10 per 1,000; on held-out data that point is at 10.4 and 10.6 on
+the two gold v2 views, above 10. The shipped strict point is at or below its target of 5.0 per 1,000 answered on open test, gold v2
+test and UD-EWT, and above it on the shape probe (5.9, two of 340; the previous model 11.9).)
+
+Noun-verb confusion of the same decisions (previous | shipped; noun as other, noun as noun, noun as verb, verb as other, verb as
+noun, verb as verb):
+
+| Set | Previous | Shipped |
+| --- | --- | --- |
+| open-test | 51, 2,377, 29, 31, 53, 1,851 | 54, 2,373, 30, 38, 45, 1,852 |
+| gold-v2-test | 2, 454, 11, 9, 17, 443 | 2, 454, 11, 9, 12, 448 |
+| shape-probe | 6, 355, 35, 2, 15, 143 | 7, 361, 28, 1, 13, 146 |
+| challenge-set | 3, 47, 0, 3, 0, 33 | 7, 43, 0, 4, 0, 32 |
+| ud-test-mapped | 140, 2,131, 43, 66, 41, 1,989 | 150, 2,121, 43, 63, 32, 2,001 |
+| ud-test-raw | 140, 2,131, 43, 53, 41, 1,599 | 150, 2,121, 43, 51, 32, 1,610 |
+
+Shape probe by shape (accuracy % and harmful at 0.45; previous | shipped): `n-obj-light` 95.00, 1 | 96.25, 1;
+`n-compound-head` 73.75, 18 | 77.50, 15; `n-modifier` 100.00, 0 | 97.50, 0; `n-subject-initial` 86.25, 10 | 90.00, 7; `n-measure`
+93.75, 5 | 95.00, 4; `v-imperative-initial` 82.50, 12 | 83.75, 10; `v-after-modal` 96.25, 2 | 98.75, 0.
+
+Inputs and run: model image `ec3f090e...aa40f3`, selection artifact SHA-256
+`4087b928123d80eadbbdb5a08e49f941beee1564feffe7b7cc30c52ec87ca80b`, the six input hashes are those of the previous record (unchanged
+data; see `docs/evaluation/test-results.md`). The throughput line of the report (571,504 tokens per second, one thread, open test)
+is a timing of a shared machine of the moment, not a result of the model, and it is not comparable with the previous record's line
+(894,415 on another load); the dev-side alternating measurement of the adoption section (medians 833,252 and 816,220) is the
+better comparison.
+
+**Reading.** On the held-out sets the shipped model has a higher accuracy than the previous one on four of the five (open test +0.25
+points, gold v2 +0.40, shape probe +1.61, UD-EWT mapped +0.34 and raw +0.33) and a lower one on the challenge set (-1.84), and fewer
+harmful errors at 0.45 on every set that has any (open test 74 against 82, gold v2 23 against 28, shape probe 37 against 48, UD-EWT 70
+against 79). The direction agrees with the development evidence of the experiment (hard tranche, UD-EWT dev), and it is the
+opposite of the seed-20260101 development open and gold v2 harmful counts. The intervals overlap everywhere, so none of these
+differences is a significant one on its own; the experiment's own evidence is the pre-registered development rule, and this
+record adds a third, weaker look.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
