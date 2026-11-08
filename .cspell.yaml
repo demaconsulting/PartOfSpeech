@@ -104,6 +104,7 @@ words:
   - memberwise
   - treebanks
   # Terms of the sentence key (Unicode scripts and properties, Python's str.isalnum, a preprocessor symbol, test words)
+  - Ahom
   - isalnum
   - Deseret
   - deseret

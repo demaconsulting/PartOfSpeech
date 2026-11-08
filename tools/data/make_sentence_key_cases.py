@@ -37,6 +37,8 @@ CASES = [
     ("greek-sigma-after-full-stop", "a full stop is case-ignorable, so the sigma behind it is final", "\u0391.\u03a3"),
     ("greek-sigma-before-full-stop", "the sigma before a full stop and a letter is no final sigma", "\u0391\u03a3.\u0391"),
     ("greek-sigma-before-mark", "a combining mark behind the sigma is skipped, so the sigma is final", "\u0391\u03a3\u0301"),
+    ("greek-sigma-after-ahom-mark", "U+1171E is a nonspacing mark in Python (spacing mark in newer Unicode data): it is skipped, so the sigma before it and a letter is no final sigma", "\u0391\u03a3\U0001171e\u0391"),
+    ("greek-sigma-before-ahom-mark", "U+1171E before the sigma is skipped as well, so the sigma at the end is final", "\u0391\U0001171e\u03a3"),
     ("greek-final-sigma-lower", "an already lower-case final sigma stays", "\u03bf\u03b4\u03c5\u03c3\u03c3\u03ad\u03b1\u03c2"),
     ("cyrillic", "Cyrillic case", "\u041f\u0420\u0418\u0412\u0415\u0422 \u043f\u0440\u0438\u0432\u0435\u0442"),
     ("fullwidth", "fullwidth Latin letters and digits lower-case and stay", "\uff21\uff22\uff23\uff11\uff12\uff13"),

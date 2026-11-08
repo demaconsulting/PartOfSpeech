@@ -2985,8 +2985,9 @@ fold model never sees the sentences that it tags. That caveat is superseded by t
 affected arms are run again.
 
 Measurement of the training sources of `training.json` (open twice, MASC, silver at probability 80 or more), loaded by the
-trainer's own reader, with a sentence key of the lower-case letters and digits of the tokens (the key of the leakage
-check):
+trainer's own reader, with a sentence key of the lower-case letters and numbers of the tokens (the key of the leakage
+check; the corrected key, see "Sentence key parity" below: the key as first computed here used the letters and digits of
+the UTF-16 code units, and the corrected key gives the same groups and folds):
 
 | Measure | Value |
 | --- | --- |
@@ -3144,8 +3145,12 @@ about F3 do not change (F3 alone does not significantly improve the hard tranche
 The amendment (commit `58bdfd2`, committed 2026-11-08 05:21:56 UTC; the fix `f8ee48c` at 05:07:47 UTC) precedes every re-run:
 the first run started at 14:48:20 UTC the same day, 9 h 26 min after the amendment, and `58bdfd2` is an ancestor of the commit
 `ac5c20e` that every result file records (`git merge-base --is-ancestor 58bdfd2 ac5c20e`). The 25 runs went one after the other,
-in the order of the table, in one invocation of the driver (`run_arms.ps1 -Arms F3,ALL,ALL-minus-F1,ALL-minus-F2,ALL-minus-F4`,
-Normal priority, 8 threads); there was no earlier attempt that produced a result.
+in the order of the table, in one invocation of the driver, which takes the arms with `-Arms F3,ALL,ALL-minus-F1,ALL-minus-F2,ALL-minus-F4`
+and the runner with `-Runner dotnet-normal.cmd`; there was no earlier attempt that produced a result. The driver starts
+`dotnet` at BelowNormal priority by default (the frozen script of the pre-registration, with at most 8 threads); the runner
+`dotnet-normal.cmd` (`start "" /normal /wait /b dotnet %*`, kept in the session folder outside the repository) starts it at
+Normal priority instead, as for the first 50 runs, because BelowNormal received almost no CPU on a machine that other sessions
+saturated (the owner allowed this deviation, see the first results section). The driver script itself is unchanged.
 
 Sources of the times: the **end** of a run is the `driver.utc` field that the driver wrote into the result file `<run>.json` (the
 same instant as its line in `progress.log`); the driver records no start time, so the **start** is the file-system creation time
@@ -3189,11 +3194,16 @@ characters for which Python's `str.isalnum()` is true after NFC and `lower()`. T
 point, keeps the letters and numbers (the categories `L*` and `N*`, so the superscripts, fractions and Roman numerals as well as
 the supplementary-plane letters and digits), applies the same lower case (including the final sigma and the dotted capital I)
 and lists the supplementary-plane case mapping itself, because the runtimes differ in it. Parity is pinned by the fixture
-`tools/data/tests/sentence-key-cases.tsv` (42 cases with astral characters, combining marks and case folding; the keys were
-written once by the Python function and are checked by both `test_common.py` and `ModelTrainerTests.cs`). A one-off check
-of every Unicode code point (in four contexts, including the sigma rules, 4,448,256 strings) against Python 3.13 (Unicode 15.1)
-had no difference on .NET 10 except code points that Unicode 15.1 does not assign, and U+1171E (Python files it under the
-nonspacing marks, .NET 10 under the spacing marks; neither is kept in a key, so only the final-sigma rule next to it differs).
+`tools/data/tests/sentence-key-cases.tsv` (44 cases with astral characters, combining marks, case folding and the sigma rules; the
+keys were written once by the Python function and are checked by both `test_common.py` and `ModelTrainerTests.cs`). A one-off
+check of every Unicode code point (in four contexts, including the sigma rules, 4,448,256 strings) against Python 3.13
+(Unicode 15.1) found one assigned code point with a different result on .NET 10, U+1171E (Python files it under the nonspacing
+marks, .NET 10 under the spacing marks; neither is kept in a key, so only the final-sigma rule next to it differed). The key
+now has an explicit category override for it (the mechanism for any such code point; the list is derived from that comparison)
+and the fixture has the two sigma cases around it. After the override the check shows no difference except the 17,604 strings
+whose code point Unicode 15.1 does not assign (parity targets the Unicode version of the Python normalizer; no sentence of the
+corpora has such a code point). The corpus measurement below was repeated with the override: the keys of all 48,790 sentences
+are unchanged and still equal the Python keys.
 
 Effect on the training corpus (the 48,790 distinct sentences of the sources of `training.json`; the same measurement as in
 amendment 1):

@@ -18,7 +18,7 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///     <para>
 ///         The folds are made from groups of documents. A document is the <c>source_id</c> of the corpus (the sentence id when a
 ///         sentence has none). Two documents belong to the same group when they share a sentence key (the lower-case letters and
-///         digits of the text, the sentence key of the leakage rule of <c>data/README.md</c>), directly or through a chain of other
+///         numbers of the text, the sentence key of the leakage rule of <c>data/README.md</c>), directly or through a chain of other
 ///         documents, so an exact duplicate sentence under two document ids never lands in two folds. The fold of a group is the
 ///         FNV-1a hash of its smallest document id (ordinal order) modulo the number of folds, so a document is never split and
 ///         the folds do not depend on the order of the files, on the seed, on the feature groups or on the platform: the same
@@ -76,6 +76,13 @@ internal static class Jackknife
     ///         behind it, ignoring case-ignorable code points in between); keep the code points of the categories letter (<c>L*</c>)
     ///         and number (<c>N*</c>: decimal digits, letter numbers such as the Roman numerals, and other numbers such as the
     ///         superscripts and the fractions), which are the code points for which <c>str.isalnum()</c> is true.
+    ///     </para>
+    ///     <para>
+    ///         The parity targets the Unicode version of the Python normalizer (Python 3.13: Unicode 15.1) for the code points that it
+    ///         assigns; the mechanism for a code point whose general category differs between its tables and the runtime's is
+    ///         <see cref="CategoryOverrides"/>, which is derived from an exhaustive comparison of every code point (in the contexts of
+    ///         the sigma rules) and holds only U+1171E today. Code points that the Python version does not assign are outside the
+    ///         parity; no sentence of the corpora has one.
     ///     </para>
     ///     <para>
     ///         The parity is pinned by the fixture <c>tools/data/tests/sentence-key-cases.tsv</c>, whose keys the Python function wrote.
@@ -206,12 +213,31 @@ internal static class Jackknife
     }
 
     /// <summary>
-    ///     Gets the Unicode category of a code point (a lone surrogate has the category surrogate).
+    ///     Gets the Unicode category of a code point (a lone surrogate has the category surrogate; a code point of
+    ///     <see cref="CategoryOverrides"/> has the category of the Python tables).
     /// </summary>
-    private static UnicodeCategory UnicodeCategoryOf(int codePoint) =>
-        codePoint is >= 0xD800 and <= 0xDFFF
+    private static UnicodeCategory UnicodeCategoryOf(int codePoint)
+    {
+        if (CategoryOverrides.TryGetValue(codePoint, out var category))
+        {
+            return category;
+        }
+
+        return codePoint is >= 0xD800 and <= 0xDFFF
             ? UnicodeCategory.Surrogate
             : CharUnicodeInfo.GetUnicodeCategory(char.ConvertFromUtf32(codePoint), 0);
+    }
+
+    /// <summary>
+    ///     The code points whose general category in Python 3.13 (Unicode 15.1) differs from the one of the runtime, so that the
+    ///     rules that read categories (the letters and numbers of the key, and the case-ignorable code points of the final sigma)
+    ///     give the Python result. U+1171E (Ahom consonant sign medial wa) is a nonspacing mark in Python and a spacing mark in the
+    ///     newer Unicode data of .NET 10; as a case-ignorable mark it decides a final sigma next to it.
+    /// </summary>
+    private static readonly Dictionary<int, UnicodeCategory> CategoryOverrides = new()
+    {
+        [0x1171E] = UnicodeCategory.NonSpacingMark
+    };
 
     /// <summary>
     ///     Tells whether a capital sigma at an index is a final sigma: a cased letter before it and none behind it, where the

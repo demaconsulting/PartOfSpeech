@@ -300,7 +300,7 @@ internal static class DataFiles
     }
 
     /// <summary>
-    ///     Computes the sentence key of the leakage rule: the lower-case letters and digits of the text (the key of the jackknife, which
+    ///     Computes the sentence key of the leakage rule: the lower-case letters and numbers of the text (the key of the jackknife, which
     ///     reproduces the Python normalizer; see the parity cases <c>sentence-key-cases.tsv</c>).
     /// </summary>
     /// <param name="text">The sentence text.</param>

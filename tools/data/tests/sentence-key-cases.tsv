@@ -22,6 +22,8 @@ greek-sigma-after-space	391 20 3A3	3B1 3C3		a space is not case-ignorable, so th
 greek-sigma-after-full-stop	391 2E 3A3	3B1 3C2		a full stop is case-ignorable, so the sigma behind it is final
 greek-sigma-before-full-stop	391 3A3 2E 391	3B1 3C3 3B1		the sigma before a full stop and a letter is no final sigma
 greek-sigma-before-mark	391 3A3 301	3B1 3C2		a combining mark behind the sigma is skipped, so the sigma is final
+greek-sigma-after-ahom-mark	391 3A3 1171E 391	3B1 3C3 3B1		U+1171E is a nonspacing mark in Python (spacing mark in newer Unicode data): it is skipped, so the sigma before it and a letter is no final sigma
+greek-sigma-before-ahom-mark	391 1171E 3A3	3B1 3C2		U+1171E before the sigma is skipped as well, so the sigma at the end is final
 greek-final-sigma-lower	3BF 3B4 3C5 3C3 3C3 3AD 3B1 3C2	3BF 3B4 3C5 3C3 3C3 3AD 3B1 3C2		an already lower-case final sigma stays
 cyrillic	41F 420 418 412 415 422 20 43F 440 438 432 435 442	43F 440 438 432 435 442 43F 440 438 432 435 442		Cyrillic case
 fullwidth	FF21 FF22 FF23 FF11 FF12 FF13	FF41 FF42 FF43 FF11 FF12 FF13		fullwidth Latin letters and digits lower-case and stay
