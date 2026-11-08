@@ -1014,7 +1014,7 @@ public class PartOfSpeechDataTests
 
     /// <summary>
     ///     Proves that no training sentence, of any length, is also an evaluation sentence: the sentence keys (lower-case
-    ///     letters and digits) of the training corpora are disjoint from those of the evaluation sets.
+    ///     letters and numbers) of the training corpora are disjoint from those of the evaluation sets.
     /// </summary>
     [Fact]
     public void PartOfSpeech_Leakage_Sentences_TrainingAndEvaluationAreDisjoint()
@@ -1052,7 +1052,7 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
-    ///     Proves that the sentence key of the leakage rule keeps only the lower-case letters and digits of a sentence, so
+    ///     Proves that the sentence key of the leakage rule keeps only the lower-case letters and numbers of a sentence, so
     ///     that a short sentence has a key as well.
     /// </summary>
     [Fact]
@@ -1066,7 +1066,7 @@ public class PartOfSpeechDataTests
         var key = DataFiles.SentenceKey(sentence);
         var shortKey = DataFiles.SentenceKey(shortSentence);
 
-        // Assert: only the lower-case letters and digits remain
+        // Assert: only the lower-case letters and numbers remain
         Assert.Equal("xy42", key);
         Assert.Equal("thankyou", shortKey);
     }

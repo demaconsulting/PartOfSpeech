@@ -132,7 +132,7 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   its own id; composed and decomposed accents give one key, and a text without letters the empty key),
   `Jackknife_SentenceKey_SharedParityCases_AgreeWithPython` (the sentence key reproduces, for every case of
   `tools/data/tests/sentence-key-cases.tsv`, the key that the Python normalizer of the leakage check wrote: supplementary-plane
-  letters and digits, combining marks, the sigma rules and other case folding; the Python tests read the same file; the
+  letters and numbers, combining marks, the sigma rules and other case folding; the Python tests read the same file; the
   cases of scripts newer than Unicode 8 are left out on .NET Framework only),
   `Jackknife_Compute_DuplicatesAcrossDocuments_FoldModelNeverSeesAHeldOutSentenceKey` (a toy corpus with duplicates
   under other document ids: the document ids alone would have split a duplicate from its original, no key of a

@@ -68,7 +68,7 @@ internal static class Jackknife
     /// <remarks>
     ///     <para>
     ///         The definition is the one of the Python leakage check, <c>"".join(ch for ch in nfc(text).lower() if ch.isalnum())</c>, which
-    ///         works on code points, so the supplementary planes are letters and digits too. The equivalent steps here are: iterate by
+    ///         works on code points, so the supplementary planes are letters and numbers too. The equivalent steps here are: iterate by
     ///         code point (a surrogate pair is one code point); lower-case every code point with the simple mapping of the invariant
     ///         culture, except that the supplementary-plane mapping (the Deseret, Osage, Vithkuqi, Old Hungarian, Warang Citi, Medefaidrin
     ///         and Adlam letters) is listed here because the runtimes differ in it; map <c>U+0130</c> to <c>i</c> and its combining dot

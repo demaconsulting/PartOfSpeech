@@ -3192,7 +3192,7 @@ The formal re-review found that the first version of the jackknife sentence key 
 code units, while the leakage check of the data tools (`key` in `tools/data/common.py`) works on code points: it keeps the
 characters for which Python's `str.isalnum()` is true after NFC and `lower()`. The key is now equivalent: it iterates by code
 point, keeps the letters and numbers (the categories `L*` and `N*`, so the superscripts, fractions and Roman numerals as well as
-the supplementary-plane letters and digits), applies the same lower case (including the final sigma and the dotted capital I)
+the supplementary-plane letters and numbers), applies the same lower case (including the final sigma and the dotted capital I)
 and lists the supplementary-plane case mapping itself, because the runtimes differ in it. Parity is pinned by the fixture
 `tools/data/tests/sentence-key-cases.tsv` (44 cases with astral characters, combining marks, case folding and the sigma rules; the
 keys were written once by the Python function and are checked by both `test_common.py` and `ModelTrainerTests.cs`). A one-off

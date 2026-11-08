@@ -228,7 +228,7 @@ The data assets are protected by two release gates, which the data tests of the 
   tags derive from) is neither.
 - **Isolation gate**: no training document and no training sentence, of any length, appears in an evaluation set, so that
   measured accuracy is not inflated by training data. The data tools enforce it on the training side: a long match
-  (a key of 25 or more letters and digits) shows shared source text and excludes the whole training document; a
+  (a key of 25 or more letters and numbers) shows shared source text and excludes the whole training document; a
   shorter exact match is a sentence that recurs in unrelated texts and is dropped alone. The evaluation sets are never
   changed.
 

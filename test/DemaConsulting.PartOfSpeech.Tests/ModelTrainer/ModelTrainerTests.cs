@@ -2334,7 +2334,7 @@ public class ModelTrainerTests
 
     /// <summary>
     ///     Validates that an exact duplicate sentence under two document ids lands in one fold: the documents are one group (the sentence key is the
-    ///     lower-case letters and digits, so case, spacing and punctuation do not matter), the fold is the hash of the smallest document id, and the
+    ///     lower-case letters and numbers, so case, spacing and punctuation do not matter), the fold is the hash of the smallest document id, and the
     ///     same two documents without the duplicate keep the folds of their own ids.
     /// </summary>
     [Fact]
@@ -2500,7 +2500,7 @@ public class ModelTrainerTests
 
     /// <summary>
     ///     Validates the sentence key against the keys that the Python function of the leakage check wrote (the shared parity cases
-    ///     <c>tools/data/tests/sentence-key-cases.tsv</c>, also read by the Python tests): supplementary-plane letters and digits, combining
+    ///     <c>tools/data/tests/sentence-key-cases.tsv</c>, also read by the Python tests): supplementary-plane letters and numbers, combining
     ///     marks, the capital sigma and other case folding must give exactly the keys of the authoritative normalizer, because a
     ///     sentence key that differs from it could leave a duplicate sentence in two folds.
     /// </summary>
