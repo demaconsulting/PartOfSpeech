@@ -318,8 +318,10 @@ public class PartOfSpeechEvaluationTests
             }));
         }
 
-        // Assert: both tables exist, they name the sets and the points that the guidance relies on, and nothing differs
-        Assert.Contains(resultRows, row => row[0] == "`open-test`");
+        // Assert: both tables exist, they list exactly the sets and the points that the guidance relies on, and nothing differs
+        Assert.Equal(
+            new[] { "`open-test`", "`gold-v2-test`", "`shape-probe`", "`challenge-set`", "`ud-test-mapped`" },
+            resultRows.Select(row => row[0]).ToArray());
         Assert.Equal(new[] { "`strict`", "`balanced`" }, thresholdRows.Select(row => row[0]).ToArray());
         Assert.Empty(problems);
     }

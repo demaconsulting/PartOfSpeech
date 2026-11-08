@@ -956,9 +956,9 @@ sections:
     requirements:
       - id: PartOfSpeech-Lib-ConfidenceGuidance
         title: >-
-          The documentation that is packed with the library shall recommend a strict and a balanced confidence threshold
-          with the coverage and the harmful-error rate that were measured for them, state that a consumer that needs a
-          low harmful rate must use one, and link to the evaluation record.
+          The documentation that is packed with the library and the repository README shall recommend a strict and a
+          balanced confidence threshold with the coverage and the harmful-error rate that were measured for them, state
+          that a consumer that needs a low harmful rate must use one, and link to the evaluation record.
         tags: [system]
         justification: |
           A confidence is only useful with guidance on which values to trust, and a consumer that reads the packed
