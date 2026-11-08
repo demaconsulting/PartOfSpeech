@@ -2527,6 +2527,11 @@ tree in all 50 result files) and scored by `eval-arm` on development data only. 
 committed `analyze_arms.py` over the per-run result files, copied unchanged. The selection rule was applied mechanically; the
 decision was not reconsidered. No held-out set was read by this experiment.
 
+**Superseded in part.** The rows of the five arms that contain F3 (F3, ALL, ALL-minus-F1, ALL-minus-F2 and ALL-minus-F4) in the
+tables below, and the selection set that follows from them, are superseded by the section "Context-feature experiment:
+amendment 1 results" (after the amendment), which gives the corrected figures beside these ones. The rows of BASE, F1, F2,
+F4 and ALL-minus-F3 are not affected. The tables are kept unchanged as the record of the first runs.
+
 **Pre-registration commit.** The pre-registration section was committed as `3a7623a1bf2e792b95f33a1d60fb809615d5f58f` (the
 pre-registration said that its SHA would be recorded after the fact; this is that record).
 
@@ -3027,6 +3032,112 @@ held-out sentence key occurs in the training set of its fold model (0 of 48,790)
   stay in the results section above as superseded; the corrected figures are recorded in a results section that follows
   the re-runs.
 - **No held-out set** is read by the re-runs.
+
+## Context-feature experiment: amendment 1 results
+
+All 25 re-runs of the amendment above are complete (the five arms F3, ALL, ALL-minus-F1, ALL-minus-F2 and ALL-minus-F4, five
+seeds each: 20260101, 11, 12, 13, 14; 0 runs repeated or skipped). Every run was made by the frozen driver `run_arms.ps1` at
+commit `ac5c20e` (clean tree in all 25 result files), which contains the jackknife fix `f8ee48c`, and scored by `eval-arm` on
+development data only. The 25 runs of BASE, F1, F2, F4 and ALL-minus-F3 of the first results section stand (commit
+`a674d50`), so the analysis covers all 10 arms. The unchanged, frozen `analyze_arms.py` was applied to the 50 result files and
+the selection rule was applied mechanically. No held-out set was read.
+
+The earlier runs of the five arms (the document-id folds) are superseded, not deleted: they are kept outside the repository
+with their per-run files, and their figures stay in the results section above. Below, each cell of the five re-run arms shows
+the superseded figure (document-id folds), an arrow, and the corrected one (sentence-component folds); a cell with one figure
+did not change. Values are mean ± sample sd over the five seeds. The other columns of the pre-registered report (the hard
+tranche per shape, the Welch intervals of the other measures and the guard table) are in the analysis report; every arm
+passes every guard, as before.
+
+| File | SHA-256 |
+| --- | --- |
+| `report2.md` (the corrected analysis) | `7D281A6A4A013CBADEF6719D724643CF8E788048D056B253074D12950CD0BF0C` |
+| `decision2.json` (per-arm values, intervals, guards, decision) | `8223A3AB4023BBE2C16DDF5E73218053C130819D2AB6F652B989C89969F82DBE` |
+
+### Shapes development set (superseded → corrected)
+
+| arm | hard harmful per 1k (primary) | hard target acc % | hard control acc % | standard harmful per 1k | standard target acc % | standard control acc % |
+| --- | --- | --- | --- | --- | --- | --- |
+| F3 | 252.0 ± 7.4 → 253.0 ± 20.3 | 67.25 ± 1.00 → 67.90 ± 2.15 | 95.67 ± 0.91 → 95.33 ± 0.75 | 26.7 ± 4.2 → 27.0 ± 3.6 | 96.60 ± 0.38 → 96.40 ± 0.48 | 96.60 ± 0.55 → 96.80 ± 0.84 |
+| ALL | 225.5 ± 11.2 → 221.0 ± 14.4 | 70.40 ± 0.42 → 71.35 ± 1.63 | 98.33 ± 0.00 | 13.3 ± 2.0 → 13.0 ± 1.4 | 97.80 ± 0.14 → 97.77 ± 0.19 | 99.00 ± 0.00 |
+| ALL-minus-F1 | 229.0 ± 12.1 → 228.0 ± 11.1 | 69.65 ± 1.46 → 70.35 ± 0.65 | 98.33 ± 0.00 | 13.3 ± 1.2 → 14.7 ± 1.8 | 97.73 ± 0.19 → 97.60 ± 0.28 | 98.60 ± 0.55 → 98.80 ± 0.45 |
+| ALL-minus-F2 | 248.0 ± 4.8 → 247.0 ± 14.1 | 68.30 ± 1.05 → 67.90 ± 0.95 | 96.67 ± 1.18 | 22.0 ± 5.5 → 21.7 ± 1.7 | 96.60 ± 0.51 → 96.67 ± 0.26 | 98.00 ± 1.22 → 97.80 ± 1.10 |
+| ALL-minus-F4 | 242.0 ± 15.0 → 235.5 ± 3.3 | 68.20 ± 1.45 → 68.65 ± 0.74 | 98.33 ± 0.00 | 12.3 ± 1.9 → 13.0 ± 1.8 | 97.90 ± 0.22 → 97.63 ± 0.22 | 98.60 ± 0.55 |
+
+### Open dev and gold v2 dev (superseded → corrected)
+
+| arm | open acc % | open ambiguous acc % | open harmful per 1k | open NLL | open ECE % | gold acc % | gold harmful per 1k | gold NLL | gold ECE % |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| F3 | 96.60 ± 0.05 → 96.59 ± 0.05 | 95.99 ± 0.08 → 95.99 ± 0.07 | 21.03 ± 0.59 → 21.25 ± 1.43 | 0.1161 ± 0.0009 → 0.1165 ± 0.0011 | 0.22 ± 0.05 → 0.21 ± 0.05 | 95.14 ± 0.16 → 95.13 ± 0.04 | 19.3 ± 0.7 → 20.3 ± 1.9 | 0.2595 ± 0.0033 → 0.2561 ± 0.0017 | 2.39 ± 0.27 → 2.29 ± 0.08 |
+| ALL | 96.82 ± 0.03 → 96.77 ± 0.05 | 96.24 ± 0.04 → 96.18 ± 0.06 | 18.60 ± 0.40 → 19.19 ± 0.85 | 0.1084 ± 0.0004 → 0.1088 ± 0.0008 | 0.22 ± 0.04 → 0.29 ± 0.05 | 95.27 ± 0.11 → 95.11 ± 0.14 | 19.3 ± 2.4 → 21.3 ± 2.0 | 0.2545 ± 0.0021 → 0.2549 ± 0.0021 | 2.22 ± 0.14 → 2.26 ± 0.18 |
+| ALL-minus-F1 | 96.81 ± 0.06 → 96.80 ± 0.05 | 96.21 ± 0.06 → 96.19 ± 0.07 | 19.32 ± 1.04 → 18.92 ± 0.66 | 0.1088 ± 0.0010 | 0.28 ± 0.04 → 0.20 ± 0.06 | 95.06 ± 0.18 → 95.29 ± 0.12 | 22.6 ± 3.5 → 18.3 ± 1.8 | 0.2569 ± 0.0022 → 0.2549 ± 0.0010 | 2.22 ± 0.14 → 2.36 ± 0.15 |
+| ALL-minus-F2 | 96.74 ± 0.04 → 96.69 ± 0.02 | 96.20 ± 0.04 → 96.12 ± 0.04 | 19.19 ± 0.76 → 20.00 ± 0.32 | 0.1134 ± 0.0004 → 0.1134 ± 0.0007 | 0.24 ± 0.05 → 0.18 ± 0.04 | 95.24 ± 0.06 → 95.21 ± 0.11 | 19.6 ± 2.0 → 18.3 ± 0.7 | 0.2563 ± 0.0041 → 0.2550 ± 0.0024 | 2.21 ± 0.19 → 2.30 ± 0.23 |
+| ALL-minus-F4 | 96.80 ± 0.02 → 96.77 ± 0.04 | 96.22 ± 0.04 → 96.19 ± 0.04 | 20.04 ± 0.73 → 20.09 ± 0.80 | 0.1091 ± 0.0001 → 0.1093 ± 0.0008 | 0.16 ± 0.06 → 0.20 ± 0.03 | 95.08 ± 0.12 → 95.17 ± 0.20 | 25.2 ± 2.5 → 23.9 ± 2.7 | 0.2530 ± 0.0027 → 0.2527 ± 0.0017 | 2.23 ± 0.27 → 2.25 ± 0.09 |
+
+### UD-EWT dev (superseded → corrected)
+
+| arm | UD acc % | UD harmful per 1k |
+| --- | --- | --- |
+| F3 | 92.961 ± 0.084 → 92.926 ± 0.055 | 22.80 ± 1.59 → 22.19 ± 1.03 |
+| ALL | 92.986 ± 0.030 → 93.013 ± 0.086 | 20.00 ± 1.43 → 19.65 ± 1.22 |
+| ALL-minus-F1 | 93.007 ± 0.084 → 93.015 ± 0.061 | 19.82 ± 0.86 → 20.26 ± 0.72 |
+| ALL-minus-F2 | 92.957 ± 0.069 → 92.902 ± 0.072 | 20.83 ± 1.24 → 21.62 ± 1.18 |
+| ALL-minus-F4 | 93.004 ± 0.084 → 93.024 ± 0.040 | 20.88 ± 0.92 → 20.18 ± 1.66 |
+
+### Model, speed and training (superseded → corrected)
+
+The training times and the throughput were measured on a shared machine under changing load and are not comparable between
+the two sets of runs.
+
+| arm | temperature | rows | raw bytes | deflated bytes | tokens/s (1 thread) | train wall s |
+| --- | --- | --- | --- | --- | --- | --- |
+| F3 | 7.368 ± 0.072 → 7.400 ± 0.088 | 124625 ± 268 → 124779 ± 269 | 1176037 ± 2089 → 1177673 ± 2175 | 524835 ± 775 → 525510 ± 799 | 523784 ± 103316 → 469563 ± 81442 | 108.9 ± 46.8 → 57.0 ± 16.3 |
+| ALL | 12.774 ± 0.151 → 12.663 ± 0.123 | 132530 ± 239 → 132396 ± 114 | 1302897 ± 1388 → 1302049 ± 1044 | 599597 ± 581 → 599190 ± 650 | 333293 ± 55857 → 316067 ± 59981 | 120.0 ± 39.3 → 85.4 ± 13.1 |
+| ALL-minus-F1 | 10.557 ± 0.102 → 10.648 ± 0.104 | 126754 ± 316 → 126675 ± 270 | 1225977 ± 1578 → 1225906 ± 2299 | 559047 ± 657 → 559037 ± 884 | 377821 ± 100586 → 456963 ± 13113 | 140.6 ± 14.1 → 54.3 ± 2.7 |
+| ALL-minus-F2 | 9.597 ± 0.114 → 9.680 ± 0.093 | 132407 ± 150 → 132521 ± 78 | 1281749 ± 1383 → 1283025 ± 1340 | 580636 ± 463 → 581137 ± 387 | 480066 ± 104881 → 485474 ± 105604 | 141.5 ± 37.7 → 96.3 ± 17.7 |
+| ALL-minus-F4 | 12.554 ± 0.121 → 12.608 ± 0.000 | 134807 ± 195 → 134698 ± 143 | 1322271 ± 2182 → 1321542 ± 1716 | 606955 ± 970 → 606839 ± 706 | 435470 ± 63332 → 395685 ± 65424 | 118.6 ± 6.1 → 68.7 ± 9.5 |
+
+### Welch 95% interval of (arm - BASE) for the primary (superseded → corrected)
+
+| arm | shapes.hard.pooled.harmfulPer1k |
+| --- | --- |
+| F3 | -5.00 [-16.38, +6.38] → -4.00 [-28.83, +20.83] |
+| ALL | -31.50 [-46.07, -16.93] → -36.00 [-53.92, -18.08] |
+| ALL-minus-F1 | -28.00 [-43.40, -12.60] → -29.00 [-43.43, -14.57] |
+| ALL-minus-F2 | -9.00 [-19.20, +1.20] → -10.00 [-27.53, +7.53] |
+| ALL-minus-F4 | -15.00 [-33.61, +3.61] → -21.50 [-31.48, -11.52] |
+
+### Selection rule on the corrected table
+
+Primary: mean hard harmful per 1k (lower is better); BASE mean 257.00. The arms BASE, F1, F2, F4 and ALL-minus-F3 are as in
+the first results section.
+
+| arm | groups | primary (superseded → corrected) | passes all guards |
+| --- | --- | --- | --- |
+| BASE | 0 | 257.00 ± 8.18 | - |
+| F1 | 1 | 267.00 ± 10.22 | yes |
+| F2 | 1 | 234.00 ± 11.26 | yes |
+| F3 | 1 | 252.00 ± 7.37 → 253.00 ± 20.34 | yes |
+| F4 | 1 | 247.50 ± 5.30 | yes |
+| ALL | 4 | 225.50 ± 11.24 → 221.00 ± 14.43 | yes |
+| ALL-minus-F1 | 3 | 229.00 ± 12.07 → 228.00 ± 11.10 | yes |
+| ALL-minus-F2 | 3 | 248.00 ± 4.81 → 247.00 ± 14.08 | yes |
+| ALL-minus-F3 | 3 | 232.50 ± 12.50 | yes |
+| ALL-minus-F4 | 3 | 242.00 ± 15.04 → 235.50 ± 3.26 | yes |
+
+- Passing arms (Q): F1, F2, F3, F4, ALL, ALL-minus-F1, ALL-minus-F2, ALL-minus-F3, ALL-minus-F4 (unchanged)
+- Lowest primary in Q: ALL, 225.50 → 221.00; within 10% of it: primary <= 248.05 → <= 243.10
+- Within 10%: F2, F4, ALL, ALL-minus-F1, ALL-minus-F2, ALL-minus-F3, ALL-minus-F4 → F2, ALL, ALL-minus-F1, ALL-minus-F3,
+  ALL-minus-F4 (F4 at 247.50 and ALL-minus-F2 at 247.00 are now above the bound)
+- Candidate (fewest groups, then lowest primary): F2 (unchanged)
+- Welch 95% interval of (F2 - BASE): -23.00 [-37.60, -8.40], df 7.30, p 0.0072 (unchanged); the descriptive paired item
+  bootstrap of F2 on the hard tranche, [-44.50, -1.49], is unchanged as well
+
+**Decision: SHIP F2 (unchanged).** The corrected table selects the same arm by the same rule. The shipped model (the F2
+weights) and the held-out record of the shipped model stand unchanged, and no arm other than F2 was selected, so nothing
+went to the project owner for a decision. The caveat of the first results section about the document-id folds is closed by
+this section: the arms with F3 now have leakage-safe folds, F3 is still not part of the shipped model, and the conclusions
+about F3 do not change (F3 alone does not significantly improve the hard tranche; its Welch interval contains 0).
 
 ## Run table
 
