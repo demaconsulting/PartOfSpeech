@@ -106,9 +106,8 @@ justifications and the requirements trace matrix.
 
 The repository holds the open training data, the evaluation data and a part-of-speech lexicon for the 17 Universal POS
 tags in the [data folder][link-data], each source with its origin, license and recipe, verified against checksums. At run
-time the library uses only the lexicon and the trained weights, both embedded in the assembly.
-`tools/DemaConsulting.PartOfSpeech.Trainer` trains the weights from the open corpus, MASC and the silver corpus, and
-`train --check` verifies that the embedded weights are exactly what the committed data produces. The corpora and the
+time the library uses only the lexicon and the trained weights, both embedded in the assembly. The trainer in
+`tools/DemaConsulting.PartOfSpeech.Trainer` reproduces the weights from the committed data. The corpora and the
 evaluation sets are not shipped.
 
 ## Credits and Licenses
