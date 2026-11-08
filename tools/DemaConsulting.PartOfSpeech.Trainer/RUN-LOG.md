@@ -3416,6 +3416,199 @@ The data-side commits are `100e747cb0b31deff4f10d89b426001bf8c95f16` (builder, r
 passes. The trainer commit that produced each result is recorded in its JSON (`inputs.commit`, with the dirty flag), and the folders of
 the runs lie outside the repository, as in the earlier experiment; their files are not part of the review set.
 
+## Imperative training data: results
+
+Written after the 20 runs and the analysis of the pre-registration commit `ca0c2d431e9b167e7ef7208add28cf0169a2f445` (the tree
+was clean and HEAD was that commit when the runs started and when the analysis ran; every result file records
+`inputs.commit` = `ca0c2d4...` with `dirty` = false). Four arms, five seeds each (20260101, 11, 12, 13, 14), 20 runs; the commands
+were exactly those of the pre-registration (the frozen driver `run_arms.ps1` with `runner-base.cmd` or `runner-imp.cmd`, one
+invocation at a time, in the registered order F2, F2+IMP, ALL+IMP, ALL); no run was repeated, replaced or dropped (every run
+produced its result at the first attempt), and no frozen file was edited. The unchanged, frozen `analyze_imperative.py` was
+applied to the 20 result files with the reference arm, and the selection rule was applied mechanically. No held-out set was read
+and no held-out command (`evaluate`, `thresholds`, `train --update-config`) was run.
+
+**Decision: the rule selects F2+IMP** (the arm F2 with the `imperative` source at weight 1). Both IMP arms pass every guard, so
+Q = {F2+IMP, ALL+IMP}; the lowest primary is F2+IMP (179.0); ALL+IMP (179.5) is inside the 10% window (<= 196.9); the candidate is
+the arm with the fewest feature groups, F2+IMP; the Welch 95% interval of (F2+IMP - F2) on the primary is -55.00 [-69.09, -40.91]
+(df 6.55), entirely below 0. The adoption steps are not part of this section; they follow in an adoption section written before any
+held-out command.
+
+| File | SHA-256 |
+| --- | --- |
+| `report.md` (the analysis; 13,514 bytes) | `7a01287901eebc44468501a5900242d62c983dbec05e74431513e55acf88b6d3` |
+| `decision.json` (per-arm values, intervals, guards, decision) | `23e366491dbfd6fc9c0633893796b8fc018baca4c36d495e8fc4b3518d9f0dbf` |
+
+Both files lie outside the repository next to the run folders. The command was:
+
+```text
+python tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py --run F2=<runs>\f2 --run F2+IMP=<runs>\f2imp --run ALL+IMP=<runs>\allimp --reference ALL=<runs>\all-ref --out report.md --decision decision.json
+```
+
+### Acceptance tests (all passed; the analysis made a selection only after them)
+
+39 checks, 39 PASS: the SHA-256 of the six frozen files; (a) the F2 run at seed 20260101 has weights SHA-256
+`72cc28cf10c556a617e8edb49d92d96148ed023874cfe834557ea5c6911b9672`, equal to the shipped `weights.bin` (file and result field, byte
+identical), and the figures of the shipped model: hard tranche 235.0 harmful per 1k, standard 16.7, open dev 100 of 4,451, UD-EWT dev
+91 of 4,570; (b) every F2 and every reference-arm run trained on 60,780 sentences with the sources `open:2,masc:1,silver:1`, and every
+F2+IMP and ALL+IMP run on 61,680 sentences (exactly 900 more) with the sources `open:2,masc:1,silver:1,imperative:1`; (c) the five
+`inputs.*Sha256` fields agree in all 20 runs and equal the frozen hashes. The F2 arm therefore reproduces the shipped model at seed
+20260101, and the seed variation of the other seeds is the training noise.
+
+### Imperative results: shapes development set
+
+Values are mean ± sample sd over the five seeds.
+
+| arm | hard harmful per 1k (primary) | hard v-imperative-initial target acc % (secondary) | hard target acc % | hard control acc % | standard harmful per 1k | standard target acc % | standard control acc % |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F2 | 234.0 ± 11.3 | 51.6 ± 4.3 | 69.80 ± 1.39 | 98.00 ± 0.75 | 16.0 ± 3.5 | 97.23 ± 0.43 | 98.80 ± 0.45 |
+| F2+IMP | 179.0 ± 6.8 | 77.4 ± 3.0 | 76.50 ± 0.92 | 98.00 ± 0.75 | 13.3 ± 3.5 | 97.73 ± 0.47 | 99.00 ± 0.00 |
+| ALL+IMP | 179.5 ± 7.4 | 83.0 ± 1.2 | 77.10 ± 1.01 | 98.33 ± 0.00 | 15.0 ± 2.0 | 97.50 ± 0.12 | 99.00 ± 0.00 |
+| ALL (reference) | 221.0 ± 14.4 | 57.6 ± 4.3 | 71.35 ± 1.63 | 98.33 ± 0.00 | 13.0 ± 1.4 | 97.77 ± 0.19 | 99.00 ± 0.00 |
+
+### Imperative results: open dev and gold v2 dev
+
+| arm | open acc % | open ambiguous acc % | open harmful per 1k | open NLL | open ECE % | gold acc % | gold harmful per 1k | gold NLL | gold ECE % |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| F2 | 96.64 ± 0.05 | 95.98 ± 0.05 | 20.67 ± 1.02 | 0.1123 ± 0.0012 | 0.26 ± 0.02 | 94.98 ± 0.13 | 23.2 ± 2.1 | 0.2571 ± 0.0031 | 2.36 ± 0.09 |
+| F2+IMP | 96.67 ± 0.06 | 96.02 ± 0.08 | 20.09 ± 1.39 | 0.1117 ± 0.0005 | 0.25 ± 0.02 | 95.15 ± 0.10 | 22.3 ± 0.9 | 0.2546 ± 0.0045 | 2.23 ± 0.14 |
+| ALL+IMP | 96.83 ± 0.05 | 96.24 ± 0.08 | 19.55 ± 0.94 | 0.1078 ± 0.0004 | 0.24 ± 0.04 | 95.22 ± 0.11 | 20.3 ± 1.9 | 0.2563 ± 0.0023 | 2.26 ± 0.12 |
+| ALL (reference) | 96.77 ± 0.05 | 96.18 ± 0.06 | 19.19 ± 0.85 | 0.1088 ± 0.0008 | 0.29 ± 0.05 | 95.11 ± 0.14 | 21.3 ± 2.0 | 0.2549 ± 0.0021 | 2.26 ± 0.18 |
+
+### Imperative results: UD-EWT dev
+
+| arm | UD acc % | UD harmful per 1k |
+| --- | --- | --- |
+| F2 | 92.943 ± 0.059 | 19.91 ± 1.54 |
+| F2+IMP | 92.988 ± 0.026 | 20.74 ± 0.32 |
+| ALL+IMP | 93.077 ± 0.072 | 19.96 ± 0.78 |
+| ALL (reference) | 93.013 ± 0.086 | 19.65 ± 1.22 |
+
+### Imperative results: model, speed and training
+
+The training times and the throughput were measured on a shared machine at Normal priority (the deviation record of the
+pre-registration) and are not comparable between arms or with earlier records.
+
+| arm | temperature | rows | raw bytes | deflated bytes | tokens/s (1 thread) | train wall s |
+| --- | --- | --- | --- | --- | --- | --- |
+| F2 | 9.473 ± 0.091 | 120981 ± 221 | 1146923 ± 1964 | 517282 ± 696 | 772197 ± 41861 | 23.6 ± 1.0 |
+| F2+IMP | 9.392 ± 0.112 | 122214 ± 264 | 1158701 ± 2142 | 522272 ± 991 | 749742 ± 60155 | 24.2 ± 1.8 |
+| ALL+IMP | 12.608 ± 0.000 | 133991 ± 128 | 1317341 ± 1921 | 605679 ± 759 | 429935 ± 4335 | 104.0 ± 28.2 |
+| ALL (reference) | 12.663 ± 0.123 | 132396 ± 114 | 1302049 ± 1044 | 599190 ± 650 | 389661 ± 49616 | 133.7 ± 13.3 |
+
+### Hard tranche per shape (diagnostics, not gated)
+
+| hard: target accuracy % | n-compound-head | n-subject-initial | v-after-modal | v-imperative-initial |
+| --- | --- | --- | --- | --- |
+| F2 | 62.2 ± 2.9 | 78.8 ± 2.3 | 86.6 ± 1.5 | 51.6 ± 4.3 |
+| F2+IMP | 66.2 ± 2.2 | 75.6 ± 3.1 | 86.8 ± 1.3 | 77.4 ± 3.0 |
+| ALL+IMP | 67.0 ± 2.3 | 67.6 ± 1.1 | 90.8 ± 0.8 | 83.0 ± 1.2 |
+| ALL (reference) | 66.0 ± 5.4 | 72.6 ± 4.2 | 89.2 ± 1.9 | 57.6 ± 4.3 |
+
+| hard: harmful per 1k | n-compound-head | n-subject-initial | v-after-modal | v-imperative-initial |
+| --- | --- | --- | --- | --- |
+| F2 | 332.0 ± 27.7 | 114.0 ± 19.5 | 104.0 ± 11.4 | 386.0 ± 30.5 |
+| F2+IMP | 296.0 ± 13.4 | 136.0 ± 30.5 | 98.0 ± 14.8 | 186.0 ± 20.7 |
+| ALL+IMP | 284.0 ± 20.7 | 206.0 ± 11.4 | 78.0 ± 4.5 | 150.0 ± 14.1 |
+| ALL (reference) | 296.0 ± 51.8 | 170.0 ± 30.8 | 88.0 ± 19.2 | 330.0 ± 32.4 |
+
+### Standard tranche per shape (diagnostics, not gated)
+
+| standard: target accuracy % | n-compound-head | n-measure | n-subject-initial | v-after-modal | v-imperative-initial |
+| --- | --- | --- | --- | --- | --- |
+| F2 | 96.7 ± 0.6 | 98.7 ± 1.0 | 96.0 ± 0.7 | 98.7 ± 1.0 | 96.2 ± 1.3 |
+| F2+IMP | 96.8 ± 0.9 | 99.0 ± 1.1 | 95.5 ± 0.5 | 98.7 ± 0.7 | 98.7 ± 0.5 |
+| ALL+IMP | 96.5 ± 0.4 | 98.7 ± 0.5 | 93.8 ± 0.5 | 99.5 ± 0.5 | 99.0 ± 0.4 |
+| ALL (reference) | 96.7 ± 0.6 | 98.8 ± 0.7 | 96.2 ± 1.0 | 99.7 ± 0.5 | 97.5 ± 1.0 |
+
+| standard: harmful per 1k | n-compound-head | n-measure | n-subject-initial | v-after-modal | v-imperative-initial |
+| --- | --- | --- | --- | --- | --- |
+| F2 | 16.7 ± 5.9 | 1.7 ± 3.7 | 20.0 ± 4.6 | 13.3 ± 9.5 | 28.3 ± 9.5 |
+| F2+IMP | 15.0 ± 9.1 | 0.0 ± 0.0 | 26.7 ± 7.0 | 13.3 ± 7.5 | 11.7 ± 4.6 |
+| ALL+IMP | 18.3 ± 3.7 | 0.0 ± 0.0 | 41.7 ± 10.2 | 5.0 ± 4.6 | 10.0 ± 3.7 |
+| ALL (reference) | 18.3 ± 3.7 | 0.0 ± 0.0 | 23.3 ± 7.0 | 3.3 ± 4.6 | 20.0 ± 4.6 |
+
+### Welch 95% interval of (arm - F2)
+
+Difference of the means with the Welch-Satterthwaite t interval over the seeds (seeds measure training noise only).
+
+| arm | shapes.hard.pooled.harmfulPer1k | shapes.hard.shapes.v-imperative-initial.targetAccuracy | shapes.standard.pooled.harmfulPer1k | openDev.harmfulPer1k | udDev.harmfulPer1k | udDev.accuracy |
+| --- | --- | --- | --- | --- | --- | --- |
+| F2+IMP | -55.00 [-69.09, -40.91] | +25.80 [+20.31, +31.29] | -2.67 [-7.77, +2.43] | -0.58 [-2.39, +1.22] | +0.83 [-1.06, +2.72] | +0.05 [-0.03, +0.12] |
+| ALL+IMP | -54.50 [-68.78, -40.22] | +31.40 [+26.17, +36.63] | -1.00 [-5.31, +3.31] | -1.12 [-2.55, +0.31] | +0.04 [-1.85, +1.94] | +0.13 [+0.04, +0.23] |
+| ALL (reference) | -13.00 [-32.07, +6.07] | +6.00 [-0.28, +12.28] | -3.00 [-7.22, +1.22] | -1.48 [-2.86, -0.11] | -0.26 [-2.31, +1.78] | +0.07 [-0.04, +0.18] |
+
+### Guards against F2
+
+Delta guards use the mean over the seeds; the size guard is 1.5 x the F2 mean; the throughput guard uses the median of the seeds'
+medians. The reference arm is shown for information; it is never in Q.
+
+| arm | standard harmful per 1k <= F2 + 5 | open dev harmful per 1k <= F2 + 1.5 | UD-EWT dev harmful per 1k <= F2 + 1.5 | UD-EWT dev accuracy >= F2 - 0.15 | deflated bytes <= 1.5 x F2 | tokens/s >= 150,000 | all guards |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F2+IMP | PASS -2.67 | PASS -0.58 | PASS +0.83 | PASS +0.05 | PASS 1.010x | PASS 755888 | PASS |
+| ALL+IMP | PASS -1.00 | PASS -1.12 | PASS +0.04 | PASS +0.13 | PASS 1.171x | PASS 431875 | PASS |
+| ALL (reference) | PASS -3.00 | PASS -1.48 | PASS -0.26 | PASS +0.07 | PASS 1.158x | PASS 408856 | PASS |
+
+### Selection rule applied
+
+| arm | groups | primary | passes all guards | role |
+| --- | --- | --- | --- | --- |
+| F2 | 1 | 234.00 ± 11.26 | - | baseline |
+| F2+IMP | 1 | 179.00 ± 6.75 | yes | candidate |
+| ALL+IMP | 4 | 179.50 ± 7.37 | yes | candidate |
+| ALL (reference) | 4 | 221.00 ± 14.43 | yes | reference (not gated) |
+
+Q = {F2+IMP, ALL+IMP}; lowest primary in Q: F2+IMP (179.00); within 10% (primary <= 196.90): F2+IMP, ALL+IMP; candidate (fewest
+groups, then lowest primary): F2+IMP; Welch 95% interval of (F2+IMP - F2): -55.00 [-69.09, -40.91], df 6.55, p < 0.0001.
+**SHIP F2+IMP.**
+
+### Descriptive: paired item bootstrap on the hard tranche (not part of the rule)
+
+2,000 resamples of the 400 hard items, seed 20261108, items averaged over the seeds:
+
+- F2+IMP - F2 harmful per 1k: -55.00, 95% percentile interval [-78.50, -32.00].
+- ALL+IMP - F2 harmful per 1k: -54.50, 95% percentile interval [-84.00, -25.00].
+- ALL (reference) - F2 harmful per 1k: -13.00, 95% percentile interval [-33.00, +7.51].
+
+### Per-seed values (hard harmful per 1k / hard v-imperative-initial target accuracy % / hard n-subject-initial target accuracy %)
+
+| arm | 20260101 | 11 | 12 | 13 | 14 |
+| --- | --- | --- | --- | --- | --- |
+| F2 | 235.0 / 45 / 82 | 240.0 / 53 / 80 | 217.5 / 56 / 78 | 230.0 / 54 / 78 | 247.5 / 50 / 76 |
+| F2+IMP | 170.0 / 78 / 79 | 182.5 / 77 / 74 | 187.5 / 76 / 73 | 180.0 / 74 / 79 | 175.0 / 82 / 73 |
+| ALL+IMP | 190.0 / 82 / 67 | 172.5 / 85 / 68 | 172.5 / 83 / 69 | 182.5 / 82 / 68 | 180.0 / 83 / 66 |
+| ALL (reference) | 245.0 / 51 / 74 | 220.0 / 59 / 74 | 220.0 / 57 / 70 | 212.5 / 58 / 78 | 207.5 / 63 / 67 |
+
+Every F2+IMP seed (170.0 to 187.5) is below every F2 seed (217.5 to 247.5), and so is every ALL+IMP seed (172.5 to 190.0).
+
+### Run times
+
+Training wall seconds per run (including the jackknife and the calibration): F2 22.5 to 25.1 s (whole arm with evaluation 2 min 9 s);
+F2+IMP 23.0 to 27.4 s (2 min 15 s); ALL+IMP 64.5 to 134.3 s (8 min 54 s); ALL reference 120.4 to 150.0 s (11 min 23 s). The
+`eval-arm` of every run took 1.6 to 2.7 s.
+
+### Caveats (read with the limits stated in advance)
+
+- The seeds measure training noise only. The interval of the paired item bootstrap over the 400 hard items is wider
+  ([-78.5, -32.0] for F2+IMP) but also lies below 0. This is development evidence on a set that the project has used before, and the
+  source was built from the frame of the `v-imperative-initial` shape, which is the shape that gains (target accuracy 51.6% to
+  77.4%, harmful 386 to 186 per 1k); it is the direct target of the data, not an independent test of the idea.
+- The gain on the other three hard shapes is small or none: `n-compound-head` harm 332 to 296, `v-after-modal` 104 to 98, and
+  `n-subject-initial` target accuracy fell from 78.8 to 75.6 (harmful per 1k 114 to 136, within the seed spread). The data give
+  no counter-example, as stated in advance, and the effect is larger in ALL+IMP (n-subject-initial target accuracy 67.6%, harmful
+  206 per 1k; on the standard tranche 41.7 per 1k against 20.0 at F2), a shift of harm from `v-imperative-initial` to
+  `n-subject-initial` that the rule did not gate (it entered only through the standard-tranche guard, which every arm passes).
+  For F2+IMP the standard `n-subject-initial` harm is 26.7 per 1k against 20.0 (within about one seed sd).
+- Only F2 against F2+IMP isolates the effect of the data; the reference arm ALL (221.0, interval [-32.07, +6.07] against F2) shows
+  that the three other feature groups do not by themselves lower the primary below F2, so the gain of ALL+IMP is the gain of the data.
+- The labels are model-written without human review (model review: 59/60 sentences, token precision 99.87%); the text is
+  instructional federal text of another register and era than the development sets.
+- Throughput and training time were measured on a loaded shared machine at Normal priority.
+- The run folders, `report.md` and `decision.json` lie outside the repository; the figures above are copied unchanged from
+  `report.md` (the per-seed table is read from the 20 result files).
+- No held-out set was read; no weights, thresholds, `training.json` or documents were changed by this slice. The adoption (the
+  `imperative` source at weight 1 in `training.json`, `train`/`calibrate` with `--update-config`, `weights.bin`, `thresholds`
+  and the single held-out `evaluate`) is the next section and is written before any held-out command.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
