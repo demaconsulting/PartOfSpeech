@@ -64,7 +64,7 @@ internal sealed class HintedPredictor
     /// <summary>
     ///     The scratch buffer for the buckets of a token.
     /// </summary>
-    private readonly int[] _buckets = new int[FeatureExtractor.MaxFeatures + GlossaryFeatures.Count];
+    private readonly int[] _buckets = new int[GlossaryFeatures.BufferCapacity];
 
     /// <summary>
     ///     The lexicon.
@@ -89,9 +89,13 @@ internal sealed class HintedPredictor
     /// <param name="scale">The weight scale.</param>
     /// <param name="temperature">The softmax temperature.</param>
     /// <param name="lexicon">The lexicon.</param>
-    public HintedPredictor(int hashBits, IEnumerable<KeyValuePair<int, short[]>> rows, float scale, float temperature, Lexicon lexicon)
+    /// <param name="groups">The feature groups of the model (the mask of its header); none is the shipped feature set.</param>
+    /// <exception cref="ArgumentException"><paramref name="groups"/> contains a group that the experiment does not support (see <see cref="EnsureSupported"/>).</exception>
+    public HintedPredictor(int hashBits, IEnumerable<KeyValuePair<int, short[]>> rows, float scale, float temperature, Lexicon lexicon, FeatureGroups groups = FeatureGroups.None)
     {
+        EnsureSupported(groups);
         HashBits = hashBits;
+        Groups = groups;
         _scale = scale;
         _temperature = temperature;
         _lexicon = lexicon;
@@ -108,6 +112,28 @@ internal sealed class HintedPredictor
     public int HashBits { get; }
 
     /// <summary>
+    ///     Gets the feature groups of the model.
+    /// </summary>
+    public FeatureGroups Groups { get; }
+
+    /// <summary>
+    ///     Checks that the experiment can decode a model with the feature groups.
+    /// </summary>
+    /// <remarks>
+    ///     The right preview group (F3) needs a first decoding pass whose tags the second pass reads; the experiment decodes in a
+    ///     single pass and its hints would have to be part of the first pass too, so a model with that group is not supported.
+    /// </remarks>
+    /// <param name="groups">The feature groups of the model.</param>
+    /// <exception cref="ArgumentException"><paramref name="groups"/> contains <see cref="FeatureGroups.RightPreview"/>.</exception>
+    public static void EnsureSupported(FeatureGroups groups)
+    {
+        if ((groups & FeatureGroups.RightPreview) != 0)
+        {
+            throw new ArgumentException("The glossary experiment does not support the right preview group (F3 / rightPreview): it decodes in a single pass. Use a configuration without it.", nameof(groups));
+        }
+    }
+
+    /// <summary>
     ///     Tags a sentence.
     /// </summary>
     /// <param name="tokens">The tokens.</param>
@@ -118,6 +144,8 @@ internal sealed class HintedPredictor
     /// <returns>The tags, confidences and candidates.</returns>
     public HintedTagging Predict(string[] tokens, int[]? hints, double boost, bool hard, bool useFeature)
     {
+        // Configure the workspace for the model's groups first, as the trainer's predictor and the runtime decoder do
+        _workspace.Configure(Groups, _lexicon);
         FeatureExtractor.Prepare(_workspace, tokens, HashBits);
         var tags = new int[tokens.Length];
         var confidences = new double[tokens.Length];
@@ -180,6 +208,9 @@ internal sealed class HintedPredictor
             tags[i] = best;
             confidences[i] = 1.0 / sum;
             candidates[i] = mask;
+
+            // The decision is history for the clause state of the following tokens
+            FeatureExtractor.Advance(_workspace, i, best);
             previous2 = previous1;
             previous1 = best;
         }

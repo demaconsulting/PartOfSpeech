@@ -498,6 +498,11 @@ sections:
               - GlossaryFeatures_Append_InBucketSpaceAndDependOnHintAndHistory
               - HintedPredictor_NoHints_MatchesQuantizedPredictor
               - HintedPredictor_HardHintAndHugeBoost_FollowTheHint
+              - ModelTrainer_Train_AllGroupsWithGlossaryHints_FitsTheBucketBuffer
+              - HintedPredictor_FeatureGroups_MatchesQuantizedPredictor
+              - HintedPredictor_FeatureGroupsWithHints_DecodeEveryTokenAndFollowHardHints
+              - HintedPredictor_RightPreviewGroup_IsRefused
+              - GlossaryProbeAndEvaluation_GroupedModel_UseTheConfiguredTagger
 
           - id: PartOfSpeech-ModelTrainer-GlossaryEvaluation
             title: >-

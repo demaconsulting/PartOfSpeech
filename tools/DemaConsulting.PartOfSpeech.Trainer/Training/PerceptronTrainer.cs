@@ -134,7 +134,8 @@ internal static class PerceptronTrainer
             order[i] = i;
         }
 
-        var buckets = new int[Math.Max(FeatureExtractor.BucketCapacity, FeatureExtractor.MaxFeatures + GlossaryFeatures.Count)];
+        // Room for every feature group and, in the glossary experiment, the buckets that are appended after the extraction
+        var buckets = new int[GlossaryFeatures.BufferCapacity];
         var scores = new int[UposExtensions.Count];
         for (var epoch = 1; epoch <= config.Epochs; epoch++)
         {

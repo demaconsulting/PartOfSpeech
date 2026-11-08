@@ -833,6 +833,10 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
         var configPath = line.Value("--config") ?? Path.Combine(root, DefaultConfig.Replace('/', Path.DirectorySeparatorChar));
         var config = ConfigFile.Load(configPath).Clone();
         config.Validate();
+
+        // The experiment decodes in a single pass: refuse a configuration with the right preview group before anything is trained
+        var groups = config.ResolveGroups();
+        HintedPredictor.EnsureSupported(groups);
         var seed = ParseUInt64(line.Value("--seed"), "--seed", 1UL);
         var lexicon = EmbeddedModel.Lexicon;
         var data = CorpusReader.LoadSources(root, config);
@@ -860,8 +864,8 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
             File.WriteAllBytes(m1Output, ModelBuilder.Encode(rows1, config1, true));
         }
 
-        var m0 = new HintedPredictor(config.HashBits, rows0, config.Scale, (float)config.Temperature, lexicon);
-        var m1 = new HintedPredictor(config1.HashBits, rows1, config1.Scale, (float)config1.Temperature, lexicon);
+        var m0 = new HintedPredictor(config.HashBits, rows0, config.Scale, (float)config.Temperature, lexicon, groups);
+        var m1 = new HintedPredictor(config1.HashBits, rows1, config1.Scale, (float)config1.Temperature, lexicon, groups);
         foreach (var text in GlossaryExperiment.Run(m0, m1, file0, dev.Open, lexicon, seed))
         {
             Console.WriteLine(text);

@@ -1449,6 +1449,144 @@ public class ModelTrainerTests
     }
 
     /// <summary>
+    ///     Validates that training with every feature group (the most buckets a token can have) and glossary hints on every eligible token fits the
+    ///     bucket buffer: the buffer holds the group capacity plus the glossary buckets, and the run completes and is reproducible.
+    /// </summary>
+    [Fact]
+    public void ModelTrainer_Train_AllGroupsWithGlossaryHints_FitsTheBucketBuffer()
+    {
+        // Arrange: all four groups and a glossary that hints every eligible token (a token of the second pass has the full group capacity)
+        var config = GroupConfig(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection);
+        var corpus = SmallCorpus();
+
+        // Act: before the buffer had room for the glossary buckets this overran it
+        var first = PerceptronTrainer.Train(config, EmbeddedModel.Lexicon, corpus, null, new GlossaryTraining(EmbeddedModel.Lexicon, 100, 0, 5));
+        var second = PerceptronTrainer.Train(config, EmbeddedModel.Lexicon, corpus, null, new GlossaryTraining(EmbeddedModel.Lexicon, 100, 0, 5));
+
+        // Assert: the buffer is sized for both, and the run is deterministic and different from the run without hints
+        Assert.Equal(FeatureExtractor.BucketCapacity + GlossaryFeatures.Count, GlossaryFeatures.BufferCapacity);
+        Assert.True(first.Steps > 0);
+        Assert.Equal(ModelBuilder.Build(first, config, false), ModelBuilder.Build(second, config, false));
+        Assert.NotEqual(ModelBuilder.Build(first, config, false), ModelBuilder.Build(PerceptronTrainer.Train(config, EmbeddedModel.Lexicon, corpus), config, false));
+    }
+
+    /// <summary>
+    ///     Validates that the experiment's decoder configures its workspace with the groups of the model: without hints it gives the tags of the
+    ///     trainer's predictor (so the clause features are computed and advanced as in the decoder), while a decoder that ignores the groups does not.
+    /// </summary>
+    /// <param name="mask">The groups as the bits of the feature group flags: 1 position cues, 2 clause cues, 8 inflection.</param>
+    [Theory]
+    [InlineData(2u)]
+    [InlineData(11u)]
+    public void HintedPredictor_FeatureGroups_MatchesQuantizedPredictor(uint mask)
+    {
+        // Arrange: a grouped model, the trainer's predictor, the experiment's decoder with the groups and one that ignores them
+        var groups = (FeatureGroups)mask;
+        var config = GroupConfig(groups);
+        var corpus = SmallCorpus();
+        var rows = ModelBuilder.Rows(PerceptronTrainer.Train(config, EmbeddedModel.Lexicon, corpus), config);
+        var reference = new QuantizedPredictor(HashBits, rows, groups);
+        var hinted = new HintedPredictor(HashBits, rows, config.Scale, (float)config.Temperature, EmbeddedModel.Lexicon, groups);
+        var ignoring = new HintedPredictor(HashBits, rows, config.Scale, (float)config.Temperature, EmbeddedModel.Lexicon);
+
+        // Act / Assert: the same tags as the predictor, which the other test proves equal to the runtime decoder
+        var differing = 0;
+        foreach (var sentence in corpus.Distinct())
+        {
+            var expected = reference.Predict(sentence.Tokens, EmbeddedModel.Lexicon);
+            Assert.Equal(groups, hinted.Groups);
+            Assert.Equal(expected, hinted.Predict(sentence.Tokens, null, 0, false, false).Tags);
+            differing += ignoring.Predict(sentence.Tokens, null, 0, false, false).Tags.SequenceEqual(expected) ? 0 : 1;
+        }
+
+        // Assert: leaving the groups out would have scored a different model
+        Assert.True(differing > 0);
+    }
+
+    /// <summary>
+    ///     Validates that the glossary features of a grouped model fit the buffer of the experiment's decoder for every token, and that a hint
+    ///     still takes effect (a hard hint is followed) with the groups on.
+    /// </summary>
+    [Fact]
+    public void HintedPredictor_FeatureGroupsWithHints_DecodeEveryTokenAndFollowHardHints()
+    {
+        // Arrange
+        var groups = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.Inflection;
+        var config = GroupConfig(groups);
+        var corpus = SmallCorpus();
+        var rows = ModelBuilder.Rows(PerceptronTrainer.Train(config, EmbeddedModel.Lexicon, corpus, null, new GlossaryTraining(EmbeddedModel.Lexicon, 100, 0, 3)), config);
+        var hinted = new HintedPredictor(HashBits, rows, config.Scale, (float)config.Temperature, EmbeddedModel.Lexicon, groups);
+        var glossary = new GlossaryTraining(EmbeddedModel.Lexicon, 100, 0, 3);
+
+        // Act / Assert: every token with a hint is decoded with the glossary features, and a hard hint is the tag
+        var hintedTokens = 0;
+        foreach (var sentence in corpus.Distinct().Take(80))
+        {
+            var hints = glossary.Draw(sentence, new DeterministicRandom(4));
+            var feature = hinted.Predict(sentence.Tokens, hints, 0, false, true);
+            var hard = hinted.Predict(sentence.Tokens, hints, 0, true, false);
+            for (var i = 0; i < hints.Length; i++)
+            {
+                if (hints[i] >= 0)
+                {
+                    hintedTokens++;
+                    Assert.Equal(hints[i], hard.Tags[i]);
+                }
+            }
+
+            Assert.Equal(sentence.Tokens.Length, feature.Tags.Length);
+        }
+
+        Assert.True(hintedTokens > 0);
+    }
+
+    /// <summary>
+    ///     Validates that the experiment's decoder refuses the right preview group (it decodes in a single pass), alone or combined.
+    /// </summary>
+    [Theory]
+    [InlineData(4u)]
+    [InlineData(5u)]
+    [InlineData(15u)]
+    public void HintedPredictor_RightPreviewGroup_IsRefused(uint mask)
+    {
+        // Arrange
+        var groups = (FeatureGroups)mask;
+
+        // Act / Assert
+        var error = Assert.Throws<ArgumentException>(() => HintedPredictor.EnsureSupported(groups));
+        Assert.Contains("right preview", error.Message);
+        Assert.Throws<ArgumentException>(() => new HintedPredictor(HashBits, new List<KeyValuePair<int, short[]>>(), 1f, 1f, EmbeddedModel.Lexicon, groups));
+        HintedPredictor.EnsureSupported(FeatureGroups.None);
+        HintedPredictor.EnsureSupported(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.Inflection);
+    }
+
+    /// <summary>
+    ///     Validates that the probe and the evaluation, which tag through the real <see cref="Tagger"/>, accept a model with every feature group:
+    ///     the tagger configures the groups itself, so the hints are applied to the model as it was trained.
+    /// </summary>
+    [Fact]
+    public void GlossaryProbeAndEvaluation_GroupedModel_UseTheConfiguredTagger()
+    {
+        // Arrange: a small model with all groups
+        var config = GroupConfig(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection);
+        var weights = ModelBuilder.Build(TrainSmall(config), config, false);
+        Assert.Equal(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection, PerceptronModel.Load(weights).FeatureGroups);
+        var open = OpenFixture(
+            "the/DET old/ADJ kitchen/NOUN table/NOUN is/AUX here/ADV ./PUNCT",
+            "they/PRON open/VERB the/DET kitchen/NOUN table/NOUN now/ADV ./PUNCT",
+            "i/PRON use/VERB it/PRON now/ADV ./PUNCT");
+        var gold = GoldFixture("d-1|doc-a|1|valve|Noun|valve|The valve leaks .");
+
+        // Act
+        var probe = GlossaryProbe.Run(weights, open, EmbeddedModel.Lexicon, 1);
+        var evaluation = string.Join("\n", GlossaryEvaluation.Run(weights, open, gold, EmbeddedModel.Lexicon, 1, 20));
+
+        // Assert: both ran and the probe's baseline tags agree with the grouped tagger (the evaluation's parity check)
+        Assert.True(probe.Count > 2);
+        Assert.Contains("give 0 different tags", evaluation);
+    }
+
+    /// <summary>
     ///     Creates a gold v2 table fixture from rows of (id, document, target index, form, class, lemma, sentence).
     /// </summary>
     private static List<GoldTarget> GoldFixture(params string[] rows)

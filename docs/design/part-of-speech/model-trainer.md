@@ -400,7 +400,10 @@ replacement rule whose reason is recorded as a dated change; the cost of that ch
 there. The experiment code
 (`glossary-probe`, `glossary-experiment`, `GlossaryFeatures`, and the optional `glossary` parameter of the trainer, which
 is `null` for the shipped model and does not change its pinned hash) stays in the tool so that the decision can be
-reproduced.
+reproduced. The experiment's own decoder takes the feature groups of the configuration (it configures its workspace
+and advances the clause state exactly as the trainer's predictor does) and sizes its bucket buffer for the group
+capacity plus the two glossary buckets; it does not support the right preview group and refuses a configuration with
+it before anything is trained. The probe and the evaluation tag through the real `Tagger`, which handles every group.
 
 ### Glossary Evaluation
 

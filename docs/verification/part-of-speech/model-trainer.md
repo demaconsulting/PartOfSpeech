@@ -266,7 +266,14 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   token as written), `ModelTrainer_Train_GlossaryHints_ChangeTheImage` (and
   the plain run keeps its pinned hash, which is the golden test),
   `GlossaryFeatures_Append_InBucketSpaceAndDependOnHintAndHistory`, `HintedPredictor_NoHints_MatchesQuantizedPredictor`
-  and `HintedPredictor_HardHintAndHugeBoost_FollowTheHint`.
+  and `HintedPredictor_HardHintAndHugeBoost_FollowTheHint`. With feature groups,
+  `ModelTrainer_Train_AllGroupsWithGlossaryHints_FitsTheBucketBuffer` (the bucket buffer holds the group capacity plus the
+  glossary buckets),
+  `HintedPredictor_FeatureGroups_MatchesQuantizedPredictor` and
+  `HintedPredictor_FeatureGroupsWithHints_DecodeEveryTokenAndFollowHardHints` (the experiment's decoder configures the
+  workspace with the groups of the model), `HintedPredictor_RightPreviewGroup_IsRefused` (a model with the right preview
+  group is rejected) and `GlossaryProbeAndEvaluation_GroupedModel_UseTheConfiguredTagger` (the probe and the evaluation
+  tag through the real `Tagger`, which handles every group).
 - **Glossary evaluation** (the tests run the evaluation code of the tool on tiny dev-like fixtures with known answers, not
   on the development data): `GoldTarget_Lemma_IsParsedAndOptional` (the lemma column of the gold development set is read
   when present, and is empty otherwise), `GlossaryEvaluation_StrengthGrid_ContainsTheDefaultSoftStrength` (the library
