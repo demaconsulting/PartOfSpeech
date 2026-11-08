@@ -77,14 +77,15 @@ internal static class ModelBuilder
     ///     Encodes quantized rows as a weights file with the header values of a configuration.
     /// </summary>
     /// <param name="rows">The rows.</param>
-    /// <param name="config">The configuration that supplies the bucket space, the scale and the temperature.</param>
+    /// <param name="config">The configuration that supplies the bucket space, the scale, the temperature and the feature groups (the mask of the header).</param>
     /// <param name="compress">Whether to Deflate the payload.</param>
     /// <returns>The file bytes.</returns>
     public static byte[] Encode(IEnumerable<KeyValuePair<int, short[]>> rows, TrainingConfig config, bool compress)
     {
         ArgumentNullException.ThrowIfNull(rows);
         ArgumentNullException.ThrowIfNull(config);
-        return PerceptronModelWriter.Compile(config.HashBits, (float)config.Temperature, config.Scale, FeatureExtractor.FeatureSetVersion, rows, compress);
+        var groups = config.ResolveGroups();
+        return PerceptronModelWriter.Compile(config.HashBits, (float)config.Temperature, config.Scale, FeatureExtractor.FeatureSetVersionFor(groups), rows, compress, (uint)groups);
     }
 
     /// <summary>

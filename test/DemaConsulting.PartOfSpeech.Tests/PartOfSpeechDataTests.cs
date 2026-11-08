@@ -1014,7 +1014,7 @@ public class PartOfSpeechDataTests
 
     /// <summary>
     ///     Proves that no training sentence, of any length, is also an evaluation sentence: the sentence keys (lower-case
-    ///     letters and digits) of the training corpora are disjoint from those of the evaluation sets.
+    ///     letters and numbers) of the training corpora are disjoint from those of the evaluation sets.
     /// </summary>
     [Fact]
     public void PartOfSpeech_Leakage_Sentences_TrainingAndEvaluationAreDisjoint()
@@ -1052,7 +1052,7 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
-    ///     Proves that the sentence key of the leakage rule keeps only the lower-case letters and digits of a sentence, so
+    ///     Proves that the sentence key of the leakage rule keeps only the lower-case letters and numbers of a sentence, so
     ///     that a short sentence has a key as well.
     /// </summary>
     [Fact]
@@ -1066,7 +1066,7 @@ public class PartOfSpeechDataTests
         var key = DataFiles.SentenceKey(sentence);
         var shortKey = DataFiles.SentenceKey(shortSentence);
 
-        // Assert: only the lower-case letters and digits remain
+        // Assert: only the lower-case letters and numbers remain
         Assert.Equal("xy42", key);
         Assert.Equal("thankyou", shortKey);
     }
@@ -1983,8 +1983,8 @@ public class PartOfSpeechDataTests
         var committed = File.ReadAllBytes(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/weights.bin"));
         var config = File.ReadAllText(DataFiles.Repository(TrainingConfigPath));
 
-        // Act: load the model and hash its uncompressed image
-        var model = PerceptronModel.Load(embedded, FeatureExtractor.FeatureSetVersion);
+        // Act: load the model (any feature set the build knows) and hash its uncompressed image
+        var model = PerceptronModel.Load(embedded);
         string hash;
         using (var sha = System.Security.Cryptography.SHA256.Create())
         {
@@ -1997,6 +1997,36 @@ public class PartOfSpeechDataTests
         Assert.Equal(int.Parse(ConfigValue(config, "hashBits"), CultureInfo.InvariantCulture), model.HashBits);
         Assert.Equal(1f / int.Parse(ConfigValue(config, "quantScale"), CultureInfo.InvariantCulture), model.Scale);
         Assert.Equal((float)double.Parse(ConfigValue(config, "temperature"), CultureInfo.InvariantCulture), model.Temperature);
+        Assert.Equal(ConfigFeatureGroups(config), model.FeatureGroups);
+    }
+
+    /// <summary>
+    ///     Reads the feature groups that a training configuration selects (an absent or empty <c>features</c> member means none).
+    /// </summary>
+    /// <param name="config">The text of the configuration.</param>
+    /// <returns>The selected groups.</returns>
+    private static FeatureGroups ConfigFeatureGroups(string config)
+    {
+        var members = Regex.Match(config, "\"features\"\\s*:\\s*\\[([^\\]]*)\\]");
+        var groups = FeatureGroups.None;
+        if (!members.Success)
+        {
+            return groups;
+        }
+
+        foreach (Match name in Regex.Matches(members.Groups[1].Value, "\"([^\"]+)\""))
+        {
+            groups |= name.Groups[1].Value switch
+            {
+                "positionCues" => FeatureGroups.PositionCues,
+                "clauseCues" => FeatureGroups.ClauseCues,
+                "rightPreview" => FeatureGroups.RightPreview,
+                "inflection" => FeatureGroups.Inflection,
+                _ => throw new InvalidDataException($"Unknown feature group '{name.Groups[1].Value}' in the training configuration.")
+            };
+        }
+
+        return groups;
     }
 
     /// <summary>
@@ -2014,13 +2044,12 @@ public class PartOfSpeechDataTests
         using var buffer = new MemoryStream();
         stream.CopyTo(buffer);
         var embedded = buffer.ToArray();
-        var model = PerceptronModel.Load(embedded, FeatureExtractor.FeatureSetVersion);
+        var model = PerceptronModel.Load(embedded);
         var compressed = embedded.Length.ToString("N0", CultureInfo.InvariantCulture);
         var uncompressed = PerceptronModel.ToUncompressedImage(embedded).Length.ToString("N0", CultureInfo.InvariantCulture);
         var rows = model.RowCount.ToString("N0", CultureInfo.InvariantCulture);
         var sizeDocuments = new[]
         {
-            "README.md",
             "docs/user_guide/introduction.md",
             "data/README.md",
             "src/DemaConsulting.PartOfSpeech/NamespaceDoc.cs",

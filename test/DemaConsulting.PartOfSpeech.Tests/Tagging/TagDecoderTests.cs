@@ -37,8 +37,9 @@ public class TagDecoderTests
         TokenConstraint[]? constraints = null,
         int alternatives = 3,
         float temperature = 1f,
-        float scale = 1f) =>
-        TinyModels.CreateDecoder(weights.Build(temperature, scale), lexicon).Decode(Tokens(words), constraints, alternatives);
+        float scale = 1f,
+        FeatureGroups groups = FeatureGroups.None) =>
+        TinyModels.CreateDecoder(weights.Build(temperature, scale, groups: groups), lexicon).Decode(Tokens(words), constraints, alternatives);
 
     /// <summary>
     ///     Builds weights where the word cat scores NOUN 3 and VERB 1.
@@ -458,5 +459,285 @@ public class TagDecoderTests
         var bound = (50 * 64) + (150 * 16) + 256;
         Assert.True(perCall <= bound, $"{perCall} bytes per call, bound {bound}");
     }
+
+    /// <summary>
+    ///     The mask of all groups.
+    /// </summary>
+    private const FeatureGroups AllGroups = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection;
+
+    /// <summary>
+    ///     Proves that decoding with all groups on (both passes, stem lookups) allocates only its result arrays.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_AllGroups_DoesNotAllocateInHotPath()
+    {
+        // Arrange: a decoder whose weights say all groups, the real lexicon and a 50-token ASCII sentence
+        var weights = CatWeights().Build(groups: AllGroups);
+        var decoder = TinyModels.CreateDecoder(weights, File.ReadAllBytes(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin")));
+        var tokens = Tokens(Enumerable.Range(0, 50).Select(i => i % 2 == 0 ? "cat" : "Running").ToArray());
+
+        // Act: warm up thoroughly, then take the minimum over several batches of the bytes allocated by this thread for 100 decodes
+        var perCall = AllocationMeter.MinimumBatchBytes(() => decoder.Decode(tokens, null, 3), 100) / 100;
+
+        // Assert: the same bound as without groups
+        var bound = (50 * 64) + (150 * 16) + 256;
+        Assert.True(perCall <= bound, $"{perCall} bytes per call, bound {bound}");
+    }
 #endif
+
+    /// <summary>
+    ///     Proves that a model with the clause cues turns an imperative around: the ambiguous first word before a determiner becomes a
+    ///     verb, and the same weights without the group in the header do nothing.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_ClauseCues_ImperativeBeforeDeterminer()
+    {
+        // Arrange: check prefers NOUN, but a determiner as the next token adds 5 to VERB
+        var lexicon = TinyModels.CreateLexicon("check NOUN VERB", "the DET", "valve NOUN");
+        TinyModels.WeightsBuilder Weights() => new TinyModels.WeightsBuilder()
+            .Word("check", Upos.Noun, 3)
+            .Word("check", Upos.Verb, 1)
+            .AddCodes(FeatureKind.NextClass1, (uint)TokenClass.Det, 0, Upos.Verb, 5);
+
+        // Act: decode with and without the group in the header, and the word alone
+        var withGroup = Decode(Weights(), lexicon, new[] { "check", "the", "valve" }, groups: FeatureGroups.ClauseCues);
+        var withoutGroup = Decode(Weights(), lexicon, new[] { "check", "the", "valve" });
+        var alone = Decode(Weights(), lexicon, new[] { "check" }, groups: FeatureGroups.ClauseCues);
+
+        // Assert: the next-class feature acts only when the header names the group
+        Assert.Equal(Upos.Verb, withGroup[0].Tag);
+        Assert.Equal(Upos.Noun, withoutGroup[0].Tag);
+        Assert.Equal(Upos.Noun, alone[0].Tag);
+    }
+
+    /// <summary>
+    ///     Proves that the clause state of the decoder follows the tags that it chose itself: a verb chosen for the first
+    ///     token changes the decision of the second.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_ClauseCues_ClauseStateFollowsChosenTags()
+    {
+        // Arrange: run is NOUN or VERB; a clause that already has a verb (state 2) pushes the next ambiguous word to NOUN
+        var lexicon = TinyModels.CreateLexicon("run NOUN VERB", "dog NOUN VERB");
+        var weights = new TinyModels.WeightsBuilder()
+            .Word("run", Upos.Verb, 4)
+            .Word("dog", Upos.Verb, 2)
+            .Word("dog", Upos.Noun, 1)
+            .AddCodes(FeatureKind.ClauseState, 2, 0, Upos.Noun, 5);
+
+        // Act: after run (VERB) the state is 2; alone dog has no verb before it
+        var afterVerb = Decode(weights, lexicon, new[] { "run", "dog" }, groups: FeatureGroups.ClauseCues);
+        var alone = Decode(weights, lexicon, new[] { "dog" }, groups: FeatureGroups.ClauseCues);
+
+        // Assert: the history feature acted
+        Assert.Equal(new[] { Upos.Verb, Upos.Noun }, afterVerb.Select(t => t.Tag));
+        Assert.Equal(Upos.Verb, alone[0].Tag);
+    }
+
+    /// <summary>
+    ///     Proves that the position cues reach the decoder: the first position favors a verb, the second does not.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_PositionCues_UsePositionInSentence()
+    {
+        // Arrange: dog prefers NOUN, the first position adds 5 to VERB
+        var lexicon = TinyModels.CreateLexicon("dog NOUN VERB");
+        var weights = new TinyModels.WeightsBuilder()
+            .Word("dog", Upos.Noun, 2)
+            .Word("dog", Upos.Verb, 1)
+            .AddCodes(FeatureKind.PosIdx, 0, 0, Upos.Verb, 5);
+
+        // Act: decode two dogs
+        var result = Decode(weights, lexicon, new[] { "dog", "dog" }, groups: FeatureGroups.PositionCues);
+
+        // Assert: VERB at position 0, NOUN at position 1
+        Assert.Equal(new[] { Upos.Verb, Upos.Noun }, result.Select(t => t.Tag));
+    }
+
+    /// <summary>
+    ///     Proves that the inflection group tells a word with a verb stem from a word that only ends in <c>ing</c>.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_Inflection_SeparatesVerbStemFromLookalike()
+    {
+        // Arrange: both words prefer NOUN; a verb stem with the ing suffix (value 5) adds 5 to VERB
+        var lexicon = TinyModels.CreateLexicon("avoiding NOUN VERB", "avoid VERB", "thing NOUN VERB");
+        var weights = new TinyModels.WeightsBuilder()
+            .Word("avoiding", Upos.Noun, 2)
+            .Word("avoiding", Upos.Verb, 1)
+            .Word("thing", Upos.Noun, 2)
+            .Word("thing", Upos.Verb, 1)
+            .AddCodes(FeatureKind.StemKind, 5, 0, Upos.Verb, 5);
+
+        // Act: decode both words
+        var result = Decode(weights, lexicon, new[] { "avoiding", "thing" }, groups: FeatureGroups.Inflection);
+
+        // Assert: VERB for the word with the verb stem, NOUN for the lookalike
+        Assert.Equal(new[] { Upos.Verb, Upos.Noun }, result.Select(t => t.Tag));
+    }
+
+    /// <summary>
+    ///     Proves the two-pass decode of the right preview group: the second pass sees the first-pass tags of the next tokens,
+    ///     a token at the end of the sentence sees the end marker, and constraints act in both passes.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_RightPreview_SecondPassSeesFirstPassTags()
+    {
+        // Arrange: in the first pass dog is VERB (2 against 1); a NOUN ahead (first pass) adds 5 to NOUN in the second pass
+        var lexicon = TinyModels.CreateLexicon("dog NOUN VERB", "bone NOUN VERB");
+        TinyModels.WeightsBuilder Weights() => new TinyModels.WeightsBuilder()
+            .Word("dog", Upos.Verb, 2)
+            .Word("dog", Upos.Noun, 1)
+            .Word("bone", Upos.Noun, 5)
+            .AddCodes(FeatureKind.Rt1, (uint)Upos.Noun, 0, Upos.Noun, 5);
+
+        // Act: two tokens, one token (end marker), the second token forced to VERB (first pass sees the constraint), and no group
+        var pair = Decode(Weights(), lexicon, new[] { "dog", "bone" }, groups: FeatureGroups.RightPreview);
+        var single = Decode(Weights(), lexicon, new[] { "dog" }, groups: FeatureGroups.RightPreview);
+        var forced = Decode(Weights(), lexicon, new[] { "dog", "bone" }, new[] { TokenConstraint.None, TokenConstraint.Only(Upos.Verb) }, groups: FeatureGroups.RightPreview);
+        var noGroup = Decode(Weights(), lexicon, new[] { "dog", "bone" });
+
+        // Assert
+        Assert.Equal(new[] { Upos.Noun, Upos.Noun }, pair.Select(t => t.Tag));
+        Assert.Equal(Upos.Verb, single[0].Tag);
+        Assert.Equal(new[] { Upos.Verb, Upos.Verb }, forced.Select(t => t.Tag));
+        Assert.Equal(new[] { Upos.Verb, Upos.Noun }, noGroup.Select(t => t.Tag));
+    }
+
+    /// <summary>
+    ///     Proves that a right-preview model whose weights have no preview rows decodes exactly like the same weights without the group:
+    ///     the first pass equals the one-pass decode, so the second pass changes nothing.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_RightPreview_WithoutPreviewWeights_EqualsOnePass()
+    {
+        // Arrange: weights with base features only, written once with and once without the group
+        var lexicon = TinyModels.CreateLexicon("a DET", "dog NOUN VERB", "cat NOUN", "runs VERB");
+        TinyModels.WeightsBuilder Weights() => new TinyModels.WeightsBuilder()
+            .Word("a", Upos.Det, 10)
+            .Word("dog", Upos.Verb, 2)
+            .Word("dog", Upos.Noun, 1)
+            .Word("cat", Upos.Noun, 3)
+            .AfterTag("DET", Upos.Noun, 5);
+        var sentences = new[] { new[] { "a", "dog" }, new[] { "dog", "runs" }, new[] { "a", "cat", "runs" }, new[] { "dog" } };
+
+        // Act / Assert: tags, confidences and alternatives are equal
+        foreach (var words in sentences)
+        {
+            var onePass = Decode(Weights(), lexicon, words, temperature: 3f);
+            var twoPass = Decode(Weights(), lexicon, words, temperature: 3f, groups: FeatureGroups.RightPreview);
+            Assert.Equal(onePass.Select(t => t.Tag), twoPass.Select(t => t.Tag));
+            Assert.Equal(onePass.Select(t => t.Confidence), twoPass.Select(t => t.Confidence));
+            Assert.Equal(
+                onePass.Select(t => t.Alternatives.Select(a => (a.Tag, a.Probability)).ToList()),
+                twoPass.Select(t => t.Alternatives.Select(a => (a.Tag, a.Probability)).ToList()));
+        }
+    }
+
+    /// <summary>
+    ///     Proves that for every set of groups the decoder chooses the tags that a plain reference decoder chooses with the string-based
+    ///     reference features, on a toy model trained with that set of groups (the preview group in two passes).
+    /// </summary>
+    /// <param name="mask">The groups as a mask.</param>
+    [Theory]
+    [MemberData(nameof(FeatureExtractorTests.GroupMasks), MemberType = typeof(FeatureExtractorTests))]
+    public void TagDecoder_Decode_MatchesReferenceDecoder(uint mask)
+    {
+        // Arrange: a toy model trained with the groups, its lexicon, and fixture sentences plus a few new ones
+        var groups = (FeatureGroups)mask;
+        var model = PerceptronModel.Load(TinyTrainer.Train(epochs: 5, groups: groups));
+        var lexiconBytes = TinyTrainer.FixtureLexicon();
+        var lexicon = DemaConsulting.PartOfSpeech.Lexicon.Load(lexiconBytes);
+        var decoder = new TagDecoder(model, lexicon);
+        var sentences = TinyTrainer.Sentences().Select(s => s.Tokens).Concat(new[]
+        {
+            new[] { "Open", "the", "door", "and", "run", "." },
+            new[] { "She", "will", "run", "to", "the", "store", ",", "then", "walks", "home", "." },
+            new[] { "Running", "dogs", "chased", "the", "boxes", "." },
+        }).ToList();
+
+        // Act / Assert: the same tags for every token of every sentence
+        Assert.Equal(groups, model.FeatureGroups);
+        foreach (var words in sentences)
+        {
+            var actual = decoder.Decode(Tokens(words), null, 0).Select(t => (int)t.Tag).ToArray();
+            Assert.Equal(ReferenceDecode(model, lexicon, words, groups), actual);
+        }
+    }
+
+    /// <summary>
+    ///     Proves that the two-pass decode is deterministic: repeated and concurrent decodes of the same sentences give identical results.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_RightPreview_IsDeterministic()
+    {
+        // Arrange: a toy model with the preview group and a list of sentences
+        var model = PerceptronModel.Load(TinyTrainer.Train(epochs: 5, groups: FeatureGroups.RightPreview | FeatureGroups.ClauseCues));
+        var decoder = new TagDecoder(model, DemaConsulting.PartOfSpeech.Lexicon.Load(TinyTrainer.FixtureLexicon()));
+        var sentences = TinyTrainer.Sentences().Select(s => Tokens(s.Tokens)).ToList();
+        string Render(Token[] tokens) => string.Join(" ", decoder.Decode(tokens, null, 2).Select(t => t.Tag + ":" + t.Confidence.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
+        var expected = sentences.Select(Render).ToArray();
+
+        // Act: decode again sequentially and from several threads
+        var again = sentences.Select(Render).ToArray();
+        var concurrent = new string[sentences.Count * 4];
+        Parallel.For(0, concurrent.Length, i => concurrent[i] = Render(sentences[i % sentences.Count]));
+
+        // Assert: identical text every time
+        Assert.Equal(expected, again);
+        for (var i = 0; i < concurrent.Length; i++)
+        {
+            Assert.Equal(expected[i % sentences.Count], concurrent[i]);
+        }
+    }
+
+    /// <summary>
+    ///     Decodes with the string-based reference features and the plain rules of the decoder (lexicon restriction, lowest tag wins a tie),
+    ///     in two passes when the model has the preview group.
+    /// </summary>
+    private static int[] ReferenceDecode(PerceptronModel model, DemaConsulting.PartOfSpeech.Lexicon lexicon, string[] words, FeatureGroups groups)
+    {
+        int[] Pass(IReadOnlyList<string>? preview)
+        {
+            var chosen = new List<string>();
+            var result = new int[words.Length];
+            for (var i = 0; i < words.Length; i++)
+            {
+                var previous1 = i >= 1 ? chosen[i - 1] : "-S-";
+                var previous2 = "-S2-";
+                if (i == 1)
+                {
+                    previous2 = "-S-";
+                }
+                else if (i >= 2)
+                {
+                    previous2 = chosen[i - 2];
+                }
+                var buckets = FeatureExtractor.ReferenceBuckets(words, i, previous1, previous2, model.HashBits, groups, lexicon, chosen, preview);
+                var scores = new int[UposExtensions.Count];
+                foreach (var bucket in buckets)
+                {
+                    model.AddScores(bucket, scores);
+                }
+
+                var allowed = DemaConsulting.PartOfSpeech.Lexicon.AllowedTags(words[i], lexicon);
+                var best = -1;
+                for (var tag = 0; tag < UposExtensions.Count; tag++)
+                {
+                    if (allowed.Contains((Upos)tag) && (best < 0 || scores[tag] > scores[best]))
+                    {
+                        best = tag;
+                    }
+                }
+
+                result[i] = best;
+                chosen.Add(((Upos)best).ToTagString());
+            }
+
+            return result;
+        }
+
+        var first = Pass(null);
+        return (groups & FeatureGroups.RightPreview) != 0 ? Pass(first.Select(t => ((Upos)t).ToTagString()).ToList()) : first;
+    }
 }

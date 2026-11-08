@@ -26,7 +26,7 @@ internal static class EvaluationReport
 
     /// <summary>
     ///     Reads the disclosure of an evaluation record: the one-paragraph notice that the Markdown reports carry directly after their
-    ///     introduction (for example that the held-out sets were already seen once for another model, a disclosed second look).
+    ///     introduction (for example that the held-out sets were already seen for earlier models of the family, a disclosed look).
     ///     The text belongs to a particular model and a particular evaluation, so it is not part of this generic renderer: it is read
     ///     from a committed, reviewable file (<c>docs/evaluation/disclosure.md</c>) that must be revised or removed for any later
     ///     evaluation of a different model. The notice is part of the Markdown only (the JSON artifacts do not carry it).

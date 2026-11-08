@@ -24,11 +24,15 @@ target framework, including .NET Framework.
   sentences enter every epoch; 0 leaves it out), `MaskDisputed`, `MinSilverProbability`, `SamplePermille` and
   `MaxSentences`. The run has `Epochs`, `HashBits` (18 to 24), `MinCount`, `PruneThreshold`, `QuantScale` (a power of
   two; the file scale is its reciprocal, which is exact), `Seed`, `Restriction` (`None`, `History` or `Full`),
-  `History` (`Predicted` or `Gold`), `Temperature` and `ImageSha256`. There is no floating-point training setting:
+  `History` (`Predicted` or `Gold`), `Temperature` and `ImageSha256`, and the context feature groups: `Features` (a list
+  of group names, empty by default; `positionCues` (F1), `clauseCues` (F2), `rightPreview` (F3), `inflection` (F4);
+  `ResolveGroups` maps them to the `FeatureGroups` flags and `Validate` refuses an unknown or repeated name) and
+  `PreviewFolds` (2 to 10, default 5, used only with `rightPreview`). There is no floating-point training setting:
   the temperature is chosen once by the `calibrate` command and is only written into the file header.
 - **`training.json`** (`ConfigFile.cs`, System.Text.Json, strict: an unknown member or an out-of-range value is an error):
-  the committed selected configuration in canonical form, so that rewriting it makes no changes. The selected values are
-  in _Selection of the Shipped Model_ below.
+  the committed selected configuration in canonical form, so that rewriting it makes no changes (`features` and
+  `previewFolds` are written only while a group is selected, so the committed form of a configuration without groups
+  does not change). The selected values are in _Selection of the Shipped Model_ below.
 - **`TrainingSentence`** (`Training/CorpusReader.cs`): the tokens of a sentence, the gold tag of every token or "no
   signal" (a masked token), the marks of every token and the id of the sentence. The marks (`TokenMarks`: `Foreign`,
   `Mentioned`) come from the status cell of a corpus row, `status[+flag...]` (`CorpusStatus`, same file); the reader
@@ -39,6 +43,16 @@ target framework, including .NET Framework.
   mistakes.
 - **`DeterministicRandom`** (`Training/DeterministicRandom.cs`): SplitMix64 with a Fisher-Yates shuffle; the sequence for
   seed 0 is pinned by a test.
+- **`QuantizedPredictor`** (`Training/QuantizedPredictor.cs`): the trainer's own greedy predictor over quantized rows for
+  a set of feature groups (two decoding passes with the right preview group); a test proves that it gives the tags of
+  `TagDecoder` for every group.
+- **`Jackknife`** (`Training/Jackknife.cs`): the folds by groups of documents that share sentence keys, and the preview
+  tags of the right preview group
+  (see _Context-Feature Experiment_).
+- **`ArmEvaluationData`**, **`ArmEvaluation`**, **`ArmConfigEcho`** and **`ArmInputs`** (`Evaluation/ArmEvaluation.cs`):
+  the development data of the command `eval-arm`, the scoring of one weights file and the hand-written JSON writer of
+  its result (see _Context-Feature Experiment_); `DevSets.ReadUdDev` reads the mapped development part of the external
+  treebank from the local cache.
 - **`DataGuard`** (`Evaluation/DevSets.cs`): the allow-list of the two development files, the deny-list for training
   sources, which works on the canonical path (absolute, with symbolic links and junctions resolved on .NET 6 and later)
   and requires a training source to lie below the `data` folder of the repository, and the held-out allow-list (the four
@@ -90,8 +104,10 @@ target framework, including .NET Framework.
 - **Training** (`PerceptronTrainer.Train`): the sentences of all sources are loaded (each repeated by its weight), the
   allowed tags of every token are computed once with `Lexicon.AllowedTags` (the same code that the decoder uses), and
   for every epoch the sentence order is shuffled with `DeterministicRandom` (continuing from the order of the previous
-  epoch) and every sentence is decoded from left to right: `FeatureExtractor` gives the 22 buckets of the token (the
-  four history features use the two previous tags), the integer scores of the 17 tags are summed, the guess is made,
+  epoch) and every sentence is decoded from left to right: `FeatureExtractor` gives the buckets of the token (the 22 base
+  templates, four of which use the two previous tags, and the features of the groups of the run, see _Context-Feature
+  Experiment_), the integer scores of
+  the 17 tags are summed, the guess is made,
   and on a mistake against a gold tag the weights of every feature are changed by +1 for the gold tag and -1 for the
   guessed tag, and the update is recorded as `t * delta` in `U`. A token without a training signal is only decoded: it
   is a step of the averaging (because it is decoded at run time) and it enters the history.
@@ -110,8 +126,10 @@ target framework, including .NET Framework.
 - **Minimum count**: when `MinCount` is above 1 a feature takes part in training only if it occurs often enough in the
   training signal.
 - **Building the file** (`ModelBuilder`): the rows go to `PerceptronModelWriter.Compile` (which orders the buckets) with
-  `hashBits`, the temperature, the scale and `FeatureExtractor.FeatureSetVersion`; `Build(..., compress: false)` gives
-  the uncompressed image that is compared and hashed, `compress: true` the committed file.
+  `hashBits`, the temperature, the scale, the feature set version of the groups of the configuration
+  (`FeatureExtractor.FeatureSetVersionFor`: 1 without a group, 2 with at least one) and the group mask (the header word
+  at offset 40); `Build(..., compress: false)` gives the uncompressed image that is compared and hashed,
+  `compress: true` the committed file.
 - **`train --check`**: retrains with `training.json`, builds the uncompressed image and compares it with
   `PerceptronModel.ToUncompressedImage` of the committed file and with `imageSha256`; the status is `Current`, `Missing`,
   `Stale` or `Invalid`, and the exit code is 1 with the regeneration command in the message unless the file is current.
@@ -126,8 +144,12 @@ target framework, including .NET Framework.
 - **Glossary evaluation** (`GlossaryEvaluation`, `GlossaryEvaluationReport`): see _Glossary Evaluation_.
 - **Shapes development evaluation** (`ShapesDevSets`, `ShapesDevEvaluator`, `ShapesDevReport`): see _Shapes Development
   Evaluation_.
-- **Commands** (`Program.cs`): `train` (with experiment overrides, `--check`, `--update-config`, `--eval`, `--log`,
+- **Context features** (`PerceptronTrainer`, `Jackknife`, `QuantizedPredictor`, `ArmEvaluation`): see _Context-Feature
+  Experiment_.
+- **Commands** (`Program.cs`): `train` (with experiment overrides, among them `--features` and `--preview-folds`, `--check`,
+  `--update-config`, `--eval`, `--log`,
   `--calibrate`, `--checkpoints`), `eval`, `eval-shapes` (the hard-shape development set; `--weights`, `--label`, `--tranche`),
+  `eval-arm` (`--weights`, `--label`, `--json`; the dev-only scoring of a trained arm),
   `shapes-tokenize` (`--in`, `--out`; the library tokenizer over a text file; `DataGuard.EnsureOutsideData` refuses a
   path inside the repository's data folder, so no repository data), `calibrate`, `compare`,
   `glossary-probe`, `glossary-experiment` and
@@ -153,9 +175,19 @@ environmental inputs are the Unicode normalization and the culture-invariant cas
 of the few non-ASCII tokens of the corpora, which are stable by Unicode policy; any difference would surface as a
 failing `train --check` or golden test in the CI job of that system.
 
+With no feature group (no `features` in the configuration, no `--features` option or `--features none`) none of the
+group code runs and the training is the base training, the one that the trainer had before the groups existed: the
+golden hashes of the small reference runs are unchanged, and the BASE arm of the context-feature experiment reproduced
+the weights file of the model before the groups byte for byte (`RUN-LOG.md`). The embedded model, which enables the
+clause cues, is the one that `train --check` reproduces from `training.json`, and the calibrated run with the
+committed seed is byte-identical to the committed weights file. The jackknife is deterministic too: its folds depend
+on the document ids and the sentence keys only, and the fold models are trained like any other run.
+
 ### Development-Only Selection
 
-Every setting of the shipped model was selected on `data/open/dev.tsv` and `data/eval/gold-v2/dev.tsv` only. The rule
+Every setting of the shipped model was selected on development data only: `data/open/dev.tsv` and
+`data/eval/gold-v2/dev.tsv`, and for the feature group also the hard-shape development set and the development part of
+the external treebank (read by `eval-arm`; see below and _Context-Feature Experiment_). The rule
 is code, not convention: evaluation accepts exactly those two paths (compared as full paths, so a relative spelling or a
 dotted detour cannot slip past), a file at a development path must announce a development split in its header, and
 training sources must lie below the `data` folder of the repository and are checked against a deny-list that refuses
@@ -218,12 +250,10 @@ before any curve existed.
   t, and
   a harmful error is an answered decision with the other one of the two tags. The curve gives, for every threshold of the
   grid, the answered decisions, the coverage, the harmful errors, the harmful errors per 1,000 answered and per 1,000
-  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 90, 11 and 101 harmful
-  errors on open dev, gold v2 dev and pooled for the model adopted after the pre-registered `prenominal-ing`
-  follow-up; the first retrained model of the corpus cleanup C had 103, 14 and 117, and the first freeze 94, 9 and
-  103). The constants of
-  the command are the development figures of the embedded model (`RUN-LOG.md`, "Corpus cleanup C"); they were set to
-  those of the adopted model once, to the figures that `thresholds` itself reported (it refused to write with the old
+  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 100, 16 and 116 harmful
+  errors on open dev, gold v2 dev and pooled for the embedded model). The constants of
+  the command are the development figures of the embedded model (`RUN-LOG.md`, "Context-feature experiment"); they were
+  set to the figures that `thresholds` itself reported (it refused to write with the old
   constants), before its run that wrote the artifact. The reliability table
   groups the decisions by confidence.
 - **Rule `nv-pooled-dev-v1`.** On the pooled development decisions the first grid threshold with at most 5.0 harmful
@@ -268,9 +298,9 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   is a data error (exit code 2) before any line is parsed.
 - **Run once.** `evaluate` refuses to start when `docs/evaluation/test-results.json` or its lock file
   `docs/evaluation/test-results.json.running` exists. There is no `--force`: a repeat needs that committed file to be
-  deleted, which is visible in the history and must be recorded in the run log. That was done once, for the second
-  evaluation of the model family (the model adopted after the `prenominal-ing` follow-up, a disclosed second look): the
-  record of the first retrained model was deleted on purpose before the run and stays in the history. Immediately before
+  deleted, which is visible in the history and must be recorded in the run log. That was done for the evaluation of
+  the embedded model: the record of the previous model was deleted on purpose before the run and stays in the history
+  (the run log, "Context-feature experiment", has the procedure). Immediately before
   the first held-out
   token is scored, `evaluate` creates the lock file with `FileMode.CreateNew` (`DataGuard.AcquireRunLock`), so of two
   concurrent runs exactly one proceeds. The results file is written last, exclusively, and only then is the lock file
@@ -280,8 +310,9 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   after their introduction, the one-paragraph disclosure that `EvaluationReport.ReadDisclosure` reads from the committed
   file `docs/evaluation/disclosure.md` (the line breaks of the file collapse to single spaces; a missing or blank file
   means no notice, and `RenderDev` and `RenderResults` take the text as an optional `disclosure` argument, so the renderer
-  itself holds no claim about any model). For the embedded model the text says that the record belongs to the second
-  held-out evaluation of the model family, a disclosed second look, with a link to the run log and the evaluation
+  itself holds no claim about any model). For the embedded model the text says that the record belongs to a later
+  held-out evaluation of the model family, a disclosed look at sets that earlier models had been scored on, with a link
+  to the run log and the evaluation
   overview. The text describes one model and one evaluation: it must be revised or removed (the file deleted or
   emptied) before a later evaluation of a different model is rendered, so that no record inherits a stale claim. The notice
   is in the Markdown only; the JSON artifacts, and so the pinned selection hash, do not carry it. The held-out report
@@ -323,7 +354,8 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   "Earlier Model" table (a test compares the few it states; the earlier-model figures are copied from the trainer
   `RUN-LOG.md`, which is their record). The figures that the package documentation and the user guide
   quote are verified against the committed JSON by the system tests, not by this unit. The root `README.md` repeats the
-  current threshold figures of the generated reports and links to them; no test compares that copy.
+  held-out results and the threshold figures of the generated reports in two tables, checked by a system test, and links
+  to the evaluation record.
 
 ### Selection of the Shipped Model
 
@@ -338,13 +370,16 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | Hash bits | 19 | 18 was borderline, 19 is tied with 22 |
 | Pruning | minimum count 1, magnitude threshold 8 units | largest tied threshold; the next is not tied |
 | Quantization | `quantScale` 8 (scale 1/8) | tied with the unpruned scale 16; scale 4 is not tied |
-| Temperature | 6.442 | minimum log-likelihood on open development data |
+| Temperature | 9.514 | minimum log-likelihood on open development data |
+| Feature groups | `clauseCues` | the context-feature experiment (`RUN-LOG.md`): pre-registered rule, five seeds |
 
-The result is a file of 116,662 rows and 282,426 weights, 1,080,650 bytes uncompressed and 478,835 bytes compressed;
+The settings above the last row were selected on the base feature set (before the groups existed) and were not selected
+again for the clause cues: the experiment compared the groups at those settings, and only the temperature was refit.
+The result is a file of 121,033 rows and 301,571 weights, 1,146,827 bytes uncompressed and 517,210 bytes compressed;
 training takes about 5 to 14 seconds on one thread (6,285,552 steps), and the check about 15 seconds. Development
-results through the real decoder: open development 96.38% accuracy (95.68% on lexicon-ambiguous tokens), gold
-development 95.24% (without the `to` and `not` targets, which follow another convention and are reported
-separately), harmful errors 20.0 per 1,000 noun-verb decisions pooled, calibration error 0.26% (open) and 1.99% (gold).
+results through the real decoder: open development 96.65% accuracy (95.98% on lexicon-ambiguous tokens), gold
+development 94.84% (without the `to` and `not` targets, which follow another convention and are reported
+separately), harmful errors 22.9 per 1,000 noun-verb decisions pooled, calibration error 0.24% (open) and 2.38% (gold).
 These are development figures; they say nothing about held-out data.
 
 ### Glossary Decision
@@ -356,9 +391,8 @@ them wrong) against the shipped model M0 with a score boost on type-level simula
 without a glossary than the rule allows and did not beat the boost on covered tokens or on the neighbors of
 covered tokens. (The eligibility of a training token for a hint uses the allowed tags of the token as written, the same
 mask as the runtime decoder, so a capitalized token also allows PROPN and X; a first run that lower-cased the token was
-corrected and repeated, with the same decision.) **Decision: boost only.** The feature set stays at version 1 and the
-library's extractor and decoder are
-unchanged. The measured boost curve was the starting point for calibrating the boosts: up to about two temperatures
+corrected and repeated, with the same decision.) **Decision: boost only.** The library's extractor and decoder were
+left unchanged by it. The measured boost curve was the starting point for calibrating the boosts: up to about two temperatures
 (a log-odds shift of 2) give most of the benefit of right entries and cost at most 0.5 points on wrong entries at 10%
 wrong; larger boosts cost more on wrong entries, and eight or more behave like a hard constraint. This curve is not the
 final word on the default: the strength that the library ships as `GlossaryOptions.DefaultSoftStrength` was chosen
@@ -368,7 +402,10 @@ replacement rule whose reason is recorded as a dated change; the cost of that ch
 there. The experiment code
 (`glossary-probe`, `glossary-experiment`, `GlossaryFeatures`, and the optional `glossary` parameter of the trainer, which
 is `null` for the shipped model and does not change its pinned hash) stays in the tool so that the decision can be
-reproduced.
+reproduced. The experiment's own decoder takes the feature groups of the configuration (it configures its workspace
+and advances the clause state exactly as the trainer's predictor does) and sizes its bucket buffer for the group
+capacity plus the two glossary buckets; it does not support the right preview group and refuses a configuration with
+it before anything is trained. The probe and the evaluation tag through the real `Tagger`, which handles every group.
 
 ### Glossary Evaluation
 
@@ -438,6 +475,78 @@ scores a weights file on it:
 - **Tokens**: the file stores tokens made by the library `Tokenizer`; the command `shapes-tokenize` runs it over a text
   file for `tools/data/shapes_dev.py`, which builds the set from sentences that two blind model taggers labeled.
 
+### Context-Feature Experiment
+
+The context feature groups (position cues F1, clause cues F2, right preview F3, inflection F4; their definitions are
+in `feature-extractor.md` and in the pre-registration section of `RUN-LOG.md`) are switches of the shared
+`FeatureExtractor`. The trainer is the side that trains them and measures them; the protocol (arms, seeds, metrics, guards
+and the selection rule) was fixed before any candidate model was trained and is recorded in `RUN-LOG.md`, and the
+harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-features/` (`arms.json`, `run_arms.ps1`,
+`analyze_arms.py`; frozen by the hashes in the run log, resumable: a run is complete when its JSON exists).
+
+- **Arms and rule.** Ten arms of five seeds each (the base feature set, each group alone, all four groups, and all four
+  minus one), every arm with the settings of `training.json` and only the groups and the seed different. The primary
+  measure is the mean over the seeds of the pooled harmful noun-verb errors per 1,000 decisions on the hard tranche of
+  the shapes development set; guards on the standard tranche, the open and the treebank development sets, the size of
+  the file and the throughput must hold. Among the arms that pass the guards, the arm with the fewest groups within
+  10% of the best primary measure is the candidate, and it is adopted only if the Welch 95% interval of its primary
+  measure minus that of the base arm lies entirely below zero; there is no fallback to another arm. The word-cluster
+  group of the plan was not built (it needs a new resource and format).
+- **Outcome.** The rule selected the clause cues. The all-groups arm had the lowest primary measure but is not the
+  candidate, because the clause cues are within the window and have fewer groups. `training.json` therefore selects
+  `clauseCues`, the temperature was refit, the two thresholds were selected again on development data (the balanced
+  point moved), and the model was evaluated once on held-out data (see _Held-Out Evaluation_). The groups that were not
+  selected remain switches of the shared extractor, the trainer, the loader and the decoder, off in `training.json`;
+  the run log states the caveats of the evidence (development data only, one set that the groups were designed
+  against, nine candidate arms, seeds that measure training noise only, and a shipped seed that is worse than the
+  previous model on two development measures).
+- **Training with groups** (`PerceptronTrainer.Train`): the workspace is configured with the groups and the lexicon
+  (`DecoderWorkspace.Configure`) before a sentence is prepared, the buckets of a token are the base ones, the static
+  buckets of the groups and the history buckets (`BucketCapacity` elements), and `FeatureExtractor.Advance` is called
+  after every decision with the tag that becomes the history of the next token, exactly as the decoder does. The minimum
+  count and the pruning treat the static group features like the base ones; the history features of the groups are never
+  dropped. `QuantizedPredictor` takes the groups and decodes like `TagDecoder`, including the first and the second pass
+  of the right preview group, and the tests prove the equality for every group.
+- **Right preview** (`PerceptronTrainer`, `Jackknife`): every sentence is trained in two passes on one weight table,
+  the first without the preview features, the second with the preview tags of the sentence (the pass-2 history is its
+  own), so the table serves the first pass of the decoder as well and the file keeps the size of an arm without the
+  group. The
+  preview tags are the **jackknife** tags: the distinct sentences are split into `PreviewFolds` folds from groups of
+  documents (`source_id`, or the sentence id when there is none). Two documents are in one group when they share a
+  sentence key, the lower-case letters and numbers of the text (the Unicode categories L and N) that the leakage check of
+  the data compares. The trainer computes it exactly as the Python normalizer of that check does, by code point, and a
+  fixture of shared cases pins this. The parity targets the Unicode version of the Python normalizer (Python 3.13: Unicode
+  15.1) for the code points that it assigns; the mechanism for a code point whose general category differs between the
+  Python tables and the runtime's (today only U+1171E) is an explicit category override, derived from an exhaustive
+  comparison of every code point. Two documents share a group directly or
+  through other documents (union-find over the documents; a sentence without a letter or number joins nothing). The fold
+  of a group is the FNV-1a hash of its smallest document id (ordinal order) modulo the number of folds. A document is
+  never split, an exact duplicate sentence under two document ids never lands in two folds (no held-out sentence key
+  occurs in the training set of its fold model), and the same sentences share a fold in every run and for every seed; a
+  document that shares no key with another one has the fold of its own id. For each fold a model is trained on
+  the other folds without the right preview group (the other groups, the settings and the seed of the run) and tags its
+  fold with `QuantizedPredictor`, the quantized weights and the lexicon restriction, which is the first pass of the
+  decoder. The first pass at run time uses the final model and the training tags come from the fold models; that
+  mismatch is accepted. The tags are not cached: the fold models depend on the other groups of the arm and on the seed,
+  so no two runs of the experiment share them, and a run that fails is repeated from the start.
+- **`eval-arm`** (`ArmEvaluation`, `ArmEvaluationData`): scores one weights file through the real decoder (all 16
+  alternatives, `Metrics.Judge`) on the standard and the hard tranche of the shapes development set (per shape and
+  pooled; `items` lists `d`, `c` and `h` for every target item, which sum to the pooled decisions, correct and
+  harmful counts), on the open and the gold v2 development splits and on the mapped development part of the external
+  treebank (the file `ud_dev.tsv` of the local, git-ignored treebank cache below `tools/data/cache`, whose SHA-256 is
+  pinned in `DataGuard`; a missing or changed cache is an error with the fetch recipe, and judging uses the mapped tags
+  like the held-out view of the treebank), reads the size of the file and the groups from the header, and measures the
+  throughput. **Throughput**: tokens per second of the default tagger (a tagger loaded from the same file with default
+  options) on the calling thread only, over the tokens of the open development split followed by those of the
+  development part of the treebank, one `Tag(tokens)` call per sentence, after one warm-up pass that is not counted, as
+  the median of five timed passes over all sentences; it excludes tokenization, loading and the judged pass. The result
+  is one JSON object (schema 1, hand-written and deterministic except for the throughput) whose members are listed in
+  the interface contract at the top of `run_arms.ps1`; the command records the commit and a dirty flag from git. The
+  command has no data option; `--weights` and `--json` must lie outside `data/` and `tools/data/`
+  (`DataGuard.EnsureArmFile`), so no held-out file can be read as weights or overwritten by a result, and a test pins
+  that every held-out file is refused by the guards that the command uses and that its sources do not mention the
+  held-out readers.
+
 ### Error Handling
 
 Invalid configuration (an unknown member, an out-of-range value, no source, a source with weight above 16, a corpus
@@ -448,8 +557,10 @@ training source that lies outside the `data` folder after resolution, and a link
 negative, non-numeric or out-of-sentence target index throws `InvalidDataException`. A shapes development item whose
 judged word is missing, outside its sentence, disputed, not a noun or verb or in the wrong class for its shape and role,
 a header without `dev split`, and a missing file throw as well (`InvalidDataException`, `FileNotFoundException`), and a
-path other than the two shapes development files given to its guard throws `InvalidOperationException`. A held-out gate
-failure (no
+path other than the two shapes development files given to its guard throws `InvalidOperationException`. `eval-arm`
+refuses a weights or result file inside `data/` or `tools/data/` (`InvalidOperationException`), a missing, changed or
+non-development treebank table and a weights file that is not valid (`InvalidDataException`), all exit code 2. A
+held-out gate failure (no
 selection artifact, an artifact for another model, rule or development file, a held-out file that differs from its recorded
 hash or announces another set, a missing or unpinned treebank cache or a mapped table that differs from its pin, a
 malformed probe or treebank row, a missing development file or one that differs from the manifest hash, an artifact
@@ -465,8 +576,9 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
 
 ### Dependencies
 
-- **FeatureExtractor**, **DecoderWorkspace** and **Lexicon** (the same extraction and the same `AllowedTags` rules as at
-  run time), **PerceptronModel** (`Load`, `ToUncompressedImage`), **PerceptronModelWriter**, **BinaryFormat**
+- **FeatureExtractor**, **DecoderWorkspace** and **Lexicon** (the same extraction, the same feature groups and the same
+  `AllowedTags` rules as at run time), **PerceptronModel** (`Load`, `FeatureGroups`, `ToUncompressedImage`),
+  **PerceptronModelWriter** (with the group mask), **BinaryFormat**
   (header patching for the temperature), **Upos**; **Tagger**, **TagDecoder** and **TokenConstraint** for the evaluation
   and the glossary experiment through the real decoder; **Glossary** (with its builder, entry, options and match types)
   for the glossary evaluation through the real tagger. All of these are internal and reached through
@@ -475,9 +587,10 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
   (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv` and `data/silver/silver.tsv`, and the two
   development files plus the two hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche) and
-  `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` only); for
+  `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` and `eval-arm` only); for
   `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the
-  external treebank that the data tools fetch (the tool itself uses no network).
+  external treebank that the data tools fetch (the tool itself uses no network); `eval-arm` reads the mapped development
+  table of the same cache.
 
 ### Callers
 

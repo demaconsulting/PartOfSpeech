@@ -107,3 +107,71 @@ sections:
                   lower throughput.
                 tests:
                   - FeatureExtractor_Extract_DoesNotAllocateAfterWarmUp
+                  - FeatureExtractor_Extract_AllGroups_DoesNotAllocateAfterWarmUp
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-FeatureGroups
+                title: >-
+                  The extractor shall extend the 22 base templates only by the feature groups that its workspace is
+                  configured with: with no group it shall produce exactly the 22 base templates, whatever the workspace
+                  served before; with a group it shall add the features of that group behind the base ones, in a
+                  bucket buffer of at most 40 buckets per token; and for every set of groups the buckets shall equal
+                  the buckets of the plain, string-based definition.
+                justification: |
+                  The groups are an experiment with a switch: a model without groups must keep the features it was
+                  trained with, a model with groups must be scored with exactly the features it was trained with, and
+                  the trainer and the decoder share this one implementation.
+                tests:
+                  - FeatureExtractor_Extract_NoGroups_ProducesOnlyBaseTemplates
+                  - FeatureExtractor_Extract_GroupsMatchReference
+                  - FeatureExtractor_Extract_AllGroups_FillsBucketCapacity
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-PositionCues
+                title: >-
+                  The position cues shall describe where a token is in its sentence: its position capped at three,
+                  the first token that is not a function word, the terminal of the sentence (a final closing quote or
+                  bracket skipped) and the length bucket of the sentence.
+                justification: |
+                  Imperatives, subjects and fragments differ by where they stand in a sentence; the cues are fixed by
+                  the pre-registered definition.
+                tests:
+                  - FeatureExtractor_Extract_PositionCues_FollowTheDefinition
+                  - FeatureExtractor_Extract_PositionCues_LengthBuckets
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-ClauseCues
+                title: >-
+                  The clause cues shall describe the classes of the neighbors of a token (so that a verb before a
+                  determiner is distinguishable), the distance to the nearest preceding determiner or number and to the
+                  nearest preceding modal or `to`, and what the tags decided since the last clause boundary
+                  contain (a subject-like tag, a verb), where a comma, semicolon, colon, opening bracket or dash and a
+                  decided conjunction start a new clause.
+                justification: |
+                  Whether a clause already has a subject or a verb decides whether an ambiguous word is a verb; the
+                  classes and the state are fixed by the pre-registered definition.
+                tests:
+                  - FeatureExtractor_Extract_ClauseCues_ClassifiesTokens
+                  - FeatureExtractor_Extract_ClauseCues_ImperativeFollowedByDeterminer
+                  - FeatureExtractor_Advance_ClauseState_TracksSubjectVerbAndBoundaries
+                  - FeatureExtractor_Advance_ClauseState_BoundaryTokens
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-Inflection
+                title: >-
+                  The inflection cues shall tell whether the stem of a token that ends in `ing`, `ed` or `s` is a
+                  verb or a noun in the lexicon, restoring a dropped `e`, undoing a doubled final consonant and
+                  mapping `ied` and `ies` to `y`, so that `avoiding` is told from `bring` and `thing`.
+                justification: |
+                  A word that only looks inflected must not be read as a verb form; the lexicon knows which stems are
+                  verbs.
+                tests:
+                  - FeatureExtractor_Extract_Inflection_StemFacts
+                  - FeatureExtractor_Extract_Inflection_SeparatesAvoidingFromBringAndThing
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-RightPreview
+                title: >-
+                  The right preview cues shall be absent in the first decoding pass and, in the second pass, describe
+                  the tags that the first pass chose for the next two tokens, with distinct markers for the end of the
+                  sentence and for beyond it; the cues shall stay inactive for a workspace without the group.
+                justification: |
+                  The preview gives the second pass the right-hand context that a left-to-right decoder cannot see; the
+                  first pass must not contain it, or it would be circular.
+                tests:
+                  - FeatureExtractor_Extract_RightPreview_UsesFirstPassTagsOfNextTwoTokens

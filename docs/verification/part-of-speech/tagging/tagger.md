@@ -57,3 +57,7 @@ invariants (excludes the tag, sorted, limited, sums with the confidence to at mo
   (a hard entry decides the tag of its head word with certainty, and the match is reported on the token and on the
   sentence with its offset and definition). What a glossary does to the tags is verified in _Glossary Verification_.
 - **Alternatives**: `Tagger_Tag_Alternatives_ExcludeBestAndSumWithConfidence`.
+- **Feature groups**: `Tagger_Load_ModelWithFeatureGroups_TagsWithTheGroups` (a toy model trained with all four groups
+  loads through the public loader, its header names all four groups, and the tagger, which decodes the right preview
+  group in two passes, tags at least 90% of the fixture tokens right; what each group does is verified in
+  _FeatureExtractor Verification_ and _TagDecoder Verification_).

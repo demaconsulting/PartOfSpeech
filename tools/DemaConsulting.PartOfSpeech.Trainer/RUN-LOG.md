@@ -2354,6 +2354,868 @@ Headroom is 100% minus the target accuracy (derived from the hard table above, n
 the four shapes (136 of 400 target errors), against 3.7% on the standard tranche. The 95% intervals of a shape are 16 to 19
 points wide, so a difference of a few items between variants is inside the interval.
 
+## Context-feature experiment: pre-registration
+
+This section is written and committed **before any candidate model of the experiment is trained or evaluated**; the git
+history shows the order: this commit (plan, harness, analysis script, rule), then the feature code, then the arm runs, then a
+results section. Only the shipped model (the BASE arm) has been run: the baselines below. The harness is in
+`tools/DemaConsulting.PartOfSpeech.Trainer/context-features/` (`arms.json`, `run_arms.ps1`, `analyze_arms.py`) and is frozen by
+the hashes at the end; the SHA of this commit is recorded by the commit that follows it (a commit cannot contain its own SHA).
+
+### Goal
+
+Test whether sentence-level context features, added to the shared feature extractor behind switches, lower the harmful
+noun-verb errors of the tagger on the hard tranche of the shapes development set without costing the other development
+measures, size or speed. The hard tranche holds the contested cases of four shapes (`n-compound-head`, `n-subject-initial`,
+`v-imperative-initial`, `v-after-modal`) where the shipped model is weakest. Nothing is adopted unless the pre-registered rule
+below selects it.
+
+### Baselines (shipped model, seed 20260101; development data only)
+
+| Measure | Value |
+| --- | --- |
+| Hard tranche, all shapes (400 target items) | 66.0% target accuracy, 107 harmful, **267.5 harmful per 1k** |
+| `v-imperative-initial` | 45.0%, 440.0 per 1k |
+| `n-compound-head` | 68.0%, 280.0 per 1k |
+| `n-subject-initial` | 73.0%, 160.0 per 1k |
+| `v-after-modal` | 78.0%, 190.0 per 1k |
+| Standard tranche, all shapes (600 target items) | 96.3% target accuracy, 17 harmful, 28.3 per 1k |
+| Open dev (the adopted model's own labels) | 96.38% accuracy, 90 harmful of 4,451 decisions = 20.2 per 1k |
+| UD-EWT dev (mapped view, 25,148 tokens) | 92.71% agreement, 103 harmful of 4,570 decisions = 22.54 per 1k |
+| Gold v2 dev (recorded, not gated) | 95.24% accuracy, 11 harmful of 611 = 18.0 per 1k |
+| Weights | 478,835 bytes deflated, 1,080,650 raw, 116,662 rows |
+
+These are the sections above (the open dev and UD-EWT dev figures are those of the adoption section). The experiment compares
+arms by their own five-seed means: the BASE arm re-measures every figure at five seeds, and the guards below are relative to
+that BASE mean, not to the single-seed figures in this table. Single-thread throughput of the default tagger was recorded at
+315k to 894k tokens per second depending on machine load.
+
+### Feature groups
+
+The groups extend the 22 templates of the shipped extractor. Each is a switch (`FeatureGroups`, stored as a mask in the weights
+header; mask 0 is the shipped format). New feature kinds are appended, so BASE hashes do not move. The definitions below are
+binding; buffer sizes, hash seeds and similar details are not. A lexicon lookup is the one that the decoder already does (the
+cached tag set of a token); tokens not in the lexicon have an empty set.
+
+**Token class (used by F1 and F2).** First match in this order, from the lexicon tag set T of the token and its lower-cased form:
+`Punct` (no letter or digit); `Modal` (one of can, could, may, might, must, shall, should, will, would, cannot); `To` (`to`);
+`Num` (all digits, or NUM in T); `Det` (DET in T and none of NOUN, VERB, ADJ); `Pron` (PRON in T and none of NOUN, VERB, ADJ);
+`Adp` (ADP in T and none of NOUN, VERB, ADJ); `Conj` (CCONJ or SCONJ in T and none of NOUN, VERB, ADJ); `NounVerb` (NOUN and
+VERB in T); `NounOnly` (NOUN, no VERB); `VerbOnly` (VERB, no NOUN); `AdjAdv` (ADJ or ADV in T); `Other` (everything else,
+including unknown spellings). A token is **function-only** when T is not empty and has only DET, PRON, ADP, CCONJ, SCONJ, PART,
+AUX, PUNCT or SYM tags.
+
+- **F1 `positionCues`** (5 static features). `PosIdx` = min(i, 3). `FirstContent`: the index of the first token that is not
+  function-only (unknown spellings count as content), capped at 2, combined with whether the token is that token. `EndPos`:
+  the sentence terminal (`.`, `!`, `?`, `:`, other or none; a final closing quote or bracket is skipped) combined with `PosIdx`.
+  `LenBucket`: sentence length in tokens, buckets 1-3, 4-6, 7-10, 11-15, 16-25, 26+. `LenPos` = `LenBucket` x `PosIdx`.
+- **F2 `clauseCues`** (7 features). Static: `PrevClass1` and `NextClass1` (token class of i-1 and i+1, with a boundary marker),
+  `PrevNextClass` (the pair), `DetDist` (distance 1, 2, 3 or none to the nearest preceding Det, possessive or Num token within 3
+  tokens), `ModalDist` (distance 1, 2 or none to the nearest preceding Modal or To token within 2 tokens). History:
+  `ClauseState` (two bits from the predicted tags since the last clause boundary: a subject-like tag, DET, PRON, NOUN, PROPN or
+  NUM, was seen; a verb tag, VERB or AUX, was seen; a punctuation token among `, ; : ( --` or a predicted SCONJ or CCONJ resets
+  both bits) and `ClauseStatePrev` (`ClauseState` x the previous tag).
+- **F3 `rightPreview`** (4 features; absent in pass 1). A first greedy pass without F3 gives preview tags; the decoder then
+  decodes again with `Rt1` (preview tag of i+1), `Rt2` (preview tag of i+2), `RtPair` (both) and `RtPrev` (the previous tag of
+  this pass x `Rt1`); an end-of-sentence value is used past the end. Training uses **jackknife** preview tags: K = 5 folds by
+  hash of the document id (a document is never split, the same folds for every seed), fold models trained without F3 on the
+  arm's other groups with the shipped training settings and the run seed, decoding their held-out fold exactly as the runtime
+  pass 1 does. One weight table is trained on both modes (pass 1 without F3, pass 2 with the jackknife tags). Known and accepted
+  mismatch: the runtime pass 1 uses the final model, the training preview tags come from the fold models.
+- **F4 `inflection`** (2 features, only for tokens ending in `ing`, `ed`, `s`, `es` or `ies`). Stem candidates (at most 3
+  lexicon lookups, minimum stem length 2): `ing`: stem, stem + `e`, the undoubled final consonant; `ed`: the same and `ied` to
+  `y`; `s`: drop `s` (not after `ss`), drop `es`, `ies` to `y`. `StemKind` = suffix kind x whether some candidate has VERB in
+  the lexicon x whether some candidate has NOUN; `StemKindPrev` = `StemKind` x the previous tag.
+
+### F5 (word clusters): skipped
+
+F5 is not built. It needs a new embedded resource, a new binary format with loader and tests, and a license review of the
+derived data, and the only public-domain text available is about 0.5 million tokens, too little to add information beyond the
+lexicon. The mask bit stays reserved and the loader rejects it.
+
+### Arms and runs
+
+Every arm uses the shipped `training.json` settings (sources open x2, MASC, silver >= 80, restriction `history`,
+predicted history, 6 epochs, 19 hash bits, minimum count 1, pruning 8, scale 8); only the groups and the seed differ, and the
+temperature is refit on open dev for every run (`--calibrate`) as for the shipped model. Seeds: **20260101, 11, 12, 13, 14**
+(five per arm). **K = 5** jackknife folds for F3. Ten arms, 50 runs, run one at a time by `run_arms.ps1`:
+
+| Arm | Groups |
+| --- | --- |
+| BASE | none (the shipped feature set) |
+| F1, F2, F3, F4 | each alone |
+| ALL | F1 + F2 + F3 + F4 |
+| ALL-minus-F1, -F2, -F3, -F4 | ALL without the named group |
+
+The driver trains with `train --seed S --features <groups|none> [--preview-folds 5] --calibrate --output <file>`, then scores
+the file with the dev-only command `eval-arm`, which writes one JSON file per run (the interface contract and the schema are at
+the top of `run_arms.ps1`). It runs below normal priority with at most 8 runtime threads, requires at least 6 GB free on C:,
+and resumes after an interruption: a run is complete when its JSON exists. A run that fails without a result is repeated; no
+run is repeated or replaced because of its result, and no arm is dropped.
+
+### Metrics and the selection rule (fixed now; applied exactly as written; nothing is tuned afterwards)
+
+A harmful error is a swapped noun-verb class at confidence >= 0.45 on a noun-verb decision; rates are per 1,000 decisions
+(the definitions of E0 and of the shapes development set). All figures come from `analyze_arms.py` over the five seeds
+of every arm; spreads are sample standard deviations.
+
+- **Primary metric:** the mean over the five seeds of the pooled harmful per 1k on the hard tranche of the shapes development
+  set (four shapes, 400 target items). Lower is better.
+- **Guards** (arm against the BASE mean; all must hold): shapes-dev standard tranche harmful per 1k <= BASE + 5; open dev
+  harmful per 1k <= BASE + 1.5; UD-EWT dev harmful per 1k <= BASE + 1.5; UD-EWT dev accuracy >= BASE - 0.15 points; deflated
+  weights file size <= 2 x BASE; single-thread throughput >= 150,000 tokens per second (absolute; the median over the seeds).
+- **Rule.** Q = the arms other than BASE that pass every guard. If Q is empty, BASE stays. Otherwise m = the lowest primary in
+  Q, S = the arms of Q with primary <= 1.10 x m (within 10% relative), and the candidate is the arm of S with the fewest feature
+  groups (ties: the lowest primary; a remaining tie: the order of `arms.json`). The candidate ships only if the Welch 95%
+  t-interval (with the Welch degrees-of-freedom approximation) of its primary minus BASE lies **entirely below 0**; otherwise BASE stays
+  and nothing ships. There is no fallback to another arm.
+- **Reported, not gated:** hard and standard target and control accuracy, open dev and gold v2 dev accuracy, NLL and ECE,
+  temperature, rows, raw bytes, training seconds, the per-shape hard breakdown (mean and sd of accuracy and harmful per 1k),
+  and a paired bootstrap over the hard items of the candidate against BASE (2,000 resamples, seed 20261107, descriptive only).
+- **Acceptance test before the rule is applied.** The BASE arm at seed 20260101 must reproduce the baselines above (open dev
+  90 of 4,451, UD-EWT dev 103 of 4,570, hard 267.5 per 1k, standard 28.3 per 1k) and its weights must be byte-identical to the
+  shipped `weights.bin`; if not, the experiment stops without a selection.
+
+**BASE must be byte-identical with all switches off.** With every group off (no `--features` option, or `--features none`), the
+code of the feature work must give weights that are byte-identical to the shipped file (`train --check` exit 0, image
+`a0d45458...8da3`), and all existing tests must pass unchanged. A failure of this gate stops the work before any arm is run.
+
+### Limits stated in advance
+
+- Nine candidate arms are compared with a seed-only interval: it measures training noise, not the sampling of the 400 hard items
+  (their item-level interval is far wider; the bootstrap above shows it), and the lowest of nine is subject to selection bias.
+  The rule is applied as written regardless, and a win is described as development evidence of that kind.
+- The shapes development set has been used for baselines before this experiment; the groups were designed knowing which
+  shapes are weak, so the set is a development set for this selection and not an independent test of the idea.
+- F1 uses sentence-end and sentence-length cues that may not carry over to fragments (headings, list items) of real text; the
+  development sets contain few such inputs.
+
+### Held-out sets
+
+The held-out sets (open test, gold v2 test, shape probe, STE challenge set, UD-EWT test) are **never used for selection** and
+are not read by this experiment: the harness reads only the development files, and `eval-arm` has no path to a held-out file.
+The adoption section above says that a further held-out evaluation "would be a third look and is not planned". That sentence is
+the state when it was written and stays as it is. This experiment is a new work item that the project owner authorized, and it
+changes it only conditionally: **if and only if a winner qualifies under the rule**, one `evaluate` of the new model, with the
+committed record of the current model kept for a side-by-side comparison, is run once, and it is a **disclosed third look** at
+sets already seen for this model family (a new record, not an erratum, labeled as such in the disclosure and the evaluation
+README). If BASE stays, no held-out command is run and that sentence remains true.
+
+### Inputs frozen by this commit
+
+SHA-256 of the files as committed (line endings LF) and of the data they read:
+
+| File | SHA-256 |
+| --- | --- |
+| `context-features/analyze_arms.py` | `3d52825384b440c5786e1b241fc6f814e4e47a63f155414e0d6450107d33e494` |
+| `context-features/run_arms.ps1` | `26ba1c6ed281bdc86ac88522aaab76fd6490f10a753c5aa1dae96d83ff5995db` |
+| `context-features/arms.json` | `0aac43677f11b3cbfa37a020344b6276483edbf8af7eee840893a43520e9fad8` |
+| `tools/data/cache/ud-ewt/ud_dev.tsv` | `0fc0b4a371ef6d0437e01e396762cdb600d0d7ff0d725ead00ac9f3c41f82037` |
+| `data/eval/shapes-dev/dev.tsv` (standard tranche) | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
+| `data/eval/shapes-dev/hard.tsv` | `c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22` |
+| `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (the file) | `439d4af5329b44d3a226b823b20b3afa54dab0ef8e7247f1333135bb96a14092` |
+
+`analyze_arms.py --selftest` passes (the rule logic is tested on synthetic runs: the t quantile against published values, the
+guard boundaries, the 10% window, the fewest-groups tie-break, ties, the no-fallback case, missing runs). The repository code
+base of this experiment is `main` at `4709395`; the trainer commit that produced each result is recorded in its JSON.
+
+## Context-feature experiment: results
+
+All 50 runs of the pre-registration above are complete (10 arms, five seeds each: 20260101, 11, 12, 13, 14; 0 runs repeated or
+skipped, no arm dropped). Every run was made by the frozen driver `run_arms.ps1` with the trainer of commit `a674d50` (clean
+tree in all 50 result files) and scored by `eval-arm` on development data only. The tables below are the output of the
+committed `analyze_arms.py` over the per-run result files, copied unchanged. The selection rule was applied mechanically; the
+decision was not reconsidered. No held-out set was read by this experiment.
+
+**Superseded in part.** The rows of the five arms that contain F3 (F3, ALL, ALL-minus-F1, ALL-minus-F2 and ALL-minus-F4) in the
+tables below, and the selection set that follows from them, are superseded by the section "Context-feature experiment:
+amendment 1 results" (after the amendment), which gives the corrected figures beside these ones. The rows of BASE, F1, F2,
+F4 and ALL-minus-F3 are not affected. The tables are kept unchanged as the record of the first runs.
+
+**Pre-registration commit.** The pre-registration section was committed as `3a7623a1bf2e792b95f33a1d60fb809615d5f58f` (the
+pre-registration said that its SHA would be recorded after the fact; this is that record).
+
+**Pipeline smoke runs.** After the pre-registration and before the arm runs, one real-corpus ALL (all four groups) training run
+with seed 20260101 and its `eval-arm` scoring were made, for pipeline validation only: the timing and the memory use were read,
+the metrics were not read, and the output is excluded from the tables. It is not one of the 50 runs of the table.
+Outputs (kept outside the repository; the 50 per-run JSON files are not copied into it):
+
+| File | SHA-256 |
+| --- | --- |
+| `report.md` (the analysis below) | `CF5450F11B2961EF930D631745EA49EC97BF9CB10501E913FABA99DE3146C2B4` |
+| `decision.json` (per-arm values, intervals, guards, decision) | `777B6450DB23C0AFFB737E47257FAD667734964A9755A3FE65DFEC443797B756` |
+
+**Run machine.** The runs shared a machine with other sessions that kept its cores saturated. The frozen driver starts
+`dotnet` at BelowNormal priority, which received almost no CPU, so it was run with the driver's `-Runner` option and a
+one-line wrapper (`start /normal /wait /b dotnet`) that starts it at Normal priority (the owner allowed this); the frozen
+files were not edited. Training times therefore are not comparable between arms or with earlier records (the load varied
+during the run); throughput was measured single-threaded on the same loaded machine and varies strongly (see the spreads).
+
+### Analysis report (`analyze_arms.py`)
+
+Values are mean ± sample sd over the five seeds of an arm.
+
+#### Shapes development set
+
+| arm | hard harmful per 1k (primary) | hard target acc % | hard control acc % | standard harmful per 1k | standard target acc % | standard control acc % |
+| --- | --- | --- | --- | --- | --- | --- |
+| BASE | 257.0 ± 8.2 | 67.20 ± 1.02 | 96.33 ± 0.75 | 26.7 ± 3.9 | 96.37 ± 0.22 | 97.20 ± 0.84 |
+| F1 | 267.0 ± 10.2 | 65.75 ± 1.19 | 96.00 ± 1.49 | 23.0 ± 4.5 | 96.70 ± 0.27 | 97.80 ± 1.10 |
+| F2 | 234.0 ± 11.3 | 69.80 ± 1.39 | 98.00 ± 0.75 | 16.0 ± 3.5 | 97.23 ± 0.43 | 98.80 ± 0.45 |
+| F3 | 252.0 ± 7.4 | 67.25 ± 1.00 | 95.67 ± 0.91 | 26.7 ± 4.2 | 96.60 ± 0.38 | 96.60 ± 0.55 |
+| F4 | 247.5 ± 5.3 | 67.95 ± 0.74 | 95.33 ± 0.75 | 28.0 ± 1.8 | 96.30 ± 0.25 | 96.00 ± 1.00 |
+| ALL | 225.5 ± 11.2 | 70.40 ± 0.42 | 98.33 ± 0.00 | 13.3 ± 2.0 | 97.80 ± 0.14 | 99.00 ± 0.00 |
+| ALL-minus-F1 | 229.0 ± 12.1 | 69.65 ± 1.46 | 98.33 ± 0.00 | 13.3 ± 1.2 | 97.73 ± 0.19 | 98.60 ± 0.55 |
+| ALL-minus-F2 | 248.0 ± 4.8 | 68.30 ± 1.05 | 96.67 ± 1.18 | 22.0 ± 5.5 | 96.60 ± 0.51 | 98.00 ± 1.22 |
+| ALL-minus-F3 | 232.5 ± 12.5 | 69.95 ± 1.16 | 98.33 ± 0.00 | 12.7 ± 1.5 | 97.77 ± 0.38 | 99.00 ± 0.00 |
+| ALL-minus-F4 | 242.0 ± 15.0 | 68.20 ± 1.45 | 98.33 ± 0.00 | 12.3 ± 1.9 | 97.90 ± 0.22 | 98.60 ± 0.55 |
+
+#### Open dev and gold v2 dev
+
+| arm | open acc % | open ambiguous acc % | open harmful per 1k | open NLL | open ECE % | gold acc % | gold harmful per 1k | gold NLL | gold ECE % |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| BASE | 96.36 ± 0.03 | 95.65 ± 0.04 | 21.30 ± 1.03 | 0.1217 ± 0.0009 | 0.25 ± 0.09 | 95.08 ± 0.21 | 20.9 ± 3.1 | 0.2582 ± 0.0020 | 2.13 ± 0.13 |
+| F1 | 96.36 ± 0.02 | 95.66 ± 0.05 | 20.62 ± 0.75 | 0.1196 ± 0.0006 | 0.23 ± 0.05 | 94.98 ± 0.11 | 21.3 ± 4.0 | 0.2562 ± 0.0031 | 2.05 ± 0.23 |
+| F2 | 96.64 ± 0.05 | 95.98 ± 0.05 | 20.67 ± 1.02 | 0.1123 ± 0.0012 | 0.26 ± 0.02 | 94.98 ± 0.13 | 23.2 ± 2.1 | 0.2571 ± 0.0031 | 2.36 ± 0.09 |
+| F3 | 96.60 ± 0.05 | 95.99 ± 0.08 | 21.03 ± 0.59 | 0.1161 ± 0.0009 | 0.22 ± 0.05 | 95.14 ± 0.16 | 19.3 ± 0.7 | 0.2595 ± 0.0033 | 2.39 ± 0.27 |
+| F4 | 96.38 ± 0.02 | 95.69 ± 0.03 | 20.35 ± 0.72 | 0.1224 ± 0.0009 | 0.32 ± 0.12 | 95.13 ± 0.21 | 18.7 ± 4.1 | 0.2596 ± 0.0019 | 2.23 ± 0.11 |
+| ALL | 96.82 ± 0.03 | 96.24 ± 0.04 | 18.60 ± 0.40 | 0.1084 ± 0.0004 | 0.22 ± 0.04 | 95.27 ± 0.11 | 19.3 ± 2.4 | 0.2545 ± 0.0021 | 2.22 ± 0.14 |
+| ALL-minus-F1 | 96.81 ± 0.06 | 96.21 ± 0.06 | 19.32 ± 1.04 | 0.1088 ± 0.0010 | 0.28 ± 0.04 | 95.06 ± 0.18 | 22.6 ± 3.5 | 0.2569 ± 0.0022 | 2.22 ± 0.14 |
+| ALL-minus-F2 | 96.74 ± 0.04 | 96.20 ± 0.04 | 19.19 ± 0.76 | 0.1134 ± 0.0004 | 0.24 ± 0.05 | 95.24 ± 0.06 | 19.6 ± 2.0 | 0.2563 ± 0.0041 | 2.21 ± 0.19 |
+| ALL-minus-F3 | 96.67 ± 0.03 | 96.02 ± 0.06 | 19.46 ± 0.91 | 0.1116 ± 0.0005 | 0.26 ± 0.02 | 95.09 ± 0.08 | 21.9 ± 1.5 | 0.2561 ± 0.0025 | 2.15 ± 0.21 |
+| ALL-minus-F4 | 96.80 ± 0.02 | 96.22 ± 0.04 | 20.04 ± 0.73 | 0.1091 ± 0.0001 | 0.16 ± 0.06 | 95.08 ± 0.12 | 25.2 ± 2.5 | 0.2530 ± 0.0027 | 2.23 ± 0.27 |
+
+#### UD-EWT dev
+
+| arm | UD acc % | UD harmful per 1k |
+| --- | --- | --- |
+| BASE | 92.707 ± 0.063 | 22.19 ± 1.13 |
+| F1 | 92.615 ± 0.022 | 23.24 ± 1.94 |
+| F2 | 92.943 ± 0.059 | 19.91 ± 1.54 |
+| F3 | 92.961 ± 0.084 | 22.80 ± 1.59 |
+| F4 | 92.724 ± 0.041 | 20.74 ± 0.72 |
+| ALL | 92.986 ± 0.030 | 20.00 ± 1.43 |
+| ALL-minus-F1 | 93.007 ± 0.084 | 19.82 ± 0.86 |
+| ALL-minus-F2 | 92.957 ± 0.069 | 20.83 ± 1.24 |
+| ALL-minus-F3 | 92.885 ± 0.063 | 21.27 ± 0.97 |
+| ALL-minus-F4 | 93.004 ± 0.084 | 20.88 ± 0.92 |
+
+#### Model, speed and training
+
+| arm | temperature | rows | raw bytes | deflated bytes | tokens/s (1 thread) | train wall s |
+| --- | --- | --- | --- | --- | --- | --- |
+| BASE | 6.584 ± 0.101 | 116453 ± 279 | 1079088 ± 2577 | 478352 ± 936 | 722824 ± 203951 | 46.1 ± 11.5 |
+| F1 | 8.537 ± 0.000 | 126050 ± 292 | 1194629 ± 2083 | 534937 ± 885 | 699039 ± 88719 | 46.2 ± 16.7 |
+| F2 | 9.473 ± 0.091 | 120981 ± 221 | 1146923 ± 1964 | 517282 ± 696 | 693014 ± 114518 | 48.3 ± 13.4 |
+| F3 | 7.368 ± 0.072 | 124625 ± 268 | 1176037 ± 2089 | 524835 ± 775 | 523784 ± 103316 | 108.9 ± 46.8 |
+| F4 | 6.699 ± 0.122 | 115005 ± 166 | 1069022 ± 1777 | 474880 ± 697 | 672601 ± 98652 | 13.7 ± 4.0 |
+| ALL | 12.774 ± 0.151 | 132530 ± 239 | 1302897 ± 1388 | 599597 ± 581 | 333293 ± 55857 | 120.0 ± 39.3 |
+| ALL-minus-F1 | 10.557 ± 0.102 | 126754 ± 316 | 1225977 ± 1578 | 559047 ± 657 | 377821 ± 100586 | 140.6 ± 14.1 |
+| ALL-minus-F2 | 9.597 ± 0.114 | 132407 ± 150 | 1281749 ± 1383 | 580636 ± 463 | 480066 ± 104881 | 141.5 ± 37.7 |
+| ALL-minus-F3 | 11.561 ± 0.000 | 124517 ± 182 | 1200819 ± 1694 | 547134 ± 795 | 624965 ± 98422 | 30.6 ± 1.7 |
+| ALL-minus-F4 | 12.554 ± 0.121 | 134807 ± 195 | 1322271 ± 2182 | 606955 ± 970 | 435470 ± 63332 | 118.6 ± 6.1 |
+
+#### Hard tranche per shape: target accuracy %
+
+| arm | n-compound-head | n-subject-initial | v-imperative-initial | v-after-modal |
+| --- | --- | --- | --- | --- |
+| BASE | 65.2 ± 3.0 | 77.6 ± 3.9 | 45.8 ± 3.7 | 80.2 ± 2.8 |
+| F1 | 64.6 ± 0.5 | 67.6 ± 6.1 | 50.2 ± 3.0 | 80.6 ± 1.7 |
+| F2 | 62.2 ± 2.9 | 78.8 ± 2.3 | 51.6 ± 4.3 | 86.6 ± 1.5 |
+| F3 | 66.4 ± 1.5 | 73.4 ± 3.0 | 47.0 ± 3.1 | 82.2 ± 2.4 |
+| F4 | 66.6 ± 1.1 | 76.8 ± 2.2 | 47.6 ± 1.7 | 80.8 ± 1.5 |
+| ALL | 65.4 ± 2.9 | 73.0 ± 2.5 | 54.0 ± 1.2 | 89.2 ± 1.1 |
+| ALL-minus-F1 | 65.8 ± 1.5 | 75.0 ± 4.5 | 51.6 ± 2.6 | 86.2 ± 2.2 |
+| ALL-minus-F2 | 64.8 ± 3.2 | 71.2 ± 0.8 | 51.6 ± 1.1 | 85.6 ± 2.3 |
+| ALL-minus-F3 | 64.8 ± 3.9 | 73.6 ± 5.9 | 53.0 ± 3.7 | 88.4 ± 1.7 |
+| ALL-minus-F4 | 63.4 ± 2.9 | 72.4 ± 2.6 | 51.2 ± 4.0 | 85.8 ± 1.5 |
+
+#### Hard tranche per shape: harmful per 1k
+
+| arm | n-compound-head | n-subject-initial | v-imperative-initial | v-after-modal |
+| --- | --- | --- | --- | --- |
+| BASE | 310.0 ± 30.0 | 126.0 ± 36.5 | 416.0 ± 48.3 | 176.0 ± 20.7 |
+| F1 | 316.0 ± 11.4 | 194.0 ± 28.8 | 388.0 ± 23.9 | 170.0 ± 15.8 |
+| F2 | 332.0 ± 27.7 | 114.0 ± 19.5 | 386.0 ± 30.5 | 104.0 ± 11.4 |
+| F3 | 302.0 ± 13.0 | 136.0 ± 20.7 | 414.0 ± 25.1 | 156.0 ± 18.2 |
+| F4 | 300.0 ± 14.1 | 120.0 ± 14.1 | 402.0 ± 22.8 | 168.0 ± 19.2 |
+| ALL | 298.0 ± 28.6 | 162.0 ± 16.4 | 360.0 ± 20.0 | 82.0 ± 13.0 |
+| ALL-minus-F1 | 296.0 ± 11.4 | 144.0 ± 33.6 | 370.0 ± 23.5 | 106.0 ± 20.7 |
+| ALL-minus-F2 | 314.0 ± 39.1 | 174.0 ± 29.7 | 376.0 ± 15.2 | 128.0 ± 19.2 |
+| ALL-minus-F3 | 308.0 ± 43.8 | 156.0 ± 37.1 | 368.0 ± 29.5 | 98.0 ± 14.8 |
+| ALL-minus-F4 | 318.0 ± 27.7 | 164.0 ± 28.8 | 370.0 ± 36.7 | 116.0 ± 8.9 |
+
+#### Welch 95% interval of (arm - BASE)
+
+Difference of the means with the Welch t interval over the seeds (seeds measure training noise only).
+
+| arm | shapes.hard.pooled.harmfulPer1k | shapes.standard.pooled.harmfulPer1k | openDev.harmfulPer1k | udDev.harmfulPer1k | udDev.accuracy |
+| --- | --- | --- | --- | --- | --- |
+| F1 | +10.00 [-3.61, +23.61] | -3.67 [-9.81, +2.48] | -0.67 [-2.02, +0.67] | +1.05 [-1.37, +3.47] | -0.09 [-0.17, -0.02] |
+| F2 | -23.00 [-37.60, -8.40] | -10.67 [-16.06, -5.27] | -0.63 [-2.13, +0.87] | -2.28 [-4.28, -0.27] | +0.24 [+0.15, +0.32] |
+| F3 | -5.00 [-16.38, +6.38] | +0.00 [-5.96, +5.96] | -0.27 [-1.55, +1.02] | +0.61 [-1.44, +2.66] | +0.25 [+0.14, +0.36] |
+| F4 | -9.50 [-19.85, +0.85] | +1.33 [-3.46, +6.12] | -0.94 [-2.27, +0.38] | -1.44 [-2.87, -0.02] | +0.02 [-0.06, +0.10] |
+| ALL | -31.50 [-46.07, -16.93] | -13.33 [-18.15, -8.51] | -2.70 [-3.96, -1.43] | -2.19 [-4.09, -0.29] | +0.28 [+0.20, +0.36] |
+| ALL-minus-F1 | -28.00 [-43.40, -12.60] | -13.33 [-18.11, -8.56] | -1.98 [-3.49, -0.46] | -2.36 [-3.85, -0.88] | +0.30 [+0.19, +0.41] |
+| ALL-minus-F2 | -9.00 [-19.20, +1.20] | -4.67 [-11.71, +2.38] | -2.11 [-3.45, -0.77] | -1.36 [-3.09, +0.38] | +0.25 [+0.15, +0.35] |
+| ALL-minus-F3 | -24.50 [-40.35, -8.65] | -14.00 [-18.77, -9.23] | -1.84 [-3.27, -0.42] | -0.92 [-2.46, +0.63] | +0.18 [+0.09, +0.27] |
+| ALL-minus-F4 | -15.00 [-33.61, +3.61] | -14.33 [-19.13, -9.54] | -1.26 [-2.59, +0.08] | -1.31 [-2.83, +0.20] | +0.30 [+0.19, +0.41] |
+
+#### Guards against BASE
+
+Delta guards use the mean over the seeds; the throughput guard uses the median of the seeds' medians.
+
+| arm | standard harmful per 1k <= BASE + 5 | open dev harmful per 1k <= BASE + 1.5 | UD-EWT dev harmful per 1k <= BASE + 1.5 | UD-EWT dev accuracy >= BASE - 0.15 | deflated bytes <= 2 x BASE | tokens/s >= 150,000 | all guards |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F1 | PASS -3.67 | PASS -0.67 | PASS +1.05 | PASS -0.09 | PASS 1.12x | PASS 675998 | PASS |
+| F2 | PASS -10.67 | PASS -0.63 | PASS -2.28 | PASS +0.24 | PASS 1.08x | PASS 754719 | PASS |
+| F3 | PASS +0.00 | PASS -0.27 | PASS +0.61 | PASS +0.25 | PASS 1.10x | PASS 556779 | PASS |
+| F4 | PASS +1.33 | PASS -0.94 | PASS -1.44 | PASS +0.02 | PASS 0.99x | PASS 636980 | PASS |
+| ALL | PASS -13.33 | PASS -2.70 | PASS -2.19 | PASS +0.28 | PASS 1.25x | PASS 302032 | PASS |
+| ALL-minus-F1 | PASS -13.33 | PASS -1.98 | PASS -2.36 | PASS +0.30 | PASS 1.17x | PASS 421805 | PASS |
+| ALL-minus-F2 | PASS -4.67 | PASS -2.11 | PASS -1.36 | PASS +0.25 | PASS 1.21x | PASS 527898 | PASS |
+| ALL-minus-F3 | PASS -14.00 | PASS -1.84 | PASS -0.92 | PASS +0.18 | PASS 1.14x | PASS 659045 | PASS |
+| ALL-minus-F4 | PASS -14.33 | PASS -1.26 | PASS -1.31 | PASS +0.30 | PASS 1.27x | PASS 459080 | PASS |
+
+#### Selection rule
+
+Primary: mean hard harmful per 1k (lower is better); BASE mean 257.00.
+
+| arm | groups | primary | passes all guards |
+| --- | --- | --- | --- |
+| BASE | 0 | 257.00 ± 8.18 | - |
+| F1 | 1 | 267.00 ± 10.22 | yes |
+| F2 | 1 | 234.00 ± 11.26 | yes |
+| F3 | 1 | 252.00 ± 7.37 | yes |
+| F4 | 1 | 247.50 ± 5.30 | yes |
+| ALL | 4 | 225.50 ± 11.24 | yes |
+| ALL-minus-F1 | 3 | 229.00 ± 12.07 | yes |
+| ALL-minus-F2 | 3 | 248.00 ± 4.81 | yes |
+| ALL-minus-F3 | 3 | 232.50 ± 12.50 | yes |
+| ALL-minus-F4 | 3 | 242.00 ± 15.04 | yes |
+
+- Passing arms (Q): F1, F2, F3, F4, ALL, ALL-minus-F1, ALL-minus-F2, ALL-minus-F3, ALL-minus-F4
+- Lowest primary in Q: ALL (225.50); within 10% (primary <= 248.05): F2, F4, ALL, ALL-minus-F1, ALL-minus-F2, ALL-minus-F3, ALL-minus-F4
+- Candidate (fewest groups, then lowest primary): F2
+- Welch 95% interval of (F2 - BASE): -23.00 [-37.60, -8.40], df 7.30, p 0.0072
+
+**Decision: SHIP F2.** F2 ships: it has the fewest groups among the passing arms within 10% of the lowest primary, and the Welch
+95% interval of (arm - BASE) is [-37.60, -8.40], entirely below 0.
+
+#### Descriptive: paired item bootstrap of the candidate on the hard tranche (not part of the rule)
+
+F2 - BASE harmful per 1k: -23.00, 95% percentile interval [-44.50, -1.49] (2000 resamples of the items, seed 20261107, items
+averaged over the seeds).
+
+### Decision
+
+The pre-registered rule selected **F2 (`clauseCues`)**, one group of seven features. The rule is the only basis of the decision.
+It follows the owner's instruction to ship it, which the pre-registration made conditional on exactly this outcome, and
+the follow-up (adoption, thresholds, one held-out `evaluate` as a disclosed third look) is recorded in the sections after
+this one. F5 (word clusters) was not built (see the pre-registration).
+
+### Caveats (stated with the result)
+
+- **The shipped seed was an unlucky draw for BASE.** The BASE five-seed mean of the primary is 257.0 and the shipped seed
+  (20260101) gave 267.5, the highest of its five seeds. The gap between the old and the new model at the shipped seed
+  therefore is not the gap between the means; the same applies to every other measure, and a single seed also differs from the
+  mean in the other direction on some measures.
+- **Seeds measure training noise only.** The Welch interval does not include the sampling noise of the 400 hard items (the
+  descriptive paired bootstrap over the items is much wider and has an upper end close to 0).
+- **Nine candidate arms were compared**, so the lowest primary values are subject to winner's curse; the decision describes
+  development evidence only, on a set that was used for baselines before and that the groups were designed knowing.
+- **F1 hurt the hard tranche on its own** (its primary is above BASE, mainly on `n-subject-initial`), and **F3 and F4 alone
+  did not significantly improve** it (their Welch intervals contain 0).
+- **ALL had the lowest primary** (four groups, with a lower open dev harmful rate than F2 and the largest model and training
+  cost), but it is not selected: F2 is within 10% of it, has fewer groups, and the pre-registered tie-break takes the arm with
+  the fewest groups.
+- **The function-only set is lexicon-based**, as pre-registered, and that makes `FirstContent` coarse: many function words
+  have rare content readings in the lexicon (for example `the`, `a`, `of`, `in`, `to`, `is`, `it` are not function-only), so
+  the first token usually counts as content and the token classes are noisier than their names suggest. This affects F1 and F2
+  (F2 uses the token classes). It was implemented literally and was not tuned.
+- **The calibrated temperature of every arm with groups is higher than BASE** (F2 is the arm with 9.47 against 6.58; see the
+  table), so confidence cuts such as the harmful limit 0.45 and the operating-point thresholds are not interchangeable between
+  BASE and F2; the operating points are recomputed for the shipped model.
+- The training times and the throughput figures were measured on a loaded shared machine (see above) and vary by arm and run.
+- **The F3 jackknife folds by document only.** A sentence whose text appears in more than one document or corpus (for example
+  silver against open) can fall into different folds, so a small optimistic leak is possible for the arms with F3. F3 was not
+  selected and is not part of the shipped model.
+
+## Context-feature experiment: adoption of the clause-cue model (written before any held-out command of this step)
+
+The pre-registered rule selected F2, and the project owner decided to ship it. This section records the adoption **before the
+held-out command of this step** (`evaluate` has not been run; git history shows the order: results, this adoption and the
+development figures, the deletion of the previous held-out record on purpose, the one `evaluate`, the evaluation record). No
+hyperparameter, source, corpus or seed changed: the shipped seed 20260101 stays.
+
+### Disclosure: the third look
+
+The held-out sets (open test, gold v2 test, shape probe, STE challenge set, UD-EWT test) were scored for the model before
+the label corrections, for the first retrained model (FULL) and for the adopted NO-ING model, which the adoption section above
+calls the second look of the family. The adoption section also said that "any further held-out evaluation would be a third
+look and is not planned"; that sentence is the state when it was written and stays as it is. This step is a new work item that
+the owner authorized, conditional on a winner of the pre-registered rule, and the evaluation after this section is a
+**disclosed third look** at sets that are no longer unseen for this family. The selection of F2 used development data only.
+The one `evaluate` of this step is run once; no second run is made after a result exists (an infrastructure failure without a
+result may be rerun without looking at results to tune). A held-out result that is worse than the previous model's is
+reported as it is, and nothing is selected, tuned or reverted because of it.
+
+### What changed in the clause-cue adoption
+
+- **Configuration.** `training.json` gains `"features": ["clauseCues"]` (the file form of the configuration omits the member
+  while no group is selected, so earlier files kept their form). Then, as for every retrained model: `train --output <file>`
+  (outside the repository), `calibrate --weights <file> --update-config` (the temperature is refit on the new open dev: **9.514**,
+  NLL 0.11274, ECE 0.241%; it was 6.442), `train --update-config` and `train --check` (exit 0). 121,033 rows, **301,571
+  weights, 1,146,827 bytes raw, 517,210 bytes deflated** (116,662 rows, 282,426 weights, 1,080,650 and 478,835 before),
+  `imageSha256` `ec3f090eb318abc1bcf4dc8a88e401567e606932142178277d3ec387e0aa40f3` (it was `a0d45458...8da3`), weights file
+  SHA-256 `72cc28cf10c556a617e8edb49d92d96148ed023874cfe834557ea5c6911b9672`. The header carries feature set 2 and the mask 2
+  (clause cues). **The new `weights.bin` is byte-identical to the weights of the F2 run of seed 20260101 in the experiment**
+  (same SHA-256), so the experiment's seed-20260101 figures are those of the shipped model.
+- **Tests and pins.** The embedded-model requirement that said "the embedded model has no feature group" now says that the
+  embedded model enables the clause-cue group (test renamed `ModelStorage_EmbeddedWeights_EnableTheClauseCueGroup`, which asserts
+  feature set 2, the mask and the zero reserved bytes); the two tests that load the embedded file with the base feature set
+  now use the mask-aware loader, and the configuration test checks that the groups of `training.json` equal the groups of the
+  header. The size figures of the documents were re-pinned. The two constants `FrozenOpenHarmful` and `FrozenGoldHarmful` of
+  the trainer (90 and 11) are set to the development figures of the shipped model (100 and 16), which `thresholds` reported
+  before it wrote anything (it refused with the old constants and wrote nothing); they only guard that the 0.45 row
+  reproduces the freeze figures.
+
+### Development figures of the shipped model (dev data only)
+
+Seed 20260101, scored by `eval-arm` through the real decoder (the old model is the weights file of commit `4709395`, SHA-256
+`439d4af5...4092`). The shapes development set is a development set for this selection and not an independent test.
+
+| Measure | Previous model (BASE) | Shipped model (F2) |
+| --- | --- | --- |
+| Hard tranche harmful per 1k (400 target items) | 267.5 (107) | 235.0 (94) |
+| Hard tranche target / control accuracy % | 66.00 / 96.67 | 69.50 / 98.33 |
+| Standard tranche harmful per 1k (600 target items) | 28.3 (17) | 16.7 (10) |
+| Standard tranche target / control accuracy % | 96.33 / 96.00 | 96.83 / 99.00 |
+| Open dev accuracy % (ambiguous %) | 96.38 (95.68) | 96.65 (95.98) |
+| Open dev harmful per 1k (of 4,451 decisions) | 20.22 (90) | **22.47 (100)** |
+| Open dev NLL, ECE % | 0.1222, 0.26 | 0.1127, 0.24 |
+| Gold v2 dev accuracy % | 95.24 | 94.84 |
+| Gold v2 dev harmful per 1k (of 611 decisions) | 18.00 (11) | **26.19 (16)** |
+| Gold v2 dev NLL, ECE % | 0.2601, 1.99 | 0.2577, 2.38 |
+| UD-EWT dev agreement % (25,148 tokens) | 92.711 | 92.950 |
+| UD-EWT dev harmful per 1k (of 4,570 decisions) | 22.54 (103) | 19.91 (91) |
+| Temperature | 6.442 | 9.514 |
+| Rows, weights | 116,662, 282,426 | 121,033, 301,571 |
+| Raw, deflated bytes | 1,080,650; 478,835 | 1,146,827; 517,210 |
+| Single-thread throughput, tokens per second (three alternating runs, median of five passes each; machine shared) | 747,790 to 1,059,991, median 816,220 | 779,638 to 843,284, median 833,252 |
+
+**What is worse (stated before the held-out evaluation).** (1) At the shipped seed the open dev harmful count is **10 higher**
+(100 against 90) and the gold v2 dev one 5 higher (16 against 11), where the five-seed means of the experiment have F2 below
+BASE on open dev (20.67 against 21.30, interval contains 0) and 2.3 above on gold v2 dev (23.2 against 20.9; not gated). The old
+model's seed was a lucky draw on open dev (20.22 against its mean 21.30) and an unlucky one on the hard tranche (267.5 against
+257.0), so the gaps at the shipped seed are not the gaps between the means. (2) The model is 38,375 bytes larger when deflated
+(+8.0%) and its calibrated temperature is higher (9.514), so the operating points move (below). (3) Gold v2 dev accuracy is 0.4
+points lower at this seed. (4) The evidence for the selection is the pre-registered rule on development data: nine arms, a seed
+interval that excludes only training noise, and a paired item bootstrap with an upper end near 0 (see the caveats above).
+
+### Clause-cue model: `thresholds` result (development data only; committed before the held-out run)
+
+`thresholds` (rule `nv-pooled-dev-v1`, grid, targets and floors unchanged) gave, for the model image `ec3f090e...`, temperature
+9.514 and the dev files unchanged: **strict 0.95** (coverage 81.3% [79.9, 82.8], 3.2 harmful per 1,000 answered [1.1, 5.6], 13 of
+4,116) and **balanced 0.75** (coverage 94.1% [93.4, 94.8], 9.9 [6.6, 13.6], 47 of 4,761). The previous model had strict 0.95
+(coverage 81.8%, 3.1 per 1,000, 13 of 4,141) and balanced 0.80 (coverage 92.4%, 9.0, 42 of 4,675). The pooled harmful count at 0.45 is 116 of
+5,062 decisions (22.9 per 1,000). The disclosure paragraph of the evaluation record (`docs/evaluation/disclosure.md`) was
+revised for the third look before `thresholds` was run again (the generated development report carries it); that second run
+read the development files only and produced the same operating points.
+
+### Clause-cue model: procedure of the held-out step (fixed now)
+
+1. The committed previous record (`docs/evaluation/test-results.md` and `.json`, `operating-points.json`,
+   `confidence-thresholds.md`, `README.md`, `disclosure.md`) and the previous weights are copied outside the repository for the
+   comparison; they stay in git history (the previous record at `4709395`).
+2. Delete the previous `test-results.json` and `.md` (`evaluate` refuses to run while one exists) in a commit of its own, then
+   `evaluate --preflight` (scores nothing), then `evaluate --dump-dir <folder outside the repository>` **once**. The stop
+   conditions that fired in the earlier records (gold v2 `to`/`not`, UD-EWT raw gold outside the candidates, the shape probe's
+   harmful errors) may fire again; they are reported, not tuned.
+3. The previous model is shown beside the new one in this log and in `docs/evaluation/README.md`, from the previous record
+   (the old held-out figures are not recomputed: the previous model is not evaluated again). Open test is not strictly
+   comparable with the oldest record (its labels changed), but between the previous model and the shipped one every held-out
+   set has the same labels, so all five are fair comparisons. Intervals are the 95% percentile bootstrap over documents of each
+   record (1,000 resamples, seed 1); no paired interval between the models is computed, so overlapping intervals are not a test.
+   Nothing is claimed as an improvement unless the data show it.
+
+## Context-feature experiment: held-out evaluation of the shipped clause-cue model (disclosed third look; a new record, not an erratum)
+
+This is a **new** record for the shipped model. It does not correct or replace the earlier ones ("Outcome of the held-out run" and
+its errata, "Corpus cleanup C: held-out evaluation of the retrained model" for FULL, and "Corpus cleanup C: held-out evaluation of
+the adopted NO-ING model"), which stay as written. Order (git history): the results and the adoption record above, the shipped
+model with its development operating points (`thresholds`), the deletion of the previous record on purpose (`evaluate` refuses to
+run while a record exists; the previous record stays in git at `4709395` and was copied outside the repository first), the one
+`evaluate`, and this section with the documents after it.
+
+**This is the third look of the family at these held-out sets** (see the disclosure above; four models have now been scored on
+them in all). `evaluate --preflight` passed first (it scores nothing); `evaluate --dump-dir <folder outside the repository>` then ran
+**once** (Normal priority, at most 8 threads, the treebank from the git-ignored cache). It exited with 1 because of the stop
+conditions below (findings, not failures of the run) and the committed files are the output as produced. **No second `evaluate`
+run was made.** Nothing was selected, tuned or reverted because of any result. The previous model was not evaluated again: its
+figures below are those of its committed record.
+
+Stop conditions of the protocol: **the same three fired as in all earlier records** (previous model in brackets):
+
+- `shape-probe`: 37 harmful errors at 0.45 against a limit of 28 (5% of 560 rows) (48).
+- `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (the same); the `to`/`not` convention difference.
+- `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (the same). The primary mapped view is at 0.55% (138
+  words) (the same), under the limit.
+
+All other stop conditions held (the open test accuracy 96.78% against 96.65% on development; harmful rates per 1,000 answered at the strict
+(2.2) and balanced (8.5) points on open test below twice the pooled development rates (3.2 and 9.9); open test ECE 0.23%; open test gold
+outside the candidates 41 of 26,185 tokens).
+
+**What is comparable (stated plainly).** The previous model and the shipped one were scored on the same labels on all five held-out
+sets (the open test labels changed with the NO-ING adoption, not since), so all five are fair comparisons between them. Intervals are
+the 95% percentile bootstrap over documents of each record (1,000 resamples, seed 1); no paired interval between the models was
+computed, so overlapping intervals are not a test: the intervals overlap on every row below, so no single row proves a difference.
+The sets are small and the shipped model is one seed (see the caveats above: seeds are training noise, and the gaps at one seed are
+not the gaps between means).
+
+Accuracy and harmful errors at the harmful limit 0.45, previous model and shipped model:
+
+| Set | Model | Accuracy % | Ambiguous accuracy % | Decisions | Harmful | Harmful per 1,000 decisions | ECE % | NLL | Gold outside candidates |
+| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | ---: |
+| open-test | previous | 96.53 [96.12, 96.87] | 95.69 [95.30, 96.05] | 4,392 | 82 | 18.7 [14.0, 23.7] | 0.20 [0.17, 0.52] | 0.1161 [0.1013, 0.1320] | 41 |
+| | **shipped** | 96.78 [96.42, 97.09] | 96.02 [95.69, 96.34] | 4,392 | 74 | 16.8 [12.4, 21.6] | 0.23 [0.19, 0.50] | 0.1076 [0.0939, 0.1222] | 41 |
+| gold-v2-test | previous | 94.37 [93.55, 95.18] | 91.39 [90.11, 92.64] | 936 | 28 | 29.9 [19.0, 41.2] | 2.49 [2.02, 3.38] | 0.2497 [0.2052, 0.2989] | 12 |
+| | **shipped** | 94.77 [93.94, 95.53] | 92.06 [90.76, 93.21] | 936 | 23 | 24.6 [15.1, 36.1] | 1.90 [1.55, 2.89] | 0.2342 [0.1918, 0.2807] | 12 |
+| gold-v2-test-full-agreement | previous | 95.23 [94.36, 96.05] | 92.23 [90.85, 93.54] | 713 | 22 | 30.9 [18.9, 44.3] | 1.85 [1.43, 2.74] | 0.1971 [0.1557, 0.2424] | 5 |
+| | **shipped** | 95.62 [94.88, 96.37] | 92.93 [91.71, 94.18] | 713 | 15 | 21.0 [11.1, 32.6] | 1.49 [1.24, 2.46] | 0.1827 [0.1435, 0.2272] | 5 |
+| gold-v2-test-to-not (8 targets) | previous | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 55.64 [24.45, 87.44] | 6.9910 [1.9506, 12.0940] | 4 |
+| | **shipped** | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 52.65 [21.94, 87.25] | 6.9560 [1.8584, 12.0911] | 4 |
+| shape-probe (560 rows) | previous | 89.64 [87.14, 92.14] | 89.57 [87.07, 92.09] | 556 | 48 | 86.3 [63.1, 109.9] | 3.53 [2.84, 6.63] | 0.2704 [0.2143, 0.3291] | 0 |
+| | **shipped** | 91.25 [88.93, 93.39] | 91.19 [88.79, 93.37] | 556 | 37 | 66.5 [46.8, 86.2] | 2.47 [2.16, 5.32] | 0.2122 [0.1649, 0.2617] | 0 |
+| challenge-set (STE, 272 tokens) | previous | 88.60 [83.03, 93.65] | 89.90 [83.65, 94.79] | 86 | 0 | 0.0 | 6.25 [4.04, 11.47] | 0.3644 [0.2095, 0.5371] | 0 |
+| | **shipped** | 86.76 [80.55, 92.42] | 87.88 [81.37, 93.14] | 86 | 0 | 0.0 | 8.33 [4.23, 13.79] | 0.3815 [0.2087, 0.5689] | 0 |
+| ud-test-mapped (UD-EWT, primary view) | previous | 92.85 [92.33, 93.31] | 92.43 [91.83, 92.96] | 4,410 | 79 | 17.9 [13.9, 22.5] | 2.22 [1.90, 2.70] | 0.3025 [0.2770, 0.3373] | 138 |
+| | **shipped** | 93.19 [92.69, 93.64] | 92.84 [92.25, 93.40] | 4,410 | 70 | 15.9 [12.1, 20.0] | 2.08 [1.78, 2.52] | 0.2877 [0.2634, 0.3210] | 138 |
+| ud-test-raw (UD-EWT, raw tags) | previous | 88.92 [88.38, 89.40] | 88.18 [87.53, 88.74] | 4,007 | 79 | 19.7 [15.3, 24.8] | 6.15 [5.75, 6.67] | 0.6191 [0.5849, 0.6607] | 484 |
+| | **shipped** | 89.25 [88.73, 89.72] | 88.56 [87.90, 89.15] | 4,007 | 70 | 17.5 [13.3, 22.1] | 5.99 [5.62, 6.48] | 0.6019 [0.5677, 0.6417] | 484 |
+
+**What is worse (stated plainly).** On the **challenge set** (32 sentences, 272 tokens) the shipped model has a lower accuracy
+(86.76 against 88.60), a higher calibration error and a higher log-loss; the set is a smoke test and the difference is five tokens. The **open test ECE** is 0.03
+points higher (0.23 against 0.20), well inside the intervals. The previous model's **development** open and gold v2 harmful counts
+were lower at this seed (see the adoption section), which the held-out sets do not repeat; nothing is concluded from that either way.
+The shape probe still fires its stop condition (37 harmful errors against a limit of 28) and remains the weakest set (66.5 harmful
+errors per 1,000 decisions): the model helps there, it does not remove the weakness.
+
+Operating points on the held-out sets (the thresholds selected on development data: previous strict 0.95 and balanced 0.80; shipped
+strict 0.95 and balanced 0.75; the reference point is 0.45):
+
+| Set | Point | Previous: coverage % | Previous: harmful per 1,000 answered | Previous: harmful of answered | Shipped: coverage % | Shipped: harmful per 1,000 answered | Shipped: harmful of answered |
+| --- | --- | ---: | --- | --- | ---: | --- | --- |
+| open-test | reference 0.45 | 99.7 | 18.7 [14.1, 23.8] | 82 of 4,381 | 99.7 | 16.9 [12.4, 21.7] | 74 of 4,381 |
+| open-test | strict | 83.8 | 3.5 [1.6, 6.0] | 13 of 3,682 | 83.9 | 2.2 [0.6, 4.3] | 8 of 3,687 |
+| open-test | balanced | 93.3 | 7.3 [4.5, 10.4] | 30 of 4,097 | 94.1 | 8.5 [5.4, 11.4] | 35 of 4,135 |
+| gold-v2-test | reference 0.45 | 99.8 | 30.0 [19.1, 41.3] | 28 of 934 | 99.9 | 24.6 [15.2, 36.1] | 23 of 935 |
+| gold-v2-test | strict | 82.2 | 6.5 [1.4, 13.3] | 5 of 769 | 81.3 | 0.0 [0.0, 0.0] | 0 of 761 |
+| gold-v2-test | balanced | 91.9 | 9.3 [3.4, 16.5] | 8 of 860 | 92.4 | 10.4 [4.4, 17.6] | 9 of 865 |
+| gold-v2-test-full-agreement | reference 0.45 | 99.9 | 30.9 [18.9, 44.3] | 22 of 712 | 99.9 | 21.1 [11.2, 32.7] | 15 of 712 |
+| gold-v2-test-full-agreement | strict | 82.5 | 5.1 [0.0, 10.9] | 3 of 588 | 80.8 | 0.0 [0.0, 0.0] | 0 of 576 |
+| gold-v2-test-full-agreement | balanced | 91.4 | 7.7 [1.7, 15.0] | 5 of 652 | 92.7 | 10.6 [3.3, 19.0] | 7 of 661 |
+| shape-probe | reference 0.45 | 98.0 | 88.1 [64.3, 112.1] | 48 of 545 | 98.2 | 67.8 [48.1, 87.3] | 37 of 546 |
+| shape-probe | strict | 60.6 | 11.9 [2.8, 24.0] | 4 of 337 | 61.2 | 5.9 [0.0, 14.8] | 2 of 340 |
+| shape-probe | balanced | 77.5 | 37.1 [19.0, 55.8] | 16 of 431 | 82.0 | 21.9 [8.8, 34.1] | 10 of 456 |
+| challenge-set | reference 0.45 | 100.0 | 0.0 [0.0, 0.0] | 0 of 86 | 100.0 | 0.0 [0.0, 0.0] | 0 of 86 |
+| challenge-set | strict | 70.9 | 0.0 [0.0, 0.0] | 0 of 61 | 67.4 | 0.0 [0.0, 0.0] | 0 of 58 |
+| challenge-set | balanced | 80.2 | 0.0 [0.0, 0.0] | 0 of 69 | 84.9 | 0.0 [0.0, 0.0] | 0 of 73 |
+| ud-test-mapped | reference 0.45 | 99.5 | 18.0 [14.1, 22.6] | 79 of 4,389 | 99.2 | 16.0 [12.2, 20.2] | 70 of 4,375 |
+| ud-test-mapped | strict | 79.3 | 2.6 [1.1, 4.4] | 9 of 3,497 | 77.5 | 2.6 [1.1, 4.6] | 9 of 3,417 |
+| ud-test-mapped | balanced | 89.8 | 6.6 [4.1, 9.5] | 26 of 3,961 | 91.3 | 8.2 [5.4, 11.5] | 33 of 4,028 |
+| ud-test-raw | reference 0.45 | 99.5 | 19.8 [15.4, 24.9] | 79 of 3,986 | 99.1 | 17.6 [13.5, 22.3] | 70 of 3,972 |
+| ud-test-raw | strict | 80.2 | 2.8 [1.2, 4.8] | 9 of 3,214 | 77.8 | 2.9 [1.2, 5.1] | 9 of 3,116 |
+| ud-test-raw | balanced | 90.0 | 7.2 [4.5, 10.6] | 26 of 3,607 | 91.2 | 9.0 [5.9, 12.7] | 33 of 3,656 |
+
+(The two balanced thresholds differ, so a balanced row compares two different operating points: the shipped balanced point answers
+more and makes more harmful errors per 1,000 answered on every set that has any except the shape probe, the cost that its
+development selection accepted within the development target of 10 per 1,000; on held-out data that point is at 10.4 and 10.6 on
+the two gold v2 views, above 10. The shipped strict point is at or below its target of 5.0 per 1,000 answered on open test, gold v2
+test and UD-EWT, and above it on the shape probe (5.9, two of 340; the previous model 11.9).)
+
+Noun-verb confusion of the same decisions (previous | shipped; noun as other, noun as noun, noun as verb, verb as other, verb as
+noun, verb as verb):
+
+| Set | Previous | Shipped |
+| --- | --- | --- |
+| open-test | 51, 2,377, 29, 31, 53, 1,851 | 54, 2,373, 30, 38, 45, 1,852 |
+| gold-v2-test | 2, 454, 11, 9, 17, 443 | 2, 454, 11, 9, 12, 448 |
+| shape-probe | 6, 355, 35, 2, 15, 143 | 7, 361, 28, 1, 13, 146 |
+| challenge-set | 3, 47, 0, 3, 0, 33 | 7, 43, 0, 4, 0, 32 |
+| ud-test-mapped | 140, 2,131, 43, 66, 41, 1,989 | 150, 2,121, 43, 63, 32, 2,001 |
+| ud-test-raw | 140, 2,131, 43, 53, 41, 1,599 | 150, 2,121, 43, 51, 32, 1,610 |
+
+Shape probe by shape (accuracy % and harmful at 0.45; previous | shipped): `n-obj-light` 95.00, 1 | 96.25, 1;
+`n-compound-head` 73.75, 18 | 77.50, 15; `n-modifier` 100.00, 0 | 97.50, 0; `n-subject-initial` 86.25, 10 | 90.00, 7; `n-measure`
+93.75, 5 | 95.00, 4; `v-imperative-initial` 82.50, 12 | 83.75, 10; `v-after-modal` 96.25, 2 | 98.75, 0.
+
+Inputs and run: model image `ec3f090e...aa40f3`, selection artifact SHA-256
+`4087b928123d80eadbbdb5a08e49f941beee1564feffe7b7cc30c52ec87ca80b`, the six input hashes are those of the previous record (unchanged
+data; see `docs/evaluation/test-results.md`). The throughput line of the report (571,504 tokens per second, one thread, open test)
+is a timing of a shared machine of the moment, not a result of the model, and it is not comparable with the previous record's line
+(894,415 on another load); the dev-side alternating measurement of the adoption section (medians 833,252 and 816,220) is the
+better comparison.
+
+**Reading.** On the held-out sets the shipped model has a higher accuracy than the previous one on four of the five (open test +0.25
+points, gold v2 +0.40, shape probe +1.61, UD-EWT mapped +0.34 and raw +0.33) and a lower one on the challenge set (-1.84), and fewer
+harmful errors at 0.45 on every set that has any (open test 74 against 82, gold v2 23 against 28, shape probe 37 against 48, UD-EWT 70
+against 79). The direction agrees with the development evidence of the experiment (hard tranche, UD-EWT dev), and it is the
+opposite of the seed-20260101 development open and gold v2 harmful counts. The intervals overlap everywhere, so none of these
+differences is a significant one on its own; the experiment's own evidence is the pre-registered development rule, and this
+record adds a third, weaker look.
+
+## Context-feature experiment: amendment 1 (jackknife grouping)
+
+Dated 2026-11-07. This section is appended after the results, the adoption and the held-out record above, which are not
+edited, and it is committed **before any re-run it describes**; the git history shows the order: the fix of the jackknife
+(commit `f8ee48c`), this amendment, then the re-runs, then a results section for them. It changes the grouping of the
+jackknife folds and the set of arms that are run again. It does not change the arms, the seeds, the primary metric, the
+guards, the selection rule or the frozen harness files (`arms.json`, `run_arms.ps1`, `analyze_arms.py`), which keep the
+hashes of the pre-registration.
+
+### The defect
+
+The jackknife of the `rightPreview` group (F3) formed its five folds from the hash of the document id (`source_id`) only. An
+exact duplicate sentence under two document ids could therefore sit in two folds, and the fold model of the fold that held
+one copy out was trained on the other copy. The preview tags of that sentence were then better than the tags of new text,
+which is the optimism that the jackknife exists to remove. The results section above records this as a small optimistic
+leak of the F3-containing arms; the formal review of the pull request found that this does not meet the requirement that a
+fold model never sees the sentences that it tags. That caveat is superseded by this section: the defect is fixed and the
+affected arms are run again.
+
+Measurement of the training sources of `training.json` (open twice, MASC, silver at probability 80 or more), loaded by the
+trainer's own reader, with a sentence key of the lower-case letters and numbers of the tokens (the key of the leakage
+check; the corrected key, see "Sentence key parity" below: the key as first computed here used the letters and digits of
+the UTF-16 code units, and the corrected key gives the same groups and folds):
+
+| Measure | Value |
+| --- | --- |
+| Sentences of one epoch, with the source weights | 60,780 |
+| Distinct sentences (a repeat of the weight is one sentence) | 48,790 |
+| Distinct non-empty sentence keys | 47,999 |
+| Documents | 9,576 |
+| Sentences with an exact duplicate in another document | 608 (216 keys) |
+| Of those, in another fold than a duplicate (document-id folds) | 399 (113 keys) |
+
+Held-out sentences whose key occurs in the training set of their fold model, by fold (document-id folds): 43, 81, 134, 67
+and 74 (399 in all). Fold sizes in distinct sentences, folds 0 to 4: 8,329, 12,167, 8,768, 11,331 and 8,195.
+
+Connected components of the documents (two documents are joined when they share any sentence key): 9,471 components, of
+which 9,446 are one document and 25 hold two or more documents (130 documents). The largest holds 26 documents and 8,393
+sentences (17.2% of all distinct sentences); the next largest multi-document components hold 623 sentences (2 documents) and
+513 sentences (24 documents). The largest component is below the 25% bound that was set before the fix to decide that
+grouping is workable (above it, removing the duplicates of the held-out fold from the fold model training would have been
+proposed instead).
+
+### The fix
+
+Documents are joined by union-find when they share any non-empty normalized sentence key, so the folds are made from the
+connected components. The fold of a component is the FNV-1a hash of its smallest document id (ordinal order) modulo 5, the
+same for every seed, every order of the files and every set of feature groups. K = 5 and the rest of the jackknife (fold
+models without F3, on the other groups, the settings and the seed of the run, tagging their own fold like the first pass of
+the decoder) are unchanged. A document that shares no key with another one keeps the fold of its own id. After the fix no
+held-out sentence key occurs in the training set of its fold model (0 of 48,790), and the fold sizes in distinct sentences are
+15,765, 9,698, 7,424, 8,315 and 7,588: the largest component falls into fold 0, so the fold model of fold 0 is trained on
+33,025 sentences and the others on 39,092 to 41,366. That imbalance is accepted.
+
+### Scope of the re-runs
+
+- **Run again:** the five arms that contain F3: F3, ALL, ALL-minus-F1, ALL-minus-F2 and ALL-minus-F4. Five seeds each
+  (20260101, 11, 12, 13, 14), 25 runs, with the fixed jackknife and with everything else unchanged: the trainer settings,
+  the driver, the scoring, the primary metric, the guards and the selection rule of the pre-registration.
+- **Stand:** BASE, F1, F2, F4 and ALL-minus-F3. They use no jackknife, so their runs are not affected. The shipped model
+  (the F2 weights) and the held-out record of the shipped model are not affected either.
+- **Selection:** the corrected table (the five re-run arms and the five standing arms) is passed through the same rule,
+  unchanged. If an arm other than F2 would be selected, nothing ships and the decision goes to the project owner before any
+  held-out data is touched. If F2 is selected again, the shipped model stands.
+- **Superseded runs:** the earlier runs of the five F3-containing arms are kept outside the repository, and their figures
+  stay in the results section above as superseded; the corrected figures are recorded in a results section that follows
+  the re-runs.
+- **No held-out set** is read by the re-runs.
+
+## Context-feature experiment: amendment 1 results
+
+All 25 re-runs of the amendment above are complete (the five arms F3, ALL, ALL-minus-F1, ALL-minus-F2 and ALL-minus-F4, five
+seeds each: 20260101, 11, 12, 13, 14; 0 runs repeated or skipped). Every run was made by the frozen driver `run_arms.ps1` at
+commit `ac5c20e` (clean tree in all 25 result files), which contains the jackknife fix `f8ee48c`, and scored by `eval-arm` on
+development data only. The 25 runs of BASE, F1, F2, F4 and ALL-minus-F3 of the first results section stand (commit
+`a674d50`), so the analysis covers all 10 arms. The unchanged, frozen `analyze_arms.py` was applied to the 50 result files and
+the selection rule was applied mechanically. No held-out set was read.
+
+The earlier runs of the five arms (the document-id folds) are superseded, not deleted: they are kept outside the repository
+with their per-run files, and their figures stay in the results section above. Below, each cell of the five re-run arms shows
+the superseded figure (document-id folds), an arrow, and the corrected one (sentence-component folds); a cell with one figure
+did not change. Values are mean ± sample sd over the five seeds. The other columns of the pre-registered report (the hard
+tranche per shape, the Welch intervals of the other measures and the guard table) are in the analysis report; every arm
+passes every guard, as before.
+
+| File | SHA-256 |
+| --- | --- |
+| `report2.md` (the corrected analysis) | `7D281A6A4A013CBADEF6719D724643CF8E788048D056B253074D12950CD0BF0C` |
+| `decision2.json` (per-arm values, intervals, guards, decision) | `8223A3AB4023BBE2C16DDF5E73218053C130819D2AB6F652B989C89969F82DBE` |
+
+### Shapes development set (superseded → corrected)
+
+| arm | hard harmful per 1k (primary) | hard target acc % | hard control acc % | standard harmful per 1k | standard target acc % | standard control acc % |
+| --- | --- | --- | --- | --- | --- | --- |
+| F3 | 252.0 ± 7.4 → 253.0 ± 20.3 | 67.25 ± 1.00 → 67.90 ± 2.15 | 95.67 ± 0.91 → 95.33 ± 0.75 | 26.7 ± 4.2 → 27.0 ± 3.6 | 96.60 ± 0.38 → 96.40 ± 0.48 | 96.60 ± 0.55 → 96.80 ± 0.84 |
+| ALL | 225.5 ± 11.2 → 221.0 ± 14.4 | 70.40 ± 0.42 → 71.35 ± 1.63 | 98.33 ± 0.00 | 13.3 ± 2.0 → 13.0 ± 1.4 | 97.80 ± 0.14 → 97.77 ± 0.19 | 99.00 ± 0.00 |
+| ALL-minus-F1 | 229.0 ± 12.1 → 228.0 ± 11.1 | 69.65 ± 1.46 → 70.35 ± 0.65 | 98.33 ± 0.00 | 13.3 ± 1.2 → 14.7 ± 1.8 | 97.73 ± 0.19 → 97.60 ± 0.28 | 98.60 ± 0.55 → 98.80 ± 0.45 |
+| ALL-minus-F2 | 248.0 ± 4.8 → 247.0 ± 14.1 | 68.30 ± 1.05 → 67.90 ± 0.95 | 96.67 ± 1.18 | 22.0 ± 5.5 → 21.7 ± 1.7 | 96.60 ± 0.51 → 96.67 ± 0.26 | 98.00 ± 1.22 → 97.80 ± 1.10 |
+| ALL-minus-F4 | 242.0 ± 15.0 → 235.5 ± 3.3 | 68.20 ± 1.45 → 68.65 ± 0.74 | 98.33 ± 0.00 | 12.3 ± 1.9 → 13.0 ± 1.8 | 97.90 ± 0.22 → 97.63 ± 0.22 | 98.60 ± 0.55 |
+
+### Open dev and gold v2 dev (superseded → corrected)
+
+| arm | open acc % | open ambiguous acc % | open harmful per 1k | open NLL | open ECE % | gold acc % | gold harmful per 1k | gold NLL | gold ECE % |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| F3 | 96.60 ± 0.05 → 96.59 ± 0.05 | 95.99 ± 0.08 → 95.99 ± 0.07 | 21.03 ± 0.59 → 21.25 ± 1.43 | 0.1161 ± 0.0009 → 0.1165 ± 0.0011 | 0.22 ± 0.05 → 0.21 ± 0.05 | 95.14 ± 0.16 → 95.13 ± 0.04 | 19.3 ± 0.7 → 20.3 ± 1.9 | 0.2595 ± 0.0033 → 0.2561 ± 0.0017 | 2.39 ± 0.27 → 2.29 ± 0.08 |
+| ALL | 96.82 ± 0.03 → 96.77 ± 0.05 | 96.24 ± 0.04 → 96.18 ± 0.06 | 18.60 ± 0.40 → 19.19 ± 0.85 | 0.1084 ± 0.0004 → 0.1088 ± 0.0008 | 0.22 ± 0.04 → 0.29 ± 0.05 | 95.27 ± 0.11 → 95.11 ± 0.14 | 19.3 ± 2.4 → 21.3 ± 2.0 | 0.2545 ± 0.0021 → 0.2549 ± 0.0021 | 2.22 ± 0.14 → 2.26 ± 0.18 |
+| ALL-minus-F1 | 96.81 ± 0.06 → 96.80 ± 0.05 | 96.21 ± 0.06 → 96.19 ± 0.07 | 19.32 ± 1.04 → 18.92 ± 0.66 | 0.1088 ± 0.0010 | 0.28 ± 0.04 → 0.20 ± 0.06 | 95.06 ± 0.18 → 95.29 ± 0.12 | 22.6 ± 3.5 → 18.3 ± 1.8 | 0.2569 ± 0.0022 → 0.2549 ± 0.0010 | 2.22 ± 0.14 → 2.36 ± 0.15 |
+| ALL-minus-F2 | 96.74 ± 0.04 → 96.69 ± 0.02 | 96.20 ± 0.04 → 96.12 ± 0.04 | 19.19 ± 0.76 → 20.00 ± 0.32 | 0.1134 ± 0.0004 → 0.1134 ± 0.0007 | 0.24 ± 0.05 → 0.18 ± 0.04 | 95.24 ± 0.06 → 95.21 ± 0.11 | 19.6 ± 2.0 → 18.3 ± 0.7 | 0.2563 ± 0.0041 → 0.2550 ± 0.0024 | 2.21 ± 0.19 → 2.30 ± 0.23 |
+| ALL-minus-F4 | 96.80 ± 0.02 → 96.77 ± 0.04 | 96.22 ± 0.04 → 96.19 ± 0.04 | 20.04 ± 0.73 → 20.09 ± 0.80 | 0.1091 ± 0.0001 → 0.1093 ± 0.0008 | 0.16 ± 0.06 → 0.20 ± 0.03 | 95.08 ± 0.12 → 95.17 ± 0.20 | 25.2 ± 2.5 → 23.9 ± 2.7 | 0.2530 ± 0.0027 → 0.2527 ± 0.0017 | 2.23 ± 0.27 → 2.25 ± 0.09 |
+
+### UD-EWT dev (superseded → corrected)
+
+| arm | UD acc % | UD harmful per 1k |
+| --- | --- | --- |
+| F3 | 92.961 ± 0.084 → 92.926 ± 0.055 | 22.80 ± 1.59 → 22.19 ± 1.03 |
+| ALL | 92.986 ± 0.030 → 93.013 ± 0.086 | 20.00 ± 1.43 → 19.65 ± 1.22 |
+| ALL-minus-F1 | 93.007 ± 0.084 → 93.015 ± 0.061 | 19.82 ± 0.86 → 20.26 ± 0.72 |
+| ALL-minus-F2 | 92.957 ± 0.069 → 92.902 ± 0.072 | 20.83 ± 1.24 → 21.62 ± 1.18 |
+| ALL-minus-F4 | 93.004 ± 0.084 → 93.024 ± 0.040 | 20.88 ± 0.92 → 20.18 ± 1.66 |
+
+### Model, speed and training (superseded → corrected)
+
+The training times and the throughput were measured on a shared machine under changing load and are not comparable between
+the two sets of runs.
+
+| arm | temperature | rows | raw bytes | deflated bytes | tokens/s (1 thread) | train wall s |
+| --- | --- | --- | --- | --- | --- | --- |
+| F3 | 7.368 ± 0.072 → 7.400 ± 0.088 | 124625 ± 268 → 124779 ± 269 | 1176037 ± 2089 → 1177673 ± 2175 | 524835 ± 775 → 525510 ± 799 | 523784 ± 103316 → 469563 ± 81442 | 108.9 ± 46.8 → 57.0 ± 16.3 |
+| ALL | 12.774 ± 0.151 → 12.663 ± 0.123 | 132530 ± 239 → 132396 ± 114 | 1302897 ± 1388 → 1302049 ± 1044 | 599597 ± 581 → 599190 ± 650 | 333293 ± 55857 → 316067 ± 59981 | 120.0 ± 39.3 → 85.4 ± 13.1 |
+| ALL-minus-F1 | 10.557 ± 0.102 → 10.648 ± 0.104 | 126754 ± 316 → 126675 ± 270 | 1225977 ± 1578 → 1225906 ± 2299 | 559047 ± 657 → 559037 ± 884 | 377821 ± 100586 → 456963 ± 13113 | 140.6 ± 14.1 → 54.3 ± 2.7 |
+| ALL-minus-F2 | 9.597 ± 0.114 → 9.680 ± 0.093 | 132407 ± 150 → 132521 ± 78 | 1281749 ± 1383 → 1283025 ± 1340 | 580636 ± 463 → 581137 ± 387 | 480066 ± 104881 → 485474 ± 105604 | 141.5 ± 37.7 → 96.3 ± 17.7 |
+| ALL-minus-F4 | 12.554 ± 0.121 → 12.608 ± 0.000 | 134807 ± 195 → 134698 ± 143 | 1322271 ± 2182 → 1321542 ± 1716 | 606955 ± 970 → 606839 ± 706 | 435470 ± 63332 → 395685 ± 65424 | 118.6 ± 6.1 → 68.7 ± 9.5 |
+
+### Welch 95% interval of (arm - BASE) for the primary (superseded → corrected)
+
+| arm | shapes.hard.pooled.harmfulPer1k |
+| --- | --- |
+| F3 | -5.00 [-16.38, +6.38] → -4.00 [-28.83, +20.83] |
+| ALL | -31.50 [-46.07, -16.93] → -36.00 [-53.92, -18.08] |
+| ALL-minus-F1 | -28.00 [-43.40, -12.60] → -29.00 [-43.43, -14.57] |
+| ALL-minus-F2 | -9.00 [-19.20, +1.20] → -10.00 [-27.53, +7.53] |
+| ALL-minus-F4 | -15.00 [-33.61, +3.61] → -21.50 [-31.48, -11.52] |
+
+### Selection rule on the corrected table
+
+Primary: mean hard harmful per 1k (lower is better); BASE mean 257.00. The arms BASE, F1, F2, F4 and ALL-minus-F3 are as in
+the first results section.
+
+| arm | groups | primary (superseded → corrected) | passes all guards |
+| --- | --- | --- | --- |
+| BASE | 0 | 257.00 ± 8.18 | - |
+| F1 | 1 | 267.00 ± 10.22 | yes |
+| F2 | 1 | 234.00 ± 11.26 | yes |
+| F3 | 1 | 252.00 ± 7.37 → 253.00 ± 20.34 | yes |
+| F4 | 1 | 247.50 ± 5.30 | yes |
+| ALL | 4 | 225.50 ± 11.24 → 221.00 ± 14.43 | yes |
+| ALL-minus-F1 | 3 | 229.00 ± 12.07 → 228.00 ± 11.10 | yes |
+| ALL-minus-F2 | 3 | 248.00 ± 4.81 → 247.00 ± 14.08 | yes |
+| ALL-minus-F3 | 3 | 232.50 ± 12.50 | yes |
+| ALL-minus-F4 | 3 | 242.00 ± 15.04 → 235.50 ± 3.26 | yes |
+
+- Passing arms (Q): F1, F2, F3, F4, ALL, ALL-minus-F1, ALL-minus-F2, ALL-minus-F3, ALL-minus-F4 (unchanged)
+- Lowest primary in Q: ALL, 225.50 → 221.00; within 10% of it: primary <= 248.05 → <= 243.10
+- Within 10%: F2, F4, ALL, ALL-minus-F1, ALL-minus-F2, ALL-minus-F3, ALL-minus-F4 → F2, ALL, ALL-minus-F1, ALL-minus-F3,
+  ALL-minus-F4 (F4 at 247.50 and ALL-minus-F2 at 247.00 are now above the bound)
+- Candidate (fewest groups, then lowest primary): F2 (unchanged)
+- Welch 95% interval of (F2 - BASE): -23.00 [-37.60, -8.40], df 7.30, p 0.0072 (unchanged); the descriptive paired item
+  bootstrap of F2 on the hard tranche, [-44.50, -1.49], is unchanged as well
+
+**Decision: SHIP F2 (unchanged).** The corrected table selects the same arm by the same rule. The shipped model (the F2
+weights) and the held-out record of the shipped model stand unchanged, and no arm other than F2 was selected, so nothing
+went to the project owner for a decision. The caveat of the first results section about the document-id folds is closed by
+this section: the arms with F3 now have leakage-safe folds, F3 is still not part of the shipped model, and the conclusions
+about F3 do not change (F3 alone does not significantly improve the hard tranche; its Welch interval contains 0).
+
+### Order of the re-runs (audit)
+
+The amendment (commit `58bdfd2`, committed 2026-11-08 05:21:56 UTC; the fix `f8ee48c` at 05:07:47 UTC) precedes every re-run:
+the first run started at 14:48:20 UTC the same day, 9 h 26 min after the amendment, and `58bdfd2` is an ancestor of the commit
+`ac5c20e` that every result file records (`git merge-base --is-ancestor 58bdfd2 ac5c20e`). The 25 runs went one after the other,
+in the order of the table, in one invocation of the driver, which takes the arms with `-Arms F3,ALL,ALL-minus-F1,ALL-minus-F2,ALL-minus-F4`
+and the runner with `-Runner dotnet-normal.cmd`; there was no earlier attempt that produced a result. The driver starts
+`dotnet` at BelowNormal priority by default (the frozen script of the pre-registration, with at most 8 threads); the runner
+`dotnet-normal.cmd` (`start "" /normal /wait /b dotnet %*`, kept in the session folder outside the repository) starts it at
+Normal priority instead, as for the first 50 runs, because BelowNormal received almost no CPU on a machine that other sessions
+saturated (the owner allowed this deviation, see the first results section). The driver script itself is unchanged.
+
+Sources of the times: the **end** of a run is the `driver.utc` field that the driver wrote into the result file `<run>.json` (the
+same instant as its line in `progress.log`); the driver records no start time, so the **start** is the file-system creation time
+of `<run>.train.txt`, which the driver creates when it starts the train process (file-system time, not recorded metadata; it
+agrees with end - train - eval seconds to within 1 s for all 25 runs). All times are UTC, 2026-11-08. The run folder is outside
+the repository; its files are not part of the review set, so the table is the committed evidence of the order.
+
+| Run | Start (UTC) | End (UTC) | Train s | Eval s |
+| --- | --- | --- | ---: | ---: |
+| `F3-s20260101` | 14:48:20 | 14:49:47 | 84.1 | 2.9 |
+| `F3-s11` | 14:49:47 | 14:50:32 | 42.0 | 2.9 |
+| `F3-s12` | 14:50:32 | 14:51:23 | 48.0 | 2.5 |
+| `F3-s13` | 14:51:23 | 14:52:23 | 57.8 | 2.4 |
+| `F3-s14` | 14:52:23 | 14:53:20 | 53.1 | 3.5 |
+| `ALL-s20260101` | 14:53:20 | 14:55:02 | 99.1 | 3.4 |
+| `ALL-s11` | 14:55:02 | 14:56:31 | 86.1 | 3.3 |
+| `ALL-s12` | 14:56:31 | 14:58:12 | 97.0 | 3.1 |
+| `ALL-s13` | 14:58:12 | 14:59:30 | 76.2 | 2.4 |
+| `ALL-s14` | 14:59:30 | 15:00:41 | 68.7 | 2.1 |
+| `ALL-minus-F1-s20260101` | 15:00:41 | 15:01:34 | 51.2 | 2.0 |
+| `ALL-minus-F1-s11` | 15:01:34 | 15:02:33 | 56.8 | 2.0 |
+| `ALL-minus-F1-s12` | 15:02:33 | 15:03:29 | 53.5 | 2.0 |
+| `ALL-minus-F1-s13` | 15:03:29 | 15:04:28 | 57.5 | 2.0 |
+| `ALL-minus-F1-s14` | 15:04:28 | 15:05:23 | 52.8 | 2.0 |
+| `ALL-minus-F2-s20260101` | 15:05:23 | 15:06:55 | 90.1 | 1.9 |
+| `ALL-minus-F2-s11` | 15:06:55 | 15:08:43 | 106.3 | 2.0 |
+| `ALL-minus-F2-s12` | 15:08:43 | 15:10:40 | 115.1 | 2.0 |
+| `ALL-minus-F2-s13` | 15:10:40 | 15:11:52 | 69.2 | 1.9 |
+| `ALL-minus-F2-s14` | 15:11:52 | 15:13:35 | 100.7 | 2.9 |
+| `ALL-minus-F4-s20260101` | 15:13:35 | 15:14:57 | 80.0 | 2.0 |
+| `ALL-minus-F4-s11` | 15:14:57 | 15:15:57 | 57.4 | 2.4 |
+| `ALL-minus-F4-s12` | 15:15:57 | 15:17:07 | 67.5 | 2.4 |
+| `ALL-minus-F4-s13` | 15:17:07 | 15:18:11 | 62.3 | 2.0 |
+| `ALL-minus-F4-s14` | 15:18:11 | 15:19:30 | 76.4 | 2.1 |
+
+### Sentence key parity with the leakage normalizer (review follow-up)
+
+The formal re-review found that the first version of the jackknife sentence key used .NET `char.IsLetterOrDigit` on UTF-16
+code units, while the leakage check of the data tools (`key` in `tools/data/common.py`) works on code points: it keeps the
+characters for which Python's `str.isalnum()` is true after NFC and `lower()`. The key is now equivalent: it iterates by code
+point, keeps the letters and numbers (the categories `L*` and `N*`, so the superscripts, fractions and Roman numerals as well as
+the supplementary-plane letters and numbers), applies the same lower case (including the final sigma and the dotted capital I)
+and lists the supplementary-plane case mapping itself, because the runtimes differ in it. Parity is pinned by the fixture
+`tools/data/tests/sentence-key-cases.tsv` (44 cases with astral characters, combining marks, case folding and the sigma rules; the
+keys were written once by the Python function and are checked by both `test_common.py` and `ModelTrainerTests.cs`). A one-off
+check of every Unicode code point (in four contexts, including the sigma rules, 4,448,256 strings) against Python 3.13
+(Unicode 15.1) found one assigned code point with a different result on .NET 10, U+1171E (Python files it under the nonspacing
+marks, .NET 10 under the spacing marks; neither is kept in a key, so only the final-sigma rule next to it differed). The key
+now has an explicit category override for it (the mechanism for any such code point; the list is derived from that comparison)
+and the fixture has the two sigma cases around it. After the override the check shows no difference except the 17,604 strings
+whose code point Unicode 15.1 does not assign (parity targets the Unicode version of the Python normalizer; no sentence of the
+corpora has such a code point). The corpus measurement below was repeated with the override: the keys of all 48,790 sentences
+are unchanged and still equal the Python keys.
+
+Effect on the training corpus (the 48,790 distinct sentences of the sources of `training.json`; the same measurement as in
+amendment 1):
+
+- No sentence has a supplementary-plane character, so the astral defect of the review did not occur in the corpus.
+- 16 sentence keys differ between the first and the corrected key, because they contain a number that is no decimal digit
+  (the superscripts `²` `¹` `₂`, the fractions `½` `⅓` `¾` and the Roman numeral `Ⅱ`); the corrected key keeps those characters,
+  as the Python key does. The corrected key equals the Python key for all 48,790 sentences.
+- **No document group and no fold assignment changes** (0 of 9,576 documents change group, 0 of 48,790 sentences change fold,
+  and the grouping of the library equals the independent computation). The jackknife preview tags, the trained weights and all
+  results of the experiment are therefore identical with the corrected key, so nothing was re-run.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

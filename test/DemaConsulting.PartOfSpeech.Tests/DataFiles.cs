@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using DemaConsulting.PartOfSpeech.Trainer;
 
 namespace DemaConsulting.PartOfSpeech.Tests;
 
@@ -299,23 +300,12 @@ internal static class DataFiles
     }
 
     /// <summary>
-    ///     Computes the sentence key of the leakage rule: the lower-case letters and digits of the text.
+    ///     Computes the sentence key of the leakage rule: the lower-case letters and numbers of the text (the key of the jackknife, which
+    ///     reproduces the Python normalizer; see the parity cases <c>sentence-key-cases.tsv</c>).
     /// </summary>
     /// <param name="text">The sentence text.</param>
     /// <returns>The key.</returns>
-    public static string SentenceKey(string text)
-    {
-        var key = new StringBuilder(text.Length);
-        foreach (var ch in text.Normalize(NormalizationForm.FormC).ToLowerInvariant())
-        {
-            if (char.IsLetterOrDigit(ch))
-            {
-                key.Append(ch);
-            }
-        }
-
-        return key.ToString();
-    }
+    public static string SentenceKey(string text) => Jackknife.SentenceKey(text);
 
     /// <summary>
     ///     Computes the lower-case hexadecimal SHA-256 of a file.

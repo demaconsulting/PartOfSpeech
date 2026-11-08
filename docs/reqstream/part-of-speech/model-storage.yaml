@@ -70,5 +70,7 @@ sections:
               - PartOfSpeech-ModelStorage-PerceptronModel-ScoreLookup
               - PartOfSpeech-ModelStorage-PerceptronModel-Temperature
               - PartOfSpeech-ModelStorage-PerceptronModel-UncompressedImage
+              - PartOfSpeech-ModelStorage-PerceptronModel-FeatureGroups
             tests:
               - ModelStorage_WeightsWriterAndReader_RoundTrip
+              - ModelStorage_WeightsWriterAndReader_FeatureGroupsRoundTrip

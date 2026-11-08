@@ -22,7 +22,8 @@ It contains four units:
 
 The subsystem has no public type. Its classes are internal; the tests, the `LexiconCompiler` tool and the trainer
 see them through `InternalsVisibleTo`. The subsystem does not know the feature definition: a weights file carries a
-feature set number that the caller compares with the one it expects.
+feature set number and a feature group mask that the caller interprets (the decoder reads the groups from
+`PerceptronModel.FeatureGroups`).
 
 ### Interfaces
 
@@ -30,19 +31,23 @@ Exposed (internal to the library and its friends):
 
 - `Lexicon.Load`, `Lexicon.TryGetTags`, `Lexicon.AllowedTags`, `LexiconWriter.FromTsv`, `LexiconWriter.Compile`.
 - `PerceptronModel.Load`, `PerceptronModel.ToUncompressedImage`, `PerceptronModel.AddScores`, the properties `HashBits`,
-  `Temperature` and `Scale`, `PerceptronModelWriter.Compile`.
+  `Temperature`, `Scale` and `FeatureGroups`, `PerceptronModelWriter.Compile`.
 - `EmbeddedModel.Lexicon` and `EmbeddedModel.Weights`.
 
-Consumed: `UposSet` and `UposExtensions` (Upos); `FeatureExtractor.FeatureSetVersion` (Tagging) by `EmbeddedModel`
-and `PerceptronModel.ToUncompressedImage` only, as a constant.
+Consumed: `UposSet` and `UposExtensions` (Upos); the constants of `FeatureExtractor` (Tagging: the feature set versions
+and the mask of the known groups) and the type `FeatureGroups`, by `PerceptronModel` and `PerceptronModelWriter`.
 
 The following points make up the contract with the trainer; the exact byte layouts are in
 _PerceptronModel Design_ and _Lexicon Design_:
 
-- The weights writer takes `hashBits` (18 to 24), the temperature, the weight scale, the feature set version and the
-  occupied buckets with a dense 17-element `int16` weight vector each, and writes the sparse `POSW` file.
-- A reader accepts a weights file only if its feature set version equals the one that its caller passes; the decoder
-  passes `FeatureExtractor.FeatureSetVersion`, so changing the extractor requires a new version number.
+- The weights writer takes `hashBits` (18 to 24), the temperature, the weight scale, the feature set version, the
+  occupied buckets with a dense 17-element `int16` weight vector each and, optionally, the feature group mask (default
+  0), and writes the sparse `POSW` file. With the mask 0 the file is byte-identical to the one written before the mask
+  existed.
+- A reader that is given an expected feature set version accepts a weights file only if its feature set version equals
+  it; the reader without an expected version accepts feature set 1 with no group and feature set 2 with a non-zero mask
+  of known groups. The decoder takes the groups from the file; the feature set number is 1 if and only if the mask is 0.
+  Changing a feature of the base templates or of a group requires a new version number.
 - `PerceptronModel.ToUncompressedImage` gives the deterministic uncompressed form of a (compressed or plain) weights file;
   the trainer's `--check` compares uncompressed images because Deflate bytes differ between runtimes.
 - The embedded weights resource is named `DemaConsulting.PartOfSpeech.Resources.weights.bin` and the lexicon resource
@@ -77,5 +82,5 @@ should build with nothing to run. The weights resource is generated the same way
 (`train` writes `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`; `train --check`, run by `build.ps1` and the CI
 build, and a unit test fail when the committed binary is not what the committed corpora and `training.json` produce).
 The package contains each resource once per target framework: the lexicon resource is 639,711 bytes (1,626,269
-uncompressed) and the weights resource 478,835 bytes (1,080,650 uncompressed, 116,662 rows, 282,426 weights, 19 hash
+uncompressed) and the weights resource 517,210 bytes (1,146,827 uncompressed, 121,033 rows, 301,571 weights, 19 hash
 bits, scale 1/8), which is why the package is several MB (see "Package size" in the system design).

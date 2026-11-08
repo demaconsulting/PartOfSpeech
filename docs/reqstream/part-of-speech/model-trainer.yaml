@@ -34,7 +34,8 @@ sections:
           - id: PartOfSpeech-ModelTrainer-SharedDefinitions
             title: >-
               The tags that the trainer predicts while it trains shall equal the tags of the runtime decoder for the
-              same weights, with the embedded lexicon and with unknown words.
+              same weights, with the embedded lexicon and with unknown words, and for every feature group alone and in
+              the combinations of the experiment, the two decoding passes of the right preview group included.
             justification: |
               A trainer that predicts with its own copy of the decoder would train for conditions that the tagger does
               not have. The trainer uses the feature extractor and the lexicon restriction of the library, and the
@@ -42,6 +43,8 @@ sections:
             tests:
               - ModelTrainer_Predict_RestrictedWithLexicon_MatchesTagDecoder
               - ModelTrainer_Predict_Unrestricted_MatchesTagDecoderWithUnknownWords
+              - ModelTrainer_Predict_FeatureGroups_MatchesTagDecoder
+              - QuantizedPredictor_RightPreview_SecondPassReadsFirstPassTags
 
           - id: PartOfSpeech-ModelTrainer-ExactQuantization
             title: >-
@@ -368,18 +371,18 @@ sections:
               - DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent
               - OperatingPointsFile_FormatResults_RoundTrip
 
-          - id: PartOfSpeech-ModelTrainer-EvaluationReport-SecondLookNotice
+          - id: PartOfSpeech-ModelTrainer-EvaluationReport-DisclosureNotice
             title: >-
               The Markdown report of the development selection and the Markdown report of the held-out run shall carry,
               directly after their introduction, the disclosure paragraph that is read from the committed file
-              `docs/evaluation/disclosure.md` (which for the embedded model states that the record belongs to the
-              second held-out evaluation of the model family, a disclosed second look, and points to the run log),
-              and shall carry no notice when the file is missing or blank, the text being read and not typed into the
-              renderer.
+              `docs/evaluation/disclosure.md` (which for the embedded model states that the record belongs to a later
+              held-out evaluation of the model family, a disclosed look at sets that earlier models were scored on, and
+              points to the run log), and shall carry no notice when the file is missing or blank, the text being read
+              and not typed into the renderer.
             justification: |
               A record is read on its own. A held-out result that does not say that the held-out sets were already
-              seen once for the sibling model would read as a first look at unseen data. The text describes one model
-              and one evaluation, so it lives in a reviewable file that must be revised or removed for any later
+              seen for earlier models of the family would read as a first look at unseen data. The text describes one
+              model and one evaluation, so it lives in a reviewable file that must be revised or removed for any later
               evaluation of a different model, and the generic renderer cannot give a later record a stale claim. The
               notice is part of the generated Markdown only, so the JSON artifacts and their pinned hashes do not
               change, and the committed reports carry the text at the position where a regeneration puts it.
@@ -482,7 +485,8 @@ sections:
               large hint.
             justification: |
               The decision between a trained glossary feature and a score boost rests on this experiment, so the
-              experiment must be reproducible, must not disturb the shipped feature set (the plain run keeps its pinned
+              experiment must be reproducible, must not disturb the features of the model (the plain run keeps its
+              pinned
               hash), must judge eligibility with the same candidates that the tagger has, and its decoder must agree
               with the real one before the comparison means anything.
             tests:
@@ -494,6 +498,11 @@ sections:
               - GlossaryFeatures_Append_InBucketSpaceAndDependOnHintAndHistory
               - HintedPredictor_NoHints_MatchesQuantizedPredictor
               - HintedPredictor_HardHintAndHugeBoost_FollowTheHint
+              - ModelTrainer_Train_AllGroupsWithGlossaryHints_FitsTheBucketBuffer
+              - HintedPredictor_FeatureGroups_MatchesQuantizedPredictor
+              - HintedPredictor_FeatureGroupsWithHints_DecodeEveryTokenAndFollowHardHints
+              - HintedPredictor_RightPreviewGroup_IsRefused
+              - GlossaryProbeAndEvaluation_GroupedModel_UseTheConfiguredTagger
 
           - id: PartOfSpeech-ModelTrainer-GlossaryEvaluation
             title: >-
@@ -605,4 +614,100 @@ sections:
               - DataGuard_EnsureOutsideData_InsideDataFolder_RefusedAndOutsideAdmitted
               - DevSets_ReadShapesDev_HeaderWithoutDevSplit_Throws
               - DevSets_ReadShapesDev_MissingAndValidFile_ThrowsAndReads
+              - ModelTrainer_Sources_NoHeldOutPathLiterals
+
+          - id: PartOfSpeech-ModelTrainer-FeatureGroups
+            title: >-
+              The trainer shall take the context feature groups of a model from the configuration (`features`, a list of
+              group names, empty by default, and `previewFolds`, 2 to 10 with a default of 5) or from the options
+              `--features` (`none`, or group names in the long or the short form, in any order and case) and
+              `--preview-folds`, refuse an unknown or repeated group, train the groups with the shared feature
+              extractor, write the groups as the mask of the weights header with the feature set version that follows
+              from it, leave the feature settings out of the file form of a configuration while they are at their
+              defaults, and, with no group, give the same bytes as the training did before the groups existed.
+            justification: |
+              The experiment on context features compares arms that differ only in their groups, so the groups are
+              settings of the training like every other one, are checked where they are read, and are recorded in the
+              weights file that the runtime reads. The shipped model must stay what the committed data and configuration
+              produce, so a run without a group takes none of the group code paths and the golden hashes of the
+              reference runs do not move; the committed configuration keeps its form for the same reason.
+            tests:
+              - TrainingConfig_ParseFeatureList_ValidValue_CanonicalOrder
+              - TrainingConfig_ParseFeatureList_InvalidValue_Throws
+              - TrainingConfig_Features_DefaultsResolveValidateAndClone
+              - ModelBuilder_Encode_FeatureGroups_WritesMaskAndFeatureSetVersion
+              - ConfigFile_Features_OmittedByDefaultAndRoundTripped
+              - ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical
+              - PerceptronTrainer_Train_NoGroups_IsTheShippedTraining
+              - ModelTrainer_Train_SmallUnrestrictedRun_MatchesGoldenHash
+              - ModelTrainer_Train_SmallRestrictedRun_MatchesGoldenHash
+
+          - id: PartOfSpeech-ModelTrainer-Jackknife
+            title: >-
+              For the right preview group the trainer shall train every sentence in two passes on one weight table (the
+              first without the preview features, the second with the first-pass tags of the next two tokens), shall
+              take those tags from fold models that did not see the sentence (folds from groups of documents that
+              share a sentence key, the lower-case letters and numbers of the text (Unicode categories L and N, taken by
+              code point as the leakage check takes them), directly or through other documents, so that a document is
+              never split and an exact duplicate sentence under two document ids
+              never lands in two folds; the fold of a group is the hash of its smallest document id, the same for
+              every seed; fold models trained without the group on the other groups, the settings and the seed of
+              the run, and decoding their held-out fold with the quantized weights and the lexicon restriction like
+              the first pass of the decoder),
+              and shall refuse sentences that fill fewer than two folds or preview tags that miss a sentence.
+            justification: |
+              A model that is trained on first-pass tags of its own training sentences sees tags that are better than
+              the ones it gets on new text. Fold models give tags of the quality that the runtime has, and the replay
+              test proves that the tags are what an independent run of the same fold models produces. A fold model that
+              trained on the text of a sentence under another document id would tag it better than it tags new text, so
+              duplicates are kept together and no held-out sentence key occurs in the training set of its fold model.
+              One table for both passes keeps the format and the size of the model, and the first pass stays usable at
+              run time.
+            tests:
+              - Jackknife_Partition_ByDocumentHash_NeverSplitsADocumentAndIsStable
+              - Jackknife_Partition_DuplicateSentenceInTwoDocuments_LandsInOneFold
+              - Jackknife_Partition_TransitiveChain_LandsInOneFold
+              - Jackknife_Partition_WithDuplicates_IsDeterministicAndIndependentOfOrderAndSeed
+              - Jackknife_GroupDocuments_NoDuplicates_EveryDocumentIsItsOwnGroup
+              - Jackknife_SentenceKey_SharedParityCases_AgreeWithPython
+              - Jackknife_Compute_DuplicatesAcrossDocuments_FoldModelNeverSeesAHeldOutSentenceKey
+              - Jackknife_Compute_TagsEachFoldWithAModelThatDidNotSeeIt
+              - Jackknife_Compute_OneDocument_Throws
+              - PerceptronTrainer_Train_RightPreview_TrainsBothPassesOnOneTable
+
+          - id: PartOfSpeech-ModelTrainer-ArmEvaluation
+            title: >-
+              The command `eval-arm` shall score a trained weights file through the real decoder on the standard and the
+              hard tranche of the shapes development set (per shape and pooled, with the per-item outcomes of the target
+              items), on the open and the gold v2 development splits and on the mapped development part of the external
+              treebank (read from the local cache with a pinned SHA-256), measure the size of the file and the
+              single-thread throughput of the default tagger (one warm-up pass, five timed passes, the median), and
+              write one JSON result in schema 1 with the groups of the weights header and the hashes of the inputs.
+            justification: |
+              The experiment decides on figures that must come from one definition of a harmful error and from the same
+              decoder that users run, for every arm in the same way. A fixed schema lets the analysis script read the
+              runs without interpretation, the hashes tie a result to its inputs, and a treebank table that does not
+              match its pin is refused so that a stale local cache cannot be scored.
+            tests:
+              - ArmEvaluation_Evaluate_TinyWeights_WritesTheResultSchema
+              - ArmEvaluation_Evaluate_NoGroupsAndBadInput_BehavesAsSpecified
+              - HeldOutEvaluator_Throughput_TimedPasses_AtLeastOneAndPositiveRate
+              - DevSets_ReadUdDev_MissingOrChangedTable_RefusedAndPinnedTableRead
+
+          - id: PartOfSpeech-ModelTrainer-ArmEvaluationIsDevelopmentOnly
+            title: >-
+              The command `eval-arm` shall have no option that names a data file, shall read the development sets
+              through their guarded readers only, shall refuse a weights file or a result file inside the data folder or
+              the data tooling folder (which holds the treebank cache), and shall have no path to the held-out sets
+              (the open and gold v2 test splits, the shape probe, the challenge set and the test part of the treebank):
+              their files are refused by every guard it uses and its sources do not mention the held-out readers.
+            justification: |
+              The experiment selects with development data, and the held-out sets have already been seen for the
+              model family, so the command that is run fifty times must be structurally unable to read one or to
+              overwrite one with its result. The refusal is code and is pinned by a test, not a rule in a document.
+            tests:
+              - DataGuard_EnsureArmFile_DataFolders_Refused
+              - DataGuard_EnsureArmFile_OrdinaryLocations_Admitted
+              - ArmEvaluation_HeldOutSets_AreUnreachable
+              - DevSets_ReadUdDev_MissingOrChangedTable_RefusedAndPinnedTableRead
               - ModelTrainer_Sources_NoHeldOutPathLiterals

@@ -13,18 +13,17 @@
 
 ## Features
 
-- **Tokenizer and sentence splitter**: English text becomes sentences and tokens, with character offsets into your
-  original string
-- **Tagger**: an averaged-perceptron tagger over the 17 Universal POS tags, with a word lexicon that restricts known
-  words
-- **Confidences and alternatives**: every tag comes with a calibrated probability and the ranked competing tags
-- **Constraints and glossaries**: restrict or steer single tokens, or give the tagger a glossary of domain terms
-- **Pre-tokenized input**: tag tokens that you already have
-- **No dependencies, no downloads**: the lexicon and the trained weights are embedded in the package. It runs on
-  .NET Standard 2.0, .NET 8, 9 and 10, tags hundreds of thousands of tokens per second on one thread and is thread-safe
-- **API reference in the package**: a generated Markdown reference is packed with the library
-- **Continuous Compliance**: evidence is generated on every CI run, following the
-  [Continuous Compliance][link-continuous-compliance] methodology
+- 🔤 **Tokenizer** - English text to sentences and tokens with offsets
+- 🏷️ **Tagger** - 17 Universal POS tags from an averaged perceptron
+- 📊 **Confidences** - calibrated probabilities and ranked alternatives for every tag
+- 🔒 **Constraints** - restrict or steer the tag of single tokens
+- 📚 **Glossaries** - tag domain terms correctly, in hard or soft mode
+- 🧩 **Pre-tokenized input** - tag tokens that you already have
+- 📦 **No dependencies** - lexicon and weights are embedded, nothing to download
+- ⚡ **Fast** - hundreds of thousands of tokens per second, thread-safe
+- 🎯 **Wide support** - .NET Standard 2.0 and .NET 8 to 10
+- 📄 **API reference** - generated Markdown reference packed with the library
+- ✅ [**Continuous Compliance**][link-continuous-compliance] - evidence generated on every CI run
 
 ## Installation
 
@@ -49,8 +48,7 @@ foreach (TaggedSentence sentence in Tagger.Default.Tag("The cat sat on the mat. 
 ```
 
 `Tagger.Default` is a shared, thread-safe tagger that uses the model and the lexicon that are embedded in the package,
-so it needs no file and no download. The first read inflates and validates the embedded files once (the weights are
-478,835 bytes compressed and 1,080,650 bytes uncompressed, the lexicon 639,711 bytes compressed). To use other weights,
+so it needs no file and no download. The first read inflates and validates the embedded files once. To use other weights,
 create a tagger with `Tagger.Load(stream)`. The [user guide][link-user-guide] explains confidences and alternatives,
 constraints, glossaries and the tokenization conventions.
 
@@ -71,53 +69,45 @@ foreach (GlossaryMatch match in sentence.GlossaryMatches)
 }
 ```
 
-The default is hard mode: the entries are trusted completely, so a wrong entry forces a wrong tag. That fits a curated
-list; use soft mode for a list that may be wrong. The measured cost is in section E9 of the
-[trainer run log][link-run-log].
+The default is hard mode: the entries are trusted completely, so a wrong entry forces a wrong tag. Use hard mode for
+curated lists and soft mode for lists that may contain errors.
 
-## Accuracy and Confidence
+## Accuracy
 
-The model was selected on development data only, its confidence thresholds too, and it was then evaluated on held-out
-data twice over the model family (after the corpora had been corrected and the model retrained, and again for the
-follow-up model that is embedded now, a disclosed second look; the [trainer run log][link-run-log] has the decisions and
-the gates). The tagger is accurate on ordinary running text. Its most costly mistake is a harmful error: a
-noun tagged as a verb, or a verb tagged as a noun. It makes some on every test set and noticeably more on short,
-technical and imperative sentences built to be hard, a limitation that is reported and was not tuned away. The labels of
-the test sets were written by language models, and the results come from one run.
+Held-out results of the embedded model. A harmful error is a noun tagged as a verb or a verb tagged as a noun; the rate
+is per 1,000 noun-verb decisions. `shape-probe` and `challenge-set` are small sets of hard sentences.
 
-See the evaluation report for accuracy, harmful-error rates and recommended thresholds: the [test results][link-test-results]
-have every held-out set and the [confidence thresholds][link-thresholds] have the coverage and harmful-rate tables. The
-[evaluation guide][link-evaluation] explains how to read them.
+| Set | Accuracy (%) | Harmful per 1,000 |
+| --- | ---: | ---: |
+| `open-test` | 96.78 | 16.8 |
+| `gold-v2-test` | 94.77 | 24.6 |
+| `shape-probe` | 91.25 | 66.5 |
+| `challenge-set` | 86.76 | 0.0 |
+| `ud-test-mapped` | 93.19 | 15.9 |
 
-**Consumers that need a low harmful rate must use a confidence threshold.** Treat a token below the threshold as
-unknown. A rule checker should use the `strict` threshold; `balanced` suits consumers that can tolerate more errors or
-show the result to a person. The thresholds were chosen on development data and measured on the held-out open test
-split:
+Recommended confidence thresholds, with the share of the noun-verb decisions that they answer and the harmful errors per
+1,000 answered decisions on the open test split:
 
-- `strict` (0.95) answers 81.8% of the noun-verb decisions on the development data with 3.1 harmful errors in 1,000
-  answered, and 83.8% with 3.5 in 1,000 on the open test split.
-- `balanced` (0.80) answers 92.4% with 9.0 in 1,000 on the development data, and 93.3% with 7.3 in 1,000 on the open
-  test split.
+| Threshold | Value | Coverage (%) | Harmful per 1,000 answered |
+| --- | ---: | ---: | ---: |
+| `strict` | 0.95 | 83.9 | 2.2 |
+| `balanced` | 0.75 | 94.1 | 8.5 |
 
-The `strict` target (at most 5 harmful errors in 1,000 answered) was met on the development data and on the open test
-split by the point estimate (its 95% interval, 1.6 to 6.0, reaches above 5), and it is **exceeded on the held-out gold v2
-test split** (6.5 in 1,000 answered, five errors, 95% interval 1.4 to 13.3). A token with a single allowed tag has
-confidence 1.0 without being a decision. The [user guide][link-user-guide] and
-the packed API reference have the details.
+Rule checkers should use `strict`; treat tokens below the threshold as unknown.
+
+The [evaluation report][link-evaluation] has the details.
 
 ## Documentation
 
 Generated documentation includes build notes, the user guide, the code quality report, requirements with
-justifications and the requirements trace matrix. The [evaluation report][link-evaluation] is plain Markdown in the
-repository.
+justifications and the requirements trace matrix.
 
 ## Data
 
 The repository holds the open training data, the evaluation data and a part-of-speech lexicon for the 17 Universal POS
 tags in the [data folder][link-data], each source with its origin, license and recipe, verified against checksums. At run
-time the library uses only the lexicon and the trained weights, both embedded in the assembly.
-`tools/DemaConsulting.PartOfSpeech.Trainer` trains the weights from the open corpus, MASC and the silver corpus, and
-`train --check` verifies that the embedded weights are exactly what the committed data produces. The corpora and the
+time the library uses only the lexicon and the trained weights, both embedded in the assembly. The trainer in
+`tools/DemaConsulting.PartOfSpeech.Trainer` reproduces the weights from the committed data. The corpora and the
 evaluation sets are not shipped.
 
 ## Credits and Licenses
@@ -179,10 +169,7 @@ By contributing to this project, you agree that your contributions will be licen
 [link-contributing]: https://github.com/demaconsulting/PartOfSpeech/blob/main/CONTRIBUTING.md
 [link-data]: https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md
 [link-user-guide]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/user_guide/introduction.md
-[link-run-log]: https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md
 [link-evaluation]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md
-[link-test-results]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/test-results.md
-[link-thresholds]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/confidence-thresholds.md
 [link-notices]: https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md
 [link-package-license]: https://github.com/demaconsulting/PartOfSpeech/blob/main/PACKAGE-LICENSE.md
 [link-wordsense]: https://github.com/demaconsulting/WordSense

@@ -33,8 +33,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <para>
 ///     How the pieces fit together. The text goes through <see cref="Tokenizer.Tokenize(string)"/> (or you provide the
 ///     tokens yourself); the <see cref="Tagger"/> then walks the tokens from left to right. For each token it looks the
-///     word up in the lexicon, builds features of the word and of the tags it has chosen so far, scores the allowed tags
-///     with the weights of the model and picks the best one; the chosen tag becomes history for the next token. The
+///     word up in the lexicon, builds features of the word, its neighbors and the tags it has chosen so far, scores the
+///     allowed tags with the weights of the model and picks the best one; the chosen tag becomes history for the next
+///     token. The
 ///     <see cref="Tagger.Tag(string)"/> method does all of this for a whole text.
 ///     </para>
 ///     <para>
@@ -72,7 +73,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </description></item>
 ///     <item><description>
 ///     **Averaged perceptron** names the kind of model. Every feature of a token (the word, its ending, its
-///     capitalization, the neighboring words and the tags chosen before it) has one learned weight per tag; the weights
+///     capitalization, the neighboring words and the tags chosen before it; the embedded model also uses clause cues: the
+///     kind of the neighboring words, the distance to the nearest determiner or modal, and whether a subject-like tag and
+///     a verb tag were already chosen in the current clause) has one learned weight per tag; the weights
 ///     of all features of the token are added up for each tag, and the tag with the highest sum fits best. "Averaged"
 ///     means that the weights are the average over the training updates, which makes them more stable than the last
 ///     update.
@@ -168,24 +171,23 @@ namespace DemaConsulting.PartOfSpeech;
 ///     ## Confidence thresholds
 ///     </para>
 ///     <para>
-///     The embedded model was evaluated on held-out data (the second evaluation of its model family, after the first had
-///     been run for the model that came before the latest corrections), after two thresholds had been chosen on development data
-///     only. The measurement is about the mistake that changes the meaning of a sentence: a word that is a noun and is
+///     The embedded model was measured on held-out data. The measurement is about the mistake that changes the meaning of a
+///     sentence: a word that is a noun and is
 ///     tagged as a verb, or the other way round (a <em>harmful error</em>). A token is <em>answered</em> at a threshold
 ///     when the confidence of its tag is at least the threshold, and <em>coverage</em> is the share of the noun-verb
-///     decisions that is answered. Without a threshold, 18.7 of 1,000 noun-verb decisions of the open test split are
+///     decisions that is answered. Without a threshold, 16.8 of 1,000 noun-verb decisions of the open test split are
 ///     harmful errors. Two thresholds are recommended for the confidence of <see cref="Tagger.Default"/>
 ///     (<see cref="TaggedToken.Confidence"/>):
 ///     </para>
 ///     <list type="bullet">
 ///     <item><description>
-///     **strict**, 0.95: on the development data it answered 81.8% of the decisions with 3.1 harmful errors in 1,000
-///     answered decisions; on the open test split it answered 83.8% with 3.5 in 1,000. Use it when a wrong noun or verb
+///     **strict**, 0.95: on the development data it answered 81.3% of the decisions with 3.2 harmful errors in 1,000
+///     answered decisions; on the open test split it answered 83.9% with 2.2 in 1,000. Use it when a wrong noun or verb
 ///     does harm, for example in a rule checker.
 ///     </description></item>
 ///     <item><description>
-///     **balanced**, 0.80: on the development data it answered 92.4% of the decisions with 9.0 harmful errors in 1,000
-///     answered decisions; on the open test split it answered 93.3% with 7.3 in 1,000. Use it when more errors are
+///     **balanced**, 0.75: on the development data it answered 94.1% of the decisions with 9.9 harmful errors in 1,000
+///     answered decisions; on the open test split it answered 94.1% with 8.5 in 1,000. Use it when more errors are
 ///     acceptable or when a person sees the result.
 ///     </description></item>
 ///     </list>
@@ -193,10 +195,11 @@ namespace DemaConsulting.PartOfSpeech;
 ///     Treat a token below the threshold as unknown: do not act on its tag, show it to a person, or look at
 ///     <see cref="TaggedToken.Alternatives"/> and give the word a <see cref="TokenConstraint"/> or a
 ///     <see cref="Glossary"/> entry. A consumer that needs a low harmful rate must use a threshold, because the harmful
-///     rate without one is two to five times higher; the rate is higher still on short technical and imperative text
-///     (86.3 in 1,000 on a probe of such sentences without a threshold). The strict target of at most 5 in 1,000 was met on
-///     the development data and on the open test split by the point estimate (the 95% interval of 1.6 to 6.0 reaches above
-///     5), and is exceeded on the held-out gold v2 test split (6.5 in 1,000 answered, interval 1.4 to 13.3). The thresholds
+///     rate without one is two to eight times higher; the rate is higher still on short technical and imperative text
+///     (66.5 in 1,000 on a probe of such sentences without a threshold). The strict target of at most 5 in 1,000 was met on
+///     the development data, on the open test split (the 95% interval of 0.6 to 4.3 stays below 5) and on the held-out gold
+///     v2 test split (no harmful error in 761 answered decisions), and is exceeded on the probe (5.9 in 1,000 answered, two
+///     harmful errors in 340 answered decisions). The thresholds
 ///     apply to the embedded model:
 ///     weights that you load need their own measurement. A token with only one allowed tag has the confidence 1.0 and
 ///     is not a decision, and the confidence of a token that a hard glossary entry limits to one tag says nothing about
@@ -251,8 +254,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     weights (the embedded lexicon is used unless you pass one as well).
 ///     </para>
 ///     <para>
-///     The embedded weights file (<c>weights.bin</c>) is 478,835 bytes compressed and 1,080,650 bytes uncompressed (about
-///     0.5 MB and 1.1 MB); it holds 116,662 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
+///     The embedded weights file (<c>weights.bin</c>) is 517,210 bytes compressed and 1,146,827 bytes uncompressed (about
+///     0.5 MB and 1.1 MB); it holds 121,033 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
 ///     bytes compressed and 1,626,269 bytes uncompressed and holds 262,635 spellings. Both files are stored as resources
 ///     of the assembly, so the package grows by their compressed sizes for each target framework. The first read of
 ///     <see cref="Tagger.Default"/> inflates and validates both files once in the process (tens of milliseconds on a
@@ -364,10 +367,7 @@ namespace DemaConsulting.PartOfSpeech;
 ///     | With wrong entries | A wrong entry forces a wrong tag: hard mode makes confident errors. | The accuracy stays near that of tagging without a glossary, because the model can overrule a wrong entry. |
 ///     </para>
 ///     <para>
-///     In short: with wrong entries, hard mode makes confident errors, while soft mode stays near no-glossary accuracy. The
-///     full measurements (simulated glossaries on development data, with 0, 10 and 30 percent wrong entries, and the effect of
-///     the strength) are in the trainer run log of the repository, section E9:
-///     https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md
+///     In short: with wrong entries, hard mode makes confident errors, while soft mode stays near no-glossary accuracy.
 ///     </para>
 ///     <para>
 ///     ## Glossary navigation

@@ -25,6 +25,12 @@ internal static class GlossaryFeatures
     public const int Count = 2;
 
     /// <summary>
+    ///     The size of a bucket buffer that holds the features of a token with every feature group and a glossary hint: the group
+    ///     capacity of <see cref="FeatureExtractor.BucketCapacity"/> plus the <see cref="Count"/> buckets appended after the extraction.
+    /// </summary>
+    public const int BufferCapacity = FeatureExtractor.BucketCapacity + Count;
+
+    /// <summary>
     ///     Appends the glossary features of a hinted token to its buckets.
     /// </summary>
     /// <param name="buckets">The bucket buffer; it must have room for <see cref="Count"/> more buckets.</param>

@@ -140,7 +140,7 @@ internal static partial class GlossaryEvaluation
             Weights = weights,
             Tagger = DevEvaluator.CreateTagger(weights),
             Lexicon = lexicon,
-            Temperature = PerceptronModel.Load(weights, FeatureExtractor.FeatureSetVersion).Temperature,
+            Temperature = PerceptronModel.Load(weights).Temperature,
             Seed = seed,
             Resamples = resamples,
         };

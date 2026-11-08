@@ -37,7 +37,8 @@ software items, specifically:
   - **PerceptronModel (Unit)** — Reads, writes and scores with the perceptron weights
   - **EmbeddedModel (Unit)** — Lazy, thread-safe access to the data embedded in the package
 - **Tagging (Subsystem)** — Assigns tags with confidences, alternatives, constraints and glossary terms
-  - **FeatureExtractor (Unit)** — The single definition of the hashed features
+  - **FeatureExtractor (Unit)** — The single definition of the hashed features: the base templates and the switchable
+    feature groups
   - **TagDecoder (Unit)** — The greedy decoder with lexicon restriction and softmax confidence
   - **TokenConstraint (Unit)** — The caller's restriction or preference for the tag of one token
   - **Glossary (Unit)** — The caller's domain terms with allowed tags, their matching and their constraints
@@ -85,8 +86,9 @@ build-time tool that trains the embedded weights) and three subsystems:
 `Tokenization` (text to sentences and tokens), `ModelStorage` (the binary formats of the weights and the lexicon and the
 embedded lexicon and weights) and `Tagging` (features, decoding, constraints, glossaries and the public `Tagger`). The dependencies
 between them have no unit-level call cycle, but the subsystem graph is not acyclic: `Tagging` uses `Tokenization`,
-`ModelStorage` and `Upos`; `ModelStorage` uses `Upos` and, for one constant (`EmbeddedModel` reads
-`FeatureExtractor.FeatureSetVersion`), `Tagging`; `Tokenization` uses nothing else. `ModelTrainer` is not part of the
+`ModelStorage` and `Upos`; `ModelStorage` uses `Upos` and, for constants (`PerceptronModel` and its writer read the
+feature set versions and the known feature groups of `FeatureExtractor`), `Tagging`; `Tokenization` uses nothing else.
+`ModelTrainer` is not part of the
 runtime: it uses `Tagging` (the feature extractor, the decoder), `ModelStorage` (the weights writer and reader, the
 lexicon) and `Upos` through `InternalsVisibleTo`, and nothing in the library uses it. Each unit is one class or a few
 tightly coupled files, as listed in the folder layout below. The Trainer is a software unit although it is a build-time
@@ -118,7 +120,7 @@ src/DemaConsulting.PartOfSpeech/
 │   ├── PerceptronModelWriter.cs — Weights writer (used by the Trainer and the tests)
 │   └── EmbeddedModel.cs        — Lazy access to the embedded resources
 ├── Tagging/
-│   ├── FeatureExtractor.cs     — The hashed feature definition
+│   ├── FeatureExtractor.cs     — The hashed feature definition (base templates and feature groups)
 │   ├── DecoderWorkspace.cs     — Per-thread scratch memory of the decoder
 │   ├── ScoreSlice.cs           — Read-only list over the alternatives array
 │   ├── TagDecoder.cs           — Greedy decoder
@@ -151,18 +153,23 @@ The unit `ModelTrainer` is the tool project `tools/DemaConsulting.PartOfSpeech.T
 
 ```text
 tools/DemaConsulting.PartOfSpeech.Trainer/
-├── Program.cs                  — Command line (train, eval, calibrate, compare, glossary-probe, glossary-experiment,
-│                                 glossary-eval, thresholds, evaluate)
+├── Program.cs                  — Command line (train, eval, eval-shapes, eval-arm, calibrate, compare, glossary-probe,
+│                                 glossary-experiment, glossary-eval, thresholds, evaluate)
 ├── ConfigFile.cs               — Reads and writes training.json (System.Text.Json)
 ├── OperatingPointsFile.cs      — Reads and writes the selection and the results of the evaluation (System.Text.Json)
 ├── RunLog.cs                   — Formats the rows of the run log table
 ├── training.json               — The selected, committed configuration (including imageSha256)
 ├── README.md                   — How to run it, the determinism contract, the held-out gate
-├── RUN-LOG.md                  — The pre-registered rules, the dev-only run log, the glossary decisions and the
-│                                 protocol and outcome of the held-out evaluation
-├── Training/                   — Corpus reader, random generator, integer averaged perceptron, trainer, builder, predictor
+├── RUN-LOG.md                  — The pre-registered rules, the dev-only run log, the glossary decisions, the
+│                                 context-feature experiment (pre-registration, results, adoption) and the protocol
+│                                 and outcome of the held-out evaluations
+├── context-features/           — Harness of the context-feature experiment: arms, resumable driver, analysis script
+├── prenominal-ing/             — Harness of the pre-registered `prenominal-ing` follow-up: arms and scoring scripts
+├── Training/                   — Corpus reader, random generator, integer averaged perceptron, trainer, jackknife folds,
+│                                 builder, predictor
 └── Evaluation/                 — Data guard, development and held-out sets, metrics, bootstrap, calibration, confidence
-                                  curve and selection, held-out evaluator, reports, glossary experiment and evaluation
+                                  curve and selection, held-out evaluator, reports, glossary experiment and evaluation,
+                                  scoring of a trained arm
 ```
 
 Further top-level folders hold files that are not software items and are therefore not part of the software

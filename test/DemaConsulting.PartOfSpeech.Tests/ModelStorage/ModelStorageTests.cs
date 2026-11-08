@@ -149,4 +149,43 @@ public class ModelStorageTests
         Assert.Equal(2, loaded.SpellingCount);
         Assert.Equal(3, loaded.EntryCount);
     }
+
+    /// <summary>
+    ///     Proves that the committed weights file is the shipped feature set with the clause-cue group and no other: feature set 2, the clause-cue mask at offset 40 and zero reserved bytes from offset 44 on.
+    /// </summary>
+    [Fact]
+    public void ModelStorage_EmbeddedWeights_EnableTheClauseCueGroup()
+    {
+        // Arrange: the committed file
+        var committed = File.ReadAllBytes(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/weights.bin"));
+
+        // Act: read the header fields and the loaded model
+        var model = EmbeddedModel.Weights;
+
+        // Assert: the layout of the format with the clause-cue group only
+        Assert.Equal((ushort)2, BinaryFormat.ReadUInt16(committed, 8));
+        Assert.Equal((uint)FeatureGroups.ClauseCues, BinaryFormat.ReadUInt32(committed, PerceptronModel.GroupMaskOffset));
+        Assert.All(committed.Skip(44).Take(4), b => Assert.Equal(0, b));
+        Assert.Equal(FeatureGroups.ClauseCues, model.FeatureGroups);
+    }
+
+    /// <summary>
+    ///     Proves that a weights file with groups goes through the writer, a stream and the reader with its mask.
+    /// </summary>
+    [Fact]
+    public void ModelStorage_WeightsWriterAndReader_FeatureGroupsRoundTrip()
+    {
+        // Arrange: hand-set weights written with the clause cues and the preview group in a Deflate file
+        var groups = FeatureGroups.ClauseCues | FeatureGroups.RightPreview;
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 5).Build(2.5f, 0.5f, true, groups);
+        using var stream = new MemoryStream(weights);
+
+        // Act: load from the stream
+        var model = PerceptronModel.Load(stream);
+
+        // Assert: the mask and the feature set of the header
+        Assert.Equal(groups, model.FeatureGroups);
+        Assert.Equal(FeatureExtractor.GroupsFeatureSetVersion, BinaryFormat.ReadUInt16(weights, 8));
+        Assert.Equal((uint)groups, BinaryFormat.ReadUInt32(weights, 40));
+    }
 }

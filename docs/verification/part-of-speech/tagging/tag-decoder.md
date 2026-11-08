@@ -68,6 +68,23 @@ second or less (5,000 or less in a run with code coverage), or the allocation bo
 - **Empty input and arguments**: `TagDecoder_Decode_EmptySentence_ReturnsEmpty` (also that invalid arguments are
   rejected).
 - **Throughput**: `TagDecoder_Decode_SyntheticModel_ExceedsFiftyThousandTokensPerSecond`.
-- **No allocation**: `TagDecoder_Decode_DoesNotAllocateInHotPath` (.NET 8 and later) and, for the lexicon shape rules
+- **No allocation**: `TagDecoder_Decode_DoesNotAllocateInHotPath` (.NET 8 and later) and
+  `TagDecoder_Decode_AllGroups_DoesNotAllocateInHotPath` (the same bound for a model with all groups, which decodes in two
+  passes) and, for the lexicon shape rules
   that the decoder applies to every known token, `Lexicon_AllowedTags_KnownTokenShapes_DoNotAllocate` (described in
   the Lexicon verification document).
+- **Feature groups**: the decoder follows the groups of the weights header.
+  `TagDecoder_Decode_ClauseCues_ImperativeBeforeDeterminer`
+  (an ambiguous first word before a determiner becomes a verb; the same weights with a header without the group, and
+  the word alone, give a noun), `TagDecoder_Decode_ClauseCues_ClauseStateFollowsChosenTags` (a verb chosen for the first
+  token changes the second), `TagDecoder_Decode_PositionCues_UsePositionInSentence`,
+  `TagDecoder_Decode_Inflection_SeparatesVerbStemFromLookalike` and
+  `TagDecoder_Decode_MatchesReferenceDecoder` (for each of
+  the 16 sets of groups a toy model is trained with `TestSupport/TinyTrainer.cs` and the decoder is compared, tag for
+  tag, with a plain reference decoder in the test that uses the string-based reference features, the lexicon
+  restriction and the lowest-tag tie rule, in two passes for the preview group).
+- **Right preview**: `TagDecoder_Decode_RightPreview_SecondPassSeesFirstPassTags` (the second pass sees the first-pass tag
+  of the next token, the end of the sentence gives the end marker, a constraint acts in the first pass too, and a header
+  without the group ignores the weights), `TagDecoder_Decode_RightPreview_WithoutPreviewWeights_EqualsOnePass` (tags,
+  confidences and alternatives equal the one-pass decode of the same weights, so the first pass is the plain decode) and
+  `TagDecoder_Decode_RightPreview_IsDeterministic` (repeated and concurrent decodes give identical text).

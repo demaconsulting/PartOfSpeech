@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace DemaConsulting.PartOfSpeech.Trainer;
 
@@ -25,7 +26,35 @@ internal static class ConfigFile
         IgnoreReadOnlyProperties = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver { Modifiers = { OmitUnusedFeatureSettings } },
     };
+
+    /// <summary>
+    ///     Leaves the feature settings out of the file form while they are at their defaults, so that the committed configuration of the
+    ///     shipped feature set keeps its form: <c>features</c> is written when a group is selected, <c>previewFolds</c> when the
+    ///     <c>rightPreview</c> group is selected or the value is not the default.
+    /// </summary>
+    /// <param name="info">The type information that is being built.</param>
+    private static void OmitUnusedFeatureSettings(JsonTypeInfo info)
+    {
+        if (info.Type != typeof(TrainingConfig))
+        {
+            return;
+        }
+
+        foreach (var property in info.Properties)
+        {
+            if (property.Name == "features")
+            {
+                property.ShouldSerialize = (_, value) => value is List<string> { Count: > 0 };
+            }
+            else if (property.Name == "previewFolds")
+            {
+                property.ShouldSerialize = (owner, value) =>
+                    value is not TrainingConfig.DefaultPreviewFolds || (owner is TrainingConfig { Features: { } features } && features.Any(f => string.Equals(f, "rightPreview", StringComparison.OrdinalIgnoreCase) || string.Equals(f, "F3", StringComparison.OrdinalIgnoreCase)));
+            }
+        }
+    }
 
     /// <summary>
     ///     Parses and validates a configuration.

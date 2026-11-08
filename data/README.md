@@ -8,7 +8,7 @@ that produce and check it are in [`tools/data/`](../tools/data/README.md); the t
 formats and every mapping table are in [CONVENTIONS.md](CONVENTIONS.md) (normative). At run time the library uses only the
 lexicon and the trained weights, which are embedded in the package in compact binary forms: the lexicon is generated from
 `lexicon/lexicon.tsv` (see [lexicon/README.md](lexicon/README.md), "Embedded Form"), and the weights
-(`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 478,835 bytes compressed, 1,080,650 bytes uncompressed) are
+(`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 517,210 bytes compressed, 1,146,827 bytes uncompressed) are
 trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC and silver
 corpora with settings that were selected on the two development sets only (the run log is
 [RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not

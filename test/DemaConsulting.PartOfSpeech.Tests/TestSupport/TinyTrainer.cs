@@ -110,14 +110,16 @@ internal static class TinyTrainer
     /// </summary>
     /// <param name="epochs">The number of passes over the fixtures.</param>
     /// <param name="compress">Whether to Deflate the weights file.</param>
+    /// <param name="groups">The groups of context features; with <see cref="FeatureGroups.RightPreview"/> every sentence is trained in both modes (without the preview features, then with the gold tags of the next two tokens as preview) on the same weights.</param>
     /// <returns>The weights file.</returns>
-    public static byte[] Train(int epochs = 15, bool compress = false)
+    public static byte[] Train(int epochs = 15, bool compress = false, FeatureGroups groups = FeatureGroups.None)
     {
         var sentences = Sentences();
+        var lexicon = DemaConsulting.PartOfSpeech.Lexicon.Load(FixtureLexicon());
         var weights = new Dictionary<int, double[]>();
         var totals = new Dictionary<int, double[]>();
         var workspace = new DecoderWorkspace();
-        var buckets = new int[FeatureExtractor.MaxFeatures];
+        var buckets = new int[FeatureExtractor.BucketCapacity];
         var scores = new double[UposExtensions.Count];
         var order = Enumerable.Range(0, sentences.Count).ToArray();
         long seed = 12345;
@@ -135,52 +137,76 @@ internal static class TinyTrainer
             foreach (var index in order)
             {
                 var (tokens, gold) = sentences[index];
+                workspace.Configure(groups, lexicon);
                 FeatureExtractor.Prepare(workspace, tokens, TinyModels.HashBits);
-                var previous1 = FeatureExtractor.StartTag1;
-                var previous2 = FeatureExtractor.StartTag2;
-                for (var i = 0; i < tokens.Length; i++)
+                TrainPass(workspace, tokens, gold, weights, totals, buckets, scores, ref step);
+                if ((groups & FeatureGroups.RightPreview) != 0)
                 {
-                    var count = FeatureExtractor.Extract(workspace, i, previous1, previous2, TinyModels.HashBits, buckets);
-                    Array.Clear(scores, 0, scores.Length);
-                    for (var k = 0; k < count; k++)
-                    {
-                        if (weights.TryGetValue(buckets[k], out var row))
-                        {
-                            for (var t = 0; t < scores.Length; t++)
-                            {
-                                scores[t] += row[t];
-                            }
-                        }
-                    }
-
-                    // Greedy guess, the lowest tag wins a tie
-                    var guess = 0;
-                    for (var t = 1; t < scores.Length; t++)
-                    {
-                        if (scores[t] > scores[guess])
-                        {
-                            guess = t;
-                        }
-                    }
-
-                    step++;
-                    var truth = (int)gold[i];
-                    if (guess != truth)
-                    {
-                        for (var k = 0; k < count; k++)
-                        {
-                            Update(weights, totals, buckets[k], truth, 1, step);
-                            Update(weights, totals, buckets[k], guess, -1, step);
-                        }
-                    }
-
-                    previous2 = previous1;
-                    previous1 = guess;
+                    workspace.SetPreview(gold.Select(t => (int)t).ToArray());
+                    FeatureExtractor.StartPass(workspace, true);
+                    TrainPass(workspace, tokens, gold, weights, totals, buckets, scores, ref step);
                 }
             }
         }
 
-        return Quantize(weights, totals, step, compress);
+        return Quantize(weights, totals, step, compress, groups);
+    }
+
+    /// <summary>
+    ///     Trains on one sentence in the current mode of the workspace: decodes it left to right and updates on every mistake.
+    /// </summary>
+    private static void TrainPass(
+        DecoderWorkspace workspace,
+        string[] tokens,
+        Upos[] gold,
+        Dictionary<int, double[]> weights,
+        Dictionary<int, double[]> totals,
+        int[] buckets,
+        double[] scores,
+        ref long step)
+    {
+        var previous1 = FeatureExtractor.StartTag1;
+        var previous2 = FeatureExtractor.StartTag2;
+        for (var i = 0; i < tokens.Length; i++)
+        {
+            var count = FeatureExtractor.Extract(workspace, i, previous1, previous2, TinyModels.HashBits, buckets);
+            Array.Clear(scores, 0, scores.Length);
+            for (var k = 0; k < count; k++)
+            {
+                if (weights.TryGetValue(buckets[k], out var row))
+                {
+                    for (var t = 0; t < scores.Length; t++)
+                    {
+                        scores[t] += row[t];
+                    }
+                }
+            }
+
+            // Greedy guess, the lowest tag wins a tie
+            var guess = 0;
+            for (var t = 1; t < scores.Length; t++)
+            {
+                if (scores[t] > scores[guess])
+                {
+                    guess = t;
+                }
+            }
+
+            step++;
+            var truth = (int)gold[i];
+            if (guess != truth)
+            {
+                for (var k = 0; k < count; k++)
+                {
+                    Update(weights, totals, buckets[k], truth, 1, step);
+                    Update(weights, totals, buckets[k], guess, -1, step);
+                }
+            }
+
+            FeatureExtractor.Advance(workspace, i, guess);
+            previous2 = previous1;
+            previous1 = guess;
+        }
     }
 
     /// <summary>
@@ -202,7 +228,7 @@ internal static class TinyTrainer
     /// <summary>
     ///     Averages the weights, quantizes them to 16 bits and writes the weights file.
     /// </summary>
-    private static byte[] Quantize(Dictionary<int, double[]> weights, Dictionary<int, double[]> totals, long steps, bool compress)
+    private static byte[] Quantize(Dictionary<int, double[]> weights, Dictionary<int, double[]> totals, long steps, bool compress, FeatureGroups groups)
     {
         // Average as in the spike: the weight minus the time-weighted updates divided by the number of steps
         var averaged = new Dictionary<int, double[]>();
@@ -224,6 +250,6 @@ internal static class TinyTrainer
         var rows = averaged.Select(r => new KeyValuePair<int, short[]>(
             r.Key,
             r.Value.Select(v => (short)Math.Round(v / scale)).ToArray()));
-        return PerceptronModelWriter.Compile(TinyModels.HashBits, 1f, scale, FeatureExtractor.FeatureSetVersion, rows, compress);
+        return PerceptronModelWriter.Compile(TinyModels.HashBits, 1f, scale, FeatureExtractor.FeatureSetVersionFor(groups), rows, compress, (uint)groups);
     }
 }

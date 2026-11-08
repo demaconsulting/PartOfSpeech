@@ -22,6 +22,7 @@ dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- <co
 | `train --check` | Retrain with the committed configuration and compare the **uncompressed image** with the committed file and with `imageSha256`. Exit code 1 if stale. |
 | `eval --weights FILE` | Score a weights file on the two development sets through the real decoder (`Tagger.Load`). |
 | `eval-shapes [--weights FILE] [--label TEXT] [--tranche standard\|hard\|both]` | Score a weights file (default: the embedded model) on the hard-shape development set through the real decoder and print Markdown: per shape the target-token accuracy (with a 95% Wilson interval), harmful errors and harmful errors per 1,000 noun-verb decisions, and the control accuracy (the same spelling in the other class), plus a pooled row. The standard tranche `data/eval/shapes-dev/dev.tsv` (section unchanged), the hard tranche `hard.tsv` and the two pooled each get a section (default `both`; a missing hard file is noted, `--tranche hard` needs it). Reads the shapes development files only (their own guard); appends no run-log row. |
+| `eval-arm --weights FILE --label TEXT --json FILE` | Dev-only scoring of a trained arm of the context-feature experiment (see _Context-feature experiment_ below): the standard and the hard tranche of the shapes development set (per shape and pooled, with per-item outcomes of the target items), open dev, gold v2 dev, the mapped development part of the external treebank (local cache `tools/data/cache/ud-ewt/ud_dev.tsv`, SHA-256 pinned; missing cache: exit 2 with the fetch recipe), the file sizes, the groups of the weights header and the single-thread throughput of the default tagger (one warm-up pass and five timed passes over the open dev and treebank dev tokens, median tokens per second). Writes one JSON result (schema 1) to `--json`. It has no data option and refuses a weights or result file inside `data/` or `tools/data/`; it cannot read a held-out set. |
 | `shapes-tokenize --in FILE --out FILE` | Tokenize a text file, one sentence per line, with the library tokenizer: each output line is `sentence TAB sentences found TAB tokens` (tokens separated by single spaces). Reads and writes only the two files, and refuses a path inside the repository's `data/` folder (links resolved), so it cannot read training, development or held-out data; it is the tokenizer of `tools/data/shapes_dev.py`, so the development set follows the corpus tokenization by construction. |
 | `calibrate --weights FILE` | Choose the softmax temperature that minimizes the log-likelihood on the open development split. |
 | `compare --a FILE --b FILE` | Paired bootstrap by document (1,000 resamples, fixed seed) of the difference between two weights files. |
@@ -46,6 +47,8 @@ Exit codes: 0 success, 1 stale weights (`train --check`) or a stop condition fir
 | `--checkpoints 4,6,8` | Also evaluate the averaged weights after these epochs (one run gives the epoch curve). |
 | `--epochs --hash-bits --min-count --prune --scale --seed --temperature` | Override one setting of the configuration. |
 | `--restrict none\|history\|full`, `--history predicted\|gold` | Restriction mode (A, B, C) and history mode. |
+| `--features none\|F1,F2,F3,F4\|positionCues,clauseCues,rightPreview,inflection` | Context feature groups of the model (experiment override; the groups are stored as a mask in the weights header; `none` is the base feature set, the one before the groups existed, and trains as it did then; the embedded model uses `clauseCues`). Names are accepted in any order and case, short or long. |
+| `--preview-folds N` | Number of jackknife folds of the `rightPreview` group (2 to 10, default 5; experiment override). |
 | `--source NAME:WEIGHT` | Set the weight of a source (0 leaves it out); repeatable. |
 | `--max-sentences N`, `--sample-permille N` | Limit or subsample every source (deterministic by sentence id). |
 | `--mask-disputed true\|false`, `--silver-min N` | Masking of `disputed` tokens and of silver tokens below N percent. |
@@ -71,8 +74,10 @@ SHA-256 of the image with a pinned value on every target framework.
 
 ## Development data and the held-out gate
 
-Every setting is selected on the two development sets (`data/open/dev.tsv`, `data/eval/gold-v2/dev.tsv`). Every command
-except `evaluate` and `eval-shapes` reads those two files and nothing else: evaluation accepts exactly those two paths, and
+Every setting is selected on development data: the two development sets (`data/open/dev.tsv`,
+`data/eval/gold-v2/dev.tsv`) and, for the feature group, also the hard-shape development set and the development part of
+the external treebank (below). Every command
+except `evaluate`, `eval-shapes` and `eval-arm` reads those two files and nothing else: evaluation accepts exactly those two paths, and
 training accepts only files below the repository's `data` folder (after the path is made absolute and links are resolved) and refuses
 held-out and development files there (`Evaluation/DevSets.cs`, tested). The held-out sets are read by `evaluate` only, and
 only with a committed selection artifact that is valid for the frozen model.
@@ -86,6 +91,32 @@ ids start with `shapes-dev-hard-`; the standard tranche does neither), so a copy
 the two-file allow-list, so no other command can read them, they are not held-out files, so `evaluate` never reads them, and
 training refuses them like every other development file (both lie below the `eval` folder). They are for selecting settings (for example the context-feature work),
 never a held-out figure; the shape probe stays evaluation only.
+
+### Context-feature experiment
+
+The experiment on sentence-level context features (the groups F1 position cues, F2 clause cues, F3 right preview and F4
+inflection of the shared feature extractor) is pre-registered in `RUN-LOG.md` and run by the harness in
+`context-features/`: `arms.json` (the ten arms and the five seeds), `run_arms.ps1` (resumable and sequential: per arm and
+seed `train --seed S --features G [--preview-folds 5] --calibrate --output FILE`, then `eval-arm`; below-normal priority,
+at most 8 threads, at least 6 GB free on C:; the interface contract and the schema of the per-run JSON are at the top of
+the script) and `analyze_arms.py` (the table, the guards and the selection rule; it checks its own logic on synthetic runs).
+All three files are frozen by
+the hashes in the run log. The rule selected F2, which the embedded model enables through `training.json`; the other
+groups stay switches that are off (`RUN-LOG.md` has the results and the caveats, and `docs/design/part-of-speech/model-trainer.md`
+the design). On a machine whose cores are saturated by other processes the below-normal priority can starve a run;
+`-Runner FILE` replaces the `dotnet` command with a wrapper of your own (for example one that starts it at normal priority).
+To run everything (writes below the given folder, which must be on C:):
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <folder>
+python tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py --runs <folder> --out <report.md>
+```
+
+The treebank development table that `eval-arm` reads comes from `python tools/data/fetch_ud_ewt.py fetch` and `map`.
+A model that is trained with the `rightPreview` group first trains one model per fold (without that group, with the other
+groups of the arm), decodes the held-out fold with each, and then trains once on both decoding modes; its `train` output
+prints one line per fold and the time of the jackknife, and the `Trained ... in X s` line is the time of the final training
+alone.
 
 ### Held-out evaluation
 
@@ -116,8 +147,9 @@ Run the commands at below-normal priority, one process at a time (see _Machine l
 
 `training.json` selects: sources open (x2), MASC and silver (labeled tokens with probability of at least 80%); restriction
 mode `history` with predicted history; 6 epochs; 19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8;
-temperature 6.442. The file `weights.bin` has 116,662 rows and 282,426 weights, is 1,080,650 bytes uncompressed and
-478,835 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check` takes about 15 seconds and runs
+the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 121,033 rows and 301,571 weights, is
+1,146,827 bytes uncompressed and 517,210 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
+takes about 15 seconds and runs
 in `build.ps1` and in the CI build on all three operating systems. The glossary decision (boost only, no trained
 feature) and every experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and
 `docs/verification/part-of-speech/model-trainer.md` the verification. To change the model: edit `training.json` (or run

@@ -1,0 +1,49 @@
+# Parity cases of the sentence key of the leakage rule: the Python function (tools/data/common.py, key) wrote the
+# keys; the Python tests (test_common.py) and the trainer (Jackknife.SentenceKey, ModelTrainerTests.cs) must reproduce
+# them. Generated once by tools/data/make_sentence_key_cases.py; do not edit by hand.
+# columns = id, input (hexadecimal code points), key (hexadecimal code points; empty = the empty key),
+# since (Unicode version that the case needs when newer than 8.0, else empty; skipped on .NET Framework), description
+empty				the empty text
+punctuation-only	2E 2E 2E 20 21 3F 20 2D 2D 20 28 29			no letter and no digit: the empty key
+ascii-sentence	44 6F 6E 27 74 20 20 50 41 4E 49 43 2C 20 34 32 21	64 6F 6E 74 70 61 6E 69 63 34 32		case, spaces and punctuation are dropped
+typographic-apostrophe	44 6F 6E 2019 74 20 70 61 6E 69 63	64 6F 6E 74 70 61 6E 69 63		the typographic apostrophe is dropped like the plain one
+latin-1-case	C9 43 4F 4C 45 20 E9 63 6F 6C 65 20 D1	E9 63 6F 6C 65 E9 63 6F 6C 65 F1		lower case of the Latin-1 letters
+sharp-s	53 74 72 61 DF 65	73 74 72 61 DF 65		the sharp s stays one letter
+composed-e-acute	63 61 66 E9	63 61 66 E9		the precomposed letter
+decomposed-e-acute	63 61 66 65 301	63 61 66 E9		e and the combining acute compose to the same key
+combining-mark-left-over	61 300 301 62	E0 62		a mark that does not compose is dropped
+combining-mark-alone	301 302			a mark without a base is dropped
+dotted-capital-i	130 73 74 61 6E 62 75 6C	69 73 74 61 6E 62 75 6C		the capital I with dot above lower-cases to i and a combining dot
+dotless-i	131 73 74 61 6E 62 75 6C 20 49 53 54 41 4E 42 55 4C	131 73 74 61 6E 62 75 6C 69 73 74 61 6E 62 75 6C		the dotless i is a letter of its own
+greek-final-sigma	39F 394 3A5 3A3 3A3 395 3A5 3A3	3BF 3B4 3C5 3C3 3C3 3B5 3C5 3C2		the capital sigma at the end of a word lower-cases to the final sigma
+greek-medial-sigma	391 3A3 391	3B1 3C3 3B1		the capital sigma inside a word lower-cases to the small sigma
+greek-lone-sigma	3A3 20 3A3 391	3C3 3C3 3B1		a capital sigma without a letter before it
+greek-sigma-after-space	391 20 3A3	3B1 3C3		a space is not case-ignorable, so the sigma after it is no final sigma
+greek-sigma-after-full-stop	391 2E 3A3	3B1 3C2		a full stop is case-ignorable, so the sigma behind it is final
+greek-sigma-before-full-stop	391 3A3 2E 391	3B1 3C3 3B1		the sigma before a full stop and a letter is no final sigma
+greek-sigma-before-mark	391 3A3 301	3B1 3C2		a combining mark behind the sigma is skipped, so the sigma is final
+greek-sigma-after-ahom-mark	391 3A3 1171E 391	3B1 3C3 3B1		U+1171E is a nonspacing mark in Python (spacing mark in newer Unicode data): it is skipped, so the sigma before it and a letter is no final sigma
+greek-sigma-before-ahom-mark	391 1171E 3A3	3B1 3C2		U+1171E before the sigma is skipped as well, so the sigma at the end is final
+greek-final-sigma-lower	3BF 3B4 3C5 3C3 3C3 3AD 3B1 3C2	3BF 3B4 3C5 3C3 3C3 3AD 3B1 3C2		an already lower-case final sigma stays
+cyrillic	41F 420 418 412 415 422 20 43F 440 438 432 435 442	43F 440 438 432 435 442 43F 440 438 432 435 442		Cyrillic case
+fullwidth	FF21 FF22 FF23 FF11 FF12 FF13	FF41 FF42 FF43 FF11 FF12 FF13		fullwidth Latin letters and digits lower-case and stay
+roman-numeral	2163 20 2173	2173 2173		the Roman numeral four is a letter number and lower-cases
+superscript-and-fraction	78 B2 20 BD	78 B2 BD		the superscript two and the vulgar fraction are numbers
+arabic-indic-digits	661 662 663	661 662 663		decimal digits of another script
+cjk-and-hangul	65E5 672C 8A9E 20 D55C AD6D C5B4	65E5 672C 8A9E D55C AD6D C5B4		ideographs and syllables are letters
+symbols-and-spaces	20AC 20 35 20 2B 20 33 20 3D 20 38 A0 A3	35 33 38		currency, math and no-break space are dropped
+zero-width-joiner	61 200D 62 200B 63	61 62 63		format characters are dropped
+emoji-astral	68 69 20 1F600 20 74 68 65 72 65	68 69 74 68 65 72 65		an emoji of the supplementary plane is no letter
+musical-symbol-astral	1D11E 20 63 6C 65 66	63 6C 65 66		a musical symbol of the supplementary plane is no letter
+deseret-capital-astral	10400 10401 10427	10428 10429 1044F		supplementary-plane letters with a lower case: Deseret
+deseret-small-astral	10428 10429 1044F	10428 10429 1044F		the lower-case Deseret letters give the same key
+osage-astral	104B0 104D3	104D8 104FB	9.0	Osage
+vithkuqi-astral	10570 1057A 1057C 1058A	10597 105A1 105A3 105B1	14.0	Vithkuqi (with the gaps of the block)
+old-hungarian-astral	10C80 10CB2	10CC0 10CF2		Old Hungarian
+warang-citi-astral	118A0 118BF	118C0 118DF		Warang Citi
+medefaidrin-astral	16E40 16E5F	16E60 16E7F	11.0	Medefaidrin
+adlam-astral	1E900 1E921	1E922 1E943	9.0	Adlam
+math-bold-astral	1D400 1D401 20 1D7CE 1D7CF	1D400 1D401 1D7CE 1D7CF		mathematical bold letters are letters without a case mapping
+cjk-extension-b-astral	20000 20 78	20000 78		an ideograph of the supplementary plane is a letter
+astral-with-latin	54 68 65 20 10400 20 63 61 74 20 73 61 74 2E 20 1F600 20 44 6F 6E 65 21	74 68 65 10428 63 61 74 73 61 74 64 6F 6E 65		supplementary-plane and Latin letters in one sentence
+astral-digits	1D7D8 1D7D9 20 37	1D7D8 1D7D9 37		mathematical digits are decimal digits

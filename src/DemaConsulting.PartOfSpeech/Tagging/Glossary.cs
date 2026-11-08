@@ -73,8 +73,7 @@ namespace DemaConsulting.PartOfSpeech;
 ///         may be wrong: in <see cref="GlossaryMode.Soft"/> mode those tags get a boost of
 ///         <see cref="GlossaryOptions.SoftStrength"/> times the model temperature, so the model can still disagree when it
 ///         is sure. With wrong entries, hard mode makes confident errors, while soft mode stays near the accuracy of tagging
-///         without a glossary; the full measurements are in section E9 of
-///         https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md. The other words of a noun term (<c>bleed</c> in
+///         without a glossary. The other words of a noun term (<c>bleed</c> in
 ///         <c>bleed valve</c>) can no longer be a verb or an
 ///         auxiliary in hard mode, and are penalized for these tags in soft mode; the second word of a two-word verb term
 ///         whose head is the first word (the particle of a phrasal verb such as <c>shut down</c>; see

@@ -18,7 +18,7 @@ unchanged. The tests of the default tagger and of the embedded weights use the r
 properties that do not depend on its accuracy: that it loads, that it is one shared instance, and that it gives the
 unmistakable tags of a few hand-written sentences (these sentences were written once and not tuned; the accuracy of the
 model is measured by the held-out evaluation of the trainer, which is a documented procedure (once for each frozen
-model; the model family has had two disclosed held-out evaluations) and not a test,
+model; each evaluation of the model family is disclosed as such in the evaluation record) and not a test,
 and its committed results are tied to the shipped model by the evaluation record tests, never by the tests of the tagger).
 
 System tests reside in `PartOfSpeechTests.cs` within the `DemaConsulting.PartOfSpeech.Tests` project. The data and
@@ -152,7 +152,7 @@ are information for reviewers, not acceptance values:
   instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
-- The embedded weights are 478,835 bytes (1,080,650 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
+- The embedded weights are 517,210 bytes (1,146,827 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
   uncompressed); the package is larger because both resources are embedded once per target framework (the package size
   is stated, approximately, in the "Package size" item of the design document `part-of-speech.md`).
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
@@ -242,7 +242,9 @@ and of `EmbeddedModel.Weights` are described in _Tagger Verification_ and _Embed
 **Test**: `PartOfSpeech_Model_EmbeddedWeights_MatchTrainingConfig` (in `PartOfSpeechDataTests.cs`)
 
 Reads the embedded weights resource and the committed `weights.bin` and asserts that they are the same bytes, loads the
-model, and compares its hash bits, scale and temperature with `training.json` and the SHA-256 of its uncompressed image
+model, and compares its hash bits, scale, temperature and feature groups with `training.json` (the groups named by its
+`features` list, none when the member is absent, so the header mask of the file and the configuration cannot differ) and
+the SHA-256 of its uncompressed image
 with `imageSha256` (the values are read from the JSON text with a regular expression, because the JSON API is not part of
 .NET Framework). This is cheap and runs in every test run on every framework. The complete proof that the configuration
 and the committed corpora produce exactly this model is the retraining check `train --check`, which `build.ps1` and
@@ -314,6 +316,18 @@ that no threshold is recommended. The FileAssert test opens the generated API re
 the namespace page carries the heading, both thresholds, the advice and the links and that the page of
 `TaggedToken.Confidence` links to the section, which proves the generated result and not only the source comment. It runs
 in `build.ps1` and in the CI build, immediately after the API reference is generated.
+
+### Root README Tables Equal the Record
+
+**Test**: `PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures` (in `PartOfSpeechEvaluationTests.cs`)
+
+Parses the two tables of the root `README.md` and compares them with the committed record: each row of the table of
+held-out results must state the accuracy (two decimals) and the harmful-error rate per 1,000 decisions (one decimal) of
+its set in `test-results.json`, and each row of the table of thresholds must state the threshold of
+`operating-points.json` (two decimals) with the coverage and the harmful-error rate per 1,000 answered decisions (one
+decimal each) of its point on the open test split in `test-results.json`. It also asserts that the open test split is in
+the first table and that the second table has exactly the two points `strict` and `balanced`. The README copy cannot
+drift from the record: a reissued evaluation fails this test until the README is updated.
 
 ### Glossary: Hard and Soft Entries
 

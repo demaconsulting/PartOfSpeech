@@ -23,8 +23,17 @@ is mocked. The tests use four kinds of method:
   open training corpus changes, the pinned values must be updated; a
   failing test prints the actual hash.
 - **Parity with the runtime.** The trainer's predictor is compared token by token with the real `TagDecoder` for the same
-  quantized weights, once restricted with the embedded lexicon and once unrestricted with unknown words, so that the
-  trainer cannot train for conditions that the tagger does not have.
+  quantized weights, once restricted with the embedded lexicon and once unrestricted with unknown words, and for every
+  feature group (and the combinations of the experiment) on a model that the trainer made with that group, so that the
+  trainer cannot train for conditions that the tagger does not have; a hand-set model proves that the second decoding
+  pass of the right preview group reads the first-pass tags.
+- **Replay of the jackknife.** The preview tags of the right preview group are compared with an independent replay in
+  the test: the same fold models trained by hand on the other folds, the quantized weights and the lexicon restriction;
+  the folds are checked to depend on the document ids and the sentence keys only, with pinned values of the hash, and
+  every held-out sentence key is checked to be absent from the training set of its fold model.
+- **Result schema on fixtures.** `eval-arm` is run on a tiny model with feature groups in its header and on small
+  fixtures of every development set; the JSON is parsed and its members, counts and sums are compared with the contract
+  (.NET 8 and later, where System.Text.Json exists).
 - **Oracles and fixtures.** The integer averaging and quantization is compared with a `decimal` oracle on random update
   sequences and on hand-made ties and clamps; the corpus reader, the masks, the development-set parser, the metrics and
   the bootstrap are checked against small fixtures with known answers; the pseudo-random generator is checked against its
@@ -38,8 +47,8 @@ is mocked. The tests use four kinds of method:
   tested with tiny fixtures: a temporary fake repository with a manifest for the guarded reader, hand-written probe and
   treebank rows, hand-computed outcomes for the curve and the rule, and the tiny trained model for the judging. No test,
   build step or CI job reads a real held-out file through this code, so CI never looks at held-out data. The real held-out
-  run is a documented procedure that runs once for each frozen model (the protocol section of the run log; the model
-  family has had two disclosed held-out evaluations), not a test: it would be wrong for a
+  run is a documented procedure that runs once for each frozen model (the protocol section of the run log; each
+  evaluation of the model family is disclosed as such in the evaluation record), not a test: it would be wrong for a
   test to run it, because its value is that it happens once, after the selection is committed. Its output is a committed,
   generated report; the system-level tests that tie it to the shipped model and to the selection accompany the report.
 
@@ -76,7 +85,13 @@ a malformed probe or treebank row, selects an operating point that does not meet
 relaxes them when none qualifies), computes a tally that disagrees with the metrics, renders a different report for the
 same results or a treebank word into a report, or lets a stop condition pass, or the shapes development evaluation reads
 a file other than its own, accepts an item whose judged word is missing, disputed, outside its sentence or in the wrong
-class for its shape and role, or renders different text for the same results.
+class for its shape and role, or renders different text for the same results, or the feature groups are not read,
+validated and written as the specification says (an unknown or repeated group is accepted, the group mask or the
+feature set version of a file is wrong, a run without a group differs from the base training), the predictor of a
+group differs from the decoder, a document is split between jackknife folds, a sentence key occurs in two folds, the
+jackknife tags differ from the replay,
+the right preview group does not train both passes on one table, `eval-arm` writes a result that does not match the
+schema or its own counts, or reaches a held-out file or writes into a data folder.
 
 ### Test Scenarios
 
@@ -87,7 +102,61 @@ class for its shape and role, or renders different text for the same results.
   `DeterministicRandom_Shuffle_Permutation_ReproducibleAndSeedDependent` and
   `DeterministicRandom_NextInt_NonPositiveBound_Throws`.
 - **Shared definitions**: `ModelTrainer_Predict_RestrictedWithLexicon_MatchesTagDecoder` and
-  `ModelTrainer_Predict_Unrestricted_MatchesTagDecoderWithUnknownWords`.
+  `ModelTrainer_Predict_Unrestricted_MatchesTagDecoderWithUnknownWords`, and for the feature groups
+  `ModelTrainer_Predict_FeatureGroups_MatchesTagDecoder` (a theory over each group alone, all four and the combination
+  without the right preview group: train the small run with the groups, load the weights into the decoder, compare every
+  token of 300 sentences, and check that the training sentences are mostly tagged right) and
+  `QuantizedPredictor_RightPreview_SecondPassReadsFirstPassTags` (a hand-set model: without the group a word keeps its own
+  tag, with it the first-pass tag of the next word changes it).
+- **Feature groups in the configuration and the file**: `TrainingConfig_ParseFeatureList_ValidValue_CanonicalOrder` and
+  `TrainingConfig_ParseFeatureList_InvalidValue_Throws` (the option value: `none`, short and long names in any order
+  and case; an empty value, an unknown group, the skipped clusters group, a group twice by either spelling and `none`
+  next to a group are refused), `TrainingConfig_Features_DefaultsResolveValidateAndClone` (defaults, flags, validation
+  of the names and of the fold count, a clone does not share the list),
+  `ModelBuilder_Encode_FeatureGroups_WritesMaskAndFeatureSetVersion` (feature set 1 and mask 0 without a group, feature
+  set 2 and the mask in the header word at offset 40 with groups, the loader reads them back and the strict loader of
+  feature set 1 refuses them), `ConfigFile_Features_OmittedByDefaultAndRoundTripped` (the settings are left out of the
+  file form while at their defaults, written and read back otherwise, an unknown group and an out-of-range fold count
+  are refused) and `PerceptronTrainer_Train_NoGroups_IsTheShippedTraining` (an explicit empty list and unused preview
+  tags give the golden hash of the base training).
+- **Jackknife** (`ModelTrainer/ModelTrainerTests.cs`): `Jackknife_Partition_ByDocumentHash_NeverSplitsADocumentAndIsStable`
+  (60 documents of three sentences without duplicates: one fold per document, the same in any order, all folds used,
+  the sentence id as the fallback, pinned folds of three ids),
+  `Jackknife_Partition_DuplicateSentenceInTwoDocuments_LandsInOneFold` (two documents with different folds of their own
+  share one sentence up to case and punctuation: all their sentences get the fold of the smaller id, and without the
+  duplicate they keep their own folds), `Jackknife_Partition_TransitiveChain_LandsInOneFold` (documents A-B and B-C
+  share sentences: one group and one fold for all three; sentences without a letter or digit join nothing),
+  `Jackknife_Partition_WithDuplicates_IsDeterministicAndIndependentOfOrderAndSeed` (the folds and the groups are the
+  same in any order, the group is the smallest document id, the folds are pinned to the hash of that id),
+  `Jackknife_GroupDocuments_NoDuplicates_EveryDocumentIsItsOwnGroup` (every document is its own group with the fold of
+  its own id; composed and decomposed accents give one key, and a text without letters the empty key),
+  `Jackknife_SentenceKey_SharedParityCases_AgreeWithPython` (the sentence key reproduces, for every case of
+  `tools/data/tests/sentence-key-cases.tsv`, the key that the Python normalizer of the leakage check wrote: supplementary-plane
+  letters and numbers, combining marks, the sigma rules and other case folding; the Python tests read the same file; the
+  cases of scripts newer than Unicode 8 are left out on .NET Framework only),
+  `Jackknife_Compute_DuplicatesAcrossDocuments_FoldModelNeverSeesAHeldOutSentenceKey` (a toy corpus with duplicates
+  under other document ids: the document ids alone would have split a duplicate from its original, no key of a
+  held-out fold occurs in the training set of its fold model, and the tags equal a replay of that model),
+  `Jackknife_Compute_TagsEachFoldWithAModelThatDidNotSeeIt` (the tags equal a
+  replay with fold models trained by hand on the other folds without the group, one message per fold, reproducible, the
+  seed changes the tags and not the sentences), `Jackknife_Compute_OneDocument_Throws` and
+  `PerceptronTrainer_Train_RightPreview_TrainsBothPassesOnOneTable` (twice the steps of the arm without the group, the
+  same model whether the tags are passed or computed, another model from other tags, a missing sentence is refused).
+- **Arm evaluation** (`ModelTrainer/ShapesDevEvaluationTests.cs`, fixtures and a tiny model):
+  `ArmEvaluation_Evaluate_TinyWeights_WritesTheResultSchema` (every member of schema 1, the groups and sizes of the
+  header, the token counts of the throughput, per-shape rows that add up to the pooled rows, per-item outcomes that add
+  up to the pooled counts, the inputs as given, a label that survives escaping, the same result for the same inputs
+  apart from the measured rate), `ArmEvaluation_Evaluate_NoGroupsAndBadInput_BehavesAsSpecified`,
+  `HeldOutEvaluator_Throughput_TimedPasses_AtLeastOneAndPositiveRate` and
+  `DevSets_ReadUdDev_MissingOrChangedTable_RefusedAndPinnedTableRead` (a missing cache, a cache that holds only the test
+  table and a changed table are refused with the recipe; the cached table of the machine, when present, has the pinned
+  hash and the documented size).
+- **`eval-arm` is development only**: `DataGuard_EnsureArmFile_DataFolders_Refused` (a theory over the held-out files,
+  the development files, the treebank cache files and detours), `DataGuard_EnsureArmFile_OrdinaryLocations_Admitted`
+  and `ArmEvaluation_HeldOutSets_AreUnreachable` (all five held-out files are refused by the development, shapes and
+  arm guards; the development table of the treebank is another file and another pin; the sources of the evaluation and
+  of the command do not mention the held-out machinery; the command guards its two files, has no data option and the
+  loader takes the repository root only).
 - **Exact quantization**: `AveragedPerceptron_Quantize_RandomUpdates_MatchesDecimalOracle`,
   `AveragedPerceptron_Quantize_TiesAndClamp_RoundAwayFromZeroAndClamp` (a tie is rounded away from zero, large values are
   clamped to the 16-bit range without -32768), `AveragedPerceptron_Quantize_RangeExceeded_ThrowsClearException` and
@@ -215,7 +284,14 @@ class for its shape and role, or renders different text for the same results.
   token as written), `ModelTrainer_Train_GlossaryHints_ChangeTheImage` (and
   the plain run keeps its pinned hash, which is the golden test),
   `GlossaryFeatures_Append_InBucketSpaceAndDependOnHintAndHistory`, `HintedPredictor_NoHints_MatchesQuantizedPredictor`
-  and `HintedPredictor_HardHintAndHugeBoost_FollowTheHint`.
+  and `HintedPredictor_HardHintAndHugeBoost_FollowTheHint`. With feature groups,
+  `ModelTrainer_Train_AllGroupsWithGlossaryHints_FitsTheBucketBuffer` (the bucket buffer holds the group capacity plus the
+  glossary buckets),
+  `HintedPredictor_FeatureGroups_MatchesQuantizedPredictor` and
+  `HintedPredictor_FeatureGroupsWithHints_DecodeEveryTokenAndFollowHardHints` (the experiment's decoder configures the
+  workspace with the groups of the model), `HintedPredictor_RightPreviewGroup_IsRefused` (a model with the right preview
+  group is rejected) and `GlossaryProbeAndEvaluation_GroupedModel_UseTheConfiguredTagger` (the probe and the evaluation
+  tag through the real `Tagger`, which handles every group).
 - **Glossary evaluation** (the tests run the evaluation code of the tool on tiny dev-like fixtures with known answers, not
   on the development data): `GoldTarget_Lemma_IsParsedAndOptional` (the lemma column of the gold development set is read
   when present, and is empty otherwise), `GlossaryEvaluation_StrengthGrid_ContainsTheDefaultSoftStrength` (the library

@@ -867,6 +867,8 @@ sections:
           - PartOfSpeech-ModelTrainer-ExactQuantization
           - PartOfSpeech-ModelTrainer-CheckDetectsStaleWeights
           - PartOfSpeech-ModelTrainer-ProtectsShippedWeights
+          - PartOfSpeech-ModelTrainer-FeatureGroups
+          - PartOfSpeech-ModelTrainer-Jackknife
         tests:
           - PartOfSpeech_Model_EmbeddedWeights_MatchTrainingConfig
           - PartOfSpeech_Model_EmbeddedWeights_SizeFiguresInDocs_AreCurrent
@@ -906,6 +908,8 @@ sections:
           - PartOfSpeech-ModelTrainer-ShapesDevEvaluation
           - PartOfSpeech-ModelTrainer-ShapesDevTranches
           - PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
+          - PartOfSpeech-ModelTrainer-ArmEvaluation
+          - PartOfSpeech-ModelTrainer-ArmEvaluationIsDevelopmentOnly
         tests:
           - PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora
 
@@ -939,7 +943,7 @@ sections:
           - PartOfSpeech-ModelTrainer-HeldOutMetrics-StopConditions
           - PartOfSpeech-ModelTrainer-HeldOutMetrics-Throughput
           - PartOfSpeech-ModelTrainer-EvaluationReport-Deterministic
-          - PartOfSpeech-ModelTrainer-EvaluationReport-SecondLookNotice
+          - PartOfSpeech-ModelTrainer-EvaluationReport-DisclosureNotice
           - PartOfSpeech-ModelTrainer-EvaluationReport-JsonComplete
           - PartOfSpeech-ModelTrainer-EvaluationReport-NoTreebankText
           - PartOfSpeech-ModelTrainer-EvaluationReport-PerTokenDump
@@ -952,9 +956,9 @@ sections:
     requirements:
       - id: PartOfSpeech-Lib-ConfidenceGuidance
         title: >-
-          The documentation that is packed with the library shall recommend a strict and a balanced confidence threshold
-          with the coverage and the harmful-error rate that were measured for them, state that a consumer that needs a
-          low harmful rate must use one, and link to the evaluation record.
+          The documentation that is packed with the library and the repository README shall recommend a strict and a
+          balanced confidence threshold with the coverage and the harmful-error rate that were measured for them, state
+          that a consumer that needs a low harmful rate must use one, and link to the evaluation record.
         tags: [system]
         justification: |
           A confidence is only useful with guidance on which values to trust, and a consumer that reads the packed
@@ -966,6 +970,7 @@ sections:
           - PartOfSpeech-ModelTrainer-ConfidenceCurve
         tests:
           - PartOfSpeech_Evaluation_ConfidenceGuidance_MatchesTheCommittedFigures
+          - PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures
           - ApiMark_ConfidenceGuidanceDocumented
 
       - id: PartOfSpeech-Lib-ApiDocsPackaged

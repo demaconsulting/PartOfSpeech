@@ -83,7 +83,7 @@ internal static class TinyModels
     /// <param name="lexicon">The lexicon file.</param>
     /// <returns>The decoder.</returns>
     public static TagDecoder CreateDecoder(byte[] weights, byte[] lexicon) =>
-        new(PerceptronModel.Load(weights, FeatureExtractor.FeatureSetVersion), DemaConsulting.PartOfSpeech.Lexicon.Load(lexicon));
+        new(PerceptronModel.Load(weights), DemaConsulting.PartOfSpeech.Lexicon.Load(lexicon));
 
     /// <summary>
     ///     Collects hand-set weights keyed by feature and writes them as a weights file.
@@ -155,16 +155,39 @@ internal static class TinyModels
         public WeightsBuilder Bias(Upos tag, int weight) => Add(FeatureKind.Bias, null, null, tag, weight);
 
         /// <summary>
+        ///     Adds to the weight of one tag for one instance of a group feature given by its numeric values.
+        /// </summary>
+        /// <param name="kind">The feature template of a group.</param>
+        /// <param name="a">The first value.</param>
+        /// <param name="b">The second value.</param>
+        /// <param name="tag">The tag.</param>
+        /// <param name="weight">The amount to add (an integer weight).</param>
+        /// <returns>This builder.</returns>
+        public WeightsBuilder AddCodes(FeatureKind kind, uint a, uint b, Upos tag, int weight)
+        {
+            var bucket = FeatureExtractor.ReferenceBucketOfCodes(kind, a, b, HashBits);
+            if (!_rows.TryGetValue(bucket, out var row))
+            {
+                row = new int[UposExtensions.Count];
+                _rows[bucket] = row;
+            }
+
+            row[(int)tag] += weight;
+            return this;
+        }
+
+        /// <summary>
         ///     Writes the weights file.
         /// </summary>
         /// <param name="temperature">The softmax temperature.</param>
         /// <param name="scale">The weight scale.</param>
         /// <param name="compress">Whether to Deflate the payload.</param>
+        /// <param name="groups">The feature groups to record in the header (the feature set version follows from them).</param>
         /// <returns>The file.</returns>
-        public byte[] Build(float temperature = 1f, float scale = 1f, bool compress = false)
+        public byte[] Build(float temperature = 1f, float scale = 1f, bool compress = false, FeatureGroups groups = FeatureGroups.None)
         {
             var rows = _rows.Select(r => new KeyValuePair<int, short[]>(r.Key, r.Value.Select(w => (short)w).ToArray()));
-            return PerceptronModelWriter.Compile(HashBits, temperature, scale, FeatureExtractor.FeatureSetVersion, rows, compress);
+            return PerceptronModelWriter.Compile(HashBits, temperature, scale, FeatureExtractor.FeatureSetVersionFor(groups), rows, compress, (uint)groups);
         }
     }
 }

@@ -95,6 +95,18 @@ internal static class DataGuard
     public const string UdMappedSha256 = "fdb535bdbbc4ece79826323e450fc30a686543358c0f0c958deb8289850f6695";
 
     /// <summary>
+    ///     The name of the convention-mapped table of the development part of the external treebank in the cache; the dev-only
+    ///     <c>eval-arm</c> command reads exactly this file and no other part of the treebank.
+    /// </summary>
+    public const string UdDevMappedFile = "ud_dev.tsv";
+
+    /// <summary>
+    ///     The pinned SHA-256 of the convention-mapped table of the development part of the external treebank (recorded in the run log
+    ///     of the context-feature experiment). The table is verified against it before a line is parsed.
+    /// </summary>
+    public const string UdDevMappedSha256 = "0fc0b4a371ef6d0437e01e396762cdb600d0d7ff0d725ead00ac9f3c41f82037";
+
+    /// <summary>
     ///     The file of the pinned hashes of the treebank, relative to the repository root.
     /// </summary>
     public const string UdPinsFile = "tools/data/pins/ud-ewt.tsv";
@@ -325,6 +337,33 @@ internal static class DataGuard
         if (same || RelativeTo(Canonicalize(dataRoot), Canonicalize(path)) != null || RelativeTo(Path.GetFullPath(dataRoot), Path.GetFullPath(path)) != null)
         {
             throw new InvalidOperationException($"'{path}' is inside the data folder of the repository; this command reads and writes files outside it only.");
+        }
+
+        return Path.GetFullPath(path);
+    }
+
+    /// <summary>
+    ///     Checks that a file given to the dev-only <c>eval-arm</c> command (the weights to read, the result to write) lies neither in the
+    ///     data folder of the repository nor in the data tooling folder below <c>tools</c> (which holds the treebank cache), links resolved,
+    ///     so that the command can never read a held-out file as weights or overwrite one with its result.
+    /// </summary>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="path">The file, absolute or relative to the working directory.</param>
+    /// <returns>The full path of the file.</returns>
+    /// <exception cref="InvalidOperationException">The path is inside one of the two folders, as written or after link resolution.</exception>
+    public static string EnsureArmFile(string repositoryRoot, string path)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        ArgumentNullException.ThrowIfNull(path);
+        EnsureOutsideData(repositoryRoot, path);
+        var toolsData = Path.Combine(repositoryRoot, "tools", "data");
+        var same = string.Equals(
+            Path.GetFullPath(toolsData).TrimEnd(Path.DirectorySeparatorChar),
+            Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar),
+            Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+        if (same || RelativeTo(Canonicalize(toolsData), Canonicalize(path)) != null || RelativeTo(Path.GetFullPath(toolsData), Path.GetFullPath(path)) != null)
+        {
+            throw new InvalidOperationException($"'{path}' is inside the data tooling folder of the repository; the evaluation of a trained arm reads and writes files outside it only.");
         }
 
         return Path.GetFullPath(path);
@@ -858,6 +897,54 @@ internal static class DevSets
     /// <returns>The targets in file order.</returns>
     /// <exception cref="InvalidDataException">A required column is missing, a row is malformed or the target index is negative or outside the sentence.</exception>
     public static List<GoldTarget> ParseGoldDev(IEnumerable<string> lines, string origin) => ParseGold(lines, origin);
+
+    /// <summary>
+    ///     Reads the convention-mapped table of the development part of the external treebank from its local cache.
+    /// </summary>
+    /// <remarks>
+    ///     The file name is fixed (<see cref="DataGuard.UdDevMappedFile"/> in <see cref="DataGuard.UdCacheFolder"/>), there is no
+    ///     path parameter, the SHA-256 of the table is verified against its pin before a line is parsed, and the corpus comment must
+    ///     announce a development table. The test part of the treebank has another file name and is never opened here.
+    /// </remarks>
+    /// <param name="repositoryRoot">The full path of the repository root.</param>
+    /// <param name="sha256">Receives the SHA-256 of the table as 64 lower-case hexadecimal digits.</param>
+    /// <returns>The sentences.</returns>
+    /// <exception cref="InvalidDataException">The cache is missing, the hash differs from the pin or the table does not announce a development part.</exception>
+    public static List<UdSentence> ReadUdDev(string repositoryRoot, out string sha256)
+    {
+        ArgumentNullException.ThrowIfNull(repositoryRoot);
+        var path = Path.GetFullPath(Path.Combine(repositoryRoot, DataGuard.UdCacheFolder.Replace('/', Path.DirectorySeparatorChar), DataGuard.UdDevMappedFile));
+        const string Recipe = "Run: python tools/data/fetch_ud_ewt.py fetch, then python tools/data/fetch_ud_ewt.py map.";
+        if (!File.Exists(path))
+        {
+            throw new InvalidDataException($"The development table {path} is missing from the treebank cache. {Recipe}");
+        }
+
+        var bytes = File.ReadAllBytes(path);
+        sha256 = ModelBuilder.Sha256Hex(bytes);
+        if (!string.Equals(sha256, DataGuard.UdDevMappedSha256, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException($"The cached {DataGuard.UdDevMappedFile} does not match its pinned SHA-256. {Recipe}");
+        }
+
+        var lines = new List<string>();
+        using (var reader = new StringReader(new UTF8Encoding(false).GetString(bytes)))
+        {
+            while (reader.ReadLine() is { } line)
+            {
+                lines.Add(line);
+            }
+        }
+
+        // The corpus comment of the cache file says which part of the treebank it holds
+        var announced = lines.Take(5).FirstOrDefault(l => l.StartsWith("# cache file", StringComparison.Ordinal)) ?? string.Empty;
+        if (!announced.Contains(" dev,", StringComparison.Ordinal) || announced.Contains(" test,", StringComparison.Ordinal))
+        {
+            throw new InvalidDataException($"{path} does not announce itself as the development part of the treebank in its header; refusing to read it.");
+        }
+
+        return HeldOutSets.ParseUd(lines, path);
+    }
 
     /// <summary>
     ///     Parses the lines of a gold v2 table (development or held-out): a <c># columns =</c> comment names the tab-separated columns.

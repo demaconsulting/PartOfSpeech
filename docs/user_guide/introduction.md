@@ -48,15 +48,20 @@ The package targets .NET Standard 2.0 (and so runs on .NET Framework 4.8.1 and e
 public API under its `api/` folder, generated from the XML documentation of the library.
 
 **The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
-compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (478,835 bytes compressed,
-1,080,650 bytes uncompressed, about 0.5 MB and 1.1 MB). `Tagger.Default` returns a shared tagger that uses them, so the
+compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (517,210 bytes compressed,
+1,146,827 bytes uncompressed, about 0.5 MB and 1.1 MB). `Tagger.Default` returns a shared tagger that uses them, so the
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
-The model was selected on development data only and then evaluated on held-out data (twice over the model family: a
-disclosed second look), after the training corpora had been corrected and the model retrained. The
-[evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the results
-and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to trust.
+The tagger decides token by token from left to right. For each token it scores the allowed tags from the word and its
+ending, the words around it, the tags it chose before and, in the embedded model, clause cues: the kind of the
+neighboring words (for example a determiner or a modal), the distance to the nearest determiner or modal, and whether
+the current clause already has a subject-like tag and a verb tag. The cues were designed for words that are both noun and
+verb, such as the first word of an instruction. The embedded model does not use tags of the words to its right.
+
+The [evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the
+results and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to
+trust.
 
 # Usage
 
@@ -152,23 +157,21 @@ Read the numbers with these points in mind:
 ### Choosing a Confidence Threshold
 
 The confidence is not equally reliable at every level, and the mistake that matters most is a noun that is tagged as a
-verb or a verb that is tagged as a noun (a harmful error). The embedded model was measured on that mistake: two
-thresholds were selected on development data only, and the model was then evaluated on held-out data (the second
-evaluation of the model family on those sets). A token is
-answered at a threshold when its confidence is at least the threshold; coverage is the share of the noun-verb
-decisions that is answered.
+verb or a verb that is tagged as a noun (a harmful error). The embedded model was measured on that mistake on held-out
+data. A token is answered at a threshold when its confidence is at least the threshold; coverage is the share of the
+noun-verb decisions that is answered.
 
 | Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
 | --- | ---: | ---: | ---: |
-| strict | 0.95 | 83.8% | 3.5 |
-| balanced | 0.80 | 93.3% | 7.3 |
+| strict | 0.95 | 83.9% | 2.2 |
+| balanced | 0.75 | 94.1% | 8.5 |
 
-On the development data the same thresholds answered 81.8% (strict, 3.1 harmful errors in 1,000) and 92.4% (balanced, 9.0)
-of the decisions. The strict target of at most 5 in 1,000 was met on the open test split by the point estimate (its 95%
-interval, 1.6 to 6.0, reaches above 5) and is exceeded on the held-out gold v2 test split (6.5 in 1,000 answered, five
-errors; interval 1.4 to 13.3).
+On the development data the same thresholds answered 81.3% (strict, 3.2 harmful errors in 1,000) and 94.1% (balanced, 9.9)
+of the decisions. The strict target of at most 5 in 1,000 was met on the open test split (its 95% interval is 0.6 to 4.3)
+and on the held-out gold v2 test split (no harmful error in 761 answered decisions) and is exceeded on the shape probe of
+short technical and imperative sentences (5.9 in 1,000 answered, two errors in 340).
 
-Without a threshold, 18.7 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
+Without a threshold, 16.8 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
 
 - **A consumer that needs a low harmful rate must use a threshold.** A rule checker, for example, uses `strict`:
@@ -312,9 +315,6 @@ such as the technical names and verbs of ASD-STE100: every right entry helps and
 list that is not curated or may be wrong (for example one that was extracted automatically): the model keeps its tag
 when it is clearly sure, so a wrong entry costs much less. `GlossaryEntry.WithMode` sets the mode of one entry, and
 `GlossaryOptions.SoftStrength` the strength (greater than zero; the default is `GlossaryOptions.DefaultSoftStrength`).
-The simulated glossaries on development data, the rule that chose the default strength and the measured cost of wrong
-entries in each mode are in section E9 of the
-[run log](https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md).
 
 ### Reading the results
 
@@ -391,6 +391,9 @@ using var lexicon = File.OpenRead("lexicon.posl");
 Tagger custom = Tagger.Load(File.OpenRead("model.posw"), lexicon);   // your own lexicon file
 ```
 
+A weights file with feature groups (the embedded model has the clause-cue group) also reads the lexicon to compute those
+features, so a custom lexicon changes the features the model sees, not only the allowed tags.
+
 The stream is read to its end and is not closed. `Load` throws `InvalidDataException` for a file that is damaged, is not
 a weights file, or is of a format or feature set version that this build does not read; `ArgumentNullException` for a
 `null` stream and `ArgumentOutOfRangeException` for options outside their range.
@@ -404,7 +407,7 @@ TaggedSentence sentence = tagger.Tag("Dogs bark.")[0];
 
 `Tagger.Default` is the shared tagger that uses the weights and the lexicon that are embedded in the package. It is
 created on first use, so a program that only tokenizes pays nothing; the first read inflates and validates the two
-embedded files once (the weights: 478,835 bytes compressed, 1,080,650 bytes uncompressed; the lexicon: 639,711 bytes
+embedded files once (the weights: 517,210 bytes compressed, 1,146,827 bytes uncompressed; the lexicon: 639,711 bytes
 compressed, 1,626,269 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
 same thread-safe instance. A read does not fail in a released package; an `InvalidOperationException` or an
 `InvalidDataException` would mean that the package is broken.

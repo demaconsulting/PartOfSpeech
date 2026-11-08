@@ -529,4 +529,131 @@ public class PerceptronModelTests
         var empty = PerceptronModel.Load(PerceptronModelWriter.Compile(18, 1f, 1f, FeatureSet, new[] { new KeyValuePair<int, short[]>(5, new short[17]) }, false), FeatureSet);
         Assert.Equal(0, empty.RowCount);
     }
+
+    /// <summary>
+    ///     Proves that the feature group mask is stored little-endian at offset 40 with feature set 2, that the reader returns it,
+    ///     and that the uncompressed image keeps it.
+    /// </summary>
+    /// <param name="mask">The groups as a mask.</param>
+    [Theory]
+    [InlineData(1u)]
+    [InlineData(2u)]
+    [InlineData(4u)]
+    [InlineData(8u)]
+    [InlineData(9u)]
+    [InlineData(15u)]
+    public void PerceptronModel_Load_FeatureGroups_RoundTripsMask(uint mask)
+    {
+        // Arrange: the small model written with a group mask, compressed and not
+        var groups = (FeatureGroups)mask;
+        var featureSet = FeatureExtractor.FeatureSetVersionFor(groups);
+        var plain = PerceptronModelWriter.Compile(18, 5.4f, 0.25f, featureSet, SmallRows(), false, mask);
+        var packed = PerceptronModelWriter.Compile(18, 5.4f, 0.25f, featureSet, SmallRows(), true, mask);
+
+        // Act: load both ways and build the image
+        var model = PerceptronModel.Load(plain);
+        var byVersion = PerceptronModel.Load(packed, FeatureExtractor.GroupsFeatureSetVersion);
+        var image = PerceptronModel.ToUncompressedImage(packed);
+
+        // Assert: version 2 layout, feature set 2, mask at offset 40, reserved bytes zero, same model
+        Assert.Equal(groups, model.FeatureGroups);
+        Assert.Equal(groups, byVersion.FeatureGroups);
+        Assert.Equal((ushort)2, BinaryFormat.ReadUInt16(plain, 4));
+        Assert.Equal((ushort)2, BinaryFormat.ReadUInt16(plain, 8));
+        Assert.Equal(mask, BinaryFormat.ReadUInt32(plain, 40));
+        Assert.Equal(mask & 0xFF, plain[40]);
+        Assert.All(plain.Skip(44).Take(4), b => Assert.Equal(0, b));
+        Assert.Equal(mask, BinaryFormat.ReadUInt32(image, 40));
+        Assert.Equal(model.RowCount, byVersion.RowCount);
+        Assert.Equal(groups, PerceptronModel.Load(image).FeatureGroups);
+    }
+
+    /// <summary>
+    ///     Proves that a file without groups is written byte for byte as before the mask existed (feature set 1, zero mask and reserved
+    ///     bytes) and that this build reads such a file, also the way that earlier callers ask for it.
+    /// </summary>
+    [Fact]
+    public void PerceptronModel_Load_OldFileWithoutMask_LoadsAsNoGroups()
+    {
+        // Arrange: files written without the mask parameter, with an explicit zero mask, and the same with a header patched to the old layout
+        var implicitMask = SmallFile(false);
+        var explicitMask = PerceptronModelWriter.Compile(18, 5.4f, 0.25f, FeatureSet, SmallRows(), false, 0);
+        var old = (byte[])implicitMask.Clone();
+        for (var i = 40; i < PerceptronModel.HeaderLength; i++)
+        {
+            old[i] = 0;
+        }
+
+        // Act: load the three ways
+        var byDefault = PerceptronModel.Load(old);
+        var byVersion = PerceptronModel.Load(old, FeatureSet);
+
+        // Assert: identical bytes, feature set 1, no groups, and every header byte from offset 40 on is zero
+        Assert.Equal(implicitMask, explicitMask);
+        Assert.Equal(implicitMask, old);
+        Assert.Equal((ushort)1, BinaryFormat.ReadUInt16(old, 8));
+        Assert.Equal(FeatureGroups.None, byDefault.FeatureGroups);
+        Assert.Equal(FeatureGroups.None, byVersion.FeatureGroups);
+        Assert.Equal(FeatureGroups.None, PerceptronModel.Load(SmallFile(true)).FeatureGroups);
+    }
+
+    /// <summary>
+    ///     Proves that a mask with a bit that this build does not know (including the bit reserved for word clusters) is rejected, and that the writer refuses to write one.
+    /// </summary>
+    /// <param name="mask">The invalid mask.</param>
+    [Theory]
+    [InlineData(16u)]
+    [InlineData(17u)]
+    [InlineData(0x80000000u)]
+    [InlineData(0xFFFFFFFFu)]
+    public void PerceptronModel_Load_UnknownGroupBit_Throws(uint mask)
+    {
+        // Arrange: a file with groups whose mask was patched
+        var file = PerceptronModelWriter.Compile(18, 5.4f, 0.25f, 2, SmallRows(), false, 1);
+        BinaryFormat.WriteUInt32(file, 40, mask);
+
+        // Act / Assert: the load names the mask, and the writer refuses it
+        var ex = Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(file));
+        Assert.Contains("feature group mask", ex.Message);
+        Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(file, 2));
+        Assert.Throws<InvalidDataException>(() => PerceptronModel.ToUncompressedImage(file));
+        Assert.Throws<ArgumentOutOfRangeException>(() => PerceptronModelWriter.Compile(18, 1f, 1f, 2, SmallRows(), false, mask));
+    }
+
+    /// <summary>
+    ///     Proves that the feature set of the header must agree with the mask: feature set 1 needs a zero mask, feature set 2 a non-zero mask,
+    ///     and no other feature set is read.
+    /// </summary>
+    [Fact]
+    public void PerceptronModel_Load_FeatureSetDisagreesWithMask_Throws()
+    {
+        // Arrange: groups under feature set 1, no groups under feature set 2, and feature set 3
+        var groupsUnderOne = PerceptronModelWriter.Compile(18, 1f, 1f, 1, SmallRows(), false, 1);
+        var noneUnderTwo = PerceptronModelWriter.Compile(18, 1f, 1f, 2, SmallRows(), false);
+        var three = PerceptronModelWriter.Compile(18, 1f, 1f, 3, SmallRows(), false);
+
+        // Act / Assert: each is rejected, by any way of loading
+        Assert.Contains("does not match", Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(groupsUnderOne)).Message);
+        Assert.Contains("does not match", Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(noneUnderTwo)).Message);
+        Assert.Contains("Feature set mismatch", Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(three)).Message);
+        Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(groupsUnderOne, 1));
+        Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(noneUnderTwo, 2));
+    }
+
+    /// <summary>
+    ///     Proves that a file with groups fails the two checks that a reader from before the mask existed makes (feature set 1 only, reserved
+    ///     bytes zero), so that such a reader fails loudly instead of decoding with the wrong features.
+    /// </summary>
+    [Fact]
+    public void PerceptronModel_Load_FileWithGroups_FailsTheChecksOfAnOldReader()
+    {
+        // Arrange: a file with groups
+        var file = PerceptronModelWriter.Compile(18, 5.4f, 0.25f, 2, SmallRows(), false, 5);
+
+        // Act / Assert: this build asked for feature set 1 (what every earlier reader did) refuses it, and the old reserved range is not zero
+        var ex = Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(file, FeatureSet));
+        Assert.Contains("Feature set mismatch", ex.Message);
+        Assert.Contains(file.Skip(40).Take(8), b => b != 0);
+        Assert.NotEqual(FeatureSet, (int)BinaryFormat.ReadUInt16(file, 8));
+    }
 }

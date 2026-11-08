@@ -1,4 +1,4 @@
-// cspell:ignore FFFD
+// cspell:ignore FFFD zzyzx
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -368,6 +368,506 @@ public class FeatureExtractorTests
                 }
             },
             100);
+
+        // Assert: nothing was allocated
+        Assert.Equal(0, allocated);
+    }
+#endif
+
+    /// <summary>
+    ///     The lexicon of the group tests: function words, ambiguous words and the stems that the inflection examples need.
+    /// </summary>
+    private static readonly DemaConsulting.PartOfSpeech.Lexicon GroupLexicon = DemaConsulting.PartOfSpeech.Lexicon.Load(TinyModels.CreateLexicon(
+        "the DET",
+        "a DET",
+        "of ADP",
+        "in ADP",
+        "she PRON",
+        "you PRON",
+        "and CCONJ",
+        "because SCONJ",
+        ", PUNCT",
+        "check INTJ NOUN VERB",
+        "valve NOUN",
+        "dog NOUN",
+        "cat NOUN",
+        "avoid VERB",
+        "make NOUN VERB",
+        "run NOUN VERB",
+        "stop NOUN VERB",
+        "try NOUN VERB",
+        "box NOUN VERB",
+        "walk NOUN VERB",
+        "red ADJ",
+        "quickly ADV",
+        "sat VERB"));
+
+    /// <summary>
+    ///     Gets every set of groups (as masks, since the groups are internal) for the theories.
+    /// </summary>
+    public static IEnumerable<object[]> GroupMasks() => Enumerable.Range(0, 16).Select(mask => new object[] { (uint)mask });
+
+    /// <summary>
+    ///     Prepares a workspace with groups and the group lexicon for the tokens.
+    /// </summary>
+    private static DecoderWorkspace Prepared(string[] tokens, FeatureGroups groups)
+    {
+        var workspace = new DecoderWorkspace();
+        workspace.Configure(groups, GroupLexicon);
+        FeatureExtractor.Prepare(workspace, tokens, Bits);
+        return workspace;
+    }
+
+    /// <summary>
+    ///     Extracts the buckets of one token of a prepared workspace with sentence-start history.
+    /// </summary>
+    private static int[] ExtractFrom(DecoderWorkspace workspace, int index, int previous1 = FeatureExtractor.StartTag1, int previous2 = FeatureExtractor.StartTag2)
+    {
+        var buckets = new int[FeatureExtractor.BucketCapacity];
+        var count = FeatureExtractor.Extract(workspace, index, previous1, previous2, Bits, buckets);
+        return buckets.Take(count).ToArray();
+    }
+
+    /// <summary>
+    ///     Computes the bucket of a group feature from its codes.
+    /// </summary>
+    private static int Code(FeatureKind kind, uint a, uint b = 0) => FeatureExtractor.ReferenceBucketOfCodes(kind, a, b, Bits);
+
+    /// <summary>
+    ///     Proves that with no group the buckets equal the plain definition, also after the workspace served a model with all groups,
+    ///     so that no state of a group leaks into the 22 base templates.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_NoGroups_ProducesOnlyBaseTemplates()
+    {
+        // Arrange: a workspace that first served all groups, then is configured for none
+        var tokens = new[] { "Check", "the", "running", "valve", "." };
+        var workspace = new DecoderWorkspace();
+        workspace.Configure(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection, GroupLexicon);
+        FeatureExtractor.Prepare(workspace, tokens, Bits);
+        workspace.Configure(FeatureGroups.None, null);
+
+        // Act: prepare again and extract every token, with a stale clause state and preview left behind
+        FeatureExtractor.Prepare(workspace, tokens, Bits);
+        var fresh = new DecoderWorkspace();
+        FeatureExtractor.Prepare(fresh, tokens, Bits);
+
+        // Assert: the base stride, at most 22 buckets, equal to a fresh workspace and to the string-based reference
+        Assert.Equal(FeatureExtractor.StaticFeatureCount, workspace.StaticStride);
+        for (var i = 0; i < tokens.Length; i++)
+        {
+            var buckets = ExtractFrom(workspace, i);
+            Assert.True(buckets.Length <= FeatureExtractor.MaxFeatures);
+            Assert.Equal(ExtractFrom(fresh, i), buckets);
+            Assert.Equal(FeatureExtractor.ReferenceBuckets(tokens, i, "-S-", "-S2-", Bits), buckets);
+        }
+
+        Assert.Equal(FeatureExtractor.FeatureSetVersion, FeatureExtractor.FeatureSetVersionFor(FeatureGroups.None));
+        Assert.Equal(FeatureExtractor.GroupsFeatureSetVersion, FeatureExtractor.FeatureSetVersionFor(FeatureGroups.Inflection));
+    }
+
+    /// <summary>
+    ///     Proves that for every set of groups the fast path equals the string-based reference on corpus sentences, with the
+    ///     real lexicon, gold tags as history and (for the preview group) gold tags as preview.
+    /// </summary>
+    /// <param name="mask">The groups as a mask.</param>
+    [Theory]
+    [MemberData(nameof(GroupMasks))]
+    public void FeatureExtractor_Extract_GroupsMatchReference(uint mask)
+    {
+        // Arrange: 60 development sentences and the embedded lexicon
+        var groups = (FeatureGroups)mask;
+        var lexicon = EmbeddedModel.Lexicon;
+        var sentences = DataFiles.ReadCorpus(DataFiles.Data("open/dev.tsv")).Take(60).ToList();
+        var workspace = new DecoderWorkspace();
+        var buckets = new int[FeatureExtractor.BucketCapacity];
+        var compared = 0;
+
+        // Act / Assert: compare every token, advancing the clause state with the gold tag after each token
+        foreach (var sentence in sentences)
+        {
+            var tokens = sentence.Tokens.Select(t => t[0]).ToArray();
+            var gold = sentence.Tokens.Select(t => (int)ParseTag(t[1])).ToArray();
+            var spelled = gold.Select(Spell).ToList();
+            workspace.Configure(groups, lexicon);
+            FeatureExtractor.Prepare(workspace, tokens, Bits);
+            if ((groups & FeatureGroups.RightPreview) != 0)
+            {
+                workspace.SetPreview(gold);
+                FeatureExtractor.StartPass(workspace, true);
+            }
+
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                var p1 = i >= 1 ? gold[i - 1] : FeatureExtractor.StartTag1;
+                var p2 = History2(gold, i);
+                var count = FeatureExtractor.Extract(workspace, i, p1, p2, Bits, buckets);
+                var expected = FeatureExtractor.ReferenceBuckets(
+                    tokens,
+                    i,
+                    Spell(p1),
+                    Spell(p2),
+                    Bits,
+                    groups,
+                    lexicon,
+                    spelled,
+                    (groups & FeatureGroups.RightPreview) != 0 ? spelled : null);
+                Assert.Equal(expected, buckets.Take(count).ToArray());
+                Assert.InRange(count, 1, FeatureExtractor.BucketCapacity);
+                FeatureExtractor.Advance(workspace, i, gold[i]);
+                compared++;
+            }
+        }
+
+        Assert.True(compared > 300);
+    }
+
+    /// <summary>
+    ///     Proves the token classes of the clause cues: the first matching rule wins and the fast path equals the readable rules.
+    /// </summary>
+    /// <param name="word">The token.</param>
+    /// <param name="expected">The expected class.</param>
+    [Theory]
+    [InlineData(",", (int)TokenClass.Punct)]
+    [InlineData("will", (int)TokenClass.Modal)]
+    [InlineData("Cannot", (int)TokenClass.Modal)]
+    [InlineData("to", (int)TokenClass.To)]
+    [InlineData("42", (int)TokenClass.Num)]
+    [InlineData("the", (int)TokenClass.Det)]
+    [InlineData("she", (int)TokenClass.Pron)]
+    [InlineData("of", (int)TokenClass.Adp)]
+    [InlineData("and", (int)TokenClass.Conj)]
+    [InlineData("because", (int)TokenClass.Conj)]
+    [InlineData("check", (int)TokenClass.NounVerb)]
+    [InlineData("valve", (int)TokenClass.NounOnly)]
+    [InlineData("avoid", (int)TokenClass.VerbOnly)]
+    [InlineData("red", (int)TokenClass.AdjAdv)]
+    [InlineData("quickly", (int)TokenClass.AdjAdv)]
+    [InlineData("zzyzx", (int)TokenClass.Other)]
+    [InlineData("1,000", (int)TokenClass.Other)]
+    public void FeatureExtractor_Extract_ClauseCues_ClassifiesTokens(string word, int expected)
+    {
+        // Arrange / Act: prepare the token with the clause cues
+        var workspace = Prepared(new[] { word }, FeatureGroups.ClauseCues);
+        var lower = FeatureExtractor.Fold(word).ToLowerInvariant();
+        var tags = GroupLexicon.TryGetTags(lower.ToCharArray(), 0, lower.Length, new byte[GroupLexicon.ScratchSize], out var set) ? set : UposSet.Empty;
+
+        // Assert: both implementations give the class, and the class goes into the neighbor features
+        Assert.Equal((TokenClass)expected, (TokenClass)workspace.Classes[0]);
+        Assert.Equal((TokenClass)expected, FeatureExtractor.ReferenceTokenClass(FeatureExtractor.Fold(word), lower, tags));
+    }
+
+    /// <summary>
+    ///     Proves the clause cues of an imperative: the verb before a determiner sees the determiner as next class, and the noun
+    ///     after it sees the determiner at distance one; a modal or <c>to</c> before the verb is seen at distance one.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_ClauseCues_ImperativeFollowedByDeterminer()
+    {
+        // Arrange: an imperative, a clause with a modal and an infinitive
+        var imperative = Prepared(new[] { "Check", "the", "valve" }, FeatureGroups.ClauseCues);
+        var modal = Prepared(new[] { "You", "will", "check", "the", "valve" }, FeatureGroups.ClauseCues);
+        var infinitive = Prepared(new[] { "to", "check" }, FeatureGroups.ClauseCues);
+        var boundary = (uint)FeatureExtractor.ClassBoundary;
+
+        // Act: extract
+        var check = ExtractFrom(imperative, 0);
+        var valve = ExtractFrom(imperative, 2);
+        var afterModal = ExtractFrom(modal, 2);
+        var afterTo = ExtractFrom(infinitive, 1);
+
+        // Assert: the cues of the written definition
+        Assert.Contains(Code(FeatureKind.PrevClass1, boundary), check);
+        Assert.Contains(Code(FeatureKind.NextClass1, (uint)TokenClass.Det), check);
+        Assert.Contains(Code(FeatureKind.PrevNextClass, boundary, (uint)TokenClass.Det), check);
+        Assert.Contains(Code(FeatureKind.DetDist, 0), check);
+        Assert.Contains(Code(FeatureKind.ModalDist, 0), check);
+        Assert.Contains(Code(FeatureKind.PrevClass1, (uint)TokenClass.Det), valve);
+        Assert.Contains(Code(FeatureKind.NextClass1, boundary), valve);
+        Assert.Contains(Code(FeatureKind.DetDist, 1), valve);
+        Assert.Contains(Code(FeatureKind.ModalDist, 1), afterModal);
+        Assert.Contains(Code(FeatureKind.PrevClass1, (uint)TokenClass.Modal), afterModal);
+        Assert.Contains(Code(FeatureKind.NextClass1, (uint)TokenClass.Det), afterModal);
+        Assert.Contains(Code(FeatureKind.DetDist, 0), afterModal);
+        Assert.Contains(Code(FeatureKind.ModalDist, 1), afterTo);
+        Assert.Contains(Code(FeatureKind.DetDist, 2), ExtractFrom(Prepared(new[] { "the", "red", "valve" }, FeatureGroups.ClauseCues), 2));
+        Assert.Contains(Code(FeatureKind.DetDist, 0), ExtractFrom(Prepared(new[] { "the", "red", "red", "red", "valve" }, FeatureGroups.ClauseCues), 4));
+    }
+
+    /// <summary>
+    ///     Proves that the clause state records a subject-like and a verb tag, and that a boundary token or a conjunction resets it.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Advance_ClauseState_TracksSubjectVerbAndBoundaries()
+    {
+        // Arrange: a sentence with a comma and a conjunction
+        var tokens = new[] { "the", "cat", ",", "sat", "and", "dog" };
+        var workspace = Prepared(tokens, FeatureGroups.ClauseCues);
+        var tags = new[] { Upos.Det, Upos.Noun, Upos.Punct, Upos.Verb, Upos.Cconj, Upos.Noun };
+        var expectedBefore = new uint[] { 0, 1, 1, 0, 2, 0 };
+
+        // Act / Assert: the state before each token is the one of the tags decided so far
+        var previous1 = FeatureExtractor.StartTag1;
+        for (var i = 0; i < tokens.Length; i++)
+        {
+            var buckets = ExtractFrom(workspace, i, previous1);
+            Assert.Contains(Code(FeatureKind.ClauseState, expectedBefore[i]), buckets);
+            Assert.Contains(Code(FeatureKind.ClauseStatePrev, expectedBefore[i], (uint)previous1), buckets);
+            FeatureExtractor.Advance(workspace, i, (int)tags[i]);
+            previous1 = (int)tags[i];
+        }
+
+        // Assert: starting a pass again clears the state
+        FeatureExtractor.StartPass(workspace, false);
+        Assert.Contains(Code(FeatureKind.ClauseState, 0), ExtractFrom(workspace, 0));
+    }
+
+    /// <summary>
+    ///     Proves which tokens are clause boundaries: a comma, a semicolon, a colon, an opening bracket and a dash (also typographic) reset
+    ///     the state, a hyphen or a period does not, and a predicted subordinating conjunction resets it too.
+    /// </summary>
+    /// <param name="token">The token after the noun.</param>
+    /// <param name="tag">The tag predicted for it.</param>
+    /// <param name="expectedState">The clause state before the next token.</param>
+    [Theory]
+    [InlineData(",", Upos.Punct, 0u)]
+    [InlineData(";", Upos.Punct, 0u)]
+    [InlineData(":", Upos.Punct, 0u)]
+    [InlineData("(", Upos.Punct, 0u)]
+    [InlineData("\u2014", Upos.Punct, 0u)]
+    [InlineData("--", Upos.Punct, 0u)]
+    [InlineData("-", Upos.Punct, 1u)]
+    [InlineData(".", Upos.Punct, 1u)]
+    [InlineData("because", Upos.Sconj, 0u)]
+    [InlineData("because", Upos.Adp, 1u)]
+    public void FeatureExtractor_Advance_ClauseState_BoundaryTokens(string token, Upos tag, uint expectedState)
+    {
+        // Arrange: a noun followed by the token
+        var workspace = Prepared(new[] { "cat", token, "sat" }, FeatureGroups.ClauseCues);
+
+        // Act: record the decisions of the first two tokens
+        FeatureExtractor.Advance(workspace, 0, (int)Upos.Noun);
+        FeatureExtractor.Advance(workspace, 1, (int)tag);
+
+        // Assert: the state seen by the third token
+        Assert.Contains(Code(FeatureKind.ClauseState, expectedState), ExtractFrom(workspace, 2));
+    }
+
+    /// <summary>
+    ///     Proves the position cues: position capped at three, the first content token, the terminal of the sentence (a final closing
+    ///     quote or bracket skipped) and the length bucket.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_PositionCues_FollowTheDefinition()
+    {
+        // Arrange: function words before the first content word, a question, a quoted statement and a sentence without a terminal
+        var content = Prepared(new[] { "the", "of", "valve", "?" }, FeatureGroups.PositionCues);
+        var quoted = Prepared(new[] { "she", "sat", "\"", "go", ".", "\"" }, FeatureGroups.PositionCues);
+        var bare = Prepared(new[] { "Check", "valve" }, FeatureGroups.PositionCues);
+        var onlyFunction = Prepared(new[] { "the", "of" }, FeatureGroups.PositionCues);
+        var unknown = Prepared(new[] { "zzyzx", "dog" }, FeatureGroups.PositionCues);
+
+        // Act / Assert: first content token (function-only tokens are skipped; unknown spellings and punctuation not in the lexicon count as content)
+        Assert.Equal(2, content.FirstContent);
+        Assert.Contains(Code(FeatureKind.FirstContent, 2, 1), ExtractFrom(content, 2));
+        Assert.Contains(Code(FeatureKind.FirstContent, 2, 0), ExtractFrom(content, 0));
+        Assert.Equal(2, onlyFunction.FirstContent);
+        Assert.Contains(Code(FeatureKind.FirstContent, 2, 0), ExtractFrom(onlyFunction, 1));
+        Assert.Equal(0, unknown.FirstContent);
+        Assert.Contains(Code(FeatureKind.FirstContent, 0, 1), ExtractFrom(unknown, 0));
+        Assert.Contains(Code(FeatureKind.FirstContent, 0, 0), ExtractFrom(unknown, 1));
+
+        // Position and terminal: "?" is 2, "." behind a skipped closing quote is 0, none is 4
+        Assert.Contains(Code(FeatureKind.PosIdx, 3), ExtractFrom(content, 3));
+        Assert.Contains(Code(FeatureKind.PosIdx, 0), ExtractFrom(content, 0));
+        Assert.Contains(Code(FeatureKind.EndPos, 2, 1), ExtractFrom(content, 1));
+        Assert.Contains(Code(FeatureKind.EndPos, 0, 3), ExtractFrom(quoted, 5));
+        Assert.Contains(Code(FeatureKind.EndPos, 4, 0), ExtractFrom(bare, 0));
+        Assert.Contains(Code(FeatureKind.LenBucket, 1), ExtractFrom(quoted, 0));
+        Assert.Contains(Code(FeatureKind.LenPos, 1, 3), ExtractFrom(quoted, 4));
+    }
+
+    /// <summary>
+    ///     Proves the length buckets at both ends of every range.
+    /// </summary>
+    /// <param name="length">The number of tokens.</param>
+    /// <param name="bucket">The expected bucket.</param>
+    [Theory]
+    [InlineData(1, 0)]
+    [InlineData(3, 0)]
+    [InlineData(4, 1)]
+    [InlineData(6, 1)]
+    [InlineData(7, 2)]
+    [InlineData(10, 2)]
+    [InlineData(11, 3)]
+    [InlineData(15, 3)]
+    [InlineData(16, 4)]
+    [InlineData(25, 4)]
+    [InlineData(26, 5)]
+    [InlineData(60, 5)]
+    public void FeatureExtractor_Extract_PositionCues_LengthBuckets(int length, int bucket)
+    {
+        // Arrange / Act: a sentence of the given length
+        var workspace = Prepared(Enumerable.Repeat("dog", length).ToArray(), FeatureGroups.PositionCues);
+        var buckets = ExtractFrom(workspace, 0);
+
+        // Assert: the bucket, alone and with the position
+        Assert.Contains(Code(FeatureKind.LenBucket, (uint)bucket), buckets);
+        Assert.Contains(Code(FeatureKind.LenPos, (uint)bucket, 0), buckets);
+    }
+
+    /// <summary>
+    ///     Proves the inflection stems, including <c>avoid + ing</c> against <c>br + ing</c> and <c>th + ing</c>, the restored <c>e</c> and the undoubled consonant.
+    /// </summary>
+    /// <param name="word">The token.</param>
+    /// <param name="expected">The expected value: the suffix kind (1 ing, 2 ed, 3 s), plus 4 when a stem is a verb and 8 when a stem is a noun.</param>
+    [Theory]
+    [InlineData("avoiding", 5)]
+    [InlineData("bring", 1)]
+    [InlineData("thing", 1)]
+    [InlineData("making", 13)]
+    [InlineData("running", 13)]
+    [InlineData("stopped", 14)]
+    [InlineData("tried", 14)]
+    [InlineData("tries", 15)]
+    [InlineData("boxes", 15)]
+    [InlineData("cats", 11)]
+    [InlineData("Walks", 15)]
+    [InlineData("pass", 3)]
+    [InlineData("is", 3)]
+    [InlineData("red", 2)]
+    [InlineData("ing", 1)]
+    [InlineData("cat", 0)]
+    [InlineData("the", 0)]
+    public void FeatureExtractor_Extract_Inflection_StemFacts(string word, int expected)
+    {
+        // Arrange / Act: prepare the token with the inflection group
+        var workspace = Prepared(new[] { word }, FeatureGroups.Inflection);
+        var buckets = ExtractFrom(workspace, 0, (int)Upos.Pron);
+        var lower = FeatureExtractor.Fold(word).ToLowerInvariant();
+
+        // Assert: fast path and reference agree; the two features exist exactly for tokens with a suffix
+        Assert.Equal(expected, workspace.StemValue[0]);
+        Assert.Equal(expected, FeatureExtractor.ReferenceStemValue(lower, GroupLexicon));
+        Assert.Equal(expected != 0, buckets.Contains(Code(FeatureKind.StemKind, (uint)expected)));
+        Assert.Equal(expected != 0, buckets.Contains(Code(FeatureKind.StemKindPrev, (uint)expected, (uint)Upos.Pron)));
+    }
+
+    /// <summary>
+    ///     Proves that a word with a verb stem gets other inflection features than words that only look inflected.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_Inflection_SeparatesAvoidingFromBringAndThing()
+    {
+        // Arrange / Act: extract the three words
+        var avoiding = ExtractFrom(Prepared(new[] { "avoiding" }, FeatureGroups.Inflection), 0);
+        var bring = ExtractFrom(Prepared(new[] { "bring" }, FeatureGroups.Inflection), 0);
+        var thing = ExtractFrom(Prepared(new[] { "thing" }, FeatureGroups.Inflection), 0);
+
+        // Assert: bring and thing share the "inflected, no verb or noun stem" features, avoiding has its own
+        Assert.Contains(Code(FeatureKind.StemKind, 5), avoiding);
+        Assert.DoesNotContain(Code(FeatureKind.StemKind, 1), avoiding);
+        Assert.Contains(Code(FeatureKind.StemKind, 1), bring);
+        Assert.Contains(Code(FeatureKind.StemKind, 1), thing);
+    }
+
+    /// <summary>
+    ///     Proves the preview features: absent in the first pass, present in the second with the first-pass tags of the next two
+    ///     tokens and the end markers, and inactive without the group.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_RightPreview_UsesFirstPassTagsOfNextTwoTokens()
+    {
+        // Arrange: three tokens with first-pass tags
+        var tokens = new[] { "the", "dog", "sat" };
+        var workspace = Prepared(tokens, FeatureGroups.RightPreview);
+        var firstPass = ExtractFrom(workspace, 0);
+        workspace.SetPreview(new[] { (int)Upos.Det, (int)Upos.Noun, (int)Upos.Verb });
+
+        // Act: second pass
+        FeatureExtractor.StartPass(workspace, true);
+        var second = Enumerable.Range(0, 3).Select(i => ExtractFrom(workspace, i, (int)Upos.Adj)).ToList();
+        var withoutGroup = Prepared(tokens, FeatureGroups.PositionCues);
+        withoutGroup.SetPreview(new[] { 0, 0, 0 });
+        FeatureExtractor.StartPass(withoutGroup, true);
+
+        // Assert: the first pass has the base buckets only, the second four more, with the end markers 17 (end) and 18 (beyond)
+        Assert.Equal(firstPass, ExtractFrom(Prepared(tokens, FeatureGroups.None), 0));
+        Assert.Equal(firstPass.Length + 4, second[0].Length);
+        Assert.Contains(Code(FeatureKind.Rt1, (uint)Upos.Noun), second[0]);
+        Assert.Contains(Code(FeatureKind.Rt2, (uint)Upos.Verb), second[0]);
+        Assert.Contains(Code(FeatureKind.RtPair, (uint)Upos.Noun, (uint)Upos.Verb), second[0]);
+        Assert.Contains(Code(FeatureKind.RtPrev, (uint)Upos.Adj, (uint)Upos.Noun), second[0]);
+        Assert.Contains(Code(FeatureKind.Rt1, (uint)Upos.Verb), second[1]);
+        Assert.Contains(Code(FeatureKind.Rt2, FeatureExtractor.StartTag1), second[1]);
+        Assert.Contains(Code(FeatureKind.Rt1, FeatureExtractor.StartTag1), second[2]);
+        Assert.Contains(Code(FeatureKind.RtPair, FeatureExtractor.StartTag1, FeatureExtractor.StartTag2), second[2]);
+        Assert.Equal(ExtractFrom(Prepared(tokens, FeatureGroups.PositionCues), 0).Length, ExtractFrom(withoutGroup, 0).Length);
+        Assert.Throws<ArgumentException>(() => workspace.SetPreview(new[] { 1 }));
+    }
+
+    /// <summary>
+    ///     Proves that a token with every possible feature has exactly the capacity that the buffers are sized for.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_AllGroups_FillsBucketCapacity()
+    {
+        // Arrange: the first token has a suffix (inflection), is the initial token and has all four affix lengths
+        var all = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection;
+        var workspace = Prepared(new[] { "running", "the", "valve" }, all);
+        workspace.SetPreview(new[] { (int)Upos.Verb, (int)Upos.Det, (int)Upos.Noun });
+        FeatureExtractor.StartPass(workspace, true);
+
+        // Act
+        var buckets = ExtractFrom(workspace, 0);
+
+        // Assert: 40 buckets, and the base stride grows by the static group features only
+        Assert.Equal(FeatureExtractor.BucketCapacity, buckets.Length);
+        Assert.Equal(FeatureExtractor.StaticFeatureCount + 5 + 5 + 1, workspace.StaticStride);
+        Assert.Equal(FeatureExtractor.StaticFeatureCount, FeatureExtractor.StaticStrideFor(FeatureGroups.None));
+        Assert.Equal(FeatureExtractor.StaticFeatureCount, FeatureExtractor.StaticStrideFor(FeatureGroups.RightPreview));
+    }
+
+#if NET
+    /// <summary>
+    ///     Proves that extracting the buckets of all groups, with a stem lookup and both passes, does not allocate once the workspace has grown.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_AllGroups_DoesNotAllocateAfterWarmUp()
+    {
+        // Arrange: a sentence with inflected words, a workspace configured for all groups and a bucket buffer, warmed up once
+        var all = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection;
+        var tokens = new[] { "Check", "the", "running", "valves", "and", "avoiding", "boxes", "." };
+        var preview = new[] { 7, 5, 15, 7, 4, 15, 7, 12 };
+        var workspace = new DecoderWorkspace();
+        var buckets = new int[FeatureExtractor.BucketCapacity];
+
+        void Run()
+        {
+            workspace.Configure(all, GroupLexicon);
+            workspace.Begin(tokens.Length);
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                FeatureExtractor.SetToken(workspace, i, tokens[i]);
+            }
+
+            FeatureExtractor.Finish(workspace, Bits);
+            workspace.SetPreview(preview);
+            for (var pass = 0; pass < 2; pass++)
+            {
+                FeatureExtractor.StartPass(workspace, pass == 1);
+                for (var i = 0; i < tokens.Length; i++)
+                {
+                    FeatureExtractor.Extract(workspace, i, 3, 4, Bits, buckets);
+                    FeatureExtractor.Advance(workspace, i, preview[i]);
+                }
+            }
+        }
+
+        Run();
+
+        // Act: take the minimum over several batches of the bytes allocated by this thread for 100 rounds
+        var allocated = AllocationMeter.MinimumBatchBytes(Run, 100);
 
         // Assert: nothing was allocated
         Assert.Equal(0, allocated);
