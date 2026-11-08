@@ -46,7 +46,8 @@ target framework, including .NET Framework.
 - **`QuantizedPredictor`** (`Training/QuantizedPredictor.cs`): the trainer's own greedy predictor over quantized rows for
   a set of feature groups (two decoding passes with the right preview group); a test proves that it gives the tags of
   `TagDecoder` for every group.
-- **`Jackknife`** (`Training/Jackknife.cs`): the folds by document hash and the preview tags of the right preview group
+- **`Jackknife`** (`Training/Jackknife.cs`): the folds by groups of documents that share sentence keys, and the preview
+  tags of the right preview group
   (see _Context-Feature Experiment_).
 - **`ArmEvaluationData`**, **`ArmEvaluation`**, **`ArmConfigEcho`** and **`ArmInputs`** (`Evaluation/ArmEvaluation.cs`):
   the development data of the command `eval-arm`, the scoring of one weights file and the hand-written JSON writer of
@@ -180,7 +181,7 @@ golden hashes of the small reference runs are unchanged, and the BASE arm of the
 the weights file of the model before the groups byte for byte (`RUN-LOG.md`). The embedded model, which enables the
 clause cues, is the one that `train --check` reproduces from `training.json`, and the calibrated run with the
 committed seed is byte-identical to the committed weights file. The jackknife is deterministic too: its folds depend
-on the document ids only, and the fold models are trained like any other run.
+on the document ids and the sentence keys only, and the fold models are trained like any other run.
 
 ### Development-Only Selection
 
@@ -509,9 +510,14 @@ harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-featu
   the first without the preview features, the second with the preview tags of the sentence (the pass-2 history is its
   own), so the table serves the first pass of the decoder as well and the file keeps the size of an arm without the
   group. The
-  preview tags are the **jackknife** tags: the distinct sentences are split into `PreviewFolds` folds by the FNV-1a hash
-  of the document id (`source_id`, or the sentence id when there is none) modulo the number of folds, so a document is
-  never split and the same sentences share a fold in every run and for every seed; for each fold a model is trained on
+  preview tags are the **jackknife** tags: the distinct sentences are split into `PreviewFolds` folds from groups of
+  documents (`source_id`, or the sentence id when there is none). Two documents are in one group when they share a
+  sentence key, the lower-case letters and digits of the text that the leakage check of the data compares, directly or
+  through other documents (union-find over the documents; a sentence without a letter or digit joins nothing). The fold
+  of a group is the FNV-1a hash of its smallest document id (ordinal order) modulo the number of folds. A document is
+  never split, an exact duplicate sentence under two document ids never lands in two folds (no held-out sentence key
+  occurs in the training set of its fold model), and the same sentences share a fold in every run and for every seed; a
+  document that shares no key with another one has the fold of its own id. For each fold a model is trained on
   the other folds without the right preview group (the other groups, the settings and the seed of the run) and tags its
   fold with `QuantizedPredictor`, the quantized weights and the lexicon restriction, which is the first pass of the
   decoder. The first pass at run time uses the final model and the training tags come from the fold models; that

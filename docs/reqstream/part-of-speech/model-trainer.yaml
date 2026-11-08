@@ -646,18 +646,28 @@ sections:
             title: >-
               For the right preview group the trainer shall train every sentence in two passes on one weight table (the
               first without the preview features, the second with the first-pass tags of the next two tokens), shall
-              take those tags from fold models that did not see the sentence (folds by the hash of the document id, so
-              that a document is never split and every seed has the same folds; fold models trained without the group
-              on the other groups, the settings and the seed of the run, and decoding their held-out fold with the
-              quantized weights and the lexicon restriction like the first pass of the decoder), and shall refuse
-              sentences that fill fewer than two folds or preview tags that miss a sentence.
+              take those tags from fold models that did not see the sentence (folds from groups of documents that share a
+              sentence key, the lower-case letters and digits of the text, directly or through other documents, so that
+              a document is never split and an exact duplicate sentence under two document ids never lands in two
+              folds; the fold of a group is the hash of its smallest document id, the same for every seed; fold models
+              trained without the group on the other groups, the settings and the seed of the run, and decoding their
+              held-out fold with the quantized weights and the lexicon restriction like the first pass of the decoder),
+              and shall refuse sentences that fill fewer than two folds or preview tags that miss a sentence.
             justification: |
               A model that is trained on first-pass tags of its own training sentences sees tags that are better than
               the ones it gets on new text. Fold models give tags of the quality that the runtime has, and the replay
-              test proves that the tags are what an independent run of the same fold models produces. One table for both
-              passes keeps the format and the size of the model, and the first pass stays usable at run time.
+              test proves that the tags are what an independent run of the same fold models produces. A fold model that
+              trained on the text of a sentence under another document id would tag it better than it tags new text, so
+              duplicates are kept together and no held-out sentence key occurs in the training set of its fold model.
+              One table for both passes keeps the format and the size of the model, and the first pass stays usable at
+              run time.
             tests:
               - Jackknife_Partition_ByDocumentHash_NeverSplitsADocumentAndIsStable
+              - Jackknife_Partition_DuplicateSentenceInTwoDocuments_LandsInOneFold
+              - Jackknife_Partition_TransitiveChain_LandsInOneFold
+              - Jackknife_Partition_WithDuplicates_IsDeterministicAndIndependentOfOrderAndSeed
+              - Jackknife_GroupDocuments_NoDuplicates_EveryDocumentIsItsOwnGroup
+              - Jackknife_Compute_DuplicatesAcrossDocuments_FoldModelNeverSeesAHeldOutSentenceKey
               - Jackknife_Compute_TagsEachFoldWithAModelThatDidNotSeeIt
               - Jackknife_Compute_OneDocument_Throws
               - PerceptronTrainer_Train_RightPreview_TrainsBothPassesOnOneTable

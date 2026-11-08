@@ -2073,7 +2073,8 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Creates the sentences of a synthetic corpus: <paramref name="documents"/> documents of <paramref name="perDocument"/> sentences each.
+    ///     Creates the sentences of a synthetic corpus: <paramref name="documents"/> documents of <paramref name="perDocument"/> sentences each (every
+    ///     sentence ends in a token of its own, so that no two sentences share a sentence key).
     /// </summary>
     private static List<TrainingSentence> Documents(int documents, int perDocument)
     {
@@ -2082,12 +2083,18 @@ public class ModelTrainerTests
         {
             for (var s = 0; s < perDocument; s++)
             {
-                sentences.Add(new TrainingSentence($"doc{d}-s{s}", $"doc{d}", new[] { "The", "dog", "runs" }, new sbyte[] { (sbyte)Upos.Det, (sbyte)Upos.Noun, (sbyte)Upos.Verb }));
+                sentences.Add(new TrainingSentence($"doc{d}-s{s}", $"doc{d}", new[] { "The", "dog", "runs", $"mark{d}x{s}" }, new sbyte[] { (sbyte)Upos.Det, (sbyte)Upos.Noun, (sbyte)Upos.Verb, (sbyte)Upos.Noun }));
             }
         }
 
         return sentences;
     }
+
+    /// <summary>
+    ///     Creates one training sentence of a document whose tags are all nouns.
+    /// </summary>
+    private static TrainingSentence NounSentence(string sentenceId, string documentId, params string[] tokens) =>
+        new(sentenceId, documentId, tokens, tokens.Select(_ => (sbyte)Upos.Noun).ToArray());
 
     /// <summary>
     ///     Creates the configuration of a small run with feature groups (three epochs, three jackknife folds).
@@ -2292,8 +2299,8 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates the folds: they depend on the document id only (a document is never split, the order of the sentences and the seed do not matter),
-    ///     every fold is used, and the pinned values of the hash do not move.
+    ///     Validates the folds of a corpus without duplicate sentences: they depend on the document id only (a document is never split, the order of
+    ///     the sentences and the seed do not matter), every fold is used, and the pinned values of the hash do not move.
     /// </summary>
     [Fact]
     public void Jackknife_Partition_ByDocumentHash_NeverSplitsADocumentAndIsStable()
@@ -2322,6 +2329,171 @@ public class ModelTrainerTests
 
         // Assert: pinned folds (FNV-1a of the UTF-8 bytes modulo the fold count)
         Assert.Equal(new[] { 3, 2, 0 }, new[] { Jackknife.FoldOf("doc-a", 5), Jackknife.FoldOf("doc-b", 5), Jackknife.FoldOf("tatoeba-10001852", 5) });
+    }
+
+    /// <summary>
+    ///     Validates that an exact duplicate sentence under two document ids lands in one fold: the documents are one group (the sentence key is the
+    ///     lower-case letters and digits, so case, spacing and punctuation do not matter), the fold is the hash of the smallest document id, and the
+    ///     same two documents without the duplicate keep the folds of their own ids.
+    /// </summary>
+    [Fact]
+    public void Jackknife_Partition_DuplicateSentenceInTwoDocuments_LandsInOneFold()
+    {
+        // Arrange: "doc-a" and "doc-b" have different folds of their own (3 and 2); they share one sentence up to case and punctuation
+        var shared = NounSentence("a1", "doc-a", "The", "dog", "runs", ".");
+        var variant = NounSentence("b1", "doc-b", "the", "DOG", "runs");
+        var alone = NounSentence("b2", "doc-b", "A", "cat", "sleeps");
+        var other = NounSentence("a2", "doc-a", "Birds", "sing");
+
+        // Act
+        var joined = Jackknife.Partition(new[] { shared, other, variant, alone }, 5);
+        var separate = Jackknife.Partition(new[] { shared, other, NounSentence("b1", "doc-b", "A", "bird", "flies"), alone }, 5);
+
+        // Assert: one fold for both documents, the fold of the smallest id; no duplicate, no change
+        Assert.NotEqual(Jackknife.FoldOf("doc-a", 5), Jackknife.FoldOf("doc-b", 5));
+        Assert.All(new[] { shared, other, variant, alone }, s => Assert.Equal(Jackknife.FoldOf("doc-a", 5), joined[s]));
+        Assert.Equal(Jackknife.FoldOf("doc-a", 5), separate[shared]);
+        Assert.Equal(Jackknife.FoldOf("doc-b", 5), separate[alone]);
+    }
+
+    /// <summary>
+    ///     Validates that the groups are transitive: documents A and B share a sentence, B and C share another one, and all three land in one fold
+    ///     although their own folds differ; a sentence without a letter or digit joins nothing.
+    /// </summary>
+    [Fact]
+    public void Jackknife_Partition_TransitiveChain_LandsInOneFold()
+    {
+        // Arrange: three documents with three different folds of their own (3, 2 and 0)
+        var ids = new[] { "doc-a", "doc-b", "tatoeba-10001852" };
+        var sentences = new List<TrainingSentence>
+        {
+            NounSentence("a1", ids[0], "Red", "apples"),
+            NounSentence("b1", ids[1], "red", "apples", "!"),
+            NounSentence("b2", ids[1], "Blue", "pears"),
+            NounSentence("c1", ids[2], "BLUE", "pears"),
+            NounSentence("c2", ids[2], "Green", "plums"),
+
+            // Two sentences of two other documents without any letter or digit do not match each other
+            NounSentence("x1", "doc-x", "...", "!!!"),
+            NounSentence("y1", "doc-y", "?", "?"),
+        };
+
+        // Act
+        var folds = Jackknife.Partition(sentences, 5);
+        var groups = Jackknife.GroupDocuments(sentences);
+
+        // Assert
+        Assert.Equal(3, ids.Select(i => Jackknife.FoldOf(i, 5)).Distinct().Count());
+        Assert.All(sentences.Take(5), s => Assert.Equal(Jackknife.FoldOf("doc-a", 5), folds[s]));
+        Assert.All(ids, i => Assert.Equal("doc-a", groups[i]));
+        Assert.Equal("doc-x", groups["doc-x"]);
+        Assert.Equal("doc-y", groups["doc-y"]);
+        Assert.Equal(string.Empty, Jackknife.SentenceKey(sentences[5]));
+    }
+
+    /// <summary>
+    ///     Validates that the folds with duplicate sentences are deterministic: they do not depend on the order of the sentences, and the group
+    ///     of a document is its smallest document id whatever the order; the pinned fold values do not move.
+    /// </summary>
+    [Fact]
+    public void Jackknife_Partition_WithDuplicates_IsDeterministicAndIndependentOfOrderAndSeed()
+    {
+        // Arrange: 40 documents, every fourth one has a duplicate of its first sentence in the next document
+        var sentences = Documents(40, 2);
+        for (var d = 0; d < 40; d += 4)
+        {
+            sentences[(2 * d) + 3] = NounSentence($"copy{d}", $"doc{d + 1}", "THE", "dog", "runs", $"mark{d}x0");
+        }
+
+        var shuffled = sentences.OrderBy(s => Jackknife.FoldOf(s.SentenceId + "shuffle", 97)).ThenBy(s => s.SentenceId, StringComparer.Ordinal).ToList();
+
+        // Act
+        var folds = Jackknife.Partition(sentences, 5);
+        var reordered = Jackknife.Partition(shuffled, 5);
+        var reversed = Jackknife.Partition(Enumerable.Reverse(sentences).ToList(), 5);
+        var groups = Jackknife.GroupDocuments(sentences);
+        var reversedGroups = Jackknife.GroupDocuments(Enumerable.Reverse(sentences).ToList());
+
+        // Assert: the same folds and groups in any order; the group of a joined pair is its smaller id, the others are their own groups
+        Assert.All(sentences, s => Assert.Equal(folds[s], reordered[s]));
+        Assert.All(sentences, s => Assert.Equal(folds[s], reversed[s]));
+        Assert.Equal(groups.OrderBy(g => g.Key, StringComparer.Ordinal), reversedGroups.OrderBy(g => g.Key, StringComparer.Ordinal));
+        for (var d = 0; d < 40; d += 4)
+        {
+            var smaller = string.CompareOrdinal($"doc{d}", $"doc{d + 1}") < 0 ? $"doc{d}" : $"doc{d + 1}";
+            Assert.Equal(smaller, groups[$"doc{d}"]);
+            Assert.Equal(smaller, groups[$"doc{d + 1}"]);
+            Assert.Equal(Jackknife.FoldOf(smaller, 5), folds[sentences[2 * d]]);
+            Assert.Equal(Jackknife.FoldOf(smaller, 5), folds[sentences[(2 * d) + 3]]);
+        }
+
+        Assert.Equal("doc2", groups["doc2"]);
+        Assert.Equal(30, groups.Values.Distinct().Count());
+    }
+
+    /// <summary>
+    ///     Validates the leakage boundary on a toy corpus with duplicates across documents: no sentence key of a held-out fold occurs in the training
+    ///     set of its fold model, the tags equal a replay of that fold model, and the folds of the document ids alone would have leaked.
+    /// </summary>
+    [Fact]
+    public void Jackknife_Compute_DuplicatesAcrossDocuments_FoldModelNeverSeesAHeldOutSentenceKey()
+    {
+        // Arrange: 30 documents of three sentences, and ten more documents that repeat the first sentence of a document up to case and punctuation
+        var corpus = Documents(30, 3);
+        for (var d = 0; d < 30; d += 3)
+        {
+            corpus.Add(NounSentence($"dup{d}", $"extra{d}", "the", "DOG", "runs", ".", $"mark{d}x0"));
+        }
+
+        var groups = GroupConfig(FeatureGroups.ClauseCues | FeatureGroups.RightPreview);
+
+        // Act
+        var foldOf = Jackknife.Partition(corpus, 3);
+        var tags = Jackknife.Compute(groups, EmbeddedModel.Lexicon, corpus);
+
+        // Assert: the document ids alone would have put a duplicate into another fold than its original
+        Assert.Contains(corpus.Skip(90), s => Jackknife.FoldOf(Jackknife.DocumentOf(s), 3) != Jackknife.FoldOf($"doc{s.SentenceId.Substring(3)}", 3));
+
+        // Assert: no key of a held-out sentence in the training set of its fold model
+        var foldConfig = GroupConfig(FeatureGroups.ClauseCues);
+        for (var fold = 0; fold < 3; fold++)
+        {
+            var training = corpus.Where(s => foldOf[s] != fold).ToList();
+            var held = corpus.Where(s => foldOf[s] == fold).ToList();
+            var trainingKeys = new HashSet<string>(training.Select(Jackknife.SentenceKey), StringComparer.Ordinal);
+            Assert.NotEmpty(held);
+            Assert.DoesNotContain(held, s => trainingKeys.Contains(Jackknife.SentenceKey(s)));
+
+            // Assert: the preview tags of the fold are the tags of that fold model
+            var rows = ModelBuilder.Rows(PerceptronTrainer.Train(foldConfig, EmbeddedModel.Lexicon, training), foldConfig);
+            var predictor = new QuantizedPredictor(HashBits, rows, FeatureGroups.ClauseCues);
+            Assert.All(held, s => Assert.Equal(predictor.Predict(s.Tokens, EmbeddedModel.Lexicon), tags[s]));
+        }
+    }
+
+    /// <summary>
+    ///     Validates the sentence key against the key of the leakage check of the data tests, and that without duplicate sentences every document is
+    ///     its own group, so that the fold of a document is the hash of its own id.
+    /// </summary>
+    [Fact]
+    public void Jackknife_GroupDocuments_NoDuplicates_EveryDocumentIsItsOwnGroup()
+    {
+        // Arrange
+        var sentences = Documents(25, 3);
+        var texts = new[] { "The dog's  RUN, 42 times!", "Caf\u00E9 au lait", "Cafe\u0301 au lait", "(...)" };
+
+        // Act
+        var groups = Jackknife.GroupDocuments(sentences);
+        var folds = Jackknife.Partition(sentences, 5);
+
+        // Assert: every document alone, the fold of its own id
+        Assert.Equal(25, groups.Count);
+        Assert.All(groups, g => Assert.Equal(g.Key, g.Value));
+        Assert.All(sentences, s => Assert.Equal(Jackknife.FoldOf(s.SourceId, 5), folds[s]));
+
+        // Assert: the key is the one of the leakage rule (the tokens of a sentence are the words of its text)
+        Assert.All(texts, t => Assert.Equal(DataFiles.SentenceKey(t), Jackknife.SentenceKey(NounSentence("k", "d", t.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)))));
+        Assert.Equal(Jackknife.SentenceKey(NounSentence("k1", "d", texts[1])), Jackknife.SentenceKey(NounSentence("k2", "d", texts[2])));
     }
 
     /// <summary>

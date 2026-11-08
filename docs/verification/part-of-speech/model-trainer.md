@@ -29,7 +29,8 @@ is mocked. The tests use four kinds of method:
   pass of the right preview group reads the first-pass tags.
 - **Replay of the jackknife.** The preview tags of the right preview group are compared with an independent replay in
   the test: the same fold models trained by hand on the other folds, the quantized weights and the lexicon restriction;
-  the folds are checked to depend on the document id only, with pinned values of the hash.
+  the folds are checked to depend on the document ids and the sentence keys only, with pinned values of the hash, and
+  every held-out sentence key is checked to be absent from the training set of its fold model.
 - **Result schema on fixtures.** `eval-arm` is run on a tiny model with feature groups in its header and on small
   fixtures of every development set; the JSON is parsed and its members, counts and sums are compared with the contract
   (.NET 8 and later, where System.Text.Json exists).
@@ -87,7 +88,8 @@ a file other than its own, accepts an item whose judged word is missing, dispute
 class for its shape and role, or renders different text for the same results, or the feature groups are not read,
 validated and written as the specification says (an unknown or repeated group is accepted, the group mask or the
 feature set version of a file is wrong, a run without a group differs from the base training), the predictor of a
-group differs from the decoder, a document is split between jackknife folds, the jackknife tags differ from the replay,
+group differs from the decoder, a document is split between jackknife folds, a sentence key occurs in two folds, the
+jackknife tags differ from the replay,
 the right preview group does not train both passes on one table, `eval-arm` writes a result that does not match the
 schema or its own counts, or reaches a held-out file or writes into a data folder.
 
@@ -118,8 +120,21 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   are refused) and `PerceptronTrainer_Train_NoGroups_IsTheShippedTraining` (an explicit empty list and unused preview
   tags give the golden hash of the base training).
 - **Jackknife** (`ModelTrainer/ModelTrainerTests.cs`): `Jackknife_Partition_ByDocumentHash_NeverSplitsADocumentAndIsStable`
-  (60 documents of three sentences: one fold per document, the same in any order, all folds used, the sentence id as
-  the fallback, pinned folds of three ids), `Jackknife_Compute_TagsEachFoldWithAModelThatDidNotSeeIt` (the tags equal a
+  (60 documents of three sentences without duplicates: one fold per document, the same in any order, all folds used,
+  the sentence id as the fallback, pinned folds of three ids),
+  `Jackknife_Partition_DuplicateSentenceInTwoDocuments_LandsInOneFold` (two documents with different folds of their own
+  share one sentence up to case and punctuation: all their sentences get the fold of the smaller id, and without the
+  duplicate they keep their own folds), `Jackknife_Partition_TransitiveChain_LandsInOneFold` (documents A-B and B-C
+  share sentences: one group and one fold for all three; sentences without a letter or digit join nothing),
+  `Jackknife_Partition_WithDuplicates_IsDeterministicAndIndependentOfOrderAndSeed` (the folds and the groups are the
+  same in any order, the group is the smallest document id, the folds are pinned to the hash of that id),
+  `Jackknife_GroupDocuments_NoDuplicates_EveryDocumentIsItsOwnGroup` (every document is its own group with the fold of
+  its own id; the sentence key equals the key of the leakage check of the data tests, also for composed and
+  decomposed accents),
+  `Jackknife_Compute_DuplicatesAcrossDocuments_FoldModelNeverSeesAHeldOutSentenceKey` (a toy corpus with duplicates
+  under other document ids: the document ids alone would have split a duplicate from its original, no key of a
+  held-out fold occurs in the training set of its fold model, and the tags equal a replay of that model),
+  `Jackknife_Compute_TagsEachFoldWithAModelThatDidNotSeeIt` (the tags equal a
   replay with fold models trained by hand on the other folds without the group, one message per fold, reproducible, the
   seed changes the tags and not the sentences), `Jackknife_Compute_OneDocument_Throws` and
   `PerceptronTrainer_Train_RightPreview_TrainsBothPassesOnOneTable` (twice the steps of the arm without the group, the
