@@ -37,7 +37,8 @@ software items, specifically:
   - **PerceptronModel (Unit)** — Reads, writes and scores with the perceptron weights
   - **EmbeddedModel (Unit)** — Lazy, thread-safe access to the data embedded in the package
 - **Tagging (Subsystem)** — Assigns tags with confidences, alternatives, constraints and glossary terms
-  - **FeatureExtractor (Unit)** — The single definition of the hashed features
+  - **FeatureExtractor (Unit)** — The single definition of the hashed features: the base templates and the switchable
+    feature groups
   - **TagDecoder (Unit)** — The greedy decoder with lexicon restriction and softmax confidence
   - **TokenConstraint (Unit)** — The caller's restriction or preference for the tag of one token
   - **Glossary (Unit)** — The caller's domain terms with allowed tags, their matching and their constraints
@@ -119,7 +120,7 @@ src/DemaConsulting.PartOfSpeech/
 │   ├── PerceptronModelWriter.cs — Weights writer (used by the Trainer and the tests)
 │   └── EmbeddedModel.cs        — Lazy access to the embedded resources
 ├── Tagging/
-│   ├── FeatureExtractor.cs     — The hashed feature definition
+│   ├── FeatureExtractor.cs     — The hashed feature definition (base templates and feature groups)
 │   ├── DecoderWorkspace.cs     — Per-thread scratch memory of the decoder
 │   ├── ScoreSlice.cs           — Read-only list over the alternatives array
 │   ├── TagDecoder.cs           — Greedy decoder
@@ -159,9 +160,11 @@ tools/DemaConsulting.PartOfSpeech.Trainer/
 ├── RunLog.cs                   — Formats the rows of the run log table
 ├── training.json               — The selected, committed configuration (including imageSha256)
 ├── README.md                   — How to run it, the determinism contract, the held-out gate
-├── RUN-LOG.md                  — The pre-registered rules, the dev-only run log, the glossary decisions and the
-│                                 protocol and outcome of the held-out evaluation
+├── RUN-LOG.md                  — The pre-registered rules, the dev-only run log, the glossary decisions, the
+│                                 context-feature experiment (pre-registration, results, adoption) and the protocol
+│                                 and outcome of the held-out evaluations
 ├── context-features/           — Harness of the context-feature experiment: arms, resumable driver, analysis script
+├── prenominal-ing/             — Harness of the pre-registered `prenominal-ing` follow-up: arms and scoring scripts
 ├── Training/                   — Corpus reader, random generator, integer averaged perceptron, trainer, jackknife folds,
 │                                 builder, predictor
 └── Evaluation/                 — Data guard, development and held-out sets, metrics, bootstrap, calibration, confidence

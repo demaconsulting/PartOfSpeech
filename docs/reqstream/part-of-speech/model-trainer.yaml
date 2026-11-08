@@ -371,18 +371,18 @@ sections:
               - DevSelection_Create_FixtureOutcomes_DeterministicAndConsistent
               - OperatingPointsFile_FormatResults_RoundTrip
 
-          - id: PartOfSpeech-ModelTrainer-EvaluationReport-SecondLookNotice
+          - id: PartOfSpeech-ModelTrainer-EvaluationReport-DisclosureNotice
             title: >-
               The Markdown report of the development selection and the Markdown report of the held-out run shall carry,
               directly after their introduction, the disclosure paragraph that is read from the committed file
-              `docs/evaluation/disclosure.md` (which for the embedded model states that the record belongs to the
-              second held-out evaluation of the model family, a disclosed second look, and points to the run log),
-              and shall carry no notice when the file is missing or blank, the text being read and not typed into the
-              renderer.
+              `docs/evaluation/disclosure.md` (which for the embedded model states that the record belongs to a later
+              held-out evaluation of the model family, a disclosed look at sets that earlier models were scored on, and
+              points to the run log), and shall carry no notice when the file is missing or blank, the text being read
+              and not typed into the renderer.
             justification: |
               A record is read on its own. A held-out result that does not say that the held-out sets were already
-              seen once for the sibling model would read as a first look at unseen data. The text describes one model
-              and one evaluation, so it lives in a reviewable file that must be revised or removed for any later
+              seen for earlier models of the family would read as a first look at unseen data. The text describes one
+              model and one evaluation, so it lives in a reviewable file that must be revised or removed for any later
               evaluation of a different model, and the generic renderer cannot give a later record a stale claim. The
               notice is part of the generated Markdown only, so the JSON artifacts and their pinned hashes do not
               change, and the committed reports carry the text at the position where a regeneration puts it.
@@ -485,7 +485,8 @@ sections:
               large hint.
             justification: |
               The decision between a trained glossary feature and a score boost rests on this experiment, so the
-              experiment must be reproducible, must not disturb the shipped feature set (the plain run keeps its pinned
+              experiment must be reproducible, must not disturb the features of the model (the plain run keeps its
+              pinned
               hash), must judge eligibility with the same candidates that the tagger has, and its decoder must agree
               with the real one before the comparison means anything.
             tests:

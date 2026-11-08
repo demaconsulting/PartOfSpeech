@@ -9,7 +9,8 @@ sentence and the two previous tags into hashed feature buckets. Decoding and the
 trainer therefore trains for exactly the features that the decoder scores), because a model is only valid for the exact
 feature set it was trained with. The 22 base templates can be extended by four switchable **feature groups** (context
 features, `FeatureGroups`); the groups of a model are stored in its weights file and, with no group, the extractor
-produces exactly the 22 base templates. It is an internal static class (with the internal enumerations `FeatureKind`,
+produces exactly the 22 base templates. The embedded model enables one group, `ClauseCues` (the choice is described in
+the system design under _Context Features_). It is an internal static class (with the internal enumerations `FeatureKind`,
 `FeatureGroups` and `TokenClass`) and has no state of its own; the state that the groups need lives in the caller's
 `DecoderWorkspace`.
 

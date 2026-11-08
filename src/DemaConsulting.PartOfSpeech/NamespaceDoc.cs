@@ -33,8 +33,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <para>
 ///     How the pieces fit together. The text goes through <see cref="Tokenizer.Tokenize(string)"/> (or you provide the
 ///     tokens yourself); the <see cref="Tagger"/> then walks the tokens from left to right. For each token it looks the
-///     word up in the lexicon, builds features of the word and of the tags it has chosen so far, scores the allowed tags
-///     with the weights of the model and picks the best one; the chosen tag becomes history for the next token. The
+///     word up in the lexicon, builds features of the word, its neighbors and the tags it has chosen so far, scores the
+///     allowed tags with the weights of the model and picks the best one; the chosen tag becomes history for the next
+///     token. The
 ///     <see cref="Tagger.Tag(string)"/> method does all of this for a whole text.
 ///     </para>
 ///     <para>
@@ -72,7 +73,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </description></item>
 ///     <item><description>
 ///     **Averaged perceptron** names the kind of model. Every feature of a token (the word, its ending, its
-///     capitalization, the neighboring words and the tags chosen before it) has one learned weight per tag; the weights
+///     capitalization, the neighboring words and the tags chosen before it; the embedded model also uses clause cues: the
+///     kind of the neighboring words, the distance to the nearest determiner or modal, and whether a subject-like tag and
+///     a verb tag were already chosen in the current clause) has one learned weight per tag; the weights
 ///     of all features of the token are added up for each tag, and the tag with the highest sum fits best. "Averaged"
 ///     means that the weights are the average over the training updates, which makes them more stable than the last
 ///     update.

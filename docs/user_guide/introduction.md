@@ -53,6 +53,15 @@ compiled word lexicon (639,711 bytes compressed) and the trained averaged-percep
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
+The tagger decides token by token from left to right. For each token it scores the allowed tags from the word and its
+ending, the words around it, the tags it chose before and, in the embedded model, clause cues: the kind of the
+neighboring words (for example a determiner or a modal), the distance to the nearest determiner or modal, and whether
+the current clause already has a subject-like tag and a verb tag. The cues were designed for words that are both noun and
+verb, such as the first word of an instruction. The embedded model does not use tags of the words to its right. A
+pre-registered experiment on development data chose the clause cues; the
+[run log](https://github.com/demaconsulting/PartOfSpeech/blob/main/tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)
+(section "Context-feature experiment") has the protocol and the results.
+
 The model was selected on development data only and then evaluated on held-out data (a disclosed third look at those
 sets: earlier models of the family had been evaluated on them before), after the training corpora had been corrected
 and the model retrained. The

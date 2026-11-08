@@ -943,7 +943,7 @@ sections:
           - PartOfSpeech-ModelTrainer-HeldOutMetrics-StopConditions
           - PartOfSpeech-ModelTrainer-HeldOutMetrics-Throughput
           - PartOfSpeech-ModelTrainer-EvaluationReport-Deterministic
-          - PartOfSpeech-ModelTrainer-EvaluationReport-SecondLookNotice
+          - PartOfSpeech-ModelTrainer-EvaluationReport-DisclosureNotice
           - PartOfSpeech-ModelTrainer-EvaluationReport-JsonComplete
           - PartOfSpeech-ModelTrainer-EvaluationReport-NoTreebankText
           - PartOfSpeech-ModelTrainer-EvaluationReport-PerTokenDump

@@ -7,7 +7,8 @@
 Tagging is the subsystem that assigns a Universal POS tag to every token and is the public face of the library. It
 contains five units:
 
-- **FeatureExtractor** (`FeatureExtractor.cs`): the single definition of the 22 hashed features of a token. It is shared
+- **FeatureExtractor** (`FeatureExtractor.cs`): the single definition of the hashed features of a token: 22 base
+  templates and four switchable feature groups, of which the embedded model enables the clause cues. It is shared
   between decoding and training (the trainer tool).
 - **TagDecoder** (`TagDecoder.cs`, `DecoderWorkspace.cs`, `ScoreSlice.cs`): the greedy left-to-right decoder that scores
   the features with the weights, restricts the candidates with the lexicon and the constraints, and turns the scores
@@ -100,13 +101,18 @@ it):
   restricted guess, the update from the unrestricted guess) was selected; the log is in `RUN-LOG.md` of the trainer.
 - **Extra features.** The feature set also contains the previous-two-tags pair (`p12`) and the previous-and-next
   neighbor pair (`m1n1`), which are not in the spike's base template list.
+- **Context features.** The spike scores a token from its own spelling, two words on each side and two tags only. The
+  feature groups add the class of the neighbors, the distance to a determiner or a modal and a clause state from the
+  tags decided so far (the embedded model), and optionally the position in the sentence, the stem of an inflected word
+  and the tags of a first pass for the next two tokens (switches that are off in the embedded model).
 - **Tag history type.** Previous tags are `Upos` ordinals plus two start sentinels, not strings, and the extractor takes
   them as arguments, so a trainer can pass gold or predicted history.
 
 **Contract with the Trainer.** The trainer reuses `FeatureExtractor` unchanged, so that training and decoding
 see identical buckets, and writes weights with `PerceptronModelWriter` using the feature set version that
-`FeatureExtractor.FeatureSetVersionFor` gives for the groups of context features it trained with: 1 without a group
-(the shipped model), 2 with at least one, together with the group mask in the header. The decoder takes the groups from
+`FeatureExtractor.FeatureSetVersionFor` gives for the groups of context features it trained with: 1 without a group, 2
+with at least one (the embedded model has the clause cues and so feature set 2), together with the group mask in the
+header. The decoder takes the groups from
 the weights file, so a model is always scored with the features it was trained with. Any change of the template set,
 the hash, the fold or a group requires a new feature set version; readers refuse a weights file of an unknown version or
 mask. The trainer also chooses `hashBits` (18 to 24; the shipped model uses 19), the

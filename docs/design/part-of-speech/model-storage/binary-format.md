@@ -19,7 +19,10 @@ version (`uint16`); bytes 6 to 7 the flags (`uint16`, only bit 0 is defined). Al
 The payload of a format is stored after its fixed header, raw or as a raw Deflate stream (no zlib or gzip wrapper). Both
 formats are at version 2: version 1 (unreleased) put a checksum over the inflated payload, which let a truncated
 Deflate stream pass; version 2 checksums the stored bytes and the reader inflates strictly (see Key Methods). Version 1
-files are refused as an unsupported version.
+files are refused as an unsupported version. The fields after byte 8 belong to the format and are checked by its reader,
+not here; for the weights format they include the feature set number and, at offset 40, the feature group mask, which
+took four of the eight bytes that were reserved and zero, so adding it did not change the format version or move any
+other field (see _PerceptronModel Design_).
 
 #### Key Methods
 

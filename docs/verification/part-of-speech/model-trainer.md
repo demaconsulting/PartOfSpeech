@@ -46,8 +46,8 @@ is mocked. The tests use four kinds of method:
   tested with tiny fixtures: a temporary fake repository with a manifest for the guarded reader, hand-written probe and
   treebank rows, hand-computed outcomes for the curve and the rule, and the tiny trained model for the judging. No test,
   build step or CI job reads a real held-out file through this code, so CI never looks at held-out data. The real held-out
-  run is a documented procedure that runs once for each frozen model (the protocol section of the run log; the model
-  family has had two disclosed held-out evaluations), not a test: it would be wrong for a
+  run is a documented procedure that runs once for each frozen model (the protocol section of the run log; each
+  evaluation of the model family is disclosed as such in the evaluation record), not a test: it would be wrong for a
   test to run it, because its value is that it happens once, after the selection is committed. Its output is a committed,
   generated report; the system-level tests that tie it to the shipped model and to the selection accompany the report.
 
@@ -86,7 +86,7 @@ same results or a treebank word into a report, or lets a stop condition pass, or
 a file other than its own, accepts an item whose judged word is missing, disputed, outside its sentence or in the wrong
 class for its shape and role, or renders different text for the same results, or the feature groups are not read,
 validated and written as the specification says (an unknown or repeated group is accepted, the group mask or the
-feature set version of a file is wrong, a run without a group differs from the shipped training), the predictor of a
+feature set version of a file is wrong, a run without a group differs from the base training), the predictor of a
 group differs from the decoder, a document is split between jackknife folds, the jackknife tags differ from the replay,
 the right preview group does not train both passes on one table, `eval-arm` writes a result that does not match the
 schema or its own counts, or reaches a held-out file or writes into a data folder.
@@ -116,7 +116,7 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   feature set 1 refuses them), `ConfigFile_Features_OmittedByDefaultAndRoundTripped` (the settings are left out of the
   file form while at their defaults, written and read back otherwise, an unknown group and an out-of-range fold count
   are refused) and `PerceptronTrainer_Train_NoGroups_IsTheShippedTraining` (an explicit empty list and unused preview
-  tags give the golden hash of the shipped training).
+  tags give the golden hash of the base training).
 - **Jackknife** (`ModelTrainer/ModelTrainerTests.cs`): `Jackknife_Partition_ByDocumentHash_NeverSplitsADocumentAndIsStable`
   (60 documents of three sentences: one fold per document, the same in any order, all folds used, the sentence id as
   the fallback, pinned folds of three ids), `Jackknife_Compute_TagsEachFoldWithAModelThatDidNotSeeIt` (the tags equal a

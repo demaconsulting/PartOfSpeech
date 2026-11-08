@@ -58,3 +58,7 @@ runs (or two taggers loaded from the same bytes) differ in any tag, confidence o
 - **Determinism**: `Tagging_Tag_SameInput_ProducesSameOutput` tags a text with an unknown word three times (twice with
   one tagger, once with a second tagger loaded from the same bytes) and asserts identical tags, offsets, confidences
   (round-trip format) and alternatives.
+- **Feature groups**: the subsystem scenarios above use models without groups, so that they prove the base behavior. The
+  groups are verified where they are defined and used: per group against the string-based reference in _FeatureExtractor
+  Verification_, in the decoder (also in two passes for the right preview group) in _TagDecoder Verification_, through
+  the public loader in _Tagger Verification_, and against the trainer's predictor in _ModelTrainer Verification_.

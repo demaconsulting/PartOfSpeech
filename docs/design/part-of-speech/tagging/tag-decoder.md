@@ -78,8 +78,10 @@ up to 1 when all candidates are listed; a token with one candidate has confidenc
 Complexity: 22 bucket lookups per token without groups (a bit test and about 2.7 additions each on a realistic model)
 and one lexicon lookup (about 14 block-head comparisons and at most 15 decoded spellings). The groups add up to 18
 bucket lookups and, for the inflection group, up to three more lexicon lookups for a token that ends in `ing`, `ed` or
-`s`; a preview model decodes every token twice. Without groups nothing of this runs, and the decode is the one-pass
-decode that the model had before the groups existed. Measured speed is in the verification design.
+`s`; a preview model decodes every token twice. The embedded model (clause cues) adds seven bucket lookups per token,
+the class of the two neighbors from the cached lexicon lookup of the token (the decoder looks every token up once for
+the restriction anyway) and a two-bit clause state per token. Without groups nothing of this runs, and the decode is
+the one-pass decode that the model had before the groups existed. Measured speed is in the verification design.
 
 #### Error Handling
 

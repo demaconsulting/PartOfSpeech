@@ -8,11 +8,12 @@ License: CC0-1.0
 Label corrections for the open corpus, MASC and the silver data that follow the conventions of
 [CONVENTIONS.md](../CONVENTIONS.md), kept as small tables next to the corpus files. **The rows are applied:** the corpora under
 `open/`, `masc/` and `silver/` carry them (`corrections.py apply --write`), and the lexicon and the weights were rebuilt from the
-corrected labels. The held-out evaluation record (`docs/evaluation/`) was reissued twice for retrained models: the first
+corrected labels. The held-out evaluation record (`docs/evaluation/`) was reissued for each retrained model: the first
 cleanup model was evaluated once on held-out data (its pre-registered development gate G2 failed on its single seed, and the
-owner accepted it after a development-only diagnosis), and the model that ships now was selected by a pre-registered
-follow-up that withdrew the 878 adjudicated `prenominal-ing` rows (see _Withdrawn Rows_ below) and evaluated once more on
-the same held-out data (a disclosed second look); both are in the trainer `RUN-LOG.md`, "Corpus cleanup C". The tables stay
+owner accepted it after a development-only diagnosis), the model after the pre-registered follow-up that withdrew the 878
+adjudicated `prenominal-ing` rows (see _Withdrawn Rows_ below) was evaluated on the same held-out data, and so was the
+model that ships now, which adds a context-feature group (all disclosed as looks at sets seen before); the first two are in
+the trainer `RUN-LOG.md`, "Corpus cleanup C", the last in "Context-feature experiment". The tables stay
 as provenance: they describe the corpora as the importers wrote them, and they stay valid against the corrected files (see
 _States and Apply_).
 

@@ -227,9 +227,9 @@ visible.
 The sets above are held-out evaluation sets: nothing was chosen on them. One more set exists for the opposite purpose, the
 [shapes development set](../../data/eval/shapes-dev/README.md): 700 real sentences from US federal-government documents,
 labeled by two blind models, with a judged word in each (600 target items, 120 for each of five hard shapes, and 100
-controls). It is the set on which variants of the tagger (sentence-level context features, a two-pass decoder, word
-clusters) are compared and settings are selected, so a figure from it is optimistic by construction and is never
-reported as a held-out result.
+controls). It is the set on which variants of the tagger are compared and settings are selected (the clause cues of the
+embedded model were selected on its hard tranche; see the section "Context-feature experiment" of the run log), so a
+figure from it is optimistic by construction and is never reported as a held-out result.
 
 - **Five shapes, not seven.** The shape probe has seven shape ids. The development set uses the four that the limitations
   above name as the weak ones (`n-compound-head`, `n-subject-initial`, `v-imperative-initial`, `n-measure`) and a fifth,
@@ -239,12 +239,11 @@ reported as a held-out result.
 - **Selection only here.** The trainer reads the file only through its own development guard (`eval-shapes`). It is never
   trained on, and the shape probe stays held-out evaluation only: it is not tuned on, and a variant is judged on it only
   after the settings were fixed on the development sets.
-- **The baseline** of the shipped model on the development set, per shape, is in the
-  [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: baseline of the
-  shipped model"); every variant is compared with it. The baseline there is the one of the previous model; the embedded
-  model scores 96.8% on the standard tranche at its seed and 91.25% on the held-out probe, so the room to show a gain
-  is small; the run log has the headroom per shape and explains
-  why the set was not made harder.
+- **The baseline** of the model before the clause cues, on the development set and per shape, is in the
+  [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: baseline of
+  the shipped model"), and the section "Context-feature experiment" has every variant, the embedded model among them,
+  against it. The standard tranche leaves little room to show a gain (the run log has the headroom per shape and
+  explains why the set was not made harder), so a hard tranche was added, described below.
 - **The hard tranche** (`hard.tsv`, [README](../../data/eval/shapes-dev/README.md#hard-tranche): 460 sentences of the
   contested cases of four shapes, chosen by a pre-registered rule that uses another model family's numbers and no
   PartOfSpeech output) has its own shipped-model baseline and headroom in the

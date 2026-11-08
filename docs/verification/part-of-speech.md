@@ -18,7 +18,7 @@ unchanged. The tests of the default tagger and of the embedded weights use the r
 properties that do not depend on its accuracy: that it loads, that it is one shared instance, and that it gives the
 unmistakable tags of a few hand-written sentences (these sentences were written once and not tuned; the accuracy of the
 model is measured by the held-out evaluation of the trainer, which is a documented procedure (once for each frozen
-model; the model family has had two disclosed held-out evaluations) and not a test,
+model; each evaluation of the model family is disclosed as such in the evaluation record) and not a test,
 and its committed results are tied to the shipped model by the evaluation record tests, never by the tests of the tagger).
 
 System tests reside in `PartOfSpeechTests.cs` within the `DemaConsulting.PartOfSpeech.Tests` project. The data and
@@ -242,7 +242,9 @@ and of `EmbeddedModel.Weights` are described in _Tagger Verification_ and _Embed
 **Test**: `PartOfSpeech_Model_EmbeddedWeights_MatchTrainingConfig` (in `PartOfSpeechDataTests.cs`)
 
 Reads the embedded weights resource and the committed `weights.bin` and asserts that they are the same bytes, loads the
-model, and compares its hash bits, scale and temperature with `training.json` and the SHA-256 of its uncompressed image
+model, and compares its hash bits, scale, temperature and feature groups with `training.json` (the groups named by its
+`features` list, none when the member is absent, so the header mask of the file and the configuration cannot differ) and
+the SHA-256 of its uncompressed image
 with `imageSha256` (the values are read from the JSON text with a regular expression, because the JSON API is not part of
 .NET Framework). This is cheap and runs in every test run on every framework. The complete proof that the configuration
 and the committed corpora produce exactly this model is the retraining check `train --check`, which `build.ps1` and

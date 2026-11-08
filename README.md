@@ -16,7 +16,8 @@
 - **Tokenizer and sentence splitter**: English text becomes sentences and tokens, with character offsets into your
   original string
 - **Tagger**: an averaged-perceptron tagger over the 17 Universal POS tags, with a word lexicon that restricts known
-  words
+  words and clause cues (the kind of the neighboring words and a clause state from the tags already chosen) that help
+  with noun-verb ambiguity
 - **Confidences and alternatives**: every tag comes with a calibrated probability and the ranked competing tags
 - **Constraints and glossaries**: restrict or steer single tokens, or give the tagger a glossary of domain terms
 - **Pre-tokenized input**: tag tokens that you already have
@@ -80,8 +81,10 @@ list; use soft mode for a list that may be wrong. The measured cost is in sectio
 The model was selected on development data only, its confidence thresholds too, and it was then evaluated on held-out
 data several times over the model family (after the corpora had been corrected and the model retrained, again for the
 follow-up model, and now for the model that is embedded, a disclosed third look; the [trainer run log][link-run-log]
-has the decisions and the gates). The tagger is accurate on ordinary running text. Its most costly mistake is a
-harmful error: a
+has the decisions and the gates). The embedded model has the clause-cue feature group, which a pre-registered
+experiment on development data selected from four candidate groups (the section "Context-feature experiment" of the
+run log has the protocol, the results and their caveats). The tagger is accurate on ordinary running text. Its most
+costly mistake is a harmful error: a
 noun tagged as a verb, or a verb tagged as a noun. It makes some on every test set and noticeably more on short,
 technical and imperative sentences built to be hard, a limitation that is reported and was not tuned away. The labels of
 the test sets were written by language models, and the results come from one run.

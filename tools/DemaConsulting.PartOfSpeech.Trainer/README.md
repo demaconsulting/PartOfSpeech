@@ -47,7 +47,7 @@ Exit codes: 0 success, 1 stale weights (`train --check`) or a stop condition fir
 | `--checkpoints 4,6,8` | Also evaluate the averaged weights after these epochs (one run gives the epoch curve). |
 | `--epochs --hash-bits --min-count --prune --scale --seed --temperature` | Override one setting of the configuration. |
 | `--restrict none\|history\|full`, `--history predicted\|gold` | Restriction mode (A, B, C) and history mode. |
-| `--features none\|F1,F2,F3,F4\|positionCues,clauseCues,rightPreview,inflection` | Context feature groups of the model (experiment override; the groups are stored as a mask in the weights header; `none` is the shipped feature set and gives the shipped bytes). Names are accepted in any order and case, short or long. |
+| `--features none\|F1,F2,F3,F4\|positionCues,clauseCues,rightPreview,inflection` | Context feature groups of the model (experiment override; the groups are stored as a mask in the weights header; `none` is the base feature set, the one before the groups existed, and trains as it did then; the embedded model uses `clauseCues`). Names are accepted in any order and case, short or long. |
 | `--preview-folds N` | Number of jackknife folds of the `rightPreview` group (2 to 10, default 5; experiment override). |
 | `--source NAME:WEIGHT` | Set the weight of a source (0 leaves it out); repeatable. |
 | `--max-sentences N`, `--sample-permille N` | Limit or subsample every source (deterministic by sentence id). |
@@ -74,7 +74,9 @@ SHA-256 of the image with a pinned value on every target framework.
 
 ## Development data and the held-out gate
 
-Every setting is selected on the two development sets (`data/open/dev.tsv`, `data/eval/gold-v2/dev.tsv`). Every command
+Every setting is selected on development data: the two development sets (`data/open/dev.tsv`,
+`data/eval/gold-v2/dev.tsv`) and, for the feature group, also the hard-shape development set and the development part of
+the external treebank (below). Every command
 except `evaluate`, `eval-shapes` and `eval-arm` reads those two files and nothing else: evaluation accepts exactly those two paths, and
 training accepts only files below the repository's `data` folder (after the path is made absolute and links are resolved) and refuses
 held-out and development files there (`Evaluation/DevSets.cs`, tested). The held-out sets are read by `evaluate` only, and
@@ -99,7 +101,11 @@ seed `train --seed S --features G [--preview-folds 5] --calibrate --output FILE`
 at most 8 threads, at least 6 GB free on C:; the interface contract and the schema of the per-run JSON are at the top of
 the script) and `analyze_arms.py` (the table, the guards and the selection rule; it checks its own logic on synthetic runs).
 All three files are frozen by
-the hashes in the run log. To run everything (writes below the given folder, which must be on C:):
+the hashes in the run log. The rule selected F2, which the embedded model enables through `training.json`; the other
+groups stay switches that are off (`RUN-LOG.md` has the results and the caveats, and `docs/design/part-of-speech/model-trainer.md`
+the design). On a machine whose cores are saturated by other processes the below-normal priority can starve a run;
+`-Runner FILE` replaces the `dotnet` command with a wrapper of your own (for example one that starts it at normal priority).
+To run everything (writes below the given folder, which must be on C:):
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <folder>

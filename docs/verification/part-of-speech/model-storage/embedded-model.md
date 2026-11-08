@@ -10,9 +10,10 @@ lexicon and weights resources are real. Nothing is mocked. The
 threads returns one shared instance, not that the very first access is concurrent; the first access in a test run
 happens in whichever test reaches it first, and the parallel tests are the ones that release their threads together.
 The tests of the weights check only what does not depend on the accuracy of the model: that the resource exists, that
-it loads as a model of this feature set (the loader validates the format, the checksum and the feature set) with the
-hash bits and the scale of the trained model, and that the model is not empty. That the embedded file is the one that the
-training configuration describes is a system test (_System Verification_).
+it loads (the loader validates the format, the checksum, the feature set and the group mask) with the
+hash bits and the scale of the trained model, and that the model is not empty. That the embedded file enables the
+clause-cue group is asserted at subsystem level (_ModelStorage Verification_), and that the embedded file is the one that
+the training configuration describes is a system test (_System Verification_).
 
 #### Test Environment
 
