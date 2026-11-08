@@ -3609,6 +3609,56 @@ F2+IMP 23.0 to 27.4 s (2 min 15 s); ALL+IMP 64.5 to 134.3 s (8 min 54 s); ALL re
   `imperative` source at weight 1 in `training.json`, `train`/`calibrate` with `--update-config`, `weights.bin`, `thresholds`
   and the single held-out `evaluate`) is the next section and is written before any held-out command.
 
+## Imperative training data: adoption (plan written before the retraining and before any held-out command)
+
+The pre-registered rule selected **F2+IMP** (results commit `742258d46f8b15639d4a6cd2d613b9825f96baf1`), and the plan of the project
+owner is to ship it. This section is committed **before the retraining of the shipped model**: no `train --output`,
+`calibrate --update-config`, `train --update-config`, `thresholds` or `evaluate` has been run for it, and the held-out sets are not
+read. Git history shows the order: this plan, then the adoption commit (the weights, the configuration, the operating points and the
+re-pinned figures; development data only), then the deletion of the previous held-out record, the one `evaluate`, and the evaluation
+record. No hyperparameter, corpus, feature group or seed changes: the shipped seed 20260101 stays, and the model is the arm F2 of
+the experiment with one more training source.
+
+### The arm and the exact steps
+
+The adopted arm is **F2+IMP**: the F2 configuration (feature group `clauseCues`, the mix open x2, MASC, silver >= 80, 6 epochs, 19
+hash bits, prune 8, quantization scale 8, restriction `history`, predicted history, seed 20260101) plus the source `imperative`
+(`data/imperative/imperative.tsv`, 900 sentences) at **weight 1**. F2 features are unchanged. The steps, as in the clause-cue
+adoption, from a clean tree whose HEAD is the commit of this plan:
+
+1. In `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` set the weight of the source `imperative` from 0 to 1 (nothing else).
+2. `train --output <file outside the repository>` at the shipped seed (the trainer reads `training.json`).
+3. `calibrate --weights <file> --update-config` (refits the temperature on the open dev set and writes it to `training.json`).
+4. `train --update-config` (writes the image SHA-256 of the new model to `training.json`), then `train --check` (must exit 0).
+5. Copy the file to `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`.
+6. `thresholds` (development data only; recomputes `docs/evaluation/operating-points.json` and `confidence-thresholds.md`; it
+   refuses to write anything if the 0.45 row does not reproduce the frozen figures `FrozenOpenHarmful` and `FrozenGoldHarmful`;
+   if it refuses, the two constants are set to the figures it reports for the new model, with the reason recorded, as in the
+   clause-cue adoption, and it is run again).
+7. Re-pin the figures and tests that depend on the weights (size figures, the embedded-model tests, the documents that describe the
+   shipped model).
+
+One heavy process runs at a time, at most 8 threads. `evaluate` is **not** run in the adoption commit.
+
+### Byte-identity requirement (stated before the retraining)
+
+The new `weights.bin` must be **byte-identical to the weights of the F2+IMP run of seed 20260101 of the experiment**
+(`runs\f2imp\F2-s20260101.bin`, outside the repository). Its SHA-256 is
+`48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b`, its size 521,695 bytes deflated (1,157,499 bytes raw, 122,088 rows,
+image SHA-256 `6e1e4ade56aa277d79709c107000f10e99c6f4e55a097e872a9c38fa2e12e8d0`, per the run's training output). The model it
+replaces has SHA-256 `72cc28cf10c556a617e8edb49d92d96148ed023874cfe834557ea5c6911b9672` (517,210 bytes; image `ec3f090e...`).
+If the retrained file is **not** byte-identical, the adoption stops: nothing is committed except an account of the difference,
+the cause is investigated and recorded, and no figure of the experiment is claimed for the shipped model.
+
+### What stays the same and what will be written afterwards
+
+- The data, the labels, the experiment's decision and the experiment's tables are not changed by the adoption.
+- The seed-20260101 figures of the experiment (hard tranche 170.0 harmful per 1k, `v-imperative-initial` target accuracy 78%) are
+  the figures of the shipped model if and only if the byte identity holds.
+- The adoption commit adds the development figures of the shipped model, the `thresholds` result and the list of the re-pinned
+  figures to this section (development data only). The held-out evaluation is a **disclosed fourth look** at sets already seen by this
+  model family, run once, as a new record (not an erratum), reported as produced, and is the step that follows the adoption commit.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
