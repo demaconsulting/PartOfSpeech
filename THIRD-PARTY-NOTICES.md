@@ -134,6 +134,13 @@ U.S.C. 105; 43 documents are also in the standard tranche). The license basis of
 `data/eval/shapes-dev/hard-sources.tsv`. Numeric output of the WordSense Basic classifier (same owner, run unmodified)
 helped to choose which sentences to label; no WordSense text, label or data is copied.
 
+The training source `data/imperative/` is built the same way from instructional text of US federal government
+documents: 122 documents of the federal families War Department and Army, Navy, Department of Agriculture, Forest
+Service, Bureau of Mines and Public Health Service (17 U.S.C. 105; scans and electronic copies on the Internet Archive
+whose records carry the Public Domain Mark). Its annotations and its selection are dedicated to the public domain under
+CC0 1.0, and the license basis of every document is quoted in `data/imperative/sources.tsv`. The source is registered
+in the training configuration with weight 0, so the embedded weights were not learned from it.
+
 Language models wrote the tags, and no human has reviewed them. In the owner's position, GitHub claims no ownership of
 model outputs, so the repository owner, who prompted their creation, holds the rights in them and dedicates them to the
 public domain under CC0 1.0. That is the owner's position, not legal advice or a warranty.

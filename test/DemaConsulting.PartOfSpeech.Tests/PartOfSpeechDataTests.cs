@@ -9,7 +9,7 @@ namespace DemaConsulting.PartOfSpeech.Tests;
 /// <summary>
 ///     System-level tests of the committed data and licensing artifacts: the third-party notice and its packaging, the
 ///     licenses and provenance of the data, the staged corpus corrections, the Universal POS tags, the separation of
-///     training and evaluation data, the hard-shape development set, and the lexicon. The tests read the files of the working copy and need no network.
+///     training and evaluation data, the hard-shape development set, the imperative training source, and the lexicon. The tests read the files of the working copy and need no network.
 ///     Each test proves one obligation of one requirement; a test that finds no file or no row fails instead of passing
 ///     on nothing.
 /// </summary>
@@ -54,6 +54,41 @@ public class PartOfSpeechDataTests
     ///     The source table of the hard tranche, relative to the data folder.
     /// </summary>
     private const string ShapesDevHardSources = ShapesDevFolder + "/hard-sources.tsv";
+
+    /// <summary>
+    ///     The folder of the imperative training source, relative to the data folder.
+    /// </summary>
+    private const string ImperativeFolder = "imperative";
+
+    /// <summary>
+    ///     The corpus file of the imperative training source, relative to the data folder.
+    /// </summary>
+    private const string ImperativeCorpus = ImperativeFolder + "/imperative.tsv";
+
+    /// <summary>
+    ///     The source table of the imperative training source, relative to the data folder.
+    /// </summary>
+    private const string ImperativeSources = ImperativeFolder + "/sources.tsv";
+
+    /// <summary>
+    ///     The fewest and the most sentences of the imperative training source.
+    /// </summary>
+    private const int ImperativeMinSentences = 600;
+
+    /// <summary>
+    ///     The most sentences of the imperative training source.
+    /// </summary>
+    private const int ImperativeMaxSentences = 900;
+
+    /// <summary>
+    ///     The most sentences of the imperative training source that one lemma (the base form of the first word) has.
+    /// </summary>
+    private const int ImperativeLemmaCap = 6;
+
+    /// <summary>
+    ///     The most sentences of the imperative training source that one document has.
+    /// </summary>
+    private const int ImperativeDocumentCap = 30;
 
     /// <summary>
     ///     The most targets of one lemma in a shape of the hard tranche.
@@ -115,7 +150,7 @@ public class PartOfSpeechDataTests
     /// <summary>
     ///     The training corpora, relative to the data folder.
     /// </summary>
-    private static readonly string[] TrainingCorpora = { "open/train.tsv", "masc/masc.tsv", "silver/silver.tsv" };
+    private static readonly string[] TrainingCorpora = { "open/train.tsv", "masc/masc.tsv", "silver/silver.tsv", ImperativeCorpus };
 
     /// <summary>
     ///     The token-level evaluation corpora, relative to the data folder.
@@ -130,7 +165,7 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static readonly string[] LicensedFolders =
     {
-        "open", "masc", "silver", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections"
+        "open", "masc", "silver", ImperativeFolder, "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections"
     };
 
     /// <summary>
@@ -140,7 +175,7 @@ public class PartOfSpeechDataTests
     private static readonly (string Table, string IdColumn)[] SourceTables =
     {
         ("open/sources.tsv", "source_id"), ("eval/gold-v2/sources.tsv", "doc_id"), ("silver/sources.tsv", "source_id"),
-        (ShapesDevFolder + "/sources.tsv", "source_id"), (ShapesDevHardSources, "source_id")
+        (ShapesDevFolder + "/sources.tsv", "source_id"), (ShapesDevHardSources, "source_id"), (ImperativeSources, "source_id")
     };
 
     /// <summary>
@@ -153,6 +188,11 @@ public class PartOfSpeechDataTests
         ["open"] = new[] { "## License and Provenance", "**Source:**", "**How produced:**", "`sources.tsv`" },
         ["masc"] = new[] { "## Source", "**Corpus:**", "**Input file:**", "**How produced:**", "`sources.tsv`" },
         ["silver"] = new[] { "## Content and License", "## How It Was Produced", "`sources.tsv`" },
+        [ImperativeFolder] = new[]
+        {
+            "## Source and Provenance", "**Source:**", "**How produced:**", "**Labels:**", "**Sentences:**", "`sources.tsv`",
+            "## Labeling and Decision Rule", "## Hand Check", "model review, not a human review", "## Sources", "## Known Limits", "## Use"
+        },
         ["eval/shapes"] = new[]
         {
             "## Source and Provenance", "**Source:**", "**How produced (by the WordSense project):**", "**License:**"
@@ -366,7 +406,7 @@ public class PartOfSpeechDataTests
         }
 
         // Assert: every folder was checked and no problem was found
-        Assert.Equal(9, LicensedFolders.Length);
+        Assert.Equal(10, LicensedFolders.Length);
         Assert.Empty(problems);
     }
 
@@ -554,12 +594,12 @@ public class PartOfSpeechDataTests
             .Select(name => "missing: data/" + name));
 
         // Assert: every folder was checked and no problem was found
-        Assert.Equal(9, ReadmeStatements.Count);
+        Assert.Equal(10, ReadmeStatements.Count);
         Assert.Empty(problems);
     }
 
     /// <summary>
-    ///     Proves that every source document of the open corpus, the evaluation sets and the silver and MASC training data
+    ///     Proves that every source document of the open corpus, the evaluation sets and the silver, MASC and imperative training data
     ///     appears in the source list of its folder (and that every MASC source row has sentences in <c>masc.tsv</c>).
     /// </summary>
     [Fact]
@@ -578,12 +618,15 @@ public class PartOfSpeechDataTests
         var silverDocuments = DataFiles.ReadCorpus(DataFiles.Data("silver/silver.tsv")).Select(sentence => sentence.SourceId).ToList();
         var mascDocuments = DataFiles.ReadCorpus(DataFiles.Data("masc/masc.tsv")).Select(sentence => sentence.SourceId).Distinct().ToList();
         var mascListed = SourceIds("masc/sources.tsv", "source_id");
+        var imperativeDocuments = DataFiles.ReadCorpus(DataFiles.Data(ImperativeCorpus)).Select(sentence => sentence.SourceId).Distinct().ToList();
+        var imperativeListed = SourceIds(ImperativeSources, "source_id");
 
         // Act: find the documents that no source list names
         var problems = MissingDocuments("open", openDocuments, openListed)
             .Concat(MissingDocuments("eval/gold-v2", goldDocuments, goldListed))
             .Concat(MissingDocuments("silver", silverDocuments, silverListed))
             .Concat(MissingDocuments("masc", mascDocuments, mascListed))
+            .Concat(MissingDocuments("imperative", imperativeDocuments, imperativeListed))
             .Concat(mascListed.Except(mascDocuments).Select(document => "masc: listed but not in masc.tsv: " + document))
             .ToList();
 
@@ -592,6 +635,7 @@ public class PartOfSpeechDataTests
         Assert.True(goldDocuments.Distinct().Count() > 1000);
         Assert.True(silverDocuments.Distinct().Count() > 5000);
         Assert.True(mascDocuments.Count > 300);
+        Assert.True(imperativeDocuments.Count > 50);
         Assert.Empty(problems.Take(ShownProblems));
     }
 
@@ -1089,7 +1133,7 @@ public class PartOfSpeechDataTests
         var trainingSets = rows.Select(row => row[0]).Distinct().OrderBy(name => name, StringComparer.Ordinal).ToList();
 
         // Assert: every training set is reported against every evaluation set, and no pair overlaps
-        Assert.Equal(new[] { "masc", "open-train", "silver" }, trainingSets);
+        Assert.Equal(new[] { "imperative", "masc", "open-train", "silver" }, trainingSets);
         foreach (var training in trainingSets)
         {
             var evaluationSets = rows.Where(row => row[0] == training).Select(row => row[1]).Distinct(StringComparer.Ordinal);
@@ -1812,6 +1856,234 @@ public class PartOfSpeechDataTests
         Assert.True(others.Count > 5000);
         Assert.Contains(others, item => item.Set == ShapesDevCorpus && documents.Contains(item.Document));
         Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the header of the imperative training source announces a training file (and no development use), and
+    ///     that the committed file meets the documented quotas: 600 to 900 sentences with sequential ids, token 0 of every
+    ///     sentence a VERB whose lower-case form is listed in the lexicon as both noun and verb, every token <c>unanimous</c>
+    ///     (no disputed or masked token), at most six sentences per lemma (the first word is in the base form, so the
+    ///     lower-case first word is the lemma) and at most 30 per document.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Imperative_Corpus_IsWellFormedAndWithinQuotas()
+    {
+        // Arrange: the header, the sentences and the lexicon
+        var header = File.ReadLines(DataFiles.Data(ImperativeCorpus)).TakeWhile(line => line.Length > 0).ToList();
+        var sentences = DataFiles.ReadCorpus(DataFiles.Data(ImperativeCorpus)).ToList();
+        var lexicon = DataFiles.ReadLexicon(DataFiles.Data("lexicon/lexicon.tsv"));
+        var problems = new List<string>();
+
+        // Act: check every sentence
+        for (var index = 0; index < sentences.Count; index++)
+        {
+            var sentence = sentences[index];
+            var id = string.Format(CultureInfo.InvariantCulture, "imperative-{0:D4}", index + 1);
+            if (sentence.SentenceId != id)
+            {
+                problems.Add($"{sentence.SentenceId}: expected the id {id}");
+            }
+
+            var first = sentence.Tokens[0];
+            if (first[1] != "VERB" || !lexicon.TryGetValue(first[0].ToLowerInvariant(), out var tags) || !tags.Contains("NOUN") || !tags.Contains("VERB"))
+            {
+                problems.Add($"{sentence.SentenceId}: token 0 is not a VERB that the lexicon lists as both noun and verb");
+            }
+
+            if (sentence.Tokens.Any(token => DataFiles.BaseStatus(token[2]) != "unanimous"))
+            {
+                problems.Add($"{sentence.SentenceId}: a token is not unanimous");
+            }
+        }
+
+        var lemmas = sentences.GroupBy(sentence => sentence.Tokens[0][0].ToLowerInvariant(), StringComparer.Ordinal).ToList();
+        problems.AddRange(lemmas.Where(group => group.Count() > ImperativeLemmaCap).Select(group => $"the lemma '{group.Key}' has {group.Count()} sentences"));
+        problems.AddRange(sentences.GroupBy(sentence => sentence.SourceId, StringComparer.Ordinal)
+            .Where(group => group.Count() > ImperativeDocumentCap)
+            .Select(group => $"the document {group.Key} has {group.Count()} sentences"));
+
+        // Assert: a training file, the size within the quotas, many lemmas and no problem
+        Assert.Contains(header, line => line == "# use = training");
+        Assert.Contains(header, line => line == "# columns = form, upos, status");
+        Assert.DoesNotContain(header, line => line.Contains("dev split", StringComparison.Ordinal) || line.Contains("development only", StringComparison.Ordinal));
+        Assert.InRange(sentences.Count, ImperativeMinSentences, ImperativeMaxSentences);
+        Assert.True(lemmas.Count > 250);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the source table of the imperative training source lists exactly the documents of its sentences with
+    ///     their counts, that every document has a US federal-work or public-domain basis, that no row mentions FAA material,
+    ///     that no document is excluded (by id or normalized URL, using the record of the shapes development set), and that
+    ///     the exclusion and drop records are well formed and carry ids and counts only.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Imperative_Sources_AreListedOpenAndNotExcluded()
+    {
+        // Arrange: the documents of the sentences, the rows of the table and the exclusions
+        var counts = DataFiles.ReadCorpus(DataFiles.Data(ImperativeCorpus))
+            .GroupBy(sentence => sentence.SourceId, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        var table = DataFiles.ReadTable(DataFiles.Data(ImperativeSources));
+        var excluded = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/excluded-sources.tsv"));
+        var excludedIds = new HashSet<string>(excluded.Column("source_id"), StringComparer.Ordinal);
+        var excludedUrls = new HashSet<string>(excluded.Column("url").Select(NormalizeUrl), StringComparer.Ordinal);
+        var faa = new Regex(@"faa\.gov|\bFAA\b|Federal Aviation", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var openBases = new[] { "US federal government work", "US public domain" };
+
+        // Act: compare the listed documents and counts with the sentences and look at every row
+        var listed = table.Rows.ToDictionary(row => table.Cell(row, "source_id"), row => table.Cell(row, "sentences"), StringComparer.Ordinal);
+        var problems = counts.Keys.Except(listed.Keys).Select(document => "not listed: " + document)
+            .Concat(listed.Keys.Except(counts.Keys).Select(document => "listed but unused: " + document))
+            .Concat(counts.Where(count => listed.TryGetValue(count.Key, out var cell) && cell != count.Value.ToString(CultureInfo.InvariantCulture))
+                .Select(count => $"count of {count.Key} differs from the table"))
+            .ToList();
+        foreach (var row in table.Rows)
+        {
+            var id = table.Cell(row, "source_id");
+            if (!openBases.Any(basis => table.Cell(row, "license_basis").StartsWith(basis, StringComparison.Ordinal)))
+            {
+                problems.Add($"{id}: the license basis is not a US federal work or US public domain");
+            }
+
+            if (row.Any(cell => faa.IsMatch(cell)))
+            {
+                problems.Add($"{id}: the row mentions FAA material");
+            }
+
+            if (excludedIds.Contains(id) || excludedUrls.Contains(NormalizeUrl(table.Cell(row, "url"))))
+            {
+                problems.Add($"{id}: the document is excluded");
+            }
+        }
+
+        var rejected = DataFiles.ReadTable(DataFiles.Data(ImperativeFolder + "/excluded-documents.tsv"));
+        var dropped = DataFiles.ReadTable(DataFiles.Data(ImperativeFolder + "/dropped-sentences.tsv"));
+        problems.AddRange(rejected.Column("document_id").Where(counts.ContainsKey).Select(id => $"{id}: a rejected document is used"));
+        problems.AddRange(dropped.Rows.Where(row => !int.TryParse(dropped.Cell(row, "sentences"), NumberStyles.None, CultureInfo.InvariantCulture, out _))
+            .Select(row => $"{dropped.Cell(row, "reason")}: the count is not a number"));
+
+        // Assert: the rows are unique, the table has documents, the records have their columns and no problem was found
+        Assert.Equal(table.Rows.Count, listed.Count);
+        Assert.True(counts.Count > 50);
+        Assert.Equal(new[] { "document_id", "reason" }, rejected.Columns);
+        Assert.Equal(new[] { "reason", "sentences" }, dropped.Columns);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the documents of the imperative training source are in no other source table (open, gold v2, silver,
+    ///     MASC, both tranches of the shapes development set and its exclusion record), neither by id nor by normalized URL,
+    ///     and that its sentences and documents are not those of any evaluation set (read from the evaluation files).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Imperative_Documents_AreInNoOtherSourceTableAndNoEvaluationSet()
+    {
+        // Arrange: the ids and normalized URLs of the other tables, and the documents of the evaluation sets
+        var own = DataFiles.ReadTable(DataFiles.Data(ImperativeSources));
+        var others = new[]
+        {
+            ("open/sources.tsv", "source_id"), ("eval/gold-v2/sources.tsv", "doc_id"), ("silver/sources.tsv", "source_id"),
+            ("masc/sources.tsv", "source_id"), (ShapesDevFolder + "/sources.tsv", "source_id"), (ShapesDevHardSources, "source_id"),
+            (ShapesDevFolder + "/excluded-sources.tsv", "source_id")
+        };
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        var urls = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (name, idColumn) in others)
+        {
+            var data = DataFiles.ReadTable(DataFiles.Data(name));
+            ids.UnionWith(data.Column(idColumn));
+            if (Array.IndexOf(data.Columns, "url") >= 0)
+            {
+                urls.UnionWith(data.Column("url").Select(NormalizeUrl).Where(url => url.Length > 0));
+            }
+        }
+
+        var evaluationDocuments = new HashSet<string>(EvaluationItems().Select(item => item.Document), StringComparer.Ordinal);
+
+        // Act: find the shared ids, URLs and evaluation documents
+        var problems = own.Rows
+            .Where(row => ids.Contains(own.Cell(row, "source_id")) || urls.Contains(NormalizeUrl(own.Cell(row, "url"))) || evaluationDocuments.Contains(own.Cell(row, "source_id")))
+            .Select(row => own.Cell(row, "source_id") + " is in another source table or an evaluation set")
+            .ToList();
+
+        // Assert: the tables are not empty and nothing is shared
+        Assert.True(own.Rows.Count > 50);
+        Assert.True(ids.Count > 5000);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the committed leakage report covers the imperative training source against every evaluation set (the
+    ///     probe and both tranches of the shapes development set included) and records no document overlap and no exact
+    ///     sentence overlap; near duplicates are reported and must be numbers.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Imperative_LeakageReport_RecordsNoOverlapWithAnyEvaluationSet()
+    {
+        // Arrange: the rows of the report that name the imperative source (training set, evaluation set, sentences, documents, exact, near)
+        var rows = File.ReadLines(DataFiles.Data("leakage-report.tsv"))
+            .Where(line => line.Length > 0 && !DataFiles.IsComment(line))
+            .Select(line => line.Split('\t'))
+            .Where(row => row[0] == "imperative")
+            .ToList();
+        var expected = new[]
+        {
+            "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-hard", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test",
+            "ud-ewt-train"
+        };
+
+        // Act: find the sets that the report misses and the rows that report an overlap
+        var overlaps = rows.Where(row => row[3] != "0" || row[4] != "0").Select(row => row[1]).ToList();
+        var malformed = rows.Where(row => !int.TryParse(row[5], NumberStyles.None, CultureInfo.InvariantCulture, out _)).Select(row => row[1]).ToList();
+
+        // Assert: every evaluation set is reported once, nothing overlaps and the near-duplicate counts are numbers
+        Assert.All(rows, row => Assert.Equal(6, row.Length));
+        Assert.Equal(expected, rows.Select(row => row[1]).OrderBy(name => name, StringComparer.Ordinal));
+        Assert.Empty(overlaps);
+        Assert.Empty(malformed);
+    }
+
+    /// <summary>
+    ///     Proves that the selection of the imperative training source is independent of the PartOfSpeech model: the builder
+    ///     (<c>imperative_data.py</c>) names no weights file, decoder, tagger or shapes evaluation, and it names no probe file and uses no probe reader
+    ///     (the held-out sets reach it only through the opaque exclusion keys of the shared filter).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Imperative_Selection_UsesNoPartOfSpeechModel()
+    {
+        // Arrange: the source of the builder
+        var forbidden = new[] { "weights.bin", "Resources/weights", "PerceptronModel", "FeatureExtractor", "PartOfSpeechTagger", "ITagger", "eval-shapes", "ShapesDevEvaluator" };
+        var builder = File.ReadAllText(DataFiles.Repository("tools/data/imperative_data.py"));
+
+        // Act: find the forbidden names
+        var found = forbidden.Where(word => builder.Contains(word, StringComparison.Ordinal)).ToList();
+
+        // Assert: no model, no probe file and no probe reader
+        Assert.Empty(found);
+        Assert.DoesNotContain("probe.tsv", builder, StringComparison.Ordinal);
+        Assert.DoesNotContain("sentence_column", builder, StringComparison.Ordinal);
+        Assert.DoesNotContain("probe_sentences", builder, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Proves that the third-party notice names the imperative training source, its US federal-work basis, its CC0
+    ///     dedication of annotations and selection, and that the embedded weights were not learned from it (weight 0).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Imperative_Notice_NamesTheSourceAndItsBasis()
+    {
+        // Arrange: the section of the notice that describes the data built by this project
+        var notice = NoticeSection("### The open English part-of-speech corpus (CC0 1.0)");
+
+        // Act: find the statements that the notice lacks
+        var missing = MissingFragments(notice, new[]
+        {
+            "data/imperative/", "17 U.S.C. 105", "CC0 1.0", "data/imperative/sources.tsv", "weight 0", "not learned from it"
+        });
+
+        // Assert: the notice makes every statement
+        Assert.Empty(missing);
     }
 
     /// <summary>

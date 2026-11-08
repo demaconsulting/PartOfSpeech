@@ -239,6 +239,16 @@ the numbers of the WordSense Basic classifier (HMM tagger plus cue model) from t
 lexicon and the text. Its quota gate is a set of floors and caps per shape instead of exact counts. The rule and its
 record are in `data/eval/shapes-dev/README.md`.
 
+The training sources of `training.json` are the open corpus, MASC and the silver corpus with a positive weight, and the
+imperative source (`data/imperative/imperative.tsv`) with weight 0. A source can only be added to a run through the
+configuration: `--source NAME:WEIGHT` changes the weight of a source that the configuration names and refuses an unknown
+name, and a source of weight 0 is not read (`CorpusReader.LoadSources` skips it), so the committed entry leaves the
+shipped weights unchanged (`train --check` reproduces the same image). The imperative file is an ordinary training file
+under `data/`, so the training guard admits it (the deny-list names no part of its path); it is disjoint from every
+evaluation set, and the builder `tools/data/imperative_data.py` reuses the opaque-key discipline of `shapes_dev.py`:
+the held-out sets reach it only through `leakage.held_out_overlap_keys()`, and it names no weights file, decoder or
+tagger. The rule of the source and its record are in `data/imperative/README.md`.
+
 ### Confidence Thresholds
 
 A consumer who wants to avoid confident noun-verb mistakes needs a threshold below which it abstains. The `thresholds`
@@ -585,7 +595,8 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
   `InternalsVisibleTo` (the assembly name `DemaConsulting.PartOfSpeech.Trainer` is reserved there).
 - The base class library and, for `training.json`, `operating-points.json` and `test-results.json`, System.Text.Json
   (net10.0 only; the engine does not use it).
-- The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv` and `data/silver/silver.tsv`, and the two
+- The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv`, `data/silver/silver.tsv` and
+  `data/imperative/imperative.tsv` (the last with weight 0), and the two
   development files plus the two hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche) and
   `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` and `eval-arm` only); for
   `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the

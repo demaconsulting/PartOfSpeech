@@ -869,7 +869,7 @@ class RequiredFilesFailClosedTests(base.MiniFolder):
     tranche's two files are optional only while leakage.HARD_TRANCHE_REQUIRED is False."""
 
     STANDARD = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv", "masc/sources.tsv",
-                "eval/shapes-dev/dev.tsv")
+                "eval/shapes-dev/dev.tsv", "imperative/sources.tsv")
     HARD = ("eval/shapes-dev/hard-sources.tsv", "eval/shapes-dev/hard.tsv")
 
     def write_data(self):
@@ -878,6 +878,7 @@ class RequiredFilesFailClosedTests(base.MiniFolder):
         row = ["doc-a", "us-government", "T", "https://example.gov/doc-a", "A", "1990", "US federal government work (17 U.S.C. 105): test",
                "https://example.gov/terms", "2026-11-01", "a" * 64, "b" * 64, "1"]
         for path in (os.path.join(self.data, "eval", "gold-v2", "sources.tsv"), os.path.join(self.data, "silver", "sources.tsv"),
+                     os.path.join(self.data, "imperative", "sources.tsv"),
                      os.path.join(folder, "sources.tsv"), os.path.join(folder, "hard-sources.tsv")):
             base.table_file(path, sd.SOURCE_COLUMNS, [row])
         extra = [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]]

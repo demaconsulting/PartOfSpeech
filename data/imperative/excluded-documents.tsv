@@ -1,0 +1,3 @@
+# Documents left out of imperative.tsv because the document is a reprint of, or shares sentences with, a training or evaluation set, or was already used
+# (only ids and reasons, never text)
+# columns = document_id, reason

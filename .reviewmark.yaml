@@ -425,11 +425,13 @@ reviews:
       - "tools/data/fetch_ud_ewt.py"                                # UD English-EWT fetch (cache only)
       - "tools/data/build_lexicon.py"                               # lexicon build
       - "tools/data/shapes_dev.py"                                  # shapes dev set builder (blind labeling)
+      - "tools/data/imperative_data.py"                             # imperative source builder (blind labeling)
       - "tools/data/hmm-tags/README.md"                             # hard tranche harness: usage, format, pinned build
       - "tools/data/hmm-tags/Program.cs"                            # hard tranche harness: WordSense Basic tags
       - "tools/data/tests/test_common.py"                           # tests of the shared helpers
       - "tools/data/tests/test_shapes_dev.py"                       # tests of the development set builder
       - "tools/data/tests/test_shapes_dev_hard.py"                  # tests of the hard tranche
+      - "tools/data/tests/test_imperative_data.py"                  # tests of the imperative training source builder
       - "tools/data/tests/status-cases.tsv"                         # shared parity cases of the status cell
       - "tools/data/tests/sentence-key-cases.tsv"                   # shared parity cases of the sentence key
       - "tools/data/make_sentence_key_cases.py"                     # writes the sentence key cases

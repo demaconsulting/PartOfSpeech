@@ -31,3 +31,13 @@ silver	shapes-probe	560	0	0	0
 silver	ud-ewt-dev	2001	0	0	0
 silver	ud-ewt-test	2077	0	0	0
 silver	ud-ewt-train	12544	0	0	0
+imperative	open-dev	1489	0	0	0
+imperative	open-test	1501	0	0	0
+imperative	ste-challenge	32	0	0	0
+imperative	shapes-dev	700	0	0	0
+imperative	shapes-dev-hard	460	0	0	0
+imperative	gold-v2	5072	0	0	0
+imperative	shapes-probe	560	0	0	0
+imperative	ud-ewt-dev	2001	0	0	0
+imperative	ud-ewt-test	2077	0	0	0
+imperative	ud-ewt-train	12544	0	0	0

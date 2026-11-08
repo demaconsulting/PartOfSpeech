@@ -2,7 +2,7 @@
 
   python tools/data/check_leakage.py [--no-ud] [--write-report]
 
-Training sets: data/open/train.tsv, data/masc/masc.tsv, data/silver/silver.tsv.
+Training sets: data/open/train.tsv, data/masc/masc.tsv, data/silver/silver.tsv, data/imperative/imperative.tsv.
 Evaluation sets: data/open/{dev,test}.tsv, data/eval/gold-v2, data/eval/shapes/probe.tsv, data/eval/ste-challenge,
 data/eval/shapes-dev/dev.tsv (the hard-shape development set; required), and UD English-EWT train/dev/test when the
 git-ignored cache is present (fetch it with fetch_ud_ewt.py; nothing from UD is ever committed or written to the report
@@ -30,9 +30,9 @@ document is reported there and not gated; an exact sentence and a same-document 
 6-grams in the standard sentences of the same document) are gated. The training sets are checked against hard.tsv in the first section like
 against any evaluation set (label `shapes-dev-hard`).
 
-Data removal, not evaluation removal, is the remedy: the importers (import_masc.py, import_silver.py) drop training
-documents (long matches) or sentences (short matches) that overlap an evaluation set and list them in their
-excluded-documents.tsv and dropped-sentences.tsv.
+Data removal, not evaluation removal, is the remedy: the importers (import_masc.py, import_silver.py) and the builder of
+the imperative source (imperative_data.py) drop training documents (long matches) or sentences (short matches) that overlap an
+evaluation set and list them in their excluded-documents.tsv and dropped-sentences.tsv.
 """
 import argparse
 import os
@@ -51,11 +51,11 @@ NEAR_THRESHOLD = 0.8
 def training_sets():
     sets = {}
     for label, parts in (("open-train", ("open", "train.tsv")), ("masc", ("masc", "masc.tsv")),
-                         ("silver", ("silver", "silver.tsv"))):
+                         ("silver", ("silver", "silver.tsv")), ("imperative", ("imperative", "imperative.tsv"))):
         path = os.path.join(common.DATA, *parts)
         if os.path.exists(path):
             sets[label] = [(s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]
-    leakage.require_sets(sets, ("open-train", "masc", "silver"), "training")
+    leakage.require_sets(sets, ("open-train", "masc", "silver", "imperative"), "training")
     return sets
 
 

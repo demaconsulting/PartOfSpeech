@@ -187,7 +187,7 @@ Source: UD English-EWT labels; [UD, PROPN](https://universaldependencies.org/u/p
 
 ### Corpus Block Format
 
-The open corpus, MASC, the silver data, the STE challenge set and the shapes development set share one format (UTF-8, no BOM, LF newlines, NFC,
+The open corpus, MASC, the silver data, the STE challenge set, the shapes development set and the imperative training source share one format (UTF-8, no BOM, LF newlines, NFC,
 final newline). A file starts with header comment lines, then a blank line, then one block per sentence:
 
 ```text
@@ -208,7 +208,8 @@ final newline). A file starts with header comment lines, then a blank line, then
 - `text` is the original sentence for the open corpus and the STE set. For MASC and silver it is the tokens joined by
   single spaces (the original text is not kept). The tokens of a sentence always concatenate to its text without spaces.
 - `status` vocabulary: open and STE `unanimous | disputed | unchecked`; MASC `ptb | disputed`; silver `silver | masked |
-  disputed` (a `disputed` mark on MASC or silver comes from the corrections overlay; the importers never write it).
+  disputed` (a `disputed` mark on MASC or silver comes from the corrections overlay; the importers never write it); the
+  imperative source `unanimous` only.
 - **Status flags.** The status cell may continue with flags, each after a plus sign: `status[+foreign][+mentioned]`
   (`unanimous+mentioned`, `unchecked+foreign+mentioned`). `mentioned` marks a word that is talked about rather than used
   and `foreign` a word of another language (see "Mentioned Words"). A flag never changes the tag, and a flag is
@@ -243,6 +244,16 @@ The **hard tranche** is the file `data/eval/shapes-dev/hard.tsv` in the same for
 `hard tranche` and `dev split`; no `origin = authored`; no `n-measure` item; no selection number such as q in the file), with
 `hard-sources.tsv` (same columns as `sources.tsv`) and `hard-leakage-report.tsv` (same columns, plus a row for the standard tranche
 whose document count may be above zero: the tranches may share a source document, never a sentence).
+
+**Imperative training source** (`data/imperative/imperative.tsv`, specified in its `README.md`). The corpus block format with the
+header comments `corpus`, `license`, `columns`, `status`, `selection` and `use = training` (a training file: the trainer admits it
+and refuses the evaluation files by name), ids `imperative-NNNN` and the document id of the sentence in `source_id`. The status is
+`unanimous` for every token (two blind model labelers agree on the tag of every token of the sentence), with the usual flags where
+both labelers agree on them (the committed file carries none). Normative rules: token 0 of every sentence is tagged VERB and
+is the base form of the verb (no gerund, past or third-person form). `sources.tsv` has the 12 columns of the gold v2 source
+table and lists the used documents only; `excluded-documents.tsv` (`document_id, reason`) and `dropped-sentences.tsv`
+(`reason, sentences`) hold ids and counts only, never text. The convention linter reads the file (the fix tier must find no
+violation) but the corrections overlay never addresses it.
 
 **Corrections overlay** (`data/corrections/`, specified in full in its `README.md`). Corrections to the labels of the open
 corpus, MASC and the silver data are rows of three tables; the rows are applied to the corpus files (`corrections.py apply

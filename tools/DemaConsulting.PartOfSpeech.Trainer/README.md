@@ -58,8 +58,9 @@ and they are rejected together with `--check` and `--update-config`.
 
 ## Configuration
 
-`training.json` names the corpora (`open`, `masc`, `silver`; each with an integer `weight`, the number of times its
-sentences enter every epoch) and every training setting. It contains no floating-point training setting except the
+`training.json` names the corpora (`open`, `masc`, `silver` and `imperative`; each with an integer `weight`, the number of times its
+sentences enter every epoch; `imperative` has weight 0, so it is configured and left out of the mix, and `--source imperative:1`
+adds it to a run) and every training setting. It contains no floating-point training setting except the
 softmax `temperature`, which is chosen once by `calibrate` and only written into the file header. The weight scale is
 `1 / quantScale` with `quantScale` a power of two, so it is exact in the file.
 

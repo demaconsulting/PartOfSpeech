@@ -26,6 +26,15 @@
       "minSilverProbability": 80,
       "samplePermille": 1000,
       "maxSentences": 0
+    },
+    {
+      "name": "imperative",
+      "path": "data/imperative/imperative.tsv",
+      "weight": 0,
+      "maskDisputed": false,
+      "minSilverProbability": 0,
+      "samplePermille": 1000,
+      "maxSentences": 0
     }
   ],
   "epochs": 6,
