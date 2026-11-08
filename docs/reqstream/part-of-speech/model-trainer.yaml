@@ -668,6 +668,7 @@ sections:
               - Jackknife_Partition_TransitiveChain_LandsInOneFold
               - Jackknife_Partition_WithDuplicates_IsDeterministicAndIndependentOfOrderAndSeed
               - Jackknife_GroupDocuments_NoDuplicates_EveryDocumentIsItsOwnGroup
+              - Jackknife_SentenceKey_SharedParityCases_AgreeWithPython
               - Jackknife_Compute_DuplicatesAcrossDocuments_FoldModelNeverSeesAHeldOutSentenceKey
               - Jackknife_Compute_TagsEachFoldWithAModelThatDidNotSeeIt
               - Jackknife_Compute_OneDocument_Throws

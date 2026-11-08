@@ -1,4 +1,5 @@
 // cspell:ignore DCDAFUL mklink XQZW
+using System.Globalization;
 using DemaConsulting.PartOfSpeech.Trainer;
 
 namespace DemaConsulting.PartOfSpeech.Tests.ModelTrainer;
@@ -2472,8 +2473,8 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates the sentence key against the key of the leakage check of the data tests, and that without duplicate sentences every document is
-    ///     its own group, so that the fold of a document is the hash of its own id.
+    ///     Validates that without duplicate sentences every document is its own group, so that the fold of a document is the hash of its own id, and
+    ///     that the sentence key of two spellings of one text is the same.
     /// </summary>
     [Fact]
     public void Jackknife_GroupDocuments_NoDuplicates_EveryDocumentIsItsOwnGroup()
@@ -2491,9 +2492,66 @@ public class ModelTrainerTests
         Assert.All(groups, g => Assert.Equal(g.Key, g.Value));
         Assert.All(sentences, s => Assert.Equal(Jackknife.FoldOf(s.SourceId, 5), folds[s]));
 
-        // Assert: the key is the one of the leakage rule (the tokens of a sentence are the words of its text)
-        Assert.All(texts, t => Assert.Equal(DataFiles.SentenceKey(t), Jackknife.SentenceKey(NounSentence("k", "d", t.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)))));
+        // Assert: the precomposed and the decomposed spelling have one key, and a text without letters has the empty key
+        Assert.Equal("thedogsrun42times", Jackknife.SentenceKey(texts[0]));
         Assert.Equal(Jackknife.SentenceKey(NounSentence("k1", "d", texts[1])), Jackknife.SentenceKey(NounSentence("k2", "d", texts[2])));
+        Assert.Equal(string.Empty, Jackknife.SentenceKey(texts[3]));
+    }
+
+    /// <summary>
+    ///     Validates the sentence key against the keys that the Python function of the leakage check wrote (the shared parity cases
+    ///     <c>tools/data/tests/sentence-key-cases.tsv</c>, also read by the Python tests): supplementary-plane letters and digits, combining
+    ///     marks, the capital sigma and other case folding must give exactly the keys of the authoritative normalizer, because a
+    ///     sentence key that differs from it could leave a duplicate sentence in two folds.
+    /// </summary>
+    [Fact]
+    public void Jackknife_SentenceKey_SharedParityCases_AgreeWithPython()
+    {
+        // Arrange: the shared cases (id, input and key as hexadecimal code points, the newer Unicode version that the case needs, description);
+        // the case tables of .NET Framework 4.8 are those of Unicode 8, so on it the cases of newer scripts are left out
+        var path = Path.Combine(DataFiles.RepositoryRoot, "tools", "data", "tests", "sentence-key-cases.tsv");
+        var cases = File.ReadLines(path).Where(line => line.Length > 0 && !line.StartsWith("# ", StringComparison.Ordinal)).Select(line => line.Split('\t')).ToList();
+        Assert.True(cases.Count >= 40);
+        Assert.Contains(cases, c => c[0] == "deseret-capital-astral" && c[2].Length > 0);
+#if NETFRAMEWORK
+        var checkedCases = cases.Where(c => c[3].Length == 0).ToList();
+#else
+        var checkedCases = cases;
+#endif
+
+        // Act: the key of every input
+        var mismatches = checkedCases
+            .Select(c => (Id: c[0], Expected: c[2], Actual: HexOf(Jackknife.SentenceKey(TextOf(c[1])))))
+            .Where(c => c.Expected != c.Actual)
+            .Select(c => $"{c.Id}: expected [{c.Expected}] but was [{c.Actual}]")
+            .ToList();
+
+        // Assert: every key is the one that Python wrote
+        Assert.Empty(mismatches);
+    }
+
+    /// <summary>
+    ///     Builds a text from hexadecimal code points separated by spaces.
+    /// </summary>
+    private static string TextOf(string hexadecimal) =>
+        string.Concat(hexadecimal.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(h => char.ConvertFromUtf32(int.Parse(h, NumberStyles.HexNumber, CultureInfo.InvariantCulture))));
+
+    /// <summary>
+    ///     Writes the code points of a text as hexadecimal numbers separated by spaces.
+    /// </summary>
+    private static string HexOf(string text)
+    {
+        var codePoints = new List<string>();
+        var index = 0;
+        while (index < text.Length)
+        {
+            var codePoint = char.ConvertToUtf32(text, index);
+            codePoints.Add(codePoint.ToString("X", CultureInfo.InvariantCulture));
+            index += char.IsSurrogatePair(text, index) ? 2 : 1;
+        }
+
+        return string.Join(" ", codePoints);
     }
 
     /// <summary>

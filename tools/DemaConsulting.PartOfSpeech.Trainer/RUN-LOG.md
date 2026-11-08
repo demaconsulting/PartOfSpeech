@@ -3139,6 +3139,73 @@ went to the project owner for a decision. The caveat of the first results sectio
 this section: the arms with F3 now have leakage-safe folds, F3 is still not part of the shipped model, and the conclusions
 about F3 do not change (F3 alone does not significantly improve the hard tranche; its Welch interval contains 0).
 
+### Order of the re-runs (audit)
+
+The amendment (commit `58bdfd2`, committed 2026-11-08 05:21:56 UTC; the fix `f8ee48c` at 05:07:47 UTC) precedes every re-run:
+the first run started at 14:48:20 UTC the same day, 9 h 26 min after the amendment, and `58bdfd2` is an ancestor of the commit
+`ac5c20e` that every result file records (`git merge-base --is-ancestor 58bdfd2 ac5c20e`). The 25 runs went one after the other,
+in the order of the table, in one invocation of the driver (`run_arms.ps1 -Arms F3,ALL,ALL-minus-F1,ALL-minus-F2,ALL-minus-F4`,
+Normal priority, 8 threads); there was no earlier attempt that produced a result.
+
+Sources of the times: the **end** of a run is the `driver.utc` field that the driver wrote into the result file `<run>.json` (the
+same instant as its line in `progress.log`); the driver records no start time, so the **start** is the file-system creation time
+of `<run>.train.txt`, which the driver creates when it starts the train process (file-system time, not recorded metadata; it
+agrees with end - train - eval seconds to within 1 s for all 25 runs). All times are UTC, 2026-11-08. The run folder is outside
+the repository; its files are not part of the review set, so the table is the committed evidence of the order.
+
+| Run | Start (UTC) | End (UTC) | Train s | Eval s |
+| --- | --- | --- | ---: | ---: |
+| `F3-s20260101` | 14:48:20 | 14:49:47 | 84.1 | 2.9 |
+| `F3-s11` | 14:49:47 | 14:50:32 | 42.0 | 2.9 |
+| `F3-s12` | 14:50:32 | 14:51:23 | 48.0 | 2.5 |
+| `F3-s13` | 14:51:23 | 14:52:23 | 57.8 | 2.4 |
+| `F3-s14` | 14:52:23 | 14:53:20 | 53.1 | 3.5 |
+| `ALL-s20260101` | 14:53:20 | 14:55:02 | 99.1 | 3.4 |
+| `ALL-s11` | 14:55:02 | 14:56:31 | 86.1 | 3.3 |
+| `ALL-s12` | 14:56:31 | 14:58:12 | 97.0 | 3.1 |
+| `ALL-s13` | 14:58:12 | 14:59:30 | 76.2 | 2.4 |
+| `ALL-s14` | 14:59:30 | 15:00:41 | 68.7 | 2.1 |
+| `ALL-minus-F1-s20260101` | 15:00:41 | 15:01:34 | 51.2 | 2.0 |
+| `ALL-minus-F1-s11` | 15:01:34 | 15:02:33 | 56.8 | 2.0 |
+| `ALL-minus-F1-s12` | 15:02:33 | 15:03:29 | 53.5 | 2.0 |
+| `ALL-minus-F1-s13` | 15:03:29 | 15:04:28 | 57.5 | 2.0 |
+| `ALL-minus-F1-s14` | 15:04:28 | 15:05:23 | 52.8 | 2.0 |
+| `ALL-minus-F2-s20260101` | 15:05:23 | 15:06:55 | 90.1 | 1.9 |
+| `ALL-minus-F2-s11` | 15:06:55 | 15:08:43 | 106.3 | 2.0 |
+| `ALL-minus-F2-s12` | 15:08:43 | 15:10:40 | 115.1 | 2.0 |
+| `ALL-minus-F2-s13` | 15:10:40 | 15:11:52 | 69.2 | 1.9 |
+| `ALL-minus-F2-s14` | 15:11:52 | 15:13:35 | 100.7 | 2.9 |
+| `ALL-minus-F4-s20260101` | 15:13:35 | 15:14:57 | 80.0 | 2.0 |
+| `ALL-minus-F4-s11` | 15:14:57 | 15:15:57 | 57.4 | 2.4 |
+| `ALL-minus-F4-s12` | 15:15:57 | 15:17:07 | 67.5 | 2.4 |
+| `ALL-minus-F4-s13` | 15:17:07 | 15:18:11 | 62.3 | 2.0 |
+| `ALL-minus-F4-s14` | 15:18:11 | 15:19:30 | 76.4 | 2.1 |
+
+### Sentence key parity with the leakage normalizer (review follow-up)
+
+The formal re-review found that the first version of the jackknife sentence key used .NET `char.IsLetterOrDigit` on UTF-16
+code units, while the leakage check of the data tools (`key` in `tools/data/common.py`) works on code points: it keeps the
+characters for which Python's `str.isalnum()` is true after NFC and `lower()`. The key is now equivalent: it iterates by code
+point, keeps the letters and numbers (the categories `L*` and `N*`, so the superscripts, fractions and Roman numerals as well as
+the supplementary-plane letters and digits), applies the same lower case (including the final sigma and the dotted capital I)
+and lists the supplementary-plane case mapping itself, because the runtimes differ in it. Parity is pinned by the fixture
+`tools/data/tests/sentence-key-cases.tsv` (42 cases with astral characters, combining marks and case folding; the keys were
+written once by the Python function and are checked by both `test_common.py` and `ModelTrainerTests.cs`). A one-off check
+of every Unicode code point (in four contexts, including the sigma rules, 4,448,256 strings) against Python 3.13 (Unicode 15.1)
+had no difference on .NET 10 except code points that Unicode 15.1 does not assign, and U+1171E (a code point whose category the
+newer Unicode data changed).
+
+Effect on the training corpus (the 48,790 distinct sentences of the sources of `training.json`; the same measurement as in
+amendment 1):
+
+- No sentence has a supplementary-plane character, so the astral defect of the review did not occur in the corpus.
+- 16 sentence keys differ between the first and the corrected key, because they contain a number that is no decimal digit
+  (the superscripts `²` `¹` `₂`, the fractions `½` `⅓` `¾` and the Roman numeral `Ⅱ`); the corrected key keeps those characters,
+  as the Python key does. The corrected key equals the Python key for all 48,790 sentences.
+- **No document group and no fold assignment changes** (0 of 9,576 documents change group, 0 of 48,790 sentences change fold,
+  and the grouping of the library equals the independent computation). The jackknife preview tags, the trained weights and all
+  results of the experiment are therefore identical with the corrected key, so nothing was re-run.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

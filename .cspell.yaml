@@ -103,6 +103,20 @@ words:
   - bijective
   - memberwise
   - treebanks
+  # Terms of the sentence key (Unicode scripts and properties, Python's str.isalnum, a preprocessor symbol, test words)
+  - isalnum
+  - Deseret
+  - deseret
+  - Vithkuqi
+  - Warang
+  - Citi
+  - Medefaidrin
+  - Adlam
+  - Titlecase
+  - nonspacing
+  - precomposed
+  - thedogsrun
+  - NETFRAMEWORK
 # Exclude common build artifacts, dependencies, and vendored third-party code
 ignorePaths:
   - "**/.git/**"

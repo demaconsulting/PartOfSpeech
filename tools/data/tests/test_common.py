@@ -10,6 +10,17 @@ import leakage
 
 
 class KeyTests(unittest.TestCase):
+    CASES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sentence-key-cases.tsv")
+
+    def test_every_shared_case_has_the_key_that_the_fixture_records(self):
+        """The shared parity cases (also read by ModelTrainerTests.cs): hexadecimal code points in and out."""
+        rows = [line.split("\t") for line in common.read_lines(self.CASES) if line and not line.startswith("# ")]
+        self.assertGreaterEqual(len(rows), 40)
+        for case_id, text, expected, _since, _description in rows:
+            with self.subTest(case=case_id):
+                actual = "".join(chr(int(h, 16)) for h in text.split())
+                self.assertEqual(" ".join("%X" % ord(c) for c in common.key(actual)), expected)
+
     def test_key_keeps_lowercase_alphanumerics_only(self):
         self.assertEqual(common.key("Don't  PANIC, 42!"), "dontpanic42")
 

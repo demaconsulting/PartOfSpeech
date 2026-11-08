@@ -129,8 +129,11 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   `Jackknife_Partition_WithDuplicates_IsDeterministicAndIndependentOfOrderAndSeed` (the folds and the groups are the
   same in any order, the group is the smallest document id, the folds are pinned to the hash of that id),
   `Jackknife_GroupDocuments_NoDuplicates_EveryDocumentIsItsOwnGroup` (every document is its own group with the fold of
-  its own id; the sentence key equals the key of the leakage check of the data tests, also for composed and
-  decomposed accents),
+  its own id; composed and decomposed accents give one key, and a text without letters the empty key),
+  `Jackknife_SentenceKey_SharedParityCases_AgreeWithPython` (the sentence key reproduces, for every case of
+  `tools/data/tests/sentence-key-cases.tsv`, the key that the Python normalizer of the leakage check wrote: supplementary-plane
+  letters and digits, combining marks, the sigma rules and other case folding; the Python tests read the same file; the
+  cases of scripts newer than Unicode 8 are left out on .NET Framework only),
   `Jackknife_Compute_DuplicatesAcrossDocuments_FoldModelNeverSeesAHeldOutSentenceKey` (a toy corpus with duplicates
   under other document ids: the document ids alone would have split a duplicate from its original, no key of a
   held-out fold occurs in the training set of its fold model, and the tags equal a replay of that model),
