@@ -513,7 +513,8 @@ harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-featu
   group. The
   preview tags are the **jackknife** tags: the distinct sentences are split into `PreviewFolds` folds from groups of
   documents (`source_id`, or the sentence id when there is none). Two documents are in one group when they share a
-  sentence key, the lower-case letters and digits of the text that the leakage check of the data compares (the trainer
+  sentence key, the lower-case letters and numbers of the text (the Unicode categories L and N) that the leakage check of
+  the data compares (the trainer
   computes it exactly as the Python normalizer of that check does, by code point, which a fixture of shared cases pins),
   directly or
   through other documents (union-find over the documents; a sentence without a letter or digit joins nothing). The fold

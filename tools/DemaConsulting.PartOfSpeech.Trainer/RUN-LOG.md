@@ -3192,8 +3192,8 @@ and lists the supplementary-plane case mapping itself, because the runtimes diff
 `tools/data/tests/sentence-key-cases.tsv` (42 cases with astral characters, combining marks and case folding; the keys were
 written once by the Python function and are checked by both `test_common.py` and `ModelTrainerTests.cs`). A one-off check
 of every Unicode code point (in four contexts, including the sigma rules, 4,448,256 strings) against Python 3.13 (Unicode 15.1)
-had no difference on .NET 10 except code points that Unicode 15.1 does not assign, and U+1171E (a code point whose category the
-newer Unicode data changed).
+had no difference on .NET 10 except code points that Unicode 15.1 does not assign, and U+1171E (Python files it under the
+nonspacing marks, .NET 10 under the spacing marks; neither is kept in a key, so only the final-sigma rule next to it differs).
 
 Effect on the training corpus (the 48,790 distinct sentences of the sources of `training.json`; the same measurement as in
 amendment 1):
