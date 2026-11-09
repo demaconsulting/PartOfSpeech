@@ -28,7 +28,10 @@ Commands:
   python tools/data/shapes_dev_extra.py --work W report [--tranche T]           # decisions per shape and role
   python tools/data/shapes_dev_extra.py --work W sample                          # the hand-check sample (the items that the build takes)
   python tools/data/shapes_dev_extra.py --work W review-result --verdicts FILE ...
-  python tools/data/shapes_dev_extra.py --work W build [--tranche T] [--out-dir D] [--allow-short]
+  python tools/data/shapes_dev_extra.py --work W build [--tranche T] [--out-dir D] [--allow-short] [--extra-table PATH ...]
+Fail closed: `preflight`, `candidates` and `build` refuse (exit 1, nothing written) unless W/sources-draft.tsv passes the source and license gate of
+`imperative_data.draft_problems` (federal or public-domain license basis, no FAA, share-alike, restricted or Wikipedia source, valid ids, URLs and hashes,
+no used or excluded document, text files that match the draft); no option waives it.
 """
 import argparse
 import collections
@@ -370,6 +373,25 @@ def used_tables(data_dir, extra_tables=()):
     return tables
 
 
+class DraftError(ValueError):
+    """W/sources-draft.tsv is not a sound list of documents; nothing is selected, built or published from it."""
+
+
+def extra_index(data_dir, exclusions, extra_tables=()):
+    """The used-document index of the extra builder: the earlier tranches, the imperative source and `extra_tables`, never the tranches it builds."""
+    return imperative_data.used_index(data_dir, exclusions, used_tables(data_dir, extra_tables), imperative_data.BASE_SHAPES_DEV_TABLES)
+
+
+def require_sound_draft(work, draft, index, exclusions):
+    """Fail closed (DraftError) on any problem of `imperative_data.draft_problems`, the source and license gate of the data builders: a malformed or
+    duplicate source row, a license basis that is not a federal or public-domain basis, a share-alike, restricted, Wikipedia or FAA source, a used or
+    excluded document, a missing or changed text file. There is no way around it: `candidates`, `preflight` and `build` all call it."""
+    problems = imperative_data.draft_problems(work, draft, index, exclusions)
+    if problems:
+        raise DraftError("sources-draft.tsv is not sound (%d problems):\n  %s%s" % (
+            len(problems), "\n  ".join(problems[:20]), "\n  ..." if len(problems) > 20 else ""))
+
+
 class Scan:
     """The clean units (sentences of W/text, or heading lines of W/lines) of the new documents, with the counts of what was dropped."""
 
@@ -391,9 +413,11 @@ def scan_units(work, data_dir, unit, extra_tables=(), include_ud=True, filt=None
     filt = filt or shapes_dev.LeakageFilter(data_dir, include_ud)
     reference = reference or Reference(data_dir)
     tokens_of = shapes_dev.read_tokens(work)
-    draft = {row["source_id"]: row for row in shapes_dev.read_draft(work)}
+    rows = shapes_dev.read_draft(work)
+    draft = {row["source_id"]: row for row in rows}
     exclusions = shapes_dev.load_exclusions(work, data_dir)
-    index = imperative_data.used_index(data_dir, exclusions, used_tables(data_dir, extra_tables), imperative_data.BASE_SHAPES_DEV_TABLES)
+    index = extra_index(data_dir, exclusions, extra_tables)
+    require_sound_draft(work, rows, index, exclusions)                  # fail closed before any document is scanned
     sentences = shapes_dev.read_documents(work)
     documents = sentences if unit == "sentence" else read_folder(work, "lines")
     low_tokens, high_tokens = ((SENTENCE_MIN_TOKENS, SENTENCE_MAX_TOKENS) if unit == "sentence"
@@ -892,14 +916,18 @@ class QuotaError(ValueError):
     """The quota gate is not met (nothing is written)."""
 
 
-def build(work, tranche, out_dir, seed=SEED, allow_short=False, data_dir=None, caps=None):
+def build(work, tranche, out_dir, seed=SEED, allow_short=False, data_dir=None, caps=None, extra_tables=()):
     """Write <tranche>.tsv and <tranche>-sources.tsv into `out_dir`; returns (sentences, report lines, problems).
 
-    Fail closed: the exclusion record is read through `shapes_dev.load_exclusions` (never rewritten); a chosen sentence or a used source row
+    Fail closed: W/sources-draft.tsv must pass `require_sound_draft` (DraftError, nothing written: a malformed row, a license basis that is not
+    federal or public domain, a FAA or restricted source, a used or excluded document, a changed text file); the exclusion record is read through
+    `shapes_dev.load_exclusions` (never rewritten); a chosen sentence or a used source row
     that it lists refuses the build; a quota miss (QuotaError, nothing written) unless `allow_short` (the misses become warnings); a lemma
     over its cap is a QuotaError in every case (`allow_short` waives a floor or a cap of a stratum, never a lemma cap)."""
     items, tagged, candidates = read_round(work, tranche, data_dir)
     draft = shapes_dev.read_draft(work)
+    exclusions = shapes_dev.load_exclusions(work, data_dir)
+    require_sound_draft(work, draft, extra_index(data_dir or common.DATA, exclusions, extra_tables), exclusions)
     targets, controls, drops = select(tranche, items, candidates, seed, caps)
     chosen = targets + controls
     chosen.sort(key=lambda i: (CANDIDATE_SHAPES[tranche].index(i["shape"]), i["role"] != "target", shapes_dev.rank_of(seed, "order", i["cand_id"])))
@@ -910,7 +938,6 @@ def build(work, tranche, out_dir, seed=SEED, allow_short=False, data_dir=None, c
     unknown = sorted({s["source_id"] for s in built} - {r["source_id"] for r in draft})
     if unknown:
         raise ValueError("no source row for: " + ", ".join(unknown))
-    exclusions = shapes_dev.load_exclusions(work, data_dir)
     refused = exclusions.problems(draft, built)
     if refused:
         raise shapes_dev.ExcludedSourceError("excluded sources are used:\n  " + "\n  ".join(refused[:20]))
@@ -934,8 +961,8 @@ def _command_build(args):
     out_dir = args.out_dir or os.path.join(args.data_dir, "eval", "shapes-dev")
     for tranche in (args.tranche,) if args.tranche else TRANCHES:
         try:
-            built, report, _ = build(work, tranche, out_dir, args.seed, args.allow_short, args.data_dir)
-        except (QuotaError, shapes_dev.ExcludedSourceError, ValueError) as error:
+            built, report, _ = build(work, tranche, out_dir, args.seed, args.allow_short, args.data_dir, extra_tables=args.extra_table or ())
+        except (QuotaError, shapes_dev.ExcludedSourceError, ValueError) as error:  # DraftError is a ValueError
             print("build refused (%s): %s" % (tranche, error), file=sys.stderr)
             return 1
         adjudicate._print(report)
@@ -1094,6 +1121,7 @@ def main(argv=None):
     p.add_argument("--tranche", choices=TRANCHES)
     p.add_argument("--out-dir")
     p.add_argument("--allow-short", action="store_true")
+    p.add_argument("--extra-table", action="append")
     p.set_defaults(func=_command_build)
     p = sub.add_parser("report", help="counts of the decided rounds")
     p.add_argument("--tranche", choices=TRANCHES)
@@ -1103,7 +1131,11 @@ def main(argv=None):
     p.add_argument("--verdicts", nargs="+", required=True)
     p.set_defaults(func=_command_review_result)
     args = parser.parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except DraftError as error:                                         # preflight and candidates: nothing is written
+        print("refused: %s" % error, file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

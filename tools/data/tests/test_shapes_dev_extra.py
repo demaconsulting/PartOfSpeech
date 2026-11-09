@@ -337,6 +337,7 @@ class QuotaGate(unittest.TestCase):
             with mock.patch.object(sx, "read_round", return_value=([], blank, blank)), \
                     mock.patch.object(sx.shapes_dev, "read_draft", return_value=[{"source_id": "d"}]), \
                     mock.patch.object(sx.shapes_dev, "load_exclusions", return_value=mock.Mock(problems=lambda draft, built: [])), \
+                    mock.patch.object(sx, "require_sound_draft"), mock.patch.object(sx, "extra_index"), \
                     mock.patch.object(sx, "select", return_value=(over, controls, collections.Counter())), \
                     mock.patch.object(sx, "final_sentence", return_value={"source_id": "d"}), \
                     mock.patch.object(sx, "sentence_problems", return_value=[]):
