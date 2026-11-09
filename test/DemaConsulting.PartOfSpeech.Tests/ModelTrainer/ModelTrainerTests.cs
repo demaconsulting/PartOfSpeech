@@ -1,4 +1,4 @@
-// cspell:ignore DCDAFUL mklink XQZW
+// cspell:ignore amongst thedogsrun DCDAFUL mklink XQZW
 using System.Globalization;
 using DemaConsulting.PartOfSpeech.Trainer;
 

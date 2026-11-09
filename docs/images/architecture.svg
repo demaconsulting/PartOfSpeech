@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="770" viewBox="0 0 900 770" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <!-- Transparent canvas; a white rounded card keeps the diagram readable in light and dark themes -->
+  <rect x="14" y="16" width="875" height="740" rx="28" fill="#d5dce6"/>
+  <rect x="10" y="10" width="875" height="740" rx="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+
+  <g transform="translate(30,30)">
+    <!-- Caller -->
+    <rect x="250" y="0" width="340" height="60" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+    <text x="420" y="26" font-size="16" font-weight="600" fill="#92400e" text-anchor="middle">Your application</text>
+    <text x="420" y="46" font-size="13" fill="#92400e" text-anchor="middle">English text, sentences or pre-tokenized tokens</text>
+    <line x1="300" y1="64" x2="300" y2="108" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+    <text x="312" y="84" font-size="12" fill="#334155">Tag(text, sentences,</text>
+    <text x="312" y="98" font-size="12" fill="#334155">tokens, glossary)</text>
+    <line x1="540" y1="110" x2="540" y2="66" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+    <text x="552" y="84" font-size="12" fill="#334155">TaggedSentence: tag,</text>
+    <text x="552" y="98" font-size="12" fill="#334155">confidence, alternatives</text>
+
+    <!-- Library frame -->
+    <rect x="0" y="112" width="835" height="496" rx="14" fill="#f8fafc" stroke="#2563eb" stroke-width="2" stroke-dasharray="8 5"/>
+    <text x="16" y="138" font-size="14" font-weight="600" fill="#2563eb">DemaConsulting.PartOfSpeech - one NuGet package, no runtime dependencies</text>
+
+    <!-- Tokenization -->
+    <rect x="20" y="156" width="220" height="170" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="130" y="182" font-size="16" font-weight="600" fill="#166534" text-anchor="middle">Tokenization subsystem</text>
+    <rect x="34" y="196" width="192" height="52" rx="6" fill="#ffffff" stroke="#16a34a"/>
+    <text x="130" y="217" font-size="14" font-family="Consolas, monospace" fill="#14532d" text-anchor="middle">Tokenizer</text>
+    <text x="130" y="236" font-size="11.5" fill="#166534" text-anchor="middle">text to tokens with offsets</text>
+    <rect x="34" y="262" width="192" height="52" rx="6" fill="#ffffff" stroke="#16a34a"/>
+    <text x="130" y="283" font-size="14" font-family="Consolas, monospace" fill="#14532d" text-anchor="middle">SentenceSplitter</text>
+    <text x="130" y="302" font-size="11.5" fill="#166534" text-anchor="middle">tokens to sentences</text>
+    <line x1="130" y1="248" x2="130" y2="260" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+    <!-- Tagging -->
+    <rect x="330" y="156" width="485" height="268" rx="12" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+    <text x="572" y="182" font-size="16" font-weight="600" fill="#1e3a8a" text-anchor="middle">Tagging subsystem</text>
+    <rect x="350" y="196" width="445" height="50" rx="6" fill="#ffffff" stroke="#2563eb"/>
+    <text x="572" y="217" font-size="14" font-family="Consolas, monospace" fill="#1e3a8a" text-anchor="middle">Tagger</text>
+    <text x="572" y="236" font-size="11.5" fill="#1e40af" text-anchor="middle">public entry point: options and immutable results</text>
+    <rect x="350" y="262" width="210" height="64" rx="6" fill="#ffffff" stroke="#2563eb"/>
+    <text x="455" y="289" font-size="14" font-family="Consolas, monospace" fill="#1e3a8a" text-anchor="middle">TagDecoder</text>
+    <text x="455" y="310" font-size="11.5" fill="#1e40af" text-anchor="middle">greedy, left to right</text>
+    <rect x="585" y="262" width="210" height="64" rx="6" fill="#ffffff" stroke="#2563eb"/>
+    <text x="690" y="289" font-size="14" font-family="Consolas, monospace" fill="#1e3a8a" text-anchor="middle">TokenConstraint</text>
+    <text x="690" y="310" font-size="11.5" fill="#1e40af" text-anchor="middle">restrict or prefer a tag</text>
+    <rect x="350" y="342" width="210" height="64" rx="6" fill="#ffffff" stroke="#2563eb"/>
+    <text x="455" y="369" font-size="14" font-family="Consolas, monospace" fill="#1e3a8a" text-anchor="middle">FeatureExtractor</text>
+    <text x="455" y="390" font-size="11.5" fill="#1e40af" text-anchor="middle">hashed token features</text>
+    <rect x="585" y="342" width="210" height="64" rx="6" fill="#ffffff" stroke="#2563eb"/>
+    <text x="690" y="369" font-size="14" font-family="Consolas, monospace" fill="#1e3a8a" text-anchor="middle">Glossary</text>
+    <text x="690" y="390" font-size="11.5" fill="#1e40af" text-anchor="middle">domain terms as constraints</text>
+    <line x1="455" y1="246" x2="455" y2="260" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="690" y1="246" x2="690" y2="260" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="455" y1="326" x2="455" y2="340" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="690" y1="340" x2="690" y2="328" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+    <!-- Upos -->
+    <rect x="330" y="440" width="485" height="60" rx="10" fill="#cffafe" stroke="#0891b2" stroke-width="2"/>
+    <text x="572" y="464" font-size="14" font-family="Consolas, monospace" font-weight="600" fill="#164e63" text-anchor="middle">Upos</text>
+    <text x="572" y="484" font-size="12" fill="#155e75" text-anchor="middle">the 17 Universal POS tags, their text forms and UposSet, used by every subsystem</text>
+
+    <!-- ModelStorage -->
+    <rect x="20" y="348" width="220" height="236" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+    <text x="130" y="374" font-size="16" font-weight="600" fill="#4c1d95" text-anchor="middle">ModelStorage subsystem</text>
+    <rect x="34" y="390" width="192" height="40" rx="6" fill="#ffffff" stroke="#7c3aed"/>
+    <text x="130" y="407" font-size="14" font-family="Consolas, monospace" fill="#4c1d95" text-anchor="middle">EmbeddedModel</text>
+    <text x="130" y="423" font-size="11" fill="#5b21b6" text-anchor="middle">embedded lexicon and weights</text>
+    <rect x="34" y="438" width="192" height="40" rx="6" fill="#ffffff" stroke="#7c3aed"/>
+    <text x="130" y="455" font-size="14" font-family="Consolas, monospace" fill="#4c1d95" text-anchor="middle">PerceptronModel</text>
+    <text x="130" y="471" font-size="11" fill="#5b21b6" text-anchor="middle">POSW weights: read, score</text>
+    <rect x="34" y="486" width="192" height="40" rx="6" fill="#ffffff" stroke="#7c3aed"/>
+    <text x="130" y="503" font-size="14" font-family="Consolas, monospace" fill="#4c1d95" text-anchor="middle">Lexicon</text>
+    <text x="130" y="519" font-size="11" fill="#5b21b6" text-anchor="middle">POSL lexicon: spelling to tags</text>
+    <rect x="34" y="534" width="192" height="40" rx="6" fill="#ffffff" stroke="#7c3aed"/>
+    <text x="130" y="551" font-size="14" font-family="Consolas, monospace" fill="#4c1d95" text-anchor="middle">BinaryFormat</text>
+    <text x="130" y="567" font-size="11" fill="#5b21b6" text-anchor="middle">shared primitives of both files</text>
+
+    <!-- Tagging uses the other subsystems -->
+    <line x1="330" y1="221" x2="244" y2="221" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+    <text x="287" y="213" font-size="11.5" fill="#334155" text-anchor="middle">tokens</text>
+    <line x1="330" y1="374" x2="244" y2="374" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+    <text x="287" y="351" font-size="11.5" fill="#334155" text-anchor="middle">weights</text>
+    <text x="287" y="364" font-size="11.5" fill="#334155" text-anchor="middle">and lexicon</text>
+
+    <!-- Build-time tools -->
+    <rect x="20" y="632" width="220" height="72" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="130" y="658" font-size="14" font-family="Consolas, monospace" font-weight="600" fill="#334155" text-anchor="middle">LexiconCompiler</text>
+    <text x="130" y="678" font-size="12" fill="#475569" text-anchor="middle">build-time tool,</text>
+    <text x="130" y="693" font-size="12" fill="#475569" text-anchor="middle">not shipped</text>
+    <line x1="130" y1="630" x2="130" y2="588" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+    <text x="142" y="624" font-size="11.5" fill="#334155">lexicon.bin</text>
+
+    <rect x="330" y="632" width="485" height="72" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="572" y="656" font-size="14" font-family="Consolas, monospace" font-weight="600" fill="#334155" text-anchor="middle">ModelTrainer</text>
+    <text x="572" y="676" font-size="12" fill="#475569" text-anchor="middle">build-time tool, not shipped: trains the weights from the committed</text>
+    <text x="572" y="692" font-size="12" fill="#475569" text-anchor="middle">corpora with the library's own FeatureExtractor</text>
+    <polyline points="328,668 285,668 285,410 244,410" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+    <text x="247" y="402" font-size="11.5" fill="#334155">weights.bin</text>
+  </g>
+</svg>

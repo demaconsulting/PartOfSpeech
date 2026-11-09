@@ -6,6 +6,13 @@ This document is the user guide for the Part Of Speech, a .NET library that spli
 tokens and tags every token with one of the 17 Universal POS tags, with a confidence, ranked alternatives and optional
 per-token constraints and glossaries of domain terms.
 
+The figure below shows how the pieces fit together: your application calls the `Tagger`, which splits the text with the
+tokenization subsystem and tags it with the embedded model and the lexicon, and returns immutable results with a
+confidence and ranked alternatives for every token. The model and lexicon are built ahead of time by build-time tools
+that are not part of the package.
+
+![Architecture: an application calls the Tagger, which uses tokenization, the model and Upos](architecture.svg)
+
 ## Scope
 
 This user guide covers:
@@ -30,7 +37,7 @@ compliance evidence is generated automatically on every CI run.
 
 - **Requirements Traceability**: Every requirement is linked to passing tests, and a trace matrix is
   auto-generated on each release
-- **Linting Enforcement**: markdownlint, cspell, and yamllint are enforced before any build proceeds
+- **Linting Enforcement**: markdownlint, TextLint, and yamllint are enforced before any build proceeds
 - **Automated Audit Documentation**: Each release ships with generated requirements, justifications,
   trace matrix, and quality reports
 - **CodeQL and SonarCloud**: Security and quality analysis runs on every build

@@ -1,3 +1,4 @@
+// cspell:ignore semcor thankyou
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
