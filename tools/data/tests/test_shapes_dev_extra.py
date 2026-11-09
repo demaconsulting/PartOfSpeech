@@ -8,7 +8,9 @@ import collections
 import os
 import re
 import sys
+import tempfile
 import unittest
+from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import adjudicate
 import shapes_dev as sd
@@ -292,6 +294,16 @@ class Selection(unittest.TestCase):
         targets, _, _ = sx.select("named-state", items, candidates_of(items))
         self.assertEqual([], targets)
 
+    def test_headings_lemma_cap_is_shared_by_both_target_kinds(self):
+        items = [item("n%d" % n, "heading-noun", "target", "check", "d%d" % n) for n in range(3)]
+        items += [item("i%d" % n, "heading-imperative", "target", "check", "e%d" % n, tag="VERB", target=0) for n in range(3)]
+        items += [item("j%d" % n, "heading-imperative", "target", "other", "f%d" % n, tag="VERB", target=0) for n in range(2)]
+        targets, _, drops = sx.select("headings", items, candidates_of(items))
+        self.assertEqual(4, sum(1 for t in targets if t["lemma"] == "check"))      # 3 + 3 kept, 4 allowed over both kinds
+        self.assertEqual(2, sum(1 for t in targets if t["lemma"] == "other"))
+        self.assertEqual(2, drops["lemma-cap"])
+        self.assertEqual([], sx.lemma_cap_problems(targets, []))
+
 
 class QuotaGate(unittest.TestCase):
     def members(self, count, shape="n-named-state", role="target", prefix="t"):
@@ -315,6 +327,24 @@ class QuotaGate(unittest.TestCase):
     def test_lemma_cap(self):
         many = [item("t%d" % n, "n-named-state", "target", "same", "d") for n in range(70)]
         self.assertTrue(any("lemma same" in p for p in sx.quota_problems("named-state", many, self.members(12, role="control", prefix="c"))))
+
+    def test_allow_short_never_waives_a_lemma_cap(self):
+        over = [item("t%d" % n, "n-named-state", "target", "same", "d") for n in range(5)]
+        controls = [item("c%d" % n, "n-named-state", "control", "same", "d", tag="VERB") for n in range(3)]
+        self.assertEqual(2, len(sx.lemma_cap_problems(over, controls)))
+        with tempfile.TemporaryDirectory() as out_dir:
+            blank = collections.defaultdict(dict)
+            with mock.patch.object(sx, "read_round", return_value=([], blank, blank)), \
+                    mock.patch.object(sx.shapes_dev, "read_draft", return_value=[{"source_id": "d"}]), \
+                    mock.patch.object(sx.shapes_dev, "load_exclusions", return_value=mock.Mock(problems=lambda draft, built: [])), \
+                    mock.patch.object(sx, "select", return_value=(over, controls, collections.Counter())), \
+                    mock.patch.object(sx, "final_sentence", return_value={"source_id": "d"}), \
+                    mock.patch.object(sx, "sentence_problems", return_value=[]):
+                for allow_short in (False, True):
+                    with self.assertRaises(sx.QuotaError) as caught:
+                        sx.build(None, "named-state", out_dir, allow_short=allow_short)
+                    self.assertIn("lemma", str(caught.exception))
+            self.assertEqual([], os.listdir(out_dir))                                   # nothing is written
 
 
 class BuiltSentences(unittest.TestCase):

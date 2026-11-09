@@ -5,81 +5,14 @@ file, measure shapes that those files do not hold. This tool does everything aro
 calls one. It imports `shapes_dev` (frames, cleanliness filter, leakage filter, exclusions, decision rule) and `imperative_data` (the used-document
 index) read-only, and no PartOfSpeech tagger, decoder, weights file, prediction or score: a test scans its source for that.
 
-THE PRE-REGISTERED RULE (written and committed before any candidate or label of these tranches exists; the commit is recorded in
-data/eval/shapes-dev/README.md and in the trainer RUN-LOG.md)
-
-The three shapes (tranche ids `compound-head`, `headings`, `named-state`; files `<id>.tsv`, `<id>-sources.tsv`, `<id>-leakage-report.tsv`; ids
-`shapes-dev-<id>-NNNN`; the header of a file says `<id> tranche` and `dev split`; the shape ids are in the `# shape` comment):
-
-  n-compound-head-ambiguous (class Noun). The judged word is the head, the last noun, of a noun + noun compound, in a spelling that the lexicon
-      lists as NOUN and VERB (`check`, `split`, `stand`, `reach`, `finding`, `register`, `estimate`, ...). The existing shape `n-compound-head`
-      tests the head after a modifier noun in the frame of `shapes_dev.shape_hits` (token before the modifier is a determiner, a preposition, a
-      conjunction, an auxiliary or a mark; next token the end or verb-like). The new shape is the COMPLEMENT of that frame at the target token:
-      compounds of three or more nouns, a compound after an adjective or another noun-adjective chain, a compound at the start of the
-      sentence (head at index 1), a head that an adverb or mark ends, and `-ing` heads that the lexicon lists as nouns. The two shapes
-      therefore do not overlap at a token, and no sentence of dev.tsv or hard.tsv is a candidate (exact key, or a sentence of at least 10 words
-      with at least 80% of its word 6-grams in the sentences of those files of the same document). Frame (`compound_ambiguous_hit`): target
-      lower case, NOUN and VERB listed, no function word; the token before passes `noun_like_modifier` (strict) and is lower case or the first
-      token; the next token is the end, a mark or no noun-capable word; the existing frame does not hit at the target. The nominal-gerund
-      rule of the older noun shapes is NOT applied (`finding` is wanted), `-ing` heads are at most 25% of the built targets, and the
-      README reports them separately. Selection: the contested band of the WordSense Basic classifier as in the hard tranche: q = the mass of the
-      class Noun at the target in hmm.tsv; eligible iff 0.10 <= q < 0.97; order q ascending (hardest first), ties by the seeded rank, at most 4
-      per lemma; budget 600 candidates. Controls: the same lemma as a verb (`control_hits` noun branch: after a modal or `to`, or an imperative
-      start), no band, at most 2 per lemma, 50 candidates. Quota gate: targets floor 80 and cap 100, controls floor 15 and cap 20.
-      Amendment 2 (written after the main round was decided and before any label of the round below existed): the controls of the main round are
-      chosen for the lemmas of all 600 candidate targets, so the build found only 14 controls for the lemmas of the 100 built targets, below the floor
-      of 15. A controls-only top-up round `h3` (`candidates --tranche compound-head --round h3`, folder W/rounds/compound-head-h3, ids `ch-h3-cNNNNN`)
-      labels more controls under the same rule: for the lemmas of the targets that the build takes, the real sentences of the verb use (`control_hits`)
-      that are not candidates of the main round, at most the room left under 2 per lemma, 50 candidates, seeded order. It adds no target. This is the
-      round that the hard tranche also needed (its controls round `h3`).
-
-  heading-titlecase (exact tags). Title Case headings, captions, table headers and step titles: a LINE of the source text, not a sentence, 2 to 10
-      tokens, no final period, usually without final punctuation. The line is stored without its numbering or label (`2.1`, `Step 3.`,
-      `Table 2.`). Extraction (`heading_lines`, text only): a line preceded by a blank line whose next non-blank line is a paragraph line (40
-      characters, 6 words), at most 90 characters, not printed three or more times in the document (running header), no dot leaders or trailing page
-      number. Filter (`heading_noise_reason`): ASCII, no junk, balanced brackets, not ALL CAPS, every content word capitalized, no broken last word,
-      every word in a word list (capitalized words included), one sentence by the library tokenizer, not equal to or a 5-gram of any training or
-      evaluation sentence. Frames (`heading_hits`, position and lexicon only; the capitalization itself is the stress, so there is no band):
-      noun targets: a non-initial capitalized token whose lower-case spelling the lexicon lists as NOUN and VERB, ending its noun phrase (next token
-      the end, a mark, a preposition or a conjunction); gold NOUN exactly (a common noun tagged PROPN is wrong for this shape). Imperative targets:
-      token 0, capitalized, NOUN and VERB listed, its own base form, token 1 a determiner, object pronoun, adverb or particle (stronger) or a
-      capitalized noun-capable word; gold VERB. Controls: a non-initial capitalized token whose lower-case spelling the lexicon lists as PROPN only
-      (`Washington`-like names); gold PROPN; at most 2 per lemma. Candidate budgets 400 per target kind and 60 controls, at most 4 per lemma, at most 20 per
-      document. The built set takes at most 4 per lemma and 12 per document over both target kinds. Quota gate: noun targets floor 40 and cap 50,
-      imperative targets floor 40 and cap 50, controls floor 12 and cap 20. The file carries `# kind = noun | imperative | proper` per item.
-      Amendment 1 (written after the main round was decided and before any label of the round below existed): the main round kept 25 imperative
-      targets, below the floor of 40 (366 of 400 imperative frames were read by both labelers as compound nouns: `Check Fluid Level`). A top-up round
-      `h2` (`candidates --tranche headings --round h2`, folder W/rounds/headings-h2, candidate ids `hd-h2-cNNNNN`) therefore labels more imperative
-      frames under the same rule, from the units that are not candidates of the main round, with one widening of the frame (`heading_hits(verb_only=True)`): the
-      first word may also be a base form that the lexicon lists as a verb and not as a noun, proper noun, adjective or auxiliary (`Remove the Cover`), because
-      the pool of noun and verb words is nearly used up. Only `heading-imperative` candidates are written (budget 400, at most 4 per lemma and 20 per document).
-      Targets of both rounds count together at the build (4 per lemma, 12 per document, cap 50). The kept targets of the two kinds of first word are counted
-      separately in the README. The `named-state` tranche has no top-up round.
-
-  n-named-state (class Noun). A capitalized or ALL-CAPS state, position or setting name after a preposition, for example a switch set to a
-      position or a mechanism moved to a named position (`set to OFF`, `moved to STANDBY`). Frame (`named_state_hit`): a single token of 2 to 12
-      letters, ALL CAPS (not a Roman numeral) or capitalized and then an ordinary word (its lower-case spelling is in the lexicon and not only a proper
-      noun); not the first token; directly after `to`, `in`, `at`, `from`, `into` or `on` with an optional determiner between; a device cue word
-      (`set`, `switch`, `selector`, `position`, `mode`, `setting`, `move`, `turn`, `lever`, `knob`, `valve`, `control`, ... see STATE_CUES, inflected forms
-      too) among the 6 tokens before the preposition; and no modifier of what follows (the next token is the end, a mark, a preposition, a conjunction,
-      `to`, an auxiliary or a verb-only word). Selection: the seeded order of all frame hits (no band: the pool is thin, a band would shrink it
-      further), at most 4 per lemma, budget 500 candidates. Controls: the same lemma (lower case) as a verb after a modal or `to`, at most 2 per
-      lemma, 50 candidates. Quota gate: targets floor 40 and cap 100, controls floor 12 and cap 20; a miss below the floor is disclosed, never padded
-      (no sentence is authored).
-
-Common rules. Inputs: real text of federal documents that are new (no id, URL or archive.org identifier in any table of
-`imperative_data.used_index`, the shapes-dev tables and the imperative source; no FAA; nothing in excluded-sources.tsv; a document with 3 sentences that are
-also in a training or evaluation set, in dev.tsv, hard.tsv or imperative.tsv is rejected as a reprint); the held-out sets enter only through
-`leakage.held_out_overlap_keys` (through `shapes_dev.LeakageFilter`). Cleanliness, duplicates and the length of a sentence (3 to 30 tokens) are those of
-`shapes_dev`. No model of the project takes part in the selection. The WordSense Basic numbers (hmm.tsv) are used only for `compound-head`; the pins are
-`HMM_SHA256` and `TOKENS_SHA256` below (and the WordSense commit and DLL SHA-256 of `shapes_dev`): `read_hmm_pinned` refuses any other bytes. Gold: two blind
-labelers (`claude-opus-5.5`, whose tag breaks ties for non-target tokens, and `gpt-6.1-sol`) tag every token of every unit blind (the batches hold an
-opaque id, an index and a token) through the unchanged commands `shapes_dev.py export`, `check-batches`, `validate-output` and `decide` with `--round <tranche>`;
-the decision rule is that of `shapes_dev` (a target disagreement drops the item, as does a class mismatch; the frame rules of `frame_mismatch` for the new
-shapes; the exact tag for the heading shapes). No label is edited by hand. Hand check: 60 targets (20 `n-compound-head-ambiguous`, 10 + 10 heading nouns
-and imperatives, 20 `n-named-state`, fewer where a shape has fewer) and 4 swapped controls, shown with all tags to a third model (`claude-sonnet-5.5`; a
-model review, not a human one); the gate is a precision of 95% (3 incorrect of 60 is exactly 95.0%). Build: `build` writes a tranche only when its quota gate is
-met (`--allow-short` writes it anyway and lists the misses; the exclusion record is read through `shapes_dev.load_exclusions` and never rewritten).
+THE RULE is stated once, in data/eval/shapes-dev/README.md (sections "The Shape of ...", "Inputs of the Selection" and "The Rule"); the order in which it
+was fixed and amended (commits, pool sizes, rounds) is in the trainer RUN-LOG.md, section "Shapes development set: new tranches, pre-registered selection
+rule". This docstring does not repeat either. In short: the tranche ids are `compound-head`, `headings` and `named-state` (files `<id>.tsv`, `<id>-sources.tsv`,
+`<id>-leakage-report.tsv`; ids `shapes-dev-<id>-NNNN`), their shapes are `n-compound-head-ambiguous` (the head of a noun compound outside the frame of
+`n-compound-head`), `heading-titlecase` (words of Title Case heading lines, exact tags) and `n-named-state` (a state or position name after a preposition), and a
+candidate is chosen by position and lexicon only (`compound-head` also by the contested band of the WordSense Basic classifier), never by a PartOfSpeech model.
+Constants of the rule (budgets, caps, floors, the band) are the module constants below.
+`build` writes a tranche only when its quota gate is met: `--allow-short` waives a floor or the cap of a stratum (the misses are listed as warnings), never a lemma cap.
 
 Work folder W (`--work W`, outside the repository): the layout of shapes_dev.py (W/sources-draft.tsv, W/text/<id>.txt one sentence per line, W/tokens.tsv, W/hmm.tsv,
 W/excluded-sources.tsv) plus W/raw/<id>.txt (the OCR or PDF text of a document), W/lines/<id>.txt (heading lines, written by `lines`) and one round folder
@@ -118,7 +51,7 @@ FILES = {name: (name + ".tsv", name + "-sources.tsv", name + "-leakage-report.ts
 SHAPE_OF = {"compound-head": "n-compound-head-ambiguous", "headings": "heading-titlecase", "named-state": "n-named-state"}
 SENT_ID = {name: "shapes-dev-%s-%%04d" % name for name in TRANCHES}
 CAND_PREFIX = {"compound-head": "ch-", "headings": "hd-", "named-state": "ns-"}
-TOP_UP_ROUNDS = (("headings", "h2"), ("compound-head", "h3"))       # (tranche, round): amendments 1 and 2 of the module docstring
+TOP_UP_ROUNDS = (("headings", "h2"), ("compound-head", "h3"))       # (tranche, round): the two top-up rounds (RUN-LOG, "Amendments of the rule")
 # candidate shapes (the internal `shape` of candidates.tsv and decided.tsv): the headings tranche has three, see KIND_OF
 CANDIDATE_SHAPES = {"compound-head": ("n-compound-head-ambiguous",), "headings": ("heading-noun", "heading-imperative", "heading-proper"),
                     "named-state": ("n-named-state",)}
@@ -126,7 +59,7 @@ KIND_OF = {"heading-noun": "noun", "heading-imperative": "imperative", "heading-
 HEADING_ROLE = {"heading-noun": "target", "heading-imperative": "target", "heading-proper": "control"}
 SAMPLE_KEY_COLUMNS = ("item", "kind", "cand_id", "shape", "target", "shown_tag", "agreed_tag", "tranche")
 
-# pre-registered pins (see the module docstring and data/eval/shapes-dev/README.md): the SHA-256 of the bytes of the work folder's tokens.tsv
+# pre-registered pins (see data/eval/shapes-dev/README.md, "Inputs of the Selection"): the SHA-256 of the bytes of the work folder's tokens.tsv
 # (the harness input) and hmm.tsv (the WordSense Basic mass of every token; used by `compound-head` only)
 TOKENS_SHA256 = "5b800937b439b53a54c76d270c23ca510a26967716c45f748aa31cd658a8b055"
 HMM_SHA256 = "f20d0952ab09b838c32fa56d4c14f45743db60d74db0fefaabea5150499ed6f1"
@@ -360,7 +293,7 @@ def heading_hits(tokens, lex, verb_only=False):
                         mark, a preposition or a conjunction (so a following capitalized word does not continue it as a name)
     heading-imperative  token 0, capitalized, listed NOUN and VERB, its own base form (`base_form_of`), and token 1 a determiner, an
                         object pronoun, a following adverb or a particle (strength 0) or a capitalized word that can be a noun (strength 1);
-                        with `verb_only` (the amended round `h2`, see the module docstring) a word that the lexicon lists as a verb and not as
+                        with `verb_only` (the top-up round `h2`, see the README rule) a word that the lexicon lists as a verb and not as
                         a noun, a proper noun, an adjective or an auxiliary counts as well
     heading-proper      a non-initial capitalized token whose lower-case spelling the lexicon lists as a proper noun only (a name)"""
     hits = []
@@ -523,10 +456,10 @@ def _cap_by_lemma(ranked, cap, limit, extra_cap=None):
 
 def candidate_rows(work, data_dir, tranche, hmm=None, seed=SEED, include_ud=True, extra_tables=(), budget=None, scans=None, round_name=None,
                    exclude_keys=frozenset(), control_room=None):
-    """(rows, report lines, stats): the candidates of one tranche (see the module docstring for the pre-registered rule).
+    """(rows, report lines, stats): the candidates of one tranche (see the README, "The Rule").
 
     `hmm` is the HmmTable of the pinned W/hmm.tsv (compound-head only: the contested band of the WordSense Basic classifier).
-    `round_name` is a top-up round (amendments 1 and 2 of the module docstring): `h2` of the headings tranche writes only `heading-imperative`
+    `round_name` is a top-up round (the README rule, items 2 and 3): `h2` of the headings tranche writes only `heading-imperative`
     candidates, with the `verb_only` frame; `h3` of the compound-head tranche writes only controls, for the lemmas of `control_room`
     ({lemma: controls that the build still takes}); both use only units that are not in `exclude_keys` (the sentence keys of the earlier candidates)."""
     lex = shapes_dev.lexicon_of(data_dir)
@@ -796,8 +729,9 @@ def select(tranche, items, candidates, seed=SEED, caps=None):
     compound-head   targets in the order q ascending (the candidates carry q), at most 4 per lemma, at most 25 percent whose form ends in
                     `ing`, up to the cap; controls: lemma of a chosen target, 2 per lemma, seeded order, up to the cap
     named-state     targets in the seeded order, at most 4 per lemma, up to the cap; controls like compound-head
-    headings        noun targets and imperative targets in the seeded order, at most 4 per lemma, at most HEADING_DOCUMENT_CAP per
-                    document over both kinds, up to the cap of each kind; controls (`heading-proper`): 2 per lemma, up to the cap"""
+    headings        noun targets and imperative targets in the seeded order, at most 4 per lemma over both kinds together, at most
+                    HEADING_DOCUMENT_CAP per document over both kinds, up to the cap of each kind; controls (`heading-proper`): 2 per lemma,
+                    up to the cap"""
     quota = QUOTAS[tranche]
     caps = dict(caps or {})
     drops = collections.Counter()
@@ -805,9 +739,9 @@ def select(tranche, items, candidates, seed=SEED, caps=None):
     targets, controls = [], []
     if tranche == "headings":
         per_doc = collections.Counter()
+        counts = collections.Counter()      # per lemma, shared by both target kinds: the cap is 4 per lemma over noun and imperative targets together
         for shape in ("heading-noun", "heading-imperative"):
             limit = caps.get(KIND_OF[shape], quota[KIND_OF[shape]][1])
-            counts = collections.Counter()
             members = sorted((i for i in kept if i["shape"] == shape), key=lambda i: shapes_dev.rank_of(seed, "build", i["cand_id"]))
             taken = 0
             for item in members:
@@ -885,6 +819,13 @@ def quota_problems(tranche, targets, controls, caps=None):
         found.append("controls: %d, the floor is %d" % (len(controls), floor))
     if len(controls) > cap:
         found.append("controls: %d, the cap is %d" % (len(controls), cap))
+    found += lemma_cap_problems(targets, controls)
+    return found
+
+
+def lemma_cap_problems(targets, controls):
+    """[message] for each lemma over its cap (LEMMA_CAP targets over all target kinds together, CONTROL_LEMMA_CAP controls); never waived."""
+    found = []
     for label, members, limit in (("target", targets, LEMMA_CAP), ("control", controls, CONTROL_LEMMA_CAP)):
         for lemma, n in sorted(collections.Counter(m["lemma"] for m in members).items()):
             if n > limit:
@@ -951,7 +892,8 @@ def build(work, tranche, out_dir, seed=SEED, allow_short=False, data_dir=None, c
     """Write <tranche>.tsv and <tranche>-sources.tsv into `out_dir`; returns (sentences, report lines, problems).
 
     Fail closed: the exclusion record is read through `shapes_dev.load_exclusions` (never rewritten); a chosen sentence or a used source row
-    that it lists refuses the build; a quota miss (QuotaError, nothing written) unless `allow_short` (the misses become warnings)."""
+    that it lists refuses the build; a quota miss (QuotaError, nothing written) unless `allow_short` (the misses become warnings); a lemma
+    over its cap is a QuotaError in every case (`allow_short` waives a floor or a cap of a stratum, never a lemma cap)."""
     items, tagged, candidates = read_round(work, tranche, data_dir)
     draft = shapes_dev.read_draft(work)
     targets, controls, drops = select(tranche, items, candidates, seed, caps)
@@ -969,6 +911,9 @@ def build(work, tranche, out_dir, seed=SEED, allow_short=False, data_dir=None, c
     if refused:
         raise shapes_dev.ExcludedSourceError("excluded sources are used:\n  " + "\n  ".join(refused[:20]))
     short = quota_problems(tranche, targets, controls, caps)
+    over = lemma_cap_problems(targets, controls)
+    if over:
+        raise QuotaError("lemma caps violated (`--allow-short` does not waive a cap):\n  " + "\n  ".join(over))
     if short and not allow_short:
         raise QuotaError("quotas not met (pass --allow-short to build anyway):\n  " + "\n  ".join(short))
     corpus, sources, _ = FILES[tranche]
