@@ -869,7 +869,9 @@ class RequiredFilesFailClosedTests(base.MiniFolder):
     tranche's two files are optional only while leakage.HARD_TRANCHE_REQUIRED is False."""
 
     STANDARD = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv", "masc/sources.tsv",
-                "eval/shapes-dev/dev.tsv", "imperative/sources.tsv")
+                "eval/shapes-dev/dev.tsv", "imperative/sources.tsv",
+                "eval/shapes-dev/compound-head-sources.tsv", "eval/shapes-dev/headings-sources.tsv", "eval/shapes-dev/named-state-sources.tsv",
+                "eval/shapes-dev/compound-head.tsv", "eval/shapes-dev/headings.tsv", "eval/shapes-dev/named-state.tsv")
     HARD = ("eval/shapes-dev/hard-sources.tsv", "eval/shapes-dev/hard.tsv")
 
     def write_data(self):
@@ -879,10 +881,11 @@ class RequiredFilesFailClosedTests(base.MiniFolder):
                "https://example.gov/terms", "2026-11-01", "a" * 64, "b" * 64, "1"]
         for path in (os.path.join(self.data, "eval", "gold-v2", "sources.tsv"), os.path.join(self.data, "silver", "sources.tsv"),
                      os.path.join(self.data, "imperative", "sources.tsv"),
-                     os.path.join(folder, "sources.tsv"), os.path.join(folder, "hard-sources.tsv")):
+                     os.path.join(folder, "sources.tsv"), os.path.join(folder, "hard-sources.tsv")) + tuple(
+                         os.path.join(folder, name + "-sources.tsv") for name in ("compound-head", "headings", "named-state")):
             base.table_file(path, sd.SOURCE_COLUMNS, [row])
         extra = [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]]
-        for name in ("dev.tsv", "hard.tsv"):
+        for name in ("dev.tsv", "hard.tsv", "compound-head.tsv", "headings.tsv", "named-state.tsv"):
             base.corpus_file(os.path.join(folder, name), [("doc-a", "A brand new dev sentence about nothing in particular .")], extra)
         base.table_file(os.path.join(folder, "excluded-sources.tsv"), common.EXCLUDED_SOURCES_COLUMNS, [])
 

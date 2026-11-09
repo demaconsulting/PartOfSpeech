@@ -3965,8 +3965,10 @@ changes no figure of this record.
 ## Shapes development set: new tranches, pre-registered selection rule
 
 **The inputs table and the numbered rule below were written before any candidate or label of the three new tranches existed.** The
-frozen pre-registration is the commit that adds this section (`tools/data/shapes_dev_extra.py`, its tests and the same rule in
-`data/eval/shapes-dev/README.md`, section "New Tranches"); the sections after it were written after labeling and do not change the rule. The three
+frozen pre-registration is the commit `426876f` of this branch (`tools/data/shapes_dev_extra.py`, its tests and the same rule in
+`data/eval/shapes-dev/README.md`, section "New Tranches"), amended twice, each time before any label of the round that the amendment names: `65ee3c3`
+(amendment 1, the top-up round `h2` of `headings`) and `41423fd` (amendment 2, the controls-only round `h3` of `compound-head`). If the pull request is squash-merged, these commits stay retrievable from
+the pull request's head ref (`refs/pull/<n>/head`). The sections after the rule were written after labeling and do not change it. The three
 tranches (`compound-head.tsv`, `headings.tsv`, `named-state.tsv` in `data/eval/shapes-dev/`) are development sets: the figures that they
 produce select settings and are never held-out results. The rule is model-independent: no PartOfSpeech weight file, prediction, error or
 score takes part in the selection.
@@ -4011,6 +4013,55 @@ Rule (`python tools/data/shapes_dev_extra.py`):
 8. **Convention rules** for headings and state names were added to `data/CONVENTIONS.md` before any label was requested.
 9. **Baseline:** the shipped model is scored once per tranche after the build (`eval-shapes --tranche new`): target accuracy (exact tag for `headings`), harmful errors per 1,000
    decisions and the number of wrong answers with a confidence of at least 0.95.
+
+### Rounds and amendments of the rule
+
+The main round of each tranche was labeled in full. Two top-up rounds follow rule 5 and the quota gate and were written down (amendments 1 and 2 above) before any label of their
+round existed: round `h2` of `headings` (155 imperative candidates; the main round kept 25 imperative targets, below the floor of 40) and the controls-only round `h3` of
+`compound-head` (50 controls; only 14 controls fitted the lemmas of the 100 built targets, below the floor of 15). `named-state` needed no top-up round. Both blind labelers tagged every
+batch of every round (11 batches, 22 agent runs), every output was valid on the first run, and neither model refused (0 refusals). The `named-state` pool of 189 frames was below the 250 that the
+pre-flight asked for, and the floor of that tranche was fixed at 40 before the candidates were written; the 100 built targets are above it. The outcome (counts, drops,
+documents, hand check, limits) is in the [README](../../data/eval/shapes-dev/README.md#new-tranches); the baseline is in the next section.
+
+## Shapes development set: new tranches baseline of the shipped model
+
+The built tranches `compound-head.tsv`, `headings.tsv` and `named-state.tsv` were scored once with the shipped model after the build. These are development figures: they select settings,
+nothing is trained on the files and none is a held-out result. The standard and hard tranche files are unchanged by this work (`eval-shapes --tranche both` reads the same two
+files, SHA-256 `bbc94e42...` and `c041ae3d...`).
+
+Command (run once from the repository root, below normal priority; it reads only the three development files and the embedded weights and appends no row to the run table):
+
+```text
+dotnet run --no-build -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eval-shapes --tranche new --label "shipped model baseline"
+```
+
+| Input | SHA-256 |
+| --- | --- |
+| `data/eval/shapes-dev/compound-head.tsv` | `537e0be3923f585b8f084de4e88f4064624e4f5dc484f84ccd303fed3db924f5` |
+| `data/eval/shapes-dev/headings.tsv` | `de6a46fe105b42f0ddf8b55dee6dd5f6c669b8292f39002b8b2de472f1e5a122` |
+| `data/eval/shapes-dev/named-state.tsv` | `e08472387630368b7fb3fbaa5cd7b6187d0760608c93b55f19250c98f2d06d6e` |
+| shipped weights file (embedded resource) | `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` |
+
+Scoring: by class for `n-compound-head-ambiguous` and `n-named-state` (Noun: NOUN and PROPN), by exact tag for `heading-titlecase` (a common-noun heading word answered PROPN is wrong
+but not harmful). A harmful error is a swapped noun/verb decision at a confidence of at least 0.45 (`harmful per 1,000` is per noun-verb decision, as before); **wrong at confidence >= 0.95**
+counts the target items answered wrongly with a confidence of at least 0.95.
+
+| shape | target items | target accuracy | 95% interval | noun-verb decisions | harmful errors | harmful per 1,000 decisions | wrong at confidence >= 0.95 | control items | control accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| n-compound-head-ambiguous | 100 | 60.0% | [50.2%, 69.1%] | 100 | 39 | 390.0 | 5 | 20 | 100.0% |
+| heading-titlecase | 96 | 84.4% | [75.8%, 90.3%] | 78 | 4 | 51.3 | 2 | 20 | 100.0% |
+| heading-titlecase: noun targets | 50 | 82.0% | [69.2%, 90.2%] | 50 | 1 | 20.0 | 2 | - | - |
+| heading-titlecase: imperative targets | 46 | 87.0% | [74.3%, 93.9%] | 28 | 3 | 107.1 | 0 | - | - |
+| heading-titlecase: PROPN controls | - | - | - | - | - | - | - | 20 | 100.0% |
+| n-named-state | 100 | 90.0% | [82.6%, 94.5%] | 37 | 3 | 81.1 | 0 | 12 | 100.0% |
+
+Wrong answers at a confidence of at least 0.95: 5 (`n-compound-head-ambiguous`), 2 (`heading-titlecase`, both on noun targets) and 0 (`n-named-state`), 7 in all.
+
+### Headroom of the new tranches
+
+Headroom is 100% minus the target accuracy (derived from the table above, not a new measurement): 40.0% for `n-compound-head-ambiguous` (40 of 100 target errors), 15.6% for `heading-titlecase`
+(15 of 96; 18.0% of the noun targets and 13.0% of the imperative targets) and 10.0% for `n-named-state` (10 of 100). The 95% intervals are 15 to 19 points wide for the first two shapes
+and 12 points for `n-named-state`, so a difference of a few items between variants is inside the interval.
 
 ## Run table
 

@@ -726,6 +726,33 @@ sections:
           - PartOfSpeech_ShapesDevHard_LeakageReport_RecordsNoOverlapAndSharedDocumentsWithTheStandardTranche
           - PartOfSpeech_ShapesDevHard_Sentences_AreDisjointFromTheOtherEvaluationSets
 
+      - id: PartOfSpeech-Data-ShapesDevNewTranches
+        title: >-
+          The three single-shape tranches of the hard-shape development set (`compound-head.tsv`, `headings.tsv` and
+          `named-state.tsv`) shall use the format of the standard tranche, announce a dev split and their own tranche
+          in the header, and give every item its shape, role, judged word and a real origin (no authored sentence);
+          the judged word of a `compound-head` or `named-state` target shall be a noun (NOUN or PROPN) and of a control
+          a verb, a `headings` item shall name its kind and carry exactly the tag of the kind (noun NOUN, imperative
+          VERB, proper PROPN), the judged word shall never be disputed, every tranche shall hold between its floor and
+          cap of targets (compound-head 80 to 100, headings 40 to 50 per kind, named-state 40 to 100) and controls (15
+          to 20, 12 to 20 and 12 to 20) with no more than 4 per lemma (controls 2), and the library tokenizer shall
+          reproduce the stored tokens.
+        tags: [system]
+        justification: |
+          Each tranche measures one failure shape that the standard and the hard tranche do not hold: a compound head
+          that the old frame refuses, a Title Case heading word and a state name after a preposition. The sets are
+          small, so a mislabeled judged word, a kind with the wrong tag, a tranche below its floor or an overfull lemma
+          would steer the next feature work. The heading shape is scored by the exact tag because the class Noun would
+          hide a capitalized common noun that is tagged as a name. The floors and caps are the quota gate that was
+          pre-registered with the rule; the data tests check them on the committed files.
+        children:
+          - PartOfSpeech-ModelTrainer-ShapesDevNewTranches
+        tests:
+          - PartOfSpeech_ShapesDevNew_Headers_AnnounceTheTrancheAndTheDevSplit
+          - PartOfSpeech_ShapesDevNew_Items_AreWellFormedRealAndNeverDisputed
+          - PartOfSpeech_ShapesDevNew_Quotas_AreMetByTheCommittedTranches
+          - PartOfSpeech_ShapesDevNew_Tokens_AreReproducedByTheTokenizer
+
       - id: PartOfSpeech-Data-ShapesDevIndependent
         title: >-
           No document, exact sentence or shared word 5-gram of the shape probe shall be common to the hard-shape
@@ -750,6 +777,8 @@ sections:
           - PartOfSpeech_ShapesDev_Builder_SeesHeldOutSetsOnlyThroughOpaqueKeys
           - PartOfSpeech_ShapesDevHard_Sentences_AreDisjointFromTheOtherEvaluationSets
           - PartOfSpeech_ShapesDevHard_LeakageReport_RecordsNoOverlapAndSharedDocumentsWithTheStandardTranche
+          - PartOfSpeech_ShapesDevNew_Sentences_AreDisjointFromTheOtherEvaluationSets
+          - PartOfSpeech_ShapesDevNew_LeakageReports_RecordNoOverlap
 
       - id: PartOfSpeech-Data-ShapesDevSourcesAreOpen
         title: >-
@@ -772,6 +801,7 @@ sections:
           - PartOfSpeech_ShapesDev_ExcludedSources_AreRecordedAndAbsentFromTheSet
           - PartOfSpeech_ShapesDev_ExcludedSources_NothingUsedMatchesByIdOrNormalizedUrl
           - PartOfSpeech_ShapesDevHard_Sources_AreListedOpenAndNotExcluded
+          - PartOfSpeech_ShapesDevNew_Sources_AreListedOpenAndNotExcluded
           - PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl
           - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
 
@@ -791,6 +821,23 @@ sections:
           pipeline; the rule itself is recorded in the README of the data set before any label of the tranche exists.
         tests:
           - PartOfSpeech_ShapesDevHard_Selection_UsesNoPartOfSpeechModel
+
+      - id: PartOfSpeech-Data-ShapesDevNewSelectionIndependent
+        title: >-
+          The selection of the three single-shape tranches of the hard-shape development set shall use no part of the
+          PartOfSpeech model and shall not read a held-out set: the builder shall name no weights file, decoder, tagger
+          or shapes evaluation, shall open neither the shape probe nor gold v2 nor the STE challenge set (the held-out
+          sets enter only as the opaque hashed keys of the leakage module), and the gold shall come only from two blind
+          labelers.
+        tags: [system]
+        justification: |
+          A development tranche that was chosen where the tagger errs would measure the tagger against its own mistakes.
+          The `compound-head` tranche uses the numbers of another model family (the pinned WordSense Basic mass), the
+          other two use position and lexicon only, and the rule, the pins and the quota gates were written before any
+          label existed. The data test scans the source of the builder; the rule is recorded in its docstring, in the
+          README of the data set and in the run log.
+        tests:
+          - PartOfSpeech_ShapesDevNew_Selection_UsesNoPartOfSpeechModel
 
       - id: PartOfSpeech-Data-ImperativeWellFormed
         title: >-
@@ -980,6 +1027,7 @@ sections:
           - PartOfSpeech-ModelTrainer-GlossaryEvaluation
           - PartOfSpeech-ModelTrainer-ShapesDevEvaluation
           - PartOfSpeech-ModelTrainer-ShapesDevTranches
+          - PartOfSpeech-ModelTrainer-ShapesDevNewTranches
           - PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
           - PartOfSpeech-ModelTrainer-ArmEvaluation
           - PartOfSpeech-ModelTrainer-ArmEvaluationIsDevelopmentOnly

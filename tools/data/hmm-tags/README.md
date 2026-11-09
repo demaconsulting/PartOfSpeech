@@ -5,10 +5,11 @@
 
 A standalone, development-time console tool. It tags tokenized sentences with the WordSense Basic classifier (HMM tagger plus
 cue model; below, "the WordSense Basic classifier (HMM tagger plus cue model)") and writes the part-of-speech probability mass
-of every token. The hard tranche of the shapes development set (`data/eval/shapes-dev/hard.tsv`) uses that mass as a
+of every token. The hard tranche of the shapes development set (`data/eval/shapes-dev/hard.tsv`) and its `compound-head` tranche
+(`compound-head.tsv`) use that mass as a
 model-independent selection signal: a different model family, trained by another project, that has no connection to the
-PartOfSpeech tagger or its weights. The selection rule is in
-[`tools/data/shapes_dev.py`](../shapes_dev.py) and in `data/eval/shapes-dev/README.md`.
+PartOfSpeech tagger or its weights. The selection rules are in
+[`tools/data/shapes_dev.py`](../shapes_dev.py), [`tools/data/shapes_dev_extra.py`](../shapes_dev_extra.py) and in `data/eval/shapes-dev/README.md`.
 
 ## Not part of the solution
 

@@ -357,10 +357,29 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   `ShapesDevReport_RenderTranches_StandardUnchangedThenHardThenCombined` (the standard section is the plain report byte
   for byte, the three headings, the hashes, a shape without items shows dashes, two renderings are equal) and
   `ShapesDevReport_Render_StandardSection_HasNoTrancheNameInItsHeading`.
+- **Single-shape tranches** (same file, synthetic fixtures):
+  `ShapesDevSets_Parse_NewTranches_ValidFiles_ReturnItemsWithKindAndGoldTag` and
+  `ShapesDevSets_Parse_NewTranches_InvalidItems_AreRefused` (a wrong shape id, kind, gold tag or role for a
+  tranche, and a `kind` comment outside `headings`),
+  `DevSets_ReadShapesDev_NewTranches_ReadOwnFileAndMarkItems` and `..._FileOfAnotherTranche_Throws` (a header or an
+  id of another tranche is refused), `ShapesDevTrancheEvaluator_Evaluate_Headings_ScoredByExactTag` (a capitalized
+  common noun answered PROPN is wrong but not harmful, a PROPN control is never a noun-verb decision),
+  `ShapesDevTrancheEvaluator_Summarize_ConfidentWrong_CountsFromTheLimit` (a wrong answer at 0.95 counts, at
+  0.949 not) and `..._Summarize_InconsistentInput_Throws`,
+  `ShapesDevReport_RenderTranche_CompoundHead_PrintsSectionAndTable`,
+  `..._Headings_PrintsRowsOfTheKinds` and `..._NoItems_PrintsDashes`, and the command tests
+  `ShapesDevCommand_EnsureSelection_Value_AcceptedOrRefused`,
+  `ShapesDevCommand_Run_ExplicitNewTranche_ScoresItAloneAndMissingFileIsAnError`,
+  `ShapesDevCommand_Run_New_ScoresPresentTranchesAndNotesMissingFiles` and
+  `ShapesDevCommand_Run_StandardHardBoth_OutputIsUnchangedByTheNewFiles` (the standard, hard and both output
+  equals the plain renderers whatever the new files are).
 - **The shapes development files are development only**:
-  `DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted` (both files, also through a dotted detour),
+  `DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted` (the files, also through a dotted detour),
   `DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused` (the two development files, a held-out file, the other
   files of its folder, the tables and report of the hard tranche),
+  `DataGuard_EnsureShapesDevelopmentFile_NewTrancheFile_Admitted` and
+  `..._NewTrancheSourcesAndLeakage_Refused` (the three single-shape files are admitted, their sources and
+  leakage files are not),
   `DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused` (a theory over both files: a link as the
   file or as its folder is refused, the real file admitted), `DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt`
   (for each file: not in the two-file allow-list, not in the held-out list, refused by `EnsureDevelopmentFile` and for

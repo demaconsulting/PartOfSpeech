@@ -10,7 +10,7 @@ lexicon and the trained weights, which are embedded in the package in compact bi
 `lexicon/lexicon.tsv` (see [lexicon/README.md](lexicon/README.md), "Embedded Form"), and the weights
 (`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 521,695 bytes compressed, 1,157,499 bytes uncompressed) are
 trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC, silver and
-imperative corpora with settings that are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard and hard tranches) and UD-EWT dev (the run log is
+imperative corpora with settings that are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard, hard and the three single-shape tranches) and UD-EWT dev (the run log is
 [RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not
 shipped. How the model scores on the evaluation sets, the confidence thresholds that were chosen on the development
 sets, and how to reproduce the evaluation (including the local UD English-EWT run) are in the
@@ -25,7 +25,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [silver/](silver/README.md) | BERT silver: Tatoeba and Gutenberg text, model labels mapped to UPOS | 13,971 | 242,699 | 8.5 MB | CC0-1.0 labels; CC0/PD sentences |
 | [imperative/](imperative/README.md) | imperative-initial sentences from US federal instructional text, two-labeler agreement (training; weight 1 in `training.json`) | 900 | 11,946 | 0.5 MB | CC0-1.0 labels; US federal-work sentences |
 | [eval/shapes/](eval/shapes/README.md) | noun/verb shape probe (evaluation) | 560 | | 0.06 MB | CC0-1.0 |
-| [eval/shapes-dev/](eval/shapes-dev/README.md) | hard-shape development set from US federal-government text (development only): standard tranche `dev.tsv` (700 sentences, 12,279 tokens) and hard tranche `hard.tsv` (460 sentences, 7,936 tokens) | 1,160 | 20,215 | 0.8 MB | CC0-1.0 labels; US federal-work sentences |
+| [eval/shapes-dev/](eval/shapes-dev/README.md) | hard-shape development set from US federal-government text (development only): standard tranche `dev.tsv` (700 sentences, 12,279 tokens), hard tranche `hard.tsv` (460 sentences, 7,936 tokens) and three single-shape tranches `compound-head.tsv` (120 sentences, 2,148 tokens), `headings.tsv` (116 heading lines, 520 tokens) and `named-state.tsv` (112 sentences, 1,970 tokens) | 1,508 | 24,853 | 1.2 MB | CC0-1.0 labels; US federal-work sentences |
 | [eval/gold-v2/](eval/gold-v2/README.md) | single-target gold tokens (evaluation) | 5,072 | | 2.4 MB | CC0-1.0 labels; PD sentences |
 | [eval/ste-challenge/](eval/ste-challenge/README.md) | simplified-technical-English challenge set (evaluation) | 32 | 272 | 0.01 MB | CC0-1.0 |
 | [eval/ud-ewt/](eval/ud-ewt/README.md) | UD English-EWT: fetch documentation only, **no data** | | | | CC BY-SA 4.0, never committed |
@@ -110,8 +110,11 @@ set, and UD English-EWT train, dev and test when the git-ignored cache is presen
    used to exclude overlaps and never to select, weight or frame a candidate. The hard tranche (`eval/shapes-dev/hard.tsv`) is
    an evaluation set of its own in this check (label `shapes-dev-hard`, counts in `eval/shapes-dev/hard-leakage-report.tsv`) and
    is also checked against the standard tranche: the two tranches are one family and may share a source document (reported, not
-   gated), but no sentence of one equals a sentence of the other, and no same-document near duplicate is allowed. The selection of
-   the hard tranche used numeric output of the WordSense Basic classifier (same owner, run unmodified); nothing of WordSense text,
+   gated), but no sentence of one equals a sentence of the other, and no same-document near duplicate is allowed. The three newer
+   tranches (`compound-head.tsv`, `headings.tsv`, `named-state.tsv`) are evaluation sets of their own too (labels `shapes-dev-compound-head`,
+   `shapes-dev-headings`, `shapes-dev-named-state`, counts in `eval/shapes-dev/<tranche>-leakage-report.tsv`) and are checked against the standard
+   and the hard tranche with no shared document allowed; among themselves a shared document is reported, not gated. The selection of
+   the hard tranche and of `compound-head` used numeric output of the WordSense Basic classifier (same owner, run unmodified); nothing of WordSense text,
    labels or data is copied.
 
 **Result** (`python tools/data/check_leakage.py`; the committed `leakage-report.tsv` has every pair; UD English-EWT was

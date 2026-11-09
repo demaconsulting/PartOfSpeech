@@ -135,6 +135,16 @@ U.S.C. 105; 43 documents are also in the standard tranche). The license basis of
 `data/eval/shapes-dev/hard-sources.tsv`. Numeric output of the WordSense Basic classifier (same owner, run unmodified)
 helped to choose which sentences to label; no WordSense text, label or data is copied.
 
+The three single-shape tranches of that set (`compound-head.tsv`, `headings.tsv` and `named-state.tsv` in
+`data/eval/shapes-dev/`) are cut from new documents: 74, 51 and 59 documents of the federal families War
+Department, Army and Army Air Forces, Navy, Department of Agriculture and Forest Service, plus one NASA handbook
+(17 U.S.C. 105; scans on the Internet Archive whose records carry the Public Domain Mark or a statement that the
+item is not in copyright, and a NASA Technical Reports Server record with the determination
+`GOV_PUBLIC_USE_PERMITTED` and no third-party material). No document is in any other source table or evaluation
+set. The license basis of every document is quoted in `data/eval/shapes-dev/<tranche>-sources.tsv`. Numeric output
+of the WordSense Basic classifier (same owner, run unmodified) helped to choose the `compound-head` sentences; no
+WordSense text, label or data is copied.
+
 The training source `data/imperative/` is built the same way from instructional text of US federal government
 documents: 122 documents of the federal families War Department and Army, Navy, Department of Agriculture, Forest
 Service, Bureau of Mines and Public Health Service (17 U.S.C. 105; scans and electronic copies on the Internet Archive

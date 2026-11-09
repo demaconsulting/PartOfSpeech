@@ -595,10 +595,45 @@ sections:
               - ShapesDevReport_RenderTranches_StandardUnchangedThenHardThenCombined
               - ShapesDevReport_Render_StandardSection_HasNoTrancheNameInItsHeading
 
+          - id: PartOfSpeech-ModelTrainer-ShapesDevNewTranches
+            title: >-
+              The shapes development evaluation shall read the three single-shape tranches (`compound-head.tsv`,
+              `headings.tsv` and `named-state.tsv`) from their own files through the development guard, check their
+              header, ids, shape, kind and gold tag, score a heading item by its exact tag (noun NOUN, imperative VERB,
+              proper PROPN, so a common noun answered PROPN is wrong) and the other two tranches by class, report per
+              tranche the target accuracy, the harmful errors, the harmful errors per 1,000 noun-verb decisions, the
+              target items wrong at a confidence of at least 0.95 and the control accuracy, accept `--tranche
+              compound-head|headings|named-state|new` (an explicit file that is missing is an error, a missing file
+              under `new` is noted), and leave the standard, hard and combined output unchanged.
+            justification: |
+              The new tranches measure shapes that the older sections do not, so each gets a section of its own and the
+              older text stays byte for byte what the recorded baselines show. The heading shape would look better than
+              it is if scored by class, because a capitalized common noun tagged as a name is still a noun, so its score
+              is by the exact tag. A wrong answer with a confidence of 0.95 or more is the figure that a consumer who
+              trusts the strict threshold meets, so it is counted beside the harmful errors. A missing file must stop an
+              explicit request but not the pooled `new` run, so the guard and the command refuse a file of another
+              tranche and never read the sources or leakage files.
+            tests:
+              - ShapesDevSets_Parse_NewTranches_ValidFiles_ReturnItemsWithKindAndGoldTag
+              - ShapesDevSets_Parse_NewTranches_InvalidItems_AreRefused
+              - DevSets_ReadShapesDev_NewTranches_ReadOwnFileAndMarkItems
+              - DevSets_ReadShapesDev_NewTranches_FileOfAnotherTranche_Throws
+              - ShapesDevTrancheEvaluator_Summarize_ConfidentWrong_CountsFromTheLimit
+              - ShapesDevTrancheEvaluator_Evaluate_Headings_ScoredByExactTag
+              - ShapesDevTrancheEvaluator_Summarize_InconsistentInput_Throws
+              - ShapesDevReport_RenderTranche_CompoundHead_PrintsSectionAndTable
+              - ShapesDevReport_RenderTranche_Headings_PrintsRowsOfTheKinds
+              - ShapesDevReport_RenderTranche_NoItems_PrintsDashes
+              - ShapesDevCommand_EnsureSelection_Value_AcceptedOrRefused
+              - ShapesDevCommand_Run_ExplicitNewTranche_ScoresItAloneAndMissingFileIsAnError
+              - ShapesDevCommand_Run_New_ScoresPresentTranchesAndNotesMissingFiles
+              - ShapesDevCommand_Run_StandardHardBoth_OutputIsUnchangedByTheNewFiles
+
           - id: PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
             title: >-
-              The two files of the hard-shape development set (the standard and the hard tranche) shall be readable only
-              through their own guard (exactly those two paths, also when spelled with a detour, refused when a link
+              The files of the hard-shape development set (the standard and the hard tranche and the three single-shape
+              tranches) shall be readable only
+              through their own guard (exactly those five paths, also when spelled with a detour, refused when a link
               lies on the way, and a header that announces a development split), shall not be in the
               two-file development allow-list or the held-out list, shall be refused for training, and no source of the
               trainer other than the guard shall name a held-out set.
@@ -611,6 +646,8 @@ sections:
             tests:
               - DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted
               - DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused
+              - DataGuard_EnsureShapesDevelopmentFile_NewTrancheFile_Admitted
+              - DataGuard_EnsureShapesDevelopmentFile_NewTrancheSourcesAndLeakage_Refused
               - DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused
               - DataGuard_EnsureDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused
               - DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt
