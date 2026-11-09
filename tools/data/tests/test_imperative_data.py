@@ -365,6 +365,33 @@ class BuildTests(Mini):
         self.assertEqual(["Check the valve 1 ."], [s["text"] for s in built])
         self.assertEqual({"fix-tier": 1}, drops_of(report))
 
+    def test_an_existing_imperative_source_in_the_data_folder_does_not_change_the_fix_tier_drops(self):
+        bad = spec("Check the valve not the tank .", "check", tags=["VERB", "DET", "NOUN", "ADV", "DET", "NOUN", "PUNCT"])
+        specs = [bad, spec("Check the valve 1 .", "check")]
+        path = os.path.join(self.data, "imperative", "imperative.tsv")
+        os.remove(path)
+        without, report_without, _ = self.build(specs, minimum=1)
+        previous = [dict(sent_id="imperative-0001", source_id="army-old", text="The valve is very closed .",
+                         rows=[["The", "DET", "unanimous"], ["valve", "NOUN", "unanimous"], ["is", "AUX", "unanimous"],
+                               ["very", "ADV", "unanimous"], ["closed", "ADJ", "unanimous"], [".", "PUNCT", "unanimous"]])]
+        common.write_corpus(path, ["# corpus = a previous output"], previous)
+        seen = []
+        real = idata.convention_rules.build_resources
+
+        def spy(sentences):
+            sentences = list(sentences)
+            seen.extend(sentences)
+            return real(sentences)
+
+        with mock.patch.object(idata.convention_rules, "build_resources", spy):
+            with_previous, report_with, _ = self.build(specs, minimum=1)
+        self.assertEqual([s["text"] for s in without], [s["text"] for s in with_previous])
+        self.assertEqual(drops_of(report_without), drops_of(report_with))
+        self.assertEqual({"fix-tier": 1}, drops_of(report_with))
+        self.assertTrue(seen)
+        self.assertEqual(set(), {s.source for s in seen} & {"imperative", "ste"})     # RESOURCE_EXEMPT of check_conventions.py
+        self.assertNotIn("closed", {w for s in seen for w in s.w})
+
     def test_caps_in_seeded_order_lemma_document_and_total(self):
         specs = many("check", "Check", 8) + many("seal", "Seal", 8, "army-b", 20) + many("test", "Test", 4, "army-c", 40)
         built, report, _ = self.build(specs, minimum=1, lemma_cap=6, document_cap=5, maximum=100)

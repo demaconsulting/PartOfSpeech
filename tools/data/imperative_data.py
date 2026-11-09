@@ -1,7 +1,7 @@
 """Builder of the training source data/imperative/ (Python 3, standard library only; imports shapes_dev.py and the repository's data tools read-only).
 
 The source holds about 900 sentences that start with an imperative verb, from US federal public-domain instructional text (US Army and
-Navy manuals, USDA bulletins, Forest Service and Public Health Service leaflets, NASA handbooks and the like). It is a TRAINING source
+Navy manuals, USDA bulletins, Forest Service, Bureau of Mines and Public Health Service leaflets and the like). It is a TRAINING source
 (use = training), written for one purpose: the library's training mix has far fewer imperative-initial sentences than instructional text
 has (the scarcity measured by the shape count of the earlier experiment), and the hard tranche of the shapes development set shows the
 weakness. Everything around the labeling is done by this tool; it never calls a model, reads no weights and no prediction: the tool
@@ -471,11 +471,13 @@ def keep_reason(item, rows, lex):
 def fix_tier_rules(sentences, data_dir):
     """{sent_id: [rule id]} of the sentences that the convention linter reports at the fix tier (rule 4c).
 
-    The resources of the participle rules come from every corpus of the data folder and these sentences; nothing is changed."""
-    corpora = corrections.load_corpora(data_dir, lint_only=True)
+    The resources of the participle rules come from the correctable corpora of the data folder only, as in `check_conventions.py`
+    (its `RESOURCE_EXEMPT`): neither these sentences nor an imperative.tsv already in the data folder nor the STE set feed them,
+    so a rebuild gives the same result whether or not a previous output is present; nothing is changed."""
+    corpora = corrections.load_corpora(data_dir)
     known = [convention_rules.Sentence(source, split, s) for (source, split), corpus in corpora.items() for s in corpus.sentences]
     own = [convention_rules.Sentence("imperative", "-", s) for s in sentences]
-    resources = convention_rules.build_resources(known + own)
+    resources = convention_rules.build_resources(known)
     found = {}
     for s in own:
         rules = [p.rule for p in convention_rules.evaluate(s, resources, (convention_rules.FIX,), None)]

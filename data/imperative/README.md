@@ -62,7 +62,9 @@ Token 0 of every sentence is tagged VERB and is the base form of the verb; a dat
 ## Labeling and Decision Rule
 
 The rule was fixed before any label of this source was seen (the commit above); the docstring of `tools/data/imperative_data.py` is its
-normative text.
+normative text. Later commits changed only the wording of the source families in the docstring and made the fix-tier lint of `build`
+take the resources of its participle rules from the correctable corpora only (as `check_conventions.py` does); the output of `build`
+is byte-identical to the committed files.
 
 1. **Documents.** US federal authorship, with the public-domain basis checked one document at a time and written in the `license_basis`
    cell. The id, the normalized URL and the Internet Archive identifier of a document are in no table of used sources (training and

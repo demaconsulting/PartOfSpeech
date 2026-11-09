@@ -3243,7 +3243,9 @@ mean of the context-feature experiment, the weakest shape of the tranche). Nothi
 instructional text (army 69 documents / 643 sentences, USDA 36 / 166, navy 12 / 68, Forest Service 3 / 11, Bureau of Mines 1 / 7,
 Public Health Service 1 / 5; at most 6 sentences per lemma, at most 30 per document). Every sentence starts with an imperative verb
 in its base form (token 0 is VERB in every sentence); every token has a tag on which two blind model labelers (`claude-opus-5.5` and
-`gpt-6.1-sol`) agree; no human reviewed a label. The rule is the docstring of `tools/data/imperative_data.py` at `100e747`.
+`gpt-6.1-sol`) agree; no human reviewed a label. The rule is the docstring of `tools/data/imperative_data.py` at `100e747` (a later commit changed only the wording of the source
+families in the docstring and made the fix-tier lint of `build` take its resources from the correctable corpora only, as
+`check_conventions.py` does; the output was verified byte-identical).
 
 | Fact | Value |
 | --- | --- |
@@ -3428,6 +3430,14 @@ applied to the 20 result files with the reference arm, and the selection rule wa
 and no held-out command (`evaluate`, `thresholds`, `train --update-config`) was run. The labeling disclosure of the data (the
 refusals and retries of the labeler `gpt-6.1-sol`, with the batches concerned) is in `data/imperative/README.md` ("Refusals of one
 labeler").
+
+**Reproduction note.** The frozen runners, `run_arms.ps1` and the analysis encode the pre-registered state, in which `training.json`
+carries `imperative` at weight 0: `runner-base.cmd` passes `train` unchanged, so it trained F2 and `runner-imp.cmd` (which appends
+`--source imperative:1`) trained F2+IMP. The published comparison is reproducible from the commands above only at the
+pre-registration commit `ca0c2d4` (the registered `training.json`, whose hash the analysis checks). At the adopted state
+(`training.json` with weight 1, the commits after the decision) `runner-base.cmd` trains F2+IMP as well, so base and imperative runs
+would both train on the 900 sentences; the F2 arm at that state needs `--source imperative:0` on a direct `train` command, which
+the frozen runners do not add. No frozen file was edited for this.
 
 **Decision: the rule selects F2+IMP** (the arm F2 with the `imperative` source at weight 1). Both IMP arms pass every guard, so
 Q = {F2+IMP, ALL+IMP}; the lowest primary is F2+IMP (179.0); ALL+IMP (179.5) is inside the 10% window (<= 196.9); the candidate is

@@ -128,10 +128,15 @@ starts `dotnet` at normal priority; `imperative-data/runner-imp.cmd` does the sa
 seed equals the shipped weights, the imperative runs trained on exactly 900 more sentences, every run scored the frozen development
 files), prints the tables and the guards (size 1.5 x F2) and applies the selection rule; it takes only `welch_diff` from
 `analyze_arms.py` and checks its own logic on synthetic runs with `--selftest`. The runners and the script are frozen by the hashes
-in the run log. Arm F2 is defined as the configuration in which the source `imperative` has weight 0 in `training.json`; with a
-`training.json` where the source has weight 1 (the shipped one), the base runner trains the arm F2+IMP and the acceptance test
-"F2 equals the shipped weights" does not hold. The registration, the results and the decision are in `RUN-LOG.md` ("Imperative
-training data"); the provenance of the data, including the refusals and retries of one labeler, is in `data/imperative/README.md`.
+in the run log. The runners, the driver and the analysis encode the **pre-registered state**, in which `training.json` carries the
+source `imperative` at weight 0: there the base runner trains the arm F2 (the runner passes `train` unchanged, so the weight in
+`training.json` decides) and the imperative runner trains F2+IMP (`--source imperative:1`). **To reproduce the published comparison,
+check out the pre-registration commit `ca0c2d4`** (its `training.json` is the registered one, and the analysis script checks its
+hash). At the adopted state (the current `training.json`, weight 1) the base runner also trains F2+IMP, so base and imperative runs
+train on the same 900 sentences, the comparison is no longer an F2 against F2+IMP comparison, and the acceptance test "F2 equals the
+shipped weights" does not hold. To train the F2 arm at the adopted state, add `--source imperative:0` to a direct `train` command
+(the frozen runners do not add it). The registration, the results and the decision are in `RUN-LOG.md` ("Imperative training
+data"); the provenance of the data, including the refusals and retries of one labeler, is in `data/imperative/README.md`.
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp -Arms F2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd
