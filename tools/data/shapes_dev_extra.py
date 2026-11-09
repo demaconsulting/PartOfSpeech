@@ -41,6 +41,14 @@ The three shapes (tranche ids `compound-head`, `headings`, `named-state`; files 
       (`Washington`-like names); gold PROPN; at most 2 per lemma. Candidate budgets 400 per target kind and 60 controls, at most 4 per lemma, at most 20 per
       document. The built set takes at most 4 per lemma and 12 per document over both target kinds. Quota gate: noun targets floor 40 and cap 50,
       imperative targets floor 40 and cap 50, controls floor 12 and cap 20. The file carries `# kind = noun | imperative | proper` per item.
+      Amendment 1 (written after the main round was decided and before any label of the round below existed): the main round kept 25 imperative
+      targets, below the floor of 40 (366 of 400 imperative frames were read by both labelers as compound nouns: `Check Fluid Level`). A top-up round
+      `h2` (`candidates --tranche headings --round h2`, folder W/rounds/headings-h2, candidate ids `hd-h2-cNNNNN`) therefore labels more imperative
+      frames under the same rule, from the units that are not candidates of the main round, with one widening of the frame (`heading_hits(verb_only=True)`): the
+      first word may also be a base form that the lexicon lists as a verb and not as a noun, proper noun, adjective or auxiliary (`Remove the Cover`), because
+      the pool of noun and verb words is nearly used up. Only `heading-imperative` candidates are written (budget 400, at most 4 per lemma and 20 per document).
+      Targets of both rounds count together at the build (4 per lemma, 12 per document, cap 50). The kept targets of the two kinds of first word are counted
+      separately in the README. No other tranche has a top-up round.
 
   n-named-state (class Noun). A capitalized or ALL-CAPS state, position or setting name after a preposition, for example a switch set to a
       position or a mechanism moved to a named position (`set to OFF`, `moved to STANDBY`). Frame (`named_state_hit`): a single token of 2 to 12
@@ -337,14 +345,16 @@ def named_state_hit(tokens, lex):
     return None
 
 
-def heading_hits(tokens, lex):
+def heading_hits(tokens, lex, verb_only=False):
     """[(candidate shape, index, strength)] of a heading: `heading-noun`, `heading-imperative` (at most one each) and `heading-proper`.
 
     heading-noun        a non-initial token that is capitalized (a capital and lower-case letters only), whose lower-case spelling the
                         lexicon lists as NOUN and VERB (no function word), and that ends its noun phrase: the next token is the end, a
                         mark, a preposition or a conjunction (so a following capitalized word does not continue it as a name)
     heading-imperative  token 0, capitalized, listed NOUN and VERB, its own base form (`base_form_of`), and token 1 a determiner, an
-                        object pronoun, a following adverb or a particle (strength 0) or a capitalized word that can be a noun (strength 1)
+                        object pronoun, a following adverb or a particle (strength 0) or a capitalized word that can be a noun (strength 1);
+                        with `verb_only` (the amended round `h2`, see the module docstring) a word that the lexicon lists as a verb and not as
+                        a noun, a proper noun, an adjective or an auxiliary counts as well
     heading-proper      a non-initial capitalized token whose lower-case spelling the lexicon lists as a proper noun only (a name)"""
     hits = []
     n = len(tokens)
@@ -355,7 +365,9 @@ def heading_hits(tokens, lex):
         nxt = tokens[i + 1] if i + 1 < n else None
         nlow = nxt.lower() if nxt is not None else ""
         if i == 0:
-            if (nxt is not None and shapes_dev.is_target_word(lex, low) and low not in shapes_dev.FUNCTION_WORDS
+            tags = lex.get(low, frozenset())
+            verb_word = verb_only and "VERB" in tags and not tags & {"NOUN", "PROPN", "ADJ", "AUX"} and low not in HEADING_FUNCTION_WORDS
+            if (nxt is not None and (shapes_dev.is_target_word(lex, low) or verb_word) and low not in shapes_dev.FUNCTION_WORDS
                     and shapes_dev.base_form_of(token, lex) == low and not any(h[0] == "heading-imperative" for h in hits)):
                 if (nlow in shapes_dev.DETERMINERS or nlow in shapes_dev.OBJECT_PRONOUNS or nlow in shapes_dev.FOLLOWING_ADVERBS
                         or nlow in ("up", "down", "out", "off", "back", "away")):
@@ -502,10 +514,13 @@ def _cap_by_lemma(ranked, cap, limit, extra_cap=None):
     return kept
 
 
-def candidate_rows(work, data_dir, tranche, hmm=None, seed=SEED, include_ud=True, extra_tables=(), budget=None, scans=None):
+def candidate_rows(work, data_dir, tranche, hmm=None, seed=SEED, include_ud=True, extra_tables=(), budget=None, scans=None, round_name=None,
+                   exclude_keys=frozenset()):
     """(rows, report lines, stats): the candidates of one tranche (see the module docstring for the pre-registered rule).
 
-    `hmm` is the HmmTable of the pinned W/hmm.tsv (compound-head only: the contested band of the WordSense Basic classifier)."""
+    `hmm` is the HmmTable of the pinned W/hmm.tsv (compound-head only: the contested band of the WordSense Basic classifier).
+    `round_name` is the top-up round `h2` of the headings tranche (amendment 1 of the module docstring): only `heading-imperative` candidates,
+    with the `verb_only` frame, from the units that are not in `exclude_keys` (the sentence keys of the main round's candidates)."""
     lex = shapes_dev.lexicon_of(data_dir)
     unit = "heading" if tranche == "headings" else "sentence"
     scan = scans if scans is not None else scan_units(work, data_dir, unit, extra_tables, include_ud, lex=lex)
@@ -514,6 +529,8 @@ def candidate_rows(work, data_dir, tranche, hmm=None, seed=SEED, include_ud=True
     stats = collections.Counter()
     for source_id, number, text, tokens in scan.units:
         key = shapes_dev.sent_key_of(text)
+        if key in exclude_keys:
+            continue
         base = dict(role="target", origin="real", source_id=source_id, line=number, text=text, tokens=tokens)
         if tranche == "compound-head":
             i = compound_ambiguous_hit(tokens, lex)
@@ -537,7 +554,9 @@ def candidate_rows(work, data_dir, tranche, hmm=None, seed=SEED, include_ud=True
             shape_pool["n-named-state"].append(
                 (shapes_dev.rank_of(seed, tranche, key), dict(base, shape="n-named-state", target=i, lemma=tokens[i].lower())))
         else:
-            for shape, i, strength in heading_hits(tokens, lex):
+            for shape, i, strength in heading_hits(tokens, lex, verb_only=bool(round_name)):
+                if round_name and shape != "heading-imperative":
+                    continue
                 stats["frame-" + shape] += 1
                 row = dict(base, shape=shape, role=HEADING_ROLE[shape], target=i, lemma=shapes_dev.lemma_of(tokens[i], lex))
                 shape_pool[shape].append(((strength, shapes_dev.rank_of(seed, tranche, shape, key)), row))
@@ -568,15 +587,16 @@ def candidate_rows(work, data_dir, tranche, hmm=None, seed=SEED, include_ud=True
         rows += _cap_by_lemma(sorted(pool, key=lambda item: item[0]), CONTROL_LEMMA_CAP, CONTROL_POOL)
     else:
         limit = budget if budget is not None else HEADING_BUDGET
-        for shape in ("heading-noun", "heading-imperative"):
+        for shape in (("heading-imperative",) if round_name else ("heading-noun", "heading-imperative")):
             rows += _cap_by_lemma(sorted(shape_pool[shape], key=lambda item: item[0]), LEMMA_CAP, limit,
                                   ("source_id", HEADING_DOCUMENT_CAP_CANDIDATES))
-        rows += _cap_by_lemma(sorted(shape_pool["heading-proper"], key=lambda item: item[0]), CONTROL_LEMMA_CAP, HEADING_CONTROL_POOL,
-                              ("source_id", HEADING_DOCUMENT_CAP_CANDIDATES))
+        if not round_name:
+            rows += _cap_by_lemma(sorted(shape_pool["heading-proper"], key=lambda item: item[0]), CONTROL_LEMMA_CAP, HEADING_CONTROL_POOL,
+                                  ("source_id", HEADING_DOCUMENT_CAP_CANDIDATES))
     order = {shape: n for n, shape in enumerate(CANDIDATE_SHAPES[tranche])}
     rows.sort(key=lambda r: (order[r["shape"]], r["role"] != "target", shapes_dev.rank_of(seed, "order", tranche, shapes_dev.sent_key_of(r["text"]))))
     for number, row in enumerate(rows, 1):
-        row["cand_id"] = "%sc%05d" % (CAND_PREFIX[tranche], number)
+        row["cand_id"] = "%s%sc%05d" % (CAND_PREFIX[tranche], (round_name + "-") if round_name else "", number)
     pools = {shape: len(items) for shape, items in shape_pool.items()}
     report = candidate_report(tranche, rows, scan, stats, pools)
     return rows, report, dict(stats=stats, pools=pools, scan=scan)
@@ -698,24 +718,45 @@ def _command_preflight(args):
 def _command_candidates(args):
     work = adjudicate.Work(args.work)
     tranche = args.tranche
+    if args.round and tranche != "headings":
+        raise ValueError("only the headings tranche has a top-up round")
     hmm = _hmm_for(args, work, tranche == "compound-head")
-    rows, report, info = candidate_rows(work, args.data_dir, tranche, hmm, args.seed, not args.no_ud, args.extra_table or (), args.budget)
-    round_work = shapes_dev.RoundWork(args.work, tranche)
+    exclude = frozenset()
+    if args.round:
+        exclude = frozenset(c["sent_key"] for c in shapes_dev.read_candidates(shapes_dev.RoundWork(args.work, tranche)))
+    rows, report, info = candidate_rows(work, args.data_dir, tranche, hmm, args.seed, not args.no_ud, args.extra_table or (), args.budget,
+                                        round_name=args.round, exclude_keys=exclude)
+    name = round_folder(tranche, args.round)
+    round_work = shapes_dev.RoundWork(args.work, name)
     os.makedirs(round_work.private, exist_ok=True)
     common.write_text(round_work.private_file("candidates-report.md"), report)
     shapes_dev.write_candidates(round_work, rows)
     print("\n".join(report))
-    print("%d candidates written to rounds/%s/candidates.tsv" % (len(rows), tranche))
+    print("%d candidates written to rounds/%s/candidates.tsv" % (len(rows), name))
     return 0
 
 
 # ---------------------------------------------------------------- selection and build
 
+def round_folder(tranche, round_name=None):
+    """The folder name under W/rounds of a tranche (`headings`) or of its top-up round (`headings-h2`)."""
+    return tranche if not round_name else "%s-%s" % (tranche, round_name)
+
+
 def read_round(work, tranche, data_dir=None):
-    """(items, rows, candidates {cand_id: dict}) of the decided round of a tranche (shapes_dev.read_decided over W/rounds/<tranche>)."""
-    round_work = shapes_dev.RoundWork(work.root if not hasattr(work, "base") else work.base, tranche)
-    items, rows = shapes_dev.read_decided(round_work, data_dir)
-    candidates = {c["cand_id"]: c for c in shapes_dev.read_candidates(round_work)}
+    """(items, rows, candidates {cand_id: dict}) of the decided rounds of a tranche: W/rounds/<tranche> and, when it exists, the top-up round
+    W/rounds/<tranche>-h2 (shapes_dev.read_decided over each; a candidate id is in one round only)."""
+    base = work.root if not hasattr(work, "base") else work.base
+    items, rows, candidates = [], {}, {}
+    for name in (tranche, round_folder(tranche, "h2")):
+        round_work = shapes_dev.RoundWork(base, name)
+        if name != tranche and not os.path.exists(round_work.private_file("decided.tsv")):
+            continue
+        part_items, part_rows = shapes_dev.read_decided(round_work, data_dir)
+        items += part_items
+        for key, tagged in part_rows.items():
+            rows.setdefault(key, tagged)
+        candidates.update({c["cand_id"]: c for c in shapes_dev.read_candidates(round_work)})
     return items, rows, candidates
 
 
@@ -1068,6 +1109,7 @@ def main(argv=None):
     p.set_defaults(func=_command_preflight)
     p = sub.add_parser("candidates", help="write W/rounds/<tranche>/candidates.tsv")
     p.add_argument("--tranche", required=True, choices=TRANCHES)
+    p.add_argument("--round", choices=("h2",), help="the top-up round h2 of the headings tranche (amendment 1)")
     p.add_argument("--extra-table", action="append")
     p.add_argument("--budget", type=int)
     p.add_argument("--hmm-sha256")

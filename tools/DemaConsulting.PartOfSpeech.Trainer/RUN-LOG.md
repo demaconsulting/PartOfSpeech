@@ -3995,7 +3995,11 @@ Rule (`python tools/data/shapes_dev_extra.py`):
 2. **`compound-head`:** the complement frame of `n-compound-head`; the contested band 0.10 <= q < 0.97 of the Noun mass of the Basic classifier, q ascending, at most 4 per lemma,
    600 candidates; controls (the same lemma as a verb) at most 2 per lemma, 50 candidates, no band; `-ing` heads at most 25% of the built targets.
 3. **`headings`:** frames by position and lexicon only (noun and imperative targets, `proper` controls), no band; 400 candidates per kind, at most 4 per lemma and 20 per document;
-   60 controls.
+   60 controls. **Amendment 1** (written after the main round was decided and before any label of the round below existed): the main round kept 25 imperative targets,
+   below the floor of 40 (366 of 400 imperative frames were read by both labelers as compound nouns). A top-up round `h2` labels more imperative frames under the same
+   rule, from the units that are not candidates of the main round, with one widening of the frame: the first word may also be a base form that the lexicon lists as a verb
+   and not as a noun, proper noun, adjective or auxiliary (`Remove the Cover`); budget 400, at most 4 per lemma and 20 per document; the targets of both rounds count
+   together at the build.
 4. **`named-state`:** frames by position, a cue word and the lexicon only, no band (the pool is thin); the seeded order, at most 4 per lemma; 50 controls.
 5. **Gold:** two blind labelers (`claude-opus-5.5`, `gpt-6.1-sol`); a target disagreement and a class mismatch (exact tag for `headings`) drop the item; frame rules after labeling; no label is edited by hand.
 6. **Quota gate** (floor and cap): `compound-head` 80 and 100 (controls 15 and 20), `headings` 40 and 50 per target kind (controls 12 and 20), `named-state` 40 and 100 (controls 12 and 20);

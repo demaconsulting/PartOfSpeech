@@ -115,6 +115,16 @@ class HeadingFrames(unittest.TestCase):
     def test_imperative_needs_the_base_form(self):
         self.assertEqual([], [h for h in self.kinds("Testing the Valve") if h[0] == "heading-imperative"])
 
+    def test_verb_only_widening_is_for_the_top_up_round_only(self):
+        tk = tokens("Remove the Cover")
+        self.assertEqual([], [h for h in sx.heading_hits(tk, LEX) if h[0] == "heading-imperative"])
+        self.assertEqual([("heading-imperative", 0, 0)], [h for h in sx.heading_hits(tk, LEX, verb_only=True) if h[0] == "heading-imperative"])
+        self.assertEqual([], [h for h in sx.heading_hits(tokens("Closed the Valve"), LEX, verb_only=True) if h[0] == "heading-imperative"])   # an adjective too
+
+    def test_round_folder_names(self):
+        self.assertEqual("headings", sx.round_folder("headings"))
+        self.assertEqual("headings-h2", sx.round_folder("headings", "h2"))
+
 
 class HeadingFilter(unittest.TestCase):
     def reason(self, text):

@@ -465,7 +465,8 @@ word (position and lexicon only; the capitalization is the stress, so there is n
   that ends its noun phrase (the next token is the end, a mark, a preposition or a conjunction), as `Check` in `Engine Oil Check`;
   a common noun that is tagged PROPN is wrong for this shape;
 - **imperative** (target, gold VERB): token 0, capitalized, listed as noun and verb, in its base form, followed by a determiner, an
-  object pronoun, an adverb or particle, or a capitalized noun-capable word (`Remove the Cover`, `Check Fluid Level`);
+  object pronoun, an adverb or particle, or a capitalized noun-capable word (`Remove the Cover`, `Check Fluid Level`); the top-up round
+  (see "The Rule", item 3) also takes a base form that the lexicon lists as a verb only;
 - **proper** (control, gold PROPN): a non-initial capitalized token whose lower-case spelling the lexicon lists as a proper noun only.
 
 ### The Shape of `named-state`
@@ -513,7 +514,11 @@ The pool sizes before the caps (counts only; no label, no model): 8,009 `compoun
    order q ascending, ties by the seeded rank), at most 4 per lemma, 600 candidates. Controls: the same lemma as a verb after a modal or `to`, or as the first word of
    an instruction; no band; at most 2 per lemma; 50 candidates.
 3. **`headings`.** The frames above; 400 candidates per target kind, at most 4 per lemma and 20 per document, in the order strong imperative frames first, then the seeded rank;
-   60 `proper` controls, at most 2 per lemma.
+   60 `proper` controls, at most 2 per lemma. **Amendment 1** (written after the main round was decided and before any label of the round below existed): the main round
+   kept 25 imperative targets, below the floor of 40 (366 of 400 imperative frames were read by both labelers as compound nouns). A top-up round `h2` labels more imperative
+   frames under the same rule, from the units that are not candidates of the main round, with one widening of the frame: the first word may also be a base form that the lexicon
+   lists as a verb and not as a noun, proper noun, adjective or auxiliary (`Remove the Cover`); budget 400, at most 4 per lemma and 20 per document; the targets of both rounds
+   count together at the build.
 4. **`named-state`.** Every frame hit in the seeded order (the pool is below the 500 budget), at most 4 per lemma. Controls: 50 candidates, at most 2 per lemma.
 5. **Gold.** Two blind labelers (`claude-opus-5.5`, whose tag breaks ties for tokens other than the judged word, and `gpt-6.1-sol`) tag every token of every unit and see only an
    opaque id, an index and the token. A target disagreement drops the item; so does an agreed tag other than the gold of the kind (the exact tag for `headings`, the class for the
