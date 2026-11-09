@@ -274,8 +274,9 @@ Releases are managed by project maintainers. The process includes:
 1. Version bump in project files
 2. Tag the release in Git
 3. Build and test across all supported platforms
-4. Publish NuGet package
-5. Create GitHub release with artifacts and release notes
+4. Create GitHub release with artifacts and release notes
+5. Publish NuGet package using NuGet Trusted Publishing: the release workflow runs in the `release` environment and
+   exchanges its GitHub OIDC token for a short-lived nuget.org API key, so no long-lived API key is stored
 
 ## Getting Help
 
