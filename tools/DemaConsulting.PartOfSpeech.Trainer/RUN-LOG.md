@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite -->
 
 # Trainer Run Log
 
@@ -3215,6 +3215,752 @@ amendment 1):
 - **No document group and no fold assignment changes** (0 of 9,576 documents change group, 0 of 48,790 sentences change fold,
   and the grouping of the library equals the independent computation). The jackknife preview tags, the trained weights and all
   results of the experiment are therefore identical with the corrected key, so nothing was re-run.
+
+## Imperative training data: pre-registration
+
+This section is written and committed **before any model of this experiment is trained or evaluated**. No `train --output`, no
+`eval-arm` and no other run has been made for any arm below: the only trainer command run since the data were registered is
+`train --check` (exit 0, image `ec3f090e...`, which shows that the weight-0 entry leaves the shipped model unchanged). The git
+history shows the order: the builder and the data rule (`100e747`, committed 2026-11-08 15:29 -0500, **before any label of the
+source existed**), the data and their registration with weight 0 (`3a703f5`, 17:32 -0500), this commit (the experiment design, the
+analysis script and the two runners), then the arm runs, then a results section. The SHA of this commit is recorded by the
+commit that follows it (a commit cannot contain its own SHA). The code base of the experiment is `main` at `5f9a9f0` plus those two
+commits; no source file of the trainer or the library changed in them (only `training.json`, the trainer README, data, tools of
+`tools/data`, tests and documents).
+
+### Imperative data: goal
+
+Test whether a targeted training source of 900 imperative-initial sentences (the source `imperative`, `data/imperative/`) lowers the
+harmful noun-verb errors of the tagger on the hard tranche of the shapes development set without costing the guarded measures,
+size or speed. Motive: **scarcity** (the imperative-initial frame is 15.8 per 1,000 sentences of the training mix and 55.2 per 1,000
+sentences of instructional federal text, a factor of 3.5; the count report `shape-count/REPORT.md` is kept outside the repository and
+its numbers are listed here) and **weakness** (the hard `v-imperative-initial` shape has 51.6% target accuracy at F2, the five-seed
+mean of the context-feature experiment, the weakest shape of the tranche). Nothing is adopted unless the rule below selects it.
+
+### The data (frozen)
+
+`data/imperative/imperative.tsv`: 900 sentences, 11,946 tokens, 351 distinct lemmas of the first word, 122 documents of US federal
+instructional text (army 69 documents / 643 sentences, USDA 36 / 166, navy 12 / 68, Forest Service 3 / 11, Bureau of Mines 1 / 7,
+Public Health Service 1 / 5; at most 6 sentences per lemma, at most 30 per document). Every sentence starts with an imperative verb
+in its base form (token 0 is VERB in every sentence); every token has a tag on which two blind model labelers (`claude-opus-5.5` and
+`gpt-6.1-sol`) agree; no human reviewed a label. The rule is the docstring of `tools/data/imperative_data.py` at `100e747` (a later commit changed only the wording of the source
+families in the docstring and made the fix-tier lint of `build` take its resources from the correctable corpora only, as
+`check_conventions.py` does; the output was verified byte-identical).
+
+| Fact | Value |
+| --- | --- |
+| Candidates / kept by the decision / in the file | 2,300 / 1,595 / 900 (693 class mismatch and 12 target disagreement dropped; 143 for a disputed token, 1 fix-tier violation, caps 58 + 131 + 362) |
+| Hand check (model review by `claude-sonnet-5.5`, seed 20261110, one draw) | target token 60/60 = 100.0% (gate 95%); whole sentence 59/60; token precision 99.87%; leniency controls accepted 0 of 4 |
+| Leakage | 0 document overlaps, 0 exact sentence overlaps and 0 near duplicates against every evaluation set (`check_leakage.py`, `leakage-report.tsv`) |
+| Lexicon | not rebuilt (`lexicon/lexicon.tsv` unchanged); 97.86% of the word tokens and 94.46% of the (spelling, tag) pairs are listed |
+| Configuration | `training.json` has the source `imperative` with `"weight": 0`; `train --check` exit 0, `imageSha256` unchanged |
+
+### Imperative data: arms and runs
+
+| Arm | Configuration | Driver arm | Runner |
+| --- | --- | --- | --- |
+| **F2** | the shipped configuration: feature group `clauseCues`, the current training mix (open x2, MASC, silver >= 80) | `F2` | `runner-base.cmd` |
+| **F2+IMP** | F2 plus the `imperative` source at weight 1 | `F2` | `runner-imp.cmd` |
+| **ALL+IMP** | all four feature groups plus the `imperative` source at weight 1 | `ALL` | `runner-imp.cmd` |
+| ALL (reference, reported, **not gated, never selected**) | all four feature groups, current mix (the ALL arm of the context-feature experiment, re-run on this code base) | `ALL` | `runner-base.cmd` |
+
+Seeds: **20260101, 11, 12, 13, 14** (the seeds and the order of `context-features/arms.json`), five runs per arm: 15 runs for the
+three arms, 20 with the reference arm. Every other setting is the shipped `training.json`; the temperature is refit on open dev
+for every run (`--calibrate`); `previewFolds` is 5 (the `ALL` arms train the jackknife of `rightPreview`). The mechanism is the
+frozen harness `context-features/run_arms.ps1`, unedited, with its `-Arms` and `-Runner` options, one folder per arm (the folders lie
+on C: outside the repository), one invocation at a time, in this order:
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2     -Arms F2  -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp  -Arms F2  -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\allimp -Arms ALL -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\all-ref -Arms ALL -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+```
+
+The harness takes the runner as the command that replaces `dotnet`, so the **only** difference between a base and an imperative run
+is the option `--source imperative:1`, which `runner-imp.cmd` appends to the `train` command (the driver calls the runner as
+`<runner> <trainer.dll> train ...`; the runner tests its second argument; `build` and `eval-arm` pass through unchanged). The driver
+trains with `train --seed S --features G [--preview-folds 5] --calibrate --output FILE [--source imperative:1]`, then scores the file
+with the dev-only command `eval-arm`; it is resumable (a run is complete when its JSON exists), requires at least 6 GB free on C:
+and uses at most 8 threads. A run that fails without a result is repeated; no run is repeated or replaced because of its result,
+and no arm is dropped. The reference arm is run last and does not influence the rule.
+
+**Deviation record (Normal priority).** The frozen driver starts `dotnet` at BelowNormal priority, which received almost no CPU
+on this machine in the earlier experiment (other sessions keep its cores saturated). As in that experiment, the runners start
+`dotnet` at Normal priority (`start "" /normal /wait /b dotnet %*`), which the project owner allowed; it changes the speed of the
+runs and nothing else (the driver script is unchanged; the runners propagate the exit code of `dotnet`, which was tested with a
+failing command). Consequence: the training times and the single-thread throughput are measured on a shared, loaded machine and
+are not comparable between arms or with earlier records; the throughput guard is an absolute floor far below the speeds recorded
+earlier (315k to 894k tokens per second), and the `ALL` arms are slower than `F2` by design.
+
+### Why a new analysis script
+
+The frozen `context-features/analyze_arms.py` cannot judge these arms: it requires a baseline arm without feature groups, it
+hard-codes the arm set of `arms.json` and it hard-codes a size guard of 2 x BASE, whereas this experiment has the baseline F2 (one
+group), the arms F2+IMP and ALL+IMP, and a size guard of 1.5 x F2. The frozen script and its `arms.json` are **not** edited. The new,
+versioned `imperative-data/analyze_imperative.py` is part of this pre-registration (its SHA-256 is below, `--selftest` passes). Its only
+use of the frozen script is the function `welch_diff` (the Welch-Satterthwaite 95% interval), loaded from the frozen file by path
+after the file's SHA-256 has been checked; every other function is its own. The self-test checks the t quantile of the frozen
+function against published values, the Welch case by hand, the six guards at their boundaries and just beyond (including the size
+guard at exactly 1.5 x the F2 mean, 1.5 x + 1 byte and 1.6 x), the 10% window (an arm at exactly 1.10 x the lowest is inside,
+at 1.105 x it is outside), the preference of F2+IMP over ALL+IMP, the case that only ALL+IMP passes, the nothing-qualifies case, a
+qualifying candidate whose interval contains 0, the no-fallback case, the reference arm that never enters the rule, missing runs and
+a missing arm, each acceptance test failing when its condition is broken, and the paired bootstrap. A mutation check (size limit,
+window and significance test changed) made the self-test fail as intended.
+
+### Imperative data: metrics and the selection rule (fixed now; applied exactly as written; nothing is tuned afterwards)
+
+A harmful error is a swapped noun-verb class at confidence >= 0.45 on a noun-verb decision; rates are per 1,000 decisions (the
+definitions of E0 and of the shapes development set). All figures come from `analyze_imperative.py` over the five seeds of every
+arm; spreads are sample standard deviations.
+
+- **Primary metric:** the mean over the five seeds of the pooled harmful per 1k on the **hard tranche** of the shapes development
+  set (`shapes.hard.pooled.harmfulPer1k`; four shapes, 400 target items). Lower is better.
+- **Secondary metric (reported, not gated):** the hard `v-imperative-initial` target accuracy
+  (`shapes.hard.shapes.v-imperative-initial.targetAccuracy`).
+- **Guards** (arm against the **F2 five-seed mean**; all must hold): shapes-dev standard tranche harmful per 1k <= F2 + 5; open dev
+  harmful per 1k <= F2 + 1.5; UD-EWT dev harmful per 1k <= F2 + 1.5; UD-EWT dev accuracy >= F2 - 0.15 points; deflated weights file size
+  <= **1.5 x F2**; single-thread throughput >= 150,000 tokens per second (absolute; the median over the seeds of the runs' medians).
+- **Rule.** Q = the arms F2+IMP and ALL+IMP that pass every guard. If Q is empty, F2 stays. Otherwise m = the lowest primary in Q,
+  S = the arms of Q with primary <= 1.10 x m (within 10% relative), and the candidate is the arm of S with the fewest feature groups
+  (so F2+IMP is preferred over ALL+IMP; ties: the lowest primary). The candidate ships only if the Welch 95% interval (Welch-Satterthwaite
+  degrees of freedom) of (candidate - F2) on the primary lies **entirely below 0** (its upper bound is below 0); otherwise F2 stays and
+  nothing ships. **There is no fallback** to the other arm. The reference arm ALL is never in Q.
+- **Reported, not gated:** hard and standard target and control accuracy, open dev and gold v2 dev accuracy, NLL and ECE, temperature,
+  rows, raw bytes, training seconds, the per-shape breakdown of both tranches (target accuracy and harmful per 1k: the hard shapes
+  `n-compound-head`, `n-subject-initial`, `v-imperative-initial`, `v-after-modal` and the shapes of the standard tranche, so a shift of
+  harm from `n-subject-initial` to `v-imperative-initial` is visible), the Welch interval of every arm against F2 for the secondary
+  metric, and a paired bootstrap over the hard items of each candidate against F2 (2,000 resamples, seed 20261108, descriptive only).
+
+### Acceptance tests (run before the rule is applied; a failure stops without a selection)
+
+`analyze_imperative.py` runs them first and makes no selection (exit code 1, no `decision.json`) if one fails:
+
+1. **F2 seed 20260101 is the shipped model.** Its weights SHA-256 (the `weights.sha256` of its result file, and the `.bin` file of the
+   run when present) equals that of `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, and its figures equal those of the
+   shipped model: hard tranche 235.0 harmful per 1k (94 of 400), standard tranche 16.7 (10 of 600), open dev 100 harmful of 4,451
+   decisions, UD-EWT dev 91 of 4,570 (the development figures of the clause-cue adoption section).
+2. **The source was really added.** From the line `Training on N sentences (...), sources=...` of the `<run>.train.txt` of every run:
+   every run of F2+IMP and ALL+IMP trained on exactly **900 more** sentences than the F2 run of the same seed (900 = the sentences of
+   `imperative.tsv` at weight 1) and lists `imperative:1` among its sources; every run of F2 and of the reference arm trained on the same
+   number of sentences as the F2 run of its seed and lists no `imperative` source.
+3. **Same inputs.** The `inputs.*Sha256` fields of all runs agree and equal the frozen hashes of the five development files
+   (the table below).
+
+The analysis script also checks the SHA-256 of every frozen file below (with CRLF normalized to LF) and stops if one differs.
+
+### What happens on each outcome
+
+- **F2 stays** (Q is empty, or the candidate's interval is not entirely below 0). The data source stays committed with weight 0, and
+  the results section records the analysis tables unchanged, the decision "F2 stays" and the caveats. No weights change, no
+  `thresholds`, no `evaluate`, no README accuracy change; the run log states that no held-out command was run (the held-out sets
+  stay unread by this experiment).
+- **A candidate ships.** An adoption section is written in this log **before any held-out command**: `training.json` gets
+  `imperative` at weight 1 (and, for ALL+IMP, the four feature groups and the preview folds), with the steps of the clause-cue adoption
+  (`train --output <file outside the repository>`, `calibrate --update-config`, `train --update-config`, `train --check`, copy to
+  `weights.bin`; the new `weights.bin` must be byte-identical to the winning run at seed 20260101); then `thresholds` (development data
+  only), and **one** `evaluate` of the new model as a **disclosed fourth look** at sets already seen by this model family (a new
+  record, not an erratum; no second run; results reported as produced), with the documents, tables and drift tests updated.
+- **An acceptance test fails.** The experiment stops without a selection; the cause is investigated and recorded, and any change
+  to the protocol is an amendment written before the affected runs are repeated, never a choice made on a result.
+- **A run is missing** (a command failed without a result): it is repeated; the analysis refuses to select with a missing run.
+
+### Imperative data: limits stated in advance
+
+- The seeds measure training noise only; the interval over the 400 hard items (the bootstrap) is far wider, so a win is development
+  evidence of that kind. Two candidate arms are compared (less selection bias than the nine arms of the earlier experiment, but
+  some).
+- The hard tranche is a development set that this project has used for baselines and for the earlier selection; it is not an
+  independent test of this idea. The source was built from the frame of the `v-imperative-initial` shape, so the shape is the
+  direct target of the data.
+- ALL+IMP also adds the three other feature groups; only F2 against F2+IMP isolates the effect of the data, which is why the
+  reference arm ALL is run and reported.
+- The data keep only sentences whose first word both labelers read as a verb: the source gives no counter-example, so a model that
+  trains on it can lean toward the verb reading of an ambiguous first word (`n-subject-initial` is watched through the diagnostics
+  and, indirectly, through the standard-tranche guard).
+- The text is instructional federal text of another register and era (mostly scans of 1940 to 1969 manuals, 71% Army) than the
+  development sets; the labels are model-written without human review (known residual error about 0.1% of tokens in the model review).
+- Throughput and training time are measured on a loaded shared machine at Normal priority (the deviation record above).
+
+### Imperative data: held-out sets
+
+The held-out sets (open test, gold v2 test, shape probe, STE challenge set, UD-EWT test) are never used for selection and are not
+read by this experiment: the harness reads only the development files, and `eval-arm` has no path to a held-out file. A held-out
+command is run if and only if a candidate ships (above).
+
+### Imperative data: inputs frozen by this commit
+
+SHA-256 of the files as committed (line endings LF; the two `.cmd` files are checked out with CRLF by `.gitattributes` and are
+hashed after normalizing to LF) and of the data they read:
+
+| File | SHA-256 |
+| --- | --- |
+| `context-features/run_arms.ps1` (frozen driver, unchanged) | `26ba1c6ed281bdc86ac88522aaab76fd6490f10a753c5aa1dae96d83ff5995db` |
+| `context-features/arms.json` (frozen arms and seeds, unchanged) | `0aac43677f11b3cbfa37a020344b6276483edbf8af7eee840893a43520e9fad8` |
+| `context-features/analyze_arms.py` (frozen; imported for `welch_diff` only) | `3d52825384b440c5786e1b241fc6f814e4e47a63f155414e0d6450107d33e494` |
+| `imperative-data/analyze_imperative.py` (new, versioned) | `c8a0a553ecdb636b0e28dea80a59d88aa7928a0dfaf61539bdcbae142065e0e1` |
+| `imperative-data/runner-base.cmd` | `549a2c6ed8d1eaf00b30551fae14e546c51023dd79fe3a77810f39a1fe79ff3e` |
+| `imperative-data/runner-imp.cmd` | `c60a7eac3ba369406710f7737926ac743c16346b7a9edd8d98bd8fea08b05f4b` |
+| `data/imperative/imperative.tsv` (900 sentences) | `218246df0c4ce739e6631a066e5296194d6773e09fc849cd64c1eb93516185ad` |
+| `data/imperative/sources.tsv` (122 documents) | `46ed6556224f2adcd73da7f8c8b026597a3a72f85dc7f6f8284231f003699df5` |
+| `data/imperative/excluded-documents.tsv` | `e3a6f73dda9a089f9c04f99fd5b8d674b68cddf80c7aefc6e493394dd240bfe8` |
+| `data/imperative/dropped-sentences.tsv` | `ff7667dbee716ed01fe2182c4497e301f48006ac63a18b560d347aeb22f2fddf` |
+| `data/eval/shapes-dev/dev.tsv` (standard tranche) | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
+| `data/eval/shapes-dev/hard.tsv` (hard tranche) | `c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22` |
+| `data/open/dev.tsv` | `8caa822515cee179093f068ff4ea7fa62714830d4c50de696bd4403037fc05c7` |
+| `data/eval/gold-v2/dev.tsv` | `ffb2f3afd3460523656f5528a66094bad507982b15eb2b4a9341cdb78ff117f5` |
+| `tools/data/cache/ud-ewt/ud_dev.tsv` | `0fc0b4a371ef6d0437e01e396762cdb600d0d7ff0d725ead00ac9f3c41f82037` |
+| `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (the shipped model; image `ec3f090eb318abc1bcf4dc8a88e401567e606932142178277d3ec387e0aa40f3`) | `72cc28cf10c556a617e8edb49d92d96148ed023874cfe834557ea5c6911b9672` |
+| `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` (with the weight-0 entry) | `3fbdd3dad34b86a422a2be854c6b9174842160d42b47d7d3bfc2d854e452652b` |
+
+The data-side commits are `100e747cb0b31deff4f10d89b426001bf8c95f16` (builder, rule and tests, before any label) and
+`3a703f52ad978ca040fc21252b67d1180d3b5019` (data, checks, documents and the weight-0 registration). `analyze_imperative.py --selftest`
+passes. The trainer commit that produced each result is recorded in its JSON (`inputs.commit`, with the dirty flag), and the folders of
+the runs lie outside the repository, as in the earlier experiment; their files are not part of the review set.
+
+## Imperative training data: results
+
+Written after the 20 runs and the analysis of the pre-registration commit `ca0c2d431e9b167e7ef7208add28cf0169a2f445` (the tree
+was clean and HEAD was that commit when the runs started and when the analysis ran; every result file records
+`inputs.commit` = `ca0c2d4...` with `dirty` = false). Four arms, five seeds each (20260101, 11, 12, 13, 14), 20 runs; the commands
+were exactly those of the pre-registration (the frozen driver `run_arms.ps1` with `runner-base.cmd` or `runner-imp.cmd`, one
+invocation at a time, in the registered order F2, F2+IMP, ALL+IMP, ALL); no run was repeated, replaced or dropped (every run
+produced its result at the first attempt), and no frozen file was edited. The unchanged, frozen `analyze_imperative.py` was
+applied to the 20 result files with the reference arm, and the selection rule was applied mechanically. No held-out set was read
+and no held-out command (`evaluate`, `thresholds`, `train --update-config`) was run. The labeling disclosure of the data (the
+refusals and retries of the labeler `gpt-6.1-sol`, with the batches concerned) is in `data/imperative/README.md` ("Refusals of one
+labeler").
+
+**Reproduction note.** The frozen runners, `run_arms.ps1` and the analysis encode the pre-registered state, in which `training.json`
+carries `imperative` at weight 0: `runner-base.cmd` passes `train` unchanged, so it trained F2 and `runner-imp.cmd` (which appends
+`--source imperative:1`) trained F2+IMP. The published comparison is reproducible from the commands above only at the
+pre-registration commit `ca0c2d4` (the registered `training.json`, whose hash the analysis checks). At the adopted state
+(`training.json` with weight 1, the commits after the decision) `runner-base.cmd` trains F2+IMP as well, so base and imperative runs
+would both train on the 900 sentences; the F2 arm at that state needs `--source imperative:0` on a direct `train` command, which
+the frozen runners do not add. No frozen file was edited for this.
+
+**Decision: the rule selects F2+IMP** (the arm F2 with the `imperative` source at weight 1). Both IMP arms pass every guard, so
+Q = {F2+IMP, ALL+IMP}; the lowest primary is F2+IMP (179.0); ALL+IMP (179.5) is inside the 10% window (<= 196.9); the candidate is
+the arm with the fewest feature groups, F2+IMP; the Welch 95% interval of (F2+IMP - F2) on the primary is -55.00 [-69.09, -40.91]
+(df 6.55), entirely below 0. The adoption steps are not part of this section; they follow in an adoption section written before any
+held-out command.
+
+| File | SHA-256 |
+| --- | --- |
+| `report.md` (the analysis; 13,514 bytes) | `7a01287901eebc44468501a5900242d62c983dbec05e74431513e55acf88b6d3` |
+| `decision.json` (per-arm values, intervals, guards, decision) | `23e366491dbfd6fc9c0633893796b8fc018baca4c36d495e8fc4b3518d9f0dbf` |
+
+Both files lie outside the repository next to the run folders. The command was:
+
+```text
+python tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py --run F2=<runs>\f2 --run F2+IMP=<runs>\f2imp --run ALL+IMP=<runs>\allimp --reference ALL=<runs>\all-ref --out report.md --decision decision.json
+```
+
+### Acceptance tests (all passed; the analysis made a selection only after them)
+
+39 checks, 39 PASS: the SHA-256 of the six frozen files; (a) the F2 run at seed 20260101 has weights SHA-256
+`72cc28cf10c556a617e8edb49d92d96148ed023874cfe834557ea5c6911b9672`, equal to the shipped `weights.bin` (file and result field, byte
+identical), and the figures of the shipped model: hard tranche 235.0 harmful per 1k, standard 16.7, open dev 100 of 4,451, UD-EWT dev
+91 of 4,570; (b) every F2 and every reference-arm run trained on 60,780 sentences with the sources `open:2,masc:1,silver:1`, and every
+F2+IMP and ALL+IMP run on 61,680 sentences (exactly 900 more) with the sources `open:2,masc:1,silver:1,imperative:1`; (c) the five
+`inputs.*Sha256` fields agree in all 20 runs and equal the frozen hashes. The F2 arm therefore reproduces the shipped model at seed
+20260101, and the seed variation of the other seeds is the training noise.
+
+### Imperative results: shapes development set
+
+Values are mean ± sample sd over the five seeds.
+
+| arm | hard harmful per 1k (primary) | hard v-imperative-initial target acc % (secondary) | hard target acc % | hard control acc % | standard harmful per 1k | standard target acc % | standard control acc % |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F2 | 234.0 ± 11.3 | 51.6 ± 4.3 | 69.80 ± 1.39 | 98.00 ± 0.75 | 16.0 ± 3.5 | 97.23 ± 0.43 | 98.80 ± 0.45 |
+| F2+IMP | 179.0 ± 6.8 | 77.4 ± 3.0 | 76.50 ± 0.92 | 98.00 ± 0.75 | 13.3 ± 3.5 | 97.73 ± 0.47 | 99.00 ± 0.00 |
+| ALL+IMP | 179.5 ± 7.4 | 83.0 ± 1.2 | 77.10 ± 1.01 | 98.33 ± 0.00 | 15.0 ± 2.0 | 97.50 ± 0.12 | 99.00 ± 0.00 |
+| ALL (reference) | 221.0 ± 14.4 | 57.6 ± 4.3 | 71.35 ± 1.63 | 98.33 ± 0.00 | 13.0 ± 1.4 | 97.77 ± 0.19 | 99.00 ± 0.00 |
+
+### Imperative results: open dev and gold v2 dev
+
+| arm | open acc % | open ambiguous acc % | open harmful per 1k | open NLL | open ECE % | gold acc % | gold harmful per 1k | gold NLL | gold ECE % |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| F2 | 96.64 ± 0.05 | 95.98 ± 0.05 | 20.67 ± 1.02 | 0.1123 ± 0.0012 | 0.26 ± 0.02 | 94.98 ± 0.13 | 23.2 ± 2.1 | 0.2571 ± 0.0031 | 2.36 ± 0.09 |
+| F2+IMP | 96.67 ± 0.06 | 96.02 ± 0.08 | 20.09 ± 1.39 | 0.1117 ± 0.0005 | 0.25 ± 0.02 | 95.15 ± 0.10 | 22.3 ± 0.9 | 0.2546 ± 0.0045 | 2.23 ± 0.14 |
+| ALL+IMP | 96.83 ± 0.05 | 96.24 ± 0.08 | 19.55 ± 0.94 | 0.1078 ± 0.0004 | 0.24 ± 0.04 | 95.22 ± 0.11 | 20.3 ± 1.9 | 0.2563 ± 0.0023 | 2.26 ± 0.12 |
+| ALL (reference) | 96.77 ± 0.05 | 96.18 ± 0.06 | 19.19 ± 0.85 | 0.1088 ± 0.0008 | 0.29 ± 0.05 | 95.11 ± 0.14 | 21.3 ± 2.0 | 0.2549 ± 0.0021 | 2.26 ± 0.18 |
+
+### Imperative results: UD-EWT dev
+
+| arm | UD acc % | UD harmful per 1k |
+| --- | --- | --- |
+| F2 | 92.943 ± 0.059 | 19.91 ± 1.54 |
+| F2+IMP | 92.988 ± 0.026 | 20.74 ± 0.32 |
+| ALL+IMP | 93.077 ± 0.072 | 19.96 ± 0.78 |
+| ALL (reference) | 93.013 ± 0.086 | 19.65 ± 1.22 |
+
+### Imperative results: model, speed and training
+
+The training times and the throughput were measured on a shared machine at Normal priority (the deviation record of the
+pre-registration) and are not comparable between arms or with earlier records.
+
+| arm | temperature | rows | raw bytes | deflated bytes | tokens/s (1 thread) | train wall s |
+| --- | --- | --- | --- | --- | --- | --- |
+| F2 | 9.473 ± 0.091 | 120981 ± 221 | 1146923 ± 1964 | 517282 ± 696 | 772197 ± 41861 | 23.6 ± 1.0 |
+| F2+IMP | 9.392 ± 0.112 | 122214 ± 264 | 1158701 ± 2142 | 522272 ± 991 | 749742 ± 60155 | 24.2 ± 1.8 |
+| ALL+IMP | 12.608 ± 0.000 | 133991 ± 128 | 1317341 ± 1921 | 605679 ± 759 | 429935 ± 4335 | 104.0 ± 28.2 |
+| ALL (reference) | 12.663 ± 0.123 | 132396 ± 114 | 1302049 ± 1044 | 599190 ± 650 | 389661 ± 49616 | 133.7 ± 13.3 |
+
+### Hard tranche per shape (diagnostics, not gated)
+
+| hard: target accuracy % | n-compound-head | n-subject-initial | v-after-modal | v-imperative-initial |
+| --- | --- | --- | --- | --- |
+| F2 | 62.2 ± 2.9 | 78.8 ± 2.3 | 86.6 ± 1.5 | 51.6 ± 4.3 |
+| F2+IMP | 66.2 ± 2.2 | 75.6 ± 3.1 | 86.8 ± 1.3 | 77.4 ± 3.0 |
+| ALL+IMP | 67.0 ± 2.3 | 67.6 ± 1.1 | 90.8 ± 0.8 | 83.0 ± 1.2 |
+| ALL (reference) | 66.0 ± 5.4 | 72.6 ± 4.2 | 89.2 ± 1.9 | 57.6 ± 4.3 |
+
+| hard: harmful per 1k | n-compound-head | n-subject-initial | v-after-modal | v-imperative-initial |
+| --- | --- | --- | --- | --- |
+| F2 | 332.0 ± 27.7 | 114.0 ± 19.5 | 104.0 ± 11.4 | 386.0 ± 30.5 |
+| F2+IMP | 296.0 ± 13.4 | 136.0 ± 30.5 | 98.0 ± 14.8 | 186.0 ± 20.7 |
+| ALL+IMP | 284.0 ± 20.7 | 206.0 ± 11.4 | 78.0 ± 4.5 | 150.0 ± 14.1 |
+| ALL (reference) | 296.0 ± 51.8 | 170.0 ± 30.8 | 88.0 ± 19.2 | 330.0 ± 32.4 |
+
+### Standard tranche per shape (diagnostics, not gated)
+
+| standard: target accuracy % | n-compound-head | n-measure | n-subject-initial | v-after-modal | v-imperative-initial |
+| --- | --- | --- | --- | --- | --- |
+| F2 | 96.7 ± 0.6 | 98.7 ± 1.0 | 96.0 ± 0.7 | 98.7 ± 1.0 | 96.2 ± 1.3 |
+| F2+IMP | 96.8 ± 0.9 | 99.0 ± 1.1 | 95.5 ± 0.5 | 98.7 ± 0.7 | 98.7 ± 0.5 |
+| ALL+IMP | 96.5 ± 0.4 | 98.7 ± 0.5 | 93.8 ± 0.5 | 99.5 ± 0.5 | 99.0 ± 0.4 |
+| ALL (reference) | 96.7 ± 0.6 | 98.8 ± 0.7 | 96.2 ± 1.0 | 99.7 ± 0.5 | 97.5 ± 1.0 |
+
+| standard: harmful per 1k | n-compound-head | n-measure | n-subject-initial | v-after-modal | v-imperative-initial |
+| --- | --- | --- | --- | --- | --- |
+| F2 | 16.7 ± 5.9 | 1.7 ± 3.7 | 20.0 ± 4.6 | 13.3 ± 9.5 | 28.3 ± 9.5 |
+| F2+IMP | 15.0 ± 9.1 | 0.0 ± 0.0 | 26.7 ± 7.0 | 13.3 ± 7.5 | 11.7 ± 4.6 |
+| ALL+IMP | 18.3 ± 3.7 | 0.0 ± 0.0 | 41.7 ± 10.2 | 5.0 ± 4.6 | 10.0 ± 3.7 |
+| ALL (reference) | 18.3 ± 3.7 | 0.0 ± 0.0 | 23.3 ± 7.0 | 3.3 ± 4.6 | 20.0 ± 4.6 |
+
+### Welch 95% interval of (arm - F2)
+
+Difference of the means with the Welch-Satterthwaite t interval over the seeds (seeds measure training noise only).
+
+| arm | shapes.hard.pooled.harmfulPer1k | shapes.hard.shapes.v-imperative-initial.targetAccuracy | shapes.standard.pooled.harmfulPer1k | openDev.harmfulPer1k | udDev.harmfulPer1k | udDev.accuracy |
+| --- | --- | --- | --- | --- | --- | --- |
+| F2+IMP | -55.00 [-69.09, -40.91] | +25.80 [+20.31, +31.29] | -2.67 [-7.77, +2.43] | -0.58 [-2.39, +1.22] | +0.83 [-1.06, +2.72] | +0.05 [-0.03, +0.12] |
+| ALL+IMP | -54.50 [-68.78, -40.22] | +31.40 [+26.17, +36.63] | -1.00 [-5.31, +3.31] | -1.12 [-2.55, +0.31] | +0.04 [-1.85, +1.94] | +0.13 [+0.04, +0.23] |
+| ALL (reference) | -13.00 [-32.07, +6.07] | +6.00 [-0.28, +12.28] | -3.00 [-7.22, +1.22] | -1.48 [-2.86, -0.11] | -0.26 [-2.31, +1.78] | +0.07 [-0.04, +0.18] |
+
+### Guards against F2
+
+Delta guards use the mean over the seeds; the size guard is 1.5 x the F2 mean; the throughput guard uses the median of the seeds'
+medians. The reference arm is shown for information; it is never in Q.
+
+| arm | standard harmful per 1k <= F2 + 5 | open dev harmful per 1k <= F2 + 1.5 | UD-EWT dev harmful per 1k <= F2 + 1.5 | UD-EWT dev accuracy >= F2 - 0.15 | deflated bytes <= 1.5 x F2 | tokens/s >= 150,000 | all guards |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F2+IMP | PASS -2.67 | PASS -0.58 | PASS +0.83 | PASS +0.05 | PASS 1.010x | PASS 755888 | PASS |
+| ALL+IMP | PASS -1.00 | PASS -1.12 | PASS +0.04 | PASS +0.13 | PASS 1.171x | PASS 431875 | PASS |
+| ALL (reference) | PASS -3.00 | PASS -1.48 | PASS -0.26 | PASS +0.07 | PASS 1.158x | PASS 408856 | PASS |
+
+### Selection rule applied
+
+| arm | groups | primary | passes all guards | role |
+| --- | --- | --- | --- | --- |
+| F2 | 1 | 234.00 ± 11.26 | - | baseline |
+| F2+IMP | 1 | 179.00 ± 6.75 | yes | candidate |
+| ALL+IMP | 4 | 179.50 ± 7.37 | yes | candidate |
+| ALL (reference) | 4 | 221.00 ± 14.43 | yes | reference (not gated) |
+
+Q = {F2+IMP, ALL+IMP}; lowest primary in Q: F2+IMP (179.00); within 10% (primary <= 196.90): F2+IMP, ALL+IMP; candidate (fewest
+groups, then lowest primary): F2+IMP; Welch 95% interval of (F2+IMP - F2): -55.00 [-69.09, -40.91], df 6.55, p < 0.0001.
+**SHIP F2+IMP.**
+
+### Descriptive: paired item bootstrap on the hard tranche (not part of the rule)
+
+2,000 resamples of the 400 hard items, seed 20261108, items averaged over the seeds:
+
+- F2+IMP - F2 harmful per 1k: -55.00, 95% percentile interval [-78.50, -32.00].
+- ALL+IMP - F2 harmful per 1k: -54.50, 95% percentile interval [-84.00, -25.00].
+- ALL (reference) - F2 harmful per 1k: -13.00, 95% percentile interval [-33.00, +7.51].
+
+### Per-seed values (hard harmful per 1k / hard v-imperative-initial target accuracy % / hard n-subject-initial target accuracy %)
+
+| arm | 20260101 | 11 | 12 | 13 | 14 |
+| --- | --- | --- | --- | --- | --- |
+| F2 | 235.0 / 45 / 82 | 240.0 / 53 / 80 | 217.5 / 56 / 78 | 230.0 / 54 / 78 | 247.5 / 50 / 76 |
+| F2+IMP | 170.0 / 78 / 79 | 182.5 / 77 / 74 | 187.5 / 76 / 73 | 180.0 / 74 / 79 | 175.0 / 82 / 73 |
+| ALL+IMP | 190.0 / 82 / 67 | 172.5 / 85 / 68 | 172.5 / 83 / 69 | 182.5 / 82 / 68 | 180.0 / 83 / 66 |
+| ALL (reference) | 245.0 / 51 / 74 | 220.0 / 59 / 74 | 220.0 / 57 / 70 | 212.5 / 58 / 78 | 207.5 / 63 / 67 |
+
+Every F2+IMP seed (170.0 to 187.5) is below every F2 seed (217.5 to 247.5), and so is every ALL+IMP seed (172.5 to 190.0).
+
+### Run times
+
+Training wall seconds per run (including the jackknife and the calibration): F2 22.5 to 25.1 s (whole arm with evaluation 2 min 9 s);
+F2+IMP 23.0 to 27.4 s (2 min 15 s); ALL+IMP 64.5 to 134.3 s (8 min 54 s); ALL reference 120.4 to 150.0 s (11 min 23 s). The
+`eval-arm` of every run took 1.6 to 2.7 s.
+
+### Caveats (read with the limits stated in advance)
+
+- The seeds measure training noise only. The interval of the paired item bootstrap over the 400 hard items is wider
+  ([-78.5, -32.0] for F2+IMP) but also lies below 0. This is development evidence on a set that the project has used before, and the
+  source was built from the frame of the `v-imperative-initial` shape, which is the shape that gains (target accuracy 51.6% to
+  77.4%, harmful 386 to 186 per 1k); it is the direct target of the data, not an independent test of the idea.
+- The gain on the other three hard shapes is small or none: `n-compound-head` harm 332 to 296, `v-after-modal` 104 to 98, and
+  `n-subject-initial` target accuracy fell from 78.8 to 75.6 (harmful per 1k 114 to 136, within the seed spread). The data give
+  no counter-example, as stated in advance, and the effect is larger in ALL+IMP (n-subject-initial target accuracy 67.6%, harmful
+  206 per 1k; on the standard tranche 41.7 per 1k against 20.0 at F2), a shift of harm from `v-imperative-initial` to
+  `n-subject-initial` that the rule did not gate (it entered only through the standard-tranche guard, which every arm passes).
+  For F2+IMP the standard `n-subject-initial` harm is 26.7 per 1k against 20.0 (within about one seed sd).
+- Only F2 against F2+IMP isolates the effect of the data; the reference arm ALL (221.0, interval [-32.07, +6.07] against F2) shows
+  that the three other feature groups do not by themselves lower the primary below F2, so the gain of ALL+IMP is the gain of the data.
+- The labels are model-written without human review (model review: 59/60 sentences, token precision 99.87%); the text is
+  instructional federal text of another register and era than the development sets.
+- Throughput and training time were measured on a loaded shared machine at Normal priority.
+- The run folders, `report.md` and `decision.json` lie outside the repository; the figures above are copied unchanged from
+  `report.md` (the per-seed table is read from the 20 result files).
+- No held-out set was read; no weights, thresholds, `training.json` or documents were changed by this slice. The adoption (the
+  `imperative` source at weight 1 in `training.json`, `train`/`calibrate` with `--update-config`, `weights.bin`, `thresholds`
+  and the single held-out `evaluate`) is the next section and is written before any held-out command.
+
+## Imperative training data: adoption (plan written before the retraining and before any held-out command)
+
+The pre-registered rule selected **F2+IMP** (results commit `742258d46f8b15639d4a6cd2d613b9825f96baf1`), and the plan of the project
+owner is to ship it. This section is committed **before the retraining of the shipped model**: no `train --output`,
+`calibrate --update-config`, `train --update-config`, `thresholds` or `evaluate` has been run for it, and the held-out sets are not
+read. Git history shows the order: this plan, then the adoption commit (the weights, the configuration, the operating points and the
+re-pinned figures; development data only), then the deletion of the previous held-out record, the one `evaluate`, and the evaluation
+record. No hyperparameter, corpus, feature group or seed changes: the shipped seed 20260101 stays, and the model is the arm F2 of
+the experiment with one more training source.
+
+### The arm and the exact steps
+
+The adopted arm is **F2+IMP**: the F2 configuration (feature group `clauseCues`, the mix open x2, MASC, silver >= 80, 6 epochs, 19
+hash bits, prune 8, quantization scale 8, restriction `history`, predicted history, seed 20260101) plus the source `imperative`
+(`data/imperative/imperative.tsv`, 900 sentences) at **weight 1**. F2 features are unchanged. The steps, as in the clause-cue
+adoption, from a clean tree whose HEAD is the commit of this plan:
+
+1. In `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` set the weight of the source `imperative` from 0 to 1 (nothing else).
+2. `train --output <file outside the repository>` at the shipped seed (the trainer reads `training.json`).
+3. `calibrate --weights <file> --update-config` (refits the temperature on the open dev set and writes it to `training.json`).
+4. `train --update-config` (writes the image SHA-256 of the new model to `training.json`), then `train --check` (must exit 0).
+5. Copy the file to `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`.
+6. `thresholds` (development data only; recomputes `docs/evaluation/operating-points.json` and `confidence-thresholds.md`; it
+   refuses to write anything if the 0.45 row does not reproduce the frozen figures `FrozenOpenHarmful` and `FrozenGoldHarmful`;
+   if it refuses, the two constants are set to the figures it reports for the new model, with the reason recorded, as in the
+   clause-cue adoption, and it is run again).
+7. Re-pin the figures and tests that depend on the weights (size figures, the embedded-model tests, the documents that describe the
+   shipped model).
+
+One heavy process runs at a time, at most 8 threads. `evaluate` is **not** run in the adoption commit.
+
+### Byte-identity requirement (stated before the retraining)
+
+The new `weights.bin` must be **byte-identical to the weights of the F2+IMP run of seed 20260101 of the experiment**
+(`runs\f2imp\F2-s20260101.bin`, outside the repository). Its SHA-256 is
+`48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b`, its size 521,695 bytes deflated (1,157,499 bytes raw, 122,088 rows,
+image SHA-256 `6e1e4ade56aa277d79709c107000f10e99c6f4e55a097e872a9c38fa2e12e8d0`, per the run's training output). The model it
+replaces has SHA-256 `72cc28cf10c556a617e8edb49d92d96148ed023874cfe834557ea5c6911b9672` (517,210 bytes; image `ec3f090e...`).
+If the retrained file is **not** byte-identical, the adoption stops: nothing is committed except an account of the difference,
+the cause is investigated and recorded, and no figure of the experiment is claimed for the shipped model.
+
+### What stays the same and what will be written afterwards
+
+- The data, the labels, the experiment's decision and the experiment's tables are not changed by the adoption.
+- The seed-20260101 figures of the experiment (hard tranche 170.0 harmful per 1k, `v-imperative-initial` target accuracy 78%) are
+  the figures of the shipped model if and only if the byte identity holds.
+- The adoption commit adds the development figures of the shipped model, the `thresholds` result and the list of the re-pinned
+  figures to this section (development data only). The held-out evaluation is a **disclosed fourth look** at sets already seen by this
+  model family, run once, as a new record (not an erratum), reported as produced, and is the step that follows the adoption commit.
+
+### Adoption result (written by the adoption commit; development data only)
+
+The steps ran in the registered order from a clean tree at the commit of the plan above (`13e2b1a`), one process at a time at
+8 threads at most. The trainer commands wrote their output under the working folder outside the repository.
+
+- **`train --output <file>`** (seed 20260101; 61,680 sentences, sources `open:2,masc:1,silver:1,imperative:1`, 6,357,228 steps, 8.4 s):
+  image 1,157,499 bytes, 122,088 rows, 304,425 weights, image SHA-256 `6e1e4ade56aa277d79709c107000f10e99c6f4e55a097e872a9c38fa2e12e8d0`,
+  521,695 bytes deflated, file SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b`.
+- **`calibrate --weights <file> --update-config`**: best temperature on open dev **9.514** (NLL 0.11245, ECE 0.276%; gold v2 dev
+  NLL 0.2498, ECE 2.44%), the same value as before, so `training.json` kept its temperature.
+- **`train --update-config`** wrote `imageSha256` `6e1e4ade...e8d0` (it was `ec3f090e...`) and wrote `weights.bin` itself (the
+  trainer's default output is the embedded file, so the copy of the plan's step 5 is this write); **`train --check` exit 0**.
+- **Byte identity: confirmed.** `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` has SHA-256
+  `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` and 521,695 bytes, equal to the file written by
+  `train --output`, to the weights of the F2+IMP run of seed 20260101 of the experiment and to the `weights.sha256` of that run's
+  result file. The model it replaces had SHA-256 `72cc28cf10c556a617e8edb49d92d96148ed023874cfe834557ea5c6911b9672` (517,210 bytes).
+  The seed-20260101 figures of the experiment are therefore the figures of the shipped model.
+
+#### Imperative adoption: development figures of the shipped model (dev data only)
+
+Seed 20260101, scored by `eval-arm` through the real decoder (the figures of the experiment's run `F2-s20260101` of the arm F2+IMP,
+which is this model; the previous model is the F2 run of the same seed, which was the shipped model before this adoption). The shapes
+development set is a development set for this selection and not an independent test.
+
+| Measure | Previous model (F2) | Shipped model (F2+IMP) |
+| --- | --- | --- |
+| Hard tranche harmful per 1k (400 target items) | 235.0 (94) | 170.0 (68) |
+| Hard tranche target / control accuracy % | 69.50 / 98.33 | 77.25 / 98.33 |
+| Hard `v-imperative-initial` target accuracy %, harmful per 1k (100 target items) | 45.0, 430.0 | 78.0, 170.0 |
+| Hard `n-subject-initial` target accuracy %, harmful per 1k (100 target items) | 82.0, 90.0 | 79.0, 110.0 |
+| Standard tranche harmful per 1k (600 target items) | 16.7 (10) | 15.0 (9) |
+| Standard tranche target / control accuracy % | 96.83 / 99.00 | 97.83 / 99.00 |
+| Open dev accuracy % (ambiguous %) | 96.65 (95.98) | 96.57 (95.90) |
+| Open dev harmful per 1k (of 4,451 decisions) | 22.47 (100) | **20.44 (91)** |
+| Open dev NLL, ECE % | 0.1127, 0.24 | 0.1125, 0.28 |
+| Gold v2 dev accuracy % | 94.84 | 95.04 |
+| Gold v2 dev harmful per 1k (of 611 decisions) | 26.19 (16) | **22.91 (14)** |
+| Gold v2 dev NLL, ECE % | 0.2577, 2.38 | 0.2498, 2.44 |
+| UD-EWT dev agreement % (25,148 tokens) | 92.950 | 92.962 |
+| UD-EWT dev harmful per 1k (of 4,570 decisions) | 19.91 (91) | 20.57 (94) |
+| Temperature | 9.514 | 9.514 |
+| Rows, weights | 121,033, 301,571 | 122,088, 304,425 |
+| Raw, deflated bytes | 1,146,827; 517,210 | 1,157,499; 521,695 |
+
+Throughput was not measured again for the adoption: the experiment recorded 771,457 tokens per second for this model's run (one
+thread, a loaded shared machine; the five-seed median of the arm was 755,888), against the floor of 150,000. **What is worse
+(stated before the held-out evaluation).** (1) The shipped model is 4,485 bytes larger when deflated (+0.9%). (2) UD-EWT dev harmful
+errors are 3 higher (94 against 91; the five-seed difference of the experiment, +0.83 per 1k, has an interval that contains 0).
+(3) `n-subject-initial` is worse in the experiment (hard harmful per 1k 114 to 136 and standard 20.0 to 26.7 as five-seed means; at
+this seed the hard target accuracy is 79% against 82% and the harmful rate 110 against 90 per 1k): the source gives no counter-example, as the pre-registration said.
+(4) Open dev accuracy is 0.08 points lower at this seed (the five-seed means are 96.64 and 96.67). The gain is on the hard shapes of
+a development set that is the direct target of the data, so it is development evidence and not a held-out result.
+
+#### Imperative adoption: `thresholds` result (development data only; committed before the held-out run)
+
+`thresholds` (rule `nv-pooled-dev-v1`, grid, targets and floors unchanged) **refused to write** with the old constants
+(`At 0.45: harmful 91 (open dev), 14 (gold v2 dev), 105 (pooled); frozen figures 100, 16, 116`; nothing was written). The reason
+is that the model changed: the 0.45 row of the frozen figures is the development figure of the shipped model, and the new model's
+figures equal those of the experiment's `eval-arm` (open 91, gold 14). The two constants `FrozenOpenHarmful` and `FrozenGoldHarmful`
+of the trainer were set to the figures that `thresholds` reported (**91** and **14**; they were 100 and 16), the comment of each
+constant records the history, and the command was run again: the 0.45 row reproduced the figures and the command wrote
+`docs/evaluation/operating-points.json` and `docs/evaluation/confidence-thresholds.md`. The disclosure paragraph
+(`docs/evaluation/disclosure.md`) was revised for the **fourth look** (five models in all scored on the held-out sets) before the
+run that wrote the files, and the command was run a third time after that revision (the operating points are byte-identical to the
+second run; only the disclosure paragraph of the generated report changed).
+
+For the model image `6e1e4ade...`, temperature 9.514 and the dev files unchanged: **strict 0.95** (coverage 81.8% [80.4, 83.2], 1.9
+harmful per 1,000 answered [0.5, 3.8], 8 of 4,139) and **balanced 0.75** (coverage 94.1% [93.2, 94.9], 9.9 [6.7, 13.3], 47 of
+4,762). The previous model had strict 0.95 (coverage 81.3%, 3.2 per 1,000, 13 of 4,116) and balanced 0.75 (coverage 94.1%, 9.9, 47
+of 4,761): **the thresholds are unchanged** (0.95 and 0.75), so the guidance lines of the documents keep their thresholds, and only
+their development coverage and harmful figures changed. The pooled harmful count at 0.45 is 105 of 5,062 decisions (20.7 per 1,000;
+it was 116, 22.9).
+
+#### Pinned figures and documents re-pinned by the adoption commit
+
+The size figures (521,695 bytes compressed, 1,157,499 uncompressed, 122,088 rows, 304,425 weights; about 0.5 MB and 1.2 MB) in the
+user guide, the packed API reference (`NamespaceDoc.cs`), the trainer README, the design documents of the system, of
+`ModelStorage`, `PerceptronModel` and `ModelTrainer`, and the system verification document; the development figures of the
+shipped model in the "Selection of the Shipped Model" section of the `ModelTrainer` design (a row for the imperative source, open
+and gold development accuracy, pooled harmful rate, calibration error, step count); the development coverage and harmful figures of
+the two thresholds in the user guide and in the packed API reference; the weight of the source `imperative` (0 to 1) in
+`training.json`, in the configuration test (`ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical`: all four sources have a
+positive weight) and in every document that described it as "weight 0" (data READMEs, the trainer README, the design and
+verification documents of `ModelTrainer`, the requirements text of `PartOfSpeech-ModelTrainer-SourceWeights` and
+`PartOfSpeech-ModelTrainer-Configuration`); the third-party notice, the package license and the root README, which now name the
+imperative source among the corpora the weights were learned from (and the notice test, which expects "weight 1" and "were learned
+from it"). Nothing in the experiment's frozen files (`analyze_imperative.py`, the runners, the pre-registration, the results
+section) changed: the analysis script's acceptance test (a), which compares the F2 run with the shipped weights, holds only at the
+pre-registration commit, as the trainer README now says.
+
+#### Pending for the held-out step (not changed by the adoption commit)
+
+The committed held-out record (`docs/evaluation/test-results.json` and `.md`) is still the record of the previous model, and the
+README tables are still its figures. These tests and figures follow the one `evaluate` of the next step and are not edited by
+hand: `PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs` (the record names the previous image and selection hash),
+`DataGuard_CommittedReports_CarryCommittedDisclosureWhereGeneratorPutsIt` for `test-results.md` (it still carries the third-look
+paragraph; `confidence-thresholds.md` already carries the fourth-look one), the held-out figures of the two README tables, the
+held-out figures of the guidance in the user guide and in `NamespaceDoc.cs` (test coverage and harmful rate of the two points, the
+rate without a threshold, the interval, the gold v2 and probe sentences), the prose of `docs/evaluation/README.md` (the third-look
+statement, the previous-model comparison, every held-out figure) and the statement of `docs/design/part-of-speech.md` about the
+record.
+
+## Imperative training data: held-out look (plan written before the held-out command)
+
+The project owner authorized **exactly one** held-out `evaluate` for the shipped F2+IMP model, to be disclosed as a **further look**
+(the fourth look of the family at these sets; five models in all have been scored on them), as a **new record and not an erratum**.
+This section is committed **before** the command: no `evaluate` (not even `--preflight`) has been run for this model, and no held-out
+file has been read. The adoption section above is the state of the development evidence (HEAD `e969afa`).
+
+Plan (the procedure of the clause-cue held-out step, followed exactly):
+
+1. The committed previous record (`docs/evaluation/test-results.md` and `.json`, `operating-points.json`,
+   `confidence-thresholds.md`, `README.md`, `disclosure.md`, all as of `e969afa`; `test-results.*` is the record of the clause-cue
+   model, last written by commit `5f9a9f0`) is copied to a folder outside the repository for the comparison. It stays in git history.
+2. `test-results.json` and `.md` are deleted in a commit of their own (`evaluate` refuses to run while one exists).
+3. `evaluate --preflight` (scores nothing), then `evaluate --dump-dir <folder outside the repository>` **once** (at most 8
+   threads, the treebank from the git-ignored cache). If the command fails for an infrastructure reason before it produces a result,
+   the failure is reported precisely and nothing is retried to tune anything; **no second run is made after a result exists and
+   there is no re-roll**. The stop conditions that fired in the earlier records (gold v2 `to`/`not`, UD-EWT raw gold outside the
+   candidates, the shape probe's harmful errors) may fire again; they are reported, not tuned.
+4. The results are committed **as produced**, whatever they are, including any regression against the previous model. The previous
+   model is shown beside the new one from its committed record (it is not evaluated again). Between these two models every held-out
+   set has the same labels, so all five are fair comparisons; intervals are the 95% percentile bootstrap over documents of each
+   record, no paired interval is computed, so overlapping intervals are not a test.
+5. What is disclosed: `docs/evaluation/disclosure.md` (the fourth look; already revised in the adoption commit), the overview
+   `docs/evaluation/README.md` (status, procedure, comparison with the previous and earlier models), the README tables and the
+   guidance of the user guide and of the packed API reference (generated figures copied by tests-guarded rules), and the record
+   section that follows this one. Nothing is selected, tuned or reverted because of the result. The known weaker shape,
+   `n-subject-initial`, which the pre-registration and the adoption listed as worse on development data, is reported as it appears
+   in the shape-probe rows.
+
+## Imperative training data: held-out evaluation of the shipped F2+IMP model (disclosed fourth look; a new record, not an erratum)
+
+This is a **new** record for the shipped model. It does not correct or replace the earlier ones ("Outcome of the held-out run" and
+its errata, "Corpus cleanup C: held-out evaluation of the retrained model" for FULL, "Corpus cleanup C: held-out evaluation of the
+adopted NO-ING model" and "Context-feature experiment: held-out evaluation of the shipped clause-cue model"), which stay as written.
+Order (git history): the pre-registration, the results, the adoption plan and the adoption (`e969afa`, development data only), the
+plan of this look (`349377e`), the deletion of the previous record on purpose (`2ed2bd4`; `evaluate` refuses to run while a record
+exists; the previous record stays in git at `5f9a9f0` and was copied outside the repository first), the one `evaluate` and its
+generated record (`e1a23f7`), and this section with the documents after it.
+
+**This is the fourth look of the family at these held-out sets** (five models have now been scored on them; see the disclosure
+`docs/evaluation/disclosure.md`). `evaluate --preflight` passed first (it scores nothing); `evaluate --dump-dir <folder outside the
+repository>` then ran **once** (`DOTNET_PROCESSOR_COUNT=8`, the treebank from the git-ignored cache). It exited with 1 because of the
+stop conditions below (findings, not failures of the run) and the committed files are the output as produced. **No second `evaluate`
+run was made and nothing was re-rolled.** Nothing was selected, tuned or reverted because of any result. The previous model (the
+clause-cue model, the record at `5f9a9f0`) was not evaluated again: its figures below are those of its committed record.
+
+Stop conditions of the protocol: **two fired** (the same two as in all earlier records; the third, the shape probe, did not fire
+this time):
+
+- `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (the same); the `to`/`not` convention difference.
+- `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (the same). The primary mapped view is at 0.55% (138
+  words) (the same), under the limit.
+- `shape-probe`: **did not fire**: 27 harmful errors at 0.45 against a limit of 28 (5% of 560 rows); the previous model had 37 and the
+  earlier models 48 and more. The margin is one error.
+
+All other stop conditions held (the open test accuracy 96.75% against 96.65% on development; harmful rates per 1,000 answered at the
+strict (2.4) and balanced (7.5) points on open test below twice the pooled development rates (1.9 and 9.9); open test ECE 0.25%; open
+test gold outside the candidates 41 of 26,185 tokens).
+
+**What is comparable (stated plainly).** The previous model and the shipped one were scored on the same labels on all five held-out
+sets and the six input hashes are identical in the two records (the data did not change), so all five are fair comparisons between
+them. Intervals are the 95% percentile bootstrap over documents of each record (1,000 resamples, seed 1); no paired interval between
+the models was computed, so overlapping intervals are not a test: the intervals overlap on every row below. The sets are small and
+the shipped model is one seed.
+
+Accuracy and harmful errors at the harmful limit 0.45, previous model (clause-cue) and shipped model (F2+IMP):
+
+| Set | Model | Accuracy % | Ambiguous accuracy % | Decisions | Harmful | Harmful per 1,000 decisions | ECE % | NLL | Gold outside candidates |
+| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | ---: |
+| open-test | previous | 96.78 [96.42, 97.09] | 96.02 [95.69, 96.34] | 4,392 | 74 | 16.8 [12.4, 21.6] | 0.23 [0.19, 0.50] | 0.1076 [0.0939, 0.1222] | 41 |
+| | **shipped** | 96.75 [96.39, 97.08] | 96.00 [95.66, 96.33] | 4,392 | 81 | 18.4 [14.1, 22.7] | 0.25 [0.20, 0.56] | 0.1068 [0.0928, 0.1217] | 41 |
+| gold-v2-test | previous | 94.77 [93.94, 95.53] | 92.06 [90.76, 93.21] | 936 | 23 | 24.6 [15.1, 36.1] | 1.90 [1.55, 2.89] | 0.2342 [0.1918, 0.2807] | 12 |
+| | **shipped** | 94.87 [93.99, 95.62] | 92.21 [90.85, 93.39] | 936 | 25 | 26.7 [15.7, 38.7] | 1.95 [1.53, 2.89] | 0.2307 [0.1897, 0.2787] | 12 |
+| gold-v2-test-full-agreement | previous | 95.62 [94.88, 96.37] | 92.93 [91.71, 94.18] | 713 | 15 | 21.0 [11.1, 32.6] | 1.49 [1.24, 2.46] | 0.1827 [0.1435, 0.2272] | 5 |
+| | **shipped** | 95.70 [94.92, 96.47] | 93.06 [91.79, 94.31] | 713 | 17 | 23.8 [12.6, 36.2] | 1.59 [1.21, 2.41] | 0.1802 [0.1409, 0.2201] | 5 |
+| gold-v2-test-to-not (8 targets) | previous | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 52.65 [21.94, 87.25] | 6.9560 [1.8584, 12.0911] | 4 |
+| | **shipped** | 50.00 [12.50, 87.50] | 100.00 | 0 | 0 | 0.0 | 52.78 [22.38, 87.31] | 6.9578 [1.8650, 12.0905] | 4 |
+| shape-probe (560 rows) | previous | 91.25 [88.93, 93.39] | 91.19 [88.79, 93.37] | 556 | 37 | 66.5 [46.8, 86.2] | 2.47 [2.16, 5.32] | 0.2122 [0.1649, 0.2617] | 0 |
+| | **shipped** | 93.21 [91.07, 95.36] | 93.17 [91.06, 95.28] | 556 | 27 | 48.6 [30.5, 66.4] | 2.66 [2.16, 5.21] | 0.1841 [0.1383, 0.2331] | 0 |
+| challenge-set (STE, 272 tokens) | previous | 86.76 [80.55, 92.42] | 87.88 [81.37, 93.14] | 86 | 0 | 0.0 | 8.33 [4.23, 13.79] | 0.3815 [0.2087, 0.5689] | 0 |
+| | **shipped** | 89.34 [83.86, 94.30] | 91.41 [85.78, 95.45] | 86 | 0 | 0.0 | 6.50 [3.68, 11.45] | 0.3033 [0.1563, 0.4681] | 0 |
+| ud-test-mapped (UD-EWT, primary view) | previous | 93.19 [92.69, 93.64] | 92.84 [92.25, 93.40] | 4,410 | 70 | 15.9 [12.1, 20.0] | 2.08 [1.78, 2.52] | 0.2877 [0.2634, 0.3210] | 138 |
+| | **shipped** | 93.03 [92.48, 93.51] | 92.74 [92.12, 93.32] | 4,410 | 82 | 18.6 [14.7, 23.1] | 2.23 [1.92, 2.66] | 0.2915 [0.2674, 0.3249] | 138 |
+| ud-test-raw (UD-EWT, raw tags) | previous | 89.25 [88.73, 89.72] | 88.56 [87.90, 89.15] | 4,007 | 70 | 17.5 [13.3, 22.1] | 5.99 [5.62, 6.48] | 0.6019 [0.5677, 0.6417] | 484 |
+| | **shipped** | 89.08 [88.51, 89.57] | 88.46 [87.79, 89.08] | 4,007 | 82 | 20.5 [16.1, 25.6] | 6.17 [5.77, 6.66] | 0.6066 [0.5722, 0.6461] | 484 |
+
+**What is worse (stated plainly; these are regressions against the previous model, reported as produced).**
+
+1. **Harmful errors at 0.45 are higher on the open test split, gold v2 and the treebank**: open test **81 against 74**
+   (18.4 against 16.8 per 1,000; accuracy 96.75 against 96.78), gold v2 **25 against 23** (26.7 against 24.6; the full-agreement view
+   17 against 15) and the treebank **82 against 70** on both the mapped and the raw view (18.6 against 15.9 and 20.5 against 17.5;
+   accuracy 93.03 against 93.19 and 89.08 against 89.25). On the treebank, noun-as-verb decisions rose from 43 to 52.
+2. **Calibration**: the ECE is higher on the open test split (0.25 against 0.23), gold v2 (1.95 against 1.90), the shape probe
+   (2.66 against 2.47) and the treebank (2.23 against 2.08 mapped, 6.17 against 5.99 raw); the log-loss is higher on the treebank
+   (0.2915 against 0.2877 mapped; 0.6066 against 0.6019 raw).
+3. **Operating points (below)**: the strict point has one harmful error on gold v2 (1 of 759; the previous model 0 of 761) and 9 of
+   3,677 on open test (8 of 3,687); the balanced point on gold v2 is at **12.7** (11 of 868) per 1,000 answered and on the
+   full-agreement view at **12.1** (8 of 661), above the development target of 10 (10.4 and 10.6 for the previous model, also
+   above); on the treebank the balanced point is at 8.6 (35 of 4,049) against 8.2 (33 of 4,028). The strict point on the shape probe
+   is at 8.1 (3 of 372) against 5.9 (2 of 340), above its target of 5.0 (the previous model also above it), at a higher coverage
+   (66.9% against 61.2%).
+4. **Development counts did not predict the held-out direction on the open test split and gold v2.** At the shipped
+   seed the development open and gold v2 harmful counts were lower than the previous model's (91 against 100 and 14 against 16);
+   the held-out counts are higher on both. The UD-EWT development count was higher (94 against 91), as the held-out treebank
+   counts are. Nothing is concluded from the
+   difference either way (the sets are small and these are a few errors each), and nothing was changed because of it.
+
+**What is better.** The **shape probe**: accuracy 93.21 against 91.25, 27 harmful errors against 37 (48.6 against 66.5 per 1,000
+decisions), NLL 0.1841 against 0.2122, and its stop condition no longer fires. The **challenge set**: accuracy 89.34 against 86.76
+(seven of 272 tokens), no harmful error in either, NLL 0.3033 against 0.3815. The probe's shape `v-imperative-initial` (the target
+of the new source) rose from 83.75% to 95.00% and from 10 harmful errors to 3 (table below). The open test, gold v2 and gold v2
+full-agreement NLL are slightly lower (0.1068 against 0.1076, 0.2307 against 0.2342, 0.1802 against 0.1827) and the open test and gold v2
+accuracies equal the previous ones within 0.1 points.
+
+Operating points on the held-out sets (the thresholds selected on development data are the same for both models, strict 0.95 and
+balanced 0.75; the reference point is 0.45):
+
+| Set | Point | Previous: coverage % | Previous: harmful per 1,000 answered | Previous: harmful of answered | Shipped: coverage % | Shipped: harmful per 1,000 answered | Shipped: harmful of answered |
+| --- | --- | ---: | --- | --- | ---: | --- | --- |
+| open-test | reference 0.45 | 99.7 | 16.9 [12.4, 21.7] | 74 of 4,381 | 99.8 | 18.5 [14.1, 22.8] | 81 of 4,385 |
+| open-test | strict | 83.9 | 2.2 [0.6, 4.3] | 8 of 3,687 | 83.7 | 2.4 [0.8, 4.6] | 9 of 3,677 |
+| open-test | balanced | 94.1 | 8.5 [5.4, 11.4] | 35 of 4,135 | 94.7 | 7.5 [4.5, 10.6] | 31 of 4,159 |
+| gold-v2-test | reference 0.45 | 99.9 | 24.6 [15.2, 36.1] | 23 of 935 | 99.7 | 26.8 [15.8, 38.8] | 25 of 933 |
+| gold-v2-test | strict | 81.3 | 0.0 [0.0, 0.0] | 0 of 761 | 81.1 | 1.3 [0.0, 4.3] | 1 of 759 |
+| gold-v2-test | balanced | 92.4 | 10.4 [4.4, 17.6] | 9 of 865 | 92.7 | 12.7 [5.3, 21.9] | 11 of 868 |
+| gold-v2-test-full-agreement | reference 0.45 | 99.9 | 21.1 [11.2, 32.7] | 15 of 712 | 99.6 | 23.9 [12.6, 36.4] | 17 of 710 |
+| gold-v2-test-full-agreement | strict | 80.8 | 0.0 [0.0, 0.0] | 0 of 576 | 80.6 | 1.7 [0.0, 6.2] | 1 of 575 |
+| gold-v2-test-full-agreement | balanced | 92.7 | 10.6 [3.3, 19.0] | 7 of 661 | 92.7 | 12.1 [4.0, 22.7] | 8 of 661 |
+| shape-probe | reference 0.45 | 98.2 | 67.8 [48.1, 87.3] | 37 of 546 | 98.2 | 49.5 [31.1, 67.5] | 27 of 546 |
+| shape-probe | strict | 61.2 | 5.9 [0.0, 14.8] | 2 of 340 | 66.9 | 8.1 [0.0, 18.2] | 3 of 372 |
+| shape-probe | balanced | 82.0 | 21.9 [8.8, 34.1] | 10 of 456 | 87.2 | 24.7 [12.2, 38.9] | 12 of 485 |
+| challenge-set | reference 0.45 | 100.0 | 0.0 [0.0, 0.0] | 0 of 86 | 100.0 | 0.0 [0.0, 0.0] | 0 of 86 |
+| challenge-set | strict | 67.4 | 0.0 [0.0, 0.0] | 0 of 58 | 76.7 | 0.0 [0.0, 0.0] | 0 of 66 |
+| challenge-set | balanced | 84.9 | 0.0 [0.0, 0.0] | 0 of 73 | 88.4 | 0.0 [0.0, 0.0] | 0 of 76 |
+| ud-test-mapped | reference 0.45 | 99.2 | 16.0 [12.2, 20.2] | 70 of 4,375 | 99.2 | 18.8 [14.8, 23.3] | 82 of 4,373 |
+| ud-test-mapped | strict | 77.5 | 2.6 [1.1, 4.6] | 9 of 3,417 | 77.4 | 2.3 [0.9, 4.1] | 8 of 3,414 |
+| ud-test-mapped | balanced | 91.3 | 8.2 [5.4, 11.5] | 33 of 4,028 | 91.8 | 8.6 [5.8, 12.2] | 35 of 4,049 |
+| ud-test-raw | reference 0.45 | 99.1 | 17.6 [13.5, 22.3] | 70 of 3,972 | 99.1 | 20.7 [16.2, 25.9] | 82 of 3,970 |
+| ud-test-raw | strict | 77.8 | 2.9 [1.2, 5.1] | 9 of 3,116 | 77.9 | 2.6 [1.0, 4.5] | 8 of 3,120 |
+| ud-test-raw | balanced | 91.2 | 9.0 [5.9, 12.7] | 33 of 3,656 | 91.6 | 9.5 [6.4, 13.4] | 35 of 3,671 |
+
+(The strict point is at or below its target of 5.0 per 1,000 answered on open test, gold v2 test and the treebank for both models,
+and above it on the shape probe for both; the balanced point is below its target of 10 on open test and the treebank and above it on
+both gold v2 views for both models, the shipped one by more.)
+
+Noun-verb confusion of the same decisions (previous | shipped; noun as other, noun as noun, noun as verb, verb as other, verb as
+noun, verb as verb):
+
+| Set | Previous | Shipped |
+| --- | --- | --- |
+| open-test | 54, 2,373, 30, 38, 45, 1,852 | 52, 2,373, 32, 31, 51, 1,853 |
+| gold-v2-test | 2, 454, 11, 9, 12, 448 | 1, 454, 12, 7, 14, 448 |
+| shape-probe | 7, 361, 28, 1, 13, 146 | 7, 363, 26, 1, 4, 155 |
+| challenge-set | 7, 43, 0, 4, 0, 32 | 5, 45, 0, 1, 0, 35 |
+| ud-test-mapped | 150, 2,121, 43, 63, 32, 2,001 | 155, 2,107, 52, 65, 34, 1,997 |
+| ud-test-raw | 150, 2,121, 43, 51, 32, 1,610 | 155, 2,107, 52, 52, 34, 1,607 |
+
+Shape probe by shape (accuracy % and harmful at 0.45; previous | shipped): `n-obj-light` 96.25, 1 | 95.00, 1;
+`n-compound-head` 77.50, 15 | 78.75, 14; `n-modifier` 97.50, 0 | 98.75, 0; `n-subject-initial` 90.00, 7 | 90.00, 6; `n-measure`
+95.00, 4 | 96.25, 3; `v-imperative-initial` 83.75, 10 | **95.00, 3**; `v-after-modal` 98.75, 0 | 98.75, 0. **The n-subject-initial
+caveat** of the adoption (worse on the development shapes set: hard harmful 114 to 136 and standard 20.0 to 26.7 per 1,000 as five-seed
+means) **does not show on the probe**: 90.00% and six harmful errors against 90.00% and seven (80 rows; one row is 1.25 points).
+The probe has too few rows to show or exclude the development effect.
+
+Inputs and run: model image `6e1e4ade...e8d0`, selection artifact SHA-256
+`6e34aaa4ad67e6b448ef84bb44d271db72e72d785c4db51be95826dfb43f8ebd`, the six input hashes are those of the previous record
+(unchanged data; see `docs/evaluation/test-results.md`; the six rows of the two records are identical). The throughput line of the
+report (528,578 tokens per second, one thread, open test) is a timing of a shared machine of the moment, not a result of the model,
+and it is not comparable with the previous record's line (571,504 on another load); the experiment's own measurement (the
+five-seed median 755,888 against the floor of 150,000) is the better comparison.
+
+**Reading.** On the held-out sets the shipped model is clearly better only where its source aims: the shape probe (accuracy +1.96
+points, harmful errors 37 to 27, the imperative shape from 10 to 3 harmful errors and 83.75% to 95.00% accuracy) and, by a smaller and
+less reliable margin on a 32-sentence smoke test, the challenge set (+2.58 points). On the three general sets it is **not better**: it
+has more harmful errors at 0.45 than the previous model on open test (+7), gold v2 (+2) and the treebank (+12, mapped and raw), a
+slightly lower accuracy on open test (-0.03) and on the treebank (-0.16 mapped), and a higher calibration error on all but the
+challenge set. The intervals overlap on every row, so none of these differences is a significant one on its own, and the direction
+differs from the development counts at the shipped seed on open test and gold v2 (lower there) and agrees on the treebank
+(higher there). The recommended thresholds did not change; the strict point still meets its target on open test, gold v2 and the
+treebank and not on the probe, and the balanced point is above its target of 10 on both gold v2 views by more than before. The
+selection rule had its evidence on development data (the hard tranche, five seeds, a Welch interval that excludes 0), and this
+record is the fourth, weaker look at held-out sets whose result is reported as produced: no setting, threshold, weight or document
+claim was changed to improve it.
+
+**Owner decision (2026-11-08).** The owner reviewed this mixed held-out result and accepted it for the gains on instructional
+text: the model is better on the shape probe, the challenge set and the imperative shape, slightly worse on open test (+7), gold v2
+(+2) and the treebank (+12 harmful errors at 0.45), and has a higher calibration error on several sets. F2+IMP ships. The decision
+changes no figure of this record.
 
 ## Run table
 

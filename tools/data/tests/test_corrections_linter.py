@@ -148,5 +148,114 @@ class LinterTests(unittest.TestCase):
             check_conventions.load_sentences(self.data, apply_overlay=True)
 
 
+IMPERATIVE_CLEAN = """# corpus = test imperative source
+# columns = form, upos, status
+# status = unanimous
+# use = training
+
+# sent_id = imperative-0001
+# source_id = army-doc
+# text = Check the oil level .
+Check\tVERB\tunanimous
+the\tDET\tunanimous
+oil\tNOUN\tunanimous
+level\tNOUN\tunanimous
+.\tPUNCT\tunanimous
+"""
+
+IMPERATIVE_VIOLATING = IMPERATIVE_CLEAN + """
+# sent_id = imperative-0002
+# source_id = army-doc
+# text = It is out of order .
+It\tPRON\tunanimous
+is\tVERB\tunanimous
+out\tADV\tunanimous
+of\tADP\tunanimous
+order\tNOUN\tunanimous
+.\tPUNCT\tunanimous
+"""
+
+IMPERATIVE_GRADABLE = IMPERATIVE_CLEAN + """
+# sent_id = imperative-0002
+# source_id = army-doc
+# text = They were very daubed .
+They\tPRON\tunanimous
+were\tVERB\tunanimous
+very\tADV\tunanimous
+daubed\tADJ\tunanimous
+.\tPUNCT\tunanimous
+"""
+
+OPEN_DAUBED = """# corpus = test open corpus, train split
+# columns = form, upos, status
+
+# sent_id = t9
+# source_id = d9
+# text = He was daubed .
+He\tPRON\tunanimous
+was\tVERB\tunanimous
+daubed\tADJ\tunanimous
+.\tPUNCT\tunanimous
+"""
+
+
+class ImperativeSourceTests(unittest.TestCase):
+    """The imperative training source is linted (its own column), counts for `--enforce`, is never corrected and does not feed the corpus resources."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.data = corrections_testdata.write_data_dir(self.temp.name)
+        self.path = os.path.join(self.data, "imperative", "imperative.tsv")
+
+    def write(self, text):
+        common.write_text(self.path, text.rstrip("\n").split("\n"))
+
+    def test_a_fix_tier_violation_in_the_source_is_reported_in_its_column_and_fails_enforce_after_the_corrections(self):
+        # Arrange: stage the corrections of the correctable corpora, then add a source with a violation
+        files, _, _, _, _ = make_corrections.generate_all(self.data)
+        make_corrections.write_files(files, self.data)
+        self.write(IMPERATIVE_VIOLATING)
+        # Act
+        code, text = run(["--data-dir", self.data, "--apply", "--tier", "fix", "--enforce"])
+        listed_code, listed = run(["--data-dir", self.data, "--apply", "--source", "imperative", "--tier", "fix"])
+        # Assert: only the imperative source is left, it counts, and the column is shown
+        self.assertEqual(1, code)
+        self.assertIn("FAILED: 1 convention violations", text)
+        self.assertIn("imperative", text.splitlines()[0])
+        self.assertEqual(0, listed_code)
+        self.assertIn("out-of", listed)
+
+    def test_a_clean_source_passes_enforce_and_the_staged_corrections_never_address_it(self):
+        # Arrange
+        before, _, _, _, _ = make_corrections.generate_all(self.data)
+        self.write(IMPERATIVE_CLEAN)
+        after, _, corpora, _, _ = make_corrections.generate_all(self.data)
+        files, _, _, _, _ = make_corrections.generate_all(self.data)
+        make_corrections.write_files(files, self.data)
+        # Act
+        code, text = run(["--data-dir", self.data, "--apply", "--tier", "fix", "--enforce"])
+        # Assert: the generated tables are the same with and without the source, and the lint passes
+        self.assertEqual(before, after)
+        self.assertNotIn(("imperative", "-"), corpora)
+        self.assertEqual(0, code)
+        self.assertNotIn("FAILED", text)
+
+    def test_the_source_does_not_feed_the_corpus_resources_of_the_rules(self):
+        # Arrange: an open sentence with an agentless participle that no degree word shows to be gradable
+        common.write_text(os.path.join(self.data, "open", "train.tsv"), OPEN_DAUBED.rstrip("\n").split("\n"))
+        without = run(["--data-dir", self.data, "--tier", "check", "--source", "open"])[1]
+        # Act: add a source that shows the participle with a degree word
+        self.write(IMPERATIVE_GRADABLE)
+        with_source = run(["--data-dir", self.data, "--tier", "check", "--source", "open"])[1]
+        # Assert: the violation of the open sentence is the same, so the resources came from the correctable corpora only
+        self.assertIn("be-participle-adj-not-gradable", without)
+        self.assertEqual(without, with_source)
+        self.assertEqual(("ste", "imperative"), check_conventions.RESOURCE_EXEMPT)
+        self.assertEqual(("imperative", "-"), check_conventions.COLUMN_ORDER[-1])
+        self.assertIn(("imperative", "-"), corrections.LINT_ONLY_FILES)
+        self.assertNotIn(("imperative", "-"), corrections.CORPUS_FILES)
+
+
 if __name__ == "__main__":
     unittest.main()

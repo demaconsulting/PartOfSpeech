@@ -76,6 +76,7 @@ class MiniFolder(unittest.TestCase):
         corpus_file(os.path.join(d, "open", "test.tsv"), [("test-1", "A completely different held out sentence here .")])
         corpus_file(os.path.join(d, "masc", "masc.tsv"), [("masc:written/x", "Another unrelated training sentence is here .")])
         corpus_file(os.path.join(d, "silver", "silver.tsv"), [("gutenberg-1", "Yet another silver training sentence appears here .")])
+        corpus_file(os.path.join(d, "imperative", "imperative.tsv"), [("army-imperative-1", "Inspect the fuel strainer before each long trip .")])
         corpus_file(os.path.join(d, "eval", "ste-challenge", "test.tsv"), [("ste-1", "Remove the cover before you start the work .")])
         table_file(os.path.join(d, "eval", "gold-v2", "dev.tsv"), ("id", "doc_id", "sentence"), [("g1", "gutenberg-99", "Gold sentence one is here .")])
         table_file(os.path.join(d, "eval", "gold-v2", "test.tsv"), ("id", "doc_id", "sentence"), [("g2", "gutenberg-98", "Gold sentence two is here .")])

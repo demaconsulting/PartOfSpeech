@@ -169,7 +169,10 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
 - **Corpus rules**: `ModelTrainer_Train_MaskedToken_NoUpdateButStepAndHistory`,
   `CorpusReader_Parse_MaskingRules_MarkTokensWithoutSignal` (masked tokens, `disputed` tokens when configured and silver
   tokens below the probability threshold), `CorpusReader_Parse_LimitAndSample_AreDeterministic`,
-  `CorpusReader_Parse_UnknownTag_ThrowsWithLine` and `CorpusReader_LoadSources_Weight_RepeatsSentences`.
+  `CorpusReader_Parse_UnknownTag_ThrowsWithLine`, `CorpusReader_LoadSources_Weight_RepeatsSentences` (weight 2 repeats
+  the sentences, weight 0 leaves a source out) and `CorpusReader_LoadSources_ImperativeSource_ReadsUnmaskedWhenWeighted`
+  (the committed imperative file, weighted in a copy of the committed configuration, gives its 900 sentences with every
+  token tagged and a VERB first token; the test sets the other sources to weight 0 in the copy).
   The status flags are covered by `CorpusReader_Parse_StatusFlags_AreKeptAndDoNotChangeTagsOrMasking` (flags are kept per
   token, and tags and masking are those of the plain status, for open-style and silver-style rows),
   `CorpusReader_Parse_NoStatusFlags_GivesNoFlags` (the committed files stay valid),
@@ -185,7 +188,8 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   two files: a real file is admitted, and a link as the file, as its folder or as the `data` folder is refused; links as
   in the training test below; skipped where none can be made and on .NET Framework),
   `DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused` (also in other spellings of the path),
-  `DataGuard_EnsureTrainable_TrainingCorpus_Admitted`, `DataGuard_EnsureTrainable_PathOutsideDataRoot_Refused` (a dotted
+  `DataGuard_EnsureTrainable_TrainingCorpus_Admitted` (the four training corpora, the imperative one included),
+  `DataGuard_EnsureTrainable_PathOutsideDataRoot_Refused` (a dotted
   detour or a path outside the `data` folder), `CorpusReader_LoadSources_RootedPathOutsideData_Refused` (a rooted source
   path, which `Path.Combine` lets replace the repository root),
   `DataGuard_EnsureTrainable_LinkToHeldOutOrOutsideData_Refused` (in a temporary fake repository: directory links to a
@@ -270,8 +274,9 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
 - **The check**: `ModelBuilder_Check_CommittedFile_DetectsStaleMissingAndInvalid` (the compressed committed form of the
   fresh image is current, another seed or another temperature is stale, no file is missing, bytes that are no weights file
   are invalid).
-- **Configuration**: `ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical` (on .NET 8 and later: three existing
-  corpora, and rewriting the file gives the same text) and `ConfigFile_Parse_UnknownMemberOrBadRange_Throws`.
+- **Configuration**: `ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical` (on .NET 8 and later: four existing
+  corpora, all four sources with a positive weight (the imperative source with weight 1), and rewriting the file gives the
+  same text) and `ConfigFile_Parse_UnknownMemberOrBadRange_Throws`.
 - **Development metrics**: `DevSets_ParseGoldDev_Fixture_ReadsTargetsAndMapsClasses`,
   `DevSets_ParseGoldDev_InvalidTarget_Throws` (a negative, non-numeric or out-of-sentence target index),
   `Metrics_Compute_KnownOutcomes_ExpectedNumbers`, `Metrics_Judge_TinyTagger_CorrectAndNounVerbError`,

@@ -792,6 +792,79 @@ sections:
         tests:
           - PartOfSpeech_ShapesDevHard_Selection_UsesNoPartOfSpeechModel
 
+      - id: PartOfSpeech-Data-ImperativeWellFormed
+        title: >-
+          The imperative training source (`imperative.tsv`) shall be a training file in the corpus block format with 600
+          to 900 sentences whose ids run from imperative-0001 without a gap, whose first token is a VERB that the
+          lexicon lists as both noun and verb, whose every token is unanimous (no disputed or masked token), with no
+          more than 6 sentences per lemma and no more than 30 per document.
+        tags: [system]
+        justification: |
+          The source exists to teach one sentence type, the sentence that starts with an imperative verb, so a first
+          word that is not a verb, a disputed or masked token, or a sentence count outside the quota that the builder
+          gates would change what it teaches. The lemma and document caps keep a few verbs or a few manuals from
+          dominating a small source. The quotas are checked on the committed file itself.
+        tests:
+          - PartOfSpeech_Imperative_Corpus_IsWellFormedAndWithinQuotas
+          - PartOfSpeech_TrainingData_Corpora_UseOnlySeventeenUposTags
+          - PartOfSpeech_TrainingData_Corpora_TokensRejoinToSentenceText
+
+      - id: PartOfSpeech-Data-ImperativeIndependent
+        title: >-
+          No document, exact sentence or near duplicate shall be common to the imperative training source and any
+          evaluation set (the hard-shape development set, both tranches, and the shape probe included), its documents
+          shall be in no other source table, neither by id nor by normalized URL, and the committed leakage report shall
+          record that.
+        tags: [system]
+        justification: |
+          A training source that shares text with an evaluation set would reward memorizing and overstate the measured
+          accuracy. The source is built from the same families of federal text as the development set, so the same
+          documents or reprints could appear in both unless every document is checked against every table of used
+          sources and every evaluation sentence. The existing document and sentence tests read the source as a training
+          corpus; the leakage report is the evidence for UD English-EWT, which is not committed.
+        tests:
+          - PartOfSpeech_Leakage_Documents_TrainingAndEvaluationAreDisjoint
+          - PartOfSpeech_Leakage_Sentences_TrainingAndEvaluationAreDisjoint
+          - PartOfSpeech_Leakage_Report_RecordsNoOverlaps
+          - PartOfSpeech_Imperative_LeakageReport_RecordsNoOverlapWithAnyEvaluationSet
+          - PartOfSpeech_Imperative_Documents_AreInNoOtherSourceTableAndNoEvaluationSet
+
+      - id: PartOfSpeech-Data-ImperativeSourcesAreOpen
+        title: >-
+          Every source document of the imperative training source shall be listed with a US federal-work or
+          public-domain license basis and its sentence count, no source row shall name FAA material, no listed document
+          shall be one that the owner excluded, the record of rejected documents and the record of dropped sentences
+          shall hold ids, reasons and counts only, and the README and the third-party notice shall state the basis and
+          the dedication of the labels.
+        tags: [system]
+        justification: |
+          The source is built from the text of real documents, so each document needs a recorded basis for its use. The
+          project owner excluded FAA material and the documents that the exclusion record of the development set lists,
+          and the license check scans the source table for restricted text. The records of what the builder dropped
+          carry no text, so they cannot reintroduce material that was left out.
+        tests:
+          - PartOfSpeech_Imperative_Sources_AreListedOpenAndNotExcluded
+          - PartOfSpeech_Imperative_Notice_NamesTheSourceAndItsBasis
+          - PartOfSpeech_DataProvenance_Sources_ListEveryDocument
+          - PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl
+          - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
+          - PartOfSpeech_DataProvenance_Readmes_RecordSourceAndProduction
+          - PartOfSpeech_DataLicensing_Folders_DeclareAllowedLicenses
+
+      - id: PartOfSpeech-Data-ImperativeSelectionIndependent
+        title: >-
+          The selection of the imperative training source shall use no part of the PartOfSpeech model: its builder shall
+          name no weights file, decoder, tagger or shapes evaluation and no probe file, and the labels shall come only
+          from two blind labelers whose agreement on every token is the condition for a sentence to be kept.
+        tags: [system]
+        justification: |
+          A training source that was chosen where the tagger errs would make every later comparison of the tagger with
+          it circular. The sentences are chosen by position and lexicon frame and by the agreement of two blind
+          labelers, and the rule is recorded in the builder before any label exists. The data test scans the source of
+          the builder.
+        tests:
+          - PartOfSpeech_Imperative_Selection_UsesNoPartOfSpeechModel
+
       - id: PartOfSpeech-Data-LexiconTrainCoverage
         title: >-
           The lexicon shall allow the gold tag for at least 99.9% of the non-disputed tokens of the training set.

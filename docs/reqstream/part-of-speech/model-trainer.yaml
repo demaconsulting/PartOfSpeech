@@ -124,12 +124,15 @@ sections:
           - id: PartOfSpeech-ModelTrainer-SourceWeights
             title: >-
               The trainer shall repeat the sentences of a source in every epoch as many times as the weight of the
-              source says.
+              source says, shall leave a source of weight 0 out, and shall read the committed imperative source, once it
+              is weighted, as sentences without a masked token.
             justification: |
               The weight of a source is a selected training setting, so the epoch must contain exactly the repeats that
-              the configuration names.
+              the configuration names. The imperative source is committed with weight 1, so it is in the mix of the
+              shipped weights; a run that weights it must get exactly its sentences, all with a gold tag.
             tests:
               - CorpusReader_LoadSources_Weight_RepeatsSentences
+              - CorpusReader_LoadSources_ImperativeSource_ReadsUnmaskedWhenWeighted
 
           - id: PartOfSpeech-ModelTrainer-SourceLimits
             title: >-
@@ -446,12 +449,14 @@ sections:
 
           - id: PartOfSpeech-ModelTrainer-Configuration
             title: >-
-              The training configuration shall be a valid, canonical file that names existing training corpora, and a
+              The training configuration shall be a valid, canonical file that names existing training corpora (the
+              imperative source among them, all with a positive weight), and a
               misspelled setting or an out-of-range value shall be an error.
             justification: |
               The configuration is the record of what the committed weights were trained from. A silently ignored
               misspelling would train something other than what the file says, and a file that the tool rewrites in
-              another form would make every configuration update noisy.
+              another form would make every configuration update noisy. A corpus that is committed but not trained on
+              would have to be visible as such, with weight 0, so that the weights stay reproducible from the file.
             tests:
               - ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical
               - ConfigFile_Parse_UnknownMemberOrBadRange_Throws

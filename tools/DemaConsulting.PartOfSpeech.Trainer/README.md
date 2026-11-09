@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
+<!-- cspell:ignore selftest allimp -->
 
 # Trainer
 
@@ -58,8 +59,8 @@ and they are rejected together with `--check` and `--update-config`.
 
 ## Configuration
 
-`training.json` names the corpora (`open`, `masc`, `silver`; each with an integer `weight`, the number of times its
-sentences enter every epoch) and every training setting. It contains no floating-point training setting except the
+`training.json` names the corpora (`open`, `masc`, `silver` and `imperative`; each with an integer `weight`, the number of times its
+sentences enter every epoch; all four have a positive weight, and `--source imperative:0` leaves the imperative source out of a run) and every training setting. It contains no floating-point training setting except the
 softmax `temperature`, which is chosen once by `calibrate` and only written into the file header. The weight scale is
 `1 / quantScale` with `quantScale` a power of two, so it is exact in the file.
 
@@ -74,9 +75,9 @@ SHA-256 of the image with a pinned value on every target framework.
 
 ## Development data and the held-out gate
 
-Every setting is selected on development data: the two development sets (`data/open/dev.tsv`,
-`data/eval/gold-v2/dev.tsv`) and, for the feature group, also the hard-shape development set and the development part of
-the external treebank (below). Every command
+Every setting is chosen on development data only: open dev (`data/open/dev.tsv`), gold v2 dev
+(`data/eval/gold-v2/dev.tsv`), shapes-dev (standard and hard tranches) and UD-EWT dev (the last two are read by
+`eval-shapes` and `eval-arm`; below). Every command
 except `evaluate`, `eval-shapes` and `eval-arm` reads those two files and nothing else: evaluation accepts exactly those two paths, and
 training accepts only files below the repository's `data` folder (after the path is made absolute and links are resolved) and refuses
 held-out and development files there (`Evaluation/DevSets.cs`, tested). The held-out sets are read by `evaluate` only, and
@@ -118,6 +119,30 @@ groups of the arm), decodes the held-out fold with each, and then trains once on
 prints one line per fold and the time of the jackknife, and the `Trained ... in X s` line is the time of the final training
 alone.
 
+### Imperative-data experiment
+
+The harness for the training source `imperative` (900 imperative-initial sentences, `data/imperative/`) reuses the driver
+`context-features/run_arms.ps1` unchanged, with one folder per arm and the `-Runner` option. `imperative-data/runner-base.cmd`
+starts `dotnet` at normal priority; `imperative-data/runner-imp.cmd` does the same and appends `--source imperative:1` to the
+`train` command (the arms F2+IMP and ALL+IMP). `imperative-data/analyze_imperative.py` runs the acceptance tests (F2 at the shipped
+seed equals the shipped weights, the imperative runs trained on exactly 900 more sentences, every run scored the frozen development
+files), prints the tables and the guards (size 1.5 x F2) and applies the selection rule; it takes only `welch_diff` from
+`analyze_arms.py` and checks its own logic on synthetic runs with `--selftest`. The runners and the script are frozen by the hashes
+in the run log. The runners, the driver and the analysis encode the **pre-registered state**, in which `training.json` carries the
+source `imperative` at weight 0: there the base runner trains the arm F2 (the runner passes `train` unchanged, so the weight in
+`training.json` decides) and the imperative runner trains F2+IMP (`--source imperative:1`). **To reproduce the published comparison,
+check out the pre-registration commit `ca0c2d4`** (its `training.json` is the registered one, and the analysis script checks its
+hash). At the adopted state (the current `training.json`, weight 1) the base runner also trains F2+IMP, so base and imperative runs
+train on the same 900 sentences, the comparison is no longer an F2 against F2+IMP comparison, and the acceptance test "F2 equals the
+shipped weights" does not hold. To train the F2 arm at the adopted state, add `--source imperative:0` to a direct `train` command
+(the frozen runners do not add it). The registration, the results and the decision are in `RUN-LOG.md` ("Imperative training
+data"); the provenance of the data, including the refusals and retries of one labeler, is in `data/imperative/README.md`.
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp -Arms F2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd
+python tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py --run F2=<runs>\f2 --run F2+IMP=<runs>\f2imp --run ALL+IMP=<runs>\allimp --out report.md --decision decision.json
+```
+
 ### Held-out evaluation
 
 The protocol (definitions, selection rule, stop conditions) is the section "Phase 5 protocol" of `RUN-LOG.md`; it was
@@ -145,10 +170,10 @@ Run the commands at below-normal priority, one process at a time (see _Machine l
 
 ## Current model
 
-`training.json` selects: sources open (x2), MASC and silver (labeled tokens with probability of at least 80%); restriction
+`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%) and imperative (x1); restriction
 mode `history` with predicted history; 6 epochs; 19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8;
-the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 121,033 rows and 301,571 weights, is
-1,146,827 bytes uncompressed and 517,210 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
+the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 122,088 rows and 304,425 weights, is
+1,157,499 bytes uncompressed and 521,695 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
 takes about 15 seconds and runs
 in `build.ps1` and in the CI build on all three operating systems. The glossary decision (boost only, no trained
 feature) and every experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and

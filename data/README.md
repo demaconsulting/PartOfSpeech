@@ -8,9 +8,9 @@ that produce and check it are in [`tools/data/`](../tools/data/README.md); the t
 formats and every mapping table are in [CONVENTIONS.md](CONVENTIONS.md) (normative). At run time the library uses only the
 lexicon and the trained weights, which are embedded in the package in compact binary forms: the lexicon is generated from
 `lexicon/lexicon.tsv` (see [lexicon/README.md](lexicon/README.md), "Embedded Form"), and the weights
-(`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 517,210 bytes compressed, 1,146,827 bytes uncompressed) are
-trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC and silver
-corpora with settings that were selected on the two development sets only (the run log is
+(`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 521,695 bytes compressed, 1,157,499 bytes uncompressed) are
+trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC, silver and
+imperative corpora with settings that are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard and hard tranches) and UD-EWT dev (the run log is
 [RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not
 shipped. How the model scores on the evaluation sets, the confidence thresholds that were chosen on the development
 sets, and how to reproduce the evaluation (including the local UD English-EWT run) are in the
@@ -23,6 +23,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [open/](open/README.md) | open corpus, train/dev/test, UPOS | 14,980 | 261,641 | 10.3 MB | CC0-1.0 annotations; PD/CC0 sentences |
 | [masc/](masc/README.md) | MASC written genres, Penn trees mapped to UPOS | 22,829 | 386,445 | 11.6 MB | CC-BY-3.0-US |
 | [silver/](silver/README.md) | BERT silver: Tatoeba and Gutenberg text, model labels mapped to UPOS | 13,971 | 242,699 | 8.5 MB | CC0-1.0 labels; CC0/PD sentences |
+| [imperative/](imperative/README.md) | imperative-initial sentences from US federal instructional text, two-labeler agreement (training; weight 1 in `training.json`) | 900 | 11,946 | 0.5 MB | CC0-1.0 labels; US federal-work sentences |
 | [eval/shapes/](eval/shapes/README.md) | noun/verb shape probe (evaluation) | 560 | | 0.06 MB | CC0-1.0 |
 | [eval/shapes-dev/](eval/shapes-dev/README.md) | hard-shape development set from US federal-government text (development only): standard tranche `dev.tsv` (700 sentences, 12,279 tokens) and hard tranche `hard.tsv` (460 sentences, 7,936 tokens) | 1,160 | 20,215 | 0.8 MB | CC0-1.0 labels; US federal-work sentences |
 | [eval/gold-v2/](eval/gold-v2/README.md) | single-target gold tokens (evaluation) | 5,072 | | 2.4 MB | CC0-1.0 labels; PD sentences |
@@ -32,7 +33,8 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [corrections/](corrections/README.md) | label corrections for open, MASC and silver (mechanical rows, adjudicated rows, candidates, exceptions); **applied** to the corpora | | | 2.7 MB | CC0-1.0 labels; MASC token forms and excerpts CC-BY-3.0-US |
 
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
-masked). Total size of `data/`: 40.6 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
+masked); the fourth training source, `imperative/`, holds 11,946 tokens and is configured with weight 1, so it is part of the
+mix that trained the shipped weights. Total size of `data/`: 41.1 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
 WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.md` at the repository root.
 
 ## Rules of This Folder
@@ -40,8 +42,8 @@ WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.
 - **Open licenses only.** CC0, public domain, CC BY (with attribution) and project licenses. No share-alike and no
   non-commercial data. `tools/data/check_licenses.py` scans the source tables and the folder tree; it also refuses
   `*.conllu` files and any path that names SemCor, Brown or UD English-EWT (except the fetch-only `eval/ud-ewt/README.md`).
-- **Model-written labels are labeled as such.** The open corpus, the shape probe, the shapes development set, gold v2 and the
-  silver data have tags that language models wrote; no human reviewed them. Each README says so and gives the owner's CC0
+- **Model-written labels are labeled as such.** The open corpus, the shape probe, the shapes development set, gold v2, the
+  silver data and the imperative source have tags that language models wrote; no human reviewed them. Each README says so and gives the owner's CC0
   dedication of labels and selection (not a claim on the underlying sentences). Nothing here is legal advice.
 - **Every file is reproducible.** Inputs are pinned by SHA-256 (WordSense commit
   `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, the MASC archive, UD files); outputs are sorted, UTF-8 without BOM, LF, NFC.
@@ -66,6 +68,7 @@ python tools/data/import_silver.py derive                                       
 python tools/data/make_corrections.py                                                       # corrections/{mechanical,candidates,exceptions}.tsv; regenerates only in the pending state (--check is state-aware)
 python tools/data/corrections.py validate                                                   # the correction tables (adjudicated.tsv included) against the corpora (pending or applied)
 python tools/data/corrections.py apply --write                                              # the corrections onto open, MASC and silver (a second apply is refused)
+python tools/data/imperative_data.py --work <work-folder> build                             # imperative/ (needs the work folder of the labeling: see its README; not part of the corrections)
 python tools/data/build_lexicon.py [--wordsense-dir <checkout>]                             # lexicon/lexicon.tsv again, from the corrected corpora
 python tools/data/check_lexicon.py                                                          # lexicon/coverage.tsv, COVERAGE.md
 python tools/data/check_leakage.py --write-report                                           # leakage-report.tsv
@@ -81,7 +84,7 @@ built from the corrected files.
 
 ## Leakage Check
 
-No training document and no training sentence may appear in an evaluation set. Training sets: open train, MASC, silver.
+No training document and no training sentence may appear in an evaluation set. Training sets: open train, MASC, silver, imperative.
 Evaluation sets: open dev and test, gold v2 (dev and test), the shape probe, the shapes development set, the STE challenge
 set, and UD English-EWT train, dev and test when the git-ignored cache is present.
 
@@ -95,8 +98,10 @@ set, and UD English-EWT train, dev and test when the git-ignored cache is presen
    sentence that recurs in unrelated texts, so only that sentence is dropped from the training data (the sentences of a
    treebank file or of a book are independent; a Tatoeba document is a single sentence); the dropped sentence ids
    are listed in `dropped-sentences.tsv` of the training folder. The evaluation sets are never changed.
-3. **Near duplicates** (reported, not gated): an evaluation sentence of at least 10 words whose word 6-grams are at least 80
-   percent contained in the training 6-grams of a set.
+3. **Near duplicates** (gated for the imperative source, reported for the other training sets): an evaluation sentence of at
+   least 10 words whose word 6-grams are at least 80 percent contained in the training 6-grams of a set. Any near duplicate
+   of the imperative source fails the check (`NEAR_GATED_TRAINING` in `check_leakage.py`); the older sources share agency
+   boilerplate with the evaluation sets, so their near duplicates are only counted.
 4. **Shapes development set against every other evaluation set:** the same document and sentence rules apply, and no
    sentence may share a word 5-gram with the shape probe (the probe's short sentences escape the near-duplicate rule). The
    counts are in `eval/shapes-dev/leakage-report.tsv`; no evaluation text is printed or stored. The builder of the set applies
@@ -111,7 +116,7 @@ set, and UD English-EWT train, dev and test when the git-ignored cache is presen
 
 **Result** (`python tools/data/check_leakage.py`; the committed `leakage-report.tsv` has every pair; UD English-EWT was
 fetched and included in this run): **0 document overlaps and 0 exact sentence overlaps** for every pair of training and
-evaluation set, short sentences included, and none between the shapes development set and the other evaluation sets. Informational: 2, 4 and 7 near-duplicate sentences of open dev, open test and
+evaluation set, short sentences included, and none between the shapes development set and the other evaluation sets (the imperative source included, with 0 near duplicates too). Informational: 2, 4 and 7 near-duplicate sentences of open dev, open test and
 gold v2 against open train, and 1 gold v2 sentence against silver; all are agency boilerplate or repeated phrases
 (`Please let us know if these examples and explanations have helped you, Ali.`, standard NWS and USGS announcement
 sentences) and not shared documents.
@@ -123,7 +128,8 @@ characters, such as `Thank you .`; 36 equal to a UD English-EWT dev sentence, 36
 the id of an open dev or test sentence (found by the document rule), listed in `silver/excluded-documents.tsv`, 2 short
 Gutenberg sentences equal to UD English-EWT dev and train sentences (11 tokens), listed in `silver/dropped-sentences.tsv`,
 plus the 1,840 documents the selection run of the earlier
-experiment removed against the WordSense evaluation sets (informational). The open corpus is split by document hash, so
+experiment removed against the WordSense evaluation sets (informational); imperative no document and 5 candidate sentences before labeling (1 equal to a set
+sentence and 4 near duplicates of shapes development sentences, counted in `imperative/dropped-sentences.tsv`). The open corpus is split by document hash, so
 open train has no overlap with open dev and test by construction (confirmed; short sentences included).
 
 **Limitations:** paraphrases and partial overlaps are not detected; Tatoeba near-duplicates can sit in different open splits

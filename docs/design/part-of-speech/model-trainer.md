@@ -185,9 +185,9 @@ on the document ids and the sentence keys only, and the fold models are trained 
 
 ### Development-Only Selection
 
-Every setting of the shipped model was selected on development data only: `data/open/dev.tsv` and
-`data/eval/gold-v2/dev.tsv`, and for the feature group also the hard-shape development set and the development part of
-the external treebank (read by `eval-arm`; see below and _Context-Feature Experiment_). The rule
+Every setting of the shipped model is chosen on development data only: open dev (`data/open/dev.tsv`), gold v2 dev
+(`data/eval/gold-v2/dev.tsv`), shapes-dev (standard and hard tranches) and UD-EWT dev (the last two are read by
+`eval-shapes` and `eval-arm`; see below and _Context-Feature Experiment_). The rule
 is code, not convention: evaluation accepts exactly those two paths (compared as full paths, so a relative spelling or a
 dotted detour cannot slip past), a file at a development path must announce a development split in its header, and
 training sources must lie below the `data` folder of the repository and are checked against a deny-list that refuses
@@ -239,6 +239,17 @@ the numbers of the WordSense Basic classifier (HMM tagger plus cue model) from t
 lexicon and the text. Its quota gate is a set of floors and caps per shape instead of exact counts. The rule and its
 record are in `data/eval/shapes-dev/README.md`.
 
+The training sources of `training.json` are the open corpus, MASC, the silver corpus and the imperative source
+(`data/imperative/imperative.tsv`), all with a positive weight (the imperative source has weight 1). A source can only
+be added to a run through the
+configuration: `--source NAME:WEIGHT` changes the weight of a source that the configuration names and refuses an unknown
+name, and a source of weight 0 is not read (`CorpusReader.LoadSources` skips it), so `--source imperative:0` trains the
+model without the imperative source. The imperative file is an ordinary training file
+under `data/`, so the training guard admits it (the deny-list names no part of its path); it is disjoint from every
+evaluation set, and the builder `tools/data/imperative_data.py` reuses the opaque-key discipline of `shapes_dev.py`:
+the held-out sets reach it only through `leakage.held_out_overlap_keys()`, and it names no weights file, decoder or
+tagger. The rule of the source and its record are in `data/imperative/README.md`.
+
 ### Confidence Thresholds
 
 A consumer who wants to avoid confident noun-verb mistakes needs a threshold below which it abstains. The `thresholds`
@@ -250,11 +261,10 @@ before any curve existed.
   t, and
   a harmful error is an answered decision with the other one of the two tags. The curve gives, for every threshold of the
   grid, the answered decisions, the coverage, the harmful errors, the harmful errors per 1,000 answered and per 1,000
-  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 100, 16 and 116 harmful
+  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 91, 14 and 105 harmful
   errors on open dev, gold v2 dev and pooled for the embedded model). The constants of
-  the command are the development figures of the embedded model (`RUN-LOG.md`, "Context-feature experiment"); they were
-  set to the figures that `thresholds` itself reported (it refused to write with the old
-  constants), before its run that wrote the artifact. The reliability table
+  the command are the development figures of the embedded model; the command refuses to write when its own 0.45 row
+  differs from them (`RUN-LOG.md`, "Imperative training data: adoption", has their history). The reliability table
   groups the decisions by confidence.
 - **Rule `nv-pooled-dev-v1`.** On the pooled development decisions the first grid threshold with at most 5.0 harmful
   errors per 1,000 answered and a coverage of at least 60% is the `strict` point, the first with at most 10.0 and at
@@ -364,6 +374,7 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | Setting | Value | Decided by |
 | --- | --- | --- |
 | Sources | open x2, MASC, silver (probability at least 80%) | +0.57 points over open alone |
+| Imperative source | `imperative` at weight 1 (900 sentences) | the imperative-data experiment (`RUN-LOG.md`) |
 | `disputed` tokens | trained, not masked | accuracy +0.2 points, harmful errors tied |
 | Restriction, history | mode B (`History`), predicted history | fully restricted training (C) failed the floor |
 | Epochs | 6 | tied with 10 epochs, fewest within 0.05 points of the best |
@@ -375,11 +386,11 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 
 The settings above the last row were selected on the base feature set (before the groups existed) and were not selected
 again for the clause cues: the experiment compared the groups at those settings, and only the temperature was refit.
-The result is a file of 121,033 rows and 301,571 weights, 1,146,827 bytes uncompressed and 517,210 bytes compressed;
-training takes about 5 to 14 seconds on one thread (6,285,552 steps), and the check about 15 seconds. Development
-results through the real decoder: open development 96.65% accuracy (95.98% on lexicon-ambiguous tokens), gold
-development 94.84% (without the `to` and `not` targets, which follow another convention and are reported
-separately), harmful errors 22.9 per 1,000 noun-verb decisions pooled, calibration error 0.24% (open) and 2.38% (gold).
+The result is a file of 122,088 rows and 304,425 weights, 1,157,499 bytes uncompressed and 521,695 bytes compressed;
+training takes about 5 to 14 seconds on one thread (6,357,228 steps), and the check about 15 seconds. Development
+results through the real decoder: open development 96.57% accuracy (95.90% on lexicon-ambiguous tokens), gold
+development 95.04% (without the `to` and `not` targets, which follow another convention and are reported
+separately), harmful errors 20.7 per 1,000 noun-verb decisions pooled, calibration error 0.28% (open) and 2.44% (gold).
 These are development figures; they say nothing about held-out data.
 
 ### Glossary Decision
@@ -547,6 +558,19 @@ harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-featu
   that every held-out file is refused by the guards that the command uses and that its sources do not mention the
   held-out readers.
 
+### Imperative-Data Experiment
+
+The training source `imperative` (`data/imperative/imperative.tsv`) has weight 1 in `training.json` and is part of the
+shipped model; `--source imperative:0` trains without it, so the same trainer trains with and without it. The protocol
+(arms F2, F2+IMP and ALL+IMP, the
+reference arm ALL, five seeds, the primary measure on the hard tranche, the guards against the F2 mean with a size limit
+of 1.5 x F2, the selection rule without a fallback, and the acceptance tests) was fixed before any model of it was
+trained and is recorded in `RUN-LOG.md`. The harness is the frozen driver of the context-feature experiment, unchanged,
+with two runners in `tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/` (`runner-base.cmd`, and
+`runner-imp.cmd`, which appends the source option to the `train` command) and the analysis script
+`analyze_imperative.py`, which takes only the Welch interval from the frozen `analyze_arms.py` and is frozen by the
+hashes in the run log. The experiment reads development files only, like `eval-arm`.
+
 ### Error Handling
 
 Invalid configuration (an unknown member, an out-of-range value, no source, a source with weight above 16, a corpus
@@ -585,7 +609,8 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
   `InternalsVisibleTo` (the assembly name `DemaConsulting.PartOfSpeech.Trainer` is reserved there).
 - The base class library and, for `training.json`, `operating-points.json` and `test-results.json`, System.Text.Json
   (net10.0 only; the engine does not use it).
-- The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv` and `data/silver/silver.tsv`, and the two
+- The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv`, `data/silver/silver.tsv` and
+  `data/imperative/imperative.tsv` (all four with a positive weight), and the two
   development files plus the two hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche) and
   `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` and `eval-arm` only); for
   `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the

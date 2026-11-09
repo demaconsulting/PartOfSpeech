@@ -17,7 +17,11 @@ eval/shapes-dev/leakage-report.tsv	632	db1c9e2f6c30c9bbf7cd328aa4f524c2aaa57d46f
 eval/shapes-dev/sources.tsv	54050	b88b1f75a376bf1e105160f835a7ad061d7391d7abd08b59471282d51907ad46	63	-
 eval/shapes/probe.tsv	58492	5d1ebe3a7fd64c20aeb1388c95c2fff2d97792f9761375bed8b52740e0d89105	561	-
 eval/ste-challenge/test.tsv	11858	7593d2ca261984c7c347f130d1d1f639b85515a4d74f39ece3fc60577a2e3aaf	272	32
-leakage-report.tsv	1209	eff28a0a95555e3ba96a7f02f01a2ecd437d67f0822f616bc0c89b1774ed7225	30	-
+imperative/dropped-sentences.tsv	335	ff7667dbee716ed01fe2182c4497e301f48006ac63a18b560d347aeb22f2fddf	3	-
+imperative/excluded-documents.tsv	222	e3a6f73dda9a089f9c04f99fd5b8d674b68cddf80c7aefc6e493394dd240bfe8	0	-
+imperative/imperative.tsv	364365	218246df0c4ce739e6631a066e5296194d6773e09fc849cd64c1eb93516185ad	11946	900
+imperative/sources.tsv	111189	46ed6556224f2adcd73da7f8c8b026597a3a72f85dc7f6f8284231f003699df5	123	-
+leakage-report.tsv	1542	2c3062afc0cee80c4aeaf3cfabb4004f090949cb9bc014358000b3d3397cfa8e	40	-
 lexicon/closed-class.tsv	9435	73b7edf3fcaec5af21b5722a83b279ee78e66cb6e3cd2b71a4e625336dc945ca	331	-
 lexicon/coverage.tsv	8587	3441f0d947f9f4ed7457b635cb9679ca477429ee9212c2dfb6d1dfdf62d1f572	268	-
 lexicon/lexicon.tsv	4452392	def08a681d82594d57dc8dfe44155b5966d316896acc78f7dd54f04d2f78d3cc	262635	-

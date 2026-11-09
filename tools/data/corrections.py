@@ -59,10 +59,11 @@ Correction = ROW_TYPES["corrections"]
 # The sources the overlay can address and the splits each has (`-` where the source has no splits).
 SOURCES = {"open": ("train", "dev", "test"), "masc": ("-",), "silver": ("-",)}
 
-# Corpus file of every (source, split), relative to the data folder. The STE challenge set is linted but never corrected.
+# Corpus file of every (source, split), relative to the data folder. The STE challenge set and the imperative training source are linted
+# but never corrected (the staged corrections address the three correctable training sources and the open dev and test splits only).
 CORPUS_FILES = {("open", "train"): "open/train.tsv", ("open", "dev"): "open/dev.tsv", ("open", "test"): "open/test.tsv",
                 ("masc", "-"): "masc/masc.tsv", ("silver", "-"): "silver/silver.tsv"}
-LINT_ONLY_FILES = {("ste", "-"): "eval/ste-challenge/test.tsv"}
+LINT_ONLY_FILES = {("ste", "-"): "eval/ste-challenge/test.tsv", ("imperative", "-"): "imperative/imperative.tsv"}
 
 CORRECTIONS_FOLDER = "corrections"
 MECHANICAL_TABLE = "mechanical.tsv"
@@ -466,7 +467,7 @@ class Corpus:
 
 
 def load_corpora(data_dir=None, lint_only=False, only=None):
-    """{(source, split): Corpus} of the correctable corpora (and the STE set with `lint_only`), optionally filtered.
+    """{(source, split): Corpus} of the correctable corpora (and the lint-only STE set and imperative source with `lint_only`), optionally filtered.
 
     `only` is an iterable of (source, split) keys to read; the others are skipped (they cost the reading time).
     """

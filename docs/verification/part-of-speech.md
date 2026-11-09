@@ -152,7 +152,7 @@ are information for reviewers, not acceptance values:
   instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
-- The embedded weights are 517,210 bytes (1,146,827 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
+- The embedded weights are 521,695 bytes (1,157,499 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
   uncompressed); the package is larger because both resources are embedded once per target framework (the package size
   is stated, approximately, in the "Package size" item of the design document `part-of-speech.md`).
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
@@ -263,9 +263,11 @@ run log is excluded because it records the figures of historical runs.
 
 **Test**: `PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora` (in `PartOfSpeechDataTests.cs`)
 
-Reads the corpus paths of `training.json` and asserts for each that it is one of the three training corpora, that the file
+Reads the corpus paths of `training.json` and asserts for each that it is one of the four training corpora (open, MASC,
+silver and imperative), that the file
 is committed, that it is not a restricted corpus, that its data folder declares an allowed license, and that the section
-of the third-party notice on the embedded weights names MASC, its license, the open corpus and the silver corpus. That
+of the third-party notice on the embedded weights names MASC, its license, the open corpus, the silver corpus and the
+imperative source. That
 nothing was selected on held-out data is verified by the guard tests of the `ModelTrainer` unit.
 
 ### Evaluation Results Record the Shipped Model
@@ -411,7 +413,8 @@ and not just the project file. The reasons for a license file instead of an expr
 
 **Tests**: the `PartOfSpeech_ThirdPartyNotices_*`, `PartOfSpeech_DataLicensing_*`, `PartOfSpeech_DataProvenance_*`,
 `PartOfSpeech_DataCorrections_*`, `PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*`,
-`PartOfSpeech_ShapesDev_*`, `PartOfSpeech_ShapesDevHard_*` and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
+`PartOfSpeech_ShapesDev_*`, `PartOfSpeech_ShapesDevHard_*`, `PartOfSpeech_Imperative_*` and `PartOfSpeech_Lexicon_*`
+tests of `PartOfSpeechDataTests.cs`
 
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
 and fails when a file is missing or empty.
@@ -526,6 +529,34 @@ unchanged), the hand-check sample (at least half from q below 0.5), the q-band t
 duplicate of it fails). One regression test builds the standard profile on a fixture and compares the bytes with hashes
 taken before the hard profile existed; an optional one rebuilds the committed standard files from their work folder
 (`SHAPES_DEV_STANDARD_WORK`).
+
+The imperative training source (`data/imperative/`) is covered by the existing tests (its folder is among the licensed
+folders, its README among the provenance statements, its source table among the source tables, its corpus among the
+training corpora, so the tag set, rejoin, manifest, document, sentence, leakage-report and training-configuration tests
+read it) and by the `PartOfSpeech_Imperative_*` data tests, which read the committed files:
+`Corpus_IsWellFormedAndWithinQuotas` asserts the `use = training` and column header lines and no development-split line,
+600 to 900 sentences with the ids `imperative-0001` upward without a gap, a VERB first token that the lexicon lists as
+both noun and verb, `unanimous` for every token, at most 6 sentences per lemma (the lower-cased first word, which is the
+base form) and at most 30 per document (the quota gate of `imperative_data.py build`, applied to the committed file);
+`Sources_AreListedOpenAndNotExcluded` asserts that `sources.tsv` lists exactly the documents of the file with their
+counts, a US federal-work or public-domain basis for every row, no FAA mention, no document that the exclusion record of
+the development set lists (by id or normalized URL), and that `excluded-documents.tsv` and `dropped-sentences.tsv` have
+their columns, hold ids and counts only and name no used document;
+`Documents_AreInNoOtherSourceTableAndNoEvaluationSet` asserts that no document id or normalized URL is in the source
+tables of open, gold v2, silver, MASC and both tranches of the development set or in its exclusion record, and that no
+document is an evaluation document;
+`LeakageReport_RecordsNoOverlapWithAnyEvaluationSet` asserts that the committed report names every evaluation set once
+for the imperative source, with no document overlap, no exact sentence overlap and no near duplicate (`check_leakage.py`
+fails on an imperative near duplicate; the near duplicates of the other training sources are only reported);
+`Selection_UsesNoPartOfSpeechModel` scans `imperative_data.py` for a weights
+file, a decoder, a tagger or the shapes evaluation and for a probe file or probe reader; `Notice_NamesTheSourceAndItsBasis`
+asserts that the third-party notice names `data/imperative/`, 17 U.S.C. 105, the CC0 dedication, the source table and
+that the embedded weights were learned from the source (weight 1). Each fails when a file is missing or empty. The generic
+`Leakage_Documents_*` and `Leakage_Sentences_*` tests read the imperative corpus as a training corpus and compare it with
+every evaluation corpus (both tranches included, the probe through `EvaluationItems`). The developer-run Python tests
+`tools/data/tests/test_imperative_data.py` cover the builder on a miniature folder (see `tools/data/README.md`); the
+checks `check_leakage.py`, `check_licenses.py` and `check_conventions.py` (fix tier, enforced, imperative source included)
+run on the committed files.
 
 ### Adjudication Tool
 

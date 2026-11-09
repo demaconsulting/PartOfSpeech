@@ -5,7 +5,7 @@
 Checks (exit code 1 on any finding):
   1. no *.conllu file anywhere in the repository data and tools folders (outside the git-ignored cache), and no path under
      data/ containing semcor, brown, ewt or ud-ewt except the fetch-only documentation data/eval/ud-ewt/README.md;
-  2. the source tables (open, gold v2, silver, shapes-dev and, when it exists, the hard tranche's hard-sources.tsv) contain no row that mentions a share-alike, no-derivatives or
+  2. the source tables (open, gold v2, silver, shapes-dev and, when it exists, the hard tranche's hard-sources.tsv, and the imperative source) contain no row that mentions a share-alike, no-derivatives or
      non-commercial license, a Creative Commons BY-family license other than CC0, or Wikipedia; the MASC source table
      (a CC BY 3.0 US corpus) must record exactly that license for every document;
   3. every data folder README declares `License: <id>` with an id from the allowed set (the staged corrections folder included);
@@ -32,7 +32,7 @@ FORBIDDEN_TEXT = re.compile(r"share-?alike|by-sa|by-nc|by-nd|non-?commercial|no-
 FORBIDDEN_PATH = re.compile(r"semcor|brown|ewt", re.I)
 ALLOWED_LICENSES = {"CC0-1.0", "CC-BY-3.0-US", "CC-BY-4.0", "Public-Domain", "MIT"}
 SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv",
-                 "eval/shapes-dev/hard-sources.tsv")
+                 "eval/shapes-dev/hard-sources.tsv", "imperative/sources.tsv")
 HARD_SOURCES_TABLE = "eval/shapes-dev/hard-sources.tsv"   # scanned when it exists; a missing one fails once leakage.HARD_TRANCHE_REQUIRED is True
 HARD_CORPUS = "eval/shapes-dev/hard.tsv"                  # likewise
 HARD_FILES = (HARD_SOURCES_TABLE, HARD_CORPUS)            # optional only while leakage.HARD_TRANCHE_REQUIRED is False
@@ -40,10 +40,11 @@ HARD_FILES = (HARD_SOURCES_TABLE, HARD_CORPUS)            # optional only while 
 # skips a file that is missing, because required_file_findings reports it once.
 REQUIRED_FILES = SOURCE_TABLES + ("masc/sources.tsv", "eval/shapes-dev/dev.tsv", HARD_CORPUS)
 MASC_LICENSE = "CC BY 3.0 US"
-# The hard-shape development set (both tranches) takes no FAA material (host, publisher or handbook); see data/eval/shapes-dev/README.md.
+# The hard-shape development set (both tranches) and the imperative training source take no FAA material (host, publisher or handbook); see
+# data/eval/shapes-dev/README.md and data/imperative/README.md.
 FAA_TEXT = re.compile(r"faa\.gov|\bFAA\b|Federal Aviation", re.I)
-FAA_TABLES = ("eval/shapes-dev/sources.tsv", HARD_SOURCES_TABLE)
-READMES = ("open", "masc", "silver", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections")
+FAA_TABLES = ("eval/shapes-dev/sources.tsv", HARD_SOURCES_TABLE, "imperative/sources.tsv")
+READMES = ("open", "masc", "silver", "imperative", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections")
 ALLOWED_PATHS = {"data/eval/ud-ewt/README.md"}
 CORRECTION_SOURCES = {"open": "open/sources.tsv", "masc": "masc/sources.tsv", "silver": "silver/sources.tsv"}
 CORRECTION_TEXT_COLUMNS = frozenset(("token", "hint", "context"))  # corpus text: covered by the check of the document

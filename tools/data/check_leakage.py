@@ -2,7 +2,7 @@
 
   python tools/data/check_leakage.py [--no-ud] [--write-report]
 
-Training sets: data/open/train.tsv, data/masc/masc.tsv, data/silver/silver.tsv.
+Training sets: data/open/train.tsv, data/masc/masc.tsv, data/silver/silver.tsv, data/imperative/imperative.tsv.
 Evaluation sets: data/open/{dev,test}.tsv, data/eval/gold-v2, data/eval/shapes/probe.tsv, data/eval/ste-challenge,
 data/eval/shapes-dev/dev.tsv (the hard-shape development set; required), and UD English-EWT train/dev/test when the
 git-ignored cache is present (fetch it with fetch_ud_ewt.py; nothing from UD is ever committed or written to the report
@@ -14,8 +14,10 @@ Rules (the same two rules the C# test applies):
   2. sentences: key = lower-case alphanumerics of the sentence; no training key may equal an evaluation key, of any
      length (a short sentence such as "Thank you." is an exact sentence as well; the importers drop it from the
      training data, see leakage.py).
-Near duplicates are reported, not gated: an evaluation sentence of at least 10 words whose word 6-grams are at least 80%
-contained in the training word 6-grams of a set. Exit code 1 on any document or sentence overlap.
+Near duplicates: an evaluation sentence of at least 10 words whose word 6-grams are at least 80% contained in the training
+word 6-grams of a set. They are gated for the imperative training source only (NEAR_GATED_TRAINING; any near duplicate of
+any evaluation set fails); for the other training sources they are reported, not gated. Exit code 1 on any document or
+sentence overlap, or any imperative near duplicate.
 
 Second section (the hard-shape development set against every other evaluation set; written to
 data/eval/shapes-dev/leakage-report.tsv, counts only): document ids, exact sentence keys and (for the shape probe only)
@@ -30,9 +32,9 @@ document is reported there and not gated; an exact sentence and a same-document 
 6-grams in the standard sentences of the same document) are gated. The training sets are checked against hard.tsv in the first section like
 against any evaluation set (label `shapes-dev-hard`).
 
-Data removal, not evaluation removal, is the remedy: the importers (import_masc.py, import_silver.py) drop training
-documents (long matches) or sentences (short matches) that overlap an evaluation set and list them in their
-excluded-documents.tsv and dropped-sentences.tsv.
+Data removal, not evaluation removal, is the remedy: the importers (import_masc.py, import_silver.py) and the builder of
+the imperative source (imperative_data.py) drop training documents (long matches) or sentences (short matches) that overlap an
+evaluation set and list them in their excluded-documents.tsv and dropped-sentences.tsv.
 """
 import argparse
 import os
@@ -46,16 +48,19 @@ import leakage
 SHINGLE = 6
 NEAR_MIN_WORDS = 10
 NEAR_THRESHOLD = 0.8
+# Training sets whose near duplicates fail the check (requirement PartOfSpeech-Data-ImperativeIndependent); the near duplicates of
+# every other training set are reported only (the older sources share agency boilerplate with open dev, open test and gold v2).
+NEAR_GATED_TRAINING = ("imperative",)
 
 
 def training_sets():
     sets = {}
     for label, parts in (("open-train", ("open", "train.tsv")), ("masc", ("masc", "masc.tsv")),
-                         ("silver", ("silver", "silver.tsv"))):
+                         ("silver", ("silver", "silver.tsv")), ("imperative", ("imperative", "imperative.tsv"))):
         path = os.path.join(common.DATA, *parts)
         if os.path.exists(path):
             sets[label] = [(s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]
-    leakage.require_sets(sets, ("open-train", "masc", "silver"), "training")
+    leakage.require_sets(sets, ("open-train", "masc", "silver", "imperative"), "training")
     return sets
 
 
@@ -69,6 +74,12 @@ def shingles(text):
 
 
 def check(include_ud):
+    """Training sets against every evaluation set: (rows, failures, UD checked).
+
+    A row is (training_set, evaluation_set, evaluation_sentences, document_overlaps, exact_sentence_overlaps,
+    near_duplicate_sentences). Document and exact sentence overlaps fail for every training set. Near duplicates fail only
+    for the training sets of NEAR_GATED_TRAINING (the imperative source); for every other training set they are reported only.
+    """
     trains = training_sets()
     evals = leakage.evaluation_sets(include_ud)
     rows, failures = [], 0
@@ -92,7 +103,7 @@ def check(include_ud):
                 sh = shingles(text)
                 if len(words(text)) >= NEAR_MIN_WORDS and sh and len(sh & train_shingles) / len(sh) >= NEAR_THRESHOLD:
                     near += 1
-            failures += doc_overlap + exact
+            failures += doc_overlap + exact + (near if train_label in NEAR_GATED_TRAINING else 0)
             rows.append((train_label, eval_label, len(eval_items), doc_overlap, exact, near))
     return rows, failures, bool(leakage.ud_sets()) if include_ud else False
 
@@ -214,10 +225,10 @@ def main():
     if dev_failures:
         print("DEV LEAKAGE FOUND: %d overlaps; remove these development sentences and rebuild: %s" % (dev_failures, ", ".join(failing[:50])))
     if failures:
-        print("LEAKAGE FOUND: %d document or exact sentence overlaps" % failures)
+        print("LEAKAGE FOUND: %d document, exact sentence or imperative near-duplicate overlaps" % failures)
     if failures or dev_failures:
         sys.exit(1)
-    print("no document or exact sentence overlap between training and evaluation sets, "
+    print("no document or exact sentence overlap (and no imperative near duplicate) between training and evaluation sets, "
           "and none between the development set and the other evaluation sets")
 
 

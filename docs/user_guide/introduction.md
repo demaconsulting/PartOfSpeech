@@ -48,8 +48,8 @@ The package targets .NET Standard 2.0 (and so runs on .NET Framework 4.8.1 and e
 public API under its `api/` folder, generated from the XML documentation of the library.
 
 **The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
-compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (517,210 bytes compressed,
-1,146,827 bytes uncompressed, about 0.5 MB and 1.1 MB). `Tagger.Default` returns a shared tagger that uses them, so the
+compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (521,695 bytes compressed,
+1,157,499 bytes uncompressed, about 0.5 MB and 1.2 MB). `Tagger.Default` returns a shared tagger that uses them, so the
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
@@ -163,15 +163,15 @@ noun-verb decisions that is answered.
 
 | Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
 | --- | ---: | ---: | ---: |
-| strict | 0.95 | 83.9% | 2.2 |
-| balanced | 0.75 | 94.1% | 8.5 |
+| strict | 0.95 | 83.7% | 2.4 |
+| balanced | 0.75 | 94.7% | 7.5 |
 
-On the development data the same thresholds answered 81.3% (strict, 3.2 harmful errors in 1,000) and 94.1% (balanced, 9.9)
-of the decisions. The strict target of at most 5 in 1,000 was met on the open test split (its 95% interval is 0.6 to 4.3)
-and on the held-out gold v2 test split (no harmful error in 761 answered decisions) and is exceeded on the shape probe of
-short technical and imperative sentences (5.9 in 1,000 answered, two errors in 340).
+On the development data the same thresholds answered 81.8% (strict, 1.9 harmful errors in 1,000) and 94.1% (balanced, 9.9)
+of the decisions. The strict target of at most 5 in 1,000 was met on the open test split (its 95% interval is 0.8 to
+4.6) and on the held-out gold v2 test split (one harmful error in 759 answered decisions) and is exceeded on the shape
+probe of short technical and imperative sentences (8.1 in 1,000 answered, three errors in 372).
 
-Without a threshold, 16.8 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
+Without a threshold, 18.4 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
 
 - **A consumer that needs a low harmful rate must use a threshold.** A rule checker, for example, uses `strict`:
@@ -407,7 +407,7 @@ TaggedSentence sentence = tagger.Tag("Dogs bark.")[0];
 
 `Tagger.Default` is the shared tagger that uses the weights and the lexicon that are embedded in the package. It is
 created on first use, so a program that only tokenizes pays nothing; the first read inflates and validates the two
-embedded files once (the weights: 517,210 bytes compressed, 1,146,827 bytes uncompressed; the lexicon: 639,711 bytes
+embedded files once (the weights: 521,695 bytes compressed, 1,157,499 bytes uncompressed; the lexicon: 639,711 bytes
 compressed, 1,626,269 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
 same thread-safe instance. A read does not fail in a released package; an `InvalidOperationException` or an
 `InvalidDataException` would mean that the package is broken.
@@ -602,8 +602,8 @@ holds open data for the 17 Universal POS tags: training corpora, a part-of-speec
 in the [data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md). The parts of the data that
 the library uses at run time are the lexicon, which is compiled into a binary file that is embedded in the assembly and
 restricts the tags of known words, and the weights, which the trainer tool of the repository learned from the open
-corpus, MASC and the silver corpus and which are embedded as a binary file too. The attribution and license notices of
-the third-party data are in
+corpus, MASC, the silver corpus and the imperative source and which are embedded as a binary file too. The attribution
+and license notices of the third-party data are in
 [THIRD-PARTY-NOTICES.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md), which is also
 packed at the root of the NuGet package.
 
@@ -618,7 +618,8 @@ packed at the root of the NuGet package.
   carry; the lexicon is embedded in the package in a compiled form.
 - **The open part-of-speech corpus** of the WordSense project (<https://github.com/demaconsulting/WordSense>): the
   annotations and the selection are CC0 1.0, and the sentences are public domain in the United States or come from the
-  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text) and the evaluation sets follow the same terms.
+  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative training source (text of US
+  federal government documents; 17 U.S.C. 105) and the evaluation sets follow the same terms.
 
 ## Evaluation-Only Data
 

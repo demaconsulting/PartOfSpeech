@@ -763,12 +763,13 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates that the three training corpora are admitted as training sources.
+    ///     Validates that the four training corpora are admitted as training sources.
     /// </summary>
     [Theory]
     [InlineData("data/open/train.tsv")]
     [InlineData("data/masc/masc.tsv")]
     [InlineData("data/silver/silver.tsv")]
+    [InlineData("data/imperative/imperative.tsv")]
     public void DataGuard_EnsureTrainable_TrainingCorpus_Admitted(string path)
     {
         // Arrange / Act
@@ -2694,7 +2695,8 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates that the committed configuration is valid, names the three corpora and is in the canonical form that the tool writes.
+    ///     Validates that the committed configuration is valid, names the four corpora (the imperative source with weight 1, so
+    ///     it is in the mix of the shipped model) and is in the canonical form that the tool writes.
     /// </summary>
     [Fact]
     public void ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical()
@@ -2705,10 +2707,35 @@ public class ModelTrainerTests
         // Act
         var config = ConfigFile.Parse(text);
 
-        // Assert: valid, three known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
-        Assert.Equal(new[] { "open", "masc", "silver" }, config.Sources.Select(s => s.Name));
+        // Assert: valid, four known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
+        Assert.Equal(new[] { "open", "masc", "silver", "imperative" }, config.Sources.Select(s => s.Name));
         Assert.All(config.Sources, s => Assert.True(File.Exists(DataFiles.Repository(s.Path))));
+        Assert.Equal(1, config.Sources.Single(s => s.Name == "imperative").Weight);
+        Assert.All(config.Sources, s => Assert.True(s.Weight > 0));
         Assert.Equal(text.Replace("\r\n", "\n"), ConfigFile.Format(config));
+    }
+
+    /// <summary>
+    ///     Validates that the committed imperative source is read by the corpus reader as 900 sentences with no masked token
+    ///     when its weight is raised to one (the way a training run adds it).
+    /// </summary>
+    [Fact]
+    public void CorpusReader_LoadSources_ImperativeSource_ReadsUnmaskedWhenWeighted()
+    {
+        // Arrange: the committed configuration with only the imperative source weighted
+        var weighted = ConfigFile.Parse(File.ReadAllText(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/training.json")));
+        foreach (var source in weighted.Sources)
+        {
+            source.Weight = source.Name == "imperative" ? 1 : 0;
+        }
+
+        // Act
+        var sentences = CorpusReader.LoadSources(DataFiles.RepositoryRoot, weighted);
+
+        // Assert: 900 sentences from the imperative file, every token with a gold tag, the first token a verb
+        Assert.Equal(900, sentences.Count);
+        Assert.All(sentences, s => Assert.DoesNotContain((sbyte)-1, s.Gold));
+        Assert.All(sentences, s => Assert.Equal((sbyte)Upos.Verb, s.Gold[0]));
     }
 
     /// <summary>
