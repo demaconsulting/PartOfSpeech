@@ -132,9 +132,8 @@ NuGet package.
 
 No CC BY-SA or NonCommercial data is committed to this repository or included in the package. Language models wrote the
 tags of the open corpus, of the silver data and of the imperative source, and no human has reviewed them. In the owner's
-position, GitHub claims
-no ownership of model outputs, so the repository owner holds the rights in them and dedicates them to the public domain
-under CC0 1.0. That is the owner's position, not legal advice or a warranty.
+position, GitHub claims no ownership of model outputs, so the repository owner holds the rights in them and dedicates
+them to the public domain under CC0 1.0. That is the owner's position, not legal advice or a warranty.
 
 ## Contributing
 

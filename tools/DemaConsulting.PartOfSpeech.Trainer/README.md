@@ -121,18 +121,17 @@ alone.
 
 ### Imperative-data experiment
 
-The experiment on the training source `imperative` (900 imperative-initial sentences, `data/imperative/`) is pre-registered in
-`RUN-LOG.md` ("Imperative training data: pre-registration") and uses the frozen driver of the context-feature experiment
-unchanged, with one folder per arm and the `-Runner` option. `imperative-data/runner-base.cmd` starts `dotnet` at normal priority;
-`imperative-data/runner-imp.cmd` does the same and appends `--source imperative:1` to the `train` command (the arms F2+IMP and
-ALL+IMP). `imperative-data/analyze_imperative.py` runs the acceptance tests (F2 at the shipped seed equals the shipped weights, the
-imperative runs trained on exactly 900 more sentences, every run scored the frozen development files), prints the tables and the
-guards (size 1.5 x F2) and applies the selection rule; it takes only `welch_diff` from the frozen `analyze_arms.py` and checks its own
-logic on synthetic runs with `--selftest`. The runners and the script are frozen by the hashes in the run log. They describe the
-experiment as it was run: its arm F2 is the shipped configuration of the pre-registration commit (the source `imperative` at weight 0
-in `training.json`), so to repeat the experiment check out that commit (`ca0c2d4`); with the current `training.json`, where the source
-has weight 1, the base runner trains the arm F2+IMP and the acceptance test of the analysis (F2 equals the shipped weights) no longer
-holds.
+The harness for the training source `imperative` (900 imperative-initial sentences, `data/imperative/`) reuses the driver
+`context-features/run_arms.ps1` unchanged, with one folder per arm and the `-Runner` option. `imperative-data/runner-base.cmd`
+starts `dotnet` at normal priority; `imperative-data/runner-imp.cmd` does the same and appends `--source imperative:1` to the
+`train` command (the arms F2+IMP and ALL+IMP). `imperative-data/analyze_imperative.py` runs the acceptance tests (F2 at the shipped
+seed equals the shipped weights, the imperative runs trained on exactly 900 more sentences, every run scored the frozen development
+files), prints the tables and the guards (size 1.5 x F2) and applies the selection rule; it takes only `welch_diff` from
+`analyze_arms.py` and checks its own logic on synthetic runs with `--selftest`. The runners and the script are frozen by the hashes
+in the run log. Arm F2 is defined as the configuration in which the source `imperative` has weight 0 in `training.json`; with a
+`training.json` where the source has weight 1 (the shipped one), the base runner trains the arm F2+IMP and the acceptance test
+"F2 equals the shipped weights" does not hold. The registration, the results and the decision are in `RUN-LOG.md` ("Imperative
+training data"); the provenance of the data, including the refusals and retries of one labeler, is in `data/imperative/README.md`.
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp -Arms F2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd

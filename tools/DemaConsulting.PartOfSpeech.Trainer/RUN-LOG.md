@@ -3425,7 +3425,9 @@ were exactly those of the pre-registration (the frozen driver `run_arms.ps1` wit
 invocation at a time, in the registered order F2, F2+IMP, ALL+IMP, ALL); no run was repeated, replaced or dropped (every run
 produced its result at the first attempt), and no frozen file was edited. The unchanged, frozen `analyze_imperative.py` was
 applied to the 20 result files with the reference arm, and the selection rule was applied mechanically. No held-out set was read
-and no held-out command (`evaluate`, `thresholds`, `train --update-config`) was run.
+and no held-out command (`evaluate`, `thresholds`, `train --update-config`) was run. The labeling disclosure of the data (the
+refusals and retries of the labeler `gpt-6.1-sol`, with the batches concerned) is in `data/imperative/README.md` ("Refusals of one
+labeler").
 
 **Decision: the rule selects F2+IMP** (the arm F2 with the `imperative` source at weight 1). Both IMP arms pass every guard, so
 Q = {F2+IMP, ALL+IMP}; the lowest primary is F2+IMP (179.0); ALL+IMP (179.5) is inside the 10% window (<= 196.9); the candidate is

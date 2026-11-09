@@ -169,8 +169,7 @@ noun-verb decisions that is answered.
 On the development data the same thresholds answered 81.8% (strict, 1.9 harmful errors in 1,000) and 94.1% (balanced, 9.9)
 of the decisions. The strict target of at most 5 in 1,000 was met on the open test split (its 95% interval is 0.8 to
 4.6) and on the held-out gold v2 test split (one harmful error in 759 answered decisions) and is exceeded on the shape
-probe of
-short technical and imperative sentences (8.1 in 1,000 answered, three errors in 372).
+probe of short technical and imperative sentences (8.1 in 1,000 answered, three errors in 372).
 
 Without a threshold, 18.4 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
@@ -604,8 +603,7 @@ in the [data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/da
 the library uses at run time are the lexicon, which is compiled into a binary file that is embedded in the assembly and
 restricts the tags of known words, and the weights, which the trainer tool of the repository learned from the open
 corpus, MASC, the silver corpus and the imperative source and which are embedded as a binary file too. The attribution
-and license notices of
-the third-party data are in
+and license notices of the third-party data are in
 [THIRD-PARTY-NOTICES.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md), which is also
 packed at the root of the NuGet package.
 

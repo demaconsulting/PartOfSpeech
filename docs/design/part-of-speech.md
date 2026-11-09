@@ -74,12 +74,11 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   in it. The packed API reference and the user guide quote a few of its figures; tests compare
   those copies with the generated files. The record describes the embedded model: the corrected corpora minus the
   withdrawn `prenominal-ing` corrections, the clause-cue feature group (see _Context Features_ in the Data Flow section)
-  and the imperative training source. The held-out sets were evaluated once for this model; they had been seen for earlier
-  models of the family, so the record is a disclosed look at them (`docs/evaluation/disclosure.md`, which both generated
-  reports carry) and a new record, not a correction of an earlier one. The evaluation `README.md` shows the previous
-  model beside it, and the run log `RUN-LOG.md` ("Corpus cleanup C", "Context-feature experiment" and "Imperative training
-  data") has the protocol and the comparison with the records of the earlier models (the open test labels changed twice,
-  with the corrections and for the 17 withdrawn test rows, the labels of the other sets did not)
+  and the imperative training source. The held-out sets are evaluated once per model; the record is a disclosed look at
+  sets that earlier models of the family also scored (`docs/evaluation/disclosure.md`, which both generated reports
+  carry) and stands as a record of its own model, not as a correction of another. The evaluation `README.md` shows the
+  previous model beside it and states which comparisons are fair, and the run log `RUN-LOG.md` ("Corpus cleanup C",
+  "Context-feature experiment" and "Imperative training data") has the protocol and the selection history
 - **Lexicon**: a table that maps a lower-case spelling to the Universal POS tags it may carry, with a coverage report;
   compiled into the embedded `POSL` file
 - **Weights**: the trained `POSW` file, 521,695 bytes compressed and 1,157,499 bytes uncompressed, with the training

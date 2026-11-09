@@ -263,9 +263,8 @@ before any curve existed.
   grid, the answered decisions, the coverage, the harmful errors, the harmful errors per 1,000 answered and per 1,000
   decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 91, 14 and 105 harmful
   errors on open dev, gold v2 dev and pooled for the embedded model). The constants of
-  the command are the development figures of the embedded model (`RUN-LOG.md`, "Imperative training data: adoption");
-  they were set to the figures that `thresholds` itself reported (it refused to write with the old
-  constants), before its run that wrote the artifact. The reliability table
+  the command are the development figures of the embedded model; the command refuses to write when its own 0.45 row
+  differs from them (`RUN-LOG.md`, "Imperative training data: adoption", has their history). The reliability table
   groups the decisions by confidence.
 - **Rule `nv-pooled-dev-v1`.** On the pooled development decisions the first grid threshold with at most 5.0 harmful
   errors per 1,000 answered and a coverage of at least 60% is the `strict` point, the first with at most 10.0 and at
