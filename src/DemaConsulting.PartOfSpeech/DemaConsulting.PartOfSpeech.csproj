@@ -44,7 +44,7 @@
     <!-- ApiMark turns this project's XML doc comments into gradually-disclosed Markdown API
          reference (index -> namespace -> type -> member) for a coding agent to read.
          - Output goes under 'generated/', which the repository already excludes from git,
-           markdownlint, and cspell, so the build regenerates it and nothing stale is committed.
+           markdownlint, and TextLint, so the build regenerates it and nothing stale is committed.
          - ApiMarkPackDocs ships the generated api/ tree inside the nupkg, so a consuming agent
            receives the reference with the library.
          - ApiMarkEnforceDocs fails the build on any public API member lacking an XML doc

@@ -11,6 +11,8 @@
 
 .NET library for part-of-speech tagging of English text, with calibrated confidences.
 
+![Architecture: an application calls the Tagger, which uses tokenization, the model and Upos][architecture]
+
 ## Features
 
 - 🔤 **Tokenizer** - English text to sentences and tokens with offsets
@@ -176,3 +178,4 @@ By contributing to this project, you agree that your contributions will be licen
 [link-wordsense]: https://github.com/demaconsulting/WordSense
 [link-cc-by-3]: https://creativecommons.org/licenses/by/3.0/us/
 [link-cc-by-4]: https://creativecommons.org/licenses/by/4.0/
+[architecture]: https://raw.githubusercontent.com/demaconsulting/PartOfSpeech/main/docs/images/architecture.png

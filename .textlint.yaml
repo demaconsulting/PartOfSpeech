@@ -1,0 +1,147 @@
+---
+# Spell-Checking with TextLint
+#
+# PURPOSE:
+# - Maintain professional documentation and code quality
+# - Catch spelling errors before publication
+# - Support consistent technical terminology usage
+# - Misspelled words should be fixed in the source
+# - NEVER add a misspelled word to the 'words' list
+# - PROPOSE only genuine technical terms/names as needed
+
+version: "0.2"
+language: en
+
+# The files to spell-check
+files:
+  - "**/*.{md,yaml,yml,json,cs,cpp,hpp,h,txt}"
+# Include hidden paths such as .github/ and .*.yaml
+enableGlobDot: true
+
+# Project-specific technical terms and tool names
+words:
+  - ADJP
+  - Adlam
+  - adposition
+  - Adposition
+  - ADVP
+  - Ahom
+  - allwords
+  - Artagnan
+  - bijective
+  - Cconj
+  - CCONJ
+  - Christiane
+  - Citi
+  - compileall
+  - conllu
+  - CORECLR
+  - dema
+  - Dema
+  - DEMA
+  - demaconsulting
+  - deseret
+  - Deseret
+  - disfluencies
+  - Fellbaum
+  - ficlets
+  - guillemets
+  - hashlib
+  - HYPH
+  - Intj
+  - INTJ
+  - isalnum
+  - LREC
+  - McCrae
+  - Medefaidrin
+  - Memberwise
+  - memberwise
+  - moby
+  - Moby
+  - mscorlib
+  - multiword
+  - Multiword
+  - ncipollo
+  - nestings
+  - NETFRAMEWORK
+  - netstandard
+  - nmod
+  - NNPS
+  - noaa
+  - NOAA
+  - nonspacing
+  - OANC
+  - oewn
+  - Oewn
+  - ONNX
+  - Passonneau
+  - pbio
+  - permille
+  - Permille
+  - posl
+  - POSL
+  - posw
+  - POSW
+  - precomposed
+  - prenominal
+  - Prenominal
+  - PROPN
+  - Propn
+  - propn
+  - PUNCT
+  - Punct
+  - pycache
+  - sarif
+  - Sarif
+  - SARIF
+  - SBAR
+  - sconj
+  - Sconj
+  - SCONJ
+  - Setext
+  - shopt
+  - slnx
+  - snupkg
+  - Softmax
+  - softmax
+  - sonarscanner
+  - tatoeba
+  - Tatoeba
+  - testdata
+  - thirdparty
+  - Titlecase
+  - treebank
+  - Treebank
+  - treebanks
+  - unidirectionality
+  - USGS
+  - varint
+  - Varint
+  - varints
+  - Varints
+  - venv
+  - Vithkuqi
+  - Warang
+  - WHADVP
+  - WHNP
+  - WNDB
+  - WORDSENSE
+  - wordsense
+  - yamlfix
+
+# Exclude common build artifacts, dependencies, and vendored third-party code
+ignorePaths:
+  - "**/.git/**"
+  - "**/node_modules/**"
+  - "**/.venv/**"
+  - "**/thirdparty/**"
+  - "**/third-party/**"
+  - "**/3rd-party/**"
+  - "**/generated/**"
+  - "**/AGENT_REPORT_*.md"
+  - "**/.agent-logs/**"
+  - "**/bin/**"
+  - "**/obj/**"
+  - package-lock.json
+  # Generated coverage report: it lists arbitrary spellings of the data sets, which are not words to check
+  - data/lexicon/COVERAGE.md

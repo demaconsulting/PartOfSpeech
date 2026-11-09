@@ -1,4 +1,6 @@
 package PartOfSpeech {
+    private import SoftwareItemMetadata::*;
+
     doc
     /*
      * PartOfSpeech is a .NET library for part-of-speech analysis of English text: it splits text into sentences and
@@ -15,10 +17,13 @@ package PartOfSpeech {
     part def PartOfSpeechSystem {
         doc /* The Part Of Speech system as a whole, including its system-level data, licensing, embedded model, evaluation record and confidence guidance requirements. */
 
-        comment testRef /* Test: test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechTests.cs, test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechDataTests.cs, test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechEvaluationTests.cs, test/DemaConsulting.PartOfSpeech.Tests/DataFiles.cs */
-        comment designRef /* Design: docs/design/part-of-speech.md */
-        comment verificationRef /* Verification: docs/verification/part-of-speech.md */
-        comment reqRef /* Requirements: docs/reqstream/part-of-speech.yaml */
+        metadata info : SoftwareInfo {
+            description = "The Part Of Speech system as a whole, including its system-level data, licensing, embedded model, evaluation record and confidence guidance requirements.";
+            testFiles = ("test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechTests.cs", "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechDataTests.cs", "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechEvaluationTests.cs", "test/DemaConsulting.PartOfSpeech.Tests/DataFiles.cs");
+            designFiles = ("docs/design/part-of-speech.md");
+            verificationFiles = ("docs/verification/part-of-speech.md");
+            requirementFiles = ("docs/reqstream/part-of-speech.yaml");
+        }
 
         part upos : Upos;
         part modelTrainer : ModelTrainer;

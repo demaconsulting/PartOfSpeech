@@ -52,7 +52,7 @@ the package; the tool itself is not.
 The library project sets these properties:
 
 - **`ApiMarkOutputDir`**: `$(MSBuildProjectDirectory)\generated\api`. The `generated/` folder is
-  already excluded by `.gitignore`, `.markdownlint-cli2.yaml`, `.cspell.yaml` and `.reviewmark.yaml`,
+  already excluded by `.gitignore`, `.markdownlint-cli2.yaml`, `.textlint.yaml` and `.reviewmark.yaml`,
   and covered by the rule that agents never read, lint, or modify generated content. The reference is
   therefore generated at build time and not committed, so no staleness check is needed.
 - **`ApiMarkVisibility`**: `Public`.
