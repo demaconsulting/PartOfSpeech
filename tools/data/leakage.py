@@ -40,7 +40,11 @@ DOCUMENT_KEY_LENGTH = 25
 # The label of the hard-shape development set among the evaluation sets, and the word n-gram length of the probe gate.
 SHAPES_DEV_LABEL = "shapes-dev"
 SHAPES_DEV_HARD_LABEL = "shapes-dev-hard"
+# The three newer tranches of the set (data/eval/shapes-dev/<name>.tsv): optional files, included as evaluation sets once they exist.
+SHAPES_DEV_NEW_TRANCHES = ("compound-head", "headings", "named-state")
+SHAPES_DEV_NEW_LABELS = tuple("shapes-dev-" + name for name in SHAPES_DEV_NEW_TRANCHES)
 SHAPES_DEV_LABELS = (SHAPES_DEV_LABEL, SHAPES_DEV_HARD_LABEL)
+SHAPES_DEV_ALL_LABELS = SHAPES_DEV_LABELS + SHAPES_DEV_NEW_LABELS
 # data/eval/shapes-dev/hard.tsv is committed: a missing hard tranche file fails loudly like every other required set.
 HARD_TRANCHE_REQUIRED = True
 PROBE_GRAM_WORDS = 5
@@ -67,7 +71,8 @@ def corpus_sets():
     for label, parts in (("open-dev", ("open", "dev.tsv")), ("open-test", ("open", "test.tsv")),
                          ("ste-challenge", ("eval", "ste-challenge", "test.tsv")),
                          (SHAPES_DEV_LABEL, ("eval", "shapes-dev", "dev.tsv")),
-                         (SHAPES_DEV_HARD_LABEL, ("eval", "shapes-dev", "hard.tsv"))):
+                         (SHAPES_DEV_HARD_LABEL, ("eval", "shapes-dev", "hard.tsv"))) + tuple(
+            ("shapes-dev-" + name, ("eval", "shapes-dev", name + ".tsv")) for name in SHAPES_DEV_NEW_TRANCHES):
         path = os.path.join(common.DATA, *parts)
         if os.path.exists(path):
             sets[label] = [(s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]
@@ -189,7 +194,7 @@ def evaluation_sets(include_ud=True, shapes_dev=True):
     sets.update(table_sets())
     required = REQUIRED_EVALUATION_SETS
     if not shapes_dev:
-        for label in SHAPES_DEV_LABELS:
+        for label in SHAPES_DEV_ALL_LABELS:
             sets.pop(label, None)
         required = tuple(label for label in required if label not in SHAPES_DEV_LABELS)
     require_sets(sets, required, "evaluation")

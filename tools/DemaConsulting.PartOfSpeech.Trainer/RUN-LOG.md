@@ -3962,6 +3962,49 @@ text: the model is better on the shape probe, the challenge set and the imperati
 (+2) and the treebank (+12 harmful errors at 0.45), and has a higher calibration error on several sets. F2+IMP ships. The decision
 changes no figure of this record.
 
+## Shapes development set: new tranches, pre-registered selection rule
+
+**The inputs table and the numbered rule below were written before any candidate or label of the three new tranches existed.** The
+frozen pre-registration is the commit that adds this section (`tools/data/shapes_dev_extra.py`, its tests and the same rule in
+`data/eval/shapes-dev/README.md`, section "New Tranches"); the sections after it were written after labeling and do not change the rule. The three
+tranches (`compound-head.tsv`, `headings.tsv`, `named-state.tsv` in `data/eval/shapes-dev/`) are development sets: the figures that they
+produce select settings and are never held-out results. The rule is model-independent: no PartOfSpeech weight file, prediction, error or
+score takes part in the selection.
+
+**What the first shape is.** `n-compound-head` (standard and hard tranche) tests the head, the last noun, of a noun compound in the frame of
+`shapes_dev.shape_hits`. The new shape `n-compound-head-ambiguous` also tests a head that the lexicon lists as noun and verb, but only where that frame
+does not hold at the token (a compound of three or more nouns, a compound after an adjective, a compound at the start of the sentence, a head followed by an
+adverb or mark, an `-ing` head listed as a noun). The two shapes therefore do not overlap at a token. A shape for the modifier position of a compound
+(`bleed valve`) is not part of this set.
+
+| Input | Value |
+| --- | --- |
+| Text | 288 US federal documents, 163,727 sentences and 139,208 candidate heading lines, disjoint (by id, URL, archive.org identifier and sentence) from every training source, evaluation set, `dev.tsv`, `hard.tsv` and `imperative.tsv` |
+| Selection signal of `compound-head` | the WordSense Basic classifier (HMM tagger plus cue model); none for `headings` and `named-state` |
+| WordSense commit | `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (read only) |
+| `DemaConsulting.WordSense.dll` SHA-256 | `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
+| `hmm.tsv` SHA-256 | `f20d0952ab09b838c32fa56d4c14f45743db60d74db0fefaabea5150499ed6f1` |
+| `tokens.tsv` SHA-256 (harness input, 289,335 units) | `5b800937b439b53a54c76d270c23ca510a26967716c45f748aa31cd658a8b055` |
+| Pool before the caps (counts only) | 8,009 `compound-head` candidates in the band (21,152 frame hits); 636 imperative, 1,666 noun and 52 proper heading frames; 189 `named-state` frames |
+
+Rule (`python tools/data/shapes_dev_extra.py`):
+
+1. **Candidates:** the cleanliness, length, duplicate, held-out (only through `leakage.held_out_overlap_keys`), excluded-source and
+   document-key-hit filters of the earlier tranches (a heading line has its own filter), and no sentence of `dev.tsv`, `hard.tsv` or `imperative.tsv`
+   (exact key, or at least 80% of the word 6-grams for a sentence of at least 10 words).
+2. **`compound-head`:** the complement frame of `n-compound-head`; the contested band 0.10 <= q < 0.97 of the Noun mass of the Basic classifier, q ascending, at most 4 per lemma,
+   600 candidates; controls (the same lemma as a verb) at most 2 per lemma, 50 candidates, no band; `-ing` heads at most 25% of the built targets.
+3. **`headings`:** frames by position and lexicon only (noun and imperative targets, `proper` controls), no band; 400 candidates per kind, at most 4 per lemma and 20 per document;
+   60 controls.
+4. **`named-state`:** frames by position, a cue word and the lexicon only, no band (the pool is thin); the seeded order, at most 4 per lemma; 50 controls.
+5. **Gold:** two blind labelers (`claude-opus-5.5`, `gpt-6.1-sol`); a target disagreement and a class mismatch (exact tag for `headings`) drop the item; frame rules after labeling; no label is edited by hand.
+6. **Quota gate** (floor and cap): `compound-head` 80 and 100 (controls 15 and 20), `headings` 40 and 50 per target kind (controls 12 and 20), `named-state` 40 and 100 (controls 12 and 20);
+   below a floor `build` refuses unless `--allow-short`, and a miss is stated, never padded. No sentence is authored.
+7. **Hand check:** 60 targets and 4 swapped-tag controls by `claude-sonnet-5.5` (a model review); gate 95% precision.
+8. **Convention rules** for headings and state names were added to `data/CONVENTIONS.md` before any label was requested.
+9. **Baseline:** the shipped model is scored once per tranche after the build (`eval-shapes --tranche new`): target accuracy (exact tag for `headings`), harmful errors per 1,000
+   decisions and the number of wrong answers with a confidence of at least 0.95.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

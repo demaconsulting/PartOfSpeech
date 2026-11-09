@@ -425,6 +425,107 @@ figures are kept there only.
 - **Same text family as the standard tranche:** 43 documents are shared, so the two tranches are one family, not two independent
   samples; the narrow-domain limit below applies to both.
 
+## New Tranches
+
+Three more development files hold shapes that `dev.tsv` and `hard.tsv` do not measure: `compound-head.tsv`, `headings.tsv` and
+`named-state.tsv`. Each is a real-text tranche for development only, built by a pre-registered rule that is independent of the
+PartOfSpeech model (`python tools/data/shapes_dev_extra.py`; the docstring of the tool has the same text), and each gold tag is
+the agreement of two blind model labelers. **The rule below was written before any candidate or label of the three tranches existed.**
+It is also the "Selection" record of the trainer [run log](../../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md),
+section "Shapes development set: new tranches, pre-registered selection rule".
+
+| Tranche | File | Shape id | The judged word is | Gold |
+| --- | --- | --- | --- | --- |
+| `compound-head` | `compound-head.tsv` | `n-compound-head-ambiguous` | the head (the last noun) of a noun compound, in a spelling that the lexicon lists as noun and verb, in the cases that the frame of `n-compound-head` does not hold | Noun (NOUN or PROPN); controls: the same lemma as a verb |
+| `headings` | `headings.tsv` | `heading-titlecase` | a capitalized word of a Title Case heading line: a common noun (kind `noun`), the initial imperative (kind `imperative`) or a true name (kind `proper`, a control) | exactly NOUN, VERB and PROPN |
+| `named-state` | `named-state.tsv` | `n-named-state` | a capitalized or ALL-CAPS state, position or setting name after a preposition (`set to OFF`, `moved to STANDBY`) | Noun (NOUN or PROPN); controls: the same lemma as a verb |
+
+### The Shape of `compound-head`
+
+`n-compound-head` (standard and hard tranche) tests the **head** of a noun compound: its frame (`shape_hits`) wants a determiner,
+a preposition, a conjunction, an auxiliary or a mark two tokens before the head, a strict noun modifier right before it and a
+verb-like word, a mark or the end after it. The shape of this tranche is the **complement** of that frame at the target token, so
+the two shapes do not overlap at a token: compounds of three or more nouns, a compound after an adjective or another noun-adjective
+chain, a compound at the start of the sentence (head at token 1), a head that an adverb or a mark ends, and `-ing` heads that the
+lexicon lists as nouns (`finding`, `setting`). The head is lower case and listed as NOUN and VERB (`check`, `split`, `stand`,
+`reach`, `register`, `estimate`); the word before it is a noun modifier (`noun_like_modifier`, strict); the next token is the end,
+a mark or not a noun-capable word. The nominal-gerund rule of the older noun shapes is not applied, `-ing` heads are at most 25% of the
+targets and are counted separately. The modifier position of a compound (`bleed valve`) is not a shape of this set.
+
+### The Shape of `headings`
+
+A heading, caption, table header or step title is a **line**, not a sentence: 2 to 10 tokens, usually without final punctuation, in
+Title Case, with the numbering or label (`2.1`, `Step 3.`, `Table 2.`) removed. Lines come from the OCR text of the documents (`heading_lines`: a
+line after a blank line whose next non-blank line is a paragraph line; no running header, table-of-contents line, dot leader or trailing page
+number) and pass a heading filter (`heading_noise_reason`: ASCII, no junk, balanced brackets, not ALL CAPS, every content word capitalized, no
+broken last word, every word in a word list, one sentence by the library tokenizer, no training or evaluation line). Three kinds of judged
+word (position and lexicon only; the capitalization is the stress, so there is no band):
+
+- **noun** (target, gold NOUN): a non-initial capitalized token whose lower-case spelling the lexicon lists as noun and verb and
+  that ends its noun phrase (the next token is the end, a mark, a preposition or a conjunction), as `Check` in `Engine Oil Check`;
+  a common noun that is tagged PROPN is wrong for this shape;
+- **imperative** (target, gold VERB): token 0, capitalized, listed as noun and verb, in its base form, followed by a determiner, an
+  object pronoun, an adverb or particle, or a capitalized noun-capable word (`Remove the Cover`, `Check Fluid Level`);
+- **proper** (control, gold PROPN): a non-initial capitalized token whose lower-case spelling the lexicon lists as a proper noun only.
+
+### The Shape of `named-state`
+
+The judged word is a single capitalized or ALL-CAPS token (2 to 12 letters; an ordinary word when capitalized, a Roman numeral never) that is
+not the first token and stands directly after `to`, `in`, `at`, `from`, `into` or `on` (a determiner may be between), with a device cue word
+(`set`, `switch`, `selector`, `position`, `mode`, `setting`, `move`, `turn`, `lever`, `knob`, `valve`, `control`, ... and their inflected forms) among the 6 tokens before
+the preposition, and that is not the modifier of a following noun (`set to OFF` and `moved to STANDBY` qualify; `to the OFF position` does not).
+There is no band: the pool of real frames is thin and a band would shrink it further. A control is the same lemma as a verb after a modal or `to`.
+
+### Conventions Added With These Tranches
+
+[CONVENTIONS.md](../../CONVENTIONS.md) was silent on both label questions, so two rules were added **before any label was requested**
+(they apply to new data; no existing corpus is relabeled):
+
+- Title Case or ALL-CAPS capitalization of a heading is typographic and never changes a tag: a common noun is NOUN, a base verb that starts an
+  instruction is VERB, a function word keeps its tag, and a word is PROPN only when it names one particular entity.
+- A state, position or setting name (`OFF`, `AUTO`, `STANDBY`, `Closed`) after a preposition is NOUN when it is an ordinary English
+  word (the capitals mark a printed label, not a name), and PROPN only for a coined or arbitrary label that is no English word or for the name of
+  one particular entity; a letter or number label is outside the frame.
+
+### Inputs of the Selection
+
+| Input | Value |
+| --- | --- |
+| Text | 288 US federal documents (Army and Army Air Forces 123, Department of Agriculture 104, Forest Service 48, Navy 11, NASA 2), 163,727 sentences and 139,208 candidate heading lines, none of them in a training source, an evaluation set, `dev.tsv`, `hard.tsv` or `imperative.tsv`, and none by id, URL or archive.org identifier in any source table |
+| Selection signal of `compound-head` | the WordSense Basic classifier (HMM tagger plus cue model), as in the hard tranche; no signal for the other two tranches |
+| WordSense commit | `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (read only) |
+| `DemaConsulting.WordSense.dll` SHA-256 | `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
+| `hmm.tsv` SHA-256 | `f20d0952ab09b838c32fa56d4c14f45743db60d74db0fefaabea5150499ed6f1` |
+| `tokens.tsv` SHA-256 (harness input, 289,335 units) | `5b800937b439b53a54c76d270c23ca510a26967716c45f748aa31cd658a8b055` |
+
+The tool refuses any `hmm.tsv` or `tokens.tsv` whose bytes differ from the two pinned values, so edited mass cells cannot enter a selection.
+The pool sizes before the caps (counts only; no label, no model): 8,009 `compound-head` candidates in the contested band (of 21,152 frame hits);
+636 imperative, 1,666 noun and 52 proper heading frames (296, 621 and 37 lemmas); 189 `named-state` frames (94 lemmas, 61 documents).
+
+### The Rule
+
+1. **Candidates.** A unit (a sentence of 3 to 30 tokens, or a heading line of 2 to 10 tokens) passes the cleanliness filter of `shapes_dev` (headings:
+   the heading filter above), has no duplicate, equals no training or evaluation sentence (the held-out sets enter only through
+   `leakage.held_out_overlap_keys`), shares no probe word 5-gram, and is not a sentence of `dev.tsv`, `hard.tsv` or `imperative.tsv` (exact key, or a
+   sentence of at least 10 words with at least 80% of its word 6-grams in those files). A document with 3 or more sentences of that kind, or whose id, URL or
+   archive.org identifier is already used or excluded, is rejected as a whole.
+2. **`compound-head`.** Frame as above; the contested band of the Basic classifier (q is the mass of the class Noun at the target; eligible if 0.10 <= q < 0.97;
+   order q ascending, ties by the seeded rank), at most 4 per lemma, 600 candidates. Controls: the same lemma as a verb after a modal or `to`, or as the first word of
+   an instruction; no band; at most 2 per lemma; 50 candidates.
+3. **`headings`.** The frames above; 400 candidates per target kind, at most 4 per lemma and 20 per document, in the order strong imperative frames first, then the seeded rank;
+   60 `proper` controls, at most 2 per lemma.
+4. **`named-state`.** Every frame hit in the seeded order (the pool is below the 500 budget), at most 4 per lemma. Controls: 50 candidates, at most 2 per lemma.
+5. **Gold.** Two blind labelers (`claude-opus-5.5`, whose tag breaks ties for tokens other than the judged word, and `gpt-6.1-sol`) tag every token of every unit and see only an
+   opaque id, an index and the token. A target disagreement drops the item; so does an agreed tag other than the gold of the kind (the exact tag for `headings`, the class for the
+   others); frame rules after labeling (`compound-head`: a noun before the head; `named-state`: a preposition, with an optional determiner, before the word; `headings`: the imperative is
+   token 0 and in its base form, the noun is never token 0). No label is edited by hand. No authored sentence exists in any tranche.
+6. **Quota gate** (floor and cap): `compound-head` targets 80 and 100, controls 15 and 20; `headings` noun targets 40 and 50, imperative targets 40 and 50, controls 12 and 20;
+   `named-state` targets 40 and 100, controls 12 and 20; at most 4 items per lemma (controls 2) and at most 12 `headings` targets per document. Below a floor `build` refuses unless
+   `--allow-short`; a miss is stated and never padded.
+7. **Hand check.** 60 targets (20 `compound-head`, 10 heading nouns, 10 heading imperatives, 20 `named-state`; fewer where a tranche has fewer) and 4 swapped-tag controls are
+   shown to a third model (`claude-sonnet-5.5`; a model review, not a human review); the gate is a precision of 95%.
+8. **No PartOfSpeech model in the selection** (a data test asserts it).
+
 ## Known Limits
 
 - **OCR residue:** most documents are scans with OCR text. The filter removes most errors, but a few sentences keep a

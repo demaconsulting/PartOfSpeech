@@ -994,10 +994,22 @@ public class ShapesDevEvaluationTests
     [Fact]
     public void DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt()
     {
-        // Arrange / Act / Assert: the list of the set is exactly the two tranches, the other allow-lists did not grow
-        Assert.Equal(new[] { "data/eval/shapes-dev/dev.tsv", "data/eval/shapes-dev/hard.tsv" }, DataGuard.ShapesDevelopmentFiles);
+        // Arrange / Act / Assert: the list of the set is exactly the five tranches, the other allow-lists did not grow
+        Assert.Equal(
+            new[]
+            {
+                "data/eval/shapes-dev/dev.tsv",
+                "data/eval/shapes-dev/hard.tsv",
+                "data/eval/shapes-dev/compound-head.tsv",
+                "data/eval/shapes-dev/headings.tsv",
+                "data/eval/shapes-dev/named-state.tsv",
+            },
+            DataGuard.ShapesDevelopmentFiles);
         Assert.Equal(DataGuard.ShapesDevelopmentFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.Standard]);
         Assert.Equal(DataGuard.ShapesDevelopmentHardFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.Hard]);
+        Assert.Equal(DataGuard.ShapesDevelopmentCompoundHeadFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.CompoundHead]);
+        Assert.Equal(DataGuard.ShapesDevelopmentHeadingsFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.Headings]);
+        Assert.Equal(DataGuard.ShapesDevelopmentNamedStateFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.NamedState]);
         Assert.Equal(new[] { "data/open/dev.tsv", "data/eval/gold-v2/dev.tsv" }, DataGuard.DevelopmentFiles);
         Assert.Equal(4, DataGuard.HeldOutFiles.Count);
         foreach (var file in DataGuard.ShapesDevelopmentFiles)
@@ -1383,6 +1395,645 @@ public class ShapesDevEvaluationTests
         Assert.True(HeldOutEvaluator.Throughput(tagger, sentences, 1) > 0);
         Assert.True(HeldOutEvaluator.Throughput(tagger, sentences, 4) > 0);
         Assert.True(HeldOutEvaluator.Throughput(tagger, sentences) > 0);
+    }
+
+    /// <summary>
+    ///     Builds a block of a single-shape tranche: the judged word <c>cat</c> at index 1 of a three-word sentence.
+    /// </summary>
+    private static string[] NewBlock(string id, string shape, string role, string tag, string? kind = null, string status = "unanimous")
+    {
+        var block = Sentence(id, shape, role, 1, new[] { "The", "cat", "sleeps" }, new[] { "DET", tag, "VERB" }, targetStatus: status, lemma: "cat");
+        if (kind == null)
+        {
+            return block;
+        }
+
+        var lines = block.ToList();
+        lines.Insert(lines.FindIndex(l => l.StartsWith("# origin = ", StringComparison.Ordinal)) + 1, "# kind = " + kind);
+        return lines.ToArray();
+    }
+
+    /// <summary>
+    ///     Joins the header of a single-shape tranche (its corpus comment carries the tranche marker) and blocks.
+    /// </summary>
+    private static List<string> TrancheFile(string tranche, params string[][] blocks)
+    {
+        var lines = File(blocks);
+        lines[0] = $"# corpus = fixture hard-shape development set, {tranche} tranche (UPOS), dev split";
+        return lines;
+    }
+
+    /// <summary>
+    ///     The sentence id of a single-shape tranche.
+    /// </summary>
+    private static string NewId(string tranche, int number) => $"shapes-dev-{tranche}-{number:0000}";
+
+    /// <summary>
+    ///     A valid file of the compound-head tranche: a NOUN target, a PROPN target and a VERB control.
+    /// </summary>
+    private static List<string> CompoundHeadFile() => TrancheFile(
+        "compound-head",
+        NewBlock(NewId("compound-head", 1), "n-compound-head-ambiguous", "target", "NOUN"),
+        NewBlock(NewId("compound-head", 2), "n-compound-head-ambiguous", "target", "PROPN"),
+        NewBlock(NewId("compound-head", 3), "n-compound-head-ambiguous", "control", "VERB"));
+
+    /// <summary>
+    ///     A valid file of the headings tranche: a noun, an imperative and a proper heading.
+    /// </summary>
+    private static List<string> HeadingsFile() => TrancheFile(
+        "headings",
+        NewBlock(NewId("headings", 1), "heading-titlecase", "target", "NOUN", "noun"),
+        NewBlock(NewId("headings", 2), "heading-titlecase", "target", "VERB", "imperative"),
+        NewBlock(NewId("headings", 3), "heading-titlecase", "control", "PROPN", "proper"));
+
+    /// <summary>
+    ///     A valid file of the named-state tranche: a PROPN target, a NOUN target and a VERB control.
+    /// </summary>
+    private static List<string> NamedStateFile() => TrancheFile(
+        "named-state",
+        NewBlock(NewId("named-state", 1), "n-named-state", "target", "PROPN"),
+        NewBlock(NewId("named-state", 2), "n-named-state", "target", "NOUN"),
+        NewBlock(NewId("named-state", 3), "n-named-state", "control", "VERB"));
+
+    /// <summary>
+    ///     Writes a file into the shapes development folder of a temporary repository root.
+    /// </summary>
+    private static void WriteShapes(string root, string file, IEnumerable<string> lines) =>
+        System.IO.File.WriteAllText(Path.Combine(root, "data", "eval", "shapes-dev", file), string.Join("\n", lines) + "\n");
+
+    /// <summary>
+    ///     Creates an item of a single-shape tranche with a one-word sentence.
+    /// </summary>
+    private static ShapesDevItem TrancheItem(ShapesDevTranche tranche, string id, string role, string word, string goldTag, string kind = "") =>
+        new(id, "doc-a", new[] { word }, 0, goldTag == "VERB" ? "Verb" : "Noun", ShapesDevSets.SpecOf(tranche)!.Shape, role, word, "real", tranche, kind, goldTag);
+
+    /// <summary>
+    ///     Creates a tagger that calls <c>cat</c> a PROPN (NOUN is the other candidate) and <c>dog</c> a VERB (NOUN is the other candidate).
+    /// </summary>
+    private static Tagger PropnCatVerbDogTagger() => TinyModels.CreateTagger(
+        new TinyModels.WeightsBuilder().Word("cat", Upos.Propn, 40).Word("dog", Upos.Verb, 40).Build(temperature: 1f, scale: 0.1f),
+        TinyModels.CreateLexicon("cat NOUN PROPN", "dog NOUN VERB"),
+        new TaggerOptions { MaxAlternatives = 16 });
+
+    /// <summary>
+    ///     Creates a tagger for the sentences of the file fixtures (the embedded lexicon; <c>cat</c> is a noun).
+    /// </summary>
+    private static Tagger FixtureTagger() => TinyModels.CreateTagger(
+        new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 40).Build(temperature: 1f, scale: 0.1f),
+        null,
+        new TaggerOptions { MaxAlternatives = 16 });
+
+    /// <summary>
+    ///     Validates that valid files of the three single-shape tranches are read into items with shape, role, kind, gold tag and gold class.
+    /// </summary>
+    [Fact]
+    public void ShapesDevSets_Parse_NewTranches_ValidFiles_ReturnItemsWithKindAndGoldTag()
+    {
+        // Arrange / Act
+        var compound = ShapesDevSets.Parse(CompoundHeadFile(), "fixture", ShapesDevTranche.CompoundHead);
+        var headings = ShapesDevSets.Parse(HeadingsFile(), "fixture", ShapesDevTranche.Headings);
+        var named = ShapesDevSets.Parse(NamedStateFile(), "fixture", ShapesDevTranche.NamedState);
+
+        // Assert: class-scored tranches carry the tag and its class, no kind
+        Assert.Equal(new[] { "NOUN", "PROPN", "VERB" }, compound.Select(i => i.GoldTag));
+        Assert.Equal(new[] { "Noun", "Noun", "Verb" }, compound.Select(i => i.GoldClass));
+        Assert.Equal(new[] { "target", "target", "control" }, compound.Select(i => i.Role));
+        Assert.All(compound, i => Assert.Equal(("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead, string.Empty), (i.Shape, i.Tranche, i.Kind)));
+        Assert.Equal(new[] { "PROPN", "NOUN", "VERB" }, named.Select(i => i.GoldTag));
+        Assert.All(named, i => Assert.Equal(("n-named-state", ShapesDevTranche.NamedState), (i.Shape, i.Tranche)));
+
+        // Assert: headings carry the kind, the role it fixes and the exact gold tag
+        Assert.Equal(new[] { "noun", "imperative", "proper" }, headings.Select(i => i.Kind));
+        Assert.Equal(new[] { "NOUN", "VERB", "PROPN" }, headings.Select(i => i.GoldTag));
+        Assert.Equal(new[] { true, true, false }, headings.Select(i => i.IsTarget));
+        Assert.All(headings, i => Assert.Equal(("heading-titlecase", ShapesDevTranche.Headings), (i.Shape, i.Tranche)));
+    }
+
+    /// <summary>
+    ///     Validates that each invalid item of a single-shape tranche is refused with a message that names the rule: a shape that is not the
+    ///     shape of the tranche, a wrong gold tag, a missing, unknown or misplaced kind, a kind with the wrong role and a disputed judged word.
+    /// </summary>
+    [Fact]
+    public void ShapesDevSets_Parse_NewTranches_InvalidItems_AreRefused()
+    {
+        // Arrange: one broken file per rule, with the text the message must contain
+        var compound = (ShapesDevTranche.CompoundHead, "n-compound-head-ambiguous");
+        var named = (ShapesDevTranche.NamedState, "n-named-state");
+        var headings = (ShapesDevTranche.Headings, "heading-titlecase");
+        var cases = new List<(ShapesDevTranche Tranche, string[] Block, string Expected)>
+        {
+            (compound.Item1, NewBlock(NewId("compound-head", 1), "n-compound-head", "target", "NOUN"), "the only shape of the compound-head tranche"),
+            (named.Item1, NewBlock(NewId("named-state", 1), "heading-titlecase", "target", "NOUN"), "the only shape of the named-state tranche"),
+            (headings.Item1, NewBlock(NewId("headings", 1), "n-named-state", "target", "NOUN", "noun"), "the only shape of the headings tranche"),
+            (compound.Item1, NewBlock(NewId("compound-head", 1), compound.Item2, "target", "VERB"), "must be tagged NOUN or PROPN but is tagged VERB"),
+            (compound.Item1, NewBlock(NewId("compound-head", 1), compound.Item2, "control", "NOUN"), "must be tagged VERB but is tagged NOUN"),
+            (named.Item1, NewBlock(NewId("named-state", 1), named.Item2, "target", "ADJ"), "must be tagged NOUN or PROPN but is tagged ADJ"),
+            (compound.Item1, NewBlock(NewId("compound-head", 1), compound.Item2, "target", "NOUN", "noun"), "belongs to the headings tranche only"),
+            (compound.Item1, NewBlock(NewId("compound-head", 1), compound.Item2, "target", "NOUN", status: "disputed"), "must not be disputed"),
+            (headings.Item1, NewBlock(NewId("headings", 1), headings.Item2, "target", "NOUN"), "the comment 'kind' is missing"),
+            (headings.Item1, NewBlock(NewId("headings", 1), headings.Item2, "target", "NOUN", "adjective"), "the kind 'adjective' is not one of noun, imperative, proper"),
+            (headings.Item1, NewBlock(NewId("headings", 1), headings.Item2, "control", "NOUN", "noun"), "does not match the kind 'noun'"),
+            (headings.Item1, NewBlock(NewId("headings", 1), headings.Item2, "target", "PROPN", "proper"), "does not match the kind 'proper'"),
+            (headings.Item1, NewBlock(NewId("headings", 1), headings.Item2, "target", "VERB", "noun"), "must be tagged NOUN but is tagged VERB"),
+            (headings.Item1, NewBlock(NewId("headings", 1), headings.Item2, "target", "NOUN", "imperative"), "must be tagged VERB but is tagged NOUN"),
+            (headings.Item1, NewBlock(NewId("headings", 1), headings.Item2, "control", "NOUN", "proper"), "must be tagged PROPN but is tagged NOUN"),
+            (headings.Item1, NewBlock(NewId("headings", 1), headings.Item2, "target", "NOUN", "noun", "disputed"), "must not be disputed"),
+        };
+
+        // Act / Assert
+        foreach (var (tranche, block, expected) in cases)
+        {
+            var exception = Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(TrancheFile(DevSets.ShapesDevNameOf(tranche), block), "fixture", tranche));
+            Assert.Contains(expected, exception.Message, StringComparison.Ordinal);
+        }
+
+        // Assert: the shape of a single-shape tranche is not a shape of the standard or the hard tranche, and the other way round
+        var wrongTranche = Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(CompoundHeadFile(), "fixture"));
+        Assert.Contains("is not one of n-compound-head", wrongTranche.Message, StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(File(CompoundHead()), "fixture", ShapesDevTranche.CompoundHead));
+    }
+
+    /// <summary>
+    ///     Validates that each single-shape tranche is read from its own file with its own SHA-256 and marks its items, that the standard
+    ///     tranche is still read next to them and that an absent file is known to be absent and refused when it is read.
+    /// </summary>
+    [Fact]
+    public void DevSets_ReadShapesDev_NewTranches_ReadOwnFileAndMarkItems()
+    {
+        // Arrange: the standard file and the three new files; the hard file is absent
+        var root = TempRoot(File(CompoundHead("shapes-dev-0001")));
+        WriteShapes(root, "compound-head.tsv", CompoundHeadFile());
+        WriteShapes(root, "headings.tsv", HeadingsFile());
+        WriteShapes(root, "named-state.tsv", NamedStateFile());
+        try
+        {
+            // Act
+            var compound = DevSets.ReadShapesDev(root, ShapesDevTranche.CompoundHead, out var compoundSha);
+            var headings = DevSets.ReadShapesDev(root, ShapesDevTranche.Headings, out var headingsSha);
+            var named = DevSets.ReadShapesDev(root, ShapesDevTranche.NamedState, out var namedSha);
+
+            // Assert
+            Assert.Equal(new[] { NewId("compound-head", 1), NewId("compound-head", 2), NewId("compound-head", 3) }, compound.Select(i => i.Id));
+            Assert.All(compound, i => Assert.Equal(ShapesDevTranche.CompoundHead, i.Tranche));
+            Assert.All(headings, i => Assert.Equal(ShapesDevTranche.Headings, i.Tranche));
+            Assert.All(named, i => Assert.Equal(ShapesDevTranche.NamedState, i.Tranche));
+            Assert.Equal(ModelBuilder.Sha256Hex(System.IO.File.ReadAllBytes(Path.Combine(root, "data", "eval", "shapes-dev", "headings.tsv"))), headingsSha);
+            Assert.Equal(3, new[] { compoundSha, headingsSha, namedSha }.Distinct().Count());
+            Assert.Equal("data/eval/shapes-dev/named-state.tsv", DevSets.ShapesDevFileOf(ShapesDevTranche.NamedState));
+            Assert.Single(DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out _));
+            Assert.False(DevSets.ShapesDevExists(root, ShapesDevTranche.Hard));
+            Assert.True(DevSets.ShapesDevExists(root, ShapesDevTranche.Headings));
+
+            // Assert: removing a file makes it absent and its read an error
+            System.IO.File.Delete(Path.Combine(root, "data", "eval", "shapes-dev", "headings.tsv"));
+            Assert.False(DevSets.ShapesDevExists(root, ShapesDevTranche.Headings));
+            Assert.Throws<FileNotFoundException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Headings, out _));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that a file of one tranche cannot be read as another: a corpus comment without the marker of the tranche, with the marker
+    ///     of another tranche or with two markers, a header that is not a development split, and sentence ids of another tranche are refused.
+    /// </summary>
+    [Fact]
+    public void DevSets_ReadShapesDev_NewTranches_FileOfAnotherTranche_Throws()
+    {
+        // Arrange
+        var root = TempRoot(null);
+        try
+        {
+            // Act / Assert: the headings file at the compound-head path, and the standard file at the headings path
+            WriteShapes(root, "compound-head.tsv", HeadingsFile());
+            Assert.Contains("announces itself as the headings tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.CompoundHead, out _)).Message);
+            WriteShapes(root, "headings.tsv", File(CompoundHead(NewId("headings", 1))));
+            Assert.Contains("does not announce itself as the headings tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Headings, out _)).Message);
+
+            // Assert: a hard-tranche or two-tranche header is not a header of a new tranche
+            WriteShapes(root, "named-state.tsv", HardFile(NewBlock(NewId("named-state", 1), "n-named-state", "target", "NOUN")));
+            Assert.Contains("announces itself as the hard tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.NamedState, out _)).Message);
+            var two = NamedStateFile();
+            two[0] = "# corpus = fixture hard-shape development set, named-state tranche and headings tranche, dev split";
+            WriteShapes(root, "named-state.tsv", two);
+            Assert.Contains("announces itself as the headings tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.NamedState, out _)).Message);
+
+            // Assert: a new tranche's marker at the standard or the hard path
+            WriteShapes(root, "dev.tsv", HeadingsFile());
+            Assert.Contains("announces itself as the headings tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out _)).Message);
+            WriteShapes(root, "hard.tsv", HeadingsFile());
+            Assert.Contains("announces itself as the headings tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Hard, out _)).Message);
+
+            // Assert: not a development split
+            var held = NamedStateFile();
+            held[0] = "# corpus = fixture hard-shape set, named-state tranche, test split";
+            WriteShapes(root, "named-state.tsv", held);
+            Assert.Contains("development split", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.NamedState, out _)).Message);
+
+            // Assert: right header, ids of another tranche
+            WriteShapes(root, "named-state.tsv", TrancheFile("named-state", NewBlock(NewId("headings", 1), "n-named-state", "target", "NOUN")));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.NamedState, out _)).Message);
+            WriteShapes(root, "named-state.tsv", TrancheFile("named-state", NewBlock("shapes-dev-0001", "n-named-state", "target", "NOUN")));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.NamedState, out _)).Message);
+            WriteShapes(root, "named-state.tsv", TrancheFile("named-state", NewBlock("shapes-dev-hard-0001", "n-named-state", "target", "NOUN")));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.NamedState, out _)).Message);
+
+            // Assert: ids of a new tranche at the standard path
+            WriteShapes(root, "dev.tsv", File(CompoundHead(NewId("named-state", 1))));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out _)).Message);
+
+            // Assert: the correct file is accepted
+            WriteShapes(root, "named-state.tsv", NamedStateFile());
+            Assert.Equal(3, DevSets.ReadShapesDev(root, ShapesDevTranche.NamedState, out _).Count);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that the shapes guard admits the files of the three new tranches (also through a dotted detour) and returns the file under the repository root.
+    /// </summary>
+    /// <param name="relativePath">The path relative to the repository root.</param>
+    [Theory]
+    [InlineData("data/eval/shapes-dev/compound-head.tsv")]
+    [InlineData("data/eval/shapes-dev/headings.tsv")]
+    [InlineData("data/eval/shapes-dev/named-state.tsv")]
+    [InlineData("data/eval/shapes-dev/../shapes-dev/headings.tsv")]
+    public void DataGuard_EnsureShapesDevelopmentFile_NewTrancheFile_Admitted(string relativePath)
+    {
+        // Arrange / Act
+        var resolved = DataGuard.EnsureShapesDevelopmentFile(DataFiles.RepositoryRoot, DataFiles.Repository(relativePath));
+
+        // Assert
+        Assert.EndsWith(Path.Combine("data", "eval", "shapes-dev", Path.GetFileName(relativePath)), resolved, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(relativePath, DataGuard.DevelopmentFiles);
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureDevelopmentFile(DataFiles.RepositoryRoot, DataFiles.Repository(relativePath)));
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureTrainable(DataFiles.RepositoryRoot, DataFiles.Repository(relativePath)));
+    }
+
+    /// <summary>
+    ///     Validates that the shapes guard still refuses by name every other file of the folder, among them the sources files and the
+    ///     leakage reports of the three new tranches.
+    /// </summary>
+    /// <param name="relativePath">The path relative to the repository root.</param>
+    [Theory]
+    [InlineData("data/eval/shapes-dev/compound-head-sources.tsv")]
+    [InlineData("data/eval/shapes-dev/headings-sources.tsv")]
+    [InlineData("data/eval/shapes-dev/named-state-sources.tsv")]
+    [InlineData("data/eval/shapes-dev/compound-head-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/headings-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/named-state-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/headings.tsv.bak")]
+    [InlineData("data/eval/shapes-dev/new.tsv")]
+    public void DataGuard_EnsureShapesDevelopmentFile_NewTrancheSourcesAndLeakage_Refused(string relativePath)
+    {
+        // Arrange / Act / Assert
+        Assert.Throws<InvalidOperationException>(() => DataGuard.EnsureShapesDevelopmentFile(DataFiles.RepositoryRoot, DataFiles.Repository(relativePath)));
+    }
+
+    /// <summary>
+    ///     Validates that a confident wrong answer is a wrong target item with a confidence of at least 0.95: 0.95 counts, 0.949 does not, a
+    ///     correct answer and a wrong control do not, and the count does not change the harmful errors.
+    /// </summary>
+    [Fact]
+    public void ShapesDevTrancheEvaluator_Summarize_ConfidentWrong_CountsFromTheLimit()
+    {
+        // Arrange
+        var tranche = ShapesDevTranche.CompoundHead;
+        var items = new List<ShapesDevItem>
+        {
+            TrancheItem(tranche, "a", "target", "cat", "NOUN"),
+            TrancheItem(tranche, "b", "target", "cat", "NOUN"),
+            TrancheItem(tranche, "c", "target", "cat", "NOUN"),
+            TrancheItem(tranche, "d", "target", "cat", "NOUN"),
+            TrancheItem(tranche, "e", "control", "cat", "VERB"),
+        };
+        var outcomes = new List<Outcome>
+        {
+            new("d", false, 0.95, 0.05, true, true, true),
+            new("d", false, 0.949, 0.05, true, true, true),
+            new("d", true, 0.99, 0.99, true, true, false),
+            new("d", false, 1.0, 0.0, true, false, false),
+            new("d", false, 0.99, 0.01, true, true, true),
+        };
+
+        // Act
+        var result = ShapesDevTrancheEvaluator.Summarize(tranche, items, outcomes);
+
+        // Assert
+        Assert.Equal(0.95, Metrics.ConfidentWrongConfidence);
+        Assert.Equal(2, result.Overall.ConfidentWrong);
+        Assert.Equal((4, 1, 3, 2, 1, 0), (result.Overall.TargetItems, result.Overall.TargetCorrect, result.Overall.NounVerbDecisions, result.Overall.HarmfulErrors, result.Overall.ControlItems, result.Overall.ControlCorrect));
+        Assert.Empty(result.Kinds);
+        Assert.True(Metrics.IsConfidentlyWrong(outcomes[0]));
+        Assert.False(Metrics.IsConfidentlyWrong(outcomes[1]));
+        Assert.False(Metrics.IsConfidentlyWrong(outcomes[2]));
+    }
+
+    /// <summary>
+    ///     Validates the exact-tag scoring of the headings through the real decoder: a capitalized common noun that is tagged PROPN is wrong
+    ///     (and not harmful) although both are class Noun, the same answer is right under class scoring, a noun-verb swap is harmful, and a
+    ///     PROPN control that is answered with another tag is wrong and never harmful.
+    /// </summary>
+    [Fact]
+    public void ShapesDevTrancheEvaluator_Evaluate_Headings_ScoredByExactTag()
+    {
+        // Arrange: "cat" is answered PROPN (NOUN is the other candidate), "dog" is answered VERB (NOUN is the other candidate)
+        var tagger = PropnCatVerbDogTagger();
+        var items = new List<ShapesDevItem>
+        {
+            TrancheItem(ShapesDevTranche.Headings, "a", "target", "cat", "NOUN", "noun"),
+            TrancheItem(ShapesDevTranche.Headings, "b", "target", "dog", "NOUN", "noun"),
+            TrancheItem(ShapesDevTranche.Headings, "c", "target", "dog", "VERB", "imperative"),
+            TrancheItem(ShapesDevTranche.Headings, "d", "control", "cat", "PROPN", "proper"),
+            TrancheItem(ShapesDevTranche.Headings, "e", "control", "dog", "PROPN", "proper"),
+        };
+        var asClass = new List<ShapesDevItem> { TrancheItem(ShapesDevTranche.CompoundHead, "f", "target", "cat", "NOUN") };
+
+        // Act
+        var result = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.Headings, items);
+        var classResult = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.CompoundHead, asClass);
+
+        // Assert: the PROPN answer for the noun heading is wrong, and not a noun-verb decision, so not harmful
+        Assert.Equal(("heading-titlecase", 3, 1, 2, 1, 2, 1), (result.Overall.Shape, result.Overall.TargetItems, result.Overall.TargetCorrect, result.Overall.NounVerbDecisions, result.Overall.HarmfulErrors, result.Overall.ControlItems, result.Overall.ControlCorrect));
+        Assert.Equal(
+            new[] { "heading-titlecase: noun targets", "heading-titlecase: imperative targets", "heading-titlecase: PROPN controls" },
+            result.Kinds.Select(k => k.Shape));
+        Assert.Equal((2, 0, 1, 1), (result.Kinds[0].TargetItems, result.Kinds[0].TargetCorrect, result.Kinds[0].NounVerbDecisions, result.Kinds[0].HarmfulErrors));
+        Assert.Equal((1, 1, 1, 0), (result.Kinds[1].TargetItems, result.Kinds[1].TargetCorrect, result.Kinds[1].NounVerbDecisions, result.Kinds[1].HarmfulErrors));
+        Assert.Equal((0, 2, 1, 0), (result.Kinds[2].TargetItems, result.Kinds[2].ControlItems, result.Kinds[2].ControlCorrect, result.Kinds[2].HarmfulErrors));
+
+        // Assert: the same PROPN answer for a NOUN gold is right when the shape is scored by class
+        Assert.Equal((1, 1, 0), (classResult.Overall.TargetItems, classResult.Overall.TargetCorrect, classResult.Overall.HarmfulErrors));
+    }
+
+    /// <summary>
+    ///     Validates that the summary refuses a tranche that has no single shape, lists of different lengths and items of another tranche or shape.
+    /// </summary>
+    [Fact]
+    public void ShapesDevTrancheEvaluator_Summarize_InconsistentInput_Throws()
+    {
+        // Arrange
+        var item = TrancheItem(ShapesDevTranche.NamedState, "a", "target", "cat", "NOUN");
+        var outcome = new Outcome("d", true, 0.9, 0.9, true, true, false);
+        var otherShape = new ShapesDevItem("b", "doc-a", new[] { "cat" }, 0, "Noun", "n-compound-head", "target", "cat", "real", ShapesDevTranche.NamedState, string.Empty, "NOUN");
+
+        // Act / Assert
+        Assert.Throws<ArgumentException>(() => ShapesDevTrancheEvaluator.Summarize(ShapesDevTranche.Standard, new[] { item }, new[] { outcome }));
+        Assert.Throws<ArgumentException>(() => ShapesDevTrancheEvaluator.Summarize(ShapesDevTranche.NamedState, new[] { item }, Array.Empty<Outcome>()));
+        Assert.Throws<ArgumentException>(() => ShapesDevTrancheEvaluator.Summarize(ShapesDevTranche.Headings, new[] { item }, new[] { outcome }));
+        Assert.Throws<ArgumentException>(() => ShapesDevTrancheEvaluator.Summarize(ShapesDevTranche.NamedState, new[] { otherShape }, new[] { outcome }));
+        Assert.Throws<ArgumentException>(() => ShapesDevTrancheEvaluator.Judge(PropnCatVerbDogTagger(), new[] { Item("x", "n-measure", "target", "cat", "Noun") }));
+        Assert.Equal(0, ShapesDevTrancheEvaluator.Summarize(ShapesDevTranche.NamedState, Array.Empty<ShapesDevItem>(), Array.Empty<Outcome>()).Overall.TargetItems);
+    }
+
+    /// <summary>
+    ///     Validates the section of a class-scored tranche: heading, counts, hashes, scoring note and the table with the confident-wrong column,
+    ///     rendered identically twice.
+    /// </summary>
+    [Fact]
+    public void ShapesDevReport_RenderTranche_CompoundHead_PrintsSectionAndTable()
+    {
+        // Arrange: three targets (one correct, one harmful and confident, one wrong but not confident) and one control
+        var tranche = ShapesDevTranche.CompoundHead;
+        var items = new List<ShapesDevItem>
+        {
+            TrancheItem(tranche, "a", "target", "cat", "NOUN"),
+            TrancheItem(tranche, "b", "target", "cat", "NOUN"),
+            TrancheItem(tranche, "c", "target", "cat", "PROPN"),
+            TrancheItem(tranche, "d", "control", "cat", "VERB"),
+        };
+        var outcomes = new List<Outcome>
+        {
+            new("d", true, 0.9, 0.9, true, true, false),
+            new("d", false, 0.96, 0.04, true, true, true),
+            new("d", false, 0.6, 0.4, true, true, true),
+            new("d", true, 0.9, 0.9, true, true, false),
+        };
+        var result = ShapesDevTrancheEvaluator.Summarize(tranche, items, outcomes);
+
+        // Act
+        var section = ShapesDevReport.RenderTranche("model.bin", tranche, new string('a', 64), result, new string('b', 64));
+        var again = ShapesDevReport.RenderTranche("model.bin", tranche, new string('a', 64), ShapesDevTrancheEvaluator.Summarize(tranche, items, outcomes), new string('b', 64));
+
+        // Assert
+        Assert.Equal(section, again);
+        Assert.Equal(
+            new[]
+            {
+                "## Shapes development set, compound-head tranche: model.bin",
+                string.Empty,
+                "- Items: 3 target items and 1 control items; authored: 0 target items (0.0%) and 0 control items (0.0%).",
+                $"- Development file SHA-256: `{new string('a', 64)}`.",
+                $"- Weights file SHA-256: `{new string('b', 64)}`.",
+                "- Scoring: the judged word of every item through the real decoder with all alternatives, by class (Noun: NOUN and PROPN; Verb: VERB); a noun-verb decision is a target whose candidates include both classes; a harmful error is a swapped class with a confidence of at least 0.45; wrong at confidence >= 0.95 counts the target items answered wrongly with a confidence of at least 0.95.",
+                "- The set is for development: it selects settings and is never a held-out figure.",
+                string.Empty,
+                "| shape | target items | target accuracy | 95% interval | noun-verb decisions | harmful errors | harmful per 1,000 decisions | wrong at confidence >= 0.95 | control items | control accuracy |",
+                "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+                "| n-compound-head-ambiguous | 3 | 33.3% | [6.1%, 79.2%] | 3 | 2 | 666.7 | 1 | 1 | 100.0% |",
+            },
+            section);
+    }
+
+    /// <summary>
+    ///     Validates the section of the headings tranche: its scoring note names the exact tag, and the rows of the noun targets, the
+    ///     imperative targets and the PROPN controls follow the row of the shape, with dashes where a column does not apply.
+    /// </summary>
+    [Fact]
+    public void ShapesDevReport_RenderTranche_Headings_PrintsRowsOfTheKinds()
+    {
+        // Arrange
+        var tranche = ShapesDevTranche.Headings;
+        var items = new List<ShapesDevItem>
+        {
+            TrancheItem(tranche, "a", "target", "cat", "NOUN", "noun"),
+            TrancheItem(tranche, "b", "target", "dog", "VERB", "imperative"),
+            TrancheItem(tranche, "c", "control", "cat", "PROPN", "proper"),
+        };
+        var outcomes = new List<Outcome>
+        {
+            new("d", false, 0.97, 0.03, true, false, false),
+            new("d", true, 0.9, 0.9, true, true, false),
+            new("d", true, 0.9, 0.9, true, false, false),
+        };
+
+        // Act
+        var section = ShapesDevReport.RenderTranche("m", tranche, string.Empty, ShapesDevTrancheEvaluator.Summarize(tranche, items, outcomes));
+
+        // Assert
+        Assert.Equal("## Shapes development set, headings tranche: m", section[0]);
+        Assert.Contains(section, l => l.Contains("by exact tag (a NOUN or VERB heading answered PROPN is wrong, but it is not harmful", StringComparison.Ordinal));
+        Assert.Equal(
+            new[]
+            {
+                "| heading-titlecase | 2 | 50.0% | [9.5%, 90.5%] | 1 | 0 | 0.0 | 1 | 1 | 100.0% |",
+                "| heading-titlecase: noun targets | 1 | 0.0% | [0.0%, 79.3%] | 0 | 0 | - | 1 | - | - |",
+                "| heading-titlecase: imperative targets | 1 | 100.0% | [20.7%, 100.0%] | 1 | 0 | 0.0 | 0 | - | - |",
+                "| heading-titlecase: PROPN controls | - | - | - | - | - | - | - | 1 | 100.0% |",
+            },
+            section.Skip(section.Count - 4));
+    }
+
+    /// <summary>
+    ///     Validates that a tranche without items renders dashes in every column of its row.
+    /// </summary>
+    [Fact]
+    public void ShapesDevReport_RenderTranche_NoItems_PrintsDashes()
+    {
+        // Arrange / Act
+        var section = ShapesDevReport.RenderTranche("m", ShapesDevTranche.NamedState, string.Empty, ShapesDevTrancheEvaluator.Summarize(ShapesDevTranche.NamedState, Array.Empty<ShapesDevItem>(), Array.Empty<Outcome>()));
+
+        // Assert
+        Assert.Equal("| n-named-state | - | - | - | - | - | - | - | - | - |", section[^1]);
+        Assert.Equal("- The named-state tranche data/eval/shapes-dev/named-state.tsv is not present; it is not scored.", ShapesDevReport.RenderTrancheMissing(ShapesDevTranche.NamedState));
+    }
+
+    /// <summary>
+    ///     Validates the values of <c>--tranche</c>: the original three and the four new ones are accepted, anything else is refused.
+    /// </summary>
+    /// <param name="which">The value of the option.</param>
+    /// <param name="valid">Whether it is accepted.</param>
+    [Theory]
+    [InlineData("standard", true)]
+    [InlineData("hard", true)]
+    [InlineData("both", true)]
+    [InlineData("compound-head", true)]
+    [InlineData("headings", true)]
+    [InlineData("named-state", true)]
+    [InlineData("new", true)]
+    [InlineData("all", false)]
+    [InlineData("Headings", false)]
+    [InlineData("", false)]
+    public void ShapesDevCommand_EnsureSelection_Value_AcceptedOrRefused(string which, bool valid)
+    {
+        // Arrange / Act / Assert
+        if (valid)
+        {
+            ShapesDevCommand.EnsureSelection(which);
+        }
+        else
+        {
+            Assert.Contains("--tranche must be", Assert.Throws<InvalidOperationException>(() => ShapesDevCommand.EnsureSelection(which)).Message, StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that an explicit single-shape tranche is scored alone, and that its absent file is an error that names the file.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCommand_Run_ExplicitNewTranche_ScoresItAloneAndMissingFileIsAnError()
+    {
+        // Arrange: only the headings file exists
+        var root = TempRoot(null);
+        WriteShapes(root, "headings.tsv", HeadingsFile());
+        var tagger = FixtureTagger();
+        try
+        {
+            // Act
+            var lines = ShapesDevCommand.Run(root, tagger, "m", "w", "headings");
+            var items = DevSets.ReadShapesDev(root, ShapesDevTranche.Headings, out var sha);
+
+            // Assert: exactly the section of the renderer, and no other tranche
+            Assert.Equal(ShapesDevReport.RenderTranche("m", ShapesDevTranche.Headings, sha, ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.Headings, items), "w"), lines);
+            Assert.Single(lines, l => l.StartsWith("## ", StringComparison.Ordinal));
+
+            // Assert: an absent file of an explicit tranche is an error that names the file
+            foreach (var name in new[] { "compound-head", "named-state" })
+            {
+                var error = Assert.Throws<FileNotFoundException>(() => ShapesDevCommand.Run(root, tagger, "m", "w", name));
+                Assert.Contains(name + ".tsv", error.Message, StringComparison.Ordinal);
+            }
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that <c>new</c> scores the three tranches in the order compound-head, headings, named-state, one section each separated
+    ///     by an empty line, and that an absent file is noted in its place instead of being an error.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCommand_Run_New_ScoresPresentTranchesAndNotesMissingFiles()
+    {
+        // Arrange: the compound-head file is absent
+        var root = TempRoot(null);
+        WriteShapes(root, "headings.tsv", HeadingsFile());
+        WriteShapes(root, "named-state.tsv", NamedStateFile());
+        var tagger = FixtureTagger();
+        try
+        {
+            // Act
+            var lines = ShapesDevCommand.Run(root, tagger, "m", "w", "new");
+
+            // Assert
+            var headings = DevSets.ReadShapesDev(root, ShapesDevTranche.Headings, out var headingsSha);
+            var named = DevSets.ReadShapesDev(root, ShapesDevTranche.NamedState, out var namedSha);
+            var expected = new List<string> { ShapesDevReport.RenderTrancheMissing(ShapesDevTranche.CompoundHead), string.Empty };
+            expected.AddRange(ShapesDevReport.RenderTranche("m", ShapesDevTranche.Headings, headingsSha, ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.Headings, headings), "w"));
+            expected.Add(string.Empty);
+            expected.AddRange(ShapesDevReport.RenderTranche("m", ShapesDevTranche.NamedState, namedSha, ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.NamedState, named), "w"));
+            Assert.Equal(expected, lines);
+
+            // Assert: with no file at all every tranche is noted
+            Directory.Delete(Path.Combine(root, "data", "eval", "shapes-dev"), true);
+            Directory.CreateDirectory(Path.Combine(root, "data", "eval", "shapes-dev"));
+            var none = ShapesDevCommand.Run(root, tagger, "m", "w", "new");
+            Assert.Equal(5, none.Count);
+            Assert.Equal(new[] { ShapesDevTranche.CompoundHead, ShapesDevTranche.Headings, ShapesDevTranche.NamedState }.Select(ShapesDevReport.RenderTrancheMissing), none.Where(l => l.Length > 0));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that the original selections write the sections they always wrote and are not changed by the presence of the new
+    ///     files: <c>both</c> is the three sections of the standard and hard tranche (with the note when the hard file is absent), and
+    ///     <c>standard</c> and <c>hard</c> are the plain and the hard-only report.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCommand_Run_StandardHardBoth_OutputIsUnchangedByTheNewFiles()
+    {
+        // Arrange: the standard and the hard file, and the three new files next to them
+        var root = TempRoot(File(CompoundHead("shapes-dev-0001")));
+        var tagger = FixtureTagger();
+        var items = DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out var standardSha);
+        var standardOnly = ShapesDevEvaluator.EvaluateTranches(tagger, items);
+        try
+        {
+            // Act / Assert: without the hard file, "both" is the plain section and the note
+            var withoutHard = ShapesDevCommand.Run(root, tagger, "m", "w", "both");
+            var expectedNote = ShapesDevReport.Render("m", standardSha, standardOnly.Standard, "w");
+            expectedNote.Add(string.Empty);
+            expectedNote.Add("- The hard tranche data/eval/shapes-dev/hard.tsv is not present; only the standard tranche is scored.");
+            Assert.Equal(expectedNote, withoutHard);
+            Assert.Equal(ShapesDevReport.Render("m", standardSha, standardOnly.Standard, "w"), ShapesDevCommand.Run(root, tagger, "m", "w", "standard"));
+            Assert.Throws<FileNotFoundException>(() => ShapesDevCommand.Run(root, tagger, "m", "w", "hard"));
+
+            // Act / Assert: with the hard file and the new files, "both" is the three sections of the renderer
+            WriteShapes(root, "hard.tsv", HardFile(CompoundHead("shapes-dev-hard-0001")));
+            WriteShapes(root, "compound-head.tsv", CompoundHeadFile());
+            WriteShapes(root, "headings.tsv", HeadingsFile());
+            WriteShapes(root, "named-state.tsv", NamedStateFile());
+            var hardItems = DevSets.ReadShapesDev(root, ShapesDevTranche.Hard, out var hardSha);
+            var both = ShapesDevEvaluator.EvaluateTranches(tagger, items.Concat(hardItems).ToList());
+            Assert.Equal(ShapesDevReport.RenderTranches("m", standardSha, hardSha, both, "w"), ShapesDevCommand.Run(root, tagger, "m", "w", "both"));
+            Assert.Equal(ShapesDevReport.RenderHard("m", hardSha, both.Hard, "w"), ShapesDevCommand.Run(root, tagger, "m", "w", "hard"));
+            Assert.Equal(ShapesDevReport.Render("m", standardSha, both.Standard, "w"), ShapesDevCommand.Run(root, tagger, "m", "w", "standard"));
+            Assert.DoesNotContain(ShapesDevCommand.Run(root, tagger, "m", "w", "both"), l => l.Contains("compound-head tranche", StringComparison.Ordinal) || l.Contains("headings tranche", StringComparison.Ordinal) || l.Contains("named-state tranche", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
     }
 
     /// <summary>

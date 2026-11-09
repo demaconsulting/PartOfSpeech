@@ -11,7 +11,7 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 ///         The selection of every setting uses development data only. The held-out sets (the open test split, the gold v2
 ///         test split, the shape probe, the challenge set and the external treebank) are evaluated once, by the
 ///         <c>evaluate</c> command, and only behind a validated development selection: a rule in a document is easy to
-///         forget, so the rule is code. The development readers accept an allow-list of two files; the two files of the
+///         forget, so the rule is code. The development readers accept an allow-list of two files; the files of the
 ///         hard-shape development set (its tranches) have their own guard (<see cref="EnsureShapesDevelopmentFile"/>) that only the
 ///         <c>eval-shapes</c> command uses. The held-out readers
 ///         take a <see cref="SelectedOperatingPoints"/> as a required parameter, and that object exists only for the frozen
@@ -53,12 +53,35 @@ internal static class DataGuard
     public const string ShapesDevelopmentHardFile = "data/eval/shapes-dev/hard.tsv";
 
     /// <summary>
-    ///     The two files of the hard-shape development set that the shapes guard admits, in the order of <see cref="ShapesDevTranche"/>.
+    ///     The compound-head tranche of the hard-shape development set (shape <c>n-compound-head-ambiguous</c>), relative to the
+    ///     repository root with forward slashes. It shares the guard of the other tranches and, like them, is neither a
+    ///     two-file development file nor a held-out file; it may be absent.
+    /// </summary>
+    public const string ShapesDevelopmentCompoundHeadFile = "data/eval/shapes-dev/compound-head.tsv";
+
+    /// <summary>
+    ///     The headings tranche of the hard-shape development set (shape <c>heading-titlecase</c>, scored by exact tag), relative to
+    ///     the repository root with forward slashes. It shares the guard of the other tranches; it may be absent.
+    /// </summary>
+    public const string ShapesDevelopmentHeadingsFile = "data/eval/shapes-dev/headings.tsv";
+
+    /// <summary>
+    ///     The named-state tranche of the hard-shape development set (shape <c>n-named-state</c>), relative to the repository root
+    ///     with forward slashes. It shares the guard of the other tranches; it may be absent.
+    /// </summary>
+    public const string ShapesDevelopmentNamedStateFile = "data/eval/shapes-dev/named-state.tsv";
+
+    /// <summary>
+    ///     The files of the hard-shape development set that the shapes guard admits, in the order of <see cref="ShapesDevTranche"/>.
+    ///     The sources files and the leakage reports of the tranches are not listed, so the guard refuses them.
     /// </summary>
     public static readonly IReadOnlyList<string> ShapesDevelopmentFiles = new[]
     {
         ShapesDevelopmentFile,
         ShapesDevelopmentHardFile,
+        ShapesDevelopmentCompoundHeadFile,
+        ShapesDevelopmentHeadingsFile,
+        ShapesDevelopmentNamedStateFile,
     };
 
     /// <summary>
@@ -219,7 +242,7 @@ internal static class DataGuard
     }
 
     /// <summary>
-    ///     Resolves a hard-shape development file, which must be exactly <see cref="ShapesDevelopmentFile"/> or <see cref="ShapesDevelopmentHardFile"/>.
+    ///     Resolves a hard-shape development file, which must be exactly one of <see cref="ShapesDevelopmentFiles"/>.
     /// </summary>
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <param name="path">The path that was asked for, absolute or relative to the working directory.</param>
@@ -245,7 +268,7 @@ internal static class DataGuard
             }
         }
 
-        throw new InvalidOperationException($"'{path}' is not a shapes development file; the shapes evaluation reads only {string.Join(" and ", ShapesDevelopmentFiles)}.");
+        throw new InvalidOperationException($"'{path}' is not a shapes development file; the shapes evaluation reads only {string.Join(", ", ShapesDevelopmentFiles)}.");
     }
 
     /// <summary>
@@ -717,16 +740,6 @@ internal sealed class GoldTarget
 internal static class DevSets
 {
     /// <summary>
-    ///     The prefix of the sentence ids of the hard tranche of the hard-shape development set; no id of the standard tranche starts with it.
-    /// </summary>
-    private const string ShapesDevHardIdPrefix = "shapes-dev-hard-";
-
-    /// <summary>
-    ///     The phrase that the corpus comment of the hard tranche carries and that the corpus comment of the standard tranche does not.
-    /// </summary>
-    private const string ShapesDevHardMarker = "hard tranche";
-
-    /// <summary>
     ///     The class that a UPOS tag has in the gold v2 set (the table of <c>data/CONVENTIONS.md</c>).
     /// </summary>
     /// <param name="tag">The tag.</param>
@@ -803,6 +816,60 @@ internal static class DevSets
         File.Exists(DataGuard.EnsureShapesDevelopmentFile(repositoryRoot, Path.Combine(repositoryRoot, ShapesDevFileOf(tranche).Replace('/', Path.DirectorySeparatorChar))));
 
     /// <summary>
+    ///     Gets the name of a tranche of the hard-shape development set, as the corpus comment and the command line spell it.
+    /// </summary>
+    /// <param name="tranche">The tranche.</param>
+    /// <returns>The name: <c>standard</c>, <c>hard</c>, <c>compound-head</c>, <c>headings</c> or <c>named-state</c>.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tranche"/> is not a tranche.</exception>
+    public static string ShapesDevNameOf(ShapesDevTranche tranche) => tranche switch
+    {
+        ShapesDevTranche.Standard => "standard",
+        ShapesDevTranche.Hard => "hard",
+        ShapesDevTranche.CompoundHead => "compound-head",
+        ShapesDevTranche.Headings => "headings",
+        ShapesDevTranche.NamedState => "named-state",
+        _ => throw new ArgumentOutOfRangeException(nameof(tranche)),
+    };
+
+    /// <summary>
+    ///     Gets the phrase that the corpus comment of a tranche carries (<c>hard tranche</c>, <c>headings tranche</c>); the standard tranche has none.
+    /// </summary>
+    /// <param name="tranche">The tranche.</param>
+    /// <returns>The marker, or <c>null</c> for the standard tranche.</returns>
+    private static string? ShapesDevMarkerOf(ShapesDevTranche tranche) =>
+        tranche == ShapesDevTranche.Standard ? null : ShapesDevNameOf(tranche) + " tranche";
+
+    /// <summary>
+    ///     Gets the prefix of the sentence ids of a tranche (<c>shapes-dev-hard-</c>, <c>shapes-dev-headings-</c>); the standard tranche has none.
+    /// </summary>
+    /// <param name="tranche">The tranche.</param>
+    /// <returns>The prefix, or <c>null</c> for the standard tranche, whose ids are the ones that start with no other prefix.</returns>
+    private static string? ShapesDevIdPrefixOf(ShapesDevTranche tranche) =>
+        tranche == ShapesDevTranche.Standard ? null : "shapes-dev-" + ShapesDevNameOf(tranche) + "-";
+
+    /// <summary>
+    ///     The tranches that have a corpus marker and an id prefix, in the order of <see cref="ShapesDevTranche"/>.
+    /// </summary>
+    private static readonly ShapesDevTranche[] MarkedTranches =
+    {
+        ShapesDevTranche.Hard,
+        ShapesDevTranche.CompoundHead,
+        ShapesDevTranche.Headings,
+        ShapesDevTranche.NamedState,
+    };
+
+    /// <summary>
+    ///     Gets the tranche that the id of a sentence announces.
+    /// </summary>
+    /// <param name="id">The sentence id.</param>
+    /// <returns>The tranche whose prefix the id starts with, and the standard tranche for every other id.</returns>
+    private static ShapesDevTranche ShapesDevTrancheOfId(string id)
+    {
+        // No marked tranche matches: default(ShapesDevTranche) is the standard tranche
+        return MarkedTranches.FirstOrDefault(t => id.StartsWith(ShapesDevIdPrefixOf(t)!, StringComparison.Ordinal));
+    }
+
+    /// <summary>
     ///     Reads the standard tranche of the hard-shape development set.
     /// </summary>
     /// <param name="repositoryRoot">The full path of the repository root.</param>
@@ -835,10 +902,14 @@ internal static class DevSets
         EnsureShapesDevTrancheHeader(header, tranche, path);
         sha256 = ModelBuilder.Sha256Hex(File.ReadAllBytes(path));
         var items = ShapesDevSets.Parse(File.ReadLines(path, Encoding.UTF8), path, tranche);
-        var bad = items.Find(item => item.Id.StartsWith(ShapesDevHardIdPrefix, StringComparison.Ordinal) != (tranche == ShapesDevTranche.Hard));
+        var bad = items.Find(item => ShapesDevTrancheOfId(item.Id) != tranche);
         if (bad != null)
         {
-            throw new InvalidDataException($"{path}: the sentence id '{bad.Id}' does not belong to the {(tranche == ShapesDevTranche.Hard ? "hard" : "standard")} tranche (hard ids start with '{ShapesDevHardIdPrefix}'); refusing to read it.");
+            var name = ShapesDevNameOf(tranche);
+            var prefixRule = tranche is ShapesDevTranche.Standard or ShapesDevTranche.Hard
+                ? $"hard ids start with '{ShapesDevIdPrefixOf(ShapesDevTranche.Hard)}'"
+                : $"{name} ids start with '{ShapesDevIdPrefixOf(tranche)}'";
+            throw new InvalidDataException($"{path}: the sentence id '{bad.Id}' does not belong to the {name} tranche ({prefixRule}); refusing to read it.");
         }
 
         return items;
@@ -846,15 +917,15 @@ internal static class DevSets
 
     /// <summary>
     ///     Checks that the corpus comment of a file of the hard-shape development set announces the tranche that the file stands for, so that
-    ///     a copy of the standard file at the hard path (or the other way round) is refused instead of reported as the wrong tranche.
+    ///     a copy of the file of one tranche at the path of another is refused instead of reported as the wrong tranche.
     /// </summary>
     /// <param name="lines">The leading lines of the file; only the leading comment lines are inspected.</param>
     /// <param name="tranche">The tranche the file is read as.</param>
     /// <param name="origin">The name of the file for the message.</param>
-    /// <exception cref="InvalidDataException">The corpus comment does not match the tranche.</exception>
+    /// <exception cref="InvalidDataException">The corpus comment does not match the tranche: a tranche other than the standard one must name its own marker and no other, and the standard tranche names none.</exception>
     private static void EnsureShapesDevTrancheHeader(IEnumerable<string> lines, ShapesDevTranche tranche, string origin)
     {
-        var claimsHard = false;
+        var claims = new HashSet<ShapesDevTranche>();
         foreach (var line in lines)
         {
             if (!line.StartsWith("#", StringComparison.Ordinal))
@@ -862,17 +933,27 @@ internal static class DevSets
                 break;
             }
 
-            if (line.StartsWith("# corpus", StringComparison.Ordinal) && line.Contains(ShapesDevHardMarker, StringComparison.Ordinal))
+            if (!line.StartsWith("# corpus", StringComparison.Ordinal))
             {
-                claimsHard = true;
+                continue;
+            }
+
+            foreach (var marked in MarkedTranches.Where(m => line.Contains(ShapesDevMarkerOf(m)!, StringComparison.Ordinal)))
+            {
+                claims.Add(marked);
             }
         }
 
-        if (claimsHard != (tranche == ShapesDevTranche.Hard))
+        // Another tranche's marker is refused first, then a missing marker of the tranche itself
+        var other = MarkedTranches.FirstOrDefault(marked => marked != tranche && claims.Contains(marked));
+        if (other != default)
         {
-            throw new InvalidDataException(tranche == ShapesDevTranche.Hard
-                ? $"{origin} does not announce itself as the hard tranche ('{ShapesDevHardMarker}') in its corpus header; refusing to read it as the hard tranche."
-                : $"{origin} announces itself as the hard tranche in its corpus header; refusing to read it as the standard tranche.");
+            throw new InvalidDataException($"{origin} announces itself as the {ShapesDevNameOf(other)} tranche in its corpus header; refusing to read it as the {ShapesDevNameOf(tranche)} tranche.");
+        }
+
+        if (tranche != ShapesDevTranche.Standard && !claims.Contains(tranche))
+        {
+            throw new InvalidDataException($"{origin} does not announce itself as the {ShapesDevNameOf(tranche)} tranche ('{ShapesDevMarkerOf(tranche)}') in its corpus header; refusing to read it as the {ShapesDevNameOf(tranche)} tranche.");
         }
     }
 
