@@ -327,11 +327,13 @@ def heading_hits(tokens, lex, verb_only=False):
 # ---------------------------------------------------------------- the candidate stage
 
 class Reference:
-    """The sentences of the shapes development set (dev.tsv, hard.tsv) and of the imperative training source (sentence keys and word
-    6-grams), to keep every candidate disjoint from them: `equals-reference`, `near-reference`."""
+    """The sentences of the earlier tranches of the shapes development set (dev.tsv, hard.tsv; never the three tranches that this tool builds) and
+    of the imperative training source (sentence keys and word 6-grams), to keep every candidate disjoint from them: `equals-reference`,
+    `near-reference`. Only the files that existed when the tranches were selected enter, so a rerun of `candidates` from the committed repository
+    reproduces the committed candidates (the three tranches are kept disjoint from each other by `check_leakage.py`)."""
 
     def __init__(self, data_dir):
-        self.inner = imperative_data.ShapesDevSentences(data_dir)
+        self.inner = imperative_data.ShapesDevSentences(data_dir, corpora=imperative_data.BASE_SHAPES_DEV_CORPORA)
         path = os.path.join(data_dir, "imperative", "imperative.tsv")
         if os.path.exists(path):
             for sentence in common.read_corpus(path)[1]:
@@ -359,6 +361,7 @@ def read_folder(work, folder):
 
 
 def used_tables(data_dir, extra_tables=()):
+    """The extra source tables of the used-document index: `extra_tables` and the imperative source's own (never a newer tranche's)."""
     tables = list(extra_tables)
     for relative in ("imperative/sources.tsv", "imperative/excluded-documents.tsv"):
         path = os.path.join(data_dir, *relative.split("/"))
@@ -390,7 +393,7 @@ def scan_units(work, data_dir, unit, extra_tables=(), include_ud=True, filt=None
     tokens_of = shapes_dev.read_tokens(work)
     draft = {row["source_id"]: row for row in shapes_dev.read_draft(work)}
     exclusions = shapes_dev.load_exclusions(work, data_dir)
-    index = imperative_data.used_index(data_dir, exclusions, used_tables(data_dir, extra_tables))
+    index = imperative_data.used_index(data_dir, exclusions, used_tables(data_dir, extra_tables), imperative_data.BASE_SHAPES_DEV_TABLES)
     sentences = shapes_dev.read_documents(work)
     documents = sentences if unit == "sentence" else read_folder(work, "lines")
     low_tokens, high_tokens = ((SENTENCE_MIN_TOKENS, SENTENCE_MAX_TOKENS) if unit == "sentence"

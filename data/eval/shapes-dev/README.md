@@ -540,6 +540,9 @@ The sizes of the candidate pools before the caps are in the run log.
 
 The files are written by `python tools/data/shapes_dev_extra.py --work <work-folder> build`. The work folder (documents, tokens, `hmm.tsv`, candidate rounds, blind batches and both
 labelers' outputs) is outside the repository and not committed; a rebuild from it into another `--out-dir` is byte-identical to the committed files. No label is edited by hand.
+A rerun of `candidates` from the committed repository reproduces each round's `candidates.tsv` and its report byte for byte, because the tool's used-document index and sentence
+reference hold only what existed when the tranches were selected (the standard and hard tranches, the imperative source and the training and evaluation sets), never the three
+tranches it builds; the tranches are kept disjoint from one another by `check_leakage.py` (no shared sentence), and the imperative builder keeps its source disjoint from all of them.
 The rounds, the batches and the labeler runs are recorded in the run log.
 
 ### Counts of the New Tranches

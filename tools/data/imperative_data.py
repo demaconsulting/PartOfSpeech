@@ -101,10 +101,15 @@ DOCUMENT_KEY_HITS = shapes_dev.DOCUMENT_KEY_HITS
 NEAR_WORDS, NEAR_SHARE = shapes_dev.NEAR_STANDARD_WORDS, shapes_dev.NEAR_STANDARD_SHARE
 EQUALS_SHAPES_DEV = "equals-shapes-dev"
 NEAR_SHAPES_DEV = "near-shapes-dev"
-SHAPES_DEV_TABLES = ("eval/shapes-dev/sources.tsv", "eval/shapes-dev/hard-sources.tsv", "eval/shapes-dev/excluded-sources.tsv",
-                     "eval/shapes-dev/compound-head-sources.tsv", "eval/shapes-dev/headings-sources.tsv", "eval/shapes-dev/named-state-sources.tsv")
-SHAPES_DEV_CORPORA = ("eval/shapes-dev/dev.tsv", "eval/shapes-dev/hard.tsv", "eval/shapes-dev/compound-head.tsv", "eval/shapes-dev/headings.tsv",
-                      "eval/shapes-dev/named-state.tsv")
+# The tables and corpora of the earlier tranches (standard, hard): the only shapes-dev files that existed when the three newer tranches
+# (compound-head, headings, named-state) were selected. `shapes_dev_extra.py` uses exactly these, so that its `candidates` stage reproduces
+# its committed tranches from the committed repository (a newer tranche's own documents and sentences must not reject themselves).
+BASE_SHAPES_DEV_TABLES = ("eval/shapes-dev/sources.tsv", "eval/shapes-dev/hard-sources.tsv", "eval/shapes-dev/excluded-sources.tsv")
+BASE_SHAPES_DEV_CORPORA = ("eval/shapes-dev/dev.tsv", "eval/shapes-dev/hard.tsv")
+# Every shapes-dev tranche: the imperative builder keeps its training source disjoint from all of them.
+SHAPES_DEV_TABLES = BASE_SHAPES_DEV_TABLES + ("eval/shapes-dev/compound-head-sources.tsv", "eval/shapes-dev/headings-sources.tsv",
+                                              "eval/shapes-dev/named-state-sources.tsv")
+SHAPES_DEV_CORPORA = BASE_SHAPES_DEV_CORPORA + ("eval/shapes-dev/compound-head.tsv", "eval/shapes-dev/headings.tsv", "eval/shapes-dev/named-state.tsv")
 LICENSE_PREFIXES = ("US federal government work", "US public domain")
 SAMPLE_KEY_COLUMNS = ("item", "kind", "sent_id", "shape", "target", "shown_tag", "agreed_tag", "ntokens")
 REVIEW_INSTRUCTIONS = [
@@ -159,13 +164,13 @@ def _add_table(index, path, origin):
             index.setdefault(("id", found), origin)
 
 
-def used_index(data_dir, exclusions, extra_tables=()):
+def used_index(data_dir, exclusions, extra_tables=(), shapes_dev_tables=SHAPES_DEV_TABLES):
     """{(kind, value): origin} of every document training, evaluation, the shapes development set and the extra tables used or excluded.
 
-    It is `shapes_dev.exclusion_index` plus the shapes-dev source tables (both tranches) and every `extra_tables` path (for example the
-    shapes-dev sourcing drafts), which also contribute archive.org identifiers (kind `ident`)."""
+    It is `shapes_dev.exclusion_index` plus the shapes-dev source tables (`shapes_dev_tables`, every tranche by default) and every
+    `extra_tables` path (for example the shapes-dev sourcing drafts), which also contribute archive.org identifiers (kind `ident`)."""
     index = shapes_dev.exclusion_index(data_dir, exclusions)
-    for table in SHAPES_DEV_TABLES:
+    for table in shapes_dev_tables:
         path = os.path.join(data_dir, *table.split("/"))
         if os.path.exists(path):
             _add_table(index, path, table)
@@ -256,13 +261,13 @@ def _command_exclusions(args):
 # ---------------------------------------------------------------- the shapes development set (sentences to stay disjoint from)
 
 class ShapesDevSentences:
-    """The sentences of the shapes development set (both tranches, committed) and of every `extra_text` folder (cleaned document text of
-    the shapes-dev sourcing): sentence keys and word 6-grams, to keep the candidates disjoint from them."""
+    """The sentences of the shapes development set (`corpora`, every committed tranche by default) and of every `extra_text` folder (cleaned
+    document text of the shapes-dev sourcing): sentence keys and word 6-grams, to keep the candidates disjoint from them."""
 
-    def __init__(self, data_dir, extra_text=()):
+    def __init__(self, data_dir, extra_text=(), corpora=SHAPES_DEV_CORPORA):
         self.keys = set()
         self.grams = set()
-        for relative in SHAPES_DEV_CORPORA:
+        for relative in corpora:
             path = os.path.join(data_dir, *relative.split("/"))
             if os.path.exists(path):
                 for sentence in common.read_corpus(path)[1]:

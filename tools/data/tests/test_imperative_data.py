@@ -17,6 +17,7 @@ import check_leakage
 import common
 import imperative_data as idata
 import shapes_dev as sd
+import shapes_dev_extra as sx
 import test_shapes_dev as base
 
 GOOD = [
@@ -671,6 +672,70 @@ class NearDuplicateGateTests(unittest.TestCase):
         rows, failures, _ = self.run_check("imperative", "Stop the pump when the oil level drops below the line on the tank gauge")
         self.assertEqual([("imperative", "eval-set", 1, 0, 0, 0)], rows)
         self.assertEqual(0, failures)
+
+
+class NewTrancheRebuildTests(Mini):
+    """The three newer tranches of the shapes development set (committed) must not reject their own documents and sentences when
+    shapes_dev_extra.py reruns `candidates` from the committed repository, while the imperative builder keeps its source disjoint from them."""
+
+    TRANCHE_TEXT = "Check the pump valve before each long trip ."
+    OLD_TEXT = "Open the access door and inspect the seal before each flight today ."
+
+    def write_data(self):
+        super().write_data()
+        shapes_dev = os.path.join(self.data, "eval", "shapes-dev")
+        for name in ("compound-head", "headings", "named-state"):
+            base.corpus_file(os.path.join(shapes_dev, name + ".tsv"), [("army-%s-doc" % name, self.tranche_text(name))])
+            base.table_file(os.path.join(shapes_dev, name + "-sources.tsv"), sd.SOURCE_COLUMNS,
+                            [self.source_row("army-%s-doc" % name, "https://archive.org/download/%sDoc/%sDoc_djvu.txt" % (name, name))])
+
+    def tranche_text(self, name):
+        return self.TRANCHE_TEXT if name == "compound-head" else "Test the %s seal again before each long trip ." % name
+
+    def scan(self, documents):
+        self.write_draft(sorted(documents))
+        for source_id, sentences in documents.items():
+            self.write_text_doc(source_id, sentences)
+        texts = [t for sentences in documents.values() for t in sentences]
+        adjudicate.write_rows(sd.shared_path(self.work, "tokens.tsv"), ("text", "sentences", "tokens"),
+                              [(t, 1, " ".join(base.simple_tokens(t))) for t in sorted(set(texts))])
+        lex = sd.lexicon_of(self.data)
+        vocab = {w.lower() for t in texts for w in base.simple_tokens(t)} | set(lex)
+        return sx.scan_units(self.work, self.data, "sentence", include_ud=False, lex=lex, vocab=vocab)
+
+    def test_the_extra_builder_reference_and_index_leave_out_the_tranches_it_builds(self):
+        reference = sx.Reference(self.data)
+        self.assertEqual(sx.Reference(self.data).reason(self.OLD_TEXT), "equals-reference")           # the earlier tranches still count
+        for name in ("compound-head", "headings", "named-state"):
+            self.assertIsNone(reference.reason(self.tranche_text(name)), name)
+            self.assertEqual(idata.EQUALS_SHAPES_DEV, idata.ShapesDevSentences(self.data).reason(self.tranche_text(name)), name)
+        exclusions = sd.load_exclusions(self.work, self.data)
+        for name in ("compound-head", "headings", "named-state"):
+            self.assertIsNone(idata.document_rejection(
+                idata.used_index(self.data, exclusions, sx.used_tables(self.data), idata.BASE_SHAPES_DEV_TABLES), "army-%s-doc" % name), name)
+            self.assertIsNotNone(idata.document_rejection(idata.used_index(self.data, exclusions), "army-%s-doc" % name), name)
+
+    def test_rebuilding_a_tranche_from_the_committed_state_reproduces_its_candidates(self):
+        # documents and sentences that the committed tranches hold are found again as candidates (document ids, URLs and sentences alike) ...
+        documents = {"army-%s-doc" % name: [self.tranche_text(name)] for name in ("compound-head", "headings", "named-state")}
+        scan = self.scan(documents)
+        self.assertEqual({}, scan.rejected)
+        self.assertEqual([], scan.problems)
+        self.assertEqual(sorted(t for ts in documents.values() for t in ts), sorted(text for _, _, text, _ in scan.units))
+        self.assertEqual(0, sum(scan.drops.values()))
+
+    def test_the_earlier_tranches_and_the_imperative_source_still_exclude(self):
+        scan = self.scan({"army-dev-doc": ["Check the pump valve before each long trip ."], "army-new": [self.OLD_TEXT, "Inspect the fuel strainer before each long trip ."]})
+        self.assertIn("army-dev-doc", scan.rejected)                                       # a document of sources.tsv
+        self.assertEqual([], [text for _, _, text, _ in scan.units])                       # dev.tsv and imperative.tsv sentences are dropped
+        self.assertEqual(2, sum(scan.drops.values()))
+
+    def test_the_imperative_builder_stays_disjoint_from_every_tranche(self):
+        rows, report, rejected, _ = self.collect({"army-a": GOOD + [self.TRANCHE_TEXT]})
+        self.assertNotIn(self.TRANCHE_TEXT, [r["text"] for r in rows])
+        self.assertIn(idata.EQUALS_SHAPES_DEV + " 1", "\n".join(report))
+        rows, report, rejected, _ = self.collect({"army-named-state-doc": GOOD})
+        self.assertIn("army-named-state-doc", rejected)
 
 
 if __name__ == "__main__":
