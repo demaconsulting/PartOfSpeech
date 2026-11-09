@@ -58,13 +58,13 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   imperative source (weight 1, so it is in the mix of the embedded weights; `--source imperative:0` leaves it out of an
   experimental run)
 - **Evaluation sets**: a split of the open corpus, a single-target gold set, a probe of difficult noun and verb shapes
-  and a challenge set; the UD English-EWT treebank is evaluation-only and is fetched on demand, never stored. Only the
-  two development splits were used to select the model and the confidence thresholds; the other sets were evaluated
-  once for each frozen model by the trainer (see _ModelTrainer Design_). A hard-shape
+  and a challenge set; the UD English-EWT treebank is evaluation-only and is fetched on demand, never stored. Model
+  configuration and thresholds are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard and hard
+  tranches) and UD-EWT dev; the other sets are evaluated once for each frozen model by the trainer (see _ModelTrainer
+  Design_). The hard-shape
   development set (`data/eval/shapes-dev/`: real US federal-government sentences, five shapes, controls, labeled blind
   by two models; a standard tranche and a harder second tranche that a pre-registered rule selects from the contested
-  cases of another model family, never from the PartOfSpeech model) is the one evaluation file that is used to select
-  settings; it is development only, read by the trainer
+  cases of another model family, never from the PartOfSpeech model) is development only, read by the trainer
   through a guard of its own, never trained on, kept disjoint from the training sets and from every other evaluation set
   (the two tranches share documents but no sentence), and never reported as a held-out figure
 - **Evaluation record**: `docs/evaluation/` holds the selection of the two recommended confidence thresholds
@@ -284,8 +284,8 @@ The data assets are protected by two release gates, which the data tests of the 
    the same `FeatureExtractor`, restricts the tags with the same lexicon code, trains an averaged perceptron in integer
    arithmetic, quantizes and prunes the weights and writes the `POSW` file with `PerceptronModelWriter`; the file is
    committed as `Resources/weights.bin` and embedded, and `training.json` records the SHA-256 of its uncompressed image.
-   Every setting was selected on the development sets only (the run log is `RUN-LOG.md` next to the trainer); `train
-   --check` retrains and compares in the build
+   Every setting is chosen on development data only (open dev, gold v2 dev, shapes-dev and UD-EWT dev; the run log is
+   `RUN-LOG.md` next to the trainer); `train --check` retrains and compares in the build
 7. **Checks**: the tools write the leakage report and the checksum manifest
 8. **Notices**: `THIRD-PARTY-NOTICES.md` carries the attributions of the sources (the weights included), and
    `PACKAGE-LICENSE.md` is the license of the package; the NuGet package includes both

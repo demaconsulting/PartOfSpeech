@@ -75,9 +75,9 @@ SHA-256 of the image with a pinned value on every target framework.
 
 ## Development data and the held-out gate
 
-Every setting is selected on development data: the two development sets (`data/open/dev.tsv`,
-`data/eval/gold-v2/dev.tsv`) and, for the feature group, also the hard-shape development set and the development part of
-the external treebank (below). Every command
+Every setting is chosen on development data only: open dev (`data/open/dev.tsv`), gold v2 dev
+(`data/eval/gold-v2/dev.tsv`), shapes-dev (standard and hard tranches) and UD-EWT dev (the last two are read by
+`eval-shapes` and `eval-arm`; below). Every command
 except `evaluate`, `eval-shapes` and `eval-arm` reads those two files and nothing else: evaluation accepts exactly those two paths, and
 training accepts only files below the repository's `data` folder (after the path is made absolute and links are resolved) and refuses
 held-out and development files there (`Evaluation/DevSets.cs`, tested). The held-out sets are read by `evaluate` only, and

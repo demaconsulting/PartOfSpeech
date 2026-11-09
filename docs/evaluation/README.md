@@ -37,8 +37,8 @@ them and states what they do not show.
 
 ## How the Evaluation Was Done
 
-1. **The model was frozen first.** Every setting of the model was chosen on the two development sets (the open corpus
-   development split and the development split of gold v2). After the labels of the corpora were corrected, the model
+1. **The model was frozen first.** Every setting of the model was chosen on development data only: open dev, gold v2
+   dev, shapes-dev (standard and hard tranches) and UD-EWT dev. After the labels of the corpora were corrected, the model
    was trained again with those settings unchanged and only the softmax temperature was refit on development data; a
    pre-registered follow-up then removed the `prenominal-ing` corrections from the training data on the strength of
    development data alone, a second pre-registered experiment then added the clause-cue feature group on the strength

@@ -10,7 +10,7 @@ lexicon and the trained weights, which are embedded in the package in compact bi
 `lexicon/lexicon.tsv` (see [lexicon/README.md](lexicon/README.md), "Embedded Form"), and the weights
 (`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 521,695 bytes compressed, 1,157,499 bytes uncompressed) are
 trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC, silver and
-imperative corpora with settings that were selected on the two development sets only (the run log is
+imperative corpora with settings that are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard and hard tranches) and UD-EWT dev (the run log is
 [RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not
 shipped. How the model scores on the evaluation sets, the confidence thresholds that were chosen on the development
 sets, and how to reproduce the evaluation (including the local UD English-EWT run) are in the

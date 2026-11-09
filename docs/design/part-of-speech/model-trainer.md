@@ -185,9 +185,9 @@ on the document ids and the sentence keys only, and the fold models are trained 
 
 ### Development-Only Selection
 
-Every setting of the shipped model was selected on development data only: `data/open/dev.tsv` and
-`data/eval/gold-v2/dev.tsv`, and for the feature group also the hard-shape development set and the development part of
-the external treebank (read by `eval-arm`; see below and _Context-Feature Experiment_). The rule
+Every setting of the shipped model is chosen on development data only: open dev (`data/open/dev.tsv`), gold v2 dev
+(`data/eval/gold-v2/dev.tsv`), shapes-dev (standard and hard tranches) and UD-EWT dev (the last two are read by
+`eval-shapes` and `eval-arm`; see below and _Context-Feature Experiment_). The rule
 is code, not convention: evaluation accepts exactly those two paths (compared as full paths, so a relative spelling or a
 dotted detour cannot slip past), a file at a development path must announce a development split in its header, and
 training sources must lie below the `data` folder of the repository and are checked against a deny-list that refuses
