@@ -20,6 +20,9 @@ needs-review:
   - "docs/verification/**/*.md"  # Verification documentation files
   - "docs/user_guide/**/*.md"    # User guide documentation
   - "docs/sysml2/**/*.sysml"     # SysML2 architecture model
+  # Frozen analysis scripts of the context-feature and imperative-data experiments
+  - "tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py"
+  - "tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py"
   - "tools/data/**/*.py"         # Build-time Python tools of the data assets, and their tests
   - "tools/data/README.md"       # Documentation of the data tools
   - "tools/data/hmm-tags/README.md"  # Standalone WordSense Basic tagging harness (not in the solution)
@@ -162,6 +165,9 @@ reviews:
       - "tools/DemaConsulting.PartOfSpeech.Trainer/training.json"    # the selected configuration
       - "tools/DemaConsulting.PartOfSpeech.Trainer/README.md"        # how to run the tool
       - "tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md"       # pre-registered rule, run log and decisions
+      # frozen analysis scripts (context features, imperative data)
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py"
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py"
       - "tools/data/tests/sentence-key-cases.tsv"                    # shared parity cases of the sentence key
       - "docs/evaluation/**/*.md"                                    # evaluation record (thresholds, held-out results)
       - "docs/evaluation/**/*.json"                                  # selection artifact and run-once results

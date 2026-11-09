@@ -221,7 +221,11 @@ that import and convert data and build the lexicon), `PartOfSpeech-DataChecks` (
 verify it) and `PartOfSpeech-DataCorrections` (the conventions linter, the generator and validator of the
 corrections in `data/corrections/` and the adjudication tool, with their tests and fixtures); the system design and the
 system requirements are
-their context. The data tools run in two places: `lint.ps1` runs the unit tests of the correction tools, the validation
+their context. The two frozen analysis scripts of the Trainer experiments,
+`tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py` and
+`tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py`, are reviewed in the review-set
+`PartOfSpeech-ModelTrainer`. The data tools run in two places: `lint.ps1` runs the unit tests of the correction tools,
+the validation
 and the state-aware regeneration check of the correction tables, the fix tier of the linter with `--enforce` and a
 report-only pass of the check tier (the quality-checks job of the workflow runs
 `lint.ps1`, and it is the only workflow entry that can host Python checks), while the C# tests of the system read the

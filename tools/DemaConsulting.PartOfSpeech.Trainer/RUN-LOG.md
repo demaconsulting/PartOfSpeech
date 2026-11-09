@@ -3957,6 +3957,11 @@ selection rule had its evidence on development data (the hard tranche, five seed
 record is the fourth, weaker look at held-out sets whose result is reported as produced: no setting, threshold, weight or document
 claim was changed to improve it.
 
+**Owner decision (2026-11-08).** The owner reviewed this mixed held-out result and accepted it for the gains on instructional
+text: the model is better on the shape probe, the challenge set and the imperative shape, slightly worse on open test (+7), gold v2
+(+2) and the treebank (+12 harmful errors at 0.45), and has a higher calibration error on several sets. F2+IMP ships. The decision
+changes no figure of this record.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
