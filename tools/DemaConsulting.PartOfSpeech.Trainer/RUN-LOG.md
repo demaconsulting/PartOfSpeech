@@ -3761,6 +3761,35 @@ rate without a threshold, the interval, the gold v2 and probe sentences), the pr
 statement, the previous-model comparison, every held-out figure) and the statement of `docs/design/part-of-speech.md` about the
 record.
 
+## Imperative training data: held-out look (plan written before the held-out command)
+
+The project owner authorized **exactly one** held-out `evaluate` for the shipped F2+IMP model, to be disclosed as a **further look**
+(the fourth look of the family at these sets; five models in all have been scored on them), as a **new record and not an erratum**.
+This section is committed **before** the command: no `evaluate` (not even `--preflight`) has been run for this model, and no held-out
+file has been read. The adoption section above is the state of the development evidence (HEAD `e969afa`).
+
+Plan (the procedure of the clause-cue held-out step, followed exactly):
+
+1. The committed previous record (`docs/evaluation/test-results.md` and `.json`, `operating-points.json`,
+   `confidence-thresholds.md`, `README.md`, `disclosure.md`, all as of `e969afa`; `test-results.*` is the record of the clause-cue
+   model, last written by commit `5f9a9f0`) is copied to a folder outside the repository for the comparison. It stays in git history.
+2. `test-results.json` and `.md` are deleted in a commit of their own (`evaluate` refuses to run while one exists).
+3. `evaluate --preflight` (scores nothing), then `evaluate --dump-dir <folder outside the repository>` **once** (at most 8
+   threads, the treebank from the git-ignored cache). If the command fails for an infrastructure reason before it produces a result,
+   the failure is reported precisely and nothing is retried to tune anything; **no second run is made after a result exists and
+   there is no re-roll**. The stop conditions that fired in the earlier records (gold v2 `to`/`not`, UD-EWT raw gold outside the
+   candidates, the shape probe's harmful errors) may fire again; they are reported, not tuned.
+4. The results are committed **as produced**, whatever they are, including any regression against the previous model. The previous
+   model is shown beside the new one from its committed record (it is not evaluated again). Between these two models every held-out
+   set has the same labels, so all five are fair comparisons; intervals are the 95% percentile bootstrap over documents of each
+   record, no paired interval is computed, so overlapping intervals are not a test.
+5. What is disclosed: `docs/evaluation/disclosure.md` (the fourth look; already revised in the adoption commit), the overview
+   `docs/evaluation/README.md` (status, procedure, comparison with the previous and earlier models), the README tables and the
+   guidance of the user guide and of the packed API reference (generated figures copied by tests-guarded rules), and the record
+   section that follows this one. Nothing is selected, tuned or reverted because of the result. The known weaker shape,
+   `n-subject-initial`, which the pre-registration and the adoption listed as worse on development data, is reported as it appears
+   in the shape-probe rows.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
