@@ -79,19 +79,19 @@ is per 1,000 noun-verb decisions. `shape-probe` and `challenge-set` are small se
 
 | Set | Accuracy (%) | Harmful per 1,000 |
 | --- | ---: | ---: |
-| `open-test` | 96.78 | 16.8 |
-| `gold-v2-test` | 94.77 | 24.6 |
-| `shape-probe` | 91.25 | 66.5 |
-| `challenge-set` | 86.76 | 0.0 |
-| `ud-test-mapped` | 93.19 | 15.9 |
+| `open-test` | 96.75 | 18.4 |
+| `gold-v2-test` | 94.87 | 26.7 |
+| `shape-probe` | 93.21 | 48.6 |
+| `challenge-set` | 89.34 | 0.0 |
+| `ud-test-mapped` | 93.03 | 18.6 |
 
 Recommended confidence thresholds, with the share of the noun-verb decisions that they answer and the harmful errors per
 1,000 answered decisions on the open test split:
 
 | Threshold | Value | Coverage (%) | Harmful per 1,000 answered |
 | --- | ---: | ---: | ---: |
-| `strict` | 0.95 | 83.9 | 2.2 |
-| `balanced` | 0.75 | 94.1 | 8.5 |
+| `strict` | 0.95 | 83.7 | 2.4 |
+| `balanced` | 0.75 | 94.7 | 7.5 |
 
 Rule checkers should use `strict`; treat tokens below the threshold as unknown.
 
