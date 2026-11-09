@@ -101,8 +101,10 @@ DOCUMENT_KEY_HITS = shapes_dev.DOCUMENT_KEY_HITS
 NEAR_WORDS, NEAR_SHARE = shapes_dev.NEAR_STANDARD_WORDS, shapes_dev.NEAR_STANDARD_SHARE
 EQUALS_SHAPES_DEV = "equals-shapes-dev"
 NEAR_SHAPES_DEV = "near-shapes-dev"
-SHAPES_DEV_TABLES = ("eval/shapes-dev/sources.tsv", "eval/shapes-dev/hard-sources.tsv", "eval/shapes-dev/excluded-sources.tsv")
-SHAPES_DEV_CORPORA = ("eval/shapes-dev/dev.tsv", "eval/shapes-dev/hard.tsv")
+SHAPES_DEV_TABLES = ("eval/shapes-dev/sources.tsv", "eval/shapes-dev/hard-sources.tsv", "eval/shapes-dev/excluded-sources.tsv",
+                     "eval/shapes-dev/compound-head-sources.tsv", "eval/shapes-dev/headings-sources.tsv", "eval/shapes-dev/named-state-sources.tsv")
+SHAPES_DEV_CORPORA = ("eval/shapes-dev/dev.tsv", "eval/shapes-dev/hard.tsv", "eval/shapes-dev/compound-head.tsv", "eval/shapes-dev/headings.tsv",
+                      "eval/shapes-dev/named-state.tsv")
 LICENSE_PREFIXES = ("US federal government work", "US public domain")
 SAMPLE_KEY_COLUMNS = ("item", "kind", "sent_id", "shape", "target", "shown_tag", "agreed_tag", "ntokens")
 REVIEW_INSTRUCTIONS = [

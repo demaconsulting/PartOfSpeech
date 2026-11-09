@@ -1,0 +1,2987 @@
+# corpus = DemaConsulting.PartOfSpeech shapes development set, named-state tranche (UPOS), dev split
+# license = CC0-1.0 for annotations and selection; sentences are US federal government works, US public domain, see named-state-sources.tsv
+# columns = form, upos, status
+# status = unanimous | disputed (two blind model labelers; disputed = they differ, the tag is the first labeler's)
+# status flags = a status may be followed by +foreign (word of another language) and +mentioned (word talked about, not used), in that order; a flag never changes the tag (data/CONVENTIONS.md)
+# judged word = per sentence: shape (n-named-state), role (target | control), target (zero-based token index), lemma, origin (real); the judged word is never disputed
+# selection = state, position and setting names after a preposition, by position and lexicon only; the gold is the agreement of two blind labelers (see README.md)
+# use = development only: select settings here, never train on it, never report it as a held-out figure
+# file = named-state.tsv
+
+# sent_id = shapes-dev-named-state-0001
+# source_id = army-ShoeRepairMachines.USArmyWarDept.Quatermaster.orig.1946.1952
+# text = The stitcher can be heated to the proper sewing temperature again in 5 to 10 minutes by turning the heat control indicator back to HIGH.
+# shape = n-named-state
+# role = target
+# target = 24
+# lemma = high
+# origin = real
+The	DET	unanimous
+stitcher	NOUN	unanimous
+can	AUX	unanimous
+be	AUX	unanimous
+heated	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+proper	ADJ	unanimous
+sewing	NOUN	unanimous
+temperature	NOUN	unanimous
+again	ADV	unanimous
+in	ADP	unanimous
+5	NUM	unanimous
+to	ADP	unanimous
+10	NUM	unanimous
+minutes	NOUN	unanimous
+by	ADP	unanimous
+turning	VERB	unanimous
+the	DET	unanimous
+heat	NOUN	unanimous
+control	NOUN	unanimous
+indicator	NOUN	unanimous
+back	ADV	unanimous
+to	ADP	unanimous
+HIGH	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0002
+# source_id = usda-CAT93992611
+# text = Things changed in China after 1978.
+# shape = n-named-state
+# role = target
+# target = 3
+# lemma = china
+# origin = real
+Things	NOUN	unanimous
+changed	VERB	unanimous
+in	ADP	unanimous
+China	PROPN	unanimous
+after	ADP	unanimous
+1978	NUM	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0003
+# source_id = army-TM11-317
+# text = Throw meter switch to AUDIO.
+# shape = n-named-state
+# role = target
+# target = 4
+# lemma = audio
+# origin = real
+Throw	VERB	unanimous
+meter	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+AUDIO	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0004
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Turn the function selector to ON.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = on
+# origin = real
+Turn	VERB	unanimous
+the	DET	unanimous
+function	NOUN	unanimous
+selector	NOUN	unanimous
+to	ADP	unanimous
+ON	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0005
+# source_id = navy-draftenvironment00unit_5
+# text = An annual trail ride along the Pony Express route takes place in June.
+# shape = n-named-state
+# role = target
+# target = 12
+# lemma = june
+# origin = real
+An	DET	unanimous
+annual	ADJ	unanimous
+trail	NOUN	unanimous
+ride	NOUN	unanimous
+along	ADP	unanimous
+the	DET	unanimous
+Pony	PROPN	unanimous
+Express	PROPN	unanimous
+route	NOUN	unanimous
+takes	VERB	unanimous
+place	NOUN	unanimous
+in	ADP	unanimous
+June	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0006
+# source_id = usda-handbookforyouri532unit
+# text = However, the Department never wishes to lose good employees, and personnel officers immediately go to work to locate similar positions for experienced workers elsewhere in the Department.
+# shape = n-named-state
+# role = target
+# target = 28
+# lemma = department
+# origin = real
+However	ADV	unanimous
+,	PUNCT	unanimous
+the	DET	unanimous
+Department	PROPN	unanimous
+never	ADV	unanimous
+wishes	VERB	unanimous
+to	PART	unanimous
+lose	VERB	unanimous
+good	ADJ	unanimous
+employees	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+personnel	NOUN	unanimous
+officers	NOUN	unanimous
+immediately	ADV	unanimous
+go	VERB	unanimous
+to	ADP	unanimous
+work	NOUN	unanimous
+to	PART	unanimous
+locate	VERB	unanimous
+similar	ADJ	unanimous
+positions	NOUN	unanimous
+for	ADP	unanimous
+experienced	ADJ	unanimous
+workers	NOUN	unanimous
+elsewhere	ADV	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Department	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0007
+# source_id = usfs-CAT89930077
+# text = The results of all analyses are summarized in Table 4 by listing the range of values and corresponding absolute changes in ET and water yield for each variable.
+# shape = n-named-state
+# role = target
+# target = 21
+# lemma = et
+# origin = real
+The	DET	unanimous
+results	NOUN	unanimous
+of	ADP	unanimous
+all	DET	unanimous
+analyses	NOUN	unanimous
+are	AUX	unanimous
+summarized	VERB	unanimous
+in	ADP	unanimous
+Table	NOUN	unanimous
+4	NUM	unanimous
+by	ADP	unanimous
+listing	VERB	unanimous
+the	DET	unanimous
+range	NOUN	unanimous
+of	ADP	unanimous
+values	NOUN	unanimous
+and	CCONJ	unanimous
+corresponding	ADJ	unanimous
+absolute	ADJ	unanimous
+changes	NOUN	unanimous
+in	ADP	unanimous
+ET	NOUN	unanimous
+and	CCONJ	unanimous
+water	NOUN	unanimous
+yield	NOUN	unanimous
+for	ADP	unanimous
+each	DET	unanimous
+variable	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0008
+# source_id = usda-CAT10504803
+# text = Changes in the West, where initial irrigation was largely through streamflow diversion, are even more striking.
+# shape = n-named-state
+# role = target
+# target = 3
+# lemma = west
+# origin = real
+Changes	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+West	PROPN	unanimous
+,	PUNCT	unanimous
+where	ADV	unanimous
+initial	ADJ	unanimous
+irrigation	NOUN	unanimous
+was	VERB	unanimous
+largely	ADV	unanimous
+through	ADP	unanimous
+streamflow	NOUN	unanimous
+diversion	NOUN	unanimous
+,	PUNCT	unanimous
+are	VERB	unanimous
+even	ADV	unanimous
+more	ADV	unanimous
+striking	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0009
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = Cones that had turned gray in Alabama were over 5 years old and yielded seeds of quality not much better than immature cones.
+# shape = n-named-state
+# role = target
+# target = 6
+# lemma = alabama
+# origin = real
+Cones	NOUN	unanimous
+that	PRON	unanimous
+had	AUX	unanimous
+turned	VERB	unanimous
+gray	ADJ	unanimous
+in	ADP	unanimous
+Alabama	PROPN	unanimous
+were	VERB	unanimous
+over	ADV	unanimous
+5	NUM	unanimous
+years	NOUN	unanimous
+old	ADJ	unanimous
+and	CCONJ	unanimous
+yielded	VERB	unanimous
+seeds	NOUN	unanimous
+of	ADP	unanimous
+quality	NOUN	unanimous
+not	PART	unanimous
+much	ADV	unanimous
+better	ADJ	unanimous
+than	ADP	unanimous
+immature	ADJ	unanimous
+cones	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0010
+# source_id = army-ShoeRepairMachines.USArmyWarDept.Quatermaster.orig.1946.1952
+# text = Turn the indicator to the left as far as it will go to set the heat control at LOW.
+# shape = n-named-state
+# role = target
+# target = 18
+# lemma = low
+# origin = real
+Turn	VERB	unanimous
+the	DET	unanimous
+indicator	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+left	NOUN	unanimous
+as	ADV	unanimous
+far	ADV	unanimous
+as	SCONJ	unanimous
+it	PRON	unanimous
+will	AUX	unanimous
+go	VERB	unanimous
+to	PART	unanimous
+set	VERB	unanimous
+the	DET	unanimous
+heat	NOUN	unanimous
+control	NOUN	unanimous
+at	ADP	unanimous
+LOW	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0011
+# source_id = army-TM11-862
+# text = Throw POWER switch to OFF to prevent further drain on the batteries until they are removed for charging.
+# shape = n-named-state
+# role = target
+# target = 4
+# lemma = off
+# origin = real
+Throw	VERB	unanimous
+POWER	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+OFF	NOUN	unanimous
+to	PART	unanimous
+prevent	VERB	unanimous
+further	ADJ	unanimous
+drain	NOUN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+batteries	NOUN	unanimous
+until	SCONJ	unanimous
+they	PRON	unanimous
+are	AUX	unanimous
+removed	VERB	unanimous
+for	ADP	unanimous
+charging	VERB	disputed
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0012
+# source_id = usfs-CAT89930077
+# text = Reviewing the other results shows that changes in LAI had a larger effect on adjusted ET and thus on water yield, than any of the other variables.
+# shape = n-named-state
+# role = target
+# target = 8
+# lemma = lai
+# origin = real
+Reviewing	VERB	unanimous
+the	DET	unanimous
+other	ADJ	unanimous
+results	NOUN	unanimous
+shows	VERB	unanimous
+that	SCONJ	unanimous
+changes	NOUN	unanimous
+in	ADP	unanimous
+LAI	NOUN	unanimous
+had	VERB	unanimous
+a	DET	unanimous
+larger	ADJ	unanimous
+effect	NOUN	unanimous
+on	ADP	unanimous
+adjusted	VERB	disputed
+ET	NOUN	unanimous
+and	CCONJ	unanimous
+thus	ADV	unanimous
+on	ADP	unanimous
+water	NOUN	unanimous
+yield	NOUN	unanimous
+,	PUNCT	unanimous
+than	ADP	unanimous
+any	DET	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+other	ADJ	unanimous
+variables	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0013
+# source_id = usda-formulaformoreef753unit
+# text = Officers and key civilians from the Army, Navy, and the Office of the Secretary of Defense are also enrolled in this course.
+# shape = n-named-state
+# role = target
+# target = 6
+# lemma = army
+# origin = real
+Officers	NOUN	unanimous
+and	CCONJ	unanimous
+key	ADJ	unanimous
+civilians	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+Army	PROPN	unanimous
+,	PUNCT	unanimous
+Navy	PROPN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+the	DET	unanimous
+Office	PROPN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Secretary	PROPN	unanimous
+of	ADP	unanimous
+Defense	PROPN	unanimous
+are	AUX	unanimous
+also	ADV	unanimous
+enrolled	VERB	unanimous
+in	ADP	unanimous
+this	DET	unanimous
+course	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0014
+# source_id = army-TM11-867
+# text = Set at BROAD for reception of phone signals.
+# shape = n-named-state
+# role = target
+# target = 2
+# lemma = broad
+# origin = real
+Set	VERB	unanimous
+at	ADP	unanimous
+BROAD	NOUN	unanimous
+for	ADP	unanimous
+reception	NOUN	unanimous
+of	ADP	unanimous
+phone	NOUN	unanimous
+signals	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0015
+# source_id = army-TM11-317
+# text = Set the MODULATION FREQ, selector switch to EXT.
+# shape = n-named-state
+# role = target
+# target = 8
+# lemma = ext
+# origin = real
+Set	VERB	unanimous
+the	DET	unanimous
+MODULATION	NOUN	unanimous
+FREQ	NOUN	unanimous
+,	PUNCT	unanimous
+selector	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+EXT	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0016
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Putt-putt control lever to IDLE.
+# shape = n-named-state
+# role = target
+# target = 4
+# lemma = idle
+# origin = real
+Putt-putt	NOUN	unanimous
+control	NOUN	unanimous
+lever	NOUN	unanimous
+to	ADP	unanimous
+IDLE	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0017
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = During the 20th century, the California canning olive occupied a strong market position in America, with olive oil as a salvage industry.
+# shape = n-named-state
+# role = target
+# target = 15
+# lemma = america
+# origin = real
+During	ADP	unanimous
+the	DET	unanimous
+20th	ADJ	unanimous
+century	NOUN	unanimous
+,	PUNCT	unanimous
+the	DET	unanimous
+California	PROPN	unanimous
+canning	NOUN	unanimous
+olive	NOUN	unanimous
+occupied	VERB	unanimous
+a	DET	unanimous
+strong	ADJ	unanimous
+market	NOUN	unanimous
+position	NOUN	unanimous
+in	ADP	unanimous
+America	PROPN	unanimous
+,	PUNCT	unanimous
+with	ADP	unanimous
+olive	NOUN	unanimous
+oil	NOUN	unanimous
+as	ADP	unanimous
+a	DET	unanimous
+salvage	NOUN	unanimous
+industry	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0018
+# source_id = navy-MCRP3-403B
+# text = The distance from the transmitting antenna to the place where the sky waves first return to Earth is called the skip distance.
+# shape = n-named-state
+# role = target
+# target = 16
+# lemma = earth
+# origin = real
+The	DET	unanimous
+distance	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+transmitting	NOUN	unanimous
+antenna	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+place	NOUN	unanimous
+where	ADV	unanimous
+the	DET	unanimous
+sky	NOUN	unanimous
+waves	NOUN	unanimous
+first	ADV	unanimous
+return	VERB	unanimous
+to	ADP	unanimous
+Earth	PROPN	unanimous
+is	AUX	unanimous
+called	VERB	unanimous
+the	DET	unanimous
+skip	NOUN	unanimous
+distance	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0019
+# source_id = army-HistoryOfThe136thRadioSecurityDetachment
+# text = Theater units Scheduled for return to the States and subsequent discharge.
+# shape = n-named-state
+# role = target
+# target = 7
+# lemma = states
+# origin = real
+Theater	NOUN	unanimous
+units	NOUN	unanimous
+Scheduled	VERB	unanimous
+for	ADP	unanimous
+return	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+States	PROPN	unanimous
+and	CCONJ	unanimous
+subsequent	ADJ	unanimous
+discharge	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0020
+# source_id = army-TrainingManualSuperfortressB-29
+# text = When the retraction screws have hooked on to the doors, move the bomb door handle to CLOSE and close the doors.
+# shape = n-named-state
+# role = target
+# target = 17
+# lemma = close
+# origin = real
+When	SCONJ	unanimous
+the	DET	unanimous
+retraction	NOUN	unanimous
+screws	NOUN	unanimous
+have	AUX	unanimous
+hooked	VERB	unanimous
+on	ADV	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+doors	NOUN	unanimous
+,	PUNCT	unanimous
+move	VERB	unanimous
+the	DET	unanimous
+bomb	NOUN	unanimous
+door	NOUN	unanimous
+handle	NOUN	unanimous
+to	ADP	unanimous
+CLOSE	NOUN	unanimous
+and	CCONJ	unanimous
+close	VERB	unanimous
+the	DET	unanimous
+doors	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0021
+# source_id = army-TM11-862
+# text = ALWAYS turn A and B-CURRENT controls to LOW before turning on the charger.
+# shape = n-named-state
+# role = target
+# target = 7
+# lemma = low
+# origin = real
+ALWAYS	ADV	unanimous
+turn	VERB	unanimous
+A	X	unanimous
+and	CCONJ	unanimous
+B-CURRENT	NOUN	unanimous
+controls	NOUN	unanimous
+to	ADP	unanimous
+LOW	NOUN	unanimous
+before	ADP	unanimous
+turning	VERB	unanimous
+on	ADV	unanimous
+the	DET	unanimous
+charger	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0022
+# source_id = usda-CAT31371619
+# text = In his last position at FAS, he served as the Director of the Dairy, Livestock and Poultry Division.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = fas
+# origin = real
+In	ADP	unanimous
+his	DET	unanimous
+last	ADJ	unanimous
+position	NOUN	unanimous
+at	ADP	unanimous
+FAS	PROPN	unanimous
+,	PUNCT	unanimous
+he	PRON	unanimous
+served	VERB	unanimous
+as	ADP	unanimous
+the	DET	unanimous
+Director	PROPN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Dairy	PROPN	unanimous
+,	PUNCT	unanimous
+Livestock	PROPN	unanimous
+and	CCONJ	unanimous
+Poultry	PROPN	unanimous
+Division	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0023
+# source_id = usfs-CAT10680420
+# text = Accounts for all the recognized forest resources have not been set up in the Service required accounts because they would not draw direct charges at this time.
+# shape = n-named-state
+# role = target
+# target = 14
+# lemma = service
+# origin = real
+Accounts	NOUN	unanimous
+for	ADP	unanimous
+all	DET	unanimous
+the	DET	unanimous
+recognized	VERB	disputed
+forest	NOUN	unanimous
+resources	NOUN	unanimous
+have	AUX	unanimous
+not	PART	unanimous
+been	AUX	unanimous
+set	VERB	unanimous
+up	ADV	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Service	PROPN	unanimous
+required	VERB	unanimous
+accounts	NOUN	unanimous
+because	SCONJ	unanimous
+they	PRON	unanimous
+would	AUX	unanimous
+not	PART	unanimous
+draw	VERB	unanimous
+direct	ADJ	unanimous
+charges	NOUN	unanimous
+at	ADP	unanimous
+this	DET	unanimous
+time	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0024
+# source_id = army-TM11-1211
+# text = Set the selector switch to CALIB.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = calib
+# origin = real
+Set	VERB	unanimous
+the	DET	unanimous
+selector	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+CALIB	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0025
+# source_id = usda-CAT80740816
+# text = Additional information is available in the manuals, Control of Water Pollution from Cropland, Volumes I and II (126, 127).
+# shape = n-named-state
+# role = target
+# target = 13
+# lemma = cropland
+# origin = real
+Additional	ADJ	unanimous
+information	NOUN	unanimous
+is	VERB	unanimous
+available	ADJ	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+manuals	NOUN	unanimous
+,	PUNCT	unanimous
+Control	PROPN	unanimous
+of	ADP	unanimous
+Water	PROPN	unanimous
+Pollution	PROPN	unanimous
+from	ADP	unanimous
+Cropland	PROPN	unanimous
+,	PUNCT	unanimous
+Volumes	NOUN	unanimous
+I	NUM	unanimous
+and	CCONJ	unanimous
+II	NUM	unanimous
+(	PUNCT	unanimous
+126	NUM	unanimous
+,	PUNCT	unanimous
+127	NUM	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0026
+# source_id = army-1946TM11-306
+# text = The OHMS ADJ. control, R18, is used for this purpose and functions here just as R17 does when switch SW2 is set at VOLTS.
+# shape = n-named-state
+# role = target
+# target = 26
+# lemma = volts
+# origin = real
+The	DET	unanimous
+OHMS	NOUN	unanimous
+ADJ	NOUN	unanimous
+.	PUNCT	unanimous
+control	NOUN	unanimous
+,	PUNCT	unanimous
+R18	PROPN	unanimous
+,	PUNCT	unanimous
+is	AUX	unanimous
+used	VERB	unanimous
+for	ADP	unanimous
+this	DET	unanimous
+purpose	NOUN	unanimous
+and	CCONJ	unanimous
+functions	VERB	unanimous
+here	ADV	unanimous
+just	ADV	unanimous
+as	SCONJ	unanimous
+R17	PROPN	unanimous
+does	VERB	unanimous
+when	SCONJ	unanimous
+switch	NOUN	unanimous
+SW2	PROPN	unanimous
+is	AUX	unanimous
+set	VERB	unanimous
+at	ADP	unanimous
+VOLTS	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0027
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Turn the fuel boost on LOW and check pressure.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = low
+# origin = real
+Turn	VERB	unanimous
+the	DET	unanimous
+fuel	NOUN	unanimous
+boost	NOUN	unanimous
+on	ADP	unanimous
+LOW	NOUN	unanimous
+and	CCONJ	unanimous
+check	VERB	unanimous
+pressure	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0028
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Set the formation stick function selector at ON.
+# shape = n-named-state
+# role = target
+# target = 7
+# lemma = on
+# origin = real
+Set	VERB	unanimous
+the	DET	unanimous
+formation	NOUN	unanimous
+stick	NOUN	unanimous
+function	NOUN	unanimous
+selector	NOUN	unanimous
+at	ADP	unanimous
+ON	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0029
+# source_id = army-Fm17-27
+# text = This set is taken to the OP.
+# shape = n-named-state
+# role = target
+# target = 6
+# lemma = op
+# origin = real
+This	DET	unanimous
+set	NOUN	unanimous
+is	AUX	unanimous
+taken	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+OP	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0030
+# source_id = nasa-apollo-ops-handbook-emu-vol1-1971
+# text = After passing through the suit vent system, the oxygen returns to the PLSS through the PLSS inlet connector.
+# shape = n-named-state
+# role = target
+# target = 13
+# lemma = plss
+# origin = real
+After	ADP	unanimous
+passing	VERB	unanimous
+through	ADP	unanimous
+the	DET	unanimous
+suit	NOUN	unanimous
+vent	NOUN	unanimous
+system	NOUN	unanimous
+,	PUNCT	unanimous
+the	DET	unanimous
+oxygen	NOUN	unanimous
+returns	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+PLSS	NOUN	unanimous
+through	ADP	unanimous
+the	DET	unanimous
+PLSS	NOUN	unanimous
+inlet	NOUN	unanimous
+connector	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0031
+# source_id = navy-practicalmanualo00lanirich
+# text = The greater part of the orders received are placed directly by readers at the Library.
+# shape = n-named-state
+# role = target
+# target = 14
+# lemma = library
+# origin = real
+The	DET	unanimous
+greater	ADJ	unanimous
+part	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+orders	NOUN	unanimous
+received	VERB	unanimous
+are	AUX	unanimous
+placed	VERB	unanimous
+directly	ADV	unanimous
+by	ADP	unanimous
+readers	NOUN	unanimous
+at	ADP	unanimous
+the	DET	unanimous
+Library	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0032
+# source_id = army-TM11-2019
+# text = The key switch RES-VAR-MUR is thrown to the MUR, position.
+# shape = n-named-state
+# role = target
+# target = 8
+# lemma = mur
+# origin = real
+The	DET	unanimous
+key	NOUN	unanimous
+switch	NOUN	unanimous
+RES-VAR-MUR	PROPN	unanimous
+is	AUX	unanimous
+thrown	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+MUR	PROPN	unanimous
+,	PUNCT	unanimous
+position	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0033
+# source_id = usda-CAT31332509
+# text = Always return letters which are addressed to Members of Congress, the White House, or the Executive Office of the President to their offices with the reply.
+# shape = n-named-state
+# role = target
+# target = 7
+# lemma = members
+# origin = real
+Always	ADV	unanimous
+return	VERB	unanimous
+letters	NOUN	unanimous
+which	PRON	unanimous
+are	AUX	unanimous
+addressed	VERB	unanimous
+to	ADP	unanimous
+Members	NOUN	unanimous
+of	ADP	unanimous
+Congress	PROPN	unanimous
+,	PUNCT	unanimous
+the	DET	unanimous
+White	PROPN	unanimous
+House	PROPN	unanimous
+,	PUNCT	unanimous
+or	CCONJ	unanimous
+the	DET	unanimous
+Executive	PROPN	unanimous
+Office	PROPN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+President	PROPN	unanimous
+to	ADP	unanimous
+their	DET	unanimous
+offices	NOUN	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+reply	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0034
+# source_id = usda-departmentofagri690unit
+# text = Employees reached for reduction in force have certain rights to be assigned to other positions in the Department for which they qualify.
+# shape = n-named-state
+# role = target
+# target = 17
+# lemma = department
+# origin = real
+Employees	NOUN	unanimous
+reached	VERB	unanimous
+for	ADP	unanimous
+reduction	NOUN	unanimous
+in	ADP	unanimous
+force	NOUN	unanimous
+have	VERB	unanimous
+certain	ADJ	unanimous
+rights	NOUN	unanimous
+to	PART	unanimous
+be	AUX	unanimous
+assigned	VERB	unanimous
+to	ADP	unanimous
+other	ADJ	unanimous
+positions	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Department	PROPN	unanimous
+for	ADP	unanimous
+which	PRON	unanimous
+they	PRON	unanimous
+qualify	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0035
+# source_id = army-TM5-627
+# text = Measurement of standard track begins at end of switch ties (87 feet from PS).
+# shape = n-named-state
+# role = target
+# target = 14
+# lemma = ps
+# origin = real
+Measurement	NOUN	unanimous
+of	ADP	unanimous
+standard	ADJ	unanimous
+track	NOUN	unanimous
+begins	VERB	unanimous
+at	ADP	unanimous
+end	NOUN	unanimous
+of	ADP	unanimous
+switch	NOUN	unanimous
+ties	NOUN	unanimous
+(	PUNCT	unanimous
+87	NUM	unanimous
+feet	NOUN	unanimous
+from	ADP	unanimous
+PS	NOUN	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0036
+# source_id = usda-CAT31371619
+# text = After managing the Australian Food & Agribusiness Research and Advisory (or FAR) team for four years she moved to the USA.
+# shape = n-named-state
+# role = target
+# target = 22
+# lemma = usa
+# origin = real
+After	ADP	unanimous
+managing	VERB	unanimous
+the	DET	unanimous
+Australian	PROPN	unanimous
+Food	PROPN	unanimous
+&	CCONJ	unanimous
+Agribusiness	PROPN	unanimous
+Research	PROPN	unanimous
+and	CCONJ	unanimous
+Advisory	PROPN	unanimous
+(	PUNCT	unanimous
+or	CCONJ	unanimous
+FAR	PROPN	unanimous
+)	PUNCT	unanimous
+team	NOUN	unanimous
+for	ADP	unanimous
+four	NUM	unanimous
+years	NOUN	unanimous
+she	PRON	unanimous
+moved	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+USA	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0037
+# source_id = army-TrainingManualSuperfortressB-29
+# text = After one revolution (four blades) turn the ignition switch to BOTH.
+# shape = n-named-state
+# role = target
+# target = 12
+# lemma = both
+# origin = real
+After	ADP	unanimous
+one	NUM	unanimous
+revolution	NOUN	unanimous
+(	PUNCT	unanimous
+four	NUM	unanimous
+blades	NOUN	unanimous
+)	PUNCT	unanimous
+turn	VERB	unanimous
+the	DET	unanimous
+ignition	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+BOTH	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0038
+# source_id = usda-handbookforyouri532unit
+# text = The Civil Service Commission has no jurisdiction over the classification of field positions in the Department of Agriculture.
+# shape = n-named-state
+# role = target
+# target = 15
+# lemma = department
+# origin = real
+The	DET	unanimous
+Civil	PROPN	unanimous
+Service	PROPN	unanimous
+Commission	PROPN	unanimous
+has	VERB	unanimous
+no	DET	unanimous
+jurisdiction	NOUN	unanimous
+over	ADP	unanimous
+the	DET	unanimous
+classification	NOUN	unanimous
+of	ADP	unanimous
+field	NOUN	unanimous
+positions	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Department	PROPN	unanimous
+of	ADP	unanimous
+Agriculture	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0039
+# source_id = usfs-CAT10680406
+# text = To accomplish this objective each transaction of the FPS must include full consideration of the obligation to return the money with interest to the Government.
+# shape = n-named-state
+# role = target
+# target = 24
+# lemma = government
+# origin = real
+To	PART	unanimous
+accomplish	VERB	unanimous
+this	DET	unanimous
+objective	NOUN	unanimous
+each	DET	unanimous
+transaction	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+FPS	PROPN	unanimous
+must	AUX	unanimous
+include	VERB	unanimous
+full	ADJ	unanimous
+consideration	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+obligation	NOUN	unanimous
+to	PART	unanimous
+return	VERB	unanimous
+the	DET	unanimous
+money	NOUN	unanimous
+with	ADP	unanimous
+interest	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+Government	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0040
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Put the switch in AUTOMATIC.
+# shape = n-named-state
+# role = target
+# target = 4
+# lemma = automatic
+# origin = real
+Put	VERB	unanimous
+the	DET	unanimous
+switch	NOUN	unanimous
+in	ADP	unanimous
+AUTOMATIC	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0041
+# source_id = army-TM11-2056
+# text = Move switch SW2 to NEON and switch SW1 to INTV.
+# shape = n-named-state
+# role = target
+# target = 4
+# lemma = neon
+# origin = real
+Move	VERB	unanimous
+switch	NOUN	unanimous
+SW2	PROPN	unanimous
+to	ADP	unanimous
+NEON	NOUN	unanimous
+and	CCONJ	unanimous
+switch	NOUN	unanimous
+SW1	PROPN	unanimous
+to	ADP	unanimous
+INTV	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0042
+# source_id = army-TrainingManualSuperfortressB-29
+# text = It should not be returned to NORMAL.
+# shape = n-named-state
+# role = target
+# target = 6
+# lemma = normal
+# origin = real
+It	PRON	unanimous
+should	AUX	unanimous
+not	PART	unanimous
+be	AUX	unanimous
+returned	VERB	unanimous
+to	ADP	unanimous
+NORMAL	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0043
+# source_id = navy-MCRP3-403C
+# text = The signal is then reflected from the ionosphere and returns to Earth in a circular pattern all around the transmitter.
+# shape = n-named-state
+# role = target
+# target = 11
+# lemma = earth
+# origin = real
+The	DET	unanimous
+signal	NOUN	unanimous
+is	AUX	unanimous
+then	ADV	unanimous
+reflected	VERB	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+ionosphere	NOUN	unanimous
+and	CCONJ	unanimous
+returns	VERB	unanimous
+to	ADP	unanimous
+Earth	PROPN	unanimous
+in	ADP	unanimous
+a	DET	unanimous
+circular	ADJ	unanimous
+pattern	NOUN	unanimous
+all	ADV	unanimous
+around	ADP	unanimous
+the	DET	unanimous
+transmitter	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0044
+# source_id = army-micro_IA41152806_0203
+# text = NOTE Unless otherwise specified, all controls and control settings refer to the TI.
+# shape = n-named-state
+# role = target
+# target = 13
+# lemma = ti
+# origin = real
+NOTE	NOUN	unanimous
+Unless	SCONJ	unanimous
+otherwise	ADV	unanimous
+specified	VERB	unanimous
+,	PUNCT	unanimous
+all	DET	unanimous
+controls	NOUN	unanimous
+and	CCONJ	unanimous
+control	NOUN	unanimous
+settings	NOUN	unanimous
+refer	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+TI	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0045
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = Flowering takes place in March and April during the regrowth of new leaves after the leafless dry season (Hughes and Styles 1984; Janzen 1983).
+# shape = n-named-state
+# role = target
+# target = 4
+# lemma = march
+# origin = real
+Flowering	NOUN	unanimous
+takes	VERB	unanimous
+place	NOUN	unanimous
+in	ADP	unanimous
+March	PROPN	unanimous
+and	CCONJ	unanimous
+April	PROPN	unanimous
+during	ADP	unanimous
+the	DET	unanimous
+regrowth	NOUN	unanimous
+of	ADP	unanimous
+new	ADJ	unanimous
+leaves	NOUN	unanimous
+after	ADP	unanimous
+the	DET	unanimous
+leafless	ADJ	unanimous
+dry	ADJ	unanimous
+season	NOUN	unanimous
+(	PUNCT	unanimous
+Hughes	PROPN	unanimous
+and	CCONJ	unanimous
+Styles	PROPN	unanimous
+1984	NUM	unanimous
+;	PUNCT	unanimous
+Janzen	PROPN	unanimous
+1983	NUM	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0046
+# source_id = army-TM9-1868
+# text = To lower the operating pressure range, turn the nut to the LEFT (counterclockwise).
+# shape = n-named-state
+# role = target
+# target = 12
+# lemma = left
+# origin = real
+To	PART	unanimous
+lower	VERB	unanimous
+the	DET	unanimous
+operating	NOUN	unanimous
+pressure	NOUN	unanimous
+range	NOUN	unanimous
+,	PUNCT	unanimous
+turn	VERB	unanimous
+the	DET	unanimous
+nut	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+LEFT	NOUN	unanimous
+(	PUNCT	unanimous
+counterclockwise	ADV	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0047
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = Pollination takes place in March before the tree puts on needles (Hwa 1945, 1948).
+# shape = n-named-state
+# role = target
+# target = 4
+# lemma = march
+# origin = real
+Pollination	NOUN	unanimous
+takes	VERB	unanimous
+place	NOUN	unanimous
+in	ADP	unanimous
+March	PROPN	unanimous
+before	SCONJ	unanimous
+the	DET	unanimous
+tree	NOUN	unanimous
+puts	VERB	unanimous
+on	ADV	unanimous
+needles	NOUN	unanimous
+(	PUNCT	unanimous
+Hwa	PROPN	unanimous
+1945	NUM	unanimous
+,	PUNCT	unanimous
+1948	NUM	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0048
+# source_id = army-TrainingManualSuperfortressB-29
+# text = After one revolution of the propeller (four blades) turn the ignition switch to BOTH.
+# shape = n-named-state
+# role = target
+# target = 15
+# lemma = both
+# origin = real
+After	ADP	unanimous
+one	NUM	unanimous
+revolution	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+propeller	NOUN	unanimous
+(	PUNCT	unanimous
+four	NUM	unanimous
+blades	NOUN	unanimous
+)	PUNCT	unanimous
+turn	VERB	unanimous
+the	DET	unanimous
+ignition	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+BOTH	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0049
+# source_id = army-1946TM11-306
+# text = If the SELECTOR switch is left at OHMS and the ohmmeter test prods should become shorted, the current drain from the two Batteries BA-30 will be high.
+# shape = n-named-state
+# role = target
+# target = 7
+# lemma = ohms
+# origin = real
+If	SCONJ	unanimous
+the	DET	unanimous
+SELECTOR	NOUN	unanimous
+switch	NOUN	unanimous
+is	AUX	unanimous
+left	VERB	unanimous
+at	ADP	unanimous
+OHMS	NOUN	unanimous
+and	CCONJ	unanimous
+the	DET	unanimous
+ohmmeter	NOUN	unanimous
+test	NOUN	unanimous
+prods	NOUN	unanimous
+should	AUX	unanimous
+become	VERB	unanimous
+shorted	ADJ	unanimous
+,	PUNCT	unanimous
+the	DET	unanimous
+current	NOUN	unanimous
+drain	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+two	NUM	unanimous
+Batteries	NOUN	unanimous
+BA-30	PROPN	unanimous
+will	AUX	unanimous
+be	VERB	unanimous
+high	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0050
+# source_id = usda-CAT93992611
+# text = It is usually cheaper to call collect, but rates are high for all calls placed from China.
+# shape = n-named-state
+# role = target
+# target = 17
+# lemma = china
+# origin = real
+It	PRON	unanimous
+is	VERB	unanimous
+usually	ADV	unanimous
+cheaper	ADJ	unanimous
+to	PART	unanimous
+call	VERB	unanimous
+collect	ADV	unanimous
+,	PUNCT	unanimous
+but	CCONJ	unanimous
+rates	NOUN	unanimous
+are	VERB	unanimous
+high	ADJ	unanimous
+for	ADP	unanimous
+all	DET	unanimous
+calls	NOUN	unanimous
+placed	VERB	unanimous
+from	ADP	unanimous
+China	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0051
+# source_id = army-TM11-867
+# text = Set at SHARP for c-w reception.
+# shape = n-named-state
+# role = target
+# target = 2
+# lemma = sharp
+# origin = real
+Set	VERB	unanimous
+at	ADP	unanimous
+SHARP	NOUN	unanimous
+for	ADP	unanimous
+c-w	NOUN	unanimous
+reception	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0052
+# source_id = usfs-CAT10680151
+# text = Turn in form to Supervisor at end of fire.
+# shape = n-named-state
+# role = target
+# target = 4
+# lemma = supervisor
+# origin = real
+Turn	VERB	unanimous
+in	ADV	unanimous
+form	NOUN	unanimous
+to	ADP	unanimous
+Supervisor	PROPN	unanimous
+at	ADP	unanimous
+end	NOUN	unanimous
+of	ADP	unanimous
+fire	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0053
+# source_id = usda-CAT30938510
+# text = Many key terms are listed in the Glossary and acronyms are defined in the Acronyms List.
+# shape = n-named-state
+# role = target
+# target = 7
+# lemma = glossary
+# origin = real
+Many	ADJ	unanimous
+key	ADJ	unanimous
+terms	NOUN	unanimous
+are	AUX	unanimous
+listed	VERB	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Glossary	PROPN	unanimous
+and	CCONJ	unanimous
+acronyms	NOUN	unanimous
+are	AUX	unanimous
+defined	VERB	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Acronyms	PROPN	unanimous
+List	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0054
+# source_id = army-TM11-636
+# text = Shunt resistor SH101 is provided in the B+ lead across which the meter is connected with the METER SWITCH in the AMP.
+# shape = n-named-state
+# role = target
+# target = 21
+# lemma = amp
+# origin = real
+Shunt	NOUN	unanimous
+resistor	NOUN	unanimous
+SH101	PROPN	unanimous
+is	AUX	unanimous
+provided	VERB	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+B+	NOUN	disputed
+lead	NOUN	unanimous
+across	ADP	unanimous
+which	PRON	unanimous
+the	DET	unanimous
+meter	NOUN	unanimous
+is	AUX	unanimous
+connected	VERB	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+METER	NOUN	unanimous
+SWITCH	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+AMP	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0055
+# source_id = army-TrainingManualSuperfortressB-29
+# text = The motor switch should be in NEUTRAL.
+# shape = n-named-state
+# role = target
+# target = 6
+# lemma = neutral
+# origin = real
+The	DET	unanimous
+motor	NOUN	unanimous
+switch	NOUN	unanimous
+should	AUX	unanimous
+be	VERB	unanimous
+in	ADP	unanimous
+NEUTRAL	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0056
+# source_id = usda-departmentofagri690unit
+# text = The Forest Service was set up to care for them; in 1905, under Secretary Wilson, it was placed in the Department of Agriculture.
+# shape = n-named-state
+# role = target
+# target = 23
+# lemma = department
+# origin = real
+The	DET	unanimous
+Forest	PROPN	unanimous
+Service	PROPN	unanimous
+was	AUX	unanimous
+set	VERB	unanimous
+up	ADV	unanimous
+to	PART	unanimous
+care	VERB	unanimous
+for	ADP	unanimous
+them	PRON	unanimous
+;	PUNCT	unanimous
+in	ADP	unanimous
+1905	NUM	unanimous
+,	PUNCT	unanimous
+under	ADP	unanimous
+Secretary	PROPN	unanimous
+Wilson	PROPN	unanimous
+,	PUNCT	unanimous
+it	PRON	unanimous
+was	AUX	unanimous
+placed	VERB	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Department	PROPN	unanimous
+of	ADP	unanimous
+Agriculture	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0057
+# source_id = usfs-CAT10679094
+# text = When approved, one copy will be returned to the State, one is for the regional forester, and one for the Chief's office.
+# shape = n-named-state
+# role = target
+# target = 10
+# lemma = state
+# origin = real
+When	SCONJ	unanimous
+approved	VERB	unanimous
+,	PUNCT	unanimous
+one	NUM	unanimous
+copy	NOUN	unanimous
+will	AUX	unanimous
+be	AUX	unanimous
+returned	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+State	PROPN	unanimous
+,	PUNCT	unanimous
+one	PRON	unanimous
+is	VERB	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+regional	ADJ	unanimous
+forester	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+one	PRON	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+Chief	PROPN	unanimous
+'s	PART	unanimous
+office	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0058
+# source_id = usda-CAT31371619
+# text = Prior to his tenure with the Com Refiners Association, Conner held several staff positions with the Senate Committee on Agriculture, Nutrition, and Forestry.
+# shape = n-named-state
+# role = target
+# target = 20
+# lemma = agriculture
+# origin = real
+Prior	ADJ	unanimous
+to	ADP	unanimous
+his	DET	unanimous
+tenure	NOUN	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+Com	PROPN	unanimous
+Refiners	PROPN	unanimous
+Association	PROPN	unanimous
+,	PUNCT	unanimous
+Conner	PROPN	unanimous
+held	VERB	unanimous
+several	ADJ	unanimous
+staff	NOUN	unanimous
+positions	NOUN	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+Senate	PROPN	unanimous
+Committee	PROPN	unanimous
+on	ADP	unanimous
+Agriculture	PROPN	unanimous
+,	PUNCT	unanimous
+Nutrition	PROPN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Forestry	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0059
+# source_id = usfs-CAT10429087
+# text = Meet fiscal regulations as well as policies and procedures set forth in the Manual and Handbook, including current revisions.
+# shape = n-named-state
+# role = target
+# target = 13
+# lemma = manual
+# origin = real
+Meet	VERB	unanimous
+fiscal	ADJ	unanimous
+regulations	NOUN	unanimous
+as	ADV	unanimous
+well	ADV	unanimous
+as	ADP	unanimous
+policies	NOUN	unanimous
+and	CCONJ	unanimous
+procedures	NOUN	unanimous
+set	VERB	unanimous
+forth	ADV	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Manual	PROPN	unanimous
+and	CCONJ	unanimous
+Handbook	PROPN	unanimous
+,	PUNCT	unanimous
+including	ADP	unanimous
+current	ADJ	unanimous
+revisions	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0060
+# source_id = usfs-CAT89930077
+# text = The results from the analysis showed water yields to increase from 9.9 to 89.9 inches with no change in ET.
+# shape = n-named-state
+# role = target
+# target = 19
+# lemma = et
+# origin = real
+The	DET	unanimous
+results	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+analysis	NOUN	unanimous
+showed	VERB	unanimous
+water	NOUN	unanimous
+yields	NOUN	unanimous
+to	PART	unanimous
+increase	VERB	unanimous
+from	ADP	unanimous
+9.9	NUM	unanimous
+to	ADP	unanimous
+89.9	NUM	unanimous
+inches	NOUN	unanimous
+with	ADP	unanimous
+no	DET	unanimous
+change	NOUN	unanimous
+in	ADP	unanimous
+ET	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0061
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Check bus selector switch on battery solenoid shield at NORMAL.
+# shape = n-named-state
+# role = target
+# target = 9
+# lemma = normal
+# origin = real
+Check	VERB	unanimous
+bus	NOUN	unanimous
+selector	NOUN	unanimous
+switch	NOUN	unanimous
+on	ADP	unanimous
+battery	NOUN	unanimous
+solenoid	NOUN	unanimous
+shield	NOUN	unanimous
+at	ADP	unanimous
+NORMAL	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0062
+# source_id = army-TM11-2674
+# text = With switch SW2 in the OSC. position, voltage is developed across the grid load resistor R5 which also forms part of the diode detector circuit.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = osc
+# origin = real
+With	ADP	unanimous
+switch	NOUN	unanimous
+SW2	PROPN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+OSC	PROPN	unanimous
+.	PUNCT	unanimous
+position	NOUN	unanimous
+,	PUNCT	unanimous
+voltage	NOUN	unanimous
+is	AUX	unanimous
+developed	VERB	unanimous
+across	ADP	unanimous
+the	DET	unanimous
+grid	NOUN	unanimous
+load	NOUN	unanimous
+resistor	NOUN	unanimous
+R5	PROPN	unanimous
+which	PRON	unanimous
+also	ADV	unanimous
+forms	VERB	unanimous
+part	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+diode	NOUN	unanimous
+detector	NOUN	unanimous
+circuit	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0063
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Set formation stick function selector at OFF.
+# shape = n-named-state
+# role = target
+# target = 6
+# lemma = off
+# origin = real
+Set	VERB	unanimous
+formation	NOUN	unanimous
+stick	NOUN	unanimous
+function	NOUN	unanimous
+selector	NOUN	unanimous
+at	ADP	unanimous
+OFF	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0064
+# source_id = navy-MCRP3-403B
+# text = The antenna height, in relation to the operating frequency, affects the angle that transmitted radio waves strike and penetrate the ionosphere and then return to Earth.
+# shape = n-named-state
+# role = target
+# target = 27
+# lemma = earth
+# origin = real
+The	DET	unanimous
+antenna	NOUN	unanimous
+height	NOUN	unanimous
+,	PUNCT	unanimous
+in	ADP	unanimous
+relation	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+operating	NOUN	unanimous
+frequency	NOUN	unanimous
+,	PUNCT	unanimous
+affects	VERB	unanimous
+the	DET	unanimous
+angle	NOUN	unanimous
+that	SCONJ	unanimous
+transmitted	VERB	disputed
+radio	NOUN	unanimous
+waves	NOUN	unanimous
+strike	VERB	unanimous
+and	CCONJ	unanimous
+penetrate	VERB	unanimous
+the	DET	unanimous
+ionosphere	NOUN	unanimous
+and	CCONJ	unanimous
+then	ADV	unanimous
+return	VERB	unanimous
+to	ADP	unanimous
+Earth	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0065
+# source_id = usda-CAT10674538
+# text = Pen and ink changes should be made in this Guide when such changes are made.
+# shape = n-named-state
+# role = target
+# target = 9
+# lemma = guide
+# origin = real
+Pen	NOUN	unanimous
+and	CCONJ	unanimous
+ink	NOUN	unanimous
+changes	NOUN	unanimous
+should	AUX	unanimous
+be	AUX	unanimous
+made	VERB	unanimous
+in	ADP	unanimous
+this	DET	unanimous
+Guide	PROPN	unanimous
+when	SCONJ	unanimous
+such	ADJ	unanimous
+changes	NOUN	unanimous
+are	AUX	unanimous
+made	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0066
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = Viable seeds were not released in meaningful amounts until September, with the maximum of good seeds being released in October (Houle and Payette 1990).
+# shape = n-named-state
+# role = target
+# target = 20
+# lemma = october
+# origin = real
+Viable	ADJ	unanimous
+seeds	NOUN	unanimous
+were	AUX	unanimous
+not	PART	unanimous
+released	VERB	unanimous
+in	ADP	unanimous
+meaningful	ADJ	unanimous
+amounts	NOUN	unanimous
+until	ADP	unanimous
+September	PROPN	unanimous
+,	PUNCT	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+maximum	NOUN	unanimous
+of	ADP	unanimous
+good	ADJ	unanimous
+seeds	NOUN	unanimous
+being	AUX	unanimous
+released	VERB	unanimous
+in	ADP	unanimous
+October	PROPN	unanimous
+(	PUNCT	unanimous
+Houle	PROPN	unanimous
+and	CCONJ	unanimous
+Payette	PROPN	unanimous
+1990	NUM	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0067
+# source_id = army-TM11-636
+# text = The d-c voltage across shunt resistor SH103 is applied to the panel meter to indicate resonance of the master oscillator when the METER SWITCH is in the AMP.
+# shape = n-named-state
+# role = target
+# target = 27
+# lemma = amp
+# origin = real
+The	DET	unanimous
+d-c	NOUN	unanimous
+voltage	NOUN	unanimous
+across	ADP	unanimous
+shunt	NOUN	unanimous
+resistor	NOUN	unanimous
+SH103	PROPN	unanimous
+is	AUX	unanimous
+applied	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+panel	NOUN	unanimous
+meter	NOUN	unanimous
+to	PART	unanimous
+indicate	VERB	unanimous
+resonance	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+master	NOUN	unanimous
+oscillator	NOUN	unanimous
+when	SCONJ	unanimous
+the	DET	unanimous
+METER	NOUN	unanimous
+SWITCH	NOUN	unanimous
+is	VERB	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+AMP	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0068
+# source_id = nasa-apollo-ops-handbook-emu-vol1-1971
+# text = The electrical umbilicals, in turn, connect the communications system to the PLSS or spacecraft.
+# shape = n-named-state
+# role = target
+# target = 13
+# lemma = plss
+# origin = real
+The	DET	unanimous
+electrical	ADJ	unanimous
+umbilicals	NOUN	unanimous
+,	PUNCT	unanimous
+in	ADP	unanimous
+turn	NOUN	unanimous
+,	PUNCT	unanimous
+connect	VERB	unanimous
+the	DET	unanimous
+communications	NOUN	unanimous
+system	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+PLSS	NOUN	unanimous
+or	CCONJ	unanimous
+spacecraft	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0069
+# source_id = usfs-CAT10506487
+# text = Return them to the Library to be charged to the persons who wish them.
+# shape = n-named-state
+# role = target
+# target = 4
+# lemma = library
+# origin = real
+Return	VERB	unanimous
+them	PRON	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+Library	PROPN	unanimous
+to	PART	unanimous
+be	AUX	unanimous
+charged	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+persons	NOUN	unanimous
+who	PRON	unanimous
+wish	VERB	unanimous
+them	PRON	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0070
+# source_id = army-TM11-2056
+# text = Move switch SW2 to NEON & MAZDA and switch SW1 to EXTV.
+# shape = n-named-state
+# role = target
+# target = 4
+# lemma = neon
+# origin = real
+Move	VERB	unanimous
+switch	NOUN	unanimous
+SW2	PROPN	unanimous
+to	ADP	unanimous
+NEON	NOUN	unanimous
+&	CCONJ	unanimous
+MAZDA	PROPN	unanimous
+and	CCONJ	unanimous
+switch	NOUN	unanimous
+SW1	PROPN	unanimous
+to	ADP	unanimous
+EXTV	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0071
+# source_id = navy-MCRP3-403B
+# text = The movements of the Earth around the Sun and changes in the Sun's activity contribute to ionospheric variations.
+# shape = n-named-state
+# role = target
+# target = 12
+# lemma = sun
+# origin = real
+The	DET	unanimous
+movements	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Earth	PROPN	unanimous
+around	ADP	unanimous
+the	DET	unanimous
+Sun	PROPN	unanimous
+and	CCONJ	unanimous
+changes	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Sun	PROPN	unanimous
+'s	PART	unanimous
+activity	NOUN	unanimous
+contribute	VERB	unanimous
+to	ADP	unanimous
+ionospheric	ADJ	unanimous
+variations	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0072
+# source_id = usfs-CAT89930077
+# text = Change all the month column headings to read one month earlier (i.e., change Dec to Nov, Jan to Dec, and so on).
+# shape = n-named-state
+# role = target
+# target = 17
+# lemma = nov
+# origin = real
+Change	VERB	unanimous
+all	DET	unanimous
+the	DET	unanimous
+month	NOUN	unanimous
+column	NOUN	unanimous
+headings	NOUN	unanimous
+to	PART	unanimous
+read	VERB	unanimous
+one	NUM	unanimous
+month	NOUN	unanimous
+earlier	ADV	unanimous
+(	PUNCT	unanimous
+i.e.	ADV	unanimous
+,	PUNCT	unanimous
+change	VERB	unanimous
+Dec	PROPN	unanimous+mentioned
+to	ADP	unanimous
+Nov	PROPN	unanimous+mentioned
+,	PUNCT	unanimous
+Jan	PROPN	unanimous+mentioned
+to	ADP	unanimous
+Dec	PROPN	unanimous+mentioned
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+so	ADV	unanimous
+on	ADV	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0073
+# source_id = navy-draftenvironment00unit_5
+# text = Taking no action would not change current flight operations in the FRTC; therefore, there would be no new impact on the local air traffic environment.
+# shape = n-named-state
+# role = target
+# target = 11
+# lemma = frtc
+# origin = real
+Taking	VERB	unanimous
+no	DET	unanimous
+action	NOUN	unanimous
+would	AUX	unanimous
+not	PART	unanimous
+change	VERB	unanimous
+current	ADJ	unanimous
+flight	NOUN	unanimous
+operations	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+FRTC	PROPN	unanimous
+;	PUNCT	unanimous
+therefore	ADV	unanimous
+,	PUNCT	unanimous
+there	PRON	unanimous
+would	AUX	unanimous
+be	VERB	unanimous
+no	DET	unanimous
+new	ADJ	unanimous
+impact	NOUN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+local	ADJ	unanimous
+air	NOUN	unanimous
+traffic	NOUN	unanimous
+environment	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0074
+# source_id = army-TM11-317
+# text = To turn the signal generator off completely, throw the POWER switch to OFF.
+# shape = n-named-state
+# role = target
+# target = 13
+# lemma = off
+# origin = real
+To	PART	unanimous
+turn	VERB	unanimous
+the	DET	unanimous
+signal	NOUN	unanimous
+generator	NOUN	unanimous
+off	ADV	unanimous
+completely	ADV	unanimous
+,	PUNCT	unanimous
+throw	VERB	unanimous
+the	DET	unanimous
+POWER	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+OFF	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0075
+# source_id = army-TM11-317
+# text = Throw the CALIBRATOR switch to OFF.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = off
+# origin = real
+Throw	VERB	unanimous
+the	DET	unanimous
+CALIBRATOR	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+OFF	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0076
+# source_id = army-TM11-251
+# text = When the receiver has become warm, turn the RF SENSITIVITY control left to AVC.
+# shape = n-named-state
+# role = target
+# target = 14
+# lemma = avc
+# origin = real
+When	SCONJ	unanimous
+the	DET	unanimous
+receiver	NOUN	unanimous
+has	AUX	unanimous
+become	VERB	unanimous
+warm	ADJ	unanimous
+,	PUNCT	unanimous
+turn	VERB	unanimous
+the	DET	unanimous
+RF	NOUN	unanimous
+SENSITIVITY	NOUN	unanimous
+control	NOUN	unanimous
+left	ADV	unanimous
+to	ADP	unanimous
+AVC	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0077
+# source_id = army-TM5-1150
+# text = Turn an M38 Flanged Nipple into the end of the Valve on the opposite side from the Tee.
+# shape = n-named-state
+# role = target
+# target = 17
+# lemma = tee
+# origin = real
+Turn	VERB	unanimous
+an	DET	unanimous
+M38	PROPN	unanimous
+Flanged	ADJ	unanimous
+Nipple	NOUN	unanimous
+into	ADP	unanimous
+the	DET	unanimous
+end	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Valve	NOUN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+opposite	ADJ	unanimous
+side	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+Tee	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0078
+# source_id = army-TM11-246B
+# text = Throw the LIGHTS-OFF switch to LIGHTS if you need light.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = lights
+# origin = real
+Throw	VERB	unanimous
+the	DET	unanimous
+LIGHTS-OFF	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+LIGHTS	NOUN	unanimous
+if	SCONJ	unanimous
+you	PRON	unanimous
+need	VERB	unanimous
+light	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0079
+# source_id = army-TM11-2056
+# text = However, switch SW2 should be kept in the NEON & MAZDA position.
+# shape = n-named-state
+# role = target
+# target = 9
+# lemma = neon
+# origin = real
+However	ADV	unanimous
+,	PUNCT	unanimous
+switch	NOUN	unanimous
+SW2	PROPN	unanimous
+should	AUX	unanimous
+be	AUX	unanimous
+kept	VERB	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+NEON	NOUN	unanimous
+&	CCONJ	unanimous
+MAZDA	PROPN	unanimous
+position	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0080
+# source_id = army-TM11-2674
+# text = Set the POWER switch at ON.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = on
+# origin = real
+Set	VERB	unanimous
+the	DET	unanimous
+POWER	NOUN	unanimous
+switch	NOUN	unanimous
+at	ADP	unanimous
+ON	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0081
+# source_id = army-TrainingManualSuperfortressB-29
+# text = To check, move air conditioning switches to HEAT for about 20 to 30 seconds.
+# shape = n-named-state
+# role = target
+# target = 8
+# lemma = heat
+# origin = real
+To	PART	unanimous
+check	VERB	unanimous
+,	PUNCT	unanimous
+move	VERB	unanimous
+air	NOUN	unanimous
+conditioning	NOUN	unanimous
+switches	NOUN	unanimous
+to	ADP	unanimous
+HEAT	NOUN	unanimous
+for	ADP	unanimous
+about	ADV	unanimous
+20	NUM	unanimous
+to	ADP	unanimous
+30	NUM	unanimous
+seconds	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0082
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Turn the control lever to IDLE and permit the engine to run 2 or 3 minutes.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = idle
+# origin = real
+Turn	VERB	unanimous
+the	DET	unanimous
+control	NOUN	unanimous
+lever	NOUN	unanimous
+to	ADP	unanimous
+IDLE	NOUN	unanimous
+and	CCONJ	unanimous
+permit	VERB	unanimous
+the	DET	unanimous
+engine	NOUN	unanimous
+to	PART	unanimous
+run	VERB	unanimous
+2	NUM	unanimous
+or	CCONJ	unanimous
+3	NUM	unanimous
+minutes	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0083
+# source_id = usda-CAT93995149
+# text = The portion of the crop (except pecans) that is to be kept through the following summer should be placed in cold storage early in March.
+# shape = n-named-state
+# role = target
+# target = 26
+# lemma = march
+# origin = real
+The	DET	unanimous
+portion	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+crop	NOUN	unanimous
+(	PUNCT	unanimous
+except	ADP	unanimous
+pecans	NOUN	unanimous
+)	PUNCT	unanimous
+that	PRON	unanimous
+is	AUX	unanimous
+to	PART	unanimous
+be	AUX	unanimous
+kept	VERB	unanimous
+through	ADP	unanimous
+the	DET	unanimous
+following	ADJ	unanimous
+summer	NOUN	unanimous
+should	AUX	unanimous
+be	AUX	unanimous
+placed	VERB	unanimous
+in	ADP	unanimous
+cold	ADJ	unanimous
+storage	NOUN	unanimous
+early	ADV	unanimous
+in	ADP	unanimous
+March	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0084
+# source_id = army-TM11-867
+# text = Set at SHARP for reception of phone signals.
+# shape = n-named-state
+# role = target
+# target = 2
+# lemma = sharp
+# origin = real
+Set	VERB	unanimous
+at	ADP	unanimous
+SHARP	NOUN	unanimous
+for	ADP	unanimous
+reception	NOUN	unanimous
+of	ADP	unanimous
+phone	NOUN	unanimous
+signals	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0085
+# source_id = usda-CAT93992611
+# text = Your passport must be current and the expiration date at least six months after your return from China.
+# shape = n-named-state
+# role = target
+# target = 17
+# lemma = china
+# origin = real
+Your	DET	unanimous
+passport	NOUN	unanimous
+must	AUX	unanimous
+be	VERB	unanimous
+current	ADJ	unanimous
+and	CCONJ	unanimous
+the	DET	unanimous
+expiration	NOUN	unanimous
+date	NOUN	unanimous
+at	ADP	unanimous
+least	ADJ	unanimous
+six	NUM	unanimous
+months	NOUN	unanimous
+after	ADP	unanimous
+your	DET	unanimous
+return	NOUN	unanimous
+from	ADP	unanimous
+China	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0086
+# source_id = usfs-CAT10680499
+# text = Each State Selecting Agency will report this information to the Director's special assistant, Mr. Persons.
+# shape = n-named-state
+# role = target
+# target = 10
+# lemma = director
+# origin = real
+Each	DET	unanimous
+State	PROPN	unanimous
+Selecting	PROPN	unanimous
+Agency	PROPN	unanimous
+will	AUX	unanimous
+report	VERB	unanimous
+this	DET	unanimous
+information	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+Director	PROPN	unanimous
+'s	PART	unanimous
+special	ADJ	unanimous
+assistant	NOUN	unanimous
+,	PUNCT	unanimous
+Mr.	PROPN	unanimous
+Persons	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0087
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Then return the control switch to AUTOMATIC.
+# shape = n-named-state
+# role = target
+# target = 6
+# lemma = automatic
+# origin = real
+Then	ADV	unanimous
+return	VERB	unanimous
+the	DET	unanimous
+control	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+AUTOMATIC	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0088
+# source_id = usfs-CAT10507128
+# text = The policies and procedures set forth in the Foreword are hereby approved, effective immediately.
+# shape = n-named-state
+# role = target
+# target = 8
+# lemma = foreword
+# origin = real
+The	DET	unanimous
+policies	NOUN	unanimous
+and	CCONJ	unanimous
+procedures	NOUN	unanimous
+set	VERB	unanimous
+forth	ADV	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Foreword	PROPN	unanimous
+are	AUX	unanimous
+hereby	ADV	unanimous
+approved	VERB	unanimous
+,	PUNCT	unanimous
+effective	ADJ	unanimous
+immediately	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0089
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Turn fuel boost pumps on LOW.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = low
+# origin = real
+Turn	VERB	unanimous
+fuel	NOUN	unanimous
+boost	NOUN	unanimous
+pumps	NOUN	unanimous
+on	ADP	unanimous
+LOW	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0090
+# source_id = usfs-CAT89930077
+# text = In Rain-Dominated Sensitivity Analysis II, the change in LAI from 7.0 to 4.0 yielded a net change of 3.5 inches for water yield.
+# shape = n-named-state
+# role = target
+# target = 9
+# lemma = lai
+# origin = real
+In	ADP	unanimous
+Rain-Dominated	PROPN	unanimous
+Sensitivity	PROPN	unanimous
+Analysis	PROPN	unanimous
+II	NUM	unanimous
+,	PUNCT	unanimous
+the	DET	unanimous
+change	NOUN	unanimous
+in	ADP	unanimous
+LAI	NOUN	unanimous
+from	ADP	unanimous
+7.0	NUM	unanimous
+to	ADP	unanimous
+4.0	NUM	unanimous
+yielded	VERB	unanimous
+a	DET	unanimous
+net	ADJ	unanimous
+change	NOUN	unanimous
+of	ADP	unanimous
+3.5	NUM	unanimous
+inches	NOUN	unanimous
+for	ADP	unanimous
+water	NOUN	unanimous
+yield	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0091
+# source_id = army-TM11-636
+# text = Rotate the METER switch knob to the AMP.
+# shape = n-named-state
+# role = target
+# target = 7
+# lemma = amp
+# origin = real
+Rotate	VERB	unanimous
+the	DET	unanimous
+METER	NOUN	unanimous
+switch	NOUN	unanimous
+knob	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+AMP	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0092
+# source_id = usfs-CAT31353319
+# text = The change from Transmit to Receive is effected by means of an anti-capacity switch, which, in the mid position, shuts off the entire set.
+# shape = n-named-state
+# role = target
+# target = 3
+# lemma = transmit
+# origin = real
+The	DET	unanimous
+change	NOUN	unanimous
+from	ADP	unanimous
+Transmit	NOUN	unanimous
+to	ADP	unanimous
+Receive	NOUN	unanimous
+is	AUX	unanimous
+effected	VERB	unanimous
+by	ADP	unanimous
+means	NOUN	unanimous
+of	ADP	unanimous
+an	DET	unanimous
+anti-capacity	ADJ	unanimous
+switch	NOUN	unanimous
+,	PUNCT	unanimous
+which	PRON	unanimous
+,	PUNCT	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+mid	ADJ	unanimous
+position	NOUN	unanimous
+,	PUNCT	unanimous
+shuts	VERB	unanimous
+off	ADV	unanimous
+the	DET	unanimous
+entire	ADJ	unanimous
+set	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0093
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Move the landing gear transfer switch to EMERGENCY.
+# shape = n-named-state
+# role = target
+# target = 7
+# lemma = emergency
+# origin = real
+Move	VERB	unanimous
+the	DET	unanimous
+landing	NOUN	unanimous
+gear	NOUN	unanimous
+transfer	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+EMERGENCY	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0094
+# source_id = army-TM5-4020
+# text = Be sure all parts are properly seated in the Cylinder before placing rifle bar assembly in Cylinder.
+# shape = n-named-state
+# role = target
+# target = 16
+# lemma = cylinder
+# origin = real
+Be	VERB	unanimous
+sure	ADJ	unanimous
+all	DET	unanimous
+parts	NOUN	unanimous
+are	AUX	unanimous
+properly	ADV	unanimous
+seated	VERB	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Cylinder	NOUN	unanimous
+before	ADP	unanimous
+placing	VERB	unanimous
+rifle	NOUN	unanimous
+bar	NOUN	unanimous
+assembly	NOUN	unanimous
+in	ADP	unanimous
+Cylinder	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0095
+# source_id = usfs-CAT10680420
+# text = One copy of each statement will be returned to the Unit after the report has been checked and verified.
+# shape = n-named-state
+# role = target
+# target = 10
+# lemma = unit
+# origin = real
+One	NUM	unanimous
+copy	NOUN	unanimous
+of	ADP	unanimous
+each	DET	unanimous
+statement	NOUN	unanimous
+will	AUX	unanimous
+be	AUX	unanimous
+returned	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+Unit	PROPN	unanimous
+after	SCONJ	unanimous
+the	DET	unanimous
+report	NOUN	unanimous
+has	AUX	unanimous
+been	AUX	unanimous
+checked	VERB	unanimous
+and	CCONJ	unanimous
+verified	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0096
+# source_id = usda-CAT11085202
+# text = July, with the peak movement taking place in June.
+# shape = n-named-state
+# role = target
+# target = 9
+# lemma = june
+# origin = real
+July	PROPN	unanimous
+,	PUNCT	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+peak	NOUN	unanimous
+movement	NOUN	unanimous
+taking	VERB	unanimous
+place	NOUN	unanimous
+in	ADP	unanimous
+June	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0097
+# source_id = army-TM11-317
+# text = In the 1.9-4.5 MC position, meter M, is inoperative when the METER switch is at AUDIO.
+# shape = n-named-state
+# role = target
+# target = 17
+# lemma = audio
+# origin = real
+In	ADP	unanimous
+the	DET	unanimous
+1.9-4.5	NUM	unanimous
+MC	NOUN	unanimous
+position	NOUN	unanimous
+,	PUNCT	unanimous
+meter	NOUN	unanimous
+M	PROPN	disputed
+,	PUNCT	unanimous
+is	VERB	unanimous
+inoperative	ADJ	unanimous
+when	SCONJ	unanimous
+the	DET	unanimous
+METER	NOUN	unanimous
+switch	NOUN	unanimous
+is	VERB	unanimous
+at	ADP	unanimous
+AUDIO	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0098
+# source_id = army-TM11-636
+# text = With the switch in the AMP.
+# shape = n-named-state
+# role = target
+# target = 5
+# lemma = amp
+# origin = real
+With	ADP	unanimous
+the	DET	unanimous
+switch	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+AMP	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0099
+# source_id = army-ShoeRepairMachines.USArmyWarDept.Quatermaster.orig.1946.1952
+# text = Turn the heat switch on and leave the heat control indicator at HIGH.
+# shape = n-named-state
+# role = target
+# target = 12
+# lemma = high
+# origin = real
+Turn	VERB	unanimous
+the	DET	unanimous
+heat	NOUN	unanimous
+switch	NOUN	unanimous
+on	ADV	unanimous
+and	CCONJ	unanimous
+leave	VERB	unanimous
+the	DET	unanimous
+heat	NOUN	unanimous
+control	NOUN	unanimous
+indicator	NOUN	unanimous
+at	ADP	unanimous
+HIGH	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0100
+# source_id = usda-patentmanualfore551unit
+# text = The references furnished to the bureau must be returned with its reply to the Solicitor's Office.
+# shape = n-named-state
+# role = target
+# target = 14
+# lemma = solicitor
+# origin = real
+The	DET	unanimous
+references	NOUN	unanimous
+furnished	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+bureau	NOUN	unanimous
+must	AUX	unanimous
+be	AUX	unanimous
+returned	VERB	unanimous
+with	ADP	unanimous
+its	DET	unanimous
+reply	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+Solicitor	PROPN	unanimous
+'s	PART	unanimous
+Office	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0101
+# source_id = army-MethodsOfTeaching1943
+# text = State its purpose and explain the process.
+# shape = n-named-state
+# role = control
+# target = 0
+# lemma = state
+# origin = real
+State	VERB	unanimous
+its	DET	unanimous
+purpose	NOUN	unanimous
+and	CCONJ	unanimous
+explain	VERB	unanimous
+the	DET	unanimous
+process	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0102
+# source_id = army-Fm2-30
+# text = However, the combat trucks and kitchen trucks of the various troops may march with their respective troops or they may be grouped in a squadron train.
+# shape = n-named-state
+# role = control
+# target = 13
+# lemma = march
+# origin = real
+However	ADV	unanimous
+,	PUNCT	unanimous
+the	DET	unanimous
+combat	NOUN	unanimous
+trucks	NOUN	unanimous
+and	CCONJ	unanimous
+kitchen	NOUN	unanimous
+trucks	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+various	ADJ	unanimous
+troops	NOUN	unanimous
+may	AUX	unanimous
+march	VERB	unanimous
+with	ADP	unanimous
+their	DET	unanimous
+respective	ADJ	unanimous
+troops	NOUN	unanimous
+or	CCONJ	unanimous
+they	PRON	unanimous
+may	AUX	unanimous
+be	AUX	unanimous
+grouped	VERB	unanimous
+in	ADP	unanimous
+a	DET	unanimous
+squadron	NOUN	unanimous
+train	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0103
+# source_id = army-FM30-1021959
+# text = Battalion and regimental trains may march under division control.
+# shape = n-named-state
+# role = control
+# target = 5
+# lemma = march
+# origin = real
+Battalion	NOUN	unanimous
+and	CCONJ	unanimous
+regimental	ADJ	unanimous
+trains	NOUN	unanimous
+may	AUX	unanimous
+march	VERB	unanimous
+under	ADP	unanimous
+division	NOUN	unanimous
+control	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0104
+# source_id = usfs-almosteverything1043unit
+# text = Now, let the stove burn for 30 to 40 minutes on the lowest setting to heat the pot enough to properly vaporize the oil.
+# shape = n-named-state
+# role = control
+# target = 16
+# lemma = heat
+# origin = real
+Now	ADV	unanimous
+,	PUNCT	unanimous
+let	VERB	unanimous
+the	DET	unanimous
+stove	NOUN	unanimous
+burn	VERB	unanimous
+for	ADP	unanimous
+30	NUM	unanimous
+to	ADP	unanimous
+40	NUM	unanimous
+minutes	NOUN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+lowest	ADJ	unanimous
+setting	NOUN	unanimous
+to	PART	unanimous
+heat	VERB	unanimous
+the	DET	unanimous
+pot	NOUN	unanimous
+enough	ADV	unanimous
+to	PART	unanimous
+properly	ADV	unanimous
+vaporize	VERB	unanimous
+the	DET	unanimous
+oil	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0105
+# source_id = army-TM5-5052
+# text = Close the generator breaker so that the generator voltage is transmitted to the bus connections.
+# shape = n-named-state
+# role = control
+# target = 0
+# lemma = close
+# origin = real
+Close	VERB	unanimous
+the	DET	unanimous
+generator	NOUN	unanimous
+breaker	NOUN	unanimous
+so	SCONJ	unanimous
+that	SCONJ	unanimous
+the	DET	unanimous
+generator	NOUN	unanimous
+voltage	NOUN	unanimous
+is	AUX	unanimous
+transmitted	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+bus	NOUN	unanimous
+connections	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0106
+# source_id = army-TM9-2865
+# text = Close the slide fastener chain from the bottom stop up to the point of damage.
+# shape = n-named-state
+# role = control
+# target = 0
+# lemma = close
+# origin = real
+Close	VERB	unanimous
+the	DET	unanimous
+slide	NOUN	unanimous
+fastener	NOUN	unanimous
+chain	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+bottom	NOUN	disputed
+stop	NOUN	unanimous
+up	ADV	disputed
+to	ADP	unanimous
+the	DET	unanimous
+point	NOUN	unanimous
+of	ADP	unanimous
+damage	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0107
+# source_id = army-MethodsOfTeaching1943
+# text = Guide the students carefully through the main steps and key points by questioning them, checking their work, and pointing out weaknesses.
+# shape = n-named-state
+# role = control
+# target = 0
+# lemma = guide
+# origin = real
+Guide	VERB	unanimous
+the	DET	unanimous
+students	NOUN	unanimous
+carefully	ADV	unanimous
+through	ADP	unanimous
+the	DET	unanimous
+main	ADJ	unanimous
+steps	NOUN	unanimous
+and	CCONJ	unanimous
+key	ADJ	unanimous
+points	NOUN	unanimous
+by	ADP	unanimous
+questioning	VERB	unanimous
+them	PRON	unanimous
+,	PUNCT	unanimous
+checking	VERB	unanimous
+their	DET	unanimous
+work	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+pointing	VERB	unanimous
+out	ADV	unanimous
+weaknesses	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0108
+# source_id = army-TM37-2810
+# text = Remove foot from pedal and allow engine to idle a few seconds.
+# shape = n-named-state
+# role = control
+# target = 8
+# lemma = idle
+# origin = real
+Remove	VERB	unanimous
+foot	NOUN	unanimous
+from	ADP	unanimous
+pedal	NOUN	unanimous
+and	CCONJ	unanimous
+allow	VERB	unanimous
+engine	NOUN	unanimous
+to	PART	unanimous
+idle	VERB	unanimous
+a	DET	unanimous
+few	ADJ	unanimous
+seconds	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0109
+# source_id = army-handbookof47inch00unitrich
+# text = For example, if a piston rod is wanted the order should state whether it is to be with or without the nut.
+# shape = n-named-state
+# role = control
+# target = 12
+# lemma = state
+# origin = real
+For	ADP	unanimous
+example	NOUN	unanimous
+,	PUNCT	unanimous
+if	SCONJ	unanimous
+a	DET	unanimous
+piston	NOUN	unanimous
+rod	NOUN	unanimous
+is	AUX	unanimous
+wanted	VERB	unanimous
+the	DET	unanimous
+order	NOUN	unanimous
+should	AUX	unanimous
+state	VERB	unanimous
+whether	SCONJ	unanimous
+it	PRON	unanimous
+is	AUX	unanimous
+to	PART	unanimous
+be	VERB	unanimous
+with	ADP	unanimous
+or	CCONJ	unanimous
+without	ADP	unanimous
+the	DET	unanimous
+nut	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0110
+# source_id = usda-CAT10667296
+# text = To service traps on a scheduled basis.
+# shape = n-named-state
+# role = control
+# target = 1
+# lemma = service
+# origin = real
+To	PART	unanimous
+service	VERB	unanimous
+traps	NOUN	unanimous
+on	ADP	unanimous
+a	DET	unanimous
+scheduled	ADJ	unanimous
+basis	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0111
+# source_id = army-TM5-1042
+# text = To Idle motor, lower the Idling adjustment lever.
+# shape = n-named-state
+# role = control
+# target = 1
+# lemma = idle
+# origin = real
+To	PART	unanimous
+Idle	VERB	unanimous
+motor	NOUN	unanimous
+,	PUNCT	unanimous
+lower	VERB	unanimous
+the	DET	unanimous
+Idling	NOUN	unanimous
+adjustment	NOUN	unanimous
+lever	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-named-state-0112
+# source_id = usda-CAT10504803
+# text = Nearly all farms or ranches need planned conservation programs, based on sound technology, to guide their conservation progress efficiently.
+# shape = n-named-state
+# role = control
+# target = 16
+# lemma = guide
+# origin = real
+Nearly	ADV	unanimous
+all	DET	unanimous
+farms	NOUN	unanimous
+or	CCONJ	unanimous
+ranches	NOUN	unanimous
+need	VERB	unanimous
+planned	VERB	disputed
+conservation	NOUN	unanimous
+programs	NOUN	unanimous
+,	PUNCT	unanimous
+based	VERB	unanimous
+on	ADP	unanimous
+sound	ADJ	unanimous
+technology	NOUN	unanimous
+,	PUNCT	unanimous
+to	PART	unanimous
+guide	VERB	unanimous
+their	DET	unanimous
+conservation	NOUN	unanimous
+progress	NOUN	unanimous
+efficiently	ADV	unanimous
+.	PUNCT	unanimous

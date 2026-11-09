@@ -1,0 +1,1688 @@
+# corpus = DemaConsulting.PartOfSpeech shapes development set, headings tranche (UPOS), dev split
+# license = CC0-1.0 for annotations and selection; sentences are US federal government works, US public domain, see headings-sources.tsv
+# columns = form, upos, status
+# status = unanimous | disputed (two blind model labelers; disputed = they differ, the tag is the first labeler's)
+# judged word = per sentence: shape (heading-titlecase), role (target | control), target (zero-based token index), lemma, origin (real), kind (noun | imperative | proper); the judged word is never disputed
+# selection = Title Case heading lines of federal documents, by position and lexicon only; the gold is the agreement of two blind labelers (see README.md)
+# use = development only: select settings here, never train on it, never report it as a held-out figure
+# file = headings.tsv
+
+# sent_id = shapes-dev-headings-0001
+# source_id = army-TM11-2019
+# text = Weight and Dimensions
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = dimension
+# origin = real
+# kind = noun
+Weight	NOUN	unanimous
+and	CCONJ	unanimous
+Dimensions	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0002
+# source_id = army-TM5-3012
+# text = Magneto in Proper Position for Installing on Engine
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = position
+# origin = real
+# kind = noun
+Magneto	NOUN	unanimous
+in	ADP	unanimous
+Proper	ADJ	unanimous
+Position	NOUN	unanimous
+for	ADP	unanimous
+Installing	VERB	unanimous
+on	ADP	unanimous
+Engine	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0003
+# source_id = navy-draftenvironment00unit_5
+# text = Regional Land Status and Use
+# shape = heading-titlecase
+# role = target
+# target = 4
+# lemma = use
+# origin = real
+# kind = noun
+Regional	ADJ	unanimous
+Land	NOUN	unanimous
+Status	NOUN	unanimous
+and	CCONJ	unanimous
+Use	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0004
+# source_id = army-TM11-2509
+# text = Fig, No, Title Page
+# shape = heading-titlecase
+# role = target
+# target = 5
+# lemma = page
+# origin = real
+# kind = noun
+Fig	NOUN	unanimous
+,	PUNCT	unanimous
+No	NOUN	unanimous
+,	PUNCT	unanimous
+Title	NOUN	unanimous
+Page	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0005
+# source_id = usfs-CAT31372465
+# text = Dead Wood
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = wood
+# origin = real
+# kind = noun
+Dead	ADJ	unanimous
+Wood	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0006
+# source_id = navy-draftenvironment00unit_5
+# text = Proposed Action (Four Valleys-Fixed) 4-8
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = action
+# origin = real
+# kind = noun
+Proposed	VERB	disputed
+Action	NOUN	unanimous
+(	PUNCT	unanimous
+Four	NUM	unanimous
+Valleys-Fixed	PROPN	unanimous
+)	PUNCT	unanimous
+4-8	NUM	unanimous
+
+# sent_id = shapes-dev-headings-0007
+# source_id = usfs-CAT10507128
+# text = First Supper
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = supper
+# origin = real
+# kind = noun
+First	ADJ	unanimous
+Supper	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0008
+# source_id = navy-draftenvironment00unit_5
+# text = Hazard Analysis Report
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = report
+# origin = real
+# kind = noun
+Hazard	NOUN	unanimous
+Analysis	NOUN	unanimous
+Report	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0009
+# source_id = army-TM5-9194
+# text = Stationary Contact
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = contact
+# origin = real
+# kind = noun
+Stationary	ADJ	unanimous
+Contact	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0010
+# source_id = usfs-CAT10680151
+# text = Releasing Emergency Guards
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = guard
+# origin = real
+# kind = noun
+Releasing	VERB	unanimous
+Emergency	NOUN	unanimous
+Guards	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0011
+# source_id = army-CAT10507936
+# text = Use of Plant After Emergency
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = plant
+# origin = real
+# kind = noun
+Use	NOUN	unanimous
+of	ADP	unanimous
+Plant	NOUN	unanimous
+After	ADP	unanimous
+Emergency	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0012
+# source_id = usda-CAT10674538
+# text = Basic Financial Benefits
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = benefit
+# origin = real
+# kind = noun
+Basic	ADJ	unanimous
+Financial	ADJ	unanimous
+Benefits	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0013
+# source_id = army-TM55-405
+# text = Induction Motor
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = motor
+# origin = real
+# kind = noun
+Induction	NOUN	unanimous
+Motor	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0014
+# source_id = usda-CAT77691293
+# text = Changing Traditional Patterns
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = pattern
+# origin = real
+# kind = noun
+Changing	VERB	unanimous
+Traditional	ADJ	unanimous
+Patterns	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0015
+# source_id = army-FM11-85
+# text = Company Supply
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = supply
+# origin = real
+# kind = noun
+Company	NOUN	unanimous
+Supply	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0016
+# source_id = usfs-CAT10680151
+# text = Strength of First Attack
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = attack
+# origin = real
+# kind = noun
+Strength	NOUN	unanimous
+of	ADP	unanimous
+First	ADJ	unanimous
+Attack	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0017
+# source_id = army-TM37-2810
+# text = Gear Shifting
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = shifting
+# origin = real
+# kind = noun
+Gear	NOUN	unanimous
+Shifting	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0018
+# source_id = army-FM11-85
+# text = Advanced Individual Training
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = training
+# origin = real
+# kind = noun
+Advanced	ADJ	unanimous
+Individual	ADJ	unanimous
+Training	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0019
+# source_id = navy-MCRP3-403B
+# text = Skip Zone
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = zone
+# origin = real
+# kind = noun
+Skip	NOUN	unanimous
+Zone	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0020
+# source_id = army-TM55-405
+# text = Tests For Determining the Condition of Insulation
+# shape = heading-titlecase
+# role = target
+# target = 4
+# lemma = condition
+# origin = real
+# kind = noun
+Tests	NOUN	unanimous
+For	ADP	unanimous
+Determining	VERB	unanimous
+the	DET	unanimous
+Condition	NOUN	unanimous
+of	ADP	unanimous
+Insulation	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0021
+# source_id = usda-CAT10506430
+# text = Timber Scaling or Estimating
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = scaling
+# origin = real
+# kind = noun
+Timber	NOUN	unanimous
+Scaling	NOUN	unanimous
+or	CCONJ	unanimous
+Estimating	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0022
+# source_id = army-FM30-1021959
+# text = General Headquarters Troops
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = troop
+# origin = real
+# kind = noun
+General	ADJ	unanimous
+Headquarters	NOUN	unanimous
+Troops	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0023
+# source_id = usfs-CAT10429087
+# text = Incentive Awards Program
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = program
+# origin = real
+# kind = noun
+Incentive	NOUN	unanimous
+Awards	NOUN	unanimous
+Program	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0024
+# source_id = usda-CAT77691293
+# text = The Agency Headquarters and the Office Federal Women's Program
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = headquarters
+# origin = real
+# kind = noun
+The	DET	unanimous
+Agency	NOUN	disputed
+Headquarters	NOUN	unanimous
+and	CCONJ	unanimous
+the	DET	unanimous
+Office	PROPN	unanimous
+Federal	PROPN	unanimous
+Women	PROPN	unanimous
+'s	PART	unanimous
+Program	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0025
+# source_id = usda-CAT31315031
+# text = Financial Condition
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = condition
+# origin = real
+# kind = noun
+Financial	ADJ	unanimous
+Condition	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0026
+# source_id = usda-CAT31314606
+# text = Direct Help
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = help
+# origin = real
+# kind = noun
+Direct	ADJ	unanimous
+Help	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0027
+# source_id = usfs-CAT10682918
+# text = Interpretation Aids and Tables
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = aid
+# origin = real
+# kind = noun
+Interpretation	NOUN	unanimous
+Aids	NOUN	unanimous
+and	CCONJ	unanimous
+Tables	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0028
+# source_id = usda-CAT93992611
+# text = Currency and Money Exchange
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = exchange
+# origin = real
+# kind = noun
+Currency	NOUN	unanimous
+and	CCONJ	unanimous
+Money	NOUN	unanimous
+Exchange	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0029
+# source_id = usfs-CAT88893768
+# text = Land Survey and Data Gathering
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = survey
+# origin = real
+# kind = noun
+Land	NOUN	unanimous
+Survey	NOUN	unanimous
+and	CCONJ	unanimous
+Data	NOUN	unanimous
+Gathering	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0030
+# source_id = army-TM5-3012
+# text = Shipment by Plane
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = plane
+# origin = real
+# kind = noun
+Shipment	NOUN	unanimous
+by	ADP	unanimous
+Plane	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0031
+# source_id = usfs-CAT10680499
+# text = Application For The Establishment Of Forest Tree
+# shape = heading-titlecase
+# role = target
+# target = 6
+# lemma = tree
+# origin = real
+# kind = noun
+Application	NOUN	unanimous
+For	ADP	unanimous
+The	DET	unanimous
+Establishment	NOUN	unanimous
+Of	ADP	unanimous
+Forest	NOUN	unanimous
+Tree	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0032
+# source_id = navy-draftenvironment00unit_5
+# text = Proposed Action (Four Valleys-Fixed) 4-19
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = action
+# origin = real
+# kind = noun
+Proposed	VERB	disputed
+Action	NOUN	unanimous
+(	PUNCT	unanimous
+Four	NUM	unanimous
+Valleys-Fixed	PROPN	unanimous
+)	PUNCT	unanimous
+4-19	NUM	unanimous
+
+# sent_id = shapes-dev-headings-0033
+# source_id = usda-CAT10834932
+# text = Fruit Group
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = group
+# origin = real
+# kind = noun
+Fruit	NOUN	unanimous
+Group	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0034
+# source_id = usda-consumersguideto959unit
+# text = Tips on Cooking, Preserving Nutrients
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = cooking
+# origin = real
+# kind = noun
+Tips	NOUN	unanimous
+on	ADP	unanimous
+Cooking	NOUN	unanimous
+,	PUNCT	unanimous
+Preserving	VERB	unanimous
+Nutrients	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0035
+# source_id = navy-MCRP3-403B
+# text = Antenna Repair
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = repair
+# origin = real
+# kind = noun
+Antenna	NOUN	unanimous
+Repair	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0036
+# source_id = army-TM5-3012
+# text = Distributor Disk
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = disk
+# origin = real
+# kind = noun
+Distributor	NOUN	unanimous
+Disk	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0037
+# source_id = usda-CAT31321762
+# text = Shipping Schedule
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = schedule
+# origin = real
+# kind = noun
+Shipping	NOUN	unanimous
+Schedule	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0038
+# source_id = usfs-CAT10680151
+# text = Sector Boss
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = boss
+# origin = real
+# kind = noun
+Sector	NOUN	unanimous
+Boss	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0039
+# source_id = usda-CAT10506430
+# text = Farm Machinery and Farm Power
+# shape = heading-titlecase
+# role = target
+# target = 4
+# lemma = power
+# origin = real
+# kind = noun
+Farm	NOUN	unanimous
+Machinery	NOUN	unanimous
+and	CCONJ	unanimous
+Farm	NOUN	unanimous
+Power	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0040
+# source_id = army-TM37-2810
+# text = Hammers, Jaws, Lining Plates, Rolls
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = jaw
+# origin = real
+# kind = noun
+Hammers	NOUN	unanimous
+,	PUNCT	unanimous
+Jaws	NOUN	unanimous
+,	PUNCT	unanimous
+Lining	NOUN	unanimous
+Plates	NOUN	unanimous
+,	PUNCT	unanimous
+Rolls	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0041
+# source_id = usda-CAT11076071
+# text = A Little Bit of Salt
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = bit
+# origin = real
+# kind = noun
+A	DET	unanimous
+Little	ADJ	unanimous
+Bit	NOUN	unanimous
+of	ADP	unanimous
+Salt	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0042
+# source_id = army-TM5-5052
+# text = Working on Contacts with Generator in Service
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = contact
+# origin = real
+# kind = noun
+Working	VERB	unanimous
+on	ADP	unanimous
+Contacts	NOUN	unanimous
+with	ADP	unanimous
+Generator	NOUN	unanimous
+in	ADP	unanimous
+Service	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0043
+# source_id = army-TM5-5052
+# text = Collector Rings and Brushes
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = ring
+# origin = real
+# kind = noun
+Collector	NOUN	unanimous
+Rings	NOUN	unanimous
+and	CCONJ	unanimous
+Brushes	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0044
+# source_id = usda-CAT10679262
+# text = Religious Taboos
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = taboo
+# origin = real
+# kind = noun
+Religious	ADJ	unanimous
+Taboos	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0045
+# source_id = usda-CAT10834932
+# text = Let's Have a Birthday Party
+# shape = heading-titlecase
+# role = target
+# target = 5
+# lemma = party
+# origin = real
+# kind = noun
+Let	VERB	unanimous
+'s	PRON	unanimous
+Have	VERB	unanimous
+a	DET	unanimous
+Birthday	NOUN	unanimous
+Party	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0046
+# source_id = usda-CAT10504803
+# text = Game Animals and Birds
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = bird
+# origin = real
+# kind = noun
+Game	NOUN	unanimous
+Animals	NOUN	unanimous
+and	CCONJ	unanimous
+Birds	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0047
+# source_id = army-TM55-405
+# text = Field-Coil Test for Continuous Circuit
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = test
+# origin = real
+# kind = noun
+Field-Coil	NOUN	unanimous
+Test	NOUN	unanimous
+for	ADP	unanimous
+Continuous	ADJ	unanimous
+Circuit	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0048
+# source_id = usda-CAT80740816
+# text = Specific Site Planning
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = planning
+# origin = real
+# kind = noun
+Specific	ADJ	unanimous
+Site	NOUN	unanimous
+Planning	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0049
+# source_id = navy-WelfareRecreationManual
+# text = Voluntary Classes
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = class
+# origin = real
+# kind = noun
+Voluntary	ADJ	unanimous
+Classes	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0050
+# source_id = usda-handbookofoffici00unit_2
+# text = Blighted Mixed Grain
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = grain
+# origin = real
+# kind = noun
+Blighted	ADJ	unanimous
+Mixed	ADJ	unanimous
+Grain	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0051
+# source_id = usda-CAT10678525
+# text = Performs Nutrition and Consumer Use
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = performs
+# origin = real
+# kind = imperative
+Performs	VERB	unanimous
+Nutrition	NOUN	unanimous
+and	CCONJ	unanimous
+Consumer	NOUN	unanimous
+Use	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0052
+# source_id = army-TM5-5052
+# text = Replace Colls
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = replace
+# origin = real
+# kind = imperative
+Replace	VERB	unanimous
+Colls	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0053
+# source_id = usda-CAT31321762
+# text = See Personnel - Applications
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = see
+# origin = real
+# kind = imperative
+See	VERB	unanimous
+Personnel	NOUN	unanimous
+-	PUNCT	unanimous
+Applications	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0054
+# source_id = army-TM5-3012
+# text = Remove the Distributor Cap
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = remove
+# origin = real
+# kind = imperative
+Remove	VERB	unanimous
+the	DET	unanimous
+Distributor	NOUN	unanimous
+Cap	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0055
+# source_id = usda-CAT11076071
+# text = Provide Fluid Milk Choices
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = provide
+# origin = real
+# kind = imperative
+Provide	VERB	unanimous
+Fluid	ADJ	unanimous
+Milk	NOUN	unanimous
+Choices	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0056
+# source_id = usda-CAT31321762
+# text = See Procedure - Issuances - Classification
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = see
+# origin = real
+# kind = imperative
+See	VERB	unanimous
+Procedure	NOUN	unanimous
+-	PUNCT	unanimous
+Issuances	NOUN	unanimous
+-	PUNCT	unanimous
+Classification	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0057
+# source_id = army-TM5-3012
+# text = Replace Vent Plugs
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = replace
+# origin = real
+# kind = imperative
+Replace	VERB	unanimous
+Vent	NOUN	unanimous
+Plugs	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0058
+# source_id = navy-MCRP3-403B
+# text = Check the Condition of Plugs, Receptacles, and Connectors
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = check
+# origin = real
+# kind = imperative
+Check	VERB	unanimous
+the	DET	unanimous
+Condition	NOUN	unanimous
+of	ADP	unanimous
+Plugs	NOUN	unanimous
+,	PUNCT	unanimous
+Receptacles	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Connectors	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0059
+# source_id = army-TM5-3012
+# text = Keep Battery Clean and Dry
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = keep
+# origin = real
+# kind = imperative
+Keep	VERB	unanimous
+Battery	NOUN	unanimous
+Clean	ADJ	unanimous
+and	CCONJ	unanimous
+Dry	ADJ	unanimous
+
+# sent_id = shapes-dev-headings-0060
+# source_id = usda-CAT10674538
+# text = File That Injury Claim Promptly
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = file
+# origin = real
+# kind = imperative
+File	VERB	unanimous
+That	DET	unanimous
+Injury	NOUN	unanimous
+Claim	NOUN	unanimous
+Promptly	ADV	unanimous
+
+# sent_id = shapes-dev-headings-0061
+# source_id = usda-CAT10834932
+# text = Take a Field Trip to a Farm or Market
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = take
+# origin = real
+# kind = imperative
+Take	VERB	unanimous
+a	DET	unanimous
+Field	NOUN	unanimous
+Trip	NOUN	unanimous
+to	ADP	unanimous
+a	DET	unanimous
+Farm	NOUN	unanimous
+or	CCONJ	unanimous
+Market	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0062
+# source_id = usda-CAT11076071
+# text = Collect Menu Resources
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = collect
+# origin = real
+# kind = imperative
+Collect	VERB	unanimous
+Menu	NOUN	unanimous
+Resources	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0063
+# source_id = army-TM5-5052
+# text = Replace Core and Colls
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = replace
+# origin = real
+# kind = imperative
+Replace	VERB	unanimous
+Core	NOUN	unanimous
+and	CCONJ	unanimous
+Colls	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0064
+# source_id = usda-CAT82771091
+# text = Help the Teenager Evaluate Her Situation Starting from Her Own
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = help
+# origin = real
+# kind = imperative
+Help	VERB	unanimous
+the	DET	unanimous
+Teenager	NOUN	unanimous
+Evaluate	VERB	unanimous
+Her	DET	unanimous
+Situation	NOUN	unanimous
+Starting	VERB	unanimous
+from	ADP	unanimous
+Her	DET	unanimous
+Own	ADJ	unanimous
+
+# sent_id = shapes-dev-headings-0065
+# source_id = army-MethodsOfTeaching1943
+# text = Suggest Proper Study Habits Such as Following
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = suggest
+# origin = real
+# kind = imperative
+Suggest	VERB	unanimous
+Proper	ADJ	unanimous
+Study	NOUN	unanimous
+Habits	NOUN	unanimous
+Such	ADJ	unanimous
+as	ADP	unanimous
+Following	VERB	unanimous
+
+# sent_id = shapes-dev-headings-0066
+# source_id = army-MethodsOfTeaching1943
+# text = Teach Students How to Read Efficiently
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = teach
+# origin = real
+# kind = imperative
+Teach	VERB	unanimous
+Students	NOUN	unanimous
+How	ADV	unanimous
+to	PART	unanimous
+Read	VERB	unanimous
+Efficiently	ADV	unanimous
+
+# sent_id = shapes-dev-headings-0067
+# source_id = usda-CAT11076071
+# text = Determine Choices
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = determine
+# origin = real
+# kind = imperative
+Determine	VERB	unanimous
+Choices	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0068
+# source_id = navy-headquartersmari00unit
+# text = Insure that Bureau
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = insure
+# origin = real
+# kind = imperative
+Insure	VERB	unanimous
+that	SCONJ	unanimous
+Bureau	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0069
+# source_id = army-MethodsOfTeaching1943
+# text = Suggest Methods for Memorizing
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = suggest
+# origin = real
+# kind = imperative
+Suggest	VERB	unanimous
+Methods	NOUN	unanimous
+for	ADP	unanimous
+Memorizing	VERB	unanimous
+
+# sent_id = shapes-dev-headings-0070
+# source_id = navy-MCRP3-403B
+# text = Check the Connections Diagrams
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = check
+# origin = real
+# kind = imperative
+Check	VERB	unanimous
+the	DET	unanimous
+Connections	NOUN	unanimous
+Diagrams	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0071
+# source_id = army-TM11-246B
+# text = Remove Radio Receiver BC-973-B, Loop LP-23-B, Azimuth Scale
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = remove
+# origin = real
+# kind = imperative
+Remove	VERB	unanimous
+Radio	NOUN	unanimous
+Receiver	NOUN	unanimous
+BC-973-B	PROPN	unanimous
+,	PUNCT	unanimous
+Loop	NOUN	unanimous
+LP-23-B	PROPN	unanimous
+,	PUNCT	unanimous
+Azimuth	NOUN	unanimous
+Scale	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0072
+# source_id = navy-MCRP3-403B
+# text = Use the Proper Procedure to Turn Off the Set
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = use
+# origin = real
+# kind = imperative
+Use	VERB	unanimous
+the	DET	unanimous
+Proper	ADJ	unanimous
+Procedure	NOUN	unanimous
+to	PART	unanimous
+Turn	VERB	unanimous
+Off	ADV	unanimous
+the	DET	unanimous
+Set	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0073
+# source_id = usda-planningyourreti932unit
+# text = Plan To Be Useful
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = plan
+# origin = real
+# kind = imperative
+Plan	VERB	unanimous
+To	PART	unanimous
+Be	VERB	unanimous
+Useful	ADJ	unanimous
+
+# sent_id = shapes-dev-headings-0074
+# source_id = usda-CAT31306177
+# text = Check Conversation
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = check
+# origin = real
+# kind = imperative
+Check	VERB	unanimous
+Conversation	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0075
+# source_id = army-TM5-3012
+# text = Test Timing on Synchroscope
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = test
+# origin = real
+# kind = imperative
+Test	VERB	unanimous
+Timing	NOUN	unanimous
+on	ADP	unanimous
+Synchroscope	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0076
+# source_id = usda-CAT11076071
+# text = Adjust Portion Size
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = adjust
+# origin = real
+# kind = imperative
+Adjust	VERB	unanimous
+Portion	NOUN	unanimous
+Size	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0077
+# source_id = usda-planningyourreti932unit
+# text = Plan To Be Financially Secure
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = plan
+# origin = real
+# kind = imperative
+Plan	VERB	unanimous
+To	PART	unanimous
+Be	VERB	unanimous
+Financially	ADV	unanimous
+Secure	ADJ	unanimous
+
+# sent_id = shapes-dev-headings-0078
+# source_id = usda-CAT31302317
+# text = Base Your Plan on an Adequate Diet
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = base
+# origin = real
+# kind = imperative
+Base	VERB	unanimous
+Your	DET	unanimous
+Plan	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+Adequate	ADJ	unanimous
+Diet	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0079
+# source_id = army-TM5-5052
+# text = Warm Up Engine
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = warm
+# origin = real
+# kind = imperative
+Warm	VERB	unanimous
+Up	ADV	unanimous
+Engine	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0080
+# source_id = usda-planningyourreti932unit
+# text = Plan To Have A Good Home
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = plan
+# origin = real
+# kind = imperative
+Plan	VERB	unanimous
+To	PART	unanimous
+Have	VERB	unanimous
+A	DET	unanimous
+Good	ADJ	unanimous
+Home	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0081
+# source_id = usda-CAT11076071
+# text = Follow the Meal Pattern
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = follow
+# origin = real
+# kind = imperative
+Follow	VERB	unanimous
+the	DET	unanimous
+Meal	NOUN	unanimous
+Pattern	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0082
+# source_id = usda-CAT11076071
+# text = Determine a Time Period
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = determine
+# origin = real
+# kind = imperative
+Determine	VERB	unanimous
+a	DET	unanimous
+Time	NOUN	unanimous
+Period	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0083
+# source_id = usda-CAT11076071
+# text = Use Standardized Recipes
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = use
+# origin = real
+# kind = imperative
+Use	VERB	unanimous
+Standardized	ADJ	unanimous
+Recipes	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0084
+# source_id = usda-CAT31321762
+# text = See Personnel - Classification
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = see
+# origin = real
+# kind = imperative
+See	VERB	unanimous
+Personnel	NOUN	unanimous
+-	PUNCT	unanimous
+Classification	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0085
+# source_id = navy-MCRP3-403B
+# text = Make Sure of Dial, Switch, and Control Settings
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = make
+# origin = real
+# kind = imperative
+Make	VERB	unanimous
+Sure	ADJ	unanimous
+of	ADP	unanimous
+Dial	NOUN	unanimous
+,	PUNCT	unanimous
+Switch	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Control	NOUN	unanimous
+Settings	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0086
+# source_id = navy-MCRP3-403B
+# text = Check the Set for Completeness
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = check
+# origin = real
+# kind = imperative
+Check	VERB	unanimous
+the	DET	unanimous
+Set	NOUN	unanimous
+for	ADP	unanimous
+Completeness	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0087
+# source_id = usda-planningyourreti932unit
+# text = Plan To Keep Healthy
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = plan
+# origin = real
+# kind = imperative
+Plan	VERB	unanimous
+To	PART	unanimous
+Keep	VERB	unanimous
+Healthy	ADJ	unanimous
+
+# sent_id = shapes-dev-headings-0088
+# source_id = army-MethodsOfTeaching1943
+# text = Suggest Methods for Outlining
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = suggest
+# origin = real
+# kind = imperative
+Suggest	VERB	unanimous
+Methods	NOUN	unanimous
+for	ADP	unanimous
+Outlining	VERB	unanimous
+
+# sent_id = shapes-dev-headings-0089
+# source_id = army-TM5-5052
+# text = Replace Core and Coils
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = replace
+# origin = real
+# kind = imperative
+Replace	VERB	unanimous
+Core	NOUN	unanimous
+and	CCONJ	unanimous
+Coils	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0090
+# source_id = usda-CAT11076071
+# text = Maximize Nutrient Retention 4-4
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = maximize
+# origin = real
+# kind = imperative
+Maximize	VERB	unanimous
+Nutrient	NOUN	unanimous
+Retention	NOUN	unanimous
+4-4	NUM	unanimous
+
+# sent_id = shapes-dev-headings-0091
+# source_id = navy-MCRP3-403B
+# text = Follow the Starting Procedure
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = follow
+# origin = real
+# kind = imperative
+Follow	VERB	unanimous
+the	DET	unanimous
+Starting	NOUN	unanimous
+Procedure	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0092
+# source_id = army-MethodsOfTeaching1943
+# text = Suggest Methods for Taking Notes
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = suggest
+# origin = real
+# kind = imperative
+Suggest	VERB	unanimous
+Methods	NOUN	unanimous
+for	ADP	unanimous
+Taking	VERB	unanimous
+Notes	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0093
+# source_id = army-TM5-3012
+# text = Keep Cable Terminals Tight and Clean
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = keep
+# origin = real
+# kind = imperative
+Keep	VERB	unanimous
+Cable	NOUN	unanimous
+Terminals	NOUN	unanimous
+Tight	ADJ	unanimous
+and	CCONJ	unanimous
+Clean	ADJ	unanimous
+
+# sent_id = shapes-dev-headings-0094
+# source_id = usda-CAT10678525
+# text = Provides Consolidated Management Support Services
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = provides
+# origin = real
+# kind = imperative
+Provides	VERB	unanimous
+Consolidated	ADJ	unanimous
+Management	NOUN	unanimous
+Support	NOUN	unanimous
+Services	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-0095
+# source_id = usfs-CAT10680151
+# text = Spread Fire Fighters Out
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = spread
+# origin = real
+# kind = imperative
+Spread	VERB	unanimous
+Fire	NOUN	unanimous
+Fighters	NOUN	unanimous
+Out	ADV	unanimous
+
+# sent_id = shapes-dev-headings-0096
+# source_id = navy-MCRP3-403B
+# text = Allow the Set to Warm Up
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = allow
+# origin = real
+# kind = imperative
+Allow	VERB	unanimous
+the	DET	unanimous
+Set	NOUN	unanimous
+to	PART	unanimous
+Warm	VERB	unanimous
+Up	ADV	unanimous
+
+# sent_id = shapes-dev-headings-0097
+# source_id = usda-CAT31371619
+# text = Jeffrey Jones
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = jones
+# origin = real
+# kind = proper
+Jeffrey	PROPN	unanimous
+Jones	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0098
+# source_id = navy-searchlightssign00unit
+# text = Los Angeles
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = angeles
+# origin = real
+# kind = proper
+Los	PROPN	unanimous
+Angeles	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0099
+# source_id = navy-draftenvironment00unit_5
+# text = University of Nevada Reno Bureau of Mines and Geology
+# shape = heading-titlecase
+# role = control
+# target = 2
+# lemma = nevada
+# origin = real
+# kind = proper
+University	PROPN	unanimous
+of	ADP	unanimous
+Nevada	PROPN	unanimous
+Reno	PROPN	unanimous
+Bureau	PROPN	unanimous
+of	ADP	unanimous
+Mines	PROPN	unanimous
+and	CCONJ	unanimous
+Geology	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0100
+# source_id = usda-CAT31371619
+# text = Oklahoma City, Oklahoma
+# shape = heading-titlecase
+# role = control
+# target = 3
+# lemma = oklahoma
+# origin = real
+# kind = proper
+Oklahoma	PROPN	unanimous
+City	PROPN	unanimous
+,	PUNCT	unanimous
+Oklahoma	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0101
+# source_id = usda-CAT31371619
+# text = Richard Raymond
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = raymond
+# origin = real
+# kind = proper
+Richard	PROPN	unanimous
+Raymond	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0102
+# source_id = usfs-CAT10680499
+# text = San Francisco, California
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = francisco
+# origin = real
+# kind = proper
+San	PROPN	unanimous
+Francisco	PROPN	unanimous
+,	PUNCT	unanimous
+California	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0103
+# source_id = usda-CAT31371619
+# text = John Johnson
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = johnson
+# origin = real
+# kind = proper
+John	PROPN	unanimous
+Johnson	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0104
+# source_id = usda-CAT10682666
+# text = Princess Anne College
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = anne
+# origin = real
+# kind = proper
+Princess	PROPN	unanimous
+Anne	PROPN	unanimous
+College	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0105
+# source_id = army-TM9-3014
+# text = Toledo, Ohio
+# shape = heading-titlecase
+# role = control
+# target = 2
+# lemma = ohio
+# origin = real
+# kind = proper
+Toledo	PROPN	unanimous
+,	PUNCT	unanimous
+Ohio	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0106
+# source_id = army-TM11-317
+# text = Alliance Manufacturing Company, Alliance, Ohio
+# shape = heading-titlecase
+# role = control
+# target = 6
+# lemma = ohio
+# origin = real
+# kind = proper
+Alliance	PROPN	unanimous
+Manufacturing	PROPN	unanimous
+Company	PROPN	unanimous
+,	PUNCT	unanimous
+Alliance	PROPN	unanimous
+,	PUNCT	unanimous
+Ohio	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0107
+# source_id = usda-CAT31371619
+# text = Virginia Harris
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = harris
+# origin = real
+# kind = proper
+Virginia	PROPN	unanimous
+Harris	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0108
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = S Oregon to S California
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = oregon
+# origin = real
+# kind = proper
+S	PROPN	disputed
+Oregon	PROPN	unanimous
+to	ADP	unanimous
+S	PROPN	disputed
+California	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0109
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = Newfoundland, W to Minnesota, S to N
+# shape = heading-titlecase
+# role = control
+# target = 4
+# lemma = minnesota
+# origin = real
+# kind = proper
+Newfoundland	PROPN	unanimous
+,	PUNCT	unanimous
+W	ADV	unanimous
+to	ADP	unanimous
+Minnesota	PROPN	unanimous
+,	PUNCT	unanimous
+S	ADV	unanimous
+to	ADP	unanimous
+N	PROPN	disputed
+
+# sent_id = shapes-dev-headings-0110
+# source_id = army-TM11-317
+# text = General Electric Company, Cleveland, Ohio
+# shape = heading-titlecase
+# role = control
+# target = 4
+# lemma = cleveland
+# origin = real
+# kind = proper
+General	PROPN	unanimous
+Electric	PROPN	unanimous
+Company	PROPN	unanimous
+,	PUNCT	unanimous
+Cleveland	PROPN	unanimous
+,	PUNCT	unanimous
+Ohio	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0111
+# source_id = usda-CAT31354906
+# text = Eradication Procedure in Connecticut 19-21
+# shape = heading-titlecase
+# role = control
+# target = 3
+# lemma = connecticut
+# origin = real
+# kind = proper
+Eradication	NOUN	unanimous
+Procedure	NOUN	unanimous
+in	ADP	unanimous
+Connecticut	PROPN	unanimous
+19-21	NUM	unanimous
+
+# sent_id = shapes-dev-headings-0112
+# source_id = usda-CAT31380687
+# text = The East Tennessee Community Improvement Program, Knoxville Civic
+# shape = heading-titlecase
+# role = control
+# target = 2
+# lemma = tennessee
+# origin = real
+# kind = proper
+The	DET	unanimous
+East	PROPN	unanimous
+Tennessee	PROPN	unanimous
+Community	PROPN	unanimous
+Improvement	PROPN	unanimous
+Program	PROPN	unanimous
+,	PUNCT	unanimous
+Knoxville	PROPN	unanimous
+Civic	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0113
+# source_id = navy-draftenvironment00unit_5
+# text = San Francisco, California 94105-1617
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = francisco
+# origin = real
+# kind = proper
+San	PROPN	unanimous
+Francisco	PROPN	unanimous
+,	PUNCT	unanimous
+California	PROPN	unanimous
+94105-1617	NUM	unanimous
+
+# sent_id = shapes-dev-headings-0114
+# source_id = navy-draftenvironment00unit_5
+# text = Jane Steven
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = steven
+# origin = real
+# kind = proper
+Jane	PROPN	unanimous
+Steven	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0115
+# source_id = army-TM11-317
+# text = Allen Bradley Company, Milwaukee, Wisconsin
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = bradley
+# origin = real
+# kind = proper
+Allen	PROPN	unanimous
+Bradley	PROPN	unanimous
+Company	PROPN	unanimous
+,	PUNCT	unanimous
+Milwaukee	PROPN	unanimous
+,	PUNCT	unanimous
+Wisconsin	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-0116
+# source_id = usda-CAT31332509
+# text = Baltimore L, Maryland
+# shape = heading-titlecase
+# role = control
+# target = 3
+# lemma = maryland
+# origin = real
+# kind = proper
+Baltimore	PROPN	unanimous
+L	PROPN	disputed
+,	PUNCT	unanimous
+Maryland	PROPN	unanimous

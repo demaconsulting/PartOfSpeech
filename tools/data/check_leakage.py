@@ -32,6 +32,12 @@ document is reported there and not gated; an exact sentence and a same-document 
 6-grams in the standard sentences of the same document) are gated. The training sets are checked against hard.tsv in the first section like
 against any evaluation set (label `shapes-dev-hard`).
 
+Fourth section (the three newer tranches data/eval/shapes-dev/{compound-head,headings,named-state}.tsv, each when its file exists; written to
+data/eval/shapes-dev/<tranche>-leakage-report.tsv): the same checks against every evaluation set that is not a tranche of the development set, plus a
+row for each tranche file. The documents of a new tranche are new: a document, an exact sentence or a same-document near duplicate that the standard
+or the hard tranche shares is gated; against another new tranche a shared document is reported, an exact sentence and a same-document near
+duplicate are gated (the three tranches may share a source document, never a sentence).
+
 Data removal, not evaluation removal, is the remedy: the importers (import_masc.py, import_silver.py) and the builder of
 the imperative source (imperative_data.py) drop training documents (long matches) or sentences (short matches) that overlap an
 evaluation set and list them in their excluded-documents.tsv and dropped-sentences.tsv.
@@ -121,7 +127,7 @@ def dev_check(include_ud, tranche="standard"):
     a shared document is allowed (counted in the row, not gated), but an exact sentence and a near duplicate (a sentence of at least 10 words
     with at least 80% of its word 6-grams in the standard sentences of its own document) are gated and name the hard sentence.
     """
-    name = "hard.tsv" if tranche == "hard" else "dev.tsv"
+    name = {"standard": "dev.tsv", "hard": "hard.tsv"}.get(tranche, tranche + ".tsv")
     path = os.path.join(common.DATA, "eval", "shapes-dev", name)
     if not os.path.exists(path):
         raise SystemExit("missing committed development set: data/eval/shapes-dev/" + name)
@@ -169,6 +175,35 @@ def dev_check(include_ud, tranche="standard"):
                 failing.append(sent_id)
         rows.append((leakage.SHAPES_DEV_LABEL, len(dev), len(dev_docs & {doc for doc, _ in standard}), exact, near, "-"))
         failures += exact + near
+    if tranche in leakage.SHAPES_DEV_NEW_TRANCHES:
+        # A new tranche is cut from documents that no other tranche uses: documents, exact sentences and same-document near duplicates are
+        # gated against the standard and the hard tranche; against another new tranche a shared document is reported, not gated (the three
+        # new tranches may share a source document, never a sentence).
+        others = [(leakage.SHAPES_DEV_LABEL, "dev.tsv", True), (leakage.SHAPES_DEV_HARD_LABEL, "hard.tsv", True)]
+        others += [("shapes-dev-" + other, other + ".tsv", False) for other in leakage.SHAPES_DEV_NEW_TRANCHES if other != tranche]
+        for label, other_name, gate_docs in others:
+            other_path = os.path.join(common.DATA, "eval", "shapes-dev", other_name)
+            if not os.path.exists(other_path):
+                if label in (leakage.SHAPES_DEV_LABEL, leakage.SHAPES_DEV_HARD_LABEL):
+                    raise SystemExit("missing committed development set: data/eval/shapes-dev/" + other_name)
+                continue
+            other_items = [(s["source_id"], s["text"]) for s in common.read_corpus(other_path)[1]]
+            other_keys = {common.key(text) for _, text in other_items} - {""}
+            other_grams = {}
+            for doc, text in other_items:
+                other_grams.setdefault(doc, set()).update(shingles(text))
+            shared = len(dev_docs & {doc for doc, _ in other_items})
+            exact = near = 0
+            for sent_id, doc, text in dev:
+                hit = common.key(text) in other_keys
+                sh = shingles(text)
+                close = len(words(text)) >= NEAR_MIN_WORDS and bool(sh) and len(sh & other_grams.get(doc, set())) / len(sh) >= NEAR_THRESHOLD
+                exact += hit
+                near += close
+                if hit or close or (gate_docs and doc in {d for d, _ in other_items}):
+                    failing.append(sent_id)
+            rows.append((label, len(dev), shared, exact, near, "-"))
+            failures += exact + near + (shared if gate_docs else 0)
     return rows, failures, sorted(set(failing))
 
 
@@ -217,11 +252,26 @@ def main():
             print(line)
         dev_failures += hard_failures
         failing += ["hard:" + sent_id for sent_id in hard_failing]
+    new_lines = {}
+    for name in leakage.SHAPES_DEV_NEW_TRANCHES:
+        if not os.path.exists(os.path.join(common.DATA, "eval", "shapes-dev", name + ".tsv")):
+            continue
+        new_rows, new_failures, new_failing = dev_check(not args.no_ud, name)
+        new_lines[name] = tranche_lines("the %s tranche of the hard-shape development set" % name, new_rows, ud_checked,
+                                        ["# shapes-dev and shapes-dev-hard rows: documents, exact sentences and same-document near duplicates are gated; "
+                                         "rows of the other new tranches: documents are shared on purpose (reported, not gated)"])
+        print()
+        for line in new_lines[name][1:2] + new_lines[name][4:]:
+            print(line)
+        dev_failures += new_failures
+        failing += ["%s:%s" % (name, sent_id) for sent_id in new_failing]
     if args.write_report:
         common.write_text(os.path.join(common.DATA, "leakage-report.tsv"), lines)
         common.write_text(os.path.join(common.DATA, "eval", "shapes-dev", "leakage-report.tsv"), dev_lines)
         if hard_lines:
             common.write_text(os.path.join(common.DATA, "eval", "shapes-dev", "hard-leakage-report.tsv"), hard_lines)
+        for name, new in new_lines.items():
+            common.write_text(os.path.join(common.DATA, "eval", "shapes-dev", name + "-leakage-report.tsv"), new)
     if dev_failures:
         print("DEV LEAKAGE FOUND: %d overlaps; remove these development sentences and rebuild: %s" % (dev_failures, ", ".join(failing[:50])))
     if failures:
