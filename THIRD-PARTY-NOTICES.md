@@ -140,8 +140,9 @@ The three single-shape tranches of that set (`compound-head.tsv`, `headings.tsv`
 Department, Army and Army Air Forces, Navy, Department of Agriculture and Forest Service, plus one NASA handbook
 (17 U.S.C. 105; scans on the Internet Archive whose records carry the Public Domain Mark or a statement that the
 item is not in copyright, and a NASA Technical Reports Server record with the determination
-`GOV_PUBLIC_USE_PERMITTED` and no third-party material). No document is in any other source table or evaluation
-set. The license basis of every document is quoted in `data/eval/shapes-dev/<tranche>-sources.tsv`. Numeric output
+`GOV_PUBLIC_USE_PERMITTED` and no third-party material). No document is in a training source or in any other evaluation
+set; the three tranches may share documents among themselves, but no sentence. The license basis of every document is quoted
+in `data/eval/shapes-dev/<tranche>-sources.tsv`. Numeric output
 of the WordSense Basic classifier (same owner, run unmodified) helped to choose the `compound-head` sentences; no
 WordSense text, label or data is copied.
 

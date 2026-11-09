@@ -160,7 +160,7 @@ round name and avoid every id already in an earlier key, so ids never collide. `
 root and of every round folder under W/rounds (a folder without decided.tsv is skipped; the root keeps its old behavior when no round exists):
 the lemma cap, the authored cap and the selection run across the union. Hand check: generate the sample after every round is decided.
 
-Decision rule (the core was committed in this docstring, PR #10 commit 88bafc2, before any label existed: target disagreement drops the sentence, class-mismatch, and a disputed non-target token takes the tag of the first labeler; the cleanliness filters, frame validation, base-form and nominal-gerund rules were added later and only remove items; see "Honest record of the order" in data/eval/shapes-dev/README.md; see `decide_item` and `frame_mismatch`). For the judged
+Decision rule (the core was committed in this docstring, PR #10 commit 88bafc2, before any label existed: target disagreement drops the sentence, class-mismatch, and a disputed non-target token takes the tag of the first labeler; the cleanliness filters, frame validation, base-form and nominal-gerund rules were added later and only remove items; see "Shapes development set: standard tranche, build record" in tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md; see `decide_item` and `frame_mismatch`). For the judged
 word (the target): different tags -> drop the sentence (counted per shape); the same tag but a class other than the intended one
 (the shape's class for a `target`, the other class for a `control`) -> drop, counted as `class-mismatch`; the intended class but a
 target outside the frame of its shape (only for a `target`, by the tags both labelers gave the neighbor tokens: n-compound-head needs

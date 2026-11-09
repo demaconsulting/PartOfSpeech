@@ -2169,6 +2169,34 @@ was measured on a busy machine and the three are not a comparison of the models.
   model or a setting. The three stop conditions fired again as in both earlier records and are findings, not tuned.
   Any further held-out evaluation would be a third look and is not planned.
 
+## Shapes development set: standard tranche, build record
+
+The standard tranche (`data/eval/shapes-dev/dev.tsv`, [README](../../data/eval/shapes-dev/README.md)) states what the data is; this section holds the order in which it was
+built.
+
+- **Commits.** The builder ran as `python tools/data/shapes_dev.py --work <work-folder> build --shape-lemma-cap n-measure=12` at PR #10 commit
+  `43300948ecc5c76360e9284c951b119e8a63ff36` (squashed into PR #10 merge commit `17a9cf9` on main); the labeling rounds ran at PR #10 commit
+  `57420f577b9f81ea25304475af85ee9bdae12f94`. A squash merge makes the commits of a PR unreachable from main, but they stay retrievable from the PR's head
+  ref (`refs/pull/<n>/head`), for example `git fetch origin pull/10/head`.
+- **Order of the rule.** Rules 1 and 2 and the treatment of disputed tokens were committed in the docstring of `tools/data/shapes_dev.py` (PR #10 commit `88bafc2`) before any
+  label was seen. Rules 3, 4 and 5 and the cleaning filters were added later, after labels of an earlier round had been seen, because the frame-mismatch and gerund cases showed
+  up there. They only remove items; no label was changed, and every change is in the history of `shapes_dev.py`.
+- **Labeling rounds.** The labeling ran in three rounds of candidates: round 1 was **superseded** and archived (OCR noise and weak shape fidelity; its pool had only 57 controls),
+  round 2 rebuilt the pool with the cleaning filter, and round 3 added `n-compound-head` candidates only. Sentences were never labeled twice.
+- **Exclusion of the two NIST handbooks.** The project owner decided on 2026-11-06 to drop NIST Handbook 44 and NIST Handbook 130 after they had been used. The sentences that were
+  removed (26 targets and 6 controls) were replaced from the other, already blind-labeled documents of the same pool, by the same method and decision rule; no new labeling was
+  needed, and no label was changed. The baseline below was measured again on the rebuilt file.
+- **Hand-check passes.** The final pass (D, on the committed data) is in the README. The earlier passes are kept as history; none of them describes the committed data:
+
+  | Pass | Data | Correct | Incorrect | Unclear |
+  | --- | --- | ---: | ---: | ---: |
+  | A | superseded round-1 data | 59 | 0 | 1 |
+  | B | before the nominal-gerund rule (rule 5) | 57 | 0 | 3 |
+  | C | the data that still contained the two NIST documents | 59 | 0 | 1 |
+
+  Pass B found three nominal gerunds, which motivated rule 5. Pass C's one unclear item was a garbled title-like fragment (OCR residue). The replacement sentences of the rebuilt
+  set were not in any earlier sample, which is why pass D drew a fresh sample.
+
 ## Shapes development set: baseline of the shipped model
 
 The shapes development set (`data/eval/shapes-dev/dev.tsv`, [README](../../data/eval/shapes-dev/README.md)) is the development
@@ -2298,10 +2326,12 @@ Rule (`python tools/data/shapes_dev.py --tranche hard`):
 
 ### Rounds actually run
 
-The main round labeled all 2,258 candidate sentences. Round `h2` (the next 200 `v-after-modal` candidates) ran because that
-shape kept 77 targets, below its floor of 80. Round `h3` (a controls-only round, 149 sentences) ran because the controls were
-45, below the floor of 50; the pre-registration did not name it, it applies rule 6 and the controls floor, adds no target, and was
-exported before any `h3` label existed. Both blind labelers tagged every sentence; the hand check passed the 95% gate. The
+The main round labeled all 2,258 candidate sentences (2,320 candidates: 400, 846, 574 and 300 targets for `n-compound-head`,
+`n-subject-initial`, `v-imperative-initial` and `v-after-modal`, plus 50 control candidates per shape; 16 blind batches). Round `h2` (the next 200 `v-after-modal` candidates) ran because that
+shape kept 77 targets, below its floor of 80; rule 4 provides for it. Round `h3` (a controls-only round, 149 sentences, 152 control candidates, 38 per shape) ran because the controls were
+45, below the floor of 50; the pre-registration did not name it, it applies rule 6 (the other-class sentences of the chosen target lemmas, at most 2 per lemma) and the controls floor, adds no target, and was
+prepared and exported before any `h3` label existed. Both blind labelers tagged every sentence; the hand check passed the 95% gate. No other round ran, and no candidate was
+relabeled or added after the labels were seen. The build ran at PR #11 commit `5d3abb5`. The
 outcome (counts, drops, q bands, documents, hand check, limits) is in the
 [README](../../data/eval/shapes-dev/README.md#hard-tranche); the baseline is in the next section.
 
