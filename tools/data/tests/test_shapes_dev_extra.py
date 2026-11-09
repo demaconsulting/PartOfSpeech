@@ -124,6 +124,7 @@ class HeadingFrames(unittest.TestCase):
     def test_round_folder_names(self):
         self.assertEqual("headings", sx.round_folder("headings"))
         self.assertEqual("headings-h2", sx.round_folder("headings", "h2"))
+        self.assertEqual((("headings", "h2"), ("compound-head", "h3")), sx.TOP_UP_ROUNDS)
 
 
 class HeadingFilter(unittest.TestCase):

@@ -512,7 +512,10 @@ The pool sizes before the caps (counts only; no label, no model): 8,009 `compoun
    archive.org identifier is already used or excluded, is rejected as a whole.
 2. **`compound-head`.** Frame as above; the contested band of the Basic classifier (q is the mass of the class Noun at the target; eligible if 0.10 <= q < 0.97;
    order q ascending, ties by the seeded rank), at most 4 per lemma, 600 candidates. Controls: the same lemma as a verb after a modal or `to`, or as the first word of
-   an instruction; no band; at most 2 per lemma; 50 candidates.
+   an instruction; no band; at most 2 per lemma; 50 candidates. **Amendment 2** (written after the main round was decided and before any label of the round below): the controls
+   of the main round were chosen for the lemmas of all 600 candidate targets, so only 14 fit the lemmas of the 100 built targets, below the floor of 15. A controls-only
+   round `h3` labels more controls under the same rule: for the lemmas of the targets that the build takes, the real verb-use sentences that are not candidates of the main
+   round, at most the room left under 2 per lemma, 50 candidates, seeded order; it adds no target.
 3. **`headings`.** The frames above; 400 candidates per target kind, at most 4 per lemma and 20 per document, in the order strong imperative frames first, then the seeded rank;
    60 `proper` controls, at most 2 per lemma. **Amendment 1** (written after the main round was decided and before any label of the round below existed): the main round
    kept 25 imperative targets, below the floor of 40 (366 of 400 imperative frames were read by both labelers as compound nouns). A top-up round `h2` labels more imperative

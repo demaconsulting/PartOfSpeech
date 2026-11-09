@@ -3993,7 +3993,10 @@ Rule (`python tools/data/shapes_dev_extra.py`):
    document-key-hit filters of the earlier tranches (a heading line has its own filter), and no sentence of `dev.tsv`, `hard.tsv` or `imperative.tsv`
    (exact key, or at least 80% of the word 6-grams for a sentence of at least 10 words).
 2. **`compound-head`:** the complement frame of `n-compound-head`; the contested band 0.10 <= q < 0.97 of the Noun mass of the Basic classifier, q ascending, at most 4 per lemma,
-   600 candidates; controls (the same lemma as a verb) at most 2 per lemma, 50 candidates, no band; `-ing` heads at most 25% of the built targets.
+   600 candidates; controls (the same lemma as a verb) at most 2 per lemma, 50 candidates, no band; `-ing` heads at most 25% of the built targets. **Amendment 2** (written after
+   the main round was decided and before any label of the round below existed): only 14 controls fit the lemmas of the 100 built targets, below the floor of 15, so a
+   controls-only round `h3` labels more controls under the same rule (for the lemmas of the built targets, the real verb-use sentences that are not candidates of the main round,
+   at most the room left under 2 per lemma, 50 candidates); it adds no target.
 3. **`headings`:** frames by position and lexicon only (noun and imperative targets, `proper` controls), no band; 400 candidates per kind, at most 4 per lemma and 20 per document;
    60 controls. **Amendment 1** (written after the main round was decided and before any label of the round below existed): the main round kept 25 imperative targets,
    below the floor of 40 (366 of 400 imperative frames were read by both labelers as compound nouns). A top-up round `h2` labels more imperative frames under the same

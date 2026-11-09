@@ -26,6 +26,12 @@ The three shapes (tranche ids `compound-head`, `headings`, `named-state`; files 
       class Noun at the target in hmm.tsv; eligible iff 0.10 <= q < 0.97; order q ascending (hardest first), ties by the seeded rank, at most 4
       per lemma; budget 600 candidates. Controls: the same lemma as a verb (`control_hits` noun branch: after a modal or `to`, or an imperative
       start), no band, at most 2 per lemma, 50 candidates. Quota gate: targets floor 80 and cap 100, controls floor 15 and cap 20.
+      Amendment 2 (written after the main round was decided and before any label of the round below existed): the controls of the main round are
+      chosen for the lemmas of all 600 candidate targets, so the build found only 14 controls for the lemmas of the 100 built targets, below the floor
+      of 15. A controls-only top-up round `h3` (`candidates --tranche compound-head --round h3`, folder W/rounds/compound-head-h3, ids `ch-h3-cNNNNN`)
+      labels more controls under the same rule: for the lemmas of the targets that the build takes, the real sentences of the verb use (`control_hits`)
+      that are not candidates of the main round, at most the room left under 2 per lemma, 50 candidates, seeded order. It adds no target. This is the
+      round that the hard tranche also needed (its controls round `h3`).
 
   heading-titlecase (exact tags). Title Case headings, captions, table headers and step titles: a LINE of the source text, not a sentence, 2 to 10
       tokens, no final period, usually without final punctuation. The line is stored without its numbering or label (`2.1`, `Step 3.`,
@@ -48,7 +54,7 @@ The three shapes (tranche ids `compound-head`, `headings`, `named-state`; files 
       first word may also be a base form that the lexicon lists as a verb and not as a noun, proper noun, adjective or auxiliary (`Remove the Cover`), because
       the pool of noun and verb words is nearly used up. Only `heading-imperative` candidates are written (budget 400, at most 4 per lemma and 20 per document).
       Targets of both rounds count together at the build (4 per lemma, 12 per document, cap 50). The kept targets of the two kinds of first word are counted
-      separately in the README. No other tranche has a top-up round.
+      separately in the README. The `named-state` tranche has no top-up round.
 
   n-named-state (class Noun). A capitalized or ALL-CAPS state, position or setting name after a preposition, for example a switch set to a
       position or a mechanism moved to a named position (`set to OFF`, `moved to STANDBY`). Frame (`named_state_hit`): a single token of 2 to 12
@@ -112,6 +118,7 @@ FILES = {name: (name + ".tsv", name + "-sources.tsv", name + "-leakage-report.ts
 SHAPE_OF = {"compound-head": "n-compound-head-ambiguous", "headings": "heading-titlecase", "named-state": "n-named-state"}
 SENT_ID = {name: "shapes-dev-%s-%%04d" % name for name in TRANCHES}
 CAND_PREFIX = {"compound-head": "ch-", "headings": "hd-", "named-state": "ns-"}
+TOP_UP_ROUNDS = (("headings", "h2"), ("compound-head", "h3"))       # (tranche, round): amendments 1 and 2 of the module docstring
 # candidate shapes (the internal `shape` of candidates.tsv and decided.tsv): the headings tranche has three, see KIND_OF
 CANDIDATE_SHAPES = {"compound-head": ("n-compound-head-ambiguous",), "headings": ("heading-noun", "heading-imperative", "heading-proper"),
                     "named-state": ("n-named-state",)}
@@ -515,12 +522,13 @@ def _cap_by_lemma(ranked, cap, limit, extra_cap=None):
 
 
 def candidate_rows(work, data_dir, tranche, hmm=None, seed=SEED, include_ud=True, extra_tables=(), budget=None, scans=None, round_name=None,
-                   exclude_keys=frozenset()):
+                   exclude_keys=frozenset(), control_room=None):
     """(rows, report lines, stats): the candidates of one tranche (see the module docstring for the pre-registered rule).
 
     `hmm` is the HmmTable of the pinned W/hmm.tsv (compound-head only: the contested band of the WordSense Basic classifier).
-    `round_name` is the top-up round `h2` of the headings tranche (amendment 1 of the module docstring): only `heading-imperative` candidates,
-    with the `verb_only` frame, from the units that are not in `exclude_keys` (the sentence keys of the main round's candidates)."""
+    `round_name` is a top-up round (amendments 1 and 2 of the module docstring): `h2` of the headings tranche writes only `heading-imperative`
+    candidates, with the `verb_only` frame; `h3` of the compound-head tranche writes only controls, for the lemmas of `control_room`
+    ({lemma: controls that the build still takes}); both use only units that are not in `exclude_keys` (the sentence keys of the earlier candidates)."""
     lex = shapes_dev.lexicon_of(data_dir)
     unit = "heading" if tranche == "headings" else "sentence"
     scan = scans if scans is not None else scan_units(work, data_dir, unit, extra_tables, include_ud, lex=lex)
@@ -533,6 +541,8 @@ def candidate_rows(work, data_dir, tranche, hmm=None, seed=SEED, include_ud=True
             continue
         base = dict(role="target", origin="real", source_id=source_id, line=number, text=text, tokens=tokens)
         if tranche == "compound-head":
+            if round_name == "h3":
+                continue                                    # the controls-only round: no target candidate
             i = compound_ambiguous_hit(tokens, lex)
             if i is None:
                 continue
@@ -563,16 +573,25 @@ def candidate_rows(work, data_dir, tranche, hmm=None, seed=SEED, include_ud=True
     rows = []
     if tranche == "compound-head":
         ranked = sorted(shape_pool["n-compound-head-ambiguous"], key=lambda item: item[0])
-        chosen = _cap_by_lemma(ranked, LEMMA_CAP, budget if budget is not None else COMPOUND_BUDGET)
+        chosen = [] if round_name == "h3" else _cap_by_lemma(ranked, LEMMA_CAP, budget if budget is not None else COMPOUND_BUDGET)
         rows += chosen
-        lemmas = {r["lemma"] for r in chosen}
+        lemmas = {r["lemma"] for r in chosen} if round_name != "h3" else {lemma for lemma, room in (control_room or {}).items() if room > 0}
         pool = []
         for source_id, number, text, tokens in scan.units:
+            if shapes_dev.sent_key_of(text) in exclude_keys:
+                continue
             for i in shapes_dev.control_hits(tokens, lex, "n-compound-head-ambiguous", lemmas):
                 pool.append((shapes_dev.rank_of(seed, "control", tranche, shapes_dev.sent_key_of(text)),
                              dict(shape="n-compound-head-ambiguous", role="control", target=i, lemma=shapes_dev.lemma_of(tokens[i], lex),
                                   origin="real", source_id=source_id, line=number, text=text, tokens=tokens, q="")))
-        rows += _cap_by_lemma(sorted(pool, key=lambda item: item[0]), CONTROL_LEMMA_CAP, CONTROL_POOL)
+        if round_name == "h3":
+            counts = collections.Counter()
+            for _, row in sorted(pool, key=lambda item: item[0]):
+                if sum(counts.values()) < CONTROL_POOL and counts[row["lemma"]] < control_room.get(row["lemma"], 0):
+                    counts[row["lemma"]] += 1
+                    rows.append(row)
+        else:
+            rows += _cap_by_lemma(sorted(pool, key=lambda item: item[0]), CONTROL_LEMMA_CAP, CONTROL_POOL)
     elif tranche == "named-state":
         chosen = _cap_by_lemma(sorted(shape_pool["n-named-state"], key=lambda item: item[0]), LEMMA_CAP,
                                budget if budget is not None else NAMED_STATE_BUDGET)
@@ -718,14 +737,21 @@ def _command_preflight(args):
 def _command_candidates(args):
     work = adjudicate.Work(args.work)
     tranche = args.tranche
-    if args.round and tranche != "headings":
-        raise ValueError("only the headings tranche has a top-up round")
-    hmm = _hmm_for(args, work, tranche == "compound-head")
-    exclude = frozenset()
+    if args.round and (tranche, args.round) not in TOP_UP_ROUNDS:
+        raise ValueError("the top-up rounds are %s" % ", ".join("%s of %s" % (r, t) for t, r in TOP_UP_ROUNDS))
+    hmm = _hmm_for(args, work, tranche == "compound-head" and args.round is None)
+    exclude, room = frozenset(), None
     if args.round:
-        exclude = frozenset(c["sent_key"] for c in shapes_dev.read_candidates(shapes_dev.RoundWork(args.work, tranche)))
+        main = shapes_dev.RoundWork(args.work, tranche)
+        exclude = frozenset(c["sent_key"] for c in shapes_dev.read_candidates(main))
+        if args.round == "h3":
+            items, _ = shapes_dev.read_decided(main, args.data_dir)
+            candidates = {c["cand_id"]: c for c in shapes_dev.read_candidates(main)}
+            targets, controls, _ = select(tranche, items, candidates, args.seed)
+            have = collections.Counter(c["lemma"] for c in items if keep_item(c) and c["role"] == "control")
+            room = {lemma: CONTROL_LEMMA_CAP - have[lemma] for lemma in {t["lemma"] for t in targets} if have[lemma] < CONTROL_LEMMA_CAP}
     rows, report, info = candidate_rows(work, args.data_dir, tranche, hmm, args.seed, not args.no_ud, args.extra_table or (), args.budget,
-                                        round_name=args.round, exclude_keys=exclude)
+                                        round_name=args.round, exclude_keys=exclude, control_room=room)
     name = round_folder(tranche, args.round)
     round_work = shapes_dev.RoundWork(args.work, name)
     os.makedirs(round_work.private, exist_ok=True)
@@ -744,11 +770,11 @@ def round_folder(tranche, round_name=None):
 
 
 def read_round(work, tranche, data_dir=None):
-    """(items, rows, candidates {cand_id: dict}) of the decided rounds of a tranche: W/rounds/<tranche> and, when it exists, the top-up round
-    W/rounds/<tranche>-h2 (shapes_dev.read_decided over each; a candidate id is in one round only)."""
+    """(items, rows, candidates {cand_id: dict}) of the decided rounds of a tranche: W/rounds/<tranche> and, when they exist, its top-up rounds
+    (W/rounds/<tranche>-h2 or -h3; shapes_dev.read_decided over each; a candidate id is in one round only)."""
     base = work.root if not hasattr(work, "base") else work.base
     items, rows, candidates = [], {}, {}
-    for name in (tranche, round_folder(tranche, "h2")):
+    for name in (tranche,) + tuple(round_folder(t, r) for t, r in TOP_UP_ROUNDS if t == tranche):
         round_work = shapes_dev.RoundWork(base, name)
         if name != tranche and not os.path.exists(round_work.private_file("decided.tsv")):
             continue
@@ -1109,7 +1135,7 @@ def main(argv=None):
     p.set_defaults(func=_command_preflight)
     p = sub.add_parser("candidates", help="write W/rounds/<tranche>/candidates.tsv")
     p.add_argument("--tranche", required=True, choices=TRANCHES)
-    p.add_argument("--round", choices=("h2",), help="the top-up round h2 of the headings tranche (amendment 1)")
+    p.add_argument("--round", choices=("h2", "h3"), help="a top-up round: h2 of the headings tranche (amendment 1), h3 of the compound-head tranche (amendment 2)")
     p.add_argument("--extra-table", action="append")
     p.add_argument("--budget", type=int)
     p.add_argument("--hmm-sha256")
