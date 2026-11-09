@@ -1648,6 +1648,36 @@ class LeakageExtensionTests(MiniFolder):
         self.assertEqual(1, failures)
 
 
+    def test_the_standard_and_hard_builders_see_the_newer_tranches_and_the_newer_builder_does_not(self):
+        sentence = "A brand new heading style sentence about nothing in particular ."
+        extra = [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]]
+        for name in leakage.SHAPES_DEV_NEW_TRANCHES:
+            path = os.path.join(self.data, "eval", "shapes-dev", name + ".tsv")
+            with self.subTest(tranche=name):
+                self.assertFalse(sd.LeakageFilter(self.data, include_ud=False).key_hit(sentence))
+                corpus_file(path, [("doc-n", sentence)], extra)
+                self.assertTrue(sd.LeakageFilter(self.data, include_ud=False).key_hit(sentence))                       # the default: the standard and hard builders
+                self.assertTrue(sd.LeakageFilter(self.data, include_ud=False, new_tranches=True).key_hit(sentence))
+                self.assertFalse(sd.LeakageFilter(self.data, include_ud=False, new_tranches=False).key_hit(sentence))  # the builder of the newer tranches
+                self.assertNotIn(name, leakage.evaluation_sets(include_ud=False, shapes_dev=False))
+                self.assertIn("shapes-dev-" + name, leakage.evaluation_sets(include_ud=False, shapes_dev=False, new_tranches=True))
+                os.remove(path)
+
+    def test_held_out_keys_with_the_newer_tranches_are_a_superset_and_an_absent_tranche_is_not_required(self):
+        plain = leakage.held_out_overlap_keys(include_ud=False)
+        self.assertEqual(plain, leakage.held_out_overlap_keys(include_ud=False, new_tranches=True))             # no newer tranche file: nothing added
+        corpus_file(os.path.join(self.data, "eval", "shapes-dev", "headings.tsv"), [("doc-n", "A brand new heading style sentence about nothing .")],
+                    [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]])
+        self.assertEqual(plain, leakage.held_out_overlap_keys(include_ud=False))
+        with_new = leakage.held_out_overlap_keys(include_ud=False, new_tranches=True)
+        self.assertEqual(plain | {leakage.key_hash("A brand new heading style sentence about nothing .")}, with_new)
+
+    def test_a_standard_or_hard_candidate_equal_to_a_newer_tranche_sentence_is_dropped(self):
+        corpus_file(os.path.join(self.data, "eval", "shapes-dev", "named-state.tsv"), [("doc-n", "Then seal the pump housing with sealant before use .")],
+                    [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]])
+        self.assertTrue(sd.LeakageFilter(self.data, include_ud=False).key_hit("then seal the pump housing with sealant before use"))
+
+
 class StandardRebuildTests(unittest.TestCase):
     """Optional regression check: rebuild the committed standard tranche from its original work folder and compare the bytes.
 

@@ -16,7 +16,8 @@ import make_manifest
 
 CORPORA = (("open", "train.tsv"), ("open", "dev.tsv"), ("open", "test.tsv"), ("masc", "masc.tsv"),
            ("silver", "silver.tsv"), ("eval", "ste-challenge", "test.tsv"), ("eval", "shapes-dev", "dev.tsv"),
-           ("eval", "shapes-dev", "hard.tsv"))
+           ("eval", "shapes-dev", "hard.tsv"), ("eval", "shapes-dev", "compound-head.tsv"), ("eval", "shapes-dev", "headings.tsv"),
+           ("eval", "shapes-dev", "named-state.tsv"))
 
 
 class CommittedDataTests(unittest.TestCase):

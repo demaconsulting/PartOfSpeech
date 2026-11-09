@@ -4,12 +4,15 @@ using System.Text;
 namespace DemaConsulting.PartOfSpeech.Trainer;
 
 /// <summary>
-///     The tranche of the hard-shape development set an item belongs to: the standard tranche (<c>dev.tsv</c>) or the hard
-///     tranche (<c>hard.tsv</c>, selected by a pre-registered rule that favors the contested cases).
+///     The tranche of the hard-shape development set an item belongs to: the standard tranche (<c>dev.tsv</c>), the hard
+///     tranche (<c>hard.tsv</c>, selected by a pre-registered rule that favors the contested cases) or one of the three
+///     single-shape tranches (<c>compound-head.tsv</c>, <c>headings.tsv</c>, <c>named-state.tsv</c>).
 /// </summary>
 /// <remarks>
 ///     The tranche of an item is the file it was read from (see <see cref="DevSets.ReadShapesDev(string, ShapesDevTranche, out string)"/>);
-///     no comment in a file can set it. The values are the indexes of <see cref="DataGuard.ShapesDevelopmentFiles"/>.
+///     no comment in a file can set it. The values are the indexes of <see cref="DataGuard.ShapesDevelopmentFiles"/>. The three
+///     single-shape tranches are scored by <see cref="ShapesDevTrancheEvaluator"/> and have their own report sections; the standard and the
+///     hard tranche keep the five original shapes of <see cref="ShapesDevSets.Shapes"/>.
 /// </remarks>
 internal enum ShapesDevTranche
 {
@@ -22,6 +25,21 @@ internal enum ShapesDevTranche
     ///     The hard tranche, <c>data/eval/shapes-dev/hard.tsv</c>.
     /// </summary>
     Hard = 1,
+
+    /// <summary>
+    ///     The compound-head tranche, <c>data/eval/shapes-dev/compound-head.tsv</c> (shape <c>n-compound-head-ambiguous</c>).
+    /// </summary>
+    CompoundHead = 2,
+
+    /// <summary>
+    ///     The headings tranche, <c>data/eval/shapes-dev/headings.tsv</c> (shape <c>heading-titlecase</c>, scored by exact tag).
+    /// </summary>
+    Headings = 3,
+
+    /// <summary>
+    ///     The named-state tranche, <c>data/eval/shapes-dev/named-state.tsv</c> (shape <c>n-named-state</c>).
+    /// </summary>
+    NamedState = 4,
 }
 
 /// <summary>
@@ -42,7 +60,9 @@ internal sealed class ShapesDevItem
     /// <param name="lemma">The lemma of the judged word.</param>
     /// <param name="origin">The origin, <c>real</c> or <c>authored</c>.</param>
     /// <param name="tranche">The tranche of the file the item was read from.</param>
-    public ShapesDevItem(string id, string sourceId, string[] tokens, int target, string goldClass, string shape, string role, string lemma, string origin, ShapesDevTranche tranche = ShapesDevTranche.Standard)
+    /// <param name="kind">The kind of a heading (<c>noun</c>, <c>imperative</c> or <c>proper</c>); empty for every other item.</param>
+    /// <param name="goldTag">The gold tag of the judged word as its UPOS name (<c>NOUN</c>, <c>PROPN</c> or <c>VERB</c>); empty for an item of the standard or hard tranche, whose class is the gold.</param>
+    public ShapesDevItem(string id, string sourceId, string[] tokens, int target, string goldClass, string shape, string role, string lemma, string origin, ShapesDevTranche tranche = ShapesDevTranche.Standard, string kind = "", string goldTag = "")
     {
         Id = id;
         SourceId = sourceId;
@@ -54,7 +74,19 @@ internal sealed class ShapesDevItem
         Lemma = lemma;
         Origin = origin;
         Tranche = tranche;
+        Kind = kind;
+        GoldTag = goldTag;
     }
+
+    /// <summary>
+    ///     Gets the kind of a heading (<c>noun</c>, <c>imperative</c> or <c>proper</c>); empty for every other item.
+    /// </summary>
+    public string Kind { get; }
+
+    /// <summary>
+    ///     Gets the gold tag of the judged word as its UPOS name; empty for an item of the standard or hard tranche.
+    /// </summary>
+    public string GoldTag { get; }
 
     /// <summary>
     ///     Gets the tranche of the file the item was read from.
@@ -113,6 +145,143 @@ internal sealed class ShapesDevItem
 }
 
 /// <summary>
+///     How the judged word of a shape is scored.
+/// </summary>
+internal enum ShapesDevScoring
+{
+    /// <summary>
+    ///     By class: Noun (NOUN, PROPN) against Verb (VERB), like gold v2 and the five original shapes.
+    /// </summary>
+    Class = 0,
+
+    /// <summary>
+    ///     By exact tag: the answer is right only when it is the gold tag, so a capitalized common noun tagged PROPN is wrong.
+    /// </summary>
+    Exact = 1,
+}
+
+/// <summary>
+///     One kind of heading in the headings tranche: the role it has and the tag its judged word must carry.
+/// </summary>
+internal sealed class ShapesDevHeadingKind
+{
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ShapesDevHeadingKind"/> class.
+    /// </summary>
+    /// <param name="name">The kind as the <c>kind</c> comment spells it (<c>noun</c>, <c>imperative</c> or <c>proper</c>).</param>
+    /// <param name="role">The role of the items of the kind (<c>target</c> or <c>control</c>).</param>
+    /// <param name="tag">The gold tag of the judged word of the kind.</param>
+    public ShapesDevHeadingKind(string name, string role, Upos tag)
+    {
+        Name = name;
+        Role = role;
+        Tag = tag;
+    }
+
+    /// <summary>
+    ///     Gets the kind as the <c>kind</c> comment spells it.
+    /// </summary>
+    public string Name { get; }
+
+    /// <summary>
+    ///     Gets the role of the items of the kind.
+    /// </summary>
+    public string Role { get; }
+
+    /// <summary>
+    ///     Gets the gold tag of the judged word of the kind.
+    /// </summary>
+    public Upos Tag { get; }
+}
+
+/// <summary>
+///     The specification of the shape of a single-shape tranche: which tags a target and a control carry and how the answer is scored.
+/// </summary>
+/// <remarks>
+///     One table (<see cref="ShapesDevSets.TrancheShapes"/>) is the source of the parser, the evaluator and the report, so the three
+///     cannot disagree about what a shape means. Immutable and thread-safe.
+/// </remarks>
+internal sealed class ShapesDevShapeSpec
+{
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ShapesDevShapeSpec"/> class.
+    /// </summary>
+    /// <param name="shape">The shape id.</param>
+    /// <param name="tranche">The tranche that holds the shape.</param>
+    /// <param name="scoring">How the judged word is scored.</param>
+    /// <param name="targetTags">The gold tags a target may carry.</param>
+    /// <param name="controlTags">The gold tags a control may carry.</param>
+    /// <param name="kinds">The kinds of the shape (headings only; empty otherwise).</param>
+    public ShapesDevShapeSpec(string shape, ShapesDevTranche tranche, ShapesDevScoring scoring, IReadOnlyList<Upos> targetTags, IReadOnlyList<Upos> controlTags, IReadOnlyList<ShapesDevHeadingKind> kinds)
+    {
+        Shape = shape;
+        Tranche = tranche;
+        Scoring = scoring;
+        TargetTags = targetTags;
+        ControlTags = controlTags;
+        Kinds = kinds;
+    }
+
+    /// <summary>
+    ///     Gets the shape id.
+    /// </summary>
+    public string Shape { get; }
+
+    /// <summary>
+    ///     Gets the tranche that holds the shape.
+    /// </summary>
+    public ShapesDevTranche Tranche { get; }
+
+    /// <summary>
+    ///     Gets how the judged word is scored.
+    /// </summary>
+    public ShapesDevScoring Scoring { get; }
+
+    /// <summary>
+    ///     Gets the gold tags a target may carry.
+    /// </summary>
+    public IReadOnlyList<Upos> TargetTags { get; }
+
+    /// <summary>
+    ///     Gets the gold tags a control may carry.
+    /// </summary>
+    public IReadOnlyList<Upos> ControlTags { get; }
+
+    /// <summary>
+    ///     Gets the kinds of the shape (headings only; empty otherwise).
+    /// </summary>
+    public IReadOnlyList<ShapesDevHeadingKind> Kinds { get; }
+
+    /// <summary>
+    ///     Gets the label that stands for nouns in the scoring (<c>Noun</c> by class, <c>NOUN</c> by exact tag).
+    /// </summary>
+    public string NounLabel => Scoring == ShapesDevScoring.Class ? "Noun" : "NOUN";
+
+    /// <summary>
+    ///     Gets the label that stands for verbs in the scoring (<c>Verb</c> by class, <c>VERB</c> by exact tag).
+    /// </summary>
+    public string VerbLabel => Scoring == ShapesDevScoring.Class ? "Verb" : "VERB";
+
+    /// <summary>
+    ///     Maps a tag to its label under the scoring of the shape.
+    /// </summary>
+    /// <param name="tag">The tag.</param>
+    /// <returns>The class name by class, the tag name by exact tag.</returns>
+    public string LabelOf(Upos tag) => Scoring == ShapesDevScoring.Class ? DevSets.GoldClassOf(tag) : tag.ToTagString();
+
+    /// <summary>
+    ///     Gets the gold label of an item under the scoring of the shape.
+    /// </summary>
+    /// <param name="item">The item.</param>
+    /// <returns>The class of the gold tag by class, the gold tag by exact tag.</returns>
+    public string GoldLabelOf(ShapesDevItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        return Scoring == ShapesDevScoring.Class ? item.GoldClass : item.GoldTag;
+    }
+}
+
+/// <summary>
 ///     Parses the hard-shape development set: the corpus block format with the comments <c>shape</c>, <c>role</c>, <c>target</c>,
 ///     <c>lemma</c> and <c>origin</c> after the three standard comments of every sentence.
 /// </summary>
@@ -122,6 +291,12 @@ internal sealed class ShapesDevItem
 ///         extra comments are read by a scan of the same lines. The judged word must be tagged NOUN, PROPN or VERB, must be in the
 ///         class that its role asks for (the class of the shape for a target, the other class for a control) and must not be
 ///         disputed. An authored sentence belongs to the authored pseudo-document and no other sentence does.
+///     </para>
+///     <para>
+///         The three single-shape tranches (compound-head, headings, named-state) hold the one shape of their specification
+///         (<see cref="ShapesDevSets.TrancheShapes"/>), and the judged word must carry a tag that the specification allows for its role. The
+///         headings tranche has one more comment, <c>kind</c> (<c>noun</c>, <c>imperative</c> or <c>proper</c>), that fixes the role and
+///         the exact gold tag of the heading; no other tranche may have it.
 ///     </para>
 ///     <para>
 ///         The class is stateless and thread-safe.
@@ -176,6 +351,46 @@ internal static class ShapesDevSets
         ArgumentNullException.ThrowIfNull(shape);
         return shape.StartsWith("n-", StringComparison.Ordinal) ? "Noun" : "Verb";
     }
+
+    /// <summary>
+    ///     The kinds of the heading shape: a noun heading and an imperative heading are targets, a proper-name heading is a control.
+    /// </summary>
+    private static readonly IReadOnlyList<ShapesDevHeadingKind> HeadingKinds = new[]
+    {
+        new ShapesDevHeadingKind("noun", TargetRole, Upos.Noun),
+        new ShapesDevHeadingKind("imperative", TargetRole, Upos.Verb),
+        new ShapesDevHeadingKind("proper", ControlRole, Upos.Propn),
+    };
+
+    /// <summary>
+    ///     The shape of each single-shape tranche, in the order of the tranches that have one (compound-head, headings, named-state).
+    /// </summary>
+    /// <remarks>
+    ///     The two noun shapes are scored by class (a PROPN target is a Noun, like in the five original shapes). The heading shape is
+    ///     scored by exact tag, because the class would hide a capitalized common noun that the tagger calls PROPN.
+    /// </remarks>
+    public static readonly IReadOnlyList<ShapesDevShapeSpec> TrancheShapes = new[]
+    {
+        new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
+        new ShapesDevShapeSpec("heading-titlecase", ShapesDevTranche.Headings, ShapesDevScoring.Exact, new[] { Upos.Noun, Upos.Verb }, new[] { Upos.Propn }, HeadingKinds),
+        new ShapesDevShapeSpec("n-named-state", ShapesDevTranche.NamedState, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
+    };
+
+    /// <summary>
+    ///     Gets the shape specification of a single-shape tranche.
+    /// </summary>
+    /// <param name="tranche">The tranche.</param>
+    /// <returns>The specification, or <c>null</c> for the standard and the hard tranche (their shapes are <see cref="Shapes"/>).</returns>
+    public static ShapesDevShapeSpec? SpecOf(ShapesDevTranche tranche) =>
+        TrancheShapes.FirstOrDefault(spec => spec.Tranche == tranche);
+
+    /// <summary>
+    ///     Gets the shape specification of a shape id of a single-shape tranche.
+    /// </summary>
+    /// <param name="shape">The shape id.</param>
+    /// <returns>The specification, or <c>null</c> when the id is not the shape of a single-shape tranche.</returns>
+    public static ShapesDevShapeSpec? SpecOf(string shape) =>
+        TrancheShapes.FirstOrDefault(spec => string.Equals(spec.Shape, shape, StringComparison.Ordinal));
 
     /// <summary>
     ///     Parses the lines of a development set.
@@ -267,10 +482,16 @@ internal static class ShapesDevSets
                 ? value
                 : throw Fail(origin, id, $"the comment '{name}' is missing.");
 
+        var spec = SpecOf(tranche);
         var shape = Comment("shape");
-        if (!Shapes.Contains(shape))
+        if (spec == null && !Shapes.Contains(shape))
         {
             throw Fail(origin, id, $"the shape '{shape}' is not one of {string.Join(", ", Shapes)}.");
+        }
+
+        if (spec != null && shape != spec.Shape)
+        {
+            throw Fail(origin, id, $"the shape '{shape}' is not {spec.Shape}, the only shape of the {DevSets.ShapesDevNameOf(tranche)} tranche.");
         }
 
         var role = Comment("role");
@@ -296,8 +517,88 @@ internal static class ShapesDevSets
             throw Fail(origin, id, "the target is not a token index of the sentence.");
         }
 
+        if (spec != null)
+        {
+            return ReadSpecItem(sentence, block, origin, spec, role, target, sourceOrigin, tranche);
+        }
+
+        // Only the headings tranche has a kind: the standard and the hard tranche refuse the comment
+        if (block.Comments.ContainsKey("kind"))
+        {
+            throw Fail(origin, id, $"the comment 'kind' belongs to the headings tranche only, not to the {DevSets.ShapesDevNameOf(tranche)} tranche.");
+        }
+
         var goldClass = ReadTargetClass(sentence, target, shape, role, block, origin);
         return new ShapesDevItem(id, sentence.SourceId, sentence.Tokens, target, goldClass, shape, role, Comment("lemma"), sourceOrigin, tranche);
+    }
+
+    /// <summary>
+    ///     Creates and validates the item of a sentence of a single-shape tranche.
+    /// </summary>
+    /// <param name="sentence">The sentence as the corpus reader read it.</param>
+    /// <param name="block">The comments and status cells of the sentence.</param>
+    /// <param name="origin">The origin for error messages.</param>
+    /// <param name="spec">The specification of the shape of the tranche.</param>
+    /// <param name="role">The role, already checked to be <c>target</c> or <c>control</c>.</param>
+    /// <param name="target">The index of the judged word, already checked to lie in the sentence.</param>
+    /// <param name="sourceOrigin">The origin of the sentence, already checked.</param>
+    /// <param name="tranche">The tranche of the file.</param>
+    /// <returns>The item, with its gold tag and, for a heading, its kind.</returns>
+    /// <exception cref="InvalidDataException">The kind, the role or the gold tag of the judged word breaks the specification, or the judged word is disputed.</exception>
+    private static ShapesDevItem ReadSpecItem(TrainingSentence sentence, Block block, string origin, ShapesDevShapeSpec spec, string role, int target, string sourceOrigin, ShapesDevTranche tranche)
+    {
+        var id = sentence.SentenceId;
+        var gold = sentence.Gold[target];
+        var tag = gold >= 0 ? (Upos)gold : Upos.X;
+        var kindName = string.Empty;
+        if (spec.Kinds.Count == 0)
+        {
+            // Only the headings tranche has a kind
+            if (block.Comments.ContainsKey("kind"))
+            {
+                throw Fail(origin, id, $"the comment 'kind' belongs to the headings tranche only, not to the {DevSets.ShapesDevNameOf(tranche)} tranche.");
+            }
+
+            var allowed = role == TargetRole ? spec.TargetTags : spec.ControlTags;
+            if (gold < 0 || !allowed.Contains(tag))
+            {
+                throw Fail(origin, id, $"the judged word of a {role} of shape {spec.Shape} must be tagged {string.Join(" or ", allowed.Select(t => t.ToTagString()))} but is tagged {(gold < 0 ? "nothing" : tag.ToTagString())}.");
+            }
+        }
+        else
+        {
+            // The kind fixes the role and the exact gold tag of a heading
+            if (!block.Comments.TryGetValue("kind", out var named) || named.Length == 0)
+            {
+                throw Fail(origin, id, "the comment 'kind' is missing.");
+            }
+
+            var kind = spec.Kinds.FirstOrDefault(k => k.Name == named);
+            if (kind == null)
+            {
+                throw Fail(origin, id, $"the kind '{named}' is not one of {string.Join(", ", spec.Kinds.Select(k => k.Name))}.");
+            }
+
+            if (role != kind.Role)
+            {
+                throw Fail(origin, id, $"the role '{role}' does not match the kind '{named}' (a {named} heading is a {kind.Role}).");
+            }
+
+            if (gold < 0 || tag != kind.Tag)
+            {
+                throw Fail(origin, id, $"the judged word of a {named} heading must be tagged {kind.Tag.ToTagString()} but is tagged {(gold < 0 ? "nothing" : tag.ToTagString())}.");
+            }
+
+            kindName = named;
+        }
+
+        if (CorpusStatus.BaseStatus(block.Statuses[target]) == "disputed")
+        {
+            throw Fail(origin, id, "the judged word must not be disputed.");
+        }
+
+        var lemma = block.Comments.TryGetValue("lemma", out var value) && value.Length > 0 ? value : throw Fail(origin, id, "the comment 'lemma' is missing.");
+        return new ShapesDevItem(id, sentence.SourceId, sentence.Tokens, target, DevSets.GoldClassOf(tag), spec.Shape, role, lemma, sourceOrigin, tranche, kindName, tag.ToTagString());
     }
 
     /// <summary>
@@ -395,6 +696,7 @@ internal sealed class ShapesDevShapeResult
     /// <param name="controlCorrect">The number of control items whose judged word was tagged with the gold class.</param>
     /// <param name="authoredTargets">The number of authored target items.</param>
     /// <param name="authoredControls">The number of authored control items.</param>
+    /// <param name="confidentWrong">The target items that were wrong with a confidence of at least <see cref="Metrics.ConfidentWrongConfidence"/>.</param>
     public ShapesDevShapeResult(
         string shape,
         int targetItems,
@@ -404,7 +706,8 @@ internal sealed class ShapesDevShapeResult
         int controlItems,
         int controlCorrect,
         int authoredTargets,
-        int authoredControls)
+        int authoredControls,
+        int confidentWrong = 0)
     {
         Shape = shape;
         TargetItems = targetItems;
@@ -415,7 +718,14 @@ internal sealed class ShapesDevShapeResult
         ControlCorrect = controlCorrect;
         AuthoredTargets = authoredTargets;
         AuthoredControls = authoredControls;
+        ConfidentWrong = confidentWrong;
     }
+
+    /// <summary>
+    ///     Gets the number of target items that were wrong with a confidence of at least <see cref="Metrics.ConfidentWrongConfidence"/>.
+    ///     Only <see cref="ShapesDevTrancheEvaluator"/> counts it; it is 0 in the results of the standard and the hard tranche, whose report does not print it.
+    /// </summary>
+    public int ConfidentWrong { get; }
 
     /// <summary>
     ///     Gets the shape id, or the label of the pooled row.
@@ -700,7 +1010,7 @@ internal static class ShapesDevEvaluator
 ///     The text depends on the results only: invariant culture, fixed column order, no time stamp or machine name, so two runs on
 ///     the same model and file give the same bytes. Stateless and thread-safe.
 /// </remarks>
-internal static class ShapesDevReport
+internal static partial class ShapesDevReport
 {
     /// <summary>
     ///     The z value of a two-sided 95% interval.
@@ -782,15 +1092,7 @@ internal static class ShapesDevReport
         {
             "## Shapes development set" + (tranche.Length > 0 ? ", " + tranche : string.Empty) + ": " + label,
             string.Empty,
-            string.Format(
-                CultureInfo.InvariantCulture,
-                "- Items: {0} target items and {1} control items; authored: {2} target items ({3}) and {4} control items ({5}).",
-                pooled.TargetItems,
-                pooled.ControlItems,
-                pooled.AuthoredTargets,
-                Share(pooled.AuthoredTargets, pooled.TargetItems),
-                pooled.AuthoredControls,
-                Share(pooled.AuthoredControls, pooled.ControlItems)),
+            ItemsLine(pooled),
         };
         if (datasetLine.Length > 0)
         {
@@ -816,6 +1118,22 @@ internal static class ShapesDevReport
 
         return lines;
     }
+
+    /// <summary>
+    ///     Renders the item counts line of a section.
+    /// </summary>
+    /// <param name="pooled">The result that holds the counts of all items of the section.</param>
+    /// <returns>The line.</returns>
+    private static string ItemsLine(ShapesDevShapeResult pooled) =>
+        string.Format(
+            CultureInfo.InvariantCulture,
+            "- Items: {0} target items and {1} control items; authored: {2} target items ({3}) and {4} control items ({5}).",
+            pooled.TargetItems,
+            pooled.ControlItems,
+            pooled.AuthoredTargets,
+            Share(pooled.AuthoredTargets, pooled.TargetItems),
+            pooled.AuthoredControls,
+            Share(pooled.AuthoredControls, pooled.ControlItems));
 
     /// <summary>
     ///     Renders one table row.

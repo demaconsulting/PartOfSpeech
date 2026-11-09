@@ -22,7 +22,7 @@ dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- <co
 | `train` | Train with `training.json` (plus experiment overrides) and write the weights file (default: the embedded resource). |
 | `train --check` | Retrain with the committed configuration and compare the **uncompressed image** with the committed file and with `imageSha256`. Exit code 1 if stale. |
 | `eval --weights FILE` | Score a weights file on the two development sets through the real decoder (`Tagger.Load`). |
-| `eval-shapes [--weights FILE] [--label TEXT] [--tranche standard\|hard\|both]` | Score a weights file (default: the embedded model) on the hard-shape development set through the real decoder and print Markdown: per shape the target-token accuracy (with a 95% Wilson interval), harmful errors and harmful errors per 1,000 noun-verb decisions, and the control accuracy (the same spelling in the other class), plus a pooled row. The standard tranche `data/eval/shapes-dev/dev.tsv` (section unchanged), the hard tranche `hard.tsv` and the two pooled each get a section (default `both`; a missing hard file is noted, `--tranche hard` needs it). Reads the shapes development files only (their own guard); appends no run-log row. |
+| `eval-shapes [--weights FILE] [--label TEXT] [--tranche standard\|hard\|both\|compound-head\|headings\|named-state\|new]` | Score a weights file (default: the embedded model) on the hard-shape development set through the real decoder and print Markdown: per shape the target-token accuracy (with a 95% Wilson interval), harmful errors and harmful errors per 1,000 noun-verb decisions, and the control accuracy (the same spelling in the other class), plus a pooled row. The standard tranche `data/eval/shapes-dev/dev.tsv` (section unchanged), the hard tranche `hard.tsv` and the two pooled each get a section (default `both`; a missing hard file is noted, `--tranche hard` needs it). The single-shape tranches `compound-head.tsv` (shape `n-compound-head-ambiguous`), `headings.tsv` (shape `heading-titlecase`, scored by exact tag with rows for the noun targets, the imperative targets and the PROPN controls) and `named-state.tsv` (shape `n-named-state`) each get a section of their own that adds the target items that are wrong at a confidence of at least 0.95; `--tranche NAME` scores one of them (a missing file is an error), `--tranche new` scores all three (a missing file is noted). Reads the shapes development files only (their own guard); appends no run-log row. |
 | `eval-arm --weights FILE --label TEXT --json FILE` | Dev-only scoring of a trained arm of the context-feature experiment (see _Context-feature experiment_ below): the standard and the hard tranche of the shapes development set (per shape and pooled, with per-item outcomes of the target items), open dev, gold v2 dev, the mapped development part of the external treebank (local cache `tools/data/cache/ud-ewt/ud_dev.tsv`, SHA-256 pinned; missing cache: exit 2 with the fetch recipe), the file sizes, the groups of the weights header and the single-thread throughput of the default tagger (one warm-up pass and five timed passes over the open dev and treebank dev tokens, median tokens per second). Writes one JSON result (schema 1) to `--json`. It has no data option and refuses a weights or result file inside `data/` or `tools/data/`; it cannot read a held-out set. |
 | `shapes-tokenize --in FILE --out FILE` | Tokenize a text file, one sentence per line, with the library tokenizer: each output line is `sentence TAB sentences found TAB tokens` (tokens separated by single spaces). Reads and writes only the two files, and refuses a path inside the repository's `data/` folder (links resolved), so it cannot read training, development or held-out data; it is the tokenizer of `tools/data/shapes_dev.py`, so the development set follows the corpus tokenization by construction. |
 | `calibrate --weights FILE` | Choose the softmax temperature that minimizes the log-likelihood on the open development split. |
@@ -83,14 +83,17 @@ training accepts only files below the repository's `data` folder (after the path
 held-out and development files there (`Evaluation/DevSets.cs`, tested). The held-out sets are read by `evaluate` only, and
 only with a committed selection artifact that is valid for the frozen model.
 
-The hard-shape development set has two files, the standard tranche (`data/eval/shapes-dev/dev.tsv`) and the hard tranche
-(`data/eval/shapes-dev/hard.tsv`), and they are development files with a guard of their own:
-`eval-shapes` reads them through `DataGuard.EnsureShapesDevelopmentFile` (an allow-list of exactly those two paths, links refused)
+The hard-shape development set has five files: the standard tranche (`data/eval/shapes-dev/dev.tsv`), the hard tranche
+(`data/eval/shapes-dev/hard.tsv`) and the single-shape tranches `compound-head.tsv`, `headings.tsv` and `named-state.tsv` (the
+last three may be absent). They are development files with a guard of their own:
+`eval-shapes` reads them through `DataGuard.EnsureShapesDevelopmentFile` (an allow-list of exactly those paths, links refused; the
+sources files and leakage reports of the folder are refused by name)
 and a header that announces a `dev split`; the tranche of an item is the file it was read from, never a comment. The reader also
-checks that the corpus header and the sentence ids belong to the tranche of the file (the hard tranche says `hard tranche` and its
-ids start with `shapes-dev-hard-`; the standard tranche does neither), so a copy of one file at the path of the other is refused. They are not in
+checks that the corpus header and the sentence ids belong to the tranche of the file (a tranche other than the standard one says
+`<tranche> tranche`, for example `hard tranche`, and its ids start with `shapes-dev-<tranche>-`; the standard tranche has no marker and no such
+prefix), so a copy of one file at the path of another is refused. They are not in
 the two-file allow-list, so no other command can read them, they are not held-out files, so `evaluate` never reads them, and
-training refuses them like every other development file (both lie below the `eval` folder). They are for selecting settings (for example the context-feature work),
+training refuses them like every other development file (all lie below the `eval` folder). They are for selecting settings (for example the context-feature work),
 never a held-out figure; the shape probe stays evaluation only.
 
 ### Context-feature experiment

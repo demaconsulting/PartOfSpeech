@@ -160,7 +160,7 @@ round name and avoid every id already in an earlier key, so ids never collide. `
 root and of every round folder under W/rounds (a folder without decided.tsv is skipped; the root keeps its old behavior when no round exists):
 the lemma cap, the authored cap and the selection run across the union. Hand check: generate the sample after every round is decided.
 
-Decision rule (the core was committed in this docstring, PR #10 commit 88bafc2, before any label existed: target disagreement drops the sentence, class-mismatch, and a disputed non-target token takes the tag of the first labeler; the cleanliness filters, frame validation, base-form and nominal-gerund rules were added later and only remove items; see "Honest record of the order" in data/eval/shapes-dev/README.md; see `decide_item` and `frame_mismatch`). For the judged
+Decision rule (the core was committed in this docstring, PR #10 commit 88bafc2, before any label existed: target disagreement drops the sentence, class-mismatch, and a disputed non-target token takes the tag of the first labeler; the cleanliness filters, frame validation, base-form and nominal-gerund rules were added later and only remove items; see "Shapes development set: standard tranche, build record" in tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md; see `decide_item` and `frame_mismatch`). For the judged
 word (the target): different tags -> drop the sentence (counted per shape); the same tag but a class other than the intended one
 (the shape's class for a `target`, the other class for a `control`) -> drop, counted as `class-mismatch`; the intended class but a
 target outside the frame of its shape (only for a `target`, by the tags both labelers gave the neighbor tokens: n-compound-head needs
@@ -210,6 +210,13 @@ EXCLUDED_REASON = "excluded-source"
 EXCLUSION_COMMANDS = ("exclusions", "candidates", "decide", "sample", "build", "report")      # the commands that call `load_exclusions` first
 SHAPES = ("n-compound-head", "n-subject-initial", "v-imperative-initial", "n-measure", "v-after-modal")
 SHAPE_CLASS = {shape: ("Noun" if shape.startswith("n-") else "Verb") for shape in SHAPES}
+# The candidate shapes of the three newer tranches (shapes_dev_extra.py): they are not in SHAPES, so the standard and hard profiles never
+# see them. A heading shape has an exact gold tag (a common noun is NOUN, an initial imperative is VERB, a true name is PROPN: scoring
+# by class would hide a capitalized common noun that is tagged PROPN); the other new shapes are scored by class like the old ones.
+EXTRA_SHAPE_CLASS = {"n-compound-head-ambiguous": "Noun", "n-named-state": "Noun", "heading-noun": "Noun", "heading-imperative": "Verb",
+                     "heading-proper": "Noun"}
+EXACT_TAGS = {"heading-noun": "NOUN", "heading-imperative": "VERB", "heading-proper": "PROPN"}
+SHAPE_CLASS.update(EXTRA_SHAPE_CLASS)
 OTHER_CLASS = {"Noun": "Verb", "Verb": "Noun"}
 CLASS_TAG = {"Noun": "NOUN", "Verb": "VERB"}
 ROLES = ("target", "control")
@@ -345,6 +352,8 @@ def tag_class(tag):
 
 def intended_class(shape, role):
     """The class that the judged word of an item has when the sentence is an instance: the shape's class, or the other for a control."""
+    if shape in EXACT_TAGS:
+        return tag_class(EXACT_TAGS[shape])
     return SHAPE_CLASS[shape] if role == "target" else OTHER_CLASS[SHAPE_CLASS[shape]]
 
 
@@ -1235,10 +1244,14 @@ class LeakageFilter:
 
     The held-out sets (the shape probe included) are seen only as the opaque hash set `leakage.held_out_overlap_keys()`; the filter
     removes exact and near-duplicate overlaps and never chooses, weights or frames a candidate.
+
+    `new_tranches` (default True: the builders of the standard and hard tranches) adds the sentence keys of the committed newer tranches
+    (compound-head, headings, named-state) to the held-out keys, so that a rebuild of the standard or hard tranche cannot take a sentence of
+    one of them. The builder of the newer tranches (`shapes_dev_extra`) passes False: it must not see its own earlier build.
     """
 
-    def __init__(self, data_dir, include_ud=True):
-        self.held_out = leakage.held_out_overlap_keys(include_ud)
+    def __init__(self, data_dir, include_ud=True, new_tranches=True):
+        self.held_out = leakage.held_out_overlap_keys(include_ud, new_tranches=new_tranches)
         self.train = set()
         trains = {}
         for label, parts in (("open-train", ("open", "train.tsv")), ("masc", ("masc", "masc.tsv")), ("silver", ("silver", "silver.tsv"))):
@@ -1828,6 +1841,8 @@ def decide_item(item, opus, sol):
     """
     if opus.tag != sol.tag:
         return "drop", "target-disagreement", ""
+    if item["shape"] in EXACT_TAGS and opus.tag != EXACT_TAGS[item["shape"]]:
+        return "drop", "class-mismatch", opus.tag
     if tag_class(opus.tag) != intended_class(item["shape"], item["role"]):
         return "drop", "class-mismatch", opus.tag
     return "keep", "", opus.tag
@@ -1879,8 +1894,18 @@ def frame_mismatch(item, opus, sol, form=None, lex=None):
         return False
     shape, i = item["shape"], item["target"]
     votes = (opus, sol)
-    if shape in ("v-imperative-initial", "v-after-modal") and form is not None and lex is not None and form.lower() != base_form_of(form, lex):
+    if (shape in ("v-imperative-initial", "v-after-modal", "heading-imperative") and form is not None and lex is not None
+            and form.lower() != base_form_of(form, lex)):
         return True
+    if shape == "n-compound-head-ambiguous":          # the head of a compound; the nominal-gerund rule does not apply (`finding` is wanted)
+        return vote_tag(votes, i - 1) not in ("NOUN", "PROPN")
+    if shape == "n-named-state":                       # directly after a preposition or `to`, an optional determiner between
+        before = vote_tag(votes, i - 1)
+        return not (before in ("ADP", "PART") or (before == "DET" and vote_tag(votes, i - 2) in ("ADP", "PART")))
+    if shape == "heading-imperative":                  # the first word of the heading
+        return i != 0
+    if shape == "heading-noun":                        # never the first word
+        return i == 0
     if shape in NOMINAL_GERUND_SHAPES and form is not None and lex is not None and possible_gerund(form, lex):
         return True
     if shape in ("n-subject-initial", "v-imperative-initial"):

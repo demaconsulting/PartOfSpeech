@@ -16,7 +16,8 @@ Checks (exit code 1 on any finding):
      the MASC attribution file, which must exist;
   5. the hard-shape development set has a required, well-formed exclusion record eval/shapes-dev/excluded-sources.tsv (missing, zero-byte
      or headerless is a finding; header-only is valid), and neither its sources.tsv nor the source_id of any sentence of its dev.tsv
-     matches an excluded id or normalized URL; the same for the hard tranche (hard-sources.tsv and hard.tsv), which shares the record.
+     matches an excluded id or normalized URL; the same for the hard tranche (hard-sources.tsv and hard.tsv) and the three newer tranches
+     (<tranche>-sources.tsv and <tranche>.tsv), which share the record.
   6. fail closed: every source table and corpus above must exist (missing is a finding, not a skip or a traceback); the two files of the hard
      tranche are required while leakage.HARD_TRANCHE_REQUIRED is True and skipped when missing while it is False.
 """
@@ -31,19 +32,22 @@ import leakage
 FORBIDDEN_TEXT = re.compile(r"share-?alike|by-sa|by-nc|by-nd|non-?commercial|no-?derivat|cc by|wikipedia|creativecommons\.org/licenses/by", re.I)
 FORBIDDEN_PATH = re.compile(r"semcor|brown|ewt", re.I)
 ALLOWED_LICENSES = {"CC0-1.0", "CC-BY-3.0-US", "CC-BY-4.0", "Public-Domain", "MIT"}
+NEW_TRANCHES = leakage.SHAPES_DEV_NEW_TRANCHES            # the three newer tranches of the development set (compound-head, headings, named-state)
+NEW_SOURCES_TABLES = tuple("eval/shapes-dev/%s-sources.tsv" % name for name in NEW_TRANCHES)
+NEW_CORPORA = tuple("eval/shapes-dev/%s.tsv" % name for name in NEW_TRANCHES)
 SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv",
-                 "eval/shapes-dev/hard-sources.tsv", "imperative/sources.tsv")
+                 "eval/shapes-dev/hard-sources.tsv", "imperative/sources.tsv") + NEW_SOURCES_TABLES
 HARD_SOURCES_TABLE = "eval/shapes-dev/hard-sources.tsv"   # scanned when it exists; a missing one fails once leakage.HARD_TRANCHE_REQUIRED is True
 HARD_CORPUS = "eval/shapes-dev/hard.tsv"                  # likewise
 HARD_FILES = (HARD_SOURCES_TABLE, HARD_CORPUS)            # optional only while leakage.HARD_TRANCHE_REQUIRED is False
 # Every table and corpus whose absence is a finding (the hard tranche's two files only while the tranche is required); each consumer below
-# skips a file that is missing, because required_file_findings reports it once.
-REQUIRED_FILES = SOURCE_TABLES + ("masc/sources.tsv", "eval/shapes-dev/dev.tsv", HARD_CORPUS)
+# skips a file that is missing, because required_file_findings reports it once. The files of the three newer tranches are required too.
+REQUIRED_FILES = SOURCE_TABLES + ("masc/sources.tsv", "eval/shapes-dev/dev.tsv", HARD_CORPUS) + NEW_CORPORA
 MASC_LICENSE = "CC BY 3.0 US"
-# The hard-shape development set (both tranches) and the imperative training source take no FAA material (host, publisher or handbook); see
+# The hard-shape development set (all tranches) and the imperative training source take no FAA material (host, publisher or handbook); see
 # data/eval/shapes-dev/README.md and data/imperative/README.md.
 FAA_TEXT = re.compile(r"faa\.gov|\bFAA\b|Federal Aviation", re.I)
-FAA_TABLES = ("eval/shapes-dev/sources.tsv", HARD_SOURCES_TABLE, "imperative/sources.tsv")
+FAA_TABLES = ("eval/shapes-dev/sources.tsv", HARD_SOURCES_TABLE, "imperative/sources.tsv") + NEW_SOURCES_TABLES
 READMES = ("open", "masc", "silver", "imperative", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections")
 ALLOWED_PATHS = {"data/eval/ud-ewt/README.md"}
 CORRECTION_SOURCES = {"open": "open/sources.tsv", "masc": "masc/sources.tsv", "silver": "silver/sources.tsv"}
@@ -176,7 +180,7 @@ def excluded_source_findings(base=None):
     except ValueError as error:
         return ["eval/shapes-dev/excluded-sources.tsv: " + str(error)]
     findings = []
-    for name in ("sources.tsv", "hard-sources.tsv"):
+    for name in ("sources.tsv", "hard-sources.tsv") + tuple(t.rsplit("/", 1)[1] for t in NEW_SOURCES_TABLES):
         path = os.path.join(folder, name)
         if os.path.isfile(path):
             for line in common.read_lines(path):
@@ -186,7 +190,7 @@ def excluded_source_findings(base=None):
                 hit = common.excluded_match(lookup, cells[0], cells[3] if len(cells) > 3 else "")
                 if hit:
                     findings.append("eval/shapes-dev/%s: row %s uses the excluded source %s" % (name, cells[0], hit))
-    for name in ("dev.tsv", "hard.tsv"):
+    for name in ("dev.tsv", "hard.tsv") + tuple(c.rsplit("/", 1)[1] for c in NEW_CORPORA):
         path = os.path.join(folder, name)
         if os.path.isfile(path):
             for source_id in sorted({s["source_id"] for s in common.read_corpus(path)[1]}):

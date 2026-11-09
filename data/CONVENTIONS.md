@@ -176,6 +176,18 @@ Source: UD English-EWT labels; [UD, PROPN](https://universaldependencies.org/u/p
 - A fiscal-year token such as `FY2020` is NOUN.
 - A language name is PROPN (existing convention), also as a modifier that names the language of the head (`English
   conversation`, `a Spanish word`); it is ADJ when it means of the people or place (`English tea`, `Spanish soldiers`).
+- **Headings, captions, table headers and step titles.** Title Case (and ALL-CAPS) capitalization of a heading is
+  typographic: it never changes the tag of a word. A common noun is NOUN (`Pressure Test`, `Engine Oil Check`), a base
+  verb that starts an instruction is VERB (`Remove the Cover`, `Check Fluid Level`), and a function word keeps its own
+  tag (`Removal of the Cover`: NOUN ADP DET NOUN). A word is PROPN only when it names one particular entity under the rules
+  above (`Apollo Program`, `Washington`). A heading has no final period, and the numbering or label in front of it
+  (`2.1`, `Step 3.`, `Table 2.`) is not part of the text.
+- **State, position and setting names.** A word that names a state, mode, position or setting of a device (`OFF`, `AUTO`,
+  `STANDBY`, `HIGH`, `Closed`), in ALL CAPS or capitalized, used as the name after a preposition (`set to OFF`,
+  `moved to STANDBY`, `in the CLOSED position`), is NOUN when it is an ordinary English word, because the capitals mark a
+  printed label and not a name of one particular entity. It is PROPN only when it is a coined or arbitrary label that is no
+  English word (a made-up type code after `set to`) or the name of one particular entity. A letter or a number used as a label (`set to A`,
+  `position 3`) is not a state name: it follows the rules for list labels and numbers.
 
 ### The `get`-passive
 
@@ -244,6 +256,14 @@ The **hard tranche** is the file `data/eval/shapes-dev/hard.tsv` in the same for
 `hard tranche` and `dev split`; no `origin = authored`; no `n-measure` item; no selection number such as q in the file), with
 `hard-sources.tsv` (same columns as `sources.tsv`) and `hard-leakage-report.tsv` (same columns, plus a row for the standard tranche
 whose document count may be above zero: the tranches may share a source document, never a sentence).
+
+The **single-shape tranches** are the files `data/eval/shapes-dev/compound-head.tsv`, `headings.tsv` and `named-state.tsv` in the same format (ids
+`shapes-dev-<tranche>-NNNN`; the header says `<tranche> tranche` and `dev split`; `origin = real` only), each with `<tranche>-sources.tsv` (same columns as
+`sources.tsv`) and `<tranche>-leakage-report.tsv` (same columns; no shared document with the standard or the hard tranche, a shared document with another new
+tranche is reported). The `# shape` is `n-compound-head-ambiguous`, `heading-titlecase` or `n-named-state`. In `compound-head.tsv` and `named-state.tsv` the
+judged word of a target is NOUN or PROPN and of a control VERB. In `headings.tsv` a unit is a heading line, not a sentence, and there is a last comment
+`# kind = noun | imperative | proper`: the judged word is tagged exactly NOUN (kind `noun`, a target), VERB (kind `imperative`, a target, token 0) or PROPN (kind
+`proper`, role `control`).
 
 **Imperative training source** (`data/imperative/imperative.tsv`, specified in its `README.md`). The corpus block format with the
 header comments `corpus`, `license`, `columns`, `status`, `selection` and `use = training` (a training file: the trainer admits it

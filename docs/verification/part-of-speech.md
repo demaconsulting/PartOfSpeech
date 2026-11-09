@@ -413,8 +413,8 @@ and not just the project file. The reasons for a license file instead of an expr
 
 **Tests**: the `PartOfSpeech_ThirdPartyNotices_*`, `PartOfSpeech_DataLicensing_*`, `PartOfSpeech_DataProvenance_*`,
 `PartOfSpeech_DataCorrections_*`, `PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*`,
-`PartOfSpeech_ShapesDev_*`, `PartOfSpeech_ShapesDevHard_*`, `PartOfSpeech_Imperative_*` and `PartOfSpeech_Lexicon_*`
-tests of `PartOfSpeechDataTests.cs`
+`PartOfSpeech_ShapesDev_*`, `PartOfSpeech_ShapesDevHard_*`, `PartOfSpeech_ShapesDevNew_*`, `PartOfSpeech_Imperative_*`
+and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
 
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
 and fails when a file is missing or empty.
@@ -529,6 +529,32 @@ unchanged), the hand-check sample (at least half from q below 0.5), the q-band t
 duplicate of it fails). One regression test builds the standard profile on a fixture and compares the bytes with hashes
 taken before the hard profile existed; an optional one rebuilds the committed standard files from their work folder
 (`SHAPES_DEV_STANDARD_WORK`).
+
+The three single-shape tranches (`compound-head.tsv`, `headings.tsv`, `named-state.tsv`) are covered by the same
+existing tests (their source tables are among the source tables and their corpora among the evaluation corpora) and
+by the `PartOfSpeech_ShapesDevNew_*` data tests, each of which loops over the three tranches and names the tranche
+and the sentence in a failure: `Headers_AnnounceTheTrancheAndTheDevSplit` asserts the `<tranche> tranche` and
+`dev split` header and the ids; `Items_AreWellFormedRealAndNeverDisputed` parses the file with the trainer's parser
+and asserts the shape, the role, the tag of the judged word (NOUN or PROPN for a target and VERB for a control of
+`compound-head` and `named-state`; the exact tag of the `kind` for `headings`), that no judged word is `disputed`
+and that no item is authored; `Quotas_AreMetByTheCommittedTranches` asserts the floors and caps (80 to 100 and 15
+to 20; 40 to 50 per kind and 12 to 20; 40 to 100 and 12 to 20), at most 4 targets and 2 controls per lemma, at
+most 12 `headings` targets per document, no `headings` line that ends in a page number or a page range and at most
+25% `-ing` heads in `compound-head`;
+`Tokens_AreReproducedByTheTokenizer` asserts one tokenized sentence with the stored tokens;
+`Sources_AreListedOpenAndNotExcluded` asserts the exact documents with their counts, an open basis, no FAA mention
+and no excluded id or URL; `LeakageReports_RecordNoOverlap` asserts that every report names every other evaluation
+set and tranche, with no exact or near-duplicate overlap, no shared probe 5-gram and no shared document except
+among the three new tranches; `Sentences_AreDisjointFromTheOtherEvaluationSets` asserts, by reading the files,
+that no sentence is shared with any other evaluation set, tranche or the imperative source and no document with
+any of them but a new tranche; and `Selection_UsesNoPartOfSpeechModel` scans `shapes_dev_extra.py` for a weights
+file, a decoder, a tagger or the shapes evaluation and for a direct read of a held-out set. The developer-run
+Python tests `tools/data/tests/test_shapes_dev_extra.py` cover the frames (the complement of the
+`n-compound-head` frame, the state-name frame, the heading frames), the heading filter and extraction (a trailing page
+number or page range is refused), the exact-tag decision and the frame rules after labeling, the selection caps, the
+quota gates, the hand-check sample and gate, and the registry of the shapes. `tools/data/tests/test_shapes_dev.py`
+covers that the builders of the standard and hard tranches see the sentence keys of the three newer tranches (a
+rebuild cannot take one of their sentences) and that the builder of the newer tranches does not see its own.
 
 The imperative training source (`data/imperative/`) is covered by the existing tests (its folder is among the licensed
 folders, its README among the provenance statements, its source table among the source tables, its corpus among the

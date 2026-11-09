@@ -278,6 +278,14 @@ figure from it is optimistic by construction and is never reported as a held-out
   [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: hard tranche
   baseline of the shipped model"). It is for development only, like the standard tranche. Selection used numeric output
   of the WordSense Basic classifier (the same owner; nothing copied).
+- **Three single-shape tranches** (`compound-head.tsv`, `headings.tsv`, `named-state.tsv`,
+  [README](../../data/eval/shapes-dev/README.md#new-tranches)) measure shapes that the first two files do not: the
+  head of a noun compound outside the frame of `n-compound-head`, Title Case heading lines (scored by exact tag) and
+  state names after a preposition. They are also for development only, were built by a pre-registered rule that uses
+  no PartOfSpeech output, and
+  have a shipped-model baseline (including the wrong answers at a confidence of at least 0.95) in the
+  [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: new tranches
+  baseline of the shipped model").
 
 ## Reproduce the Results
 

@@ -58,9 +58,11 @@ target framework, including .NET Framework.
   and requires a training source to lie below the `data` folder of the repository, and the held-out allow-list (the four
   repository sets and the cache of the external treebank), whose resolver and header check need a validated selection.
   `HeldOutReader` (same file) opens the held-out files and verifies their hashes against `data/MANIFEST.tsv` (the
-  treebank against its pins) and their headers. The two files of the hard-shape development set (its standard and hard
-  tranche) have a guard of their own (`ShapesDevelopmentFile`, `ShapesDevelopmentHardFile`, `ShapesDevelopmentFiles`,
-  `EnsureShapesDevelopmentFile`), next to and not inside the two-file allow-list.
+  treebank against its pins) and their headers. The five files of the hard-shape development set (its standard and hard
+  tranche and the three single-shape tranches `compound-head`, `headings` and `named-state`) have a guard of their own
+  (`ShapesDevelopmentFile`, `ShapesDevelopmentHardFile`, `ShapesDevelopmentCompoundHeadFile`, `ShapesDevelopmentHeadingsFile`,
+  `ShapesDevelopmentNamedStateFile`, `ShapesDevelopmentFiles`, `EnsureShapesDevelopmentFile`), next to and not inside the
+  two-file allow-list; the sources and leakage files of a tranche are not in it, so the guard refuses them.
 - **`ShapesDevTranche`**, **`ShapesDevItem`**, **`ShapesDevSets`**, **`ShapesDevShapeResult`**, **`ShapesDevResult`**,
   **`ShapesDevTrancheResults`**, **`ShapesDevEvaluator`** and **`ShapesDevReport`** (`Evaluation/ShapesDev.cs`): one
   judged word of the hard-shape development set (sentence id, document, tokens, target index, the class of its gold tag,
@@ -69,6 +71,14 @@ target framework, including .NET Framework.
   results (standard, hard, combined), the evaluator and the deterministic Markdown writer. The tokens, tags and status
   cells are read by `CorpusReader.Parse` (one grammar for every corpus file); the extra comments `shape`, `role`,
   `target`, `lemma` and `origin` are read from the same lines.
+- **`ShapesDevShapeSpec`**, **`ShapesDevTrancheEvaluator`**, **`ShapesDevReport.RenderTranche`** and **`ShapesDevCommand`**
+  (`Evaluation/ShapesDevTranches.cs`, `ShapesDevSets.TrancheShapes` and `SpecOf`): the shape-spec table of the three
+  single-shape tranches (the shape id, the tags of a target and of a control, and the scoring: by class for
+  `n-compound-head-ambiguous` and `n-named-state`, by exact tag for `heading-titlecase`, whose items carry a `kind`
+  comment: noun NOUN, imperative VERB, proper PROPN), the evaluator that judges them through `Metrics.Judge` with a
+  label function, the new measure `Metrics.ConfidentWrongConfidence` (0.95: the target items that are answered wrongly
+  at that confidence or higher), the section renderer, and the command logic of `eval-shapes --tranche` that `Program`
+  calls. The original `ShapesDevSets.Shapes` (five shapes) and the standard, hard and combined output do not change.
 - **Metrics** (`Evaluation/Metrics.cs`): per-token outcomes, accuracy, accuracy on lexicon-ambiguous tokens, harmful
   errors (gold NOUN answered VERB or gold VERB answered NOUN with confidence at least 0.45, counted per 1,000
   noun-verb decisions), negative log-likelihood and expected calibration error (15 equal-width bins), and the paired
@@ -206,14 +216,15 @@ measured with two more seeds. The settings were chosen by coordinate descent (no
 limitation, as are the small size of the gold development set (2,025 targets) and the fact that both development sets are
 labeled by language models.
 
-The hard-shape development set has two files, the standard tranche (`data/eval/shapes-dev/dev.tsv`) and the hard tranche
-(`data/eval/shapes-dev/hard.tsv`), and they are development files of their own kind. They are not added to the
-two-file allow-list: `DataGuard.EnsureShapesDevelopmentFile` compares full paths against those two files
+The hard-shape development set has five files, the standard tranche (`data/eval/shapes-dev/dev.tsv`), the hard tranche
+(`data/eval/shapes-dev/hard.tsv`) and three single-shape tranches (`compound-head.tsv`, `headings.tsv`, `named-state.tsv`),
+and they are development files of their own kind. They are not added to the
+two-file allow-list: `DataGuard.EnsureShapesDevelopmentFile` compares full paths against those five files
 (`ShapesDevelopmentFiles`) and the reader requires a development-split header, so a command that reads "the two
 development files" cannot reach them, the held-out list does not contain them (so `evaluate` cannot open them) and the
 training deny-list refuses them (folder `eval`, and `dev.tsv` by name). `DevSets.ReadShapesDev(root, tranche, out sha)`
 reads one tranche, and the tranche of an item is the file that it was read from (a comment in a file cannot set it).
-Both guards, `EnsureDevelopmentFile` for the two standard files and `EnsureShapesDevelopmentFile` for these two,
+Both guards, `EnsureDevelopmentFile` for the two standard files and `EnsureShapesDevelopmentFile` for these five,
 canonicalize the requested path (symbolic links and junctions resolved) and require it to equal the canonical
 repository root plus the allowed relative file, so a link at or below the data folder is refused. A possible follow-up is
 to verify the manifest hash of a development file before each selection read. The shape probe, which shares the shapes,
@@ -238,6 +249,13 @@ the numbers of the WordSense Basic classifier (HMM tagger plus cue model) from t
 `tools/data/hmm-tags` (not in the solution, no reference to this library, a pinned DLL outside the repository), the
 lexicon and the text. Its quota gate is a set of floors and caps per shape instead of exact counts. The rule and its
 record are in `data/eval/shapes-dev/README.md`.
+The three single-shape tranches (`tools/data/shapes_dev_extra.py`) follow the same discipline: the `compound-head`
+tranche uses the pinned numbers of the same classifier (the SHA-256 of `hmm.tsv` and `tokens.tsv` are constants of the
+tool, so edited mass cells are refused), the `headings` and `named-state` tranches use position and lexicon only, the
+heading lines are extracted from the text by a deterministic filter, no held-out set is read by the tool (the opaque
+hashed keys of `shapes_dev.LeakageFilter` only), a top-up round of a tranche is written down before its labels exist, and
+the quota gate is a floor and a cap per stratum. The gold of a heading item is an exact tag, which the decision rule of
+`shapes_dev.py` checks for the heading shapes (`EXACT_TAGS`).
 
 The training sources of `training.json` are the open corpus, MASC, the silver corpus and the imperative source
 (`data/imperative/imperative.tsv`), all with a positive weight (the imperative source has weight 1). A source can only
@@ -483,6 +501,14 @@ scores a weights file on it:
   section (heading `..., hard tranche`) and the combined section; a hard file that is not present is noted in one line
   and not scored, `--tranche standard` prints the standard section alone and `--tranche hard` needs the file. A shape
   without items in a tranche (n-measure has none in the hard tranche) prints dashes, never a score.
+- **Single-shape tranches** (`ShapesDevTrancheEvaluator`, `ShapesDevReport.RenderTranche`): `eval-shapes --tranche
+  compound-head|headings|named-state` prints one section for that tranche, `--tranche new` the three of them (a missing
+  file is noted in one line and not scored; an explicit request for a missing file is an error with exit code 2). A section
+  has one table with the target items, the target accuracy and its Wilson interval, the noun-verb decisions, the harmful
+  errors (the definition of the other sections), the harmful errors per 1,000 decisions, the target items wrong at a
+  confidence of at least 0.95, and the control items and accuracy; the headings section adds a row per kind (noun
+  targets, imperative targets, PROPN controls), scored by the exact tag, where a common noun that is answered PROPN is
+  wrong but not harmful, and a PROPN control is never a noun-verb decision.
 - **Tokens**: the file stores tokens made by the library `Tokenizer`; the command `shapes-tokenize` runs it over a text
   file for `tools/data/shapes_dev.py`, which builds the set from sentences that two blind model taggers labeled.
 
@@ -611,8 +637,9 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
   (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv`, `data/silver/silver.tsv` and
   `data/imperative/imperative.tsv` (all four with a positive weight), and the two
-  development files plus the two hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche) and
-  `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` and `eval-arm` only); for
+  development files plus the hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche),
+  `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` and `eval-arm`) and `compound-head.tsv`,
+  `headings.tsv` and `named-state.tsv` of the same folder (for `eval-shapes` only); for
   `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the
   external treebank that the data tools fetch (the tool itself uses no network); `eval-arm` reads the mapped development
   table of the same cache.

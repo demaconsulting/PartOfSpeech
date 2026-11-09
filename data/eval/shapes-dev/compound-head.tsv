@@ -1,0 +1,3236 @@
+# corpus = DemaConsulting.PartOfSpeech shapes development set, compound-head tranche (UPOS), dev split
+# license = CC0-1.0 for annotations and selection; sentences are US federal government works, US public domain, see compound-head-sources.tsv
+# columns = form, upos, status
+# status = unanimous | disputed (two blind model labelers; disputed = they differ, the tag is the first labeler's)
+# judged word = per sentence: shape (n-compound-head-ambiguous), role (target | control), target (zero-based token index), lemma, origin (real); the judged word is never disputed
+# selection = the contested band of the WordSense Basic classifier, hardest first; the gold is the agreement of two blind labelers (see README.md)
+# use = development only: select settings here, never train on it, never report it as a held-out figure
+# file = compound-head.tsv
+
+# sent_id = shapes-dev-compound-head-0001
+# source_id = army-TM9-1595
+# text = If reading is not correct, loosen two fillister head screws which secure case support, B 137952, and shift case support until correct reading is obtained.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 10
+# lemma = screw
+# origin = real
+If	SCONJ	unanimous
+reading	NOUN	unanimous
+is	VERB	unanimous
+not	PART	unanimous
+correct	ADJ	unanimous
+,	PUNCT	unanimous
+loosen	VERB	unanimous
+two	NUM	unanimous
+fillister	NOUN	unanimous
+head	NOUN	unanimous
+screws	NOUN	unanimous
+which	PRON	unanimous
+secure	VERB	unanimous
+case	NOUN	unanimous
+support	NOUN	unanimous
+,	PUNCT	unanimous
+B	PROPN	disputed
+137952	NUM	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+shift	VERB	unanimous
+case	NOUN	unanimous
+support	NOUN	unanimous
+until	SCONJ	unanimous
+correct	ADJ	unanimous
+reading	NOUN	unanimous
+is	AUX	unanimous
+obtained	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0002
+# source_id = usda-fruitvegetablebu167unit
+# text = Over United States railroads and important boat lines more than a million carloads of fresh fruits and vegetables move annually on their journey from the producers to the consumers.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 7
+# lemma = line
+# origin = real
+Over	ADP	unanimous
+United	PROPN	unanimous
+States	PROPN	unanimous
+railroads	NOUN	unanimous
+and	CCONJ	unanimous
+important	ADJ	unanimous
+boat	NOUN	unanimous
+lines	NOUN	unanimous
+more	ADJ	unanimous
+than	ADP	unanimous
+a	DET	unanimous
+million	NUM	unanimous
+carloads	NOUN	unanimous
+of	ADP	unanimous
+fresh	ADJ	unanimous
+fruits	NOUN	unanimous
+and	CCONJ	unanimous
+vegetables	NOUN	unanimous
+move	VERB	unanimous
+annually	ADV	unanimous
+on	ADP	unanimous
+their	DET	unanimous
+journey	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+producers	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+consumers	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0003
+# source_id = navy-DivingManual1943
+# text = Therefore, this lower safe ratio of pressures with helium requires the first decompression stop to be deeper than with nitrogen.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 14
+# lemma = stop
+# origin = real
+Therefore	ADV	unanimous
+,	PUNCT	unanimous
+this	DET	unanimous
+lower	ADJ	unanimous
+safe	ADJ	unanimous
+ratio	NOUN	unanimous
+of	ADP	unanimous
+pressures	NOUN	unanimous
+with	ADP	unanimous
+helium	NOUN	unanimous
+requires	VERB	unanimous
+the	DET	unanimous
+first	ADJ	unanimous
+decompression	NOUN	unanimous
+stop	NOUN	unanimous
+to	PART	unanimous
+be	VERB	unanimous
+deeper	ADJ	unanimous
+than	ADP	disputed
+with	ADP	unanimous
+nitrogen	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0004
+# source_id = usfs-CAT10504501
+# text = Taper tables applicable to the species and region are valuable for training and checking scalers.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = table
+# origin = real
+Taper	NOUN	unanimous
+tables	NOUN	unanimous
+applicable	ADJ	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+species	NOUN	unanimous
+and	CCONJ	unanimous
+region	NOUN	unanimous
+are	VERB	unanimous
+valuable	ADJ	unanimous
+for	ADP	unanimous
+training	VERB	unanimous
+and	CCONJ	unanimous
+checking	VERB	unanimous
+scalers	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0005
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = Root pruning with a reciprocating blade makes lifting the large, fleshy root system easier (Buchanan 1996).
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = pruning
+# origin = real
+Root	NOUN	unanimous
+pruning	NOUN	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+reciprocating	VERB	unanimous
+blade	NOUN	unanimous
+makes	VERB	unanimous
+lifting	VERB	unanimous
+the	DET	unanimous
+large	ADJ	unanimous
+,	PUNCT	unanimous
+fleshy	ADJ	unanimous
+root	NOUN	unanimous
+system	NOUN	unanimous
+easier	ADJ	unanimous
+(	PUNCT	unanimous
+Buchanan	PROPN	unanimous
+1996	NUM	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0006
+# source_id = usfs-CAT10506476
+# text = The specification shows in detail the manner of construction of both the concrete box and suitable tool racks for the interior.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 17
+# lemma = rack
+# origin = real
+The	DET	unanimous
+specification	NOUN	unanimous
+shows	VERB	unanimous
+in	ADP	unanimous
+detail	NOUN	unanimous
+the	DET	unanimous
+manner	NOUN	unanimous
+of	ADP	unanimous
+construction	NOUN	unanimous
+of	ADP	unanimous
+both	CCONJ	disputed
+the	DET	unanimous
+concrete	NOUN	unanimous
+box	NOUN	unanimous
+and	CCONJ	unanimous
+suitable	ADJ	unanimous
+tool	NOUN	unanimous
+racks	NOUN	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+interior	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0007
+# source_id = usfs-CAT10513655
+# text = If signals do not come in clearly, make adjustments in telephone bell (extension bell also if there is an extension bell).
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 15
+# lemma = bell
+# origin = real
+If	SCONJ	unanimous
+signals	NOUN	unanimous
+do	AUX	unanimous
+not	PART	unanimous
+come	VERB	unanimous
+in	ADV	unanimous
+clearly	ADV	unanimous
+,	PUNCT	unanimous
+make	VERB	unanimous
+adjustments	NOUN	unanimous
+in	ADP	unanimous
+telephone	NOUN	unanimous
+bell	NOUN	unanimous
+(	PUNCT	unanimous
+extension	NOUN	unanimous
+bell	NOUN	unanimous
+also	ADV	unanimous
+if	SCONJ	unanimous
+there	PRON	unanimous
+is	VERB	unanimous
+an	DET	unanimous
+extension	NOUN	unanimous
+bell	NOUN	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0008
+# source_id = army-TM11-859
+# text = Turn the volume control fully clockwise.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = control
+# origin = real
+Turn	VERB	unanimous
+the	DET	unanimous
+volume	NOUN	unanimous
+control	NOUN	unanimous
+fully	ADV	unanimous
+clockwise	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0009
+# source_id = usfs-CAT11064663
+# text = The company offers the 1DFHFS pump stand as the replacement for the 1DFHF.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 6
+# lemma = stand
+# origin = real
+The	DET	unanimous
+company	NOUN	unanimous
+offers	VERB	unanimous
+the	DET	unanimous
+1DFHFS	PROPN	unanimous
+pump	NOUN	unanimous
+stand	NOUN	unanimous
+as	ADP	unanimous
+the	DET	unanimous
+replacement	NOUN	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+1DFHF	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0010
+# source_id = army-TM11-2019
+# text = Connections for the various loop tests and for resistance measurements are made with a single cam type key switch.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 5
+# lemma = test
+# origin = real
+Connections	NOUN	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+various	ADJ	unanimous
+loop	NOUN	unanimous
+tests	NOUN	unanimous
+and	CCONJ	unanimous
+for	ADP	unanimous
+resistance	NOUN	unanimous
+measurements	NOUN	unanimous
+are	AUX	unanimous
+made	VERB	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+single	ADJ	unanimous
+cam	NOUN	unanimous
+type	NOUN	unanimous
+key	NOUN	unanimous
+switch	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0011
+# source_id = usfs-CAT10506487
+# text = Occasionally, this grass is also associated with aspen, larch, and open Douglas fir stands and occurs in openings both in and adjacent to the timbered areas.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 16
+# lemma = stand
+# origin = real
+Occasionally	ADV	unanimous
+,	PUNCT	unanimous
+this	DET	unanimous
+grass	NOUN	unanimous
+is	AUX	disputed
+also	ADV	unanimous
+associated	VERB	disputed
+with	ADP	unanimous
+aspen	NOUN	unanimous
+,	PUNCT	unanimous
+larch	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+open	ADJ	unanimous
+Douglas	PROPN	unanimous
+fir	NOUN	unanimous
+stands	NOUN	unanimous
+and	CCONJ	unanimous
+occurs	VERB	unanimous
+in	ADP	unanimous
+openings	NOUN	unanimous
+both	CCONJ	unanimous
+in	ADP	unanimous
+and	CCONJ	unanimous
+adjacent	ADJ	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+timbered	ADJ	unanimous
+areas	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0012
+# source_id = army-handbookof47inch00unitrich
+# text = Caisson prop with chain and hook.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = prop
+# origin = real
+Caisson	NOUN	unanimous
+prop	NOUN	unanimous
+with	ADP	unanimous
+chain	NOUN	unanimous
+and	CCONJ	unanimous
+hook	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0013
+# source_id = army-Fm1-20
+# text = Advise the commander of the supported unit when the remaining number of air observation teams available to conduct missions begins to encroach upon a reasonable reserve.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 14
+# lemma = team
+# origin = real
+Advise	VERB	unanimous
+the	DET	unanimous
+commander	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+supported	VERB	disputed
+unit	NOUN	unanimous
+when	SCONJ	unanimous
+the	DET	unanimous
+remaining	VERB	unanimous
+number	NOUN	unanimous
+of	ADP	unanimous
+air	NOUN	unanimous
+observation	NOUN	unanimous
+teams	NOUN	unanimous
+available	ADJ	unanimous
+to	PART	unanimous
+conduct	VERB	unanimous
+missions	NOUN	unanimous
+begins	VERB	unanimous
+to	PART	unanimous
+encroach	VERB	unanimous
+upon	ADP	unanimous
+a	DET	unanimous
+reasonable	ADJ	unanimous
+reserve	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0014
+# source_id = army-prelimhandbookMarkVIIItank
+# text = High-speed brake bottom band stop.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 4
+# lemma = stop
+# origin = real
+High-speed	ADJ	unanimous
+brake	NOUN	unanimous
+bottom	NOUN	disputed
+band	NOUN	unanimous
+stop	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0015
+# source_id = army-TM5-3012
+# text = This housing should also be a light push fit with the hands.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 8
+# lemma = fit
+# origin = real
+This	DET	unanimous
+housing	NOUN	unanimous
+should	AUX	unanimous
+also	ADV	unanimous
+be	VERB	unanimous
+a	DET	unanimous
+light	ADJ	unanimous
+push	NOUN	unanimous
+fit	NOUN	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+hands	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0016
+# source_id = usfs-CAT31353319
+# text = After making this adjustment, alternately press and release the microphone switch several times to make sure the oscillator starts reliably.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 11
+# lemma = switch
+# origin = real
+After	ADP	unanimous
+making	VERB	unanimous
+this	DET	unanimous
+adjustment	NOUN	unanimous
+,	PUNCT	unanimous
+alternately	ADV	unanimous
+press	VERB	unanimous
+and	CCONJ	unanimous
+release	VERB	unanimous
+the	DET	unanimous
+microphone	NOUN	unanimous
+switch	NOUN	unanimous
+several	ADJ	unanimous
+times	NOUN	unanimous
+to	PART	unanimous
+make	VERB	unanimous
+sure	ADJ	unanimous
+the	DET	unanimous
+oscillator	NOUN	unanimous
+starts	VERB	unanimous
+reliably	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0017
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Generator switch to RUN (or ON) position.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = switch
+# origin = real
+Generator	NOUN	unanimous
+switch	NOUN	unanimous
+to	ADP	unanimous
+RUN	NOUN	unanimous
+(	PUNCT	unanimous
+or	CCONJ	unanimous
+ON	NOUN	unanimous
+)	PUNCT	unanimous
+position	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0018
+# source_id = usfs-CAT10429087
+# text = Currently much attention is being devoted to decision making, particularly to the application of scientific method to problem solving.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 8
+# lemma = making
+# origin = real
+Currently	ADV	unanimous
+much	ADJ	unanimous
+attention	NOUN	unanimous
+is	AUX	unanimous
+being	AUX	unanimous
+devoted	VERB	unanimous
+to	ADP	unanimous
+decision	NOUN	unanimous
+making	NOUN	unanimous
+,	PUNCT	unanimous
+particularly	ADV	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+application	NOUN	unanimous
+of	ADP	unanimous
+scientific	ADJ	unanimous
+method	NOUN	unanimous
+to	ADP	unanimous
+problem	NOUN	unanimous
+solving	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0019
+# source_id = usda-CAT30938510
+# text = Monitor new developments in pollution prevention, control, and abatement and coordinate technology transfer to USDA agencies.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 14
+# lemma = transfer
+# origin = real
+Monitor	VERB	unanimous
+new	ADJ	unanimous
+developments	NOUN	unanimous
+in	ADP	unanimous
+pollution	NOUN	unanimous
+prevention	NOUN	unanimous
+,	PUNCT	unanimous
+control	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+abatement	NOUN	unanimous
+and	CCONJ	unanimous
+coordinate	VERB	unanimous
+technology	NOUN	unanimous
+transfer	NOUN	unanimous
+to	ADP	unanimous
+USDA	PROPN	unanimous
+agencies	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0020
+# source_id = army-FM1-15_1942
+# text = Strength of pursuit force available.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = force
+# origin = real
+Strength	NOUN	unanimous
+of	ADP	unanimous
+pursuit	NOUN	unanimous
+force	NOUN	unanimous
+available	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0021
+# source_id = usda-CAT80740816
+# text = Livestock wastes as a substitute for commercial nitrogen fertilizer.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = waste
+# origin = real
+Livestock	NOUN	unanimous
+wastes	NOUN	unanimous
+as	ADP	unanimous
+a	DET	unanimous
+substitute	NOUN	unanimous
+for	ADP	unanimous
+commercial	ADJ	unanimous
+nitrogen	NOUN	unanimous
+fertilizer	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0022
+# source_id = usda-fruitvegetablebu167unit
+# text = Varieties of the damson type, because of their tart flavor, are especially desirable for jam and jelly making.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 19
+# lemma = making
+# origin = real
+Varieties	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+damson	NOUN	unanimous
+type	NOUN	unanimous
+,	PUNCT	unanimous
+because	ADP	unanimous
+of	ADP	unanimous
+their	DET	unanimous
+tart	ADJ	unanimous
+flavor	NOUN	unanimous
+,	PUNCT	unanimous
+are	VERB	unanimous
+especially	ADV	unanimous
+desirable	ADJ	unanimous
+for	ADP	unanimous
+jam	NOUN	unanimous
+and	CCONJ	unanimous
+jelly	NOUN	unanimous
+making	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0023
+# source_id = usda-CAT77685246
+# text = Continued performance of normal agency functions as far as emergency conditions permit.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 5
+# lemma = function
+# origin = real
+Continued	ADJ	unanimous
+performance	NOUN	unanimous
+of	ADP	unanimous
+normal	ADJ	unanimous
+agency	NOUN	unanimous
+functions	NOUN	unanimous
+as	ADV	unanimous
+far	ADV	unanimous
+as	SCONJ	unanimous
+emergency	NOUN	unanimous
+conditions	NOUN	unanimous
+permit	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0024
+# source_id = army-handbookof38inch00unitrich
+# text = A range quadrant wrench for use on the lock screw and nut is issued with each carriage.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = wrench
+# origin = real
+A	DET	unanimous
+range	NOUN	unanimous
+quadrant	NOUN	unanimous
+wrench	NOUN	unanimous
+for	ADP	unanimous
+use	NOUN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+lock	NOUN	unanimous
+screw	NOUN	unanimous
+and	CCONJ	unanimous
+nut	NOUN	unanimous
+is	AUX	unanimous
+issued	VERB	unanimous
+with	ADP	unanimous
+each	DET	unanimous
+carriage	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0025
+# source_id = army-TM8-630
+# text = It is not necessary to remove fuel pump from adapter.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 7
+# lemma = pump
+# origin = real
+It	PRON	unanimous
+is	VERB	unanimous
+not	PART	unanimous
+necessary	ADJ	unanimous
+to	PART	unanimous
+remove	VERB	unanimous
+fuel	NOUN	unanimous
+pump	NOUN	unanimous
+from	ADP	unanimous
+adapter	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0026
+# source_id = usda-CAT10667296
+# text = Project outlines also briefly discuss objectives and a possible work plan.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = outline
+# origin = real
+Project	NOUN	unanimous
+outlines	NOUN	unanimous
+also	ADV	unanimous
+briefly	ADV	unanimous
+discuss	VERB	unanimous
+objectives	NOUN	unanimous
+and	CCONJ	unanimous
+a	DET	unanimous
+possible	ADJ	unanimous
+work	NOUN	unanimous
+plan	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0027
+# source_id = army-prelimhandbookMarkVIIItank
+# text = By means of a chain hoist or other convenient apparatus lift the epicyclic gear set into position and place it transversely across the hull.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 14
+# lemma = set
+# origin = real
+By	ADP	unanimous
+means	NOUN	unanimous
+of	ADP	unanimous
+a	DET	unanimous
+chain	NOUN	unanimous
+hoist	NOUN	unanimous
+or	CCONJ	unanimous
+other	ADJ	unanimous
+convenient	ADJ	unanimous
+apparatus	NOUN	unanimous
+lift	VERB	unanimous
+the	DET	unanimous
+epicyclic	ADJ	unanimous
+gear	NOUN	unanimous
+set	NOUN	unanimous
+into	ADP	unanimous
+position	NOUN	unanimous
+and	CCONJ	unanimous
+place	VERB	unanimous
+it	PRON	unanimous
+transversely	ADV	unanimous
+across	ADP	unanimous
+the	DET	unanimous
+hull	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0028
+# source_id = army-TM3-381
+# text = Crankcase fill and level (Superseded).
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = fill
+# origin = real
+Crankcase	NOUN	unanimous
+fill	NOUN	unanimous
+and	CCONJ	unanimous
+level	NOUN	unanimous
+(	PUNCT	unanimous
+Superseded	VERB	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0029
+# source_id = usfs-CAT10680420
+# text = Includes walling up of springs, piping of water, installation of tanks, digging of wells, dams, or other water development projects primarily for recreational purposes.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 24
+# lemma = project
+# origin = real
+Includes	VERB	unanimous
+walling	NOUN	unanimous
+up	ADV	unanimous
+of	ADP	unanimous
+springs	NOUN	unanimous
+,	PUNCT	unanimous
+piping	NOUN	unanimous
+of	ADP	unanimous
+water	NOUN	unanimous
+,	PUNCT	unanimous
+installation	NOUN	unanimous
+of	ADP	unanimous
+tanks	NOUN	unanimous
+,	PUNCT	unanimous
+digging	NOUN	unanimous
+of	ADP	unanimous
+wells	NOUN	unanimous
+,	PUNCT	unanimous
+dams	NOUN	unanimous
+,	PUNCT	unanimous
+or	CCONJ	unanimous
+other	ADJ	unanimous
+water	NOUN	unanimous
+development	NOUN	unanimous
+projects	NOUN	unanimous
+primarily	ADV	unanimous
+for	ADP	unanimous
+recreational	ADJ	unanimous
+purposes	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0030
+# source_id = army-TM55-277
+# text = Lever locks of the forced drop type or equivalent will be used in new installations and in making replacements on interlocking machines.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = lock
+# origin = real
+Lever	NOUN	unanimous
+locks	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+forced	ADJ	unanimous
+drop	NOUN	unanimous
+type	NOUN	unanimous
+or	CCONJ	unanimous
+equivalent	ADJ	disputed
+will	AUX	unanimous
+be	AUX	unanimous
+used	VERB	unanimous
+in	ADP	unanimous
+new	ADJ	unanimous
+installations	NOUN	unanimous
+and	CCONJ	unanimous
+in	ADP	unanimous
+making	VERB	unanimous
+replacements	NOUN	unanimous
+on	ADP	unanimous
+interlocking	NOUN	unanimous
+machines	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0031
+# source_id = navy-WelfareRecreationManual
+# text = Labor transport or barrack ship.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = transport
+# origin = real
+Labor	NOUN	unanimous
+transport	NOUN	unanimous
+or	CCONJ	unanimous
+barrack	NOUN	unanimous
+ship	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0032
+# source_id = navy-MCRP3-403B
+# text = To maintain a continuous receiver watch with transmitter ready for immediate use.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 5
+# lemma = watch
+# origin = real
+To	PART	unanimous
+maintain	VERB	unanimous
+a	DET	unanimous
+continuous	ADJ	unanimous
+receiver	NOUN	unanimous
+watch	NOUN	unanimous
+with	ADP	unanimous
+transmitter	NOUN	unanimous
+ready	ADJ	unanimous
+for	ADP	unanimous
+immediate	ADJ	unanimous
+use	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0033
+# source_id = army-FM1-10
+# text = The nature and strength of the ground and air defense forces also may influence the type of the offensive formation.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 10
+# lemma = force
+# origin = real
+The	DET	unanimous
+nature	NOUN	unanimous
+and	CCONJ	unanimous
+strength	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+ground	NOUN	unanimous
+and	CCONJ	unanimous
+air	NOUN	unanimous
+defense	NOUN	unanimous
+forces	NOUN	unanimous
+also	ADV	unanimous
+may	AUX	unanimous
+influence	VERB	unanimous
+the	DET	unanimous
+type	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+offensive	ADJ	unanimous
+formation	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0034
+# source_id = usda-CAT82771091
+# text = There is a higher likelihood of such problems as pre-eclampsia, anemia, and inadequate or excessive weight gain during pregnancy.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 18
+# lemma = gain
+# origin = real
+There	PRON	unanimous
+is	VERB	unanimous
+a	DET	unanimous
+higher	ADJ	unanimous
+likelihood	NOUN	unanimous
+of	ADP	unanimous
+such	ADJ	unanimous
+problems	NOUN	unanimous
+as	ADP	unanimous
+pre-eclampsia	NOUN	unanimous
+,	PUNCT	unanimous
+anemia	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+inadequate	ADJ	unanimous
+or	CCONJ	unanimous
+excessive	ADJ	unanimous
+weight	NOUN	unanimous
+gain	NOUN	unanimous
+during	ADP	unanimous
+pregnancy	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0035
+# source_id = usfs-CAT10504963
+# text = Sale contracts also may specify the equivalent in board feet versus linear feet.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = contract
+# origin = real
+Sale	NOUN	unanimous
+contracts	NOUN	unanimous
+also	ADV	unanimous
+may	AUX	unanimous
+specify	VERB	unanimous
+the	DET	unanimous
+equivalent	NOUN	unanimous
+in	ADP	unanimous
+board	NOUN	unanimous
+feet	NOUN	unanimous
+versus	ADP	unanimous
+linear	ADJ	unanimous
+feet	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0036
+# source_id = army-TM5-9722
+# text = Attach brush lead to brush rigging assembly.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 2
+# lemma = lead
+# origin = real
+Attach	VERB	unanimous
+brush	NOUN	unanimous
+lead	NOUN	unanimous
+to	ADP	unanimous
+brush	NOUN	unanimous
+rigging	NOUN	unanimous
+assembly	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0037
+# source_id = army-airservicehandb00unit
+# text = Grind in valves (or after 1,000 miles running).
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 8
+# lemma = running
+# origin = real
+Grind	VERB	unanimous
+in	ADV	unanimous
+valves	NOUN	unanimous
+(	PUNCT	unanimous
+or	CCONJ	unanimous
+after	ADP	unanimous
+1,000	NUM	unanimous
+miles	NOUN	unanimous
+running	NOUN	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0038
+# source_id = navy-searchlightssign00unit
+# text = In this case coils 3 right and 3 loft are short-circuited and inactive.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = coil
+# origin = real
+In	ADP	unanimous
+this	DET	unanimous
+case	NOUN	unanimous
+coils	NOUN	unanimous
+3	NUM	unanimous
+right	ADJ	unanimous
+and	CCONJ	unanimous
+3	NUM	unanimous
+loft	ADJ	unanimous
+are	AUX	unanimous
+short-circuited	VERB	unanimous
+and	CCONJ	unanimous
+inactive	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0039
+# source_id = usfs-CAT10504963
+# text = Fungus does not require conspicuous entrance courts such as wounds, fire scars, or dead tops.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 6
+# lemma = court
+# origin = real
+Fungus	NOUN	unanimous
+does	AUX	unanimous
+not	PART	unanimous
+require	VERB	unanimous
+conspicuous	ADJ	unanimous
+entrance	NOUN	unanimous
+courts	NOUN	unanimous
+such	ADJ	unanimous
+as	ADP	unanimous
+wounds	NOUN	unanimous
+,	PUNCT	unanimous
+fire	NOUN	unanimous
+scars	NOUN	unanimous
+,	PUNCT	unanimous
+or	CCONJ	unanimous
+dead	ADJ	unanimous
+tops	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0040
+# source_id = army-prelimhandbookMarkVIIItank
+# text = Packing for rear seat stay.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 4
+# lemma = stay
+# origin = real
+Packing	NOUN	unanimous
+for	ADP	unanimous
+rear	ADJ	unanimous
+seat	NOUN	unanimous
+stay	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0041
+# source_id = usda-CAT31316436
+# text = Patrons are served by 437 farmer-representatives, 17 independent cooperatives that also serve as representatives, and 79 regional branch warehouses strategically located to supplement local car-door distribution.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 20
+# lemma = warehouse
+# origin = real
+Patrons	NOUN	unanimous
+are	AUX	unanimous
+served	VERB	unanimous
+by	ADP	unanimous
+437	NUM	unanimous
+farmer-representatives	NOUN	unanimous
+,	PUNCT	unanimous
+17	NUM	unanimous
+independent	ADJ	unanimous
+cooperatives	NOUN	unanimous
+that	PRON	unanimous
+also	ADV	unanimous
+serve	VERB	unanimous
+as	ADP	unanimous
+representatives	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+79	NUM	unanimous
+regional	ADJ	unanimous
+branch	NOUN	unanimous
+warehouses	NOUN	unanimous
+strategically	ADV	unanimous
+located	VERB	unanimous
+to	PART	unanimous
+supplement	VERB	unanimous
+local	ADJ	unanimous
+car-door	NOUN	unanimous
+distribution	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0042
+# source_id = navy-headquartersmari00unit
+# text = Planned activation schedule to include pertinent readiness dates.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 2
+# lemma = schedule
+# origin = real
+Planned	VERB	unanimous
+activation	NOUN	unanimous
+schedule	NOUN	unanimous
+to	PART	unanimous
+include	VERB	unanimous
+pertinent	ADJ	unanimous
+readiness	NOUN	unanimous
+dates	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0043
+# source_id = army-FM1-15_1942
+# text = It will take its position' outside of effective fire range from the bombardment formation and detach elements to attack.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 10
+# lemma = range
+# origin = real
+It	PRON	unanimous
+will	AUX	unanimous
+take	VERB	unanimous
+its	DET	unanimous
+position	NOUN	unanimous
+'	PUNCT	unanimous
+outside	ADP	unanimous
+of	ADP	unanimous
+effective	ADJ	unanimous
+fire	NOUN	unanimous
+range	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+bombardment	NOUN	unanimous
+formation	NOUN	unanimous
+and	CCONJ	unanimous
+detach	VERB	unanimous
+elements	NOUN	unanimous
+to	PART	unanimous
+attack	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0044
+# source_id = usfs-CAT10507128
+# text = Power chain saws adaptable to fire control work fall into two general classes: electric-powered and gasoline-powered.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 2
+# lemma = saw
+# origin = real
+Power	NOUN	unanimous
+chain	NOUN	unanimous
+saws	NOUN	unanimous
+adaptable	ADJ	unanimous
+to	ADP	unanimous
+fire	NOUN	unanimous
+control	NOUN	unanimous
+work	NOUN	unanimous
+fall	VERB	unanimous
+into	ADP	unanimous
+two	NUM	unanimous
+general	ADJ	unanimous
+classes	NOUN	unanimous
+:	PUNCT	unanimous
+electric-powered	ADJ	unanimous
+and	CCONJ	unanimous
+gasoline-powered	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0045
+# source_id = navy-MCRP3-403B
+# text = Then, lash the pole support securely to both sections of the antenna.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 5
+# lemma = support
+# origin = real
+Then	ADV	unanimous
+,	PUNCT	unanimous
+lash	VERB	unanimous
+the	DET	unanimous
+pole	NOUN	unanimous
+support	NOUN	unanimous
+securely	ADV	unanimous
+to	ADP	unanimous
+both	DET	unanimous
+sections	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+antenna	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0046
+# source_id = army-TM9-1227
+# text = If there is excessive end play, it may be necessary to replace the slide.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 5
+# lemma = play
+# origin = real
+If	SCONJ	unanimous
+there	PRON	unanimous
+is	VERB	unanimous
+excessive	ADJ	unanimous
+end	NOUN	unanimous
+play	NOUN	unanimous
+,	PUNCT	unanimous
+it	PRON	unanimous
+may	AUX	unanimous
+be	VERB	unanimous
+necessary	ADJ	unanimous
+to	PART	unanimous
+replace	VERB	unanimous
+the	DET	unanimous
+slide	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0047
+# source_id = navy-MCRP3-403B
+# text = Airborne direction finding is more accurate than ground-based direction finding but normally requires further analysis for targeting.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 9
+# lemma = finding
+# origin = real
+Airborne	ADJ	unanimous
+direction	NOUN	unanimous
+finding	NOUN	unanimous
+is	VERB	unanimous
+more	ADV	unanimous
+accurate	ADJ	unanimous
+than	ADP	unanimous
+ground-based	ADJ	unanimous
+direction	NOUN	unanimous
+finding	NOUN	unanimous
+but	CCONJ	unanimous
+normally	ADV	unanimous
+requires	VERB	unanimous
+further	ADJ	unanimous
+analysis	NOUN	unanimous
+for	ADP	unanimous
+targeting	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0048
+# source_id = army-TM37-2810
+# text = Clean the spark plug baffle thoroughly.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 4
+# lemma = baffle
+# origin = real
+Clean	VERB	unanimous
+the	DET	unanimous
+spark	NOUN	unanimous
+plug	NOUN	unanimous
+baffle	NOUN	unanimous
+thoroughly	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0049
+# source_id = army-TM5-5052
+# text = The governors of engines whose generators operate in parallel determine how much kilowatt load each generator carries.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 13
+# lemma = load
+# origin = real
+The	DET	unanimous
+governors	NOUN	unanimous
+of	ADP	unanimous
+engines	NOUN	unanimous
+whose	DET	unanimous
+generators	NOUN	unanimous
+operate	VERB	unanimous
+in	ADP	unanimous
+parallel	NOUN	disputed
+determine	VERB	unanimous
+how	ADV	unanimous
+much	ADJ	unanimous
+kilowatt	NOUN	unanimous
+load	NOUN	unanimous
+each	DET	unanimous
+generator	NOUN	unanimous
+carries	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0050
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Adjust tank selector handles carefully to the detent position.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = handle
+# origin = real
+Adjust	VERB	unanimous
+tank	NOUN	unanimous
+selector	NOUN	unanimous
+handles	NOUN	unanimous
+carefully	ADV	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+detent	NOUN	unanimous
+position	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0051
+# source_id = navy-DivingManual1943
+# text = The high-pressure nozzle fitting as shown on plate 97 is threaded into the aspirator body with a metal to metal Joint, no packing being used.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = fitting
+# origin = real
+The	DET	unanimous
+high-pressure	ADJ	unanimous
+nozzle	NOUN	unanimous
+fitting	NOUN	unanimous
+as	SCONJ	unanimous
+shown	VERB	unanimous
+on	ADP	unanimous
+plate	NOUN	unanimous
+97	NUM	unanimous
+is	AUX	unanimous
+threaded	VERB	unanimous
+into	ADP	unanimous
+the	DET	unanimous
+aspirator	NOUN	unanimous
+body	NOUN	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+metal	NOUN	unanimous
+to	ADP	unanimous
+metal	NOUN	unanimous
+Joint	NOUN	unanimous
+,	PUNCT	unanimous
+no	DET	unanimous
+packing	NOUN	unanimous
+being	AUX	unanimous
+used	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0052
+# source_id = army-TM5-627
+# text = Commonly used in sets of 4, 8, or 12 tools in connection with a portable generator set.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 18
+# lemma = set
+# origin = real
+Commonly	ADV	unanimous
+used	VERB	unanimous
+in	ADP	unanimous
+sets	NOUN	unanimous
+of	ADP	unanimous
+4	NUM	unanimous
+,	PUNCT	unanimous
+8	NUM	unanimous
+,	PUNCT	unanimous
+or	CCONJ	unanimous
+12	NUM	unanimous
+tools	NOUN	unanimous
+in	ADP	unanimous
+connection	NOUN	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+portable	ADJ	unanimous
+generator	NOUN	unanimous
+set	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0053
+# source_id = army-prelimhandbookMarkVIIItank
+# text = Roller bracket for sliding door.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = bracket
+# origin = real
+Roller	NOUN	unanimous
+bracket	NOUN	unanimous
+for	ADP	unanimous
+sliding	NOUN	unanimous
+door	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0054
+# source_id = usfs-CAT31353319
+# text = Alternately press and release the microphone switch several times to make sure the oscillator starts reliably.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 6
+# lemma = switch
+# origin = real
+Alternately	ADV	unanimous
+press	VERB	unanimous
+and	CCONJ	unanimous
+release	VERB	unanimous
+the	DET	unanimous
+microphone	NOUN	unanimous
+switch	NOUN	unanimous
+several	ADJ	unanimous
+times	NOUN	unanimous
+to	PART	unanimous
+make	VERB	unanimous
+sure	ADJ	unanimous
+the	DET	unanimous
+oscillator	NOUN	unanimous
+starts	VERB	unanimous
+reliably	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0055
+# source_id = navy-headquartersmari00unit
+# text = Monitor activation schedule to ensure the attainment of the assigned activation date.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 2
+# lemma = schedule
+# origin = real
+Monitor	VERB	unanimous
+activation	NOUN	unanimous
+schedule	NOUN	unanimous
+to	PART	unanimous
+ensure	VERB	unanimous
+the	DET	unanimous
+attainment	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+assigned	VERB	unanimous
+activation	NOUN	unanimous
+date	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0056
+# source_id = usfs-CAT10507659
+# text = This will involve in many instances the purchase of special motor equipment for the purpose, supplemented by road and acquisition trucks already in Federal ownership.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 21
+# lemma = truck
+# origin = real
+This	PRON	unanimous
+will	AUX	unanimous
+involve	VERB	unanimous
+in	ADP	unanimous
+many	ADJ	unanimous
+instances	NOUN	unanimous
+the	DET	unanimous
+purchase	NOUN	unanimous
+of	ADP	unanimous
+special	ADJ	unanimous
+motor	NOUN	unanimous
+equipment	NOUN	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+purpose	NOUN	unanimous
+,	PUNCT	unanimous
+supplemented	VERB	unanimous
+by	ADP	unanimous
+road	NOUN	unanimous
+and	CCONJ	unanimous
+acquisition	NOUN	unanimous
+trucks	NOUN	unanimous
+already	ADV	unanimous
+in	ADP	unanimous
+Federal	ADJ	unanimous
+ownership	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0057
+# source_id = army-TM5-1042
+# text = Open further to the fully open position at the rate of about on.e valve turn every 10 seconds.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 14
+# lemma = turn
+# origin = real
+Open	VERB	unanimous
+further	ADV	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+fully	ADV	unanimous
+open	ADJ	unanimous
+position	NOUN	unanimous
+at	ADP	unanimous
+the	DET	unanimous
+rate	NOUN	unanimous
+of	ADP	unanimous
+about	ADV	unanimous
+on.e	NUM	unanimous
+valve	NOUN	unanimous
+turn	NOUN	unanimous
+every	DET	unanimous
+10	NUM	unanimous
+seconds	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0058
+# source_id = usfs-CAT31353319
+# text = Proper grid bias is provided by inserting a 0.5-megohm l/2-watt resistor between the grid cap and the grid clip from the i-f transformer.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 18
+# lemma = clip
+# origin = real
+Proper	ADJ	unanimous
+grid	NOUN	unanimous
+bias	NOUN	unanimous
+is	AUX	unanimous
+provided	VERB	unanimous
+by	ADP	unanimous
+inserting	VERB	unanimous
+a	DET	unanimous
+0.5-megohm	ADJ	unanimous
+l/2-watt	ADJ	unanimous
+resistor	NOUN	unanimous
+between	ADP	unanimous
+the	DET	unanimous
+grid	NOUN	unanimous
+cap	NOUN	unanimous
+and	CCONJ	unanimous
+the	DET	unanimous
+grid	NOUN	unanimous
+clip	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+i-f	NOUN	unanimous
+transformer	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0059
+# source_id = army-Fm17-27
+# text = They are not joy rides, during which everyone except the driver enjoys the scenery or goes to sleep.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 4
+# lemma = ride
+# origin = real
+They	PRON	unanimous
+are	VERB	unanimous
+not	PART	unanimous
+joy	NOUN	unanimous
+rides	NOUN	unanimous
+,	PUNCT	unanimous
+during	ADP	unanimous
+which	PRON	unanimous
+everyone	PRON	unanimous
+except	ADP	unanimous
+the	DET	unanimous
+driver	NOUN	unanimous
+enjoys	VERB	unanimous
+the	DET	unanimous
+scenery	NOUN	unanimous
+or	CCONJ	unanimous
+goes	VERB	unanimous
+to	ADP	unanimous
+sleep	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0060
+# source_id = army-TM1-447
+# text = Variation is caused by terrestrial magnetism influences and is the angular difference between true north and magnetic north measured from the true meridian.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 6
+# lemma = influence
+# origin = real
+Variation	NOUN	unanimous
+is	AUX	unanimous
+caused	VERB	unanimous
+by	ADP	unanimous
+terrestrial	ADJ	unanimous
+magnetism	NOUN	unanimous
+influences	NOUN	unanimous
+and	CCONJ	unanimous
+is	VERB	unanimous
+the	DET	unanimous
+angular	ADJ	unanimous
+difference	NOUN	unanimous
+between	ADP	unanimous
+true	ADJ	unanimous
+north	NOUN	unanimous
+and	CCONJ	unanimous
+magnetic	ADJ	unanimous
+north	NOUN	unanimous
+measured	VERB	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+true	ADJ	unanimous
+meridian	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0061
+# source_id = army-TM5-5052
+# text = Fuel filters dirty or no fuel.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = filter
+# origin = real
+Fuel	NOUN	unanimous
+filters	NOUN	unanimous
+dirty	ADJ	unanimous
+or	CCONJ	unanimous
+no	DET	unanimous
+fuel	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0062
+# source_id = usfs-CAT80736363
+# text = Thus, the unknowns involved in predicting subsidence, particularly where mining methods employed leave potentially unstable mine voids, make reclamation and land-use planning difficult for many years.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 24
+# lemma = planning
+# origin = real
+Thus	ADV	unanimous
+,	PUNCT	unanimous
+the	DET	unanimous
+unknowns	NOUN	unanimous
+involved	VERB	unanimous
+in	ADP	unanimous
+predicting	VERB	unanimous
+subsidence	NOUN	unanimous
+,	PUNCT	unanimous
+particularly	ADV	unanimous
+where	SCONJ	unanimous
+mining	NOUN	unanimous
+methods	NOUN	unanimous
+employed	VERB	unanimous
+leave	VERB	unanimous
+potentially	ADV	unanimous
+unstable	ADJ	unanimous
+mine	NOUN	unanimous
+voids	NOUN	unanimous
+,	PUNCT	unanimous
+make	VERB	unanimous
+reclamation	NOUN	unanimous
+and	CCONJ	unanimous
+land-use	NOUN	unanimous
+planning	NOUN	unanimous
+difficult	ADJ	unanimous
+for	ADP	unanimous
+many	ADJ	unanimous
+years	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0063
+# source_id = army-TM11-2545
+# text = A low resistance reading of a few ohms from filament, pin No. 1 of tube V-S, to ground will indicate a shorted filter capacitor.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = reading
+# origin = real
+A	DET	unanimous
+low	ADJ	unanimous
+resistance	NOUN	unanimous
+reading	NOUN	unanimous
+of	ADP	unanimous
+a	DET	unanimous
+few	ADJ	unanimous
+ohms	NOUN	unanimous
+from	ADP	unanimous
+filament	NOUN	unanimous
+,	PUNCT	unanimous
+pin	NOUN	unanimous
+No.	NOUN	unanimous
+1	NUM	unanimous
+of	ADP	unanimous
+tube	NOUN	unanimous
+V-S	PROPN	unanimous
+,	PUNCT	unanimous
+to	ADP	unanimous
+ground	NOUN	unanimous
+will	AUX	unanimous
+indicate	VERB	unanimous
+a	DET	unanimous
+shorted	ADJ	disputed
+filter	NOUN	unanimous
+capacitor	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0064
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = Lateral root pruning with a vertical blade or coulter is used to cut the lateral roots between the seedling rows.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 2
+# lemma = pruning
+# origin = real
+Lateral	ADJ	unanimous
+root	NOUN	unanimous
+pruning	NOUN	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+vertical	ADJ	unanimous
+blade	NOUN	unanimous
+or	CCONJ	unanimous
+coulter	NOUN	unanimous
+is	AUX	unanimous
+used	VERB	unanimous
+to	PART	unanimous
+cut	VERB	unanimous
+the	DET	unanimous
+lateral	ADJ	unanimous
+roots	NOUN	unanimous
+between	ADP	unanimous
+the	DET	unanimous
+seedling	NOUN	unanimous
+rows	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0065
+# source_id = army-TM37-2810
+# text = Tighten the universal joint and companion flange bolts securely.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 7
+# lemma = bolt
+# origin = real
+Tighten	VERB	unanimous
+the	DET	unanimous
+universal	ADJ	unanimous
+joint	NOUN	unanimous
+and	CCONJ	unanimous
+companion	NOUN	unanimous
+flange	NOUN	unanimous
+bolts	NOUN	unanimous
+securely	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0066
+# source_id = army-TM37-2810
+# text = Check for excessive or irregular tread wear.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 6
+# lemma = wear
+# origin = real
+Check	VERB	unanimous
+for	ADP	unanimous
+excessive	ADJ	unanimous
+or	CCONJ	unanimous
+irregular	ADJ	unanimous
+tread	NOUN	unanimous
+wear	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0067
+# source_id = army-prelimhandbookMarkVIIItank
+# text = The action is a V design, having six cylinders on each side, and an independent cam shaft for each set of six cylinders.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 18
+# lemma = shaft
+# origin = real
+The	DET	unanimous
+action	NOUN	unanimous
+is	VERB	unanimous
+a	DET	unanimous
+V	NOUN	unanimous
+design	NOUN	unanimous
+,	PUNCT	unanimous
+having	VERB	unanimous
+six	NUM	unanimous
+cylinders	NOUN	unanimous
+on	ADP	unanimous
+each	DET	unanimous
+side	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+an	DET	unanimous
+independent	ADJ	unanimous
+cam	NOUN	unanimous
+shaft	NOUN	unanimous
+for	ADP	unanimous
+each	DET	unanimous
+set	NOUN	unanimous
+of	ADP	unanimous
+six	NUM	unanimous
+cylinders	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0068
+# source_id = usda-CAT31334088
+# text = Yet farmers faced the 1943-44 job with labor supply considerably reduced by the claims of war industry and of the armed forces.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 8
+# lemma = supply
+# origin = real
+Yet	CCONJ	disputed
+farmers	NOUN	unanimous
+faced	VERB	unanimous
+the	DET	unanimous
+1943-44	NUM	unanimous
+job	NOUN	unanimous
+with	ADP	unanimous
+labor	NOUN	unanimous
+supply	NOUN	unanimous
+considerably	ADV	unanimous
+reduced	VERB	unanimous
+by	ADP	unanimous
+the	DET	unanimous
+claims	NOUN	unanimous
+of	ADP	unanimous
+war	NOUN	unanimous
+industry	NOUN	unanimous
+and	CCONJ	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+armed	ADJ	unanimous
+forces	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0069
+# source_id = navy-searchlightssign00unit
+# text = The main leads B and C are connected to the insulated carbon supports through flexible connection strips.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 12
+# lemma = support
+# origin = real
+The	DET	unanimous
+main	ADJ	unanimous
+leads	NOUN	unanimous
+B	X	unanimous
+and	CCONJ	unanimous
+C	X	unanimous
+are	AUX	unanimous
+connected	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+insulated	ADJ	unanimous
+carbon	NOUN	unanimous
+supports	NOUN	unanimous
+through	ADP	unanimous
+flexible	ADJ	unanimous
+connection	NOUN	unanimous
+strips	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0070
+# source_id = usfs-CAT10504963
+# text = Trunk rot rarely acting as butt rot.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = rot
+# origin = real
+Trunk	NOUN	unanimous
+rot	NOUN	unanimous
+rarely	ADV	unanimous
+acting	VERB	unanimous
+as	ADP	unanimous
+butt	NOUN	unanimous
+rot	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0071
+# source_id = usda-consumersguideto553vieh
+# text = Meat of this grade is produced primarily from very young animals which have had special care and feeding, usually for fairs or other livestock shows.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 25
+# lemma = show
+# origin = real
+Meat	NOUN	unanimous
+of	ADP	unanimous
+this	DET	unanimous
+grade	NOUN	unanimous
+is	AUX	unanimous
+produced	VERB	unanimous
+primarily	ADV	unanimous
+from	ADP	unanimous
+very	ADV	unanimous
+young	ADJ	unanimous
+animals	NOUN	unanimous
+which	PRON	unanimous
+have	AUX	unanimous
+had	VERB	unanimous
+special	ADJ	unanimous
+care	NOUN	unanimous
+and	CCONJ	unanimous
+feeding	NOUN	unanimous
+,	PUNCT	unanimous
+usually	ADV	unanimous
+for	ADP	unanimous
+fairs	NOUN	unanimous
+or	CCONJ	unanimous
+other	ADJ	unanimous
+livestock	NOUN	unanimous
+shows	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0072
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = However, the new shoots form flower buds almost exclusively, and the resulting plants develop slowly due to excessive flowering (Ballington 1998).
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 7
+# lemma = bud
+# origin = real
+However	ADV	unanimous
+,	PUNCT	unanimous
+the	DET	unanimous
+new	ADJ	unanimous
+shoots	NOUN	unanimous
+form	VERB	unanimous
+flower	NOUN	unanimous
+buds	NOUN	unanimous
+almost	ADV	unanimous
+exclusively	ADV	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+the	DET	unanimous
+resulting	VERB	unanimous
+plants	NOUN	unanimous
+develop	VERB	unanimous
+slowly	ADV	unanimous
+due	ADJ	unanimous
+to	ADP	unanimous
+excessive	ADJ	unanimous
+flowering	NOUN	unanimous
+(	PUNCT	unanimous
+Ballington	PROPN	unanimous
+1998	NUM	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0073
+# source_id = army-prelimhandbookMarkVIIItank
+# text = Oil pump to crank-case stud nut.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = pump
+# origin = real
+Oil	NOUN	unanimous
+pump	NOUN	unanimous
+to	ADP	unanimous
+crank-case	NOUN	unanimous
+stud	NOUN	unanimous
+nut	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0074
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Governor and pressure control inoperative.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = control
+# origin = real
+Governor	NOUN	unanimous
+and	CCONJ	unanimous
+pressure	NOUN	unanimous
+control	NOUN	unanimous
+inoperative	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0075
+# source_id = navy-DivingManual1943
+# text = Steel tape measure and 6-foot rule.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 2
+# lemma = measure
+# origin = real
+Steel	NOUN	unanimous
+tape	NOUN	unanimous
+measure	NOUN	unanimous
+and	CCONJ	unanimous
+6-foot	ADJ	unanimous
+rule	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0076
+# source_id = army-handbookofartill00unitiala
+# text = Steering is accomplished by means of a lever for each steering clutch and planetary brake set.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 15
+# lemma = set
+# origin = real
+Steering	NOUN	unanimous
+is	AUX	unanimous
+accomplished	VERB	unanimous
+by	ADP	unanimous
+means	NOUN	unanimous
+of	ADP	unanimous
+a	DET	unanimous
+lever	NOUN	unanimous
+for	ADP	unanimous
+each	DET	unanimous
+steering	NOUN	unanimous
+clutch	NOUN	unanimous
+and	CCONJ	unanimous
+planetary	ADJ	unanimous
+brake	NOUN	unanimous
+set	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0077
+# source_id = navy-headquartersmari00unit
+# text = Receive schedules and detailed modification plan to include type of unit to be modified.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 5
+# lemma = plan
+# origin = real
+Receive	VERB	unanimous
+schedules	NOUN	unanimous
+and	CCONJ	unanimous
+detailed	ADJ	unanimous
+modification	NOUN	unanimous
+plan	NOUN	unanimous
+to	PART	unanimous
+include	VERB	unanimous
+type	NOUN	unanimous
+of	ADP	unanimous
+unit	NOUN	unanimous
+to	PART	unanimous
+be	AUX	unanimous
+modified	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0078
+# source_id = army-handbookof295inc00unitrich
+# text = The elevation-worm retaining nut retains the elevation-worm bushing and elevation worm lengthwise within the rotating head.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 10
+# lemma = worm
+# origin = real
+The	DET	unanimous
+elevation-worm	NOUN	unanimous
+retaining	NOUN	unanimous
+nut	NOUN	unanimous
+retains	VERB	unanimous
+the	DET	unanimous
+elevation-worm	NOUN	unanimous
+bushing	NOUN	unanimous
+and	CCONJ	unanimous
+elevation	NOUN	unanimous
+worm	NOUN	unanimous
+lengthwise	ADV	unanimous
+within	ADP	unanimous
+the	DET	unanimous
+rotating	VERB	unanimous
+head	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0079
+# source_id = army-TM5-1150
+# text = Press fulcrum pin into slotted side until the pin is centered in the hanger.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 2
+# lemma = pin
+# origin = real
+Press	VERB	unanimous
+fulcrum	NOUN	unanimous
+pin	NOUN	unanimous
+into	ADP	unanimous
+slotted	ADJ	unanimous
+side	NOUN	unanimous
+until	SCONJ	unanimous
+the	DET	unanimous
+pin	NOUN	unanimous
+is	AUX	disputed
+centered	VERB	disputed
+in	ADP	unanimous
+the	DET	unanimous
+hanger	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0080
+# source_id = usfs-CAT31353319
+# text = Grid bias for VT-2 and VT-3 is furnished by plate and screen current drop in cathode resistor R4, and by grid current drop in resistor R3.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = bias
+# origin = real
+Grid	NOUN	unanimous
+bias	NOUN	unanimous
+for	ADP	unanimous
+VT-2	PROPN	unanimous
+and	CCONJ	unanimous
+VT-3	PROPN	unanimous
+is	AUX	unanimous
+furnished	VERB	unanimous
+by	ADP	unanimous
+plate	NOUN	unanimous
+and	CCONJ	unanimous
+screen	NOUN	unanimous
+current	NOUN	unanimous
+drop	NOUN	unanimous
+in	ADP	unanimous
+cathode	NOUN	unanimous
+resistor	NOUN	unanimous
+R4	PROPN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+by	ADP	unanimous
+grid	NOUN	unanimous
+current	NOUN	unanimous
+drop	NOUN	unanimous
+in	ADP	unanimous
+resistor	NOUN	unanimous
+R3	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0081
+# source_id = usfs-CAT92983111
+# text = Difficult terrain, poor soils and rock, equipment access difficult, dewatering required.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 9
+# lemma = access
+# origin = real
+Difficult	ADJ	unanimous
+terrain	NOUN	unanimous
+,	PUNCT	unanimous
+poor	ADJ	unanimous
+soils	NOUN	unanimous
+and	CCONJ	unanimous
+rock	NOUN	unanimous
+,	PUNCT	unanimous
+equipment	NOUN	unanimous
+access	NOUN	unanimous
+difficult	ADJ	unanimous
+,	PUNCT	unanimous
+dewatering	NOUN	unanimous
+required	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0082
+# source_id = army-TM55-277
+# text = In electro-mechanical interlocking machine locking between electric and mechanical levers will be maintained to insure that mechanical lever cannot be operated except when properly released by electric lever.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 4
+# lemma = locking
+# origin = real
+In	ADP	unanimous
+electro-mechanical	ADJ	unanimous
+interlocking	NOUN	unanimous
+machine	NOUN	unanimous
+locking	NOUN	unanimous
+between	ADP	unanimous
+electric	ADJ	unanimous
+and	CCONJ	unanimous
+mechanical	ADJ	unanimous
+levers	NOUN	unanimous
+will	AUX	unanimous
+be	AUX	unanimous
+maintained	VERB	unanimous
+to	PART	unanimous
+insure	VERB	unanimous
+that	SCONJ	unanimous
+mechanical	ADJ	unanimous
+lever	NOUN	unanimous
+can	AUX	unanimous
+not	PART	unanimous
+be	AUX	unanimous
+operated	VERB	unanimous
+except	SCONJ	disputed
+when	SCONJ	unanimous
+properly	ADV	unanimous
+released	VERB	unanimous
+by	ADP	unanimous
+electric	ADJ	unanimous
+lever	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0083
+# source_id = usfs-CAT10507659
+# text = Power pumps either attached to the motor of the truck or separate units of the Pacific pump type, are a part of the equipment.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = pump
+# origin = real
+Power	NOUN	unanimous
+pumps	NOUN	unanimous
+either	CCONJ	unanimous
+attached	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+motor	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+truck	NOUN	unanimous
+or	CCONJ	unanimous
+separate	ADJ	unanimous
+units	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Pacific	PROPN	unanimous
+pump	NOUN	unanimous
+type	NOUN	unanimous
+,	PUNCT	unanimous
+are	VERB	unanimous
+a	DET	unanimous
+part	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+equipment	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0084
+# source_id = army-FM1-5
+# text = This category consists of air forces assigned to task force or other commanders.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 5
+# lemma = force
+# origin = real
+This	DET	unanimous
+category	NOUN	unanimous
+consists	VERB	unanimous
+of	ADP	unanimous
+air	NOUN	unanimous
+forces	NOUN	unanimous
+assigned	VERB	unanimous
+to	ADP	unanimous
+task	NOUN	unanimous
+force	NOUN	unanimous
+or	CCONJ	unanimous
+other	ADJ	unanimous
+commanders	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0085
+# source_id = army-FM30-1021959
+# text = This battalion includes a headquarters and service company and three truck companies each with a company headquarters and two truck platoons with thirty 3-ton trucks and trailers each.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 11
+# lemma = company
+# origin = real
+This	DET	unanimous
+battalion	NOUN	unanimous
+includes	VERB	unanimous
+a	DET	unanimous
+headquarters	NOUN	unanimous
+and	CCONJ	unanimous
+service	NOUN	unanimous
+company	NOUN	unanimous
+and	CCONJ	unanimous
+three	NUM	unanimous
+truck	NOUN	unanimous
+companies	NOUN	unanimous
+each	DET	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+company	NOUN	unanimous
+headquarters	NOUN	unanimous
+and	CCONJ	unanimous
+two	NUM	unanimous
+truck	NOUN	unanimous
+platoons	NOUN	unanimous
+with	ADP	unanimous
+thirty	NUM	unanimous
+3-ton	ADJ	unanimous
+trucks	NOUN	unanimous
+and	CCONJ	unanimous
+trailers	NOUN	unanimous
+each	ADV	disputed
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0086
+# source_id = usda-CAT10409432
+# text = Camera copy for the errata sheet, prepared on ERS letterhead stationery (see the illustration below).
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = copy
+# origin = real
+Camera	NOUN	unanimous
+copy	NOUN	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+errata	NOUN	unanimous
+sheet	NOUN	unanimous
+,	PUNCT	unanimous
+prepared	VERB	unanimous
+on	ADP	unanimous
+ERS	PROPN	unanimous
+letterhead	NOUN	unanimous
+stationery	NOUN	unanimous
+(	PUNCT	unanimous
+see	VERB	unanimous
+the	DET	unanimous
+illustration	NOUN	unanimous
+below	ADV	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0087
+# source_id = army-TrainingManualSuperfortressB-29
+# text = Emergency brake handles sure drop continuously moved.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 2
+# lemma = handle
+# origin = real
+Emergency	NOUN	unanimous
+brake	NOUN	unanimous
+handles	NOUN	unanimous
+sure	ADJ	disputed
+drop	NOUN	disputed
+continuously	ADV	unanimous
+moved	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0088
+# source_id = army-TM11-4051
+# text = Choose convenient reference point such as anvil or tape drive roll to determine time for passage of 10 feet of tape.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 10
+# lemma = roll
+# origin = real
+Choose	VERB	unanimous
+convenient	ADJ	unanimous
+reference	NOUN	unanimous
+point	NOUN	unanimous
+such	ADJ	unanimous
+as	ADP	unanimous
+anvil	NOUN	unanimous
+or	CCONJ	unanimous
+tape	NOUN	unanimous
+drive	NOUN	unanimous
+roll	NOUN	unanimous
+to	PART	unanimous
+determine	VERB	unanimous
+time	NOUN	unanimous
+for	ADP	unanimous
+passage	NOUN	unanimous
+of	ADP	unanimous
+10	NUM	unanimous
+feet	NOUN	unanimous
+of	ADP	unanimous
+tape	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0089
+# source_id = army-TM11-246A
+# text = Turn the loop wheel slowly to bring the pointer intersection precisely back to the mid-scale meter line.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = wheel
+# origin = real
+Turn	VERB	unanimous
+the	DET	unanimous
+loop	NOUN	unanimous
+wheel	NOUN	unanimous
+slowly	ADV	unanimous
+to	PART	unanimous
+bring	VERB	unanimous
+the	DET	unanimous
+pointer	NOUN	unanimous
+intersection	NOUN	unanimous
+precisely	ADV	unanimous
+back	ADV	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+mid-scale	ADJ	unanimous
+meter	NOUN	unanimous
+line	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0090
+# source_id = usda-CAT10409432
+# text = Clean the typewriter keys thoroughly so that all characters are sharp and clean, and check to see that all characters are in line.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = key
+# origin = real
+Clean	VERB	unanimous
+the	DET	unanimous
+typewriter	NOUN	unanimous
+keys	NOUN	unanimous
+thoroughly	ADV	unanimous
+so	SCONJ	unanimous
+that	SCONJ	unanimous
+all	DET	unanimous
+characters	NOUN	unanimous
+are	VERB	unanimous
+sharp	ADJ	unanimous
+and	CCONJ	unanimous
+clean	ADJ	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+check	VERB	unanimous
+to	PART	unanimous
+see	VERB	unanimous
+that	SCONJ	unanimous
+all	DET	unanimous
+characters	NOUN	unanimous
+are	VERB	unanimous
+in	ADP	unanimous
+line	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0091
+# source_id = usfs-CAT80736363
+# text = The stability and general performance of these dumps should accommodate reclamation and enable future land use compatible with the surrounding area.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 15
+# lemma = use
+# origin = real
+The	DET	unanimous
+stability	NOUN	unanimous
+and	CCONJ	unanimous
+general	ADJ	unanimous
+performance	NOUN	unanimous
+of	ADP	unanimous
+these	DET	unanimous
+dumps	NOUN	unanimous
+should	AUX	unanimous
+accommodate	VERB	unanimous
+reclamation	NOUN	unanimous
+and	CCONJ	unanimous
+enable	VERB	unanimous
+future	ADJ	unanimous
+land	NOUN	unanimous
+use	NOUN	unanimous
+compatible	ADJ	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+surrounding	VERB	disputed
+area	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0092
+# source_id = usda-CAT10506430
+# text = Insect control with early potatoes, peanuts, soybeans, cowpeas, and cotton.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = control
+# origin = real
+Insect	NOUN	unanimous
+control	NOUN	unanimous
+with	ADP	unanimous
+early	ADJ	unanimous
+potatoes	NOUN	unanimous
+,	PUNCT	unanimous
+peanuts	NOUN	unanimous
+,	PUNCT	unanimous
+soybeans	NOUN	unanimous
+,	PUNCT	unanimous
+cowpeas	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+cotton	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0093
+# source_id = usfs-CAT10507648
+# text = Salicylate of soda should be given in 5 or 10 grain doses every 4 hours.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 11
+# lemma = dose
+# origin = real
+Salicylate	NOUN	unanimous
+of	ADP	unanimous
+soda	NOUN	unanimous
+should	AUX	unanimous
+be	AUX	unanimous
+given	VERB	unanimous
+in	ADP	unanimous
+5	NUM	unanimous
+or	CCONJ	unanimous
+10	NUM	unanimous
+grain	NOUN	unanimous
+doses	NOUN	unanimous
+every	DET	unanimous
+4	NUM	unanimous
+hours	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0094
+# source_id = usda-CAT80740816
+# text = Prolonged soil oxygen depletion may reduce crop yields more than denitrification would.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 7
+# lemma = yield
+# origin = real
+Prolonged	ADJ	unanimous
+soil	NOUN	unanimous
+oxygen	NOUN	unanimous
+depletion	NOUN	unanimous
+may	AUX	unanimous
+reduce	VERB	unanimous
+crop	NOUN	unanimous
+yields	NOUN	unanimous
+more	ADV	unanimous
+than	SCONJ	unanimous
+denitrification	NOUN	unanimous
+would	AUX	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0095
+# source_id = usfs-CAT31353319
+# text = Grid bias for VT-5 and VT-6 is furnished by cathode resistor R13.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = bias
+# origin = real
+Grid	NOUN	unanimous
+bias	NOUN	unanimous
+for	ADP	unanimous
+VT-5	PROPN	unanimous
+and	CCONJ	unanimous
+VT-6	PROPN	unanimous
+is	AUX	unanimous
+furnished	VERB	unanimous
+by	ADP	unanimous
+cathode	NOUN	unanimous
+resistor	NOUN	unanimous
+R13	PROPN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0096
+# source_id = army-FM1-10
+# text = The operating personnel of hostile air forces usually are so dispersed that they alone do not constitute a profitable bombardment target.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 6
+# lemma = force
+# origin = real
+The	DET	unanimous
+operating	NOUN	disputed
+personnel	NOUN	unanimous
+of	ADP	unanimous
+hostile	ADJ	unanimous
+air	NOUN	unanimous
+forces	NOUN	unanimous
+usually	ADV	unanimous
+are	VERB	unanimous
+so	ADV	unanimous
+dispersed	ADJ	unanimous
+that	SCONJ	unanimous
+they	PRON	unanimous
+alone	ADV	unanimous
+do	AUX	unanimous
+not	PART	unanimous
+constitute	VERB	unanimous
+a	DET	unanimous
+profitable	ADJ	unanimous
+bombardment	NOUN	unanimous
+target	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0097
+# source_id = army-TM5-3012
+# text = Keep radiator hose clamps tight.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = clamp
+# origin = real
+Keep	VERB	unanimous
+radiator	NOUN	unanimous
+hose	NOUN	unanimous
+clamps	NOUN	unanimous
+tight	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0098
+# source_id = army-handbookof295inc00unitrich
+# text = This article is designed to furnish a light, strong head harness for a mule.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 11
+# lemma = harness
+# origin = real
+This	DET	unanimous
+article	NOUN	unanimous
+is	AUX	unanimous
+designed	VERB	unanimous
+to	PART	unanimous
+furnish	VERB	unanimous
+a	DET	unanimous
+light	ADJ	unanimous
+,	PUNCT	unanimous
+strong	ADJ	unanimous
+head	NOUN	unanimous
+harness	NOUN	unanimous
+for	ADP	unanimous
+a	DET	unanimous
+mule	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0099
+# source_id = army-TM5-4020
+# text = Remove oil control felts every 64 hours and clean thoroughly in gasoline.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 3
+# lemma = felt
+# origin = real
+Remove	VERB	unanimous
+oil	NOUN	unanimous
+control	NOUN	unanimous
+felts	NOUN	unanimous
+every	DET	unanimous
+64	NUM	unanimous
+hours	NOUN	unanimous
+and	CCONJ	unanimous
+clean	VERB	unanimous
+thoroughly	ADV	unanimous
+in	ADP	unanimous
+gasoline	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0100
+# source_id = army-Fm1-40
+# text = Intelligence plan for collection of information.
+# shape = n-compound-head-ambiguous
+# role = target
+# target = 1
+# lemma = plan
+# origin = real
+Intelligence	NOUN	unanimous
+plan	NOUN	unanimous
+for	ADP	unanimous
+collection	NOUN	unanimous
+of	ADP	unanimous
+information	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0101
+# source_id = army-MethodsOfTeaching1943
+# text = Plan the most advantageous seating arrangement of the students for the exercise.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 0
+# lemma = plan
+# origin = real
+Plan	VERB	unanimous
+the	DET	unanimous
+most	ADV	unanimous
+advantageous	ADJ	unanimous
+seating	NOUN	unanimous
+arrangement	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+students	NOUN	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+exercise	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0102
+# source_id = army-CAT10507936
+# text = Studies have shown that use of lift-trucks can cut in half the time and labor needed to load or unload a highway truck or railroad car.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 17
+# lemma = load
+# origin = real
+Studies	NOUN	unanimous
+have	AUX	unanimous
+shown	VERB	unanimous
+that	SCONJ	unanimous
+use	NOUN	unanimous
+of	ADP	unanimous
+lift-trucks	NOUN	unanimous
+can	AUX	unanimous
+cut	VERB	unanimous
+in	ADP	unanimous
+half	NOUN	unanimous
+the	DET	unanimous
+time	NOUN	unanimous
+and	CCONJ	unanimous
+labor	NOUN	unanimous
+needed	VERB	unanimous
+to	PART	unanimous
+load	VERB	unanimous
+or	CCONJ	unanimous
+unload	VERB	unanimous
+a	DET	unanimous
+highway	NOUN	unanimous
+truck	NOUN	unanimous
+or	CCONJ	unanimous
+railroad	NOUN	unanimous
+car	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0103
+# source_id = usda-consumersguideto959unit
+# text = Planning the Bathroom.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 0
+# lemma = planning
+# origin = real
+Planning	VERB	unanimous
+the	DET	unanimous
+Bathroom	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0104
+# source_id = army-TM11-246A
+# text = When tightening, allow some slack so that the compass may be rotated to line up the sights with a target.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 14
+# lemma = line
+# origin = real
+When	SCONJ	unanimous
+tightening	VERB	unanimous
+,	PUNCT	unanimous
+allow	VERB	unanimous
+some	DET	unanimous
+slack	NOUN	unanimous
+so	SCONJ	unanimous
+that	SCONJ	unanimous
+the	DET	unanimous
+compass	NOUN	unanimous
+may	AUX	unanimous
+be	AUX	unanimous
+rotated	VERB	unanimous
+to	PART	unanimous
+line	VERB	unanimous
+up	ADV	unanimous
+the	DET	unanimous
+sights	NOUN	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+target	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0105
+# source_id = usfs-TheWoodyPlantSeedManual
+# text = These acres will support strong wildlife populations, preserve watersheds, and provide many recreational opportunities.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 3
+# lemma = support
+# origin = real
+These	DET	unanimous
+acres	NOUN	unanimous
+will	AUX	unanimous
+support	VERB	unanimous
+strong	ADJ	unanimous
+wildlife	NOUN	unanimous
+populations	NOUN	unanimous
+,	PUNCT	unanimous
+preserve	VERB	unanimous
+watersheds	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+provide	VERB	unanimous
+many	ADJ	unanimous
+recreational	ADJ	unanimous
+opportunities	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0106
+# source_id = usda-CAT82771091
+# text = The teenager's family may influence her food choices through their food attitudes and food preferences.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 5
+# lemma = influence
+# origin = real
+The	DET	unanimous
+teenager	NOUN	unanimous
+'s	PART	unanimous
+family	NOUN	unanimous
+may	AUX	unanimous
+influence	VERB	unanimous
+her	DET	unanimous
+food	NOUN	unanimous
+choices	NOUN	unanimous
+through	ADP	unanimous
+their	DET	unanimous
+food	NOUN	unanimous
+attitudes	NOUN	unanimous
+and	CCONJ	unanimous
+food	NOUN	unanimous
+preferences	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0107
+# source_id = army-TM9-1611-1941
+# text = Test the optical axes of the two telescopes for parallelism with each other at the 64-mm setting of the interpupillary scale.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 0
+# lemma = test
+# origin = real
+Test	VERB	unanimous
+the	DET	unanimous
+optical	ADJ	unanimous
+axes	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+two	NUM	unanimous
+telescopes	NOUN	unanimous
+for	ADP	unanimous
+parallelism	NOUN	unanimous
+with	ADP	unanimous
+each	DET	unanimous
+other	ADJ	unanimous
+at	ADP	unanimous
+the	DET	unanimous
+64-mm	ADJ	unanimous
+setting	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+interpupillary	ADJ	unanimous
+scale	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0108
+# source_id = usfs-CAT10504963
+# text = Do not replace the core in determining the defect when the core is too small (normally less than 6 inches) to yield merchantable lumber.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 23
+# lemma = yield
+# origin = real
+Do	AUX	unanimous
+not	PART	unanimous
+replace	VERB	unanimous
+the	DET	unanimous
+core	NOUN	unanimous
+in	ADP	unanimous
+determining	VERB	unanimous
+the	DET	unanimous
+defect	NOUN	unanimous
+when	SCONJ	unanimous
+the	DET	unanimous
+core	NOUN	unanimous
+is	VERB	unanimous
+too	ADV	unanimous
+small	ADJ	unanimous
+(	PUNCT	unanimous
+normally	ADV	unanimous
+less	ADJ	unanimous
+than	ADP	unanimous
+6	NUM	unanimous
+inches	NOUN	unanimous
+)	PUNCT	unanimous
+to	PART	unanimous
+yield	VERB	unanimous
+merchantable	ADJ	unanimous
+lumber	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0109
+# source_id = usda-CAT10677691
+# text = A graphic that represents an approved design must show (or account for the absence of) all required details.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 8
+# lemma = show
+# origin = real
+A	DET	unanimous
+graphic	NOUN	unanimous
+that	PRON	unanimous
+represents	VERB	unanimous
+an	DET	unanimous
+approved	VERB	disputed
+design	NOUN	unanimous
+must	AUX	unanimous
+show	VERB	unanimous
+(	PUNCT	unanimous
+or	CCONJ	unanimous
+account	VERB	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+absence	NOUN	unanimous
+of	ADP	unanimous
+)	PUNCT	unanimous
+all	DET	unanimous
+required	VERB	disputed
+details	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0110
+# source_id = army-TM11-4051
+# text = Resolder link to drive arm, using just enough solder to fill completely the slit in the link.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 11
+# lemma = fill
+# origin = real
+Resolder	VERB	unanimous
+link	NOUN	unanimous
+to	ADP	unanimous
+drive	NOUN	unanimous
+arm	NOUN	unanimous
+,	PUNCT	unanimous
+using	VERB	unanimous
+just	ADV	unanimous
+enough	ADJ	unanimous
+solder	NOUN	unanimous
+to	PART	unanimous
+fill	VERB	unanimous
+completely	ADV	unanimous
+the	DET	unanimous
+slit	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+link	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0111
+# source_id = army-TM37-2810
+# text = Watch the speedometer and tachometer for proper operation, excessive fluctuation, and unusual noises that might indicate worn or damaged gears or cable.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 0
+# lemma = watch
+# origin = real
+Watch	VERB	unanimous
+the	DET	unanimous
+speedometer	NOUN	unanimous
+and	CCONJ	unanimous
+tachometer	NOUN	unanimous
+for	ADP	unanimous
+proper	ADJ	unanimous
+operation	NOUN	unanimous
+,	PUNCT	unanimous
+excessive	ADJ	unanimous
+fluctuation	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+unusual	ADJ	unanimous
+noises	NOUN	unanimous
+that	PRON	unanimous
+might	AUX	unanimous
+indicate	VERB	unanimous
+worn	ADJ	unanimous
+or	CCONJ	unanimous
+damaged	ADJ	unanimous
+gears	NOUN	unanimous
+or	CCONJ	unanimous
+cable	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0112
+# source_id = army-TM5-5052
+# text = Running the engine with an injector not firing will damage the lower end of the injector.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 0
+# lemma = running
+# origin = real
+Running	VERB	unanimous
+the	DET	unanimous
+engine	NOUN	unanimous
+with	ADP	unanimous
+an	DET	unanimous
+injector	NOUN	unanimous
+not	PART	unanimous
+firing	VERB	unanimous
+will	AUX	unanimous
+damage	VERB	unanimous
+the	DET	unanimous
+lower	ADJ	unanimous
+end	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+injector	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0113
+# source_id = army-TM11-246A
+# text = Measure the voltage on the oscillator grid or on one of the wires connected to it with a voltmeter of at least 1,000 ohms per volt.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 0
+# lemma = measure
+# origin = real
+Measure	VERB	unanimous
+the	DET	unanimous
+voltage	NOUN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+oscillator	NOUN	unanimous
+grid	NOUN	unanimous
+or	CCONJ	unanimous
+on	ADP	unanimous
+one	NUM	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+wires	NOUN	unanimous
+connected	VERB	unanimous
+to	ADP	unanimous
+it	PRON	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+voltmeter	NOUN	unanimous
+of	ADP	unanimous
+at	ADP	unanimous
+least	ADJ	unanimous
+1,000	NUM	unanimous
+ohms	NOUN	unanimous
+per	ADP	unanimous
+volt	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0114
+# source_id = army-sforcinstruction00unitrich
+# text = In case moisture condenses on the optical parts of unsealed sights it may be evaporated by allowing the sight to stand in a warm, dry room.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 20
+# lemma = stand
+# origin = real
+In	ADP	unanimous
+case	NOUN	unanimous
+moisture	NOUN	unanimous
+condenses	VERB	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+optical	ADJ	unanimous
+parts	NOUN	unanimous
+of	ADP	unanimous
+unsealed	ADJ	unanimous
+sights	NOUN	unanimous
+it	PRON	unanimous
+may	AUX	unanimous
+be	AUX	unanimous
+evaporated	VERB	unanimous
+by	ADP	unanimous
+allowing	VERB	unanimous
+the	DET	unanimous
+sight	NOUN	unanimous
+to	PART	unanimous
+stand	VERB	unanimous
+in	ADP	unanimous
+a	DET	unanimous
+warm	ADJ	unanimous
+,	PUNCT	unanimous
+dry	ADJ	unanimous
+room	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0115
+# source_id = usda-CAT31108354
+# text = Give the menu sheet to the participants and ask them to fill in the blank menu items, according to their family's food preferences.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 11
+# lemma = fill
+# origin = real
+Give	VERB	unanimous
+the	DET	unanimous
+menu	NOUN	unanimous
+sheet	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+participants	NOUN	unanimous
+and	CCONJ	unanimous
+ask	VERB	unanimous
+them	PRON	unanimous
+to	PART	unanimous
+fill	VERB	unanimous
+in	ADV	unanimous
+the	DET	unanimous
+blank	ADJ	unanimous
+menu	NOUN	unanimous
+items	NOUN	unanimous
+,	PUNCT	unanimous
+according	ADP	unanimous
+to	ADP	unanimous
+their	DET	unanimous
+family	NOUN	unanimous
+'s	PART	unanimous
+food	NOUN	unanimous
+preferences	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0116
+# source_id = army-regulationsforop00unitrich
+# text = The best way to lead wires through the side of a building is to inclose them in hard-rubber tubes, or use a wire well insulated with rubber compound.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 4
+# lemma = lead
+# origin = real
+The	DET	unanimous
+best	ADJ	unanimous
+way	NOUN	unanimous
+to	PART	unanimous
+lead	VERB	unanimous
+wires	NOUN	unanimous
+through	ADP	unanimous
+the	DET	unanimous
+side	NOUN	unanimous
+of	ADP	unanimous
+a	DET	unanimous
+building	NOUN	unanimous
+is	VERB	unanimous
+to	PART	unanimous
+inclose	VERB	unanimous
+them	PRON	unanimous
+in	ADP	unanimous
+hard-rubber	NOUN	disputed
+tubes	NOUN	unanimous
+,	PUNCT	unanimous
+or	CCONJ	unanimous
+use	VERB	unanimous
+a	DET	unanimous
+wire	NOUN	unanimous
+well	ADV	unanimous
+insulated	VERB	disputed
+with	ADP	unanimous
+rubber	NOUN	unanimous
+compound	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0117
+# source_id = army-TM11-2509
+# text = In order to operate the 2050 tube as a control tube, it is necessary to use a-c voltage on the plate.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 16
+# lemma = use
+# origin = real
+In	ADP	unanimous
+order	NOUN	unanimous
+to	PART	unanimous
+operate	VERB	unanimous
+the	DET	unanimous
+2050	NUM	unanimous
+tube	NOUN	unanimous
+as	ADP	unanimous
+a	DET	unanimous
+control	NOUN	unanimous
+tube	NOUN	unanimous
+,	PUNCT	unanimous
+it	PRON	unanimous
+is	VERB	unanimous
+necessary	ADJ	unanimous
+to	PART	unanimous
+use	VERB	unanimous
+a-c	ADJ	disputed
+voltage	NOUN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+plate	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0118
+# source_id = usda-consumersguideto959unit
+# text = Fallout radiation decays rapidly and if there were a nuclear attack, it might be necessary to stay in the shelter only a few days.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 17
+# lemma = stay
+# origin = real
+Fallout	NOUN	unanimous
+radiation	NOUN	unanimous
+decays	VERB	unanimous
+rapidly	ADV	unanimous
+and	CCONJ	unanimous
+if	SCONJ	unanimous
+there	PRON	unanimous
+were	VERB	unanimous
+a	DET	unanimous
+nuclear	ADJ	unanimous
+attack	NOUN	unanimous
+,	PUNCT	unanimous
+it	PRON	unanimous
+might	AUX	unanimous
+be	VERB	unanimous
+necessary	ADJ	unanimous
+to	PART	unanimous
+stay	VERB	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+shelter	NOUN	unanimous
+only	ADV	unanimous
+a	DET	unanimous
+few	ADJ	unanimous
+days	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0119
+# source_id = army-ShoeRepairMachines.USArmyWarDept.Quatermaster.orig.1946.1952
+# text = To stop the stitcher with the sewing parts in the desired position, release the power treadle and grasp the handwheel.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 1
+# lemma = stop
+# origin = real
+To	PART	unanimous
+stop	VERB	unanimous
+the	DET	unanimous
+stitcher	NOUN	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+sewing	NOUN	unanimous
+parts	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+desired	ADJ	unanimous
+position	NOUN	unanimous
+,	PUNCT	unanimous
+release	VERB	unanimous
+the	DET	unanimous
+power	NOUN	unanimous
+treadle	NOUN	unanimous
+and	CCONJ	unanimous
+grasp	VERB	unanimous
+the	DET	unanimous
+handwheel	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-compound-head-0120
+# source_id = army-MethodsOfTeaching1943
+# text = Develop your ability to plan, analyze, and organize the subject matter you teach.
+# shape = n-compound-head-ambiguous
+# role = control
+# target = 4
+# lemma = plan
+# origin = real
+Develop	VERB	unanimous
+your	DET	unanimous
+ability	NOUN	unanimous
+to	PART	unanimous
+plan	VERB	unanimous
+,	PUNCT	unanimous
+analyze	VERB	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+organize	VERB	unanimous
+the	DET	unanimous
+subject	NOUN	unanimous
+matter	NOUN	unanimous
+you	PRON	unanimous
+teach	VERB	unanimous
+.	PUNCT	unanimous

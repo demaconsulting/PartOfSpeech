@@ -2169,6 +2169,34 @@ was measured on a busy machine and the three are not a comparison of the models.
   model or a setting. The three stop conditions fired again as in both earlier records and are findings, not tuned.
   Any further held-out evaluation would be a third look and is not planned.
 
+## Shapes development set: standard tranche, build record
+
+The standard tranche (`data/eval/shapes-dev/dev.tsv`, [README](../../data/eval/shapes-dev/README.md)) states what the data is; this section holds the order in which it was
+built.
+
+- **Commits.** The builder ran as `python tools/data/shapes_dev.py --work <work-folder> build --shape-lemma-cap n-measure=12` at PR #10 commit
+  `43300948ecc5c76360e9284c951b119e8a63ff36` (squashed into PR #10 merge commit `17a9cf9` on main); the labeling rounds ran at PR #10 commit
+  `57420f577b9f81ea25304475af85ee9bdae12f94`. A squash merge makes the commits of a PR unreachable from main, but they stay retrievable from the PR's head
+  ref (`refs/pull/<n>/head`), for example `git fetch origin pull/10/head`.
+- **Order of the rule.** Rules 1 and 2 and the treatment of disputed tokens were committed in the docstring of `tools/data/shapes_dev.py` (PR #10 commit `88bafc2`) before any
+  label was seen. Rules 3, 4 and 5 and the cleaning filters were added later, after labels of an earlier round had been seen, because the frame-mismatch and gerund cases showed
+  up there. They only remove items; no label was changed, and every change is in the history of `shapes_dev.py`.
+- **Labeling rounds.** The labeling ran in three rounds of candidates: round 1 was **superseded** and archived (OCR noise and weak shape fidelity; its pool had only 57 controls),
+  round 2 rebuilt the pool with the cleaning filter, and round 3 added `n-compound-head` candidates only. Sentences were never labeled twice.
+- **Exclusion of the two NIST handbooks.** The project owner decided on 2026-11-06 to drop NIST Handbook 44 and NIST Handbook 130 after they had been used. The sentences that were
+  removed (26 targets and 6 controls) were replaced from the other, already blind-labeled documents of the same pool, by the same method and decision rule; no new labeling was
+  needed, and no label was changed. The baseline below was measured again on the rebuilt file.
+- **Hand-check passes.** The final pass (D, on the committed data) is in the README. The earlier passes are kept as history; none of them describes the committed data:
+
+  | Pass | Data | Correct | Incorrect | Unclear |
+  | --- | --- | ---: | ---: | ---: |
+  | A | superseded round-1 data | 59 | 0 | 1 |
+  | B | before the nominal-gerund rule (rule 5) | 57 | 0 | 3 |
+  | C | the data that still contained the two NIST documents | 59 | 0 | 1 |
+
+  Pass B found three nominal gerunds, which motivated rule 5. Pass C's one unclear item was a garbled title-like fragment (OCR residue). The replacement sentences of the rebuilt
+  set were not in any earlier sample, which is why pass D drew a fresh sample.
+
 ## Shapes development set: baseline of the shipped model
 
 The shapes development set (`data/eval/shapes-dev/dev.tsv`, [README](../../data/eval/shapes-dev/README.md)) is the development
@@ -2298,10 +2326,12 @@ Rule (`python tools/data/shapes_dev.py --tranche hard`):
 
 ### Rounds actually run
 
-The main round labeled all 2,258 candidate sentences. Round `h2` (the next 200 `v-after-modal` candidates) ran because that
-shape kept 77 targets, below its floor of 80. Round `h3` (a controls-only round, 149 sentences) ran because the controls were
-45, below the floor of 50; the pre-registration did not name it, it applies rule 6 and the controls floor, adds no target, and was
-exported before any `h3` label existed. Both blind labelers tagged every sentence; the hand check passed the 95% gate. The
+The main round labeled all 2,258 candidate sentences (2,320 candidates: 400, 846, 574 and 300 targets for `n-compound-head`,
+`n-subject-initial`, `v-imperative-initial` and `v-after-modal`, plus 50 control candidates per shape; 16 blind batches). Round `h2` (the next 200 `v-after-modal` candidates) ran because that
+shape kept 77 targets, below its floor of 80; rule 4 provides for it. Round `h3` (a controls-only round, 149 sentences, 152 control candidates, 38 per shape) ran because the controls were
+45, below the floor of 50; the pre-registration did not name it, it applies rule 6 (the other-class sentences of the chosen target lemmas, at most 2 per lemma) and the controls floor, adds no target, and was
+prepared and exported before any `h3` label existed. Both blind labelers tagged every sentence; the hand check passed the 95% gate. No other round ran, and no candidate was
+relabeled or added after the labels were seen. The build ran at PR #11 commit `5d3abb5`. The
 outcome (counts, drops, q bands, documents, hand check, limits) is in the
 [README](../../data/eval/shapes-dev/README.md#hard-tranche); the baseline is in the next section.
 
@@ -3961,6 +3991,138 @@ claim was changed to improve it.
 text: the model is better on the shape probe, the challenge set and the imperative shape, slightly worse on open test (+7), gold v2
 (+2) and the treebank (+12 harmful errors at 0.45), and has a higher calibration error on several sets. F2+IMP ships. The decision
 changes no figure of this record.
+
+## Shapes development set: new tranches, pre-registered selection rule
+
+**The rule and the inputs of the three tranches were written before any candidate or label of them existed.** They are stated once, as a rule, in
+`data/eval/shapes-dev/README.md` (sections "The Rule" and "Inputs of the Selection", with the shape definitions above them); this section holds the order in which they
+were fixed and run. The three tranches (`compound-head.tsv`, `headings.tsv`, `named-state.tsv` in `data/eval/shapes-dev/`) are development sets: the figures that they
+produce select settings and are never held-out results. The rule is model-independent: no PartOfSpeech weight file, prediction, error or
+score takes part in the selection.
+
+### Order of the pre-registration
+
+| Commit | Time (2026-11-09) | Content |
+| --- | --- | --- |
+| `426876f` | 11:45 | the frozen pre-registration: the rule and the inputs in the README, `tools/data/shapes_dev_extra.py` and its tests, the two convention rules, the trainer support |
+| `65ee3c3` | 12:31 | amendment 1 (below): top-up round `h2` of `headings`, with its code and tests, before any label of the round |
+| `41423fd` | 12:35 | amendment 2 (below): controls-only round `h3` of `compound-head`, with its code and tests, before any label of the round |
+| `5c81c67` | 12:44 | the data: the three tranches, their sources and leakage reports |
+
+The selection and build code is identical between `41423fd` and `5c81c67`: nothing was tuned after labeling. If the pull request is squash-merged, these commits stay
+retrievable from the pull request's head ref (`refs/pull/<n>/head`). The README, the verification record and this log were written after labeling and do not change the rule.
+
+### Pool sizes before the caps
+
+Counts only (no label, no model), from the pre-flight of the tool on the pinned inputs (the pins are in the README):
+
+| Tranche | Pool before the caps |
+| --- | --- |
+| `compound-head` | 8,009 candidates in the contested band (of 21,152 frame hits) |
+| `headings` | 636 imperative, 1,666 noun and 52 proper frames (296, 621 and 37 lemmas) |
+| `named-state` | 189 frames (94 lemmas, 61 documents) |
+
+### Amendments of the rule
+
+Each amendment was written down and committed after the main round of its tranche was decided and before any label of the round that it names existed. The README rule
+states the rule as amended.
+
+1. **Amendment 1, `headings`, top-up round `h2`** (`65ee3c3`): the main round kept 25 imperative targets, below the floor of 40 (366 of 400 imperative frames were read by both
+   labelers as compound nouns). Round `h2` labels more imperative frames under the same rule, from the units that are not candidates of the main round, with one widening of the frame
+   (the first word may also be a base form that the lexicon lists as a verb and not as a noun, proper noun, adjective or auxiliary), because the pool of noun and verb words was nearly used up.
+2. **Amendment 2, `compound-head`, controls-only round `h3`** (`41423fd`): the controls of the main round were chosen for the lemmas of all 600 candidate targets, so only 14 fitted the
+   lemmas of the 100 built targets, below the floor of 15. Round `h3` labels more controls under the same rule, for the lemmas of the targets that the build takes; it adds no target.
+   The hard tranche needed the same round.
+
+`named-state` needed no top-up round. The pool of its frames was below the 250 that the pre-flight asked for, and the floor of that tranche was fixed at 40 before the candidates were
+written.
+
+### Labeling rounds and runs
+
+| Tranche | Rounds | Candidate units | Batches |
+| --- | --- | ---: | ---: |
+| `compound-head` | main round (600 targets, 50 controls); round `h3` (50 controls) | 700 | 6 |
+| `headings` | main round (400 noun, 400 imperative, 46 proper); round `h2` (155 imperative) | 1,001 candidates in 941 lines | 3 |
+| `named-state` | main round (153 targets, 43 controls) | 196 | 2 |
+
+Both blind labelers tagged every batch of every round (11 batches, 22 agent runs, one agent per labeler and batch), every output was valid on the first run, and neither model refused
+(0 refusals, 0 retries). The imperative yield of `headings` was low because most `Check Fluid Level`-like frames were read as compound nouns (47 of 555 imperative frames were kept).
+The files were written by `python tools/data/shapes_dev_extra.py --work <work-folder> build` from the tool as of commit `41423fd`. The committed counts, the drops, the documents, the hand
+check and the limits are in the [README](../../data/eval/shapes-dev/README.md#new-tranches); the baseline is in the next section.
+
+### Note: the lemma cap of the `headings` build
+
+The build counted the 4 targets per lemma separately for the noun and the imperative kind, while the rule (README "The Rule", item 6) caps them over both kinds together. The committed
+`headings.tsv` has no lemma with more than 4 targets (the largest, `check`, `plan`, `replace` and `suggest`, have 4 imperative targets each), so a rebuild with one shared counter into a
+separate folder from the same work folder is byte-identical to the committed `headings.tsv` and `headings-sources.tsv` (SHA-256 `de6a46fe...` and `30754b95...`); no committed data changed.
+The build now uses one shared counter, and `lemma_cap_problems` refuses a lemma over its cap even with `--allow-short`.
+
+### Note: correction of the trailing page number rule of the `headings` build
+
+The pre-registered line rule refuses a table-of-contents line, including a line that ends in a page number (README "The Shape of `headings`"). The implementation tested for a final
+number only (`\s\d{1,4}$`), so a line that ends in a page range (`4-8`, `4-19`, `4-4`, `19-21`) passed it. This is a defect of the implementation against the rule, not a change of the rule: the
+rule text is unchanged, and the implementation now refuses a final number or a final range written with a hyphen, an en dash or an em dash (`has_trailing_page_number`; refused at
+the line stage, as the heading filter rule `page-number`, and at the build). Forms that the rule does not name (a letter before the number such as `A-12`, a dotted number such as `4.8`)
+are not refused.
+
+The build was rerun from the same work folder and the same labels, with no new candidate and no new label. Nine kept items fail the corrected rule; four of them were in the committed
+file (`shapes-dev-headings-0006` and `-0032` noun targets, `-0090` an imperative target, `-0111` a proper control), and the next kept items in the seeded order of the same labeled pool
+fill the strata (two noun targets and one control; no imperative item was left). Result: `headings.tsv` has 115 lines (50 noun and 45 imperative targets, 20 controls; was 116: 50, 46 and
+20), 507 tokens (was 520), and the quota floors hold (noun 40, imperative 40, controls 12). None of the four removed items and none of the three added items is among the 60 items of
+the hand check, so the hand-check figure is unchanged (57 correct, 1 incorrect, 2 unclear of 60). `compound-head.tsv` and `named-state.tsv` are cut by other frames and the rule is for
+heading lines only: they are unchanged. `shapes-dev-headings-0004` (`Fig, No, Title Page`, OCR junk) has no trailing number, so the rule does not reject it, and it stays.
+
+New SHA-256: `headings.tsv` `45a62a71...`, `headings-sources.tsv` `aa3a14f1...`; the leakage reports, `MANIFEST.tsv` and the baseline below are regenerated.
+
+### Note: the standard and hard builders see the newer tranches
+
+`shapes_dev.py` filtered its candidates through the hashed sentence keys of the evaluation sets without the five tranches of the development set, so a rebuild of the standard or the hard tranche
+could have taken a sentence of `compound-head`, `headings` or `named-state`. Its filter (`LeakageFilter`) now adds the sentence keys of the three newer tranches that exist
+(`leakage.held_out_overlap_keys(new_tranches=True)`); the builder of the newer tranches (`shapes_dev_extra.py`) passes `new_tranches=False`, because it must not see its own earlier build. The standard
+and the hard tranche have 0 exact sentences in common with each of the three newer tranches (`check_leakage.py`, the leakage reports), so the data is unchanged: a rebuild of the standard tranche
+(`StandardRebuildTests`, from its work folder) and of the hard tranche (from its work folder, into a separate folder) is byte-identical to the committed `dev.tsv`, `sources.tsv`,
+`excluded-sources.tsv`, `hard.tsv` and `hard-sources.tsv` (SHA-256 `bbc94e42...` and `c041ae3d...`).
+
+## Shapes development set: new tranches baseline of the shipped model
+
+The built tranches `compound-head.tsv`, `headings.tsv` and `named-state.tsv` were scored once with the shipped model after the build. These are development figures: they select settings,
+nothing is trained on the files and none is a held-out result. The standard and hard tranche files are unchanged by this work (`eval-shapes --tranche both` reads the same two
+files, SHA-256 `bbc94e42...` and `c041ae3d...`). The `heading-titlecase` rows are scored on the `headings.tsv` of the correction note above (the earlier file scored 96 targets at 84.4%); the other two shapes are
+scored on the same files as before and their rows are unchanged.
+
+Command (run once from the repository root, below normal priority; it reads only the three development files and the embedded weights and appends no row to the run table):
+
+```text
+dotnet run --no-build -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eval-shapes --tranche new --label "shipped model baseline"
+```
+
+| Input | SHA-256 |
+| --- | --- |
+| `data/eval/shapes-dev/compound-head.tsv` | `537e0be3923f585b8f084de4e88f4064624e4f5dc484f84ccd303fed3db924f5` |
+| `data/eval/shapes-dev/headings.tsv` | `45a62a71837f02d1e76f0ad55a71a1770cb628ea8ca8765c0d4583f49b9da72a` |
+| `data/eval/shapes-dev/named-state.tsv` | `e08472387630368b7fb3fbaa5cd7b6187d0760608c93b55f19250c98f2d06d6e` |
+| shipped weights file (embedded resource) | `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` |
+
+Scoring: by class for `n-compound-head-ambiguous` and `n-named-state` (Noun: NOUN and PROPN), by exact tag for `heading-titlecase` (a common-noun heading word answered PROPN is wrong
+but not harmful). A harmful error is a swapped noun/verb decision at a confidence of at least 0.45 (`harmful per 1,000` is per noun-verb decision, as before); **wrong at confidence >= 0.95**
+counts the target items answered wrongly with a confidence of at least 0.95.
+
+| shape | target items | target accuracy | 95% interval | noun-verb decisions | harmful errors | harmful per 1,000 decisions | wrong at confidence >= 0.95 | control items | control accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| n-compound-head-ambiguous | 100 | 60.0% | [50.2%, 69.1%] | 100 | 39 | 390.0 | 5 | 20 | 100.0% |
+| heading-titlecase | 95 | 84.2% | [75.6%, 90.2%] | 78 | 4 | 51.3 | 2 | 20 | 100.0% |
+| heading-titlecase: noun targets | 50 | 80.0% | [67.0%, 88.8%] | 50 | 1 | 20.0 | 2 | - | - |
+| heading-titlecase: imperative targets | 45 | 88.9% | [76.5%, 95.2%] | 28 | 3 | 107.1 | 0 | - | - |
+| heading-titlecase: PROPN controls | - | - | - | - | - | - | - | 20 | 100.0% |
+| n-named-state | 100 | 90.0% | [82.6%, 94.5%] | 37 | 3 | 81.1 | 0 | 12 | 100.0% |
+
+Wrong answers at a confidence of at least 0.95: 5 (`n-compound-head-ambiguous`), 2 (`heading-titlecase`, both on noun targets) and 0 (`n-named-state`), 7 in all.
+
+### Headroom of the new tranches
+
+Headroom is 100% minus the target accuracy (derived from the table above, not a new measurement): 40.0% for `n-compound-head-ambiguous` (40 of 100 target errors), 15.8% for `heading-titlecase`
+(15 of 95; 20.0% of the noun targets and 11.1% of the imperative targets) and 10.0% for `n-named-state` (10 of 100). The 95% intervals are 15 to 19 points wide for the first two shapes
+and 12 points for `n-named-state`, so a difference of a few items between variants is inside the interval.
 
 ## Run table
 

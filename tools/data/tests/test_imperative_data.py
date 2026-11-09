@@ -17,6 +17,7 @@ import check_leakage
 import common
 import imperative_data as idata
 import shapes_dev as sd
+import shapes_dev_extra as sx
 import test_shapes_dev as base
 
 GOOD = [
@@ -671,6 +672,140 @@ class NearDuplicateGateTests(unittest.TestCase):
         rows, failures, _ = self.run_check("imperative", "Stop the pump when the oil level drops below the line on the tank gauge")
         self.assertEqual([("imperative", "eval-set", 1, 0, 0, 0)], rows)
         self.assertEqual(0, failures)
+
+
+class NewTrancheRebuildTests(Mini):
+    """The three newer tranches of the shapes development set (committed) must not reject their own documents and sentences when
+    shapes_dev_extra.py reruns `candidates` from the committed repository, while the imperative builder keeps its source disjoint from them."""
+
+    TRANCHE_TEXT = "Check the pump valve before each long trip ."
+    OLD_TEXT = "Open the access door and inspect the seal before each flight today ."
+
+    def write_data(self):
+        super().write_data()
+        shapes_dev = os.path.join(self.data, "eval", "shapes-dev")
+        for name in ("compound-head", "headings", "named-state"):
+            base.corpus_file(os.path.join(shapes_dev, name + ".tsv"), [("army-%s-doc" % name, self.tranche_text(name))])
+            base.table_file(os.path.join(shapes_dev, name + "-sources.tsv"), sd.SOURCE_COLUMNS,
+                            [self.source_row("army-%s-doc" % name, "https://archive.org/download/%sDoc/%sDoc_djvu.txt" % (name, name))])
+
+    def tranche_text(self, name):
+        return self.TRANCHE_TEXT if name == "compound-head" else "Test the %s seal again before each long trip ." % name
+
+    def sound_draft(self, documents, changes=None):
+        """W/sources-draft.tsv and W/text of `documents` with the true hashes and sentence counts; `changes` {column: value} edits the first row."""
+        rows = []
+        for source_id in sorted(documents):
+            self.write_text_doc(source_id, documents[source_id])
+            row = self.source_row(source_id, sentences=str(len([t for t in documents[source_id] if t.strip()])))
+            row[sd.SOURCE_COLUMNS.index("text_sha256")] = common.sha256_file(os.path.join(self.root, "text", source_id + ".txt"))
+            rows.append(row)
+        for column, value in (changes or {}).items():
+            rows[0][sd.SOURCE_COLUMNS.index(column)] = value
+        common.write_text(os.path.join(self.root, "sources-draft.tsv"), ["\t".join(sd.SOURCE_COLUMNS)] + ["\t".join(r) for r in rows])
+
+    def scan(self, documents, changes=None):
+        self.sound_draft(documents, changes)
+        texts = [t for sentences in documents.values() for t in sentences]
+        adjudicate.write_rows(sd.shared_path(self.work, "tokens.tsv"), ("text", "sentences", "tokens"),
+                              [(t, 1, " ".join(base.simple_tokens(t))) for t in sorted(set(texts))])
+        lex = sd.lexicon_of(self.data)
+        vocab = {w.lower() for t in texts for w in base.simple_tokens(t)} | set(lex)
+        return sx.scan_units(self.work, self.data, "sentence", include_ud=False, lex=lex, vocab=vocab)
+
+    def test_the_extra_builder_reference_and_index_leave_out_the_tranches_it_builds(self):
+        reference = sx.Reference(self.data)
+        self.assertEqual(sx.Reference(self.data).reason(self.OLD_TEXT), "equals-reference")           # the earlier tranches still count
+        for name in ("compound-head", "headings", "named-state"):
+            self.assertIsNone(reference.reason(self.tranche_text(name)), name)
+            self.assertEqual(idata.EQUALS_SHAPES_DEV, idata.ShapesDevSentences(self.data).reason(self.tranche_text(name)), name)
+        exclusions = sd.load_exclusions(self.work, self.data)
+        for name in ("compound-head", "headings", "named-state"):
+            self.assertIsNone(idata.document_rejection(
+                idata.used_index(self.data, exclusions, sx.used_tables(self.data), idata.BASE_SHAPES_DEV_TABLES), "army-%s-doc" % name), name)
+            self.assertIsNotNone(idata.document_rejection(idata.used_index(self.data, exclusions), "army-%s-doc" % name), name)
+
+    def test_rebuilding_a_tranche_from_the_committed_state_reproduces_its_candidates(self):
+        # documents and sentences that the committed tranches hold are found again as candidates (document ids, URLs and sentences alike) ...
+        documents = {"army-%s-doc" % name: [self.tranche_text(name)] for name in ("compound-head", "headings", "named-state")}
+        scan = self.scan(documents)
+        self.assertEqual({}, scan.rejected)
+        self.assertEqual([], scan.problems)
+        self.assertEqual(sorted(t for ts in documents.values() for t in ts), sorted(text for _, _, text, _ in scan.units))
+        self.assertEqual(0, sum(scan.drops.values()))
+
+    def test_the_earlier_tranches_and_the_imperative_source_still_exclude(self):
+        with self.assertRaises(sx.DraftError) as caught:                                   # a document of sources.tsv in the draft fails closed
+            self.scan({"army-dev-doc": ["Check the pump valve before each long trip ."], "army-new": [self.OLD_TEXT]})
+        self.assertIn("army-dev-doc: already used", str(caught.exception))
+        scan = self.scan({"army-new": [self.OLD_TEXT, "Inspect the fuel strainer before each long trip ."]})
+        self.assertEqual([], [text for _, _, text, _ in scan.units])                       # dev.tsv and imperative.tsv sentences are dropped
+        self.assertEqual(2, sum(scan.drops.values()))
+
+    def test_the_imperative_builder_stays_disjoint_from_every_tranche(self):
+        rows, report, rejected, _ = self.collect({"army-a": GOOD + [self.TRANCHE_TEXT]})
+        self.assertNotIn(self.TRANCHE_TEXT, [r["text"] for r in rows])
+        self.assertIn(idata.EQUALS_SHAPES_DEV + " 1", "\n".join(report))
+        rows, report, rejected, _ = self.collect({"army-named-state-doc": GOOD})
+        self.assertIn("army-named-state-doc", rejected)
+
+    # --- the source and license gate: `preflight`, `candidates` and `build` fail closed on `imperative_data.draft_problems` (no option waives it)
+
+    DOCUMENTS = {"army-new": ["Check the pump valve before each long trip ."]}
+    BAD_ROWS = {
+        "malformed-hash": ({"raw_sha256": "abc"}, "SHA-256"),
+        "malformed-id": ({"source_id": "army new"}, "source_id"),
+        "malformed-url": ({"url": "ftp://example.gov/x"}, "not an http"),
+        "wrong-sentence-count": ({"sentences": "9"}, "sentence count"),
+        "non-public-domain-license": ({"license_basis": "CC BY 4.0"}, "license_basis"),
+        "share-alike-license": ({"license_basis": "US public domain; CC BY-SA text"}, "share-alike"),
+        "faa-title": ({"title": "FAA Handbook of Flying"}, "FAA"),
+        "faa-url": ({"url": "https://www.faa.gov/x.pdf"}, "FAA"),
+    }
+
+    def test_a_sound_draft_passes(self):
+        self.assertEqual(1, len(self.scan(self.DOCUMENTS).units))
+
+    def test_scan_refuses_each_unsound_row(self):
+        for name, (changes, message) in self.BAD_ROWS.items():
+            with self.subTest(name), self.assertRaises(sx.DraftError) as caught:
+                self.scan(self.DOCUMENTS, changes)
+            self.assertIn(message, str(caught.exception))
+
+    def test_candidates_and_preflight_refuse_with_exit_code_one_and_write_nothing(self):
+        for name, (changes, message) in self.BAD_ROWS.items():
+            self.sound_draft(self.DOCUMENTS, changes)
+            for command in (["candidates", "--tranche", "named-state"], ["preflight"]):
+                err = io.StringIO()
+                with self.subTest(name, command=command[0]), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+                    self.assertEqual(1, sx.main(["--work", self.root, "--data-dir", self.data] + command + ["--no-ud"]))
+                    self.assertIn("refused", err.getvalue())
+                    self.assertIn(message, err.getvalue())
+            self.assertFalse(os.path.exists(os.path.join(self.root, sd.ROUNDS_DIR)), name)
+
+    def test_build_refuses_each_unsound_row_before_anything_is_written(self):
+        out_dir = os.path.join(self.temp, "out")
+        os.makedirs(out_dir)
+        for name, (changes, message) in self.BAD_ROWS.items():
+            self.sound_draft(self.DOCUMENTS, changes)
+            with self.subTest(name), mock.patch.object(sx, "read_round", return_value=([], {}, {})), self.assertRaises(sx.DraftError) as caught:
+                sx.build(self.work, "named-state", out_dir, allow_short=True, data_dir=self.data)
+            self.assertIn(message, str(caught.exception))
+            self.assertEqual([], os.listdir(out_dir), name)
+
+    def test_build_command_reports_the_refusal(self):
+        self.sound_draft(self.DOCUMENTS, {"license_basis": "CC BY 4.0"})
+        err = io.StringIO()
+        with mock.patch.object(sx, "read_round", return_value=([], {}, {})), contextlib.redirect_stderr(err):
+            code = sx.main(["--work", self.root, "--data-dir", self.data, "build", "--tranche", "named-state", "--out-dir", self.temp, "--allow-short"])
+        self.assertEqual(1, code)
+        self.assertIn("build refused (named-state)", err.getvalue())
+        self.assertIn("license_basis", err.getvalue())
+
+    def test_a_used_document_in_the_draft_is_refused_but_a_committed_tranche_document_is_not(self):
+        with self.assertRaises(sx.DraftError):
+            self.scan({"army-dev-doc": self.DOCUMENTS["army-new"]})
+        self.assertEqual(1, len(self.scan({"army-named-state-doc": self.DOCUMENTS["army-new"]}).units))
 
 
 if __name__ == "__main__":

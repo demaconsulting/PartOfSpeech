@@ -57,6 +57,56 @@ public class PartOfSpeechDataTests
     private const string ShapesDevHardSources = ShapesDevFolder + "/hard-sources.tsv";
 
     /// <summary>
+    ///     The corpus file of the compound-head tranche of the hard-shape development set, relative to the data folder.
+    /// </summary>
+    private const string ShapesDevCompoundHeadCorpus = ShapesDevFolder + "/compound-head.tsv";
+
+    /// <summary>
+    ///     The corpus file of the headings tranche of the hard-shape development set, relative to the data folder.
+    /// </summary>
+    private const string ShapesDevHeadingsCorpus = ShapesDevFolder + "/headings.tsv";
+
+    /// <summary>
+    ///     The corpus file of the named-state tranche of the hard-shape development set, relative to the data folder.
+    /// </summary>
+    private const string ShapesDevNamedStateCorpus = ShapesDevFolder + "/named-state.tsv";
+
+    /// <summary>
+    ///     The source table of the compound-head tranche, relative to the data folder.
+    /// </summary>
+    private const string ShapesDevCompoundHeadSources = ShapesDevFolder + "/compound-head-sources.tsv";
+
+    /// <summary>
+    ///     The source table of the headings tranche, relative to the data folder.
+    /// </summary>
+    private const string ShapesDevHeadingsSources = ShapesDevFolder + "/headings-sources.tsv";
+
+    /// <summary>
+    ///     The source table of the named-state tranche, relative to the data folder.
+    /// </summary>
+    private const string ShapesDevNamedStateSources = ShapesDevFolder + "/named-state-sources.tsv";
+
+    /// <summary>
+    ///     The most targets of one lemma in a new tranche.
+    /// </summary>
+    private const int ShapesDevNewLemmaCap = 4;
+
+    /// <summary>
+    ///     The most controls of one lemma in a new tranche.
+    /// </summary>
+    private const int ShapesDevNewControlLemmaCap = 2;
+
+    /// <summary>
+    ///     The most targets of one source document in the headings tranche.
+    /// </summary>
+    private const int ShapesDevHeadingsDocumentCap = 12;
+
+    /// <summary>
+    ///     The largest share of the targets of the compound-head tranche that end in a lower-case <c>ing</c>.
+    /// </summary>
+    private const double ShapesDevCompoundHeadMaxIngShare = 0.25;
+
+    /// <summary>
     ///     The folder of the imperative training source, relative to the data folder.
     /// </summary>
     private const string ImperativeFolder = "imperative";
@@ -158,7 +208,34 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static readonly string[] EvaluationCorpora =
     {
-        "open/dev.tsv", "open/test.tsv", "eval/ste-challenge/test.tsv", ShapesDevCorpus, ShapesDevHardCorpus
+        "open/dev.tsv", "open/test.tsv", "eval/ste-challenge/test.tsv", ShapesDevCorpus, ShapesDevHardCorpus,
+        ShapesDevCompoundHeadCorpus, ShapesDevHeadingsCorpus, ShapesDevNamedStateCorpus
+    };
+
+    /// <summary>
+    ///     The three new tranches of the hard-shape development set: the name (the file stem and the id infix), the only
+    ///     shape of the tranche, the tranche of the trainer, and the quota groups (name, floor and cap of the items of a group).
+    ///     A group is the role (<c>target</c> or <c>control</c>) and, for the headings, the kind of a target.
+    /// </summary>
+    private static readonly ShapesDevNewTranche[] ShapesDevNewTranches =
+    {
+        new(
+            "compound-head", "n-compound-head-ambiguous", ShapesDevTranche.CompoundHead, ShapesDevCompoundHeadCorpus, ShapesDevCompoundHeadSources,
+            new[] { ("target", 80, 100), ("control", 15, 20) }),
+        new(
+            "headings", "heading-titlecase", ShapesDevTranche.Headings, ShapesDevHeadingsCorpus, ShapesDevHeadingsSources,
+            new[] { ("noun", 40, 50), ("imperative", 40, 50), ("control", 12, 20) }),
+        new(
+            "named-state", "n-named-state", ShapesDevTranche.NamedState, ShapesDevNamedStateCorpus, ShapesDevNamedStateSources,
+            new[] { ("target", 40, 100), ("control", 12, 20) })
+    };
+
+    /// <summary>
+    ///     The words that the script of the new tranches must not name: a weights file, a decoder, a tagger or the shapes evaluation.
+    /// </summary>
+    private static readonly string[] ModelNames =
+    {
+        "weights.bin", "Resources/weights", "PerceptronModel", "FeatureExtractor", "PartOfSpeechTagger", "ITagger", "eval-shapes", "ShapesDevEvaluator"
     };
 
     /// <summary>
@@ -176,7 +253,9 @@ public class PartOfSpeechDataTests
     private static readonly (string Table, string IdColumn)[] SourceTables =
     {
         ("open/sources.tsv", "source_id"), ("eval/gold-v2/sources.tsv", "doc_id"), ("silver/sources.tsv", "source_id"),
-        (ShapesDevFolder + "/sources.tsv", "source_id"), (ShapesDevHardSources, "source_id"), (ImperativeSources, "source_id")
+        (ShapesDevFolder + "/sources.tsv", "source_id"), (ShapesDevHardSources, "source_id"),
+        (ShapesDevCompoundHeadSources, "source_id"), (ShapesDevHeadingsSources, "source_id"), (ShapesDevNamedStateSources, "source_id"),
+        (ImperativeSources, "source_id")
     };
 
     /// <summary>
@@ -1140,8 +1219,8 @@ public class PartOfSpeechDataTests
             var evaluationSets = rows.Where(row => row[0] == training).Select(row => row[1]).Distinct(StringComparer.Ordinal);
             var expected = new[]
             {
-                "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-hard", "shapes-probe", "ste-challenge", "ud-ewt-dev",
-                "ud-ewt-test", "ud-ewt-train"
+                "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-compound-head", "shapes-dev-hard", "shapes-dev-headings",
+                "shapes-dev-named-state", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train"
             };
             Assert.Empty(expected.Except(evaluationSets));
         }
@@ -1860,6 +1939,455 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
+    ///     Proves that the header of every new tranche of the hard-shape development set announces its own tranche and the dev
+    ///     split, that no comment of the file carries the numbers that the selection used (no <c>q</c> and no tagger output),
+    ///     and that every sentence id has the tranche infix and four digits.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevNew_Headers_AnnounceTheTrancheAndTheDevSplit()
+    {
+        // Arrange: the comment keys that a file of the new tranches may carry (the kind belongs to the headings only)
+        var allowed = new[]
+        {
+            "columns", "corpus", "file", "judged word", "lemma", "license", "origin", "role", "selection", "sent_id", "shape",
+            "source_id", "status", "status flags", "target", "text", "use"
+        };
+        var problems = new List<string>();
+
+        foreach (var tranche in ShapesDevNewTranches)
+        {
+            var lines = File.ReadAllLines(DataFiles.Data(tranche.Corpus));
+            var header = lines.TakeWhile(line => line.Length > 0).ToList();
+            var keys = lines.Where(DataFiles.IsComment)
+                .Select(line => line[2..].Split(new[] { " = " }, 2, StringSplitOptions.None)[0])
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            // Act: find the corpus, use and selection lines, the unexpected comment keys and the malformed ids
+            var corpus = header.FirstOrDefault(line => line.StartsWith("# corpus = ", StringComparison.Ordinal));
+            var use = header.FirstOrDefault(line => line.StartsWith("# use = ", StringComparison.Ordinal));
+            var selection = header.FirstOrDefault(line => line.StartsWith("# selection = ", StringComparison.Ordinal));
+            if (corpus == null || !corpus.Contains(tranche.Name + " tranche", StringComparison.Ordinal) || !corpus.Contains("dev split", StringComparison.Ordinal))
+            {
+                problems.Add($"{tranche.Name}: the corpus line does not announce '{tranche.Name} tranche' and 'dev split'");
+            }
+
+            if (use == null || !use.Contains("development only", StringComparison.Ordinal))
+            {
+                problems.Add($"{tranche.Name}: the use line does not say 'development only'");
+            }
+
+            if (selection == null || selection.Any(char.IsDigit))
+            {
+                problems.Add($"{tranche.Name}: the selection line is missing or carries a number");
+            }
+
+            var permitted = tranche.Name == "headings" ? allowed.Append("kind") : allowed;
+            problems.AddRange(keys.Except(permitted).Select(key => $"{tranche.Name}: the comment key '{key}' is not documented"));
+            problems.AddRange(keys.Where(key => key == "q" || key.StartsWith("q_", StringComparison.Ordinal)).Select(key => $"{tranche.Name}: the comment key '{key}' carries a selection number"));
+
+            var pattern = new Regex($@"^shapes-dev-{Regex.Escape(tranche.Name)}-\d{{4}}$", RegexOptions.CultureInvariant);
+            var ids = ReadBlockComments(tranche.Corpus);
+            problems.AddRange(ids.Where(block => !pattern.IsMatch(block.Id)).Select(block => $"{tranche.Name}: {block.Id}: the id is not shapes-dev-{tranche.Name}-NNNN"));
+            if (ids.Count == 0)
+            {
+                problems.Add($"{tranche.Name}: no sentence was found");
+            }
+        }
+
+        // Assert: every tranche announces itself and no problem was found
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that every item of the new tranches has its comments in the stated order, the only shape of its tranche, a
+    ///     known role, a target inside the sentence, the origin <c>real</c>, a lemma, the gold tag of its role (and, for a heading,
+    ///     of its kind), a judged word that is never disputed, and tokens that rejoin to the text.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevNew_Items_AreWellFormedRealAndNeverDisputed()
+    {
+        // Arrange: the order of the comments after the sentence id, the source and the text
+        var order = new[] { "sent_id", "source_id", "text", "shape", "role", "target", "lemma", "origin" };
+        var problems = new List<string>();
+        var total = 0;
+
+        foreach (var tranche in ShapesDevNewTranches)
+        {
+            var items = ShapesDevNewItems(tranche);
+            var sentences = DataFiles.ReadCorpus(DataFiles.Data(tranche.Corpus)).ToList();
+            var comments = ReadBlockComments(tranche.Corpus);
+            if (items.Count != sentences.Count || comments.Count != sentences.Count)
+            {
+                problems.Add($"{tranche.Name}: {items.Count} items, {sentences.Count} sentences and {comments.Count} comment blocks differ");
+                continue;
+            }
+
+            var expectedOrder = tranche.Name == "headings" ? order.Append("kind").ToArray() : order;
+
+            // Act: check every item against the format, the gold tag rules and its sentence
+            for (var i = 0; i < items.Count; i++)
+            {
+                total++;
+                var item = items[i];
+                var sentence = sentences[i];
+                var where = $"{tranche.Name}: {sentence.SentenceId}";
+                if (!comments[i].Keys.SequenceEqual(expectedOrder, StringComparer.Ordinal))
+                {
+                    problems.Add($"{where}: the comments are '{string.Join(", ", comments[i].Keys)}', expected '{string.Join(", ", expectedOrder)}'");
+                }
+
+                if (item.Shape != tranche.Shape)
+                {
+                    problems.Add($"{where}: the shape is '{item.Shape}', expected '{tranche.Shape}'");
+                }
+
+                if (item.Role != "target" && item.Role != "control")
+                {
+                    problems.Add($"{where}: the role '{item.Role}' is not target or control");
+                }
+
+                if (item.Target < 0 || item.Target >= sentence.Tokens.Count)
+                {
+                    problems.Add($"{where}: the target {item.Target} is not a token of the sentence");
+                    continue;
+                }
+
+                if (item.Origin != "real" || item.SourceId == ShapesDevSets.AuthoredSourceId)
+                {
+                    problems.Add($"{where}: the origin is '{item.Origin}', expected real from a source document");
+                }
+
+                if (item.Lemma.Length == 0)
+                {
+                    problems.Add($"{where}: the lemma is empty");
+                }
+
+                var token = sentence.Tokens[item.Target];
+                if (!IsNewGoldTag(tranche, item, token[1]))
+                {
+                    problems.Add($"{where}: the judged word '{token[0]}' is {token[1]}, which is not the gold tag of a {item.Role}{(item.Kind.Length > 0 ? " of kind " + item.Kind : string.Empty)}");
+                }
+
+                if (DataFiles.BaseStatus(token[2]) == "disputed")
+                {
+                    problems.Add($"{where}: the judged word '{token[0]}' is disputed");
+                }
+
+                if (Regex.Replace(sentence.Text, @"\s+", string.Empty) != string.Concat(sentence.Tokens.Select(row => row[0])))
+                {
+                    problems.Add($"{where}: the tokens do not rejoin to the text");
+                }
+            }
+        }
+
+        // Assert: the tranches are not empty and no problem was found
+        Assert.True(total > 300);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the committed new tranches meet their documented quotas: the items of every group (role, and for the
+    ///     headings the kind of a target) between the floor and the cap, at most four targets per lemma, at most two controls per
+    ///     lemma, at most 12 heading targets per source document, no heading line that ends in a page number or a page range, and at most 25 percent of the compound-head targets ending in
+    ///     a lower-case <c>ing</c>.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevNew_Quotas_AreMetByTheCommittedTranches()
+    {
+        var problems = new List<string>();
+
+        foreach (var tranche in ShapesDevNewTranches)
+        {
+            // Arrange: the items, grouped by the quota group of the tranche
+            var items = ShapesDevNewItems(tranche);
+            var groups = items.GroupBy(item => QuotaGroup(tranche, item)).ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+
+            // Act: check the floor and the cap of every group and the caps per lemma, per document and for the ing share
+            foreach (var (group, floor, cap) in tranche.Quotas)
+            {
+                var count = groups.GetValueOrDefault(group);
+                if (count < floor || count > cap)
+                {
+                    problems.Add($"{tranche.Name}: {count} items in the group '{group}', expected {floor} to {cap}");
+                }
+            }
+
+            problems.AddRange(groups.Keys.Except(tranche.Quotas.Select(quota => quota.Group)).Select(group => $"{tranche.Name}: the group '{group}' has no quota"));
+
+            var targets = items.Where(item => item.Role == "target").ToList();
+            problems.AddRange(targets.GroupBy(item => item.Lemma, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > ShapesDevNewLemmaCap)
+                .Select(group => $"{tranche.Name}: the lemma '{group.Key}' has {group.Count()} targets, the cap is {ShapesDevNewLemmaCap}"));
+            problems.AddRange(items.Where(item => item.Role == "control").GroupBy(item => item.Lemma, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > ShapesDevNewControlLemmaCap)
+                .Select(group => $"{tranche.Name}: the lemma '{group.Key}' has {group.Count()} controls, the cap is {ShapesDevNewControlLemmaCap}"));
+
+            if (tranche.Name == "headings")
+            {
+                problems.AddRange(targets.GroupBy(item => item.SourceId, StringComparer.Ordinal)
+                    .Where(group => group.Count() > ShapesDevHeadingsDocumentCap)
+                    .Select(group => $"{tranche.Name}: the document {group.Key} has {group.Count()} targets, the cap is {ShapesDevHeadingsDocumentCap}"));
+
+                // A heading line is not a table-of-contents entry: it does not end in a page number or a page range (12, 4-8)
+                problems.AddRange(items
+                    .Where(item => Regex.IsMatch(string.Join(" ", item.Tokens), @"(?:^|\s)\d{1,4}(?:\s?[-\u2013\u2014]\s?\d{1,4})?$", RegexOptions.CultureInvariant))
+                    .Select(item => $"{tranche.Name}: {item.Id} ends in a page number or a page range"));
+            }
+
+            if (tranche.Name == "compound-head")
+            {
+                var ing = targets.Count(item => item.Tokens[item.Target].EndsWith("ing", StringComparison.Ordinal));
+                if (ing > ShapesDevCompoundHeadMaxIngShare * targets.Count)
+                {
+                    problems.Add($"{tranche.Name}: {ing} of {targets.Count} targets end in ing, the cap is {ShapesDevCompoundHeadMaxIngShare:P0}");
+                }
+            }
+        }
+
+        // Assert: no quota is missed
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the library tokenizer reproduces the stored tokens of every sentence of the new tranches: one sentence,
+    ///     the same tokens.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevNew_Tokens_AreReproducedByTheTokenizer()
+    {
+        var problems = new List<string>();
+        var total = 0;
+
+        foreach (var tranche in ShapesDevNewTranches)
+        {
+            // Arrange: the sentences of the file
+            var sentences = DataFiles.ReadCorpus(DataFiles.Data(tranche.Corpus)).ToList();
+            total += sentences.Count;
+
+            // Act: tokenize the text of every sentence and compare with the stored tokens
+            foreach (var sentence in sentences)
+            {
+                var tokenized = Tokenizer.Tokenize(sentence.Text);
+                var actual = tokenized.SelectMany(part => part.Tokens).Select(token => token.Text).ToArray();
+                var stored = sentence.Tokens.Select(token => token[0]).ToArray();
+                if (tokenized.Count != 1 || !actual.SequenceEqual(stored, StringComparer.Ordinal))
+                {
+                    problems.Add($"{tranche.Name}: {sentence.SentenceId}: the tokenizer gives {tokenized.Count} sentence(s) and {actual.Length} tokens, the file has {stored.Length}");
+                }
+            }
+        }
+
+        // Assert: the sets are not empty and every sentence is reproduced
+        Assert.True(total > 300);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the source table of every new tranche lists exactly the documents of its sentences with their counts,
+    ///     that every document has a US federal-work or public-domain basis, that no row mentions FAA material or a share-alike
+    ///     or Wikipedia text, and that no excluded document (by id or normalized URL) is used.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevNew_Sources_AreListedOpenAndNotExcluded()
+    {
+        // Arrange: the exclusions and the rules for a row
+        var excluded = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/excluded-sources.tsv"));
+        var excludedIds = new HashSet<string>(excluded.Column("source_id"), StringComparer.Ordinal);
+        var excludedUrls = new HashSet<string>(excluded.Column("url").Select(NormalizeUrl), StringComparer.Ordinal);
+        var faa = new Regex(@"faa\.gov|\bFAA\b|Federal Aviation", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var openBases = new[] { "US federal government work", "US public domain" };
+        var problems = new List<string>();
+        var documents = 0;
+
+        foreach (var tranche in ShapesDevNewTranches)
+        {
+            // Act: compare the listed documents and counts with the sentences and look at every row
+            var counts = DataFiles.ReadCorpus(DataFiles.Data(tranche.Corpus))
+                .GroupBy(sentence => sentence.SourceId, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+            var table = DataFiles.ReadTable(DataFiles.Data(tranche.Sources));
+            var listed = table.Rows.ToDictionary(row => table.Cell(row, "source_id"), row => table.Cell(row, "sentences"), StringComparer.Ordinal);
+            documents += counts.Count;
+            problems.AddRange(counts.Keys.Except(listed.Keys).Select(document => $"{tranche.Name}: not listed: {document}")
+                .Concat(listed.Keys.Except(counts.Keys).Select(document => $"{tranche.Name}: listed but unused: {document}"))
+                .Concat(counts.Where(count => listed.TryGetValue(count.Key, out var cell) && cell != count.Value.ToString(CultureInfo.InvariantCulture))
+                    .Select(count => $"{tranche.Name}: the count of {count.Key} differs from the table")));
+            if (table.Rows.Count != listed.Count)
+            {
+                problems.Add($"{tranche.Name}: a document is listed twice");
+            }
+
+            foreach (var row in table.Rows)
+            {
+                var id = table.Cell(row, "source_id");
+                if (!openBases.Any(basis => table.Cell(row, "license_basis").StartsWith(basis, StringComparison.Ordinal)))
+                {
+                    problems.Add($"{tranche.Name}: {id}: the license basis is not a US federal work or US public domain");
+                }
+
+                if (row.Any(cell => faa.IsMatch(cell)))
+                {
+                    problems.Add($"{tranche.Name}: {id}: the row mentions FAA material");
+                }
+
+                if (RestrictedLicenseText.IsMatch(table.Cell(row, "license_basis")) || RestrictedLicenseText.IsMatch(table.Cell(row, "url")))
+                {
+                    problems.Add($"{tranche.Name}: {id}: the row names a share-alike, Wikipedia or other restricted license");
+                }
+
+                if (excludedIds.Contains(id) || excludedUrls.Contains(NormalizeUrl(table.Cell(row, "url"))))
+                {
+                    problems.Add($"{tranche.Name}: {id}: the document is excluded");
+                }
+            }
+        }
+
+        // Assert: the tables have documents and no problem was found
+        Assert.True(documents > 30);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the committed leakage report of every new tranche covers every other evaluation set, that the rows of the
+    ///     standard and the hard tranche record no document, exact sentence or near-duplicate overlap, that the rows of the other
+    ///     new tranches record no exact or near-duplicate sentence (shared documents are reported, not gated), that no row shares
+    ///     a word 5-gram with the shape probe, and that every row counts the sentences of the tranche.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevNew_LeakageReports_RecordNoOverlap()
+    {
+        var problems = new List<string>();
+
+        foreach (var tranche in ShapesDevNewTranches)
+        {
+            // Arrange: read the report (evaluation set, dev sentences, documents, exact, near duplicates, probe 5-grams)
+            var path = ShapesDevFolder + "/" + tranche.Name + "-leakage-report.tsv";
+            var rows = File.ReadLines(DataFiles.Data(path))
+                .Where(line => line.Length > 0 && !DataFiles.IsComment(line))
+                .Select(line => line.Split('\t'))
+                .ToList();
+            var others = ShapesDevNewTranches.Where(other => other.Name != tranche.Name).Select(other => "shapes-dev-" + other.Name).ToList();
+            var expected = new[] { "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-hard", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train" }
+                .Concat(others)
+                .OrderBy(name => name, StringComparer.Ordinal)
+                .ToList();
+            var sentenceCount = ShapesDevNewItems(tranche).Count.ToString(CultureInfo.InvariantCulture);
+
+            // Act: find the sets that the report misses and the rows that report an overlap
+            if (rows.Any(row => row.Length != 6))
+            {
+                problems.Add($"{tranche.Name}: a row of the leakage report does not have 6 cells");
+                continue;
+            }
+
+            if (!rows.Select(row => row[0]).OrderBy(name => name, StringComparer.Ordinal).SequenceEqual(expected, StringComparer.Ordinal))
+            {
+                problems.Add($"{tranche.Name}: the report covers '{string.Join(", ", rows.Select(row => row[0]))}', expected '{string.Join(", ", expected)}'");
+            }
+
+            foreach (var row in rows)
+            {
+                var sharesDocuments = others.Contains(row[0]);
+                if (row[1] != sentenceCount)
+                {
+                    problems.Add($"{tranche.Name}: {row[0]}: {row[1]} sentences, the tranche has {sentenceCount}");
+                }
+
+                if (sharesDocuments ? !int.TryParse(row[2], NumberStyles.None, CultureInfo.InvariantCulture, out _) : row[2] != "0")
+                {
+                    problems.Add($"{tranche.Name}: {row[0]}: the document overlaps are '{row[2]}'");
+                }
+
+                if (row[3] != "0" || row[4] != "0")
+                {
+                    problems.Add($"{tranche.Name}: {row[0]}: exact sentence overlaps '{row[3]}' or near duplicates '{row[4]}'");
+                }
+
+                if (row[0] == "shapes-probe" && row[5] != "0")
+                {
+                    problems.Add($"{tranche.Name}: the probe 5-gram sentences are '{row[5]}'");
+                }
+            }
+        }
+
+        // Assert: nothing overlaps
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves, reading the files themselves, that no sentence (of any length) of a new tranche is a sentence of any other
+    ///     evaluation set, of another new tranche or of the imperative training source, and that no source document of a new
+    ///     tranche is a document of any other evaluation set (the standard and the hard tranche included) or of a training
+    ///     source; documents that the new tranches share among themselves are allowed.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevNew_Sentences_AreDisjointFromTheOtherEvaluationSets()
+    {
+        // Arrange: the evaluation items, the training documents and the sentence keys of the imperative source
+        var evaluation = EvaluationItems();
+        var trainingDocuments = new HashSet<string>(
+            TrainingCorpora.SelectMany(corpus => DataFiles.ReadCorpus(DataFiles.Data(corpus))).Select(sentence => sentence.SourceId),
+            StringComparer.Ordinal);
+        var imperativeKeys = new HashSet<string>(
+            DataFiles.ReadCorpus(DataFiles.Data(ImperativeCorpus)).Select(sentence => DataFiles.SentenceKey(sentence.Text)),
+            StringComparer.Ordinal);
+        var newCorpora = ShapesDevNewTranches.Select(tranche => tranche.Corpus).ToList();
+        var problems = new List<string>();
+        var total = 0;
+
+        foreach (var tranche in ShapesDevNewTranches)
+        {
+            var sentences = DataFiles.ReadCorpus(DataFiles.Data(tranche.Corpus)).ToList();
+            var documents = new HashSet<string>(sentences.Select(sentence => sentence.SourceId), StringComparer.Ordinal);
+            var keys = new HashSet<string>(sentences.Select(sentence => DataFiles.SentenceKey(sentence.Text)), StringComparer.Ordinal);
+            total += sentences.Count;
+
+            // Act: find the shared sentences (any set) and the shared documents (any set but the new tranches)
+            problems.AddRange(evaluation
+                .Where(item => item.Set != tranche.Corpus)
+                .Where(item => keys.Contains(DataFiles.SentenceKey(item.Text)) || (!newCorpora.Contains(item.Set) && documents.Contains(item.Document)))
+                .Select(item => $"{tranche.Name}: {item.Set}: {item.Document} shares a sentence or a document"));
+            problems.AddRange(sentences
+                .Where(sentence => imperativeKeys.Contains(DataFiles.SentenceKey(sentence.Text)))
+                .Select(sentence => $"{tranche.Name}: {sentence.SentenceId} is a sentence of the imperative source"));
+            problems.AddRange(documents
+                .Where(trainingDocuments.Contains)
+                .Select(document => $"{tranche.Name}: {document} is a training document"));
+        }
+
+        // Assert: the sets are not empty, the hard tranche is among the sets that were compared and nothing is shared
+        Assert.True(total > 300);
+        Assert.True(evaluation.Count > 5000);
+        Assert.True(trainingDocuments.Count > 1000);
+        Assert.Contains(evaluation, item => item.Set == ShapesDevHardCorpus);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the selection of the new tranches is independent of the PartOfSpeech model: the script
+    ///     (<c>shapes_dev_extra.py</c>) names no weights file, decoder, tagger or shapes evaluation, never opens the shape probe, and
+    ///     does not read gold v2 or the challenge set directly (the held-out sets reach it only through the opaque keys of
+    ///     the shared filter).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ShapesDevNew_Selection_UsesNoPartOfSpeechModel()
+    {
+        // Arrange: the source of the script
+        var script = File.ReadAllText(DataFiles.Repository("tools/data/shapes_dev_extra.py"));
+        var heldOut = new[] { "probe.tsv", "sentence_column", "probe_sentences", "gold-v2", "gold_v2", "eval/gold", "ste-challenge", "ste_challenge", "eval/ste" };
+
+        // Act: find the forbidden names
+        var models = ModelNames.Where(word => script.Contains(word, StringComparison.Ordinal)).ToList();
+        var reads = heldOut.Where(word => script.Contains(word, StringComparison.Ordinal)).ToList();
+
+        // Assert: the script is not empty, uses no model and reads no held-out file
+        Assert.True(script.Length > 10000);
+        Assert.Empty(models);
+        Assert.Empty(reads);
+    }
+
+    /// <summary>
     ///     Proves that the header of the imperative training source announces a training file (and no development use), and
     ///     that the committed file meets the documented quotas: 600 to 900 sentences with sequential ids, token 0 of every
     ///     sentence a VERB whose lower-case form is listed in the lexicon as both noun and verb, every token <c>unanimous</c>
@@ -1986,6 +2514,7 @@ public class PartOfSpeechDataTests
         {
             ("open/sources.tsv", "source_id"), ("eval/gold-v2/sources.tsv", "doc_id"), ("silver/sources.tsv", "source_id"),
             ("masc/sources.tsv", "source_id"), (ShapesDevFolder + "/sources.tsv", "source_id"), (ShapesDevHardSources, "source_id"),
+            (ShapesDevCompoundHeadSources, "source_id"), (ShapesDevHeadingsSources, "source_id"), (ShapesDevNamedStateSources, "source_id"),
             (ShapesDevFolder + "/excluded-sources.tsv", "source_id")
         };
         var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -2031,8 +2560,8 @@ public class PartOfSpeechDataTests
             .ToList();
         var expected = new[]
         {
-            "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-hard", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test",
-            "ud-ewt-train"
+            "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-compound-head", "shapes-dev-hard", "shapes-dev-headings",
+            "shapes-dev-named-state", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train"
         };
 
         // Act: find the sets that the report misses and the rows that report an overlap or a near duplicate
@@ -2782,6 +3311,94 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static List<ShapesDevItem> ShapesDevHardItems() =>
         ShapesDevSets.Parse(File.ReadAllLines(DataFiles.Data(ShapesDevHardCorpus)), ShapesDevHardCorpus);
+
+    /// <summary>
+    ///     Reads and validates the items of a new tranche with the parser of the trainer.
+    /// </summary>
+    private static List<ShapesDevItem> ShapesDevNewItems(ShapesDevNewTranche tranche) =>
+        ShapesDevSets.Parse(File.ReadAllLines(DataFiles.Data(tranche.Corpus)), tranche.Corpus, tranche.Tranche);
+
+    /// <summary>
+    ///     Reads the sentence id and the comment keys, in file order, of every sentence block of a corpus (the header block has no sentence id).
+    /// </summary>
+    private static List<(string Id, List<string> Keys)> ReadBlockComments(string corpus)
+    {
+        var blocks = new List<(string Id, List<string> Keys)>();
+        var keys = new List<string>();
+        var id = string.Empty;
+        foreach (var line in File.ReadLines(DataFiles.Data(corpus)).Concat(new[] { string.Empty }))
+        {
+            if (line.Length == 0)
+            {
+                if (keys.Contains("sent_id"))
+                {
+                    blocks.Add((id, keys));
+                }
+
+                keys = new List<string>();
+                id = string.Empty;
+            }
+            else if (DataFiles.IsComment(line))
+            {
+                var split = line.IndexOf(" = ", StringComparison.Ordinal);
+                if (split >= 0)
+                {
+                    keys.Add(line[2..split]);
+                    if (keys[^1] == "sent_id")
+                    {
+                        id = line[(split + 3)..];
+                    }
+                }
+            }
+        }
+
+        return blocks;
+    }
+
+    /// <summary>
+    ///     Determines whether a tag is the gold tag of an item of a new tranche: NOUN or PROPN for a target and VERB for a control
+    ///     of the compound-head and named-state tranches; for a heading, NOUN for a noun target, VERB for an imperative target and
+    ///     PROPN for a proper control.
+    /// </summary>
+    private static bool IsNewGoldTag(ShapesDevNewTranche tranche, ShapesDevItem item, string tag)
+    {
+        if (tranche.Name == "headings")
+        {
+            return item.Kind switch
+            {
+                "noun" => item.Role == "target" && tag == "NOUN",
+                "imperative" => item.Role == "target" && tag == "VERB",
+                "proper" => item.Role == "control" && tag == "PROPN",
+                _ => false
+            };
+        }
+
+        return item.Kind.Length == 0 && (item.Role == "target" ? tag is "NOUN" or "PROPN" : tag == "VERB");
+    }
+
+    /// <summary>
+    ///     Gets the quota group of an item of a new tranche: <c>control</c>, the kind of a heading target, or <c>target</c>.
+    /// </summary>
+    private static string QuotaGroup(ShapesDevNewTranche tranche, ShapesDevItem item)
+    {
+        if (item.Role == "control")
+        {
+            return "control";
+        }
+
+        return tranche.Name == "headings" ? item.Kind : "target";
+    }
+
+    /// <summary>
+    ///     A new tranche of the hard-shape development set and the quotas of its items.
+    /// </summary>
+    /// <param name="Name">The name of the tranche: the file stem and the infix of the sentence ids.</param>
+    /// <param name="Shape">The only shape id of the tranche.</param>
+    /// <param name="Tranche">The tranche of the trainer.</param>
+    /// <param name="Corpus">The corpus file, relative to the data folder.</param>
+    /// <param name="Sources">The source table, relative to the data folder.</param>
+    /// <param name="Quotas">The quota groups: name, floor and cap of the items of the group.</param>
+    private sealed record ShapesDevNewTranche(string Name, string Shape, ShapesDevTranche Tranche, string Corpus, string Sources, (string Group, int Floor, int Cap)[] Quotas);
 
     /// <summary>
     ///     Reads the sets, documents and sentences of all evaluation sets.
