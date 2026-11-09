@@ -97,7 +97,8 @@ Princeton University and LICENSEE agrees to preserve same.
 
 The weights embedded in the package (`Resources/weights.bin`) are the output of the Trainer tool of this repository
 (`tools/DemaConsulting.PartOfSpeech.Trainer`), which learned them from the open corpus (CC0 1.0), the written texts of
-MASC (CC BY 3.0 US, see the MASC section above) and the silver corpus (CC0 1.0). The tool, its settings
+MASC (CC BY 3.0 US, see the MASC section above), the silver corpus (CC0 1.0) and the imperative source (annotations and
+selection CC0 1.0, sentences from US federal government works, see below). The tool, its settings
 (`training.json`) and its run log (`RUN-LOG.md`) are in the repository, and the committed corpora and the tool
 reproduce the model bit for bit. Because of the MASC part, the attribution of MASC applies to the weights.
 
@@ -139,7 +140,7 @@ documents: 122 documents of the federal families War Department and Army, Navy, 
 Service, Bureau of Mines and Public Health Service (17 U.S.C. 105; scans and electronic copies on the Internet Archive
 whose records carry the Public Domain Mark). Its annotations and its selection are dedicated to the public domain under
 CC0 1.0, and the license basis of every document is quoted in `data/imperative/sources.tsv`. The source is registered
-in the training configuration with weight 0, so the embedded weights were not learned from it.
+in the training configuration with weight 1, so the embedded weights were learned from it.
 
 Language models wrote the tags, and no human has reviewed them. In the owner's position, GitHub claims no ownership of
 model outputs, so the repository owner, who prompted their creation, holds the rights in them and dedicates them to the

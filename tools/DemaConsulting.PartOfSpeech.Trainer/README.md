@@ -60,8 +60,7 @@ and they are rejected together with `--check` and `--update-config`.
 ## Configuration
 
 `training.json` names the corpora (`open`, `masc`, `silver` and `imperative`; each with an integer `weight`, the number of times its
-sentences enter every epoch; `imperative` has weight 0, so it is configured and left out of the mix, and `--source imperative:1`
-adds it to a run) and every training setting. It contains no floating-point training setting except the
+sentences enter every epoch; all four have a positive weight, and `--source imperative:0` leaves the imperative source out of a run) and every training setting. It contains no floating-point training setting except the
 softmax `temperature`, which is chosen once by `calibrate` and only written into the file header. The weight scale is
 `1 / quantScale` with `quantScale` a power of two, so it is exact in the file.
 
@@ -129,7 +128,11 @@ unchanged, with one folder per arm and the `-Runner` option. `imperative-data/ru
 ALL+IMP). `imperative-data/analyze_imperative.py` runs the acceptance tests (F2 at the shipped seed equals the shipped weights, the
 imperative runs trained on exactly 900 more sentences, every run scored the frozen development files), prints the tables and the
 guards (size 1.5 x F2) and applies the selection rule; it takes only `welch_diff` from the frozen `analyze_arms.py` and checks its own
-logic on synthetic runs with `--selftest`. The runners and the script are frozen by the hashes in the run log.
+logic on synthetic runs with `--selftest`. The runners and the script are frozen by the hashes in the run log. They describe the
+experiment as it was run: its arm F2 is the shipped configuration of the pre-registration commit (the source `imperative` at weight 0
+in `training.json`), so to repeat the experiment check out that commit (`ca0c2d4`); with the current `training.json`, where the source
+has weight 1, the base runner trains the arm F2+IMP and the acceptance test of the analysis (F2 equals the shipped weights) no longer
+holds.
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp -Arms F2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd
@@ -163,10 +166,10 @@ Run the commands at below-normal priority, one process at a time (see _Machine l
 
 ## Current model
 
-`training.json` selects: sources open (x2), MASC and silver (labeled tokens with probability of at least 80%); restriction
+`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%) and imperative (x1); restriction
 mode `history` with predicted history; 6 epochs; 19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8;
-the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 121,033 rows and 301,571 weights, is
-1,146,827 bytes uncompressed and 517,210 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
+the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 122,088 rows and 304,425 weights, is
+1,157,499 bytes uncompressed and 521,695 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
 takes about 15 seconds and runs
 in `build.ps1` and in the CI build on all three operating systems. The glossary decision (boost only, no trained
 feature) and every experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and

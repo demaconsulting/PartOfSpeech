@@ -172,7 +172,7 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   `CorpusReader_Parse_UnknownTag_ThrowsWithLine`, `CorpusReader_LoadSources_Weight_RepeatsSentences` (weight 2 repeats
   the sentences, weight 0 leaves a source out) and `CorpusReader_LoadSources_ImperativeSource_ReadsUnmaskedWhenWeighted`
   (the committed imperative file, weighted in a copy of the committed configuration, gives its 900 sentences with every
-  token tagged and a VERB first token).
+  token tagged and a VERB first token; the test sets the other sources to weight 0 in the copy).
   The status flags are covered by `CorpusReader_Parse_StatusFlags_AreKeptAndDoNotChangeTagsOrMasking` (flags are kept per
   token, and tags and masking are those of the plain status, for open-style and silver-style rows),
   `CorpusReader_Parse_NoStatusFlags_GivesNoFlags` (the committed files stay valid),
@@ -275,7 +275,7 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   fresh image is current, another seed or another temperature is stale, no file is missing, bytes that are no weights file
   are invalid).
 - **Configuration**: `ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical` (on .NET 8 and later: four existing
-  corpora, the imperative source with weight 0 and the others with a positive weight, and rewriting the file gives the
+  corpora, all four sources with a positive weight (the imperative source with weight 1), and rewriting the file gives the
   same text) and `ConfigFile_Parse_UnknownMemberOrBadRange_Throws`.
 - **Development metrics**: `DevSets_ParseGoldDev_Fixture_ReadsTargetsAndMapsClasses`,
   `DevSets_ParseGoldDev_InvalidTarget_Throws` (a negative, non-numeric or out-of-sentence target index),

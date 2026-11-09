@@ -3659,6 +3659,108 @@ the cause is investigated and recorded, and no figure of the experiment is claim
   figures to this section (development data only). The held-out evaluation is a **disclosed fourth look** at sets already seen by this
   model family, run once, as a new record (not an erratum), reported as produced, and is the step that follows the adoption commit.
 
+### Adoption result (written by the adoption commit; development data only)
+
+The steps ran in the registered order from a clean tree at the commit of the plan above (`13e2b1a`), one process at a time at
+8 threads at most. The trainer commands wrote their output under the working folder outside the repository.
+
+- **`train --output <file>`** (seed 20260101; 61,680 sentences, sources `open:2,masc:1,silver:1,imperative:1`, 6,357,228 steps, 8.4 s):
+  image 1,157,499 bytes, 122,088 rows, 304,425 weights, image SHA-256 `6e1e4ade56aa277d79709c107000f10e99c6f4e55a097e872a9c38fa2e12e8d0`,
+  521,695 bytes deflated, file SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b`.
+- **`calibrate --weights <file> --update-config`**: best temperature on open dev **9.514** (NLL 0.11245, ECE 0.276%; gold v2 dev
+  NLL 0.2498, ECE 2.44%), the same value as before, so `training.json` kept its temperature.
+- **`train --update-config`** wrote `imageSha256` `6e1e4ade...e8d0` (it was `ec3f090e...`) and wrote `weights.bin` itself (the
+  trainer's default output is the embedded file, so the copy of the plan's step 5 is this write); **`train --check` exit 0**.
+- **Byte identity: confirmed.** `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` has SHA-256
+  `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` and 521,695 bytes, equal to the file written by
+  `train --output`, to the weights of the F2+IMP run of seed 20260101 of the experiment and to the `weights.sha256` of that run's
+  result file. The model it replaces had SHA-256 `72cc28cf10c556a617e8edb49d92d96148ed023874cfe834557ea5c6911b9672` (517,210 bytes).
+  The seed-20260101 figures of the experiment are therefore the figures of the shipped model.
+
+#### Imperative adoption: development figures of the shipped model (dev data only)
+
+Seed 20260101, scored by `eval-arm` through the real decoder (the figures of the experiment's run `F2-s20260101` of the arm F2+IMP,
+which is this model; the previous model is the F2 run of the same seed, which was the shipped model before this adoption). The shapes
+development set is a development set for this selection and not an independent test.
+
+| Measure | Previous model (F2) | Shipped model (F2+IMP) |
+| --- | --- | --- |
+| Hard tranche harmful per 1k (400 target items) | 235.0 (94) | 170.0 (68) |
+| Hard tranche target / control accuracy % | 69.50 / 98.33 | 77.25 / 98.33 |
+| Hard `v-imperative-initial` target accuracy %, harmful per 1k (100 target items) | 45.0, 430.0 | 78.0, 170.0 |
+| Hard `n-subject-initial` target accuracy %, harmful per 1k (100 target items) | 82.0, 90.0 | 79.0, 110.0 |
+| Standard tranche harmful per 1k (600 target items) | 16.7 (10) | 15.0 (9) |
+| Standard tranche target / control accuracy % | 96.83 / 99.00 | 97.83 / 99.00 |
+| Open dev accuracy % (ambiguous %) | 96.65 (95.98) | 96.57 (95.90) |
+| Open dev harmful per 1k (of 4,451 decisions) | 22.47 (100) | **20.44 (91)** |
+| Open dev NLL, ECE % | 0.1127, 0.24 | 0.1125, 0.28 |
+| Gold v2 dev accuracy % | 94.84 | 95.04 |
+| Gold v2 dev harmful per 1k (of 611 decisions) | 26.19 (16) | **22.91 (14)** |
+| Gold v2 dev NLL, ECE % | 0.2577, 2.38 | 0.2498, 2.44 |
+| UD-EWT dev agreement % (25,148 tokens) | 92.950 | 92.962 |
+| UD-EWT dev harmful per 1k (of 4,570 decisions) | 19.91 (91) | 20.57 (94) |
+| Temperature | 9.514 | 9.514 |
+| Rows, weights | 121,033, 301,571 | 122,088, 304,425 |
+| Raw, deflated bytes | 1,146,827; 517,210 | 1,157,499; 521,695 |
+
+Throughput was not measured again for the adoption: the experiment recorded 771,457 tokens per second for this model's run (one
+thread, a loaded shared machine; the five-seed median of the arm was 755,888), against the floor of 150,000. **What is worse
+(stated before the held-out evaluation).** (1) The shipped model is 4,485 bytes larger when deflated (+0.9%). (2) UD-EWT dev harmful
+errors are 3 higher (94 against 91; the five-seed difference of the experiment, +0.83 per 1k, has an interval that contains 0).
+(3) `n-subject-initial` is worse in the experiment (hard harmful per 1k 114 to 136 and standard 20.0 to 26.7 as five-seed means; at
+this seed the hard target accuracy is 79% against 82% and the harmful rate 110 against 90 per 1k): the source gives no counter-example, as the pre-registration said.
+(4) Open dev accuracy is 0.08 points lower at this seed (the five-seed means are 96.64 and 96.67). The gain is on the hard shapes of
+a development set that is the direct target of the data, so it is development evidence and not a held-out result.
+
+#### Imperative adoption: `thresholds` result (development data only; committed before the held-out run)
+
+`thresholds` (rule `nv-pooled-dev-v1`, grid, targets and floors unchanged) **refused to write** with the old constants
+(`At 0.45: harmful 91 (open dev), 14 (gold v2 dev), 105 (pooled); frozen figures 100, 16, 116`; nothing was written). The reason
+is that the model changed: the 0.45 row of the frozen figures is the development figure of the shipped model, and the new model's
+figures equal those of the experiment's `eval-arm` (open 91, gold 14). The two constants `FrozenOpenHarmful` and `FrozenGoldHarmful`
+of the trainer were set to the figures that `thresholds` reported (**91** and **14**; they were 100 and 16), the comment of each
+constant records the history, and the command was run again: the 0.45 row reproduced the figures and the command wrote
+`docs/evaluation/operating-points.json` and `docs/evaluation/confidence-thresholds.md`. The disclosure paragraph
+(`docs/evaluation/disclosure.md`) was revised for the **fourth look** (five models in all scored on the held-out sets) before the
+run that wrote the files, and the command was run a third time after that revision (the operating points are byte-identical to the
+second run; only the disclosure paragraph of the generated report changed).
+
+For the model image `6e1e4ade...`, temperature 9.514 and the dev files unchanged: **strict 0.95** (coverage 81.8% [80.4, 83.2], 1.9
+harmful per 1,000 answered [0.5, 3.8], 8 of 4,139) and **balanced 0.75** (coverage 94.1% [93.2, 94.9], 9.9 [6.7, 13.3], 47 of
+4,762). The previous model had strict 0.95 (coverage 81.3%, 3.2 per 1,000, 13 of 4,116) and balanced 0.75 (coverage 94.1%, 9.9, 47
+of 4,761): **the thresholds are unchanged** (0.95 and 0.75), so the guidance lines of the documents keep their thresholds, and only
+their development coverage and harmful figures changed. The pooled harmful count at 0.45 is 105 of 5,062 decisions (20.7 per 1,000;
+it was 116, 22.9).
+
+#### Pinned figures and documents re-pinned by the adoption commit
+
+The size figures (521,695 bytes compressed, 1,157,499 uncompressed, 122,088 rows, 304,425 weights; about 0.5 MB and 1.2 MB) in the
+user guide, the packed API reference (`NamespaceDoc.cs`), the trainer README, the design documents of the system, of
+`ModelStorage`, `PerceptronModel` and `ModelTrainer`, and the system verification document; the development figures of the
+shipped model in the "Selection of the Shipped Model" section of the `ModelTrainer` design (a row for the imperative source, open
+and gold development accuracy, pooled harmful rate, calibration error, step count); the development coverage and harmful figures of
+the two thresholds in the user guide and in the packed API reference; the weight of the source `imperative` (0 to 1) in
+`training.json`, in the configuration test (`ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical`: all four sources have a
+positive weight) and in every document that described it as "weight 0" (data READMEs, the trainer README, the design and
+verification documents of `ModelTrainer`, the requirements text of `PartOfSpeech-ModelTrainer-SourceWeights` and
+`PartOfSpeech-ModelTrainer-Configuration`); the third-party notice, the package license and the root README, which now name the
+imperative source among the corpora the weights were learned from (and the notice test, which expects "weight 1" and "were learned
+from it"). Nothing in the experiment's frozen files (`analyze_imperative.py`, the runners, the pre-registration, the results
+section) changed: the analysis script's acceptance test (a), which compares the F2 run with the shipped weights, holds only at the
+pre-registration commit, as the trainer README now says.
+
+#### Pending for the held-out step (not changed by the adoption commit)
+
+The committed held-out record (`docs/evaluation/test-results.json` and `.md`) is still the record of the previous model, and the
+README tables are still its figures. These tests and figures follow the one `evaluate` of the next step and are not edited by
+hand: `PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs` (the record names the previous image and selection hash),
+`DataGuard_CommittedReports_CarryCommittedDisclosureWhereGeneratorPutsIt` for `test-results.md` (it still carries the third-look
+paragraph; `confidence-thresholds.md` already carries the fourth-look one), the held-out figures of the two README tables, the
+held-out figures of the guidance in the user guide and in `NamespaceDoc.cs` (test coverage and harmful rate of the two points, the
+rate without a threshold, the interval, the gold v2 and probe sentences), the prose of `docs/evaluation/README.md` (the third-look
+statement, the previous-model comparison, every held-out figure) and the statement of `docs/design/part-of-speech.md` about the
+record.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

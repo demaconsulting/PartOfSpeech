@@ -79,20 +79,22 @@ internal static class Program
     ///     The harmful errors at 0.45 of the frozen model on the open development split (the freeze table of the run log;
     ///     for the model retrained after the corpus cleanup C the development figure of the "Corpus cleanup C" sections
     ///     of the run log replaces the first freeze figure of 94: 103 of 4,467 decisions for the first retrained model,
-    ///     90 of 4,451 decisions for the model adopted after the pre-registered <c>-ing</c> follow-up, and 100 of 4,451
-    ///     decisions for the model with the clause-cue feature group that the context-feature experiment selected, the figure
-    ///     that <c>thresholds</c> reported for it before it wrote anything).
+    ///     90 of 4,451 decisions for the model adopted after the pre-registered <c>-ing</c> follow-up, 100 of 4,451
+    ///     decisions for the model with the clause-cue feature group that the context-feature experiment selected, and
+    ///     91 of 4,451 decisions for the model that adds the imperative training source (the figures that <c>thresholds</c>
+    ///     reported for these models before it wrote anything).
     /// </summary>
-    private const int FrozenOpenHarmful = 100;
+    private const int FrozenOpenHarmful = 91;
 
     /// <summary>
     ///     The harmful errors at 0.45 of the frozen model on the gold v2 development split (the freeze table of the run log;
     ///     for the model retrained after the corpus cleanup C the development figure of the "Corpus cleanup C" sections
     ///     of the run log replaces the first freeze figure of 9: 14 of 611 decisions for the first retrained model,
-    ///     11 of 611 decisions for the model adopted after the pre-registered <c>-ing</c> follow-up, and 16 of 611 decisions
-    ///     for the model with the clause-cue feature group, as reported by <c>thresholds</c>).
+    ///     11 of 611 decisions for the model adopted after the pre-registered <c>-ing</c> follow-up, 16 of 611 decisions
+    ///     for the model with the clause-cue feature group, and 14 of 611 decisions for the model that adds the imperative
+    ///     training source, as reported by <c>thresholds</c>).
     /// </summary>
-    private const int FrozenGoldHarmful = 16;
+    private const int FrozenGoldHarmful = 14;
 
     /// <summary>
     ///     The usage text.

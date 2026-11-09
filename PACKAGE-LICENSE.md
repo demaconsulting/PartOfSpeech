@@ -48,13 +48,15 @@ Moby Part-of-Speech List, which is in the public domain.
 
 ### The weights (`weights.bin`): CC BY 3.0 US
 
-The weights are the trained model of the tagger. They were learned from three corpora of this project, which are not
+The weights are the trained model of the tagger. They were learned from four corpora of this project, which are not
 part of the package:
 
 - the open corpus (CC0 1.0), with Universal POS tags that language models wrote;
 - the written texts of MASC, whose Penn Treebank part-of-speech tags were converted to Universal POS tags (CC BY 3.0 US);
 - a silver corpus of Tatoeba (CC0 1.0) and Project Gutenberg (public domain in the United States) sentences, tagged by a
-  language model (CC0 1.0).
+  language model (CC0 1.0);
+- an imperative source of sentences from US federal government documents (public domain under 17 U.S.C. 105), tagged by
+  language models (CC0 1.0).
 
 Because the weights were trained on data adapted from MASC, they are provided under the terms of its license. The
 authors of Open English WordNet, Princeton University and the authors of MASC do not endorse this project, the lexicon

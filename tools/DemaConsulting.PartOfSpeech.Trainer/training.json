@@ -30,7 +30,7 @@
     {
       "name": "imperative",
       "path": "data/imperative/imperative.tsv",
-      "weight": 0,
+      "weight": 1,
       "maskDisputed": false,
       "minSilverProbability": 0,
       "samplePermille": 1000,
@@ -49,5 +49,5 @@
     "clauseCues"
   ],
   "temperature": 9.514,
-  "imageSha256": "ec3f090eb318abc1bcf4dc8a88e401567e606932142178277d3ec387e0aa40f3"
+  "imageSha256": "6e1e4ade56aa277d79709c107000f10e99c6f4e55a097e872a9c38fa2e12e8d0"
 }

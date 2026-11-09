@@ -8,9 +8,9 @@ that produce and check it are in [`tools/data/`](../tools/data/README.md); the t
 formats and every mapping table are in [CONVENTIONS.md](CONVENTIONS.md) (normative). At run time the library uses only the
 lexicon and the trained weights, which are embedded in the package in compact binary forms: the lexicon is generated from
 `lexicon/lexicon.tsv` (see [lexicon/README.md](lexicon/README.md), "Embedded Form"), and the weights
-(`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 517,210 bytes compressed, 1,146,827 bytes uncompressed) are
-trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC and silver
-corpora with settings that were selected on the two development sets only (the run log is
+(`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 521,695 bytes compressed, 1,157,499 bytes uncompressed) are
+trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC, silver and
+imperative corpora with settings that were selected on the two development sets only (the run log is
 [RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not
 shipped. How the model scores on the evaluation sets, the confidence thresholds that were chosen on the development
 sets, and how to reproduce the evaluation (including the local UD English-EWT run) are in the
@@ -23,7 +23,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [open/](open/README.md) | open corpus, train/dev/test, UPOS | 14,980 | 261,641 | 10.3 MB | CC0-1.0 annotations; PD/CC0 sentences |
 | [masc/](masc/README.md) | MASC written genres, Penn trees mapped to UPOS | 22,829 | 386,445 | 11.6 MB | CC-BY-3.0-US |
 | [silver/](silver/README.md) | BERT silver: Tatoeba and Gutenberg text, model labels mapped to UPOS | 13,971 | 242,699 | 8.5 MB | CC0-1.0 labels; CC0/PD sentences |
-| [imperative/](imperative/README.md) | imperative-initial sentences from US federal instructional text, two-labeler agreement (training; weight 0 in `training.json`) | 900 | 11,946 | 0.5 MB | CC0-1.0 labels; US federal-work sentences |
+| [imperative/](imperative/README.md) | imperative-initial sentences from US federal instructional text, two-labeler agreement (training; weight 1 in `training.json`) | 900 | 11,946 | 0.5 MB | CC0-1.0 labels; US federal-work sentences |
 | [eval/shapes/](eval/shapes/README.md) | noun/verb shape probe (evaluation) | 560 | | 0.06 MB | CC0-1.0 |
 | [eval/shapes-dev/](eval/shapes-dev/README.md) | hard-shape development set from US federal-government text (development only): standard tranche `dev.tsv` (700 sentences, 12,279 tokens) and hard tranche `hard.tsv` (460 sentences, 7,936 tokens) | 1,160 | 20,215 | 0.8 MB | CC0-1.0 labels; US federal-work sentences |
 | [eval/gold-v2/](eval/gold-v2/README.md) | single-target gold tokens (evaluation) | 5,072 | | 2.4 MB | CC0-1.0 labels; PD sentences |
@@ -33,7 +33,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [corrections/](corrections/README.md) | label corrections for open, MASC and silver (mechanical rows, adjudicated rows, candidates, exceptions); **applied** to the corpora | | | 2.7 MB | CC0-1.0 labels; MASC token forms and excerpts CC-BY-3.0-US |
 
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
-masked); the fourth training source, `imperative/`, holds 11,946 tokens and is configured with weight 0, so it is not part of the
+masked); the fourth training source, `imperative/`, holds 11,946 tokens and is configured with weight 1, so it is part of the
 mix that trained the shipped weights. Total size of `data/`: 41.1 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
 WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.md` at the repository root.
 

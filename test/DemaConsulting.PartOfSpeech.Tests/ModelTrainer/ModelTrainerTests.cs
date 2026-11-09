@@ -2695,8 +2695,8 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates that the committed configuration is valid, names the four corpora (the imperative source with weight 0, so it is
-    ///     configured and not in the mix) and is in the canonical form that the tool writes.
+    ///     Validates that the committed configuration is valid, names the four corpora (the imperative source with weight 1, so
+    ///     it is in the mix of the shipped model) and is in the canonical form that the tool writes.
     /// </summary>
     [Fact]
     public void ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical()
@@ -2710,8 +2710,8 @@ public class ModelTrainerTests
         // Assert: valid, four known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
         Assert.Equal(new[] { "open", "masc", "silver", "imperative" }, config.Sources.Select(s => s.Name));
         Assert.All(config.Sources, s => Assert.True(File.Exists(DataFiles.Repository(s.Path))));
-        Assert.Equal(0, config.Sources.Single(s => s.Name == "imperative").Weight);
-        Assert.All(config.Sources.Where(s => s.Name != "imperative"), s => Assert.True(s.Weight > 0));
+        Assert.Equal(1, config.Sources.Single(s => s.Name == "imperative").Weight);
+        Assert.All(config.Sources, s => Assert.True(s.Weight > 0));
         Assert.Equal(text.Replace("\r\n", "\n"), ConfigFile.Format(config));
     }
 

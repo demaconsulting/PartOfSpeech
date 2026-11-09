@@ -8,8 +8,8 @@ License: CC0-1.0
 900 real sentences from 122 US federal-government instructional documents, each starting with an imperative verb in its base form
 (`Check the oil level.`, `Remove the cover and clean the contacts.`). Every token has a Universal POS tag on which two blind model
 labelers agree. It is a **training** source: it holds the sentence type that is rare in the other training corpora and frequent in
-manuals, and it is disjoint from every evaluation set. It is registered in the trainer configuration with weight 0, so it is
-available to the trainer (`--source imperative:1`) and does not change the shipped model.
+manuals, and it is disjoint from every evaluation set. It is registered in the trainer configuration with weight 1, so it is
+part of the mix that trained the embedded model (`--source imperative:0` trains without it).
 
 ## Source and Provenance
 
@@ -192,7 +192,7 @@ In training with the `history` restriction a gold tag that the lexicon misses is
 
 ## Use
 
-Train only. `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` lists the source as `imperative` with `"weight": 0` (not in the
-shipped mix; `train --check` reproduces the shipped weights); `--source imperative:1` adds it to a training run. The trainer refuses the
+Train only. `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` lists the source as `imperative` with `"weight": 1` (part of the
+shipped mix; `train --check` reproduces the shipped weights); `--source imperative:0` leaves it out of a training run. The trainer refuses the
 evaluation files by name and admits this file because it is a training source under `data/`. Do not evaluate on it: its sentences are
 selected by a frame and labeled by models, so a score on them says nothing about held-out text.

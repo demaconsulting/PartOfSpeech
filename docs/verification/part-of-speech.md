@@ -152,7 +152,7 @@ are information for reviewers, not acceptance values:
   instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
-- The embedded weights are 517,210 bytes (1,146,827 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
+- The embedded weights are 521,695 bytes (1,157,499 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
   uncompressed); the package is larger because both resources are embedded once per target framework (the package size
   is stated, approximately, in the "Package size" item of the design document `part-of-speech.md`).
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
@@ -266,7 +266,8 @@ run log is excluded because it records the figures of historical runs.
 Reads the corpus paths of `training.json` and asserts for each that it is one of the four training corpora (open, MASC,
 silver and imperative), that the file
 is committed, that it is not a restricted corpus, that its data folder declares an allowed license, and that the section
-of the third-party notice on the embedded weights names MASC, its license, the open corpus and the silver corpus. That
+of the third-party notice on the embedded weights names MASC, its license, the open corpus, the silver corpus and the
+imperative source. That
 nothing was selected on held-out data is verified by the guard tests of the `ModelTrainer` unit.
 
 ### Evaluation Results Record the Shipped Model
@@ -549,7 +550,7 @@ for the imperative source, with no document overlap and no exact sentence overla
 are numbers (they are reported, not gated); `Selection_UsesNoPartOfSpeechModel` scans `imperative_data.py` for a weights
 file, a decoder, a tagger or the shapes evaluation and for a probe file or probe reader; `Notice_NamesTheSourceAndItsBasis`
 asserts that the third-party notice names `data/imperative/`, 17 U.S.C. 105, the CC0 dedication, the source table and
-that the embedded weights were not learned from the source. Each fails when a file is missing or empty. The generic
+that the embedded weights were learned from the source (weight 1). Each fails when a file is missing or empty. The generic
 `Leakage_Documents_*` and `Leakage_Sentences_*` tests read the imperative corpus as a training corpus and compare it with
 every evaluation corpus (both tranches included, the probe through `EvaluationItems`). The developer-run Python tests
 `tools/data/tests/test_imperative_data.py` cover the builder on a miniature folder (see `tools/data/README.md`); the

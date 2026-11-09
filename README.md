@@ -125,12 +125,14 @@ NuGet package.
   reduced to the lexicon.
 - **The open part-of-speech corpus** of the [WordSense][link-wordsense] project (a related project with taggers of its
   own): annotations and selection are CC0 1.0, and the sentences are public domain in the United States or come from the
-  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text) and the evaluation sets follow the same terms.
+  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative training source (text of US
+  federal government documents; 17 U.S.C. 105) and the evaluation sets follow the same terms.
 - **UD English-EWT** (CC BY-SA 4.0) is used for **evaluation only**: it is not distributed, nothing is trained on it,
   and the repository ignores its files.
 
 No CC BY-SA or NonCommercial data is committed to this repository or included in the package. Language models wrote the
-tags of the open corpus and of the silver data, and no human has reviewed them. In the owner's position, GitHub claims
+tags of the open corpus, of the silver data and of the imperative source, and no human has reviewed them. In the owner's
+position, GitHub claims
 no ownership of model outputs, so the repository owner holds the rights in them and dedicates them to the public domain
 under CC0 1.0. That is the owner's position, not legal advice or a warranty.
 

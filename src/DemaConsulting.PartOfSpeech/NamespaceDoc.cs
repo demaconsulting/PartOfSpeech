@@ -181,7 +181,7 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </para>
 ///     <list type="bullet">
 ///     <item><description>
-///     **strict**, 0.95: on the development data it answered 81.3% of the decisions with 3.2 harmful errors in 1,000
+///     **strict**, 0.95: on the development data it answered 81.8% of the decisions with 1.9 harmful errors in 1,000
 ///     answered decisions; on the open test split it answered 83.9% with 2.2 in 1,000. Use it when a wrong noun or verb
 ///     does harm, for example in a rule checker.
 ///     </description></item>
@@ -254,8 +254,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     weights (the embedded lexicon is used unless you pass one as well).
 ///     </para>
 ///     <para>
-///     The embedded weights file (<c>weights.bin</c>) is 517,210 bytes compressed and 1,146,827 bytes uncompressed (about
-///     0.5 MB and 1.1 MB); it holds 121,033 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
+///     The embedded weights file (<c>weights.bin</c>) is 521,695 bytes compressed and 1,157,499 bytes uncompressed (about
+///     0.5 MB and 1.2 MB); it holds 122,088 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
 ///     bytes compressed and 1,626,269 bytes uncompressed and holds 262,635 spellings. Both files are stored as resources
 ///     of the assembly, so the package grows by their compressed sizes for each target framework. The first read of
 ///     <see cref="Tagger.Default"/> inflates and validates both files once in the process (tens of milliseconds on a

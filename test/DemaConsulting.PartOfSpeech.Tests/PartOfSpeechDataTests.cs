@@ -2068,7 +2068,7 @@ public class PartOfSpeechDataTests
 
     /// <summary>
     ///     Proves that the third-party notice names the imperative training source, its US federal-work basis, its CC0
-    ///     dedication of annotations and selection, and that the embedded weights were not learned from it (weight 0).
+    ///     dedication of annotations and selection, and that the embedded weights were learned from it (weight 1).
     /// </summary>
     [Fact]
     public void PartOfSpeech_Imperative_Notice_NamesTheSourceAndItsBasis()
@@ -2079,7 +2079,7 @@ public class PartOfSpeechDataTests
         // Act: find the statements that the notice lacks
         var missing = MissingFragments(notice, new[]
         {
-            "data/imperative/", "17 U.S.C. 105", "CC0 1.0", "data/imperative/sources.tsv", "weight 0", "not learned from it"
+            "data/imperative/", "17 U.S.C. 105", "CC0 1.0", "data/imperative/sources.tsv", "weight 1", "were learned from it"
         });
 
         // Assert: the notice makes every statement
@@ -2397,7 +2397,7 @@ public class PartOfSpeechDataTests
         // Assert: at least one source, no problem, and the notice says which corpora the weights come from
         Assert.NotEmpty(paths);
         Assert.Empty(problems.Take(ShownProblems));
-        Assert.Empty(MissingFragments(notice, new[] { "MASC", "CC BY 3.0 US", "open corpus", "silver corpus" }));
+        Assert.Empty(MissingFragments(notice, new[] { "MASC", "CC BY 3.0 US", "open corpus", "silver corpus", "imperative source" }));
     }
 
     /// <summary>

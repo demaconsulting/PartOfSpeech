@@ -54,9 +54,9 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   (`data/imperative/`: 900 sentences that start with an imperative verb, from US federal-government instructional
   text, tagged by two blind models that agree on every token, a model review of a sample, selected by position and
   lexicon frame and never by the PartOfSpeech model, and kept disjoint from every evaluation set). The weights are
-  trained from the sources that have a positive weight in `training.json`: the open corpus, MASC and silver; the
-  imperative source is configured with weight 0, so it is available to the trainer (`--source imperative:1`) and is not
-  in the mix of the embedded weights
+  trained from the sources that have a positive weight in `training.json`: the open corpus, MASC, silver and the
+  imperative source (weight 1, so it is in the mix of the embedded weights; `--source imperative:0` leaves it out of an
+  experimental run)
 - **Evaluation sets**: a split of the open corpus, a single-target gold set, a probe of difficult noun and verb shapes
   and a challenge set; the UD English-EWT treebank is evaluation-only and is fetched on demand, never stored. Only the
   two development splits were used to select the model and the confidence thresholds; the other sets were evaluated
@@ -82,7 +82,7 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   and for the 17 withdrawn test rows, the labels of the other sets did not)
 - **Lexicon**: a table that maps a lower-case spelling to the Universal POS tags it may carry, with a coverage report;
   compiled into the embedded `POSL` file
-- **Weights**: the trained `POSW` file, 517,210 bytes compressed and 1,146,827 bytes uncompressed, with the training
+- **Weights**: the trained `POSW` file, 521,695 bytes compressed and 1,157,499 bytes uncompressed, with the training
   configuration `training.json` (which records the SHA-256 of the uncompressed image) and the run log `RUN-LOG.md` next
   to the trainer
 - **Checks**: the checksum manifest and the leakage report (which covers the four training sources)
@@ -281,7 +281,7 @@ The data assets are protected by two release gates, which the data tests of the 
 5. **Compilation**: `tools/LexiconCompiler` compiles the lexicon table into `Resources/lexicon.bin`, which is committed
    and embedded in the assembly
 6. **Training**: the unit `ModelTrainer` reads the training corpora named in `training.json` that have a positive weight
-   (the open corpus, MASC and silver; the imperative source is named with weight 0 and is left out), extracts features with
+   (the open corpus, MASC, silver and the imperative source), extracts features with
    the same `FeatureExtractor`, restricts the tags with the same lexicon code, trains an averaged perceptron in integer
    arithmetic, quantizes and prunes the weights and writes the `POSW` file with `PerceptronModelWriter`; the file is
    committed as `Resources/weights.bin` and embedded, and `training.json` records the SHA-256 of its uncompressed image.
