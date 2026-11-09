@@ -631,8 +631,9 @@ def _command_tokenize(args):
 def _hmm_for(args, work, needed):
     if not needed:
         return None
-    if getattr(args, "hmm_sha256", None):
-        return shapes_dev.read_hmm(work, expected_sha256=args.hmm_sha256)
+    given = getattr(args, "hmm_sha256", None)
+    if given and given.lower() != HMM_SHA256:
+        raise ValueError("--hmm-sha256 %s is not the pre-registered hmm.tsv hash %s (only preflight accepts another hash)" % (given, HMM_SHA256))
     return read_hmm_pinned(work)
 
 
@@ -1028,14 +1029,14 @@ def review_result_lines(per_shape, controls):
         lines.append("| %s | %d | %d | %d | %s |" % (shape, counter["correct"], counter["incorrect"], counter["unclear"],
                                                     "-" if not judged else "%.1f%%" % (100 * counter["correct"] / judged)))
         total.update(counter)
-    judged = total["correct"] + total["incorrect"]
-    overall = total["correct"] / judged if judged else None
+    reviewed = sum(total.values())
+    overall = total["correct"] / reviewed if reviewed else None          # strict: unclear items stay in the denominator
     lenient = controls["correct"] > CONTROLS_ACCEPTED_MAX
     passed = overall is not None and overall >= PRECISION_MIN and not lenient
-    lines += ["", "- reviewed target items: %d (correct %d, incorrect %d, unclear %d)" % (sum(total.values()), total["correct"], total["incorrect"],
+    lines += ["", "- reviewed target items: %d (correct %d, incorrect %d, unclear %d)" % (reviewed, total["correct"], total["incorrect"],
                                                                                        total["unclear"]),
-              "- overall precision: %s (gate: at least %.0f%%; unclear items count against it only through the strict figure %d of %d)" % (
-                  "-" if overall is None else "%.1f%%" % (100 * overall), 100 * PRECISION_MIN, total["correct"], sum(total.values())),
+              "- overall precision: %s (gate: at least %.0f%% strict, correct %d of all %d reviewed target items; unclear items count against it)" % (
+                  "-" if overall is None else "%.1f%%" % (100 * overall), 100 * PRECISION_MIN, total["correct"], reviewed),
               "- control items accepted as correct: %d of %d%s" % (controls["correct"], sum(controls.values()), " (TOO LENIENT)" if lenient else ""),
               "- gate: " + ("PASSED" if passed else "STOP: do not publish; report the result")]
     return lines, passed

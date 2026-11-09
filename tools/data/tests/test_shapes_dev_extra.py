@@ -408,6 +408,42 @@ class SampleAndReview(unittest.TestCase):
             per_shape, controls = sx.review_numbers(keys, verdicts(wrong))
             self.assertEqual(passed, sx.review_result_lines(per_shape, controls)[1], wrong)
 
+    def test_review_gate_counts_unclear_items_against_precision(self):
+        keys = [{"item": "R%03d" % n, "kind": "real", "shape": "n-named-state"} for n in range(60)]
+        keys += [{"item": "R%03d" % (60 + n), "kind": "control", "shape": "n-named-state"} for n in range(4)]
+
+        class Verdict:
+            def __init__(self, item, verdict):
+                self.item, self.verdict = item, verdict
+
+        def verdicts(incorrect, unclear):
+            out = []
+            for n, k in enumerate(keys[:60]):
+                out.append(Verdict(k["item"], "incorrect" if n < incorrect else "unclear" if n < incorrect + unclear else "correct"))
+            return out + [Verdict(k["item"], "incorrect") for k in keys[60:]]
+
+        # 57 of 60 = 95.0 percent strictly passes (the committed hand check: 57 correct, 1 incorrect, 2 unclear); 56 of 60 does not,
+        # although 56 of 57 decided items would pass the decided-only figure
+        for incorrect, unclear, passed in ((1, 2, True), (1, 3, False), (0, 4, False), (0, 3, True)):
+            per_shape, controls = sx.review_numbers(keys, verdicts(incorrect, unclear))
+            lines, result = sx.review_result_lines(per_shape, controls)
+            self.assertEqual(passed, result, (incorrect, unclear))
+        per_shape, controls = sx.review_numbers(keys, verdicts(1, 2))
+        self.assertIn("overall precision: 95.0%", "\n".join(sx.review_result_lines(per_shape, controls)[0]))
+
+    def test_candidates_hmm_stays_on_the_pinned_reader(self):
+        pin = sx.HMM_SHA256
+        args = mock.Mock(hmm_sha256=None)
+        with mock.patch.object(sx, "read_hmm_pinned", return_value="pinned") as pinned, \
+                mock.patch.object(sx.shapes_dev, "read_hmm", side_effect=AssertionError("the direct reader bypasses the pins")):
+            self.assertIsNone(sx._hmm_for(args, "W", False))
+            self.assertEqual("pinned", sx._hmm_for(args, "W", True))
+            self.assertEqual("pinned", sx._hmm_for(mock.Mock(hmm_sha256=pin.upper()), "W", True))
+            self.assertEqual(2, pinned.call_count)
+            with self.assertRaises(ValueError):
+                sx._hmm_for(mock.Mock(hmm_sha256="0" * 64), "W", True)
+            self.assertEqual(2, pinned.call_count)
+
 
 class Independence(unittest.TestCase):
     """The selection uses no PartOfSpeech model and the held-out sets only through their opaque keys."""

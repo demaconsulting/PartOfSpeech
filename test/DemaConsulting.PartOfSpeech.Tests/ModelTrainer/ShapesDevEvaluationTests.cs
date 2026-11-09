@@ -353,6 +353,28 @@ public class ShapesDevEvaluationTests
     }
 
     /// <summary>
+    ///     Validates that the kind comment belongs to the headings tranche only: the standard and the hard tranche refuse it.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ShapesDevSets_Parse_KindCommentInStandardOrHardTranche_Throws(bool hard)
+    {
+        var tranche = hard ? ShapesDevTranche.Hard : ShapesDevTranche.Standard;
+
+        // Arrange: a valid block that carries a kind comment
+        var lines = File(CompoundHead("s1"));
+        lines.Insert(lines.Count - 3, "# kind = noun");
+
+        // Act
+        var exception = Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(lines, "fixture", tranche));
+
+        // Assert
+        Assert.Contains("'kind'", exception.Message);
+        Assert.Contains("headings tranche only", exception.Message);
+    }
+
+    /// <summary>
     ///     Validates that each tranche is read from its own file, with its own SHA-256, and marks its items.
     /// </summary>
     [Fact]

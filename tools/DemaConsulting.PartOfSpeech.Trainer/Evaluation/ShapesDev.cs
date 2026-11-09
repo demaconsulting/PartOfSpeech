@@ -522,6 +522,12 @@ internal static class ShapesDevSets
             return ReadSpecItem(sentence, block, origin, spec, role, target, sourceOrigin, tranche);
         }
 
+        // Only the headings tranche has a kind: the standard and the hard tranche refuse the comment
+        if (block.Comments.ContainsKey("kind"))
+        {
+            throw Fail(origin, id, $"the comment 'kind' belongs to the headings tranche only, not to the {DevSets.ShapesDevNameOf(tranche)} tranche.");
+        }
+
         var goldClass = ReadTargetClass(sentence, target, shape, role, block, origin);
         return new ShapesDevItem(id, sentence.SourceId, sentence.Tokens, target, goldClass, shape, role, Comment("lemma"), sourceOrigin, tranche);
     }
