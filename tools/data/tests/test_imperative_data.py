@@ -13,6 +13,7 @@ from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import adjudicate
+import check_leakage
 import common
 import imperative_data as idata
 import shapes_dev as sd
@@ -609,6 +610,40 @@ class NoModelTests(unittest.TestCase):
         self.assertEqual((9, 6, 30, 600, 900), (idata.LEMMA_CAP_CANDIDATES, idata.LEMMA_CAP_BUILD, idata.DOCUMENT_CAP, idata.MIN_SENTENCES, idata.MAX_SENTENCES))
         self.assertEqual((1500, 250, 60, 4, 2300), (idata.MIN_CANDIDATES, idata.MIN_LEMMAS, idata.SAMPLE_SIZE, idata.SAMPLE_CONTROLS, idata.MAX_CANDIDATES))
         self.assertEqual(0.95, idata.PRECISION_MIN)
+
+
+class NearDuplicateGateTests(unittest.TestCase):
+    """check_leakage.check gates a near duplicate for the imperative training source only (requirement PartOfSpeech-Data-ImperativeIndependent)."""
+
+    EVAL = "Remove the cover and then check the pressure valve before you start the work today"
+    NEAR = EVAL.rsplit(" ", 1)[0] + " tomorrow"        # 15 words, one 6-gram of 10 differs: 90 percent contained, not an exact key
+
+    def run_check(self, label, text):
+        trains = {label: [("train-doc", text)]}
+        evals = {"eval-set": [("eval-doc", self.EVAL)]}
+        with mock.patch.object(check_leakage, "training_sets", return_value=trains), \
+                mock.patch.object(check_leakage.leakage, "evaluation_sets", return_value=evals):
+            return check_leakage.check(False)
+
+    def test_an_imperative_near_duplicate_fails(self):
+        rows, failures, _ = self.run_check("imperative", self.NEAR)
+        self.assertEqual([("imperative", "eval-set", 1, 0, 0, 1)], rows)
+        self.assertEqual(1, failures)
+
+    def test_a_near_duplicate_of_another_training_source_is_only_reported(self):
+        for label in ("open-train", "masc", "silver"):
+            rows, failures, _ = self.run_check(label, self.NEAR)
+            self.assertEqual([(label, "eval-set", 1, 0, 0, 1)], rows)
+            self.assertEqual(0, failures, label)
+
+    def test_an_exact_sentence_still_fails_for_every_training_source(self):
+        self.assertEqual(1, self.run_check("open-train", self.EVAL)[1])
+        self.assertGreaterEqual(self.run_check("imperative", self.EVAL)[1], 1)      # an exact sentence is also a near duplicate
+
+    def test_an_unrelated_imperative_sentence_passes(self):
+        rows, failures, _ = self.run_check("imperative", "Stop the pump when the oil level drops below the line on the tank gauge")
+        self.assertEqual([("imperative", "eval-set", 1, 0, 0, 0)], rows)
+        self.assertEqual(0, failures)
 
 
 if __name__ == "__main__":

@@ -98,8 +98,10 @@ set, and UD English-EWT train, dev and test when the git-ignored cache is presen
    sentence that recurs in unrelated texts, so only that sentence is dropped from the training data (the sentences of a
    treebank file or of a book are independent; a Tatoeba document is a single sentence); the dropped sentence ids
    are listed in `dropped-sentences.tsv` of the training folder. The evaluation sets are never changed.
-3. **Near duplicates** (reported, not gated): an evaluation sentence of at least 10 words whose word 6-grams are at least 80
-   percent contained in the training 6-grams of a set.
+3. **Near duplicates** (gated for the imperative source, reported for the other training sets): an evaluation sentence of at
+   least 10 words whose word 6-grams are at least 80 percent contained in the training 6-grams of a set. Any near duplicate
+   of the imperative source fails the check (`NEAR_GATED_TRAINING` in `check_leakage.py`); the older sources share agency
+   boilerplate with the evaluation sets, so their near duplicates are only counted.
 4. **Shapes development set against every other evaluation set:** the same document and sentence rules apply, and no
    sentence may share a word 5-gram with the shape probe (the probe's short sentences escape the near-duplicate rule). The
    counts are in `eval/shapes-dev/leakage-report.tsv`; no evaluation text is printed or stored. The builder of the set applies

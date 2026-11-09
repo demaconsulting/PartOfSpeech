@@ -546,8 +546,9 @@ their columns, hold ids and counts only and name no used document;
 tables of open, gold v2, silver, MASC and both tranches of the development set or in its exclusion record, and that no
 document is an evaluation document;
 `LeakageReport_RecordsNoOverlapWithAnyEvaluationSet` asserts that the committed report names every evaluation set once
-for the imperative source, with no document overlap and no exact sentence overlap, and that the near-duplicate counts
-are numbers (they are reported, not gated); `Selection_UsesNoPartOfSpeechModel` scans `imperative_data.py` for a weights
+for the imperative source, with no document overlap, no exact sentence overlap and no near duplicate (`check_leakage.py`
+fails on an imperative near duplicate; the near duplicates of the other training sources are only reported);
+`Selection_UsesNoPartOfSpeechModel` scans `imperative_data.py` for a weights
 file, a decoder, a tagger or the shapes evaluation and for a probe file or probe reader; `Notice_NamesTheSourceAndItsBasis`
 asserts that the third-party notice names `data/imperative/`, 17 U.S.C. 105, the CC0 dedication, the source table and
 that the embedded weights were learned from the source (weight 1). Each fails when a file is missing or empty. The generic

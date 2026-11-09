@@ -2016,7 +2016,8 @@ public class PartOfSpeechDataTests
     /// <summary>
     ///     Proves that the committed leakage report covers the imperative training source against every evaluation set (the
     ///     probe and both tranches of the shapes development set included) and records no document overlap and no exact
-    ///     sentence overlap; near duplicates are reported and must be numbers.
+    ///     sentence overlap and no near duplicate (the check gates the near duplicates of the imperative source; the report records
+    ///     the count for every evaluation set).
     /// </summary>
     [Fact]
     public void PartOfSpeech_Imperative_LeakageReport_RecordsNoOverlapWithAnyEvaluationSet()
@@ -2033,15 +2034,15 @@ public class PartOfSpeechDataTests
             "ud-ewt-train"
         };
 
-        // Act: find the sets that the report misses and the rows that report an overlap
+        // Act: find the sets that the report misses and the rows that report an overlap or a near duplicate
         var overlaps = rows.Where(row => row[3] != "0" || row[4] != "0").Select(row => row[1]).ToList();
-        var malformed = rows.Where(row => !int.TryParse(row[5], NumberStyles.None, CultureInfo.InvariantCulture, out _)).Select(row => row[1]).ToList();
+        var nearDuplicates = rows.Where(row => row[5] != "0").Select(row => row[1]).ToList();
 
-        // Assert: every evaluation set is reported once, nothing overlaps and the near-duplicate counts are numbers
+        // Assert: every evaluation set is reported once and nothing overlaps, not even a near duplicate (a malformed count is not "0")
         Assert.All(rows, row => Assert.Equal(6, row.Length));
         Assert.Equal(expected, rows.Select(row => row[1]).OrderBy(name => name, StringComparer.Ordinal));
         Assert.Empty(overlaps);
-        Assert.Empty(malformed);
+        Assert.Empty(nearDuplicates);
     }
 
     /// <summary>
