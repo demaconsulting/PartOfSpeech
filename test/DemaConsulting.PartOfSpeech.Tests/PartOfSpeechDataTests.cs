@@ -2089,7 +2089,7 @@ public class PartOfSpeechDataTests
     /// <summary>
     ///     Proves that the committed new tranches meet their documented quotas: the items of every group (role, and for the
     ///     headings the kind of a target) between the floor and the cap, at most four targets per lemma, at most two controls per
-    ///     lemma, at most 12 heading targets per source document, and at most 25 percent of the compound-head targets ending in
+    ///     lemma, at most 12 heading targets per source document, no heading line that ends in a page number or a page range, and at most 25 percent of the compound-head targets ending in
     ///     a lower-case <c>ing</c>.
     /// </summary>
     [Fact]
@@ -2128,6 +2128,11 @@ public class PartOfSpeechDataTests
                 problems.AddRange(targets.GroupBy(item => item.SourceId, StringComparer.Ordinal)
                     .Where(group => group.Count() > ShapesDevHeadingsDocumentCap)
                     .Select(group => $"{tranche.Name}: the document {group.Key} has {group.Count()} targets, the cap is {ShapesDevHeadingsDocumentCap}"));
+
+                // A heading line is not a table-of-contents entry: it does not end in a page number or a page range (12, 4-8)
+                problems.AddRange(items
+                    .Where(item => Regex.IsMatch(string.Join(" ", item.Tokens), @"(?:^|\s)\d{1,4}(?:\s?[-\u2013\u2014]\s?\d{1,4})?$", RegexOptions.CultureInvariant))
+                    .Select(item => $"{tranche.Name}: {item.Id} ends in a page number or a page range"));
             }
 
             if (tranche.Name == "compound-head")

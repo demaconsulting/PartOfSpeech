@@ -152,13 +152,30 @@ class HeadingFilter(unittest.TestCase):
     def test_all_caps_heading_is_out_of_scope(self):
         self.assertEqual("caps", self.reason("CHECK FLUID LEVEL"))
 
+    def test_trailing_page_numbers_and_ranges_are_refused(self):
+        for text in ("Proposed Action Fixed 12", "Proposed Action (Four Valleys-Fixed) 4-8", "Proposed Action (Four Valleys-Fixed) 4-19",
+                     "Proposed Action Fixed 4 - 8", "Proposed Action Fixed 4\u20138", "Proposed Action Fixed 4\u201419"):
+            self.assertTrue(sx.has_trailing_page_number(text), text)
+        for text in ("Proposed Action (Four Valleys-Fixed) 4-8", "Proposed Action Fixed 12", "Proposed Action Fixed 4 - 8"):
+            self.assertEqual("page-number", self.reason(text), text)
+        for text in ("Proposed Action (Four Valleys-Fixed)", "Four-Valley Action Plan", "Valleys-Fixed Action Plan", "Check Fluid Level",
+                     "Phase 4-8 Action Plan", "Action Plan Fixed A-12", "Action Plan Fixed 4.8"):
+            self.assertFalse(sx.has_trailing_page_number(text), text)
+        self.assertNotEqual("page-number", self.reason("Four-Valley Action Plan"))
+
 
 class HeadingExtraction(unittest.TestCase):
     RAW = ("Section 2. Engine Oil Check\n\nThe oil is checked daily by the operator when the engine is running at the speed given.\n\n"
            "3.1 Remove the Cover\n\nUnscrew the four bolts that hold the cover in place and lift the cover away.\n\n"
            "Pressure Test .......... 12\n\nRunning Header\n\ntext of page one is a longer paragraph of text for the document.\n\nRunning Header\n\n"
            "more text of page two is a longer paragraph of text for the document.\n\nRunning Header\n\nShort item\nsecond short item\n\n"
-           "Check Fluid Level\nthe fluid level is checked with the dipstick before every flight of the aircraft.\n\n")
+           "Check Fluid Level\nthe fluid level is checked with the dipstick before every flight of the aircraft.\n\n"
+           "Proposed Action (Four Valleys-Fixed) 4-8\n\nThe action is carried out in the four valleys by the crew of the aircraft each year.\n\n")
+
+    def test_page_ranges_are_not_heading_lines(self):
+        self.assertFalse([h for h in sx.heading_lines(self.RAW) if h.endswith("4-8")])
+        self.assertIn("Engine Oil Check", sx.heading_lines(self.RAW))
+
 
     def test_isolated_lines_without_labels_and_without_leaders(self):
         found = sx.heading_lines(self.RAW)
@@ -303,6 +320,24 @@ class Selection(unittest.TestCase):
         self.assertEqual(2, sum(1 for t in targets if t["lemma"] == "other"))
         self.assertEqual(2, drops["lemma-cap"])
         self.assertEqual([], sx.lemma_cap_problems(targets, []))
+
+
+    def test_headings_with_a_trailing_page_number_or_range_never_enter_the_build(self):
+        items = [item("n%d" % n, "heading-noun", "target", "l%d" % n, "d%d" % n) for n in range(4)]
+        items += [item("p0", "heading-proper", "control", "q0", "e0", tag="PROPN")]
+        cands = candidates_of(items)
+        cands["n0"]["text"] = "Proposed Action (Four Valleys-Fixed) 4-8"
+        cands["n1"]["text"] = "Proposed Action (Four Valleys-Fixed) 4-19"
+        cands["n2"]["text"] = "Proposed Action Fixed 12"
+        cands["p0"]["text"] = "Proposed Action Fixed 4-8"
+        targets, controls, drops = sx.select("headings", items, cands)
+        self.assertEqual(["n3"], [t["cand_id"] for t in targets])
+        self.assertEqual([], controls)
+        self.assertEqual(4, drops["page-number"])
+        targets, _, drops = sx.select("compound-head", [item("c1", "n-compound-head-ambiguous", "target", "x", "d", q="0.1")],
+                                      {"c1": {"cand_id": "c1", "text": "Pump 4-8", "tokens": ["Pump", "x"]}})
+        self.assertEqual(1, len(targets))                                  # the rule is for the headings tranche only
+        self.assertEqual(0, drops["page-number"])
 
 
 class QuotaGate(unittest.TestCase):

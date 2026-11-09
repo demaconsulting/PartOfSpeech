@@ -7,7 +7,7 @@ open-train	ste-challenge	32	0	0	0
 open-train	shapes-dev	700	0	0	0
 open-train	shapes-dev-hard	460	0	0	0
 open-train	shapes-dev-compound-head	120	0	0	0
-open-train	shapes-dev-headings	116	0	0	0
+open-train	shapes-dev-headings	115	0	0	0
 open-train	shapes-dev-named-state	112	0	0	0
 open-train	gold-v2	5072	0	0	7
 open-train	shapes-probe	560	0	0	0
@@ -20,7 +20,7 @@ masc	ste-challenge	32	0	0	0
 masc	shapes-dev	700	0	0	0
 masc	shapes-dev-hard	460	0	0	0
 masc	shapes-dev-compound-head	120	0	0	0
-masc	shapes-dev-headings	116	0	0	0
+masc	shapes-dev-headings	115	0	0	0
 masc	shapes-dev-named-state	112	0	0	0
 masc	gold-v2	5072	0	0	0
 masc	shapes-probe	560	0	0	0
@@ -33,7 +33,7 @@ silver	ste-challenge	32	0	0	0
 silver	shapes-dev	700	0	0	0
 silver	shapes-dev-hard	460	0	0	0
 silver	shapes-dev-compound-head	120	0	0	0
-silver	shapes-dev-headings	116	0	0	0
+silver	shapes-dev-headings	115	0	0	0
 silver	shapes-dev-named-state	112	0	0	0
 silver	gold-v2	5072	0	0	1
 silver	shapes-probe	560	0	0	0
@@ -46,7 +46,7 @@ imperative	ste-challenge	32	0	0	0
 imperative	shapes-dev	700	0	0	0
 imperative	shapes-dev-hard	460	0	0	0
 imperative	shapes-dev-compound-head	120	0	0	0
-imperative	shapes-dev-headings	116	0	0	0
+imperative	shapes-dev-headings	115	0	0	0
 imperative	shapes-dev-named-state	112	0	0	0
 imperative	gold-v2	5072	0	0	0
 imperative	shapes-probe	560	0	0	0

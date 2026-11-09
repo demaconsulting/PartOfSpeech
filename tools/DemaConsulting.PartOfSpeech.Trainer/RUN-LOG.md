@@ -4057,11 +4057,38 @@ The build counted the 4 targets per lemma separately for the noun and the impera
 separate folder from the same work folder is byte-identical to the committed `headings.tsv` and `headings-sources.tsv` (SHA-256 `de6a46fe...` and `30754b95...`); no committed data changed.
 The build now uses one shared counter, and `lemma_cap_problems` refuses a lemma over its cap even with `--allow-short`.
 
+### Note: correction of the trailing page number rule of the `headings` build
+
+The pre-registered line rule refuses a table-of-contents line, including a line that ends in a page number (README "The Shape of `headings`"). The implementation tested for a final
+number only (`\s\d{1,4}$`), so a line that ends in a page range (`4-8`, `4-19`, `4-4`, `19-21`) passed it. This is a defect of the implementation against the rule, not a change of the rule: the
+rule text is unchanged, and the implementation now refuses a final number or a final range written with a hyphen, an en dash or an em dash (`has_trailing_page_number`; refused at
+the line stage, as the heading filter rule `page-number`, and at the build). Forms that the rule does not name (a letter before the number such as `A-12`, a dotted number such as `4.8`)
+are not refused.
+
+The build was rerun from the same work folder and the same labels, with no new candidate and no new label. Nine kept items fail the corrected rule; four of them were in the committed
+file (`shapes-dev-headings-0006` and `-0032` noun targets, `-0090` an imperative target, `-0111` a proper control), and the next kept items in the seeded order of the same labeled pool
+fill the strata (two noun targets and one control; no imperative item was left). Result: `headings.tsv` has 115 lines (50 noun and 45 imperative targets, 20 controls; was 116: 50, 46 and
+20), 507 tokens (was 520), and the quota floors hold (noun 40, imperative 40, controls 12). None of the four removed items and none of the three added items is among the 60 items of
+the hand check, so the hand-check figure is unchanged (57 correct, 1 incorrect, 2 unclear of 60). `compound-head.tsv` and `named-state.tsv` are cut by other frames and the rule is for
+heading lines only: they are unchanged. `shapes-dev-headings-0004` (`Fig, No, Title Page`, OCR junk) has no trailing number, so the rule does not reject it, and it stays.
+
+New SHA-256: `headings.tsv` `45a62a71...`, `headings-sources.tsv` `aa3a14f1...`; the leakage reports, `MANIFEST.tsv` and the baseline below are regenerated.
+
+### Note: the standard and hard builders see the newer tranches
+
+`shapes_dev.py` filtered its candidates through the hashed sentence keys of the evaluation sets without the five tranches of the development set, so a rebuild of the standard or the hard tranche
+could have taken a sentence of `compound-head`, `headings` or `named-state`. Its filter (`LeakageFilter`) now adds the sentence keys of the three newer tranches that exist
+(`leakage.held_out_overlap_keys(new_tranches=True)`); the builder of the newer tranches (`shapes_dev_extra.py`) passes `new_tranches=False`, because it must not see its own earlier build. The standard
+and the hard tranche have 0 exact sentences in common with each of the three newer tranches (`check_leakage.py`, the leakage reports), so the data is unchanged: a rebuild of the standard tranche
+(`StandardRebuildTests`, from its work folder) and of the hard tranche (from its work folder, into a separate folder) is byte-identical to the committed `dev.tsv`, `sources.tsv`,
+`excluded-sources.tsv`, `hard.tsv` and `hard-sources.tsv` (SHA-256 `bbc94e42...` and `c041ae3d...`).
+
 ## Shapes development set: new tranches baseline of the shipped model
 
 The built tranches `compound-head.tsv`, `headings.tsv` and `named-state.tsv` were scored once with the shipped model after the build. These are development figures: they select settings,
 nothing is trained on the files and none is a held-out result. The standard and hard tranche files are unchanged by this work (`eval-shapes --tranche both` reads the same two
-files, SHA-256 `bbc94e42...` and `c041ae3d...`).
+files, SHA-256 `bbc94e42...` and `c041ae3d...`). The `heading-titlecase` rows are scored on the `headings.tsv` of the correction note above (the earlier file scored 96 targets at 84.4%); the other two shapes are
+scored on the same files as before and their rows are unchanged.
 
 Command (run once from the repository root, below normal priority; it reads only the three development files and the embedded weights and appends no row to the run table):
 
@@ -4072,7 +4099,7 @@ dotnet run --no-build -c Release --project tools/DemaConsulting.PartOfSpeech.Tra
 | Input | SHA-256 |
 | --- | --- |
 | `data/eval/shapes-dev/compound-head.tsv` | `537e0be3923f585b8f084de4e88f4064624e4f5dc484f84ccd303fed3db924f5` |
-| `data/eval/shapes-dev/headings.tsv` | `de6a46fe105b42f0ddf8b55dee6dd5f6c669b8292f39002b8b2de472f1e5a122` |
+| `data/eval/shapes-dev/headings.tsv` | `45a62a71837f02d1e76f0ad55a71a1770cb628ea8ca8765c0d4583f49b9da72a` |
 | `data/eval/shapes-dev/named-state.tsv` | `e08472387630368b7fb3fbaa5cd7b6187d0760608c93b55f19250c98f2d06d6e` |
 | shipped weights file (embedded resource) | `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` |
 
@@ -4083,9 +4110,9 @@ counts the target items answered wrongly with a confidence of at least 0.95.
 | shape | target items | target accuracy | 95% interval | noun-verb decisions | harmful errors | harmful per 1,000 decisions | wrong at confidence >= 0.95 | control items | control accuracy |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | n-compound-head-ambiguous | 100 | 60.0% | [50.2%, 69.1%] | 100 | 39 | 390.0 | 5 | 20 | 100.0% |
-| heading-titlecase | 96 | 84.4% | [75.8%, 90.3%] | 78 | 4 | 51.3 | 2 | 20 | 100.0% |
-| heading-titlecase: noun targets | 50 | 82.0% | [69.2%, 90.2%] | 50 | 1 | 20.0 | 2 | - | - |
-| heading-titlecase: imperative targets | 46 | 87.0% | [74.3%, 93.9%] | 28 | 3 | 107.1 | 0 | - | - |
+| heading-titlecase | 95 | 84.2% | [75.6%, 90.2%] | 78 | 4 | 51.3 | 2 | 20 | 100.0% |
+| heading-titlecase: noun targets | 50 | 80.0% | [67.0%, 88.8%] | 50 | 1 | 20.0 | 2 | - | - |
+| heading-titlecase: imperative targets | 45 | 88.9% | [76.5%, 95.2%] | 28 | 3 | 107.1 | 0 | - | - |
 | heading-titlecase: PROPN controls | - | - | - | - | - | - | - | 20 | 100.0% |
 | n-named-state | 100 | 90.0% | [82.6%, 94.5%] | 37 | 3 | 81.1 | 0 | 12 | 100.0% |
 
@@ -4093,8 +4120,8 @@ Wrong answers at a confidence of at least 0.95: 5 (`n-compound-head-ambiguous`),
 
 ### Headroom of the new tranches
 
-Headroom is 100% minus the target accuracy (derived from the table above, not a new measurement): 40.0% for `n-compound-head-ambiguous` (40 of 100 target errors), 15.6% for `heading-titlecase`
-(15 of 96; 18.0% of the noun targets and 13.0% of the imperative targets) and 10.0% for `n-named-state` (10 of 100). The 95% intervals are 15 to 19 points wide for the first two shapes
+Headroom is 100% minus the target accuracy (derived from the table above, not a new measurement): 40.0% for `n-compound-head-ambiguous` (40 of 100 target errors), 15.8% for `heading-titlecase`
+(15 of 95; 20.0% of the noun targets and 11.1% of the imperative targets) and 10.0% for `n-named-state` (10 of 100). The 95% intervals are 15 to 19 points wide for the first two shapes
 and 12 points for `n-named-state`, so a difference of a few items between variants is inside the interval.
 
 ## Run table

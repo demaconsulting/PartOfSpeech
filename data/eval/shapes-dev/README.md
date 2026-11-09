@@ -74,7 +74,7 @@ describes the standard tranche (`dev.tsv`) unless it says otherwise.
 | `hard-sources.tsv` | the 99 documents of the hard tranche, same columns as `sources.tsv` |
 | `hard-leakage-report.tsv` | counts of the hard tranche against every other evaluation set, the standard tranche included (shared documents are reported, not gated) |
 | `compound-head.tsv` | the 120 items of the `compound-head` tranche (100 targets, 20 controls), same block format; ids `shapes-dev-compound-head-NNNN` |
-| `headings.tsv` | the 116 heading lines of the `headings` tranche (96 targets, 20 controls), same block format plus `# kind`; ids `shapes-dev-headings-NNNN` |
+| `headings.tsv` | the 115 heading lines of the `headings` tranche (95 targets, 20 controls), same block format plus `# kind`; ids `shapes-dev-headings-NNNN` |
 | `named-state.tsv` | the 112 sentences of the `named-state` tranche (100 targets, 12 controls), same block format; ids `shapes-dev-named-state-NNNN` |
 | `<tranche>-sources.tsv` | the documents of a new tranche (74, 51 and 59), same columns as `sources.tsv` |
 | `<tranche>-leakage-report.tsv` | counts of a new tranche against every other evaluation set, the standard and the hard tranche included, and against the other new tranches (shared documents among the new tranches are reported, not gated) |
@@ -428,7 +428,7 @@ targets and are counted separately. The modifier position of a compound (`bleed 
 A heading, caption, table header or step title is a **line**, not a sentence: 2 to 10 tokens, usually without final punctuation, in
 Title Case, with the numbering or label (`2.1`, `Step 3.`, `Table 2.`) removed. Lines come from the OCR text of the documents (`heading_lines`: a
 line after a blank line whose next non-blank line is a paragraph line; no running header, table-of-contents line, dot leader or trailing page
-number) and pass a heading filter (`heading_noise_reason`: ASCII, no junk, balanced brackets, not ALL CAPS, every content word capitalized, no
+number or page range such as `4-8`) and pass a heading filter (`heading_noise_reason`: ASCII, no junk, balanced brackets, not ALL CAPS, every content word capitalized, no
 broken last word, every word in a word list, one sentence by the library tokenizer, no training or evaluation line). Three kinds of judged
 word (position and lexicon only; the capitalization is the stress, so there is no band):
 
@@ -504,7 +504,7 @@ The files are written by `python tools/data/shapes_dev_extra.py --work <work-fol
 labelers' outputs) is outside the repository and not committed; a rebuild from it into another `--out-dir` is byte-identical to the committed files. No label is edited by hand.
 A rerun of `candidates` from the committed repository reproduces each round's `candidates.tsv` and its report byte for byte, because the tool's used-document index and sentence
 reference hold only the standard and hard tranches, the imperative source and the training and evaluation sets, never the three
-tranches it builds; the tranches are kept disjoint from one another by `check_leakage.py` (no shared sentence), and the imperative builder keeps its source disjoint from all of them.
+tranches it builds; the tranches are kept disjoint from one another by `check_leakage.py` (no shared sentence), the builders of the standard and hard tranches (`shapes_dev.py`) also leave out the sentences of the three newer tranches, and the imperative builder keeps its source disjoint from all of them.
 
 ### Counts of the New Tranches
 
@@ -513,23 +513,24 @@ tranches it builds; the tranches are kept disjoint from one another by `check_le
 | `compound-head` targets | 600 | 202 | 3 | 349 | 46 | 100 |
 | `compound-head` controls | 100 | 88 | 0 | 12 | 0 | 20 |
 | `headings` noun targets | 400 | 362 | 2 | 36 | 0 | 50 |
-| `headings` imperative targets | 555 | 47 | 10 | 498 | 0 | 46 |
+| `headings` imperative targets | 555 | 47 | 10 | 498 | 0 | 45 |
 | `headings` proper controls | 46 | 45 | 0 | 1 | 0 | 20 |
 | `named-state` targets | 153 | 137 | 9 | 2 | 5 | 100 |
 | `named-state` controls | 43 | 21 | 0 | 22 | 0 | 12 |
 
 A class mismatch is an agreed tag outside the gold of the shape (for `headings` the exact tag: a noun target tagged PROPN, an imperative target tagged NOUN). Built means
-the items that the caps of the rule take from the kept ones (4 per lemma, 2 per control lemma, 12 `headings` targets per document, the cap of each stratum).
+the items that the caps of the rule take from the kept ones (4 per lemma, 2 per control lemma, 12 `headings` targets per document, the cap of each stratum); a `headings` line that ends in a
+page number or a page range (`4-8`) is not taken (9 of the kept items are such lines).
 
 | Tranche | Sentences | Tokens | Disputed tokens (judged word never) | Target lemmas | Documents | Years |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `compound-head` | 120 | 2,148 | 24 | 80 | 74 | 1899 to 2008 |
-| `headings` | 116 | 520 | 7 | 71 | 51 | 1918 to 2017 |
+| `headings` | 115 | 507 | 5 | 70 | 51 | 1918 to 2017 |
 | `named-state` | 112 | 1,970 | 9 | 66 | 59 | 1917 to 2008 |
 
 - **`compound-head`:** all 100 targets are in the band with q below 0.30, 10 of them are `-ing` heads, and all
   tags are NOUN; the 20 controls are tagged VERB.
-- **`headings`:** 50 noun targets (NOUN), 46 imperative targets (VERB; 28 words that the lexicon lists as noun and verb, and 18 that it lists as verb only), 20 `proper`
+- **`headings`:** 50 noun targets (NOUN), 45 imperative targets (VERB; 28 words that the lexicon lists as noun and verb, and 17 that it lists as verb only), 20 `proper`
   controls (PROPN).
 - **`named-state`:** 100 targets (54 tagged NOUN, 46 PROPN; 58 in ALL CAPS, 42 capitalized) and 12 controls (VERB).
 
@@ -538,13 +539,13 @@ the items that the caps of the rule take from the kept ones (4 per lemma, 2 per 
 | Tranche | Documents | Families by documents (sentences) |
 | --- | ---: | --- |
 | `compound-head` | 74 | army 40 (62), usfs 15 (27), usda 14 (19), navy 5 (12) |
-| `headings` | 51 | usda 24 (48), army 14 (36), usfs 8 (13), navy 5 (19) |
+| `headings` | 51 | usda 24 (47), army 14 (38), usfs 8 (13), navy 5 (17) |
 | `named-state` | 59 | army 28 (61), usda 14 (21), usfs 12 (21), navy 4 (7), nasa 1 (2) |
 
 The sourced documents are all US federal government works (17 U.S.C. 105): Army, War Department and Army Air Forces manuals, Department of Agriculture and Forest Service bulletins, Navy
 manuals and one NASA handbook (NTRS rights record `GOV_PUBLIC_USE_PERMITTED`, no third-party material); the basis of every document is quoted in its `<tranche>-sources.tsv`. No FAA text,
 nothing in `excluded-sources.tsv`, and no document of a training source or of any other evaluation set (`dev.tsv`, `hard.tsv` and `imperative.tsv` included): the leakage reports show 0 shared documents,
-0 exact sentences and 0 near duplicates against all of them. The three new tranches may share documents with each other (19 between `compound-head` and `headings`, 23 between
+0 exact sentences and 0 near duplicates against all of them. The three new tranches may share documents with each other (20 between `compound-head` and `headings`, 23 between
 `compound-head` and `named-state`, 20 between `headings` and `named-state`) and share no sentence.
 
 ### Hand Check of the New Tranches
@@ -566,12 +567,11 @@ shipped model"; the figures are kept there only.
   month, a place or an organization after a preposition (`March`, `China`, `Department`). Both are Noun and the class-level score treats them alike; the ALL-CAPS share (counted above) is the closest
   to a printed label. The pool of real frames is thin (the run log has its size), so the tranche has no band and takes at most 4 per lemma; its 12 controls are the fewest because a state
   name used as a verb after `to` or a modal is rare.
-- **`headings` imperatives:** 28 of the 46 imperative targets are noun-and-verb words (the hard case) and 18 are verbs only; the two groups are not scored apart in the trainer report.
+- **`headings` imperatives:** 28 of the 45 imperative targets are noun-and-verb words (the hard case) and 17 are verbs only; the two groups are not scored apart in the trainer report.
   The labelers read most `Check Fluid Level`-like frames as compound nouns (the class mismatch column), so the imperative targets are the lines where both read a verb.
-- **`headings` lines that the line filter should have removed:** 3 of the 96 heading targets carry a trailing page number or OCR residue, against the filter in "The Shape of
-  `headings`". `shapes-dev-headings-0006` (`Proposed Action (Four Valleys-Fixed) 4-8`) and `shapes-dev-headings-0032` (`Proposed Action (Four Valleys-Fixed) 4-19`) are the same
-  heading of one document with a trailing page number; `shapes-dev-headings-0004` (`Fig, No, Title Page`) is OCR junk. All three are gold NOUN and were kept as built; none is edited or
-  dropped. A hand check of 20 of the 96 heading items did not include them.
+- **`headings` OCR residue:** one heading line is OCR junk that the line filter does not see (`Fig, No, Title Page`, gold NOUN, kept as built). No heading line ends in a
+  page number or a page range (the filter in "The Shape of `headings`"). The hand check of 20 heading items (10 nouns, 10 imperatives) does not include two of the 50 noun targets
+  (`shapes-dev-headings-0031`, `shapes-dev-headings-0035`).
 - **`compound-head` is the hardest block:** the band takes q ascending, so every target has q below 0.30 for the Basic classifier; it is "contested for the Basic classifier", not intrinsically hard.
 - **Same text family:** the tranches are cut from technical manuals and bulletins; the `headings` lines come from OCR and keep a few odd line joins that the filter could not see.
 - **Model labels:** two models, no human review; the hand check is a model review of 60 items.

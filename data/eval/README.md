@@ -8,7 +8,7 @@ was produced.
 | Folder | What | Size | License |
 | --- | --- | --- | --- |
 | `shapes/` | noun versus verb shape probe | 560 sentences | CC0-1.0 (labels model-written) |
-| `shapes-dev/` | hard-shape **development** set: real US federal-government sentences, five shapes, controls; standard tranche `dev.tsv` and hard tranche `hard.tsv` (four shapes, contested cases, same federal documents and families), and three single-shape tranches from new documents: `compound-head.tsv`, `headings.tsv` (heading lines, exact tags) and `named-state.tsv` | 700 + 460 + 120 + 116 + 112 sentences | CC0-1.0 labels (model-written), US federal-work sentences |
+| `shapes-dev/` | hard-shape **development** set: real US federal-government sentences, five shapes, controls; standard tranche `dev.tsv` and hard tranche `hard.tsv` (four shapes, contested cases, same federal documents and families), and three single-shape tranches from new documents: `compound-head.tsv`, `headings.tsv` (heading lines, exact tags) and `named-state.tsv` | 700 + 460 + 120 + 115 + 112 sentences | CC0-1.0 labels (model-written), US federal-work sentences |
 | `gold-v2/` | single-target gold tokens from public-domain documents | 5,072 tokens | CC0-1.0 labels, public-domain sentences |
 | `ste-challenge/` | simplified-technical-English challenge set | 32 sentences, 272 tokens | CC0-1.0 |
 | `ud-ewt/` | UD English-EWT: **fetch script and documentation only, no data** | | CC BY-SA 4.0, never committed |

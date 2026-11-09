@@ -104,8 +104,15 @@ HEADING_ALLOWED = re.compile(r"[A-Za-z0-9 ,'()\-]*")
 HEADING_LABEL = re.compile(
     r"^(?:(?:Step|STEP|Chapter|CHAPTER|Section|SECTION|Table|TABLE|Figure|FIGURE|Fig\.?|Paragraph|Part|PART|Appendix|APPENDIX|Para\.?)"
     r"\s+(?:[0-9]+[A-Za-z]?|[IVXL]+|[A-Z])(?:[.\-][0-9A-Za-z]+)*[.:\-]?\s+|[0-9]{1,2}(?:[.\-][0-9]{1,3})*\.?\s+|\([a-z0-9]{1,3}\)\s+)")
-HEADING_NOISE_RULES = ("length", "start-end", "chars", "junk", "brackets", "enumeration", "repeat", "caps", "case", "oov")
+HEADING_NOISE_RULES = ("length", "start-end", "chars", "page-number", "junk", "brackets", "enumeration", "repeat", "caps", "case", "oov")
 HEADING_MAX_CHARS = 90
+# A trailing page number of a heading line: a final number (`12`) or a final range (`4-8`, `4 - 8`, with a hyphen, en dash or em dash), after a space.
+TRAILING_PAGE_NUMBER = re.compile(r"\s\d{1,4}(?:\s?[-\u2013\u2014]\s?\d{1,4})?$")
+
+
+def has_trailing_page_number(text):
+    """True when a heading line ends in a page number or a page range (`Proposed Action 12`, `Proposed Action 4-8`)."""
+    return TRAILING_PAGE_NUMBER.search(text.strip()) is not None
 
 
 # ---------------------------------------------------------------- heading lines (line-level extraction of OCR text)
@@ -125,7 +132,7 @@ def heading_lines(raw):
     A line is a candidate when it is preceded by a blank line (or starts the text), is at most HEADING_MAX_CHARS characters long and the next
     non-blank line (looked for within the next two lines) is a paragraph line of at least 40 characters and 6 words (a paragraph follows a heading; a
     table row, a list item or a parts list does not). Refused: a line that occurs three or more times in the document (a running header or footer),
-    a table-of-contents line (dot leaders, or a trailing page number) and a line with a tab. The numbering or label in front is removed
+    a table-of-contents line (dot leaders, or a trailing page number or page range such as `4-8`) and a line with a tab. The numbering or label in front is removed
     (`strip_heading_label`).
     Only these light, text-only rules apply here; `heading_noise_reason` is the full filter of the candidate stage. Deterministic."""
     text = raw.replace("\r\n", "\n").replace("\r", "\n").replace("\x0c", "\n\n")
@@ -144,7 +151,7 @@ def heading_lines(raw):
         if counts[_line_key(stripped)] >= 3 or re.search(r"\.{2,}|(?:\s\.){2,}", stripped):
             continue
         heading = shapes_dev.normalize_text(strip_heading_label(stripped))
-        if not heading or re.search(r"\s\d{1,4}$", heading) or heading in seen:
+        if not heading or has_trailing_page_number(heading) or heading in seen:
             continue
         seen.add(heading)
         found.append(heading)
@@ -171,6 +178,7 @@ def heading_noise_reason(text, tokens, lex, vocab):
     start-end    does not start with an upper-case letter, ends in `.`, `;`, `,`, `:` or `-`, does not end in a letter, digit or `)`, or ends in
                  a function word (a determiner, preposition or conjunction: a broken line)
     chars        a character outside ASCII letters, digits, space and `, ' ( ) -`
+    page-number  a trailing page number or page range (`Proposed Action 12`, `Proposed Action 4-8`; `has_trailing_page_number`)
     junk         slash-punctuation junk, doubled or space-separated punctuation, a broken hyphen word, a lone lower-case letter other than `a`
     brackets     unbalanced parentheses
     enumeration  an inner list label (` (a) `, ` 2. x`) or an initial such as `M. `
@@ -186,6 +194,8 @@ def heading_noise_reason(text, tokens, lex, vocab):
         return "start-end"
     if not HEADING_ALLOWED.fullmatch(text):
         return "chars"
+    if has_trailing_page_number(text):
+        return "page-number"
     if (any(junk in text for junk in shapes_dev.JUNK_PUNCT) or shapes_dev.HYPHEN_JUNK.search(text) or re.search(r"(?<![A-Za-z0-9])'", text)
             or any(len(t) == 1 and t.islower() and t != "a" and t.isalpha() for t in tokens)):
         return "junk"
@@ -410,7 +420,7 @@ def scan_units(work, data_dir, unit, extra_tables=(), include_ud=True, filt=None
     scan = Scan()
     lex = lex or shapes_dev.lexicon_of(data_dir)
     vocab = vocab or shapes_dev.vocabulary_of(data_dir, lex)
-    filt = filt or shapes_dev.LeakageFilter(data_dir, include_ud)
+    filt = filt or shapes_dev.LeakageFilter(data_dir, include_ud, new_tranches=False)
     reference = reference or Reference(data_dir)
     tokens_of = shapes_dev.read_tokens(work)
     rows = shapes_dev.read_draft(work)
@@ -670,7 +680,7 @@ def _command_preflight(args):
     data_dir = args.data_dir
     lex = shapes_dev.lexicon_of(data_dir)
     vocab = shapes_dev.vocabulary_of(data_dir, lex)
-    filt = shapes_dev.LeakageFilter(data_dir, not args.no_ud)
+    filt = shapes_dev.LeakageFilter(data_dir, not args.no_ud, new_tranches=False)
     reference = Reference(data_dir)
     scans = {unit: scan_units(work, data_dir, unit, args.extra_table or (), not args.no_ud, filt, reference, vocab, lex)
              for unit in ("sentence", "heading")}
@@ -764,6 +774,11 @@ def select(tranche, items, candidates, seed=SEED, caps=None):
     caps = dict(caps or {})
     drops = collections.Counter()
     kept = [i for i in items if keep_item(i)]
+    if tranche == "headings":
+        # A heading line with a trailing page number or page range is not a heading (the pre-registered line rule): it never enters the build.
+        numbered = [i for i in kept if has_trailing_page_number(candidates[i["cand_id"]]["text"])]
+        drops["page-number"] += len(numbered)
+        kept = [i for i in kept if i not in numbered]
     targets, controls = [], []
     if tranche == "headings":
         per_doc = collections.Counter()

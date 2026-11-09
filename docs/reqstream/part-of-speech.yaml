@@ -735,8 +735,8 @@ sections:
           a verb, a `headings` item shall name its kind and carry exactly the tag of the kind (noun NOUN, imperative
           VERB, proper PROPN), the judged word shall never be disputed, every tranche shall hold between its floor and
           cap of targets (compound-head 80 to 100, headings 40 to 50 per kind, named-state 40 to 100) and controls (15
-          to 20, 12 to 20 and 12 to 20) with no more than 4 per lemma (controls 2), and the library tokenizer shall
-          reproduce the stored tokens.
+          to 20, 12 to 20 and 12 to 20) with no more than 4 per lemma (controls 2), no `headings` line shall end in a
+          page number or a page range, and the library tokenizer shall reproduce the stored tokens.
         tags: [system]
         justification: |
           Each tranche measures one failure shape that the standard and the hard tranche do not hold: a compound head

@@ -12,7 +12,9 @@ Evaluation sets whose sentences and documents no training file may contain:
                                                                  missing file fails loudly; `shapes_dev.py` builds it and passes
                                                                  `shapes_dev=False` because the set does not exist yet)
   shapes-dev-hard            data/eval/shapes-dev/hard.tsv      (the hard tranche of that set, same format; required, so a
-                                                                 missing file fails loudly; `shapes_dev=False` leaves both tranches out)
+                                                                 missing file fails loudly; `shapes_dev=False` leaves both tranches
+                                                                 and the three newer tranches out unless `new_tranches=True`, which the builders of the
+                                                                 standard and hard tranches pass so that no tranche shares a sentence with another)
   ud-ewt-dev, ud-ewt-test, ud-ewt-train   tools/data/cache/ud-ewt/*.conllu, only when the git-ignored cache is present
                                           (never committed; only the match result is reported)
 
@@ -183,11 +185,14 @@ def require_sets(sets, required, kind):
         raise SystemExit("missing committed %s sets: %s" % (kind, ", ".join(missing)))
 
 
-def evaluation_sets(include_ud=True, shapes_dev=True):
+def evaluation_sets(include_ud=True, shapes_dev=True, new_tranches=False):
     """{label: [(document id, text)]} of every evaluation set; a missing required set is a loud failure.
 
-    `shapes_dev=False` leaves the hard-shape development set (both tranches) out (and does not require them): the builder of that set
+    `shapes_dev=False` leaves the hard-shape development set (all its tranches) out (and does not require them): the builder of that set
     (shapes_dev.py) checks its candidates against all the other sets through `held_out_overlap_keys` only, and a stale earlier build must not count.
+    `new_tranches=True` (with `shapes_dev=False`) keeps the three newer tranches that exist (optional files, never required): the builders of
+    the standard and hard tranches use it, so that no tranche of the set can ever share a sentence with another. The builder of the newer
+    tranches leaves them out (it must not see its own earlier build).
     """
     sets = {}
     sets.update(corpus_sets())
@@ -195,7 +200,8 @@ def evaluation_sets(include_ud=True, shapes_dev=True):
     required = REQUIRED_EVALUATION_SETS
     if not shapes_dev:
         for label in SHAPES_DEV_ALL_LABELS:
-            sets.pop(label, None)
+            if not (new_tranches and label in SHAPES_DEV_NEW_LABELS):
+                sets.pop(label, None)
         required = tuple(label for label in required if label not in SHAPES_DEV_LABELS)
     require_sets(sets, required, "evaluation")
     if include_ud:
@@ -225,17 +231,19 @@ def gram_hashes(text, n=PROBE_GRAM_WORDS):
     return {stable_hash("gram", " ".join(w[i:i + n])) for i in range(len(w) - n + 1)}
 
 
-def held_out_overlap_keys(include_ud=True, n=PROBE_GRAM_WORDS):
+def held_out_overlap_keys(include_ud=True, n=PROBE_GRAM_WORDS, new_tranches=False):
     """The only view of the held-out sets that building a development set may have: an opaque frozen set of hashes.
 
     It holds the hashed sentence keys of every evaluation set but the hard-shape development set, and the hashed word
     `n`-grams of the shape probe sentences. It holds no label, shape, lemma, target, document id or readable text: the probe is
     read through `sentence_column` (the sentence column only). The set is an exclusion filter for candidates, tested with
     `key_overlap` and `gram_overlap`; it is never used to choose, weight or frame a candidate. A probe sentence with fewer
-    than `n` words has no n-gram (its sentence key covers it).
+    than `n` words has no n-gram (its sentence key covers it). `new_tranches=True` adds the hashed sentence keys of the three newer
+    tranches of the hard-shape development set that exist (the builders of the standard and hard tranches pass it; the builder of the
+    newer tranches does not).
     """
     found = set()
-    for label, items in evaluation_sets(include_ud, shapes_dev=False).items():
+    for label, items in evaluation_sets(include_ud, shapes_dev=False, new_tranches=new_tranches).items():
         for _, text in items:
             h = key_hash(text)
             if h is not None:

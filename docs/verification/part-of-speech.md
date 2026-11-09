@@ -539,7 +539,8 @@ and asserts the shape, the role, the tag of the judged word (NOUN or PROPN for a
 `compound-head` and `named-state`; the exact tag of the `kind` for `headings`), that no judged word is `disputed`
 and that no item is authored; `Quotas_AreMetByTheCommittedTranches` asserts the floors and caps (80 to 100 and 15
 to 20; 40 to 50 per kind and 12 to 20; 40 to 100 and 12 to 20), at most 4 targets and 2 controls per lemma, at
-most 12 `headings` targets per document and at most 25% `-ing` heads in `compound-head`;
+most 12 `headings` targets per document, no `headings` line that ends in a page number or a page range and at most
+25% `-ing` heads in `compound-head`;
 `Tokens_AreReproducedByTheTokenizer` asserts one tokenized sentence with the stored tokens;
 `Sources_AreListedOpenAndNotExcluded` asserts the exact documents with their counts, an open basis, no FAA mention
 and no excluded id or URL; `LeakageReports_RecordNoOverlap` asserts that every report names every other evaluation
@@ -549,9 +550,11 @@ that no sentence is shared with any other evaluation set, tranche or the imperat
 any of them but a new tranche; and `Selection_UsesNoPartOfSpeechModel` scans `shapes_dev_extra.py` for a weights
 file, a decoder, a tagger or the shapes evaluation and for a direct read of a held-out set. The developer-run
 Python tests `tools/data/tests/test_shapes_dev_extra.py` cover the frames (the complement of the
-`n-compound-head` frame, the state-name frame, the heading frames), the heading filter and extraction, the
-exact-tag decision and the frame rules after labeling, the selection caps, the quota gates, the hand-check sample
-and gate, and the registry of the shapes.
+`n-compound-head` frame, the state-name frame, the heading frames), the heading filter and extraction (a trailing page
+number or page range is refused), the exact-tag decision and the frame rules after labeling, the selection caps, the
+quota gates, the hand-check sample and gate, and the registry of the shapes. `tools/data/tests/test_shapes_dev.py`
+covers that the builders of the standard and hard tranches see the sentence keys of the three newer tranches (a
+rebuild cannot take one of their sentences) and that the builder of the newer tranches does not see its own.
 
 The imperative training source (`data/imperative/`) is covered by the existing tests (its folder is among the licensed
 folders, its README among the provenance statements, its source table among the source tables, its corpus among the

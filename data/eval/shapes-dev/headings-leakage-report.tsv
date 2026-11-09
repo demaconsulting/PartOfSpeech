@@ -3,15 +3,15 @@
 # probe_5gram_sentences = development sentences that share a word 5-gram with a shape probe sentence (gated, no probe text is stored)
 # shapes-dev and shapes-dev-hard rows: documents, exact sentences and same-document near duplicates are gated; rows of the other new tranches: documents are shared on purpose (reported, not gated)
 # columns = evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, probe_5gram_sentences
-open-dev	116	0	0	0	-
-open-test	116	0	0	0	-
-ste-challenge	116	0	0	0	-
-gold-v2	116	0	0	0	-
-shapes-probe	116	0	0	0	0
-ud-ewt-dev	116	0	0	0	-
-ud-ewt-test	116	0	0	0	-
-ud-ewt-train	116	0	0	0	-
-shapes-dev	116	0	0	0	-
-shapes-dev-hard	116	0	0	0	-
-shapes-dev-compound-head	116	19	0	0	-
-shapes-dev-named-state	116	20	0	0	-
+open-dev	115	0	0	0	-
+open-test	115	0	0	0	-
+ste-challenge	115	0	0	0	-
+gold-v2	115	0	0	0	-
+shapes-probe	115	0	0	0	0
+ud-ewt-dev	115	0	0	0	-
+ud-ewt-test	115	0	0	0	-
+ud-ewt-train	115	0	0	0	-
+shapes-dev	115	0	0	0	-
+shapes-dev-hard	115	0	0	0	-
+shapes-dev-compound-head	115	20	0	0	-
+shapes-dev-named-state	115	20	0	0	-
