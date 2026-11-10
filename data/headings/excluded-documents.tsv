@@ -1,0 +1,10 @@
+# Documents left out of headings.tsv because the document is a reprint of, or shares sentences with, a training or evaluation set, was already used, or has no verifiable federal-only basis
+# (only ids and reasons, never text)
+# columns = document_id, reason
+other-montanafinalstat02unitrich	the record lists a state or local government body as an author; a federal-only basis is not verifiable
+usda-CAT75656463	the record lists a state or local government body as an author; a federal-only basis is not verifiable
+usda-CAT76668505	the record lists a state or local government body as an author; a federal-only basis is not verifiable
+usda-CAT88893596	the record lists a state or local government body as an author; a federal-only basis is not verifiable
+usda-CAT88912096	the record lists a state or local government body as an author; a federal-only basis is not verifiable
+usda-CAT93999438	the record lists a state or local government body as an author; a federal-only basis is not verifiable
+usfs-CAT77678911	the record lists a state or local government body as an author; a federal-only basis is not verifiable

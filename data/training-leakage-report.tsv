@@ -1,0 +1,12 @@
+# Training leakage report (tools/data/check_leakage.py): the new training sources against the other training sets; counts only
+# document_overlaps (not gated between compound and headings, which share one pool of documents) and exact_sentence_overlaps are gated; near_duplicate_sentences (at least 10 words, at least 80% of the word 6-grams in the other set) are reported
+# columns = new_training_set, other_training_set, new_sentences, other_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences
+compound	open-train	742	11990	0	0	0
+compound	masc	742	22829	0	0	0
+compound	silver	742	13971	0	0	0
+compound	imperative	742	900	0	0	0
+compound	headings	742	375	73	0	0
+headings	open-train	375	11990	0	0	0
+headings	masc	375	22829	0	0	0
+headings	silver	375	13971	0	0	0
+headings	imperative	375	900	0	0	0

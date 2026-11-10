@@ -58,6 +58,10 @@ part of the package:
 - an imperative source of sentences from US federal government documents (public domain under 17 U.S.C. 105), tagged by
   language models (CC0 1.0).
 
+Two further training sources of the repository (sentences with a noun compound and heading lines, both from US federal
+government documents, tagged by language models, CC0 1.0) have weight 0 in the training configuration: they are not part
+of the mix, and the weights were not learned from them.
+
 Because the weights were trained on data adapted from MASC, they are provided under the terms of its license. The
 authors of Open English WordNet, Princeton University and the authors of MASC do not endorse this project, the lexicon
 or the weights.

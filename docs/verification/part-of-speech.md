@@ -263,8 +263,8 @@ run log is excluded because it records the figures of historical runs.
 
 **Test**: `PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora` (in `PartOfSpeechDataTests.cs`)
 
-Reads the corpus paths of `training.json` and asserts for each that it is one of the four training corpora (open, MASC,
-silver and imperative), that the file
+Reads the corpus paths of `training.json` and asserts for each that it is one of the six training corpora (open, MASC,
+silver, imperative, compound and headings), that the file
 is committed, that it is not a restricted corpus, that its data folder declares an allowed license, and that the section
 of the third-party notice on the embedded weights names MASC, its license, the open corpus, the silver corpus and the
 imperative source. That
@@ -413,7 +413,8 @@ and not just the project file. The reasons for a license file instead of an expr
 
 **Tests**: the `PartOfSpeech_ThirdPartyNotices_*`, `PartOfSpeech_DataLicensing_*`, `PartOfSpeech_DataProvenance_*`,
 `PartOfSpeech_DataCorrections_*`, `PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*`,
-`PartOfSpeech_ShapesDev_*`, `PartOfSpeech_ShapesDevHard_*`, `PartOfSpeech_ShapesDevNew_*`, `PartOfSpeech_Imperative_*`
+`PartOfSpeech_ShapesDev_*`, `PartOfSpeech_ShapesDevHard_*`, `PartOfSpeech_ShapesDevNew_*`, `PartOfSpeech_Imperative_*`,
+`PartOfSpeech_Compound_*`, `PartOfSpeech_Headings_*`, `PartOfSpeech_TargetedSources_*`
 and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
 
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
@@ -583,6 +584,45 @@ every evaluation corpus (both tranches included, the probe through `EvaluationIt
 `tools/data/tests/test_imperative_data.py` cover the builder on a miniature folder (see `tools/data/README.md`); the
 checks `check_leakage.py`, `check_licenses.py` and `check_conventions.py` (fix tier, enforced, imperative source included)
 run on the committed files.
+
+The compound-head and headings training sources (`data/compound/` and `data/headings/`) are covered the same way: their
+folders are among the licensed folders, their READMEs among the provenance statements, their source tables among the
+source tables and their corpora among the training corpora, so the tag set, rejoin, manifest, document, sentence,
+leakage-report and training-configuration tests read them. The `PartOfSpeech_Compound_*`, `PartOfSpeech_Headings_*` and
+`PartOfSpeech_TargetedSources_*` data tests read the committed files:
+
+- `Compound_Corpus_IsWellFormedAndWithinQuotas` asserts the `use = training` and column header lines and no
+  development-split line, 600 to 800 sentences with the ids `compound-0001` upward without a gap, a lower-case head
+  that the lexicon lists as both noun and verb, tagged NOUN or PROPN for kind `noun` and VERB after a noun for kind
+  `verb` (at most 15 percent), `unanimous` for every token, at least 200 head lemmas, at most 4 sentences per head
+  lemma and 20 per document.
+- `Headings_Corpus_IsWellFormedAndWithinQuotas` asserts the same header lines, at most 600 lines of 2 to 10 tokens
+  without a final period with the ids `headings-0001` upward, the judged word tagged as its stratum says (NOUN, VERB at
+  token 0, PROPN), the three strata present with the floors of the noun and proper strata met and no cap exceeded, at
+  most 4 lines per lemma and 25 per document.
+- `TargetedSources_Sources_AreListedOpenAndNotExcluded` (one case per source) asserts the exact documents with their
+  counts, an open basis, no FAA mention, no excluded id or URL, no used document in the record of left-out documents and
+  the columns of the records.
+- `TargetedSources_Documents_AreInNoOtherSourceTableAndNoEvaluationSet` asserts that no document id or normalized URL
+  is in any other source table (the imperative source included) or in the exclusion record, and that no document is an
+  evaluation document.
+- `TargetedSources_Sentences_AreDisjointFromEveryOtherTrainingSource` asserts, by reading the files, that no sentence of
+  either source is a sentence of another training source or of the other new source, and that no document is a document
+  of the open, MASC, silver or imperative data (the two new sources share documents, one pool).
+- `TargetedSources_LeakageReport_RecordsNoOverlapWithAnyEvaluationSet` and
+  `TargetedSources_TrainingLeakageReport_RecordsNoOverlapWithAnotherTrainingSet` assert that the committed reports name
+  every evaluation set and every other training set once, with no document overlap (but the shared pool of the two new
+  sources), no exact sentence overlap and no near duplicate.
+- `TargetedSources_Selection_UsesNoPartOfSpeechModel` scans `compound_heading_data.py` for a weights file, a decoder, a
+  tagger or the shapes evaluation and for a probe file or probe reader.
+- `TargetedSources_Notice_NamesTheSourcesAndTheirBasis` asserts that the third-party notice names `data/compound/` and
+  `data/headings/`, 17 U.S.C. 105, the CC0 dedication, the two source tables and weight 0 (not part of the mix).
+
+The developer-run Python tests `tools/data/tests/test_compound_heading_data.py` cover the builder on a miniature folder,
+including the gate of `check_leakage.py` on the near duplicates of both sources and its comparison with the other
+training sets, and the lint-only registration of both sources is covered by `tools/data/tests/test_corrections_linter.py`;
+the checks `check_leakage.py`, `check_licenses.py` and `check_conventions.py` (fix tier, enforced, both sources
+included) run on the committed files.
 
 ### Adjudication Tool
 

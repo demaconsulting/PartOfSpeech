@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite montanafinalstat unitrich usfs -->
 
 # Trainer Run Log
 
@@ -4264,6 +4264,81 @@ private folder); do not repair or post-process the output by script; do not ask 
 - The labels are written by two models, without human review; the hand check is a model review (the error found by the same kind of review for the imperative data was about 0.1% of tokens).
 - A `headings` line has few tokens; a Title Case imperative that both labelers read as a compound noun is dropped (the yield of imperative lines is expected to be low), and the proper-noun stratum is small.
 - No NASA documents and no FAA documents are in the pool.
+
+## Compound and heading training data: labeling, build and registration (results; written after the pre-registered rule)
+
+This section records what happened after the commit `e776f5693739900d91e63fd2a12451da1f4ba90b` (the builder, its tests and the rule above). The order of events, all on 2026-11-09:
+the candidates were written and exported as blind batches, both labelers tagged every batch, the decisions and the builds followed, the model review of a sample was run on the built data,
+a license check of the records found 7 documents to remove, and the data were registered at weight 0 (the commit that follows this one in the git history). No model of the retraining has been
+trained or evaluated yet, and no held-out command has been run.
+
+### Labeling
+
+`compound`: 1,500 candidates in 10 batches (b001 to b010). `headings`: 1,012 candidate lines in 7 batches (b001 to b007). Every batch was tagged by `claude-opus-5.5` and by `gpt-6.1-sol` (17 batches times two labelers, 34 runs),
+as general-purpose sub-agents, at most 4 at a time, with the frozen prompt above (SHA-256 of the template `9f1da5238dbcd196ca95b0795194245846955d2bb3a95a70bf0540d112d17db5`, no word added). **Refusals: none.** Every one of the 34 runs
+produced a valid output at the first request (`validate-output` passed), no batch was skipped, no run was requested again, and no run was repeated to change a result. `decide` ran once per round and `build` once per source before the removal described below.
+
+### Decisions and builds
+
+| Quantity | `compound` | `headings` |
+| --- | ---: | ---: |
+| candidates | 1,500 (694 lemmas, 192 documents) | 1,012 (noun 560, imperative 356, proper 96; 560 lemmas, 124 documents) |
+| dropped: class mismatch | 106 | 427 |
+| dropped: target disagreement | 6 | 12 |
+| dropped: frame mismatch | 80 | 0 |
+| dropped: a disputed token | 163 | 31 |
+| dropped by the caps | lemma 55, document 6, noun 107, verb 177 | noun 108, proper 26 |
+| built (before the removal below) | 800 (noun 680, verb 120; 477 lemmas; 161 documents; 15,889 tokens) | 408 (noun 340, proper 60, imperative 8; 289 lemmas; 95 documents; 1,816 tokens) |
+| removed with 7 documents (below) | 54, then 4 verb-share drops | 33 |
+| **committed** | **742** (noun 631, verb 111; 462 lemmas; 154 documents; 14,692 tokens) | **375** (noun 315, proper 52, imperative 8; 273 lemmas; 90 documents; 1,668 tokens) |
+
+The `compound` class mismatches are heads that both labelers read as another class than noun or verb (adjective 48, adverb 36, adposition 13, auxiliary 6, one each numeral, subordinating and coordinating conjunction); the build keeps a head both read as VERB
+after an agreed noun (kind `verb`) and a head read as a noun (kind `noun`). Candidate sentences dropped alone because of an overlap: 3 equal and 2 near duplicates of a shapes development sentence (`compound`), 118 heading lines equal to one (`headings`).
+
+### The imperative stratum of the headings source is almost empty
+
+The registered floors of `headings` are noun 150, imperative 100 and proper 40. 346 of the 356 initial-imperative candidates (the first word read as NOUN by both labelers 275 times, as ADJ 44 and as PROPN 27) were dropped by the class rule
+(an initial imperative must be VERB), 2 by a disagreement and 8 were kept. The rule of the pre-registration drops such a line, never keeps it with another tag and never corrects it, and `--allow-short` waives a floor with the miss disclosed. The build therefore ran with `--allow-short`:
+the floor of the imperative stratum is not met (8 lines of 100), and the noun and proper floors are met. The spot-check sample is smaller for the same reason (48 items: noun 25, imperative 8, which is all of them, proper 15). **Consequence for the retraining:** the `headings`
+source has almost no imperative training mass, so an arm that adds it can only test the noun and proper-noun readings of Title Case words, not the initial-imperative reading.
+
+### A license-basis finding and the removal of 7 documents
+
+The hand exclusions of the sourcing (44 documents) removed documents whose record shows a state, foreign, university, contractor or private publisher. A review of the author field of every used document after the build found 7 documents that also list a state or local government body as an author
+(a state environmental agency, a state natural-resources department, a state resources agency, a town and a county conservation district): `other-montanafinalstat02unitrich`, `usda-CAT75656463`, `usda-CAT76668505`, `usda-CAT88893596`, `usda-CAT88912096`, `usda-CAT93999438` and `usfs-CAT77678911`.
+Rule 1 of the pre-registration admits only documents with a verifiable US-federal basis, and the sourcing dropped a document without one, so these 7 were removed. The builder got the option `build --omit-document ID` (a change after the labeling; the labels, the decisions and the caps are untouched): it removes the selected items of the listed documents after the caps and before the numbering, so nothing is added, nothing is relabeled
+and the ids have no gap; the verb share of rule 6 is applied again to what is left (4 verb items were dropped for it); the documents are listed in `excluded-documents.tsv` with a reason. Both sources were built again with the 7 ids (`compound`: 54 items removed, `headings`: 33), which gave the counts above. The pre-removal files are not committed.
+
+### Hand check (model review, not a human review)
+
+One sample of each source was drawn from the data as built before the removal (seeds 20261111 and 20261112) and reviewed once by `claude-sonnet-5.5` against `data/CONVENTIONS.md`; no sample was drawn again.
+
+| Measure | `compound` (60 items, 4 controls) | `headings` (48 items, 4 controls) |
+| --- | ---: | ---: |
+| judged word correct | 60 of 60 (100.0%) | 48 of 48 (100.0%) |
+| whole item correct (no other token marked wrong) | 58 of 60 (96.7%) | 47 of 48 (97.9%) |
+| token precision (reported, not gated) | 99.76% (3 wrong of 1,255) | 99.56% (1 wrong of 227) |
+| controls accepted | 0 of 4 | 0 of 4 |
+| gate (judged word at least 95%, at most 1 control accepted) | passed | passed |
+| items that belong to a removed document | 2 | 3 |
+| the remaining reviewed items (judged word; whole item; token precision) | 58 of 58; 56 of 58; 99.75% (3 of 1,217) | 45 of 45; 44 of 45; 99.54% (1 of 219) |
+
+### Registration checks (on the committed files)
+
+- `check_leakage.py --write-report`: 0 document overlaps, 0 exact sentence overlaps and 0 near duplicates of both sources against every evaluation set (open dev and test, gold v2, the probe, all five tranches of the shapes development set, the STE challenge set, UD English-EWT train, dev and test), and none against the other training sets;
+  the two new sources share 73 documents (one pool, reported and not gated) and no sentence. The pairwise section is new (`data/training-leakage-report.tsv`).
+- `check_licenses.py` clean (both source tables are scanned for restricted text and FAA material, and against the exclusion record). `check_conventions.py --tier fix --enforce --apply`: 0 violations in all columns; the check tier reports 2 hits in `compound` (`be-participle-adj-not-gradable` and `language-name-token`) and none in `headings`.
+- Lexicon (not rebuilt, `lexicon.tsv` unchanged; `check_lexicon.py` gate G1 passed): the tag of 12,823 of 13,265 word tokens of `compound` (96.67%) and 3,971 of 4,332 distinct (spelling, tag) pairs (91.67%) are listed; for `headings` 1,512 of 1,569 tokens (96.37%) and 898 of 951 pairs (94.43%).
+- `train --check` exit 0, image `6e1e4ade56aa277d79709c107000f10e99c6f4e55a097e872a9c38fa2e12e8d0` unchanged, with both sources in `training.json` at weight 0.
+
+| Frozen file | SHA-256 |
+| --- | --- |
+| `data/compound/compound.tsv` | `eb8c4708ba95fb370c885110e10eda0f1d826c5922876bd66e69389894bd5e3b` |
+| `data/compound/sources.tsv` | `8b861dd3ff2d5a3fd5e741f5fe2a906807f99afa562d7e294d4011d93ef15e02` |
+| `data/headings/headings.tsv` | `5931072928829e1911468173a181761ba001c4d7f16a8492391404395649124c` |
+| `data/headings/sources.tsv` | `428a73f0581ec168cdef63d885cd6e001e925813b0a0d0dd1148f79636935aff` |
+
+The README of each folder is the description of the data (`data/compound/README.md`, `data/headings/README.md`).
 
 ## Run table
 

@@ -199,7 +199,7 @@ Source: UD English-EWT labels; [UD, PROPN](https://universaldependencies.org/u/p
 
 ### Corpus Block Format
 
-The open corpus, MASC, the silver data, the STE challenge set, the shapes development set and the imperative training source share one format (UTF-8, no BOM, LF newlines, NFC,
+The open corpus, MASC, the silver data, the STE challenge set, the shapes development set and the imperative, compound and headings training sources share one format (UTF-8, no BOM, LF newlines, NFC,
 final newline). A file starts with header comment lines, then a blank line, then one block per sentence:
 
 ```text
@@ -221,7 +221,7 @@ final newline). A file starts with header comment lines, then a blank line, then
   single spaces (the original text is not kept). The tokens of a sentence always concatenate to its text without spaces.
 - `status` vocabulary: open and STE `unanimous | disputed | unchecked`; MASC `ptb | disputed`; silver `silver | masked |
   disputed` (a `disputed` mark on MASC or silver comes from the corrections overlay; the importers never write it); the
-  imperative source `unanimous` only.
+  imperative, compound and headings sources `unanimous` only.
 - **Status flags.** The status cell may continue with flags, each after a plus sign: `status[+foreign][+mentioned]`
   (`unanimous+mentioned`, `unchecked+foreign+mentioned`). `mentioned` marks a word that is talked about rather than used
   and `foreign` a word of another language (see "Mentioned Words"). A flag never changes the tag, and a flag is
@@ -274,6 +274,18 @@ is the base form of the verb (no gerund, past or third-person form). `sources.ts
 table and lists the used documents only; `excluded-documents.tsv` (`document_id, reason`) and `dropped-sentences.tsv`
 (`reason, sentences`) hold ids and counts only, never text. The convention linter reads the file (the fix tier must find no
 violation) but the corrections overlay never addresses it.
+
+**Compound and headings training sources** (`data/compound/compound.tsv` and `data/headings/headings.tsv`, specified in their `README.md` files). The corpus
+block format with the header comments `corpus`, `license`, `columns`, `status`, `judged word`, `selection` and `use = training` (training files: the trainer
+admits them and refuses the evaluation files by name), ids `compound-NNNN` and `headings-NNNN` and the document id of the unit in `source_id`. The status is
+`unanimous` for every token (two blind model labelers agree on the tag of every token), with the usual flags where both labelers agree on them. After `text`
+every block has three more comment lines. `compound.tsv` (a unit is a sentence): `# head = <n>` (the 0-based token index of the head of a noun compound whose
+head can also be a verb), `# lemma = <lemma>` and `# kind = noun | verb`; the head is tagged NOUN or PROPN for kind `noun` and VERB for kind `verb` (a counter-example,
+a noun stands right before it). `headings.tsv` (a unit is a heading line with 2 to 10 tokens and no final period): `# word = <n>` (the token index of the
+judged word), `# lemma = <lemma>` and `# stratum = noun | imperative | proper`; the judged word is tagged exactly NOUN (stratum `noun`), VERB (stratum `imperative`,
+token 0, the base form) or PROPN (stratum `proper`), as the heading rule of "Annotation Conventions" says. Each folder has `sources.tsv` (the 12 columns of the gold v2
+source table, used documents only), `excluded-documents.tsv` (`document_id, reason`) and `dropped-sentences.tsv` (`reason, sentences`); ids and counts only,
+never text. The convention linter reads both files (the fix tier must find no violation) but the corrections overlay never addresses them.
 
 **Corrections overlay** (`data/corrections/`, specified in full in its `README.md`). Corrections to the labels of the open
 corpus, MASC and the silver data are rows of three tables; the rows are applied to the corpus files (`corrections.py apply

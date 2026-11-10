@@ -13,6 +13,7 @@ from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import adjudicate
+import check_leakage
 import common
 import compound_heading_data as chd
 import imperative_data as idata
@@ -173,7 +174,7 @@ class IndexTests(Mini):
     def test_index_has_the_imperative_and_all_shapes_dev_tables_and_extra_tables_but_not_its_own_output(self):
         extra = os.path.join(self.temp, "draft.tsv")
         base.table_file(extra, sd.SOURCE_COLUMNS, [self.source_row("army-extra", "https://archive.org/download/ExtraId/ExtraId_djvu.txt")])
-        os.makedirs(os.path.join(self.data, "compound"))
+        os.makedirs(os.path.join(self.data, "compound"), exist_ok=True)
         base.table_file(os.path.join(self.data, "compound", "sources.tsv"), sd.SOURCE_COLUMNS,
                         [self.source_row("army-own", "https://archive.org/download/OwnId/OwnId_djvu.txt")])
         index = chd.used_index(self.data, sd.load_exclusions(self.work, self.data), [extra])
@@ -477,6 +478,40 @@ class BuildCompoundTests(Mini):
         self.assertIn("do not rejoin", "\n".join(chd.quota_problems("compound", [dict(good[0], text="Oil checks .")], 1)))
         self.assertIn("at most 800", "\n".join(chd.quota_problems("compound", good * 300, 1, document_cap=900, lemma_cap=900)))
 
+    def test_an_omitted_document_is_removed_after_the_caps_nothing_is_added_and_the_ids_have_no_gap(self):
+        specs = cmany("check", 3) + cmany("seal", 3, "army-b", 10) + cmany("level", 2, "army-c", 20)
+        plain, _, _ = self.build("compound", specs, allow_short=True)
+        built, report, out = self.build("compound", specs, allow_short=True, omit=["army-b"])
+        self.assertEqual(sorted(s["text"] for s in plain if s["source_id"] != "army-b"), sorted(s["text"] for s in built))   # removal only
+        self.assertEqual(5, len(built))
+        self.assertEqual({"omitted-document": 3}, drops_of(report))
+        _, sentences = common.read_corpus(os.path.join(out, "compound.tsv"))
+        self.assertEqual(["compound-%04d" % n for n in range(1, 6)], [s["sent_id"] for s in sentences])
+        with open(os.path.join(out, "sources.tsv"), encoding="utf-8") as handle:
+            self.assertNotIn("army-b", handle.read())
+        rejected = common.read_lines(os.path.join(out, "excluded-documents.tsv"))
+        self.assertIn("army-b\t" + chd.OMIT_REASON, rejected)
+
+    def test_omitting_an_unknown_document_is_refused_and_the_command_line_passes_the_ids(self):
+        self.decided("compound", cmany("check", 3))
+        out = os.path.join(self.temp, "out")
+        with mock.patch.object(chd, "draft_gate"):
+            with self.assertRaises(chd.BuildError):
+                chd.build(self.work, "compound", out, data_dir=self.data, allow_short=True, omit=["no-such-doc"])
+            self.assertFalse(os.path.exists(out))
+            code, _, err = self.run_tool("build", "--source", "compound", "--out-dir", out, "--allow-short", "--omit-document", "no-such-doc")
+            self.assertEqual(1, code)
+            self.assertIn("cannot omit", err)
+        self.assertFalse(os.path.exists(os.path.join(out, "compound.tsv")))
+
+    def test_omitting_documents_trims_the_verb_share_again_and_never_adds_an_item(self):
+        chosen = [dict(sent_key="k%d" % n, kind="noun" if n < 17 else "verb", source_id="d") for n in range(20)]
+        kept, dropped = chd.trim_verb_share(chosen)                       # 17 nouns allow 17 * 15 // 85 = 3 verbs
+        self.assertEqual((20, 0), (len(kept), dropped))
+        kept, dropped = chd.trim_verb_share([c for c in chosen if c["sent_key"] != "k0"])        # 16 nouns allow 2 verbs: the last verb goes
+        self.assertEqual((18, 1), (len(kept), dropped))
+        self.assertEqual(["k17", "k18"], [c["sent_key"] for c in kept if c["kind"] == "verb"])
+
     def test_an_excluded_document_cannot_be_built_in(self):
         common.write_text(os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv"),
                           ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "army-a\thttps://example.gov/army-a\tlicense doubt\t2026-11-06"])
@@ -768,6 +803,64 @@ class NoModelTests(unittest.TestCase):
         self.assertEqual((60, 4, 0.95, 1), (chd.SAMPLE_SIZE, chd.SAMPLE_CONTROLS, chd.PRECISION_MIN, chd.CONTROLS_ACCEPTED_MAX))
         self.assertEqual(800, chd.CMP_NOUN_CAP + chd.CMP_VERB_CAP)
         self.assertEqual(600, sum(chd.HDG_CAPS.values()))
+
+
+class TrainingLeakageGateTests(unittest.TestCase):
+    """check_leakage gates the near duplicates of the compound and headings sources against the evaluation sets and compares them with the other training sets."""
+
+    EVAL = "Remove the cover and then check the pressure valve before you start the work today"
+    NEAR = EVAL.rsplit(" ", 1)[0] + " tomorrow"        # 15 words, one 6-gram of 10 differs: 90 percent contained, not an exact key
+
+    def run_check(self, label, text):
+        trains = {label: [("train-doc", text)]}
+        evals = {"eval-set": [("eval-doc", self.EVAL)]}
+        with mock.patch.object(check_leakage, "training_sets", return_value=trains), \
+                mock.patch.object(check_leakage.leakage, "evaluation_sets", return_value=evals):
+            return check_leakage.check(False)
+
+    def test_a_near_duplicate_of_a_new_source_fails_and_one_of_the_older_sources_is_only_reported(self):
+        for label in ("compound", "headings", "imperative"):
+            rows, failures, _ = self.run_check(label, self.NEAR)
+            self.assertEqual([(label, "eval-set", 1, 0, 0, 1)], rows)
+            self.assertEqual(1, failures, label)
+        for label in ("open-train", "masc", "silver"):
+            self.assertEqual(0, self.run_check(label, self.NEAR)[1], label)
+        self.assertEqual(("imperative", "compound", "headings"), check_leakage.NEAR_GATED_TRAINING)
+
+    def test_the_training_files_include_the_two_new_sources(self):
+        self.assertEqual(["open-train", "masc", "silver", "imperative", "compound", "headings"], [label for label, _ in check_leakage.TRAINING_FILES])
+        self.assertEqual(("compound", "headings"), check_leakage.NEW_TRAINING)
+
+    def trains(self, **changes):
+        sets = {"open-train": [("open-1", "Open the door before the long flight starts today")], "masc": [("masc-1", "Masc sentence one is here")],
+                "silver": [("silver-1", "Silver sentence one is here")], "imperative": [("imp-1", "Inspect the seal before each flight")],
+                "compound": [("army-a", "Fuel tank seal check"), ("army-b", "Oil level reading")], "headings": [("army-a", "Pump Seal Inspection")]}
+        sets.update(changes)
+        return sets
+
+    def test_each_new_source_is_compared_with_every_other_training_set_and_the_pair_once(self):
+        rows, failures = check_leakage.training_check(self.trains())
+        self.assertEqual([("compound", "open-train"), ("compound", "masc"), ("compound", "silver"), ("compound", "imperative"), ("compound", "headings"),
+                          ("headings", "open-train"), ("headings", "masc"), ("headings", "silver"), ("headings", "imperative")], [row[:2] for row in rows])
+        self.assertEqual(0, failures)
+        shared = [row for row in rows if row[:2] == ("compound", "headings")][0]
+        self.assertEqual(1, shared[4])                                                   # the shared document is counted but is not a failure
+
+    def test_a_shared_document_or_an_exact_sentence_with_another_training_set_fails(self):
+        rows, failures = check_leakage.training_check(self.trains(masc=[("army-b", "Another sentence")]))
+        self.assertEqual(1, failures)
+        self.assertEqual(1, [row for row in rows if row[:2] == ("compound", "masc")][0][4])
+        rows, failures = check_leakage.training_check(self.trains(silver=[("silver-1", "Pump seal inspection!")]))
+        self.assertEqual(1, failures)                                                    # the key of the heading line is the key of a silver sentence
+        self.assertEqual(1, [row for row in rows if row[:2] == ("headings", "silver")][0][5])
+        rows, failures = check_leakage.training_check(self.trains(headings=[("army-c", "Fuel tank seal check")]))
+        self.assertEqual(1, failures)                                                    # an exact sentence shared by the two new sources fails
+
+    def test_a_near_duplicate_between_training_sets_is_reported_not_gated(self):
+        near = self.NEAR
+        rows, failures = check_leakage.training_check(self.trains(compound=[("army-a", near)], silver=[("silver-1", self.EVAL)]))
+        self.assertEqual(0, failures)
+        self.assertEqual(1, [row for row in rows if row[:2] == ("compound", "silver")][0][6])
 
 
 if __name__ == "__main__":

@@ -257,16 +257,19 @@ hashed keys of `shapes_dev.LeakageFilter` only), a top-up round of a tranche is 
 the quota gate is a floor and a cap per stratum. The gold of a heading item is an exact tag, which the decision rule of
 `shapes_dev.py` checks for the heading shapes (`EXACT_TAGS`).
 
-The training sources of `training.json` are the open corpus, MASC, the silver corpus and the imperative source
-(`data/imperative/imperative.tsv`), all with a positive weight (the imperative source has weight 1). A source can only
+The training sources of `training.json` are the open corpus, MASC, the silver corpus, the imperative source
+(`data/imperative/imperative.tsv`, weight 1), and the compound and headings sources (`data/compound/compound.tsv` and
+`data/headings/headings.tsv`, weight 0, so they are committed and not read by a default run). A source can only
 be added to a run through the
 configuration: `--source NAME:WEIGHT` changes the weight of a source that the configuration names and refuses an unknown
 name, and a source of weight 0 is not read (`CorpusReader.LoadSources` skips it), so `--source imperative:0` trains the
-model without the imperative source. The imperative file is an ordinary training file
-under `data/`, so the training guard admits it (the deny-list names no part of its path); it is disjoint from every
-evaluation set, and the builder `tools/data/imperative_data.py` reuses the opaque-key discipline of `shapes_dev.py`:
-the held-out sets reach it only through `leakage.held_out_overlap_keys()`, and it names no weights file, decoder or
-tagger. The rule of the source and its record are in `data/imperative/README.md`.
+model without the imperative source and `--source compound:1` trains with the compound source. The three targeted files
+are ordinary training files
+under `data/`, so the training guard admits them (the deny-list names no part of their path); they are disjoint from every
+evaluation set, and the builders `tools/data/imperative_data.py` and `tools/data/compound_heading_data.py` reuse the
+opaque-key discipline of `shapes_dev.py`:
+the held-out sets reach them only through `leakage.held_out_overlap_keys()`, and they name no weights file, decoder or
+tagger. The rule of each source and its record are in its `README.md` under `data/`.
 
 ### Confidence Thresholds
 
@@ -393,6 +396,7 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | --- | --- | --- |
 | Sources | open x2, MASC, silver (probability at least 80%) | +0.57 points over open alone |
 | Imperative source | `imperative` at weight 1 (900 sentences) | the imperative-data experiment (`RUN-LOG.md`) |
+| Compound and headings | `compound` (742), `headings` (375), weight 0 | committed data, not in the mix |
 | `disputed` tokens | trained, not masked | accuracy +0.2 points, harmful errors tied |
 | Restriction, history | mode B (`History`), predicted history | fully restricted training (C) failed the floor |
 | Epochs | 6 | tied with 10 epochs, fewest within 0.05 points of the best |
@@ -636,7 +640,8 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
 - The base class library and, for `training.json`, `operating-points.json` and `test-results.json`, System.Text.Json
   (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv`, `data/silver/silver.tsv` and
-  `data/imperative/imperative.tsv` (all four with a positive weight), and the two
+  `data/imperative/imperative.tsv` (all four with a positive weight), `data/compound/compound.tsv` and
+  `data/headings/headings.tsv` (weight 0), and the two
   development files plus the hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche),
   `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` and `eval-arm`) and `compound-head.tsv`,
   `headings.tsv` and `named-state.tsv` of the same folder (for `eval-shapes` only); for

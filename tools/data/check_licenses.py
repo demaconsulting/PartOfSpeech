@@ -5,7 +5,8 @@
 Checks (exit code 1 on any finding):
   1. no *.conllu file anywhere in the repository data and tools folders (outside the git-ignored cache), and no path under
      data/ containing semcor, brown, ewt or ud-ewt except the fetch-only documentation data/eval/ud-ewt/README.md;
-  2. the source tables (open, gold v2, silver, shapes-dev and, when it exists, the hard tranche's hard-sources.tsv, and the imperative source) contain no row that mentions a share-alike, no-derivatives or
+  2. the source tables (open, gold v2, silver, shapes-dev and, when it exists, the hard tranche's hard-sources.tsv, the imperative source and the
+     compound and headings sources) contain no row that mentions a share-alike, no-derivatives or
      non-commercial license, a Creative Commons BY-family license other than CC0, or Wikipedia; the MASC source table
      (a CC BY 3.0 US corpus) must record exactly that license for every document;
   3. every data folder README declares `License: <id>` with an id from the allowed set (the staged corrections folder included);
@@ -17,7 +18,8 @@ Checks (exit code 1 on any finding):
   5. the hard-shape development set has a required, well-formed exclusion record eval/shapes-dev/excluded-sources.tsv (missing, zero-byte
      or headerless is a finding; header-only is valid), and neither its sources.tsv nor the source_id of any sentence of its dev.tsv
      matches an excluded id or normalized URL; the same for the hard tranche (hard-sources.tsv and hard.tsv) and the three newer tranches
-     (<tranche>-sources.tsv and <tranche>.tsv), which share the record.
+     (<tranche>-sources.tsv and <tranche>.tsv), which share the record; the compound and headings training sources (sources.tsv and the corpus
+     file) take the same check.
   6. fail closed: every source table and corpus above must exist (missing is a finding, not a skip or a traceback); the two files of the hard
      tranche are required while leakage.HARD_TRANCHE_REQUIRED is True and skipped when missing while it is False.
 """
@@ -35,20 +37,24 @@ ALLOWED_LICENSES = {"CC0-1.0", "CC-BY-3.0-US", "CC-BY-4.0", "Public-Domain", "MI
 NEW_TRANCHES = leakage.SHAPES_DEV_NEW_TRANCHES            # the three newer tranches of the development set (compound-head, headings, named-state)
 NEW_SOURCES_TABLES = tuple("eval/shapes-dev/%s-sources.tsv" % name for name in NEW_TRANCHES)
 NEW_CORPORA = tuple("eval/shapes-dev/%s.tsv" % name for name in NEW_TRANCHES)
+TARGETED_SOURCES = ("compound", "headings")              # the two targeted training sources (compound-head sentences, Title Case heading lines)
+TARGETED_TABLES = tuple("%s/sources.tsv" % name for name in TARGETED_SOURCES)
+TARGETED_CORPORA = tuple("%s/%s.tsv" % (name, name) for name in TARGETED_SOURCES)
 SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv",
-                 "eval/shapes-dev/hard-sources.tsv", "imperative/sources.tsv") + NEW_SOURCES_TABLES
+                 "eval/shapes-dev/hard-sources.tsv", "imperative/sources.tsv") + TARGETED_TABLES + NEW_SOURCES_TABLES
 HARD_SOURCES_TABLE = "eval/shapes-dev/hard-sources.tsv"   # scanned when it exists; a missing one fails once leakage.HARD_TRANCHE_REQUIRED is True
 HARD_CORPUS = "eval/shapes-dev/hard.tsv"                  # likewise
 HARD_FILES = (HARD_SOURCES_TABLE, HARD_CORPUS)            # optional only while leakage.HARD_TRANCHE_REQUIRED is False
 # Every table and corpus whose absence is a finding (the hard tranche's two files only while the tranche is required); each consumer below
 # skips a file that is missing, because required_file_findings reports it once. The files of the three newer tranches are required too.
-REQUIRED_FILES = SOURCE_TABLES + ("masc/sources.tsv", "eval/shapes-dev/dev.tsv", HARD_CORPUS) + NEW_CORPORA
+REQUIRED_FILES = SOURCE_TABLES + ("masc/sources.tsv", "eval/shapes-dev/dev.tsv", HARD_CORPUS) + NEW_CORPORA + TARGETED_CORPORA
 MASC_LICENSE = "CC BY 3.0 US"
-# The hard-shape development set (all tranches) and the imperative training source take no FAA material (host, publisher or handbook); see
-# data/eval/shapes-dev/README.md and data/imperative/README.md.
+# The hard-shape development set (all tranches) and the imperative, compound and headings training sources take no FAA material (host,
+# publisher or handbook); see data/eval/shapes-dev/README.md, data/imperative/README.md, data/compound/README.md and data/headings/README.md.
 FAA_TEXT = re.compile(r"faa\.gov|\bFAA\b|Federal Aviation", re.I)
-FAA_TABLES = ("eval/shapes-dev/sources.tsv", HARD_SOURCES_TABLE, "imperative/sources.tsv") + NEW_SOURCES_TABLES
-READMES = ("open", "masc", "silver", "imperative", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections")
+FAA_TABLES = ("eval/shapes-dev/sources.tsv", HARD_SOURCES_TABLE, "imperative/sources.tsv") + TARGETED_TABLES + NEW_SOURCES_TABLES
+READMES = ("open", "masc", "silver", "imperative", "compound", "headings", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge",
+           "lexicon", "corrections")
 ALLOWED_PATHS = {"data/eval/ud-ewt/README.md"}
 CORRECTION_SOURCES = {"open": "open/sources.tsv", "masc": "masc/sources.tsv", "silver": "silver/sources.tsv"}
 CORRECTION_TEXT_COLUMNS = frozenset(("token", "hint", "context"))  # corpus text: covered by the check of the document
@@ -197,6 +203,24 @@ def excluded_source_findings(base=None):
                 hit = common.excluded_match(lookup, source_id)
                 if hit:
                     findings.append("eval/shapes-dev/%s: sentences of %s use the excluded source %s" % (name, source_id, hit))
+    # The compound and headings training sources take no excluded document either (their builder refuses one; this is the independent check).
+    for table in TARGETED_TABLES:
+        path = os.path.join(base, *table.split("/"))
+        if os.path.isfile(path):
+            for line in common.read_lines(path):
+                cells = line.split("\t")
+                if not line or line.startswith("#") or cells[0] == "source_id":
+                    continue
+                hit = common.excluded_match(lookup, cells[0], cells[3] if len(cells) > 3 else "")
+                if hit:
+                    findings.append("%s: row %s uses the excluded source %s" % (table, cells[0], hit))
+    for corpus in TARGETED_CORPORA:
+        path = os.path.join(base, *corpus.split("/"))
+        if os.path.isfile(path):
+            for source_id in sorted({s["source_id"] for s in common.read_corpus(path)[1]}):
+                hit = common.excluded_match(lookup, source_id)
+                if hit:
+                    findings.append("%s: sentences of %s use the excluded source %s" % (corpus, source_id, hit))
     return findings
 
 

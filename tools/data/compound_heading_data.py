@@ -63,6 +63,11 @@ THE PRE-REGISTERED RULE (committed before any label of these sources exists; the
 9. Format. Ordered by the seeded rank, UTF-8 without BOM, LF, NFC; ids `compound-NNNN` and `headings-NNNN`; the block format of data/open/train.tsv (form, upos,
    status) with the per-sentence lines `# head`, `# lemma`, `# kind` (compound) and `# word`, `# lemma`, `# stratum` (headings); sources.tsv lists only the used documents (12 columns
    of data/eval/gold-v2/sources.tsv, `sentences` recomputed).
+10. Amendment after the build (the labels, the decisions and the caps are unchanged; recorded in the RUN-LOG): `build --omit-document ID` (repeatable) removes the
+   selected items of a document whose public-domain basis is found not to be verifiable after all (rule 1; for example a record that lists a state or local government body
+   as an author). The removal happens after the caps and before the numbering, so nothing is added, nothing is relabeled and the ids stay without a gap; the document is
+   listed with the reason `OMIT_REASON` in excluded-documents.tsv and the items are counted as `omitted-document` in the build report. The verb share of rule 6 is applied
+   again to what is left (the last verb items in the seeded order are dropped, counted as `verb-share`). An unknown id is refused.
 
 Work folder W (`--work W`, outside the repository), the layout of shapes_dev_extra.py: W/sources-draft.tsv (12 columns), W/text/<source_id>.txt (one sentence per line),
 W/raw/<source_id>.txt (OCR text), W/lines/<source_id>.txt (heading lines, `shapes_dev_extra.py lines`), W/tokens.tsv (`shapes_dev_extra.py tokenize`), W/rounds/compound and
@@ -75,7 +80,7 @@ Commands (`--data-dir D` replaces the repository's data folder, for tests; --ext
   python tools/data/compound_heading_data.py --work W candidates --source compound|headings [--extra-table PATH ...] [--extra-text DIR ...] [--no-ud]
                                                            [--lemma-cap N] [--document-cap N] [--max-candidates N] [--min-candidates N] [--min-lemmas N]
   (then: shapes_dev.py --work W export / check-batches / validate-output / status / decide --round compound|headings, the unchanged blind labeling)
-  python tools/data/compound_heading_data.py --work W build --source compound|headings [--out-dir D] [--extra-table PATH ...] [--allow-short]
+  python tools/data/compound_heading_data.py --work W build --source compound|headings [--out-dir D] [--extra-table PATH ...] [--allow-short] [--omit-document ID ...]
   python tools/data/compound_heading_data.py --work W sample --source compound|headings [--out-dir D] [--seed N]
   python tools/data/compound_heading_data.py --work W review-result --source compound|headings --verdicts FILE ...
   python tools/data/compound_heading_data.py --work W report --source compound|headings [--out-dir D]
@@ -107,6 +112,8 @@ STRATUM_OF = {"heading-noun": "noun", "heading-imperative": "imperative", "headi
 STRATA = ("noun", "imperative", "proper")
 EQUALS_SHAPES_DEV, NEAR_SHAPES_DEV = imperative_data.EQUALS_SHAPES_DEV, imperative_data.NEAR_SHAPES_DEV
 HEADING_LINE_DROP = "equals-a-heading-line"
+OMIT_REASON = "the record lists a state or local government body as an author; a federal-only basis is not verifiable"
+OMITTED = "omitted-document"
 DOCUMENT_KEY_HITS = shapes_dev.DOCUMENT_KEY_HITS
 PRECISION_MIN = shapes_dev.PRECISION_MIN
 CONTROLS_ACCEPTED_MAX = shapes_dev.CONTROLS_ACCEPTED_MAX
@@ -499,13 +506,21 @@ def select_compound(kept, seed=SEED, lemma_cap=CMP_LEMMA_CAP, document_cap=CMP_D
             per_document[item["source_id"]] += 1
             per_kind[kind] += 1
             chosen.append(item)
-    limit = per_kind["noun"] * verb_percent // (100 - verb_percent)
-    verbs = [c for c in chosen if c["kind"] == "verb"]
-    if len(verbs) > limit:
-        surplus = {id(c) for c in verbs[limit:]}
-        drops["verb-share"] += len(surplus)
-        chosen = [c for c in chosen if id(c) not in surplus]
+    chosen, surplus = trim_verb_share(chosen, verb_percent)
+    if surplus:
+        drops["verb-share"] += surplus
     return chosen, drops
+
+
+def trim_verb_share(chosen, verb_percent=CMP_VERB_PERCENT):
+    """(chosen, number dropped): the verb items of `chosen` (kept in the seeded order) that exceed `verb_percent` of the file are dropped, the last ones first."""
+    noun = sum(1 for c in chosen if c["kind"] == "noun")
+    limit = noun * verb_percent // (100 - verb_percent)
+    verbs = [c for c in chosen if c["kind"] == "verb"]
+    if len(verbs) <= limit:
+        return chosen, 0
+    surplus = {id(c) for c in verbs[limit:]}
+    return [c for c in chosen if id(c) not in surplus], len(surplus)
 
 
 def select_headings(kept, seed=SEED, lemma_cap=HDG_LEMMA_CAP, document_cap=HDG_DOCUMENT_CAP, caps=None):
@@ -607,17 +622,22 @@ def _drop_rows(round_work):
     return []
 
 
-def build(work, source, out_dir, seed=SEED, allow_short=False, data_dir=None, extra_tables=()):
+def build(work, source, out_dir, seed=SEED, allow_short=False, data_dir=None, extra_tables=(), omit=()):
     """Write <source>.tsv, sources.tsv, excluded-documents.tsv and dropped-sentences.tsv into `out_dir`; returns (sentences, report lines).
 
     Fail closed: W/sources-draft.tsv must pass the source and license gate (DraftError, nothing written), a missed quota (`BuildError`, nothing written;
-    `allow_short` lowers only the minimum or the floors) and an excluded or unknown document."""
+    `allow_short` lowers only the minimum or the floors) and an excluded or unknown document. `omit` lists documents (rule 10) whose selected items are removed after
+    the caps; an id that is not in the draft is refused."""
     data_dir = data_dir or common.DATA
     round_work = shapes_dev.RoundWork(getattr(work, "base", work.root), source)
     draft_gate(work, data_dir, extra_tables)
     items, tagged = shapes_dev.read_decided(round_work, data_dir)
     candidates = {c["cand_id"]: c for c in shapes_dev.read_candidates(round_work)}
     draft = shapes_dev.read_draft(work)
+    omit = sorted(set(omit))
+    missing = sorted(set(omit) - {row["source_id"] for row in draft})
+    if missing:
+        raise BuildError("cannot omit a document that is not in the draft: " + ", ".join(missing))
     exclusions = shapes_dev.load_exclusions(work, data_dir)
     drops, kept, sentences = collections.Counter(), [], {}
     for item in items:
@@ -643,6 +663,14 @@ def build(work, source, out_dir, seed=SEED, allow_short=False, data_dir=None, ex
             after_lint.append(entry)
     chosen, cap_drops = (select_compound if source == "compound" else select_headings)(after_lint, seed)
     drops.update(cap_drops)
+    omitted = [entry for entry in chosen if entry["source_id"] in omit]
+    if omitted:
+        drops[OMITTED] += len(omitted)
+        chosen = [entry for entry in chosen if entry["source_id"] not in omit]
+        if source == "compound":
+            chosen, surplus = trim_verb_share(chosen)                    # rule 6 again: the share of the verb items stays at most 15 percent
+            if surplus:
+                drops["verb-share"] += surplus
     ordered = sorted(chosen, key=lambda c: shapes_dev.rank_of(seed, source + "-order", c["sent_key"]))
     built = [final_sentence(source, entry, sentences[entry["sent_key"]], number) for number, entry in enumerate(ordered, 1)]
     unknown = sorted({s["source_id"] for s in built} - {row["source_id"] for row in draft})
@@ -659,8 +687,9 @@ def build(work, source, out_dir, seed=SEED, allow_short=False, data_dir=None, ex
     rejected_path = round_work.private_file("rejected-documents.tsv")
     rejected = sorted(adjudicate.read_records(rejected_path)[1], key=lambda r: r["source_id"]) if os.path.exists(rejected_path) else []
     common.write_text(os.path.join(out_dir, EXCLUDED_NAME), [
-        "# Documents left out of %s because the document is a reprint of, or shares sentences with, a training or evaluation set, or was already used" % FILES[source],
-        "# (only ids and reasons, never text)", "# columns = document_id, reason"] + ["%s\t%s" % (r["source_id"], r["reason"]) for r in rejected])
+        "# Documents left out of %s because the document is a reprint of, or shares sentences with, a training or evaluation set, was already used, or has no verifiable federal-only basis" % FILES[source],
+        "# (only ids and reasons, never text)", "# columns = document_id, reason"] + ["%s\t%s" % (r["source_id"], r["reason"]) for r in rejected]
+        + ["%s\t%s" % (document, OMIT_REASON) for document in omit])
     common.write_text(os.path.join(out_dir, DROPPED_NAME), [
         "# Candidate sentences dropped alone because they equal or nearly equal a sentence of a training or evaluation set or of the shapes development set",
         "# (counted in private/candidates-report.md of the round folder; only counts are published, never text)", "# columns = reason, sentences"]
@@ -692,7 +721,7 @@ def _command_build(args):
     work = adjudicate.Work(args.work)
     out_dir = args.out_dir or os.path.join(args.data_dir, args.source)
     try:
-        built, report = build(work, args.source, out_dir, args.seed, args.allow_short, args.data_dir, args.extra_table or ())
+        built, report = build(work, args.source, out_dir, args.seed, args.allow_short, args.data_dir, args.extra_table or (), args.omit_document or ())
     except (BuildError, shapes_dev.ExcludedSourceError, ValueError) as error:    # DraftError is a ValueError
         print("build refused: %s" % error, file=sys.stderr)
         return 1
@@ -903,6 +932,8 @@ def main(argv=None):
     common_options(build_parser)
     build_parser.add_argument("--out-dir", default=None, help="default: <data dir>/<source>")
     build_parser.add_argument("--allow-short", action="store_true", help="build below the minimum or the floors (the caps and the other gates stay)")
+    build_parser.add_argument("--omit-document", action="append", default=None, metavar="ID",
+                              help="remove the selected items of a document whose public-domain basis is not verifiable (rule 10; repeatable)")
     sample = sub.add_parser("sample", help="the review sample for the precision gate")
     common_options(sample, tables=False)
     sample.add_argument("--out-dir", default=None)

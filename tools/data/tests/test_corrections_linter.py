@@ -251,10 +251,59 @@ class ImperativeSourceTests(unittest.TestCase):
         # Assert: the violation of the open sentence is the same, so the resources came from the correctable corpora only
         self.assertIn("be-participle-adj-not-gradable", without)
         self.assertEqual(without, with_source)
-        self.assertEqual(("ste", "imperative"), check_conventions.RESOURCE_EXEMPT)
-        self.assertEqual(("imperative", "-"), check_conventions.COLUMN_ORDER[-1])
+        self.assertEqual(("ste", "imperative", "compound", "headings"), check_conventions.RESOURCE_EXEMPT)
+        self.assertEqual((("imperative", "-"), ("compound", "-"), ("headings", "-")), check_conventions.COLUMN_ORDER[-3:])
         self.assertIn(("imperative", "-"), corrections.LINT_ONLY_FILES)
         self.assertNotIn(("imperative", "-"), corrections.CORPUS_FILES)
+
+
+class TargetedSourcesTests(unittest.TestCase):
+    """The compound and headings training sources are linted like the imperative source: own columns, counted by `--enforce`, never corrected, no corpus resources."""
+
+    SOURCES = ("compound", "headings")
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.data = corrections_testdata.write_data_dir(self.temp.name)
+
+    def write(self, source, text):
+        common.write_text(os.path.join(self.data, source, source + ".tsv"), text.replace("imperative", source).rstrip("\n").split("\n"))
+
+    def test_the_sources_are_registered_as_lint_only_and_exempt_from_the_resources(self):
+        for source in self.SOURCES:
+            self.assertIn((source, "-"), check_conventions.COLUMN_ORDER)
+            self.assertIn(source, check_conventions.RESOURCE_EXEMPT)
+            self.assertEqual("%s/%s.tsv" % (source, source), corrections.LINT_ONLY_FILES[(source, "-")])
+            self.assertNotIn((source, "-"), corrections.CORPUS_FILES)
+
+    def test_a_fix_tier_violation_is_reported_in_the_column_of_the_source_and_fails_enforce(self):
+        files, _, _, _, _ = make_corrections.generate_all(self.data)
+        make_corrections.write_files(files, self.data)
+        for source in self.SOURCES:
+            self.write(source, IMPERATIVE_VIOLATING)
+            code, text = run(["--data-dir", self.data, "--apply", "--tier", "fix", "--enforce"])
+            listed_code, listed = run(["--data-dir", self.data, "--apply", "--source", source, "--tier", "fix"])
+            self.assertEqual(1, code, source)
+            self.assertIn("FAILED: 1 convention violations", text)
+            self.assertIn(source, text.splitlines()[0])
+            self.assertEqual(0, listed_code)
+            self.assertIn("out-of", listed)
+            os.remove(os.path.join(self.data, source, source + ".tsv"))
+
+    def test_clean_sources_pass_enforce_and_the_staged_corrections_never_address_them(self):
+        before, _, _, _, _ = make_corrections.generate_all(self.data)
+        for source in self.SOURCES:
+            self.write(source, IMPERATIVE_CLEAN)
+        after, _, corpora, _, _ = make_corrections.generate_all(self.data)
+        files, _, _, _, _ = make_corrections.generate_all(self.data)
+        make_corrections.write_files(files, self.data)
+        code, text = run(["--data-dir", self.data, "--apply", "--tier", "fix", "--enforce"])
+        self.assertEqual(before, after)
+        for source in self.SOURCES:
+            self.assertNotIn((source, "-"), corpora)
+        self.assertEqual(0, code)
+        self.assertNotIn("FAILED", text)
 
 
 if __name__ == "__main__":

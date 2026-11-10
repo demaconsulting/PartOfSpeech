@@ -10,7 +10,7 @@ namespace DemaConsulting.PartOfSpeech.Tests;
 /// <summary>
 ///     System-level tests of the committed data and licensing artifacts: the third-party notice and its packaging, the
 ///     licenses and provenance of the data, the staged corpus corrections, the Universal POS tags, the separation of
-///     training and evaluation data, the hard-shape development set, the imperative training source, and the lexicon. The tests read the files of the working copy and need no network.
+///     training and evaluation data, the hard-shape development set, the imperative, compound-head and headings training sources, and the lexicon. The tests read the files of the working copy and need no network.
 ///     Each test proves one obligation of one requirement; a test that finds no file or no row fails instead of passing
 ///     on nothing.
 /// </summary>
@@ -142,6 +142,92 @@ public class PartOfSpeechDataTests
     private const int ImperativeDocumentCap = 30;
 
     /// <summary>
+    ///     The folder of the compound-head training source, relative to the data folder.
+    /// </summary>
+    private const string CompoundFolder = "compound";
+
+    /// <summary>
+    ///     The corpus file of the compound-head training source, relative to the data folder.
+    /// </summary>
+    private const string CompoundCorpus = CompoundFolder + "/compound.tsv";
+
+    /// <summary>
+    ///     The source table of the compound-head training source, relative to the data folder.
+    /// </summary>
+    private const string CompoundSources = CompoundFolder + "/sources.tsv";
+
+    /// <summary>
+    ///     The folder of the headings training source, relative to the data folder.
+    /// </summary>
+    private const string HeadingsFolder = "headings";
+
+    /// <summary>
+    ///     The corpus file of the headings training source, relative to the data folder.
+    /// </summary>
+    private const string HeadingsCorpus = HeadingsFolder + "/headings.tsv";
+
+    /// <summary>
+    ///     The source table of the headings training source, relative to the data folder.
+    /// </summary>
+    private const string HeadingsSources = HeadingsFolder + "/sources.tsv";
+
+    /// <summary>
+    ///     The fewest and the most sentences of the compound-head training source.
+    /// </summary>
+    private const int CompoundMinSentences = 600;
+
+    /// <summary>
+    ///     The most sentences of the compound-head training source.
+    /// </summary>
+    private const int CompoundMaxSentences = 800;
+
+    /// <summary>
+    ///     The fewest head lemmas of the compound-head training source.
+    /// </summary>
+    private const int CompoundMinLemmas = 200;
+
+    /// <summary>
+    ///     The most sentences of the compound-head training source that one head lemma has.
+    /// </summary>
+    private const int CompoundLemmaCap = 4;
+
+    /// <summary>
+    ///     The most sentences of the compound-head training source that one document has.
+    /// </summary>
+    private const int CompoundDocumentCap = 20;
+
+    /// <summary>
+    ///     The largest share, in percent, of the compound-head training source whose head is a verb (the counter-examples).
+    /// </summary>
+    private const int CompoundVerbPercent = 15;
+
+    /// <summary>
+    ///     The most lines of the headings training source.
+    /// </summary>
+    private const int HeadingsMaxLines = 600;
+
+    /// <summary>
+    ///     The most lines of the headings training source that one lemma has.
+    /// </summary>
+    private const int HeadingsLemmaCap = 4;
+
+    /// <summary>
+    ///     The most lines of the headings training source that one document has.
+    /// </summary>
+    private const int HeadingsDocumentCap = 25;
+
+    /// <summary>
+    ///     The caps of the strata of the headings training source (the floors are 150, 100 and 40; the build may waive a floor and the README
+    ///     discloses it).
+    /// </summary>
+    private static readonly Dictionary<string, (int Floor, int Cap, string Tag)> HeadingsStrata = new(StringComparer.Ordinal)
+    {
+        ["noun"] = (150, 340, "NOUN"),
+        ["imperative"] = (0, 200, "VERB"),
+        ["proper"] = (40, 60, "PROPN")
+    };
+
+    /// <summary>
     ///     The most targets of one lemma in a shape of the hard tranche.
     /// </summary>
     private const int ShapesDevHardLemmaCap = 4;
@@ -201,7 +287,7 @@ public class PartOfSpeechDataTests
     /// <summary>
     ///     The training corpora, relative to the data folder.
     /// </summary>
-    private static readonly string[] TrainingCorpora = { "open/train.tsv", "masc/masc.tsv", "silver/silver.tsv", ImperativeCorpus };
+    private static readonly string[] TrainingCorpora = { "open/train.tsv", "masc/masc.tsv", "silver/silver.tsv", ImperativeCorpus, CompoundCorpus, HeadingsCorpus };
 
     /// <summary>
     ///     The token-level evaluation corpora, relative to the data folder.
@@ -243,7 +329,8 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static readonly string[] LicensedFolders =
     {
-        "open", "masc", "silver", ImperativeFolder, "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon", "corrections"
+        "open", "masc", "silver", ImperativeFolder, CompoundFolder, HeadingsFolder, "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge", "lexicon",
+        "corrections"
     };
 
     /// <summary>
@@ -255,7 +342,7 @@ public class PartOfSpeechDataTests
         ("open/sources.tsv", "source_id"), ("eval/gold-v2/sources.tsv", "doc_id"), ("silver/sources.tsv", "source_id"),
         (ShapesDevFolder + "/sources.tsv", "source_id"), (ShapesDevHardSources, "source_id"),
         (ShapesDevCompoundHeadSources, "source_id"), (ShapesDevHeadingsSources, "source_id"), (ShapesDevNamedStateSources, "source_id"),
-        (ImperativeSources, "source_id")
+        (ImperativeSources, "source_id"), (CompoundSources, "source_id"), (HeadingsSources, "source_id")
     };
 
     /// <summary>
@@ -272,6 +359,16 @@ public class PartOfSpeechDataTests
         {
             "## Source and Provenance", "**Source:**", "**How produced:**", "**Labels:**", "**Sentences:**", "`sources.tsv`",
             "## Labeling and Decision Rule", "## Hand Check", "model review, not a human review", "## Sources", "## Known Limits", "## Use"
+        },
+        [CompoundFolder] = new[]
+        {
+            "## Source and Provenance", "**Source:**", "**How produced:**", "**Labels:**", "**Sentences:**", "`sources.tsv`",
+            "## Labeling and Decision Rule", "## Hand Check", "model review, not a human review", "## Sources", "## Lexicon Coverage", "## Known Limits", "## Use"
+        },
+        [HeadingsFolder] = new[]
+        {
+            "## Source and Provenance", "**Source:**", "**How produced:**", "**Labels:**", "**Sentences:**", "`sources.tsv`",
+            "## Labeling and Decision Rule", "## Hand Check", "model review, not a human review", "## Sources", "## Lexicon Coverage", "## Known Limits", "## Use"
         },
         ["eval/shapes"] = new[]
         {
@@ -486,7 +583,7 @@ public class PartOfSpeechDataTests
         }
 
         // Assert: every folder was checked and no problem was found
-        Assert.Equal(10, LicensedFolders.Length);
+        Assert.Equal(12, LicensedFolders.Length);
         Assert.Empty(problems);
     }
 
@@ -674,7 +771,7 @@ public class PartOfSpeechDataTests
             .Select(name => "missing: data/" + name));
 
         // Assert: every folder was checked and no problem was found
-        Assert.Equal(10, ReadmeStatements.Count);
+        Assert.Equal(12, ReadmeStatements.Count);
         Assert.Empty(problems);
     }
 
@@ -700,6 +797,10 @@ public class PartOfSpeechDataTests
         var mascListed = SourceIds("masc/sources.tsv", "source_id");
         var imperativeDocuments = DataFiles.ReadCorpus(DataFiles.Data(ImperativeCorpus)).Select(sentence => sentence.SourceId).Distinct().ToList();
         var imperativeListed = SourceIds(ImperativeSources, "source_id");
+        var compoundDocuments = DataFiles.ReadCorpus(DataFiles.Data(CompoundCorpus)).Select(sentence => sentence.SourceId).Distinct().ToList();
+        var compoundListed = SourceIds(CompoundSources, "source_id");
+        var headingsDocuments = DataFiles.ReadCorpus(DataFiles.Data(HeadingsCorpus)).Select(sentence => sentence.SourceId).Distinct().ToList();
+        var headingsListed = SourceIds(HeadingsSources, "source_id");
 
         // Act: find the documents that no source list names
         var problems = MissingDocuments("open", openDocuments, openListed)
@@ -707,6 +808,8 @@ public class PartOfSpeechDataTests
             .Concat(MissingDocuments("silver", silverDocuments, silverListed))
             .Concat(MissingDocuments("masc", mascDocuments, mascListed))
             .Concat(MissingDocuments("imperative", imperativeDocuments, imperativeListed))
+            .Concat(MissingDocuments("compound", compoundDocuments, compoundListed))
+            .Concat(MissingDocuments("headings", headingsDocuments, headingsListed))
             .Concat(mascListed.Except(mascDocuments).Select(document => "masc: listed but not in masc.tsv: " + document))
             .ToList();
 
@@ -716,6 +819,8 @@ public class PartOfSpeechDataTests
         Assert.True(silverDocuments.Distinct().Count() > 5000);
         Assert.True(mascDocuments.Count > 300);
         Assert.True(imperativeDocuments.Count > 50);
+        Assert.True(compoundDocuments.Count > 50);
+        Assert.True(headingsDocuments.Count > 50);
         Assert.Empty(problems.Take(ShownProblems));
     }
 
@@ -1213,7 +1318,7 @@ public class PartOfSpeechDataTests
         var trainingSets = rows.Select(row => row[0]).Distinct().OrderBy(name => name, StringComparer.Ordinal).ToList();
 
         // Assert: every training set is reported against every evaluation set, and no pair overlaps
-        Assert.Equal(new[] { "imperative", "masc", "open-train", "silver" }, trainingSets);
+        Assert.Equal(new[] { "compound", "headings", "imperative", "masc", "open-train", "silver" }, trainingSets);
         foreach (var training in trainingSets)
         {
             var evaluationSets = rows.Where(row => row[0] == training).Select(row => row[1]).Distinct(StringComparer.Ordinal);
@@ -2618,6 +2723,424 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
+    ///     Proves that the header of the compound-head training source announces a training file (and no development use), and that the committed
+    ///     file meets the documented quotas: 600 to 800 sentences with sequential ids, every token <c>unanimous</c>, a head that is a lower-case word the
+    ///     lexicon lists as both noun and verb, tagged NOUN or PROPN for kind <c>noun</c> and VERB after a noun for kind <c>verb</c> (the counter-examples,
+    ///     at most 15 percent), at most four sentences per head lemma and 20 per document, and at least 200 head lemmas.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Compound_Corpus_IsWellFormedAndWithinQuotas()
+    {
+        // Arrange: the header, the sentences with their comment values and the lexicon
+        var header = File.ReadLines(DataFiles.Data(CompoundCorpus)).TakeWhile(line => line.Length > 0).ToList();
+        var sentences = DataFiles.ReadCorpus(DataFiles.Data(CompoundCorpus)).ToList();
+        var blocks = ReadBlockValues(CompoundCorpus);
+        var lexicon = DataFiles.ReadLexicon(DataFiles.Data("lexicon/lexicon.tsv"));
+        var problems = new List<string>();
+        var verbs = 0;
+
+        // Act: check every sentence
+        Assert.Equal(sentences.Count, blocks.Count);
+        for (var index = 0; index < sentences.Count; index++)
+        {
+            var sentence = sentences[index];
+            var block = blocks[index];
+            var id = string.Format(CultureInfo.InvariantCulture, "compound-{0:D4}", index + 1);
+            if (sentence.SentenceId != id)
+            {
+                problems.Add($"{sentence.SentenceId}: expected the id {id}");
+            }
+
+            if (!int.TryParse(block.GetValueOrDefault("head"), NumberStyles.None, CultureInfo.InvariantCulture, out var head) || head >= sentence.Tokens.Count)
+            {
+                problems.Add($"{sentence.SentenceId}: the head is not a token index");
+                continue;
+            }
+
+            var kind = block.GetValueOrDefault("kind") ?? string.Empty;
+            var form = sentence.Tokens[head][0];
+            var tag = sentence.Tokens[head][1];
+            if (form != form.ToLowerInvariant() || !lexicon.TryGetValue(form, out var tags) || !tags.Contains("NOUN") || !tags.Contains("VERB"))
+            {
+                problems.Add($"{sentence.SentenceId}: the head is not a lower-case word that the lexicon lists as both noun and verb");
+            }
+
+            if (string.IsNullOrEmpty(block.GetValueOrDefault("lemma")))
+            {
+                problems.Add($"{sentence.SentenceId}: no lemma");
+            }
+
+            if (kind == "noun" && tag != "NOUN" && tag != "PROPN")
+            {
+                problems.Add($"{sentence.SentenceId}: kind noun but the head is tagged {tag}");
+            }
+            else if (kind == "verb")
+            {
+                verbs++;
+                if (tag != "VERB" || head == 0 || (sentence.Tokens[head - 1][1] != "NOUN" && sentence.Tokens[head - 1][1] != "PROPN"))
+                {
+                    problems.Add($"{sentence.SentenceId}: kind verb needs a VERB head after a noun");
+                }
+            }
+            else if (kind != "noun")
+            {
+                problems.Add($"{sentence.SentenceId}: the kind '{kind}' is not noun or verb");
+            }
+
+            if (sentence.Tokens.Any(token => DataFiles.BaseStatus(token[2]) != "unanimous"))
+            {
+                problems.Add($"{sentence.SentenceId}: a token is not unanimous");
+            }
+        }
+
+        var lemmas = blocks.GroupBy(block => block.GetValueOrDefault("lemma") ?? string.Empty, StringComparer.Ordinal).ToList();
+        problems.AddRange(lemmas.Where(group => group.Count() > CompoundLemmaCap).Select(group => $"the lemma '{group.Key}' has {group.Count()} sentences"));
+        problems.AddRange(sentences.GroupBy(sentence => sentence.SourceId, StringComparer.Ordinal)
+            .Where(group => group.Count() > CompoundDocumentCap)
+            .Select(group => $"the document {group.Key} has {group.Count()} sentences"));
+
+        // Assert: a training file, the size within the quotas, a small verb share, many head lemmas and no problem
+        Assert.Contains(header, line => line == "# use = training");
+        Assert.Contains(header, line => line == "# columns = form, upos, status");
+        Assert.DoesNotContain(header, line => line.Contains("dev split", StringComparison.Ordinal) || line.Contains("development only", StringComparison.Ordinal));
+        Assert.InRange(sentences.Count, CompoundMinSentences, CompoundMaxSentences);
+        Assert.True(verbs > 0 && verbs * 100 <= CompoundVerbPercent * sentences.Count, $"{verbs} verb items of {sentences.Count}");
+        Assert.True(lemmas.Count >= CompoundMinLemmas, $"{lemmas.Count} head lemmas");
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the header of the headings training source announces a training file (and no development use), and that the committed file
+    ///     meets the documented quotas: at most 600 lines with sequential ids, 2 to 10 tokens and no final period, every token <c>unanimous</c>, the
+    ///     judged word tagged as its stratum says (NOUN, VERB at token 0, PROPN), at most the caps of the strata, the floors of the noun and
+    ///     proper strata met, at most four lines per lemma and 25 per document.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Headings_Corpus_IsWellFormedAndWithinQuotas()
+    {
+        // Arrange: the header, the lines with their comment values
+        var header = File.ReadLines(DataFiles.Data(HeadingsCorpus)).TakeWhile(line => line.Length > 0).ToList();
+        var sentences = DataFiles.ReadCorpus(DataFiles.Data(HeadingsCorpus)).ToList();
+        var blocks = ReadBlockValues(HeadingsCorpus);
+        var problems = new List<string>();
+
+        // Act: check every line
+        Assert.Equal(sentences.Count, blocks.Count);
+        for (var index = 0; index < sentences.Count; index++)
+        {
+            var sentence = sentences[index];
+            var block = blocks[index];
+            var id = string.Format(CultureInfo.InvariantCulture, "headings-{0:D4}", index + 1);
+            if (sentence.SentenceId != id)
+            {
+                problems.Add($"{sentence.SentenceId}: expected the id {id}");
+            }
+
+            if (sentence.Tokens.Count is < 2 or > 10 || sentence.Tokens[^1][0] == ".")
+            {
+                problems.Add($"{sentence.SentenceId}: a heading line has 2 to 10 tokens and no final period");
+            }
+
+            var stratum = block.GetValueOrDefault("stratum") ?? string.Empty;
+            if (!int.TryParse(block.GetValueOrDefault("word"), NumberStyles.None, CultureInfo.InvariantCulture, out var word) || word >= sentence.Tokens.Count)
+            {
+                problems.Add($"{sentence.SentenceId}: the judged word is not a token index");
+                continue;
+            }
+
+            if (!HeadingsStrata.TryGetValue(stratum, out var rule) || sentence.Tokens[word][1] != rule.Tag)
+            {
+                problems.Add($"{sentence.SentenceId}: the judged word is not tagged as the stratum '{stratum}' says");
+            }
+            else if (stratum == "imperative" && word != 0)
+            {
+                problems.Add($"{sentence.SentenceId}: an imperative line is judged at token 0");
+            }
+
+            if (string.IsNullOrEmpty(block.GetValueOrDefault("lemma")))
+            {
+                problems.Add($"{sentence.SentenceId}: no lemma");
+            }
+
+            if (sentence.Tokens.Any(token => DataFiles.BaseStatus(token[2]) != "unanimous"))
+            {
+                problems.Add($"{sentence.SentenceId}: a token is not unanimous");
+            }
+        }
+
+        var strata = blocks.GroupBy(block => block.GetValueOrDefault("stratum") ?? string.Empty, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        problems.AddRange(HeadingsStrata
+            .Where(entry => strata.GetValueOrDefault(entry.Key) > entry.Value.Cap || (entry.Key != "imperative" && strata.GetValueOrDefault(entry.Key) < entry.Value.Floor))
+            .Select(entry => $"the stratum {entry.Key} has {strata.GetValueOrDefault(entry.Key)} lines"));
+        problems.AddRange(blocks.GroupBy(block => block.GetValueOrDefault("lemma") ?? string.Empty, StringComparer.Ordinal)
+            .Where(group => group.Count() > HeadingsLemmaCap)
+            .Select(group => $"the lemma '{group.Key}' has {group.Count()} lines"));
+        problems.AddRange(sentences.GroupBy(sentence => sentence.SourceId, StringComparer.Ordinal)
+            .Where(group => group.Count() > HeadingsDocumentCap)
+            .Select(group => $"the document {group.Key} has {group.Count()} lines"));
+
+        // Assert: a training file, a size within the cap, the three strata present and no problem
+        Assert.Contains(header, line => line == "# use = training");
+        Assert.Contains(header, line => line == "# columns = form, upos, status");
+        Assert.DoesNotContain(header, line => line.Contains("dev split", StringComparison.Ordinal) || line.Contains("development only", StringComparison.Ordinal));
+        Assert.InRange(sentences.Count, 1, HeadingsMaxLines);
+        Assert.Equal(new[] { "imperative", "noun", "proper" }, strata.Keys.OrderBy(name => name, StringComparer.Ordinal));
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the source table of the compound-head or the headings training source lists exactly the documents of its units with their
+    ///     counts, that every document has a US federal-work or public-domain basis, that no row mentions FAA material, that no document is excluded
+    ///     (by id or normalized URL, using the record of the shapes development set), that no document of the exclusion record of the source
+    ///     (documents left out after the build) is used, and that the records are well formed and carry ids and counts only.
+    /// </summary>
+    [Theory]
+    [InlineData(CompoundCorpus, CompoundSources, CompoundFolder)]
+    [InlineData(HeadingsCorpus, HeadingsSources, HeadingsFolder)]
+    public void PartOfSpeech_TargetedSources_Sources_AreListedOpenAndNotExcluded(string corpus, string sources, string folder)
+    {
+        // Arrange: the documents of the units, the rows of the table and the exclusions
+        var counts = DataFiles.ReadCorpus(DataFiles.Data(corpus))
+            .GroupBy(sentence => sentence.SourceId, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        var table = DataFiles.ReadTable(DataFiles.Data(sources));
+        var excluded = DataFiles.ReadTable(DataFiles.Data(ShapesDevFolder + "/excluded-sources.tsv"));
+        var excludedIds = new HashSet<string>(excluded.Column("source_id"), StringComparer.Ordinal);
+        var excludedUrls = new HashSet<string>(excluded.Column("url").Select(NormalizeUrl), StringComparer.Ordinal);
+        var faa = new Regex(@"faa\.gov|\bFAA\b|Federal Aviation", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var openBases = new[] { "US federal government work", "US public domain" };
+
+        // Act: compare the listed documents and counts with the units and look at every row
+        var listed = table.Rows.ToDictionary(row => table.Cell(row, "source_id"), row => table.Cell(row, "sentences"), StringComparer.Ordinal);
+        var problems = counts.Keys.Except(listed.Keys).Select(document => "not listed: " + document)
+            .Concat(listed.Keys.Except(counts.Keys).Select(document => "listed but unused: " + document))
+            .Concat(counts.Where(count => listed.TryGetValue(count.Key, out var cell) && cell != count.Value.ToString(CultureInfo.InvariantCulture))
+                .Select(count => $"count of {count.Key} differs from the table"))
+            .ToList();
+        foreach (var row in table.Rows)
+        {
+            var id = table.Cell(row, "source_id");
+            if (!openBases.Any(basis => table.Cell(row, "license_basis").StartsWith(basis, StringComparison.Ordinal)))
+            {
+                problems.Add($"{id}: the license basis is not a US federal work or US public domain");
+            }
+
+            if (row.Any(cell => faa.IsMatch(cell)))
+            {
+                problems.Add($"{id}: the row mentions FAA material");
+            }
+
+            if (excludedIds.Contains(id) || excludedUrls.Contains(NormalizeUrl(table.Cell(row, "url"))))
+            {
+                problems.Add($"{id}: the document is excluded");
+            }
+        }
+
+        var rejected = DataFiles.ReadTable(DataFiles.Data(folder + "/excluded-documents.tsv"));
+        var dropped = DataFiles.ReadTable(DataFiles.Data(folder + "/dropped-sentences.tsv"));
+        problems.AddRange(rejected.Column("document_id").Where(counts.ContainsKey).Select(id => $"{id}: a rejected document is used"));
+        problems.AddRange(dropped.Rows.Where(row => !int.TryParse(dropped.Cell(row, "sentences"), NumberStyles.None, CultureInfo.InvariantCulture, out _))
+            .Select(row => $"{dropped.Cell(row, "reason")}: the count is not a number"));
+
+        // Assert: the rows are unique, the table has documents, the records have their columns and no problem was found
+        Assert.Equal(table.Rows.Count, listed.Count);
+        Assert.True(counts.Count > 50);
+        Assert.Equal(new[] { "document_id", "reason" }, rejected.Columns);
+        Assert.Equal(new[] { "reason", "sentences" }, dropped.Columns);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the documents of the compound-head and the headings training source are in no other source table (open, gold v2, silver,
+    ///     MASC, the imperative source and its exclusion record, every tranche of the shapes development set and its exclusion record), neither by
+    ///     id nor by normalized URL, and are not documents of any evaluation set (read from the evaluation files). The two sources share documents
+    ///     (one pool), never a sentence.
+    /// </summary>
+    [Theory]
+    [InlineData(CompoundSources)]
+    [InlineData(HeadingsSources)]
+    public void PartOfSpeech_TargetedSources_Documents_AreInNoOtherSourceTableAndNoEvaluationSet(string sources)
+    {
+        // Arrange: the ids and normalized URLs of the other tables, and the documents of the evaluation sets
+        var own = DataFiles.ReadTable(DataFiles.Data(sources));
+        var others = new[]
+        {
+            ("open/sources.tsv", "source_id"), ("eval/gold-v2/sources.tsv", "doc_id"), ("silver/sources.tsv", "source_id"),
+            ("masc/sources.tsv", "source_id"), (ShapesDevFolder + "/sources.tsv", "source_id"), (ShapesDevHardSources, "source_id"),
+            (ShapesDevCompoundHeadSources, "source_id"), (ShapesDevHeadingsSources, "source_id"), (ShapesDevNamedStateSources, "source_id"),
+            (ShapesDevFolder + "/excluded-sources.tsv", "source_id"), (ImperativeSources, "source_id")
+        };
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        var urls = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (name, idColumn) in others)
+        {
+            var data = DataFiles.ReadTable(DataFiles.Data(name));
+            ids.UnionWith(data.Column(idColumn));
+            if (Array.IndexOf(data.Columns, "url") >= 0)
+            {
+                urls.UnionWith(data.Column("url").Select(NormalizeUrl).Where(url => url.Length > 0));
+            }
+        }
+
+        var evaluationDocuments = new HashSet<string>(EvaluationItems().Select(item => item.Document), StringComparer.Ordinal);
+
+        // Act: find the shared ids, URLs and evaluation documents
+        var problems = own.Rows
+            .Where(row => ids.Contains(own.Cell(row, "source_id")) || urls.Contains(NormalizeUrl(own.Cell(row, "url"))) || evaluationDocuments.Contains(own.Cell(row, "source_id")))
+            .Select(row => own.Cell(row, "source_id") + " is in another source table or an evaluation set")
+            .ToList();
+
+        // Assert: the tables are not empty and nothing is shared
+        Assert.True(own.Rows.Count > 50);
+        Assert.True(ids.Count > 5000);
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves, reading the files themselves, that no sentence (of any length) of the compound-head or the headings training source is a sentence
+    ///     of another training source or of the other new source, and that no document of either is a document of the open, MASC, silver or
+    ///     imperative training data; the two new sources may share documents.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_TargetedSources_Sentences_AreDisjointFromEveryOtherTrainingSource()
+    {
+        // Arrange: the keys and the documents of the sources
+        var olderCorpora = new[] { "open/train.tsv", "masc/masc.tsv", "silver/silver.tsv", ImperativeCorpus };
+        var older = olderCorpora.SelectMany(corpus => DataFiles.ReadCorpus(DataFiles.Data(corpus))).ToList();
+        var olderKeys = new HashSet<string>(older.Select(sentence => DataFiles.SentenceKey(sentence.Text)), StringComparer.Ordinal);
+        var olderDocuments = new HashSet<string>(older.Select(sentence => sentence.SourceId), StringComparer.Ordinal);
+        var compound = DataFiles.ReadCorpus(DataFiles.Data(CompoundCorpus)).ToList();
+        var headings = DataFiles.ReadCorpus(DataFiles.Data(HeadingsCorpus)).ToList();
+        var headingKeys = new HashSet<string>(headings.Select(sentence => DataFiles.SentenceKey(sentence.Text)), StringComparer.Ordinal);
+
+        // Act: find the shared sentences and documents
+        var problems = new List<string>();
+        foreach (var (label, items) in new[] { ("compound", compound), ("headings", headings) })
+        {
+            problems.AddRange(items.Where(item => olderKeys.Contains(DataFiles.SentenceKey(item.Text)))
+                .Select(item => $"{label}: {item.SentenceId} is a sentence of another training source"));
+            problems.AddRange(items.Where(item => olderDocuments.Contains(item.SourceId))
+                .Select(item => $"{label}: {item.SentenceId} is from a document of another training source"));
+        }
+
+        problems.AddRange(compound.Where(item => headingKeys.Contains(DataFiles.SentenceKey(item.Text)))
+            .Select(item => $"compound: {item.SentenceId} is a line of the headings source"));
+
+        // Assert: the sets are not empty, the two sources do share documents (one pool), and nothing else is shared
+        Assert.True(older.Count > 10000);
+        Assert.True(compound.Count > 600 && headings.Count > 300);
+        Assert.NotEmpty(compound.Select(item => item.SourceId).Intersect(headings.Select(item => item.SourceId), StringComparer.Ordinal));
+        Assert.Empty(problems.Take(ShownProblems));
+    }
+
+    /// <summary>
+    ///     Proves that the committed leakage report covers the compound-head and the headings training source against every evaluation set (the
+    ///     probe and every tranche of the shapes development set included) and records no document overlap, no exact sentence overlap and no near
+    ///     duplicate (the check gates the near duplicates of both sources).
+    /// </summary>
+    [Theory]
+    [InlineData("compound")]
+    [InlineData("headings")]
+    public void PartOfSpeech_TargetedSources_LeakageReport_RecordsNoOverlapWithAnyEvaluationSet(string source)
+    {
+        // Arrange: the rows of the report that name the source (training set, evaluation set, sentences, documents, exact, near)
+        var rows = File.ReadLines(DataFiles.Data("leakage-report.tsv"))
+            .Where(line => line.Length > 0 && !DataFiles.IsComment(line))
+            .Select(line => line.Split('\t'))
+            .Where(row => row[0] == source)
+            .ToList();
+        var expected = new[]
+        {
+            "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-compound-head", "shapes-dev-hard", "shapes-dev-headings",
+            "shapes-dev-named-state", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train"
+        };
+
+        // Act: find the rows that report an overlap or a near duplicate
+        var overlaps = rows.Where(row => row[3] != "0" || row[4] != "0").Select(row => row[1]).ToList();
+        var nearDuplicates = rows.Where(row => row[5] != "0").Select(row => row[1]).ToList();
+
+        // Assert: every evaluation set is reported once and nothing overlaps, not even a near duplicate (a malformed count is not "0")
+        Assert.All(rows, row => Assert.Equal(6, row.Length));
+        Assert.Equal(expected, rows.Select(row => row[1]).OrderBy(name => name, StringComparer.Ordinal));
+        Assert.Empty(overlaps);
+        Assert.Empty(nearDuplicates);
+    }
+
+    /// <summary>
+    ///     Proves that the committed training leakage report compares the compound-head and the headings source with every other training set
+    ///     (the pair of the two once) and records no exact sentence overlap and no shared document with the older sources; the two new sources
+    ///     share documents by design.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_TargetedSources_TrainingLeakageReport_RecordsNoOverlapWithAnotherTrainingSet()
+    {
+        // Arrange: the rows (new set, other set, new sentences, other sentences, documents, exact, near)
+        var rows = File.ReadLines(DataFiles.Data("training-leakage-report.tsv"))
+            .Where(line => line.Length > 0 && !DataFiles.IsComment(line))
+            .Select(line => line.Split('\t'))
+            .ToList();
+        var expected = new[]
+        {
+            "compound/headings", "compound/imperative", "compound/masc", "compound/open-train", "compound/silver",
+            "headings/imperative", "headings/masc", "headings/open-train", "headings/silver"
+        };
+
+        // Act: find the pairs with an exact sentence overlap, a near duplicate or a shared document with an older source
+        var overlaps = rows.Where(row => row[5] != "0" || row[6] != "0" || (row[1] != "headings" && row[4] != "0")).Select(row => row[0] + "/" + row[1]).ToList();
+
+        // Assert: every pair is reported once with seven columns, the pool is shared and nothing else overlaps
+        Assert.All(rows, row => Assert.Equal(7, row.Length));
+        Assert.Equal(expected, rows.Select(row => row[0] + "/" + row[1]).OrderBy(name => name, StringComparer.Ordinal));
+        Assert.NotEqual("0", rows.Single(row => row[0] == "compound" && row[1] == "headings")[4]);
+        Assert.Empty(overlaps);
+    }
+
+    /// <summary>
+    ///     Proves that the selection of the compound-head and the headings training source is independent of the PartOfSpeech model: the builder
+    ///     (<c>compound_heading_data.py</c>) names no weights file, decoder, tagger or shapes evaluation, and it names no probe file and uses no probe
+    ///     reader (the held-out sets reach it only through the opaque exclusion keys of the shared filter).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_TargetedSources_Selection_UsesNoPartOfSpeechModel()
+    {
+        // Arrange: the source of the builder
+        var forbidden = new[] { "weights.bin", "Resources/weights", "PerceptronModel", "FeatureExtractor", "PartOfSpeechTagger", "ITagger", "eval-shapes", "ShapesDevEvaluator" };
+        var builder = File.ReadAllText(DataFiles.Repository("tools/data/compound_heading_data.py"));
+
+        // Act: find the forbidden names
+        var found = forbidden.Where(word => builder.Contains(word, StringComparison.Ordinal)).ToList();
+
+        // Assert: the builder is not empty, uses no model, and names no probe file and no probe reader
+        Assert.True(builder.Length > 10000);
+        Assert.Empty(found);
+        Assert.DoesNotContain("probe.tsv", builder, StringComparison.Ordinal);
+        Assert.DoesNotContain("sentence_column", builder, StringComparison.Ordinal);
+        Assert.DoesNotContain("probe_sentences", builder, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Proves that the third-party notice names the compound-head and the headings training source, their US federal-work basis, their CC0
+    ///     dedication of annotations and selection, and that they are committed at weight 0 and not part of the shipped mix.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_TargetedSources_Notice_NamesTheSourcesAndTheirBasis()
+    {
+        // Arrange: the section of the notice that describes the data built by this project
+        var notice = Collapse(NoticeSection("### The open English part-of-speech corpus (CC0 1.0)"));
+
+        // Act: find the statements that the notice lacks
+        var missing = MissingFragments(notice, new[]
+        {
+            "data/compound/", "data/headings/", "17 U.S.C. 105", "CC0 1.0", "data/compound/sources.tsv", "data/headings/sources.tsv", "weight 0",
+            "not part of the mix"
+        });
+
+        // Assert: the notice makes every statement
+        Assert.Empty(missing);
+    }
+
+    /// <summary>
     ///     Proves that the lexicon allows the gold tag for at least 99.9 percent of the non-disputed tokens of the open
     ///     training set.
     /// </summary>
@@ -3317,6 +3840,37 @@ public class PartOfSpeechDataTests
     /// </summary>
     private static List<ShapesDevItem> ShapesDevNewItems(ShapesDevNewTranche tranche) =>
         ShapesDevSets.Parse(File.ReadAllLines(DataFiles.Data(tranche.Corpus)), tranche.Corpus, tranche.Tranche);
+
+    /// <summary>
+    ///     Reads the comment values (<c># key = value</c>), in file order, of every sentence block of a corpus (the header block has no sentence id).
+    /// </summary>
+    private static List<Dictionary<string, string>> ReadBlockValues(string corpus)
+    {
+        var blocks = new List<Dictionary<string, string>>();
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var line in File.ReadLines(DataFiles.Data(corpus)).Concat(new[] { string.Empty }))
+        {
+            if (line.Length == 0)
+            {
+                if (values.ContainsKey("sent_id"))
+                {
+                    blocks.Add(values);
+                }
+
+                values = new Dictionary<string, string>(StringComparer.Ordinal);
+            }
+            else if (DataFiles.IsComment(line))
+            {
+                var split = line.IndexOf(" = ", StringComparison.Ordinal);
+                if (split >= 0)
+                {
+                    values[line[2..split]] = line[(split + 3)..];
+                }
+            }
+        }
+
+        return blocks;
+    }
 
     /// <summary>
     ///     Reads the sentence id and the comment keys, in file order, of every sentence block of a corpus (the header block has no sentence id).

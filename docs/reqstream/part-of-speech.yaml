@@ -912,6 +912,109 @@ sections:
         tests:
           - PartOfSpeech_Imperative_Selection_UsesNoPartOfSpeechModel
 
+      - id: PartOfSpeech-Data-CompoundWellFormed
+        title: >-
+          The compound-head training source (`compound.tsv`) shall be a training file in the corpus block format with
+          600 to 800 sentences whose ids run from compound-0001 without a gap, whose head is a lower-case word that the
+          lexicon lists as both noun and verb and is tagged NOUN or PROPN (kind noun) or VERB after a noun (kind verb,
+          at most 15 percent), whose every token is unanimous (no disputed or masked token), with at least 200 head
+          lemmas, no more than 4 sentences per head lemma and no more than 20 per document.
+        tags: [system]
+        justification: |
+          The source exists to teach the noun reading of an ambiguous compound head, with a small counter-example group
+          for the verb reading, so a head that is not an ambiguous word, a disputed or masked token, a verb share above
+          the quota or a sentence count outside the quota that the builder gates would change what it teaches. The lemma
+          and document caps keep a few heads or a few documents from dominating a small source. The quotas are checked
+          on the committed file itself.
+        tests:
+          - PartOfSpeech_Compound_Corpus_IsWellFormedAndWithinQuotas
+          - PartOfSpeech_TrainingData_Corpora_UseOnlySeventeenUposTags
+          - PartOfSpeech_TrainingData_Corpora_TokensRejoinToSentenceText
+
+      - id: PartOfSpeech-Data-HeadingsWellFormed
+        title: >-
+          The headings training source (`headings.tsv`) shall be a training file in the corpus block format with at
+          most 600 heading lines of 2 to 10 tokens and no final period, whose ids run from headings-0001 without a gap,
+          whose judged word is tagged as its stratum says (NOUN for noun, VERB at token 0 for imperative, PROPN for
+          proper), whose every token is unanimous, with the three strata present, the floors of the noun and proper
+          strata met, no more than the cap of each stratum, no more than 4 lines per lemma and no more than 25 per
+          document.
+        tags: [system]
+        justification: |
+          The source exists to show that the capitals of a Title Case line do not make its words proper nouns, so a
+          judged word with another tag than its stratum, a disputed or masked token or a stratum above its cap would
+          change what it teaches. The imperative floor is the one that the builder may waive, with the miss disclosed in
+          the README, because the labelers' agreement decides how many imperative lines survive. The quotas are checked
+          on the committed file itself.
+        tests:
+          - PartOfSpeech_Headings_Corpus_IsWellFormedAndWithinQuotas
+          - PartOfSpeech_TrainingData_Corpora_UseOnlySeventeenUposTags
+          - PartOfSpeech_TrainingData_Corpora_TokensRejoinToSentenceText
+
+      - id: PartOfSpeech-Data-TargetedSourcesIndependent
+        title: >-
+          No document, exact sentence or near duplicate shall be common to the compound-head or the headings training
+          source and any evaluation set (every tranche of the hard-shape development set and the shape probe included),
+          no sentence shall be common to either source and another training source, their documents shall be in no
+          other source table and in no other training source (the two sources share one pool of documents), neither by
+          id nor by normalized URL, and the committed leakage reports shall record that.
+        tags: [system]
+        justification: |
+          A training source that shares text with an evaluation set would reward memorizing and overstate the measured
+          accuracy. The sources are built from the same families of federal text as the development set, so the same
+          documents or reprints could appear in both unless every document is checked against every table of used
+          sources and every evaluation sentence. The existing document and sentence tests read the sources as training
+          corpora; the leakage reports are the evidence for UD English-EWT, which is not committed, and for the pairs of
+          training sets.
+        tests:
+          - PartOfSpeech_Leakage_Documents_TrainingAndEvaluationAreDisjoint
+          - PartOfSpeech_Leakage_Sentences_TrainingAndEvaluationAreDisjoint
+          - PartOfSpeech_Leakage_Report_RecordsNoOverlaps
+          - PartOfSpeech_TargetedSources_LeakageReport_RecordsNoOverlapWithAnyEvaluationSet
+          - PartOfSpeech_TargetedSources_TrainingLeakageReport_RecordsNoOverlapWithAnotherTrainingSet
+          - PartOfSpeech_TargetedSources_Documents_AreInNoOtherSourceTableAndNoEvaluationSet
+          - PartOfSpeech_TargetedSources_Sentences_AreDisjointFromEveryOtherTrainingSource
+
+      - id: PartOfSpeech-Data-TargetedSourcesAreOpen
+        title: >-
+          Every source document of the compound-head and the headings training source shall be listed with a US
+          federal-work or public-domain license basis and its unit count, no source row shall name FAA material, no
+          listed document shall be one that the owner excluded or that the record of left-out documents lists, the
+          records of left-out documents and of dropped sentences shall hold ids, reasons and counts only, and the
+          READMEs and the third-party notice shall state the basis, the dedication of the labels and the weight 0 of
+          the sources.
+        tags: [system]
+        justification: |
+          The sources are built from the text of real documents, so each document needs a recorded basis for its use.
+          The project owner excluded FAA material and the documents that the exclusion record of the development set
+          lists, a record that names a state or local government body as an author does not show a federal-only basis,
+          and the license check scans the source tables for restricted text. The records of what the builder dropped
+          carry no text, so they cannot reintroduce material that was left out. The notice says that the weights were
+          not learned from the sources while their weight is 0.
+        tests:
+          - PartOfSpeech_TargetedSources_Sources_AreListedOpenAndNotExcluded
+          - PartOfSpeech_TargetedSources_Notice_NamesTheSourcesAndTheirBasis
+          - PartOfSpeech_DataProvenance_Sources_ListEveryDocument
+          - PartOfSpeech_DataProvenance_Sources_RowsRecordLicenseAndUrl
+          - PartOfSpeech_DataLicensing_SourceTables_RecordNoRestrictedLicense
+          - PartOfSpeech_DataProvenance_Readmes_RecordSourceAndProduction
+          - PartOfSpeech_DataLicensing_Folders_DeclareAllowedLicenses
+
+      - id: PartOfSpeech-Data-TargetedSelectionIndependent
+        title: >-
+          The selection of the compound-head and the headings training source shall use no part of the PartOfSpeech
+          model and no classifier score: the builder shall name no weights file, decoder, tagger or shapes evaluation
+          and no probe file, and the labels shall come only from two blind labelers whose agreement on every token is
+          the condition for a unit to be kept.
+        tags: [system]
+        justification: |
+          A training source that was chosen where the tagger errs would make every later comparison of the tagger with
+          it circular. The units are chosen by position and lexicon frame, in a seeded order, and by the agreement of
+          two blind labelers, and the rule is recorded in the builder before any label exists. The data test scans the
+          source of the builder.
+        tests:
+          - PartOfSpeech_TargetedSources_Selection_UsesNoPartOfSpeechModel
+
       - id: PartOfSpeech-Data-LexiconTrainCoverage
         title: >-
           The lexicon shall allow the gold tag for at least 99.9% of the non-disputed tokens of the training set.

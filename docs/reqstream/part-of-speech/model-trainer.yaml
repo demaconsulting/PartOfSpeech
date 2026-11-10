@@ -124,15 +124,17 @@ sections:
           - id: PartOfSpeech-ModelTrainer-SourceWeights
             title: >-
               The trainer shall repeat the sentences of a source in every epoch as many times as the weight of the
-              source says, shall leave a source of weight 0 out, and shall read the committed imperative source, once it
-              is weighted, as sentences without a masked token.
+              source says, shall leave a source of weight 0 out, and shall read each committed targeted source
+              (imperative, compound, headings), once it is weighted, as sentences without a masked token.
             justification: |
               The weight of a source is a selected training setting, so the epoch must contain exactly the repeats that
               the configuration names. The imperative source is committed with weight 1, so it is in the mix of the
-              shipped weights; a run that weights it must get exactly its sentences, all with a gold tag.
+              shipped weights; the compound and headings sources are committed with weight 0, so they add nothing until
+              a run weights them. A run that weights a source must get exactly its sentences, all with a gold tag.
             tests:
               - CorpusReader_LoadSources_Weight_RepeatsSentences
               - CorpusReader_LoadSources_ImperativeSource_ReadsUnmaskedWhenWeighted
+              - CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted
 
           - id: PartOfSpeech-ModelTrainer-SourceLimits
             title: >-
@@ -450,8 +452,9 @@ sections:
           - id: PartOfSpeech-ModelTrainer-Configuration
             title: >-
               The training configuration shall be a valid, canonical file that names existing training corpora (the
-              imperative source among them, all with a positive weight), and a
-              misspelled setting or an out-of-range value shall be an error.
+              imperative source with a positive weight, and the compound and headings sources with weight 0, so that
+              they are committed and not trained on), and a misspelled setting or an out-of-range value shall be an
+              error.
             justification: |
               The configuration is the record of what the committed weights were trained from. A silently ignored
               misspelling would train something other than what the file says, and a file that the tool rewrites in

@@ -763,13 +763,15 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates that the four training corpora are admitted as training sources.
+    ///     Validates that the six training corpora are admitted as training sources.
     /// </summary>
     [Theory]
     [InlineData("data/open/train.tsv")]
     [InlineData("data/masc/masc.tsv")]
     [InlineData("data/silver/silver.tsv")]
     [InlineData("data/imperative/imperative.tsv")]
+    [InlineData("data/compound/compound.tsv")]
+    [InlineData("data/headings/headings.tsv")]
     public void DataGuard_EnsureTrainable_TrainingCorpus_Admitted(string path)
     {
         // Arrange / Act
@@ -2695,8 +2697,9 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates that the committed configuration is valid, names the four corpora (the imperative source with weight 1, so
-    ///     it is in the mix of the shipped model) and is in the canonical form that the tool writes.
+    ///     Validates that the committed configuration is valid, names the six corpora (the imperative source with weight 1, so
+    ///     it is in the mix of the shipped model; the compound and headings sources with weight 0, so they are not) and is in the
+    ///     canonical form that the tool writes.
     /// </summary>
     [Fact]
     public void ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical()
@@ -2707,11 +2710,11 @@ public class ModelTrainerTests
         // Act
         var config = ConfigFile.Parse(text);
 
-        // Assert: valid, four known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
-        Assert.Equal(new[] { "open", "masc", "silver", "imperative" }, config.Sources.Select(s => s.Name));
+        // Assert: valid, six known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
+        Assert.Equal(new[] { "open", "masc", "silver", "imperative", "compound", "headings" }, config.Sources.Select(s => s.Name));
         Assert.All(config.Sources, s => Assert.True(File.Exists(DataFiles.Repository(s.Path))));
         Assert.Equal(1, config.Sources.Single(s => s.Name == "imperative").Weight);
-        Assert.All(config.Sources, s => Assert.True(s.Weight > 0));
+        Assert.Equal(new[] { 2, 1, 1, 1, 0, 0 }, config.Sources.Select(s => s.Weight));
         Assert.Equal(text.Replace("\r\n", "\n"), ConfigFile.Format(config));
     }
 
@@ -2736,6 +2739,37 @@ public class ModelTrainerTests
         Assert.Equal(900, sentences.Count);
         Assert.All(sentences, s => Assert.DoesNotContain((sbyte)-1, s.Gold));
         Assert.All(sentences, s => Assert.Equal((sbyte)Upos.Verb, s.Gold[0]));
+    }
+
+    /// <summary>
+    ///     Validates that the committed compound and headings sources contribute nothing at the committed weight 0, and that the
+    ///     corpus reader reads each of them with no masked token when its weight is raised to one (the way a training run adds it).
+    /// </summary>
+    [Theory]
+    [InlineData("compound", 742)]
+    [InlineData("headings", 375)]
+    public void CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted(string name, int expected)
+    {
+        // Arrange: the committed configuration, as it is, with this source added, and with only this source weighted
+        var committed = ConfigFile.Parse(File.ReadAllText(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/training.json")));
+        var added = ConfigFile.Parse(File.ReadAllText(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/training.json")));
+        added.Sources.Single(s => s.Name == name).Weight = 1;
+        var weighted = ConfigFile.Parse(File.ReadAllText(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/training.json")));
+        foreach (var source in weighted.Sources)
+        {
+            source.Weight = source.Name == name ? 1 : 0;
+        }
+
+        // Act
+        var sentences = CorpusReader.LoadSources(DataFiles.RepositoryRoot, weighted);
+        var committedCount = CorpusReader.LoadSources(DataFiles.RepositoryRoot, committed).Count;
+        var addedCount = CorpusReader.LoadSources(DataFiles.RepositoryRoot, added).Count;
+
+        // Assert: the whole file with every token gold-tagged, nothing of it in the committed mix, and exactly its sentences more with weight 1
+        Assert.Equal(expected, sentences.Count);
+        Assert.All(sentences, s => Assert.DoesNotContain((sbyte)-1, s.Gold));
+        Assert.Equal(0, committed.Sources.Single(s => s.Name == name).Weight);
+        Assert.Equal(committedCount + expected, addedCount);
     }
 
     /// <summary>

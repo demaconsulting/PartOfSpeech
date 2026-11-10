@@ -24,6 +24,8 @@ package PartOfSpeech {
             //   data/eval/shapes-dev/headings.tsv
             //   data/eval/shapes-dev/named-state.tsv
             //   data/imperative/imperative.tsv
+            //   data/compound/compound.tsv
+            //   data/headings/headings.tsv
             //   tools/DemaConsulting.PartOfSpeech.Trainer/context-features/arms.json
             //   tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1
             //   tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py
