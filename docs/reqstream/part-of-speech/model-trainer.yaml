@@ -669,7 +669,9 @@ sections:
               `--preview-folds`, refuse an unknown or repeated group, train the groups with the shared feature
               extractor, write the groups as the mask of the weights header with the feature set version that follows
               from it, leave the feature settings out of the file form of a configuration while they are at their
-              defaults, and, with no group, give the same bytes as the training did before the groups existed.
+              defaults, and, with no group, give the same bytes as the training did before the groups existed. The
+              groups are `positionCues` (F1), `clauseCues` (F2), `rightPreview` (F3), `inflection` (F4) and
+              `titleCaseLine` (F5).
             justification: |
               The experiment on context features compares arms that differ only in their groups, so the groups are
               settings of the training like every other one, are checked where they are read, and are recorded in the
@@ -724,10 +726,15 @@ sections:
             title: >-
               The command `eval-arm` shall score a trained weights file through the real decoder on the standard and the
               hard tranche of the shapes development set (per shape and pooled, with the per-item outcomes of the target
-              items), on the open and the gold v2 development splits and on the mapped development part of the external
+              items), on the compound-head, headings and named-state tranches (per tranche the row of its shape with the
+              target items that are wrong at a confidence of at least 0.95, the kinds of the headings, and the pooled
+              harmful errors per 1,000 noun-verb decisions and the confident wrong answers of the compound-head and the
+              headings tranche together), on the open and the gold v2 development splits and on the mapped development
+              part of the external
               treebank (read from the local cache with a pinned SHA-256), measure the size of the file and the
               single-thread throughput of the default tagger (one warm-up pass, five timed passes, the median), and
-              write one JSON result in schema 1 with the groups of the weights header and the hashes of the inputs.
+              write one JSON result in schema 1 with the groups of the weights header and the hashes of the inputs,
+              the new members only added behind the existing ones.
             justification: |
               The experiment decides on figures that must come from one definition of a harmful error and from the same
               decoder that users run, for every arm in the same way. A fixed schema lets the analysis script read the

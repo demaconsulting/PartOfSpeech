@@ -46,14 +46,15 @@ or the shape bits differ, or extraction allocates after warm-up.
 - **Reference equivalence**: `FeatureExtractor_Extract_MatchesReferenceStringHashing`.
 - **Buckets**: `FeatureExtractor_Buckets_AreInRangeAndStable` and `FeatureExtractor_Hash_IsCaseSensitiveWhereTemplatesAre`.
 - **No allocation**: `FeatureExtractor_Extract_DoesNotAllocateAfterWarmUp` (zero bytes after the workspace has grown;
-  .NET 8 and later) and `FeatureExtractor_Extract_AllGroups_DoesNotAllocateAfterWarmUp` (the same with all groups, both
+  .NET 8 and later) and `FeatureExtractor_Extract_AllGroups_DoesNotAllocateAfterWarmUp` (the same with all five groups,
+  both
   decoding passes and stem lookups).
 - **Feature groups**: `FeatureExtractor_Extract_NoGroups_ProducesOnlyBaseTemplates` (a workspace that served all groups
   and is configured for none gives the base stride, at most 22 buckets and the buckets of a fresh workspace and of the
   reference, so the switch-off feature stream is that of the 22 templates),
-  `FeatureExtractor_Extract_GroupsMatchReference` (all 16 sets of groups against the reference on 60 corpus sentences
+  `FeatureExtractor_Extract_GroupsMatchReference` (all 32 sets of groups against the reference on 60 corpus sentences
   with the embedded lexicon, gold tags as history and preview) and `FeatureExtractor_Extract_AllGroups_FillsBucketCapacity`
-  (40 buckets for a token with every feature).
+  (42 buckets for a token with every feature).
 - **Position cues**: `FeatureExtractor_Extract_PositionCues_FollowTheDefinition` (first content token with function words,
   unknown spellings and an all-function sentence; the terminals `?`, `.` behind a closing quote and none; position cap)
   and `FeatureExtractor_Extract_PositionCues_LengthBuckets` (both ends of every length range).
@@ -65,5 +66,18 @@ or the shape bits differ, or extraction allocates after warm-up.
 - **Inflection**: `FeatureExtractor_Extract_Inflection_StemFacts` (the restored `e` of `making`, the undoubled consonant
   of `running` and `stopped`, `ied` and `ies` to `y`, `es`, no candidate for `pass`, `is`, `ing` and `red`, no feature for
   a word without suffix) and `FeatureExtractor_Extract_Inflection_SeparatesAvoidingFromBringAndThing`.
+- **Title-case line**: `FeatureExtractor_Extract_TitleCaseLine_FlagArithmetic` (the boundary of the 60 percent test,
+  59 and 60 of 100 and the small counts, with fewer than two words after the first one never marked),
+  `FeatureExtractor_Extract_TitleCaseLine_WordTokensAndFinalMark` (the first word token is left out, also after
+  punctuation and a number; tokens with a digit are no words; a final `.`, `!` or `?` ends the line and another final
+  token does not),
+  `FeatureExtractor_Extract_TitleCaseLine_FeaturesCarryCapitalizationAndFirst` (the values for an upper-first, an
+  all-upper and a lower-case token, the first token, and the constant values on another line),
+  `FeatureExtractor_Extract_TitleCaseLine_AddsExactlyTwoBuckets` (for every combination of the other four groups the
+  group adds two buckets right behind the static ones and changes no other bucket),
+  `FeatureExtractor_Extract_TitleCaseLine_MatchesReference` (the fast path equals the string-based reference for lines
+  with digits, marks, an all-upper word and a non-ASCII capital) and
+  `FeatureExtractor_Extract_TitleCaseLine_IsDeterministicAndStateless` (the same line gives the same buckets, and the
+  line before does not leak into the next). The no-allocation test above includes the group.
 - **Right preview**: `FeatureExtractor_Extract_RightPreview_UsesFirstPassTagsOfNextTwoTokens` (absent in the first pass,
   four more buckets in the second with the end and beyond markers, inactive without the group).

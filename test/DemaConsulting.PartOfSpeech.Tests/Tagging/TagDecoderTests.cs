@@ -463,7 +463,7 @@ public class TagDecoderTests
     /// <summary>
     ///     The mask of all groups.
     /// </summary>
-    private const FeatureGroups AllGroups = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection;
+    private const FeatureGroups AllGroups = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine;
 
     /// <summary>
     ///     Proves that decoding with all groups on (both passes, stem lookups) allocates only its result arrays.
@@ -552,6 +552,33 @@ public class TagDecoderTests
 
         // Assert: VERB at position 0, NOUN at position 1
         Assert.Equal(new[] { Upos.Verb, Upos.Noun }, result.Select(t => t.Tag));
+    }
+
+    /// <summary>
+    ///     Proves that the title-case line group reaches the decoder: the first word of a Title Case line is tagged by the line feature,
+    ///     the same words as an ordinary sentence and the same weights without the group in the header are not.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_TitleCaseLine_TitleLineChangesTheDecision()
+    {
+        // Arrange: check prefers NOUN, but on a Title Case line the first token adds 5 to VERB
+        var lexicon = TinyModels.CreateLexicon("check NOUN VERB", "fluid NOUN", "level NOUN");
+        TinyModels.WeightsBuilder Weights() => new TinyModels.WeightsBuilder()
+            .Word("check", Upos.Noun, 3)
+            .Word("check", Upos.Verb, 1)
+            .AddCodes(FeatureKind.TitleLineFirst, 2, 0, Upos.Verb, 5);
+
+        // Act: a Title Case line, the same words in lower case (an ordinary line), a line that ends as a sentence, and the line without the group
+        var title = Decode(Weights(), lexicon, new[] { "Check", "Fluid", "Level" }, groups: FeatureGroups.TitleCaseLine);
+        var lower = Decode(Weights(), lexicon, new[] { "Check", "fluid", "level" }, groups: FeatureGroups.TitleCaseLine);
+        var sentence = Decode(Weights(), lexicon, new[] { "Check", "Fluid", "Level", "." }, groups: FeatureGroups.TitleCaseLine);
+        var withoutGroup = Decode(Weights(), lexicon, new[] { "Check", "Fluid", "Level" });
+
+        // Assert: only the Title Case line with the group in the header turns the first word into a verb
+        Assert.Equal(Upos.Verb, title[0].Tag);
+        Assert.Equal(Upos.Noun, lower[0].Tag);
+        Assert.Equal(Upos.Noun, sentence[0].Tag);
+        Assert.Equal(Upos.Noun, withoutGroup[0].Tag);
     }
 
     /// <summary>

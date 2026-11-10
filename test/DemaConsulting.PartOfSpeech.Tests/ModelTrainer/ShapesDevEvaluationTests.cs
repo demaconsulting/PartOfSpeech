@@ -1138,7 +1138,34 @@ public class ShapesDevEvaluationTests
                 Item("c", "n-compound-head", "target", "cat", "Noun", tranche: ShapesDevTranche.Hard),
                 Item("d", "v-after-modal", "target", "dog", "Verb", tranche: ShapesDevTranche.Hard),
             },
-            Inputs = new ArmInputs { DevSha256 = "s1", HardSha256 = "s2", UdDevSha256 = "s3", OpenDevSha256 = "s4", GoldDevSha256 = "s5", Commit = "abc123", Dirty = true },
+            CompoundHead = new List<ShapesDevItem>
+            {
+                TrancheItem(ShapesDevTranche.CompoundHead, "ch1", "target", "cat", "NOUN"),
+                TrancheItem(ShapesDevTranche.CompoundHead, "ch2", "control", "cat", "VERB"),
+            },
+            Headings = new List<ShapesDevItem>
+            {
+                TrancheItem(ShapesDevTranche.Headings, "hd1", "target", "cat", "NOUN", "noun"),
+                TrancheItem(ShapesDevTranche.Headings, "hd2", "target", "dog", "VERB", "imperative"),
+                TrancheItem(ShapesDevTranche.Headings, "hd3", "control", "cat", "PROPN", "proper"),
+            },
+            NamedState = new List<ShapesDevItem>
+            {
+                TrancheItem(ShapesDevTranche.NamedState, "ns1", "target", "cat", "NOUN"),
+            },
+            Inputs = new ArmInputs
+            {
+                DevSha256 = "s1",
+                HardSha256 = "s2",
+                UdDevSha256 = "s3",
+                OpenDevSha256 = "s4",
+                GoldDevSha256 = "s5",
+                CompoundHeadSha256 = "s6",
+                HeadingsSha256 = "s7",
+                NamedStateSha256 = "s8",
+                Commit = "abc123",
+                Dirty = true,
+            },
         };
 
     /// <summary>
@@ -1239,10 +1266,60 @@ public class ShapesDevEvaluationTests
         Assert.Equal(pooled.GetProperty("harmful").GetInt32(), items.GetProperty("hard").EnumerateObject().Sum(p => p.Value.GetProperty("h").GetInt32()));
         Assert.Equal(pooled.GetProperty("targetCorrect").GetInt32(), items.GetProperty("hard").EnumerateObject().Sum(p => p.Value.GetProperty("c").GetInt32()));
 
-        // Assert: the inputs are the ones that were given
+        // Assert: the inputs are the ones that were given, the three new hashes after the old members
         var inputs = root.GetProperty("inputs");
         Assert.Equal(new[] { "s1", "s2", "s3", "s4", "s5", "abc123" }, new[] { "devSha256", "hardSha256", "udDevSha256", "openDevSha256", "goldDevSha256", "commit" }.Select(n => inputs.GetProperty(n).GetString()));
         Assert.True(inputs.GetProperty("dirty").GetBoolean());
+        Assert.Equal(new[] { "s6", "s7", "s8" }, new[] { "compoundHeadSha256", "headingsSha256", "namedStateSha256" }.Select(n => inputs.GetProperty(n).GetString()));
+        Assert.Equal(
+            new[] { "devSha256", "hardSha256", "udDevSha256", "openDevSha256", "goldDevSha256", "commit", "dirty", "compoundHeadSha256", "headingsSha256", "namedStateSha256" },
+            inputs.EnumerateObject().Select(p => p.Name));
+
+        // Assert: the new block is additive: the schema is still 1 and the members of before keep their order, the new block sits behind "items"
+        Assert.Equal(
+            new[] { "schema", "label", "groups", "temperature", "config", "weights", "throughput", "openDev", "goldDev", "udDev", "shapes", "items", "shapesNew", "inputs" },
+            root.EnumerateObject().Select(p => p.Name));
+
+        // Assert: the three new tranches have their shape row (with the confident wrong count) and the kinds of the headings only
+        var shapesNew = root.GetProperty("shapesNew");
+        Assert.Equal(new[] { "compoundHead", "headings", "namedState", "pooledPrimary" }, shapesNew.EnumerateObject().Select(p => p.Name));
+        var members = new[] { "targetItems", "targetCorrect", "targetAccuracy", "decisions", "harmful", "harmfulPer1k", "confidentWrong", "controlItems", "controlCorrect", "controlAccuracy" };
+        foreach (var name in new[] { "compoundHead", "headings", "namedState" })
+        {
+            Assert.Equal(new[] { "shape", "kinds" }, shapesNew.GetProperty(name).EnumerateObject().Select(p => p.Name));
+            Assert.Equal(members, shapesNew.GetProperty(name).GetProperty("shape").EnumerateObject().Select(p => p.Name));
+        }
+
+        var compound = shapesNew.GetProperty("compoundHead").GetProperty("shape");
+        var headings = shapesNew.GetProperty("headings").GetProperty("shape");
+        var named = shapesNew.GetProperty("namedState").GetProperty("shape");
+        Assert.Equal((1, 1), (compound.GetProperty("targetItems").GetInt32(), compound.GetProperty("controlItems").GetInt32()));
+        Assert.Equal((2, 1), (headings.GetProperty("targetItems").GetInt32(), headings.GetProperty("controlItems").GetInt32()));
+        Assert.Equal((1, 0), (named.GetProperty("targetItems").GetInt32(), named.GetProperty("controlItems").GetInt32()));
+        Assert.Empty(shapesNew.GetProperty("compoundHead").GetProperty("kinds").EnumerateObject());
+        Assert.Empty(shapesNew.GetProperty("namedState").GetProperty("kinds").EnumerateObject());
+        var kinds = shapesNew.GetProperty("headings").GetProperty("kinds");
+        Assert.Equal(new[] { "noun", "imperative", "proper" }, kinds.EnumerateObject().Select(p => p.Name));
+        Assert.Equal((1, 1, 0), (kinds.GetProperty("noun").GetProperty("targetItems").GetInt32(), kinds.GetProperty("imperative").GetProperty("targetItems").GetInt32(), kinds.GetProperty("proper").GetProperty("targetItems").GetInt32()));
+        Assert.Equal(1, kinds.GetProperty("proper").GetProperty("controlItems").GetInt32());
+        foreach (var name in new[] { "targetItems", "targetCorrect", "decisions", "harmful", "confidentWrong", "controlItems", "controlCorrect" })
+        {
+            Assert.Equal(headings.GetProperty(name).GetInt32(), kinds.EnumerateObject().Sum(p => p.Value.GetProperty(name).GetInt32()));
+        }
+
+        // Assert: the pooled primary block adds the compound-head and the headings rows (not the named-state row), and its rate is read from the pooled counts
+        var primary = shapesNew.GetProperty("pooledPrimary");
+        Assert.Equal(new[] { "targetItems", "targetCorrect", "targetAccuracy", "decisions", "harmful", "harmfulPer1k", "confidentWrongTotal" }, primary.EnumerateObject().Select(p => p.Name));
+        foreach (var (name, source) in new[] { ("targetItems", "targetItems"), ("targetCorrect", "targetCorrect"), ("decisions", "decisions"), ("harmful", "harmful"), ("confidentWrongTotal", "confidentWrong") })
+        {
+            Assert.Equal(compound.GetProperty(source).GetInt32() + headings.GetProperty(source).GetInt32(), primary.GetProperty(name).GetInt32());
+        }
+
+        Assert.Equal(3, primary.GetProperty("targetItems").GetInt32());
+        var pooledDecisions = primary.GetProperty("decisions").GetInt32();
+        Assert.True(pooledDecisions > 0);
+        Assert.Equal(1000.0 * primary.GetProperty("harmful").GetInt32() / pooledDecisions, primary.GetProperty("harmfulPer1k").GetDouble(), 9);
+        Assert.Equal(100.0 * primary.GetProperty("targetCorrect").GetInt32() / 3, primary.GetProperty("targetAccuracy").GetDouble(), 9);
 
         // Assert: the same weights and fixtures give the same result up to the measured throughput
         var again = ArmEvaluation.Evaluate(weights, Label, echo, data, timedPasses: 1);

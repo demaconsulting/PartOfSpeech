@@ -305,7 +305,7 @@ evaluation of the trainer; the protocol and the measured effect, including the c
 of `RUN-LOG.md` next to the trainer and are not repeated here. See _Glossary Design_ for the data model and algorithms.
 
 **Context Features**: the 22 base templates look at the token and its spelling, its two neighbors on each side and the
-two previous tags. `FeatureExtractor` can add four switchable feature groups, and a weights file names the groups it
+two previous tags. `FeatureExtractor` can add five switchable feature groups, and a weights file names the groups it
 was trained with in its header, so the decoder always scores with the features of the model (_FeatureExtractor Design_
 has the definitions):
 
@@ -319,6 +319,9 @@ has the definitions):
   tokens.
 - **Inflection** (`Inflection`, F4): whether the stem of a word that ends in `ing`, `ed` or `s` is a verb or a noun in
   the lexicon.
+- **Title-case line** (`TitleCaseLine`, F5): whether the sentence is a Title Case line (a heading, caption or step
+  title: at least 60% of its words after the first one start with a capital letter and it does not end as a sentence),
+  together with the capitalization of the token and whether it is the first token.
 
 The embedded model enables the clause cues only. The choice is the result of a pre-registered experiment on development
 data: every group alone, all four, and all four minus one were trained with five seeds each and scored on the hard

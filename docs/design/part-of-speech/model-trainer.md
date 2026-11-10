@@ -25,7 +25,8 @@ target framework, including .NET Framework.
   `MaxSentences`. The run has `Epochs`, `HashBits` (18 to 24), `MinCount`, `PruneThreshold`, `QuantScale` (a power of
   two; the file scale is its reciprocal, which is exact), `Seed`, `Restriction` (`None`, `History` or `Full`),
   `History` (`Predicted` or `Gold`), `Temperature` and `ImageSha256`, and the context feature groups: `Features` (a list
-  of group names, empty by default; `positionCues` (F1), `clauseCues` (F2), `rightPreview` (F3), `inflection` (F4);
+  of group names, empty by default; `positionCues` (F1), `clauseCues` (F2), `rightPreview` (F3), `inflection` (F4),
+  `titleCaseLine` (F5);
   `ResolveGroups` maps them to the `FeatureGroups` flags and `Validate` refuses an unknown or repeated name) and
   `PreviewFolds` (2 to 10, default 5, used only with `rightPreview`). There is no floating-point training setting:
   the temperature is chosen once by the `calibrate` command and is only written into the file header.
@@ -518,7 +519,8 @@ scores a weights file on it:
 
 ### Context-Feature Experiment
 
-The context feature groups (position cues F1, clause cues F2, right preview F3, inflection F4; their definitions are
+The context feature groups (position cues F1, clause cues F2, right preview F3, inflection F4, title-case line F5;
+their definitions are
 in `feature-extractor.md` and in the pre-registration section of `RUN-LOG.md`) are switches of the shared
 `FeatureExtractor`. The trainer is the side that trains them and measures them; the protocol (arms, seeds, metrics, guards
 and the selection rule) was fixed before any candidate model was trained and is recorded in `RUN-LOG.md`, and the
@@ -573,7 +575,12 @@ harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-featu
 - **`eval-arm`** (`ArmEvaluation`, `ArmEvaluationData`): scores one weights file through the real decoder (all 16
   alternatives, `Metrics.Judge`) on the standard and the hard tranche of the shapes development set (per shape and
   pooled; `items` lists `d`, `c` and `h` for every target item, which sum to the pooled decisions, correct and
-  harmful counts), on the open and the gold v2 development splits and on the mapped development part of the external
+  harmful counts), on the compound-head, headings and named-state tranches (the block `shapesNew`: per tranche the row
+  of its shape with the target items that are wrong at a confidence of at least 0.95 as `confidentWrong`, and for the
+  headings the rows of the kinds `noun`, `imperative` and `proper`; `pooledPrimary` pools the compound-head and the
+  headings rows into the harmful errors per 1,000 noun-verb decisions over both and the total of their confident wrong
+  answers; the three file hashes are members of `inputs`), on the open and the gold v2 development splits and on the
+  mapped development part of the external
   treebank (the file `ud_dev.tsv` of the local, git-ignored treebank cache below `tools/data/cache`, whose SHA-256 is
   pinned in `DataGuard`; a missing or changed cache is an error with the fetch recipe, and judging uses the mapped tags
   like the held-out view of the treebank), reads the size of the file and the groups from the header, and measures the
@@ -643,8 +650,8 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
   `data/imperative/imperative.tsv` (all four with a positive weight), `data/compound/compound.tsv` and
   `data/headings/headings.tsv` (weight 0), and the two
   development files plus the hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche),
-  `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` and `eval-arm`) and `compound-head.tsv`,
-  `headings.tsv` and `named-state.tsv` of the same folder (for `eval-shapes` only); for
+  `data/eval/shapes-dev/hard.tsv` (hard tranche) and `compound-head.tsv`, `headings.tsv` and `named-state.tsv` of the same
+  folder (for `eval-shapes` and `eval-arm`); for
   `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the
   external treebank that the data tools fetch (the tool itself uses no network); `eval-arm` reads the mapped development
   table of the same cache.

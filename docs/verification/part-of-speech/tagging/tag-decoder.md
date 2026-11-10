@@ -78,9 +78,12 @@ second or less (5,000 or less in a run with code coverage), or the allocation bo
   (an ambiguous first word before a determiner becomes a verb; the same weights with a header without the group, and
   the word alone, give a noun), `TagDecoder_Decode_ClauseCues_ClauseStateFollowsChosenTags` (a verb chosen for the first
   token changes the second), `TagDecoder_Decode_PositionCues_UsePositionInSentence`,
-  `TagDecoder_Decode_Inflection_SeparatesVerbStemFromLookalike` and
+  `TagDecoder_Decode_Inflection_SeparatesVerbStemFromLookalike`,
+  `TagDecoder_Decode_TitleCaseLine_TitleLineChangesTheDecision` (the first word of a Title Case line is turned into a
+  verb by the line feature; the same words with another line, a line that ends as a sentence, and a header without the
+  group give a noun) and
   `TagDecoder_Decode_MatchesReferenceDecoder` (for each of
-  the 16 sets of groups a toy model is trained with `TestSupport/TinyTrainer.cs` and the decoder is compared, tag for
+  the 32 sets of groups a toy model is trained with `TestSupport/TinyTrainer.cs` and the decoder is compared, tag for
   tag, with a plain reference decoder in the test that uses the string-based reference features, the lexicon
   restriction and the lowest-tag tie rule, in two passes for the preview group).
 - **Right preview**: `TagDecoder_Decode_RightPreview_SecondPassSeesFirstPassTags` (the second pass sees the first-pass tag

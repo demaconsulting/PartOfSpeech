@@ -103,15 +103,17 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   `DeterministicRandom_NextInt_NonPositiveBound_Throws`.
 - **Shared definitions**: `ModelTrainer_Predict_RestrictedWithLexicon_MatchesTagDecoder` and
   `ModelTrainer_Predict_Unrestricted_MatchesTagDecoderWithUnknownWords`, and for the feature groups
-  `ModelTrainer_Predict_FeatureGroups_MatchesTagDecoder` (a theory over each group alone, all four and the combination
+  `ModelTrainer_Predict_FeatureGroups_MatchesTagDecoder` (a theory over each group alone, all five and combinations
   without the right preview group: train the small run with the groups, load the weights into the decoder, compare every
   token of 300 sentences, and check that the training sentences are mostly tagged right) and
   `QuantizedPredictor_RightPreview_SecondPassReadsFirstPassTags` (a hand-set model: without the group a word keeps its own
   tag, with it the first-pass tag of the next word changes it).
 - **Feature groups in the configuration and the file**: `TrainingConfig_ParseFeatureList_ValidValue_CanonicalOrder` and
   `TrainingConfig_ParseFeatureList_InvalidValue_Throws` (the option value: `none`, short and long names in any order
-  and case; an empty value, an unknown group, the skipped clusters group, a group twice by either spelling and `none`
-  next to a group are refused), `TrainingConfig_Features_DefaultsResolveValidateAndClone` (defaults, flags, validation
+  and case, including `F5` for `titleCaseLine`; an empty value, an unknown group, the skipped clusters group, a group
+  twice by either spelling and `none`
+  next to a group are refused), `TrainingConfig_Features_DefaultsResolveValidateAndClone` (defaults, flags, the five
+  names in bit order, validation
   of the names and of the fold count, a clone does not share the list),
   `ModelBuilder_Encode_FeatureGroups_WritesMaskAndFeatureSetVersion` (feature set 1 and mask 0 without a group, feature
   set 2 and the mask in the header word at offset 40 with groups, the loader reads them back and the strict loader of
@@ -145,7 +147,9 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
 - **Arm evaluation** (`ModelTrainer/ShapesDevEvaluationTests.cs`, fixtures and a tiny model):
   `ArmEvaluation_Evaluate_TinyWeights_WritesTheResultSchema` (every member of schema 1, the groups and sizes of the
   header, the token counts of the throughput, per-shape rows that add up to the pooled rows, per-item outcomes that add
-  up to the pooled counts, the inputs as given, a label that survives escaping, the same result for the same inputs
+  up to the pooled counts, the inputs as given including the three hashes of the compound-head, headings and
+  named-state tranches, the block `shapesNew` behind `items` with its rows, kinds and pooled primary counts, the order
+  of the members that existed before, a label that survives escaping, the same result for the same inputs
   apart from the measured rate), `ArmEvaluation_Evaluate_NoGroupsAndBadInput_BehavesAsSpecified`,
   `HeldOutEvaluator_Throughput_TimedPasses_AtLeastOneAndPositiveRate` and
   `DevSets_ReadUdDev_MissingOrChangedTable_RefusedAndPinnedTableRead` (a missing cache, a cache that holds only the test

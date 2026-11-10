@@ -3348,6 +3348,7 @@ public class PartOfSpeechDataTests
                 "clauseCues" => FeatureGroups.ClauseCues,
                 "rightPreview" => FeatureGroups.RightPreview,
                 "inflection" => FeatureGroups.Inflection,
+                "titleCaseLine" => FeatureGroups.TitleCaseLine,
                 _ => throw new InvalidDataException($"Unknown feature group '{name.Groups[1].Value}' in the training configuration.")
             };
         }

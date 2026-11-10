@@ -188,4 +188,26 @@ public class ModelStorageTests
         Assert.Equal(FeatureExtractor.GroupsFeatureSetVersion, BinaryFormat.ReadUInt16(weights, 8));
         Assert.Equal((uint)groups, BinaryFormat.ReadUInt32(weights, 40));
     }
+
+    /// <summary>
+    ///     Proves that the title-case line group goes through the writer, a stream and the reader with its mask, and that the writer and the loader refuse the next bit.
+    /// </summary>
+    [Fact]
+    public void ModelStorage_WeightsWriterAndReader_TitleCaseLineGroupRoundTrip()
+    {
+        // Arrange: hand-set weights written with the clause cues and the title-case line group in a Deflate file
+        var groups = FeatureGroups.ClauseCues | FeatureGroups.TitleCaseLine;
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 5).Build(2.5f, 0.5f, true, groups);
+        using var stream = new MemoryStream(weights);
+
+        // Act: load from the stream
+        var model = PerceptronModel.Load(stream);
+
+        // Assert: the mask 18 and the groups feature set in the header, and the bit behind the known groups is not accepted
+        Assert.Equal(groups, model.FeatureGroups);
+        Assert.Equal(18u, BinaryFormat.ReadUInt32(weights, 40));
+        Assert.Equal(FeatureExtractor.GroupsFeatureSetVersion, BinaryFormat.ReadUInt16(weights, 8));
+        Assert.Equal(31u, FeatureExtractor.KnownGroupsMask);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 5).Build(2.5f, 0.5f, true, (FeatureGroups)32u));
+    }
 }

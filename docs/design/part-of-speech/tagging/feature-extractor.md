@@ -7,7 +7,7 @@
 `FeatureExtractor` is the single definition of the features that the perceptron scores: it turns the tokens of a
 sentence and the two previous tags into hashed feature buckets. Decoding and the trainer both use it unchanged (the
 trainer therefore trains for exactly the features that the decoder scores), because a model is only valid for the exact
-feature set it was trained with. The 22 base templates can be extended by four switchable **feature groups** (context
+feature set it was trained with. The 22 base templates can be extended by five switchable **feature groups** (context
 features, `FeatureGroups`); the groups of a model are stored in its weights file and, with no group, the extractor
 produces exactly the 22 base templates. The embedded model enables one group, `ClauseCues` (the choice is described in
 the system design under _Context Features_). It is an internal static class (with the internal enumerations `FeatureKind`,
@@ -27,12 +27,12 @@ the system design under _Context Features_). It is an internal static class (wit
 
   The members from 22 on belong to the groups and are only ever appended, so the buckets of the base templates never
   move (see "Feature groups").
-- **`FeatureGroups`** (flags, `uint`): `None` (0), `PositionCues` (1), `ClauseCues` (2), `RightPreview` (4) and
-  `Inflection` (8). Bit 16 is reserved for a later group and is rejected by the weights loader
-  (`KnownGroupsMask` is 15).
+- **`FeatureGroups`** (flags, `uint`): `None` (0), `PositionCues` (1), `ClauseCues` (2), `RightPreview` (4),
+  `Inflection` (8) and `TitleCaseLine` (16). Bit 32 and every higher bit are reserved for later groups and are rejected
+  by the weights loader (`KnownGroupsMask` is 31).
 - **Constants**: `FeatureSetVersion` (1; stored in a weights file without groups), `GroupsFeatureSetVersion` (2; stored
   in a weights file with at least one group; `FeatureSetVersionFor(groups)` gives the one that applies), `MaxFeatures`
-  (22, the most features of a token without groups), `BucketCapacity` (40, the size of a bucket buffer that may hold
+  (22, the most features of a token without groups), `BucketCapacity` (42, the size of a bucket buffer that may hold
   group features), `StaticFeatureCount` (18, the features that do not depend on tags, the base stride of
   `DecoderWorkspace.StaticBuckets`; `StaticStrideFor(groups)` gives the stride with groups), `StartTag1` (17) and
   `StartTag2` (18) as the "previous tag" values before the first token, `ClassBoundary` (13, the class value before the
@@ -59,9 +59,9 @@ the preview tags), which the decoder keeps per thread.
 
 The groups are fixed by the pre-registration section of the trainer run log. Every group adds features behind the base
 ones; the order of the buckets is: the base buckets that do not depend on tags, then those of `PositionCues`,
-`ClauseCues` and `Inflection`, then the four tag features, then the history features of `ClauseCues` and `Inflection`,
-then those of `RightPreview`. With the 22 base templates, at most 18 + 5 + 5 + 1 tag-independent and 4 + 2 + 1 + 4
-tag-dependent features give the capacity of 40.
+`ClauseCues`, `Inflection` and `TitleCaseLine`, then the four tag features, then the history features of `ClauseCues`
+and `Inflection`, then those of `RightPreview`. With the 22 base templates, at most 18 + 5 + 5 + 1 + 2 tag-independent
+and 4 + 2 + 1 + 4 tag-dependent features give the capacity of 42.
 
 - **Token class** (position and clause cues): the first matching rule, from the lexicon tag set _T_ of the token (empty
   for a spelling that is not in the lexicon) and its lower-cased folded form, gives `Punct` (no letter and no digit),
@@ -93,6 +93,16 @@ tag-dependent features give the capacity of 40.
   with `StartTag1` for the end of the sentence and `StartTag2` beyond it: `Rt1`, `Rt2`, `RtPair` and `RtPrev` (the
   previous tag of this pass with `Rt1`). The first pass runs without them, so it is the decode of the same weights
   without the group.
+- **`TitleCaseLine`** (2 static features, tag-independent, no lexicon): a sentence is a **Title Case line** (a heading,
+  a caption or a step title) when, among its word tokens with the first word token left out, there are at least two and
+  at least 60% start with an upper-case letter (the integer test `5 * capitalized >= 3 * words`), and its last token is
+  not `.`, `!` or `?`. A word token contains a letter and no digit, so numbers, numbered items (`3.`), punctuation and
+  tokens such as `Part2` are not words; the first word token is left out so that the capital of the first word of any
+  sentence is not counted. The two features of a token are `TitleLine` (the line flag with the capitalization of the
+  token: the upper-first and all-upper shape bits) and `TitleLineFirst` (the line flag with whether the token is the
+  first token of the sentence); on a line that is not Title Case both have one constant value for every token. The
+  decision is made once per sentence in `Finish` from the token facts of the workspace and allocates nothing. A
+  capital that starts a word of a heading therefore no longer has to mean a proper name to the model.
 
 #### Key Methods
 

@@ -39,6 +39,7 @@ sections:
               - PartOfSpeech-Tagging-FeatureExtractor-PositionCues
               - PartOfSpeech-Tagging-FeatureExtractor-ClauseCues
               - PartOfSpeech-Tagging-FeatureExtractor-Inflection
+              - PartOfSpeech-Tagging-FeatureExtractor-TitleCaseLine
               - PartOfSpeech-Tagging-FeatureExtractor-RightPreview
               - PartOfSpeech-Tagging-TagDecoder-FeatureGroups
               - PartOfSpeech-Tagging-TagDecoder-RightPreview
