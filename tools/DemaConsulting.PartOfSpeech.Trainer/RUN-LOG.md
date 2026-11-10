@@ -4928,6 +4928,63 @@ The single non-confirmed line (TRAIN, first-word lemma `cruise`, noun-verb word)
 
 **Supply after the pilot** (dry run of `heading_candidates` on the frozen inputs, nothing written; strength-0 pools left: DEV 29, TRAIN 65 lines): further imperative candidates at the build caps (lemma cap 6, document caps 20 and 25, pilot lines counted): **DEV 9 (pilot 38 + 9 = 47 before the build), TRAIN 14 (pilot 102 + 14 = 116 before the build)**. Expected kept after the labeling rules, at the observed rates: DEV about 45 to 47 (floor 80), TRAIN about 105 to 108 (floor 150). The floors are not reachable from these 70 documents; the registered path stands (`--allow-short` with disclosure, or the `HDG2` arms not run).
 
+## Follow-up: stream H extension, wave 3 (amendment R3-H, document list pins; counts only)
+
+This section follows the R2 commit `395f9c8` (a commit cannot contain its own SHA). It extends the **document list** of stream H after the pilot (the owner's "wave 3"): more Army soldier-training and collective-task publications (soldier's manuals of MOS and skill levels, training circulars and training programs, task lists, field manuals with task appendices). **No label was made in this step and none was read**; the pilot rows, the partition rule (seed 20261110, `rank_of(..."partition"...)`), the DEV share of stream H (0.30), the frame, the caps, the floors and the gates are unchanged. The HMM pin (`HMM_SHA256`) is not touched here: it is set at the R3 commit with stream C, together with the new `DRAFT_SHA256` and `TOKENS_SHA256` of the extended list (the values below are the inputs for that commit; the R1 pins in the tool still name the 70-document list, so `pilot` and `candidates` refuse until R3, by design). Only ids, hashes and counts appear here.
+
+### Selection (metadata and title family first, before any line was counted)
+
+- **Method.** Archive.org advanced-search queries by creator and title words (soldier training publication, STP, training circular, collective task, soldier's manual, skill level, task list, training program), stored as metadata only (`hcands.jsonl`, 710 stored records). A record was a candidate only if its creator or publisher field is a US federal body (not a university, press, corporation, state or local body, and not Readex), the title carries no FAA wording, the **title family key is new to every earlier table** (the 3,601 family keys of the open, gold, silver, MASC, all shapes-dev, imperative, `data/compound`, `data/headings`, extra-table and current draft titles; a title family already in any of them is skipped), and the title names a soldier-training or collective-task publication. Organization guides, hybrid-threat and OPFOR books, reference handbooks, and a later edition of a publication already in the list (TC 3-23.30 of 2021, the Ranger Handbook of 2025) were not taken. The two batches (22 records each, 44 in all) were fixed from that list before any text was fetched: batch 1 the MOS soldier's manuals and the training programs of the TC 21-305 series, batch 2 other training circulars, the task list and field manuals.
+- **Document gates** are those of waves 1 and 2, unchanged (`hget.py`): the used-document index before any fetch; creator, publisher, contributor, title, rights and license-URL fields read (FAA or Civil Aeronautics rejects; a non-federal entry flags); the OCR text scanned for copyright notices, third-party credits, permission phrases and distribution statements (U4: only public release, FOUO or export marks accepted, any other statement rejects); reprint check against earlier text (10 percent of the clean sentences or 3 sentences); at least 20 sentences. Notice flags were read by hand: FM 7-11B5 and FM 3-19.4 each had one flag, both OCR noise (a form and a table ornament), accepted. `hexclude.tsv` is unchanged (16 rows, no new by-hand refusal).
+- **Extraction order.** `hfinal.py` now processes the 70 documents of the R1 draft first (same order as before) and then the new ones, so that no sentence of an old document moves (the cross-document duplicate removal trims only the new documents against the old ones). Proof: all 70 rows of the R1 `sources-draft.tsv` (including `text_sha256`) are byte-identical in the extended draft, all rows of the R1 `partition.tsv` are unchanged, all R1 `tokens.tsv` rows are present, the first 112 lines of `hacc.jsonl` hash to the R1 value `031f663a...c1e7c239`, and the pilot round files (`rounds/hdg-pilot/candidates.tsv` SHA-256 `277d2618193e51ac34f428e4c43ac2ffb93c50c9d373c44d50040ea2f92f8fc8`) were not touched.
+
+### Result of the two batches
+
+| | Batch 1 | Batch 2 | Total |
+| --- | --- | --- | --- |
+| records fetched | 22 | 22 | 44 |
+| accepted (new documents) | 18 | 15 | **33** |
+| refused | 4 | 7 | **11** |
+| draft documents after the batch (title families) | 88 (79) | 103 (94) | 103 (94) |
+| strength-0 imperative lines DEV / TRAIN after the batch | 77 / 180 | 80 / 184 | 80 / 184 |
+
+**Refusals (11 records, by the automatic checks, all recorded in `hacc.jsonl`):** an empty OCR text (0 sentences, 4 records of batch 1), a distribution statement other than public release (5: three training circulars, the Radio Operator's Handbook and the pistol manual, the last also a reprint), a third-party credit or permission phrase (1: the Soldier's Guide of 2004, with 12 notice flags), a reprint of earlier text (1 more: the Ranger training manual of 1962; 2 reprint refusals in all). Every record of the 44 had a US federal creator field; no non-federal entry flag arose; no FAA wording; no Readex record.
+
+**Public-domain basis of the 33 accepted documents (one `license_basis` cell each, same form as before):** US federal government work (17 U.S.C. 105), agency named in the record (all 33 US Department of the Army; FM 21-10 names the Departments of the Army and of the Air Force as creators), creator, publisher and contributor fields read (no state, local, foreign, university, contractor or private author or co-author named), the record's own rights statement (31 of the 33 carry the Public Domain Mark; the other 2 carry none, which the cell says), the distribution check (20 documents carry a public-release statement; 2 contain the term FOUO or classified only inside task titles and references, read by hand, no marking and no other distribution statement; 11 are older or unmarked publications with no distribution statement). No FAA; `exclusions`: 103 documents, **0 problems** (nothing in either `excluded-sources.tsv`, any `excluded-documents.tsv` or any earlier sourcing table); the used-document and reprint gates mean no document shares 3 or more sentence keys with a training, evaluation or shapes-dev set (held-out sets used only as the opaque key set).
+
+**Partition (unchanged rule, new families only).** 33 new documents, 33 new title families (every new document is its own family): DEV 10 documents, TRAIN 23. Totals: 103 documents in 94 families, **DEV 29 documents, TRAIN 74 documents**; no family on both sides. Note (disclosed, not a change): the training programs of the TC 21-305 series are different publications with different title keys, so two of them (21-305-8 and 21-305-9) fall on the DEV side and six on the TRAIN side; their task titles overlap in part, and the registered near-duplicate rule (Jaccard 0.8 against any training heading line) applies to the DEV lines and dropped 7 of them in the dry run below.
+
+### Pools and projection (counts only)
+
+`lines`: 148,563 lines (T1 119,799, T2 28,764); `tokenize`: 287,463 units (39,091 new); `preflight`:
+
+| Quantity | R1 list (70 documents) | After wave 3 (103 documents) |
+| --- | --- | --- |
+| clean sentences | 99,418 | 137,391 (DEV 36,976, TRAIN 100,415) |
+| clean heading lines | 2,158 | 2,915 (tiers: T1 2,733, T2 182) |
+| strength-0 imperative lines DEV / TRAIN | 67 / 167 | **80 / 184** |
+| initial-noun lines DEV / TRAIN | 134 / 292 | 211 / 403 |
+| compound frame hits DEV / TRAIN | 4,226 / 13,511 | 6,464 / 18,705 |
+
+Projected imperative totals at the registered build caps (dry run of `heading_candidates`, nothing written: the 38 DEV and 102 TRAIN pilot rows counted and not drawn again, lemma cap 6, document caps 20 (DEV) and 25 (TRAIN)), before any labeling loss: **DEV 38 + 20 = 58 lines (floor 80), TRAIN 102 + 26 = 128 lines (floor 150)**, up from 47 and 116 before wave 3 (a gain of 11 and 12 lines from 33 documents; further imperative candidates DEV 20, TRAIN 26; 7 DEV lines dropped as near a training line). At the observed pilot rates (DEV 100 percent, TRAIN about 93 percent kept) the expected kept lines are DEV about 56 to 58 and TRAIN about 118 to 120. **Both floors stay out of reach** (shortfalls of about 22 DEV and 22 TRAIN lines at the caps); the yield of the new documents is about 0.7 further capped lines per document (23 lines from 33 documents), so about 60 more documents would be needed to close the 44-line gap, which is beyond the plan's 120-document cap (103 now). The registered path stands: `build --allow-short` with disclosure, and the `HDG2` arms are not run when the training imperative lines are below 150; the guard keeps its limit on the pooled items when the development targets are below 80.
+
+### Pins for the R3 commit (inputs as they stand in the work folder; the tool pins are still the R1 values)
+
+| Input | SHA-256 |
+| --- | --- |
+| `sources-draft.tsv` (103 rows; becomes `DRAFT_SHA256` at R3) | `22a89643a9cb735dd319adf3c66ff6e290f1cf72b1fa85ebcecc041a10daaf15` |
+| `tokens.tsv` (287,463 units; becomes `TOKENS_SHA256` at R3) | `ece0f12bc2764135ad9f57d615b8049bb634651ef1b748c80c540d97c18e8028` |
+| `streams.tsv` (103 rows, all stream H) | `0c1a672dde49eb3d6bdd8e0941ae6832baa684aa13d516bf83b9babc360f5fff` |
+| `partition.tsv` (103 rows) | `729cb3c3736b51a7522ba3d4bd6c9ea0db95e2a2d0a0504466f3460b450b5f70` |
+| `hexclude.tsv` (unchanged, 16 rows) | `fcd3e3ef00aa44b63b6d47c9347c07dfaa972b2038c389b99a3f06dda428ac0d` |
+| `hacc.jsonl` (156 fetch records: 112 of waves 1 and 2, 44 of wave 3) | `1f14e3289b9a96a5803a9fe4f1848f58e7d95bce754448c2c0da47fd0528309f` |
+
+**The 33 new documents (`source_id`, side).** DEV (10): `army-atsc-mos-45-b-small-arms-repairer-skill-level-1-1984`, `army-fm-31-11-c-s-special-forces-soldiers-manual-for-mos-11-c-sqi-s-1980`, `army-fm-7-15-the-army-universal-task-list-2003`, `army-fm-7-22-army-physical-readiness-training-2012`, `army-stp-31-18-e-34-sm-tg-special-forces-communications-sergeant-skill-levels-3-4-2003`, `army-tc-21-24-rappelling-2008`, `army-tc-21-305-8-training-program-for-medium-vehicles-1992`, `army-tc-21-305-9-training-program-for-the-het-system-1997`, `army-tc-7-9-infantry-live-fire-training-1993`, `army-tc-90-1-training-for-urban-operations`. TRAIN (23): `army-FM21-10_201212`, `army-fm-17-19-d-4-cavalry-scout-1979`, `army-fm-21-75-combat-training-of-the-individual-soldier-and-patrolling-1962`, `army-fm-23-10-sniper-training-1994`, `army-fm-3-19.4-military-police-leaders-haandbook-2002`, `army-fm-3-21.75-the-warrior-ethos-and-soldier-combat-skills-2008`, `army-fm-3-7-nbc-field-handbook-1994`, `army-fm-7-11-b-3-infantryman-sl-3-1978`, `army-fm-7-11-b-4-infantryman-11-b-sl-4-1978`, `army-fm-7-11-b-5-senior-infantry-sergeant-sl-5-1977`, `army-fm-7-11-c-4-indirect-fire-infantryman-sl-4-1976`, `army-fm-7-11-h-12-heavy-antiarmor-weapons-crewman-sl-1-2-1979`, `army-fm-7-41-mine-and-tunnel-dog-training-and-employment-1973`, `army-fm-9-55-x-34-ammunition-inspector-sl-3-4-1977`, `army-military-mountaineering-tc-3-97.61-november-2025`, `army-tc-1-251-aircrew-training-manual-ah-64-d`, `army-tc-21-305-1-training-program-for-the-hemtt-1995`, `army-tc-21-305-11-training-program-for-the-fmtv-operator-1999`, `army-tc-21-305-2-training-program-for-nvg-driving-ops-1998`, `army-tc-21-305-3-training-program-for-the-m-939-series-5-ton-tactical-cargo-truck-1997`, `army-tc-21-305-5-training-program-for-equipment-transporters-c-het-met-and-let-1991`, `army-tc-21-305-6-training-program-for-the-tractor-and-semitrailer-m-915-m-931-and-m-932-1991`, `army-tc-7-21-stryker-driver-training-2006`.
+
+### What the next commit (R3) must do
+
+Set `DRAFT_SHA256` and `TOKENS_SHA256` to the values above (and `HMM_SHA256` with stream C), run `candidates --product headings-2` and `headings-2-train` (the pilot rows are the prior of each side), and record the candidate counts. Nothing else of this step is a pin.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
