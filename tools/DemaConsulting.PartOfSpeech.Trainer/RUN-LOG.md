@@ -5054,6 +5054,38 @@ The WordSense repository was only read (HEAD `6530de1928baf30f9a14446a54bfb5dd5f
 
 The two shortfalls are those of amendment A2: the imperative supply is short (DEV 60 against the floor 80 and the owner's about 100; TRAIN 137 against the floor 150 and the owner's about 300), both rounds are built with `--allow-short` and disclosed, and the HDG2 arms are run. The R3-H projections (58 and 128 before the stream C documents) rose by 2 and 9 lines. Selection rules were **not** changed on these counts. **Batches exported after this commit** (`shapes_dev.py export` with its defaults, `check-batches` passed for all; no label exists or was read): `chd2` 6 batches (848 sentences, 15,371 token rows), `hdg2dev` 2 batches (166 sentences, 735 rows), `cmp2` 23 batches (3,400 sentences, 63,584 rows), `hdg2` 4 batches (485 sentences, 1,825 rows); 35 batches, 70 labeler runs (two models each), at most 4 at a time, in the order `hdg2dev`, `hdg2`, `chd2`, then `cmp2`; the second control round `chd2c` is written after the `chd2` decisions.
 
+## Follow-up: labeling and decisions of the rounds `hdg2dev`, `hdg2`, `chd2`, `cmp2` (counts only; second control round exported)
+
+This section follows the R3 commit `50598ae` (the attribution correction; a commit cannot contain its own SHA). **Nothing in this step changes a registered rule, a cap, a floor, a gate or a pin; no model of any experiment was trained or evaluated; no consumer text was read.** Both blind labelers (`claude-opus-5.5`, `gpt-6.1-sol`) wrote every batch of the rounds; `validate-output` was `ok` for both models and `status` showed `ok` for every batch before `decide`. `decide --round R` was run once per round, unchanged, with no hand edit and no relabel (the round `hdg-pilot` was decided earlier, R2). Only counts appear here (`decided.tsv` has ids, tags and counts, never text).
+
+| Round | Batches | Items | Target agreed by both labelers | Kept (decision rule) | Drops: target-disagreement | class-mismatch | frame-mismatch | Disputed non-target tokens in kept items |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `hdg2dev` imperative (frame F-IMP) | 2 (all kinds) | 22 | 22 | 21 | 0 | 1 | 0 | 14 (all kinds) |
+| `hdg2dev` noun | | 120 | 117 | 109 | 3 | 8 | 0 | |
+| `hdg2dev` proper controls | | 24 | 24 | 24 | 0 | 0 | 0 | |
+| `hdg2` imperative (`h2i-`, frame F-IMP) | 4 (all kinds) | 35 | 35 | 32 | 0 | 3 | 0 | 3 (all kinds) |
+| `hdg2` initial-noun frame (`h2n-`) | | 450 | 439 | 41 (both labelers tag token 0 VERB) | 11 | 398 (NOUN 327, ADJ 63, PROPN 8) | 0 | |
+| `chd2` targets | 6 | 800 | 793 | 265 | 7 | 478 | 50 | 56 (targets and controls) |
+| `chd2` controls | | 50 | 49 | 49 | 1 | 0 | 0 | |
+| `cmp2` | 23 | 3,400 | 3,390 | 2,120 | 10 | 929 | 341 | 346 |
+
+The "kept" column is the development decision of `decide` (target agreed, intended class, frame after labeling); the training rule of `build` (every token agreed, fix-tier linter, stratum tag) and the caps come later. Decided files (SHA-256): `hdg2dev` `e51b0abdeb17729c0b14b014356a60137505e9bdc0de144d70771a8786a13ea0`, `hdg2` `4a6a3225a43c639329ba8b20435ce020c2d9407c465fce98d5bbe035141bdc72`, `chd2` `b59f807486b671921a777bf9369e0d978ee39c2621bd029ff6be291bbb92b24d`, `cmp2` `4c39de0b328c9c150fca0a8d0fcf3855000aa48e2d87c69534da1637dc7be7f5`.
+
+**A fact about the training strata, stated plainly.** In `hdg2` the training rule keeps a line as `imperative` when the agreed tag of the judged word is VERB, whatever frame the candidate came from (`followup_data.heading_stratum_train`, unchanged since R0). 41 candidates of the `initial-noun` frame (token 1 a capitalized noun-capable word, the old strength-1 case that the rule text calls "not an imperative candidate") were tagged VERB by both labelers and enter the imperative stratum by that code; 398 of that frame were tagged NOUN (327), ADJ (63) or PROPN (8) by both. The dry-run projection below therefore has two readings of the `headings2` imperative count (with and without these 41 lines); which reading stands is a decision on a registered rule and is not taken here (it is put to the orchestrator and the owner).
+
+### Second control round `chd2c` (exported, not labeled)
+
+`candidates --product compound-head-2 --round chd2c` ran on the decided `chd2` round (the lemmas of the chosen targets that still have room under the 2-per-lemma control cap; the 30 sentences of the round cap): 30 control candidates over 24 head lemmas in 24 documents (0 target candidates); `candidates.tsv` SHA-256 `1434b9e70adbabf90e71828340bb4147085f7ba5f50087f9a60979606bd647d6`. `export --round chd2c` wrote 1 batch (`b001`, 30 sentences, 535 token rows, SHA-256 `e89efc092a89239395727fa29a9b3f0255334e4c6a4a6fde9071766a9084e4b9`); `check-batches` passed. No label of this round exists yet.
+
+### Projection of the builds (dry run of the committed `build` with every writer disabled and `--allow-short`; nothing written; counts only)
+
+| Product | Projected (before the hand check) | Floor / cap | Owner's target | Reading |
+| --- | --- | --- | --- | --- |
+| `compound-head-2` | targets **210** (265 kept, 55 over the cap), controls **18** of the first round (only the lemmas of the 210 chosen targets count; 157 head lemmas, 83 documents) | targets 150 to 210; controls 30 to 45 | about 300 targets in all (100 old + 210 = 310), controls about 20% | targets at the cap; controls reach the floor of 30 and the cap of 45 only with the `chd2c` labels (18 + up to 30 = at most 48; at the first-round keep rate of 49 of 50 about 47, so the cap binds at 45); 45 of 255 new items is 17.6%, so the cap and not the supply keeps the control share under 20% |
+| `compound2` | **1,100** sentences (cap; 670 head lemmas, 209 documents; noun 935, verb 165 = 15.0%) | 600 to 1,100, at least 760 by U5 | toward about 1,500 combined | 742 + 1,100 = 1,842 combined; the cap binds (2,428 sentences survive the labeling rules, 791 dropped at the noun cap and 421 at the verb cap, 59 at the document cap, 57 at the lemma cap) |
+| `headings-2` (DEV) | imperative **59** (pilot 38 + 21), noun **50** (cap; 109 kept), proper controls **20** (cap; 24 kept); 129 lines, 85 lemmas, 35 documents | imperative 80 to 130, noun 30 to 50, proper 12 to 20 | imperative about 100 | **imperative 21 below the floor 80** (needs `--allow-short`, A2), noun and proper at their caps |
+| `headings2` (TRAIN) | imperative **165** (pilot TRAIN 95 + `h2i-` 29 + `h2n-` VERB lines 41), initial-noun **82** (the half-share cap; 235 more dropped at it); 247 lines, 144 lemmas, 59 documents | imperative 150 to 400 | about 300 | **with** the 41 `initial-noun`-frame VERB lines: 165, the floor of 150 is met and `--allow-short` is not needed; **without** them: 124 imperative (26 below the floor) and at most 62 initial-noun; either way far below about 300 |
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
