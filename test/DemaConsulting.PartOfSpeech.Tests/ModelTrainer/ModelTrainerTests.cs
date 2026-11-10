@@ -2765,7 +2765,7 @@ public class ModelTrainerTests
     /// </summary>
     [Theory]
     [InlineData("compound", 742)]
-    [InlineData("headings", 375)]
+    [InlineData("headings", 374)]
     public void CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted(string name, int expected)
     {
         // Arrange: the committed configuration, as it is, with this source added, and with only this source weighted

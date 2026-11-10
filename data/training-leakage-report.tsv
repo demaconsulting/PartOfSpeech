@@ -5,8 +5,8 @@ compound	open-train	742	11990	0	0	0
 compound	masc	742	22829	0	0	0
 compound	silver	742	13971	0	0	0
 compound	imperative	742	900	0	0	0
-compound	headings	742	375	73	0	0
-headings	open-train	375	11990	0	0	0
-headings	masc	375	22829	0	0	0
-headings	silver	375	13971	0	0	0
-headings	imperative	375	900	0	0	0
+compound	headings	742	374	73	0	0
+headings	open-train	374	11990	0	0	0
+headings	masc	374	22829	0	0	0
+headings	silver	374	13971	0	0	0
+headings	imperative	374	900	0	0	0

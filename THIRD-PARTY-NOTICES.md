@@ -155,11 +155,13 @@ in the training configuration with weight 1, so the embedded weights were learne
 
 The two training sources `data/compound/` (sentences with a noun compound whose head can also be a verb) and
 `data/headings/` (Title Case heading, caption and step-title lines) are built the same way from text of US federal
-government documents: 154 and 90 documents of the federal families Department of Agriculture, Forest Service, Geological
+government documents: 154 and 89 documents of the federal families Department of Agriculture, Forest Service, Geological
 Survey, War Department and Army, Navy, Bureau of Reclamation, Public Health Service, Bureau of Land Management, Bureau of
 Mines, Weather Bureau and Bureau of Standards (17 U.S.C. 105; scans and electronic copies on the Internet Archive whose
 records carry the Public Domain Mark or a statement that the item is not in copyright). A document whose record lists a
-state or local government body as an author is not used. Their annotations and their selection are dedicated to the
+state or local government body as an author is not used, and neither is a document with a private non-profit
+co-author whose public-domain basis is uncertain (`data/eval/shapes-dev/excluded-sources.tsv`). Their annotations and
+their selection are dedicated to the
 public domain under CC0 1.0, and the license basis of every document is quoted in `data/compound/sources.tsv` and
 `data/headings/sources.tsv`. Both sources are registered in the training configuration with weight 0: they are committed
 data, they are not part of the mix that trained the embedded weights, and the weights were not learned from them.

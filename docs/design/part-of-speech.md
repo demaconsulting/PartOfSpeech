@@ -55,7 +55,7 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   text, tagged by two blind models that agree on every token, a model review of a sample, selected by position and
   lexicon frame and never by the PartOfSpeech model, and kept disjoint from every evaluation set), and two targeted
   sources built the same way: `data/compound/` (742 sentences with a noun compound whose head can also be a verb) and
-  `data/headings/` (375 Title Case heading, caption and step-title lines). The weights are
+  `data/headings/` (374 Title Case heading, caption and step-title lines). The weights are
   trained from the sources that have a positive weight in `training.json`: the open corpus, MASC, silver and the
   imperative source (weight 1, so it is in the mix of the embedded weights; `--source imperative:0` leaves it out of an
   experimental run). The compound and headings sources have weight 0: they are committed training data that is not part

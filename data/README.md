@@ -25,7 +25,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [silver/](silver/README.md) | BERT silver: Tatoeba and Gutenberg text, model labels mapped to UPOS | 13,971 | 242,699 | 8.5 MB | CC0-1.0 labels; CC0/PD sentences |
 | [imperative/](imperative/README.md) | imperative-initial sentences from US federal instructional text, two-labeler agreement (training; weight 1 in `training.json`) | 900 | 11,946 | 0.5 MB | CC0-1.0 labels; US federal-work sentences |
 | [compound/](compound/README.md) | sentences with a noun compound whose head can also be a verb, from US federal text, two-labeler agreement (training; weight 0 in `training.json`) | 742 | 14,692 | 0.6 MB | CC0-1.0 labels; US federal-work sentences |
-| [headings/](headings/README.md) | Title Case heading, caption and step-title lines from US federal text, two-labeler agreement (training; weight 0 in `training.json`) | 375 | 1,668 | 0.2 MB | CC0-1.0 labels; US federal-work lines |
+| [headings/](headings/README.md) | Title Case heading, caption and step-title lines from US federal text, two-labeler agreement (training; weight 0 in `training.json`) | 374 | 1,664 | 0.2 MB | CC0-1.0 labels; US federal-work lines |
 | [eval/shapes/](eval/shapes/README.md) | noun/verb shape probe (evaluation) | 560 | | 0.06 MB | CC0-1.0 |
 | [eval/shapes-dev/](eval/shapes-dev/README.md) | hard-shape development set from US federal-government text (development only): standard tranche `dev.tsv` (700 sentences, 12,279 tokens), hard tranche `hard.tsv` (460 sentences, 7,936 tokens) and three single-shape tranches `compound-head.tsv` (120 sentences, 2,148 tokens), `headings.tsv` (115 heading lines, 507 tokens) and `named-state.tsv` (112 sentences, 1,970 tokens) | 1,507 | 24,840 | 1.2 MB | CC0-1.0 labels; US federal-work sentences |
 | [eval/gold-v2/](eval/gold-v2/README.md) | single-target gold tokens (evaluation) | 5,072 | | 2.4 MB | CC0-1.0 labels; PD sentences |
@@ -36,7 +36,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
 masked); the fourth training source, `imperative/`, holds 11,946 tokens and is configured with weight 1, so it is part of the
-mix that trained the shipped weights. The fifth and sixth, `compound/` (14,692 tokens) and `headings/` (1,668 tokens), are configured
+mix that trained the shipped weights. The fifth and sixth, `compound/` (14,692 tokens) and `headings/` (1,664 tokens), are configured
 with weight 0: they are committed training data that are not part of the shipped mix. Total size of `data/`: 43.7 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
 WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.md` at the repository root.
 

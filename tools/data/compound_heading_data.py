@@ -65,8 +65,9 @@ THE PRE-REGISTERED RULE (committed before any label of these sources exists; the
    of data/eval/gold-v2/sources.tsv, `sentences` recomputed).
 10. Amendment after the build (the labels, the decisions and the caps are unchanged; recorded in the RUN-LOG): `build --omit-document ID` (repeatable) removes the
    selected items of a document whose public-domain basis is found not to be verifiable after all (rule 1; for example a record that lists a state or local government body
-   as an author). The removal happens after the caps and before the numbering, so nothing is added, nothing is relabeled and the ids stay without a gap; the document is
-   listed with the reason `OMIT_REASON` in excluded-documents.tsv and the items are counted as `omitted-document` in the build report. The verb share of rule 6 is applied
+   as an author, or a private co-author). The removal happens after the caps and before the numbering, so nothing is added, nothing is relabeled and the ids stay without a gap; the document is
+   listed in excluded-documents.tsv (with the reason `OMIT_REASON`, or with the reason given as `ID=REASON`) and the items are counted as `omitted-document` in the build report. The rows of
+   the omitted documents are left out of the source and license gate of the draft (so a document that was added to the exclusion record after the sourcing can still be omitted). The verb share of rule 6 is applied
    again to what is left (the last verb items in the seeded order are dropped, counted as `verb-share`). An unknown id is refused.
 
 Work folder W (`--work W`, outside the repository), the layout of shapes_dev_extra.py: W/sources-draft.tsv (12 columns), W/text/<source_id>.txt (one sentence per line),
@@ -80,7 +81,7 @@ Commands (`--data-dir D` replaces the repository's data folder, for tests; --ext
   python tools/data/compound_heading_data.py --work W candidates --source compound|headings [--extra-table PATH ...] [--extra-text DIR ...] [--no-ud]
                                                            [--lemma-cap N] [--document-cap N] [--max-candidates N] [--min-candidates N] [--min-lemmas N]
   (then: shapes_dev.py --work W export / check-batches / validate-output / status / decide --round compound|headings, the unchanged blind labeling)
-  python tools/data/compound_heading_data.py --work W build --source compound|headings [--out-dir D] [--extra-table PATH ...] [--allow-short] [--omit-document ID ...]
+  python tools/data/compound_heading_data.py --work W build --source compound|headings [--out-dir D] [--extra-table PATH ...] [--allow-short] [--omit-document ID[=REASON] ...]
   python tools/data/compound_heading_data.py --work W sample --source compound|headings [--out-dir D] [--seed N]
   python tools/data/compound_heading_data.py --work W review-result --source compound|headings --verdicts FILE ...
   python tools/data/compound_heading_data.py --work W report --source compound|headings [--out-dir D]
@@ -197,10 +198,25 @@ class Reference(imperative_data.ShapesDevSentences):
         self.keys.discard("")
 
 
-def draft_gate(work, data_dir, extra_tables=()):
-    """Fail closed (`shapes_dev_extra.DraftError`) unless W/sources-draft.tsv is a sound list of new documents (the source and license gate of the data builders)."""
+def parse_omissions(omit):
+    """{document id: reason} of the `--omit-document` values: `ID` (the reason `OMIT_REASON`) or `ID=REASON` (a reason of its own, one line without a tab)."""
+    reasons = {}
+    for value in omit:
+        document, separator, reason = value.partition("=")
+        document, reason = document.strip(), reason.strip() if separator else OMIT_REASON
+        if not document or not reason or "\t" in value or "\n" in value:
+            raise BuildError("an omitted document needs an id and, after '=', a one-line reason without a tab: " + repr(value))
+        reasons[document] = reason
+    return reasons
+
+
+def draft_gate(work, data_dir, extra_tables=(), omit=()):
+    """Fail closed (`shapes_dev_extra.DraftError`) unless W/sources-draft.tsv is a sound list of new documents (the source and license gate of the data builders).
+    The rows of the documents in `omit` are not part of the gate: nothing of such a document is written, so a document that was excluded after the sourcing
+    can still be omitted (and an unknown id is refused by `build`)."""
     exclusions = shapes_dev.load_exclusions(work, data_dir)
-    shapes_dev_extra.require_sound_draft(work, shapes_dev.read_draft(work), used_index(data_dir, exclusions, extra_tables), exclusions)
+    draft = [row for row in shapes_dev.read_draft(work) if row["source_id"] not in set(omit)]
+    shapes_dev_extra.require_sound_draft(work, draft, used_index(data_dir, exclusions, extra_tables), exclusions)
 
 
 def _command_exclusions(args):
@@ -630,14 +646,15 @@ def build(work, source, out_dir, seed=SEED, allow_short=False, data_dir=None, ex
     the caps; an id that is not in the draft is refused."""
     data_dir = data_dir or common.DATA
     round_work = shapes_dev.RoundWork(getattr(work, "base", work.root), source)
-    draft_gate(work, data_dir, extra_tables)
-    items, tagged = shapes_dev.read_decided(round_work, data_dir)
-    candidates = {c["cand_id"]: c for c in shapes_dev.read_candidates(round_work)}
+    omit_reasons = parse_omissions(omit)
+    omit = sorted(omit_reasons)
     draft = shapes_dev.read_draft(work)
-    omit = sorted(set(omit))
     missing = sorted(set(omit) - {row["source_id"] for row in draft})
     if missing:
         raise BuildError("cannot omit a document that is not in the draft: " + ", ".join(missing))
+    draft_gate(work, data_dir, extra_tables, omit)
+    items, tagged = shapes_dev.read_decided(round_work, data_dir, keep=omit)
+    candidates = {c["cand_id"]: c for c in shapes_dev.read_candidates(round_work)}
     exclusions = shapes_dev.load_exclusions(work, data_dir)
     drops, kept, sentences = collections.Counter(), [], {}
     for item in items:
@@ -689,7 +706,7 @@ def build(work, source, out_dir, seed=SEED, allow_short=False, data_dir=None, ex
     common.write_text(os.path.join(out_dir, EXCLUDED_NAME), [
         "# Documents left out of %s because the document is a reprint of, or shares sentences with, a training or evaluation set, was already used, or has no verifiable federal-only basis" % FILES[source],
         "# (only ids and reasons, never text)", "# columns = document_id, reason"] + ["%s\t%s" % (r["source_id"], r["reason"]) for r in rejected]
-        + ["%s\t%s" % (document, OMIT_REASON) for document in omit])
+        + ["%s\t%s" % (document, omit_reasons[document]) for document in omit])
     common.write_text(os.path.join(out_dir, DROPPED_NAME), [
         "# Candidate sentences dropped alone because they equal or nearly equal a sentence of a training or evaluation set or of the shapes development set",
         "# (counted in private/candidates-report.md of the round folder; only counts are published, never text)", "# columns = reason, sentences"]
@@ -932,8 +949,8 @@ def main(argv=None):
     common_options(build_parser)
     build_parser.add_argument("--out-dir", default=None, help="default: <data dir>/<source>")
     build_parser.add_argument("--allow-short", action="store_true", help="build below the minimum or the floors (the caps and the other gates stay)")
-    build_parser.add_argument("--omit-document", action="append", default=None, metavar="ID",
-                              help="remove the selected items of a document whose public-domain basis is not verifiable (rule 10; repeatable)")
+    build_parser.add_argument("--omit-document", action="append", default=None, metavar="ID[=REASON]",
+                              help="remove the selected items of a document whose public-domain basis is not verifiable (rule 10; repeatable; REASON replaces the default reason)")
     sample = sub.add_parser("sample", help="the review sample for the precision gate")
     common_options(sample, tables=False)
     sample.add_argument("--out-dir", default=None)

@@ -1688,17 +1688,6 @@ of	ADP	unanimous
 Row	NOUN	unanimous
 
 # sent_id = headings-0150
-# source_id = nbs-safehandlingofbo65unit
-# text = Contaminated Clothing or Instruments
-# word = 1
-# lemma = clothing
-# stratum = noun
-Contaminated	ADJ	unanimous
-Clothing	NOUN	unanimous
-or	CCONJ	unanimous
-Instruments	NOUN	unanimous
-
-# sent_id = headings-0151
 # source_id = usgs-watersupplypape06usgoog
 # text = Spillway at Stillwater
 # word = 2
@@ -1708,7 +1697,7 @@ Spillway	NOUN	unanimous
 at	ADP	unanimous
 Stillwater	PROPN	unanimous
 
-# sent_id = headings-0152
+# sent_id = headings-0151
 # source_id = usbr-cookmountainstud00calc
 # text = Thickness of Overburden
 # word = 2
@@ -1718,7 +1707,7 @@ Thickness	NOUN	unanimous
 of	ADP	unanimous
 Overburden	NOUN	unanimous
 
-# sent_id = headings-0153
+# sent_id = headings-0152
 # source_id = usfs-CAT85256064016
 # text = Legislative Impacts
 # word = 1
@@ -1727,7 +1716,7 @@ Overburden	NOUN	unanimous
 Legislative	ADJ	unanimous
 Impacts	NOUN	unanimous
 
-# sent_id = headings-0154
+# sent_id = headings-0153
 # source_id = usbm-bureauofminescos00unit
 # text = Construction Labor
 # word = 1
@@ -1736,7 +1725,7 @@ Impacts	NOUN	unanimous
 Construction	NOUN	unanimous
 Labor	NOUN	unanimous
 
-# sent_id = headings-0155
+# sent_id = headings-0154
 # source_id = usbr-northcentralpow1971unit_0
 # text = C, Zone
 # word = 2
@@ -1746,7 +1735,7 @@ C	X	unanimous
 ,	PUNCT	unanimous
 Zone	NOUN	unanimous
 
-# sent_id = headings-0156
+# sent_id = headings-0155
 # source_id = phs-foodforyoungchil00lowe
 # text = Adapting Recipes for Use With Children
 # word = 3
@@ -1759,7 +1748,7 @@ Use	NOUN	unanimous
 With	ADP	unanimous
 Children	NOUN	unanimous
 
-# sent_id = headings-0157
+# sent_id = headings-0156
 # source_id = usfs-guideforpredicti1981clin
 # text = Controlling And Contributing Factors
 # word = 3
@@ -1770,7 +1759,7 @@ And	CCONJ	unanimous
 Contributing	VERB	unanimous
 Factors	NOUN	unanimous
 
-# sent_id = headings-0158
+# sent_id = headings-0157
 # source_id = usfs-CAT10504248
 # text = Subprofessional Training
 # word = 1
@@ -1779,7 +1768,7 @@ Factors	NOUN	unanimous
 Subprofessional	ADJ	unanimous
 Training	NOUN	unanimous
 
-# sent_id = headings-0159
+# sent_id = headings-0158
 # source_id = army-DAPAM20-3
 # text = Conduct of the War
 # word = 3
@@ -1790,7 +1779,7 @@ of	ADP	unanimous
 the	DET	unanimous
 War	NOUN	unanimous
 
-# sent_id = headings-0160
+# sent_id = headings-0159
 # source_id = usbr-pumpkincreek1400west
 # text = Discussion of the Analyses
 # word = 3
@@ -1801,7 +1790,7 @@ of	ADP	unanimous
 the	DET	unanimous
 Analyses	NOUN	unanimous
 
-# sent_id = headings-0161
+# sent_id = headings-0160
 # source_id = usfs-CAT31285103
 # text = Costs and Outputs
 # word = 2
@@ -1811,7 +1800,7 @@ Costs	NOUN	unanimous
 and	CCONJ	unanimous
 Outputs	NOUN	unanimous
 
-# sent_id = headings-0162
+# sent_id = headings-0161
 # source_id = other-terrestrialwild00unse
 # text = Direct Counts
 # word = 1
@@ -1820,7 +1809,7 @@ Outputs	NOUN	unanimous
 Direct	ADJ	unanimous
 Counts	NOUN	unanimous
 
-# sent_id = headings-0163
+# sent_id = headings-0162
 # source_id = usfs-grazingfeereview5502unit
 # text = Long-Term Competitive Bid System, 10-Year Term Permit
 # word = 7
@@ -1835,7 +1824,7 @@ System	NOUN	unanimous
 Term	NOUN	unanimous
 Permit	NOUN	unanimous
 
-# sent_id = headings-0164
+# sent_id = headings-0163
 # source_id = usda-CAT78703578
 # text = Applying the Paint
 # word = 2
@@ -1845,7 +1834,7 @@ Applying	VERB	unanimous
 the	DET	unanimous
 Paint	NOUN	unanimous
 
-# sent_id = headings-0165
+# sent_id = headings-0164
 # source_id = phs-mentalhealthrepo00unit
 # text = Effectiveness of Systems of Care
 # word = 4
@@ -1857,7 +1846,7 @@ Systems	NOUN	unanimous
 of	ADP	unanimous
 Care	NOUN	unanimous
 
-# sent_id = headings-0166
+# sent_id = headings-0165
 # source_id = phs-foodforyoungchil00lowe
 # text = Supplementary Breakfast
 # word = 1
@@ -1866,7 +1855,7 @@ Care	NOUN	unanimous
 Supplementary	ADJ	unanimous
 Breakfast	NOUN	unanimous
 
-# sent_id = headings-0167
+# sent_id = headings-0166
 # source_id = usda-CAT71334647021
 # text = Marking, Mapping, and Recording
 # word = 2
@@ -1879,7 +1868,7 @@ Mapping	NOUN	unanimous
 and	CCONJ	unanimous
 Recording	NOUN	unanimous
 
-# sent_id = headings-0168
+# sent_id = headings-0167
 # source_id = usbr-northcentralpow1971unit_0
 # text = Wyoming Attorney General's Office, Cheyenne, Wyoming
 # word = 8
@@ -1895,7 +1884,7 @@ Cheyenne	PROPN	unanimous
 ,	PUNCT	unanimous
 Wyoming	PROPN	unanimous
 
-# sent_id = headings-0169
+# sent_id = headings-0168
 # source_id = phs-mentalhealthrepo00unit
 # text = Service Delivery for Mood Disorders
 # word = 4
@@ -1907,7 +1896,7 @@ for	ADP	unanimous
 Mood	NOUN	unanimous
 Disorders	NOUN	unanimous
 
-# sent_id = headings-0170
+# sent_id = headings-0169
 # source_id = usbm-resourceguidedep00wagn
 # text = Product Generation Issues
 # word = 2
@@ -1917,7 +1906,7 @@ Product	NOUN	unanimous
 Generation	NOUN	unanimous
 Issues	NOUN	unanimous
 
-# sent_id = headings-0171
+# sent_id = headings-0170
 # source_id = usfs-CAT85256064016
 # text = New Program Dimensions
 # word = 2
@@ -1927,7 +1916,7 @@ New	ADJ	unanimous
 Program	NOUN	unanimous
 Dimensions	NOUN	unanimous
 
-# sent_id = headings-0172
+# sent_id = headings-0171
 # source_id = usda-waterqualityindi161terr
 # text = Limitations of the Water Quality Indicators Guide
 # word = 6
@@ -1941,7 +1930,7 @@ Quality	NOUN	unanimous
 Indicators	NOUN	unanimous
 Guide	NOUN	unanimous
 
-# sent_id = headings-0173
+# sent_id = headings-0172
 # source_id = nbs-nbscommunication00unit
 # text = NBS-265 (Publications Follow-Up Record)
 # word = 4
@@ -1954,7 +1943,7 @@ Follow-Up	NOUN	unanimous
 Record	NOUN	unanimous
 )	PUNCT	unanimous
 
-# sent_id = headings-0174
+# sent_id = headings-0173
 # source_id = usda-CAT78703578
 # text = Avoid Hazards
 # word = 1
@@ -1963,7 +1952,7 @@ Record	NOUN	unanimous
 Avoid	VERB	unanimous
 Hazards	NOUN	unanimous
 
-# sent_id = headings-0175
+# sent_id = headings-0174
 # source_id = phs-insidepublicheal00unit
 # text = Primary Care Capacity Building
 # word = 3
@@ -1974,7 +1963,7 @@ Care	NOUN	unanimous
 Capacity	NOUN	unanimous
 Building	NOUN	unanimous
 
-# sent_id = headings-0176
+# sent_id = headings-0175
 # source_id = usda-CAT71334647021
 # text = Use of Oil Film
 # word = 3
@@ -1985,7 +1974,7 @@ of	ADP	unanimous
 Oil	NOUN	unanimous
 Film	NOUN	unanimous
 
-# sent_id = headings-0177
+# sent_id = headings-0176
 # source_id = navy-personnelaccount00unit
 # text = Arrangement of Unit Diaries for Processing
 # word = 5
@@ -1998,7 +1987,7 @@ Diaries	NOUN	unanimous
 for	ADP	unanimous
 Processing	NOUN	unanimous
 
-# sent_id = headings-0178
+# sent_id = headings-0177
 # source_id = other-westmojaveplanha1bunit
 # text = Conservation Biology Terms
 # word = 2
@@ -2008,7 +1997,7 @@ Conservation	NOUN	unanimous
 Biology	NOUN	unanimous
 Terms	NOUN	unanimous
 
-# sent_id = headings-0179
+# sent_id = headings-0178
 # source_id = usgs-fieldtripguideto00four
 # text = Technical Books and Reports
 # word = 1
@@ -2019,7 +2008,7 @@ Books	NOUN	unanimous
 and	CCONJ	unanimous
 Reports	NOUN	unanimous
 
-# sent_id = headings-0180
+# sent_id = headings-0179
 # source_id = wxb-interimreportpro00unit
 # text = Comparison of Adopted Maximum Winds with Previous Estimate
 # word = 4
@@ -2034,7 +2023,7 @@ with	ADP	unanimous
 Previous	ADJ	unanimous
 Estimate	NOUN	unanimous
 
-# sent_id = headings-0181
+# sent_id = headings-0180
 # source_id = usfs-CAT10507884
 # text = A, Total Stand
 # word = 3
@@ -2045,7 +2034,7 @@ A	X	unanimous
 Total	ADJ	unanimous
 Stand	NOUN	unanimous
 
-# sent_id = headings-0182
+# sent_id = headings-0181
 # source_id = other-terrestrialwild00unse
 # text = Rodents and Lagomorphs (Rabbits)
 # word = 4
@@ -2058,7 +2047,7 @@ Lagomorphs	NOUN	unanimous
 Rabbits	NOUN	unanimous
 )	PUNCT	unanimous
 
-# sent_id = headings-0183
+# sent_id = headings-0182
 # source_id = usfs-jobwithforestser843unit_0
 # text = Lassen College Ranger School, Susanville, California, 96130
 # word = 5
@@ -2075,7 +2064,7 @@ California	PROPN	unanimous
 ,	PUNCT	unanimous
 96130	NUM	unanimous
 
-# sent_id = headings-0184
+# sent_id = headings-0183
 # source_id = usfs-CAT10230847
 # text = Establishing Fire Defense Organization and Staffing
 # word = 5
@@ -2088,7 +2077,7 @@ Organization	NOUN	unanimous
 and	CCONJ	unanimous
 Staffing	NOUN	unanimous
 
-# sent_id = headings-0185
+# sent_id = headings-0184
 # source_id = usfs-influencesofvege397unit
 # text = Denudation by Smelter Fumes
 # word = 3
@@ -2099,7 +2088,7 @@ by	ADP	unanimous
 Smelter	NOUN	unanimous
 Fumes	NOUN	unanimous
 
-# sent_id = headings-0186
+# sent_id = headings-0185
 # source_id = navy-personnelaccount00unit
 # text = Electric Accounting Machine
 # word = 2
@@ -2109,7 +2098,7 @@ Electric	ADJ	unanimous
 Accounting	NOUN	unanimous
 Machine	NOUN	unanimous
 
-# sent_id = headings-0187
+# sent_id = headings-0186
 # source_id = usfs-influencesofvege397unit
 # text = Shoaling of Channels
 # word = 2
@@ -2119,7 +2108,7 @@ Shoaling	NOUN	unanimous
 of	ADP	unanimous
 Channels	NOUN	unanimous
 
-# sent_id = headings-0188
+# sent_id = headings-0187
 # source_id = usgs-bub_gb_a-gqAQAAIAAJ
 # text = Named in 1966 by the Alaska Geographic
 # word = 5
@@ -2133,7 +2122,7 @@ the	DET	unanimous
 Alaska	PROPN	unanimous
 Geographic	PROPN	unanimous
 
-# sent_id = headings-0189
+# sent_id = headings-0188
 # source_id = usda-CAT71334647018
 # text = The Water Table
 # word = 2
@@ -2143,7 +2132,7 @@ The	DET	unanimous
 Water	NOUN	unanimous
 Table	NOUN	unanimous
 
-# sent_id = headings-0190
+# sent_id = headings-0189
 # source_id = usfs-grazingfeereview5502unit
 # text = Donald Pearson, Office of Management and Budget
 # word = 1
@@ -2158,7 +2147,7 @@ Management	PROPN	unanimous
 and	CCONJ	unanimous
 Budget	PROPN	unanimous
 
-# sent_id = headings-0191
+# sent_id = headings-0190
 # source_id = usda-CAT71334647021
 # text = Preparation of Schedules
 # word = 2
@@ -2168,7 +2157,7 @@ Preparation	NOUN	unanimous
 of	ADP	unanimous
 Schedules	NOUN	unanimous
 
-# sent_id = headings-0192
+# sent_id = headings-0191
 # source_id = usbr-northcentralpow1971unit_0
 # text = Unit Size and Number Determination
 # word = 1
@@ -2180,7 +2169,7 @@ and	CCONJ	unanimous
 Number	NOUN	unanimous
 Determination	NOUN	unanimous
 
-# sent_id = headings-0193
+# sent_id = headings-0192
 # source_id = usbr-cookmountainstud00calc
 # text = Seismic Hazard
 # word = 1
@@ -2189,7 +2178,7 @@ Determination	NOUN	unanimous
 Seismic	ADJ	unanimous
 Hazard	NOUN	unanimous
 
-# sent_id = headings-0194
+# sent_id = headings-0193
 # source_id = usbr-northcentralpow1971unit_0
 # text = Pacific Northwest Loads
 # word = 2
@@ -2199,7 +2188,7 @@ Pacific	PROPN	unanimous
 Northwest	PROPN	unanimous
 Loads	NOUN	unanimous
 
-# sent_id = headings-0195
+# sent_id = headings-0194
 # source_id = usfs-CAT10684902
 # text = Through a Memorandum of Understanding with the Kentucky Natural Resources
 # word = 7
@@ -2216,7 +2205,7 @@ Kentucky	PROPN	unanimous
 Natural	PROPN	unanimous
 Resources	PROPN	unanimous
 
-# sent_id = headings-0196
+# sent_id = headings-0195
 # source_id = usda-CAT71334647018
 # text = Major Features
 # word = 1
@@ -2225,7 +2214,7 @@ Resources	PROPN	unanimous
 Major	ADJ	unanimous
 Features	NOUN	unanimous
 
-# sent_id = headings-0197
+# sent_id = headings-0196
 # source_id = usda-acquisitionuseof05leea
 # text = Usual Method of Purchase
 # word = 3
@@ -2236,7 +2225,7 @@ Method	NOUN	unanimous
 of	ADP	unanimous
 Purchase	NOUN	unanimous
 
-# sent_id = headings-0198
+# sent_id = headings-0197
 # source_id = usda-waterqualityindi161terr
 # text = Audience and Purpose of This Guide
 # word = 2
@@ -2249,7 +2238,7 @@ of	ADP	unanimous
 This	DET	unanimous
 Guide	NOUN	unanimous
 
-# sent_id = headings-0199
+# sent_id = headings-0198
 # source_id = usbm-resourceguidedep00wagn
 # text = Shawn Norton, Program Manager
 # word = 1
@@ -2261,7 +2250,7 @@ Norton	PROPN	unanimous
 Program	NOUN	unanimous
 Manager	NOUN	unanimous
 
-# sent_id = headings-0200
+# sent_id = headings-0199
 # source_id = usda-acquisitionuseof05leea
 # text = Public Land Orders
 # word = 2
@@ -2271,7 +2260,7 @@ Public	ADJ	unanimous
 Land	NOUN	unanimous
 Orders	NOUN	unanimous
 
-# sent_id = headings-0201
+# sent_id = headings-0200
 # source_id = usgs-bub_gb_a-gqAQAAIAAJ
 # text = Named by Canada in 1951 for John
 # word = 2
@@ -2285,7 +2274,7 @@ in	ADP	unanimous
 for	ADP	unanimous
 John	PROPN	unanimous
 
-# sent_id = headings-0202
+# sent_id = headings-0201
 # source_id = usda-CAT31287564
 # text = Relation of Drawdown to Yield
 # word = 4
@@ -2297,7 +2286,7 @@ Drawdown	NOUN	unanimous
 to	ADP	unanimous
 Yield	NOUN	unanimous
 
-# sent_id = headings-0203
+# sent_id = headings-0202
 # source_id = usfs-influencesofvege397unit
 # text = Absorption by Plant Litter
 # word = 3
@@ -2308,7 +2297,7 @@ by	ADP	unanimous
 Plant	NOUN	unanimous
 Litter	NOUN	unanimous
 
-# sent_id = headings-0204
+# sent_id = headings-0203
 # source_id = usfs-CAT31285103
 # text = Organization of the Report
 # word = 3
@@ -2319,7 +2308,7 @@ of	ADP	unanimous
 the	DET	unanimous
 Report	NOUN	unanimous
 
-# sent_id = headings-0205
+# sent_id = headings-0204
 # source_id = usbr-reclamationsafet1963engi
 # text = Past Is Prologue
 # word = 2
@@ -2329,7 +2318,7 @@ Past	NOUN	unanimous
 Is	VERB	unanimous
 Prologue	NOUN	unanimous
 
-# sent_id = headings-0206
+# sent_id = headings-0205
 # source_id = usda-CAT86866954
 # text = Percussion or Churn Drilling
 # word = 3
@@ -2340,7 +2329,7 @@ or	CCONJ	unanimous
 Churn	NOUN	unanimous
 Drilling	NOUN	unanimous
 
-# sent_id = headings-0207
+# sent_id = headings-0206
 # source_id = army-MarsBulletin195303
 # text = Adjustment Hints
 # word = 1
@@ -2349,7 +2338,7 @@ Drilling	NOUN	unanimous
 Adjustment	NOUN	unanimous
 Hints	NOUN	unanimous
 
-# sent_id = headings-0208
+# sent_id = headings-0207
 # source_id = army-1946-03IntelligenceBulletin
 # text = Japan's Ground Strategy From Pearl Harbor to Defeat
 # word = 8
@@ -2365,7 +2354,7 @@ Harbor	PROPN	unanimous
 to	ADP	unanimous
 Defeat	NOUN	unanimous
 
-# sent_id = headings-0209
+# sent_id = headings-0208
 # source_id = usbm-bureauofminescos00unit
 # text = Mining System Design
 # word = 2
@@ -2375,7 +2364,7 @@ Mining	NOUN	unanimous
 System	NOUN	unanimous
 Design	NOUN	unanimous
 
-# sent_id = headings-0210
+# sent_id = headings-0209
 # source_id = usfs-CAT31041219
 # text = Purchased Seed or Nursery Stock
 # word = 1
@@ -2387,7 +2376,7 @@ or	CCONJ	unanimous
 Nursery	NOUN	unanimous
 Stock	NOUN	unanimous
 
-# sent_id = headings-0211
+# sent_id = headings-0210
 # source_id = usbr-lowercrookedrive00unit
 # text = Alternative Themes
 # word = 1
@@ -2396,7 +2385,7 @@ Stock	NOUN	unanimous
 Alternative	ADJ	unanimous
 Themes	NOUN	unanimous
 
-# sent_id = headings-0212
+# sent_id = headings-0211
 # source_id = usbr-CAT30964660
 # text = Farm Credit and Financing
 # word = 1
@@ -2407,7 +2396,7 @@ Credit	NOUN	unanimous
 and	CCONJ	unanimous
 Financing	NOUN	unanimous
 
-# sent_id = headings-0213
+# sent_id = headings-0212
 # source_id = usda-CAT78703578
 # text = Changes in Pitch of the Roof
 # word = 2
@@ -2420,7 +2409,7 @@ of	ADP	unanimous
 the	DET	unanimous
 Roof	NOUN	unanimous
 
-# sent_id = headings-0214
+# sent_id = headings-0213
 # source_id = usbr-cookmountainstud00calc
 # text = Overlying Shale D
 # word = 0
@@ -2430,7 +2419,7 @@ Overlying	VERB	unanimous
 Shale	NOUN	unanimous
 D	X	unanimous
 
-# sent_id = headings-0215
+# sent_id = headings-0214
 # source_id = usfs-CAT31285103
 # text = Land Management Planning
 # word = 2
@@ -2440,7 +2429,7 @@ Land	NOUN	unanimous
 Management	NOUN	unanimous
 Planning	NOUN	unanimous
 
-# sent_id = headings-0216
+# sent_id = headings-0215
 # source_id = usda-CAT31287564
 # text = Developing with Dry Ice
 # word = 3
@@ -2451,7 +2440,7 @@ with	ADP	unanimous
 Dry	ADJ	unanimous
 Ice	NOUN	unanimous
 
-# sent_id = headings-0217
+# sent_id = headings-0216
 # source_id = usda-CAT71334647018
 # text = Development of Springs
 # word = 2
@@ -2461,7 +2450,7 @@ Development	NOUN	unanimous
 of	ADP	unanimous
 Springs	NOUN	unanimous
 
-# sent_id = headings-0218
+# sent_id = headings-0217
 # source_id = other-terrestrialwild00unse
 # text = Bleating or Winnowing Counts
 # word = 3
@@ -2472,7 +2461,7 @@ or	CCONJ	unanimous
 Winnowing	NOUN	unanimous
 Counts	NOUN	unanimous
 
-# sent_id = headings-0219
+# sent_id = headings-0218
 # source_id = usfs-grazingfeereview5502unit
 # text = Potential Impacts on Local Income and Employment
 # word = 1
@@ -2486,7 +2475,7 @@ Income	NOUN	unanimous
 and	CCONJ	unanimous
 Employment	NOUN	unanimous
 
-# sent_id = headings-0220
+# sent_id = headings-0219
 # source_id = army-CAT88904993
 # text = For the Johns Creek Structures
 # word = 4
@@ -2498,7 +2487,7 @@ Johns	PROPN	unanimous
 Creek	PROPN	unanimous
 Structures	NOUN	unanimous
 
-# sent_id = headings-0221
+# sent_id = headings-0220
 # source_id = usgs-bub_gb_a-gqAQAAIAAJ
 # text = Named in 1924 for David Thompson
 # word = 4
@@ -2511,7 +2500,7 @@ for	ADP	unanimous
 David	PROPN	unanimous
 Thompson	PROPN	unanimous
 
-# sent_id = headings-0222
+# sent_id = headings-0221
 # source_id = usda-CAT91954835
 # text = For Breakpoint Rainfall Model (Option 2)
 # word = 3
@@ -2526,7 +2515,7 @@ Option	NOUN	unanimous
 2	NUM	unanimous
 )	PUNCT	unanimous
 
-# sent_id = headings-0223
+# sent_id = headings-0222
 # source_id = usda-waterqualityindi161terr
 # text = A Word of Thanks
 # word = 1
@@ -2537,7 +2526,7 @@ Word	NOUN	unanimous
 of	ADP	unanimous
 Thanks	NOUN	unanimous
 
-# sent_id = headings-0224
+# sent_id = headings-0223
 # source_id = usda-CAT86866954
 # text = Clean-Out Tools
 # word = 1
@@ -2546,7 +2535,7 @@ Thanks	NOUN	unanimous
 Clean-Out	NOUN	unanimous
 Tools	NOUN	unanimous
 
-# sent_id = headings-0225
+# sent_id = headings-0224
 # source_id = usda-lebulletin71unit
 # text = Agricultural Labor
 # word = 1
@@ -2555,7 +2544,7 @@ Tools	NOUN	unanimous
 Agricultural	ADJ	unanimous
 Labor	NOUN	unanimous
 
-# sent_id = headings-0226
+# sent_id = headings-0225
 # source_id = usfs-CAT10230847
 # text = Extraordinary Measures
 # word = 1
@@ -2564,7 +2553,7 @@ Labor	NOUN	unanimous
 Extraordinary	ADJ	unanimous
 Measures	NOUN	unanimous
 
-# sent_id = headings-0227
+# sent_id = headings-0226
 # source_id = phs-organizationstaf00unit_9
 # text = Population Size of Areas Served
 # word = 1
@@ -2576,7 +2565,7 @@ of	ADP	unanimous
 Areas	NOUN	unanimous
 Served	VERB	unanimous
 
-# sent_id = headings-0228
+# sent_id = headings-0227
 # source_id = usbm-resourceguidedep00wagn
 # text = Construction Management Branch
 # word = 2
@@ -2586,7 +2575,7 @@ Construction	NOUN	unanimous
 Management	NOUN	unanimous
 Branch	NOUN	unanimous
 
-# sent_id = headings-0229
+# sent_id = headings-0228
 # source_id = usda-CAT91954835
 # text = Preparation of Input Data Files
 # word = 4
@@ -2598,7 +2587,7 @@ Input	NOUN	unanimous
 Data	NOUN	unanimous
 Files	NOUN	unanimous
 
-# sent_id = headings-0230
+# sent_id = headings-0229
 # source_id = usfs-grazingfeereview5502unit
 # text = Calculated Grazing Fees by Animal Class and Pricing Areas
 # word = 2
@@ -2614,7 +2603,7 @@ and	CCONJ	unanimous
 Pricing	NOUN	unanimous
 Areas	NOUN	unanimous
 
-# sent_id = headings-0231
+# sent_id = headings-0230
 # source_id = other-study-rpt-2005
 # text = Interpretation, Education, and Visitor Experience
 # word = 6
@@ -2628,7 +2617,7 @@ and	CCONJ	unanimous
 Visitor	NOUN	unanimous
 Experience	NOUN	unanimous
 
-# sent_id = headings-0232
+# sent_id = headings-0231
 # source_id = army-LogisticsInWorldWarII
 # text = Statistical Reporting
 # word = 1
@@ -2637,7 +2626,7 @@ Experience	NOUN	unanimous
 Statistical	ADJ	unanimous
 Reporting	NOUN	unanimous
 
-# sent_id = headings-0233
+# sent_id = headings-0232
 # source_id = usfs-CAT10504248
 # text = Educational Functions
 # word = 1
@@ -2646,7 +2635,7 @@ Reporting	NOUN	unanimous
 Educational	ADJ	unanimous
 Functions	NOUN	unanimous
 
-# sent_id = headings-0234
+# sent_id = headings-0233
 # source_id = other-wildlifewatercat00brig
 # text = A Note About the Authors
 # word = 1
@@ -2658,7 +2647,7 @@ About	ADP	unanimous
 the	DET	unanimous
 Authors	NOUN	unanimous
 
-# sent_id = headings-0235
+# sent_id = headings-0234
 # source_id = usbm-reportofinvestig3302unit
 # text = Assembly and Servicing
 # word = 2
@@ -2668,7 +2657,7 @@ Assembly	NOUN	unanimous
 and	CCONJ	unanimous
 Servicing	NOUN	unanimous
 
-# sent_id = headings-0236
+# sent_id = headings-0235
 # source_id = phs-federalstateradi00unit
 # text = Evaluation of the Toshiba Capacitor Discharge Mobile X-ray Machine
 # word = 8
@@ -2684,7 +2673,7 @@ Mobile	ADJ	unanimous
 X-ray	NOUN	unanimous
 Machine	NOUN	unanimous
 
-# sent_id = headings-0237
+# sent_id = headings-0236
 # source_id = army-LogisticsInWorldWarII
 # text = Crude Oil
 # word = 1
@@ -2693,7 +2682,7 @@ Machine	NOUN	unanimous
 Crude	ADJ	unanimous
 Oil	NOUN	unanimous
 
-# sent_id = headings-0238
+# sent_id = headings-0237
 # source_id = usbr-lowercrookedrive00unit
 # text = The Omnibus Oregon Wild and Scenic Rivers
 # word = 2
@@ -2707,7 +2696,7 @@ and	CCONJ	unanimous
 Scenic	PROPN	unanimous
 Rivers	PROPN	unanimous
 
-# sent_id = headings-0239
+# sent_id = headings-0238
 # source_id = other-wildlifewatercat00brig
 # text = General Comments
 # word = 1
@@ -2716,7 +2705,7 @@ Rivers	PROPN	unanimous
 General	ADJ	unanimous
 Comments	NOUN	unanimous
 
-# sent_id = headings-0240
+# sent_id = headings-0239
 # source_id = nbs-nbscommunication00unit
 # text = Two-Column and Single-Column Copy
 # word = 3
@@ -2727,7 +2716,7 @@ and	CCONJ	unanimous
 Single-Column	ADJ	unanimous
 Copy	NOUN	unanimous
 
-# sent_id = headings-0241
+# sent_id = headings-0240
 # source_id = usbr-lowercrookedrive00unit
 # text = Scenic Values
 # word = 1
@@ -2736,7 +2725,7 @@ Copy	NOUN	unanimous
 Scenic	ADJ	unanimous
 Values	NOUN	unanimous
 
-# sent_id = headings-0242
+# sent_id = headings-0241
 # source_id = usfs-CAT10507884
 # text = Tentative Hemlock Tree Grades
 # word = 3
@@ -2747,7 +2736,7 @@ Hemlock	NOUN	unanimous
 Tree	NOUN	unanimous
 Grades	NOUN	unanimous
 
-# sent_id = headings-0243
+# sent_id = headings-0242
 # source_id = phs-organizationstaf00unit_9
 # text = Personnel Ratios According to Population Size of Health Jurisdictions
 # word = 5
@@ -2763,7 +2752,7 @@ of	ADP	unanimous
 Health	NOUN	unanimous
 Jurisdictions	NOUN	unanimous
 
-# sent_id = headings-0244
+# sent_id = headings-0243
 # source_id = usda-CAT71342230
 # text = Land Treatment Measures
 # word = 2
@@ -2773,7 +2762,7 @@ Land	NOUN	unanimous
 Treatment	NOUN	unanimous
 Measures	NOUN	unanimous
 
-# sent_id = headings-0245
+# sent_id = headings-0244
 # source_id = usbr-pumpkincreek1400west
 # text = Soil Inventory
 # word = 1
@@ -2782,7 +2771,7 @@ Measures	NOUN	unanimous
 Soil	NOUN	unanimous
 Inventory	NOUN	unanimous
 
-# sent_id = headings-0246
+# sent_id = headings-0245
 # source_id = other-wildlifewatercat00brig
 # text = Setting the Tanks
 # word = 2
@@ -2792,7 +2781,7 @@ Setting	VERB	unanimous
 the	DET	unanimous
 Tanks	NOUN	unanimous
 
-# sent_id = headings-0247
+# sent_id = headings-0246
 # source_id = usfs-grazingfeereview5502unit
 # text = Technical Figures
 # word = 1
@@ -2801,7 +2790,7 @@ Tanks	NOUN	unanimous
 Technical	ADJ	unanimous
 Figures	NOUN	unanimous
 
-# sent_id = headings-0248
+# sent_id = headings-0247
 # source_id = usbm-resourceguidedep00wagn
 # text = Ecology Branch
 # word = 1
@@ -2810,7 +2799,7 @@ Figures	NOUN	unanimous
 Ecology	NOUN	unanimous
 Branch	NOUN	unanimous
 
-# sent_id = headings-0249
+# sent_id = headings-0248
 # source_id = usda-manualforartific00unit
 # text = Holding Hooks
 # word = 1
@@ -2819,7 +2808,7 @@ Branch	NOUN	unanimous
 Holding	NOUN	unanimous
 Hooks	NOUN	unanimous
 
-# sent_id = headings-0250
+# sent_id = headings-0249
 # source_id = usda-CAT78703578
 # text = Replacing Glass in Metal Frames
 # word = 1
@@ -2831,7 +2820,7 @@ in	ADP	unanimous
 Metal	NOUN	unanimous
 Frames	NOUN	unanimous
 
-# sent_id = headings-0251
+# sent_id = headings-0250
 # source_id = usfs-CAT85256064019
 # text = Land Exchange and Adjustment
 # word = 1
@@ -2842,7 +2831,7 @@ Exchange	NOUN	unanimous
 and	CCONJ	unanimous
 Adjustment	NOUN	unanimous
 
-# sent_id = headings-0252
+# sent_id = headings-0251
 # source_id = usbm-bureauofminescos00unit
 # text = Detailed Three-Dimensional Sampling and Preliminary Evaluation
 # word = 2
@@ -2855,7 +2844,7 @@ and	CCONJ	unanimous
 Preliminary	ADJ	unanimous
 Evaluation	NOUN	unanimous
 
-# sent_id = headings-0253
+# sent_id = headings-0252
 # source_id = usfs-CAT85256064019
 # text = Assist the American Forestry Association with the Seventh American Forest
 # word = 0
@@ -2872,7 +2861,7 @@ Seventh	PROPN	unanimous
 American	PROPN	unanimous
 Forest	PROPN	unanimous
 
-# sent_id = headings-0254
+# sent_id = headings-0253
 # source_id = usfs-influencesofvege397unit
 # text = Studies in North Carolina by the Appalachian Forest Experiment
 # word = 3
@@ -2888,7 +2877,7 @@ Appalachian	PROPN	unanimous
 Forest	PROPN	unanimous
 Experiment	PROPN	unanimous
 
-# sent_id = headings-0255
+# sent_id = headings-0254
 # source_id = usfs-CAT10230847
 # text = Silver Spring, Maryland
 # word = 3
@@ -2899,7 +2888,7 @@ Spring	PROPN	unanimous
 ,	PUNCT	unanimous
 Maryland	PROPN	unanimous
 
-# sent_id = headings-0256
+# sent_id = headings-0255
 # source_id = usfs-CAT10230847
 # text = Bond, Horatio (Editor)
 # word = 2
@@ -2912,7 +2901,7 @@ Horatio	PROPN	unanimous
 Editor	NOUN	unanimous
 )	PUNCT	unanimous
 
-# sent_id = headings-0257
+# sent_id = headings-0256
 # source_id = usfs-CAT10504248
 # text = Student Factors
 # word = 1
@@ -2921,7 +2910,7 @@ Editor	NOUN	unanimous
 Student	NOUN	unanimous
 Factors	NOUN	unanimous
 
-# sent_id = headings-0258
+# sent_id = headings-0257
 # source_id = usfs-grazingfeereview5502unit
 # text = Comparison of Alternative Weightings of the Private Grazing
 # word = 7
@@ -2936,7 +2925,7 @@ the	DET	unanimous
 Private	ADJ	unanimous
 Grazing	NOUN	unanimous
 
-# sent_id = headings-0259
+# sent_id = headings-0258
 # source_id = usfs-CAT10684902
 # text = Morgan Jones, Kentucky Wild Rivers Program Coordinator
 # word = 1
@@ -2951,7 +2940,7 @@ Rivers	PROPN	unanimous
 Program	PROPN	unanimous
 Coordinator	NOUN	unanimous
 
-# sent_id = headings-0260
+# sent_id = headings-0259
 # source_id = usfs-grazingfeereview5502unit
 # text = Changes in Returns Above All Costs for an Average Livestock
 # word = 2
@@ -2968,7 +2957,7 @@ an	DET	unanimous
 Average	ADJ	unanimous
 Livestock	NOUN	unanimous
 
-# sent_id = headings-0261
+# sent_id = headings-0260
 # source_id = other-study-rpt-2005
 # text = Library of Congress - Historic Architectural Building
 # word = 6
@@ -2982,7 +2971,7 @@ Historic	ADJ	unanimous
 Architectural	ADJ	unanimous
 Building	NOUN	unanimous
 
-# sent_id = headings-0262
+# sent_id = headings-0261
 # source_id = phs-childhealthconfe00unit
 # text = The Public-Health Nurse
 # word = 2
@@ -2992,7 +2981,7 @@ The	DET	unanimous
 Public-Health	ADJ	unanimous
 Nurse	NOUN	unanimous
 
-# sent_id = headings-0263
+# sent_id = headings-0262
 # source_id = usfs-CAT85256064019
 # text = Fire Attack
 # word = 1
@@ -3001,7 +2990,7 @@ Nurse	NOUN	unanimous
 Fire	NOUN	unanimous
 Attack	NOUN	unanimous
 
-# sent_id = headings-0264
+# sent_id = headings-0263
 # source_id = phs-civildefenseemer00unit
 # text = Site or Storage Facility Changes
 # word = 4
@@ -3013,7 +3002,7 @@ Storage	NOUN	unanimous
 Facility	NOUN	unanimous
 Changes	NOUN	unanimous
 
-# sent_id = headings-0265
+# sent_id = headings-0264
 # source_id = usfs-CAT10504248
 # text = Technical Laboratory of Woods Waste
 # word = 4
@@ -3025,7 +3014,7 @@ of	ADP	unanimous
 Woods	NOUN	unanimous
 Waste	NOUN	unanimous
 
-# sent_id = headings-0266
+# sent_id = headings-0265
 # source_id = usbr-pumpkincreek1400west
 # text = Forms of Sulfur, and Ash-Fusion Temperatures
 # word = 2
@@ -3039,7 +3028,7 @@ and	CCONJ	unanimous
 Ash-Fusion	NOUN	unanimous
 Temperatures	NOUN	unanimous
 
-# sent_id = headings-0267
+# sent_id = headings-0266
 # source_id = usfs-CAT10684902
 # text = Significant Issues
 # word = 1
@@ -3048,7 +3037,7 @@ Temperatures	NOUN	unanimous
 Significant	ADJ	unanimous
 Issues	NOUN	unanimous
 
-# sent_id = headings-0268
+# sent_id = headings-0267
 # source_id = usfs-firecontrolnotes17unit
 # text = Damage to Individual Trees
 # word = 3
@@ -3059,7 +3048,7 @@ to	ADP	unanimous
 Individual	ADJ	unanimous
 Trees	NOUN	unanimous
 
-# sent_id = headings-0269
+# sent_id = headings-0268
 # source_id = usda-CAT86866954
 # text = Chopping, Fishtail, and Jetting Bits
 # word = 2
@@ -3073,7 +3062,7 @@ and	CCONJ	unanimous
 Jetting	NOUN	unanimous
 Bits	NOUN	unanimous
 
-# sent_id = headings-0270
+# sent_id = headings-0269
 # source_id = army-DAPAM20-3
 # text = Army Radio Broadcasting
 # word = 2
@@ -3083,7 +3072,7 @@ Army	NOUN	unanimous
 Radio	NOUN	unanimous
 Broadcasting	NOUN	unanimous
 
-# sent_id = headings-0271
+# sent_id = headings-0270
 # source_id = usfs-CAT85256064019
 # text = Land Classification, Status and Planning
 # word = 5
@@ -3096,7 +3085,7 @@ Status	NOUN	unanimous
 and	CCONJ	unanimous
 Planning	NOUN	unanimous
 
-# sent_id = headings-0272
+# sent_id = headings-0271
 # source_id = usbm-reportofinvestig3302unit
 # text = Explosive Shattering
 # word = 1
@@ -3105,7 +3094,7 @@ Planning	NOUN	unanimous
 Explosive	ADJ	unanimous
 Shattering	NOUN	unanimous
 
-# sent_id = headings-0273
+# sent_id = headings-0272
 # source_id = usgs-fieldtripguideto00four
 # text = Obsidian Hydration Dating and Correlation of Bull Lake
 # word = 2
@@ -3120,7 +3109,7 @@ of	ADP	unanimous
 Bull	PROPN	unanimous
 Lake	PROPN	unanimous
 
-# sent_id = headings-0274
+# sent_id = headings-0273
 # source_id = usgs-bub_gb_a-gqAQAAIAAJ
 # text = Saint Nicholas Point
 # word = 1
@@ -3130,7 +3119,7 @@ Saint	PROPN	unanimous
 Nicholas	PROPN	unanimous
 Point	PROPN	unanimous
 
-# sent_id = headings-0275
+# sent_id = headings-0274
 # source_id = navy-personnelaccount00unit
 # text = Report or Process Title
 # word = 3
@@ -3141,7 +3130,7 @@ or	CCONJ	unanimous
 Process	NOUN	unanimous
 Title	NOUN	unanimous
 
-# sent_id = headings-0276
+# sent_id = headings-0275
 # source_id = usda-CAT71334647021
 # text = Factors Affecting Scheduling
 # word = 2
@@ -3151,7 +3140,7 @@ Factors	NOUN	unanimous
 Affecting	VERB	unanimous
 Scheduling	NOUN	unanimous
 
-# sent_id = headings-0277
+# sent_id = headings-0276
 # source_id = navy-effectsofnoiseof00gale
 # text = Electrophysiological Tests
 # word = 1
@@ -3160,7 +3149,7 @@ Scheduling	NOUN	unanimous
 Electrophysiological	ADJ	unanimous
 Tests	NOUN	unanimous
 
-# sent_id = headings-0278
+# sent_id = headings-0277
 # source_id = usda-CAT71342230
 # text = Secondary Benefits
 # word = 1
@@ -3169,7 +3158,7 @@ Tests	NOUN	unanimous
 Secondary	ADJ	unanimous
 Benefits	NOUN	unanimous
 
-# sent_id = headings-0279
+# sent_id = headings-0278
 # source_id = phs-childhealthconfe00unit
 # text = Frances Perkins, Secretary
 # word = 1
@@ -3180,7 +3169,7 @@ Perkins	PROPN	unanimous
 ,	PUNCT	unanimous
 Secretary	NOUN	unanimous
 
-# sent_id = headings-0280
+# sent_id = headings-0279
 # source_id = usda-CAT31288057
 # text = Service Tests Using the Osmose Process
 # word = 5
@@ -3193,7 +3182,7 @@ the	DET	unanimous
 Osmose	PROPN	unanimous
 Process	NOUN	unanimous
 
-# sent_id = headings-0281
+# sent_id = headings-0280
 # source_id = usda-acquisitionuseof05leea
 # text = Loss of Tax Base by Local Governmental Units
 # word = 3
@@ -3208,7 +3197,7 @@ Local	ADJ	unanimous
 Governmental	ADJ	unanimous
 Units	NOUN	unanimous
 
-# sent_id = headings-0282
+# sent_id = headings-0281
 # source_id = nbs-radioinformation01unit
 # text = Wisconsin Department of Markets Madison, Wise
 # word = 4
@@ -3222,7 +3211,7 @@ Madison	PROPN	unanimous
 ,	PUNCT	unanimous
 Wise	PROPN	unanimous
 
-# sent_id = headings-0283
+# sent_id = headings-0282
 # source_id = usda-CAT87892076
 # text = Structural Measures
 # word = 1
@@ -3231,7 +3220,7 @@ Wise	PROPN	unanimous
 Structural	ADJ	unanimous
 Measures	NOUN	unanimous
 
-# sent_id = headings-0284
+# sent_id = headings-0283
 # source_id = phs-healthmaterielfa00unit
 # text = Example of a State Plan for Emergency Management of Resources
 # word = 4
@@ -3248,7 +3237,7 @@ Management	NOUN	unanimous
 of	ADP	unanimous
 Resources	NOUN	unanimous
 
-# sent_id = headings-0285
+# sent_id = headings-0284
 # source_id = usda-manualforartific00unit
 # text = Preparing the Queen
 # word = 2
@@ -3258,7 +3247,7 @@ Preparing	VERB	unanimous
 the	DET	unanimous
 Queen	NOUN	unanimous
 
-# sent_id = headings-0286
+# sent_id = headings-0285
 # source_id = usfs-CAT31285103
 # text = Evaluation of Monitoring Results
 # word = 3
@@ -3269,7 +3258,7 @@ of	ADP	unanimous
 Monitoring	NOUN	unanimous
 Results	NOUN	unanimous
 
-# sent_id = headings-0287
+# sent_id = headings-0286
 # source_id = usbr-garrisonstudyare00pari
 # text = Stability of Excavation Slopes
 # word = 3
@@ -3280,7 +3269,7 @@ of	ADP	unanimous
 Excavation	NOUN	unanimous
 Slopes	NOUN	unanimous
 
-# sent_id = headings-0288
+# sent_id = headings-0287
 # source_id = usda-CAT86866954
 # text = Trenching and Test Pitting
 # word = 3
@@ -3291,7 +3280,7 @@ and	CCONJ	unanimous
 Test	NOUN	unanimous
 Pitting	NOUN	unanimous
 
-# sent_id = headings-0289
+# sent_id = headings-0288
 # source_id = usda-CAT71334647002
 # text = Volume Weight
 # word = 1
@@ -3300,7 +3289,7 @@ Pitting	NOUN	unanimous
 Volume	NOUN	unanimous
 Weight	NOUN	unanimous
 
-# sent_id = headings-0290
+# sent_id = headings-0289
 # source_id = usfs-CAT31285103
 # text = Karst and Caves
 # word = 2
@@ -3310,7 +3299,7 @@ Karst	NOUN	unanimous
 and	CCONJ	unanimous
 Caves	NOUN	unanimous
 
-# sent_id = headings-0291
+# sent_id = headings-0290
 # source_id = usda-CAT86866954
 # text = Field Tests
 # word = 1
@@ -3319,7 +3308,7 @@ Caves	NOUN	unanimous
 Field	NOUN	unanimous
 Tests	NOUN	unanimous
 
-# sent_id = headings-0292
+# sent_id = headings-0291
 # source_id = usgs-bub_gb_a-gqAQAAIAAJ
 # text = Named in 1907 for Frank Bartlett, Alaska
 # word = 7
@@ -3334,7 +3323,7 @@ Bartlett	PROPN	unanimous
 ,	PUNCT	unanimous
 Alaska	PROPN	unanimous
 
-# sent_id = headings-0293
+# sent_id = headings-0292
 # source_id = army-MarsBulletin195303
 # text = Parts List
 # word = 1
@@ -3343,7 +3332,7 @@ Alaska	PROPN	unanimous
 Parts	NOUN	unanimous
 List	NOUN	unanimous
 
-# sent_id = headings-0294
+# sent_id = headings-0293
 # source_id = usda-CAT31352946
 # text = Extension of Storage-in-Transit Time Limit
 # word = 4
@@ -3355,7 +3344,7 @@ Storage-in-Transit	NOUN	unanimous
 Time	NOUN	unanimous
 Limit	NOUN	unanimous
 
-# sent_id = headings-0295
+# sent_id = headings-0294
 # source_id = usda-acquisitionuseof05leea
 # text = Determination of Real Estate Prices and Equities
 # word = 4
@@ -3369,7 +3358,7 @@ Prices	NOUN	unanimous
 and	CCONJ	unanimous
 Equities	NOUN	unanimous
 
-# sent_id = headings-0296
+# sent_id = headings-0295
 # source_id = usda-CAT78703578
 # text = Get Ready to Paint
 # word = 0
@@ -3380,7 +3369,7 @@ Ready	ADJ	unanimous
 to	PART	unanimous
 Paint	VERB	unanimous
 
-# sent_id = headings-0297
+# sent_id = headings-0296
 # source_id = usda-lebulletin71unit
 # text = Montana - Yellowstone River Compact, Ratifies the Yellowstone River
 # word = 2
@@ -3397,7 +3386,7 @@ the	DET	unanimous
 Yellowstone	PROPN	unanimous
 River	PROPN	unanimous
 
-# sent_id = headings-0298
+# sent_id = headings-0297
 # source_id = usbr-lowercrookedrive00unit
 # text = Agency Associates, Staff, and Volunteers
 # word = 1
@@ -3411,7 +3400,7 @@ Staff	NOUN	unanimous
 and	CCONJ	unanimous
 Volunteers	NOUN	unanimous
 
-# sent_id = headings-0299
+# sent_id = headings-0298
 # source_id = usda-CAT91954835
 # text = Flow in the Unsaturated Zone - Smith
 # word = 4
@@ -3425,7 +3414,7 @@ Zone	NOUN	unanimous
 -	PUNCT	unanimous
 Smith	PROPN	unanimous
 
-# sent_id = headings-0300
+# sent_id = headings-0299
 # source_id = usda-manualforartific00unit
 # text = Cleaning the Syringe
 # word = 2
@@ -3435,7 +3424,7 @@ Cleaning	VERB	unanimous
 the	DET	unanimous
 Syringe	NOUN	unanimous
 
-# sent_id = headings-0301
+# sent_id = headings-0300
 # source_id = usda-SER73922925001
 # text = Kickapoo Nations Watershed (Lincoln and Oklahoma Counties)
 # word = 6
@@ -3451,7 +3440,7 @@ Oklahoma	PROPN	unanimous
 Counties	PROPN	unanimous
 )	PUNCT	unanimous
 
-# sent_id = headings-0302
+# sent_id = headings-0301
 # source_id = usbr-northcentralpow1971unit_0
 # text = Shell Oil Company, Denver, Colorado
 # word = 4
@@ -3465,7 +3454,7 @@ Denver	PROPN	unanimous
 ,	PUNCT	unanimous
 Colorado	PROPN	unanimous
 
-# sent_id = headings-0303
+# sent_id = headings-0302
 # source_id = usfs-CAT31342419
 # text = Economic Background
 # word = 1
@@ -3474,7 +3463,7 @@ Colorado	PROPN	unanimous
 Economic	ADJ	unanimous
 Background	NOUN	unanimous
 
-# sent_id = headings-0304
+# sent_id = headings-0303
 # source_id = usda-CAT31288057
 # text = B, Labor
 # word = 2
@@ -3484,7 +3473,7 @@ B	X	unanimous
 ,	PUNCT	unanimous
 Labor	NOUN	unanimous
 
-# sent_id = headings-0305
+# sent_id = headings-0304
 # source_id = usbr-CAT30964660
 # text = Livestock Enterprises and Production Rates
 # word = 4
@@ -3496,7 +3485,7 @@ and	CCONJ	unanimous
 Production	NOUN	unanimous
 Rates	NOUN	unanimous
 
-# sent_id = headings-0306
+# sent_id = headings-0305
 # source_id = usbm-resourceguidedep00wagn
 # text = Discussion of Department Issues
 # word = 3
@@ -3507,7 +3496,7 @@ of	ADP	unanimous
 Department	NOUN	unanimous
 Issues	NOUN	unanimous
 
-# sent_id = headings-0307
+# sent_id = headings-0306
 # source_id = other-proposedthreeriv02unit
 # text = Purpose of Monitoring
 # word = 2
@@ -3517,7 +3506,7 @@ Purpose	NOUN	unanimous
 of	ADP	unanimous
 Monitoring	NOUN	unanimous
 
-# sent_id = headings-0308
+# sent_id = headings-0307
 # source_id = phs-foodforyoungchil00lowe
 # text = Meat, Eggs, Cheese, and Fish
 # word = 2
@@ -3532,7 +3521,7 @@ Cheese	NOUN	unanimous
 and	CCONJ	unanimous
 Fish	NOUN	unanimous
 
-# sent_id = headings-0309
+# sent_id = headings-0308
 # source_id = other-study-rpt-2005
 # text = Robert Moses Parkway
 # word = 1
@@ -3542,7 +3531,7 @@ Robert	PROPN	unanimous
 Moses	PROPN	unanimous
 Parkway	PROPN	unanimous
 
-# sent_id = headings-0310
+# sent_id = headings-0309
 # source_id = other-terrestrialwild00unse
 # text = Diversity Index
 # word = 1
@@ -3551,7 +3540,7 @@ Parkway	PROPN	unanimous
 Diversity	NOUN	unanimous
 Index	NOUN	unanimous
 
-# sent_id = headings-0311
+# sent_id = headings-0310
 # source_id = usfs-CAT31342419
 # text = Employment of Engineers
 # word = 2
@@ -3561,7 +3550,7 @@ Employment	NOUN	unanimous
 of	ADP	unanimous
 Engineers	NOUN	unanimous
 
-# sent_id = headings-0312
+# sent_id = headings-0311
 # source_id = usbr-reclamationsafet1963engi
 # text = The Preconstruction Safety Meeting
 # word = 3
@@ -3572,7 +3561,7 @@ Preconstruction	NOUN	unanimous
 Safety	NOUN	unanimous
 Meeting	NOUN	unanimous
 
-# sent_id = headings-0313
+# sent_id = headings-0312
 # source_id = usfs-influencesofvege397unit
 # text = Extent of Modification of Cover
 # word = 4
@@ -3584,7 +3573,7 @@ Modification	NOUN	unanimous
 of	ADP	unanimous
 Cover	NOUN	unanimous
 
-# sent_id = headings-0314
+# sent_id = headings-0313
 # source_id = usfs-CAT31041219
 # text = Insects Girdling the Stems
 # word = 3
@@ -3595,7 +3584,7 @@ Girdling	VERB	unanimous
 the	DET	unanimous
 Stems	NOUN	unanimous
 
-# sent_id = headings-0315
+# sent_id = headings-0314
 # source_id = usda-waterqualityindi161terr
 # text = A Note to the User of This Guide
 # word = 7
@@ -3610,7 +3599,7 @@ of	ADP	unanimous
 This	DET	unanimous
 Guide	NOUN	unanimous
 
-# sent_id = headings-0316
+# sent_id = headings-0315
 # source_id = nbs-nbscommunication00unit
 # text = Importance of Good Writing
 # word = 3
@@ -3621,7 +3610,7 @@ of	ADP	unanimous
 Good	ADJ	unanimous
 Writing	NOUN	unanimous
 
-# sent_id = headings-0317
+# sent_id = headings-0316
 # source_id = other-fisherycircular392unit
 # text = Hydrographic Observations in Tampa Bay and Adjacent
 # word = 3
@@ -3635,7 +3624,7 @@ Bay	PROPN	unanimous
 and	CCONJ	unanimous
 Adjacent	ADJ	unanimous
 
-# sent_id = headings-0318
+# sent_id = headings-0317
 # source_id = other-wildlifewatercat00brig
 # text = General Plumbing
 # word = 1
@@ -3644,7 +3633,7 @@ Adjacent	ADJ	unanimous
 General	ADJ	unanimous
 Plumbing	NOUN	unanimous
 
-# sent_id = headings-0319
+# sent_id = headings-0318
 # source_id = usda-CAT86866954
 # text = Graphic Logs
 # word = 1
@@ -3653,7 +3642,7 @@ Plumbing	NOUN	unanimous
 Graphic	ADJ	unanimous
 Logs	NOUN	unanimous
 
-# sent_id = headings-0320
+# sent_id = headings-0319
 # source_id = usda-CAT72345604
 # text = Floodwater Retarding Structures
 # word = 2
@@ -3663,7 +3652,7 @@ Floodwater	NOUN	unanimous
 Retarding	NOUN	unanimous
 Structures	NOUN	unanimous
 
-# sent_id = headings-0321
+# sent_id = headings-0320
 # source_id = usda-CAT71334647018
 # text = Deep Solution Zone
 # word = 2
@@ -3673,7 +3662,7 @@ Deep	ADJ	unanimous
 Solution	NOUN	unanimous
 Zone	NOUN	unanimous
 
-# sent_id = headings-0322
+# sent_id = headings-0321
 # source_id = usda-CAT72345604
 # text = Warning Signs
 # word = 1
@@ -3682,7 +3671,7 @@ Zone	NOUN	unanimous
 Warning	NOUN	unanimous
 Signs	NOUN	unanimous
 
-# sent_id = headings-0323
+# sent_id = headings-0322
 # source_id = navy-unitedstatesnav03surggoog
 # text = By Burgeon Edgar Thompson M
 # word = 2
@@ -3694,7 +3683,7 @@ Edgar	PROPN	unanimous
 Thompson	PROPN	unanimous
 M	PROPN	unanimous
 
-# sent_id = headings-0324
+# sent_id = headings-0323
 # source_id = usbr-CAT30964660
 # text = Direct Agricultural Benefits and Potential Farm Incomes
 # word = 2
@@ -3708,7 +3697,7 @@ Potential	ADJ	unanimous
 Farm	NOUN	unanimous
 Incomes	NOUN	unanimous
 
-# sent_id = headings-0325
+# sent_id = headings-0324
 # source_id = usfs-CAT31088297
 # text = Annual Pass (Replaces Golden Eagle Passport)
 # word = 1
@@ -3723,7 +3712,7 @@ Eagle	PROPN	unanimous
 Passport	PROPN	unanimous
 )	PUNCT	unanimous
 
-# sent_id = headings-0326
+# sent_id = headings-0325
 # source_id = usfs-CAT10504248
 # text = Research and Development in Pulp and Paper
 # word = 4
@@ -3737,7 +3726,7 @@ Pulp	NOUN	unanimous
 and	CCONJ	unanimous
 Paper	NOUN	unanimous
 
-# sent_id = headings-0327
+# sent_id = headings-0326
 # source_id = other-westmojaveplanha1bunit
 # text = Loma Linda University
 # word = 1
@@ -3747,7 +3736,7 @@ Loma	PROPN	unanimous
 Linda	PROPN	unanimous
 University	PROPN	unanimous
 
-# sent_id = headings-0328
+# sent_id = headings-0327
 # source_id = usbr-lowercrookedrive00unit
 # text = Public and Administrative Access
 # word = 3
@@ -3758,7 +3747,7 @@ and	CCONJ	unanimous
 Administrative	ADJ	unanimous
 Access	NOUN	unanimous
 
-# sent_id = headings-0329
+# sent_id = headings-0328
 # source_id = usfs-CAT10684902
 # text = Cumulative and Other Effects
 # word = 3
@@ -3769,7 +3758,7 @@ and	CCONJ	unanimous
 Other	ADJ	unanimous
 Effects	NOUN	unanimous
 
-# sent_id = headings-0330
+# sent_id = headings-0329
 # source_id = other-proposedthreeriv02unit
 # text = Road Location and Design
 # word = 3
@@ -3780,7 +3769,7 @@ Location	NOUN	unanimous
 and	CCONJ	unanimous
 Design	NOUN	unanimous
 
-# sent_id = headings-0331
+# sent_id = headings-0330
 # source_id = usda-CAT86866954
 # text = Other Uses
 # word = 1
@@ -3789,7 +3778,7 @@ Design	NOUN	unanimous
 Other	ADJ	unanimous
 Uses	NOUN	unanimous
 
-# sent_id = headings-0332
+# sent_id = headings-0331
 # source_id = usda-CAT31352946
 # text = Olive Oil
 # word = 1
@@ -3798,7 +3787,7 @@ Uses	NOUN	unanimous
 Olive	NOUN	unanimous
 Oil	NOUN	unanimous
 
-# sent_id = headings-0333
+# sent_id = headings-0332
 # source_id = usfs-firecontrolnotes17unit
 # text = Unsafe Conditions
 # word = 1
@@ -3807,7 +3796,7 @@ Oil	NOUN	unanimous
 Unsafe	ADJ	unanimous
 Conditions	NOUN	unanimous
 
-# sent_id = headings-0334
+# sent_id = headings-0333
 # source_id = usda-waterqualityindi161terr
 # text = Beck's Biotic Index
 # word = 3
@@ -3818,7 +3807,7 @@ Beck	PROPN	unanimous
 Biotic	ADJ	unanimous
 Index	NOUN	unanimous
 
-# sent_id = headings-0335
+# sent_id = headings-0334
 # source_id = usda-SER73922925001
 # text = Whiskey Creek Watershed (Cotton and Jefferson Counties)
 # word = 6
@@ -3834,7 +3823,7 @@ Jefferson	PROPN	unanimous
 Counties	PROPN	unanimous
 )	PUNCT	unanimous
 
-# sent_id = headings-0336
+# sent_id = headings-0335
 # source_id = usbr-northeastmontana00calc
 # text = Correlation of Dry Weight of Plants Versus
 # word = 3
@@ -3848,7 +3837,7 @@ of	ADP	unanimous
 Plants	NOUN	unanimous
 Versus	ADP	unanimous
 
-# sent_id = headings-0337
+# sent_id = headings-0336
 # source_id = phs-comprehensiveeme77nati
 # text = Personal Attributes of Caretaker
 # word = 1
@@ -3859,7 +3848,7 @@ Attributes	NOUN	unanimous
 of	ADP	unanimous
 Caretaker	NOUN	unanimous
 
-# sent_id = headings-0338
+# sent_id = headings-0337
 # source_id = usfs-CAT31342419
 # text = By the Region and Station
 # word = 4
@@ -3871,7 +3860,7 @@ Region	NOUN	unanimous
 and	CCONJ	unanimous
 Station	NOUN	unanimous
 
-# sent_id = headings-0339
+# sent_id = headings-0338
 # source_id = army-LogisticsInWorldWarII
 # text = Disposal Agency Backlogs
 # word = 2
@@ -3881,7 +3870,7 @@ Disposal	NOUN	unanimous
 Agency	NOUN	unanimous
 Backlogs	NOUN	unanimous
 
-# sent_id = headings-0340
+# sent_id = headings-0339
 # source_id = usbm-resourceguidedep00wagn
 # text = Spatial Analysis Functions
 # word = 2
@@ -3891,7 +3880,7 @@ Spatial	ADJ	unanimous
 Analysis	NOUN	unanimous
 Functions	NOUN	unanimous
 
-# sent_id = headings-0341
+# sent_id = headings-0340
 # source_id = other-proposedthreeriv02unit
 # text = See Appendix
 # word = 0
@@ -3900,7 +3889,7 @@ Functions	NOUN	unanimous
 See	VERB	unanimous
 Appendix	NOUN	unanimous
 
-# sent_id = headings-0342
+# sent_id = headings-0341
 # source_id = usbm-bureauofminescos00unit
 # text = Operating Supplies
 # word = 1
@@ -3909,7 +3898,7 @@ Appendix	NOUN	unanimous
 Operating	NOUN	unanimous
 Supplies	NOUN	unanimous
 
-# sent_id = headings-0343
+# sent_id = headings-0342
 # source_id = army-LogisticsInWorldWarII
 # text = On 2 September 1945 in Tokyo Bay, the United
 # word = 5
@@ -3926,7 +3915,7 @@ Bay	PROPN	unanimous
 the	DET	unanimous
 United	PROPN	unanimous
 
-# sent_id = headings-0344
+# sent_id = headings-0343
 # source_id = usda-plansoffarmbuild360unit
 # text = Auto-Bumper Gate
 # word = 1
@@ -3935,7 +3924,7 @@ United	PROPN	unanimous
 Auto-Bumper	NOUN	unanimous
 Gate	NOUN	unanimous
 
-# sent_id = headings-0345
+# sent_id = headings-0344
 # source_id = usbr-northcentralpow1971unit_0
 # text = The Carter Oil Company, Houston, Texas
 # word = 5
@@ -3950,7 +3939,7 @@ Houston	PROPN	unanimous
 ,	PUNCT	unanimous
 Texas	PROPN	unanimous
 
-# sent_id = headings-0346
+# sent_id = headings-0345
 # source_id = usda-lebulletin71unit
 # text = Rural Housing
 # word = 1
@@ -3959,7 +3948,7 @@ Texas	PROPN	unanimous
 Rural	ADJ	unanimous
 Housing	NOUN	unanimous
 
-# sent_id = headings-0347
+# sent_id = headings-0346
 # source_id = navy-effectsofnoiseof00gale
 # text = Survey of the Effects of Outer Continental Shelf
 # word = 3
@@ -3974,7 +3963,7 @@ Outer	PROPN	unanimous
 Continental	PROPN	unanimous
 Shelf	PROPN	unanimous
 
-# sent_id = headings-0348
+# sent_id = headings-0347
 # source_id = usfs-influencesofvege397unit
 # text = Investigations in Ohio by the Central States Forest Experiment
 # word = 2
@@ -3990,7 +3979,7 @@ States	PROPN	unanimous
 Forest	PROPN	unanimous
 Experiment	PROPN	unanimous
 
-# sent_id = headings-0349
+# sent_id = headings-0348
 # source_id = usda-acquisitionuseof05leea
 # text = Camp White Military Reservation, Oregon
 # word = 5
@@ -4003,7 +3992,7 @@ Reservation	PROPN	unanimous
 ,	PUNCT	unanimous
 Oregon	PROPN	unanimous
 
-# sent_id = headings-0350
+# sent_id = headings-0349
 # source_id = army-DAPAM20-3
 # text = The Foreign-Born Soldier
 # word = 2
@@ -4013,7 +4002,7 @@ The	DET	unanimous
 Foreign-Born	ADJ	unanimous
 Soldier	NOUN	unanimous
 
-# sent_id = headings-0351
+# sent_id = headings-0350
 # source_id = usfs-CAT31342419
 # text = Roy Morris, Superintendent, Seattle City Water Department
 # word = 1
@@ -4029,7 +4018,7 @@ City	PROPN	unanimous
 Water	PROPN	unanimous
 Department	PROPN	unanimous
 
-# sent_id = headings-0352
+# sent_id = headings-0351
 # source_id = phs-mentalhealthrepo00unit
 # text = Barriers to the Receipt of Treatment
 # word = 3
@@ -4042,7 +4031,7 @@ Receipt	NOUN	unanimous
 of	ADP	unanimous
 Treatment	NOUN	unanimous
 
-# sent_id = headings-0353
+# sent_id = headings-0352
 # source_id = other-study-rpt-2005
 # text = The Urban Design Project
 # word = 3
@@ -4053,7 +4042,7 @@ Urban	ADJ	unanimous
 Design	NOUN	unanimous
 Project	NOUN	unanimous
 
-# sent_id = headings-0354
+# sent_id = headings-0353
 # source_id = usbr-pumpkincreek1400west
 # text = Future Hydrologic Monitoring
 # word = 2
@@ -4063,7 +4052,7 @@ Future	ADJ	unanimous
 Hydrologic	ADJ	unanimous
 Monitoring	NOUN	unanimous
 
-# sent_id = headings-0355
+# sent_id = headings-0354
 # source_id = usbm-resourceguidedep00wagn
 # text = Electrical Branch
 # word = 1
@@ -4072,7 +4061,7 @@ Monitoring	NOUN	unanimous
 Electrical	ADJ	unanimous
 Branch	NOUN	unanimous
 
-# sent_id = headings-0356
+# sent_id = headings-0355
 # source_id = usbr-northcentralpow1971unit_0
 # text = Comparison of North Central Power Study Load
 # word = 6
@@ -4086,7 +4075,7 @@ Power	PROPN	unanimous
 Study	PROPN	unanimous
 Load	NOUN	unanimous
 
-# sent_id = headings-0357
+# sent_id = headings-0356
 # source_id = usbm-reportofinvestig3302unit
 # text = Cyaniding Gold Flotation Concentrate
 # word = 3
@@ -4097,7 +4086,7 @@ Gold	NOUN	unanimous
 Flotation	NOUN	unanimous
 Concentrate	NOUN	unanimous
 
-# sent_id = headings-0358
+# sent_id = headings-0357
 # source_id = usda-waterqualityfiel160unit
 # text = Animal Wastes
 # word = 1
@@ -4106,7 +4095,7 @@ Concentrate	NOUN	unanimous
 Animal	NOUN	unanimous
 Wastes	NOUN	unanimous
 
-# sent_id = headings-0359
+# sent_id = headings-0358
 # source_id = phs-manualforprotect00unit
 # text = Tolerance Limits
 # word = 1
@@ -4115,7 +4104,7 @@ Wastes	NOUN	unanimous
 Tolerance	NOUN	unanimous
 Limits	NOUN	unanimous
 
-# sent_id = headings-0360
+# sent_id = headings-0359
 # source_id = usfs-CAT85256064019
 # text = Statistical Comparison for Number of Fires
 # word = 3
@@ -4128,7 +4117,7 @@ Number	NOUN	unanimous
 of	ADP	unanimous
 Fires	NOUN	unanimous
 
-# sent_id = headings-0361
+# sent_id = headings-0360
 # source_id = usbr-lowercrookedrive00unit
 # text = Impacts to Air
 # word = 2
@@ -4138,7 +4127,7 @@ Impacts	NOUN	unanimous
 to	ADP	unanimous
 Air	NOUN	unanimous
 
-# sent_id = headings-0362
+# sent_id = headings-0361
 # source_id = usfs-CAT31041219
 # text = Controlling Size and Quality of Seedlings Through Cultural Practices
 # word = 1
@@ -4154,7 +4143,7 @@ Through	ADP	unanimous
 Cultural	ADJ	unanimous
 Practices	NOUN	unanimous
 
-# sent_id = headings-0363
+# sent_id = headings-0362
 # source_id = usda-CAT71334647018
 # text = Yields of Saturated Sands and Gravels in Irrigation Wells
 # word = 3
@@ -4170,7 +4159,7 @@ in	ADP	unanimous
 Irrigation	NOUN	unanimous
 Wells	NOUN	unanimous
 
-# sent_id = headings-0364
+# sent_id = headings-0363
 # source_id = usfs-CAT31285103
 # text = Bridge and Culvert Design and Installation
 # word = 3
@@ -4183,7 +4172,7 @@ Design	NOUN	unanimous
 and	CCONJ	unanimous
 Installation	NOUN	unanimous
 
-# sent_id = headings-0365
+# sent_id = headings-0364
 # source_id = usda-CAT31304531
 # text = Inspect Food Packages
 # word = 2
@@ -4193,7 +4182,7 @@ Inspect	VERB	unanimous
 Food	NOUN	unanimous
 Packages	NOUN	unanimous
 
-# sent_id = headings-0366
+# sent_id = headings-0365
 # source_id = usda-CAT87892076
 # text = Nonstructural Measures
 # word = 1
@@ -4202,7 +4191,7 @@ Packages	NOUN	unanimous
 Nonstructural	ADJ	unanimous
 Measures	NOUN	unanimous
 
-# sent_id = headings-0367
+# sent_id = headings-0366
 # source_id = usbm-reportofinvestig3302unit
 # text = Observation of High Flames
 # word = 3
@@ -4213,7 +4202,7 @@ of	ADP	unanimous
 High	ADJ	unanimous
 Flames	NOUN	unanimous
 
-# sent_id = headings-0368
+# sent_id = headings-0367
 # source_id = usda-CAT31352946
 # text = Barter and Stockpile
 # word = 2
@@ -4223,7 +4212,7 @@ Barter	NOUN	unanimous
 and	CCONJ	unanimous
 Stockpile	NOUN	unanimous
 
-# sent_id = headings-0369
+# sent_id = headings-0368
 # source_id = phs-insidepublicheal00unit
 # text = Current Structure
 # word = 1
@@ -4232,7 +4221,7 @@ Stockpile	NOUN	unanimous
 Current	ADJ	unanimous
 Structure	NOUN	unanimous
 
-# sent_id = headings-0370
+# sent_id = headings-0369
 # source_id = usfs-grazingfeereview5502unit
 # text = Impacts of Alternative Grazing Fee Levels on Cattle
 # word = 5
@@ -4247,7 +4236,7 @@ Levels	NOUN	unanimous
 on	ADP	unanimous
 Cattle	NOUN	unanimous
 
-# sent_id = headings-0371
+# sent_id = headings-0370
 # source_id = usda-acquisitionuseof05leea
 # text = Illustrative Projects
 # word = 1
@@ -4256,7 +4245,7 @@ Cattle	NOUN	unanimous
 Illustrative	ADJ	unanimous
 Projects	NOUN	unanimous
 
-# sent_id = headings-0372
+# sent_id = headings-0371
 # source_id = usbr-northcentralpow1971unit_0
 # text = Development Levels
 # word = 1
@@ -4265,7 +4254,7 @@ Projects	NOUN	unanimous
 Development	NOUN	unanimous
 Levels	NOUN	unanimous
 
-# sent_id = headings-0373
+# sent_id = headings-0372
 # source_id = usda-waterqualityfiel160unit
 # text = Cropping Practice
 # word = 1
@@ -4274,7 +4263,7 @@ Levels	NOUN	unanimous
 Cropping	NOUN	unanimous
 Practice	NOUN	unanimous
 
-# sent_id = headings-0374
+# sent_id = headings-0373
 # source_id = usda-CAT86866954
 # text = Minimum Requirements for Sampling of Dam Sites
 # word = 3
@@ -4288,7 +4277,7 @@ of	ADP	unanimous
 Dam	NOUN	unanimous
 Sites	NOUN	unanimous
 
-# sent_id = headings-0375
+# sent_id = headings-0374
 # source_id = usbr-williamsmckenzie00usbu
 # text = Glacial Deposits - Pleistocene
 # word = 1

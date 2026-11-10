@@ -178,7 +178,7 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   (the committed imperative file, weighted in a copy of the committed configuration, gives its 900 sentences with every
   token tagged and a VERB first token; the test sets the other sources to weight 0 in the copy) and
   `CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted` (one case each for the committed compound file
-  with 742 sentences and the headings file with 375, which have weight 0 in the committed configuration: weighted alone
+  with 742 sentences and the headings file with 374, which have weight 0 in the committed configuration: weighted alone
   each gives its sentences with every token tagged, and adding one at weight 1 to the committed mix adds exactly its
   sentences).
   The status flags are covered by `CorpusReader_Parse_StatusFlags_AreKeptAndDoNotChangeTagsOrMasking` (flags are kept per

@@ -1,4 +1,4 @@
-<!-- cspell:ignore zorbulon -->
+<!-- cspell:ignore zorbulon safehandlingofbo -->
 
 # System Verification Design
 
@@ -472,7 +472,8 @@ of the file; `Sources_AreOpenAndHaveNoFaaMaterial` asserts a US federal-work, pu
 every row and no FAA mention in any cell; `ExcludedSources_AreRecordedAndAbsentFromTheSet` asserts that
 `excluded-sources.tsv` (the documents dropped after sourcing: id, URL, reason, decision date) is well formed and that none
 of its documents or URLs is used by the set; `ExcludedSources_NothingUsedMatchesByIdOrNormalizedUrl` asserts that the
-record lists `nist-hb44-2024` and `nist-hb130-2024` and that no source row and no sentence document of the set has an
+record lists `nist-hb44-2024`, `nist-hb130-2024` and `nbs-safehandlingofbo65unit` and that no source row and no
+sentence document of the set has an
 excluded id or an excluded URL (compared by lower-case host without `www.` and path without a trailing slash; the same
 rule as `check_licenses.py` and the builder, which refuse a match, and fail when the record is missing or malformed);
 `LeakageReport_RecordsNoOverlapWithOtherEvaluationSets` asserts that the

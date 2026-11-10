@@ -397,7 +397,7 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | --- | --- | --- |
 | Sources | open x2, MASC, silver (probability at least 80%) | +0.57 points over open alone |
 | Imperative source | `imperative` at weight 1 (900 sentences) | the imperative-data experiment (`RUN-LOG.md`) |
-| Compound and headings | `compound` (742), `headings` (375), weight 0 | committed data, not in the mix |
+| Compound and headings | `compound` (742), `headings` (374), weight 0 | committed data, not in the mix |
 | `disputed` tokens | trained, not masked | accuracy +0.2 points, harmful errors tied |
 | Restriction, history | mode B (`History`), predicted history | fully restricted training (C) failed the floor |
 | Epochs | 6 | tied with 10 epochs, fewest within 0.05 points of the best |

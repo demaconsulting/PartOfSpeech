@@ -199,7 +199,37 @@ class IndexTests(Mini):
         with self.assertRaises(sx.DraftError):
             chd.draft_gate(self.work, self.data)
 
-    def test_exclusions_command_exit_codes(self):
+    def test_the_draft_gate_skips_only_the_omitted_documents(self):
+        self.sound_draft({"army-imp-doc": FRAME})                      # a used document: the gate refuses it ...
+        with self.assertRaises(sx.DraftError):
+            chd.draft_gate(self.work, self.data)
+        chd.draft_gate(self.work, self.data, (), ["army-imp-doc"])    # ... unless nothing of it is written (omitted)
+        with self.assertRaises(sx.DraftError):
+            chd.draft_gate(self.work, self.data, (), ["another-doc"])
+
+    def test_an_excluded_document_can_still_be_omitted_with_its_own_reason(self):
+        specs = cmany("check", 3) + cmany("seal", 3, "army-b", 10)
+        self.decided("compound", specs)
+        self.sound_draft({"army-a": FRAME, "army-b": FRAME})
+        out = os.path.join(self.temp, "out")
+        reason = "private co-author; basis uncertain"
+        expected, _ = chd.build(self.work, "compound", out, data_dir=self.data, allow_short=True, omit=["army-b"])      # no exclusion record yet
+        common.write_text(os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv"),
+                          ["\t".join(common.EXCLUDED_SOURCES_COLUMNS), "army-b\thttps://example.gov/army-b\tlicense doubt\t2026-11-10"])
+        built, report = chd.build(self.work, "compound", out, data_dir=self.data, allow_short=True, omit=["army-b=" + reason])
+        self.assertEqual([s["text"] for s in expected], [s["text"] for s in built])                                        # removal only
+        self.assertEqual({"army-a"}, {s["source_id"] for s in built})
+        self.assertNotIn("excluded-source", drops_of(report))
+        self.assertEqual({"omitted-document": 3}, drops_of(report))
+        with self.assertRaises(sx.DraftError):                         # the same draft without the omission is refused (fail closed)
+            chd.build(self.work, "compound", out, data_dir=self.data, allow_short=True)
+        self.assertIn("army-b\t" + reason, common.read_lines(os.path.join(out, "excluded-documents.tsv")))
+
+    def test_an_omission_reason_is_one_line_without_a_tab(self):
+        self.assertEqual({"a": chd.OMIT_REASON, "b": "why not"}, chd.parse_omissions(["a", "b= why not "]))
+        for bad in ("=reason", "a=", "a=two\tcells", " "):
+            with self.assertRaises(chd.BuildError):
+                chd.parse_omissions([bad])
         self.sound_draft({"army-imp-doc": FRAME})
         code, out, _ = self.run_tool("exclusions")
         self.assertEqual(1, code)

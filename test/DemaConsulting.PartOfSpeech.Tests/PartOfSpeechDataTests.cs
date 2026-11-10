@@ -1,4 +1,4 @@
-// cspell:ignore semcor thankyou
+// cspell:ignore semcor thankyou safehandlingofbo
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -1595,9 +1595,9 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
-    ///     Proves that the exclusion record is fail-closed for the committed files: it lists the NIST handbooks that the owner
-    ///     dropped, and no row of the source table and no source document of any sentence of the set has an excluded id or an
-    ///     excluded URL (compared by host without <c>www.</c> and path without a trailing slash).
+    ///     Proves that the exclusion record is fail-closed for the committed files: it lists the NIST handbooks and the NBS handbook
+    ///     that the owner dropped, and no row of the source table and no source document of any sentence of the set has an
+    ///     excluded id or an excluded URL (compared by host without <c>www.</c> and path without a trailing slash).
     /// </summary>
     [Fact]
     public void PartOfSpeech_ShapesDev_ExcludedSources_NothingUsedMatchesByIdOrNormalizedUrl()
@@ -1616,9 +1616,10 @@ public class PartOfSpeechDataTests
             .Select(row => "source row " + sources.Cell(row, "source_id")));
         problems.AddRange(sentenceDocuments.Where(excludedIds.Contains).Select(id => "sentences of " + id));
 
-        // Assert: the NIST handbooks are recorded as excluded and nothing excluded is used
+        // Assert: the handbooks are recorded as excluded and nothing excluded is used
         Assert.Contains("nist-hb44-2024", excludedIds);
         Assert.Contains("nist-hb130-2024", excludedIds);
+        Assert.Contains("nbs-safehandlingofbo65unit", excludedIds);
         Assert.Empty(problems.Take(ShownProblems));
     }
 

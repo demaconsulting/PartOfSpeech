@@ -21,7 +21,7 @@ evaluation set. It is registered in the trainer configuration with weight 0, so 
   text (0 authored).
 - **How produced:** `python tools/data/compound_heading_data.py --work <work-folder> build --source compound` with the `--omit-document` options
   listed in `excluded-documents.tsv`, at the builder and the rule of commit `e776f5693739900d91e63fd2a12451da1f4ba90b` (the builder, its tests and
-  the pre-registered rule, committed before any label of this source existed; the option `--omit-document` was added after the labeling and is the
+  the pre-registered rule, committed before any label of this source existed; the option `--omit-document` (with an optional reason per document) was added after the labeling and is the
   only change of the builder since). The labeling used the unchanged commands of `tools/data/shapes_dev.py` (`export`, `check-batches`,
   `validate-output`, `status`, `decide`) with `--round compound`. The global `--work` argument (a folder outside the repository, required)
   comes before the command; the other options keep their defaults (`--seed` 20261110, the caps below). The work folder is not committed. It

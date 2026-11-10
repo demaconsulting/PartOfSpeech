@@ -5,7 +5,7 @@
 
 License: CC0-1.0
 
-375 real Title Case heading, caption and step-title lines from 90 US federal-government documents (`Fuel Filter Replacement`,
+374 real Title Case heading, caption and step-title lines from 89 US federal-government documents (`Fuel Filter Replacement`,
 `Pacific Northwest Region`), each with a judged word in one of three groups: a common noun, an initial imperative verb or a true proper
 noun. Every token has a Universal POS tag on which two blind model labelers agree. It is a **training** source: it shows that the capital
 letters of a Title Case line do not make its words proper nouns, which the sentence-shaped training corpora rarely show, and it is disjoint
@@ -14,15 +14,15 @@ embedded model (`--source headings:1` adds it to a training run).
 
 ## Source and Provenance
 
-- **Source:** the lines are text of 90 documents that are US federal government works (17 U.S.C. 105): Department of Agriculture, Forest
+- **Source:** the lines are text of 89 documents that are US federal government works (17 U.S.C. 105): Department of Agriculture, Forest
   Service, Bureau of Reclamation, Public Health Service, Bureau of Land Management, Bureau of Mines, Geological Survey, War Department and
   Army, Navy, Bureau of Standards and Weather Bureau publications, quoted per document in `sources.tsv`. No document is in any other
   source table of this repository, none is in an evaluation set, and nothing was written for this source: all lines are real text (0
   authored).
 - **How produced:** `python tools/data/compound_heading_data.py --work <work-folder> build --source headings --allow-short` with the
-  `--omit-document` options listed in `excluded-documents.tsv`, at the builder and the rule of commit `e776f5693739900d91e63fd2a12451da1f4ba90b`
-  (the builder, its tests and the pre-registered rule, committed before any label of this source existed; the option `--omit-document` was
-  added after the labeling and is the only change of the builder since). `--allow-short` is the waiver that the rule registers for a stratum floor
+  `--omit-document` options for the documents listed in `excluded-documents.tsv`, at the builder and the rule of commit `e776f5693739900d91e63fd2a12451da1f4ba90b`
+  (the builder, its tests and the pre-registered rule, committed before any label of this source existed; the option `--omit-document` (with an optional
+  reason per document) was added after the labeling and is the only change of the builder since). `--allow-short` is the waiver that the rule registers for a stratum floor
   that the labelers' agreement does not fill (see "Counts"). The labeling used the unchanged commands of `tools/data/shapes_dev.py` (`export`,
   `check-batches`, `validate-output`, `status`, `decide`) with `--round headings`. The global `--work` argument (a folder outside the
   repository, required) comes before the command; the other options keep their defaults (`--seed` 20261110, the caps below). The work
@@ -40,25 +40,21 @@ embedded model (`--source headings:1` adds it to a training run).
   `sources.tsv` (the statute, the Public Domain Mark or the rights statement of the Internet Archive record, and the check that the text
   carries no copyright, permission or third-party notice). There is no FAA text, no Wikipedia, no share-alike or non-commercial text and no
   Universal Dependencies text (`check_licenses.py` scans `sources.tsv`). A document whose record lists a state or local government body as an
-  author is not used (`excluded-documents.tsv`).
-- **One document with a private-organization co-author.** One of the two documents of the family `nbs` (it gives 1 line) is *Safe handling of bodies containing
-  radioactive isotopes*, National Bureau of Standards Handbook 65 (1958), a publication of a US federal agency (Department of Commerce)
-  and therefore a US government work (17 U.S.C. 105; the quoted basis is in its `sources.tsv` row). Its author field also lists the
-  National Committee on Radiation Protection and Measurements (a private, congressionally chartered non-profit), and the text carries no
-  copyright, permission or third-party notice. It is kept because it is an NBS publication; whether it should be removed is an open
-  question for the project owner (the trainer run log, "Compound and heading training data: results", lists it).
+  author is not used, and neither is the National Bureau of Standards Handbook 65 (*Safe handling of bodies containing radioactive isotopes*,
+  1958): its author field also lists a private non-profit organization, its public-domain basis is uncertain, and the project owner removed it
+  (`excluded-documents.tsv`, and `data/eval/shapes-dev/excluded-sources.tsv`, which every data check reads).
 
-`headings.tsv` has SHA-256 `5931072928829e1911468173a181761ba001c4d7f16a8492391404395649124c` and `sources.tsv`
-`428a73f0581ec168cdef63d885cd6e001e925813b0a0d0dd1148f79636935aff`; [MANIFEST.tsv](../MANIFEST.tsv) lists the size, hash and record
+`headings.tsv` has SHA-256 `cae45ff12cb4e7e9531a007beb8278b4014a8bdab9ae3e52b06ba46df4d48cde` and `sources.tsv`
+`26ca020469ee3a396ba71bd7845030a516e612c44e887933b1fe8450445fbad7`; [MANIFEST.tsv](../MANIFEST.tsv) lists the size, hash and record
 counts of every file of this folder.
 
 ## Files
 
 | File | Content |
 | --- | --- |
-| `headings.tsv` | the 375 lines in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md) ("Other Formats" describes the header and the extra comments); ids `headings-NNNN` |
-| `sources.tsv` | the 90 documents that the lines come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, lines used |
-| `excluded-documents.tsv` | documents left out: the 7 whose record lists a state or local government body as an author (the rule 1 check after the build) |
+| `headings.tsv` | the 374 lines in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md) ("Other Formats" describes the header and the extra comments); ids `headings-NNNN` |
+| `sources.tsv` | the 89 documents that the lines come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, lines used |
+| `excluded-documents.tsv` | documents left out: the 7 whose record lists a state or local government body as an author, and 1 with a private non-profit co-author and an uncertain public-domain basis (removed by the project owner; the rule 1 check after the build) |
 | `dropped-sentences.tsv` | counts of candidate lines dropped alone because they equal a sentence of a training or evaluation set or of the shapes development set (counts only, no text) |
 
 Each block has the comments `sent_id`, `source_id`, `text`, `word`, `lemma` and `stratum`, then one row `form`, `upos`, `status` for each
@@ -68,12 +64,12 @@ not a sentence: it has no final period, and a numbering or label in front of it 
 
 ## Counts
 
-375 lines (1,668 tokens, 2 to 10 tokens each) with 273 distinct lemmas of the judged word in 90 documents. At most 4 lines per lemma and at most
+374 lines (1,664 tokens, 2 to 10 tokens each) with 272 distinct lemmas of the judged word in 89 documents. At most 4 lines per lemma and at most
 12 per document (the cap is 25). The judged word is tagged exactly as the convention says:
 
 | Stratum | Lines | Judged word |
 | --- | ---: | --- |
-| `noun` | 315 | a Title Case common noun that ends its noun phrase: NOUN |
+| `noun` | 314 | a Title Case common noun that ends its noun phrase: NOUN |
 | `proper` | 52 | a word that names one particular entity: PROPN |
 | `imperative` | 8 | the first word of an instruction line, a base verb: VERB |
 
@@ -114,8 +110,9 @@ normative text.
    that do not rejoin to the text; a data test asserts the caps, the tags and the format. The floors of the noun and proper strata are
    met; the imperative floor is waived.
 7. **Documents removed after the build.** A license check of the author field of the records found 7 documents that list a state or local
-   government body as an author. Their lines are removed (`--omit-document`: after the caps, nothing is added), and the documents are listed
-   in `excluded-documents.tsv`.
+   government body as an author, and the project owner removed a further document whose record lists a private non-profit organization as a
+   co-author (its public-domain basis is uncertain). Their lines (33 and 1) are removed (`--omit-document`: after the caps, nothing is added), and
+   the documents are listed in `excluded-documents.tsv`.
 
 Numbers of the run:
 
@@ -129,8 +126,8 @@ Numbers of the run:
 | dropped: the labelers disagree on the judged word (target disagreement) | 12 |
 | dropped: a disputed token elsewhere in the line | 31 |
 | dropped by the caps: noun 108, proper 26 | 134 |
-| removed with the 7 documents (rule 7) | 33 |
-| **in `headings.tsv`** | **375** |
+| removed with the 8 documents (rule 7) | 34 |
+| **in `headings.tsv`** | **374** |
 
 The class mismatches are 346 imperative lines (the first word read as NOUN by both 275 times, as ADJ 44 and as PROPN 27), 80 noun lines (the
 noun word read as PROPN 65 times, VERB 9, ADJ 4 and ADV 2) and 1 proper line. Candidate lines dropped alone because of an overlap
@@ -168,7 +165,7 @@ One sample was drawn and reviewed once; it was not drawn again.
 | `army` | 5 | 18 | War Department and Department of the Army publications (Internet Archive); 17 U.S.C. 105 |
 | `usgs` | 6 | 17 | Geological Survey publications (Internet Archive); 17 U.S.C. 105 |
 | `navy` | 4 | 14 | Navy and Marine Corps publications (Internet Archive); 17 U.S.C. 105 |
-| `nbs` | 2 | 6 | National Bureau of Standards publications (Internet Archive); 17 U.S.C. 105 |
+| `nbs` | 1 | 5 | National Bureau of Standards publications (Internet Archive); 17 U.S.C. 105 |
 | `wxb` | 1 | 1 | Weather Bureau publication (Internet Archive); 17 U.S.C. 105 |
 
 `sources.tsv` lists only these used documents. Publication years are 1890 to 2008 (83 of the documents are from 1940 or later; older scans hold
@@ -196,8 +193,8 @@ The lexicon is not built from this source, and the file does not change it (`lex
 
 | Measure | Listed | Of | Share |
 | --- | ---: | ---: | ---: |
-| word tokens whose gold tag the lexicon lists for the spelling (tokens without a letter or digit are not counted) | 1,512 | 1,569 | 96.37 percent |
-| distinct (lower-cased spelling, tag) pairs the lexicon lists | 898 | 951 | 94.43 percent |
+| word tokens whose gold tag the lexicon lists for the spelling (tokens without a letter or digit are not counted) | 1,508 | 1,565 | 96.36 percent |
+| distinct (lower-cased spelling, tag) pairs the lexicon lists | 895 | 948 | 94.41 percent |
 
 Of the 53 unlisted pairs, 29 are spellings that the lexicon does not contain at all and 24 are spellings that the lexicon lists with other tags
 (for example `forests/PROPN`). 15 of the 53 contain a digit (numbers, ZIP codes, report numbers); the other 38 are hyphenated compounds
