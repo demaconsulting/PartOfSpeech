@@ -131,9 +131,12 @@ MODEL_FREE = "no PartOfSpeech model, prediction or score is read"
 # R1 (stream H pilot stage): sources-draft.tsv (70 documents), tokens.tsv. HMM_SHA256 stays None until R3: hmm.tsv exists only for the compound-head-2 documents (stream C,
 # not yet sourced) and no pilot or heading command reads it. R3 re-pins the draft and tokens files for the extended document list (the stream H documents and their partition
 # are unchanged by it); the DEV share of stream H below is frozen at R1 and never changed.
-DRAFT_SHA256 = "7f05b400e33b10eef46b02645d05f60d7d0107b9d8a041cdc4ea4560361d49ca"
-TOKENS_SHA256 = "bb7df8426cc1ed847ba89e74fa747c28992302b2590fa517a9098b313b7a35e0"
-HMM_SHA256 = None
+# R3 (this commit; stream C documents added, hmm-tags run, before any label other than the pilot): the pins name the extended document list (416 documents: stream H 103, stream C 313),
+# its tokens and the pinned WordSense Basic mass (`hmm.tsv`, WordSense commit 6530de19..., DLL b96e0055...). The pilot rows of R2 are byte-identical in the extended inputs (see the RUN-LOG).
+# The DEV share of stream H (0.30) is frozen at R1; stream C 0.35 is frozen at R3.
+DRAFT_SHA256 = "77e6a5250877694ae67e36a5a133d6cff6f8e245864ed1434f9fab6114d2f2c2"
+TOKENS_SHA256 = "4387679a975ee8ca005f8d9267ab38e2bc414ee888d907701e25cff2cd406e98"
+HMM_SHA256 = "42c7588b9c01632a96749a1a14248e8bdf2cb1be64999e177bd657f288276edb"
 
 # ---- partition
 DEV_SHARE = {"C": 0.35, "H": 0.30}

@@ -5008,6 +5008,49 @@ This section follows the A2 commit `ff2ec14` (a commit cannot contain its own SH
 | 1 | 99 | 38 | 42 | 19 | not counted |
 | 2 | 150 (249 in all) | 71 (109) | 58 (100) | 21 (40) | 117 |
 | 3 | 210 (459 in all) | 89 (198) | 89 (189) | 32 (72) | 200 |
+| 4 | 250 (709 in all) | 106 (304) | 103 (292) | 41 (113) | **313** (fetching stopped here: the plan's "about 310 usable documents") |
+
+**Outcome of the 709 records fetched** (an `ok` or `review` verdict is the automatic result; the by-hand rules follow): 313 documents accepted; **396 refused**: 113 by the automatic checks (a record can have more than one reason: 22 third-party credit or permission phrase, 25 distribution statement other than public release, 20 copyright-like notice, 17 reprint of earlier text, 20 too few sentences, 2 no OCR text, HTTP refusals 401 (14), 403 (2) and 500 (16), skipped and never worked around; 55 of the refused records also carry a non-federal-looking entry); 250 because a creator or publisher field names a person, a state, a university, a company or a society (the employment of a named co-author cannot be verified, the NBS Handbook 65 lesson; **this rule is conservative and costs many federal documents with named federal authors**); 22 by hand after reading the contexts of copyright, credit and permission wording (third-party photographs or figures, a company or society copyright, state contributions); 11 with fewer than 20 sentences after the cross-document duplicates were removed. No record was refused for FAA wording; nothing is in either `excluded-sources.tsv` or any `excluded-documents.tsv` (the `exclusions` command below: 0 problems).
+
+## Follow-up: frozen inputs and pool sizes (R3: streams C and H, pins, before any label)
+
+This section follows the stream C record commit `d4c717c` (a commit cannot contain its own SHA). It is committed **before any label other than the pilot exists**: no batch is exported, no label of any round is written or read, no model of any experiment was trained or evaluated, no consumer text was read. The pins are constants of `tools/data/followup_data.py` in this commit; after it `candidates` refuses any input whose bytes differ. Amendment A2 (HDG2 arms run with `--allow-short`) is in force. Counts only.
+
+**Documents.** 416 documents (stream H 103, stream C 313), 379 title families, 14 agency families: army 193, navy 62 (Navy, Marine Corps and Coast Guard federal bodies of the earlier family map), usda 64, usfs 35, phs 20, usbr 14, other 9, marine 7, airforce 4, usgs 3, nbs 2, coastguard 1, interior 1, wxb 1. Partition (unchanged rule, seed 20261110, DEV share **stream C 0.35 frozen now**, stream H 0.30 frozen at R1): stream C DEV 118 and TRAIN 195 documents, stream H DEV 29 and TRAIN 74 (**DEV 147, TRAIN 269**); no family on both sides. The 103 rows of stream H of `sources-draft.tsv`, their rows of `partition.tsv`, their rows of `tokens.tsv` and the pilot round file are byte-identical to the R3-H state (checked: 0 changed rows; `rounds/hdg-pilot/candidates.tsv` still SHA-256 `277d2618193e51ac34f428e4c43ac2ffb93c50c9d373c44d50040ea2f92f8fc8`). `exclusions`: 416 documents, **0 problems**. Every document is a US federal publication with its public-domain basis in its `license_basis` cell; no FAA.
+
+| Frozen input | SHA-256 |
+| --- | --- |
+| `sources-draft.tsv` (416 rows; pin `DRAFT_SHA256`) | `77e6a5250877694ae67e36a5a133d6cff6f8e245864ed1434f9fab6114d2f2c2` |
+| `tokens.tsv` (767,460 units; pin `TOKENS_SHA256`) | `4387679a975ee8ca005f8d9267ab38e2bc414ee888d907701e25cff2cd406e98` |
+| `hmm.tsv` (702,743 tagged sentences; WordSense commit `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, DLL `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` verified; header `input_sha256` equals the tokens pin; pin `HMM_SHA256`) | `42c7588b9c01632a96749a1a14248e8bdf2cb1be64999e177bd657f288276edb` |
+| `streams.tsv` (416 rows) | `52cfe70604d1ad48fa089fa5361def4466fee48b5ecb5a748d8cf6976450e1e2` |
+| `partition.tsv` (416 rows) | `724e548cc10e3ba0d9dcb0881f546e9d6ed790eb316af0ede67768ed8eb79299` |
+| `corder.tsv` (the stream C fetch order, 1,141 records, written before the first fetch) | `e691b5b918e9d8ed7aacde7e837c04d78b79a7fbdd139440ff8060fee6a55ca0` |
+| `cacc.jsonl` (the stream C fetch record, 709 records) | `beac965c801941d2509c5804aecc2be5458b36fc43cd195bdbee4910df2a54f5` |
+| `cexclude.tsv` (the 22 by-hand exclusions, ids and reasons) | `02503e04340b114e1b7a2b35f92890c56e5a0415c34044c819ccedc6258bf391` |
+
+The WordSense repository was only read (HEAD `6530de1928baf30f9a14446a54bfb5dd5f67b41c`); `hmm-tags` was built and run from this repository's harness with the pinned DLL kept outside it. Candidate files written by the pinned tool (SHA-256, rows): `rounds/chd2/candidates.tsv` `b07e1e68a70cdfbd96863c1de8121e4968604d7259ca0a94ca0d6f7c2000ab75` (850), `rounds/hdg2dev/candidates.tsv` `d2206c19a346c835e5a6f2738021755975aad3f66b58090b328683efecae4f0c` (166), `rounds/cmp2/candidates.tsv` `58673220e3da082708c9c23e67f6c8274b22276fc552fec50548961a2b668b51` (3,400), `rounds/hdg2/candidates.tsv` `251fa41a2a1eba73516343f2f959b2adccf76233f784bea9924d04e3fad06864` (485).
+
+### Pool sizes against the floors (counts only; `preflight` and `candidates`, no label)
+
+| Quantity | DEV side | TRAIN side |
+| --- | --- | --- |
+| clean sentences | 104,010 | 224,925 |
+| compound frame hits (head lemmas) | 17,502 (1,825) | 38,186 (2,416) |
+| clean heading lines | 2,283 | 5,275 |
+| imperative frame hits (strength 0) | 82 | 193 |
+| initial-noun frame hits | 450 | 946 |
+
+| Product (round) | Candidates written | Registered gate or floor | Status |
+| --- | --- | --- | --- |
+| `compound-head-2` (`chd2`) | **850** (800 target candidates over 431 head lemmas, band 0.10 <= q < 0.97 holds 6,229 of the 17,502 hits; 50 first-round control candidates; 117 documents) | at least 450 candidates; final floors targets 150 (cap 210), controls 30 (cap 45) | pool above the gate; the final counts depend on the labels |
+| `compound-2` (`cmp2`) | **3,400** over 1,219 head lemmas in 242 documents (36,552 hits over 2,396 lemmas; 1,634 hits dropped as heading lines of the pool) | at least 2,000 candidates and 400 lemmas; final floor 600 (cap 1,100) | pool above the gate; the combined total with the 742 old sentences is known only after the labels |
+| `headings-2` dev imperative (`hdg2dev`, pilot lines 38 not drawn again) | **22 further imperative candidates, 60 in all with the pilot** | gate 160 candidates, floor 80 | **short** (gate failed: only 60 imperative candidates; owner target about 100) |
+| `headings-2` dev noun and proper | noun 120, proper controls 24 (166 candidates in 46 documents, 126 lemmas) | gates 60 and 24, floors 30 and 12 | noun and proper at or above the gates |
+| `headings-2-train` imperative (`hdg2`, pilot lines 102 not drawn again) | **35 further imperative candidates, 137 in all with the pilot** | gate 300 candidates, floor 150 | **short** (gate failed: only 137 imperative candidates; owner target about 300) |
+| `headings-2-train` initial-noun (`hdg2`) | 450 (the cap) | cap of half the kept imperative lines | pool above the cap; at most about 68 are kept |
+
+The two shortfalls are those of amendment A2: the imperative supply is short (DEV 60 against the floor 80 and the owner's about 100; TRAIN 137 against the floor 150 and the owner's about 300), both rounds are built with `--allow-short` and disclosed, and the HDG2 arms are run. The R3-H projections (58 and 128 before the stream C documents) rose by 2 and 9 lines. Selection rules were **not** changed on these counts. The labeling rounds and their batch counts are recorded in the next section of this log when the batches are exported.
 
 ## Run table
 

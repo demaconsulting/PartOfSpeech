@@ -1180,8 +1180,9 @@ class PromptTests(unittest.TestCase):
                           "headings-2-train": "headings2-%04d"}, fd.SENT_ID)
         for pin in (fd.DRAFT_SHA256, fd.TOKENS_SHA256, fd.HMM_SHA256):
             self.assertTrue(pin is None or re.fullmatch(r"[0-9a-f]{64}", pin))
-        self.assertEqual(("7f05b400e33b10eef46b02645d05f60d7d0107b9d8a041cdc4ea4560361d49ca", "bb7df8426cc1ed847ba89e74fa747c28992302b2590fa517a9098b313b7a35e0", None),
-                         (fd.DRAFT_SHA256, fd.TOKENS_SHA256, fd.HMM_SHA256))                                  # the R1 pins (stream H pilot stage); the hmm pin is set at R3
+        self.assertEqual(("77e6a5250877694ae67e36a5a133d6cff6f8e245864ed1434f9fab6114d2f2c2", "4387679a975ee8ca005f8d9267ab38e2bc414ee888d907701e25cff2cd406e98",
+                          "42c7588b9c01632a96749a1a14248e8bdf2cb1be64999e177bd657f288276edb"),
+                         (fd.DRAFT_SHA256, fd.TOKENS_SHA256, fd.HMM_SHA256))                                  # the R3 pins (416 documents, tokens, the pinned Basic mass)
 
 
 # ================================================================ no model, and the rule in the docstring
