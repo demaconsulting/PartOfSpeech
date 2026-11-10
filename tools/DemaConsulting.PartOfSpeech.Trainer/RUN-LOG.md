@@ -4835,6 +4835,61 @@ Pilot sample size by the pre-registered caps (4 per first-word lemma, 20 per doc
 
 **SCARCITY**: with the frame as registered, 70 documents give at most 234 strength-0 imperative lines, of which 51 (agency-family cap) or 124 (title-family cap) can enter the pilot sample, fewer than the 150 required. The imperative-heading work cannot go on as pre-registered: the pilot did not run, the pins `DRAFT_SHA256`, `TOKENS_SHA256` and `HMM_SHA256` stay `None` in the tool (so `pilot` and `candidates` refuse), and the DEV share of stream H stays provisional. The same supply would also be short of the later targets (DEV 80 to 130, TRAIN 150 to 400 imperative lines). The compound work does not depend on this result. Inputs as they are in the work folder (informational, not pins): `sources-draft.tsv` `7f05b400e33b10eef46b02645d05f60d7d0107b9d8a041cdc4ea4560361d49ca` (70 rows), `tokens.tsv` `bb7df8426cc1ed847ba89e74fa747c28992302b2590fa517a9098b313b7a35e0`, `streams.tsv` `c9469a82136d319003c9eceed981f3ddea16b96e763a46ba63cd0e8561fbed70`, `partition.tsv` `5a9852d87cc8a15a67a0414a014779034dd1549c949831e27d6948db2754111e`, `hexclude.tsv` `fcd3e3ef00aa44b63b6d47c9347c07dfaa972b2038c389b99a3f06dda428ac0d`, `hacc.jsonl` (all 112 records, the fetch record) `031f663a6f0d7cdec158f0a25a76cb60d6f559619a9131dafcbeeb60f1e7c239`.
 
+## Follow-up: pre-label relaxation (amendment A1)
+
+This section follows the scarcity commit `920e5c4` (its hash is recorded here because a commit cannot contain its own SHA). **No label of any kind exists, no batch was exported, no candidate row was written, no pin is set, and no model of any experiment was trained or evaluated**: the amendment cannot have been chosen on a result. It is approved by the owner through the orchestrator after the scarcity stop above (the owner's choice (b): a documented relaxation of the pilot caps and a smaller gate). Only ids and counts appear here.
+
+### Cause
+
+**Scarcity.** Under the registered caps the pilot sample has 51 lines (agency-family cap 50), fewer than the 150 required; 234 strength-0 imperative lines exist in the 70 accepted documents (DEV 67 in 24 lemmas and 3 documents, TRAIN 167 in 49 lemmas and 18 documents; 233 Army, 1 Air Force). Nothing else changes: the frame F-IMP, the noise filter, the labelers, the labeler prompt and the confirmation rule (both labelers tag token 0 VERB) are as registered.
+
+### What is amended (and what is not)
+
+| Item | Registered | Amended (A1) |
+| --- | --- | --- |
+| Level of the pilot family cap (50 lines per family) | agency family (as coded in R0) | **title family** (`family_key`, the family of the partition, as in rule 2) |
+| Pilot lemma cap | 4 per first-word lemma | **6** (the pilot only) |
+| Pilot size | exactly 150; fewer is a scarcity stop | **about 150, as the owner specified: however many lines the amended caps give**, at most 150, scarcity stop below 140 |
+| Pilot gate | confirmed >= 75 of 150 | **confirmed >= ceil(n/2) of the n lines piloted** (n = 140 needs 70; one fewer stops the work and writes the INCOMPLETE record) |
+| Pilot document cap (20) and per-lemma ordering (seeded order) | | unchanged |
+| Final build: lemma cap of `headings-2` (candidates and build), `headings2` (build) | 4 (`headings2` candidates 6) | **6** |
+| Final build: build document cap of `headings-2` | 12 | **20** (the pilot cap; the candidate cap was already 20) |
+| Floors, `--allow-short`, the contingencies, the hand-check gate | | **unchanged** |
+
+### Supply numbers (counts only; the amended tool on the frozen inputs of the scarcity record)
+
+| Pilot sample, title-family cap 50 | Lines | of which DEV / TRAIN |
+| --- | --- | --- |
+| lemma cap 4 (as registered, title-family reading) | 124 | 35 / 89 |
+| lemma cap 5 | 133 | 38 / 95 |
+| **lemma cap 6 (chosen)** | **140** | **38 / 102** |
+| lemma cap 7 | 147 | 39 / 108 |
+| lemma cap 8 | 152 (150 at the maximum) | 41 / 111 |
+
+The family cap of 50 (or 60) does not bind at title-family level (the sample is the same); the document cap of 20 binds (20 documents, 14 title families in the sample). **Choice of the lemma cap:** diversity of first words is the intent of the cap, so the lowest cap that supplies a pilot of about 150 (140 to 150) is taken: 5 gives 133 (below the floor of 140), 6 gives 140. The pilot size is whatever the tool gives; the figure of the scarcity record for lemma cap 6 (146) came from an earlier diagnostic, the value of this table is that of the amended tool, and the actual pilot count is stated by the R1 record from the `pilot` command itself.
+
+**Final build (recorded now, before any label).** The pilot lines are the first candidates of their side (they are not drawn again and count against the caps); after a pilot of 140 lines (DEV 38, TRAIN 102) 29 DEV and 65 TRAIN strength-0 lines remain for the later candidate rounds. Supply per side at the build caps (a line is kept at most once; counts before any labeling loss):
+
+| Side | Lines | At lemma cap 4 / 6 | At document cap 12 / 20 / 25 / 40 |
+| --- | --- | --- | --- |
+| DEV (3 documents, 24 lemmas) | 67 | 46 / 55 | 36 / 51 / 56 / 67 |
+| TRAIN (18 documents, 49 lemmas) | 167 | 99 / 116 | 124 / 152 / 165 / 167 |
+
+The lemma cap is therefore 6 in every heading build, the same value as the pilot; the lemma cap of `compound-head-2` (4) and of `compound2` (4) is not touched. The DEV build document cap is 20 because 3 documents supply the whole DEV side (at 12 per document at most 36 lines could ever be kept); the TRAIN document cap (25) and every candidate cap and budget of the table "The products" are unchanged. **Floors are not changed** and cannot be met at these supplies: the DEV imperative floor of 80 (at most 55 at lemma cap 6, 67 without caps) and the TRAIN imperative floor of 150 (at most 116 at lemma cap 6, 167 without caps; a floor of 150 would need a lemma cap of about 12, which defeats the diversity intent). The registered path stands: `build` refuses below a floor unless `--allow-short`, the shortage is disclosed and never padded, and **if the training imperative lines are below 150, the arms with `HDG2` are not run** (the arm list shrinks to BASE, CMP2, CMP2-F5, stated at R3); the imperative-heading guard keeps its limit on the pooled items when the DEV imperative targets are below 80. The expected outcome at these numbers is therefore a small imperative-heading set and no `HDG2` arm; that is a consequence of supply, stated here, not a hidden relaxation.
+
+### Deviations from the plan (all disclosed; none depends on a label)
+
+1. The pilot family cap is read at title-family level, not agency level (R0 coded the agency level; the plan's rule 2 uses the title family key).
+2. The pilot lemma cap is 6, not 4.
+3. The pilot size is however many lines the amended caps give (140 to 150), not exactly 150.
+4. The pilot gate is ceil(n/2) of n, not 75 of 150.
+5. The lemma cap (6) of the heading builds and the DEV build document cap (20) are raised for the final build (numbers above).
+6. The 7 state or local documents of `data/compound/` and `data/headings/` (`excluded-documents.tsv`) enter `data/eval/shapes-dev/excluded-sources.tsv` **now**, not in the data commit (owner decision U6 put it in the data commit); the file grew from 3 to 10 rows (ids, URLs, a reason text and the date 2026-11-10; `data/MANIFEST.tsv` regenerated, `make_manifest.py --verify` 59 files, `check_licenses.py` passes, the used-document index already excluded the 7 through `excluded-documents.tsv`).
+
+### Tool and tests (this commit)
+
+`followup_data.py`: `PILOT_MIN_SIZE = 140`, `PILOT_LEMMA_CAP = 6`, `pilot_confirmed_min` (ceil(n/2)) replacing `PILOT_CONFIRMED_MIN`, `_title_family_of` (the family map of the pilot caps; the pilot record still reports the agency family), `DEV_HEADING_LEMMA_CAP = 6`, `HDG2_LEMMA_CAP = 6`, `DEV_BUILD_DOCUMENT_CAP = 20`, the docstring (rule 6, amendment A1). `test_followup_data.py`: 71 tests (new: gate arithmetic for odd and even n, the title-family map, a binding family cap, the 140 scarcity floor); the whole Python suite is 687 tests OK (1 skipped).
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

@@ -540,8 +540,8 @@ class CandidateTests(Mini):
         rows, _, counts = fd.heading_candidates(scan, "headings-2-train", lex)
         self.assertEqual(fd.HDG2_CANDIDATE_LEMMA_CAP, len(rows))
         rows, _, _ = fd.heading_candidates(scan, "headings-2", lex)
-        self.assertEqual(fd.LEMMA_CAP, len(rows))
-        with mock.patch.object(fd, "LEMMA_CAP", 100), mock.patch.object(fd, "DEV_CANDIDATE_DOCUMENT_CAP", 3):
+        self.assertEqual(fd.DEV_HEADING_LEMMA_CAP, len(rows))
+        with mock.patch.object(fd, "DEV_HEADING_LEMMA_CAP", 100), mock.patch.object(fd, "DEV_CANDIDATE_DOCUMENT_CAP", 3):
             rows, _, _ = fd.heading_candidates(scan, "headings-2", lex)
             self.assertEqual(6, len(rows))                                                                  # 3 per document in 2 documents
 
@@ -658,14 +658,32 @@ class PilotTests(Mini):
             out.append((documents[n % len(documents)], n + 1, text, base.simple_tokens(text)))
         return out
 
-    def test_the_gate_arithmetic_74_of_150_stops_and_75_proceeds(self):
+    def test_the_gate_arithmetic_is_half_of_the_lines_piloted_rounded_up(self):
         self.assertEqual("STOP", fd.pilot_verdict(74, 150)[0])
         self.assertEqual("PROCEED", fd.pilot_verdict(75, 150)[0])
         self.assertEqual("PROCEED", fd.pilot_verdict(150, 150)[0])
         self.assertEqual("STOP", fd.pilot_verdict(0, 150)[0])
-        self.assertEqual("SCARCITY", fd.pilot_verdict(149, 149)[0])
+        self.assertEqual("STOP", fd.pilot_verdict(69, 140)[0])                                     # amendment A1: ceil(n / 2), one fewer stops
+        self.assertEqual("PROCEED", fd.pilot_verdict(70, 140)[0])
+        self.assertEqual("STOP", fd.pilot_verdict(70, 141)[0])
+        self.assertEqual("PROCEED", fd.pilot_verdict(71, 141)[0])
+        self.assertEqual("PROCEED", fd.pilot_verdict(73, 145)[0])
+        self.assertEqual("STOP", fd.pilot_verdict(72, 145)[0])
+        self.assertEqual((70, 71, 75), (fd.pilot_confirmed_min(140), fd.pilot_confirmed_min(141), fd.pilot_confirmed_min(150)))
+        self.assertEqual("SCARCITY", fd.pilot_verdict(139, 139)[0])
+        self.assertEqual("SCARCITY", fd.pilot_verdict(100, 100)[0])
         self.assertIn("INCOMPLETE", fd.pilot_verdict(10, 150)[1])
-        self.assertEqual((150, 20, 4, 50, 75), (fd.PILOT_SIZE, fd.PILOT_DOCUMENT_CAP, fd.PILOT_LEMMA_CAP, fd.PILOT_FAMILY_CAP, fd.PILOT_CONFIRMED_MIN))
+        self.assertIn("fewer than 71", fd.pilot_verdict(70, 141)[1])
+        self.assertEqual((150, 140, 20, 6, 50), (fd.PILOT_SIZE, fd.PILOT_MIN_SIZE, fd.PILOT_DOCUMENT_CAP, fd.PILOT_LEMMA_CAP, fd.PILOT_FAMILY_CAP))
+
+    def test_the_pilot_family_cap_is_read_at_title_family_level(self):
+        draft = [dict(source_id="a1", family="army", title="TC 3-04.1 Skill Level 1 Soldier Task Book"), dict(source_id="a2", family="army", title="TC 3-04.1 Soldier Task Book Skill Level 2"),
+                 dict(source_id="a3", family="army", title="FM 5-34 Engineer Field Data")]
+        title = fd._title_family_of(draft)
+        self.assertEqual(title["a1"], title["a2"])                                                 # two scans of one publication share the key
+        self.assertNotEqual(title["a1"], title["a3"])
+        self.assertEqual({"army"}, set(fd._family_of(draft).values()))                             # the agency level is a different (coarser) map
+        self.assertEqual(title["a1"], fd.family_key("TC 3-04.1 Skill Level 1 Soldier Task Book"))
 
     def test_the_pilot_sample_is_the_first_150_in_the_seeded_order_with_the_caps(self):
         scan = sx.Scan()
@@ -674,7 +692,7 @@ class PilotTests(Mini):
         family = {"d%d" % i: "fam%d" % (i % 3) for i in range(60)}
         rows, report, counts = fd.pilot_candidates(scan, self.lex, family)
         self.assertEqual(150, len(rows))
-        self.assertTrue(all(v <= 4 for v in collections.Counter(r["lemma"] for r in rows).values()))
+        self.assertTrue(all(v <= fd.PILOT_LEMMA_CAP for v in collections.Counter(r["lemma"] for r in rows).values()))
         self.assertTrue(max(collections.Counter(family[r["source_id"]] for r in rows).values()) <= 50)
         self.assertTrue(max(collections.Counter(r["source_id"] for r in rows).values()) <= 20)
         self.assertEqual(["hp-c%05d" % n for n in range(1, 151)], sorted(r["cand_id"] for r in rows))
@@ -683,18 +701,22 @@ class PilotTests(Mini):
         # the sample is the first 150 of the seeded order that the caps allow: the first line of that order is always in it
         first = min(((sd.rank_of(sd.SEED, "pilot", sd.sent_key_of(u[2])), u[2]) for u in scan.units))[1]
         self.assertIn(first, [r["text"] for r in rows])
-        narrow = fd.pilot_candidates(scan, self.lex, family, documents={"d0", "d1"})            # 2 documents of at most 20 lines: fewer than 150, and the verdict says so
-        self.assertLess(narrow[2]["sampled"], 150)                                                  # 2 documents with a few lemmas: far fewer than 150, and the verdict says so
+        narrow = fd.pilot_candidates(scan, self.lex, family, documents={"d0", "d1"})            # 2 documents of at most 20 lines: fewer than 140, and the verdict says so
+        self.assertLess(narrow[2]["sampled"], 140)
         self.assertEqual("SCARCITY", fd.pilot_verdict(narrow[2]["sampled"], narrow[2]["sampled"])[0])
+        with mock.patch.object(fd, "PILOT_FAMILY_CAP", 20):                                         # a family cap that binds: the sample is however many lines the caps give
+            capped = fd.pilot_candidates(scan, self.lex, family)
+            self.assertEqual(60, len(capped[0]))
+            self.assertTrue(max(collections.Counter(family[r["source_id"]] for r in capped[0]).values()) <= 20)
 
-    def test_the_pilot_command_stops_with_scarcity_when_fewer_than_150_lines_exist(self):
+    def test_the_pilot_command_stops_with_scarcity_when_fewer_than_140_lines_exist(self):
         self.sound_draft({"army-a": ct.FRAME}, {"army-a": ["Check The Valve", "Remove The Cover"]})
         self.sides(**{"army-a": "train"})
         self.pins()
         code, out, err = self.run_tool("pilot", "--no-ud")
         self.assertEqual(1, code)
         self.assertIn("PILOT SCARCITY", err)
-        self.assertIn("only 2 of 150 pilot lines exist", err)
+        self.assertIn("only 2 of at least 140 pilot lines exist", err)
         self.assertEqual(2, len(self.read_candidates("hdg-pilot")))
         known = os.path.join(self.temp, "wave1.txt")
         common.write_text(known, ["# wave 1", "army-zzz"])
@@ -896,10 +918,10 @@ class BuildHeadingTrainTests(Mini):
         self.assertEqual((4, 2), (sum(c["kind"] == "imperative" for c in chosen), sum(c["kind"] == "initial-noun" for c in chosen)))
         same = [dict(sent_key="s%d" % n, lemma="mass", source_id="d%d" % n, kind="imperative" if n < 6 else "initial-noun", target=0) for n in range(8)]
         chosen, drops = fd.select_headings_train(same)
-        self.assertEqual(4, len(chosen))                                                                    # 4 per lemma over both strata
+        self.assertEqual(fd.HDG2_LEMMA_CAP, len(chosen))                                                    # 6 per lemma over both strata (amendment A1)
         self.assertGreater(drops["lemma-cap"], 0)
         self.assertEqual((6, 40, 900, 450, 300), (fd.HDG2_CANDIDATE_LEMMA_CAP, fd.HDG2_CANDIDATE_DOCUMENT_CAP, fd.HDG2_MAX_IMPERATIVE, fd.HDG2_MAX_INITIAL_NOUN, fd.HDG2_MIN_IMPERATIVE))
-        self.assertEqual((150, 400, 4, 25), (fd.HDG2_IMPERATIVE_FLOOR, fd.HDG2_IMPERATIVE_CAP, fd.HDG2_LEMMA_CAP, fd.HDG2_DOCUMENT_CAP))
+        self.assertEqual((150, 400, 6, 25), (fd.HDG2_IMPERATIVE_FLOOR, fd.HDG2_IMPERATIVE_CAP, fd.HDG2_LEMMA_CAP, fd.HDG2_DOCUMENT_CAP))
 
     def test_the_floor_refuses_and_allow_short_waives_only_the_floor(self):
         self.sides(**{"army-a": "train"})
@@ -974,7 +996,7 @@ class BuildDevTests(Mini):
         self.assertEqual({"check": 1}, fd.control_room(items, cands, {}, 0))
 
     def test_headings_2_imperative_first_caps_kinds_and_the_page_number_rule(self):
-        specs = (dev_heading_specs("imperative", "check", "Check", 6, first=1) + dev_heading_specs("noun", "seal", "Seal", 3, first=20)
+        specs = (dev_heading_specs("imperative", "check", "Check", 8, first=1) + dev_heading_specs("noun", "seal", "Seal", 3, first=20)
                  + dev_heading_specs("proper", "nile", "Nile", 3, first=40, source="army-b")
                  + [dict(dev_heading_specs("noun", "level", "Level", 1, first=60)[0], text="Pump Level 12", cand_id="h2d-c00060")])
         specs[-1]["tags"] = ["NOUN", "NOUN", "NUM"]
@@ -982,9 +1004,9 @@ class BuildDevTests(Mini):
         built, report, out = self.build("headings-2", {"hdg2dev": (specs, False)}, allow_short=True)
         _, sentences = common.read_corpus(os.path.join(out, "headings-2.tsv"))
         kinds = [(s["comments"]["kind"], s["comments"]["role"]) for s in sentences]
-        self.assertEqual([("imperative", "target")] * 4 + [("noun", "target")] * 3 + [("proper", "control")] * 2, kinds)       # 4 per lemma; controls 2 per lemma
+        self.assertEqual([("imperative", "target")] * 6 + [("noun", "target")] * 3 + [("proper", "control")] * 2, kinds)       # 6 per lemma (amendment A1); controls 2 per lemma
         self.assertEqual({"lemma-cap": 3, "page-number": 1}, {k: v for k, v in drops_of(report).items() if k in ("lemma-cap", "page-number")})
-        self.assertEqual(["shapes-dev-headings-2-%04d" % n for n in range(1, 10)], [s["sent_id"] for s in sentences])
+        self.assertEqual(["shapes-dev-headings-2-%04d" % n for n in range(1, 12)], [s["sent_id"] for s in sentences])
         self.assertEqual({"headings-2.tsv", "headings-2-sources.tsv"}, set(os.listdir(out)))
 
     def test_the_development_quota_gates_have_floors_and_caps(self):
@@ -1145,7 +1167,7 @@ class PromptTests(unittest.TestCase):
                                                                                     fd.CANDIDATE_ROUND["headings-2"], fd.CANDIDATE_ROUND["compound-2"], fd.CANDIDATE_ROUND["headings-2-train"]))
         self.assertEqual((800, 50, 30, 450), (fd.COMPOUND_HEAD_BUDGET, fd.CONTROL_POOL_FIRST, fd.CONTROL_POOL_SECOND, fd.COMPOUND_HEAD_MIN_CANDIDATES))
         self.assertEqual({"imperative": 300, "noun": 120, "proper": 60}, fd.DEV_HEADING_BUDGET)
-        self.assertEqual((20, 12, 0.8), (fd.DEV_CANDIDATE_DOCUMENT_CAP, fd.DEV_BUILD_DOCUMENT_CAP, fd.JACCARD_DROP))
+        self.assertEqual((20, 20, 0.8, 6), (fd.DEV_CANDIDATE_DOCUMENT_CAP, fd.DEV_BUILD_DOCUMENT_CAP, fd.JACCARD_DROP, fd.DEV_HEADING_LEMMA_CAP))
         self.assertEqual((6, 3400, 2000, 400), (fd.CMP2_CANDIDATE_LEMMA_CAP, fd.CMP2_MAX_CANDIDATES, fd.CMP2_MIN_CANDIDATES, fd.CMP2_MIN_LEMMAS))
         self.assertEqual((4, 20, 600, 1100, 200), (fd.CMP2_LEMMA_CAP, fd.CMP2_DOCUMENT_CAP, fd.CMP2_MIN, fd.CMP2_MAX, fd.CMP2_MIN_BUILD_LEMMAS))
         self.assertEqual(1100, fd.CMP2_NOUN_CAP + fd.CMP2_VERB_CAP)
@@ -1204,7 +1226,9 @@ class NoModelTests(unittest.TestCase):
                      "distribution statement other than public release", "excluded-documents.tsv", "a model review, not a human review", "ALL-CAPS", "the tool never calls a tagger",
                      "1. Documents.", "10. Format and amendments"):
             self.assertIn(part, doc, part)
-        self.assertEqual((75, 150), (fd.PILOT_CONFIRMED_MIN, fd.PILOT_SIZE))
+        self.assertEqual((150, 140), (fd.PILOT_SIZE, fd.PILOT_MIN_SIZE))
+        for part in ("AMENDMENT A1", "TITLE-family level", "ceil(n/2)"):
+            self.assertIn(part, doc, part)
 
 
 if __name__ == "__main__":

@@ -49,6 +49,11 @@ section "Follow-up: pre-registered rule (before any fetch)")
    document and 50 per family, both labelers, blind. A line is CONFIRMED when both labelers tag token 0 VERB. Gate: confirmed / 150 of at least 0.50 (75 of 150) proceeds; FEWER THAN 75 OF 150 STOPS
    the work before any scaling and writes the pilot record (counts only); fewer than 150 candidate lines is also a stop (scarcity). The pilot lines keep the side of their document and are not
    labeled again.
+   AMENDMENT A1 (after the scarcity stop, before any label; approved by the owner through the orchestrator; RUN-LOG section "Follow-up: pre-label relaxation (amendment A1)"). Cause: scarcity (51 lines
+   under the registered caps; 234 strength-0 lines exist). (a) The family cap of 50 is read at TITLE-family level (`family_key`), not agency level. (b) The pilot lemma cap is 6 instead of 4 (the
+   pilot only). (c) The pilot is about 150 lines, as the owner specified: it is however many lines these caps give, at most PILOT_SIZE (150) and at least PILOT_MIN_SIZE (140); fewer than 140 is
+   a scarcity stop. (d) The gate is confirmed >= ceil(n/2) of the n lines piloted (one fewer stops: INCOMPLETE). (e) For the final build of headings-2 and headings-2-train the lemma cap is 6 and
+   the development document cap is 20 (counts in the RUN-LOG); the floors are not changed and `--allow-short` and the registered contingencies stand.
 7. Labels. Two blind labelers, `claude-opus-5.5` and `gpt-6.1-sol`, from scratch, the frozen prompt of PR #19 (see LABELER_TEMPLATE), one agent per labeler and batch, at most 4 at a time, no re-roll,
    through the unchanged shapes_dev.py commands. Training: every token agreed, no fix-tier violation, the judged word with the exact tag of its stratum (VERB in base form for imperative, NOUN for
    initial-noun, head NOUN or PROPN or VERB after an agreed noun for compound-2); anything else is dropped and counted, nothing is edited by hand. Development: the target agreed, the intended
@@ -136,13 +141,14 @@ SERIES_WORDS = re.compile(r"\b(?:skill\s+levels?|volumes?|vol|editions?|ed|revis
 # ---- development products
 OLD_TARGETS = 100                                           # the targets of compound-head.tsv (the union for the lemma cap and the -ing share)
 LEMMA_CAP, CONTROL_LEMMA_CAP, ING_SHARE = 4, 2, 0.25
+DEV_HEADING_LEMMA_CAP = 6                                   # headings-2 (amendment A1, final build): 6 per lemma over imperative and noun (compound-head-2 keeps LEMMA_CAP)
 COMPOUND_HEAD_BUDGET, CONTROL_POOL_FIRST, CONTROL_POOL_SECOND = 800, 50, 30
 COMPOUND_HEAD_MIN_CANDIDATES = 450
 DEV_QUOTAS = {"compound-head-2": {"targets": (150, 210), "controls": (30, 45)},
               "headings-2": {"imperative": (80, 130), "noun": (30, 50), "controls": (12, 20)}}
 DEV_HEADING_BUDGET = {"imperative": 300, "noun": 120, "proper": 60}
 DEV_HEADING_MIN_CANDIDATES = {"imperative": 160, "noun": 60, "proper": 24}
-DEV_CANDIDATE_DOCUMENT_CAP, DEV_BUILD_DOCUMENT_CAP = 20, 12
+DEV_CANDIDATE_DOCUMENT_CAP, DEV_BUILD_DOCUMENT_CAP = 20, 20                  # amendment A1: the build cap of headings-2 is 20 (was 12), the pilot cap
 JACCARD_DROP = 0.8
 
 # ---- training products
@@ -150,13 +156,18 @@ CMP2_CANDIDATE_LEMMA_CAP, CMP2_MAX_CANDIDATES, CMP2_MIN_CANDIDATES, CMP2_MIN_LEM
 CMP2_LEMMA_CAP, CMP2_DOCUMENT_CAP, CMP2_MIN, CMP2_MAX, CMP2_MIN_BUILD_LEMMAS = 4, 20, 600, 1100, 200
 CMP2_NOUN_CAP, CMP2_VERB_CAP, CMP2_VERB_PERCENT = 935, 165, 15
 HDG2_CANDIDATE_LEMMA_CAP, HDG2_CANDIDATE_DOCUMENT_CAP, HDG2_MAX_IMPERATIVE, HDG2_MAX_INITIAL_NOUN, HDG2_MIN_IMPERATIVE = 6, 40, 900, 450, 300
-HDG2_LEMMA_CAP, HDG2_DOCUMENT_CAP = 4, 25
+HDG2_LEMMA_CAP, HDG2_DOCUMENT_CAP = 6, 25                   # amendment A1: the build lemma cap of headings2 is 6 (was 4)
 HDG2_IMPERATIVE_FLOOR, HDG2_IMPERATIVE_CAP = 150, 400
 HDG2_INITIAL_NOUN_SHARE_NUM, HDG2_INITIAL_NOUN_SHARE_DEN = 1, 2          # initial-noun lines at most 1/2 of the kept imperative lines
 
 # ---- pilot
-PILOT_SIZE, PILOT_LEMMA_CAP, PILOT_DOCUMENT_CAP, PILOT_FAMILY_CAP = 150, 4, 20, 50
-PILOT_CONFIRMED_MIN = 75                                    # confirmed of PILOT_SIZE: fewer than this stops the work
+# Amendment A1 (before any label): PILOT_SIZE is the maximum ("about 150"), PILOT_MIN_SIZE the scarcity floor, the lemma cap 6 (was 4), the family cap is read at title-family level.
+PILOT_SIZE, PILOT_MIN_SIZE, PILOT_LEMMA_CAP, PILOT_DOCUMENT_CAP, PILOT_FAMILY_CAP = 150, 140, 6, 20, 50
+
+
+def pilot_confirmed_min(sampled):
+    """The gate of the pilot: ceil(sampled / 2) lines must be confirmed (one fewer stops the work)."""
+    return (sampled + 1) // 2
 
 # ---- hand check
 SAMPLE_SIZE, SAMPLE_CONTROLS = 60, 4
@@ -609,7 +620,7 @@ def heading_candidates(scan, product, lex, seed=SEED, prior_rows=(), training_se
         limits = {"imperative": HDG2_MAX_IMPERATIVE - len(prior_rows), INITIAL_NOUN: HDG2_MAX_INITIAL_NOUN}
         order = ("imperative", INITIAL_NOUN)
         document_cap = HDG2_CANDIDATE_DOCUMENT_CAP
-    lemma_cap = LEMMA_CAP if dev else HDG2_CANDIDATE_LEMMA_CAP
+    lemma_cap = DEV_HEADING_LEMMA_CAP if dev else HDG2_CANDIDATE_LEMMA_CAP
     for stratum in order:
         taken = cap_by_lemma(pool.get(stratum, ()), lambda lemma: lemma_cap, max(0, limits[stratum]), document_cap, lemma_counts, doc_counts)
         lemma_counts.update(r["lemma"] for r in taken)
@@ -769,12 +780,13 @@ def pilot_candidates(scan, lex, family_of, seed=SEED, documents=None):
 
 
 def pilot_verdict(confirmed, sampled):
-    """(verdict, message): PROCEED when at least PILOT_CONFIRMED_MIN of PILOT_SIZE lines are confirmed, STOP when fewer, SCARCITY when fewer than PILOT_SIZE lines were sampled."""
-    if sampled < PILOT_SIZE:
-        return "SCARCITY", "only %d of %d pilot lines exist: the pilot cannot run (INCOMPLETE)" % (sampled, PILOT_SIZE)
-    if confirmed < PILOT_CONFIRMED_MIN:
-        return "STOP", "%d of %d confirmed, fewer than %d: the implementation stops before scaling (INCOMPLETE)" % (confirmed, sampled, PILOT_CONFIRMED_MIN)
-    return "PROCEED", "%d of %d confirmed (at least %d): proceed" % (confirmed, sampled, PILOT_CONFIRMED_MIN)
+    """(verdict, message): PROCEED when at least ceil(sampled / 2) of the sampled lines are confirmed, STOP when fewer, SCARCITY when fewer than PILOT_MIN_SIZE lines were sampled."""
+    if sampled < PILOT_MIN_SIZE:
+        return "SCARCITY", "only %d of at least %d pilot lines exist: the pilot cannot run (INCOMPLETE)" % (sampled, PILOT_MIN_SIZE)
+    minimum = pilot_confirmed_min(sampled)
+    if confirmed < minimum:
+        return "STOP", "%d of %d confirmed, fewer than %d: the implementation stops before scaling (INCOMPLETE)" % (confirmed, sampled, minimum)
+    return "PROCEED", "%d of %d confirmed (at least %d): proceed" % (confirmed, sampled, minimum)
 
 
 def pilot_numbers(items, candidates, family_of, tiers, lex):
@@ -822,6 +834,11 @@ def _family_of(draft):
     return {row["source_id"]: row["family"] for row in draft}
 
 
+def _title_family_of(draft):
+    """{source_id: title family key}: the family of the partition (amendment A1: the pilot family cap is read at this level, not at agency level)."""
+    return {row["source_id"]: family_key(row["title"]) for row in draft}
+
+
 def _command_pilot(args):
     work = adjudicate.Work(args.work)
     require_pins(work)
@@ -835,13 +852,13 @@ def _command_pilot(args):
         unknown = documents - {row["source_id"] for row in draft}
         if unknown:
             raise ValueError("--documents names documents that are not in the draft: " + ", ".join(sorted(unknown)[:5]))
-    rows, report, counts = pilot_candidates(scan, lex, _family_of(draft), args.seed, documents)
+    rows, report, counts = pilot_candidates(scan, lex, _title_family_of(draft), args.seed, documents)
     round_work = _round_work(args, PILOT_ROUND)
     common.write_text(round_work.private_file("candidates-report.md"), report)
     shapes_dev.write_candidates(round_work, rows)
     print("\n".join(report))
     print("%d candidates written to rounds/%s/candidates.tsv" % (len(rows), PILOT_ROUND))
-    if counts["sampled"] < PILOT_SIZE:
+    if counts["sampled"] < PILOT_MIN_SIZE:
         print("PILOT SCARCITY: " + pilot_verdict(0, counts["sampled"])[1], file=sys.stderr)
         return 1
     return 0
@@ -894,7 +911,7 @@ def heading_stratum_train(item, rows):
 
 
 def select_headings_train(kept, seed=SEED, lemma_cap=HDG2_LEMMA_CAP, document_cap=HDG2_DOCUMENT_CAP, imperative_cap=HDG2_IMPERATIVE_CAP):
-    """(chosen, drops): imperative lines first (seeded order, `imperative_cap`), then initial-noun lines up to half of the kept imperative lines; 4 per lemma and 25 per document over both."""
+    """(chosen, drops): imperative lines first (seeded order, `imperative_cap`), then initial-noun lines up to half of the kept imperative lines; HDG2_LEMMA_CAP (6 after amendment A1) per lemma and 25 per document over both."""
     drops, per_lemma, per_document, chosen = collections.Counter(), collections.Counter(), collections.Counter(), []
     counts = collections.Counter()
     for stratum in ("imperative", INITIAL_NOUN):
@@ -980,7 +997,7 @@ def select_headings_dev(items, candidates, seed=SEED):
         for item in sorted((i for i in kept if i["shape"] == shape and i["role"] == "target"), key=lambda i: shapes_dev.rank_of(seed, "build", i["cand_id"])):
             if taken >= limit:
                 drops["cap"] += 1
-            elif per_lemma[item["lemma"]] >= LEMMA_CAP:
+            elif per_lemma[item["lemma"]] >= DEV_HEADING_LEMMA_CAP:
                 drops["lemma-cap"] += 1
             elif per_document[item["source_id"]] >= DEV_BUILD_DOCUMENT_CAP:
                 drops["document-cap"] += 1
@@ -1134,8 +1151,9 @@ def quota_problems(product, sentences, minimum=None, floors=None, old_counts=Non
         control_lemmas = collections.Counter(c["lemma"] for c, t in zip(comments, is_target) if not t)
         union = collections.Counter(old_counts or ())
         union.update(target_lemmas)
-        found += ["target lemma %s has %d items, at most %d allowed" % (lemma, n, LEMMA_CAP) for lemma, n in sorted(union.items())
-                  if n > LEMMA_CAP and (lemma in target_lemmas)]
+        target_cap = DEV_HEADING_LEMMA_CAP if product == "headings-2" else LEMMA_CAP
+        found += ["target lemma %s has %d items, at most %d allowed" % (lemma, n, target_cap) for lemma, n in sorted(union.items())
+                  if n > target_cap and (lemma in target_lemmas)]
         found += ["control lemma %s has %d items, at most %d allowed" % (lemma, n, CONTROL_LEMMA_CAP) for lemma, n in sorted(control_lemmas.items())
                   if n > CONTROL_LEMMA_CAP]
         if product == "headings-2":
