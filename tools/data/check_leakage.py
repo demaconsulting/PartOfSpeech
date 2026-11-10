@@ -3,7 +3,7 @@
   python tools/data/check_leakage.py [--no-ud] [--write-report]
 
 Training sets: data/open/train.tsv, data/masc/masc.tsv, data/silver/silver.tsv, data/imperative/imperative.tsv, data/compound/compound.tsv,
-data/headings/headings.tsv.
+data/headings/headings.tsv, data/compound/compound-2.tsv, data/headings/headings-2.tsv.
 Evaluation sets: data/open/{dev,test}.tsv, data/eval/gold-v2, data/eval/shapes/probe.tsv, data/eval/ste-challenge,
 data/eval/shapes-dev/dev.tsv (the hard-shape development set; required), and UD English-EWT train/dev/test when the
 git-ignored cache is present (fetch it with fetch_ud_ewt.py; nothing from UD is ever committed or written to the report
@@ -16,7 +16,7 @@ Rules (the same two rules the C# test applies):
      length (a short sentence such as "Thank you." is an exact sentence as well; the importers drop it from the
      training data, see leakage.py).
 Near duplicates: an evaluation sentence of at least 10 words whose word 6-grams are at least 80% contained in the training
-word 6-grams of a set. They are gated for the targeted training sources only (NEAR_GATED_TRAINING: imperative, compound, headings; any near
+word 6-grams of a set. They are gated for the targeted training sources only (NEAR_GATED_TRAINING: imperative, compound, headings, compound2, headings2; any near
 duplicate of any evaluation set fails); for the other training sources they are reported, not gated. Exit code 1 on any document or
 sentence overlap, or any near duplicate of a targeted source.
 
@@ -38,11 +38,11 @@ document is reported there and not gated; an exact sentence and a same-document 
 6-grams in the standard sentences of the same document) are gated. The training sets are checked against hard.tsv in the first section like
 against any evaluation set (label `shapes-dev-hard`).
 
-Fourth section (the three newer tranches data/eval/shapes-dev/{compound-head,headings,named-state}.tsv, each when its file exists; written to
+Fourth section (the newer tranches data/eval/shapes-dev/{compound-head,headings,named-state,compound-head-2,headings-2}.tsv, each when its file exists; written to
 data/eval/shapes-dev/<tranche>-leakage-report.tsv): the same checks against every evaluation set that is not a tranche of the development set, plus a
 row for each tranche file. The documents of a new tranche are new: a document, an exact sentence or a same-document near duplicate that the standard
 or the hard tranche shares is gated; against another new tranche a shared document is reported, an exact sentence and a same-document near
-duplicate are gated (the three tranches may share a source document, never a sentence).
+duplicate are gated (the new tranches may share a source document, never a sentence).
 
 Data removal, not evaluation removal, is the remedy: the importers (import_masc.py, import_silver.py) and the builder of
 the imperative source (imperative_data.py) and of the compound and headings sources (compound_heading_data.py) drop training documents (long matches) or sentences (short matches) that overlap an
@@ -63,12 +63,16 @@ NEAR_THRESHOLD = 0.8
 # Training sets whose near duplicates fail the check (requirements PartOfSpeech-Data-ImperativeIndependent and
 # PartOfSpeech-Data-TargetedSourcesIndependent); the near duplicates of every other training set are reported only (the older sources share
 # agency boilerplate with open dev, open test and gold v2).
-NEAR_GATED_TRAINING = ("imperative", "compound", "headings")
+NEAR_GATED_TRAINING = ("imperative", "compound", "headings", "compound2", "headings2")
 # The new training sources, each compared with every other training set in training_check.
-NEW_TRAINING = ("compound", "headings")
+NEW_TRAINING = ("compound", "headings", "compound2", "headings2")
+# The pairs of new sources that are cut from one shared pool of documents: a shared document is reported there, not gated (a shared sentence is
+# always gated). Every other pair of a new source with another training set must share no document.
+SHARED_POOL_PAIRS = (frozenset(("compound", "headings")), frozenset(("compound2", "headings2")))
 TRAINING_FILES = (("open-train", ("open", "train.tsv")), ("masc", ("masc", "masc.tsv")), ("silver", ("silver", "silver.tsv")),
                   ("imperative", ("imperative", "imperative.tsv")), ("compound", ("compound", "compound.tsv")),
-                  ("headings", ("headings", "headings.tsv")))
+                  ("headings", ("headings", "headings.tsv")), ("compound2", ("compound", "compound-2.tsv")),
+                  ("headings2", ("headings", "headings-2.tsv")))
 
 
 def training_sets():
@@ -130,8 +134,9 @@ def training_check(trains=None):
 
     A row is (new_set, other_set, new_sentences, other_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences). A
     document id that both sets use and a sentence key that both sets hold (of any length) fail; a sentence of the new set with at least
-    10 words and at least 80% of its word 6-grams in the other set is a near duplicate, reported and not gated. The two new sources are cut
-    from one shared pool of documents (a document may feed both, never a sentence), so a shared document of that pair is reported, not gated.
+    10 words and at least 80% of its word 6-grams in the other set is a near duplicate, reported and not gated. The two sources of each pair in
+    SHARED_POOL_PAIRS (compound with headings, compound2 with headings2) are cut from one shared pool of documents (a document may feed both,
+    never a sentence), so a shared document of such a pair is reported, not gated; every other pair is gated on shared documents too.
     Each pair of two new sources is compared once (the pair is listed under the set that comes first in NEW_TRAINING).
     """
     trains = training_sets() if trains is None else trains
@@ -152,7 +157,7 @@ def training_check(trains=None):
                 exact += common.key(text) in other_keys
                 sh = shingles(text)
                 near += len(words(text)) >= NEAR_MIN_WORDS and bool(sh) and len(sh & other_shingles) / len(sh) >= NEAR_THRESHOLD
-            failures += exact + (0 if other_label in NEW_TRAINING else doc_overlap)
+            failures += exact + (0 if frozenset((new_label, other_label)) in SHARED_POOL_PAIRS else doc_overlap)
             rows.append((new_label, other_label, len(new_items), len(other_items), doc_overlap, exact, near))
     return rows, failures
 
@@ -281,7 +286,7 @@ def main():
         print(line)
     pair_rows, pair_failures = training_check()
     pair_lines = ["# Training leakage report (tools/data/check_leakage.py): the new training sources against the other training sets; counts only",
-                  "# document_overlaps (not gated between compound and headings, which share one pool of documents) and exact_sentence_overlaps are gated; "
+                  "# document_overlaps (not gated between compound and headings, or between compound2 and headings2, which share one pool of documents each) and exact_sentence_overlaps are gated; "
                   "near_duplicate_sentences (at least 10 words, at least 80% of the word 6-grams "
                   "in the other set) are reported",
                   "# columns = new_training_set, other_training_set, new_sentences, other_sentences, document_overlaps, exact_sentence_overlaps, "

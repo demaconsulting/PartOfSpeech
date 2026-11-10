@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite montanafinalstat unitrich usfs safehandlingofbo NCRP -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite montanafinalstat unitrich usfs safehandlingofbo NCRP airforce antiarmor atsc ccceeee cexclude coastguard fmtv FOUO haandbook hacc hcands hemtt hexclude hfinal hget Jaccard OPFOR Readex unfetched usbm usbr -->
 
 # Trainer Run Log
 
@@ -5145,6 +5145,45 @@ Commands: `python tools/data/followup_data.py --work $W build --product P @EXTRA
 | `headings-2-train` | 20261124 | imperative 40, initial-noun 20 | 4 |
 
 **Gate (rule 8):** marked-word precision `correct / (correct + incorrect)` at least 95% (3 incorrect of 60 passes, 4 fail), at most 1 of the 4 controls accepted, no unanswered item; below it the product is not registered and the work stops with a report; no second draw. Note: the tool's result text for too lenient controls says "repeat the review once" (text inherited from PR #19); the pre-registered rule of this follow-up says that the review is never repeated, and the rule governs.
+
+## Follow-up: hand check, registration of the four products (counts only)
+
+This section follows the commit `85cdcb1` (a commit cannot contain its own SHA). **No rule, cap, floor, gate or pin was changed; no model of any experiment was trained or evaluated (`train --check` retrains the shipped configuration only); no consumer text was read; nothing was pushed.**
+
+### Hand check of the four products (model review, not a human review)
+
+One review per product, blind, by `claude-sonnet-5.5` (a reviewer sees item names `R001` to `R064` only), on the samples drawn once (seeds 20261121 to 20261124); `review-result --product P --verdicts FILE` printed the gate result; no sample was drawn again.
+
+| Measure | `compound-head-2` | `headings-2` | `compound-2` | `headings-2-train` |
+| --- | ---: | ---: | ---: | ---: |
+| items reviewed (real) | 60 | 60 | 60 | 60 |
+| judged word correct (precision, gate at least 95%) | 60 (100.0%) | 60 (100.0%) | 60 (100.0%) | 60 (100.0%) |
+| judged word incorrect or unclear | 0 | 0 | 0 | 0 |
+| whole item correct (no other token marked wrong) | 98.3% | 98.3% | 98.3% | 100.0% |
+| token precision (reported, not gated) | 99.91% (1 wrong of 1,066) | 99.70% (1 of 333) | 99.91% (1 of 1,145) | 100.00% (0 of 295) |
+| controls accepted (gate: at most 1 of 4) | 0 of 4 | 0 of 4 | 0 of 4 | 0 of 4 |
+| unanswered items | 0 | 0 | 0 | 0 |
+| gate | PASSED | PASSED | PASSED | PASSED |
+
+All four products pass; all four are registered.
+
+### Registration checks of the four products (on the committed files)
+
+- `check_leakage.py --write-report` exit 0: **0 document overlaps, 0 exact sentence overlaps and 0 near duplicates** of `compound`, `headings`, `compound2` and `headings2` against every evaluation set (the five newer tranches included), and of the two new tranches against every other evaluation set (0 probe 5-grams); the training pairs are gated on documents and exact sentences (0, except `compound`/`headings` 73 shared documents and `compound2`/`headings2` 57, one pool each, reported and not gated, and 0 shared sentences); the two dev tranches share 30 documents (reported) and no sentence; DEV and TRAIN streams share no document. The reports `compound-head-2-leakage-report.tsv` and `headings-2-leakage-report.tsv` are new, the other reports have the new rows.
+- `check_licenses.py` clean (the four new source tables are scanned for restricted text, FAA material and the exclusion record; the new files are required). `check_conventions.py --tier fix --enforce`: 0 violations in every column; the check tier reports 2 hits in `compound2` (one `be-participle-adj-not-gradable`, one `infinitive-to`) and none in `headings2`.
+- `make_manifest.py` wrote 73 entries and `--verify` passed. `train --check` exit 0, image `6e1e4ade56aa277d79709c107000f10e99c6f4e55a097e872a9c38fa2e12e8d0` unchanged, `weights.bin` SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` unchanged, with `compound2` and `headings2` in `training.json` at weight 0.
+
+### Tool changes of this step (implementing-agent decisions, flagged for the owner's review; none changes a registered rule of the follow-up)
+
+- `leakage.SHAPES_DEV_NEW_TRANCHES` has the two follow-up tranches (`SHAPES_DEV_FOLLOWUP_TRANCHES`); `held_out_overlap_keys`, `evaluation_sets` and `shapes_dev.LeakageFilter` got an optional `skip_tranches` argument, and `followup_data.py` passes its own two tranches so that a rebuild never sees its own committed output (a test pins the constant; the tool still imports no `leakage`). Old builders are unchanged (default `()`).
+- `check_leakage.py`: `TRAINING_FILES`, `NEW_TRAINING` and `NEAR_GATED_TRAINING` have `compound2` and `headings2`. **Decision:** a shared document is gated for every pair of a new source with another training set, except the two pairs that are cut from one pool of documents (`SHARED_POOL_PAIRS`: `compound`/`headings` as before, `compound2`/`headings2` new); the plan said that old-versus-new compound overlap is reported, the check gates it (0 by construction).
+- `check_licenses.py` (the four new tables and files, required and scanned), `check_conventions.py` and `corrections.LINT_ONLY_FILES` (sources `compound2` and `headings2`, lint only, resource-exempt), tests updated and added (691 Python tests OK).
+
+### Disclosures (the data say so in their READMEs)
+
+- `headings-2` (dev) imperative: **59 lines against about 100 requested** (registered floor 80, built with `--allow-short`); noun and proper at their caps.
+- `headings2` (train) imperative: **165 against about 300 requested** (floor 150 met under the as-coded reading); **41 of the 165 come from the strength-1 `initial-noun` frame** whose lines both labelers tagged VERB, kept as coded (implementing-agent decision, flagged for the owner; 124 without them).
+- `compound-head-2` controls: **45 of 255 new items = 17.6% (the cap of 45 binds) against about 20% requested** (65 of 375 = 17.3% with the 20 old controls).
 
 ## Run table
 

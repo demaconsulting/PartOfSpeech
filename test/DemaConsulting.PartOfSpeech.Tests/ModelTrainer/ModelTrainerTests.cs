@@ -2715,8 +2715,8 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates that the committed configuration is valid, names the six corpora (the imperative source with weight 1, so
-    ///     it is in the mix of the shipped model; the compound and headings sources with weight 0, so they are not) and is in the
+    ///     Validates that the committed configuration is valid, names the eight corpora (the imperative source with weight 1, so
+    ///     it is in the mix of the shipped model; the compound, headings, compound2 and headings2 sources with weight 0, so they are not) and is in the
     ///     canonical form that the tool writes.
     /// </summary>
     [Fact]
@@ -2728,11 +2728,11 @@ public class ModelTrainerTests
         // Act
         var config = ConfigFile.Parse(text);
 
-        // Assert: valid, six known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
-        Assert.Equal(new[] { "open", "masc", "silver", "imperative", "compound", "headings" }, config.Sources.Select(s => s.Name));
+        // Assert: valid, eight known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
+        Assert.Equal(new[] { "open", "masc", "silver", "imperative", "compound", "headings", "compound2", "headings2" }, config.Sources.Select(s => s.Name));
         Assert.All(config.Sources, s => Assert.True(File.Exists(DataFiles.Repository(s.Path))));
         Assert.Equal(1, config.Sources.Single(s => s.Name == "imperative").Weight);
-        Assert.Equal(new[] { 2, 1, 1, 1, 0, 0 }, config.Sources.Select(s => s.Weight));
+        Assert.Equal(new[] { 2, 1, 1, 1, 0, 0, 0, 0 }, config.Sources.Select(s => s.Weight));
         Assert.Equal(text.Replace("\r\n", "\n"), ConfigFile.Format(config));
     }
 

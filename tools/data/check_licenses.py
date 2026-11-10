@@ -19,7 +19,7 @@ Checks (exit code 1 on any finding):
      or headerless is a finding; header-only is valid), and neither its sources.tsv nor the source_id of any sentence of its dev.tsv
      matches an excluded id or normalized URL; the same for the hard tranche (hard-sources.tsv and hard.tsv) and the three newer tranches
      (<tranche>-sources.tsv and <tranche>.tsv), which share the record; the compound and headings training sources (sources.tsv and the corpus
-     file) take the same check.
+     file) and their follow-up sources (compound-2 and headings-2, each with its -sources.tsv) take the same check.
   6. fail closed: every source table and corpus above must exist (missing is a finding, not a skip or a traceback); the two files of the hard
      tranche are required while leakage.HARD_TRANCHE_REQUIRED is True and skipped when missing while it is False.
 """
@@ -34,12 +34,14 @@ import leakage
 FORBIDDEN_TEXT = re.compile(r"share-?alike|by-sa|by-nc|by-nd|non-?commercial|no-?derivat|cc by|wikipedia|creativecommons\.org/licenses/by", re.I)
 FORBIDDEN_PATH = re.compile(r"semcor|brown|ewt", re.I)
 ALLOWED_LICENSES = {"CC0-1.0", "CC-BY-3.0-US", "CC-BY-4.0", "Public-Domain", "MIT"}
-NEW_TRANCHES = leakage.SHAPES_DEV_NEW_TRANCHES            # the three newer tranches of the development set (compound-head, headings, named-state)
+NEW_TRANCHES = leakage.SHAPES_DEV_NEW_TRANCHES            # the newer tranches of the development set (compound-head, headings, named-state, compound-head-2, headings-2)
 NEW_SOURCES_TABLES = tuple("eval/shapes-dev/%s-sources.tsv" % name for name in NEW_TRANCHES)
 NEW_CORPORA = tuple("eval/shapes-dev/%s.tsv" % name for name in NEW_TRANCHES)
 TARGETED_SOURCES = ("compound", "headings")              # the two targeted training sources (compound-head sentences, Title Case heading lines)
-TARGETED_TABLES = tuple("%s/sources.tsv" % name for name in TARGETED_SOURCES)
-TARGETED_CORPORA = tuple("%s/%s.tsv" % (name, name) for name in TARGETED_SOURCES)
+TARGETED_TABLES = (tuple("%s/sources.tsv" % name for name in TARGETED_SOURCES)
+                   + ("compound/compound-2-sources.tsv", "headings/headings-2-sources.tsv"))     # and their follow-up sources (compound2, headings2)
+TARGETED_CORPORA = (tuple("%s/%s.tsv" % (name, name) for name in TARGETED_SOURCES)
+                    + ("compound/compound-2.tsv", "headings/headings-2.tsv"))
 SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv",
                  "eval/shapes-dev/hard-sources.tsv", "imperative/sources.tsv") + TARGETED_TABLES + NEW_SOURCES_TABLES
 HARD_SOURCES_TABLE = "eval/shapes-dev/hard-sources.tsv"   # scanned when it exists; a missing one fails once leakage.HARD_TRANCHE_REQUIRED is True

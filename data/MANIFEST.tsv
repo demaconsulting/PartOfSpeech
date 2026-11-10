@@ -1,5 +1,9 @@
 # Checksums of the committed data files (tools/data/make_manifest.py); Markdown files are not listed
 # columns = path (relative to data/), bytes, sha256, lines, sentences
+compound/compound-2-dropped-sentences.tsv	312	033d9702bb1204df8e184a0f8bd80c04aff281d5a19e8994446ecd8950ccc569	2	-
+compound/compound-2-excluded-documents.tsv	260	84a864f548fb89068edec5e5c31037d2d07b94d1b6d6ca5bc5ce4165cd9734a8	0	-
+compound/compound-2-sources.tsv	272059	9c7ec7014ff115e745501706126b4637382c058783fdea43021b9f6cbfbd0b4f	210	-
+compound/compound-2.tsv	684906	2a9a98492afb1248623b50111ca62d8abd57e4569b1a5e52b3cff544bc0746cc	20745	1100
 compound/compound.tsv	474726	eb8c4708ba95fb370c885110e10eda0f1d826c5922876bd66e69389894bd5e3b	14692	742
 compound/dropped-sentences.tsv	318	6713acf27466c295f42d66df25951bb8ba6c25d48faf1f6e709832a42f7186be	2	-
 compound/excluded-documents.tsv	1114	6beec0246d38d913aeb5342f66e5191e396afd007abfc2f7853b76241dae4240	7	-
@@ -12,7 +16,10 @@ corrections/withdrawn-prenominal-ing.tsv	110745	40f653f921f72346810bc904b7f8cdb0
 eval/gold-v2/dev.tsv	606762	ffb2f3afd3460523656f5528a66094bad507982b15eb2b4a9341cdb78ff117f5	2025	-
 eval/gold-v2/sources.tsv	886502	0f5e84194e64459393dfea7c466c1d7efb4e8f43603f10480b2aa29dd1d36d21	1443	-
 eval/gold-v2/test.tsv	922745	11b4a38e2cb1154d063d503b289c4a40ae1ba0c7009b92bf4a069a4dc3317cfb	3047	-
-eval/shapes-dev/compound-head-leakage-report.tsv	978	b74d2037ac2b323a7983d3a42f421a2727fea29d47bbd0a12c408bc0364d298b	12	-
+eval/shapes-dev/compound-head-2-leakage-report.tsv	1050	07dd6fcc4dccb76777652b73e29ec9fbb52117115e463d064a600c07adaaecd9	14	-
+eval/shapes-dev/compound-head-2-sources.tsv	115251	c183effb24a273307e710e0b82bbf45cbc7a43d4b9bf071521c20c5e4c88a31f	90	-
+eval/shapes-dev/compound-head-2.tsv	172171	ffa7e5aef0cff05e6ef9227bce3544e4372109768685fcff8c0395e18220c527	4576	255
+eval/shapes-dev/compound-head-leakage-report.tsv	1051	421003bc7f4b8b5b5d27e24455708aa6b40aeffb3638008fc86c6594d5bd85ef	14	-
 eval/shapes-dev/compound-head-sources.tsv	67065	69ee105bb9ab81c675feca508f7aee6dabd4bd5b766f3520f20d173aa99f46d5	75	-
 eval/shapes-dev/compound-head.tsv	79190	537e0be3923f585b8f084de4e88f4064624e4f5dc484f84ccd303fed3db924f5	2148	120
 eval/shapes-dev/dev.tsv	426221	bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290	12279	700
@@ -20,11 +27,14 @@ eval/shapes-dev/excluded-sources.tsv	2774	f997b8c99a097c5fea6cc6da0900b9478b3a1e
 eval/shapes-dev/hard-leakage-report.tsv	832	c530dc708ce21367eab4a6a70a8bfe9c7fe2eeb6cb61980c2a41b4609aaf7c78	9	-
 eval/shapes-dev/hard-sources.tsv	93781	fd21313ff50068f9637c1504b059c7de45f83ec6d1d9b81ce46499ae17d8ee12	100	-
 eval/shapes-dev/hard.tsv	282782	c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22	7936	460
-eval/shapes-dev/headings-leakage-report.tsv	978	8cbbf586af51e38cc1373f11ab4f517032132d7c1863de232c8b0db81ed047e6	12	-
+eval/shapes-dev/headings-2-leakage-report.tsv	1050	7096ae8730bd49f2589afd74dbee2793c83f7db8c24ed1c5d24904ab492ea56f	14	-
+eval/shapes-dev/headings-2-sources.tsv	47144	62754e46c3306983ffd6ece5360257e023c8a7bc268668644d2edc4df5452edd	36	-
+eval/shapes-dev/headings-2.tsv	47493	6c84419851bceebcb825fff6bc530fc3a3dc5bc5306da152bda349db00c4b4a7	678	129
+eval/shapes-dev/headings-leakage-report.tsv	1051	2438f7fdae9b8c23b351a6a6fef821392a18a2d8736013fcdf3fe122a0593be6	14	-
 eval/shapes-dev/headings-sources.tsv	46971	aa3a14f10779f2c044e08ee01fb3b682e6d0f019c06323b9e3fa4ae941cefa6a	52	-
 eval/shapes-dev/headings.tsv	36363	45a62a71837f02d1e76f0ad55a71a1770cb628ea8ca8765c0d4583f49b9da72a	507	115
 eval/shapes-dev/leakage-report.tsv	632	db1c9e2f6c30c9bbf7cd328aa4f524c2aaa57d46f96e9b40069a0a7044d447c1	8	-
-eval/shapes-dev/named-state-leakage-report.tsv	978	a32fd25346dba250f0a590476406c1ed3be54f61344e2bbd37906efdd99af4c2	12	-
+eval/shapes-dev/named-state-leakage-report.tsv	1051	323bdc8956337407690bacbf67a548c338a78566cc8b2365d8d91667152bd885	14	-
 eval/shapes-dev/named-state-sources.tsv	53130	dd78973fd8848a33620432c5d31052bd803129ed0bc2d00bb81e559034cec925	60	-
 eval/shapes-dev/named-state.tsv	70355	e08472387630368b7fb3fbaa5cd7b6187d0760608c93b55f19250c98f2d06d6e	1970	112
 eval/shapes-dev/sources.tsv	54050	b88b1f75a376bf1e105160f835a7ad061d7391d7abd08b59471282d51907ad46	63	-
@@ -32,13 +42,17 @@ eval/shapes/probe.tsv	58492	5d1ebe3a7fd64c20aeb1388c95c2fff2d97792f9761375bed8b5
 eval/ste-challenge/test.tsv	11858	7593d2ca261984c7c347f130d1d1f639b85515a4d74f39ece3fc60577a2e3aaf	272	32
 headings/dropped-sentences.tsv	302	06117efe57292387db6142f7e251b5e039a901b7607b418536cd4d6f21aa1201	1	-
 headings/excluded-documents.tsv	1235	0d3595277f46972e1fe2c1ba78095f275af3e18c9af5e53f083be636e405d452	8	-
+headings/headings-2-dropped-sentences.tsv	343	47eafa25791b4e6c30d5f9002c1b3c5c1830f95be364c3eaab7e591aebe8c7a5	3	-
+headings/headings-2-excluded-documents.tsv	260	a7dce4c22dd1a2f18ee7543938f15643af9846448dc8ac81236431debd56f65e	0	-
+headings/headings-2-sources.tsv	76996	accd6790b8226e962d8d192b7658375f1bafb7e1721a11779ee55e05024b682d	60	-
+headings/headings-2.tsv	69140	3f1fca247aa625c6f46269f5db5034540e4685fc55918dff5068da6ba591fca5	1160	247
 headings/headings.tsv	92796	cae45ff12cb4e7e9531a007beb8278b4014a8bdab9ae3e52b06ba46df4d48cde	1664	374
 headings/sources.tsv	84910	26ca020469ee3a396ba71bd7845030a516e612c44e887933b1fe8450445fbad7	90	-
 imperative/dropped-sentences.tsv	335	ff7667dbee716ed01fe2182c4497e301f48006ac63a18b560d347aeb22f2fddf	3	-
 imperative/excluded-documents.tsv	222	e3a6f73dda9a089f9c04f99fd5b8d674b68cddf80c7aefc6e493394dd240bfe8	0	-
 imperative/imperative.tsv	364365	218246df0c4ce739e6631a066e5296194d6773e09fc849cd64c1eb93516185ad	11946	900
 imperative/sources.tsv	111189	46ed6556224f2adcd73da7f8c8b026597a3a72f85dc7f6f8284231f003699df5	123	-
-leakage-report.tsv	2912	96eda47b0241db70245767d82ddba10eba666f902c06e7a30d80d7b676777dbf	78	-
+leakage-report.tsv	4510	e5a22db4cd9c8b8c96120bc1360ae804b26b3a546e7fb83243c86b48e7153f0c	120	-
 lexicon/closed-class.tsv	9435	73b7edf3fcaec5af21b5722a83b279ee78e66cb6e3cd2b71a4e625336dc945ca	331	-
 lexicon/coverage.tsv	8587	3441f0d947f9f4ed7457b635cb9679ca477429ee9212c2dfb6d1dfdf62d1f572	268	-
 lexicon/lexicon.tsv	4452392	def08a681d82594d57dc8dfe44155b5966d316896acc78f7dd54f04d2f78d3cc	262635	-
@@ -58,4 +72,4 @@ silver/dropped-sentences.tsv	412	7befc5b6e3811f877932c8ab40121750fdbd788dc2052a4
 silver/excluded-documents.tsv	83844	408d844d1ad6b2c5cfc851032a18bf626ded605e1f72fc1ca5fdfa474b25ccd0	1867	-
 silver/silver.tsv	7461484	2a24853ff5a5e37fa6282fe4586d4a12eb38d00356b57766d9ec5894ba867d2a	242699	13971
 silver/sources.tsv	899132	dd2848b70b296bc30b02f28b0885fce8f89f255127174d6fffe8fcc186f91db1	5067	-
-training-leakage-report.tsv	820	bbcb9a2e083035e2fdd237a282470281986ce9d8e89c3f6c5d4f0bd20db655af	9	-
+training-leakage-report.tsv	1307	9b060d286679a9b0386eb6b44608bec0eba9ec50d495e2758bba64b2330026a3	22	-

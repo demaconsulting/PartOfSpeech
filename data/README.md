@@ -10,7 +10,7 @@ lexicon and the trained weights, which are embedded in the package in compact bi
 `lexicon/lexicon.tsv` (see [lexicon/README.md](lexicon/README.md), "Embedded Form"), and the weights
 (`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 521,695 bytes compressed, 1,157,499 bytes uncompressed) are
 trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC, silver and
-imperative corpora with settings that are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard, hard and the three single-shape tranches) and UD-EWT dev (the run log is
+imperative corpora with settings that are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard, hard and the five single-shape tranches) and UD-EWT dev (the run log is
 [RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not
 shipped. How the model scores on the evaluation sets, the confidence thresholds that were chosen on the development
 sets, and how to reproduce the evaluation (including the local UD English-EWT run) are in the
@@ -24,10 +24,10 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [masc/](masc/README.md) | MASC written genres, Penn trees mapped to UPOS | 22,829 | 386,445 | 11.6 MB | CC-BY-3.0-US |
 | [silver/](silver/README.md) | BERT silver: Tatoeba and Gutenberg text, model labels mapped to UPOS | 13,971 | 242,699 | 8.5 MB | CC0-1.0 labels; CC0/PD sentences |
 | [imperative/](imperative/README.md) | imperative-initial sentences from US federal instructional text, two-labeler agreement (training; weight 1 in `training.json`) | 900 | 11,946 | 0.5 MB | CC0-1.0 labels; US federal-work sentences |
-| [compound/](compound/README.md) | sentences with a noun compound whose head can also be a verb, from US federal text, two-labeler agreement (training; weight 0 in `training.json`) | 742 | 14,692 | 0.6 MB | CC0-1.0 labels; US federal-work sentences |
-| [headings/](headings/README.md) | Title Case heading, caption and step-title lines from US federal text, two-labeler agreement (training; weight 0 in `training.json`) | 374 | 1,664 | 0.2 MB | CC0-1.0 labels; US federal-work lines |
+| [compound/](compound/README.md) | sentences with a noun compound whose head can also be a verb, from US federal text, two-labeler agreement: two sources, `compound.tsv` (742 sentences, 14,692 tokens) and `compound-2.tsv` (1,100 sentences, 20,745 tokens) (training; weight 0 in `training.json`) | 1,842 | 35,437 | 1.6 MB | CC0-1.0 labels; US federal-work sentences |
+| [headings/](headings/README.md) | Title Case heading, caption and step-title lines from US federal text, two-labeler agreement: two sources, `headings.tsv` (374 lines, 1,664 tokens) and `headings-2.tsv` (247 lines, 1,160 tokens; strata `imperative` 165 and `initial-noun` 82) (training; weight 0 in `training.json`) | 621 | 2,824 | 0.4 MB | CC0-1.0 labels; US federal-work lines |
 | [eval/shapes/](eval/shapes/README.md) | noun/verb shape probe (evaluation) | 560 | | 0.06 MB | CC0-1.0 |
-| [eval/shapes-dev/](eval/shapes-dev/README.md) | hard-shape development set from US federal-government text (development only): standard tranche `dev.tsv` (700 sentences, 12,279 tokens), hard tranche `hard.tsv` (460 sentences, 7,936 tokens) and three single-shape tranches `compound-head.tsv` (120 sentences, 2,148 tokens), `headings.tsv` (115 heading lines, 507 tokens) and `named-state.tsv` (112 sentences, 1,970 tokens) | 1,507 | 24,840 | 1.2 MB | CC0-1.0 labels; US federal-work sentences |
+| [eval/shapes-dev/](eval/shapes-dev/README.md) | hard-shape development set from US federal-government text (development only): standard tranche `dev.tsv` (700 sentences, 12,279 tokens), hard tranche `hard.tsv` (460 sentences, 7,936 tokens), three single-shape tranches `compound-head.tsv` (120 sentences, 2,148 tokens), `headings.tsv` (115 heading lines, 507 tokens) and `named-state.tsv` (112 sentences, 1,970 tokens), and two follow-up tranches `compound-head-2.tsv` (255 sentences, 4,576 tokens) and `headings-2.tsv` (129 heading lines, 678 tokens) | 1,891 | 30,094 | 1.7 MB | CC0-1.0 labels; US federal-work sentences |
 | [eval/gold-v2/](eval/gold-v2/README.md) | single-target gold tokens (evaluation) | 5,072 | | 2.4 MB | CC0-1.0 labels; PD sentences |
 | [eval/ste-challenge/](eval/ste-challenge/README.md) | simplified-technical-English challenge set (evaluation) | 32 | 272 | 0.01 MB | CC0-1.0 |
 | [eval/ud-ewt/](eval/ud-ewt/README.md) | UD English-EWT: fetch documentation only, **no data** | | | | CC BY-SA 4.0, never committed |
@@ -36,8 +36,8 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
 masked); the fourth training source, `imperative/`, holds 11,946 tokens and is configured with weight 1, so it is part of the
-mix that trained the shipped weights. The fifth and sixth, `compound/` (14,692 tokens) and `headings/` (1,664 tokens), are configured
-with weight 0: they are committed training data that are not part of the shipped mix. Total size of `data/`: 43.7 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
+mix that trained the shipped weights. The fifth to eighth, `compound/` (`compound.tsv`, 14,692 tokens, and `compound-2.tsv`, 20,745 tokens) and `headings/` (`headings.tsv`, 1,664 tokens, and `headings-2.tsv`, 1,160 tokens), are configured
+with weight 0: they are committed training data that are not part of the shipped mix. Total size of `data/`: 45.2 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
 WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.md` at the repository root.
 
 ## Rules of This Folder
@@ -46,7 +46,7 @@ WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.
   non-commercial data. `tools/data/check_licenses.py` scans the source tables and the folder tree; it also refuses
   `*.conllu` files and any path that names SemCor, Brown or UD English-EWT (except the fetch-only `eval/ud-ewt/README.md`).
 - **Model-written labels are labeled as such.** The open corpus, the shape probe, the shapes development set, gold v2, the
-  silver data, the imperative source, the compound source and the headings source have tags that language models wrote; no human reviewed them. Each README says so and gives the owner's CC0
+  silver data, the imperative source, the compound and headings sources (both of each) have tags that language models wrote; no human reviewed them. Each README says so and gives the owner's CC0
   dedication of labels and selection (not a claim on the underlying sentences). Nothing here is legal advice.
 - **Every file is reproducible.** Inputs are pinned by SHA-256 (WordSense commit
   `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, the MASC archive, UD files); outputs are sorted, UTF-8 without BOM, LF, NFC.
@@ -73,6 +73,7 @@ python tools/data/corrections.py validate                                       
 python tools/data/corrections.py apply --write                                              # the corrections onto open, MASC and silver (a second apply is refused)
 python tools/data/imperative_data.py --work <work-folder> build                             # imperative/ (needs the work folder of the labeling: see its README; not part of the corrections)
 python tools/data/compound_heading_data.py --work <work-folder> build --source compound|headings   # compound/ and headings/ (the work folder of the labeling: see their READMEs for the options; not part of the corrections)
+python tools/data/followup_data.py --work <work-folder> build --product compound-head-2|headings-2|compound-2|headings-2-train   # the second sources and the two follow-up tranches (work folder of the labeling; see the READMEs of compound/, headings/ and eval/shapes-dev/)
 python tools/data/build_lexicon.py [--wordsense-dir <checkout>]                             # lexicon/lexicon.tsv again, from the corrected corpora
 python tools/data/check_lexicon.py                                                          # lexicon/coverage.tsv, COVERAGE.md
 python tools/data/check_leakage.py --write-report                                           # leakage-report.tsv, training-leakage-report.tsv
@@ -88,7 +89,7 @@ built from the corrected files.
 
 ## Leakage Check
 
-No training document and no training sentence may appear in an evaluation set. Training sets: open train, MASC, silver, imperative, compound, headings.
+No training document and no training sentence may appear in an evaluation set. Training sets: open train, MASC, silver, imperative, compound, headings, compound2 (`compound/compound-2.tsv`), headings2 (`headings/headings-2.tsv`).
 Evaluation sets: open dev and test, gold v2 (dev and test), the shape probe, the shapes development set, the STE challenge
 set, and UD English-EWT train, dev and test when the git-ignored cache is present.
 
@@ -102,9 +103,9 @@ set, and UD English-EWT train, dev and test when the git-ignored cache is presen
    sentence that recurs in unrelated texts, so only that sentence is dropped from the training data (the sentences of a
    treebank file or of a book are independent; a Tatoeba document is a single sentence); the dropped sentence ids
    are listed in `dropped-sentences.tsv` of the training folder. The evaluation sets are never changed.
-3. **Near duplicates** (gated for the imperative, compound and headings sources, reported for the other training sets): an evaluation sentence of at
+3. **Near duplicates** (gated for the imperative, compound, headings, compound2 and headings2 sources, reported for the other training sets): an evaluation sentence of at
    least 10 words whose word 6-grams are at least 80 percent contained in the training 6-grams of a set. Any near duplicate
-   of the imperative, compound or headings source fails the check (`NEAR_GATED_TRAINING` in `check_leakage.py`); the older sources share agency
+   of the imperative, compound, headings, compound2 or headings2 source fails the check (`NEAR_GATED_TRAINING` in `check_leakage.py`); the older sources share agency
    boilerplate with the evaluation sets, so their near duplicates are only counted.
 4. **Shapes development set against every other evaluation set:** the same document and sentence rules apply, and no
    sentence may share a word 5-gram with the shape probe (the probe's short sentences escape the near-duplicate rule). The
@@ -114,16 +115,16 @@ set, and UD English-EWT train, dev and test when the git-ignored cache is presen
    used to exclude overlaps and never to select, weight or frame a candidate. The hard tranche (`eval/shapes-dev/hard.tsv`) is
    an evaluation set of its own in this check (label `shapes-dev-hard`, counts in `eval/shapes-dev/hard-leakage-report.tsv`) and
    is also checked against the standard tranche: the two tranches are one family and may share a source document (reported, not
-   gated), but no sentence of one equals a sentence of the other, and no same-document near duplicate is allowed. The three newer
-   tranches (`compound-head.tsv`, `headings.tsv`, `named-state.tsv`) are evaluation sets of their own too (labels `shapes-dev-compound-head`,
-   `shapes-dev-headings`, `shapes-dev-named-state`, counts in `eval/shapes-dev/<tranche>-leakage-report.tsv`) and are checked against the standard
+   gated), but no sentence of one equals a sentence of the other, and no same-document near duplicate is allowed. The five newer
+   tranches (`compound-head.tsv`, `headings.tsv`, `named-state.tsv`, `compound-head-2.tsv`, `headings-2.tsv`) are evaluation sets of their own too (labels `shapes-dev-compound-head`,
+   `shapes-dev-headings`, `shapes-dev-named-state`, `shapes-dev-compound-head-2`, `shapes-dev-headings-2`, counts in `eval/shapes-dev/<tranche>-leakage-report.tsv`) and are checked against the standard
    and the hard tranche with no shared document allowed; among themselves a shared document is reported, not gated. The selection of
-   the hard tranche and of `compound-head` used numeric output of the WordSense Basic classifier (same owner, run unmodified); nothing of WordSense text,
+   the hard tranche, of `compound-head` and of `compound-head-2` used numeric output of the WordSense Basic classifier (same owner, run unmodified); nothing of WordSense text,
    labels or data is copied.
 
 **Result** (`python tools/data/check_leakage.py`; the committed `leakage-report.tsv` has every pair; UD English-EWT was
 fetched and included in this run): **0 document overlaps and 0 exact sentence overlaps** for every pair of training and
-evaluation set, short sentences included, and none between the shapes development set and the other evaluation sets (the imperative, compound and headings sources included, with 0 near duplicates too), and none between `compound` or `headings` and any other training set (the two share documents by design, one pool, and no sentence; `training-leakage-report.tsv`). Informational: 2, 4 and 7 near-duplicate sentences of open dev, open test and
+evaluation set, short sentences included, and none between the shapes development set and the other evaluation sets (the imperative, compound, headings, compound2 and headings2 sources included, with 0 near duplicates too), and none between `compound`, `headings`, `compound2` or `headings2` and any other training set (`compound` and `headings` share documents by design, one pool, and no sentence, and so do `compound2` and `headings2`; `training-leakage-report.tsv`). Informational: 2, 4 and 7 near-duplicate sentences of open dev, open test and
 gold v2 against open train, and 1 gold v2 sentence against silver; all are agency boilerplate or repeated phrases
 (`Please let us know if these examples and explanations have helped you, Ali.`, standard NWS and USGS announcement
 sentences) and not shared documents.
@@ -138,7 +139,7 @@ plus the 1,840 documents the selection run of the earlier
 experiment removed against the WordSense evaluation sets (informational); imperative no document and 5 candidate sentences before labeling (1 equal to a set
 sentence and 4 near duplicates of shapes development sentences, counted in `imperative/dropped-sentences.tsv`); compound no document and 5 candidate sentences before labeling (3 equal to and 2 near duplicates of
 shapes development sentences, `compound/dropped-sentences.tsv`) and headings no document and 118 candidate lines before labeling (equal to shapes development sentences,
-`headings/dropped-sentences.tsv`). The open corpus is split by document hash, so
+`headings/dropped-sentences.tsv`); compound2 no document and 3 candidate sentences before labeling (2 near duplicates of shapes development sentences and 1 sharing a word 5-gram with the probe, `compound/compound-2-dropped-sentences.tsv`) and headings2 no document and 24 candidate lines before labeling (3 equal to set sentences, 20 equal to and 1 near duplicate of shapes development sentences, `headings/headings-2-dropped-sentences.tsv`). The open corpus is split by document hash, so
 open train has no overlap with open dev and test by construction (confirmed; short sentences included).
 
 **Limitations:** paraphrases and partial overlaps are not detected; Tatoeba near-duplicates can sit in different open splits

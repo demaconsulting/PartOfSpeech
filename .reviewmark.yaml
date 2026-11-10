@@ -436,7 +436,7 @@ reviews:
       - "tools/data/shapes_dev_extra.py"                            # compound-head, headings, named-state builder
       - "tools/data/imperative_data.py"                             # imperative source builder (blind labeling)
       - "tools/data/compound_heading_data.py"                       # compound and headings source builder
-      - "tools/data/followup_data.py"                               # follow-up builder: compound-head-2, headings-2, compound2, headings2, pilot
+      - "tools/data/followup_data.py"                               # follow-up builder: second sources, tranches, pilot
       - "tools/data/hmm-tags/README.md"                             # hard tranche harness: usage, format, pinned build
       - "tools/data/hmm-tags/Program.cs"                            # hard tranche harness: WordSense Basic tags
       - "tools/data/tests/test_common.py"                           # tests of the shared helpers

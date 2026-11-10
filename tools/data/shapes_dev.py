@@ -1247,11 +1247,12 @@ class LeakageFilter:
 
     `new_tranches` (default True: the builders of the standard and hard tranches) adds the sentence keys of the committed newer tranches
     (compound-head, headings, named-state) to the held-out keys, so that a rebuild of the standard or hard tranche cannot take a sentence of
-    one of them. The builder of the newer tranches (`shapes_dev_extra`) passes False: it must not see its own earlier build.
+    one of them. The builder of the newer tranches (`shapes_dev_extra`) passes False: it must not see its own earlier build. `skip_tranches`
+    leaves named newer tranches out (the follow-up builder passes the names of its own two tranches for the same reason).
     """
 
-    def __init__(self, data_dir, include_ud=True, new_tranches=True):
-        self.held_out = leakage.held_out_overlap_keys(include_ud, new_tranches=new_tranches)
+    def __init__(self, data_dir, include_ud=True, new_tranches=True, skip_tranches=()):
+        self.held_out = leakage.held_out_overlap_keys(include_ud, new_tranches=new_tranches, skip_tranches=skip_tranches)
         self.train = set()
         trains = {}
         for label, parts in (("open-train", ("open", "train.tsv")), ("masc", ("masc", "masc.tsv")), ("silver", ("silver", "silver.tsv"))):

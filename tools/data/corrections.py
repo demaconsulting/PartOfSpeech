@@ -65,7 +65,8 @@ SOURCES = {"open": ("train", "dev", "test"), "masc": ("-",), "silver": ("-",)}
 CORPUS_FILES = {("open", "train"): "open/train.tsv", ("open", "dev"): "open/dev.tsv", ("open", "test"): "open/test.tsv",
                 ("masc", "-"): "masc/masc.tsv", ("silver", "-"): "silver/silver.tsv"}
 LINT_ONLY_FILES = {("ste", "-"): "eval/ste-challenge/test.tsv", ("imperative", "-"): "imperative/imperative.tsv",
-                   ("compound", "-"): "compound/compound.tsv", ("headings", "-"): "headings/headings.tsv"}
+                   ("compound", "-"): "compound/compound.tsv", ("headings", "-"): "headings/headings.tsv",
+                   ("compound2", "-"): "compound/compound-2.tsv", ("headings2", "-"): "headings/headings-2.tsv"}
 
 CORRECTIONS_FOLDER = "corrections"
 MECHANICAL_TABLE = "mechanical.tsv"

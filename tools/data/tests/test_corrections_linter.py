@@ -251,8 +251,8 @@ class ImperativeSourceTests(unittest.TestCase):
         # Assert: the violation of the open sentence is the same, so the resources came from the correctable corpora only
         self.assertIn("be-participle-adj-not-gradable", without)
         self.assertEqual(without, with_source)
-        self.assertEqual(("ste", "imperative", "compound", "headings"), check_conventions.RESOURCE_EXEMPT)
-        self.assertEqual((("imperative", "-"), ("compound", "-"), ("headings", "-")), check_conventions.COLUMN_ORDER[-3:])
+        self.assertEqual(("ste", "imperative", "compound", "headings", "compound2", "headings2"), check_conventions.RESOURCE_EXEMPT)
+        self.assertEqual((("imperative", "-"), ("compound", "-"), ("headings", "-"), ("compound2", "-"), ("headings2", "-")), check_conventions.COLUMN_ORDER[-5:])
         self.assertIn(("imperative", "-"), corrections.LINT_ONLY_FILES)
         self.assertNotIn(("imperative", "-"), corrections.CORPUS_FILES)
 
@@ -276,6 +276,22 @@ class TargetedSourcesTests(unittest.TestCase):
             self.assertIn(source, check_conventions.RESOURCE_EXEMPT)
             self.assertEqual("%s/%s.tsv" % (source, source), corrections.LINT_ONLY_FILES[(source, "-")])
             self.assertNotIn((source, "-"), corrections.CORPUS_FILES)
+
+    def test_the_follow_up_sources_are_registered_like_the_old_ones_and_a_fix_tier_violation_fails_enforce(self):
+        files = {"compound2": "compound/compound-2.tsv", "headings2": "headings/headings-2.tsv"}
+        for source, relative in files.items():
+            self.assertIn((source, "-"), check_conventions.COLUMN_ORDER)
+            self.assertIn(source, check_conventions.RESOURCE_EXEMPT)
+            self.assertEqual(relative, corrections.LINT_ONLY_FILES[(source, "-")])
+            self.assertNotIn((source, "-"), corrections.CORPUS_FILES)
+        generated, _, _, _, _ = make_corrections.generate_all(self.data)
+        make_corrections.write_files(generated, self.data)
+        for source, relative in files.items():
+            common.write_text(os.path.join(self.data, *relative.split("/")), IMPERATIVE_VIOLATING.replace("imperative", source).rstrip("\n").split("\n"))
+            code, text = run(["--data-dir", self.data, "--apply", "--tier", "fix", "--enforce"])
+            self.assertEqual(1, code, source)
+            self.assertIn(source, text.splitlines()[0])
+            os.remove(os.path.join(self.data, *relative.split("/")))
 
     def test_a_fix_tier_violation_is_reported_in_the_column_of_the_source_and_fails_enforce(self):
         files, _, _, _, _ = make_corrections.generate_all(self.data)

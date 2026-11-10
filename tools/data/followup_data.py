@@ -113,6 +113,9 @@ OUTPUT = {"compound-head-2": ("eval/shapes-dev", "compound-head-2.tsv", "compoun
           "compound-2": ("compound", "compound-2.tsv", "compound-2-sources.tsv"),
           "headings-2-train": ("headings", "headings-2.tsv", "headings-2-sources.tsv")}
 EXCLUDED_OUT = {"compound-2": "compound-2-excluded-documents.tsv", "headings-2-train": "headings-2-excluded-documents.tsv"}
+# The two committed dev tranches: the follow-up filter leaves them out of its held-out keys so that a rebuild never sees its own earlier output
+# (a test pins the value to leakage.SHAPES_DEV_FOLLOWUP_TRANCHES; this module never imports `leakage`).
+FOLLOWUP_TRANCHES = ("compound-head-2", "headings-2")
 DROPPED_OUT = {"compound-2": "compound-2-dropped-sentences.tsv", "headings-2-train": "headings-2-dropped-sentences.tsv"}
 SENT_ID = {"compound-head-2": "shapes-dev-compound-head-2-%04d", "headings-2": "shapes-dev-headings-2-%04d", "compound-2": "compound2-%04d",
            "headings-2-train": "headings2-%04d"}
@@ -487,7 +490,7 @@ def scan_all(work, data_dir, unit, extra_tables=(), extra_text=(), include_ud=Tr
     """The `shapes_dev_extra.Scan` of the clean units of ALL new documents (both sides), with the index and the reference of the follow-up."""
     lex = lex or shapes_dev.lexicon_of(data_dir)
     vocab = vocab or shapes_dev.vocabulary_of(data_dir, lex)
-    filt = filt or shapes_dev.LeakageFilter(data_dir, include_ud, new_tranches=True)
+    filt = filt or shapes_dev.LeakageFilter(data_dir, include_ud, new_tranches=True, skip_tranches=FOLLOWUP_TRANCHES)
     reference = reference or Reference(data_dir, extra_text)
     return sx.scan_units(work, data_dir, unit, used_tables(data_dir, extra_tables), include_ud, filt=filt, reference=reference, vocab=vocab, lex=lex)
 
@@ -1444,7 +1447,7 @@ def _command_preflight(args):
     sides = read_partition(work, draft)
     lex = shapes_dev.lexicon_of(args.data_dir)
     vocab = shapes_dev.vocabulary_of(args.data_dir, lex)
-    filt = shapes_dev.LeakageFilter(args.data_dir, not args.no_ud, new_tranches=True)
+    filt = shapes_dev.LeakageFilter(args.data_dir, not args.no_ud, new_tranches=True, skip_tranches=FOLLOWUP_TRANCHES)
     reference = Reference(args.data_dir, args.extra_text or ())
     sentences = scan_all(work, args.data_dir, "sentence", args.extra_table or (), (), not args.no_ud, filt, reference, lex, vocab)
     headings = scan_all(work, args.data_dir, "heading", args.extra_table or (), (), not args.no_ud, filt, reference, lex, vocab)

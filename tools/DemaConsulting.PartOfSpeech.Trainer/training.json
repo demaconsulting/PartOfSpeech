@@ -53,6 +53,24 @@
       "minSilverProbability": 0,
       "samplePermille": 1000,
       "maxSentences": 0
+    },
+    {
+      "name": "compound2",
+      "path": "data/compound/compound-2.tsv",
+      "weight": 0,
+      "maskDisputed": false,
+      "minSilverProbability": 0,
+      "samplePermille": 1000,
+      "maxSentences": 0
+    },
+    {
+      "name": "headings2",
+      "path": "data/headings/headings-2.tsv",
+      "weight": 0,
+      "maskDisputed": false,
+      "minSilverProbability": 0,
+      "samplePermille": 1000,
+      "maxSentences": 0
     }
   ],
   "epochs": 6,

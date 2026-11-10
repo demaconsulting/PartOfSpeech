@@ -1219,6 +1219,11 @@ class NoModelTests(unittest.TestCase):
         self.assertNotIn("import leakage", source)
         self.assertNotIn("probe.tsv", source)
 
+    def test_the_filter_leaves_out_exactly_the_follow_up_tranches_that_leakage_names(self):
+        import leakage
+        self.assertEqual(leakage.SHAPES_DEV_FOLLOWUP_TRANCHES, fd.FOLLOWUP_TRANCHES)
+        self.assertEqual({fd.OUTPUT[p][1][:-4] for p in fd.PRODUCTS if fd.SIDE[p] == "dev"}, set(fd.FOLLOWUP_TRANCHES))
+
     def test_no_name_of_the_code_scores_or_predicts(self):
         tree = self.parsed()
         names = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)} | {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}

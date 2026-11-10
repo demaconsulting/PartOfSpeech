@@ -166,6 +166,21 @@ public domain under CC0 1.0, and the license basis of every document is quoted i
 `data/headings/sources.tsv`. Both sources are registered in the training configuration with weight 0: they are committed
 data, they are not part of the mix that trained the embedded weights, and the weights were not learned from them.
 
+The two follow-up tranches of that set (`compound-head-2.tsv` and `headings-2.tsv` in `data/eval/shapes-dev/`) and
+the two follow-up training sources (`data/compound/compound-2.tsv` and `data/headings/headings-2.tsv`) are cut from
+further US federal government documents of a pool of 416 (the tranches use 94 documents: 89 and 35, with 30 shared;
+the sources use 211: 209 and 59, with 57 shared): scans and electronic copies on the Internet Archive of Army, Navy,
+Marine Corps, Coast Guard, Air Force, Department of Agriculture, Forest Service, Bureau of Reclamation, Public Health
+Service, Department of the Interior, Bureau of Standards and other federal publications (17 U.S.C. 105). The record
+of every document names a federal body as its creator and no state, local, foreign, university, contractor or private
+creator, publisher or co-author, and no document has a distribution statement other than public release, a copyright
+notice or a third-party credit; nothing is in `data/eval/shapes-dev/excluded-sources.tsv`. The tranches are
+development data and the sources are training data registered with weight 0, so the embedded weights were not learned
+from them. The annotations and the selection are dedicated to the public domain under CC0 1.0, and the license basis
+of every document is quoted in `data/eval/shapes-dev/<tranche>-sources.tsv`, `data/compound/compound-2-sources.tsv`
+and `data/headings/headings-2-sources.tsv`. Numeric output of the WordSense Basic classifier (same owner, run
+unmodified) helped to choose the `compound-head-2` sentences; no WordSense text, label or data is copied.
+
 Language models wrote the tags, and no human has reviewed them. In the owner's position, GitHub claims no ownership of
 model outputs, so the repository owner, who prompted their creation, holds the rights in them and dedicates them to the
 public domain under CC0 1.0. That is the owner's position, not legal advice or a warranty.

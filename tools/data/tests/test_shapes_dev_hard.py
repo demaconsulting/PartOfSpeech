@@ -871,8 +871,11 @@ class RequiredFilesFailClosedTests(base.MiniFolder):
     STANDARD = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv", "masc/sources.tsv",
                 "eval/shapes-dev/dev.tsv", "imperative/sources.tsv", "compound/sources.tsv", "headings/sources.tsv",
                 "compound/compound.tsv", "headings/headings.tsv",
+                "compound/compound-2-sources.tsv", "headings/headings-2-sources.tsv", "compound/compound-2.tsv", "headings/headings-2.tsv",
                 "eval/shapes-dev/compound-head-sources.tsv", "eval/shapes-dev/headings-sources.tsv", "eval/shapes-dev/named-state-sources.tsv",
-                "eval/shapes-dev/compound-head.tsv", "eval/shapes-dev/headings.tsv", "eval/shapes-dev/named-state.tsv")
+                "eval/shapes-dev/compound-head.tsv", "eval/shapes-dev/headings.tsv", "eval/shapes-dev/named-state.tsv",
+                "eval/shapes-dev/compound-head-2-sources.tsv", "eval/shapes-dev/headings-2-sources.tsv",
+                "eval/shapes-dev/compound-head-2.tsv", "eval/shapes-dev/headings-2.tsv")
     HARD = ("eval/shapes-dev/hard-sources.tsv", "eval/shapes-dev/hard.tsv")
 
     def write_data(self):
@@ -882,13 +885,16 @@ class RequiredFilesFailClosedTests(base.MiniFolder):
                "https://example.gov/terms", "2026-11-01", "a" * 64, "b" * 64, "1"]
         for path in (os.path.join(self.data, "eval", "gold-v2", "sources.tsv"), os.path.join(self.data, "silver", "sources.tsv"),
                      os.path.join(self.data, "imperative", "sources.tsv"), os.path.join(self.data, "compound", "sources.tsv"),
-                     os.path.join(self.data, "headings", "sources.tsv"),
+                     os.path.join(self.data, "headings", "sources.tsv"), os.path.join(self.data, "compound", "compound-2-sources.tsv"),
+                     os.path.join(self.data, "headings", "headings-2-sources.tsv"),
                      os.path.join(folder, "sources.tsv"), os.path.join(folder, "hard-sources.tsv")) + tuple(
-                         os.path.join(folder, name + "-sources.tsv") for name in ("compound-head", "headings", "named-state")):
+                         os.path.join(folder, name + "-sources.tsv") for name in ("compound-head", "headings", "named-state", "compound-head-2", "headings-2")):
             base.table_file(path, sd.SOURCE_COLUMNS, [row])
         extra = [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]]
-        for name in ("dev.tsv", "hard.tsv", "compound-head.tsv", "headings.tsv", "named-state.tsv"):
+        for name in ("dev.tsv", "hard.tsv", "compound-head.tsv", "headings.tsv", "named-state.tsv", "compound-head-2.tsv", "headings-2.tsv"):
             base.corpus_file(os.path.join(folder, name), [("doc-a", "A brand new dev sentence about nothing in particular .")], extra)
+        for name in ("compound-2.tsv", "headings-2.tsv"):
+            base.corpus_file(os.path.join(self.data, name.split("-")[0], name), [("doc-a", "A brand new dev sentence about nothing in particular .")], extra)
         base.table_file(os.path.join(folder, "excluded-sources.tsv"), common.EXCLUDED_SOURCES_COLUMNS, [])
 
     def run_main(self, required=True):
@@ -938,6 +944,23 @@ class RequiredFilesFailClosedTests(base.MiniFolder):
         expected = sorted("missing required file: data/" + r for r in self.STANDARD + self.HARD)
         self.assertEqual(expected, self.missing(self.run_main(True)))
         self.assertEqual(sorted("missing required file: data/" + r for r in self.STANDARD), self.missing(self.run_main(False)))
+
+    def test_the_follow_up_tables_and_corpora_take_the_excluded_source_faa_and_license_checks(self):
+        for table in ("compound/compound-2-sources.tsv", "headings/headings-2-sources.tsv", "eval/shapes-dev/compound-head-2-sources.tsv",
+                      "eval/shapes-dev/headings-2-sources.tsv"):
+            self.assertIn(table, check_licenses.SOURCE_TABLES)
+            self.assertIn(table, check_licenses.FAA_TABLES)
+        for corpus in ("compound/compound-2.tsv", "headings/headings-2.tsv", "eval/shapes-dev/compound-head-2.tsv", "eval/shapes-dev/headings-2.tsv"):
+            self.assertIn(corpus, check_licenses.REQUIRED_FILES)
+        row = ["doc-a", "us-government", "T", "https://example.gov/doc-a", "A", "1990", "CC BY-SA 4.0", "https://example.gov/terms",
+               "2026-11-01", "a" * 64, "b" * 64, "1"]
+        base.table_file(os.path.join(self.data, "compound", "compound-2-sources.tsv"), sd.SOURCE_COLUMNS, [row])
+        base.table_file(os.path.join(self.data, "eval", "shapes-dev", "excluded-sources.tsv"), common.EXCLUDED_SOURCES_COLUMNS,
+                        [["doc-a", "https://example.gov/doc-a", "not public domain", "2026-11-06"]])
+        found = self.run_main(False)
+        self.assertTrue(any(f.startswith("compound/compound-2-sources.tsv: row mentions") for f in found), found)
+        self.assertTrue(any(f.startswith("compound/compound-2-sources.tsv: row doc-a uses the excluded source") for f in found), found)
+        self.assertTrue(any(f.startswith("compound/compound-2.tsv: sentences of doc-a use the excluded source") for f in found), found)
 
     def test_a_present_hard_table_is_scanned_even_while_the_tranche_is_optional(self):
         base.table_file(os.path.join(self.data, "eval", "shapes-dev", "hard-sources.tsv"), sd.SOURCE_COLUMNS,

@@ -10,7 +10,8 @@ The rules live in convention_rules.py and are shared with the generator of the s
 `fix` rule is reported here exactly while its proposal has not been applied, and a `check` rule is reported until a correction
 row or an exceptions.tsv entry resolves it. The STE challenge set is evaluation-only and never corrected: it is linted and
 shown in its own column, and it does not count for the exit code of `--enforce`. The imperative, compound and headings training
-sources (data/imperative/imperative.tsv, data/compound/compound.tsv, data/headings/headings.tsv) are linted and shown in their
+sources (data/imperative/imperative.tsv, data/compound/compound.tsv, data/headings/headings.tsv) and the follow-up sources `compound2` and
+`headings2` (data/compound/compound-2.tsv, data/headings/headings-2.tsv) are linted and shown in their
 own columns too, but they are never corrected, they do not feed the corpus resources of the participle rules, and they DO count
 for `--enforce` (their fix tier must stay at zero).
 """
@@ -27,8 +28,8 @@ import corrections
 Violation = collections.namedtuple("Violation", "rule tier source split source_id sent_id index token tag new_tag context")
 
 COLUMN_ORDER = (("open", "train"), ("open", "dev"), ("open", "test"), ("masc", "-"), ("silver", "-"), ("ste", "-"), ("imperative", "-"),
-                ("compound", "-"), ("headings", "-"))
-RESOURCE_EXEMPT = ("ste", "imperative", "compound", "headings")   # linted only: these sources do not feed the corpus resources of the rules
+                ("compound", "-"), ("headings", "-"), ("compound2", "-"), ("headings2", "-"))
+RESOURCE_EXEMPT = ("ste", "imperative", "compound", "headings", "compound2", "headings2")   # linted only: these sources do not feed the corpus resources of the rules
 
 
 def load_sentences(data_dir=None, apply_overlay=False):
@@ -144,7 +145,7 @@ def main(argv=None):
     parser.add_argument("--data-dir", default=None, help="data folder (default: the repository's data/)")
     parser.add_argument("--enforce", action="store_true", help="exit code 1 when a violation is left (STE not counted)")
     parser.add_argument("--apply", action="store_true", help="lint the corpora as they would be after the staged corrections")
-    parser.add_argument("--source", choices=("open", "masc", "silver", "ste", "imperative", "compound", "headings"), default=None, help="report only this source")
+    parser.add_argument("--source", choices=("open", "masc", "silver", "ste", "imperative", "compound", "headings", "compound2", "headings2"), default=None, help="report only this source")
     parser.add_argument("--split", choices=("train", "dev", "test"), default=None, help="report only this split (open)")
     parser.add_argument("--tier", choices=("fix", "check", "all"), default="all")
     parser.add_argument("--rule", action="append", default=None, help="only this rule id (repeatable)")

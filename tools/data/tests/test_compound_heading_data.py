@@ -849,32 +849,49 @@ class TrainingLeakageGateTests(unittest.TestCase):
             return check_leakage.check(False)
 
     def test_a_near_duplicate_of_a_new_source_fails_and_one_of_the_older_sources_is_only_reported(self):
-        for label in ("compound", "headings", "imperative"):
+        for label in ("compound", "headings", "imperative", "compound2", "headings2"):
             rows, failures, _ = self.run_check(label, self.NEAR)
             self.assertEqual([(label, "eval-set", 1, 0, 0, 1)], rows)
             self.assertEqual(1, failures, label)
         for label in ("open-train", "masc", "silver"):
             self.assertEqual(0, self.run_check(label, self.NEAR)[1], label)
-        self.assertEqual(("imperative", "compound", "headings"), check_leakage.NEAR_GATED_TRAINING)
+        self.assertEqual(("imperative", "compound", "headings", "compound2", "headings2"), check_leakage.NEAR_GATED_TRAINING)
 
-    def test_the_training_files_include_the_two_new_sources(self):
-        self.assertEqual(["open-train", "masc", "silver", "imperative", "compound", "headings"], [label for label, _ in check_leakage.TRAINING_FILES])
-        self.assertEqual(("compound", "headings"), check_leakage.NEW_TRAINING)
+    def test_the_training_files_include_the_new_sources(self):
+        self.assertEqual(["open-train", "masc", "silver", "imperative", "compound", "headings", "compound2", "headings2"],
+                         [label for label, _ in check_leakage.TRAINING_FILES])
+        self.assertEqual(("compound/compound-2.tsv", "headings/headings-2.tsv"),
+                         tuple("/".join(parts) for label, parts in check_leakage.TRAINING_FILES if label in ("compound2", "headings2")))
+        self.assertEqual(("compound", "headings", "compound2", "headings2"), check_leakage.NEW_TRAINING)
+        self.assertEqual({frozenset(("compound", "headings")), frozenset(("compound2", "headings2"))}, set(check_leakage.SHARED_POOL_PAIRS))
 
     def trains(self, **changes):
         sets = {"open-train": [("open-1", "Open the door before the long flight starts today")], "masc": [("masc-1", "Masc sentence one is here")],
                 "silver": [("silver-1", "Silver sentence one is here")], "imperative": [("imp-1", "Inspect the seal before each flight")],
-                "compound": [("army-a", "Fuel tank seal check"), ("army-b", "Oil level reading")], "headings": [("army-a", "Pump Seal Inspection")]}
+                "compound": [("army-a", "Fuel tank seal check"), ("army-b", "Oil level reading")], "headings": [("army-a", "Pump Seal Inspection")],
+                "compound2": [("navy-a", "Hydraulic line pressure test")], "headings2": [("navy-a", "Drain The Hydraulic Line")]}
         sets.update(changes)
         return sets
 
     def test_each_new_source_is_compared_with_every_other_training_set_and_the_pair_once(self):
         rows, failures = check_leakage.training_check(self.trains())
-        self.assertEqual([("compound", "open-train"), ("compound", "masc"), ("compound", "silver"), ("compound", "imperative"), ("compound", "headings"),
-                          ("headings", "open-train"), ("headings", "masc"), ("headings", "silver"), ("headings", "imperative")], [row[:2] for row in rows])
+        others = ["open-train", "masc", "silver", "imperative"]
+        self.assertEqual([("compound", other) for other in others + ["headings", "compound2", "headings2"]]
+                         + [("headings", other) for other in others + ["compound2", "headings2"]]
+                         + [("compound2", other) for other in others + ["headings2"]]
+                         + [("headings2", other) for other in others], [row[:2] for row in rows])
         self.assertEqual(0, failures)
         shared = [row for row in rows if row[:2] == ("compound", "headings")][0]
         self.assertEqual(1, shared[4])                                                   # the shared document is counted but is not a failure
+        rows, failures = check_leakage.training_check(self.trains(headings2=[("navy-a", "Drain The Hydraulic Line"), ("navy-b", "Fill The Reservoir")]))
+        self.assertEqual(0, failures)                                                    # compound2 and headings2 share a document: reported, not gated
+        self.assertEqual(1, [row for row in rows if row[:2] == ("compound2", "headings2")][0][4])
+
+    def test_the_follow_up_sources_share_no_document_with_the_old_sources_or_any_other_training_set(self):
+        for label, document, expected in (("compound2", "army-a", 2), ("headings2", "army-a", 2), ("compound2", "silver-1", 1), ("headings2", "imp-1", 1)):
+            with self.subTest(new=label, document=document):
+                rows, failures = check_leakage.training_check(self.trains(**{label: [(document, "A fresh sentence about nothing in particular")]}))
+                self.assertEqual(expected, failures)
 
     def test_a_shared_document_or_an_exact_sentence_with_another_training_set_fails(self):
         rows, failures = check_leakage.training_check(self.trains(masc=[("army-b", "Another sentence")]))

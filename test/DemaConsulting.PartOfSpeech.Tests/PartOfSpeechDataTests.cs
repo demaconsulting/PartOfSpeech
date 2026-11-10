@@ -172,6 +172,16 @@ public class PartOfSpeechDataTests
     private const string HeadingsSources = HeadingsFolder + "/sources.tsv";
 
     /// <summary>
+    ///     The corpus file of the second compound-head training source (<c>compound2</c>), relative to the data folder.
+    /// </summary>
+    private const string Compound2Corpus = CompoundFolder + "/compound-2.tsv";
+
+    /// <summary>
+    ///     The corpus file of the second headings training source (<c>headings2</c>), relative to the data folder.
+    /// </summary>
+    private const string Headings2Corpus = HeadingsFolder + "/headings-2.tsv";
+
+    /// <summary>
     ///     The fewest and the most sentences of the compound-head training source.
     /// </summary>
     private const int CompoundMinSentences = 600;
@@ -287,7 +297,10 @@ public class PartOfSpeechDataTests
     /// <summary>
     ///     The training corpora, relative to the data folder.
     /// </summary>
-    private static readonly string[] TrainingCorpora = { "open/train.tsv", "masc/masc.tsv", "silver/silver.tsv", ImperativeCorpus, CompoundCorpus, HeadingsCorpus };
+    private static readonly string[] TrainingCorpora =
+    {
+        "open/train.tsv", "masc/masc.tsv", "silver/silver.tsv", ImperativeCorpus, CompoundCorpus, HeadingsCorpus, Compound2Corpus, Headings2Corpus
+    };
 
     /// <summary>
     ///     The token-level evaluation corpora, relative to the data folder.
@@ -1318,14 +1331,15 @@ public class PartOfSpeechDataTests
         var trainingSets = rows.Select(row => row[0]).Distinct().OrderBy(name => name, StringComparer.Ordinal).ToList();
 
         // Assert: every training set is reported against every evaluation set, and no pair overlaps
-        Assert.Equal(new[] { "compound", "headings", "imperative", "masc", "open-train", "silver" }, trainingSets);
+        Assert.Equal(new[] { "compound", "compound2", "headings", "headings2", "imperative", "masc", "open-train", "silver" }, trainingSets);
         foreach (var training in trainingSets)
         {
             var evaluationSets = rows.Where(row => row[0] == training).Select(row => row[1]).Distinct(StringComparer.Ordinal);
             var expected = new[]
             {
-                "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-compound-head", "shapes-dev-hard", "shapes-dev-headings",
-                "shapes-dev-named-state", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train"
+                "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-compound-head", "shapes-dev-compound-head-2", "shapes-dev-hard",
+                "shapes-dev-headings", "shapes-dev-headings-2", "shapes-dev-named-state", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test",
+                "ud-ewt-train"
             };
             Assert.Empty(expected.Except(evaluationSets));
         }
@@ -2376,6 +2390,7 @@ public class PartOfSpeechDataTests
             var others = ShapesDevNewTranches.Where(other => other.Name != tranche.Name).Select(other => "shapes-dev-" + other.Name).ToList();
             var expected = new[] { "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-hard", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train" }
                 .Concat(others)
+                .Concat(new[] { "shapes-dev-compound-head-2", "shapes-dev-headings-2" })
                 .OrderBy(name => name, StringComparer.Ordinal)
                 .ToList();
             var sentenceCount = ShapesDevNewItems(tranche).Count.ToString(CultureInfo.InvariantCulture);
@@ -2666,8 +2681,9 @@ public class PartOfSpeechDataTests
             .ToList();
         var expected = new[]
         {
-            "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-compound-head", "shapes-dev-hard", "shapes-dev-headings",
-            "shapes-dev-named-state", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train"
+            "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-compound-head", "shapes-dev-compound-head-2", "shapes-dev-hard",
+            "shapes-dev-headings", "shapes-dev-headings-2", "shapes-dev-named-state", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test",
+            "ud-ewt-train"
         };
 
         // Act: find the sets that the report misses and the rows that report an overlap or a near duplicate
@@ -3043,6 +3059,8 @@ public class PartOfSpeechDataTests
     [Theory]
     [InlineData("compound")]
     [InlineData("headings")]
+    [InlineData("compound2")]
+    [InlineData("headings2")]
     public void PartOfSpeech_TargetedSources_LeakageReport_RecordsNoOverlapWithAnyEvaluationSet(string source)
     {
         // Arrange: the rows of the report that name the source (training set, evaluation set, sentences, documents, exact, near)
@@ -3053,8 +3071,9 @@ public class PartOfSpeechDataTests
             .ToList();
         var expected = new[]
         {
-            "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-compound-head", "shapes-dev-hard", "shapes-dev-headings",
-            "shapes-dev-named-state", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test", "ud-ewt-train"
+            "gold-v2", "open-dev", "open-test", "shapes-dev", "shapes-dev-compound-head", "shapes-dev-compound-head-2", "shapes-dev-hard",
+            "shapes-dev-headings", "shapes-dev-headings-2", "shapes-dev-named-state", "shapes-probe", "ste-challenge", "ud-ewt-dev", "ud-ewt-test",
+            "ud-ewt-train"
         };
 
         // Act: find the rows that report an overlap or a near duplicate
@@ -3069,8 +3088,9 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
-    ///     Proves that the committed training leakage report compares the compound-head and the headings source with every other training set
-    ///     (the pair of the two once) and records no exact sentence overlap and no shared document with the older sources; the two new sources
+    ///     Proves that the committed training leakage report compares the compound-head and the headings sources (the old and the follow-up
+    ///     ones) with every other training set (each pair once) and records no exact sentence overlap, no near duplicate and no shared document
+    ///     except between the two sources of one pool (<c>compound</c> with <c>headings</c>, <c>compound2</c> with <c>headings2</c>), which
     ///     share documents by design.
     /// </summary>
     [Fact]
@@ -3083,17 +3103,24 @@ public class PartOfSpeechDataTests
             .ToList();
         var expected = new[]
         {
-            "compound/headings", "compound/imperative", "compound/masc", "compound/open-train", "compound/silver",
-            "headings/imperative", "headings/masc", "headings/open-train", "headings/silver"
+            "compound/compound2", "compound/headings", "compound/headings2", "compound/imperative", "compound/masc", "compound/open-train",
+            "compound/silver", "compound2/headings2", "compound2/imperative", "compound2/masc", "compound2/open-train", "compound2/silver",
+            "headings/compound2", "headings/headings2", "headings/imperative", "headings/masc", "headings/open-train", "headings/silver",
+            "headings2/imperative", "headings2/masc", "headings2/open-train", "headings2/silver"
         };
+        var sharedPools = new[] { "compound/headings", "compound2/headings2" };
 
-        // Act: find the pairs with an exact sentence overlap, a near duplicate or a shared document with an older source
-        var overlaps = rows.Where(row => row[5] != "0" || row[6] != "0" || (row[1] != "headings" && row[4] != "0")).Select(row => row[0] + "/" + row[1]).ToList();
+        // Act: find the pairs with an exact sentence overlap, a near duplicate or a shared document outside the two pools
+        var overlaps = rows
+            .Where(row => row[5] != "0" || row[6] != "0" || (Array.IndexOf(sharedPools, row[0] + "/" + row[1]) < 0 && row[4] != "0"))
+            .Select(row => row[0] + "/" + row[1])
+            .ToList();
 
-        // Assert: every pair is reported once with seven columns, the pool is shared and nothing else overlaps
+        // Assert: every pair is reported once with seven columns, each pool is shared and nothing else overlaps
         Assert.All(rows, row => Assert.Equal(7, row.Length));
         Assert.Equal(expected, rows.Select(row => row[0] + "/" + row[1]).OrderBy(name => name, StringComparer.Ordinal));
         Assert.NotEqual("0", rows.Single(row => row[0] == "compound" && row[1] == "headings")[4]);
+        Assert.NotEqual("0", rows.Single(row => row[0] == "compound2" && row[1] == "headings2")[4]);
         Assert.Empty(overlaps);
     }
 
