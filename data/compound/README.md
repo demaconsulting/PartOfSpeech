@@ -208,6 +208,7 @@ lexicon misses is allowed, so these pairs do not block training.
 ## Use
 
 Train only. `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` lists the source as `compound` with `"weight": 0` (committed, not part of
-the shipped mix; `train --check` reproduces the shipped weights); `--source compound:1` adds it to a training run. The trainer refuses the
+the shipped mix; `train --check` reproduces the shipped weights); `--source compound:1` adds it to a training run (the trainer run log, section
+"Compound and heading training data: results", has the measured effect of the source at weight 1). The trainer refuses the
 evaluation files by name and admits this file because it is a training source under `data/`. Do not evaluate on it: its sentences are selected
 by a frame and labeled by models, so a score on them says nothing about held-out text.

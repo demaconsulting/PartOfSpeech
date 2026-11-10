@@ -160,7 +160,8 @@ counts, the feature groups of every arm, the frozen development files), prints a
 harmful per 1,000 decisions on the compound-head and the headings tranche), the co-primary (answers wrong at confidence 0.95 or
 more), every guard and the verdict, and applies the selection rule; it takes only `welch_diff` from `analyze_arms.py` and checks
 its own logic on synthetic runs with `--selftest`. The files are frozen by the hashes in the run log ("Compound and heading
-training data: pre-registered retrain"). `eval-arm` writes the tranches of this experiment under `shapesNew`.
+training data: pre-registered retrain"); the results and the decision (the rule selected no arm; the sources stay at weight 0)
+are in the section "Compound and heading training data: results". `eval-arm` writes the tranches of this experiment under `shapesNew`.
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/run_arms.ps1 -Out <runs> -Arms CMP -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd

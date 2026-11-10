@@ -4530,6 +4530,163 @@ SHA-256 of the files as committed (line endings LF; `runner-base.cmd` is checked
 (The paths of the first five rows are relative to `tools/DemaConsulting.PartOfSpeech.Trainer/`.) `analyze_compound_heading.py --selftest` passes. The trainer commit that produced each result is recorded in its JSON (`inputs.commit`, with the dirty flag), and the folders of the runs lie outside
 the repository; their files are not part of the review set.
 
+## Compound and heading training data: results (decision: BASE stays)
+
+Written after the 20 runs and the analysis of the pre-registration commit `9377ff933e9aeda4be99b04a97b44e7eabb7a58e` (C4). The tree was clean and HEAD was C4 when the first run started and when the analysis ran;
+every result file records `inputs.commit` = `9377ff9...` with `dirty` = false. Four arms, five seeds each (20260101, 11, 12, 13, 14), 20 runs, on 2026-11-10; the commands were exactly those of the pre-registration (the frozen driver
+`run_arms.ps1` with `runner-base.cmd`, one invocation per arm, in the registered order BASE, CMP, CMP-HDG, CMP-HDG-F5). No run was repeated, replaced or dropped, and no frozen file was edited. The frozen `analyze_compound_heading.py` was applied
+to the 20 result files and the selection rule was applied mechanically. **No held-out set was read and no held-out command (`evaluate`, `thresholds`, `train --update-config`) was run.** No weights, operating points or README accuracy table changed.
+
+### Retrain results: order of the commits
+
+| Step | Commit | What it contains |
+| --- | --- | --- |
+| C1 | `e776f5693739900d91e63fd2a12451da1f4ba90b` | the builder, its tests and the selection rule, before any label existed |
+| C2 | `7e82e2d75e676aae2477d46131159b24cdd5673c` | the labeled data and their registration at weight 0 |
+| C3 | `9a6d10b4e7519c36bbd6c42a728f3858214a818e` | the feature group F5 (`titleCaseLine`, off by default) and the `shapesNew` block of `eval-arm` |
+| C4 | `9377ff933e9aeda4be99b04a97b44e7eabb7a58e` | the pre-registration: arms, driver, analysis script, metrics, guards, selection rule |
+| **C5** | this commit | this results section and the documents of the outcome (the SHA is recorded by the pull request, because a commit cannot contain its own SHA) |
+
+### Retrain results: acceptance tests (all passed; the analysis made a selection only after them)
+
+All checks of the pre-registration passed. (a) The BASE run at seed 20260101 has weights SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b`, equal to the shipped `weights.bin` (file and result field, byte identical), and the figures of the shipped model
+(compound-head 60.0% with 39 harmful of 100 decisions and 5 wrong at >= 0.95; headings 84.2% with 4 of 78 and 2; named-state 90.0% with 3 of 37; pooled primary 241.57 per 1k and 7 wrong at >= 0.95; hard tranche 170.0, standard 15.0; open dev 91 harmful of 4,451; UD-EWT dev 94 of 4,570).
+(b) Every BASE run trained on 61,680 sentences with the sources `open:2,masc:1,silver:1,imperative:1`; every CMP run on exactly 742 more sentences (`compound:1`); every CMP-HDG and CMP-HDG-F5 run on exactly 1,117 more (`compound:1,headings:1`).
+(c) The eight `inputs.*Sha256` fields agree in all 20 runs and equal the frozen hashes, and the frozen files have their frozen SHA-256.
+
+### Results: the arms
+
+Values are the mean ± sample standard deviation over the five seeds; the baseline is BASE. Primary = pooled harmful per 1,000 noun-verb decisions over `n-compound-head-ambiguous` (100 decisions) and `heading-titlecase` (78 decisions); co-primary = wrong at confidence >= 0.95 summed over the two tranches.
+
+| Arm | Feature groups | Sources added | Primary | Co-primary (wrong at >= 0.95) | Pooled target accuracy % |
+| --- | --- | --- | ---: | ---: | ---: |
+| BASE | `clauseCues` | none | 239.33 ± 10.21 | 6.80 ± 1.48 | 71.08 ± 1.18 |
+| CMP | `clauseCues` | compound | 221.35 ± 21.61 | 4.80 ± 1.48 | 73.33 ± 1.78 |
+| CMP-HDG | `clauseCues` | compound, headings | 237.08 ± 20.79 | 4.80 ± 1.92 | 73.64 ± 1.94 |
+| CMP-HDG-F5 | `clauseCues`, `titleCaseLine` | compound, headings | 243.82 ± 18.89 | 3.00 ± 2.00 | 74.15 ± 1.94 |
+
+Per tranche (target accuracy %, harmful per 1k, wrong at >= 0.95, control accuracy %; the controls are 100.0% in every arm):
+
+| Arm | Compound-head: acc | harmful | wrong >= 0.95 | Headings: acc | harmful | wrong >= 0.95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 59.8 ± 0.8 | 392.0 ± 8.4 | 5.20 ± 1.48 | 82.9 ± 1.7 | 43.6 ± 14.6 | 1.60 ± 0.55 |
+| CMP | 63.2 ± 3.9 | 360.0 ± 36.7 | 3.80 ± 1.30 | 84.0 ± 1.6 | 43.6 ± 14.6 | 1.00 ± 0.71 |
+| CMP-HDG | 61.8 ± 3.0 | 374.0 ± 27.0 | 4.20 ± 1.92 | 86.1 ± 1.4 | 61.5 ± 16.7 | 0.60 ± 0.55 |
+| CMP-HDG-F5 | 64.6 ± 3.4 | 344.0 ± 33.6 | 3.00 ± 2.00 | 84.2 ± 0.7 | 115.4 ± 0.0 | 0.00 ± 0.00 |
+
+Heading kinds (diagnostics, not gated; the heading tranche has 45 initial-imperative targets of 95, and the proper-noun controls are 100.0% in every arm):
+
+| Arm | Noun: acc | harmful per 1k | wrong >= 0.95 | Imperative: acc | harmful per 1k | wrong >= 0.95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 75.6 ± 3.3 | 28.0 ± 17.9 | 1.60 ± 0.55 | 91.1 ± 1.6 | 71.4 ± 25.3 | 0.00 |
+| CMP | 77.2 ± 1.1 | 24.0 ± 8.9 | 1.00 ± 0.71 | 91.6 ± 2.4 | 78.6 ± 29.9 | 0.00 |
+| CMP-HDG | 83.2 ± 1.1 | 28.0 ± 11.0 | 0.60 ± 0.55 | 89.3 ± 2.9 | 121.4 ± 54.2 | 0.00 |
+| CMP-HDG-F5 | 89.2 ± 2.3 | 40.0 ± 0.0 | 0.00 | 78.7 ± 2.5 | 250.0 ± 0.0 | 0.00 |
+
+Per-seed values (primary / wrong at >= 0.95):
+
+| Arm | 20260101 | 11 | 12 | 13 | 14 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| BASE | 241.6 / 7 | 224.7 / 9 | 236.0 / 5 | 252.8 / 7 | 241.6 / 6 |
+| CMP | 258.4 / 7 | 219.1 / 5 | 213.5 / 5 | 213.5 / 4 | 202.2 / 3 |
+| CMP-HDG | 230.3 / 2 | 269.7 / 6 | 230.3 / 7 | 241.6 / 4 | 213.5 / 5 |
+| CMP-HDG-F5 | 264.0 / 4 | 264.0 / 2 | 230.3 / 1 | 224.7 / 2 | 236.0 / 6 |
+
+### Results: guards against BASE
+
+Each cell is the arm's delta against the BASE mean and the verdict (BASE: hard harmful 179.0, standard harmful 13.3, open dev harmful 20.09, UD-EWT dev harmful 20.74, UD-EWT dev accuracy 92.99, named-state target accuracy 92.2, deflated 522,272 bytes).
+Every arm passes every guard and the co-primary.
+
+| Guard (limit) | CMP | CMP-HDG | CMP-HDG-F5 |
+| --- | --- | --- | --- |
+| wrong at >= 0.95 (<= BASE) | PASS -2.00 | PASS -2.00 | PASS -3.80 |
+| hard harmful per 1k (<= BASE + 10) | PASS -9.50 | PASS -13.00 | PASS -13.00 |
+| standard harmful per 1k (<= BASE + 5) | PASS +0.67 | PASS -0.67 | PASS -2.67 |
+| open dev harmful per 1k (<= BASE + 1.5) | PASS +0.49 | PASS -0.04 | PASS -0.58 |
+| UD-EWT dev harmful per 1k (<= BASE + 1.5) | PASS -1.01 | PASS -0.88 | PASS -0.53 |
+| UD-EWT dev accuracy (>= BASE - 0.15) | PASS -0.03 | PASS +0.02 | PASS -0.05 |
+| named-state target accuracy (>= BASE - 3) | PASS +1.60 | PASS +2.80 | PASS +0.80 |
+| deflated bytes (<= 1.5 x BASE) | PASS 1.011x | PASS 1.016x | PASS 1.043x |
+| tokens per second (>= 150,000, absolute) | PASS 789,206 | PASS 765,740 | PASS 753,145 |
+
+Reported, not gated (open dev, gold v2 dev, model and training):
+
+| Arm | Open acc % | Open harmful per 1k | Open NLL | Open ECE % | Gold acc % | Gold harmful per 1k | Temperature | Rows | Raw bytes | Train s |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 96.67 ± 0.06 | 20.09 ± 1.39 | 0.1117 ± 0.0005 | 0.25 ± 0.02 | 95.15 ± 0.10 | 22.3 ± 0.9 | 9.392 ± 0.112 | 122,214 ± 264 | 1,158,701 ± 2,142 | 11.1 ± 0.1 |
+| CMP | 96.67 ± 0.02 | 20.58 ± 1.10 | 0.1109 ± 0.0003 | 0.21 ± 0.02 | 95.17 ± 0.10 | 19.0 ± 4.4 | 9.514 ± 0.000 | 123,546 ± 155 | 1,172,423 ± 760 | 11.1 ± 0.1 |
+| CMP-HDG | 96.71 ± 0.06 | 20.04 ± 0.93 | 0.1109 ± 0.0009 | 0.30 ± 0.08 | 95.20 ± 0.08 | 20.3 ± 1.5 | 9.432 ± 0.112 | 124,319 ± 186 | 1,179,160 ± 1,815 | 11.2 ± 0.2 |
+| CMP-HDG-F5 | 96.73 ± 0.03 | 19.50 ± 1.14 | 0.1110 ± 0.0004 | 0.23 ± 0.04 | 95.15 ± 0.07 | 21.6 ± 2.9 | 10.241 ± 0.122 | 126,183 ± 257 | 1,204,322 ± 2,568 | 11.3 ± 0.1 |
+
+Hard and standard tranche accuracy (reported): hard 76.50, 77.30, 79.10, 78.50 and standard 97.73, 97.80, 97.93, 98.27 for BASE, CMP, CMP-HDG and CMP-HDG-F5. Named-state wrong at >= 0.95: 0.60, 0.00, 0.20 and 0.20 in the same order.
+The training times and the single-thread throughput were measured on a loaded shared machine at Normal priority (the deviation record of the pre-registration); the training times do not separate the arms.
+
+### Results: Welch 95% intervals of (arm - BASE)
+
+Difference of the means with the Welch-Satterthwaite t interval over the seeds (seeds measure training noise only). The primary is the only interval the rule uses; the others are reported, and with eight measures for each of three arms
+an interval that excludes 0 in one cell is not evidence by itself.
+
+| Arm | Primary | Wrong at >= 0.95 | Hard harmful | Standard harmful | Open dev harmful | UD-EWT dev harmful | UD-EWT dev accuracy | Named-state accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CMP | -17.98 [-44.47, +8.52] | -2.00 [-4.16, +0.16] | -9.50 [-20.84, +1.84] | +0.67 [-3.79, +5.12] | +0.49 [-1.35, +2.34] | -1.01 [-1.48, -0.53] | -0.03 [-0.07, +0.01] | +1.60 [-1.05, +4.25] |
+| CMP-HDG | -2.25 [-27.78, +23.29] | -2.00 [-4.53, +0.53] | -13.00 [-23.19, -2.81] | -0.67 [-5.00, +3.67] | -0.04 [-1.82, +1.73] | -0.88 [-1.79, +0.04] | +0.02 [-0.06, +0.10] | +2.80 [+0.30, +5.30] |
+| CMP-HDG-F5 | +4.49 [-18.86, +27.84] | -3.80 [-6.41, -1.19] | -13.00 [-29.64, +3.64] | -2.67 [-8.20, +2.86] | -0.58 [-2.45, +1.28] | -0.53 [-1.60, +0.55] | -0.05 [-0.11, +0.01] | +0.80 [-1.76, +3.36] |
+
+Pairwise contrasts (reported, not gated): CMP-HDG minus CMP on the primary +15.73 [-15.21, +46.67] and on wrong at >= 0.95 +0.00 [-2.53, +2.53];
+CMP-HDG-F5 minus CMP-HDG on the primary +6.74 [-22.27, +35.76] and on wrong at >= 0.95 -1.80 [-4.66, +1.06]. The effect of the headings source (CMP-HDG against CMP) and of F5 (CMP-HDG-F5 against CMP-HDG) on the primary is therefore
+not separable from training noise either, and the sign of both point estimates is toward more harm.
+
+### Decision: BASE stays
+
+The rule of the pre-registration, applied step by step:
+
+1. Primary = the five-seed mean (table above).
+2. Guards and the co-primary against the BASE mean: all three arms pass all nine.
+3. Q = {CMP, CMP-HDG, CMP-HDG-F5}; Q is not empty.
+4. m = the lowest primary in Q = CMP (221.35); S = the arms of Q with primary <= 1.10 x m = 243.48: CMP and CMP-HDG (CMP-HDG-F5 at 243.82 is just outside).
+5. Candidate = the arm of S with the fewest additions = CMP (1 source).
+6. Welch 95% interval of (CMP - BASE) on the primary: -17.98 [-44.47, +8.52], df 5.70, p 0.146. The upper bound is not below 0, so CMP does not win; there is no fallback to another arm.
+
+**BASE stays and nothing ships.** The shipped model, its operating points, the confidence-threshold document and the README accuracy tables are unchanged, and no held-out command was run. The two data sources stay in the repository at weight 0
+(they are not in the shipped mix and `train --check` reproduces the shipped image `6e1e4ade...`), and F5 stays in the code as a group that is off in the shipped model; the model trained without it is byte-identical to the one trained before F5 existed.
+
+| File | SHA-256 |
+| --- | --- |
+| `report.md` (the analysis; 16,403 bytes) | `147a2a9868f4b90183beb768522b39aa6596e2d9a0677f0e35cf83779c237a0b` |
+| `decision.json` (per-arm values, intervals, guards, decision; 12,845 bytes) | `1df109994fd35504b0454f5071ed5cafa2282d8fb2449404aea9663f3bfddb25` |
+
+Both files lie outside the repository next to the run folders. The command was:
+
+```text
+python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py --runs <runs> --out report.md --decision decision.json
+```
+
+### Reading of the result (what can and cannot be said)
+
+- **What the figures show.** All three arms lower the number of answers wrong at confidence >= 0.95 against BASE (the point estimates are the co-primary column; the interval of CMP-HDG-F5, -3.80 [-6.41, -1.19], excludes 0, those of CMP and CMP-HDG do not),
+  and every arm passes every guard. The point estimate of the primary is lower for CMP and CMP-HDG and higher for CMP-HDG-F5, and none of the three intervals excludes 0. The data are therefore **not shown to help** on the primary measure, and also not shown to hurt anywhere that is guarded.
+- **What the figures cannot show.** The seeds measure training noise only, not the choice of the 178 development decisions: the compound tranche has 100 noun-verb decisions and the heading tranche 78, so one decision moves the pooled primary by 5.6 per 1,000.
+  The sample of seeds is five per arm, which gives the wide intervals above. The tranches are the frames the data were built to target, so a gain would have been development evidence only, and the experiment gives no evidence of the effect on text that is not of these frames.
+- **A trade that the aggregate hides.** The `headings` source holds 8 initial-imperative lines of 375, and the heading-imperative diagnostic worsens as the heading data and F5 are added (imperative harmful per 1k 71.4 in BASE, 121.4 in CMP-HDG, 250.0 in CMP-HDG-F5; imperative accuracy 91.1, 89.3, 78.7)
+  while the noun-heading accuracy improves (75.6, 83.2, 89.2). A plausible reading, not tested here, is that the model learns that a capitalized word in a Title Case line is mostly a noun, which helps the noun headings and costs the initial imperatives, for which the source has almost no examples. F5 lowers the confident errors (3.00) but raises the temperature of the calibrated model (10.24 against 9.43) and the harmful rate on the heading tranche
+  (115.4 per 1k against 61.5 and 43.6 for the arms without it), so the confidence of its answers is lower. The aggregate primary averages these effects.
+- **No winner is a statement about this data and this rule,** not about the idea: the rule asked for an interval entirely below 0 on a small development measure, and the best arm, CMP, has an upper bound of +8.52.
+
+### Deviations of the whole experiment (all disclosed above and in the earlier sections)
+
+- 7 documents were removed from both sources after the labels were decided, because their author field lists a state or local government body (compound 800 to 742 sentences, headings 408 to 375 lines); the builder option `--omit-document` removes without adding anything, and the 5 hand-checked items of those documents were all judged correct.
+- The heading floors were waived by the pre-registered `--allow-short`: the imperative stratum has 8 lines of the floor 100 (the labelers read 346 of 356 initial-imperative candidates as nouns, adjectives or proper nouns and the class rule dropped them).
+- The hand check of the headings source holds 48 items instead of 60 because the imperative stratum has only 8 lines.
+- Normal process priority for the runs (the owner's allowance, recorded in the pre-registration).
+- No held-out look: the held-out sets were never used by this experiment, so it adds no entry to the list of looks.
+
+### Open questions and possible follow-ups
+
+- **More initial-imperative heading data.** A source with real initial imperatives in Title Case headings (step titles, procedure headings) would test whether the loss in the imperative diagnostic is a property of the thin stratum. It needs a candidate rule that does not rely on the first word being read as a noun by the labelers.
+- **A larger paired tranche.** A development tranche with several hundred compound and heading decisions would shrink the intervals; the 178 decisions cannot separate effects of about 10% from noise.
+- **A later mix decision.** The data stay at weight 0 and the arms are reproducible from the pre-registration commit (`--source compound:1 --source headings:1`); the choice to include a source in the shipped mix can be taken later on a larger measure, with a new pre-registration.
+- **F5 on its own.** F5 with the compound data only (not run here) would separate its effect from that of the headings source.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

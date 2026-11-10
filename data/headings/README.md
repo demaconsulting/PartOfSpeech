@@ -220,6 +220,7 @@ Of the 53 unlisted pairs, 29 are spellings that the lexicon does not contain at 
 ## Use
 
 Train only. `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` lists the source as `headings` with `"weight": 0` (committed, not part of
-the shipped mix; `train --check` reproduces the shipped weights); `--source headings:1` adds it to a training run. The trainer refuses the
+the shipped mix; `train --check` reproduces the shipped weights); `--source headings:1` adds it to a training run (the trainer run log, section
+"Compound and heading training data: results", has the measured effect of the source at weight 1). The trainer refuses the
 evaluation files by name and admits this file because it is a training source under `data/`. Do not evaluate on it: its lines are selected by
 a frame and labeled by models, so a score on them says nothing about held-out text.

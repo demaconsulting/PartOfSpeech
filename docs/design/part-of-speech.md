@@ -331,6 +331,8 @@ provided that the 95% interval over the seeds of its difference from the previou
 zero. The other groups stay in the
 code as switches that are off in `training.json` (the trainer tests prove each of them against the decoder); a model
 that enables one of them needs a new training run, a new selection of the thresholds and a new held-out record. The
+title-case line group (F5) was measured with the compound and headings sources (`RUN-LOG.md`, "Compound and heading
+training data"), an experiment that selected no arm, so it is off in the embedded model as well. The
 protocol, the results with their caveats (the evidence is development evidence from one set that the groups were
 designed against) and the adoption are in `RUN-LOG.md`, "Context-feature experiment". At run time the clause cues cost
 seven more buckets per token, the lexicon lookup that the decoder already does for the restriction, and a clause state

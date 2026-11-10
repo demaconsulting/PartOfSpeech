@@ -8,7 +8,7 @@ Tagging is the subsystem that assigns a Universal POS tag to every token and is 
 contains five units:
 
 - **FeatureExtractor** (`FeatureExtractor.cs`): the single definition of the hashed features of a token: 22 base
-  templates and four switchable feature groups, of which the embedded model enables the clause cues. It is shared
+  templates and five switchable feature groups, of which the embedded model enables the clause cues. It is shared
   between decoding and training (the trainer tool).
 - **TagDecoder** (`TagDecoder.cs`, `DecoderWorkspace.cs`, `ScoreSlice.cs`): the greedy left-to-right decoder that scores
   the features with the weights, restricts the candidates with the lexicon and the constraints, and turns the scores
