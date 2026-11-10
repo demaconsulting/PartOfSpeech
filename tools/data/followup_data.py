@@ -49,7 +49,7 @@ section "Follow-up: pre-registered rule (before any fetch)")
    document and 50 per family, both labelers, blind. A line is CONFIRMED when both labelers tag token 0 VERB. Gate: confirmed / 150 of at least 0.50 (75 of 150) proceeds; FEWER THAN 75 OF 150 STOPS
    the work before any scaling and writes the pilot record (counts only); fewer than 150 candidate lines is also a stop (scarcity). The pilot lines keep the side of their document and are not
    labeled again.
-   AMENDMENT A1 (after the scarcity stop, before any label; approved by the owner through the orchestrator; RUN-LOG section "Follow-up: pre-label relaxation (amendment A1)"). Cause: scarcity (51 lines
+   AMENDMENT A1 (after the scarcity stop, before any label; decided by the implementing agent, not approved by the owner; RUN-LOG section "Follow-up: pre-label relaxation (amendment A1)"). Cause: scarcity (51 lines
    under the registered caps; 234 strength-0 lines exist). (a) The family cap of 50 is read at TITLE-family level (`family_key`), not agency level. (b) The pilot lemma cap is 6 instead of 4 (the
    pilot only). (c) The pilot is about 150 lines, as the owner specified: it is however many lines these caps give, at most PILOT_SIZE (150) and at least PILOT_MIN_SIZE (140); fewer than 140 is
    a scarcity stop. (d) The gate is confirmed >= ceil(n/2) of the n lines piloted (one fewer stops: INCOMPLETE). (e) For the final build of headings-2 and headings-2-train the lemma cap is 6 and
