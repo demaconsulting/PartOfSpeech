@@ -59,8 +59,8 @@ Deflate validation in the `BinaryFormat` design.
 
 **Feature group mask and compatibility.** The mask (bit 0 position cues, bit 1 clause cues, bit 2 right preview,
 bit 3 inflection, bit 4 title-case line; bit 5 and every higher bit are reserved for later groups) occupies the first
-four of the eight bytes that were reserved (and
-zero) before the groups existed, so the format version stays 2 and the layout is unchanged. The feature set number
+four of the eight bytes that were reserved (and zero) before the groups existed, so the format version stays 2 and
+the layout is unchanged. The feature set number
 follows from the mask: 1 if and only if the mask is 0, otherwise 2. A file without groups is therefore byte-identical to
 a file written before the mask existed, and this build reads such files (backward compatible). A reader from before the
 mask existed fails loudly on a file with groups, twice over: it expects feature set 1 and finds 2, and it finds

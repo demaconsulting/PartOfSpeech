@@ -4679,6 +4679,8 @@ python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compou
 - The hand check of the headings source holds 48 items instead of 60 because the imperative stratum has only 8 lines.
 - Normal process priority for the runs (the owner's allowance, recorded in the pre-registration).
 - No held-out look: the held-out sets were never used by this experiment, so it adds no entry to the list of looks.
+- The driver `compound-heading/run_arms.ps1` is frozen by SHA-256, and its parameter defaults `$PyCache` and `$PauseFile` are paths of the session that ran the experiment (a folder under the session state of that machine). They are overridden by `-PyCache` and `-PauseFile` (the recorded commands pass `-PyCache`), and a reproduction must pass its own values. The file is not edited because that would change its frozen hash.
+- One document with a non-government co-author, the only document of the family `nbs` (National Bureau of Standards Handbook 65, 1958; the National Committee on Radiation Protection and Measurements is listed as co-author; 1 heading line, not in `compound`), was kept in `headings` because omitting it would change the registered data hashes and invalidate the pre-registered experiment. Its public-domain basis (the US government work rule, 17 U.S.C. 105) is stated in `data/headings/README.md`.
 
 ### Open questions and possible follow-ups
 
@@ -4686,6 +4688,7 @@ python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compou
 - **A larger paired tranche.** A development tranche with several hundred compound and heading decisions would shrink the intervals; the 178 decisions cannot separate effects of about 10% from noise.
 - **A later mix decision.** The data stay at weight 0 and the arms are reproducible from the pre-registration commit (`--source compound:1 --source headings:1`); the choice to include a source in the shipped mix can be taken later on a larger measure, with a new pre-registration.
 - **F5 on its own.** F5 with the compound data only (not run here) would separate its effect from that of the headings source.
+- **The co-authored government document.** Whether the 1 line of the family `nbs` (NBS Handbook 65, with a co-author outside the government) should be omitted from `headings`. Omitting it needs a new amendment, a new registration of the headings hashes and a rerun of the arms with headings. Until then it stays in the data at weight 0 and no shipped weight uses it.
 
 ## Run table
 

@@ -41,6 +41,12 @@ embedded model (`--source headings:1` adds it to a training run).
   carries no copyright, permission or third-party notice). There is no FAA text, no Wikipedia, no share-alike or non-commercial text and no
   Universal Dependencies text (`check_licenses.py` scans `sources.tsv`). A document whose record lists a state or local government body as an
   author is not used (`excluded-documents.tsv`).
+- **One document with a non-government co-author.** The only document of the family `nbs` (1 line) is *Safe handling of bodies containing
+  radioactive isotopes*, National Bureau of Standards Handbook 65 (1958), a publication of a US federal agency (Department of Commerce)
+  and therefore a US government work (17 U.S.C. 105; the quoted basis is in its `sources.tsv` row). Its author field also lists the
+  National Committee on Radiation Protection and Measurements (a private, congressionally chartered non-profit), and the text carries no
+  copyright, permission or third-party notice. It is kept because it is an NBS publication; whether it should be removed is an open
+  question for the project owner (the trainer run log, "Compound and heading training data: results", lists it).
 
 `headings.tsv` has SHA-256 `5931072928829e1911468173a181761ba001c4d7f16a8492391404395649124c` and `sources.tsv`
 `428a73f0581ec168cdef63d885cd6e001e925813b0a0d0dd1148f79636935aff`; [MANIFEST.tsv](../MANIFEST.tsv) lists the size, hash and record
@@ -201,7 +207,7 @@ Of the 53 unlisted pairs, 29 are spellings that the lexicon does not contain at 
 ## Known Limits
 
 - **Model labels, no human review.** Two models agree on every token, which removes the lines where they differ, not the errors that they
-  share. The model review of 45 lines found 1 wrong token of 219; the residual error of the 375 lines is not measured by a human.
+  share. The model review (see Hand Check) is a sample, not a human review; the residual error of the source is not measured by a human.
 - **No imperative training mass.** 8 lines have an initial imperative judged as VERB. The labelers read the first word of almost every
   imperative-shaped heading as a noun, an adjective or a proper noun, and the class rule dropped those lines. The source therefore teaches
   the noun reading of a Title Case word and the proper-noun boundary, and next to nothing about a Title Case instruction (`Check Fluid

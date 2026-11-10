@@ -189,7 +189,7 @@ lexicon misses is allowed, so these pairs do not block training.
 ## Known Limits
 
 - **Model labels, no human review.** Two models agree on every token, which removes the sentences where they differ, not the errors that
-  they share. The model review of 58 sentences found 3 wrong tokens of 1,217; the residual error of the 742 sentences is not measured by a
+  they share. The model review (see Hand Check) is a sample, not a human review; the residual error of the source is not measured by a
   human.
 - **No hard-case selection.** The pool is every frame hit in a seeded order; no classifier score chooses it. The sentences are therefore
   easier on average than the development tranche `compound-head.tsv`, which kept only the contested band of a classifier. The data teach
