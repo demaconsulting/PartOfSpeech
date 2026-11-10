@@ -146,6 +146,27 @@ pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Ou
 python tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py --run F2=<runs>\f2 --run F2+IMP=<runs>\f2imp --run ALL+IMP=<runs>\allimp --out report.md --decision decision.json
 ```
 
+### Compound-head and heading experiment
+
+The harness for the training sources `compound` (ambiguous-head noun compounds, `data/compound/`) and `headings` (Title Case
+heading lines, `data/headings/`) and for the feature group `titleCaseLine` (F5) is in `compound-heading/`. `arms.json` has the
+arms BASE (the shipped configuration), CMP (`compound`), CMP-HDG (`compound` and `headings`) and CMP-HDG-F5 (both sources and the
+group `titleCaseLine`), with the five seeds of the earlier experiments. `run_arms.ps1` is the driver of the context-feature
+experiment with its own `arms.json`: it appends `--source <name>:1` for each source of an arm, and it stops cleanly (exit code 4,
+`resume.txt` in the output folder) when the PAUSE file of the session folder exists. It is used with
+`imperative-data/runner-base.cmd`, which passes `train` unchanged, so the sources of `training.json` at weight 0 stay out of BASE.
+`analyze_compound_heading.py` runs the acceptance tests (BASE at the shipped seed equals the shipped weights, the added sentence
+counts, the feature groups of every arm, the frozen development files), prints a Markdown table of the primary metric (pooled
+harmful per 1,000 decisions on the compound-head and the headings tranche), the co-primary (answers wrong at confidence 0.95 or
+more), every guard and the verdict, and applies the selection rule; it takes only `welch_diff` from `analyze_arms.py` and checks
+its own logic on synthetic runs with `--selftest`. The files are frozen by the hashes in the run log ("Compound and heading
+training data: pre-registered retrain"). `eval-arm` writes the tranches of this experiment under `shapesNew`.
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/run_arms.ps1 -Out <runs> -Arms CMP -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py --runs <runs> --out report.md --decision decision.json
+```
+
 ### Held-out evaluation
 
 The protocol (definitions, selection rule, stop conditions) is the section "Phase 5 protocol" of `RUN-LOG.md`; it was

@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "experiment": "compound-heading-data",
+  "note": "Arms of the pre-registered compound-head and heading retraining. Every arm uses the shipped training.json mix (open x2, MASC, silver >= 80, imperative at weight 1; compound and headings at weight 0) and its settings; only the feature groups, the added sources, the seed and the refit temperature differ. Group names are the values of the trainer option --features; a source of an arm is trained at weight 1 with the option --source NAME:1, which the driver appends after --calibrate --output.",
+  "baseline": "BASE",
+  "primaryMetric": "shapesNew.pooledPrimary.harmfulPer1k",
+  "coPrimaryMetric": "shapesNew.compoundHead.shape.confidentWrong + shapesNew.headings.shape.confidentWrong",
+  "seeds": [20260101, 11, 12, 13, 14],
+  "previewFolds": 5,
+  "groups": {
+    "F2": "clauseCues",
+    "F5": "titleCaseLine"
+  },
+  "sources": {
+    "compound": "data/compound/compound.tsv",
+    "headings": "data/headings/headings.tsv"
+  },
+  "skipped": [],
+  "arms": [
+    { "id": "BASE", "features": ["clauseCues"], "sources": [] },
+    { "id": "CMP", "features": ["clauseCues"], "sources": ["compound"] },
+    { "id": "CMP-HDG", "features": ["clauseCues"], "sources": ["compound", "headings"] },
+    { "id": "CMP-HDG-F5", "features": ["clauseCues", "titleCaseLine"], "sources": ["compound", "headings"] }
+  ]
+}
