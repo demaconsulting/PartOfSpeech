@@ -128,8 +128,11 @@ INITIAL_NOUN = "initial-noun"
 MODEL_FREE = "no PartOfSpeech model, prediction or score is read"
 
 # ---- pre-registered pins of the inputs (set by the R1 commit; `require_pins` refuses any candidate command while one is None)
-DRAFT_SHA256 = None
-TOKENS_SHA256 = None
+# R1 (stream H pilot stage): sources-draft.tsv (70 documents), tokens.tsv. HMM_SHA256 stays None until R3: hmm.tsv exists only for the compound-head-2 documents (stream C,
+# not yet sourced) and no pilot or heading command reads it. R3 re-pins the draft and tokens files for the extended document list (the stream H documents and their partition
+# are unchanged by it); the DEV share of stream H below is frozen at R1 and never changed.
+DRAFT_SHA256 = "7f05b400e33b10eef46b02645d05f60d7d0107b9d8a041cdc4ea4560361d49ca"
+TOKENS_SHA256 = "bb7df8426cc1ed847ba89e74fa747c28992302b2590fa517a9098b313b7a35e0"
 HMM_SHA256 = None
 
 # ---- partition

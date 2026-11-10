@@ -264,11 +264,15 @@ class IndexTests(Mini):
         self.sound_draft({"army-a": ct.FRAME})
         self.sides(**{"army-a": "train"})
         before = self.snapshot()
-        code, _, err = self.run_tool("candidates", "--product", "compound-2", "--no-ud")
+        with mock.patch.object(fd, "DRAFT_SHA256", None), mock.patch.object(fd, "TOKENS_SHA256", None):      # the pins as they were before R1
+            code, _, err = self.run_tool("candidates", "--product", "compound-2", "--no-ud")
+            self.assertEqual(1, code)
+            self.assertIn("pin of sources-draft.tsv is not set", err)
+            code, _, err = self.run_tool("pilot", "--no-ud")
+            self.assertEqual(1, code)
+        code, _, err = self.run_tool("pilot", "--no-ud")                                                      # the R1 pins: this fixture's bytes differ, so the pilot refuses
         self.assertEqual(1, code)
-        self.assertIn("pin of sources-draft.tsv is not set", err)
-        code, _, err = self.run_tool("pilot", "--no-ud")
-        self.assertEqual(1, code)
+        self.assertIn("the pinned one is " + fd.DRAFT_SHA256, err)
         self.assertEqual(before, self.snapshot())
 
 
@@ -1176,6 +1180,8 @@ class PromptTests(unittest.TestCase):
                           "headings-2-train": "headings2-%04d"}, fd.SENT_ID)
         for pin in (fd.DRAFT_SHA256, fd.TOKENS_SHA256, fd.HMM_SHA256):
             self.assertTrue(pin is None or re.fullmatch(r"[0-9a-f]{64}", pin))
+        self.assertEqual(("7f05b400e33b10eef46b02645d05f60d7d0107b9d8a041cdc4ea4560361d49ca", "bb7df8426cc1ed847ba89e74fa747c28992302b2590fa517a9098b313b7a35e0", None),
+                         (fd.DRAFT_SHA256, fd.TOKENS_SHA256, fd.HMM_SHA256))                                  # the R1 pins (stream H pilot stage); the hmm pin is set at R3
 
 
 # ================================================================ no model, and the rule in the docstring

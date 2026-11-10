@@ -4890,6 +4890,23 @@ The lemma cap is therefore 6 in every heading build, the same value as the pilot
 
 `followup_data.py`: `PILOT_MIN_SIZE = 140`, `PILOT_LEMMA_CAP = 6`, `pilot_confirmed_min` (ceil(n/2)) replacing `PILOT_CONFIRMED_MIN`, `_title_family_of` (the family map of the pilot caps; the pilot record still reports the agency family), `DEV_HEADING_LEMMA_CAP = 6`, `HDG2_LEMMA_CAP = 6`, `DEV_BUILD_DOCUMENT_CAP = 20`, the docstring (rule 6, amendment A1). `test_followup_data.py`: 71 tests (new: gate arithmetic for odd and even n, the title-family map, a binding family cap, the 140 scarcity floor); the whole Python suite is 687 tests OK (1 skipped).
 
+## Follow-up: frozen inputs (R1, stream H pilot stage)
+
+This section follows the amendment commit `5e0a03a` (A1; the scarcity commit is `920e5c4`, R0 is `8c9f17fc5cb7e5c35f91827fc242980f407bd42d`). **It is committed before any label exists**: no batch is exported, no candidate row is written, no model was trained or evaluated. It freezes the inputs of the pilot; after this commit `pilot` and `candidates` refuse any input whose bytes differ.
+
+| Frozen input | Value |
+| --- | --- |
+| `sources-draft.tsv` (70 documents; pin `DRAFT_SHA256`) | `7f05b400e33b10eef46b02645d05f60d7d0107b9d8a041cdc4ea4560361d49ca` |
+| `tokens.tsv` (210,821 units; pin `TOKENS_SHA256`) | `bb7df8426cc1ed847ba89e74fa747c28992302b2590fa517a9098b313b7a35e0` |
+| `streams.tsv` (70 rows, all stream H) | `c9469a82136d319003c9eceed981f3ddea16b96e763a46ba63cd0e8561fbed70` |
+| `partition.tsv` (70 rows) | `5a9852d87cc8a15a67a0414a014779034dd1549c949831e27d6948db2754111e` |
+| `hexclude.tsv` (the 16 by-hand refusals) | `fcd3e3ef00aa44b63b6d47c9347c07dfaa972b2038c389b99a3f06dda428ac0d` |
+| `hacc.jsonl` (the fetch record of 112 archive.org records) | `031f663a6f0d7cdec158f0a25a76cb60d6f559619a9131dafcbeeb60f1e7c239` |
+| DEV share of stream H | **0.30, frozen now and never changed** (stream C 0.35 stays provisional until its R3) |
+| `HMM_SHA256` | not set at R1: `hmm.tsv` exists only for the documents of `compound-head-2` (stream C, not yet sourced) and no pilot or heading command reads it; it is set, together with new `DRAFT_SHA256` and `TOKENS_SHA256` for the extended document list, at the R3 commit (the stream H documents, their text, their partition and the pilot rows do not change by it) |
+
+Documents by agency family and side (counts only): Army DEV 13 / TRAIN 39, Air Force 2 / 2, Marine Corps 2 / 5, Navy 1 / 4, Coast Guard 0 / 1, Interior 1 / 0 (DEV 19 documents, TRAIN 51 documents; 61 title families, none on both sides). Pool sizes are those of the scarcity record (clean heading lines 2,158; strength-0 imperative lines 234, DEV 67 and TRAIN 167; initial-noun lines 426; the amendment A1 changes none of them). The pilot command is `followup_data.py --work W pilot --extra-table ...` (no `--documents` restriction: all 70 documents are stream H, and the amended caps of A1 apply); its candidate count, the gate threshold and the export are recorded in the pilot record (R2), after the labels.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
