@@ -4907,6 +4907,27 @@ This section follows the amendment commit `5e0a03a` (A1; the scarcity commit is 
 
 Documents by agency family and side (counts only): Army DEV 13 / TRAIN 39, Air Force 2 / 2, Marine Corps 2 / 5, Navy 1 / 4, Coast Guard 0 / 1, Interior 1 / 0 (DEV 19 documents, TRAIN 51 documents; 61 title families, none on both sides). Pool sizes are those of the scarcity record (clean heading lines 2,158; strength-0 imperative lines 234, DEV 67 and TRAIN 167; initial-noun lines 426; the amendment A1 changes none of them). The pilot command is `followup_data.py --work W pilot --extra-table ...` (no `--documents` restriction: all 70 documents are stream H, and the amended caps of A1 apply); its candidate count, the gate threshold and the export are recorded in the pilot record (R2), after the labels.
 
+## Follow-up: pilot record (R2, stream H)
+
+This section follows the R1 commit `90ecd27` (a commit cannot contain its own SHA). Round `hdg-pilot`: 1 batch (`b001`, 140 sentences, 3 parts per labeler), both labelers wrote all parts; `validate-output` passed for both, `status` showed both `ok`, `decide --round hdg-pilot` and `pilot-result` were run unchanged. Nothing was edited by hand, no line was relabeled. Counts only.
+
+**Result: confirmed 139 of 140 (99.3 percent; both labelers tag token 0 VERB). Gate (confirmed >= ceil(140/2) = 70 proceeds; 69 stops): PROCEED.**
+
+| Breakdown (sampled / confirmed) | Sampled | Confirmed |
+| --- | --- | --- |
+| DEV side (3 documents) | 38 | 38 |
+| TRAIN side (17 documents) | 102 | 101 |
+| Agency family: Army / Air Force | 139 / 1 | 139 / 0 |
+| Tier T1 / T2 | 114 / 26 | 113 / 26 |
+| First word noun-verb / verb-only | 70 / 70 | 69 / 70 |
+| Lemmas (55 distinct, at most 6 lines each) | 55 | 54 lemmas have at least one confirmed line |
+
+The single non-confirmed line (TRAIN, first-word lemma `cruise`, noun-verb word) has token 0 tagged NOUN by both labelers (class mismatch, dropped by the registered rule). Report-only numbers (rule 6): after the training rule (every token agreed) **95 TRAIN lines** are kept (101 confirmed, 6 of them have a disputed token elsewhere in the line; one more is the class mismatch); after the development rule (target agreed, judged word never disputed) **38 DEV lines** are kept (7 of them carry a disputed non-target token, which the development rule tolerates). Distinct verb lemmas among the confirmed lines: 54 (DEV 19, TRAIN 48).
+
+**Use of the pilot lines.** By the registered rule the pilot lines keep the side of their document, are not drawn or labeled again, and count against the caps of their side; the round `hdg-pilot` is listed in the rounds of both `headings-2` (DEV) and `headings-2-train` (TRAIN), so the pilot labels are the first part of those products (kept by the same keep rules, the document and lemma caps and the Jaccard rule applied afterwards in the build).
+
+**Supply after the pilot** (dry run of `heading_candidates` on the frozen inputs, nothing written; strength-0 pools left: DEV 29, TRAIN 65 lines): further imperative candidates at the build caps (lemma cap 6, document caps 20 and 25, pilot lines counted): **DEV 9 (pilot 38 + 9 = 47 before the build), TRAIN 14 (pilot 102 + 14 = 116 before the build)**. Expected kept after the labeling rules, at the observed rates: DEV about 45 to 47 (floor 80), TRAIN about 105 to 108 (floor 150). The floors are not reachable from these 70 documents; the registered path stands (`--allow-short` with disclosure, or the `HDG2` arms not run).
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
