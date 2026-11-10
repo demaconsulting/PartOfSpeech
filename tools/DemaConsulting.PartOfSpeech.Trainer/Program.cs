@@ -106,7 +106,7 @@ Commands:
         [--label TEXT] [--log FILE] [--checkpoints 4,6,8] [--calibrate]
         [--epochs N] [--hash-bits N] [--min-count N] [--prune N] [--scale S] [--seed N] [--temperature T]
         [--restrict none|history|full] [--history predicted|gold]
-        [--features none|F1,F2,F3,F4|positionCues,clauseCues,rightPreview,inflection] [--preview-folds N]
+        [--features none|F1,F2,F3,F4,F5|positionCues,clauseCues,rightPreview,inflection,titleCaseLine] [--preview-folds N]
         [--source NAME:WEIGHT]... [--max-sentences N] [--sample-permille N] [--mask-disputed true|false] [--silver-min N]
       Trains and writes the weights (default: the embedded resource). With --check it retrains with the
       committed configuration and compares the uncompressed image with the committed file (exit 1 if stale);
@@ -115,7 +115,7 @@ Commands:
       --check. --calibrate fits the temperature of the run on the open
       development split before the run is written and scored, so confidence-based metrics are comparable.
       --features selects the context feature groups (none, or any of positionCues=F1, clauseCues=F2, rightPreview=F3,
-      inflection=F4; the groups are stored in the weights header); rightPreview trains on jackknife preview tags of
+      inflection=F4, titleCaseLine=F5; the groups are stored in the weights header); rightPreview trains on jackknife preview tags of
       --preview-folds folds (default 5) made by document hash. Both are experiment overrides.
   eval --weights FILE [--temperature T] [--label TEXT] [--log FILE]
       Scores a weights file on the development sets (open dev, gold v2 dev) through the real decoder.
@@ -135,7 +135,8 @@ Commands:
       files (used by tools/data/shapes_dev.py to build the shapes development set); no repository data is read.
   eval-arm --weights FILE --label TEXT --json FILE
       Dev-only scoring of a trained weights file for the context-feature experiment: the shapes development set (standard and
-      hard tranche, per shape, with per-item outcomes of the target items), open dev, gold v2 dev, the mapped development part of
+      hard tranche, per shape, with per-item outcomes of the target items; and, under shapesNew, the compound-head, headings and
+      named-state tranches with their confident wrong answers and the pooled primary metric), open dev, gold v2 dev, the mapped development part of
       the treebank (local cache, pinned SHA-256), the size of the file and the single-thread throughput of the default tagger
       (one warm-up pass and five timed passes over the open dev and treebank dev tokens, median). Writes the result as JSON to
       --json. It reads no held-out set and accepts no data path; --weights and --json must lie outside data/ and tools/data/.

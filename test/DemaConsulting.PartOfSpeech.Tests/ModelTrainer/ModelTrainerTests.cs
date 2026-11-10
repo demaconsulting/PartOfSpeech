@@ -763,13 +763,15 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates that the four training corpora are admitted as training sources.
+    ///     Validates that the six training corpora are admitted as training sources.
     /// </summary>
     [Theory]
     [InlineData("data/open/train.tsv")]
     [InlineData("data/masc/masc.tsv")]
     [InlineData("data/silver/silver.tsv")]
     [InlineData("data/imperative/imperative.tsv")]
+    [InlineData("data/compound/compound.tsv")]
+    [InlineData("data/headings/headings.tsv")]
     public void DataGuard_EnsureTrainable_TrainingCorpus_Admitted(string path)
     {
         // Arrange / Act
@@ -1457,8 +1459,8 @@ public class ModelTrainerTests
     [Fact]
     public void ModelTrainer_Train_AllGroupsWithGlossaryHints_FitsTheBucketBuffer()
     {
-        // Arrange: all four groups and a glossary that hints every eligible token (a token of the second pass has the full group capacity)
-        var config = GroupConfig(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection);
+        // Arrange: all five groups and a glossary that hints every eligible token (a token of the second pass has the full group capacity)
+        var config = GroupConfig(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine);
         var corpus = SmallCorpus();
 
         // Act: before the buffer had room for the glossary buckets this overran it
@@ -1476,10 +1478,11 @@ public class ModelTrainerTests
     ///     Validates that the experiment's decoder configures its workspace with the groups of the model: without hints it gives the tags of the
     ///     trainer's predictor (so the clause features are computed and advanced as in the decoder), while a decoder that ignores the groups does not.
     /// </summary>
-    /// <param name="mask">The groups as the bits of the feature group flags: 1 position cues, 2 clause cues, 8 inflection.</param>
+    /// <param name="mask">The groups as the bits of the feature group flags: 1 position cues, 2 clause cues, 8 inflection, 16 title-case line.</param>
     [Theory]
     [InlineData(2u)]
     [InlineData(11u)]
+    [InlineData(27u)]
     public void HintedPredictor_FeatureGroups_MatchesQuantizedPredictor(uint mask)
     {
         // Arrange: a grouped model, the trainer's predictor, the experiment's decoder with the groups and one that ignores them
@@ -1559,7 +1562,7 @@ public class ModelTrainerTests
         Assert.Contains("right preview", error.Message);
         Assert.Throws<ArgumentException>(() => new HintedPredictor(HashBits, new List<KeyValuePair<int, short[]>>(), 1f, 1f, EmbeddedModel.Lexicon, groups));
         HintedPredictor.EnsureSupported(FeatureGroups.None);
-        HintedPredictor.EnsureSupported(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.Inflection);
+        HintedPredictor.EnsureSupported(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine);
     }
 
     /// <summary>
@@ -2121,6 +2124,9 @@ public class ModelTrainerTests
     [InlineData("inflection, clauseCues", "clauseCues,inflection")]
     [InlineData("positionCues,clauseCues,rightPreview,inflection", "positionCues,clauseCues,rightPreview,inflection")]
     [InlineData("INFLECTION,f1,rightPreview", "positionCues,rightPreview,inflection")]
+    [InlineData("F5", "titleCaseLine")]
+    [InlineData("f5,clauseCues", "clauseCues,titleCaseLine")]
+    [InlineData("F5,F4,F3,F2,F1", "positionCues,clauseCues,rightPreview,inflection,titleCaseLine")]
     public void TrainingConfig_ParseFeatureList_ValidValue_CanonicalOrder(string text, string expected)
     {
         // Arrange / Act
@@ -2137,10 +2143,11 @@ public class ModelTrainerTests
     [Theory]
     [InlineData("")]
     [InlineData(",")]
-    [InlineData("F5")]
+    [InlineData("F6")]
     [InlineData("wordClusters")]
     [InlineData("F1,F1")]
     [InlineData("F1,positionCues")]
+    [InlineData("F5,titleCaseLine")]
     [InlineData("none,F1")]
     [InlineData("F1,none")]
     public void TrainingConfig_ParseFeatureList_InvalidValue_Throws(string text)
@@ -2165,14 +2172,15 @@ public class ModelTrainerTests
         Assert.Equal(FeatureGroups.None, config.ResolveGroups());
 
         // Assert: names resolve to the flags in the order of the group bits
-        config.Features = new List<string> { "inflection", "F1", "rightPreview", "clauseCues" };
-        Assert.Equal(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection, config.ResolveGroups());
-        Assert.Equal(new[] { "positionCues", "clauseCues", "rightPreview", "inflection" }, TrainingConfig.NamesOf(config.ResolveGroups()));
+        config.Features = new List<string> { "titleCaseLine", "inflection", "F1", "rightPreview", "clauseCues" };
+        Assert.Equal(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine, config.ResolveGroups());
+        Assert.Equal(new[] { "positionCues", "clauseCues", "rightPreview", "inflection", "titleCaseLine" }, TrainingConfig.NamesOf(config.ResolveGroups()));
+        Assert.Equal(new[] { "positionCues", "clauseCues", "rightPreview", "inflection", "titleCaseLine" }, TrainingConfig.FeatureGroupNames);
 
         // Assert: a clone has its own list
         var clone = config.Clone();
         clone.Features.Clear();
-        Assert.Equal(4, config.Features.Count);
+        Assert.Equal(5, config.Features.Count);
 
         // Assert: unknown and repeated names, and the fold count, are refused by Validate
         foreach (var bad in new[] { new List<string> { "bogus" }, new List<string> { "F2", "clauseCues" }, new List<string> { "wordClusters" } })
@@ -2213,7 +2221,7 @@ public class ModelTrainerTests
         Assert.Equal(FeatureGroups.None, PerceptronModel.Load(none).FeatureGroups);
 
         // Act / Assert: groups
-        foreach (var groups in new[] { FeatureGroups.PositionCues, FeatureGroups.RightPreview, FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection })
+        foreach (var groups in new[] { FeatureGroups.PositionCues, FeatureGroups.RightPreview, FeatureGroups.TitleCaseLine, FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine })
         {
             var file = ModelBuilder.Encode(rows, GroupConfig(groups), false);
             Assert.Equal(2, BitConverter.ToUInt16(file, 8));
@@ -2227,14 +2235,16 @@ public class ModelTrainerTests
     ///     Validates for every group and for the combinations of the experiment that the trainer's predictor gives the same tags as the runtime decoder
     ///     for a model that the trainer made (including the two decoding passes of the right preview group).
     /// </summary>
-    /// <param name="mask">The groups as the bits of the feature group flags: 1 position cues, 2 clause cues, 4 right preview, 8 inflection.</param>
+    /// <param name="mask">The groups as the bits of the feature group flags: 1 position cues, 2 clause cues, 4 right preview, 8 inflection, 16 title-case line.</param>
     [Theory]
     [InlineData(1u)]
     [InlineData(2u)]
     [InlineData(4u)]
     [InlineData(8u)]
+    [InlineData(16u)]
     [InlineData(15u)]
     [InlineData(11u)]
+    [InlineData(31u)]
     public void ModelTrainer_Predict_FeatureGroups_MatchesTagDecoder(uint mask)
     {
         // Arrange: train the small run with the groups and load the same weights into the runtime decoder
@@ -2689,14 +2699,25 @@ public class ModelTrainerTests
         config.Features = new List<string> { "inflection" };
         Assert.DoesNotContain("previewFolds", ConfigFile.Format(config), StringComparison.Ordinal);
 
+        // Act / Assert: the title-case line group is written by its full name, read back and gives no fold count
+        config.Features = new List<string> { "clauseCues", "titleCaseLine" };
+        var titled = ConfigFile.Format(config);
+        Assert.Contains("\"titleCaseLine\"", titled, StringComparison.Ordinal);
+        Assert.DoesNotContain("previewFolds", titled, StringComparison.Ordinal);
+        var titledParsed = ConfigFile.Parse(titled);
+        Assert.Equal(new[] { "clauseCues", "titleCaseLine" }, titledParsed.Features);
+        Assert.Equal(FeatureGroups.ClauseCues | FeatureGroups.TitleCaseLine, titledParsed.ResolveGroups());
+        Assert.Equal(titled, ConfigFile.Format(titledParsed));
+
         // Assert: a short or unknown name that the file form cannot carry is refused where the engine would meet it
         Assert.Throws<InvalidDataException>(() => ConfigFile.Parse(text.Replace("positionCues", "bogus")));
         Assert.Throws<InvalidDataException>(() => ConfigFile.Parse(text.Replace("\"previewFolds\": 5", "\"previewFolds\": 1")));
     }
 
     /// <summary>
-    ///     Validates that the committed configuration is valid, names the four corpora (the imperative source with weight 1, so
-    ///     it is in the mix of the shipped model) and is in the canonical form that the tool writes.
+    ///     Validates that the committed configuration is valid, names the six corpora (the imperative source with weight 1, so
+    ///     it is in the mix of the shipped model; the compound and headings sources with weight 0, so they are not) and is in the
+    ///     canonical form that the tool writes.
     /// </summary>
     [Fact]
     public void ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical()
@@ -2707,11 +2728,11 @@ public class ModelTrainerTests
         // Act
         var config = ConfigFile.Parse(text);
 
-        // Assert: valid, four known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
-        Assert.Equal(new[] { "open", "masc", "silver", "imperative" }, config.Sources.Select(s => s.Name));
+        // Assert: valid, six known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
+        Assert.Equal(new[] { "open", "masc", "silver", "imperative", "compound", "headings" }, config.Sources.Select(s => s.Name));
         Assert.All(config.Sources, s => Assert.True(File.Exists(DataFiles.Repository(s.Path))));
         Assert.Equal(1, config.Sources.Single(s => s.Name == "imperative").Weight);
-        Assert.All(config.Sources, s => Assert.True(s.Weight > 0));
+        Assert.Equal(new[] { 2, 1, 1, 1, 0, 0 }, config.Sources.Select(s => s.Weight));
         Assert.Equal(text.Replace("\r\n", "\n"), ConfigFile.Format(config));
     }
 
@@ -2736,6 +2757,37 @@ public class ModelTrainerTests
         Assert.Equal(900, sentences.Count);
         Assert.All(sentences, s => Assert.DoesNotContain((sbyte)-1, s.Gold));
         Assert.All(sentences, s => Assert.Equal((sbyte)Upos.Verb, s.Gold[0]));
+    }
+
+    /// <summary>
+    ///     Validates that the committed compound and headings sources contribute nothing at the committed weight 0, and that the
+    ///     corpus reader reads each of them with no masked token when its weight is raised to one (the way a training run adds it).
+    /// </summary>
+    [Theory]
+    [InlineData("compound", 742)]
+    [InlineData("headings", 374)]
+    public void CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted(string name, int expected)
+    {
+        // Arrange: the committed configuration, as it is, with this source added, and with only this source weighted
+        var committed = ConfigFile.Parse(File.ReadAllText(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/training.json")));
+        var added = ConfigFile.Parse(File.ReadAllText(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/training.json")));
+        added.Sources.Single(s => s.Name == name).Weight = 1;
+        var weighted = ConfigFile.Parse(File.ReadAllText(DataFiles.Repository("tools/DemaConsulting.PartOfSpeech.Trainer/training.json")));
+        foreach (var source in weighted.Sources)
+        {
+            source.Weight = source.Name == name ? 1 : 0;
+        }
+
+        // Act
+        var sentences = CorpusReader.LoadSources(DataFiles.RepositoryRoot, weighted);
+        var committedCount = CorpusReader.LoadSources(DataFiles.RepositoryRoot, committed).Count;
+        var addedCount = CorpusReader.LoadSources(DataFiles.RepositoryRoot, added).Count;
+
+        // Assert: the whole file with every token gold-tagged, nothing of it in the committed mix, and exactly its sentences more with weight 1
+        Assert.Equal(expected, sentences.Count);
+        Assert.All(sentences, s => Assert.DoesNotContain((sbyte)-1, s.Gold));
+        Assert.Equal(0, committed.Sources.Single(s => s.Name == name).Weight);
+        Assert.Equal(committedCount + expected, addedCount);
     }
 
     /// <summary>

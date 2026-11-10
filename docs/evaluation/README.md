@@ -44,7 +44,10 @@ them and states what they do not show.
    development data alone, a second pre-registered experiment then added the clause-cue feature group on the strength
    of development data alone (the shapes development set, open and gold v2 development, UD English-EWT development; five
    seeds per variant), and a third added the imperative training source in the same way. Each time the model was trained
-   again with the same seed and the temperature refit (it did not change in the last step). The
+   again with the same seed and the temperature refit (it did not change in the last step). A fourth pre-registered
+   experiment tested two more training sources (compound heads and Title Case headings) and one more feature group
+   (title-case line) on development data only; its rule selected no arm, so nothing changed and it read no held-out
+   set (it adds no look). The
    weights, the configuration and the temperature did not change afterwards. The run log of the trainer,
    [RUN-LOG.md](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md), has the experiments, the gates of the
    retraining, the follow-ups and the decisions.

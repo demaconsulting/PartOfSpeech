@@ -105,6 +105,7 @@ sections:
                   - TagDecoder_Decode_ClauseCues_ClauseStateFollowsChosenTags
                   - TagDecoder_Decode_PositionCues_UsePositionInSentence
                   - TagDecoder_Decode_Inflection_SeparatesVerbStemFromLookalike
+                  - TagDecoder_Decode_TitleCaseLine_TitleLineChangesTheDecision
                   - TagDecoder_Decode_MatchesReferenceDecoder
 
               - id: PartOfSpeech-Tagging-TagDecoder-RightPreview

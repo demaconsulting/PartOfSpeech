@@ -74,3 +74,4 @@ sections:
             tests:
               - ModelStorage_WeightsWriterAndReader_RoundTrip
               - ModelStorage_WeightsWriterAndReader_FeatureGroupsRoundTrip
+              - ModelStorage_WeightsWriterAndReader_TitleCaseLineGroupRoundTrip

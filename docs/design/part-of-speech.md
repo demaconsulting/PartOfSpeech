@@ -49,14 +49,17 @@ into the binary resource `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`
 weights, which the unit `ModelTrainer` trains into `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, which the
 package embeds as well (the _Embedded Model_ system requirements cover it).
 
-- **Training corpora**: sentences labeled with the 17 Universal POS tags, from four sources: the open corpus, MASC, a
-  silver corpus whose labels were written by a model and mapped by documented rules, and a small imperative source
+- **Training corpora**: sentences labeled with the 17 Universal POS tags, from six sources: the open corpus, MASC, a
+  silver corpus whose labels were written by a model and mapped by documented rules, a small imperative source
   (`data/imperative/`: 900 sentences that start with an imperative verb, from US federal-government instructional
   text, tagged by two blind models that agree on every token, a model review of a sample, selected by position and
-  lexicon frame and never by the PartOfSpeech model, and kept disjoint from every evaluation set). The weights are
+  lexicon frame and never by the PartOfSpeech model, and kept disjoint from every evaluation set), and two targeted
+  sources built the same way: `data/compound/` (742 sentences with a noun compound whose head can also be a verb) and
+  `data/headings/` (374 Title Case heading, caption and step-title lines). The weights are
   trained from the sources that have a positive weight in `training.json`: the open corpus, MASC, silver and the
   imperative source (weight 1, so it is in the mix of the embedded weights; `--source imperative:0` leaves it out of an
-  experimental run)
+  experimental run). The compound and headings sources have weight 0: they are committed training data that is not part
+  of the mix (`--source compound:1` and `--source headings:1` add them to an experimental run)
 - **Evaluation sets**: a split of the open corpus, a single-target gold set, a probe of difficult noun and verb shapes
   and a challenge set; the UD English-EWT treebank is evaluation-only and is fetched on demand, never stored. Model
   configuration and thresholds are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard and hard
@@ -84,9 +87,10 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
 - **Weights**: the trained `POSW` file, 521,695 bytes compressed and 1,157,499 bytes uncompressed, with the training
   configuration `training.json` (which records the SHA-256 of the uncompressed image) and the run log `RUN-LOG.md` next
   to the trainer
-- **Checks**: the checksum manifest and the leakage report (which covers the four training sources)
+- **Checks**: the checksum manifest and the leakage reports (which cover the six training sources against the evaluation
+  sets, and the compound and headings sources against the other training sources)
 - **Corrections overlay**: `data/corrections/` holds the label corrections for the three correctable training corpora (the
-  imperative source is linted by the conventions linter but never corrected) as tables, and
+  imperative, compound and headings sources are linted by the conventions linter but never corrected) as tables, and
   the rows are applied to the corpus files (`corrections.py apply --write`). `mechanical.tsv` holds the rows that the
   mechanical rules of the conventions linter write
   (the rule knows the tag), `adjudicated.tsv` the decisions of two independent blind taggers (a tag, a flag or a
@@ -187,7 +191,8 @@ source document of the corpora in a per-document `sources.tsv` (for MASC: genre,
   open training and evaluation data
 - **Tatoeba** (CC0 export) and **Project Gutenberg** (public domain in the United States): sentences of the silver data
 - **US federal-government instructional documents** (17 U.S.C. 105; Army, Navy, Agriculture, Forest Service, Bureau of
-  Mines and Public Health Service): the sentences of the imperative training source and of the development set, each
+  Mines and Public Health Service): the sentences of the imperative, compound and headings training sources and of the
+  development set, each
   document with its quoted license basis in a `sources.tsv`
 - **UD English-EWT** (CC BY-SA 4.0): evaluation only, fetched on demand and never committed
 
@@ -280,7 +285,8 @@ The data assets are protected by two release gates, which the data tests of the 
 5. **Compilation**: `tools/LexiconCompiler` compiles the lexicon table into `Resources/lexicon.bin`, which is committed
    and embedded in the assembly
 6. **Training**: the unit `ModelTrainer` reads the training corpora named in `training.json` that have a positive weight
-   (the open corpus, MASC, silver and the imperative source), extracts features with
+   (the open corpus, MASC, silver and the imperative source; the compound and headings sources have weight 0),
+   extracts features with
    the same `FeatureExtractor`, restricts the tags with the same lexicon code, trains an averaged perceptron in integer
    arithmetic, quantizes and prunes the weights and writes the `POSW` file with `PerceptronModelWriter`; the file is
    committed as `Resources/weights.bin` and embedded, and `training.json` records the SHA-256 of its uncompressed image.
@@ -299,7 +305,7 @@ evaluation of the trainer; the protocol and the measured effect, including the c
 of `RUN-LOG.md` next to the trainer and are not repeated here. See _Glossary Design_ for the data model and algorithms.
 
 **Context Features**: the 22 base templates look at the token and its spelling, its two neighbors on each side and the
-two previous tags. `FeatureExtractor` can add four switchable feature groups, and a weights file names the groups it
+two previous tags. `FeatureExtractor` can add five switchable feature groups, and a weights file names the groups it
 was trained with in its header, so the decoder always scores with the features of the model (_FeatureExtractor Design_
 has the definitions):
 
@@ -313,17 +319,20 @@ has the definitions):
   tokens.
 - **Inflection** (`Inflection`, F4): whether the stem of a word that ends in `ing`, `ed` or `s` is a verb or a noun in
   the lexicon.
+- **Title-case line** (`TitleCaseLine`, F5): whether the sentence is a Title Case line (a heading, caption or step
+  title: at least 60% of its words after the first one start with a capital letter and it does not end as a sentence),
+  together with the capitalization of the token and whether it is the first token.
 
 The embedded model enables the clause cues only. The choice is the result of a pre-registered experiment on development
 data: every group alone, all four, and all four minus one were trained with five seeds each and scored on the hard
 tranche of the shapes development set (the primary measure), with guards on the other development measures, the size
 and the speed. The rule picked the arm with the fewest groups among those within 10% of the best primary measure,
 provided that the 95% interval over the seeds of its difference from the previous model's arm lay entirely below
-zero. The other groups stay in the
-code as switches that are off in `training.json` (the trainer tests prove each of them against the decoder); a model
-that enables one of them needs a new training run, a new selection of the thresholds and a new held-out record. The
-protocol, the results with their caveats (the evidence is development evidence from one set that the groups were
-designed against) and the adoption are in `RUN-LOG.md`, "Context-feature experiment". At run time the clause cues cost
+zero. The other groups stay in the code as switches that are off in `training.json` (the trainer tests prove each of
+them against the decoder); a model that enables one of them needs a new training run, a new selection of the
+thresholds and a new held-out record. The title-case line group (F5) is off in the embedded model. The protocol, the
+results with their caveats (the evidence is development evidence from one set that the groups were designed against)
+and the adoption are in `RUN-LOG.md`, "Context-feature experiment". At run time the clause cues cost
 seven more buckets per token, the lexicon lookup that the decoder already does for the restriction, and a clause state
 that the decoder carries from token to token; the speed is measured by the throughput requirement and by the trainer,
 and the size of the weights is stated under _Data Assets_.

@@ -1,5 +1,9 @@
 # Checksums of the committed data files (tools/data/make_manifest.py); Markdown files are not listed
 # columns = path (relative to data/), bytes, sha256, lines, sentences
+compound/compound.tsv	474726	eb8c4708ba95fb370c885110e10eda0f1d826c5922876bd66e69389894bd5e3b	14692	742
+compound/dropped-sentences.tsv	318	6713acf27466c295f42d66df25951bb8ba6c25d48faf1f6e709832a42f7186be	2	-
+compound/excluded-documents.tsv	1114	6beec0246d38d913aeb5342f66e5191e396afd007abfc2f7853b76241dae4240	7	-
+compound/sources.tsv	145246	8b861dd3ff2d5a3fd5e741f5fe2a906807f99afa562d7e294d4011d93ef15e02	155	-
 corrections/adjudicated.tsv	765051	7f8b58b91c07c07273dc76e3e9844c16cf394e79281be7efebaeec2d15b5632e	6185	-
 corrections/candidates.tsv	2443431	9c8de25d504b4750457e4e9b40784df14ef03f4a8bc9e53a5d4842b3a0750185	12500	-
 corrections/exceptions.tsv	954	8cba4e654a185275e79295f0dbe7ad8e923da45792a7d03a7bce1214c2ea78ee	0	-
@@ -12,7 +16,7 @@ eval/shapes-dev/compound-head-leakage-report.tsv	978	b74d2037ac2b323a7983d3a42f4
 eval/shapes-dev/compound-head-sources.tsv	67065	69ee105bb9ab81c675feca508f7aee6dabd4bd5b766f3520f20d173aa99f46d5	75	-
 eval/shapes-dev/compound-head.tsv	79190	537e0be3923f585b8f084de4e88f4064624e4f5dc484f84ccd303fed3db924f5	2148	120
 eval/shapes-dev/dev.tsv	426221	bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290	12279	700
-eval/shapes-dev/excluded-sources.tsv	629	918340bc1f5fb28829f48f6084b151372dda82b8dfbec814fc8f4ac9fcdbea94	3	-
+eval/shapes-dev/excluded-sources.tsv	845	1406fb8170ae07f319f83eaa8dd8cda1825591ed391074eba277ecf36990c8e1	4	-
 eval/shapes-dev/hard-leakage-report.tsv	832	c530dc708ce21367eab4a6a70a8bfe9c7fe2eeb6cb61980c2a41b4609aaf7c78	9	-
 eval/shapes-dev/hard-sources.tsv	93781	fd21313ff50068f9637c1504b059c7de45f83ec6d1d9b81ce46499ae17d8ee12	100	-
 eval/shapes-dev/hard.tsv	282782	c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22	7936	460
@@ -26,11 +30,15 @@ eval/shapes-dev/named-state.tsv	70355	e08472387630368b7fb3fbaa5cd7b6187d0760608c
 eval/shapes-dev/sources.tsv	54050	b88b1f75a376bf1e105160f835a7ad061d7391d7abd08b59471282d51907ad46	63	-
 eval/shapes/probe.tsv	58492	5d1ebe3a7fd64c20aeb1388c95c2fff2d97792f9761375bed8b52740e0d89105	561	-
 eval/ste-challenge/test.tsv	11858	7593d2ca261984c7c347f130d1d1f639b85515a4d74f39ece3fc60577a2e3aaf	272	32
+headings/dropped-sentences.tsv	302	06117efe57292387db6142f7e251b5e039a901b7607b418536cd4d6f21aa1201	1	-
+headings/excluded-documents.tsv	1235	0d3595277f46972e1fe2c1ba78095f275af3e18c9af5e53f083be636e405d452	8	-
+headings/headings.tsv	92796	cae45ff12cb4e7e9531a007beb8278b4014a8bdab9ae3e52b06ba46df4d48cde	1664	374
+headings/sources.tsv	84910	26ca020469ee3a396ba71bd7845030a516e612c44e887933b1fe8450445fbad7	90	-
 imperative/dropped-sentences.tsv	335	ff7667dbee716ed01fe2182c4497e301f48006ac63a18b560d347aeb22f2fddf	3	-
 imperative/excluded-documents.tsv	222	e3a6f73dda9a089f9c04f99fd5b8d674b68cddf80c7aefc6e493394dd240bfe8	0	-
 imperative/imperative.tsv	364365	218246df0c4ce739e6631a066e5296194d6773e09fc849cd64c1eb93516185ad	11946	900
 imperative/sources.tsv	111189	46ed6556224f2adcd73da7f8c8b026597a3a72f85dc7f6f8284231f003699df5	123	-
-leakage-report.tsv	2036	b20e28de0e165b42d1c28db764b867a360304ccc375e5d77d1c205fc56d00200	52	-
+leakage-report.tsv	2912	96eda47b0241db70245767d82ddba10eba666f902c06e7a30d80d7b676777dbf	78	-
 lexicon/closed-class.tsv	9435	73b7edf3fcaec5af21b5722a83b279ee78e66cb6e3cd2b71a4e625336dc945ca	331	-
 lexicon/coverage.tsv	8587	3441f0d947f9f4ed7457b635cb9679ca477429ee9212c2dfb6d1dfdf62d1f572	268	-
 lexicon/lexicon.tsv	4452392	def08a681d82594d57dc8dfe44155b5966d316896acc78f7dd54f04d2f78d3cc	262635	-
@@ -50,3 +58,4 @@ silver/dropped-sentences.tsv	412	7befc5b6e3811f877932c8ab40121750fdbd788dc2052a4
 silver/excluded-documents.tsv	83844	408d844d1ad6b2c5cfc851032a18bf626ded605e1f72fc1ca5fdfa474b25ccd0	1867	-
 silver/silver.tsv	7461484	2a24853ff5a5e37fa6282fe4586d4a12eb38d00356b57766d9ec5894ba867d2a	242699	13971
 silver/sources.tsv	899132	dd2848b70b296bc30b02f28b0885fce8f89f255127174d6fffe8fcc186f91db1	5067	-
+training-leakage-report.tsv	820	bbcb9a2e083035e2fdd237a282470281986ce9d8e89c3f6c5d4f0bd20db655af	9	-

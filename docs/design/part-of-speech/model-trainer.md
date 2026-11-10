@@ -25,7 +25,8 @@ target framework, including .NET Framework.
   `MaxSentences`. The run has `Epochs`, `HashBits` (18 to 24), `MinCount`, `PruneThreshold`, `QuantScale` (a power of
   two; the file scale is its reciprocal, which is exact), `Seed`, `Restriction` (`None`, `History` or `Full`),
   `History` (`Predicted` or `Gold`), `Temperature` and `ImageSha256`, and the context feature groups: `Features` (a list
-  of group names, empty by default; `positionCues` (F1), `clauseCues` (F2), `rightPreview` (F3), `inflection` (F4);
+  of group names, empty by default; `positionCues` (F1), `clauseCues` (F2), `rightPreview` (F3), `inflection` (F4),
+  `titleCaseLine` (F5);
   `ResolveGroups` maps them to the `FeatureGroups` flags and `Validate` refuses an unknown or repeated name) and
   `PreviewFolds` (2 to 10, default 5, used only with `rightPreview`). There is no floating-point training setting:
   the temperature is chosen once by the `calibrate` command and is only written into the file header.
@@ -257,16 +258,19 @@ hashed keys of `shapes_dev.LeakageFilter` only), a top-up round of a tranche is 
 the quota gate is a floor and a cap per stratum. The gold of a heading item is an exact tag, which the decision rule of
 `shapes_dev.py` checks for the heading shapes (`EXACT_TAGS`).
 
-The training sources of `training.json` are the open corpus, MASC, the silver corpus and the imperative source
-(`data/imperative/imperative.tsv`), all with a positive weight (the imperative source has weight 1). A source can only
+The training sources of `training.json` are the open corpus, MASC, the silver corpus, the imperative source
+(`data/imperative/imperative.tsv`, weight 1), and the compound and headings sources (`data/compound/compound.tsv` and
+`data/headings/headings.tsv`, weight 0, so they are committed and not read by a default run). A source can only
 be added to a run through the
 configuration: `--source NAME:WEIGHT` changes the weight of a source that the configuration names and refuses an unknown
 name, and a source of weight 0 is not read (`CorpusReader.LoadSources` skips it), so `--source imperative:0` trains the
-model without the imperative source. The imperative file is an ordinary training file
-under `data/`, so the training guard admits it (the deny-list names no part of its path); it is disjoint from every
-evaluation set, and the builder `tools/data/imperative_data.py` reuses the opaque-key discipline of `shapes_dev.py`:
-the held-out sets reach it only through `leakage.held_out_overlap_keys()`, and it names no weights file, decoder or
-tagger. The rule of the source and its record are in `data/imperative/README.md`.
+model without the imperative source and `--source compound:1` trains with the compound source. The three targeted files
+are ordinary training files
+under `data/`, so the training guard admits them (the deny-list names no part of their path); they are disjoint from every
+evaluation set, and the builders `tools/data/imperative_data.py` and `tools/data/compound_heading_data.py` reuse the
+opaque-key discipline of `shapes_dev.py`:
+the held-out sets reach them only through `leakage.held_out_overlap_keys()`, and they name no weights file, decoder or
+tagger. The rule of each source and its record are in its `README.md` under `data/`.
 
 ### Confidence Thresholds
 
@@ -393,6 +397,7 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | --- | --- | --- |
 | Sources | open x2, MASC, silver (probability at least 80%) | +0.57 points over open alone |
 | Imperative source | `imperative` at weight 1 (900 sentences) | the imperative-data experiment (`RUN-LOG.md`) |
+| Compound and headings | `compound` (742), `headings` (374), weight 0 | committed data, not in the mix |
 | `disputed` tokens | trained, not masked | accuracy +0.2 points, harmful errors tied |
 | Restriction, history | mode B (`History`), predicted history | fully restricted training (C) failed the floor |
 | Epochs | 6 | tied with 10 epochs, fewest within 0.05 points of the best |
@@ -514,7 +519,8 @@ scores a weights file on it:
 
 ### Context-Feature Experiment
 
-The context feature groups (position cues F1, clause cues F2, right preview F3, inflection F4; their definitions are
+The context feature groups (position cues F1, clause cues F2, right preview F3, inflection F4, title-case line F5;
+their definitions are
 in `feature-extractor.md` and in the pre-registration section of `RUN-LOG.md`) are switches of the shared
 `FeatureExtractor`. The trainer is the side that trains them and measures them; the protocol (arms, seeds, metrics, guards
 and the selection rule) was fixed before any candidate model was trained and is recorded in `RUN-LOG.md`, and the
@@ -569,7 +575,12 @@ harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-featu
 - **`eval-arm`** (`ArmEvaluation`, `ArmEvaluationData`): scores one weights file through the real decoder (all 16
   alternatives, `Metrics.Judge`) on the standard and the hard tranche of the shapes development set (per shape and
   pooled; `items` lists `d`, `c` and `h` for every target item, which sum to the pooled decisions, correct and
-  harmful counts), on the open and the gold v2 development splits and on the mapped development part of the external
+  harmful counts), on the compound-head, headings and named-state tranches (the block `shapesNew`: per tranche the row
+  of its shape with the target items that are wrong at a confidence of at least 0.95 as `confidentWrong`, and for the
+  headings the rows of the kinds `noun`, `imperative` and `proper`; `pooledPrimary` pools the compound-head and the
+  headings rows into the harmful errors per 1,000 noun-verb decisions over both and the total of their confident wrong
+  answers; the three file hashes are members of `inputs`), on the open and the gold v2 development splits and on the
+  mapped development part of the external
   treebank (the file `ud_dev.tsv` of the local, git-ignored treebank cache below `tools/data/cache`, whose SHA-256 is
   pinned in `DataGuard`; a missing or changed cache is an error with the fetch recipe, and judging uses the mapped tags
   like the held-out view of the treebank), reads the size of the file and the groups from the header, and measures the
@@ -636,10 +647,11 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
 - The base class library and, for `training.json`, `operating-points.json` and `test-results.json`, System.Text.Json
   (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv`, `data/silver/silver.tsv` and
-  `data/imperative/imperative.tsv` (all four with a positive weight), and the two
+  `data/imperative/imperative.tsv` (all four with a positive weight), `data/compound/compound.tsv` and
+  `data/headings/headings.tsv` (weight 0), and the two
   development files plus the hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche),
-  `data/eval/shapes-dev/hard.tsv` (hard tranche) (for `eval-shapes` and `eval-arm`) and `compound-head.tsv`,
-  `headings.tsv` and `named-state.tsv` of the same folder (for `eval-shapes` only); for
+  `data/eval/shapes-dev/hard.tsv` (hard tranche) and `compound-head.tsv`, `headings.tsv` and `named-state.tsv` of the same
+  folder (for `eval-shapes` and `eval-arm`); for
   `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the
   external treebank that the data tools fetch (the tool itself uses no network); `eval-arm` reads the mapped development
   table of the same cache.

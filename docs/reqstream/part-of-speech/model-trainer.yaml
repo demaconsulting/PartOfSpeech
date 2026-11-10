@@ -124,15 +124,17 @@ sections:
           - id: PartOfSpeech-ModelTrainer-SourceWeights
             title: >-
               The trainer shall repeat the sentences of a source in every epoch as many times as the weight of the
-              source says, shall leave a source of weight 0 out, and shall read the committed imperative source, once it
-              is weighted, as sentences without a masked token.
+              source says, shall leave a source of weight 0 out, and shall read each committed targeted source
+              (imperative, compound, headings), once it is weighted, as sentences without a masked token.
             justification: |
               The weight of a source is a selected training setting, so the epoch must contain exactly the repeats that
               the configuration names. The imperative source is committed with weight 1, so it is in the mix of the
-              shipped weights; a run that weights it must get exactly its sentences, all with a gold tag.
+              shipped weights; the compound and headings sources are committed with weight 0, so they add nothing until
+              a run weights them. A run that weights a source must get exactly its sentences, all with a gold tag.
             tests:
               - CorpusReader_LoadSources_Weight_RepeatsSentences
               - CorpusReader_LoadSources_ImperativeSource_ReadsUnmaskedWhenWeighted
+              - CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted
 
           - id: PartOfSpeech-ModelTrainer-SourceLimits
             title: >-
@@ -450,8 +452,9 @@ sections:
           - id: PartOfSpeech-ModelTrainer-Configuration
             title: >-
               The training configuration shall be a valid, canonical file that names existing training corpora (the
-              imperative source among them, all with a positive weight), and a
-              misspelled setting or an out-of-range value shall be an error.
+              imperative source with a positive weight, and the compound and headings sources with weight 0, so that
+              they are committed and not trained on), and a misspelled setting or an out-of-range value shall be an
+              error.
             justification: |
               The configuration is the record of what the committed weights were trained from. A silently ignored
               misspelling would train something other than what the file says, and a file that the tool rewrites in
@@ -666,7 +669,9 @@ sections:
               `--preview-folds`, refuse an unknown or repeated group, train the groups with the shared feature
               extractor, write the groups as the mask of the weights header with the feature set version that follows
               from it, leave the feature settings out of the file form of a configuration while they are at their
-              defaults, and, with no group, give the same bytes as the training did before the groups existed.
+              defaults, and, with no group, give the same bytes as the training did before the groups existed. The
+              groups are `positionCues` (F1), `clauseCues` (F2), `rightPreview` (F3), `inflection` (F4) and
+              `titleCaseLine` (F5).
             justification: |
               The experiment on context features compares arms that differ only in their groups, so the groups are
               settings of the training like every other one, are checked where they are read, and are recorded in the
@@ -721,10 +726,15 @@ sections:
             title: >-
               The command `eval-arm` shall score a trained weights file through the real decoder on the standard and the
               hard tranche of the shapes development set (per shape and pooled, with the per-item outcomes of the target
-              items), on the open and the gold v2 development splits and on the mapped development part of the external
+              items), on the compound-head, headings and named-state tranches (per tranche the row of its shape with the
+              target items that are wrong at a confidence of at least 0.95, the kinds of the headings, and the pooled
+              harmful errors per 1,000 noun-verb decisions and the confident wrong answers of the compound-head and the
+              headings tranche together), on the open and the gold v2 development splits and on the mapped development
+              part of the external
               treebank (read from the local cache with a pinned SHA-256), measure the size of the file and the
               single-thread throughput of the default tagger (one warm-up pass, five timed passes, the median), and
-              write one JSON result in schema 1 with the groups of the weights header and the hashes of the inputs.
+              write one JSON result in schema 1 with the groups of the weights header and the hashes of the inputs,
+              the new members only added behind the existing ones.
             justification: |
               The experiment decides on figures that must come from one definition of a harmful error and from the same
               decoder that users run, for every arm in the same way. A fixed schema lets the analysis script read the

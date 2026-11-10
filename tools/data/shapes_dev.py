@@ -2002,16 +2002,18 @@ def _command_decide(args):
     return 0
 
 
-def read_decided(work, data_dir=None):
+def read_decided(work, data_dir=None, keep=()):
     """([item dict], {sent_key: [(form, tag, status)]}) of private/decided.tsv and decided-rows.tsv.
 
-    An item of a source of the merged exclusions (`load_exclusions`) is a `drop` whatever the stored outcome."""
+    An item of a source of the merged exclusions (`load_exclusions`) is a `drop` whatever the stored outcome, except the items of the documents in `keep`
+    (the documents that a builder omits itself after its caps: their items keep their outcome until then, so the omission removes items and never lets another
+    item take their place)."""
     _, records = adjudicate.read_records(work.private_file("decided.tsv"))
     excluded = load_exclusions(work, data_dir).reasons
     for record in records:
         record["target"] = int(record["target"])
         record["disputed_tokens"] = int(record["disputed_tokens"])
-        if record["source_id"] in excluded:
+        if record["source_id"] in excluded and record["source_id"] not in keep:
             record["outcome"], record["reason"] = "drop", EXCLUDED_REASON
     _, row_records = adjudicate.read_records(work.private_file("decided-rows.tsv"))
     rows = collections.defaultdict(list)

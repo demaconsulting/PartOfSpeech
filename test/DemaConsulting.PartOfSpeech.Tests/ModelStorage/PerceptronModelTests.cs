@@ -542,6 +542,8 @@ public class PerceptronModelTests
     [InlineData(8u)]
     [InlineData(9u)]
     [InlineData(15u)]
+    [InlineData(16u)]
+    [InlineData(31u)]
     public void PerceptronModel_Load_FeatureGroups_RoundTripsMask(uint mask)
     {
         // Arrange: the small model written with a group mask, compressed and not
@@ -598,12 +600,12 @@ public class PerceptronModelTests
     }
 
     /// <summary>
-    ///     Proves that a mask with a bit that this build does not know (including the bit reserved for word clusters) is rejected, and that the writer refuses to write one.
+    ///     Proves that a mask with a bit that this build does not know (bit 5 and every higher bit) is rejected, and that the writer refuses to write one.
     /// </summary>
     /// <param name="mask">The invalid mask.</param>
     [Theory]
-    [InlineData(16u)]
-    [InlineData(17u)]
+    [InlineData(32u)]
+    [InlineData(33u)]
     [InlineData(0x80000000u)]
     [InlineData(0xFFFFFFFFu)]
     public void PerceptronModel_Load_UnknownGroupBit_Throws(uint mask)
@@ -618,6 +620,24 @@ public class PerceptronModelTests
         Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(file, 2));
         Assert.Throws<InvalidDataException>(() => PerceptronModel.ToUncompressedImage(file));
         Assert.Throws<ArgumentOutOfRangeException>(() => PerceptronModelWriter.Compile(18, 1f, 1f, 2, SmallRows(), false, mask));
+    }
+
+    /// <summary>
+    ///     Proves that the title-case line group (bit 4, value 16) is a known group: a file with it, alone or with another group, loads and keeps its mask.
+    /// </summary>
+    /// <param name="mask">The mask.</param>
+    [Theory]
+    [InlineData(16u)]
+    [InlineData(17u)]
+    [InlineData(31u)]
+    public void PerceptronModel_Load_TitleCaseLineGroup_IsKnown(uint mask)
+    {
+        // Arrange / Act: a file with groups whose mask holds the title-case line bit
+        var model = PerceptronModel.Load(PerceptronModelWriter.Compile(18, 5.4f, 0.25f, 2, SmallRows(), false, mask));
+
+        // Assert: the mask is the one written, and it holds the title-case line group
+        Assert.Equal((FeatureGroups)mask, model.FeatureGroups);
+        Assert.Equal(FeatureGroups.TitleCaseLine, model.FeatureGroups & FeatureGroups.TitleCaseLine);
     }
 
     /// <summary>

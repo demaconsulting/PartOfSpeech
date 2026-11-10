@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite montanafinalstat unitrich usfs safehandlingofbo NCRP -->
 
 # Trainer Run Log
 
@@ -4123,6 +4123,583 @@ Wrong answers at a confidence of at least 0.95: 5 (`n-compound-head-ambiguous`),
 Headroom is 100% minus the target accuracy (derived from the table above, not a new measurement): 40.0% for `n-compound-head-ambiguous` (40 of 100 target errors), 15.8% for `heading-titlecase`
 (15 of 95; 20.0% of the noun targets and 11.1% of the imperative targets) and 10.0% for `n-named-state` (10 of 100). The 95% intervals are 15 to 19 points wide for the first two shapes
 and 12 points for `n-named-state`, so a difference of a few items between variants is inside the interval.
+
+## Compound and heading training data: pre-registered selection rule
+
+This section is written and committed **before any label of the two new sources exists**. At this commit no candidate row has been written, no batch has been exported, no model has tagged a token of
+the new text, and no model of this experiment has been trained or evaluated; the only commands run on the new text are the document gate (`exclusions`) and the counts-only `preflight` of the builder
+(clean sentences, frame hits, lemmas and lines per stratum, nothing else). The git history shows the order: this commit (the builder `tools/data/compound_heading_data.py`, its tests and this rule), then
+the data and their registration (weight 0), then the optional feature, then the pre-registration of the retraining, then the runs, then the results. The SHA of this commit is recorded by the commit that
+follows it (a commit cannot contain its own SHA). The code base is `main` at `f91f25c` (PR #18); nothing outside `tools/data` and this file changed in this commit.
+
+### Goal and motive
+
+Add two targeted training sources, `compound` (about 800 sentences with a noun compound whose head can also be a verb) and `headings` (about 600 Title Case heading, caption and step-title lines), to
+`DemaConsulting.PartOfSpeech`, and test them in a pre-registered retraining. Motive: a consumer of the library reported confident errors on noun + noun compounds whose head can also be a verb
+(`[noun] split`, `[noun] check`, `[noun] stand`) and on Title Case headings and fragments tagged as proper nouns. The development tranches of PR #18 measure exactly these shapes; the shipped model
+(F2 plus the `imperative` source) scores, on the development files (`eval-shapes --tranche new`, reproduced at the start of this work on the unchanged `main`):
+
+| Shape | Target accuracy | Harmful per 1,000 decisions | Wrong at confidence >= 0.95 |
+| --- | --- | --- | --- |
+| `n-compound-head-ambiguous` | 60.0% | 390.0 | 5 |
+| `heading-titlecase` | 84.2% | 51.3 | 2 (both on noun targets) |
+| `n-named-state` | 90.0% | 81.1 | 0 |
+
+No text of the consumer report is used or was read for this work: **every sentence of the new sources comes from the recorded US federal public-domain documents below**, and none is supplied by any consumer.
+Nothing is adopted unless the retraining rule (a later section) selects it; both sources are committed with weight 0 first.
+
+### The documents (frozen)
+
+One shared pool of new US federal documents feeds both sources: 224 documents (1862 to 2008; 176,759 clean sentences), sourced from archive.org OCR text. The public-domain basis of every document
+is written in the `license_basis` cell of its row (17 U.S.C. 105, the agency named in the record, the Internet Archive record's own rights statement) and was checked one by one: the creator field of the
+record names a US federal agency, no copyright notice, claim or third-party permission statement was found in the text (the Google-scan boilerplate of the older scans, a mention of the word and the copyright policy
+that one manual describes are not claims), no FAA material, nothing in `data/eval/shapes-dev/excluded-sources.tsv`, and a document with a state, foreign, university, contractor or private co-author was dropped by hand.
+
+| Agency family | Documents | Clean sentences of the draft |
+| --- | ---: | ---: |
+| US Department of Agriculture (`usda`) | 60 | 35,549 |
+| US Forest Service | 28 | 20,566 |
+| US Geological Survey (`usgs`) | 24 | 36,213 |
+| US Public Health Service and Children's Bureau (`phs`) | 20 | 10,826 |
+| US War Department and Army (`army`) | 19 | 15,069 |
+| US Navy and Marine Corps (`navy`) | 19 | 13,246 |
+| Bureau of Land Management, Bureau of Fisheries, Office of Education, Bureau of Education and National Park Service (`other`) | 15 | 18,283 |
+| US Weather Bureau (`wxb`) | 14 | 8,043 |
+| US Bureau of Reclamation | 13 | 9,808 |
+| US National Bureau of Standards (`nbs`) | 6 | 3,820 |
+| US Bureau of Mines | 6 | 5,336 |
+| **All** | **224** | **176,759** |
+
+By decade of publication: 1860s 2, 1870s 3, 1880s 8, 1890s 7, 1900s 16, 1910s 17, 1920s 5, 1930s 4, 1940s 39, 1950s 24, 1960s 29, 1970s 27, 1980s 25, 1990s 13, 2000s 5. No NASA document was needed: both pool budgets were met
+without the NASA Technical Reports Server.
+
+How the pool was drawn (no model, no predicted tag, no label): archive.org advanced searches by federal creator name and by title words (manual, handbook, bulletin, circular, leaflet, instructions, guide,
+report, paper, ...) gave 7,709 candidate records; a record was dropped before any download when its id, normalized URL, archive.org identifier or Gutenberg number is in the used index (training and
+evaluation sources, all five shapes-dev tables, the imperative source and its exclusions, and every earlier sourcing draft of the shapes development set and of the imperative data, unused documents
+included) or when its title matches a closed list of non-expository words (index, catalog, hearing, regulations, ...). The remaining records were fetched in a round-robin over the agency families, inside a family in the
+order of a seeded hash of the identifier, at most 3 per title stem (a series). **One steer was introduced during the sourcing and is stated here**: a pilot over the first 95 documents showed that the headings pool was
+the binding budget (798 clean heading lines of 95 documents) and that the OCR of Google scans and of scans before 1940 holds almost no stand-alone heading lines, so from the 243rd record on, records dated 1940 or later
+and not a Google scan were fetched first. The steer is a property of the OCR text structure, was chosen before any label and used no model. 550 records were fetched: 274 passed the document checks, 242 were rejected
+(the reasons overlap, a record can have several: 92 downloads answered an HTTP error, 79 shared 3 or more sentences with a training or evaluation set or an earlier sourcing, 44 carried a copyright notice, 26 had too few sentences, 25 named a non-federal publisher or creator,
+9 showed no federal publisher, 1 was FAA material) and 34 were left for review (not used). Of the 92 HTTP answers, 71 were 404, 13 were 401, 7 were 500 and 1 was 403; a host that refuses is skipped, never worked around. 44 of the 274
+were then excluded by hand (state, foreign, university, contractor or private co-authors, 39; duplicate scans of a document already taken, 5), 3 had no usable publication year and 3 were left with fewer than 40 sentences after cross-document
+duplicates were removed. The list of the 44 exclusions and their reasons, the fetch records and the per-document hashes are in the work folder; the committed `sources.tsv` of each source lists only the documents that it uses,
+with `raw_sha256`, `text_sha256` and the retrieval date.
+
+| Frozen input | SHA-256 |
+| --- | --- |
+| `sources-draft.tsv` of the work folder (224 documents, 12 columns of `data/eval/gold-v2/sources.tsv`) | `81401c8328ac6335faf8aa8e5711079d07ce96aead587cae5fa5a894506a78de` |
+| `tokens.tsv` of the work folder (365,570 units: the sentences and the heading lines, tokenized by the library tokenizer through the trainer's `shapes-tokenize`) | `00c8d98e77cc538dc70b9e86959d3e56aa92e38804e53ba4ad61b452c8f28760` |
+| the labeler prompt template (the fenced block below, LF, 1,903 bytes) | `9f1da5238dbcd196ca95b0795194245846955d2bb3a95a70bf0540d112d17db5` |
+
+Independence from the other sets is enforced before any label: the document gate (`exclusions`) reports 0 problems for the draft (no used or excluded id, URL or archive.org identifier, a federal basis in every row, sound hashes and counts), every
+sentence goes through the unchanged candidate filters of `shapes_dev.py` (the held-out sets enter only as the opaque hash set of `LeakageFilter`: equal training or evaluation sentence, probe 5-gram) and is checked against all five tranches
+of the shapes development set, against `data/imperative/imperative.tsv` and against the cleaned text of every earlier sourcing (`equals-shapes-dev`, `near-shapes-dev`), and a document with 3 or more such sentences is rejected as a whole.
+No document was rejected as a whole in the final draft (the 79 that were had been removed at the fetch step by the same sentence-key test).
+
+### The rule (fixed now; applied as written; nothing is tuned after a label exists)
+
+The normative text is the docstring of `tools/data/compound_heading_data.py` at this commit; this is the same rule in short.
+
+1. **Frames (position and lexicon only; no PartOfSpeech or WordSense score; every frame hit is in the pool).** `compound`: a sentence of 3 to 30 tokens that passes the cleanliness filter and the equal and near-duplicate filters, with a hit of
+   `shapes_dev_extra.compound_ambiguous_hit` (the frame of `n-compound-head-ambiguous`, unchanged); a sentence whose key equals a heading line of the pool is dropped (`equals-a-heading-line`). `headings`: a line found by `shapes_dev_extra.heading_lines`
+   that passes `heading_noise_reason` (2 to 10 tokens, Title Case, no all-capital word, no unknown word, and the corrected trailing page number and page range rule) and has a hit of `heading_hits`; its stratum is the rarest hit (`proper`,
+   then `imperative`, then `noun`) and a line is one candidate.
+2. **Candidates.** `compound`: the seeded order `rank_of(20261110, "compound", sentence key)`, at most 6 per head lemma and 1,500 in all (gate: at least 1,200 candidates and 250 head lemmas). `headings`: strata in the order proper, imperative, noun, inside a
+   stratum the frame strength and then the seeded rank, at most 4 per lemma over all strata, 25 per document and 1,500 lines in all (gate: at least 1,000 lines and all three strata present).
+3. **Labels.** Two blind labelers, `claude-opus-5.5` and `gpt-6.1-sol` (general-purpose sub-agents, at most 4 at a time, one agent per labeler and batch), tag every token from scratch following `data/CONVENTIONS.md`, through the unchanged
+   `shapes_dev.py export`, `check-batches`, `validate-output`, `status` and `decide` commands (`--round compound`, `--round headings`). Each unit is labeled once per model; no re-roll. A refusal is requested again from a fresh agent and disclosed.
+4. **Kept items.** Both: every token agreed (`disputed_tokens == 0`) and no fix-tier violation of the convention linter (the item is dropped, no label is changed by hand). `compound`: the head read as NOUN or PROPN by both (kind `noun`), or read as VERB by both
+   with an agreed noun right before it (kind `verb`, a counter-example); any other combination is dropped and counted. `headings`: the stratum word has the exact tag of the convention on which both agree (initial imperative VERB in its base form, noun word NOUN,
+   proper noun PROPN); a line on which both agree on another tag is a `class-mismatch` and is dropped, never corrected.
+5. **Caps and quotas (seeded order).** `compound`: 4 per head lemma, 20 per document, 680 of kind `noun` and 120 of kind `verb`, 800 in all, the verb share at most 15 percent; floor 600 sentences and 200 head lemmas. `headings`: 4 per lemma, 25 per document, noun 340,
+   imperative 200, proper 60 (600 in all); floors noun 150, imperative 100, proper 40. `build` refuses (exit 1, nothing written) below a floor; `--allow-short` waives a floor or the minimum (the miss is disclosed, never padded), never a cap.
+6. **Hand check (a model review, not a human review).** 60 kept items per source (`headings`: noun 25, imperative 20, proper 15 by quota) and 4 leniency controls with a swapped tag, drawn with the fixed seeds 20261111 (`compound`) and 20261112 (`headings`), one draw each,
+   shown token by token to a third model (`claude-sonnet-5.5`). Gate per source: marked-word precision `correct / (correct + incorrect)` at least 95 percent (3 incorrect of 60 meets it), at most 1 of the 4 controls accepted, no unanswered item; below it, stop and report.
+7. **Not part of the rule:** no lexicon rebuild (the coverage of the new sources is reported); no weight tuning (a source is added at weight 1 or not at all).
+
+**Choices made while writing the builder, stated openly.** The `headings` source has no fourth stratum of "other Title Case lines" without a frame word: the shared decision tools need a judged word with an exact tag, so every kept line is a `noun`, `imperative` or `proper`
+line, and the noun cap is 340 (the 280 of the plan plus the 60 that the fourth stratum would have taken). The `compound` source keeps verb counter-examples (up to 15 percent) because the `imperative` source taught one reading only, which its README lists as a limit.
+
+### Pool sizes before the labeling (counts only; no label, no model)
+
+From `preflight` on the frozen inputs above (the budgets are met, so no stop condition of the plan applies):
+
+| Source | Pool and candidates |
+| --- | --- |
+| `compound` | 126,725 clean sentences; 17,783 frame hits over 1,935 head lemmas; 1,500 candidates over 694 head lemmas in 192 documents (budget: at least 1,200 candidates and 250 lemmas) |
+| `headings` | 2,976 clean heading lines; frame hits 1,424 noun, 505 imperative and 100 proper (505, 224 and 68 lemmas); 1,012 candidate lines over 560 lemmas in 124 documents: noun 560, imperative 356, proper 96 (budget: at least 1,000 lines, all three strata) |
+
+### Labeler prompt (frozen)
+
+The agent gets this text with `{ROUND}`, `{BATCH}` and `{MODEL}` filled in and nothing else (no stratum, source, lemma or intended class, no mention of compounds, headings or imperatives; the private folder of the round is never named):
+
+```text
+You are a part-of-speech tagger. Tag every token of every text unit from scratch with a Universal POS tag.
+
+Read exactly two files and nothing else:
+1. C:\work\DemaConsulting\Libraries\PartOfSpeech\data\CONVENTIONS.md  (read it in full first; it is the tagging convention you must follow)
+2. <W>\rounds\{ROUND}\batches\{BATCH}.tsv  (3 tab-separated columns with a header: id, token_index, token; one row per token, rows of one text unit are
+   consecutive and token_index counts from 0; a text unit is a sentence or a short line)
+
+Tag set (exactly these 17): ADJ ADP ADV AUX CCONJ DET INTJ NOUN NUM PART PRON PROPN PUNCT SCONJ SYM VERB X.
+For every row give a tag, a confidence (high | medium | low) and flags (one of: -  mentioned  foreign  foreign+mentioned; `-` when none applies).
+Decide each token from its context and the convention; the token column is what the tokenizer produced, keep it as it is.
+
+Write the result as 6-column tab-separated parts with the header line `id<TAB>token_index<TAB>token<TAB>tag<TAB>confidence<TAB>flags`,
+the first three cells copied byte for byte from the batch row (same order, every row, nothing added or dropped). Use parts of at most 400 rows,
+each with its own header line, in the folder <W>\rounds\{ROUND}\batches\out\{MODEL}\ named {BATCH}.p01.tsv, {BATCH}.p02.tsv, ... (two digits, consecutive,
+no gap). Create the files with your file-creation tool (no shell redirection).
+
+Rules: do not read, list or search any other file or folder (no repository search, no web, no other batch, no other tagger's output, no
+private folder); do not repair or post-process the output by script; do not ask questions; finish by listing the part files you wrote.
+```
+
+`<W>` is the work folder (outside the repository). The template differs from the one of the imperative data only in the round folder of the paths and in the words "text unit" for "sentence".
+
+### Compound and heading data: limits stated in advance
+
+- The pool is every frame hit and is not selected by a model, so the `compound` training data are on average easier than the development tranche (which kept only the contested band of a classifier); the data teach the frame, not the hard cases.
+- The documents are US federal text, mostly 1940 to 1990 (the register and the era differ from the consumer report); 58 of the 224 documents date from before 1930, and older scans yield few usable heading lines.
+- The labels are written by two models, without human review; the hand check is a model review (the error found by the same kind of review for the imperative data was about 0.1% of tokens).
+- A `headings` line has few tokens; a Title Case imperative that both labelers read as a compound noun is dropped (the yield of imperative lines is expected to be low), and the proper-noun stratum is small.
+- No NASA documents and no FAA documents are in the pool.
+
+## Compound and heading training data: labeling, build and registration (results; written after the pre-registered rule)
+
+This section records what happened after the commit `e776f5693739900d91e63fd2a12451da1f4ba90b` (the builder, its tests and the rule above). The order of events, all on 2026-11-09:
+the candidates were written and exported as blind batches, both labelers tagged every batch, the decisions and the builds followed, the model review of a sample was run on the built data,
+a license check of the records found 7 documents to remove, and the data were registered at weight 0 (the commit that follows this one in the git history). No model of the retraining has been
+trained or evaluated yet, and no held-out command has been run.
+
+### Labeling
+
+`compound`: 1,500 candidates in 10 batches (b001 to b010). `headings`: 1,012 candidate lines in 7 batches (b001 to b007). Every batch was tagged by `claude-opus-5.5` and by `gpt-6.1-sol` (17 batches times two labelers, 34 runs),
+as general-purpose sub-agents, at most 4 at a time, with the frozen prompt above (SHA-256 of the template `9f1da5238dbcd196ca95b0795194245846955d2bb3a95a70bf0540d112d17db5`, no word added). **Refusals: none.** Every one of the 34 runs
+produced a valid output at the first request (`validate-output` passed), no batch was skipped, no run was requested again, and no run was repeated to change a result. `decide` ran once per round and `build` once per source before the removal described below.
+
+### Decisions and builds
+
+| Quantity | `compound` | `headings` |
+| --- | ---: | ---: |
+| candidates | 1,500 (694 lemmas, 192 documents) | 1,012 (noun 560, imperative 356, proper 96; 560 lemmas, 124 documents) |
+| dropped: class mismatch | 106 | 427 |
+| dropped: target disagreement | 6 | 12 |
+| dropped: frame mismatch | 80 | 0 |
+| dropped: a disputed token | 163 | 31 |
+| dropped by the caps | lemma 55, document 6, noun 107, verb 177 | noun 108, proper 26 |
+| built (before the removal below) | 800 (noun 680, verb 120; 477 lemmas; 161 documents; 15,889 tokens) | 408 (noun 340, proper 60, imperative 8; 289 lemmas; 95 documents; 1,816 tokens) |
+| removed with 7 documents (below) | 54, then 4 verb-share drops | 33 |
+| **committed** | **742** (noun 631, verb 111; 462 lemmas; 154 documents; 14,692 tokens) | **375** (noun 315, proper 52, imperative 8; 273 lemmas; 90 documents; 1,668 tokens) |
+
+The `compound` class mismatches are heads that both labelers read as another class than noun or verb (adjective 48, adverb 36, adposition 13, auxiliary 6, one each numeral, subordinating and coordinating conjunction); the build keeps a head both read as VERB
+after an agreed noun (kind `verb`) and a head read as a noun (kind `noun`). Candidate sentences dropped alone because of an overlap: 3 equal and 2 near duplicates of a shapes development sentence (`compound`), 118 heading lines equal to one (`headings`).
+
+### The imperative stratum of the headings source is almost empty
+
+The registered floors of `headings` are noun 150, imperative 100 and proper 40. 346 of the 356 initial-imperative candidates (the first word read as NOUN by both labelers 275 times, as ADJ 44 and as PROPN 27) were dropped by the class rule
+(an initial imperative must be VERB), 2 by a disagreement and 8 were kept. The rule of the pre-registration drops such a line, never keeps it with another tag and never corrects it, and `--allow-short` waives a floor with the miss disclosed. The build therefore ran with `--allow-short`:
+the floor of the imperative stratum is not met (8 lines of 100), and the noun and proper floors are met. The spot-check sample is smaller for the same reason (48 items: noun 25, imperative 8, which is all of them, proper 15). **Consequence for the retraining:** the `headings`
+source has almost no imperative training mass, so an arm that adds it can only test the noun and proper-noun readings of Title Case words, not the initial-imperative reading.
+
+### A license-basis finding and the removal of 7 documents
+
+The hand exclusions of the sourcing (44 documents) removed documents whose record shows a state, foreign, university, contractor or private publisher. A review of the author field of every used document after the build found 7 documents that also list a state or local government body as an author
+(a state environmental agency, a state natural-resources department, a state resources agency, a town and a county conservation district): `other-montanafinalstat02unitrich`, `usda-CAT75656463`, `usda-CAT76668505`, `usda-CAT88893596`, `usda-CAT88912096`, `usda-CAT93999438` and `usfs-CAT77678911`.
+Rule 1 of the pre-registration admits only documents with a verifiable US-federal basis, and the sourcing dropped a document without one, so these 7 were removed. The builder got the option `build --omit-document ID` (a change after the labeling; the labels, the decisions and the caps are untouched): it removes the selected items of the listed documents after the caps and before the numbering, so nothing is added, nothing is relabeled
+and the ids have no gap; the verb share of rule 6 is applied again to what is left (4 verb items were dropped for it); the documents are listed in `excluded-documents.tsv` with a reason. Both sources were built again with the 7 ids (`compound`: 54 items removed, `headings`: 33), which gave the counts above. The pre-removal files are not committed.
+
+### Hand check (model review, not a human review)
+
+One sample of each source was drawn from the data as built before the removal (seeds 20261111 and 20261112) and reviewed once by `claude-sonnet-5.5` against `data/CONVENTIONS.md`; no sample was drawn again.
+
+| Measure | `compound` (60 items, 4 controls) | `headings` (48 items, 4 controls) |
+| --- | ---: | ---: |
+| judged word correct | 60 of 60 (100.0%) | 48 of 48 (100.0%) |
+| whole item correct (no other token marked wrong) | 58 of 60 (96.7%) | 47 of 48 (97.9%) |
+| token precision (reported, not gated) | 99.76% (3 wrong of 1,255) | 99.56% (1 wrong of 227) |
+| controls accepted | 0 of 4 | 0 of 4 |
+| gate (judged word at least 95%, at most 1 control accepted) | passed | passed |
+| items that belong to a removed document | 2 | 3 |
+| the remaining reviewed items (judged word; whole item; token precision) | 58 of 58; 56 of 58; 99.75% (3 of 1,217) | 45 of 45; 44 of 45; 99.54% (1 of 219) |
+
+### Registration checks (on the committed files)
+
+- `check_leakage.py --write-report`: 0 document overlaps, 0 exact sentence overlaps and 0 near duplicates of both sources against every evaluation set (open dev and test, gold v2, the probe, all five tranches of the shapes development set, the STE challenge set, UD English-EWT train, dev and test), and none against the other training sets;
+  the two new sources share 73 documents (one pool, reported and not gated) and no sentence. The pairwise section is new (`data/training-leakage-report.tsv`).
+- `check_licenses.py` clean (both source tables are scanned for restricted text and FAA material, and against the exclusion record). `check_conventions.py --tier fix --enforce --apply`: 0 violations in all columns; the check tier reports 2 hits in `compound` (`be-participle-adj-not-gradable` and `language-name-token`) and none in `headings`.
+- Lexicon (not rebuilt, `lexicon.tsv` unchanged; `check_lexicon.py` gate G1 passed): the tag of 12,823 of 13,265 word tokens of `compound` (96.67%) and 3,971 of 4,332 distinct (spelling, tag) pairs (91.67%) are listed; for `headings` 1,512 of 1,569 tokens (96.37%) and 898 of 951 pairs (94.43%).
+- `train --check` exit 0, image `6e1e4ade56aa277d79709c107000f10e99c6f4e55a097e872a9c38fa2e12e8d0` unchanged, with both sources in `training.json` at weight 0.
+
+| Frozen file | SHA-256 |
+| --- | --- |
+| `data/compound/compound.tsv` | `eb8c4708ba95fb370c885110e10eda0f1d826c5922876bd66e69389894bd5e3b` |
+| `data/compound/sources.tsv` | `8b861dd3ff2d5a3fd5e741f5fe2a906807f99afa562d7e294d4011d93ef15e02` |
+| `data/headings/headings.tsv` | `5931072928829e1911468173a181761ba001c4d7f16a8492391404395649124c` |
+| `data/headings/sources.tsv` | `428a73f0581ec168cdef63d885cd6e001e925813b0a0d0dd1148f79636935aff` |
+
+The README of each folder is the description of the data (`data/compound/README.md`, `data/headings/README.md`).
+
+## Compound and heading training data: pre-registered retrain
+
+This section is written and committed **before any model of this retraining is trained or evaluated**. No `train --output`, no `eval-arm` for an arm and no other run of an arm exists:
+since the data were registered the trainer commands run were `train --check` (exit 0, image `6e1e4ade...`, unchanged, which shows that the weight-0 entries leave the shipped model unchanged),
+one **byte-identity proof** of the shipped configuration (`train --seed 20260101 --features clauseCues --calibrate`, written outside the repository, which reproduces `weights.bin` byte for byte; it is the BASE arm's seed-20260101 run
+done once as a build gate, and its result is not used as an arm result) and one smoke scoring of the **shipped** `weights.bin` with the new `eval-arm` (a baseline, not an arm). The held-out sets are **not used by this experiment** and no held-out command was run.
+
+### Order of the commits
+
+The git history shows the order. Each step is a commit, and a commit cannot contain its own SHA: the SHA of this commit is recorded by the next one.
+
+| Step | Commit | What it contains | Written |
+| --- | --- | --- | --- |
+| C1 | `e776f5693739900d91e63fd2a12451da1f4ba90b` | the builder `tools/data/compound_heading_data.py`, its tests and the selection rule (section "pre-registered selection rule"), **before any label of the sources existed** | 2026-11-09 21:22 -0500 |
+| C2 | `7e82e2d75e676aae2477d46131159b24cdd5673c` | the labeled data, their documents and checks, and the registration in `training.json` at weight 0 (section "labeling, build and registration") | 2026-11-09 23:44 -0500 |
+| C3 | `9a6d10b4e7519c36bbd6c42a728f3858214a818e` | the feature group F5 (`titleCaseLine`), off by default, and the `shapesNew` block of `eval-arm` (code, tests, documents) | 2026-11-10 00:15 -0500 |
+| **C4** | this commit | this pre-registration: the arms, the driver, the analysis script, the metrics, the guards and the selection rule | after C3 |
+
+After C4 come the runs (a driver invocation per arm), then a results section, and then, only if the rule selects an arm, an adoption. The code base of the experiment is `main` at `f91f25c` plus C1 to C4.
+The trainer used for the runs is built from C4 (no source file changes after it before the runs; the driver records the commit and a dirty flag in every result).
+
+### Why this retraining
+
+Two shapes produce **confident errors** of the shipped model: noun + noun compounds whose head can also be a verb (the head is then tagged VERB), and Title Case headings, captions and step titles, in which a capital letter
+is read as a proper noun. The development tranches built for them (`n-compound-head-ambiguous`, `heading-titlecase`, with `n-named-state` as a watched neighbor) give the shipped model 60.0% target accuracy with 390 harmful errors per 1,000
+noun-verb decisions and 5 answers wrong at confidence >= 0.95 on the compound tranche, 84.2% with 2 answers wrong at >= 0.95 on the heading tranche, and 90.0% on named-state
+(section "new tranches baseline of the shipped model"; reproduced by the smoke scoring noted above: 43 harmful errors of 178 decisions on the two tranches pooled, 241.57 per 1,000, 7 answers wrong at >= 0.95).
+The motive is **weakness**, not a tuned fix: the tagger is weakest on these two frames, and the hypothesis is that targeted real text (and a feature that tells the model that a line is in Title Case) lowers the harmful errors. The experiment tests that hypothesis
+against the guarded measures, size and speed. Nothing is adopted unless the rule below selects it.
+
+### Retrain: the data (frozen)
+
+`data/compound/compound.tsv`: 742 sentences (noun 631, verb 111 kinds of the head; 14,692 tokens; 462 head lemmas; 154 US federal documents). `data/headings/headings.tsv`: 375 heading lines (noun 315, proper 52, imperative 8; 1,668 tokens; 273 lemmas; 90 documents).
+Every token has a tag on which two blind model labelers (`claude-opus-5.5` and `gpt-6.1-sol`) agree; no human reviewed a label; the sources are disjoint from every training and evaluation source (leakage 0/0/0, see the registration section).
+Hand check (model review by `claude-sonnet-5.5`): judged word 60 of 60 (compound) and 48 of 48 (headings) before the removal of 7 documents, 58 of 58 and 45 of 45 on the items that remain. Both are registered in `training.json` at weight 0; the arms train them at weight 1 with `--source`.
+At weight 1 the sources add 742 and 375 sentences to the 61,680 sentences of the shipped mix (1.2% and 0.6%).
+
+### The feature group F5 (`titleCaseLine`): definition and build evidence
+
+F5 was built (commit C3) because it passed the "simple and deterministic" test. The definition, **fixed before any arm was trained**: a line is Title Case when, among its word tokens (a token with a letter and no digit) with the first word token left out,
+there are at least 2 and at least 60% start with an upper-case letter (the integer test `5 x capitalized >= 3 x words`), and the last token of the line is not `.`, `!` or `?`. The last clause keeps name-heavy ordinary sentences
+(`John Smith met Mary Jones.`) from being marked; it is part of the registered definition. Two tag-independent features per token: `TitleLine` (0 off the line; on it, 4 plus the capitalization shape bits upper-first or all-upper)
+and `TitleLineFirst` (0 off the line, 1 on it, 2 for token 0), so a capital in a Title Case line stops implying a proper noun by itself. `FeatureGroups.TitleCaseLine` = 16 (the next free bit), `FeatureKind.TitleLine` = 40 and `TitleLineFirst` = 41,
+the static stride grows by 2 and the bucket capacity is 42; trainer name `titleCaseLine`, short name `F5`. The group is off unless named, and then the model is byte-identical to one trained without it.
+
+Build evidence (the report of the build, gates D1d): the extractor change is 98 added and 9 removed lines in one file, about 50 of them production code, and no feature, bucket order or constant of another group changed; one integer pass per sentence; the
+allocation test (0 bytes after warm-up) includes the group; of 366 existing tests of the extractor, decoder, perceptron model, model storage, embedded model and tagger, 363 passed unchanged and 3 had to change
+(the two unknown-group-bit cases for 16 and 17, which are now 32 and 33, and the capacity test, which asserts that a token with every feature has exactly the bucket capacity); **`train --check` exit 0 with the image `6e1e4ade...` unchanged**; the byte-identity proof
+(`train --seed 20260101 --features clauseCues --calibrate` gives 521,695 bytes with SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b`, equal to the shipped `weights.bin`; 61,680 sentences, 6,357,228 steps);
+the smoke `eval-arm` of the shipped weights reproduces the baseline figures above; the full build (4,799 tests, 4 skipped for link resolution on .NET Framework, 0 failed) and the lint were green.
+The definition has one tunable constant (60%) and one clause; neither was fitted to any result, because no arm had been trained.
+
+### Retrain: arms and runs
+
+| Arm | Feature groups | Sources added to the shipped mix | Additions |
+| --- | --- | --- | --- |
+| **BASE** | `clauseCues` | none (the shipped mix: open x2, MASC, silver >= 80, **imperative at weight 1**, exactly `training.json`) | 0 |
+| **CMP** | `clauseCues` | `compound:1` | 1 source |
+| **CMP-HDG** | `clauseCues` | `compound:1`, `headings:1` | 2 sources |
+| **CMP-HDG-F5** | `clauseCues`, `titleCaseLine` | `compound:1`, `headings:1` | 2 sources and 1 feature group |
+
+BASE is the shipped model (the imperative data and the clause cues were adopted by the earlier experiments), so the retraining is judged against the model that ships. The data effect alone is CMP and CMP-HDG against BASE; the effect of F5 alone is CMP-HDG-F5 against CMP-HDG
+(reported, not gated). Seeds: **20260101, 11, 12, 13, 14** (the seeds and the order of the earlier experiments), five runs per arm, 20 runs. Every other setting is the shipped `training.json`; the temperature is refit on open dev for every run (`--calibrate`).
+The mechanism is the new driver `compound-heading/run_arms.ps1`, which is the frozen driver of the context-feature experiment with four changes only: it reads its own `arms.json`; it appends `--source <name>:1` for each source of the arm after
+`--calibrate --output`; it checks the PAUSE file of the session folder before the build and before every run (if it exists the driver stops cleanly with exit code 4 and writes a resume record `resume.txt`); and it has its own documentation comment. The runner is `imperative-data/runner-base.cmd`, **unchanged**.
+The arms are run in this order, one invocation at a time, into one folder on C: outside the repository (`<runs>`):
+
+```text
+$runner = "<repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd"
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/run_arms.ps1 -Out <runs> -Arms BASE       -Runner $runner -PyCache <pycache>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/run_arms.ps1 -Out <runs> -Arms CMP        -Runner $runner -PyCache <pycache>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/run_arms.ps1 -Out <runs> -Arms CMP-HDG    -Runner $runner -PyCache <pycache>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/run_arms.ps1 -Out <runs> -Arms CMP-HDG-F5 -Runner $runner -PyCache <pycache>
+```
+
+Each run is `train --seed S --features <groups> --calibrate --output <arm>-sS.bin [--source compound:1 [--source headings:1]]`, then the dev-only command `eval-arm`, which scores the weights on the five development sets (open dev, gold v2 dev, UD-EWT dev, both tranches of the shapes development set)
+and the three newer tranches (compound-head, headings, named-state), reads no held-out file and writes only its JSON file. The driver is resumable (a run is complete when its JSON exists), requires at least 6 GB free on C: before every run and uses at most 8 threads.
+A run that fails without a result is repeated; no run is repeated or replaced because of its result, and no arm is dropped. A dry run of the driver (`-DryRun`) printed the commands of two arms and two seeds and ran nothing; the pause path was tested with a temporary PAUSE file and a temporary output folder.
+
+**Deviation record (Normal priority).** As in the earlier experiments, the runner starts `dotnet` at Normal priority (`start "" /normal /wait /b dotnet %*`), which the project owner allowed, because BelowNormal receives almost no CPU on this shared machine.
+It changes the speed of the runs and nothing else. Consequence: the training times and the single-thread throughput are measured on a loaded machine and are not comparable between arms or with earlier records;
+the throughput guard is an absolute floor far below the speeds recorded earlier (the smoke scoring of the shipped weights gave 822,427 tokens per second).
+
+### Metrics and where each comes from
+
+A harmful error is a swapped noun-verb class at confidence >= 0.45 on a noun-verb decision; rates are per 1,000 decisions. Every figure is read from the per-run `eval-arm` JSON; the paths below were confirmed against the code that writes the JSON
+(`Evaluation/ArmEvaluation.cs`) and against a real result of the shipped weights, and the self-test of the analysis script builds its synthetic results with exactly these paths. All figures are the mean over the five seeds unless stated; spreads are sample standard deviations.
+
+| Role | Quantity | JSON path (per run) |
+| --- | --- | --- |
+| **Primary** | pooled harmful per 1k over `n-compound-head-ambiguous` and `heading-titlecase` = 1000 x (harmful_c + harmful_h) / (decisions_c + decisions_h); the script re-derives it from the counts and a difference is an invalid run | `shapesNew.pooledPrimary.harmfulPer1k` |
+| **Co-primary** | wrong at confidence >= 0.95 summed over the two tranches; an arm's mean must be **<= the BASE mean** (it must not increase) | `shapesNew.compoundHead.shape.confidentWrong` + `shapesNew.headings.shape.confidentWrong` (the script also checks `shapesNew.pooledPrimary.confidentWrongTotal`) |
+| Guard | hard tranche harmful per 1k <= BASE + 10 | `shapes.hard.pooled.harmfulPer1k` |
+| Guard | standard tranche harmful per 1k <= BASE + 5 | `shapes.standard.pooled.harmfulPer1k` |
+| Guard | open dev harmful per 1k <= BASE + 1.5 | `openDev.harmfulPer1k` |
+| Guard | UD-EWT dev harmful per 1k <= BASE + 1.5 | `udDev.harmfulPer1k` |
+| Guard | UD-EWT dev accuracy >= BASE - 0.15 points | `udDev.accuracy` |
+| Guard | `n-named-state` target accuracy >= BASE - 3 points | `shapesNew.namedState.shape.targetAccuracy` |
+| Guard | deflated weights bytes <= 1.5 x BASE | `weights.bytesDeflated` |
+| Guard | throughput >= 150,000 tokens per second (absolute): the median over the seeds of the runs' medians (each run's value is the median of five timed single-thread passes after one warm-up) | `throughput.tokensPerSecond` |
+
+Reported, not gated: each new tranche's accuracy, harmful rate, wrong at >= 0.95 and control accuracy, the heading kinds (noun, imperative, proper-noun controls), hard and standard accuracy, open dev and gold v2 dev accuracy, NLL, ECE, temperature, rows, bytes,
+training seconds, the Welch interval of every arm against BASE on the primary, the co-primary and every guarded measure, the pairwise intervals CMP-HDG against CMP and CMP-HDG-F5 against CMP-HDG, and the per-seed table.
+(`eval-arm` writes per-item outcomes only for the older hard and standard tranches, so the paired item bootstrap of the earlier experiments is not part of this analysis.)
+
+### The selection rule (fixed now; applied exactly as written; nothing is tuned afterwards)
+
+1. **Primary** = the five-seed mean of the pooled harmful per 1k above. Lower is better.
+2. **Guards and co-primary**, each arm against the **BASE five-seed mean**, all must hold (the table above).
+3. **Q** = the arms CMP, CMP-HDG and CMP-HDG-F5 that pass every guard and the co-primary. If Q is empty, BASE stays.
+4. **m** = the lowest primary mean in Q. **S** = the arms of Q within 10% relative of m (primary <= 1.10 x m).
+5. **Candidate** = the arm of S with the fewest additions in the order CMP (1 source) < CMP-HDG (2 sources) < CMP-HDG-F5 (2 sources and 1 feature group); ties: the lowest primary.
+6. The candidate **wins only if the upper bound of the Welch 95% interval** (Welch-Satterthwaite degrees of freedom) **of (candidate - BASE) on the primary is below 0**. **There is no fallback** to another arm. Otherwise BASE stays and nothing ships.
+
+### The analysis script and its self-test
+
+The new, versioned `compound-heading/analyze_compound_heading.py` applies the rule mechanically (`--runs <runs> --out <report.md> --decision <decision.json>`; the report is a Markdown table per arm with the primary mean and standard deviation, the mean wrong at >= 0.95,
+each guard's delta with PASS or FAIL, the size ratio and the throughput, then the verdict; it is printed and written to the path given). Its only use of the frozen `context-features/analyze_arms.py` is `welch_diff`, loaded by path after the file's SHA-256 has been checked. `--selftest` passes. It checks the t quantile against
+published values, the Welch case by hand, every one of the nine guards (the co-primary included) exactly at its limit and just beyond it (including the size guard at exactly 1.5 x the BASE mean, 1.5 x + 1 byte and 1.6 x, and the 150,000 floor), the 10% window
+(an arm at exactly 1.10 x the lowest is inside, at 1.105 x it is outside), the preference order CMP < CMP-HDG < CMP-HDG-F5 and the tie rule, a guard failure or a co-primary failure that removes the arm with the lowest primary, the nothing-qualifies case, BASE staying when every arm equals BASE,
+a candidate whose interval contains 0, a worse candidate, the no-fallback case, the strict inequality of the Welch rule (an upper bound of exactly 0 does not win), the pairwise intervals, each acceptance test failing when its condition is broken, invalid runs (missing run, wrong feature groups, a primary that does not
+match its counts), a missing arm and a missing training log, and the exit codes. A mutation check (each of 14 changes of a limit, the window, the strict inequality, the preference order or a sentence count applied to the source in memory) made the self-test fail every time.
+
+### Retrain: acceptance tests (run before the rule is applied; a failure stops without a selection)
+
+The script runs them first and makes no selection (exit code 1, no decision file) if one fails:
+
+1. **BASE seed 20260101 is the shipped model.** Its weights SHA-256 (the `weights.sha256` of its result file and the `.bin` of the run when present) equals that of `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, and its figures equal those of the shipped model:
+   compound-head 60.0% with 39 harmful of 100 decisions and 5 wrong at >= 0.95; headings 84.2% with 4 of 78 and 2; named-state 90.0% with 3 of 37; pooled primary 241.57 per 1k and 7 wrong at >= 0.95;
+   hard tranche 170.0, standard tranche 15.0; open dev 91 harmful of 4,451 decisions; UD-EWT dev 94 of 4,570.
+2. **The sources were really added.** From the line `Training on N sentences (...), sources=...` of every `<run>.train.txt`: BASE lists exactly the shipped mix (`open:2,masc:1,silver:1,imperative:1`) and neither new source; CMP lists the mix plus `compound:1` and trained on exactly **742 more** sentences than the BASE run of the same seed;
+   CMP-HDG and CMP-HDG-F5 list the mix plus `compound:1,headings:1` and trained on exactly **1,117 more** (742 + 375). Every result names the feature groups of its arm (the `groups` of the weights header, so the F5 arm's header names both groups, the driver's `features` and `sources`).
+3. **Same inputs.** The `inputs.*Sha256` fields of all runs agree and equal the frozen hashes of the eight development files (the five older sets and the three newer tranches).
+4. **Frozen files.** The files of the table below (with CRLF normalized to LF for the text files) have their frozen SHA-256; the analysis refuses to run if one differs.
+
+### Retrain: what happens on each outcome
+
+- **BASE stays** (Q is empty, or the candidate's interval is not entirely below 0). The data stay committed at weight 0, F5 stays in the code as an off-by-default group, and the results section records the analysis tables unchanged, the decision "BASE stays" and the caveats.
+  No weights change, no `thresholds`, no `evaluate`, no README accuracy change; the log states that no held-out command was run.
+- **An arm wins.** An adoption section is written in this log **before any held-out command**: `training.json` gets the winning sources at weight 1 (and, for CMP-HDG-F5, the feature group `titleCaseLine`), the steps of the earlier adoptions follow
+  (`train --output <file outside the repository>`, `calibrate --update-config`, `train --update-config`, `train --check`, copy to `weights.bin`; the new `weights.bin` must be byte-identical to the winning arm's run at seed 20260101), then `thresholds`
+  (development data only), and **one** `evaluate` of the new model as a **disclosed further look** at sets already seen by this model family (a new record, not an erratum; no second run), with the documents, tables and drift tests updated.
+- **An acceptance test fails.** The experiment stops without a selection; the cause is recorded, and any change to the protocol is an amendment written before the affected runs are repeated, never a choice made on a result.
+- **A run is missing** (a command failed without a result): it is repeated; the analysis refuses to select with a missing run.
+
+### Retrain: limits stated in advance
+
+- The seeds measure training noise only. Three candidate arms are compared against one baseline, which is less selection than the earlier nine-arm experiment but not none (some winner's curse).
+- The two tranches are development sets that were also used for the baseline, and the training data are built from the same frames, so the frames are the direct target of the data; a gain is development evidence of that kind, not an independent test.
+- **The `headings` source has almost no imperative mass** (8 of 375 lines: the initial-imperative candidates were mostly read as nouns by both labelers and dropped by the rule). It can therefore teach the noun and proper-noun readings of Title Case words but not the initial-imperative reading,
+  and the heading tranche has initial-imperative targets (45 of 95).
+- **The compound sample has no contested-band selection**: it is a capped sample of frame hits, not of the cases that the tagger finds hard, so it is easier text than the development tranche, and the effect on the contested items may be smaller than the size of the source suggests.
+- The compound source keeps verb-head counter-examples (111 of 742); `n-named-state` and the standard tranche are the watched neighbors for a shift of harm, through the guards.
+- The text is federal text of other registers and eras than the development sets (documents digitized by the Internet Archive); the labels are model-written without human review (token error in the model review: 0.24% for `compound`, 0.44% for `headings`).
+- Throughput and training time are measured on a loaded shared machine at Normal priority (the deviation record above).
+- F5's definition (including the 60% threshold and the final-mark clause) was fixed before the runs; if F5 does not win, it stays off.
+
+### Retrain: held-out sets
+
+The held-out sets (open test, gold v2 test, shape probe, STE challenge set, UD-EWT test) are **not used by this experiment**: the driver reads only the development files, and `eval-arm` has no path to a held-out file. A held-out command is run if and only if an arm wins (above).
+
+### Retrain: inputs frozen by this commit
+
+SHA-256 of the files as committed (line endings LF; `runner-base.cmd` is checked out with CRLF by `.gitattributes` and is hashed after normalizing to LF; `weights.bin` is binary and hashed as bytes):
+
+| File | SHA-256 |
+| --- | --- |
+| `compound-heading/arms.json` (new) | `7fd58517b64127fe3892e928939d6896d8a0ab5e499ce696f6cb781a01bcc4cf` |
+| `compound-heading/run_arms.ps1` (new driver) | `3d20022cc7a6d7e1ddefcc5abaeb0a740fb8f186c63ff25e73d50187b57cbcbd` |
+| `compound-heading/analyze_compound_heading.py` (new, versioned) | `1265e23196f38eb2fc0cab642007a646582f947ffbb54326d6f6ef4e75048137` |
+| `context-features/analyze_arms.py` (frozen; imported for `welch_diff` only) | `3d52825384b440c5786e1b241fc6f814e4e47a63f155414e0d6450107d33e494` |
+| `imperative-data/runner-base.cmd` (unchanged) | `549a2c6ed8d1eaf00b30551fae14e546c51023dd79fe3a77810f39a1fe79ff3e` |
+| `data/compound/compound.tsv` (742 sentences) | `eb8c4708ba95fb370c885110e10eda0f1d826c5922876bd66e69389894bd5e3b` |
+| `data/compound/sources.tsv` | `8b861dd3ff2d5a3fd5e741f5fe2a906807f99afa562d7e294d4011d93ef15e02` |
+| `data/headings/headings.tsv` (375 lines) | `5931072928829e1911468173a181761ba001c4d7f16a8492391404395649124c` |
+| `data/headings/sources.tsv` | `428a73f0581ec168cdef63d885cd6e001e925813b0a0d0dd1148f79636935aff` |
+| `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` (the two new sources at weight 0; image `6e1e4ade56aa277d79709c107000f10e99c6f4e55a097e872a9c38fa2e12e8d0`) | `96ad8178b5f0bb621ee0723bc1f32da7ef5859218c14509ce6005d8a8354ca3f` |
+| `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (the shipped model) | `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` |
+| `data/eval/shapes-dev/dev.tsv` (standard tranche) | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
+| `data/eval/shapes-dev/hard.tsv` (hard tranche) | `c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22` |
+| `data/eval/shapes-dev/compound-head.tsv` | `537e0be3923f585b8f084de4e88f4064624e4f5dc484f84ccd303fed3db924f5` |
+| `data/eval/shapes-dev/headings.tsv` | `45a62a71837f02d1e76f0ad55a71a1770cb628ea8ca8765c0d4583f49b9da72a` |
+| `data/eval/shapes-dev/named-state.tsv` | `e08472387630368b7fb3fbaa5cd7b6187d0760608c93b55f19250c98f2d06d6e` |
+| `data/open/dev.tsv` | `8caa822515cee179093f068ff4ea7fa62714830d4c50de696bd4403037fc05c7` |
+| `data/eval/gold-v2/dev.tsv` | `ffb2f3afd3460523656f5528a66094bad507982b15eb2b4a9341cdb78ff117f5` |
+| `tools/data/cache/ud-ewt/ud_dev.tsv` | `0fc0b4a371ef6d0437e01e396762cdb600d0d7ff0d725ead00ac9f3c41f82037` |
+
+(The paths of the first five rows are relative to `tools/DemaConsulting.PartOfSpeech.Trainer/`.) `analyze_compound_heading.py --selftest` passes. The trainer commit that produced each result is recorded in its JSON (`inputs.commit`, with the dirty flag), and the folders of the runs lie outside
+the repository; their files are not part of the review set.
+
+## Compound and heading training data: results (decision: BASE stays)
+
+Written after the 20 runs and the analysis of the pre-registration commit `9377ff933e9aeda4be99b04a97b44e7eabb7a58e` (C4). The tree was clean and HEAD was C4 when the first run started and when the analysis ran;
+every result file records `inputs.commit` = `9377ff9...` with `dirty` = false. Four arms, five seeds each (20260101, 11, 12, 13, 14), 20 runs, on 2026-11-10; the commands were exactly those of the pre-registration (the frozen driver
+`run_arms.ps1` with `runner-base.cmd`, one invocation per arm, in the registered order BASE, CMP, CMP-HDG, CMP-HDG-F5). No run was repeated, replaced or dropped, and no frozen file was edited. The frozen `analyze_compound_heading.py` was applied
+to the 20 result files and the selection rule was applied mechanically. **No held-out set was read and no held-out command (`evaluate`, `thresholds`, `train --update-config`) was run.** No weights, operating points or README accuracy table changed.
+
+### Retrain results: order of the commits
+
+| Step | Commit | What it contains |
+| --- | --- | --- |
+| C1 | `e776f5693739900d91e63fd2a12451da1f4ba90b` | the builder, its tests and the selection rule, before any label existed |
+| C2 | `7e82e2d75e676aae2477d46131159b24cdd5673c` | the labeled data and their registration at weight 0 |
+| C3 | `9a6d10b4e7519c36bbd6c42a728f3858214a818e` | the feature group F5 (`titleCaseLine`, off by default) and the `shapesNew` block of `eval-arm` |
+| C4 | `9377ff933e9aeda4be99b04a97b44e7eabb7a58e` | the pre-registration: arms, driver, analysis script, metrics, guards, selection rule |
+| **C5** | this commit | this results section and the documents of the outcome (the SHA is recorded by the pull request, because a commit cannot contain its own SHA) |
+
+### Retrain results: acceptance tests (all passed; the analysis made a selection only after them)
+
+All checks of the pre-registration passed. (a) The BASE run at seed 20260101 has weights SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b`, equal to the shipped `weights.bin` (file and result field, byte identical), and the figures of the shipped model
+(compound-head 60.0% with 39 harmful of 100 decisions and 5 wrong at >= 0.95; headings 84.2% with 4 of 78 and 2; named-state 90.0% with 3 of 37; pooled primary 241.57 per 1k and 7 wrong at >= 0.95; hard tranche 170.0, standard 15.0; open dev 91 harmful of 4,451; UD-EWT dev 94 of 4,570).
+(b) Every BASE run trained on 61,680 sentences with the sources `open:2,masc:1,silver:1,imperative:1`; every CMP run on exactly 742 more sentences (`compound:1`); every CMP-HDG and CMP-HDG-F5 run on exactly 1,117 more (`compound:1,headings:1`).
+(c) The eight `inputs.*Sha256` fields agree in all 20 runs and equal the frozen hashes, and the frozen files have their frozen SHA-256.
+
+### Results: the arms
+
+Values are the mean ± sample standard deviation over the five seeds; the baseline is BASE. Primary = pooled harmful per 1,000 noun-verb decisions over `n-compound-head-ambiguous` (100 decisions) and `heading-titlecase` (78 decisions); co-primary = wrong at confidence >= 0.95 summed over the two tranches.
+
+| Arm | Feature groups | Sources added | Primary | Co-primary (wrong at >= 0.95) | Pooled target accuracy % |
+| --- | --- | --- | ---: | ---: | ---: |
+| BASE | `clauseCues` | none | 239.33 ± 10.21 | 6.80 ± 1.48 | 71.08 ± 1.18 |
+| CMP | `clauseCues` | compound | 221.35 ± 21.61 | 4.80 ± 1.48 | 73.33 ± 1.78 |
+| CMP-HDG | `clauseCues` | compound, headings | 237.08 ± 20.79 | 4.80 ± 1.92 | 73.64 ± 1.94 |
+| CMP-HDG-F5 | `clauseCues`, `titleCaseLine` | compound, headings | 243.82 ± 18.89 | 3.00 ± 2.00 | 74.15 ± 1.94 |
+
+Per tranche (target accuracy %, harmful per 1k, wrong at >= 0.95, control accuracy %; the controls are 100.0% in every arm):
+
+| Arm | Compound-head: acc | harmful | wrong >= 0.95 | Headings: acc | harmful | wrong >= 0.95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 59.8 ± 0.8 | 392.0 ± 8.4 | 5.20 ± 1.48 | 82.9 ± 1.7 | 43.6 ± 14.6 | 1.60 ± 0.55 |
+| CMP | 63.2 ± 3.9 | 360.0 ± 36.7 | 3.80 ± 1.30 | 84.0 ± 1.6 | 43.6 ± 14.6 | 1.00 ± 0.71 |
+| CMP-HDG | 61.8 ± 3.0 | 374.0 ± 27.0 | 4.20 ± 1.92 | 86.1 ± 1.4 | 61.5 ± 16.7 | 0.60 ± 0.55 |
+| CMP-HDG-F5 | 64.6 ± 3.4 | 344.0 ± 33.6 | 3.00 ± 2.00 | 84.2 ± 0.7 | 115.4 ± 0.0 | 0.00 ± 0.00 |
+
+Heading kinds (diagnostics, not gated; the heading tranche has 45 initial-imperative targets of 95, and the proper-noun controls are 100.0% in every arm):
+
+| Arm | Noun: acc | harmful per 1k | wrong >= 0.95 | Imperative: acc | harmful per 1k | wrong >= 0.95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 75.6 ± 3.3 | 28.0 ± 17.9 | 1.60 ± 0.55 | 91.1 ± 1.6 | 71.4 ± 25.3 | 0.00 |
+| CMP | 77.2 ± 1.1 | 24.0 ± 8.9 | 1.00 ± 0.71 | 91.6 ± 2.4 | 78.6 ± 29.9 | 0.00 |
+| CMP-HDG | 83.2 ± 1.1 | 28.0 ± 11.0 | 0.60 ± 0.55 | 89.3 ± 2.9 | 121.4 ± 54.2 | 0.00 |
+| CMP-HDG-F5 | 89.2 ± 2.3 | 40.0 ± 0.0 | 0.00 | 78.7 ± 2.5 | 250.0 ± 0.0 | 0.00 |
+
+Per-seed values (primary / wrong at >= 0.95):
+
+| Arm | 20260101 | 11 | 12 | 13 | 14 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| BASE | 241.6 / 7 | 224.7 / 9 | 236.0 / 5 | 252.8 / 7 | 241.6 / 6 |
+| CMP | 258.4 / 7 | 219.1 / 5 | 213.5 / 5 | 213.5 / 4 | 202.2 / 3 |
+| CMP-HDG | 230.3 / 2 | 269.7 / 6 | 230.3 / 7 | 241.6 / 4 | 213.5 / 5 |
+| CMP-HDG-F5 | 264.0 / 4 | 264.0 / 2 | 230.3 / 1 | 224.7 / 2 | 236.0 / 6 |
+
+### Results: guards against BASE
+
+Each cell is the arm's delta against the BASE mean and the verdict (BASE: hard harmful 179.0, standard harmful 13.3, open dev harmful 20.09, UD-EWT dev harmful 20.74, UD-EWT dev accuracy 92.99, named-state target accuracy 92.2, deflated 522,272 bytes).
+Every arm passes every guard and the co-primary.
+
+| Guard (limit) | CMP | CMP-HDG | CMP-HDG-F5 |
+| --- | --- | --- | --- |
+| wrong at >= 0.95 (<= BASE) | PASS -2.00 | PASS -2.00 | PASS -3.80 |
+| hard harmful per 1k (<= BASE + 10) | PASS -9.50 | PASS -13.00 | PASS -13.00 |
+| standard harmful per 1k (<= BASE + 5) | PASS +0.67 | PASS -0.67 | PASS -2.67 |
+| open dev harmful per 1k (<= BASE + 1.5) | PASS +0.49 | PASS -0.04 | PASS -0.58 |
+| UD-EWT dev harmful per 1k (<= BASE + 1.5) | PASS -1.01 | PASS -0.88 | PASS -0.53 |
+| UD-EWT dev accuracy (>= BASE - 0.15) | PASS -0.03 | PASS +0.02 | PASS -0.05 |
+| named-state target accuracy (>= BASE - 3) | PASS +1.60 | PASS +2.80 | PASS +0.80 |
+| deflated bytes (<= 1.5 x BASE) | PASS 1.011x | PASS 1.016x | PASS 1.043x |
+| tokens per second (>= 150,000, absolute) | PASS 789,206 | PASS 765,740 | PASS 753,145 |
+
+Reported, not gated (open dev, gold v2 dev, model and training):
+
+| Arm | Open acc % | Open harmful per 1k | Open NLL | Open ECE % | Gold acc % | Gold harmful per 1k | Temperature | Rows | Raw bytes | Train s |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 96.67 ± 0.06 | 20.09 ± 1.39 | 0.1117 ± 0.0005 | 0.25 ± 0.02 | 95.15 ± 0.10 | 22.3 ± 0.9 | 9.392 ± 0.112 | 122,214 ± 264 | 1,158,701 ± 2,142 | 11.1 ± 0.1 |
+| CMP | 96.67 ± 0.02 | 20.58 ± 1.10 | 0.1109 ± 0.0003 | 0.21 ± 0.02 | 95.17 ± 0.10 | 19.0 ± 4.4 | 9.514 ± 0.000 | 123,546 ± 155 | 1,172,423 ± 760 | 11.1 ± 0.1 |
+| CMP-HDG | 96.71 ± 0.06 | 20.04 ± 0.93 | 0.1109 ± 0.0009 | 0.30 ± 0.08 | 95.20 ± 0.08 | 20.3 ± 1.5 | 9.432 ± 0.112 | 124,319 ± 186 | 1,179,160 ± 1,815 | 11.2 ± 0.2 |
+| CMP-HDG-F5 | 96.73 ± 0.03 | 19.50 ± 1.14 | 0.1110 ± 0.0004 | 0.23 ± 0.04 | 95.15 ± 0.07 | 21.6 ± 2.9 | 10.241 ± 0.122 | 126,183 ± 257 | 1,204,322 ± 2,568 | 11.3 ± 0.1 |
+
+Hard and standard tranche accuracy (reported): hard 76.50, 77.30, 79.10, 78.50 and standard 97.73, 97.80, 97.93, 98.27 for BASE, CMP, CMP-HDG and CMP-HDG-F5. Named-state wrong at >= 0.95: 0.60, 0.00, 0.20 and 0.20 in the same order.
+The training times and the single-thread throughput were measured on a loaded shared machine at Normal priority (the deviation record of the pre-registration); the training times do not separate the arms.
+
+### Results: Welch 95% intervals of (arm - BASE)
+
+Difference of the means with the Welch-Satterthwaite t interval over the seeds (seeds measure training noise only). The primary is the only interval the rule uses; the others are reported, and with eight measures for each of three arms
+an interval that excludes 0 in one cell is not evidence by itself.
+
+| Arm | Primary | Wrong at >= 0.95 | Hard harmful | Standard harmful | Open dev harmful | UD-EWT dev harmful | UD-EWT dev accuracy | Named-state accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CMP | -17.98 [-44.47, +8.52] | -2.00 [-4.16, +0.16] | -9.50 [-20.84, +1.84] | +0.67 [-3.79, +5.12] | +0.49 [-1.35, +2.34] | -1.01 [-1.48, -0.53] | -0.03 [-0.07, +0.01] | +1.60 [-1.05, +4.25] |
+| CMP-HDG | -2.25 [-27.78, +23.29] | -2.00 [-4.53, +0.53] | -13.00 [-23.19, -2.81] | -0.67 [-5.00, +3.67] | -0.04 [-1.82, +1.73] | -0.88 [-1.79, +0.04] | +0.02 [-0.06, +0.10] | +2.80 [+0.30, +5.30] |
+| CMP-HDG-F5 | +4.49 [-18.86, +27.84] | -3.80 [-6.41, -1.19] | -13.00 [-29.64, +3.64] | -2.67 [-8.20, +2.86] | -0.58 [-2.45, +1.28] | -0.53 [-1.60, +0.55] | -0.05 [-0.11, +0.01] | +0.80 [-1.76, +3.36] |
+
+Pairwise contrasts (reported, not gated): CMP-HDG minus CMP on the primary +15.73 [-15.21, +46.67] and on wrong at >= 0.95 +0.00 [-2.53, +2.53];
+CMP-HDG-F5 minus CMP-HDG on the primary +6.74 [-22.27, +35.76] and on wrong at >= 0.95 -1.80 [-4.66, +1.06]. The effect of the headings source (CMP-HDG against CMP) and of F5 (CMP-HDG-F5 against CMP-HDG) on the primary is therefore
+not separable from training noise either, and the sign of both point estimates is toward more harm.
+
+### Decision: BASE stays
+
+The rule of the pre-registration, applied step by step:
+
+1. Primary = the five-seed mean (table above).
+2. Guards and the co-primary against the BASE mean: all three arms pass all nine.
+3. Q = {CMP, CMP-HDG, CMP-HDG-F5}; Q is not empty.
+4. m = the lowest primary in Q = CMP (221.35); S = the arms of Q with primary <= 1.10 x m = 243.48: CMP and CMP-HDG (CMP-HDG-F5 at 243.82 is just outside).
+5. Candidate = the arm of S with the fewest additions = CMP (1 source).
+6. Welch 95% interval of (CMP - BASE) on the primary: -17.98 [-44.47, +8.52], df 5.70, p 0.146. The upper bound is not below 0, so CMP does not win; there is no fallback to another arm.
+
+**BASE stays and nothing ships.** The shipped model, its operating points, the confidence-threshold document and the README accuracy tables are unchanged, and no held-out command was run. The two data sources stay in the repository at weight 0
+(they are not in the shipped mix and `train --check` reproduces the shipped image `6e1e4ade...`), and F5 stays in the code as a group that is off in the shipped model; the model trained without it is byte-identical to the one trained before F5 existed.
+
+| File | SHA-256 |
+| --- | --- |
+| `report.md` (the analysis; 16,403 bytes) | `147a2a9868f4b90183beb768522b39aa6596e2d9a0677f0e35cf83779c237a0b` |
+| `decision.json` (per-arm values, intervals, guards, decision; 12,845 bytes) | `1df109994fd35504b0454f5071ed5cafa2282d8fb2449404aea9663f3bfddb25` |
+
+Both files lie outside the repository next to the run folders. The command was:
+
+```text
+python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py --runs <runs> --out report.md --decision decision.json
+```
+
+### Reading of the result (what can and cannot be said)
+
+- **What the figures show.** All three arms lower the number of answers wrong at confidence >= 0.95 against BASE (the point estimates are the co-primary column; the interval of CMP-HDG-F5, -3.80 [-6.41, -1.19], excludes 0, those of CMP and CMP-HDG do not),
+  and every arm passes every guard. The point estimate of the primary is lower for CMP and CMP-HDG and higher for CMP-HDG-F5, and none of the three intervals excludes 0. The data are therefore **not shown to help** on the primary measure, and also not shown to hurt anywhere that is guarded.
+- **What the figures cannot show.** The seeds measure training noise only, not the choice of the 178 development decisions: the compound tranche has 100 noun-verb decisions and the heading tranche 78, so one decision moves the pooled primary by 5.6 per 1,000.
+  The sample of seeds is five per arm, which gives the wide intervals above. The tranches are the frames the data were built to target, so a gain would have been development evidence only, and the experiment gives no evidence of the effect on text that is not of these frames.
+- **A trade that the aggregate hides.** The `headings` source holds 8 initial-imperative lines of 375, and the heading-imperative diagnostic worsens as the heading data and F5 are added (imperative harmful per 1k 71.4 in BASE, 121.4 in CMP-HDG, 250.0 in CMP-HDG-F5; imperative accuracy 91.1, 89.3, 78.7)
+  while the noun-heading accuracy improves (75.6, 83.2, 89.2). A plausible reading, not tested here, is that the model learns that a capitalized word in a Title Case line is mostly a noun, which helps the noun headings and costs the initial imperatives, for which the source has almost no examples. F5 lowers the confident errors (3.00) but raises the temperature of the calibrated model (10.24 against 9.43) and the harmful rate on the heading tranche
+  (115.4 per 1k against 61.5 and 43.6 for the arms without it), so the confidence of its answers is lower. The aggregate primary averages these effects.
+- **No winner is a statement about this data and this rule,** not about the idea: the rule asked for an interval entirely below 0 on a small development measure, and the best arm, CMP, has an upper bound of +8.52.
+
+### Deviations of the whole experiment (all disclosed above and in the earlier sections)
+
+- 7 documents were removed from both sources after the labels were decided, because their author field lists a state or local government body (compound 800 to 742 sentences, headings 408 to 375 lines); the builder option `--omit-document` removes without adding anything, and the 5 hand-checked items of those documents were all judged correct.
+- The heading floors were waived by the pre-registered `--allow-short`: the imperative stratum has 8 lines of the floor 100 (the labelers read 346 of 356 initial-imperative candidates as nouns, adjectives or proper nouns and the class rule dropped them).
+- The hand check of the headings source holds 48 items instead of 60 because the imperative stratum has only 8 lines.
+- Normal process priority for the runs (the owner's allowance, recorded in the pre-registration).
+- No held-out look: the held-out sets were never used by this experiment, so it adds no entry to the list of looks.
+- The driver `compound-heading/run_arms.ps1` is frozen by SHA-256, and its parameter defaults `$PyCache` and `$PauseFile` are paths of the session that ran the experiment (a folder under the session state of that machine). They are overridden by `-PyCache` and `-PauseFile` (the recorded commands pass `-PyCache`), and a reproduction must pass its own values. The file is not edited because that would change its frozen hash.
+- One heading line of the data of the arms (1 of the 375 lines, `headings-0150`, from the National Bureau of Standards Handbook 65, a document whose record also lists a private non-profit organization as a co-author) was later removed by the project owner; see "Amendment after the result: removal of one heading line" below. The arms were run with that line included.
+
+### Open questions and possible follow-ups
+
+- **More initial-imperative heading data.** A source with real initial imperatives in Title Case headings (step titles, procedure headings) would test whether the loss in the imperative diagnostic is a property of the thin stratum. It needs a candidate rule that does not rely on the first word being read as a noun by the labelers.
+- **A larger paired tranche.** A development tranche with several hundred compound and heading decisions would shrink the intervals; the 178 decisions cannot separate effects of about 10% from noise.
+- **A later mix decision.** The data stay at weight 0 and the arms are reproducible from the pre-registration commit (`--source compound:1 --source headings:1`); the choice to include a source in the shipped mix can be taken later on a larger measure, with a new pre-registration.
+- **F5 on its own.** F5 with the compound data only (not run here) would separate its effect from that of the headings source.
+
+## Compound and heading training data: amendment after the result (2026-11-10)
+
+### Amendment after the result: removal of one heading line
+
+On 2026-11-10, after the results above were recorded, the project owner removed one document from `data/headings/`: `nbs-safehandlingofbo65unit`, *Safe handling of bodies containing radioactive isotopes*, National Bureau of Standards Handbook 65 (1958). Its record lists the National Committee on Radiation Protection and Measurements, a private non-profit organization, as a co-author, so the public-domain basis of the text (17 U.S.C. 105 covers a work of the US government, not the text of a private co-author) is uncertain. The document gave 1 of the 375 lines (`headings-0150`, noun stratum); it is not in `compound` and it was not in the hand-check sample of either source. The earlier review of the author fields had removed the 7 documents with a state or local government body (see above) and had not caught this one.
+
+- **What was done.** The document is recorded with the reason "private non-profit (NCRP) co-author; public-domain basis uncertain; removed by owner decision" in `data/eval/shapes-dev/excluded-sources.tsv` (the exclusion record that every data check and builder reads; the checks fail when a used source table or sentence document matches it) and in `data/headings/excluded-documents.tsv`. `data/headings/` was built again with `build --source headings --allow-short` and the 8 `--omit-document` options (the 7 earlier ids and this one), from the unchanged decisions: nothing was labeled, decided, sampled or re-drawn again. The removal only takes the line out after the caps; the other 374 lines, their order and their content are identical to the 375 of the experiment (checked line by line, ignoring the renumbered `sent_id`), and the ids `headings-0001` to `headings-0374` have no gap. To make this possible the builder got an optional reason per omitted document (`--omit-document ID=REASON`), it leaves the omitted documents out of the draft gate, and `shapes_dev.read_decided` takes a `keep` list, so that an omitted document that is also excluded is removed after the caps like the others and no other line takes its place (without it the exclusion alone dropped the 3 candidates of the document before the caps and another line took the place of the kept one).
+- **The data now.** `headings`: 374 lines (noun 314, proper 52, imperative 8), 1,664 tokens, 272 lemmas, 89 documents (family `nbs`: 1 document, 5 lines). SHA-256 of `data/headings/headings.tsv` `cae45ff12cb4e7e9531a007beb8278b4014a8bdab9ae3e52b06ba46df4d48cde` and of `data/headings/sources.tsv` `26ca020469ee3a396ba71bd7845030a516e612c44e887933b1fe8450445fbad7`. Lexicon coverage: 1,508 of 1,565 tokens (96.36%) and 895 of 948 pairs (94.41%). The spot-check figures of the retained lines are unchanged (45 of 45), because the removed line was not in the sample. `compound` (742 sentences) is unchanged.
+- **The arms were run with the line.** The results above (the 20 runs, the analysis, the decision "BASE stays") were computed with the data as they were: the headings source of the arms CMP-HDG and CMP-HDG-F5 had 375 lines, 1 of them from this document (1,117 added sentences in total). No arm shipped, and the source has weight 0 in `training.json`, so no weights, operating points or tables depend on it; no run was repeated. The removed line is 1 of 375 (0.27%) of the added sentences, and the conclusion that no arm qualified does not rest on it.
+- **The frozen hashes describe the data as it was at the retrain.** The table "Retrain: inputs frozen by this commit" lists the hashes of `data/headings/headings.tsv` and `data/headings/sources.tsv` as they were when the arms were trained; they are not the hashes of the committed files any more, and they are not edited. The frozen analysis script and the arm configuration were not changed: `analyze_compound_heading.py` run on the runs against the current `data/headings/` reports its frozen-file acceptance test as failed (by design: those two hashes differ), and its `--selftest` reports the same two frozen-file checks (the two hashes and the line count of the headings file) as failed while every other check (the synthetic runs) passes. The earlier decision is reproduced from the stored `report.md` and `decision.json` (hashes above), not from a new run of the analysis on the current files. `data/MANIFEST.tsv`, `data/training-leakage-report.tsv` and the documents with the counts carry the new figures.
+- **Checks after the removal.** `check_leakage.py --write-report` 0 / 0 / 0 against every evaluation set and none against the other training sets (the pairwise section shows 374 headings lines; the 73 shared documents of `compound` and `headings` are unchanged); `check_licenses.py` clean and, before the rebuild, finding both the source row and the sentences of the document through the new exclusion row (the fail-closed path); `check_conventions.py --tier fix --enforce --apply` 0 and `--tier check` 0 hits in `headings`; `make_manifest.py --verify` 59 files; `train --check` unchanged image, because the source has weight 0.
 
 ## Run table
 

@@ -56,6 +56,21 @@ internal sealed class ArmInputs
     public string GoldDevSha256 { get; set; } = string.Empty;
 
     /// <summary>
+    ///     Gets or sets the SHA-256 of the compound-head tranche of the shapes development set.
+    /// </summary>
+    public string CompoundHeadSha256 { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     Gets or sets the SHA-256 of the headings tranche of the shapes development set.
+    /// </summary>
+    public string HeadingsSha256 { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     Gets or sets the SHA-256 of the named-state tranche of the shapes development set.
+    /// </summary>
+    public string NamedStateSha256 { get; set; } = string.Empty;
+
+    /// <summary>
     ///     Gets or sets the commit of the repository (<c>unknown</c> when git does not answer).
     /// </summary>
     public string Commit { get; set; } = "unknown";
@@ -97,13 +112,28 @@ internal sealed class ArmEvaluationData
     public IReadOnlyList<ShapesDevItem> Shapes { get; set; } = Array.Empty<ShapesDevItem>();
 
     /// <summary>
+    ///     Gets the items of the compound-head tranche of the shapes development set.
+    /// </summary>
+    public IReadOnlyList<ShapesDevItem> CompoundHead { get; set; } = Array.Empty<ShapesDevItem>();
+
+    /// <summary>
+    ///     Gets the items of the headings tranche of the shapes development set.
+    /// </summary>
+    public IReadOnlyList<ShapesDevItem> Headings { get; set; } = Array.Empty<ShapesDevItem>();
+
+    /// <summary>
+    ///     Gets the items of the named-state tranche of the shapes development set.
+    /// </summary>
+    public IReadOnlyList<ShapesDevItem> NamedState { get; set; } = Array.Empty<ShapesDevItem>();
+
+    /// <summary>
     ///     Gets the hashes of the inputs (the commit and the dirty flag are set by the caller).
     /// </summary>
     public ArmInputs Inputs { get; set; } = new();
 
     /// <summary>
     ///     Reads the development sets of the arm evaluation: open dev, gold v2 dev, the standard and the hard tranche of the shapes
-    ///     development set and the mapped development table of the treebank.
+    ///     development set, its compound-head, headings and named-state tranches, and the mapped development table of the treebank.
     /// </summary>
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <returns>The data.</returns>
@@ -113,6 +143,9 @@ internal sealed class ArmEvaluationData
         ArgumentNullException.ThrowIfNull(repositoryRoot);
         var items = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.Standard, out var standardSha);
         items.AddRange(DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.Hard, out var hardSha));
+        var compound = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.CompoundHead, out var compoundSha);
+        var headings = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.Headings, out var headingsSha);
+        var namedState = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.NamedState, out var namedStateSha);
         var ud = DevSets.ReadUdDev(repositoryRoot, out var udSha);
         return new ArmEvaluationData
         {
@@ -120,6 +153,9 @@ internal sealed class ArmEvaluationData
             Gold = DevSets.ReadGoldDev(repositoryRoot),
             UdDev = ud,
             Shapes = items,
+            CompoundHead = compound,
+            Headings = headings,
+            NamedState = namedState,
             Inputs = new ArmInputs
             {
                 DevSha256 = standardSha,
@@ -127,6 +163,9 @@ internal sealed class ArmEvaluationData
                 UdDevSha256 = udSha,
                 OpenDevSha256 = HashOf(repositoryRoot, DataGuard.DevelopmentFiles[0]),
                 GoldDevSha256 = HashOf(repositoryRoot, DataGuard.DevelopmentFiles[1]),
+                CompoundHeadSha256 = compoundSha,
+                HeadingsSha256 = headingsSha,
+                NamedStateSha256 = namedStateSha,
             },
         };
     }
@@ -164,6 +203,13 @@ internal sealed class ArmEvaluationData
 ///         <b>Items.</b> <c>items.standard</c> and <c>items.hard</c> hold, for every target item of the tranche, <c>d</c> (1 when it is a
 ///         noun-verb decision), <c>c</c> (1 when it is correct) and <c>h</c> (1 when it is harmful); the sums of <c>d</c> and <c>h</c>
 ///         over a tranche are the decisions and harmful errors of its pooled row. Control items are not listed.
+///     </para>
+///     <para>
+///         <b>New tranches.</b> <c>shapesNew</c> holds, for each of the compound-head, headings and named-state tranches of the shapes
+///         development set, the row of its shape (<c>shape</c>, with the target items that are wrong at a confidence of at least
+///         <see cref="Metrics.ConfidentWrongConfidence"/> as <c>confidentWrong</c>) and the rows of its kinds (<c>kinds</c>, the headings
+///         only); <c>pooledPrimary</c> pools the compound-head and the headings rows: the harmful errors per 1,000 noun-verb decisions
+///         over both and the total of their confident wrong answers.
 ///     </para>
 ///     <para>
 ///         The JSON has no time stamp and no machine name, only invariant-culture numbers, and is written by hand because the engine
@@ -206,6 +252,9 @@ internal static class ArmEvaluation
         var items = data.Shapes;
         var outcomes = ShapesDevEvaluator.Judge(tagger, items);
         var shapes = ShapesDevEvaluator.SummarizeTranches(items, outcomes);
+        var compoundHead = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.CompoundHead, data.CompoundHead);
+        var headings = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.Headings, data.Headings);
+        var namedState = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.NamedState, data.NamedState);
 
         var sentences = data.Open.Select(s => s.Tokens).Concat(data.UdDev.Select(s => s.Tokens)).ToList();
         var tokens = sentences.Sum(s => (long)s.Length);
@@ -258,6 +307,12 @@ internal static class ArmEvaluation
         WriteItems(json, "hard", items, outcomes, ShapesDevTranche.Hard);
         WriteItems(json, "standard", items, outcomes, ShapesDevTranche.Standard);
         json.Close('}');
+        json.Open("shapesNew", '{');
+        WriteSingleShape(json, "compoundHead", compoundHead);
+        WriteSingleShape(json, "headings", headings);
+        WriteSingleShape(json, "namedState", namedState);
+        WritePooledPrimary(json, compoundHead.Overall, headings.Overall);
+        json.Close('}');
         json.Open("inputs", '{');
         json.Text("devSha256", data.Inputs.DevSha256);
         json.Text("hardSha256", data.Inputs.HardSha256);
@@ -266,6 +321,9 @@ internal static class ArmEvaluation
         json.Text("goldDevSha256", data.Inputs.GoldDevSha256);
         json.Text("commit", data.Inputs.Commit);
         json.Bool("dirty", data.Inputs.Dirty);
+        json.Text("compoundHeadSha256", data.Inputs.CompoundHeadSha256);
+        json.Text("headingsSha256", data.Inputs.HeadingsSha256);
+        json.Text("namedStateSha256", data.Inputs.NamedStateSha256);
         json.Close('}');
         json.Close('}');
         return json.ToString() + "\n";
@@ -348,7 +406,8 @@ internal static class ArmEvaluation
     /// <param name="json">The writer.</param>
     /// <param name="name">The name of the member.</param>
     /// <param name="shape">The result of the shape.</param>
-    private static void WriteShape(JsonText json, string name, ShapesDevShapeResult shape)
+    /// <param name="confidentWrong">Whether to write the count of the confident wrong answers (only the new tranches count them).</param>
+    private static void WriteShape(JsonText json, string name, ShapesDevShapeResult shape, bool confidentWrong = false)
     {
         json.Open(name, '{');
         json.Number("targetItems", shape.TargetItems);
@@ -357,9 +416,57 @@ internal static class ArmEvaluation
         json.Number("decisions", shape.NounVerbDecisions);
         json.Number("harmful", shape.HarmfulErrors);
         json.Number("harmfulPer1k", shape.HarmfulPer1000);
+        if (confidentWrong)
+        {
+            json.Number("confidentWrong", shape.ConfidentWrong);
+        }
+
         json.Number("controlItems", shape.ControlItems);
         json.Number("controlCorrect", shape.ControlCorrect);
         json.Number("controlAccuracy", shape.ControlAccuracy);
+        json.Close('}');
+    }
+
+    /// <summary>
+    ///     Writes the result of one single-shape tranche: the row of its shape and the rows of its kinds (an empty object for a shape without kinds).
+    /// </summary>
+    /// <param name="json">The writer.</param>
+    /// <param name="name">The name of the member.</param>
+    /// <param name="result">The result of the tranche.</param>
+    private static void WriteSingleShape(JsonText json, string name, ShapesDevSingleShapeResult result)
+    {
+        json.Open(name, '{');
+        WriteShape(json, "shape", result.Overall, true);
+        json.Open("kinds", '{');
+        for (var i = 0; i < result.Kinds.Count; i++)
+        {
+            WriteShape(json, result.Spec.Kinds[i].Name, result.Kinds[i], true);
+        }
+
+        json.Close('}');
+        json.Close('}');
+    }
+
+    /// <summary>
+    ///     Writes the pooled counts of the compound-head and the headings tranche, from which the primary metric of the experiment is read.
+    /// </summary>
+    /// <param name="json">The writer.</param>
+    /// <param name="compoundHead">The row of the compound-head tranche.</param>
+    /// <param name="headings">The row of the headings tranche.</param>
+    private static void WritePooledPrimary(JsonText json, ShapesDevShapeResult compoundHead, ShapesDevShapeResult headings)
+    {
+        var decisions = compoundHead.NounVerbDecisions + headings.NounVerbDecisions;
+        var harmful = compoundHead.HarmfulErrors + headings.HarmfulErrors;
+        var targets = compoundHead.TargetItems + headings.TargetItems;
+        var correct = compoundHead.TargetCorrect + headings.TargetCorrect;
+        json.Open("pooledPrimary", '{');
+        json.Number("targetItems", targets);
+        json.Number("targetCorrect", correct);
+        json.Number("targetAccuracy", targets == 0 ? 0 : 100.0 * correct / targets);
+        json.Number("decisions", decisions);
+        json.Number("harmful", harmful);
+        json.Number("harmfulPer1k", decisions == 0 ? 0 : 1000.0 * harmful / decisions);
+        json.Number("confidentWrongTotal", compoundHead.ConfidentWrong + headings.ConfidentWrong);
         json.Close('}');
     }
 

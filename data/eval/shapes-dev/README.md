@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore usfs usbm ncwm nltk fcda usbr -->
+<!-- cspell:ignore usfs usbm ncwm nltk fcda usbr safehandlingofbo -->
 
 # Shapes Development Set
 
@@ -187,6 +187,11 @@ sentence or used source row whose id or normalized URL it lists, and `check_lice
 without its header or malformed, or when `sources.tsv` or the `source_id` of any `dev.tsv` sentence matches it. A record that holds only
 the header is valid and means that nothing is excluded. The builder commands `exclusions`, `candidates`, `decide`, `sample`, `build` and `report` (both tranches)
 refuse when the record is missing or invalid; the optional work-folder table only adds rows, and every command uses the union of both tables (by id and normalized URL, through one loader), so a document listed by URL under another id is not collected either, and one id with two different URLs in the two tables is refused by every command.
+
+The record also lists one document of a training source, not of this set: `nbs-safehandlingofbo65unit` (National Bureau of Standards Handbook 65),
+removed from `data/headings/` by the project owner on 2026-11-10 because its record lists a private non-profit organization as a co-author and its
+public-domain basis is uncertain. The shapes development set has no text of it; `check_licenses.py` and the builders refuse it in the source tables
+and sentences of the training sources `data/compound/` and `data/headings/` too.
 
 ## Sources
 

@@ -20,9 +20,10 @@ needs-review:
   - "docs/verification/**/*.md"  # Verification documentation files
   - "docs/user_guide/**/*.md"    # User guide documentation
   - "docs/sysml2/**/*.sysml"     # SysML2 architecture model
-  # Frozen analysis scripts of the context-feature and imperative-data experiments
+  # Frozen analysis scripts of the context-feature, imperative-data and compound-heading experiments
   - "tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py"
   - "tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py"
+  - "tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py"
   - "tools/data/**/*.py"         # Build-time Python tools of the data assets, and their tests
   - "tools/data/README.md"       # Documentation of the data tools
   - "tools/data/hmm-tags/README.md"  # Standalone WordSense Basic tagging harness (not in the solution)
@@ -165,9 +166,10 @@ reviews:
       - "tools/DemaConsulting.PartOfSpeech.Trainer/training.json"    # the selected configuration
       - "tools/DemaConsulting.PartOfSpeech.Trainer/README.md"        # how to run the tool
       - "tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md"       # pre-registered rule, run log and decisions
-      # frozen analysis scripts (context features, imperative data)
+      # frozen analysis scripts (context features, imperative data, compound-heading data)
       - "tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py"
       - "tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py"
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py"
       - "tools/data/tests/sentence-key-cases.tsv"                    # shared parity cases of the sentence key
       - "docs/evaluation/**/*.md"                                    # evaluation record (thresholds, held-out results)
       - "docs/evaluation/**/*.json"                                  # selection artifact and run-once results
@@ -433,6 +435,7 @@ reviews:
       - "tools/data/shapes_dev.py"                                  # shapes dev set builder (blind labeling)
       - "tools/data/shapes_dev_extra.py"                            # compound-head, headings, named-state builder
       - "tools/data/imperative_data.py"                             # imperative source builder (blind labeling)
+      - "tools/data/compound_heading_data.py"                       # compound and headings source builder
       - "tools/data/hmm-tags/README.md"                             # hard tranche harness: usage, format, pinned build
       - "tools/data/hmm-tags/Program.cs"                            # hard tranche harness: WordSense Basic tags
       - "tools/data/tests/test_common.py"                           # tests of the shared helpers
@@ -440,6 +443,7 @@ reviews:
       - "tools/data/tests/test_shapes_dev_hard.py"                  # tests of the hard tranche
       - "tools/data/tests/test_shapes_dev_extra.py"                 # tests of the three single-shape tranches
       - "tools/data/tests/test_imperative_data.py"                  # tests of the imperative training source builder
+      - "tools/data/tests/test_compound_heading_data.py"            # tests of the compound and headings builder
       - "tools/data/tests/status-cases.tsv"                         # shared parity cases of the status cell
       - "tools/data/tests/sentence-key-cases.tsv"                   # shared parity cases of the sentence key
       - "tools/data/make_sentence_key_cases.py"                     # writes the sentence key cases

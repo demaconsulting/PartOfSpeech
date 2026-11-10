@@ -114,7 +114,7 @@ sections:
                   The extractor shall extend the 22 base templates only by the feature groups that its workspace is
                   configured with: with no group it shall produce exactly the 22 base templates, whatever the workspace
                   served before; with a group it shall add the features of that group behind the base ones, in a
-                  bucket buffer of at most 40 buckets per token; and for every set of groups the buckets shall equal
+                  bucket buffer of at most 42 buckets per token; and for every set of groups the buckets shall equal
                   the buckets of the plain, string-based definition.
                 justification: |
                   The groups are an experiment with a switch: a model without groups must keep the features it was
@@ -124,6 +124,7 @@ sections:
                   - FeatureExtractor_Extract_NoGroups_ProducesOnlyBaseTemplates
                   - FeatureExtractor_Extract_GroupsMatchReference
                   - FeatureExtractor_Extract_AllGroups_FillsBucketCapacity
+                  - FeatureExtractor_Extract_TitleCaseLine_AddsExactlyTwoBuckets
 
               - id: PartOfSpeech-Tagging-FeatureExtractor-PositionCues
                 title: >-
@@ -164,6 +165,25 @@ sections:
                 tests:
                   - FeatureExtractor_Extract_Inflection_StemFacts
                   - FeatureExtractor_Extract_Inflection_SeparatesAvoidingFromBringAndThing
+
+              - id: PartOfSpeech-Tagging-FeatureExtractor-TitleCaseLine
+                title: >-
+                  The title-case line cues shall mark a sentence as a Title Case line when, without its first word
+                  token, it has at least two word tokens (a letter, no digit) of which at least 60 percent start with
+                  an upper-case letter, and its last token is not `.`, `!` or `?`; they shall add two features per
+                  token, the line flag with the capitalization of the token and the line flag with whether the token
+                  is the first one, and nothing else, for the same sentence on every call.
+                justification: |
+                  A capital at the start of a word means a proper name in running text but not in a heading, caption
+                  or step title; a line-level flag lets the model tell the two cases apart, and the definition is
+                  fixed before any model is trained with it.
+                tests:
+                  - FeatureExtractor_Extract_TitleCaseLine_FlagArithmetic
+                  - FeatureExtractor_Extract_TitleCaseLine_WordTokensAndFinalMark
+                  - FeatureExtractor_Extract_TitleCaseLine_FeaturesCarryCapitalizationAndFirst
+                  - FeatureExtractor_Extract_TitleCaseLine_AddsExactlyTwoBuckets
+                  - FeatureExtractor_Extract_TitleCaseLine_MatchesReference
+                  - FeatureExtractor_Extract_TitleCaseLine_IsDeterministicAndStateless
 
               - id: PartOfSpeech-Tagging-FeatureExtractor-RightPreview
                 title: >-

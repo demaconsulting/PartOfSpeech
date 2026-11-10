@@ -133,6 +133,12 @@ internal enum FeatureKind
 
     /// <summary>Group <see cref="FeatureGroups.Inflection"/>: the stem kind together with the previous tag (history feature).</summary>
     StemKindPrev = 39,
+
+    /// <summary>Group <see cref="FeatureGroups.TitleCaseLine"/>: whether the line is Title Case, together with the capitalization shape of the token.</summary>
+    TitleLine = 40,
+
+    /// <summary>Group <see cref="FeatureGroups.TitleCaseLine"/>: whether the line is Title Case, together with whether the token is the first one.</summary>
+    TitleLineFirst = 41,
 }
 
 /// <summary>
@@ -142,7 +148,7 @@ internal enum FeatureKind
 /// <remarks>
 ///     <para>
 ///         With no group (<see cref="None"/>) the extractor produces exactly the 22 base templates, byte for byte as
-///         before the groups existed. Bit 4 (value 16) is reserved for a later group and is rejected by the loader.
+///         before the groups existed. Bit 5 (value 32) and every higher bit are reserved for later groups and are rejected by the loader.
 ///     </para>
 ///     <para>
 ///         The groups are defined in <see cref="FeatureExtractor"/> (the feature definitions).
@@ -165,6 +171,9 @@ internal enum FeatureGroups : uint
 
     /// <summary>Inflection: whether the stem of a token that ends in <c>ing</c>, <c>ed</c> or <c>s</c> is a verb or a noun in the lexicon.</summary>
     Inflection = 8,
+
+    /// <summary>Title-case line: whether the sentence is a Title Case line (a heading, caption or step title), conjoined with the capitalization of the token.</summary>
+    TitleCaseLine = 16,
 }
 
 /// <summary>
@@ -224,8 +233,8 @@ internal enum TokenClass : byte
 ///         (<see cref="FeatureSetVersion"/>) that is stored in every weights file.
 ///     </para>
 ///     <para>
-///         On top of the 22 base templates, four switchable groups of context features exist (<see cref="FeatureGroups"/>):
-///         position cues, clause cues, right preview and inflection. The groups of a model are stored as a mask in its
+///         On top of the 22 base templates, five switchable groups of context features exist (<see cref="FeatureGroups"/>):
+///         position cues, clause cues, right preview, inflection and title-case line. The groups of a model are stored as a mask in its
 ///         weights file; with the mask 0 (no group) the buckets are exactly those of the base templates. The state that
 ///         the groups need (the lexicon facts of the tokens, the clause state, the preview tags) lives in the
 ///         <see cref="DecoderWorkspace"/>, set up by <see cref="DecoderWorkspace.Configure"/> and advanced by
@@ -268,10 +277,10 @@ internal static class FeatureExtractor
     ///     The most features that one token has with all groups (buffers that may hold group features need this size).
     /// </summary>
     /// <remarks>
-    ///     18 static base features, 5 position, 5 clause and 1 inflection feature that do not depend on tags, then 4 base,
-    ///     2 clause, 1 inflection and 4 preview features that do.
+    ///     18 static base features, 5 position, 5 clause, 1 inflection and 2 title-case line features that do not depend on
+    ///     tags, then 4 base, 2 clause, 1 inflection and 4 preview features that do.
     /// </remarks>
-    public const int BucketCapacity = 40;
+    public const int BucketCapacity = 42;
 
     /// <summary>
     ///     The number of features that do not depend on the previous tags (without a group).
@@ -281,7 +290,7 @@ internal static class FeatureExtractor
     /// <summary>
     ///     The mask of the groups that this build knows; a weights file with another bit set is rejected.
     /// </summary>
-    public const uint KnownGroupsMask = (uint)(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection);
+    public const uint KnownGroupsMask = (uint)(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine);
 
     /// <summary>
     ///     The value of the boundary marker in place of a token class (before the first and after the last token).
@@ -439,6 +448,11 @@ internal static class FeatureExtractor
         if ((groups & FeatureGroups.Inflection) != 0)
         {
             stride += 1;
+        }
+
+        if ((groups & FeatureGroups.TitleCaseLine) != 0)
+        {
+            stride += 2;
         }
 
         return stride;
@@ -708,7 +722,7 @@ internal static class FeatureExtractor
     ///     Appends the tag-independent buckets of the groups to the buckets of every token, after the base ones.
     /// </summary>
     /// <remarks>
-    ///     The order is position cues, clause cues, inflection. The lexicon facts of the tokens are looked up once per
+    ///     The order is position cues, clause cues, inflection, title-case line. The lexicon facts of the tokens are looked up once per
     ///     sentence here (position cues, clause cues and right preview) and cached in the workspace, where the decoder reuses them.
     /// </remarks>
     /// <param name="workspace">The workspace whose base buckets were just computed.</param>
@@ -721,6 +735,7 @@ internal static class FeatureExtractor
         var position = (groups & FeatureGroups.PositionCues) != 0;
         var clause = (groups & FeatureGroups.ClauseCues) != 0;
         var inflection = (groups & FeatureGroups.Inflection) != 0;
+        var titleCase = (groups & FeatureGroups.TitleCaseLine) != 0;
         workspace.EnsureGroupArrays(count);
 
         // Lexicon facts of every token (one lookup each), then the sentence-level facts that the groups share
@@ -770,6 +785,7 @@ internal static class FeatureExtractor
             workspace.EnsureChars(longest + 1);
         }
 
+        var titleLine = titleCase && IsTitleCaseLine(workspace);
         var stride = workspace.StaticStride;
         var buckets = workspace.StaticBuckets;
         for (var i = 0; i < count; i++)
@@ -807,10 +823,71 @@ internal static class FeatureExtractor
                 }
             }
 
+            if (titleCase)
+            {
+                // Two features per token; a line that is not Title Case gives every token the same constant value
+                var capitalization = (uint)(workspace.Shape[i] & (ShapeUpper | ShapeAllUpper));
+                var firstToken = i == 0 ? 1u : 0u;
+                buckets[slot + n++] = (int)(Mix(FeatureKind.TitleLine, titleLine ? 4u | capitalization : 0u, 0) & mask);
+                buckets[slot + n++] = (int)(Mix(FeatureKind.TitleLineFirst, titleLine ? 1u + firstToken : 0u, 0) & mask);
+            }
+
             workspace.StaticCount[i] = n;
         }
 
         workspace.FirstContent = firstContent;
+    }
+
+    /// <summary>
+    ///     Decides whether the tokens of the workspace form a Title Case line.
+    /// </summary>
+    /// <remarks>
+    ///     A word token contains a letter and no digit. Without the first word token there must be at least two word tokens and
+    ///     at least 60 percent of them must start with an upper-case letter (<c>5 * capitalized &gt;= 3 * words</c>), and the
+    ///     last token must not be <c>.</c>, <c>!</c> or <c>?</c>.
+    /// </remarks>
+    /// <param name="workspace">The workspace whose tokens were set.</param>
+    /// <returns><c>true</c> for a Title Case line.</returns>
+    private static bool IsTitleCaseLine(DecoderWorkspace workspace)
+    {
+        var count = workspace.Count;
+        var firstSeen = false;
+        var words = 0;
+        var capitalized = 0;
+        for (var i = 0; i < count; i++)
+        {
+            var flags = workspace.Flags[i];
+            if ((flags & FlagLetterOrDigit) == 0 || (flags & FlagDigit) != 0)
+            {
+                continue;
+            }
+
+            if (!firstSeen)
+            {
+                firstSeen = true;
+                continue;
+            }
+
+            words++;
+            if ((flags & FlagFirstUpper) != 0)
+            {
+                capitalized++;
+            }
+        }
+
+        if (words < 2 || 5 * capitalized < 3 * words)
+        {
+            return false;
+        }
+
+        var last = count - 1;
+        if (workspace.Length[last] == 1)
+        {
+            var c = workspace.Chars[workspace.Start[last]];
+            return c != '.' && c != '!' && c != '?';
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -1425,7 +1502,7 @@ internal static class FeatureExtractor
     /// <remarks>
     ///     The group features are computed with string operations that follow the written definition of each group, not the
     ///     character-buffer code of the fast path; the order of the buckets is the one of <see cref="Extract"/>: the base
-    ///     buckets that do not depend on tags, then those of the position, clause and inflection groups, then the four tag
+    ///     buckets that do not depend on tags, then those of the position, clause, inflection and title-case line groups, then the four tag
     ///     features, then the history features of the clause and inflection groups, then the preview features.
     /// </remarks>
     /// <param name="tokens">The tokens of the sentence as written.</param>
@@ -1773,6 +1850,18 @@ internal static class FeatureExtractor
             {
                 result.Add(ReferenceBucketOfCodes(FeatureKind.StemKind, (uint)stem, 0, hashBits));
             }
+        }
+
+        if ((groups & FeatureGroups.TitleCaseLine) != 0)
+        {
+            var words = folded.Where(word => word.Any(char.IsLetterOrDigit) && !word.Any(char.IsDigit)).Skip(1).ToList();
+            var capitalized = words.Count(word => char.IsUpper(word[0]));
+            var title = words.Count >= 2 && capitalized * 100 >= words.Count * 60 && !new[] { ".", "!", "?" }.Contains(folded[count - 1]);
+            var capitalization = (folded[index].Length > 0 && char.IsUpper(folded[index][0]) ? 1u : 0u)
+                | (folded[index].Length > 1 && folded[index].Any(char.IsUpper) && !folded[index].Any(char.IsLower) ? 2u : 0u);
+            var firstToken = index == 0 ? 1u : 0u;
+            result.Add(ReferenceBucketOfCodes(FeatureKind.TitleLine, title ? 4u | capitalization : 0u, 0, hashBits));
+            result.Add(ReferenceBucketOfCodes(FeatureKind.TitleLineFirst, title ? 1u + firstToken : 0u, 0, hashBits));
         }
     }
 

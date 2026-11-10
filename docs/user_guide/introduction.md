@@ -625,8 +625,8 @@ packed at the root of the NuGet package.
   carry; the lexicon is embedded in the package in a compiled form.
 - **The open part-of-speech corpus** of the WordSense project (<https://github.com/demaconsulting/WordSense>): the
   annotations and the selection are CC0 1.0, and the sentences are public domain in the United States or come from the
-  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative training source (text of US
-  federal government documents; 17 U.S.C. 105) and the evaluation sets follow the same terms.
+  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative, compound and headings training
+  sources (text of US federal government documents; 17 U.S.C. 105) and the evaluation sets follow the same terms.
 
 ## Evaluation-Only Data
 

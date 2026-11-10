@@ -405,7 +405,7 @@ public class FeatureExtractorTests
     /// <summary>
     ///     Gets every set of groups (as masks, since the groups are internal) for the theories.
     /// </summary>
-    public static IEnumerable<object[]> GroupMasks() => Enumerable.Range(0, 16).Select(mask => new object[] { (uint)mask });
+    public static IEnumerable<object[]> GroupMasks() => Enumerable.Range(0, 32).Select(mask => new object[] { (uint)mask });
 
     /// <summary>
     ///     Prepares a workspace with groups and the group lexicon for the tokens.
@@ -443,7 +443,7 @@ public class FeatureExtractorTests
         // Arrange: a workspace that first served all groups, then is configured for none
         var tokens = new[] { "Check", "the", "running", "valve", "." };
         var workspace = new DecoderWorkspace();
-        workspace.Configure(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection, GroupLexicon);
+        workspace.Configure(FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine, GroupLexicon);
         FeatureExtractor.Prepare(workspace, tokens, Bits);
         workspace.Configure(FeatureGroups.None, null);
 
@@ -772,6 +772,193 @@ public class FeatureExtractorTests
     }
 
     /// <summary>
+    ///     Tells whether the extractor marks the tokens as a Title Case line (read from the first token, whose flag feature is 2 on such a line and 0 otherwise).
+    /// </summary>
+    private static bool IsTitleLine(params string[] tokens)
+    {
+        var buckets = ExtractFrom(Prepared(tokens, FeatureGroups.TitleCaseLine), 0);
+        var marked = buckets.Contains(Code(FeatureKind.TitleLineFirst, 2));
+        Assert.Equal(!marked, buckets.Contains(Code(FeatureKind.TitleLineFirst, 0)));
+        return marked;
+    }
+
+    /// <summary>
+    ///     Proves the arithmetic of the Title Case test: at least two word tokens after the first one and at least 60 percent of them
+    ///     capitalized (<c>5 * capitalized &gt;= 3 * words</c>), with exact boundaries at 59 and 60 of 100.
+    /// </summary>
+    /// <param name="words">The number of word tokens after the first one.</param>
+    /// <param name="capitalized">How many of them start with an upper-case letter.</param>
+    /// <param name="expected">Whether the line is Title Case.</param>
+    [Theory]
+    [InlineData(100, 59, false)]
+    [InlineData(100, 60, true)]
+    [InlineData(5, 3, true)]
+    [InlineData(5, 2, false)]
+    [InlineData(10, 6, true)]
+    [InlineData(10, 5, false)]
+    [InlineData(12, 7, false)]
+    [InlineData(12, 8, true)]
+    [InlineData(2, 2, true)]
+    [InlineData(2, 1, false)]
+    [InlineData(1, 1, false)]
+    [InlineData(0, 0, false)]
+    public void FeatureExtractor_Extract_TitleCaseLine_FlagArithmetic(int words, int capitalized, bool expected)
+    {
+        // Arrange: the first token, then the capitalized words, then the others (the line does not end in a mark)
+        var tokens = new List<string> { "Alpha" };
+        tokens.AddRange(Enumerable.Repeat("Word", capitalized));
+        tokens.AddRange(Enumerable.Repeat("word", words - capitalized));
+
+        // Act / Assert
+        Assert.Equal(expected, IsTitleLine(tokens.ToArray()));
+    }
+
+    /// <summary>
+    ///     Proves what counts as a word token and which token is excluded: the first word token is excluded (also a lower-case one, and
+    ///     after leading punctuation or a number), tokens with a digit and tokens without a letter are not words, and a final
+    ///     <c>.</c>, <c>!</c> or <c>?</c> ends the Title Case line while another final mark does not.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_TitleCaseLine_WordTokensAndFinalMark()
+    {
+        // Assert: two capitalized words after the first one
+        Assert.True(IsTitleLine("Check", "Fluid", "Level"));
+        Assert.True(IsTitleLine("check", "Fluid", "Level"));
+        Assert.True(IsTitleLine("1.", "Check", "Fluid", "Level"));
+        Assert.True(IsTitleLine("(", "Check", "-", "Fluid", "Level", ")"));
+        Assert.False(IsTitleLine("Check", "fluid", "level"));
+        Assert.False(IsTitleLine("Check", "Fluid"));
+
+        // Assert: a token with a digit is no word, so "Part2" and "Level2" do not make the line
+        Assert.False(IsTitleLine("Check", "fluid", "Part2", "Level2"));
+        Assert.True(IsTitleLine("Check", "Fluid", "Level", "2"));
+
+        // Assert: a final . ! ? ends the line as a sentence, any other final token does not
+        Assert.False(IsTitleLine("Check", "Fluid", "Level", "."));
+        Assert.False(IsTitleLine("Check", "Fluid", "Level", "!"));
+        Assert.False(IsTitleLine("Check", "Fluid", "Level", "?"));
+        Assert.True(IsTitleLine("Check", "Fluid", "Level", ":"));
+        Assert.True(IsTitleLine("Check", "Fluid", "Level", ")"));
+        Assert.True(IsTitleLine("Check", "Fluid", "Level", "..."));
+        Assert.False(IsTitleLine("John", "Smith", "met", "Mary", "Jones", "."));
+    }
+
+    /// <summary>
+    ///     Proves the two features of a token on a Title Case line: the capitalization of the token (none, first upper, all upper) and
+    ///     whether it is the first token; on another line every token gets the same constant values.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_TitleCaseLine_FeaturesCarryCapitalizationAndFirst()
+    {
+        // Arrange: a Title Case line with an all-upper word and a lower-case word, and an ordinary sentence
+        var title = Prepared(new[] { "Check", "FLUID", "Level", "and", "Add" }, FeatureGroups.TitleCaseLine);
+        var plain = Prepared(new[] { "the", "valve", "is", "open", "." }, FeatureGroups.TitleCaseLine);
+
+        // Act / Assert: upper-first 5, all-upper 7, lower-case 4; the first token 2 and the others 1
+        var expectedLine = new[] { 5u, 7u, 5u, 4u, 5u };
+        for (var i = 0; i < 5; i++)
+        {
+            var buckets = ExtractFrom(title, i);
+            Assert.Contains(Code(FeatureKind.TitleLine, expectedLine[i]), buckets);
+            Assert.Contains(Code(FeatureKind.TitleLineFirst, i == 0 ? 2u : 1u), buckets);
+            var other = ExtractFrom(plain, i);
+            Assert.Contains(Code(FeatureKind.TitleLine, 0), other);
+            Assert.Contains(Code(FeatureKind.TitleLineFirst, 0), other);
+        }
+    }
+
+    /// <summary>
+    ///     Proves that the group adds exactly two buckets to every token, whatever the other groups are, and leaves the others untouched.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_TitleCaseLine_AddsExactlyTwoBuckets()
+    {
+        // Arrange: a Title Case line (all words capitalized) and an ordinary sentence
+        foreach (var (tokens, isTitle) in new[] { (new[] { "Check", "Fluid", "Level" }, true), (new[] { "the", "running", "valve", "." }, false) })
+        {
+            for (var mask = 0u; mask < 16; mask++)
+            {
+                var off = Prepared(tokens, (FeatureGroups)mask);
+                var on = Prepared(tokens, (FeatureGroups)(mask | 16u));
+                Assert.Equal(FeatureExtractor.StaticStrideFor((FeatureGroups)mask) + 2, FeatureExtractor.StaticStrideFor((FeatureGroups)(mask | 16u)));
+                for (var i = 0; i < tokens.Length; i++)
+                {
+                    // Act: the buckets of the same token without and with the group
+                    var without = ExtractFrom(off, i);
+                    var with = ExtractFrom(on, i);
+
+                    // Assert: two more, every other bucket the same and in the same order, the two new ones right behind the static ones
+                    var behind = off.StaticCount[i];
+                    var firstValue = i == 0 ? 2u : 1u;
+                    Assert.Equal(without.Length + 2, with.Length);
+                    Assert.Equal(without, with.Take(behind).Concat(with.Skip(behind + 2)).ToArray());
+                    Assert.Equal(
+                        new[] { Code(FeatureKind.TitleLine, isTitle ? 5u : 0u), Code(FeatureKind.TitleLineFirst, isTitle ? firstValue : 0u) },
+                        with.Skip(behind).Take(2).ToArray());
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Proves that the fast path equals the readable reference for Title Case lines and ordinary lines, alone and with other groups.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_TitleCaseLine_MatchesReference()
+    {
+        // Arrange: lines of both kinds, with digits, marks, an all-upper word and non-ASCII capitals
+        var lines = new[]
+        {
+            new[] { "Check", "FLUID", "Level" },
+            new[] { "1.", "Remove", "the", "Valve", "Cover", "." },
+            new[] { "Installing", "The", "Output", "Shaft", "Seal" },
+            new[] { "Part2", "\u00C9" + "Valve", "Level", "A" },
+            new[] { "the", "Valve", "is", "open", "." },
+            new[] { "Tank" },
+        };
+
+        foreach (var groups in new[] { FeatureGroups.TitleCaseLine, FeatureGroups.TitleCaseLine | FeatureGroups.PositionCues | FeatureGroups.Inflection })
+        {
+            foreach (var tokens in lines)
+            {
+                var workspace = Prepared(tokens, groups);
+                for (var i = 0; i < tokens.Length; i++)
+                {
+                    // Act / Assert
+                    var expected = FeatureExtractor.ReferenceBuckets(tokens, i, "-S-", "-S2-", Bits, groups, GroupLexicon);
+                    Assert.Equal(expected, ExtractFrom(workspace, i));
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Proves that the Title Case decision is deterministic and that a workspace carries no state from one line to the next.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_Extract_TitleCaseLine_IsDeterministicAndStateless()
+    {
+        // Arrange: one workspace used for a Title Case line, an ordinary sentence and the Title Case line again
+        var title = new[] { "Check", "Fluid", "Level" };
+        var plain = new[] { "the", "valve", "is", "open", "." };
+        var workspace = new DecoderWorkspace();
+        workspace.Configure(FeatureGroups.TitleCaseLine, GroupLexicon);
+
+        // Act
+        FeatureExtractor.Prepare(workspace, title, Bits);
+        var first = Enumerable.Range(0, title.Length).Select(i => ExtractFrom(workspace, i)).ToList();
+        FeatureExtractor.Prepare(workspace, plain, Bits);
+        var middle = ExtractFrom(workspace, 0);
+        FeatureExtractor.Prepare(workspace, title, Bits);
+        var again = Enumerable.Range(0, title.Length).Select(i => ExtractFrom(workspace, i)).ToList();
+
+        // Assert: the same line gives the same buckets, and the ordinary sentence in between is not marked
+        Assert.Equal(first, again);
+        Assert.Contains(Code(FeatureKind.TitleLineFirst, 0), middle);
+        Assert.Contains(Code(FeatureKind.TitleLineFirst, 2), first[0]);
+    }
+
+    /// <summary>
     ///     Proves the preview features: absent in the first pass, present in the second with the first-pass tags of the next two
     ///     tokens and the end markers, and inactive without the group.
     /// </summary>
@@ -812,18 +999,18 @@ public class FeatureExtractorTests
     [Fact]
     public void FeatureExtractor_Extract_AllGroups_FillsBucketCapacity()
     {
-        // Arrange: the first token has a suffix (inflection), is the initial token and has all four affix lengths
-        var all = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection;
-        var workspace = Prepared(new[] { "running", "the", "valve" }, all);
-        workspace.SetPreview(new[] { (int)Upos.Verb, (int)Upos.Det, (int)Upos.Noun });
+        // Arrange: the first token has a suffix (inflection), is the initial token and has all four affix lengths; the line is Title Case
+        var all = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine;
+        var workspace = Prepared(new[] { "running", "Valve", "Cover" }, all);
+        workspace.SetPreview(new[] { (int)Upos.Verb, (int)Upos.Noun, (int)Upos.Noun });
         FeatureExtractor.StartPass(workspace, true);
 
         // Act
         var buckets = ExtractFrom(workspace, 0);
 
-        // Assert: 40 buckets, and the base stride grows by the static group features only
+        // Assert: 42 buckets, and the base stride grows by the static group features only
         Assert.Equal(FeatureExtractor.BucketCapacity, buckets.Length);
-        Assert.Equal(FeatureExtractor.StaticFeatureCount + 5 + 5 + 1, workspace.StaticStride);
+        Assert.Equal(FeatureExtractor.StaticFeatureCount + 5 + 5 + 1 + 2, workspace.StaticStride);
         Assert.Equal(FeatureExtractor.StaticFeatureCount, FeatureExtractor.StaticStrideFor(FeatureGroups.None));
         Assert.Equal(FeatureExtractor.StaticFeatureCount, FeatureExtractor.StaticStrideFor(FeatureGroups.RightPreview));
     }
@@ -836,8 +1023,8 @@ public class FeatureExtractorTests
     public void FeatureExtractor_Extract_AllGroups_DoesNotAllocateAfterWarmUp()
     {
         // Arrange: a sentence with inflected words, a workspace configured for all groups and a bucket buffer, warmed up once
-        var all = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection;
-        var tokens = new[] { "Check", "the", "running", "valves", "and", "avoiding", "boxes", "." };
+        var all = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine;
+        var tokens = new[] { "Check", "the", "Running", "Valves", "And", "Avoiding", "Boxes", "." };
         var preview = new[] { 7, 5, 15, 7, 4, 15, 7, 12 };
         var workspace = new DecoderWorkspace();
         var buckets = new int[FeatureExtractor.BucketCapacity];

@@ -114,14 +114,14 @@ internal sealed class TrainingConfig
 
     /// <summary>
     ///     The names of the feature groups in the order of the bits of <see cref="FeatureGroups"/>: <c>positionCues</c> (F1),
-    ///     <c>clauseCues</c> (F2), <c>rightPreview</c> (F3) and <c>inflection</c> (F4).
+    ///     <c>clauseCues</c> (F2), <c>rightPreview</c> (F3), <c>inflection</c> (F4) and <c>titleCaseLine</c> (F5).
     /// </summary>
-    public static readonly IReadOnlyList<string> FeatureGroupNames = new[] { "positionCues", "clauseCues", "rightPreview", "inflection" };
+    public static readonly IReadOnlyList<string> FeatureGroupNames = new[] { "positionCues", "clauseCues", "rightPreview", "inflection", "titleCaseLine" };
 
     /// <summary>
     ///     The group names that the harness uses as short names, in the same order as <see cref="FeatureGroupNames"/>.
     /// </summary>
-    private static readonly string[] FeatureGroupShortNames = { "F1", "F2", "F3", "F4" };
+    private static readonly string[] FeatureGroupShortNames = { "F1", "F2", "F3", "F4", "F5" };
 
     /// <summary>
     ///     Gets or sets the corpora to train on.
@@ -239,7 +239,7 @@ internal sealed class TrainingConfig
             var index = name == null ? -1 : IndexOfGroup(name);
             if (index < 0)
             {
-                error = $"features names an unknown group '{name}' (known: {string.Join(", ", FeatureGroupNames)}, or F1 to F4)";
+                error = $"features names an unknown group '{name}' (known: {string.Join(", ", FeatureGroupNames)}, or F1 to F5)";
                 groups = FeatureGroups.None;
                 return false;
             }

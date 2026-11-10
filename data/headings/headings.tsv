@@ -1,0 +1,4289 @@
+# corpus = DemaConsulting.PartOfSpeech Title Case heading training source (UPOS)
+# license = CC0-1.0 for annotations and selection; lines are US federal government works, see sources.tsv
+# columns = form, upos, status
+# status = unanimous (two blind model labelers agree on the tag of every token of the line)
+# judged word = per line: word (zero-based index of the stratum word), lemma, stratum (noun | imperative | proper)
+# selection = Title Case heading, caption and step-title lines from US federal text; see README.md and tools/data/compound_heading_data.py
+# use = training
+
+# sent_id = headings-0001
+# source_id = usda-CAT71334647021
+# text = Spanner Wrench Holes
+# word = 2
+# lemma = hole
+# stratum = noun
+Spanner	NOUN	unanimous
+Wrench	NOUN	unanimous
+Holes	NOUN	unanimous
+
+# sent_id = headings-0002
+# source_id = other-nevadablmstatewi5670unit
+# text = Local Social and Economic Conditions
+# word = 4
+# lemma = condition
+# stratum = noun
+Local	ADJ	unanimous
+Social	ADJ	unanimous
+and	CCONJ	unanimous
+Economic	ADJ	unanimous
+Conditions	NOUN	unanimous
+
+# sent_id = headings-0003
+# source_id = usfs-CAT31342419
+# text = Jim Clark, American Box Company
+# word = 1
+# lemma = clark
+# stratum = proper
+Jim	PROPN	unanimous
+Clark	PROPN	unanimous
+,	PUNCT	unanimous
+American	PROPN	unanimous
+Box	PROPN	unanimous
+Company	PROPN	unanimous
+
+# sent_id = headings-0004
+# source_id = usda-CAT71342230
+# text = Erosion Damage
+# word = 1
+# lemma = damage
+# stratum = noun
+Erosion	NOUN	unanimous
+Damage	NOUN	unanimous
+
+# sent_id = headings-0005
+# source_id = usda-CAT71334647021
+# text = Selecting a Site
+# word = 2
+# lemma = site
+# stratum = noun
+Selecting	VERB	unanimous
+a	DET	unanimous
+Site	NOUN	unanimous
+
+# sent_id = headings-0006
+# source_id = usda-CAT78703578
+# text = Portable Power Circular Saws
+# word = 3
+# lemma = saw
+# stratum = noun
+Portable	ADJ	unanimous
+Power	NOUN	unanimous
+Circular	ADJ	unanimous
+Saws	NOUN	unanimous
+
+# sent_id = headings-0007
+# source_id = usgs-reportworkdonei00usgoog
+# text = National Road, Washington County 1,420
+# word = 3
+# lemma = washington
+# stratum = proper
+National	PROPN	unanimous
+Road	PROPN	unanimous
+,	PUNCT	unanimous
+Washington	PROPN	unanimous
+County	PROPN	unanimous
+1,420	NUM	unanimous
+
+# sent_id = headings-0008
+# source_id = usfs-CAT10684902
+# text = Jackson County Open House
+# word = 3
+# lemma = house
+# stratum = noun
+Jackson	PROPN	unanimous
+County	PROPN	unanimous
+Open	ADJ	unanimous
+House	NOUN	unanimous
+
+# sent_id = headings-0009
+# source_id = usbm-bureauofminescos00unit
+# text = Operating Labor
+# word = 1
+# lemma = labor
+# stratum = noun
+Operating	NOUN	unanimous
+Labor	NOUN	unanimous
+
+# sent_id = headings-0010
+# source_id = usda-CAT10678448004
+# text = Volume Flow
+# word = 1
+# lemma = flow
+# stratum = noun
+Volume	NOUN	unanimous
+Flow	NOUN	unanimous
+
+# sent_id = headings-0011
+# source_id = usbr-lowercrookedrive00unit
+# text = Mineral Leases and Land Tenure
+# word = 1
+# lemma = lease
+# stratum = noun
+Mineral	NOUN	unanimous
+Leases	NOUN	unanimous
+and	CCONJ	unanimous
+Land	NOUN	unanimous
+Tenure	NOUN	unanimous
+
+# sent_id = headings-0012
+# source_id = usgs-bub_gb_QBwlAQAAIAAJ
+# text = British Columbia
+# word = 1
+# lemma = columbia
+# stratum = proper
+British	PROPN	unanimous
+Columbia	PROPN	unanimous
+
+# sent_id = headings-0013
+# source_id = usda-waterqualityfiel160unit
+# text = Categories of Practices
+# word = 2
+# lemma = practice
+# stratum = noun
+Categories	NOUN	unanimous
+of	ADP	unanimous
+Practices	NOUN	unanimous
+
+# sent_id = headings-0014
+# source_id = usda-CAT71334647021
+# text = California and British Columbia
+# word = 3
+# lemma = columbia
+# stratum = proper
+California	PROPN	unanimous
+and	CCONJ	unanimous
+British	PROPN	unanimous
+Columbia	PROPN	unanimous
+
+# sent_id = headings-0015
+# source_id = usfs-CAT31342419
+# text = Mining Claims
+# word = 1
+# lemma = claim
+# stratum = noun
+Mining	NOUN	unanimous
+Claims	NOUN	unanimous
+
+# sent_id = headings-0016
+# source_id = usbr-northeastmontana00calc
+# text = Glacial Till - Pleistocene
+# word = 1
+# lemma = till
+# stratum = noun
+Glacial	ADJ	unanimous
+Till	NOUN	unanimous
+-	PUNCT	unanimous
+Pleistocene	PROPN	unanimous
+
+# sent_id = headings-0017
+# source_id = usfs-grazingfeereview5502unit
+# text = Percent of Beef Cattle Marketings, Percent of Private Leases
+# word = 9
+# lemma = lease
+# stratum = noun
+Percent	NOUN	unanimous
+of	ADP	unanimous
+Beef	NOUN	unanimous
+Cattle	NOUN	unanimous
+Marketings	NOUN	unanimous
+,	PUNCT	unanimous
+Percent	NOUN	unanimous
+of	ADP	unanimous
+Private	ADJ	unanimous
+Leases	NOUN	unanimous
+
+# sent_id = headings-0018
+# source_id = phs-mentalhealthrepo00unit
+# text = Evolving Views of Depression
+# word = 1
+# lemma = view
+# stratum = noun
+Evolving	VERB	unanimous
+Views	NOUN	unanimous
+of	ADP	unanimous
+Depression	NOUN	unanimous
+
+# sent_id = headings-0019
+# source_id = usfs-CAT10684902
+# text = Non-Significant Issues
+# word = 1
+# lemma = issue
+# stratum = noun
+Non-Significant	ADJ	unanimous
+Issues	NOUN	unanimous
+
+# sent_id = headings-0020
+# source_id = usda-CAT31287564
+# text = Per Cent Lowering (Drawdown)
+# word = 2
+# lemma = lowering
+# stratum = noun
+Per	ADP	unanimous
+Cent	NOUN	unanimous
+Lowering	NOUN	unanimous
+(	PUNCT	unanimous
+Drawdown	NOUN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0021
+# source_id = usbm-reportofinvestig3302unit
+# text = Molecular Weight of Amine in Acid Solution
+# word = 1
+# lemma = weight
+# stratum = noun
+Molecular	ADJ	unanimous
+Weight	NOUN	unanimous
+of	ADP	unanimous
+Amine	NOUN	unanimous
+in	ADP	unanimous
+Acid	NOUN	unanimous
+Solution	NOUN	unanimous
+
+# sent_id = headings-0022
+# source_id = usfs-CAT10504248
+# text = Correspondence Course
+# word = 1
+# lemma = course
+# stratum = noun
+Correspondence	NOUN	unanimous
+Course	NOUN	unanimous
+
+# sent_id = headings-0023
+# source_id = army-DAPAM20-3
+# text = The Home Front
+# word = 2
+# lemma = front
+# stratum = noun
+The	DET	unanimous
+Home	NOUN	unanimous
+Front	NOUN	unanimous
+
+# sent_id = headings-0024
+# source_id = usfs-grazingfeereview5502unit
+# text = Comparison of the 1983 Appraisal Values for Private Grazing
+# word = 5
+# lemma = value
+# stratum = noun
+Comparison	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+1983	NUM	unanimous
+Appraisal	NOUN	unanimous
+Values	NOUN	unanimous
+for	ADP	unanimous
+Private	ADJ	unanimous
+Grazing	NOUN	unanimous
+
+# sent_id = headings-0025
+# source_id = usfs-CAT31041219
+# text = The Composition of the Accession Number
+# word = 5
+# lemma = number
+# stratum = noun
+The	DET	unanimous
+Composition	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Accession	NOUN	unanimous
+Number	NOUN	unanimous
+
+# sent_id = headings-0026
+# source_id = usbr-reclamationsafet1963engi
+# text = Emphasis and Action
+# word = 2
+# lemma = action
+# stratum = noun
+Emphasis	NOUN	unanimous
+and	CCONJ	unanimous
+Action	NOUN	unanimous
+
+# sent_id = headings-0027
+# source_id = navy-personnelaccount00unit
+# text = Sequence of Unit Diary Daily Processing
+# word = 5
+# lemma = processing
+# stratum = noun
+Sequence	NOUN	unanimous
+of	ADP	unanimous
+Unit	NOUN	unanimous
+Diary	NOUN	unanimous
+Daily	ADJ	unanimous
+Processing	NOUN	unanimous
+
+# sent_id = headings-0028
+# source_id = usfs-CAT10230847
+# text = Completing the Nationwide Plan
+# word = 3
+# lemma = plan
+# stratum = noun
+Completing	VERB	unanimous
+the	DET	unanimous
+Nationwide	ADJ	unanimous
+Plan	NOUN	unanimous
+
+# sent_id = headings-0029
+# source_id = usfs-CAT31285103
+# text = Annual Monitoring and Evaluation Reports
+# word = 1
+# lemma = monitoring
+# stratum = noun
+Annual	ADJ	unanimous
+Monitoring	NOUN	unanimous
+and	CCONJ	unanimous
+Evaluation	NOUN	unanimous
+Reports	NOUN	unanimous
+
+# sent_id = headings-0030
+# source_id = army-LogisticsInWorldWarII
+# text = Italian Campaign
+# word = 1
+# lemma = campaign
+# stratum = noun
+Italian	ADJ	unanimous
+Campaign	NOUN	unanimous
+
+# sent_id = headings-0031
+# source_id = other-westmojaveplanha1bunit
+# text = Community Character
+# word = 1
+# lemma = character
+# stratum = noun
+Community	NOUN	unanimous
+Character	NOUN	unanimous
+
+# sent_id = headings-0032
+# source_id = usfs-CAT10230847
+# text = University of North Carolina, Computation Center
+# word = 3
+# lemma = carolina
+# stratum = proper
+University	PROPN	unanimous
+of	ADP	unanimous
+North	PROPN	unanimous
+Carolina	PROPN	unanimous
+,	PUNCT	unanimous
+Computation	PROPN	unanimous
+Center	PROPN	unanimous
+
+# sent_id = headings-0033
+# source_id = navy-personnelaccount00unit
+# text = Joining (Gain) Entries
+# word = 2
+# lemma = gain
+# stratum = noun
+Joining	NOUN	unanimous
+(	PUNCT	unanimous
+Gain	NOUN	unanimous
+)	PUNCT	unanimous
+Entries	NOUN	unanimous
+
+# sent_id = headings-0034
+# source_id = phs-mentalhealthrepo00unit
+# text = Biologic Factors in Depression
+# word = 1
+# lemma = factor
+# stratum = noun
+Biologic	ADJ	unanimous
+Factors	NOUN	unanimous
+in	ADP	unanimous
+Depression	NOUN	unanimous
+
+# sent_id = headings-0035
+# source_id = usfs-CAT85256064016
+# text = Proposed Change In Language
+# word = 1
+# lemma = change
+# stratum = noun
+Proposed	VERB	unanimous
+Change	NOUN	unanimous
+In	ADP	unanimous
+Language	NOUN	unanimous
+
+# sent_id = headings-0036
+# source_id = nbs-nbscommunication00unit
+# text = Developing or Refurbishing an Exhibit
+# word = 4
+# lemma = exhibit
+# stratum = noun
+Developing	VERB	unanimous
+or	CCONJ	unanimous
+Refurbishing	VERB	unanimous
+an	DET	unanimous
+Exhibit	NOUN	unanimous
+
+# sent_id = headings-0037
+# source_id = usbr-lowercrookedwild00unit
+# text = Appeals Process
+# word = 1
+# lemma = process
+# stratum = noun
+Appeals	NOUN	unanimous
+Process	NOUN	unanimous
+
+# sent_id = headings-0038
+# source_id = usda-CAT71342230
+# text = Evaluation of Damages
+# word = 2
+# lemma = damage
+# stratum = noun
+Evaluation	NOUN	unanimous
+of	ADP	unanimous
+Damages	NOUN	unanimous
+
+# sent_id = headings-0039
+# source_id = usbr-northcentralpow1971unit_0
+# text = Reserves of Montana - Location, Tonnage, and Characteristics
+# word = 2
+# lemma = montana
+# stratum = proper
+Reserves	NOUN	unanimous
+of	ADP	unanimous
+Montana	PROPN	unanimous
+-	PUNCT	unanimous
+Location	NOUN	unanimous
+,	PUNCT	unanimous
+Tonnage	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Characteristics	NOUN	unanimous
+
+# sent_id = headings-0040
+# source_id = usda-rangemanagementf1972ogle
+# text = Long-Time Results
+# word = 1
+# lemma = result
+# stratum = noun
+Long-Time	ADJ	unanimous
+Results	NOUN	unanimous
+
+# sent_id = headings-0041
+# source_id = usbr-pumpkincreek1400west
+# text = Results of Land Suitability Survey
+# word = 4
+# lemma = survey
+# stratum = noun
+Results	NOUN	unanimous
+of	ADP	unanimous
+Land	NOUN	unanimous
+Suitability	NOUN	unanimous
+Survey	NOUN	unanimous
+
+# sent_id = headings-0042
+# source_id = usda-CAT78703578
+# text = Replacing Glass in Wood Frames
+# word = 1
+# lemma = glass
+# stratum = noun
+Replacing	VERB	unanimous
+Glass	NOUN	unanimous
+in	ADP	unanimous
+Wood	NOUN	unanimous
+Frames	NOUN	unanimous
+
+# sent_id = headings-0043
+# source_id = phs-manualforprotect00unit
+# text = Public Warning
+# word = 1
+# lemma = warning
+# stratum = noun
+Public	ADJ	unanimous
+Warning	NOUN	unanimous
+
+# sent_id = headings-0044
+# source_id = usfs-CAT31342419
+# text = Agenda for Regional Advisory Council Meeting
+# word = 5
+# lemma = meeting
+# stratum = noun
+Agenda	NOUN	unanimous
+for	ADP	unanimous
+Regional	ADJ	unanimous
+Advisory	ADJ	unanimous
+Council	NOUN	unanimous
+Meeting	NOUN	unanimous
+
+# sent_id = headings-0045
+# source_id = usfs-CAT31041219
+# text = Density of Sowing
+# word = 2
+# lemma = sowing
+# stratum = noun
+Density	NOUN	unanimous
+of	ADP	unanimous
+Sowing	NOUN	unanimous
+
+# sent_id = headings-0046
+# source_id = other-terrestrialwild00unse
+# text = Information Needs and Sampling Intensity
+# word = 1
+# lemma = need
+# stratum = noun
+Information	NOUN	unanimous
+Needs	NOUN	unanimous
+and	CCONJ	unanimous
+Sampling	NOUN	unanimous
+Intensity	NOUN	unanimous
+
+# sent_id = headings-0047
+# source_id = usda-waterqualityindi161terr
+# text = Probable Cause
+# word = 1
+# lemma = cause
+# stratum = noun
+Probable	ADJ	unanimous
+Cause	NOUN	unanimous
+
+# sent_id = headings-0048
+# source_id = usbr-pumpkincreek1400west
+# text = Mining Effects on Hydrology
+# word = 1
+# lemma = effect
+# stratum = noun
+Mining	NOUN	unanimous
+Effects	NOUN	unanimous
+on	ADP	unanimous
+Hydrology	NOUN	unanimous
+
+# sent_id = headings-0049
+# source_id = usbr-northcentralpow1971unit_0
+# text = General Background
+# word = 1
+# lemma = background
+# stratum = noun
+General	ADJ	unanimous
+Background	NOUN	unanimous
+
+# sent_id = headings-0050
+# source_id = usbm-reportofinvestig3302unit
+# text = Methods of Charging and Gas Distribution
+# word = 2
+# lemma = charging
+# stratum = noun
+Methods	NOUN	unanimous
+of	ADP	unanimous
+Charging	NOUN	unanimous
+and	CCONJ	unanimous
+Gas	NOUN	unanimous
+Distribution	NOUN	unanimous
+
+# sent_id = headings-0051
+# source_id = usda-lebulletin71unit
+# text = Planning Commissions
+# word = 1
+# lemma = commission
+# stratum = noun
+Planning	NOUN	unanimous
+Commissions	NOUN	unanimous
+
+# sent_id = headings-0052
+# source_id = usbr-cookmountainstud00calc
+# text = Soil (Low Terrace) D
+# word = 3
+# lemma = terrace
+# stratum = noun
+Soil	NOUN	unanimous
+(	PUNCT	unanimous
+Low	ADJ	unanimous
+Terrace	NOUN	unanimous
+)	PUNCT	unanimous
+D	X	unanimous
+
+# sent_id = headings-0053
+# source_id = usbm-resourceguidedep00wagn
+# text = Data Sources, Accuracy and Data-Base Development
+# word = 1
+# lemma = source
+# stratum = noun
+Data	NOUN	unanimous
+Sources	NOUN	unanimous
+,	PUNCT	unanimous
+Accuracy	NOUN	unanimous
+and	CCONJ	unanimous
+Data-Base	NOUN	unanimous
+Development	NOUN	unanimous
+
+# sent_id = headings-0054
+# source_id = usbr-pumpkincreek1400west
+# text = Analytical Results
+# word = 1
+# lemma = result
+# stratum = noun
+Analytical	ADJ	unanimous
+Results	NOUN	unanimous
+
+# sent_id = headings-0055
+# source_id = usbr-pumpkincreek1400west
+# text = Exhibit 2 - Laboratory Analyses and Procedures D
+# word = 4
+# lemma = analyses
+# stratum = noun
+Exhibit	NOUN	unanimous
+2	NUM	unanimous
+-	PUNCT	unanimous
+Laboratory	NOUN	unanimous
+Analyses	NOUN	unanimous
+and	CCONJ	unanimous
+Procedures	NOUN	unanimous
+D	X	unanimous
+
+# sent_id = headings-0056
+# source_id = usbr-cookmountainstud00calc
+# text = Principal Soil Bodies
+# word = 2
+# lemma = body
+# stratum = noun
+Principal	ADJ	unanimous
+Soil	NOUN	unanimous
+Bodies	NOUN	unanimous
+
+# sent_id = headings-0057
+# source_id = navy-personnelaccount00unit
+# text = Total Naval Aviator Officers
+# word = 3
+# lemma = officer
+# stratum = noun
+Total	ADJ	unanimous
+Naval	ADJ	unanimous
+Aviator	NOUN	unanimous
+Officers	NOUN	unanimous
+
+# sent_id = headings-0058
+# source_id = usfs-influencesofvege397unit
+# text = Slope and Soil Influences
+# word = 3
+# lemma = influence
+# stratum = noun
+Slope	NOUN	unanimous
+and	CCONJ	unanimous
+Soil	NOUN	unanimous
+Influences	NOUN	unanimous
+
+# sent_id = headings-0059
+# source_id = usda-lebulletin71unit
+# text = Enforcement of Tax Claims
+# word = 3
+# lemma = claim
+# stratum = noun
+Enforcement	NOUN	unanimous
+of	ADP	unanimous
+Tax	NOUN	unanimous
+Claims	NOUN	unanimous
+
+# sent_id = headings-0060
+# source_id = usda-CAT71334647021
+# text = On-the-Job Training
+# word = 1
+# lemma = training
+# stratum = noun
+On-the-Job	ADJ	unanimous
+Training	NOUN	unanimous
+
+# sent_id = headings-0061
+# source_id = usfs-CAT10504248
+# text = Special Courses in Forest Economics Curriculum
+# word = 1
+# lemma = course
+# stratum = noun
+Special	ADJ	unanimous
+Courses	NOUN	unanimous
+in	ADP	unanimous
+Forest	NOUN	unanimous
+Economics	NOUN	unanimous
+Curriculum	NOUN	unanimous
+
+# sent_id = headings-0062
+# source_id = usbm-resourceguidedep00wagn
+# text = Philadelphia, Pennsylvania 19106
+# word = 2
+# lemma = pennsylvania
+# stratum = proper
+Philadelphia	PROPN	unanimous
+,	PUNCT	unanimous
+Pennsylvania	PROPN	unanimous
+19106	NUM	unanimous
+
+# sent_id = headings-0063
+# source_id = usda-CAT31352946
+# text = Ocean Shipping
+# word = 1
+# lemma = shipping
+# stratum = noun
+Ocean	NOUN	unanimous
+Shipping	NOUN	unanimous
+
+# sent_id = headings-0064
+# source_id = usbr-reclamationsafet1963engi
+# text = Improper Driving
+# word = 1
+# lemma = driving
+# stratum = noun
+Improper	ADJ	unanimous
+Driving	NOUN	unanimous
+
+# sent_id = headings-0065
+# source_id = usbr-williamsmckenzie00usbu
+# text = Ranges and Means (Percentages) of Clay Types
+# word = 2
+# lemma = mean
+# stratum = noun
+Ranges	NOUN	unanimous
+and	CCONJ	unanimous
+Means	NOUN	unanimous
+(	PUNCT	unanimous
+Percentages	NOUN	unanimous
+)	PUNCT	unanimous
+of	ADP	unanimous
+Clay	NOUN	unanimous
+Types	NOUN	unanimous
+
+# sent_id = headings-0066
+# source_id = usda-CAT31288057
+# text = Untreated Pine
+# word = 1
+# lemma = pine
+# stratum = noun
+Untreated	ADJ	unanimous
+Pine	NOUN	unanimous
+
+# sent_id = headings-0067
+# source_id = other-terrestrialwild00unse
+# text = The Lincoln-Peterson Index
+# word = 2
+# lemma = index
+# stratum = noun
+The	DET	unanimous
+Lincoln-Peterson	PROPN	unanimous
+Index	NOUN	unanimous
+
+# sent_id = headings-0068
+# source_id = usgs-bub_gb_a-gqAQAAIAAJ
+# text = Chatham Inlet to Stillwater Anchorage
+# word = 3
+# lemma = stillwater
+# stratum = proper
+Chatham	PROPN	unanimous
+Inlet	PROPN	unanimous
+to	ADP	unanimous
+Stillwater	PROPN	unanimous
+Anchorage	PROPN	unanimous
+
+# sent_id = headings-0069
+# source_id = usgs-bub_gb_QBwlAQAAIAAJ
+# text = University of California, San Diego
+# word = 2
+# lemma = california
+# stratum = proper
+University	PROPN	unanimous
+of	ADP	unanimous
+California	PROPN	unanimous
+,	PUNCT	unanimous
+San	PROPN	unanimous
+Diego	PROPN	unanimous
+
+# sent_id = headings-0070
+# source_id = usda-manualforartific00unit
+# text = Sterilizing the Syringe
+# word = 2
+# lemma = syringe
+# stratum = noun
+Sterilizing	VERB	unanimous
+the	DET	unanimous
+Syringe	NOUN	unanimous
+
+# sent_id = headings-0071
+# source_id = usda-CAT71334647021
+# text = Relating Data to Existing Snow Courses
+# word = 5
+# lemma = course
+# stratum = noun
+Relating	VERB	unanimous
+Data	NOUN	unanimous
+to	ADP	unanimous
+Existing	VERB	unanimous
+Snow	NOUN	unanimous
+Courses	NOUN	unanimous
+
+# sent_id = headings-0072
+# source_id = navy-personnelaccount00unit
+# text = Diary Check Off Sheet
+# word = 1
+# lemma = check
+# stratum = noun
+Diary	NOUN	unanimous
+Check	NOUN	unanimous
+Off	ADV	unanimous
+Sheet	NOUN	unanimous
+
+# sent_id = headings-0073
+# source_id = usgs-reportworkdonei00usgoog
+# text = National Road, Washington County 1,445
+# word = 3
+# lemma = washington
+# stratum = proper
+National	PROPN	unanimous
+Road	PROPN	unanimous
+,	PUNCT	unanimous
+Washington	PROPN	unanimous
+County	PROPN	unanimous
+1,445	NUM	unanimous
+
+# sent_id = headings-0074
+# source_id = phs-healthmaterielfa00unit
+# text = General Planning Staff
+# word = 2
+# lemma = staff
+# stratum = noun
+General	ADJ	unanimous
+Planning	NOUN	unanimous
+Staff	NOUN	unanimous
+
+# sent_id = headings-0075
+# source_id = usfs-CAT85256064016
+# text = Roads and Trails for States, National Forests Fund 51,600
+# word = 2
+# lemma = trail
+# stratum = noun
+Roads	NOUN	unanimous
+and	CCONJ	unanimous
+Trails	NOUN	unanimous
+for	ADP	unanimous
+States	NOUN	unanimous
+,	PUNCT	unanimous
+National	PROPN	unanimous
+Forests	PROPN	unanimous
+Fund	PROPN	unanimous
+51,600	NUM	unanimous
+
+# sent_id = headings-0076
+# source_id = usda-CAT31304531
+# text = Clean The Shelves
+# word = 0
+# lemma = clean
+# stratum = imperative
+Clean	VERB	unanimous
+The	DET	unanimous
+Shelves	NOUN	unanimous
+
+# sent_id = headings-0077
+# source_id = usbr-garrisonstudyare00pari
+# text = Stability of the Present Landscape
+# word = 4
+# lemma = landscape
+# stratum = noun
+Stability	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Present	ADJ	unanimous
+Landscape	NOUN	unanimous
+
+# sent_id = headings-0078
+# source_id = usfs-firecontrolnotes17unit
+# text = Use and Results
+# word = 2
+# lemma = result
+# stratum = noun
+Use	NOUN	unanimous
+and	CCONJ	unanimous
+Results	NOUN	unanimous
+
+# sent_id = headings-0079
+# source_id = usda-CAT10678448004
+# text = States' Laws and Codes
+# word = 4
+# lemma = cod
+# stratum = noun
+States	NOUN	unanimous
+'	PART	unanimous
+Laws	NOUN	unanimous
+and	CCONJ	unanimous
+Codes	NOUN	unanimous
+
+# sent_id = headings-0080
+# source_id = usda-CAT71342230
+# text = Wilson County Portion
+# word = 2
+# lemma = portion
+# stratum = noun
+Wilson	PROPN	unanimous
+County	PROPN	unanimous
+Portion	NOUN	unanimous
+
+# sent_id = headings-0081
+# source_id = usbr-northeastmontana00calc
+# text = Other Climatic Factors
+# word = 2
+# lemma = factor
+# stratum = noun
+Other	ADJ	unanimous
+Climatic	ADJ	unanimous
+Factors	NOUN	unanimous
+
+# sent_id = headings-0082
+# source_id = usda-CAT71342230
+# text = Benefits from Reduction of Damages
+# word = 4
+# lemma = damage
+# stratum = noun
+Benefits	NOUN	unanimous
+from	ADP	unanimous
+Reduction	NOUN	unanimous
+of	ADP	unanimous
+Damages	NOUN	unanimous
+
+# sent_id = headings-0083
+# source_id = usbr-cookmountainstud00calc
+# text = Overlying Sandstone D
+# word = 0
+# lemma = overlying
+# stratum = imperative
+Overlying	VERB	unanimous
+Sandstone	NOUN	unanimous
+D	X	unanimous
+
+# sent_id = headings-0084
+# source_id = usfs-firecontrolnotes17unit
+# text = John Hastings
+# word = 1
+# lemma = hasting
+# stratum = proper
+John	PROPN	unanimous
+Hastings	PROPN	unanimous
+
+# sent_id = headings-0085
+# source_id = navy-guidetooccupatio00unit
+# text = Aviation Machinists Mate (Jet Engine) (A)
+# word = 2
+# lemma = mate
+# stratum = noun
+Aviation	NOUN	unanimous
+Machinists	NOUN	unanimous
+Mate	NOUN	unanimous
+(	PUNCT	unanimous
+Jet	NOUN	unanimous
+Engine	NOUN	unanimous
+)	PUNCT	unanimous
+(	PUNCT	unanimous
+A	X	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0086
+# source_id = usfs-CAT31041219
+# text = Installation of Measuring Gauge
+# word = 3
+# lemma = gauge
+# stratum = noun
+Installation	NOUN	unanimous
+of	ADP	unanimous
+Measuring	NOUN	unanimous
+Gauge	NOUN	unanimous
+
+# sent_id = headings-0087
+# source_id = usbm-reportofinvestig3302unit
+# text = Precious-Metals Section
+# word = 1
+# lemma = section
+# stratum = noun
+Precious-Metals	NOUN	unanimous
+Section	NOUN	unanimous
+
+# sent_id = headings-0088
+# source_id = usda-CAT71342230
+# text = Floodwater Damage
+# word = 1
+# lemma = damage
+# stratum = noun
+Floodwater	NOUN	unanimous
+Damage	NOUN	unanimous
+
+# sent_id = headings-0089
+# source_id = usfs-CAT31041219
+# text = Insects Affecting Seed
+# word = 2
+# lemma = seed
+# stratum = noun
+Insects	NOUN	unanimous
+Affecting	VERB	unanimous
+Seed	NOUN	unanimous
+
+# sent_id = headings-0090
+# source_id = usfs-CAT31041219
+# text = Selection of Source
+# word = 2
+# lemma = source
+# stratum = noun
+Selection	NOUN	unanimous
+of	ADP	unanimous
+Source	NOUN	unanimous
+
+# sent_id = headings-0091
+# source_id = usfs-CAT85256064016
+# text = Office Powell Ranger District, Idaho County, Idaho
+# word = 1
+# lemma = powell
+# stratum = proper
+Office	NOUN	unanimous
+Powell	PROPN	unanimous
+Ranger	PROPN	unanimous
+District	PROPN	unanimous
+,	PUNCT	unanimous
+Idaho	PROPN	unanimous
+County	PROPN	unanimous
+,	PUNCT	unanimous
+Idaho	PROPN	unanimous
+
+# sent_id = headings-0092
+# source_id = usbr-northcentralpow1971unit_0
+# text = Typical Area Monthly Load Demand Pattern
+# word = 5
+# lemma = pattern
+# stratum = noun
+Typical	ADJ	unanimous
+Area	NOUN	unanimous
+Monthly	ADJ	unanimous
+Load	NOUN	unanimous
+Demand	NOUN	unanimous
+Pattern	NOUN	unanimous
+
+# sent_id = headings-0093
+# source_id = other-westmojaveplanha1bunit
+# text = Lone Pine Public Hearing (301)
+# word = 3
+# lemma = hearing
+# stratum = noun
+Lone	PROPN	unanimous
+Pine	PROPN	unanimous
+Public	ADJ	unanimous
+Hearing	NOUN	unanimous
+(	PUNCT	unanimous
+301	NUM	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0094
+# source_id = usbr-reclamationsafet1963engi
+# text = National Safety Council Awards
+# word = 3
+# lemma = award
+# stratum = noun
+National	PROPN	unanimous
+Safety	PROPN	unanimous
+Council	PROPN	unanimous
+Awards	NOUN	unanimous
+
+# sent_id = headings-0095
+# source_id = phs-childhealthconfe00unit
+# text = Weighing and Measuring Room
+# word = 3
+# lemma = room
+# stratum = noun
+Weighing	NOUN	unanimous
+and	CCONJ	unanimous
+Measuring	NOUN	unanimous
+Room	NOUN	unanimous
+
+# sent_id = headings-0096
+# source_id = usda-yourfarmhousehow619unit
+# text = Bedroom Closets
+# word = 1
+# lemma = closet
+# stratum = noun
+Bedroom	NOUN	unanimous
+Closets	NOUN	unanimous
+
+# sent_id = headings-0097
+# source_id = usda-waterqualityindi161terr
+# text = Description of the Field Sheets
+# word = 4
+# lemma = sheet
+# stratum = noun
+Description	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Field	NOUN	unanimous
+Sheets	NOUN	unanimous
+
+# sent_id = headings-0098
+# source_id = usfs-firecontrolnotes17unit
+# text = Stop Power Saw Fires Tags
+# word = 0
+# lemma = stop
+# stratum = imperative
+Stop	VERB	unanimous
+Power	NOUN	unanimous
+Saw	NOUN	unanimous
+Fires	NOUN	unanimous
+Tags	NOUN	unanimous
+
+# sent_id = headings-0099
+# source_id = usgs-fieldtripguideto00four
+# text = Geochemistry and Dynamics of the Yellowstone National
+# word = 5
+# lemma = yellowstone
+# stratum = proper
+Geochemistry	NOUN	unanimous
+and	CCONJ	unanimous
+Dynamics	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Yellowstone	PROPN	unanimous
+National	PROPN	unanimous
+
+# sent_id = headings-0100
+# source_id = usda-CAT78703578
+# text = Blisters in the Felt
+# word = 3
+# lemma = felt
+# stratum = noun
+Blisters	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Felt	NOUN	unanimous
+
+# sent_id = headings-0101
+# source_id = usfs-CAT10230847
+# text = Rural Fuel Evaluation Guide
+# word = 3
+# lemma = guide
+# stratum = noun
+Rural	ADJ	unanimous
+Fuel	NOUN	unanimous
+Evaluation	NOUN	unanimous
+Guide	NOUN	unanimous
+
+# sent_id = headings-0102
+# source_id = usda-yourfarmhousehow619unit
+# text = Watch Your Stairs and Steps
+# word = 0
+# lemma = watch
+# stratum = imperative
+Watch	VERB	unanimous
+Your	DET	unanimous
+Stairs	NOUN	unanimous
+and	CCONJ	unanimous
+Steps	NOUN	unanimous
+
+# sent_id = headings-0103
+# source_id = army-LogisticsInWorldWarII
+# text = Demobilization Planning
+# word = 1
+# lemma = planning
+# stratum = noun
+Demobilization	NOUN	unanimous
+Planning	NOUN	unanimous
+
+# sent_id = headings-0104
+# source_id = other-terrestrialwild00unse
+# text = Specific Raptor Survey Methods and Nest
+# word = 5
+# lemma = nest
+# stratum = noun
+Specific	ADJ	unanimous
+Raptor	NOUN	unanimous
+Survey	NOUN	unanimous
+Methods	NOUN	unanimous
+and	CCONJ	unanimous
+Nest	NOUN	unanimous
+
+# sent_id = headings-0105
+# source_id = phs-mentalhealthrepo00unit
+# text = Evaluating the Robert Wood Johnson Foundation
+# word = 2
+# lemma = robert
+# stratum = proper
+Evaluating	VERB	unanimous
+the	DET	unanimous
+Robert	PROPN	unanimous
+Wood	PROPN	unanimous
+Johnson	PROPN	unanimous
+Foundation	PROPN	unanimous
+
+# sent_id = headings-0106
+# source_id = usda-acquisitionuseof05leea
+# text = Executive Order
+# word = 1
+# lemma = order
+# stratum = noun
+Executive	ADJ	unanimous
+Order	NOUN	unanimous
+
+# sent_id = headings-0107
+# source_id = army-LogisticsInWorldWarII
+# text = Military Police
+# word = 1
+# lemma = police
+# stratum = noun
+Military	ADJ	unanimous
+Police	NOUN	unanimous
+
+# sent_id = headings-0108
+# source_id = usda-acquisitionuseof05leea
+# text = Survey of Relocation Needs
+# word = 3
+# lemma = need
+# stratum = noun
+Survey	NOUN	unanimous
+of	ADP	unanimous
+Relocation	NOUN	unanimous
+Needs	NOUN	unanimous
+
+# sent_id = headings-0109
+# source_id = usfs-influencesofvege397unit
+# text = The Water Cycle
+# word = 2
+# lemma = cycle
+# stratum = noun
+The	DET	unanimous
+Water	NOUN	unanimous
+Cycle	NOUN	unanimous
+
+# sent_id = headings-0110
+# source_id = usbm-reportofinvestig3302unit
+# text = Agglomeration and Tabling
+# word = 2
+# lemma = tabling
+# stratum = noun
+Agglomeration	NOUN	unanimous
+and	CCONJ	unanimous
+Tabling	NOUN	unanimous
+
+# sent_id = headings-0111
+# source_id = usda-waterqualityfiel160unit
+# text = Pesticide Leaching
+# word = 1
+# lemma = leaching
+# stratum = noun
+Pesticide	NOUN	unanimous
+Leaching	NOUN	unanimous
+
+# sent_id = headings-0112
+# source_id = usfs-CAT10230847
+# text = Urban Fuel Evaluation Guide
+# word = 3
+# lemma = guide
+# stratum = noun
+Urban	ADJ	unanimous
+Fuel	NOUN	unanimous
+Evaluation	NOUN	unanimous
+Guide	NOUN	unanimous
+
+# sent_id = headings-0113
+# source_id = phs-nurseswardmanage00unit
+# text = Change of Shift
+# word = 2
+# lemma = shift
+# stratum = noun
+Change	NOUN	unanimous
+of	ADP	unanimous
+Shift	NOUN	unanimous
+
+# sent_id = headings-0114
+# source_id = navy-personnelaccount00unit
+# text = Reporting Unit or Command Code
+# word = 4
+# lemma = code
+# stratum = noun
+Reporting	NOUN	unanimous
+Unit	NOUN	unanimous
+or	CCONJ	unanimous
+Command	NOUN	unanimous
+Code	NOUN	unanimous
+
+# sent_id = headings-0115
+# source_id = other-wildlifewatercat00brig
+# text = Buck and Rail Fence
+# word = 3
+# lemma = fence
+# stratum = noun
+Buck	NOUN	unanimous
+and	CCONJ	unanimous
+Rail	NOUN	unanimous
+Fence	NOUN	unanimous
+
+# sent_id = headings-0116
+# source_id = usbr-northeastmontana00calc
+# text = Lignite Beds
+# word = 1
+# lemma = bed
+# stratum = noun
+Lignite	NOUN	unanimous
+Beds	NOUN	unanimous
+
+# sent_id = headings-0117
+# source_id = usda-lebulletin71unit
+# text = Real Estate Brokers
+# word = 2
+# lemma = broker
+# stratum = noun
+Real	ADJ	unanimous
+Estate	NOUN	unanimous
+Brokers	NOUN	unanimous
+
+# sent_id = headings-0118
+# source_id = usgs-professionalpap23sgoog
+# text = Rob Roy
+# word = 1
+# lemma = roy
+# stratum = proper
+Rob	PROPN	unanimous
+Roy	PROPN	unanimous
+
+# sent_id = headings-0119
+# source_id = usda-CAT86866954
+# text = Rotary Drilling
+# word = 1
+# lemma = drilling
+# stratum = noun
+Rotary	ADJ	unanimous
+Drilling	NOUN	unanimous
+
+# sent_id = headings-0120
+# source_id = other-fisherycircular392unit
+# text = Data of the Biology Phase, Florida Portion, Cooperative
+# word = 6
+# lemma = florida
+# stratum = proper
+Data	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Biology	NOUN	unanimous
+Phase	NOUN	unanimous
+,	PUNCT	unanimous
+Florida	PROPN	unanimous
+Portion	NOUN	unanimous
+,	PUNCT	unanimous
+Cooperative	ADJ	unanimous
+
+# sent_id = headings-0121
+# source_id = usda-rangemanagementf1972ogle
+# text = Stocking Rates
+# word = 1
+# lemma = rat
+# stratum = noun
+Stocking	NOUN	unanimous
+Rates	NOUN	unanimous
+
+# sent_id = headings-0122
+# source_id = usfs-grazingfeereview5502unit
+# text = Grazing Land Leases, and the Percent of Beef Cattle
+# word = 2
+# lemma = lease
+# stratum = noun
+Grazing	NOUN	unanimous
+Land	NOUN	unanimous
+Leases	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+the	DET	unanimous
+Percent	NOUN	unanimous
+of	ADP	unanimous
+Beef	NOUN	unanimous
+Cattle	NOUN	unanimous
+
+# sent_id = headings-0123
+# source_id = usbr-northcentralpow1971unit_0
+# text = Maps and Surveys
+# word = 2
+# lemma = survey
+# stratum = noun
+Maps	NOUN	unanimous
+and	CCONJ	unanimous
+Surveys	NOUN	unanimous
+
+# sent_id = headings-0124
+# source_id = other-fisherycircular392unit
+# text = Gulf of Mexico
+# word = 2
+# lemma = mexico
+# stratum = proper
+Gulf	PROPN	unanimous
+of	ADP	unanimous
+Mexico	PROPN	unanimous
+
+# sent_id = headings-0125
+# source_id = usbr-reportonresour8700unit
+# text = Description of Classes
+# word = 2
+# lemma = class
+# stratum = noun
+Description	NOUN	unanimous
+of	ADP	unanimous
+Classes	NOUN	unanimous
+
+# sent_id = headings-0126
+# source_id = usgs-bub_gb_a-gqAQAAIAAJ
+# text = Named by the United States and Canada
+# word = 6
+# lemma = canada
+# stratum = proper
+Named	VERB	unanimous
+by	ADP	unanimous
+the	DET	unanimous
+United	PROPN	unanimous
+States	PROPN	unanimous
+and	CCONJ	unanimous
+Canada	PROPN	unanimous
+
+# sent_id = headings-0127
+# source_id = navy-guidetooccupatio00unit
+# text = Photography Equipment Repair Course (C)
+# word = 3
+# lemma = course
+# stratum = noun
+Photography	NOUN	unanimous
+Equipment	NOUN	unanimous
+Repair	NOUN	unanimous
+Course	NOUN	unanimous
+(	PUNCT	unanimous
+C	X	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0128
+# source_id = usda-CAT86866954
+# text = Staking and Clearing
+# word = 2
+# lemma = clearing
+# stratum = noun
+Staking	NOUN	unanimous
+and	CCONJ	unanimous
+Clearing	NOUN	unanimous
+
+# sent_id = headings-0129
+# source_id = usda-CAT78703578
+# text = Cracks in the Roofing
+# word = 3
+# lemma = roofing
+# stratum = noun
+Cracks	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Roofing	NOUN	unanimous
+
+# sent_id = headings-0130
+# source_id = usbm-reportofinvestig3302unit
+# text = Direct Production of Steel
+# word = 3
+# lemma = steel
+# stratum = noun
+Direct	ADJ	unanimous
+Production	NOUN	unanimous
+of	ADP	unanimous
+Steel	NOUN	unanimous
+
+# sent_id = headings-0131
+# source_id = usda-manualforartific00unit
+# text = Microscope and Light
+# word = 2
+# lemma = light
+# stratum = noun
+Microscope	NOUN	unanimous
+and	CCONJ	unanimous
+Light	NOUN	unanimous
+
+# sent_id = headings-0132
+# source_id = usbr-reclamationsafet1963engi
+# text = Financial Management's Stake in Safety Programs
+# word = 3
+# lemma = stake
+# stratum = noun
+Financial	ADJ	unanimous
+Management	NOUN	unanimous
+'s	PART	unanimous
+Stake	NOUN	unanimous
+in	ADP	unanimous
+Safety	NOUN	unanimous
+Programs	NOUN	unanimous
+
+# sent_id = headings-0133
+# source_id = other-wildlifewatercat00brig
+# text = Small Game Guzzler Fence
+# word = 3
+# lemma = fence
+# stratum = noun
+Small	ADJ	unanimous
+Game	NOUN	unanimous
+Guzzler	NOUN	unanimous
+Fence	NOUN	unanimous
+
+# sent_id = headings-0134
+# source_id = usda-CAT71334647018
+# text = Radioactive Logs
+# word = 1
+# lemma = log
+# stratum = noun
+Radioactive	ADJ	unanimous
+Logs	NOUN	unanimous
+
+# sent_id = headings-0135
+# source_id = usbr-cookmountainstud00calc
+# text = Weathering Tests
+# word = 1
+# lemma = test
+# stratum = noun
+Weathering	NOUN	unanimous
+Tests	NOUN	unanimous
+
+# sent_id = headings-0136
+# source_id = other-westmojaveplanha1bunit
+# text = University of Arizona, Prescott
+# word = 2
+# lemma = arizona
+# stratum = proper
+University	PROPN	unanimous
+of	ADP	unanimous
+Arizona	PROPN	unanimous
+,	PUNCT	unanimous
+Prescott	PROPN	unanimous
+
+# sent_id = headings-0137
+# source_id = navy-personnelaccount00unit
+# text = Reports Symbol Number
+# word = 2
+# lemma = number
+# stratum = noun
+Reports	NOUN	unanimous
+Symbol	NOUN	unanimous
+Number	NOUN	unanimous
+
+# sent_id = headings-0138
+# source_id = usfs-CAT85256064019
+# text = Management Analysis and Support
+# word = 3
+# lemma = support
+# stratum = noun
+Management	NOUN	unanimous
+Analysis	NOUN	unanimous
+and	CCONJ	unanimous
+Support	NOUN	unanimous
+
+# sent_id = headings-0139
+# source_id = nbs-nbscommunication00unit
+# text = A Concluding Thought
+# word = 2
+# lemma = thought
+# stratum = noun
+A	DET	unanimous
+Concluding	ADJ	unanimous
+Thought	NOUN	unanimous
+
+# sent_id = headings-0140
+# source_id = army-DAPAM20-3
+# text = Horror Pictures and Stories
+# word = 1
+# lemma = picture
+# stratum = noun
+Horror	NOUN	unanimous
+Pictures	NOUN	unanimous
+and	CCONJ	unanimous
+Stories	NOUN	unanimous
+
+# sent_id = headings-0141
+# source_id = phs-organizationstaf00unit_3
+# text = Percent of Food Handlers Attending Food Sanitation Training
+# word = 7
+# lemma = training
+# stratum = noun
+Percent	NOUN	unanimous
+of	ADP	unanimous
+Food	NOUN	unanimous
+Handlers	NOUN	unanimous
+Attending	VERB	unanimous
+Food	NOUN	unanimous
+Sanitation	NOUN	unanimous
+Training	NOUN	unanimous
+
+# sent_id = headings-0142
+# source_id = usbm-reportofinvestig3302unit
+# text = Flotation in Brine
+# word = 2
+# lemma = brine
+# stratum = noun
+Flotation	NOUN	unanimous
+in	ADP	unanimous
+Brine	NOUN	unanimous
+
+# sent_id = headings-0143
+# source_id = usbr-lowercrookedrive00unit
+# text = Desired Changes in Rules and Regulations
+# word = 1
+# lemma = change
+# stratum = noun
+Desired	ADJ	unanimous
+Changes	NOUN	unanimous
+in	ADP	unanimous
+Rules	NOUN	unanimous
+and	CCONJ	unanimous
+Regulations	NOUN	unanimous
+
+# sent_id = headings-0144
+# source_id = usgs-bub_gb_QBwlAQAAIAAJ
+# text = Salt Chock on, Alaska Q
+# word = 4
+# lemma = alaska
+# stratum = proper
+Salt	PROPN	unanimous
+Chock	PROPN	unanimous
+on	ADP	unanimous
+,	PUNCT	unanimous
+Alaska	PROPN	unanimous
+Q	X	unanimous
+
+# sent_id = headings-0145
+# source_id = usda-manualforartific00unit
+# text = Adjusting the Flow of Carbon Dioxide
+# word = 2
+# lemma = flow
+# stratum = noun
+Adjusting	VERB	unanimous
+the	DET	unanimous
+Flow	NOUN	unanimous
+of	ADP	unanimous
+Carbon	NOUN	unanimous
+Dioxide	NOUN	unanimous
+
+# sent_id = headings-0146
+# source_id = usbr-pumpkincreek1400west
+# text = Iron, Zinc, Copper and Manganese
+# word = 2
+# lemma = zinc
+# stratum = noun
+Iron	NOUN	unanimous
+,	PUNCT	unanimous
+Zinc	NOUN	unanimous
+,	PUNCT	unanimous
+Copper	NOUN	unanimous
+and	CCONJ	unanimous
+Manganese	NOUN	unanimous
+
+# sent_id = headings-0147
+# source_id = army-LogisticsInWorldWarII
+# text = China, Burma, India
+# word = 2
+# lemma = burma
+# stratum = proper
+China	PROPN	unanimous
+,	PUNCT	unanimous
+Burma	PROPN	unanimous
+,	PUNCT	unanimous
+India	PROPN	unanimous
+
+# sent_id = headings-0148
+# source_id = army-DAPAM20-3
+# text = Equality of Arms and Services
+# word = 2
+# lemma = arm
+# stratum = noun
+Equality	NOUN	unanimous
+of	ADP	unanimous
+Arms	NOUN	unanimous
+and	CCONJ	unanimous
+Services	NOUN	unanimous
+
+# sent_id = headings-0149
+# source_id = usfs-CAT31041219
+# text = Width of Row
+# word = 2
+# lemma = row
+# stratum = noun
+Width	NOUN	unanimous
+of	ADP	unanimous
+Row	NOUN	unanimous
+
+# sent_id = headings-0150
+# source_id = usgs-watersupplypape06usgoog
+# text = Spillway at Stillwater
+# word = 2
+# lemma = stillwater
+# stratum = proper
+Spillway	NOUN	unanimous
+at	ADP	unanimous
+Stillwater	PROPN	unanimous
+
+# sent_id = headings-0151
+# source_id = usbr-cookmountainstud00calc
+# text = Thickness of Overburden
+# word = 2
+# lemma = overburden
+# stratum = noun
+Thickness	NOUN	unanimous
+of	ADP	unanimous
+Overburden	NOUN	unanimous
+
+# sent_id = headings-0152
+# source_id = usfs-CAT85256064016
+# text = Legislative Impacts
+# word = 1
+# lemma = impact
+# stratum = noun
+Legislative	ADJ	unanimous
+Impacts	NOUN	unanimous
+
+# sent_id = headings-0153
+# source_id = usbm-bureauofminescos00unit
+# text = Construction Labor
+# word = 1
+# lemma = labor
+# stratum = noun
+Construction	NOUN	unanimous
+Labor	NOUN	unanimous
+
+# sent_id = headings-0154
+# source_id = usbr-northcentralpow1971unit_0
+# text = C, Zone
+# word = 2
+# lemma = zone
+# stratum = noun
+C	X	unanimous
+,	PUNCT	unanimous
+Zone	NOUN	unanimous
+
+# sent_id = headings-0155
+# source_id = phs-foodforyoungchil00lowe
+# text = Adapting Recipes for Use With Children
+# word = 3
+# lemma = use
+# stratum = noun
+Adapting	VERB	unanimous
+Recipes	NOUN	unanimous
+for	ADP	unanimous
+Use	NOUN	unanimous
+With	ADP	unanimous
+Children	NOUN	unanimous
+
+# sent_id = headings-0156
+# source_id = usfs-guideforpredicti1981clin
+# text = Controlling And Contributing Factors
+# word = 3
+# lemma = factor
+# stratum = noun
+Controlling	VERB	unanimous
+And	CCONJ	unanimous
+Contributing	VERB	unanimous
+Factors	NOUN	unanimous
+
+# sent_id = headings-0157
+# source_id = usfs-CAT10504248
+# text = Subprofessional Training
+# word = 1
+# lemma = training
+# stratum = noun
+Subprofessional	ADJ	unanimous
+Training	NOUN	unanimous
+
+# sent_id = headings-0158
+# source_id = army-DAPAM20-3
+# text = Conduct of the War
+# word = 3
+# lemma = war
+# stratum = noun
+Conduct	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+War	NOUN	unanimous
+
+# sent_id = headings-0159
+# source_id = usbr-pumpkincreek1400west
+# text = Discussion of the Analyses
+# word = 3
+# lemma = analyses
+# stratum = noun
+Discussion	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Analyses	NOUN	unanimous
+
+# sent_id = headings-0160
+# source_id = usfs-CAT31285103
+# text = Costs and Outputs
+# word = 2
+# lemma = output
+# stratum = noun
+Costs	NOUN	unanimous
+and	CCONJ	unanimous
+Outputs	NOUN	unanimous
+
+# sent_id = headings-0161
+# source_id = other-terrestrialwild00unse
+# text = Direct Counts
+# word = 1
+# lemma = count
+# stratum = noun
+Direct	ADJ	unanimous
+Counts	NOUN	unanimous
+
+# sent_id = headings-0162
+# source_id = usfs-grazingfeereview5502unit
+# text = Long-Term Competitive Bid System, 10-Year Term Permit
+# word = 7
+# lemma = permit
+# stratum = noun
+Long-Term	ADJ	unanimous
+Competitive	ADJ	unanimous
+Bid	NOUN	unanimous
+System	NOUN	unanimous
+,	PUNCT	unanimous
+10-Year	ADJ	unanimous
+Term	NOUN	unanimous
+Permit	NOUN	unanimous
+
+# sent_id = headings-0163
+# source_id = usda-CAT78703578
+# text = Applying the Paint
+# word = 2
+# lemma = paint
+# stratum = noun
+Applying	VERB	unanimous
+the	DET	unanimous
+Paint	NOUN	unanimous
+
+# sent_id = headings-0164
+# source_id = phs-mentalhealthrepo00unit
+# text = Effectiveness of Systems of Care
+# word = 4
+# lemma = care
+# stratum = noun
+Effectiveness	NOUN	unanimous
+of	ADP	unanimous
+Systems	NOUN	unanimous
+of	ADP	unanimous
+Care	NOUN	unanimous
+
+# sent_id = headings-0165
+# source_id = phs-foodforyoungchil00lowe
+# text = Supplementary Breakfast
+# word = 1
+# lemma = breakfast
+# stratum = noun
+Supplementary	ADJ	unanimous
+Breakfast	NOUN	unanimous
+
+# sent_id = headings-0166
+# source_id = usda-CAT71334647021
+# text = Marking, Mapping, and Recording
+# word = 2
+# lemma = mapping
+# stratum = noun
+Marking	NOUN	unanimous
+,	PUNCT	unanimous
+Mapping	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Recording	NOUN	unanimous
+
+# sent_id = headings-0167
+# source_id = usbr-northcentralpow1971unit_0
+# text = Wyoming Attorney General's Office, Cheyenne, Wyoming
+# word = 8
+# lemma = wyoming
+# stratum = proper
+Wyoming	PROPN	unanimous
+Attorney	PROPN	unanimous
+General	PROPN	unanimous
+'s	PART	unanimous
+Office	PROPN	unanimous
+,	PUNCT	unanimous
+Cheyenne	PROPN	unanimous
+,	PUNCT	unanimous
+Wyoming	PROPN	unanimous
+
+# sent_id = headings-0168
+# source_id = phs-mentalhealthrepo00unit
+# text = Service Delivery for Mood Disorders
+# word = 4
+# lemma = disorder
+# stratum = noun
+Service	NOUN	unanimous
+Delivery	NOUN	unanimous
+for	ADP	unanimous
+Mood	NOUN	unanimous
+Disorders	NOUN	unanimous
+
+# sent_id = headings-0169
+# source_id = usbm-resourceguidedep00wagn
+# text = Product Generation Issues
+# word = 2
+# lemma = issue
+# stratum = noun
+Product	NOUN	unanimous
+Generation	NOUN	unanimous
+Issues	NOUN	unanimous
+
+# sent_id = headings-0170
+# source_id = usfs-CAT85256064016
+# text = New Program Dimensions
+# word = 2
+# lemma = dimension
+# stratum = noun
+New	ADJ	unanimous
+Program	NOUN	unanimous
+Dimensions	NOUN	unanimous
+
+# sent_id = headings-0171
+# source_id = usda-waterqualityindi161terr
+# text = Limitations of the Water Quality Indicators Guide
+# word = 6
+# lemma = guide
+# stratum = noun
+Limitations	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Water	NOUN	unanimous
+Quality	NOUN	unanimous
+Indicators	NOUN	unanimous
+Guide	NOUN	unanimous
+
+# sent_id = headings-0172
+# source_id = nbs-nbscommunication00unit
+# text = NBS-265 (Publications Follow-Up Record)
+# word = 4
+# lemma = record
+# stratum = noun
+NBS-265	PROPN	unanimous
+(	PUNCT	unanimous
+Publications	NOUN	unanimous
+Follow-Up	NOUN	unanimous
+Record	NOUN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0173
+# source_id = usda-CAT78703578
+# text = Avoid Hazards
+# word = 1
+# lemma = hazard
+# stratum = noun
+Avoid	VERB	unanimous
+Hazards	NOUN	unanimous
+
+# sent_id = headings-0174
+# source_id = phs-insidepublicheal00unit
+# text = Primary Care Capacity Building
+# word = 3
+# lemma = building
+# stratum = noun
+Primary	ADJ	unanimous
+Care	NOUN	unanimous
+Capacity	NOUN	unanimous
+Building	NOUN	unanimous
+
+# sent_id = headings-0175
+# source_id = usda-CAT71334647021
+# text = Use of Oil Film
+# word = 3
+# lemma = film
+# stratum = noun
+Use	NOUN	unanimous
+of	ADP	unanimous
+Oil	NOUN	unanimous
+Film	NOUN	unanimous
+
+# sent_id = headings-0176
+# source_id = navy-personnelaccount00unit
+# text = Arrangement of Unit Diaries for Processing
+# word = 5
+# lemma = processing
+# stratum = noun
+Arrangement	NOUN	unanimous
+of	ADP	unanimous
+Unit	NOUN	unanimous
+Diaries	NOUN	unanimous
+for	ADP	unanimous
+Processing	NOUN	unanimous
+
+# sent_id = headings-0177
+# source_id = other-westmojaveplanha1bunit
+# text = Conservation Biology Terms
+# word = 2
+# lemma = term
+# stratum = noun
+Conservation	NOUN	unanimous
+Biology	NOUN	unanimous
+Terms	NOUN	unanimous
+
+# sent_id = headings-0178
+# source_id = usgs-fieldtripguideto00four
+# text = Technical Books and Reports
+# word = 1
+# lemma = book
+# stratum = noun
+Technical	ADJ	unanimous
+Books	NOUN	unanimous
+and	CCONJ	unanimous
+Reports	NOUN	unanimous
+
+# sent_id = headings-0179
+# source_id = wxb-interimreportpro00unit
+# text = Comparison of Adopted Maximum Winds with Previous Estimate
+# word = 4
+# lemma = wind
+# stratum = noun
+Comparison	NOUN	unanimous
+of	ADP	unanimous
+Adopted	VERB	unanimous
+Maximum	ADJ	unanimous
+Winds	NOUN	unanimous
+with	ADP	unanimous
+Previous	ADJ	unanimous
+Estimate	NOUN	unanimous
+
+# sent_id = headings-0180
+# source_id = usfs-CAT10507884
+# text = A, Total Stand
+# word = 3
+# lemma = stand
+# stratum = noun
+A	X	unanimous
+,	PUNCT	unanimous
+Total	ADJ	unanimous
+Stand	NOUN	unanimous
+
+# sent_id = headings-0181
+# source_id = other-terrestrialwild00unse
+# text = Rodents and Lagomorphs (Rabbits)
+# word = 4
+# lemma = rabbit
+# stratum = noun
+Rodents	NOUN	unanimous
+and	CCONJ	unanimous
+Lagomorphs	NOUN	unanimous
+(	PUNCT	unanimous
+Rabbits	NOUN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0182
+# source_id = usfs-jobwithforestser843unit_0
+# text = Lassen College Ranger School, Susanville, California, 96130
+# word = 5
+# lemma = susanville
+# stratum = proper
+Lassen	PROPN	unanimous
+College	PROPN	unanimous
+Ranger	PROPN	unanimous
+School	PROPN	unanimous
+,	PUNCT	unanimous
+Susanville	PROPN	unanimous
+,	PUNCT	unanimous
+California	PROPN	unanimous
+,	PUNCT	unanimous
+96130	NUM	unanimous
+
+# sent_id = headings-0183
+# source_id = usfs-CAT10230847
+# text = Establishing Fire Defense Organization and Staffing
+# word = 5
+# lemma = staffing
+# stratum = noun
+Establishing	VERB	unanimous
+Fire	NOUN	unanimous
+Defense	NOUN	unanimous
+Organization	NOUN	unanimous
+and	CCONJ	unanimous
+Staffing	NOUN	unanimous
+
+# sent_id = headings-0184
+# source_id = usfs-influencesofvege397unit
+# text = Denudation by Smelter Fumes
+# word = 3
+# lemma = fume
+# stratum = noun
+Denudation	NOUN	unanimous
+by	ADP	unanimous
+Smelter	NOUN	unanimous
+Fumes	NOUN	unanimous
+
+# sent_id = headings-0185
+# source_id = navy-personnelaccount00unit
+# text = Electric Accounting Machine
+# word = 2
+# lemma = machine
+# stratum = noun
+Electric	ADJ	unanimous
+Accounting	NOUN	unanimous
+Machine	NOUN	unanimous
+
+# sent_id = headings-0186
+# source_id = usfs-influencesofvege397unit
+# text = Shoaling of Channels
+# word = 2
+# lemma = channel
+# stratum = noun
+Shoaling	NOUN	unanimous
+of	ADP	unanimous
+Channels	NOUN	unanimous
+
+# sent_id = headings-0187
+# source_id = usgs-bub_gb_a-gqAQAAIAAJ
+# text = Named in 1966 by the Alaska Geographic
+# word = 5
+# lemma = alaska
+# stratum = proper
+Named	VERB	unanimous
+in	ADP	unanimous
+1966	NUM	unanimous
+by	ADP	unanimous
+the	DET	unanimous
+Alaska	PROPN	unanimous
+Geographic	PROPN	unanimous
+
+# sent_id = headings-0188
+# source_id = usda-CAT71334647018
+# text = The Water Table
+# word = 2
+# lemma = table
+# stratum = noun
+The	DET	unanimous
+Water	NOUN	unanimous
+Table	NOUN	unanimous
+
+# sent_id = headings-0189
+# source_id = usfs-grazingfeereview5502unit
+# text = Donald Pearson, Office of Management and Budget
+# word = 1
+# lemma = pearson
+# stratum = proper
+Donald	PROPN	unanimous
+Pearson	PROPN	unanimous
+,	PUNCT	unanimous
+Office	PROPN	unanimous
+of	ADP	unanimous
+Management	PROPN	unanimous
+and	CCONJ	unanimous
+Budget	PROPN	unanimous
+
+# sent_id = headings-0190
+# source_id = usda-CAT71334647021
+# text = Preparation of Schedules
+# word = 2
+# lemma = schedule
+# stratum = noun
+Preparation	NOUN	unanimous
+of	ADP	unanimous
+Schedules	NOUN	unanimous
+
+# sent_id = headings-0191
+# source_id = usbr-northcentralpow1971unit_0
+# text = Unit Size and Number Determination
+# word = 1
+# lemma = size
+# stratum = noun
+Unit	NOUN	unanimous
+Size	NOUN	unanimous
+and	CCONJ	unanimous
+Number	NOUN	unanimous
+Determination	NOUN	unanimous
+
+# sent_id = headings-0192
+# source_id = usbr-cookmountainstud00calc
+# text = Seismic Hazard
+# word = 1
+# lemma = hazard
+# stratum = noun
+Seismic	ADJ	unanimous
+Hazard	NOUN	unanimous
+
+# sent_id = headings-0193
+# source_id = usbr-northcentralpow1971unit_0
+# text = Pacific Northwest Loads
+# word = 2
+# lemma = load
+# stratum = noun
+Pacific	PROPN	unanimous
+Northwest	PROPN	unanimous
+Loads	NOUN	unanimous
+
+# sent_id = headings-0194
+# source_id = usfs-CAT10684902
+# text = Through a Memorandum of Understanding with the Kentucky Natural Resources
+# word = 7
+# lemma = kentucky
+# stratum = proper
+Through	ADP	unanimous
+a	DET	unanimous
+Memorandum	NOUN	unanimous
+of	ADP	unanimous
+Understanding	NOUN	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+Kentucky	PROPN	unanimous
+Natural	PROPN	unanimous
+Resources	PROPN	unanimous
+
+# sent_id = headings-0195
+# source_id = usda-CAT71334647018
+# text = Major Features
+# word = 1
+# lemma = feature
+# stratum = noun
+Major	ADJ	unanimous
+Features	NOUN	unanimous
+
+# sent_id = headings-0196
+# source_id = usda-acquisitionuseof05leea
+# text = Usual Method of Purchase
+# word = 3
+# lemma = purchase
+# stratum = noun
+Usual	ADJ	unanimous
+Method	NOUN	unanimous
+of	ADP	unanimous
+Purchase	NOUN	unanimous
+
+# sent_id = headings-0197
+# source_id = usda-waterqualityindi161terr
+# text = Audience and Purpose of This Guide
+# word = 2
+# lemma = purpose
+# stratum = noun
+Audience	NOUN	unanimous
+and	CCONJ	unanimous
+Purpose	NOUN	unanimous
+of	ADP	unanimous
+This	DET	unanimous
+Guide	NOUN	unanimous
+
+# sent_id = headings-0198
+# source_id = usbm-resourceguidedep00wagn
+# text = Shawn Norton, Program Manager
+# word = 1
+# lemma = norton
+# stratum = proper
+Shawn	PROPN	unanimous
+Norton	PROPN	unanimous
+,	PUNCT	unanimous
+Program	NOUN	unanimous
+Manager	NOUN	unanimous
+
+# sent_id = headings-0199
+# source_id = usda-acquisitionuseof05leea
+# text = Public Land Orders
+# word = 2
+# lemma = order
+# stratum = noun
+Public	ADJ	unanimous
+Land	NOUN	unanimous
+Orders	NOUN	unanimous
+
+# sent_id = headings-0200
+# source_id = usgs-bub_gb_a-gqAQAAIAAJ
+# text = Named by Canada in 1951 for John
+# word = 2
+# lemma = canada
+# stratum = proper
+Named	VERB	unanimous
+by	ADP	unanimous
+Canada	PROPN	unanimous
+in	ADP	unanimous
+1951	NUM	unanimous
+for	ADP	unanimous
+John	PROPN	unanimous
+
+# sent_id = headings-0201
+# source_id = usda-CAT31287564
+# text = Relation of Drawdown to Yield
+# word = 4
+# lemma = yield
+# stratum = noun
+Relation	NOUN	unanimous
+of	ADP	unanimous
+Drawdown	NOUN	unanimous
+to	ADP	unanimous
+Yield	NOUN	unanimous
+
+# sent_id = headings-0202
+# source_id = usfs-influencesofvege397unit
+# text = Absorption by Plant Litter
+# word = 3
+# lemma = litter
+# stratum = noun
+Absorption	NOUN	unanimous
+by	ADP	unanimous
+Plant	NOUN	unanimous
+Litter	NOUN	unanimous
+
+# sent_id = headings-0203
+# source_id = usfs-CAT31285103
+# text = Organization of the Report
+# word = 3
+# lemma = report
+# stratum = noun
+Organization	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Report	NOUN	unanimous
+
+# sent_id = headings-0204
+# source_id = usbr-reclamationsafet1963engi
+# text = Past Is Prologue
+# word = 2
+# lemma = prologue
+# stratum = noun
+Past	NOUN	unanimous
+Is	VERB	unanimous
+Prologue	NOUN	unanimous
+
+# sent_id = headings-0205
+# source_id = usda-CAT86866954
+# text = Percussion or Churn Drilling
+# word = 3
+# lemma = drilling
+# stratum = noun
+Percussion	NOUN	unanimous
+or	CCONJ	unanimous
+Churn	NOUN	unanimous
+Drilling	NOUN	unanimous
+
+# sent_id = headings-0206
+# source_id = army-MarsBulletin195303
+# text = Adjustment Hints
+# word = 1
+# lemma = hint
+# stratum = noun
+Adjustment	NOUN	unanimous
+Hints	NOUN	unanimous
+
+# sent_id = headings-0207
+# source_id = army-1946-03IntelligenceBulletin
+# text = Japan's Ground Strategy From Pearl Harbor to Defeat
+# word = 8
+# lemma = defeat
+# stratum = noun
+Japan	PROPN	unanimous
+'s	PART	unanimous
+Ground	NOUN	unanimous
+Strategy	NOUN	unanimous
+From	ADP	unanimous
+Pearl	PROPN	unanimous
+Harbor	PROPN	unanimous
+to	ADP	unanimous
+Defeat	NOUN	unanimous
+
+# sent_id = headings-0208
+# source_id = usbm-bureauofminescos00unit
+# text = Mining System Design
+# word = 2
+# lemma = design
+# stratum = noun
+Mining	NOUN	unanimous
+System	NOUN	unanimous
+Design	NOUN	unanimous
+
+# sent_id = headings-0209
+# source_id = usfs-CAT31041219
+# text = Purchased Seed or Nursery Stock
+# word = 1
+# lemma = seed
+# stratum = noun
+Purchased	VERB	unanimous
+Seed	NOUN	unanimous
+or	CCONJ	unanimous
+Nursery	NOUN	unanimous
+Stock	NOUN	unanimous
+
+# sent_id = headings-0210
+# source_id = usbr-lowercrookedrive00unit
+# text = Alternative Themes
+# word = 1
+# lemma = theme
+# stratum = noun
+Alternative	ADJ	unanimous
+Themes	NOUN	unanimous
+
+# sent_id = headings-0211
+# source_id = usbr-CAT30964660
+# text = Farm Credit and Financing
+# word = 1
+# lemma = credit
+# stratum = noun
+Farm	NOUN	unanimous
+Credit	NOUN	unanimous
+and	CCONJ	unanimous
+Financing	NOUN	unanimous
+
+# sent_id = headings-0212
+# source_id = usda-CAT78703578
+# text = Changes in Pitch of the Roof
+# word = 2
+# lemma = pitch
+# stratum = noun
+Changes	NOUN	unanimous
+in	ADP	unanimous
+Pitch	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Roof	NOUN	unanimous
+
+# sent_id = headings-0213
+# source_id = usbr-cookmountainstud00calc
+# text = Overlying Shale D
+# word = 0
+# lemma = overlying
+# stratum = imperative
+Overlying	VERB	unanimous
+Shale	NOUN	unanimous
+D	X	unanimous
+
+# sent_id = headings-0214
+# source_id = usfs-CAT31285103
+# text = Land Management Planning
+# word = 2
+# lemma = planning
+# stratum = noun
+Land	NOUN	unanimous
+Management	NOUN	unanimous
+Planning	NOUN	unanimous
+
+# sent_id = headings-0215
+# source_id = usda-CAT31287564
+# text = Developing with Dry Ice
+# word = 3
+# lemma = ice
+# stratum = noun
+Developing	VERB	unanimous
+with	ADP	unanimous
+Dry	ADJ	unanimous
+Ice	NOUN	unanimous
+
+# sent_id = headings-0216
+# source_id = usda-CAT71334647018
+# text = Development of Springs
+# word = 2
+# lemma = spring
+# stratum = noun
+Development	NOUN	unanimous
+of	ADP	unanimous
+Springs	NOUN	unanimous
+
+# sent_id = headings-0217
+# source_id = other-terrestrialwild00unse
+# text = Bleating or Winnowing Counts
+# word = 3
+# lemma = count
+# stratum = noun
+Bleating	NOUN	unanimous
+or	CCONJ	unanimous
+Winnowing	NOUN	unanimous
+Counts	NOUN	unanimous
+
+# sent_id = headings-0218
+# source_id = usfs-grazingfeereview5502unit
+# text = Potential Impacts on Local Income and Employment
+# word = 1
+# lemma = impact
+# stratum = noun
+Potential	ADJ	unanimous
+Impacts	NOUN	unanimous
+on	ADP	unanimous
+Local	ADJ	unanimous
+Income	NOUN	unanimous
+and	CCONJ	unanimous
+Employment	NOUN	unanimous
+
+# sent_id = headings-0219
+# source_id = army-CAT88904993
+# text = For the Johns Creek Structures
+# word = 4
+# lemma = structure
+# stratum = noun
+For	ADP	unanimous
+the	DET	unanimous
+Johns	PROPN	unanimous
+Creek	PROPN	unanimous
+Structures	NOUN	unanimous
+
+# sent_id = headings-0220
+# source_id = usgs-bub_gb_a-gqAQAAIAAJ
+# text = Named in 1924 for David Thompson
+# word = 4
+# lemma = david
+# stratum = proper
+Named	VERB	unanimous
+in	ADP	unanimous
+1924	NUM	unanimous
+for	ADP	unanimous
+David	PROPN	unanimous
+Thompson	PROPN	unanimous
+
+# sent_id = headings-0221
+# source_id = usda-CAT91954835
+# text = For Breakpoint Rainfall Model (Option 2)
+# word = 3
+# lemma = model
+# stratum = noun
+For	ADP	unanimous
+Breakpoint	NOUN	unanimous
+Rainfall	NOUN	unanimous
+Model	NOUN	unanimous
+(	PUNCT	unanimous
+Option	NOUN	unanimous
+2	NUM	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0222
+# source_id = usda-waterqualityindi161terr
+# text = A Word of Thanks
+# word = 1
+# lemma = word
+# stratum = noun
+A	DET	unanimous
+Word	NOUN	unanimous
+of	ADP	unanimous
+Thanks	NOUN	unanimous
+
+# sent_id = headings-0223
+# source_id = usda-CAT86866954
+# text = Clean-Out Tools
+# word = 1
+# lemma = tool
+# stratum = noun
+Clean-Out	NOUN	unanimous
+Tools	NOUN	unanimous
+
+# sent_id = headings-0224
+# source_id = usda-lebulletin71unit
+# text = Agricultural Labor
+# word = 1
+# lemma = labor
+# stratum = noun
+Agricultural	ADJ	unanimous
+Labor	NOUN	unanimous
+
+# sent_id = headings-0225
+# source_id = usfs-CAT10230847
+# text = Extraordinary Measures
+# word = 1
+# lemma = measure
+# stratum = noun
+Extraordinary	ADJ	unanimous
+Measures	NOUN	unanimous
+
+# sent_id = headings-0226
+# source_id = phs-organizationstaf00unit_9
+# text = Population Size of Areas Served
+# word = 1
+# lemma = size
+# stratum = noun
+Population	NOUN	unanimous
+Size	NOUN	unanimous
+of	ADP	unanimous
+Areas	NOUN	unanimous
+Served	VERB	unanimous
+
+# sent_id = headings-0227
+# source_id = usbm-resourceguidedep00wagn
+# text = Construction Management Branch
+# word = 2
+# lemma = branch
+# stratum = noun
+Construction	NOUN	unanimous
+Management	NOUN	unanimous
+Branch	NOUN	unanimous
+
+# sent_id = headings-0228
+# source_id = usda-CAT91954835
+# text = Preparation of Input Data Files
+# word = 4
+# lemma = file
+# stratum = noun
+Preparation	NOUN	unanimous
+of	ADP	unanimous
+Input	NOUN	unanimous
+Data	NOUN	unanimous
+Files	NOUN	unanimous
+
+# sent_id = headings-0229
+# source_id = usfs-grazingfeereview5502unit
+# text = Calculated Grazing Fees by Animal Class and Pricing Areas
+# word = 2
+# lemma = fee
+# stratum = noun
+Calculated	VERB	unanimous
+Grazing	NOUN	unanimous
+Fees	NOUN	unanimous
+by	ADP	unanimous
+Animal	NOUN	unanimous
+Class	NOUN	unanimous
+and	CCONJ	unanimous
+Pricing	NOUN	unanimous
+Areas	NOUN	unanimous
+
+# sent_id = headings-0230
+# source_id = other-study-rpt-2005
+# text = Interpretation, Education, and Visitor Experience
+# word = 6
+# lemma = experience
+# stratum = noun
+Interpretation	NOUN	unanimous
+,	PUNCT	unanimous
+Education	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Visitor	NOUN	unanimous
+Experience	NOUN	unanimous
+
+# sent_id = headings-0231
+# source_id = army-LogisticsInWorldWarII
+# text = Statistical Reporting
+# word = 1
+# lemma = reporting
+# stratum = noun
+Statistical	ADJ	unanimous
+Reporting	NOUN	unanimous
+
+# sent_id = headings-0232
+# source_id = usfs-CAT10504248
+# text = Educational Functions
+# word = 1
+# lemma = function
+# stratum = noun
+Educational	ADJ	unanimous
+Functions	NOUN	unanimous
+
+# sent_id = headings-0233
+# source_id = other-wildlifewatercat00brig
+# text = A Note About the Authors
+# word = 1
+# lemma = note
+# stratum = noun
+A	DET	unanimous
+Note	NOUN	unanimous
+About	ADP	unanimous
+the	DET	unanimous
+Authors	NOUN	unanimous
+
+# sent_id = headings-0234
+# source_id = usbm-reportofinvestig3302unit
+# text = Assembly and Servicing
+# word = 2
+# lemma = servicing
+# stratum = noun
+Assembly	NOUN	unanimous
+and	CCONJ	unanimous
+Servicing	NOUN	unanimous
+
+# sent_id = headings-0235
+# source_id = phs-federalstateradi00unit
+# text = Evaluation of the Toshiba Capacitor Discharge Mobile X-ray Machine
+# word = 8
+# lemma = machine
+# stratum = noun
+Evaluation	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Toshiba	PROPN	unanimous
+Capacitor	NOUN	unanimous
+Discharge	NOUN	unanimous
+Mobile	ADJ	unanimous
+X-ray	NOUN	unanimous
+Machine	NOUN	unanimous
+
+# sent_id = headings-0236
+# source_id = army-LogisticsInWorldWarII
+# text = Crude Oil
+# word = 1
+# lemma = oil
+# stratum = noun
+Crude	ADJ	unanimous
+Oil	NOUN	unanimous
+
+# sent_id = headings-0237
+# source_id = usbr-lowercrookedrive00unit
+# text = The Omnibus Oregon Wild and Scenic Rivers
+# word = 2
+# lemma = oregon
+# stratum = proper
+The	DET	unanimous
+Omnibus	PROPN	unanimous
+Oregon	PROPN	unanimous
+Wild	PROPN	unanimous
+and	CCONJ	unanimous
+Scenic	PROPN	unanimous
+Rivers	PROPN	unanimous
+
+# sent_id = headings-0238
+# source_id = other-wildlifewatercat00brig
+# text = General Comments
+# word = 1
+# lemma = comment
+# stratum = noun
+General	ADJ	unanimous
+Comments	NOUN	unanimous
+
+# sent_id = headings-0239
+# source_id = nbs-nbscommunication00unit
+# text = Two-Column and Single-Column Copy
+# word = 3
+# lemma = copy
+# stratum = noun
+Two-Column	ADJ	unanimous
+and	CCONJ	unanimous
+Single-Column	ADJ	unanimous
+Copy	NOUN	unanimous
+
+# sent_id = headings-0240
+# source_id = usbr-lowercrookedrive00unit
+# text = Scenic Values
+# word = 1
+# lemma = value
+# stratum = noun
+Scenic	ADJ	unanimous
+Values	NOUN	unanimous
+
+# sent_id = headings-0241
+# source_id = usfs-CAT10507884
+# text = Tentative Hemlock Tree Grades
+# word = 3
+# lemma = grade
+# stratum = noun
+Tentative	ADJ	unanimous
+Hemlock	NOUN	unanimous
+Tree	NOUN	unanimous
+Grades	NOUN	unanimous
+
+# sent_id = headings-0242
+# source_id = phs-organizationstaf00unit_9
+# text = Personnel Ratios According to Population Size of Health Jurisdictions
+# word = 5
+# lemma = size
+# stratum = noun
+Personnel	NOUN	unanimous
+Ratios	NOUN	unanimous
+According	ADP	unanimous
+to	ADP	unanimous
+Population	NOUN	unanimous
+Size	NOUN	unanimous
+of	ADP	unanimous
+Health	NOUN	unanimous
+Jurisdictions	NOUN	unanimous
+
+# sent_id = headings-0243
+# source_id = usda-CAT71342230
+# text = Land Treatment Measures
+# word = 2
+# lemma = measure
+# stratum = noun
+Land	NOUN	unanimous
+Treatment	NOUN	unanimous
+Measures	NOUN	unanimous
+
+# sent_id = headings-0244
+# source_id = usbr-pumpkincreek1400west
+# text = Soil Inventory
+# word = 1
+# lemma = inventory
+# stratum = noun
+Soil	NOUN	unanimous
+Inventory	NOUN	unanimous
+
+# sent_id = headings-0245
+# source_id = other-wildlifewatercat00brig
+# text = Setting the Tanks
+# word = 2
+# lemma = tank
+# stratum = noun
+Setting	VERB	unanimous
+the	DET	unanimous
+Tanks	NOUN	unanimous
+
+# sent_id = headings-0246
+# source_id = usfs-grazingfeereview5502unit
+# text = Technical Figures
+# word = 1
+# lemma = figure
+# stratum = noun
+Technical	ADJ	unanimous
+Figures	NOUN	unanimous
+
+# sent_id = headings-0247
+# source_id = usbm-resourceguidedep00wagn
+# text = Ecology Branch
+# word = 1
+# lemma = branch
+# stratum = noun
+Ecology	NOUN	unanimous
+Branch	NOUN	unanimous
+
+# sent_id = headings-0248
+# source_id = usda-manualforartific00unit
+# text = Holding Hooks
+# word = 1
+# lemma = hook
+# stratum = noun
+Holding	NOUN	unanimous
+Hooks	NOUN	unanimous
+
+# sent_id = headings-0249
+# source_id = usda-CAT78703578
+# text = Replacing Glass in Metal Frames
+# word = 1
+# lemma = glass
+# stratum = noun
+Replacing	VERB	unanimous
+Glass	NOUN	unanimous
+in	ADP	unanimous
+Metal	NOUN	unanimous
+Frames	NOUN	unanimous
+
+# sent_id = headings-0250
+# source_id = usfs-CAT85256064019
+# text = Land Exchange and Adjustment
+# word = 1
+# lemma = exchange
+# stratum = noun
+Land	NOUN	unanimous
+Exchange	NOUN	unanimous
+and	CCONJ	unanimous
+Adjustment	NOUN	unanimous
+
+# sent_id = headings-0251
+# source_id = usbm-bureauofminescos00unit
+# text = Detailed Three-Dimensional Sampling and Preliminary Evaluation
+# word = 2
+# lemma = sampling
+# stratum = noun
+Detailed	ADJ	unanimous
+Three-Dimensional	ADJ	unanimous
+Sampling	NOUN	unanimous
+and	CCONJ	unanimous
+Preliminary	ADJ	unanimous
+Evaluation	NOUN	unanimous
+
+# sent_id = headings-0252
+# source_id = usfs-CAT85256064019
+# text = Assist the American Forestry Association with the Seventh American Forest
+# word = 0
+# lemma = assist
+# stratum = imperative
+Assist	VERB	unanimous
+the	DET	unanimous
+American	PROPN	unanimous
+Forestry	PROPN	unanimous
+Association	PROPN	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+Seventh	PROPN	unanimous
+American	PROPN	unanimous
+Forest	PROPN	unanimous
+
+# sent_id = headings-0253
+# source_id = usfs-influencesofvege397unit
+# text = Studies in North Carolina by the Appalachian Forest Experiment
+# word = 3
+# lemma = carolina
+# stratum = proper
+Studies	NOUN	unanimous
+in	ADP	unanimous
+North	PROPN	unanimous
+Carolina	PROPN	unanimous
+by	ADP	unanimous
+the	DET	unanimous
+Appalachian	PROPN	unanimous
+Forest	PROPN	unanimous
+Experiment	PROPN	unanimous
+
+# sent_id = headings-0254
+# source_id = usfs-CAT10230847
+# text = Silver Spring, Maryland
+# word = 3
+# lemma = maryland
+# stratum = proper
+Silver	PROPN	unanimous
+Spring	PROPN	unanimous
+,	PUNCT	unanimous
+Maryland	PROPN	unanimous
+
+# sent_id = headings-0255
+# source_id = usfs-CAT10230847
+# text = Bond, Horatio (Editor)
+# word = 2
+# lemma = horatio
+# stratum = proper
+Bond	PROPN	unanimous
+,	PUNCT	unanimous
+Horatio	PROPN	unanimous
+(	PUNCT	unanimous
+Editor	NOUN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0256
+# source_id = usfs-CAT10504248
+# text = Student Factors
+# word = 1
+# lemma = factor
+# stratum = noun
+Student	NOUN	unanimous
+Factors	NOUN	unanimous
+
+# sent_id = headings-0257
+# source_id = usfs-grazingfeereview5502unit
+# text = Comparison of Alternative Weightings of the Private Grazing
+# word = 7
+# lemma = grazing
+# stratum = noun
+Comparison	NOUN	unanimous
+of	ADP	unanimous
+Alternative	ADJ	unanimous
+Weightings	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Private	ADJ	unanimous
+Grazing	NOUN	unanimous
+
+# sent_id = headings-0258
+# source_id = usfs-CAT10684902
+# text = Morgan Jones, Kentucky Wild Rivers Program Coordinator
+# word = 1
+# lemma = jones
+# stratum = proper
+Morgan	PROPN	unanimous
+Jones	PROPN	unanimous
+,	PUNCT	unanimous
+Kentucky	PROPN	unanimous
+Wild	PROPN	unanimous
+Rivers	PROPN	unanimous
+Program	PROPN	unanimous
+Coordinator	NOUN	unanimous
+
+# sent_id = headings-0259
+# source_id = usfs-grazingfeereview5502unit
+# text = Changes in Returns Above All Costs for an Average Livestock
+# word = 2
+# lemma = return
+# stratum = noun
+Changes	NOUN	unanimous
+in	ADP	unanimous
+Returns	NOUN	unanimous
+Above	ADP	unanimous
+All	DET	unanimous
+Costs	NOUN	unanimous
+for	ADP	unanimous
+an	DET	unanimous
+Average	ADJ	unanimous
+Livestock	NOUN	unanimous
+
+# sent_id = headings-0260
+# source_id = other-study-rpt-2005
+# text = Library of Congress - Historic Architectural Building
+# word = 6
+# lemma = building
+# stratum = noun
+Library	PROPN	unanimous
+of	ADP	unanimous
+Congress	PROPN	unanimous
+-	PUNCT	unanimous
+Historic	ADJ	unanimous
+Architectural	ADJ	unanimous
+Building	NOUN	unanimous
+
+# sent_id = headings-0261
+# source_id = phs-childhealthconfe00unit
+# text = The Public-Health Nurse
+# word = 2
+# lemma = nurse
+# stratum = noun
+The	DET	unanimous
+Public-Health	ADJ	unanimous
+Nurse	NOUN	unanimous
+
+# sent_id = headings-0262
+# source_id = usfs-CAT85256064019
+# text = Fire Attack
+# word = 1
+# lemma = attack
+# stratum = noun
+Fire	NOUN	unanimous
+Attack	NOUN	unanimous
+
+# sent_id = headings-0263
+# source_id = phs-civildefenseemer00unit
+# text = Site or Storage Facility Changes
+# word = 4
+# lemma = change
+# stratum = noun
+Site	NOUN	unanimous
+or	CCONJ	unanimous
+Storage	NOUN	unanimous
+Facility	NOUN	unanimous
+Changes	NOUN	unanimous
+
+# sent_id = headings-0264
+# source_id = usfs-CAT10504248
+# text = Technical Laboratory of Woods Waste
+# word = 4
+# lemma = waste
+# stratum = noun
+Technical	ADJ	unanimous
+Laboratory	NOUN	unanimous
+of	ADP	unanimous
+Woods	NOUN	unanimous
+Waste	NOUN	unanimous
+
+# sent_id = headings-0265
+# source_id = usbr-pumpkincreek1400west
+# text = Forms of Sulfur, and Ash-Fusion Temperatures
+# word = 2
+# lemma = sulfur
+# stratum = noun
+Forms	NOUN	unanimous
+of	ADP	unanimous
+Sulfur	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Ash-Fusion	NOUN	unanimous
+Temperatures	NOUN	unanimous
+
+# sent_id = headings-0266
+# source_id = usfs-CAT10684902
+# text = Significant Issues
+# word = 1
+# lemma = issue
+# stratum = noun
+Significant	ADJ	unanimous
+Issues	NOUN	unanimous
+
+# sent_id = headings-0267
+# source_id = usfs-firecontrolnotes17unit
+# text = Damage to Individual Trees
+# word = 3
+# lemma = tree
+# stratum = noun
+Damage	NOUN	unanimous
+to	ADP	unanimous
+Individual	ADJ	unanimous
+Trees	NOUN	unanimous
+
+# sent_id = headings-0268
+# source_id = usda-CAT86866954
+# text = Chopping, Fishtail, and Jetting Bits
+# word = 2
+# lemma = fishtail
+# stratum = noun
+Chopping	NOUN	unanimous
+,	PUNCT	unanimous
+Fishtail	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Jetting	NOUN	unanimous
+Bits	NOUN	unanimous
+
+# sent_id = headings-0269
+# source_id = army-DAPAM20-3
+# text = Army Radio Broadcasting
+# word = 2
+# lemma = broadcasting
+# stratum = noun
+Army	NOUN	unanimous
+Radio	NOUN	unanimous
+Broadcasting	NOUN	unanimous
+
+# sent_id = headings-0270
+# source_id = usfs-CAT85256064019
+# text = Land Classification, Status and Planning
+# word = 5
+# lemma = planning
+# stratum = noun
+Land	NOUN	unanimous
+Classification	NOUN	unanimous
+,	PUNCT	unanimous
+Status	NOUN	unanimous
+and	CCONJ	unanimous
+Planning	NOUN	unanimous
+
+# sent_id = headings-0271
+# source_id = usbm-reportofinvestig3302unit
+# text = Explosive Shattering
+# word = 1
+# lemma = shattering
+# stratum = noun
+Explosive	ADJ	unanimous
+Shattering	NOUN	unanimous
+
+# sent_id = headings-0272
+# source_id = usgs-fieldtripguideto00four
+# text = Obsidian Hydration Dating and Correlation of Bull Lake
+# word = 2
+# lemma = dating
+# stratum = noun
+Obsidian	NOUN	unanimous
+Hydration	NOUN	unanimous
+Dating	NOUN	unanimous
+and	CCONJ	unanimous
+Correlation	NOUN	unanimous
+of	ADP	unanimous
+Bull	PROPN	unanimous
+Lake	PROPN	unanimous
+
+# sent_id = headings-0273
+# source_id = usgs-bub_gb_a-gqAQAAIAAJ
+# text = Saint Nicholas Point
+# word = 1
+# lemma = nicholas
+# stratum = proper
+Saint	PROPN	unanimous
+Nicholas	PROPN	unanimous
+Point	PROPN	unanimous
+
+# sent_id = headings-0274
+# source_id = navy-personnelaccount00unit
+# text = Report or Process Title
+# word = 3
+# lemma = title
+# stratum = noun
+Report	NOUN	unanimous
+or	CCONJ	unanimous
+Process	NOUN	unanimous
+Title	NOUN	unanimous
+
+# sent_id = headings-0275
+# source_id = usda-CAT71334647021
+# text = Factors Affecting Scheduling
+# word = 2
+# lemma = scheduling
+# stratum = noun
+Factors	NOUN	unanimous
+Affecting	VERB	unanimous
+Scheduling	NOUN	unanimous
+
+# sent_id = headings-0276
+# source_id = navy-effectsofnoiseof00gale
+# text = Electrophysiological Tests
+# word = 1
+# lemma = test
+# stratum = noun
+Electrophysiological	ADJ	unanimous
+Tests	NOUN	unanimous
+
+# sent_id = headings-0277
+# source_id = usda-CAT71342230
+# text = Secondary Benefits
+# word = 1
+# lemma = benefit
+# stratum = noun
+Secondary	ADJ	unanimous
+Benefits	NOUN	unanimous
+
+# sent_id = headings-0278
+# source_id = phs-childhealthconfe00unit
+# text = Frances Perkins, Secretary
+# word = 1
+# lemma = perkins
+# stratum = proper
+Frances	PROPN	unanimous
+Perkins	PROPN	unanimous
+,	PUNCT	unanimous
+Secretary	NOUN	unanimous
+
+# sent_id = headings-0279
+# source_id = usda-CAT31288057
+# text = Service Tests Using the Osmose Process
+# word = 5
+# lemma = process
+# stratum = noun
+Service	NOUN	unanimous
+Tests	NOUN	unanimous
+Using	VERB	unanimous
+the	DET	unanimous
+Osmose	PROPN	unanimous
+Process	NOUN	unanimous
+
+# sent_id = headings-0280
+# source_id = usda-acquisitionuseof05leea
+# text = Loss of Tax Base by Local Governmental Units
+# word = 3
+# lemma = base
+# stratum = noun
+Loss	NOUN	unanimous
+of	ADP	unanimous
+Tax	NOUN	unanimous
+Base	NOUN	unanimous
+by	ADP	unanimous
+Local	ADJ	unanimous
+Governmental	ADJ	unanimous
+Units	NOUN	unanimous
+
+# sent_id = headings-0281
+# source_id = nbs-radioinformation01unit
+# text = Wisconsin Department of Markets Madison, Wise
+# word = 4
+# lemma = madison
+# stratum = proper
+Wisconsin	PROPN	unanimous
+Department	PROPN	unanimous
+of	ADP	unanimous
+Markets	PROPN	unanimous
+Madison	PROPN	unanimous
+,	PUNCT	unanimous
+Wise	PROPN	unanimous
+
+# sent_id = headings-0282
+# source_id = usda-CAT87892076
+# text = Structural Measures
+# word = 1
+# lemma = measure
+# stratum = noun
+Structural	ADJ	unanimous
+Measures	NOUN	unanimous
+
+# sent_id = headings-0283
+# source_id = phs-healthmaterielfa00unit
+# text = Example of a State Plan for Emergency Management of Resources
+# word = 4
+# lemma = plan
+# stratum = noun
+Example	NOUN	unanimous
+of	ADP	unanimous
+a	DET	unanimous
+State	NOUN	unanimous
+Plan	NOUN	unanimous
+for	ADP	unanimous
+Emergency	NOUN	unanimous
+Management	NOUN	unanimous
+of	ADP	unanimous
+Resources	NOUN	unanimous
+
+# sent_id = headings-0284
+# source_id = usda-manualforartific00unit
+# text = Preparing the Queen
+# word = 2
+# lemma = queen
+# stratum = noun
+Preparing	VERB	unanimous
+the	DET	unanimous
+Queen	NOUN	unanimous
+
+# sent_id = headings-0285
+# source_id = usfs-CAT31285103
+# text = Evaluation of Monitoring Results
+# word = 3
+# lemma = result
+# stratum = noun
+Evaluation	NOUN	unanimous
+of	ADP	unanimous
+Monitoring	NOUN	unanimous
+Results	NOUN	unanimous
+
+# sent_id = headings-0286
+# source_id = usbr-garrisonstudyare00pari
+# text = Stability of Excavation Slopes
+# word = 3
+# lemma = slop
+# stratum = noun
+Stability	NOUN	unanimous
+of	ADP	unanimous
+Excavation	NOUN	unanimous
+Slopes	NOUN	unanimous
+
+# sent_id = headings-0287
+# source_id = usda-CAT86866954
+# text = Trenching and Test Pitting
+# word = 3
+# lemma = pitting
+# stratum = noun
+Trenching	NOUN	unanimous
+and	CCONJ	unanimous
+Test	NOUN	unanimous
+Pitting	NOUN	unanimous
+
+# sent_id = headings-0288
+# source_id = usda-CAT71334647002
+# text = Volume Weight
+# word = 1
+# lemma = weight
+# stratum = noun
+Volume	NOUN	unanimous
+Weight	NOUN	unanimous
+
+# sent_id = headings-0289
+# source_id = usfs-CAT31285103
+# text = Karst and Caves
+# word = 2
+# lemma = cave
+# stratum = noun
+Karst	NOUN	unanimous
+and	CCONJ	unanimous
+Caves	NOUN	unanimous
+
+# sent_id = headings-0290
+# source_id = usda-CAT86866954
+# text = Field Tests
+# word = 1
+# lemma = test
+# stratum = noun
+Field	NOUN	unanimous
+Tests	NOUN	unanimous
+
+# sent_id = headings-0291
+# source_id = usgs-bub_gb_a-gqAQAAIAAJ
+# text = Named in 1907 for Frank Bartlett, Alaska
+# word = 7
+# lemma = alaska
+# stratum = proper
+Named	VERB	unanimous
+in	ADP	unanimous
+1907	NUM	unanimous
+for	ADP	unanimous
+Frank	PROPN	unanimous
+Bartlett	PROPN	unanimous
+,	PUNCT	unanimous
+Alaska	PROPN	unanimous
+
+# sent_id = headings-0292
+# source_id = army-MarsBulletin195303
+# text = Parts List
+# word = 1
+# lemma = list
+# stratum = noun
+Parts	NOUN	unanimous
+List	NOUN	unanimous
+
+# sent_id = headings-0293
+# source_id = usda-CAT31352946
+# text = Extension of Storage-in-Transit Time Limit
+# word = 4
+# lemma = limit
+# stratum = noun
+Extension	NOUN	unanimous
+of	ADP	unanimous
+Storage-in-Transit	NOUN	unanimous
+Time	NOUN	unanimous
+Limit	NOUN	unanimous
+
+# sent_id = headings-0294
+# source_id = usda-acquisitionuseof05leea
+# text = Determination of Real Estate Prices and Equities
+# word = 4
+# lemma = price
+# stratum = noun
+Determination	NOUN	unanimous
+of	ADP	unanimous
+Real	ADJ	unanimous
+Estate	NOUN	unanimous
+Prices	NOUN	unanimous
+and	CCONJ	unanimous
+Equities	NOUN	unanimous
+
+# sent_id = headings-0295
+# source_id = usda-CAT78703578
+# text = Get Ready to Paint
+# word = 0
+# lemma = get
+# stratum = imperative
+Get	VERB	unanimous
+Ready	ADJ	unanimous
+to	PART	unanimous
+Paint	VERB	unanimous
+
+# sent_id = headings-0296
+# source_id = usda-lebulletin71unit
+# text = Montana - Yellowstone River Compact, Ratifies the Yellowstone River
+# word = 2
+# lemma = yellowstone
+# stratum = proper
+Montana	PROPN	unanimous
+-	PUNCT	unanimous
+Yellowstone	PROPN	unanimous
+River	PROPN	unanimous
+Compact	PROPN	unanimous
+,	PUNCT	unanimous
+Ratifies	VERB	unanimous
+the	DET	unanimous
+Yellowstone	PROPN	unanimous
+River	PROPN	unanimous
+
+# sent_id = headings-0297
+# source_id = usbr-lowercrookedrive00unit
+# text = Agency Associates, Staff, and Volunteers
+# word = 1
+# lemma = associate
+# stratum = noun
+Agency	NOUN	unanimous
+Associates	NOUN	unanimous
+,	PUNCT	unanimous
+Staff	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Volunteers	NOUN	unanimous
+
+# sent_id = headings-0298
+# source_id = usda-CAT91954835
+# text = Flow in the Unsaturated Zone - Smith
+# word = 4
+# lemma = zone
+# stratum = noun
+Flow	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+Unsaturated	ADJ	unanimous
+Zone	NOUN	unanimous
+-	PUNCT	unanimous
+Smith	PROPN	unanimous
+
+# sent_id = headings-0299
+# source_id = usda-manualforartific00unit
+# text = Cleaning the Syringe
+# word = 2
+# lemma = syringe
+# stratum = noun
+Cleaning	VERB	unanimous
+the	DET	unanimous
+Syringe	NOUN	unanimous
+
+# sent_id = headings-0300
+# source_id = usda-SER73922925001
+# text = Kickapoo Nations Watershed (Lincoln and Oklahoma Counties)
+# word = 6
+# lemma = oklahoma
+# stratum = proper
+Kickapoo	PROPN	unanimous
+Nations	PROPN	unanimous
+Watershed	PROPN	unanimous
+(	PUNCT	unanimous
+Lincoln	PROPN	unanimous
+and	CCONJ	unanimous
+Oklahoma	PROPN	unanimous
+Counties	PROPN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0301
+# source_id = usbr-northcentralpow1971unit_0
+# text = Shell Oil Company, Denver, Colorado
+# word = 4
+# lemma = denver
+# stratum = proper
+Shell	PROPN	unanimous
+Oil	PROPN	unanimous
+Company	PROPN	unanimous
+,	PUNCT	unanimous
+Denver	PROPN	unanimous
+,	PUNCT	unanimous
+Colorado	PROPN	unanimous
+
+# sent_id = headings-0302
+# source_id = usfs-CAT31342419
+# text = Economic Background
+# word = 1
+# lemma = background
+# stratum = noun
+Economic	ADJ	unanimous
+Background	NOUN	unanimous
+
+# sent_id = headings-0303
+# source_id = usda-CAT31288057
+# text = B, Labor
+# word = 2
+# lemma = labor
+# stratum = noun
+B	X	unanimous
+,	PUNCT	unanimous
+Labor	NOUN	unanimous
+
+# sent_id = headings-0304
+# source_id = usbr-CAT30964660
+# text = Livestock Enterprises and Production Rates
+# word = 4
+# lemma = rat
+# stratum = noun
+Livestock	NOUN	unanimous
+Enterprises	NOUN	unanimous
+and	CCONJ	unanimous
+Production	NOUN	unanimous
+Rates	NOUN	unanimous
+
+# sent_id = headings-0305
+# source_id = usbm-resourceguidedep00wagn
+# text = Discussion of Department Issues
+# word = 3
+# lemma = issue
+# stratum = noun
+Discussion	NOUN	unanimous
+of	ADP	unanimous
+Department	NOUN	unanimous
+Issues	NOUN	unanimous
+
+# sent_id = headings-0306
+# source_id = other-proposedthreeriv02unit
+# text = Purpose of Monitoring
+# word = 2
+# lemma = monitoring
+# stratum = noun
+Purpose	NOUN	unanimous
+of	ADP	unanimous
+Monitoring	NOUN	unanimous
+
+# sent_id = headings-0307
+# source_id = phs-foodforyoungchil00lowe
+# text = Meat, Eggs, Cheese, and Fish
+# word = 2
+# lemma = egg
+# stratum = noun
+Meat	NOUN	unanimous
+,	PUNCT	unanimous
+Eggs	NOUN	unanimous
+,	PUNCT	unanimous
+Cheese	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Fish	NOUN	unanimous
+
+# sent_id = headings-0308
+# source_id = other-study-rpt-2005
+# text = Robert Moses Parkway
+# word = 1
+# lemma = moses
+# stratum = proper
+Robert	PROPN	unanimous
+Moses	PROPN	unanimous
+Parkway	PROPN	unanimous
+
+# sent_id = headings-0309
+# source_id = other-terrestrialwild00unse
+# text = Diversity Index
+# word = 1
+# lemma = index
+# stratum = noun
+Diversity	NOUN	unanimous
+Index	NOUN	unanimous
+
+# sent_id = headings-0310
+# source_id = usfs-CAT31342419
+# text = Employment of Engineers
+# word = 2
+# lemma = engineer
+# stratum = noun
+Employment	NOUN	unanimous
+of	ADP	unanimous
+Engineers	NOUN	unanimous
+
+# sent_id = headings-0311
+# source_id = usbr-reclamationsafet1963engi
+# text = The Preconstruction Safety Meeting
+# word = 3
+# lemma = meeting
+# stratum = noun
+The	DET	unanimous
+Preconstruction	NOUN	unanimous
+Safety	NOUN	unanimous
+Meeting	NOUN	unanimous
+
+# sent_id = headings-0312
+# source_id = usfs-influencesofvege397unit
+# text = Extent of Modification of Cover
+# word = 4
+# lemma = cover
+# stratum = noun
+Extent	NOUN	unanimous
+of	ADP	unanimous
+Modification	NOUN	unanimous
+of	ADP	unanimous
+Cover	NOUN	unanimous
+
+# sent_id = headings-0313
+# source_id = usfs-CAT31041219
+# text = Insects Girdling the Stems
+# word = 3
+# lemma = stem
+# stratum = noun
+Insects	NOUN	unanimous
+Girdling	VERB	unanimous
+the	DET	unanimous
+Stems	NOUN	unanimous
+
+# sent_id = headings-0314
+# source_id = usda-waterqualityindi161terr
+# text = A Note to the User of This Guide
+# word = 7
+# lemma = guide
+# stratum = noun
+A	DET	unanimous
+Note	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+User	NOUN	unanimous
+of	ADP	unanimous
+This	DET	unanimous
+Guide	NOUN	unanimous
+
+# sent_id = headings-0315
+# source_id = nbs-nbscommunication00unit
+# text = Importance of Good Writing
+# word = 3
+# lemma = writing
+# stratum = noun
+Importance	NOUN	unanimous
+of	ADP	unanimous
+Good	ADJ	unanimous
+Writing	NOUN	unanimous
+
+# sent_id = headings-0316
+# source_id = other-fisherycircular392unit
+# text = Hydrographic Observations in Tampa Bay and Adjacent
+# word = 3
+# lemma = tampa
+# stratum = proper
+Hydrographic	ADJ	unanimous
+Observations	NOUN	unanimous
+in	ADP	unanimous
+Tampa	PROPN	unanimous
+Bay	PROPN	unanimous
+and	CCONJ	unanimous
+Adjacent	ADJ	unanimous
+
+# sent_id = headings-0317
+# source_id = other-wildlifewatercat00brig
+# text = General Plumbing
+# word = 1
+# lemma = plumbing
+# stratum = noun
+General	ADJ	unanimous
+Plumbing	NOUN	unanimous
+
+# sent_id = headings-0318
+# source_id = usda-CAT86866954
+# text = Graphic Logs
+# word = 1
+# lemma = log
+# stratum = noun
+Graphic	ADJ	unanimous
+Logs	NOUN	unanimous
+
+# sent_id = headings-0319
+# source_id = usda-CAT72345604
+# text = Floodwater Retarding Structures
+# word = 2
+# lemma = structure
+# stratum = noun
+Floodwater	NOUN	unanimous
+Retarding	NOUN	unanimous
+Structures	NOUN	unanimous
+
+# sent_id = headings-0320
+# source_id = usda-CAT71334647018
+# text = Deep Solution Zone
+# word = 2
+# lemma = zone
+# stratum = noun
+Deep	ADJ	unanimous
+Solution	NOUN	unanimous
+Zone	NOUN	unanimous
+
+# sent_id = headings-0321
+# source_id = usda-CAT72345604
+# text = Warning Signs
+# word = 1
+# lemma = sign
+# stratum = noun
+Warning	NOUN	unanimous
+Signs	NOUN	unanimous
+
+# sent_id = headings-0322
+# source_id = navy-unitedstatesnav03surggoog
+# text = By Burgeon Edgar Thompson M
+# word = 2
+# lemma = edgar
+# stratum = proper
+By	ADP	unanimous
+Burgeon	PROPN	unanimous
+Edgar	PROPN	unanimous
+Thompson	PROPN	unanimous
+M	PROPN	unanimous
+
+# sent_id = headings-0323
+# source_id = usbr-CAT30964660
+# text = Direct Agricultural Benefits and Potential Farm Incomes
+# word = 2
+# lemma = benefit
+# stratum = noun
+Direct	ADJ	unanimous
+Agricultural	ADJ	unanimous
+Benefits	NOUN	unanimous
+and	CCONJ	unanimous
+Potential	ADJ	unanimous
+Farm	NOUN	unanimous
+Incomes	NOUN	unanimous
+
+# sent_id = headings-0324
+# source_id = usfs-CAT31088297
+# text = Annual Pass (Replaces Golden Eagle Passport)
+# word = 1
+# lemma = pass
+# stratum = noun
+Annual	ADJ	unanimous
+Pass	NOUN	unanimous
+(	PUNCT	unanimous
+Replaces	VERB	unanimous
+Golden	PROPN	unanimous
+Eagle	PROPN	unanimous
+Passport	PROPN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0325
+# source_id = usfs-CAT10504248
+# text = Research and Development in Pulp and Paper
+# word = 4
+# lemma = pulp
+# stratum = noun
+Research	NOUN	unanimous
+and	CCONJ	unanimous
+Development	NOUN	unanimous
+in	ADP	unanimous
+Pulp	NOUN	unanimous
+and	CCONJ	unanimous
+Paper	NOUN	unanimous
+
+# sent_id = headings-0326
+# source_id = other-westmojaveplanha1bunit
+# text = Loma Linda University
+# word = 1
+# lemma = linda
+# stratum = proper
+Loma	PROPN	unanimous
+Linda	PROPN	unanimous
+University	PROPN	unanimous
+
+# sent_id = headings-0327
+# source_id = usbr-lowercrookedrive00unit
+# text = Public and Administrative Access
+# word = 3
+# lemma = access
+# stratum = noun
+Public	ADJ	unanimous
+and	CCONJ	unanimous
+Administrative	ADJ	unanimous
+Access	NOUN	unanimous
+
+# sent_id = headings-0328
+# source_id = usfs-CAT10684902
+# text = Cumulative and Other Effects
+# word = 3
+# lemma = effect
+# stratum = noun
+Cumulative	ADJ	unanimous
+and	CCONJ	unanimous
+Other	ADJ	unanimous
+Effects	NOUN	unanimous
+
+# sent_id = headings-0329
+# source_id = other-proposedthreeriv02unit
+# text = Road Location and Design
+# word = 3
+# lemma = design
+# stratum = noun
+Road	NOUN	unanimous
+Location	NOUN	unanimous
+and	CCONJ	unanimous
+Design	NOUN	unanimous
+
+# sent_id = headings-0330
+# source_id = usda-CAT86866954
+# text = Other Uses
+# word = 1
+# lemma = use
+# stratum = noun
+Other	ADJ	unanimous
+Uses	NOUN	unanimous
+
+# sent_id = headings-0331
+# source_id = usda-CAT31352946
+# text = Olive Oil
+# word = 1
+# lemma = oil
+# stratum = noun
+Olive	NOUN	unanimous
+Oil	NOUN	unanimous
+
+# sent_id = headings-0332
+# source_id = usfs-firecontrolnotes17unit
+# text = Unsafe Conditions
+# word = 1
+# lemma = condition
+# stratum = noun
+Unsafe	ADJ	unanimous
+Conditions	NOUN	unanimous
+
+# sent_id = headings-0333
+# source_id = usda-waterqualityindi161terr
+# text = Beck's Biotic Index
+# word = 3
+# lemma = index
+# stratum = noun
+Beck	PROPN	unanimous
+'s	PART	unanimous
+Biotic	ADJ	unanimous
+Index	NOUN	unanimous
+
+# sent_id = headings-0334
+# source_id = usda-SER73922925001
+# text = Whiskey Creek Watershed (Cotton and Jefferson Counties)
+# word = 6
+# lemma = jefferson
+# stratum = proper
+Whiskey	PROPN	unanimous
+Creek	PROPN	unanimous
+Watershed	PROPN	unanimous
+(	PUNCT	unanimous
+Cotton	PROPN	unanimous
+and	CCONJ	unanimous
+Jefferson	PROPN	unanimous
+Counties	PROPN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings-0335
+# source_id = usbr-northeastmontana00calc
+# text = Correlation of Dry Weight of Plants Versus
+# word = 3
+# lemma = weight
+# stratum = noun
+Correlation	NOUN	unanimous
+of	ADP	unanimous
+Dry	ADJ	unanimous
+Weight	NOUN	unanimous
+of	ADP	unanimous
+Plants	NOUN	unanimous
+Versus	ADP	unanimous
+
+# sent_id = headings-0336
+# source_id = phs-comprehensiveeme77nati
+# text = Personal Attributes of Caretaker
+# word = 1
+# lemma = attribute
+# stratum = noun
+Personal	ADJ	unanimous
+Attributes	NOUN	unanimous
+of	ADP	unanimous
+Caretaker	NOUN	unanimous
+
+# sent_id = headings-0337
+# source_id = usfs-CAT31342419
+# text = By the Region and Station
+# word = 4
+# lemma = station
+# stratum = noun
+By	ADP	unanimous
+the	DET	unanimous
+Region	NOUN	unanimous
+and	CCONJ	unanimous
+Station	NOUN	unanimous
+
+# sent_id = headings-0338
+# source_id = army-LogisticsInWorldWarII
+# text = Disposal Agency Backlogs
+# word = 2
+# lemma = backlog
+# stratum = noun
+Disposal	NOUN	unanimous
+Agency	NOUN	unanimous
+Backlogs	NOUN	unanimous
+
+# sent_id = headings-0339
+# source_id = usbm-resourceguidedep00wagn
+# text = Spatial Analysis Functions
+# word = 2
+# lemma = function
+# stratum = noun
+Spatial	ADJ	unanimous
+Analysis	NOUN	unanimous
+Functions	NOUN	unanimous
+
+# sent_id = headings-0340
+# source_id = other-proposedthreeriv02unit
+# text = See Appendix
+# word = 0
+# lemma = see
+# stratum = imperative
+See	VERB	unanimous
+Appendix	NOUN	unanimous
+
+# sent_id = headings-0341
+# source_id = usbm-bureauofminescos00unit
+# text = Operating Supplies
+# word = 1
+# lemma = supply
+# stratum = noun
+Operating	NOUN	unanimous
+Supplies	NOUN	unanimous
+
+# sent_id = headings-0342
+# source_id = army-LogisticsInWorldWarII
+# text = On 2 September 1945 in Tokyo Bay, the United
+# word = 5
+# lemma = tokyo
+# stratum = proper
+On	ADP	unanimous
+2	NUM	unanimous
+September	PROPN	unanimous
+1945	NUM	unanimous
+in	ADP	unanimous
+Tokyo	PROPN	unanimous
+Bay	PROPN	unanimous
+,	PUNCT	unanimous
+the	DET	unanimous
+United	PROPN	unanimous
+
+# sent_id = headings-0343
+# source_id = usda-plansoffarmbuild360unit
+# text = Auto-Bumper Gate
+# word = 1
+# lemma = gate
+# stratum = noun
+Auto-Bumper	NOUN	unanimous
+Gate	NOUN	unanimous
+
+# sent_id = headings-0344
+# source_id = usbr-northcentralpow1971unit_0
+# text = The Carter Oil Company, Houston, Texas
+# word = 5
+# lemma = houston
+# stratum = proper
+The	DET	unanimous
+Carter	PROPN	unanimous
+Oil	PROPN	unanimous
+Company	PROPN	unanimous
+,	PUNCT	unanimous
+Houston	PROPN	unanimous
+,	PUNCT	unanimous
+Texas	PROPN	unanimous
+
+# sent_id = headings-0345
+# source_id = usda-lebulletin71unit
+# text = Rural Housing
+# word = 1
+# lemma = housing
+# stratum = noun
+Rural	ADJ	unanimous
+Housing	NOUN	unanimous
+
+# sent_id = headings-0346
+# source_id = navy-effectsofnoiseof00gale
+# text = Survey of the Effects of Outer Continental Shelf
+# word = 3
+# lemma = effect
+# stratum = noun
+Survey	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Effects	NOUN	unanimous
+of	ADP	unanimous
+Outer	PROPN	unanimous
+Continental	PROPN	unanimous
+Shelf	PROPN	unanimous
+
+# sent_id = headings-0347
+# source_id = usfs-influencesofvege397unit
+# text = Investigations in Ohio by the Central States Forest Experiment
+# word = 2
+# lemma = ohio
+# stratum = proper
+Investigations	NOUN	unanimous
+in	ADP	unanimous
+Ohio	PROPN	unanimous
+by	ADP	unanimous
+the	DET	unanimous
+Central	PROPN	unanimous
+States	PROPN	unanimous
+Forest	PROPN	unanimous
+Experiment	PROPN	unanimous
+
+# sent_id = headings-0348
+# source_id = usda-acquisitionuseof05leea
+# text = Camp White Military Reservation, Oregon
+# word = 5
+# lemma = oregon
+# stratum = proper
+Camp	PROPN	unanimous
+White	PROPN	unanimous
+Military	PROPN	unanimous
+Reservation	PROPN	unanimous
+,	PUNCT	unanimous
+Oregon	PROPN	unanimous
+
+# sent_id = headings-0349
+# source_id = army-DAPAM20-3
+# text = The Foreign-Born Soldier
+# word = 2
+# lemma = soldier
+# stratum = noun
+The	DET	unanimous
+Foreign-Born	ADJ	unanimous
+Soldier	NOUN	unanimous
+
+# sent_id = headings-0350
+# source_id = usfs-CAT31342419
+# text = Roy Morris, Superintendent, Seattle City Water Department
+# word = 1
+# lemma = morris
+# stratum = proper
+Roy	PROPN	unanimous
+Morris	PROPN	unanimous
+,	PUNCT	unanimous
+Superintendent	NOUN	unanimous
+,	PUNCT	unanimous
+Seattle	PROPN	unanimous
+City	PROPN	unanimous
+Water	PROPN	unanimous
+Department	PROPN	unanimous
+
+# sent_id = headings-0351
+# source_id = phs-mentalhealthrepo00unit
+# text = Barriers to the Receipt of Treatment
+# word = 3
+# lemma = receipt
+# stratum = noun
+Barriers	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+Receipt	NOUN	unanimous
+of	ADP	unanimous
+Treatment	NOUN	unanimous
+
+# sent_id = headings-0352
+# source_id = other-study-rpt-2005
+# text = The Urban Design Project
+# word = 3
+# lemma = project
+# stratum = noun
+The	DET	unanimous
+Urban	ADJ	unanimous
+Design	NOUN	unanimous
+Project	NOUN	unanimous
+
+# sent_id = headings-0353
+# source_id = usbr-pumpkincreek1400west
+# text = Future Hydrologic Monitoring
+# word = 2
+# lemma = monitoring
+# stratum = noun
+Future	ADJ	unanimous
+Hydrologic	ADJ	unanimous
+Monitoring	NOUN	unanimous
+
+# sent_id = headings-0354
+# source_id = usbm-resourceguidedep00wagn
+# text = Electrical Branch
+# word = 1
+# lemma = branch
+# stratum = noun
+Electrical	ADJ	unanimous
+Branch	NOUN	unanimous
+
+# sent_id = headings-0355
+# source_id = usbr-northcentralpow1971unit_0
+# text = Comparison of North Central Power Study Load
+# word = 6
+# lemma = load
+# stratum = noun
+Comparison	NOUN	unanimous
+of	ADP	unanimous
+North	PROPN	unanimous
+Central	PROPN	unanimous
+Power	PROPN	unanimous
+Study	PROPN	unanimous
+Load	NOUN	unanimous
+
+# sent_id = headings-0356
+# source_id = usbm-reportofinvestig3302unit
+# text = Cyaniding Gold Flotation Concentrate
+# word = 3
+# lemma = concentrate
+# stratum = noun
+Cyaniding	VERB	unanimous
+Gold	NOUN	unanimous
+Flotation	NOUN	unanimous
+Concentrate	NOUN	unanimous
+
+# sent_id = headings-0357
+# source_id = usda-waterqualityfiel160unit
+# text = Animal Wastes
+# word = 1
+# lemma = waste
+# stratum = noun
+Animal	NOUN	unanimous
+Wastes	NOUN	unanimous
+
+# sent_id = headings-0358
+# source_id = phs-manualforprotect00unit
+# text = Tolerance Limits
+# word = 1
+# lemma = limit
+# stratum = noun
+Tolerance	NOUN	unanimous
+Limits	NOUN	unanimous
+
+# sent_id = headings-0359
+# source_id = usfs-CAT85256064019
+# text = Statistical Comparison for Number of Fires
+# word = 3
+# lemma = number
+# stratum = noun
+Statistical	ADJ	unanimous
+Comparison	NOUN	unanimous
+for	ADP	unanimous
+Number	NOUN	unanimous
+of	ADP	unanimous
+Fires	NOUN	unanimous
+
+# sent_id = headings-0360
+# source_id = usbr-lowercrookedrive00unit
+# text = Impacts to Air
+# word = 2
+# lemma = air
+# stratum = noun
+Impacts	NOUN	unanimous
+to	ADP	unanimous
+Air	NOUN	unanimous
+
+# sent_id = headings-0361
+# source_id = usfs-CAT31041219
+# text = Controlling Size and Quality of Seedlings Through Cultural Practices
+# word = 1
+# lemma = size
+# stratum = noun
+Controlling	VERB	unanimous
+Size	NOUN	unanimous
+and	CCONJ	unanimous
+Quality	NOUN	unanimous
+of	ADP	unanimous
+Seedlings	NOUN	unanimous
+Through	ADP	unanimous
+Cultural	ADJ	unanimous
+Practices	NOUN	unanimous
+
+# sent_id = headings-0362
+# source_id = usda-CAT71334647018
+# text = Yields of Saturated Sands and Gravels in Irrigation Wells
+# word = 3
+# lemma = sand
+# stratum = noun
+Yields	NOUN	unanimous
+of	ADP	unanimous
+Saturated	ADJ	unanimous
+Sands	NOUN	unanimous
+and	CCONJ	unanimous
+Gravels	NOUN	unanimous
+in	ADP	unanimous
+Irrigation	NOUN	unanimous
+Wells	NOUN	unanimous
+
+# sent_id = headings-0363
+# source_id = usfs-CAT31285103
+# text = Bridge and Culvert Design and Installation
+# word = 3
+# lemma = design
+# stratum = noun
+Bridge	NOUN	unanimous
+and	CCONJ	unanimous
+Culvert	NOUN	unanimous
+Design	NOUN	unanimous
+and	CCONJ	unanimous
+Installation	NOUN	unanimous
+
+# sent_id = headings-0364
+# source_id = usda-CAT31304531
+# text = Inspect Food Packages
+# word = 2
+# lemma = package
+# stratum = noun
+Inspect	VERB	unanimous
+Food	NOUN	unanimous
+Packages	NOUN	unanimous
+
+# sent_id = headings-0365
+# source_id = usda-CAT87892076
+# text = Nonstructural Measures
+# word = 1
+# lemma = measure
+# stratum = noun
+Nonstructural	ADJ	unanimous
+Measures	NOUN	unanimous
+
+# sent_id = headings-0366
+# source_id = usbm-reportofinvestig3302unit
+# text = Observation of High Flames
+# word = 3
+# lemma = flam
+# stratum = noun
+Observation	NOUN	unanimous
+of	ADP	unanimous
+High	ADJ	unanimous
+Flames	NOUN	unanimous
+
+# sent_id = headings-0367
+# source_id = usda-CAT31352946
+# text = Barter and Stockpile
+# word = 2
+# lemma = stockpile
+# stratum = noun
+Barter	NOUN	unanimous
+and	CCONJ	unanimous
+Stockpile	NOUN	unanimous
+
+# sent_id = headings-0368
+# source_id = phs-insidepublicheal00unit
+# text = Current Structure
+# word = 1
+# lemma = structure
+# stratum = noun
+Current	ADJ	unanimous
+Structure	NOUN	unanimous
+
+# sent_id = headings-0369
+# source_id = usfs-grazingfeereview5502unit
+# text = Impacts of Alternative Grazing Fee Levels on Cattle
+# word = 5
+# lemma = level
+# stratum = noun
+Impacts	NOUN	unanimous
+of	ADP	unanimous
+Alternative	ADJ	unanimous
+Grazing	NOUN	unanimous
+Fee	NOUN	unanimous
+Levels	NOUN	unanimous
+on	ADP	unanimous
+Cattle	NOUN	unanimous
+
+# sent_id = headings-0370
+# source_id = usda-acquisitionuseof05leea
+# text = Illustrative Projects
+# word = 1
+# lemma = project
+# stratum = noun
+Illustrative	ADJ	unanimous
+Projects	NOUN	unanimous
+
+# sent_id = headings-0371
+# source_id = usbr-northcentralpow1971unit_0
+# text = Development Levels
+# word = 1
+# lemma = level
+# stratum = noun
+Development	NOUN	unanimous
+Levels	NOUN	unanimous
+
+# sent_id = headings-0372
+# source_id = usda-waterqualityfiel160unit
+# text = Cropping Practice
+# word = 1
+# lemma = practice
+# stratum = noun
+Cropping	NOUN	unanimous
+Practice	NOUN	unanimous
+
+# sent_id = headings-0373
+# source_id = usda-CAT86866954
+# text = Minimum Requirements for Sampling of Dam Sites
+# word = 3
+# lemma = sampling
+# stratum = noun
+Minimum	ADJ	unanimous
+Requirements	NOUN	unanimous
+for	ADP	unanimous
+Sampling	NOUN	unanimous
+of	ADP	unanimous
+Dam	NOUN	unanimous
+Sites	NOUN	unanimous
+
+# sent_id = headings-0374
+# source_id = usbr-williamsmckenzie00usbu
+# text = Glacial Deposits - Pleistocene
+# word = 1
+# lemma = deposit
+# stratum = noun
+Glacial	ADJ	unanimous
+Deposits	NOUN	unanimous
+-	PUNCT	unanimous
+Pleistocene	PROPN	unanimous
