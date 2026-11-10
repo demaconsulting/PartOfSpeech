@@ -364,18 +364,27 @@ class LineTests(unittest.TestCase):
                             ("Unload an M60 Machine Gun . . . . . 12", "Unload an M60 Machine Gun"),
                             ("Maintain a Caliber .50 M2 Machine Gun ccceeee 3-67", "Maintain a Caliber .50 M2 Machine Gun"),
                             ("Prepare an M136 Launcher for Firing eeeee 4 - 9", "Prepare an M136 Launcher for Firing"),
-                            ("Decontaminate Yourself and Individual Equipment ..... 5", "Decontaminate Yourself and Individual Equipment")):
+                            ("Decontaminate Yourself and Individual Equipment ..... 5", "Decontaminate Yourself and Individual Equipment"),
+                            ("Perform First Aid for Heat InjurieS.......... eee 3-64", "Perform First Aid for Heat InjurieS"),
+                            ("Perform Mouth-to-Mouth Resuscitation.......000..... 3-83", "Perform Mouth-to-Mouth Resuscitation"),
+                            ("Evaluate a Casualty ............:ccccccccceceeceeeeeeeeseeeeneeeeees 3-52", "Evaluate a Casualty"),
+                            ("Load an M16-Series Rifle 00... eeeeeeeeeeeeeeeenees 3-303", "Load an M16-Series Rifle"),
+                            ("071-311-2027 Load an M16-Series Rifle ..........ecceeeeeereeeerees 3-311", "071-311-2027 Load an M16-Series Rifle")):
             self.assertEqual(title, fd.toc_title(line), line)
-        for line in ("Unload an M60 Machine Gun", "Remove the cover and check the seal 3", "Page 3 of 67", "Use the Ice Pack 12", "...... 5"):
+        for line in ("Unload an M60 Machine Gun", "Remove the cover and check the seal 3", "Page 3 of 67", "Use the Ice Pack 12", "...... 5", "Load an M16-Series Rifle ..... Part"):
             self.assertIsNone(fd.toc_title(line), line)
 
     def test_a_labeled_line_loses_its_label(self):
         for line, title in (("Task 3. Clean The Valve", "Clean The Valve"), ("Step 2: Check the Seal", "Check the Seal"), ("Procedure 4-1 Replace the Filter", "Replace the Filter"),
                             ("Operation B Install the Cover", "Install the Cover"), ("2.1 Remove the Cover", "Remove the Cover"), ("(a) Check the Seal", "Check the Seal"),
-                            ("Exercise 5 Drain the Tank", "Drain the Tank")):
+                            ("Exercise 5 Drain the Tank", "Drain the Tank"), ("071-311-2027 Load an M16-Series Rifle", "Load an M16-Series Rifle")):
             self.assertEqual(title, fd.labeled_title(line), line)
-        for line in ("Clean The Valve", "3 Clean The Valve", "Tasks are listed below", "Step " + "x" * 100):
+        for line in ("Clean The Valve", "3 Clean The Valve", "Tasks are listed below", "Step " + "x" * 100, "071-311 Load an M16-Series Rifle"):
             self.assertIsNone(fd.labeled_title(line), line)
+
+    def test_a_toc_line_with_a_skill_task_number_gives_the_bare_title(self):
+        found = fd.step_title_lines("081-831-1000 Evaluate a Casualty ......:ccceeee 3-52\n071-311-2027 Load an M16-Series Rifle ... eee 3-303\n", tiers=True)
+        self.assertEqual([("Evaluate a Casualty", "T1"), ("Load an M16-Series Rifle", "T1")], found)
 
     def test_step_titles_come_from_headings_toc_lines_and_labeled_lines_deduplicated(self):
         raw = "\n".join([

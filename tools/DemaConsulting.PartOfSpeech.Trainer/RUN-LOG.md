@@ -4791,6 +4791,50 @@ The appendix, appended after the frozen block (the `prompt` command prints both)
 - The lemma cap of `compound2` counts inside `compound2` only (4 per lemma; the combined training set can hold 8 per lemma).
 - The experiment of the second pull request has four arms against one baseline without a multiplicity correction (disclosed there); seeds measure training noise only.
 
+## Follow-up: documents and pins (stream H, waves 1 and 2): scarcity record
+
+This section follows the R0 commit `8c9f17fc5cb7e5c35f91827fc242980f407bd42d` (a commit cannot contain its own SHA). **No label exists, no batch was exported, no candidate row was written, and no model of any experiment was trained or evaluated.** Only ids and counts are recorded; the work folder and the one-off fetch scripts stay outside the repository by precedent.
+
+### Documents (stream H)
+
+- **Sourcing.** Archive.org records of US federal procedural publications (Army soldier training publications, training circulars and field manuals; Navy rate training manuals and first aid; Marine Corps; Air Force; Coast Guard; National Park Service), found by searching the archive.org metadata index by creator and title words. **Wave 1** (44 accepted documents, from the first 66 records) was chosen from record metadata only, before any line count existed. **Wave 2** (26 more accepted documents, from the next 46 records) was added after the first counts-only `preflight` showed few imperative lines (the plan allows wave 2 when the population is below 150). 112 records were evaluated in all: 70 documents accepted in `sources-draft.tsv` (army 52, marine 7, navy 5, airforce 4, coastguard 1, interior 1); 42 were refused.
+- **Public-domain basis, per document.** The creator, publisher, contributor, title, rights and license-URL fields of every record were read (not only the title); the OCR text was scanned for copyright and permission notices, third-party credit lines and distribution statements. The `license_basis` cell of every accepted row names 17 U.S.C. 105, the agency, the creator/publisher/contributor fields read, the record's own rights statement (57 of the 70 records carry the Public Domain Mark, the others no rights field), and the distribution check (U4: only public release, FOUO or export markings are accepted; any other distribution statement is a reason to reject). No FAA material; nothing in either `excluded-sources.tsv` or any `excluded-documents.tsv` or earlier sourcing table (the `exclusions` command: 70 documents, 0 problems); no state, local, foreign, university, contractor or private creator, publisher or co-author named in any accepted record.
+- **Refused (42 records).** By the automatic checks (26 records; some have more than one reason): a distribution statement other than public release (12 records, for example the restricted soldier's manuals), third-party credit or permission phrases (9), a reprint of earlier text (1), too few sentences (1), HTTP refusals (4: two lending-only records answered 401 and two server errors 500, skipped, never worked around). Copyright-like notice flags were read by hand: on records refused for other reasons, and on three accepted records where the context was OCR noise (a map scale, a page ornament, a table-of-contents ornament). By hand (16 records, `hexclude.tsv`): a Creative Commons BY-NC-ND license URL on the record, a rights field saying "In copyright", records that name Readex Microprint Corporation (a private reproduction company; 7 records), a manual with third-party copyright notices, and records without a year that the front matter does not give (the year is a column of the sources table). A fetch-helper bug of this work (a wrong file name for archive.org text files, HTTP 404) produced no accepted record: its 11 records were discarded and fetched again with the file names of the item metadata; a later change of the reprint check (10 percent of the clean sentences instead of 3 sentences) re-evaluated the 12 records fetched before it from the stored text.
+- **Family-level partition** (`partition`, seed 20261110, DEV share of stream H 0.30, **not frozen**: see below): 70 documents in 61 title families, DEV 19 documents, TRAIN 51 documents; no family on both sides.
+- **Earlier-source tables.** Two of the eight copies in `extra-tables` (the hand-excluded ids and the first work-folder exclusions) had CRLF line ends and the tool refuses a carriage return: the originals are kept unchanged in `extra-tables-original` (SHA-256 `950120cc3caeb87d6141b980c5ddafa14e195282d3c66291cd0e47f466b99725` and `8471ae2905e4cd7c55bcc2beefaaf1fc1f56a1c122a386a0234db1a9b9fbb84f`, the values of the table above) and LF copies with the same ids and reasons are used (SHA-256 `13f41c9221bcfa83a779eff702b21b9b306ed59dd1595abea58cb6500d0bc6a2` and `b9ad2c84d8ed16e9ebc23b36d7aa7bef4da1f764606d7a8740c4b60e4ddf20f3`).
+
+### Amendments of the R0 extraction (before any label; counts of lines motivated them, no label did)
+
+The first counts-only run showed that the table-of-contents lines of the soldier's manuals were almost all lost: the OCR leaders are dots followed by letter residue (`InjurieS.......... eee 3-64`, `Resuscitation.......000..... 3-83`) and many entries carry an Army skill-task number before the title (`071-311-2027 Load an M16-Series Rifle`). Two **extraction** amendments of `followup_data.py` (tests added; the frame F-IMP itself is unchanged, the noise filter is unchanged, nothing depends on a model):
+
+1. `toc_title`: the title is the text before the first leader (three or more dots, or the residue `ccceeee`); what follows the leader up to the page number or range is dropped; trailing OCR residue tokens `0`, `O`, `<<` before the leader are removed. (R0 accepted a leader or its residue only directly before the page number.)
+2. `labeled_title`: an Army skill-task number `NNN-NNN-NNNN` before a title is removed like a label (tier T2).
+
+A bug of the R0 `preflight` (the tier map was recomputed for every line, so the command did not finish) was also fixed. The frame needed no extension (`to` + base verb is still a strength-1 shape and is not added).
+
+### Pool sizes after wave 2 (counts only; `preflight`, `lines`, `tokenize` with the amended extraction)
+
+| Quantity | Value |
+| --- | --- |
+| documents / title families / agency families | 70 / 61 / 6 |
+| clean sentences (both sides) | 99,418 (DEV 25,260, TRAIN 74,158) |
+| clean heading lines | 2,158 (tiers: T1 1,998, T2 160); DEV 673, TRAIN 1,485 |
+| imperative frame hits (strength 0) | **234** (DEV 67, TRAIN 167), 57 first-word lemmas, 233 from the Army and 1 from the Air Force |
+| initial-noun frame hits (the old strength 1) | 426 (DEV 134, TRAIN 292) |
+| compound frame hits | 17,737 (DEV 4,226 over 855 lemmas, TRAIN 13,511 over 1,500 lemmas) |
+
+Pilot sample size by the pre-registered caps (4 per first-word lemma, 20 per document, 50 per family; a sample below 150 is a SCARCITY stop):
+
+| Reading of the family cap | Sampled lines |
+| --- | --- |
+| agency family (as coded in R0 and written in rule 5) | **51** (the Army supplies 50, the cap) |
+| title family (as in rule 2, the family key) | 124 |
+| title family and lemma cap 6 / 8 (not registered) | 146 / 150 |
+
+### Verdict
+
+**SCARCITY**: with the frame as registered, 70 documents give at most 234 strength-0 imperative lines, of which 51 (agency-family cap) or 124 (title-family cap) can enter the pilot sample, fewer than the 150 required. The imperative-heading work cannot go on as pre-registered: the pilot did not run, the pins `DRAFT_SHA256`, `TOKENS_SHA256` and `HMM_SHA256` stay `None` in the tool (so `pilot` and `candidates` refuse), and the DEV share of stream H stays provisional. The same supply would also be short of the later targets (DEV 80 to 130, TRAIN 150 to 400 imperative lines). The compound work does not depend on this result. Inputs as they are in the work folder (informational, not pins): `sources-draft.tsv` `7f05b400e33b10eef46b02645d05f60d7d0107b9d8a041cdc4ea4560361d49ca` (70 rows), `tokens.tsv` `bb7df8426cc1ed847ba89e74fa747c28992302b2590fa517a9098b313b7a35e0`, `streams.tsv` `c9469a82136d319003c9eceed981f3ddea16b96e763a46ba63cd0e8561fbed70`, `partition.tsv` `5a9852d87cc8a15a67a0414a014779034dd1549c949831e27d6948db2754111e`, `hexclude.tsv` `fcd3e3ef00aa44b63b6d47c9347c07dfaa972b2038c389b99a3f06dda428ac0d`, `hacc.jsonl` (all 112 records, the fetch record) `031f663a6f0d7cdec158f0a25a76cb60d6f559619a9131dafcbeeb60f1e7c239`.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

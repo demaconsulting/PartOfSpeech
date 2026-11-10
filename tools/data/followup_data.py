@@ -358,21 +358,23 @@ STEP_LABEL = re.compile(
     r"^(?:(?:Task|TASK|Step|STEP|Procedure|PROCEDURE|Operation|OPERATION|Exercise|EXERCISE|Job|JOB)\s+(?:[0-9]+[A-Za-z]?|[A-Z]|[IVXL]+)(?:[.\-][0-9A-Za-z]+)*[.:\-]?\s+"
     r"|[0-9]{1,2}(?:\.[0-9]{1,3})+\.?\s+|\([a-z0-9]{1,3}\)\s+)(?P<title>\S.*)$")
 TOC_LINE = re.compile(
-    r"^(?P<title>\w(?:.*?\S)?)(?:\s*\.(?:\s*\.){2,}|\s+(?:[ceCE]\s?){3,})\s*(?P<page>[0-9]{1,3}(?:\s?[-\u2013]\s?[0-9]{1,3})?)\s*$")
+    r"^(?P<title>\w(?:.*?\S)?)(?:\s*(?:\.\s*){3,}|\s+(?:[ceCE]\s?){3,}).*?(?<![0-9A-Za-z])(?P<page>[0-9]{1,3}(?:\s?[-\u2013]\s?[0-9]{1,3})?)\s*$")
+TASK_NUMBER = re.compile(r"^[0-9]{3}-[0-9]{3}-[0-9]{4}\s+(?P<title>\S.*)$")           # Army skill-task numbers (`071-311-2027 Load an M16-Series Rifle`)
 RAW_LINE_MAX_CHARS = 140
 
 
 def toc_title(line):
-    """The title of a table-of-contents line (dot leaders or their OCR residue and the page number or range removed), else None."""
+    """The title of a table-of-contents line, else None: the title is the text before the first leader (three or more dots, or the OCR residue `ccceeee`); what follows the leader
+    (more dots, OCR residue) is dropped; the line must end with a page number or range. A skill-task number before the title stays and is removed by `labeled_title`."""
     match = TOC_LINE.match(line.strip())
-    return match.group("title").strip() if match else None
+    return re.sub(r"(?:\s+[0O\u00ab\u00bb]{1,4})+$", "", match.group("title")).strip() if match else None
 
 
 def labeled_title(line):
-    """The title of a labeled line (`Task 3.`, `Step 2:`, `2.1`, `(a)` removed), else None."""
+    """The title of a labeled line (`Task 3.`, `Step 2:`, `2.1`, `(a)`, or an Army skill-task number `071-311-2027` removed), else None."""
     if len(line.strip()) > sx.HEADING_MAX_CHARS:
         return None
-    match = STEP_LABEL.match(line.strip())
+    match = STEP_LABEL.match(line.strip()) or TASK_NUMBER.match(line.strip())
     return match.group("title").strip() if match else None
 
 
@@ -1425,7 +1427,8 @@ def _command_preflight(args):
     count = collections.Counter(sides[row["source_id"]] for row in draft)
     print("documents in the draft: %d (dev %d, train %d; %d agency families); rejected as a whole: %d"
           % (len(draft), count["dev"], count["train"], len({r["family"] for r in draft}), len(sentences.rejected)))
-    tiers = collections.Counter(tier_map(work).get(shapes_dev.sent_key_of(text), "?") for _, _, text, _ in headings.units)
+    tier_of = tier_map(work)
+    tiers = collections.Counter(tier_of.get(shapes_dev.sent_key_of(text), "?") for _, _, text, _ in headings.units)
     print("clean sentences: %d; clean heading lines: %d (tiers: %s)" % (len(sentences.units), len(headings.units), ", ".join("%s %d" % t for t in sorted(tiers.items())) or "none"))
     for side in ("dev", "train"):
         sc, hd = restrict(sentences, sides, side), restrict(headings, sides, side)
