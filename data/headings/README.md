@@ -41,7 +41,7 @@ embedded model (`--source headings:1` adds it to a training run).
   carries no copyright, permission or third-party notice). There is no FAA text, no Wikipedia, no share-alike or non-commercial text and no
   Universal Dependencies text (`check_licenses.py` scans `sources.tsv`). A document whose record lists a state or local government body as an
   author is not used (`excluded-documents.tsv`).
-- **One document with a non-government co-author.** The only document of the family `nbs` (1 line) is *Safe handling of bodies containing
+- **One document with a private-organization co-author.** One of the two documents of the family `nbs` (it gives 1 line) is *Safe handling of bodies containing
   radioactive isotopes*, National Bureau of Standards Handbook 65 (1958), a publication of a US federal agency (Department of Commerce)
   and therefore a US government work (17 U.S.C. 105; the quoted basis is in its `sources.tsv` row). Its author field also lists the
   National Committee on Radiation Protection and Measurements (a private, congressionally chartered non-profit), and the text carries no
