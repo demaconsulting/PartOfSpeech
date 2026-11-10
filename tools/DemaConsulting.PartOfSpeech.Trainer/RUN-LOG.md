@@ -5086,6 +5086,66 @@ The "kept" column is the development decision of `decide` (target agreed, intend
 | `headings-2` (DEV) | imperative **59** (pilot 38 + 21), noun **50** (cap; 109 kept), proper controls **20** (cap; 24 kept); 129 lines, 85 lemmas, 35 documents | imperative 80 to 130, noun 30 to 50, proper 12 to 20 | imperative about 100 | **imperative 21 below the floor 80** (needs `--allow-short`, A2), noun and proper at their caps |
 | `headings2` (TRAIN) | imperative **165** (pilot TRAIN 95 + `h2i-` 29 + `h2n-` VERB lines 41), initial-noun **82** (the half-share cap; 235 more dropped at it); 247 lines, 144 lemmas, 59 documents | imperative 150 to 400 | about 300 | **with** the 41 `initial-noun`-frame VERB lines: 165, the floor of 150 is met and `--allow-short` is not needed; **without** them: 124 imperative (26 below the floor) and at most 62 initial-noun; either way far below about 300 |
 
+## Follow-up: control round `chd2c`, the four builds and the review samples (counts only; before any hand check)
+
+This section follows the commit `cd67abb` (a commit cannot contain its own SHA). **No rule, cap, floor, gate or pin was changed; no model of any experiment was trained or evaluated; no consumer text was read; nothing was pushed.** The only labels that exist are the rounds of the follow-up (`hdg-pilot`, `hdg2dev`, `hdg2`, `chd2`, `chd2c`, `cmp2`). The hand check (model review) is NOT run here: the four samples are drawn and wait for the reviewers.
+
+### Decision on the 41 `initial-noun`-frame lines tagged VERB by both labelers (implementing-agent decision, flagged for the owner's review)
+
+This is a decision of the implementing agent (the orchestration agent), **not of the owner**. The open question of the previous section had two readings of the `headings2` imperative stratum:
+
+| Reading | Imperative lines | Initial-noun lines | Floor 150 |
+| --- | ---: | ---: | --- |
+| (a) **as coded**: the training rule keeps a line as `imperative` when both labelers tag token 0 VERB, whatever frame the candidate came from (`followup_data.heading_stratum_train`, unchanged since R0, so unchanged by the labels) | **165** (pilot TRAIN 95 + `h2i-` 29 + `h2n-` 41) | 82 | met, `--allow-short` not needed for the floor |
+| (b) lines of the `h2n-` frame tagged VERB are not counted as `imperative` | 124 | at most 62 | not met (26 below) |
+
+**Applied: (a), the registered code, with no code change and no change of the rule text.** The rule text calls the old strength-1 frame "not an imperative candidate"; that sentence concerns the choice of candidates (the frame F-IMP), while the stratum of a kept line is decided by the agreed tag, and the code has done so since R0. **Consequence, to be read plainly:** 41 of the 165 imperative lines (24.8%) come from the `initial-noun` frame, whose word after token 0 is a capitalized noun-capable word (a strength-1 frame, the shape that the labelers read as nouns, adjectives or names 398 times of 439); those 41 are the lines on which both blind labelers nevertheless read token 0 as a base-form verb. The data README of `data/headings/` must say that these lines carry a strength-1 frame (task for the documentation step). The hand check samples the stratum as built (reading a), so the reviewer sees these lines too. The floor of 150 is met with them and not without them; the owner's target of about 300 is missed either way. The owner can overrule this reading; if it does, the data would be rebuilt (reading b, `--allow-short`) before registration, and no arm has been trained on either reading.
+
+### Second control round `chd2c` (labeled and decided)
+
+`validate-output --all` `ok` for both models (`b001`, `opus` and `sol`), `status` `ok` 1 of 1 for both, `decide --round chd2c` run once, unchanged. Items 30 (controls, 24 lemmas); both labelers agreed on the judged word in all 30; **kept 29**, dropped 1 as class-mismatch (the agreed tag was NOUN, not the verb use the control stands for); 3 disputed non-target tokens in kept items. `decided.tsv` SHA-256 `23617be474305121ae5bf08aff4e53e4862f89b0c8f75fba68efe10d3c6a1587`. The build kept controls up to the cap: 47 eligible controls (the 18 of the first round that belong to the lemmas of the 210 chosen targets, plus 29 of `chd2c`), 2 dropped at the cap of 45 (the 57 cap drops are 55 targets and 2 controls).
+
+### The four builds (committed tool, registered commands, `--allow-short`, every `--extra-table` of the work folder; the data come only from the tool)
+
+Commands: `python tools/data/followup_data.py --work $W build --product P @EXTRA --allow-short` for the four products, in the order `compound-head-2`, `headings-2`, `compound-2`, `headings-2-train`. `git diff` of every tracked file is empty: `compound.tsv`, `headings.tsv`, `compound-head.tsv`, `headings.tsv` of the tranches, `excluded-sources.tsv`, `MANIFEST.tsv` and all other old files are byte-identical; only new files were written. Nothing was edited by hand.
+
+| Product | Built | Floor / cap | Owner's target | Reading |
+| --- | --- | --- | --- | --- |
+| `compound-head-2` (dev) | targets **210** (the cap; 265 kept, 55 over), controls **45** (the cap; 47 eligible), 255 sentences, 157 head lemmas, 89 documents, 4,576 tokens; dropped at the cap 57 | targets 150 to 210; controls 30 to 45 | about 300 targets in all; controls about 20% | targets 100 old + 210 = **310** (target met); controls 45 of 255 new items = 17.6% (cap binds, not supply); no shortfall |
+| `headings-2` (dev) | imperative **59** (pilot 38 + 21), noun **50** (cap), proper controls **20** (cap); 129 lines, 85 lemmas, 35 documents, 678 tokens; dropped at the cap 63 | imperative 80 to 130, noun 30 to 50, proper 12 to 20 | imperative about 100 | **SHORTFALL: imperative 59 is 21 below the floor of 80 and 41 below the owner's about 100** (built with `--allow-short`, A2; the supply, not a label rule, is the limit) |
+| `compound2` (train) | **1,100** sentences (the cap; noun 935, verb 165 = 15.0%), 670 head lemmas, 209 documents, 20,745 tokens | 600 to 1,100; at least 760 by U5 | toward about 1,500 combined | 742 + 1,100 = **1,842** combined: target met, cap binds |
+| `headings2` (train) | imperative **165**, initial-noun **82** (the half-share cap; 235 dropped at it); 247 lines, 144 lemmas, 59 documents, 1,160 tokens | imperative 150 to 400; initial-noun at most half of the kept imperative lines | imperative about 300 | floor 150 met (reading a, see the decision above); **SHORTFALL against the owner's about 300: 165 is 135 short** (124, 176 short, under reading b) |
+
+| New file | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `data/eval/shapes-dev/compound-head-2.tsv` | 172,171 | `ffa7e5aef0cff05e6ef9227bce3544e4372109768685fcff8c0395e18220c527` |
+| `data/eval/shapes-dev/compound-head-2-sources.tsv` (89 documents) | 115,251 | `c183effb24a273307e710e0b82bbf45cbc7a43d4b9bf071521c20c5e4c88a31f` |
+| `data/eval/shapes-dev/headings-2.tsv` | 47,493 | `6c84419851bceebcb825fff6bc530fc3a3dc5bc5306da152bda349db00c4b4a7` |
+| `data/eval/shapes-dev/headings-2-sources.tsv` (35 documents) | 47,144 | `62754e46c3306983ffd6ece5360257e023c8a7bc268668644d2edc4df5452edd` |
+| `data/compound/compound-2.tsv` | 684,906 | `2a9a98492afb1248623b50111ca62d8abd57e4569b1a5e52b3cff544bc0746cc` |
+| `data/compound/compound-2-sources.tsv` (209 documents) | 272,059 | `9c7ec7014ff115e745501706126b4637382c058783fdea43021b9f6cbfbd0b4f` |
+| `data/compound/compound-2-excluded-documents.tsv` (260 bytes) | 260 | `84a864f548fb89068edec5e5c31037d2d07b94d1b6d6ca5bc5ce4165cd9734a8` |
+| `data/compound/compound-2-dropped-sentences.tsv` | 312 | `033d9702bb1204df8e184a0f8bd80c04aff281d5a19e8994446ecd8950ccc569` |
+| `data/headings/headings-2.tsv` | 69,140 | `3f1fca247aa625c6f46269f5db5034540e4685fc55918dff5068da6ba591fca5` |
+| `data/headings/headings-2-sources.tsv` (59 documents) | 76,996 | `accd6790b8226e962d8d192b7658375f1bafb7e1721a11779ee55e05024b682d` |
+| `data/headings/headings-2-excluded-documents.tsv` | 260 | `a7dce4c22dd1a2f18ee7543938f15643af9846448dc8ac81236431debd56f65e` |
+| `data/headings/headings-2-dropped-sentences.tsv` | 343 | `47eafa25791b4e6c30d5f9002c1b3c5c1830f95be364c3eaab7e591aebe8c7a5` |
+
+**Not yet done (later steps; the data are not registered):** the `-leakage-report.tsv` files, `check_leakage`, `check_licenses`, `check_conventions`, `make_manifest` (so `data/MANIFEST.tsv` does not list these files yet), the data READMEs, `training.json`, the trainer code and the re-test pre-registration. A product that fails its hand check is not registered and the work stops with a report.
+
+### Review samples (drawn once; not reviewed; never drawn again)
+
+`sample --product P` with the registered seeds, 60 kept items and 4 swapped-tag controls per product (the reviewer sees item names `R001` to `R064` only):
+
+| Product | Seed | Real items | Controls |
+| --- | ---: | --- | --- |
+| `compound-head-2` | 20261121 | 60 targets | 4 |
+| `headings-2` | 20261122 | imperative 30, noun 15, proper 15 | 4 |
+| `compound-2` | 20261123 | 60 (noun 54, verb 6) | 4 |
+| `headings-2-train` | 20261124 | imperative 40, initial-noun 20 | 4 |
+
+**Gate (rule 8):** marked-word precision `correct / (correct + incorrect)` at least 95% (3 incorrect of 60 passes, 4 fail), at most 1 of the 4 controls accepted, no unanswered item; below it the product is not registered and the work stops with a report; no second draw. Note: the tool's result text for too lenient controls says "repeat the review once" (text inherited from PR #19); the pre-registered rule of this follow-up says that the review is never repeated, and the rule governs.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

@@ -1,0 +1,5 @@
+# Candidate sentences dropped alone because they equal or nearly equal a sentence of a training or evaluation set or of the shapes development set
+# (counted in private/candidates-report.md of the round folder; only counts are published, never text)
+# columns = reason, sentences
+near-shapes-dev	2
+probe-5gram	1

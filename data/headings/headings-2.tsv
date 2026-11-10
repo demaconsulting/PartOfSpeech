@@ -1,0 +1,2896 @@
+# corpus = DemaConsulting.PartOfSpeech Title Case heading training source 2 (UPOS)
+# license = CC0-1.0 for annotations and selection; lines are US federal government works, see headings-2-sources.tsv
+# columns = form, upos, status
+# status = unanimous (two blind model labelers agree on the tag of every token of the line)
+# judged word = per line: word (zero-based index of the stratum word), lemma, stratum (imperative | initial-noun)
+# selection = Title Case step-title and table-of-contents lines with an initial imperative, and the contrast stratum of initial nouns, from new US federal text; see README.md and tools/data/followup_data.py
+# use = training
+
+# sent_id = headings2-0001
+# source_id = army-soldiersmanualof00unit
+# text = Splint A Suspected Fracture
+# word = 0
+# lemma = splint
+# stratum = imperative
+Splint	VERB	unanimous
+A	DET	unanimous
+Suspected	ADJ	unanimous
+Fracture	NOUN	unanimous
+
+# sent_id = headings2-0002
+# source_id = army-fm-31-11-b-scm-special-forces-commanders-manual-mos-11-b-s-1979
+# text = Locate a Target by Shift from a Known Point
+# word = 0
+# lemma = locate
+# stratum = imperative
+Locate	VERB	unanimous
+a	DET	unanimous
+Target	NOUN	unanimous
+by	ADP	unanimous
+Shift	NOUN	unanimous
+from	ADP	unanimous
+a	DET	unanimous
+Known	ADJ	unanimous
+Point	NOUN	unanimous
+
+# sent_id = headings2-0003
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Maintain an M9 Pistol
+# word = 0
+# lemma = maintain
+# stratum = imperative
+Maintain	VERB	unanimous
+an	DET	unanimous
+M9	PROPN	unanimous
+Pistol	NOUN	unanimous
+
+# sent_id = headings2-0004
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Measure Radiation
+# word = 0
+# lemma = measure
+# stratum = imperative
+Measure	VERB	unanimous
+Radiation	NOUN	unanimous
+
+# sent_id = headings2-0005
+# source_id = usda-technologyonfar00unit
+# text = State Game Farms
+# word = 0
+# lemma = state
+# stratum = initial-noun
+State	NOUN	unanimous
+Game	NOUN	unanimous
+Farms	NOUN	unanimous
+
+# sent_id = headings2-0006
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Search a Vehicle for Explosive Devices or Prohibited
+# word = 0
+# lemma = search
+# stratum = imperative
+Search	VERB	unanimous
+a	DET	unanimous
+Vehicle	NOUN	unanimous
+for	ADP	unanimous
+Explosive	ADJ	unanimous
+Devices	NOUN	unanimous
+or	CCONJ	unanimous
+Prohibited	ADJ	unanimous
+
+# sent_id = headings2-0007
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Mount an MK19 Machine Gun on an M3 Tripod
+# word = 0
+# lemma = mount
+# stratum = imperative
+Mount	VERB	unanimous
+an	DET	unanimous
+MK19	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M3	PROPN	unanimous
+Tripod	NOUN	unanimous
+
+# sent_id = headings2-0008
+# source_id = army-tc-21-305-3-training-program-for-the-m-939-series-5-ton-tactical-cargo-truck-1997
+# text = Drive an M939 Series Cargo Truck Off Road
+# word = 0
+# lemma = drive
+# stratum = imperative
+Drive	VERB	unanimous
+an	DET	unanimous
+M939	PROPN	unanimous
+Series	NOUN	unanimous
+Cargo	NOUN	unanimous
+Truck	NOUN	unanimous
+Off	ADP	unanimous
+Road	NOUN	unanimous
+
+# sent_id = headings2-0009
+# source_id = army-tc-21-305-3-training-program-for-the-m-939-series-5-ton-tactical-cargo-truck-1997
+# text = Drive an M939 Series Cargo Truck with Trailer
+# word = 0
+# lemma = drive
+# stratum = imperative
+Drive	VERB	unanimous
+an	DET	unanimous
+M939	PROPN	unanimous
+Series	NOUN	unanimous
+Cargo	NOUN	unanimous
+Truck	NOUN	unanimous
+with	ADP	unanimous
+Trailer	NOUN	unanimous
+
+# sent_id = headings2-0010
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Prepare a Range Card for a Machine Gun
+# word = 0
+# lemma = prepare
+# stratum = imperative
+Prepare	VERB	unanimous
+a	DET	unanimous
+Range	NOUN	unanimous
+Card	NOUN	unanimous
+for	ADP	unanimous
+a	DET	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+
+# sent_id = headings2-0011
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Employ Hand Grenades
+# word = 0
+# lemma = employ
+# stratum = imperative
+Employ	VERB	unanimous
+Hand	NOUN	unanimous
+Grenades	NOUN	unanimous
+
+# sent_id = headings2-0012
+# source_id = other-draftenvironment004unit
+# text = Forage Production By Vegetative Sub-type
+# word = 0
+# lemma = forage
+# stratum = initial-noun
+Forage	NOUN	unanimous
+Production	NOUN	unanimous
+By	ADP	unanimous
+Vegetative	ADJ	unanimous
+Sub-type	NOUN	unanimous
+
+# sent_id = headings2-0013
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Position Yourself in Riot Control Formations
+# word = 0
+# lemma = position
+# stratum = imperative
+Position	VERB	unanimous
+Yourself	PRON	unanimous
+in	ADP	unanimous
+Riot	NOUN	unanimous
+Control	NOUN	unanimous
+Formations	NOUN	unanimous
+
+# sent_id = headings2-0014
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Compute Back AZimuths
+# word = 0
+# lemma = compute
+# stratum = imperative
+Compute	VERB	unanimous
+Back	ADJ	unanimous
+AZimuths	NOUN	unanimous
+
+# sent_id = headings2-0015
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2006
+# text = Supervise an Installation Access Control Point
+# word = 0
+# lemma = supervise
+# stratum = imperative
+Supervise	VERB	unanimous
+an	DET	unanimous
+Installation	NOUN	unanimous
+Access	NOUN	unanimous
+Control	NOUN	unanimous
+Point	NOUN	unanimous
+
+# sent_id = headings2-0016
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Supervise the Implementation of Air Defense
+# word = 0
+# lemma = supervise
+# stratum = imperative
+Supervise	VERB	unanimous
+the	DET	unanimous
+Implementation	NOUN	unanimous
+of	ADP	unanimous
+Air	NOUN	unanimous
+Defense	NOUN	unanimous
+
+# sent_id = headings2-0017
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2009
+# text = Dismount an M240B Machine Gun from an M122A1
+# word = 0
+# lemma = dismount
+# stratum = imperative
+Dismount	VERB	unanimous
+an	DET	unanimous
+M240B	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+from	ADP	unanimous
+an	DET	unanimous
+M122A1	PROPN	unanimous
+
+# sent_id = headings2-0018
+# source_id = usda-CAT77680964
+# text = Field Observations
+# word = 0
+# lemma = field
+# stratum = initial-noun
+Field	NOUN	unanimous
+Observations	NOUN	unanimous
+
+# sent_id = headings2-0019
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2009
+# text = Mount an M240B Machine Gun on an M122A1
+# word = 0
+# lemma = mount
+# stratum = imperative
+Mount	VERB	unanimous
+an	DET	unanimous
+M240B	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M122A1	PROPN	unanimous
+
+# sent_id = headings2-0020
+# source_id = phs-ohioriverpollu0unit
+# text = Paper Machine
+# word = 0
+# lemma = paper
+# stratum = initial-noun
+Paper	NOUN	unanimous
+Machine	NOUN	unanimous
+
+# sent_id = headings2-0021
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Challenge Persons Entering Your Area
+# word = 0
+# lemma = challenge
+# stratum = imperative
+Challenge	VERB	unanimous
+Persons	NOUN	unanimous
+Entering	VERB	unanimous
+Your	DET	unanimous
+Area	NOUN	unanimous
+
+# sent_id = headings2-0022
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2017
+# text = Apply a Hemostatic Dressing
+# word = 0
+# lemma = apply
+# stratum = imperative
+Apply	VERB	unanimous
+a	DET	unanimous
+Hemostatic	ADJ	unanimous
+Dressing	NOUN	unanimous
+
+# sent_id = headings2-0023
+# source_id = army-soldiersmanualof00unit
+# text = Determine The Grid Coordinates
+# word = 0
+# lemma = determine
+# stratum = imperative
+Determine	VERB	unanimous
+The	DET	unanimous
+Grid	NOUN	unanimous
+Coordinates	NOUN	unanimous
+
+# sent_id = headings2-0024
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Enforce the Uniform Code of Military Justice
+# word = 0
+# lemma = enforce
+# stratum = imperative
+Enforce	VERB	unanimous
+the	DET	unanimous
+Uniform	PROPN	unanimous
+Code	PROPN	unanimous
+of	ADP	unanimous
+Military	PROPN	unanimous
+Justice	PROPN	unanimous
+
+# sent_id = headings2-0025
+# source_id = army-tc-3-20.97-reconnaissance-troop-collective-task-publication-2013
+# text = Implement Measures to Prevent Fratricide
+# word = 0
+# lemma = implement
+# stratum = imperative
+Implement	VERB	unanimous
+Measures	NOUN	unanimous
+to	PART	unanimous
+Prevent	VERB	unanimous
+Fratricide	NOUN	unanimous
+
+# sent_id = headings2-0026
+# source_id = airforce-f-4e-1-flight-manual
+# text = Mission Fuel and Distance
+# word = 0
+# lemma = mission
+# stratum = initial-noun
+Mission	NOUN	unanimous
+Fuel	NOUN	unanimous
+and	CCONJ	unanimous
+Distance	NOUN	unanimous
+
+# sent_id = headings2-0027
+# source_id = army-stp-7-11-b-1-infantry-sl-1-2004
+# text = Prepare the Chemical Agent Monitor for Operation
+# word = 0
+# lemma = prepare
+# stratum = imperative
+Prepare	VERB	unanimous
+the	DET	unanimous
+Chemical	ADJ	unanimous
+Agent	NOUN	unanimous
+Monitor	NOUN	unanimous
+for	ADP	unanimous
+Operation	NOUN	unanimous
+
+# sent_id = headings2-0028
+# source_id = army-tradoc-pam-350-16-heavy-opposing-force-opfor-tactical-handbook-1994
+# text = March Under Special Conditions
+# word = 0
+# lemma = march
+# stratum = imperative
+March	VERB	unanimous
+Under	ADP	unanimous
+Special	ADJ	unanimous
+Conditions	NOUN	unanimous
+
+# sent_id = headings2-0029
+# source_id = phs-ohioriverpollu0unit
+# text = Oil Refinery Waste - Classification of Substances
+# word = 0
+# lemma = oil
+# stratum = initial-noun
+Oil	NOUN	unanimous
+Refinery	NOUN	unanimous
+Waste	NOUN	unanimous
+-	PUNCT	unanimous
+Classification	NOUN	unanimous
+of	ADP	unanimous
+Substances	NOUN	unanimous
+
+# sent_id = headings2-0030
+# source_id = usfs-woodyplantseedma654unit
+# text = Transplant Stock
+# word = 0
+# lemma = transplant
+# stratum = initial-noun
+Transplant	NOUN	unanimous
+Stock	NOUN	unanimous
+
+# sent_id = headings2-0031
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2006
+# text = Supervise the Evacuation of Dislocated Civilians
+# word = 0
+# lemma = supervise
+# stratum = imperative
+Supervise	VERB	unanimous
+the	DET	unanimous
+Evacuation	NOUN	unanimous
+of	ADP	unanimous
+Dislocated	ADJ	unanimous
+Civilians	NOUN	unanimous
+
+# sent_id = headings2-0032
+# source_id = army-tc-21-305-5-training-program-for-equipment-transporters-c-het-met-and-let-1991
+# text = Drive a Loaded Vehicle on Improved (Primary) Roads
+# word = 0
+# lemma = drive
+# stratum = imperative
+Drive	VERB	unanimous
+a	DET	unanimous
+Loaded	ADJ	unanimous
+Vehicle	NOUN	unanimous
+on	ADP	unanimous
+Improved	ADJ	unanimous
+(	PUNCT	unanimous
+Primary	ADJ	unanimous
+)	PUNCT	unanimous
+Roads	NOUN	unanimous
+
+# sent_id = headings2-0033
+# source_id = army-stp-10-92-g-25-cook-sl-2-5-2004
+# text = Supervise the Receipt and Storage of Subsistence Items
+# word = 0
+# lemma = supervise
+# stratum = imperative
+Supervise	VERB	unanimous
+the	DET	unanimous
+Receipt	NOUN	unanimous
+and	CCONJ	unanimous
+Storage	NOUN	unanimous
+of	ADP	unanimous
+Subsistence	NOUN	unanimous
+Items	NOUN	unanimous
+
+# sent_id = headings2-0034
+# source_id = army-tc3-21-75
+# text = Read Direction to Target
+# word = 0
+# lemma = read
+# stratum = imperative
+Read	VERB	unanimous
+Direction	NOUN	unanimous
+to	ADP	unanimous
+Target	NOUN	unanimous
+
+# sent_id = headings2-0035
+# source_id = army-tc-21-305-5-training-program-for-equipment-transporters-c-het-met-and-let-1991
+# text = Couple Semitrailer
+# word = 0
+# lemma = couple
+# stratum = imperative
+Couple	VERB	unanimous
+Semitrailer	NOUN	unanimous
+
+# sent_id = headings2-0036
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2009
+# text = Search an Individual
+# word = 0
+# lemma = search
+# stratum = imperative
+Search	VERB	unanimous
+an	DET	unanimous
+Individual	NOUN	unanimous
+
+# sent_id = headings2-0037
+# source_id = army-soldiersmanualof00unit
+# text = Put The Chemical Agent
+# word = 0
+# lemma = put
+# stratum = imperative
+Put	VERB	unanimous
+The	DET	unanimous
+Chemical	ADJ	unanimous
+Agent	NOUN	unanimous
+
+# sent_id = headings2-0038
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Start an Intravenous Infusion
+# word = 0
+# lemma = start
+# stratum = imperative
+Start	VERB	unanimous
+an	DET	unanimous
+Intravenous	ADJ	unanimous
+Infusion	NOUN	unanimous
+
+# sent_id = headings2-0039
+# source_id = army-stp-7-11-b-24-sm-tg-infantry-sl-2-4-2004
+# text = Conduct a Breach a Minefield
+# word = 0
+# lemma = conduct
+# stratum = imperative
+Conduct	VERB	unanimous
+a	DET	unanimous
+Breach	NOUN	unanimous
+a	DET	unanimous
+Minefield	NOUN	unanimous
+
+# sent_id = headings2-0040
+# source_id = army-TM5-1168
+# text = Screw Drivers
+# word = 0
+# lemma = screw
+# stratum = initial-noun
+Screw	NOUN	unanimous
+Drivers	NOUN	unanimous
+
+# sent_id = headings2-0041
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Store Classified Information and Materials
+# word = 0
+# lemma = store
+# stratum = imperative
+Store	VERB	unanimous
+Classified	ADJ	unanimous
+Information	NOUN	unanimous
+and	CCONJ	unanimous
+Materials	NOUN	unanimous
+
+# sent_id = headings2-0042
+# source_id = usda-CAT11100012
+# text = Change Orders
+# word = 0
+# lemma = change
+# stratum = initial-noun
+Change	NOUN	unanimous
+Orders	NOUN	unanimous
+
+# sent_id = headings2-0043
+# source_id = usda-CAT78700064
+# text = Field Sample and Test Specimen Requirements
+# word = 0
+# lemma = field
+# stratum = initial-noun
+Field	NOUN	unanimous
+Sample	NOUN	unanimous
+and	CCONJ	unanimous
+Test	NOUN	unanimous
+Specimen	NOUN	unanimous
+Requirements	NOUN	unanimous
+
+# sent_id = headings2-0044
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Load an MK19 Machine
+# word = 0
+# lemma = load
+# stratum = imperative
+Load	VERB	unanimous
+an	DET	unanimous
+MK19	PROPN	unanimous
+Machine	NOUN	unanimous
+
+# sent_id = headings2-0045
+# source_id = army-fm-3-19.4-military-police-leaders-haandbook-2002
+# text = Air Base Defense
+# word = 0
+# lemma = air
+# stratum = initial-noun
+Air	NOUN	unanimous
+Base	NOUN	unanimous
+Defense	NOUN	unanimous
+
+# sent_id = headings2-0046
+# source_id = airforce-f-4e-1-flight-manual
+# text = Combat Fuel Flow
+# word = 0
+# lemma = combat
+# stratum = initial-noun
+Combat	NOUN	unanimous
+Fuel	NOUN	unanimous
+Flow	NOUN	unanimous
+
+# sent_id = headings2-0047
+# source_id = phs-ohioriverpollu0unit
+# text = Slop Effluents
+# word = 0
+# lemma = slop
+# stratum = initial-noun
+Slop	NOUN	unanimous
+Effluents	NOUN	unanimous
+
+# sent_id = headings2-0048
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2008
+# text = Counsel a Subordinate
+# word = 0
+# lemma = counsel
+# stratum = imperative
+Counsel	VERB	unanimous
+a	DET	unanimous
+Subordinate	NOUN	unanimous
+
+# sent_id = headings2-0049
+# source_id = army-stp-7-11-b-1-infantry-sl-1-2004
+# text = Use the Chemical Agent MOnitor
+# word = 0
+# lemma = use
+# stratum = imperative
+Use	VERB	unanimous
+the	DET	unanimous
+Chemical	ADJ	unanimous
+Agent	NOUN	unanimous
+MOnitor	NOUN	unanimous
+
+# sent_id = headings2-0050
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Enforce the Equal Opportunity Program
+# word = 0
+# lemma = enforce
+# stratum = imperative
+Enforce	VERB	unanimous
+the	DET	unanimous
+Equal	ADJ	unanimous
+Opportunity	NOUN	unanimous
+Program	NOUN	unanimous
+
+# sent_id = headings2-0051
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Boresight an M68 Sight
+# word = 0
+# lemma = boresight
+# stratum = imperative
+Boresight	VERB	unanimous
+an	DET	unanimous
+M68	PROPN	unanimous
+Sight	NOUN	unanimous
+
+# sent_id = headings2-0052
+# source_id = marine-fmfm08unit
+# text = Field Radio Techniques
+# word = 0
+# lemma = field
+# stratum = initial-noun
+Field	NOUN	unanimous
+Radio	NOUN	unanimous
+Techniques	NOUN	unanimous
+
+# sent_id = headings2-0053
+# source_id = army-tc-21-305-5-training-program-for-equipment-transporters-c-het-met-and-let-1991
+# text = Back a Loaded Vehicle
+# word = 0
+# lemma = back
+# stratum = imperative
+Back	VERB	unanimous
+a	DET	unanimous
+Loaded	ADJ	unanimous
+Vehicle	NOUN	unanimous
+
+# sent_id = headings2-0054
+# source_id = usda-pricespreadsbetw576unit
+# text = Grade Beef Cattle
+# word = 0
+# lemma = grade
+# stratum = imperative
+Grade	VERB	unanimous
+Beef	NOUN	unanimous
+Cattle	NOUN	unanimous
+
+# sent_id = headings2-0055
+# source_id = phs-ohioriverpollu0unit
+# text = Yeast Room
+# word = 0
+# lemma = yeast
+# stratum = initial-noun
+Yeast	NOUN	unanimous
+Room	NOUN	unanimous
+
+# sent_id = headings2-0056
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Restore an M136 Launcher to Carrying Configuration
+# word = 0
+# lemma = restore
+# stratum = imperative
+Restore	VERB	unanimous
+an	DET	unanimous
+M136	PROPN	unanimous
+Launcher	NOUN	unanimous
+to	ADP	unanimous
+Carrying	NOUN	unanimous
+Configuration	NOUN	unanimous
+
+# sent_id = headings2-0057
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2006
+# text = Reorganize a Unit
+# word = 0
+# lemma = reorganize
+# stratum = imperative
+Reorganize	VERB	unanimous
+a	DET	unanimous
+Unit	NOUN	unanimous
+
+# sent_id = headings2-0058
+# source_id = army-stp-7-11-b-24-sm-tg-infantry-sl-2-4-2004
+# text = Establish a Tactical Operations Center
+# word = 0
+# lemma = establish
+# stratum = imperative
+Establish	VERB	unanimous
+a	DET	unanimous
+Tactical	ADJ	unanimous
+Operations	NOUN	unanimous
+Center	NOUN	unanimous
+
+# sent_id = headings2-0059
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Load an M9 Pistol
+# word = 0
+# lemma = load
+# stratum = imperative
+Load	VERB	unanimous
+an	DET	unanimous
+M9	PROPN	unanimous
+Pistol	NOUN	unanimous
+
+# sent_id = headings2-0060
+# source_id = army-TM9-2660
+# text = Figure Title Page
+# word = 0
+# lemma = figure
+# stratum = initial-noun
+Figure	NOUN	unanimous
+Title	NOUN	unanimous
+Page	NOUN	unanimous
+
+# sent_id = headings2-0061
+# source_id = army-tc3-21-75
+# text = Open Obstructed Airway, Casualty Lying Down or Unresponsive
+# word = 0
+# lemma = open
+# stratum = imperative
+Open	VERB	unanimous
+Obstructed	ADJ	unanimous
+Airway	NOUN	unanimous
+,	PUNCT	unanimous
+Casualty	NOUN	unanimous
+Lying	VERB	unanimous
+Down	ADV	unanimous
+or	CCONJ	unanimous
+Unresponsive	ADJ	unanimous
+
+# sent_id = headings2-0062
+# source_id = usfs-CAT93511129
+# text = Forest Supervisor
+# word = 0
+# lemma = forest
+# stratum = initial-noun
+Forest	NOUN	unanimous
+Supervisor	NOUN	unanimous
+
+# sent_id = headings2-0063
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Zero an MK19 Machine Gun
+# word = 0
+# lemma = zero
+# stratum = imperative
+Zero	VERB	unanimous
+an	DET	unanimous
+MK19	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+
+# sent_id = headings2-0064
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Unload an M240B Machine
+# word = 0
+# lemma = unload
+# stratum = imperative
+Unload	VERB	unanimous
+an	DET	unanimous
+M240B	PROPN	unanimous
+Machine	NOUN	unanimous
+
+# sent_id = headings2-0065
+# source_id = army-tc-7-100.4-hybrid-threat-force-structure-organization-guide-2015
+# text = Identify the BaSe UNlit
+# word = 0
+# lemma = identify
+# stratum = imperative
+Identify	VERB	unanimous
+the	DET	unanimous
+BaSe	NOUN	unanimous
+UNlit	NOUN	unanimous
+
+# sent_id = headings2-0066
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2008
+# text = Resolve an Ethical Problem
+# word = 0
+# lemma = resolve
+# stratum = imperative
+Resolve	VERB	unanimous
+an	DET	unanimous
+Ethical	ADJ	unanimous
+Problem	NOUN	unanimous
+
+# sent_id = headings2-0067
+# source_id = army-tc-7-100.4-hybrid-threat-force-structure-organization-guide-2015
+# text = Construct the Task OrganiZation
+# word = 0
+# lemma = construct
+# stratum = imperative
+Construct	VERB	unanimous
+the	DET	unanimous
+Task	NOUN	unanimous
+OrganiZation	NOUN	unanimous
+
+# sent_id = headings2-0068
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Conduct a Mask Fit TeSt
+# word = 0
+# lemma = conduct
+# stratum = imperative
+Conduct	VERB	unanimous
+a	DET	unanimous
+Mask	NOUN	unanimous
+Fit	NOUN	unanimous
+TeSt	NOUN	unanimous
+
+# sent_id = headings2-0069
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Issue a Fragmentary Order
+# word = 0
+# lemma = issue
+# stratum = imperative
+Issue	VERB	unanimous
+a	DET	unanimous
+Fragmentary	ADJ	unanimous
+Order	NOUN	unanimous
+
+# sent_id = headings2-0070
+# source_id = army-tc-21-305-20-manual-for-the-wheeled-vehicle-operator-2016
+# text = Enter a Multi-Lane Highway
+# word = 0
+# lemma = enter
+# stratum = imperative
+Enter	VERB	unanimous
+a	DET	unanimous
+Multi-Lane	ADJ	unanimous
+Highway	NOUN	unanimous
+
+# sent_id = headings2-0071
+# source_id = usda-technologyonfar00unit
+# text = Cotton Insects
+# word = 0
+# lemma = cotton
+# stratum = initial-noun
+Cotton	NOUN	unanimous
+Insects	NOUN	unanimous
+
+# sent_id = headings2-0072
+# source_id = army-reconnaissancere00unitrich
+# text = Gravel Mining Operations
+# word = 0
+# lemma = gravel
+# stratum = initial-noun
+Gravel	NOUN	unanimous
+Mining	NOUN	unanimous
+Operations	NOUN	unanimous
+
+# sent_id = headings2-0073
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Report Casualties
+# word = 0
+# lemma = report
+# stratum = imperative
+Report	VERB	unanimous
+Casualties	NOUN	unanimous
+
+# sent_id = headings2-0074
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2009
+# text = Zero aN M68 Sight
+# word = 0
+# lemma = zero
+# stratum = imperative
+Zero	VERB	unanimous
+aN	DET	unanimous
+M68	PROPN	unanimous
+Sight	NOUN	unanimous
+
+# sent_id = headings2-0075
+# source_id = usda-pricespreadsbetw576unit
+# text = Corn Sirup
+# word = 0
+# lemma = corn
+# stratum = initial-noun
+Corn	NOUN	unanimous
+Sirup	NOUN	unanimous
+
+# sent_id = headings2-0076
+# source_id = army-stp-7-11-b-24-sm-tg-infantry-sl-2-4-2004
+# text = Locate a Target by Polar Plot
+# word = 0
+# lemma = locate
+# stratum = imperative
+Locate	VERB	unanimous
+a	DET	unanimous
+Target	NOUN	unanimous
+by	ADP	unanimous
+Polar	ADJ	unanimous
+Plot	NOUN	unanimous
+
+# sent_id = headings2-0077
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2009
+# text = Perform a Function Check on an M4 or M4A1 Carbine
+# word = 0
+# lemma = perform
+# stratum = imperative
+Perform	VERB	unanimous
+a	DET	unanimous
+Function	NOUN	unanimous
+Check	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M4	PROPN	unanimous
+or	CCONJ	unanimous
+M4A1	PROPN	unanimous
+Carbine	NOUN	unanimous
+
+# sent_id = headings2-0078
+# source_id = army-TM5-1168
+# text = Point Sheaves
+# word = 0
+# lemma = point
+# stratum = initial-noun
+Point	NOUN	unanimous
+Sheaves	NOUN	unanimous
+
+# sent_id = headings2-0079
+# source_id = army-survival-atp-3-50-21
+# text = Jaw Thrust Method
+# word = 0
+# lemma = jaw
+# stratum = initial-noun
+Jaw	NOUN	unanimous
+Thrust	NOUN	unanimous
+Method	NOUN	unanimous
+
+# sent_id = headings2-0080
+# source_id = navy-finalreportondev00unit
+# text = Study Methodology
+# word = 0
+# lemma = study
+# stratum = initial-noun
+Study	NOUN	unanimous
+Methodology	NOUN	unanimous
+
+# sent_id = headings2-0081
+# source_id = army-stp-10-92-g-25-cook-sl-2-5-2004
+# text = Administer the Safety and Fire Prevention Program
+# word = 0
+# lemma = administer
+# stratum = imperative
+Administer	VERB	unanimous
+the	DET	unanimous
+Safety	NOUN	unanimous
+and	CCONJ	unanimous
+Fire	NOUN	unanimous
+Prevention	NOUN	unanimous
+Program	NOUN	unanimous
+
+# sent_id = headings2-0082
+# source_id = army-fm-9-55-x-34-ammunition-inspector-sl-3-4-1977
+# text = Review Class V Maintenance Acceptance Reports
+# word = 0
+# lemma = review
+# stratum = imperative
+Review	VERB	unanimous
+Class	NOUN	unanimous
+V	NUM	unanimous
+Maintenance	NOUN	unanimous
+Acceptance	NOUN	unanimous
+Reports	NOUN	unanimous
+
+# sent_id = headings2-0083
+# source_id = phs-austeremedicalca00unit
+# text = Start Artificial Respiration Immediately
+# word = 0
+# lemma = start
+# stratum = imperative
+Start	VERB	unanimous
+Artificial	ADJ	unanimous
+Respiration	NOUN	unanimous
+Immediately	ADV	unanimous
+
+# sent_id = headings2-0084
+# source_id = army-reconnaissancere00unitrich
+# text = Slope Protection
+# word = 0
+# lemma = slope
+# stratum = initial-noun
+Slope	NOUN	unanimous
+Protection	NOUN	unanimous
+
+# sent_id = headings2-0085
+# source_id = army-fm-3-7-nbc-field-handbook-1994
+# text = Flame Field Expedients
+# word = 0
+# lemma = flame
+# stratum = initial-noun
+Flame	NOUN	unanimous
+Field	NOUN	unanimous
+Expedients	NOUN	unanimous
+
+# sent_id = headings2-0086
+# source_id = army-tc-21-305-3-training-program-for-the-m-939-series-5-ton-tactical-cargo-truck-1997
+# text = Remove the Front Wheel Valve from the M939A2 Series Vehicle
+# word = 0
+# lemma = remove
+# stratum = imperative
+Remove	VERB	unanimous
+the	DET	unanimous
+Front	ADJ	unanimous
+Wheel	NOUN	unanimous
+Valve	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+M939A2	PROPN	unanimous
+Series	NOUN	unanimous
+Vehicle	NOUN	unanimous
+
+# sent_id = headings2-0087
+# source_id = army-fm-9-55-x-34-ammunition-inspector-sl-3-4-1977
+# text = Surface Attack and Practice MGM-MTM-51 A, B
+# word = 0
+# lemma = surface
+# stratum = initial-noun
+Surface	NOUN	unanimous
+Attack	NOUN	unanimous
+and	CCONJ	unanimous
+Practice	NOUN	unanimous
+MGM-MTM-51	PROPN	unanimous
+A	X	unanimous
+,	PUNCT	unanimous
+B	X	unanimous
+
+# sent_id = headings2-0088
+# source_id = army-soldiersmanualof00unit
+# text = Give First Aid For Heat
+# word = 0
+# lemma = give
+# stratum = imperative
+Give	VERB	unanimous
+First	ADJ	unanimous
+Aid	NOUN	unanimous
+For	ADP	unanimous
+Heat	NOUN	unanimous
+
+# sent_id = headings2-0089
+# source_id = navy-personnelrequire00unit
+# text = Fire Protection
+# word = 0
+# lemma = fire
+# stratum = initial-noun
+Fire	NOUN	unanimous
+Protection	NOUN	unanimous
+
+# sent_id = headings2-0090
+# source_id = army-tc-3-20.97-reconnaissance-troop-collective-task-publication-2013
+# text = Perform a Map Reconnaissance
+# word = 0
+# lemma = perform
+# stratum = imperative
+Perform	VERB	unanimous
+a	DET	unanimous
+Map	NOUN	unanimous
+Reconnaissance	NOUN	unanimous
+
+# sent_id = headings2-0091
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Prepare an M136 Launcher for Firing
+# word = 0
+# lemma = prepare
+# stratum = imperative
+Prepare	VERB	unanimous
+an	DET	unanimous
+M136	PROPN	unanimous
+Launcher	NOUN	unanimous
+for	ADP	unanimous
+Firing	VERB	unanimous
+
+# sent_id = headings2-0092
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Dismount an MK19 Machine Gun from an M3 Tripod
+# word = 0
+# lemma = dismount
+# stratum = imperative
+Dismount	VERB	unanimous
+an	DET	unanimous
+MK19	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+from	ADP	unanimous
+an	DET	unanimous
+M3	PROPN	unanimous
+Tripod	NOUN	unanimous
+
+# sent_id = headings2-0093
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Implement the Unit's Crime Prevention Program
+# word = 0
+# lemma = implement
+# stratum = imperative
+Implement	VERB	unanimous
+the	DET	unanimous
+Unit	NOUN	unanimous
+'s	PART	unanimous
+Crime	NOUN	unanimous
+Prevention	NOUN	unanimous
+Program	NOUN	unanimous
+
+# sent_id = headings2-0094
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Give First Aid For Burns
+# word = 0
+# lemma = give
+# stratum = imperative
+Give	VERB	unanimous
+First	ADJ	unanimous
+Aid	NOUN	unanimous
+For	ADP	unanimous
+Burns	NOUN	unanimous
+
+# sent_id = headings2-0095
+# source_id = usda-CAT78700064
+# text = Channel Crossings
+# word = 0
+# lemma = channel
+# stratum = initial-noun
+Channel	NOUN	unanimous
+Crossings	NOUN	unanimous
+
+# sent_id = headings2-0096
+# source_id = army-military-mountaineering-tc-3-97.61-november-2025
+# text = Knot Tying Considerations
+# word = 0
+# lemma = knot
+# stratum = initial-noun
+Knot	NOUN	unanimous
+Tying	NOUN	unanimous
+Considerations	NOUN	unanimous
+
+# sent_id = headings2-0097
+# source_id = army-tc-1-251-aircrew-training-manual-ah-64-d
+# text = Plan an Instrument Flight Rules Flight
+# word = 0
+# lemma = plan
+# stratum = imperative
+Plan	VERB	unanimous
+an	DET	unanimous
+Instrument	NOUN	unanimous
+Flight	NOUN	unanimous
+Rules	NOUN	unanimous
+Flight	NOUN	unanimous
+
+# sent_id = headings2-0098
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2008
+# text = Develop an Effective Team
+# word = 0
+# lemma = develop
+# stratum = imperative
+Develop	VERB	unanimous
+an	DET	unanimous
+Effective	ADJ	unanimous
+Team	NOUN	unanimous
+
+# sent_id = headings2-0099
+# source_id = usda-CAT31113260
+# text = Ground Water
+# word = 0
+# lemma = ground
+# stratum = initial-noun
+Ground	NOUN	unanimous
+Water	NOUN	unanimous
+
+# sent_id = headings2-0100
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Report Information of Potential Intelligence Value
+# word = 0
+# lemma = report
+# stratum = imperative
+Report	VERB	unanimous
+Information	NOUN	unanimous
+of	ADP	unanimous
+Potential	ADJ	unanimous
+Intelligence	NOUN	unanimous
+Value	NOUN	unanimous
+
+# sent_id = headings2-0101
+# source_id = army-fm-9-55-x-34-ammunition-inspector-sl-3-4-1977
+# text = Coordinate Ammunition Malfunction Investigations
+# word = 0
+# lemma = coordinate
+# stratum = imperative
+Coordinate	VERB	unanimous
+Ammunition	NOUN	unanimous
+Malfunction	NOUN	unanimous
+Investigations	NOUN	unanimous
+
+# sent_id = headings2-0102
+# source_id = army-stp-7-11-b-24-sm-tg-infantry-sl-2-4-2004
+# text = Guide a Helicopter to a Landing Point
+# word = 0
+# lemma = guide
+# stratum = imperative
+Guide	VERB	unanimous
+a	DET	unanimous
+Helicopter	NOUN	unanimous
+to	ADP	unanimous
+a	DET	unanimous
+Landing	NOUN	unanimous
+Point	NOUN	unanimous
+
+# sent_id = headings2-0103
+# source_id = army-stp-7-11-b-24-sm-tg-infantry-sl-2-4-2004
+# text = Conduct an Attack by a Platoon
+# word = 0
+# lemma = conduct
+# stratum = imperative
+Conduct	VERB	unanimous
+an	DET	unanimous
+Attack	NOUN	unanimous
+by	ADP	unanimous
+a	DET	unanimous
+Platoon	NOUN	unanimous
+
+# sent_id = headings2-0104
+# source_id = usda-CAT10682559
+# text = Soil Conservation (Monthly)
+# word = 0
+# lemma = soil
+# stratum = initial-noun
+Soil	NOUN	unanimous
+Conservation	NOUN	unanimous
+(	PUNCT	unanimous
+Monthly	ADJ	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings2-0105
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2009
+# text = Prepare a Range Card for a Machine Guna
+# word = 0
+# lemma = prepare
+# stratum = imperative
+Prepare	VERB	unanimous
+a	DET	unanimous
+Range	NOUN	unanimous
+Card	NOUN	unanimous
+for	ADP	unanimous
+a	DET	unanimous
+Machine	NOUN	unanimous
+Guna	NOUN	unanimous
+
+# sent_id = headings2-0106
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Unload an MK19 Machine
+# word = 0
+# lemma = unload
+# stratum = imperative
+Unload	VERB	unanimous
+an	DET	unanimous
+MK19	PROPN	unanimous
+Machine	NOUN	unanimous
+
+# sent_id = headings2-0107
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2006
+# text = Supervise the Processing
+# word = 0
+# lemma = supervise
+# stratum = imperative
+Supervise	VERB	unanimous
+the	DET	unanimous
+Processing	NOUN	unanimous
+
+# sent_id = headings2-0108
+# source_id = usda-CAT10682559
+# text = Mail Room Equipment
+# word = 0
+# lemma = mail
+# stratum = initial-noun
+Mail	NOUN	unanimous
+Room	NOUN	unanimous
+Equipment	NOUN	unanimous
+
+# sent_id = headings2-0109
+# source_id = phs-ohioriverpollu0unit
+# text = Paper Making
+# word = 0
+# lemma = paper
+# stratum = initial-noun
+Paper	NOUN	unanimous
+Making	NOUN	unanimous
+
+# sent_id = headings2-0110
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Report Enemy Information
+# word = 0
+# lemma = report
+# stratum = imperative
+Report	VERB	unanimous
+Enemy	NOUN	unanimous
+Information	NOUN	unanimous
+
+# sent_id = headings2-0111
+# source_id = phs-ohioriverpollu0unit
+# text = Tan Yard Wastes
+# word = 0
+# lemma = tan
+# stratum = initial-noun
+Tan	NOUN	unanimous
+Yard	NOUN	unanimous
+Wastes	NOUN	unanimous
+
+# sent_id = headings2-0112
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Load an M4 or M4A1 Carbine
+# word = 0
+# lemma = load
+# stratum = imperative
+Load	VERB	unanimous
+an	DET	unanimous
+M4	PROPN	unanimous
+or	CCONJ	unanimous
+M4A1	PROPN	unanimous
+Carbine	NOUN	unanimous
+
+# sent_id = headings2-0113
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Operate an M68 Sight
+# word = 0
+# lemma = operate
+# stratum = imperative
+Operate	VERB	unanimous
+an	DET	unanimous
+M68	PROPN	unanimous
+Sight	NOUN	unanimous
+
+# sent_id = headings2-0114
+# source_id = army-stp-7-11-b-24-sm-tg-infantry-sl-2-4-2004
+# text = Control Movement of a Fire Team
+# word = 0
+# lemma = control
+# stratum = imperative
+Control	VERB	unanimous
+Movement	NOUN	unanimous
+of	ADP	unanimous
+a	DET	unanimous
+Fire	NOUN	unanimous
+Team	NOUN	unanimous
+
+# sent_id = headings2-0115
+# source_id = marine-fmfm63unit
+# text = Transfer From Landing Craft to Assault Amphibious
+# word = 0
+# lemma = transfer
+# stratum = imperative
+Transfer	VERB	unanimous
+From	ADP	unanimous
+Landing	NOUN	unanimous
+Craft	NOUN	unanimous
+to	ADP	unanimous
+Assault	NOUN	unanimous
+Amphibious	ADJ	unanimous
+
+# sent_id = headings2-0116
+# source_id = army-fm-9-55-x-34-ammunition-inspector-sl-3-4-1977
+# text = Process a Status Change of a Suspension from Temporary
+# word = 0
+# lemma = process
+# stratum = imperative
+Process	VERB	unanimous
+a	DET	unanimous
+Status	NOUN	unanimous
+Change	NOUN	unanimous
+of	ADP	unanimous
+a	DET	unanimous
+Suspension	NOUN	unanimous
+from	ADP	unanimous
+Temporary	ADJ	unanimous
+
+# sent_id = headings2-0117
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2006
+# text = Develop a Company Physical Security Plan
+# word = 0
+# lemma = develop
+# stratum = imperative
+Develop	VERB	unanimous
+a	DET	unanimous
+Company	NOUN	unanimous
+Physical	ADJ	unanimous
+Security	NOUN	unanimous
+Plan	NOUN	unanimous
+
+# sent_id = headings2-0118
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Send A Radio Message
+# word = 0
+# lemma = send
+# stratum = imperative
+Send	VERB	unanimous
+A	DET	unanimous
+Radio	NOUN	unanimous
+Message	NOUN	unanimous
+
+# sent_id = headings2-0119
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Control Entry to and Exit from a Restricted Area
+# word = 0
+# lemma = control
+# stratum = imperative
+Control	VERB	unanimous
+Entry	NOUN	unanimous
+to	ADP	unanimous
+and	CCONJ	unanimous
+Exit	NOUN	unanimous
+from	ADP	unanimous
+a	DET	unanimous
+Restricted	ADJ	unanimous
+Area	NOUN	unanimous
+
+# sent_id = headings2-0120
+# source_id = army-fm-3-21.75-the-warrior-ethos-and-soldier-combat-skills-2008
+# text = Read Back
+# word = 0
+# lemma = read
+# stratum = imperative
+Read	VERB	unanimous
+Back	ADV	unanimous
+
+# sent_id = headings2-0121
+# source_id = usda-pricespreadsbetw576unit
+# text = Price Spreads Cover Varying Quantities of Marketing Services
+# word = 0
+# lemma = price
+# stratum = initial-noun
+Price	NOUN	unanimous
+Spreads	NOUN	unanimous
+Cover	VERB	unanimous
+Varying	VERB	unanimous
+Quantities	NOUN	unanimous
+of	ADP	unanimous
+Marketing	NOUN	unanimous
+Services	NOUN	unanimous
+
+# sent_id = headings2-0122
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Implement the Unit's
+# word = 0
+# lemma = implement
+# stratum = imperative
+Implement	VERB	unanimous
+the	DET	unanimous
+Unit	NOUN	unanimous
+'s	PART	unanimous
+
+# sent_id = headings2-0123
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Clear A Field Of Fire
+# word = 0
+# lemma = clear
+# stratum = imperative
+Clear	VERB	unanimous
+A	DET	unanimous
+Field	NOUN	unanimous
+Of	ADP	unanimous
+Fire	NOUN	unanimous
+
+# sent_id = headings2-0124
+# source_id = army-stp-10-92-g-25-cook-sl-2-5-2004
+# text = Field Kitchen Operations
+# word = 0
+# lemma = field
+# stratum = initial-noun
+Field	NOUN	unanimous
+Kitchen	NOUN	unanimous
+Operations	NOUN	unanimous
+
+# sent_id = headings2-0125
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Maintain an M60 Machine
+# word = 0
+# lemma = maintain
+# stratum = imperative
+Maintain	VERB	unanimous
+an	DET	unanimous
+M60	PROPN	unanimous
+Machine	NOUN	unanimous
+
+# sent_id = headings2-0126
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Enter a Building During an Urban Operation
+# word = 0
+# lemma = enter
+# stratum = imperative
+Enter	VERB	unanimous
+a	DET	unanimous
+Building	NOUN	unanimous
+During	ADP	unanimous
+an	DET	unanimous
+Urban	ADJ	unanimous
+Operation	NOUN	unanimous
+
+# sent_id = headings2-0127
+# source_id = army-tc-21-305-3-training-program-for-the-m-939-series-5-ton-tactical-cargo-truck-1997
+# text = Drive an M939 Series Cargo Truck
+# word = 0
+# lemma = drive
+# stratum = imperative
+Drive	VERB	unanimous
+an	DET	unanimous
+M939	PROPN	unanimous
+Series	NOUN	unanimous
+Cargo	NOUN	unanimous
+Truck	NOUN	unanimous
+
+# sent_id = headings2-0128
+# source_id = usda-CAT10682559
+# text = State Work Sheets
+# word = 0
+# lemma = state
+# stratum = initial-noun
+State	NOUN	unanimous
+Work	NOUN	unanimous
+Sheets	NOUN	unanimous
+
+# sent_id = headings2-0129
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Evaluate A Casualty
+# word = 0
+# lemma = evaluate
+# stratum = imperative
+Evaluate	VERB	unanimous
+A	DET	unanimous
+Casualty	NOUN	unanimous
+
+# sent_id = headings2-0130
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Use a Riot Baton
+# word = 0
+# lemma = use
+# stratum = imperative
+Use	VERB	unanimous
+a	DET	unanimous
+Riot	NOUN	unanimous
+Baton	NOUN	unanimous
+
+# sent_id = headings2-0131
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Mine Symbols
+# word = 0
+# lemma = mine
+# stratum = initial-noun
+Mine	NOUN	unanimous
+Symbols	NOUN	unanimous
+
+# sent_id = headings2-0132
+# source_id = army-fm-3-7-nbc-field-handbook-1994
+# text = Fuel Mixing Procedures
+# word = 0
+# lemma = fuel
+# stratum = initial-noun
+Fuel	NOUN	unanimous
+Mixing	NOUN	unanimous
+Procedures	NOUN	unanimous
+
+# sent_id = headings2-0133
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2006
+# text = Enforce the Law of War and the Geneva and Hague
+# word = 0
+# lemma = enforce
+# stratum = imperative
+Enforce	VERB	unanimous
+the	DET	unanimous
+Law	NOUN	unanimous
+of	ADP	unanimous
+War	NOUN	unanimous
+and	CCONJ	unanimous
+the	DET	unanimous
+Geneva	PROPN	unanimous
+and	CCONJ	unanimous
+Hague	PROPN	unanimous
+
+# sent_id = headings2-0134
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Zero all M68 Sight
+# word = 0
+# lemma = zero
+# stratum = imperative
+Zero	VERB	unanimous
+all	DET	unanimous
+M68	PROPN	unanimous
+Sight	NOUN	unanimous
+
+# sent_id = headings2-0135
+# source_id = army-tc-3-20.97-reconnaissance-troop-collective-task-publication-2013
+# text = Identify the Conditions
+# word = 0
+# lemma = identify
+# stratum = imperative
+Identify	VERB	unanimous
+the	DET	unanimous
+Conditions	NOUN	unanimous
+
+# sent_id = headings2-0136
+# source_id = army-fm-3-21.75-the-warrior-ethos-and-soldier-combat-skills-2008
+# text = Value Living
+# word = 0
+# lemma = value
+# stratum = imperative
+Value	VERB	unanimous
+Living	NOUN	unanimous
+
+# sent_id = headings2-0137
+# source_id = navy-personnelrequire00unit
+# text = Guard Companies and Platoons
+# word = 0
+# lemma = guard
+# stratum = initial-noun
+Guard	NOUN	unanimous
+Companies	NOUN	unanimous
+and	CCONJ	unanimous
+Platoons	NOUN	unanimous
+
+# sent_id = headings2-0138
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Search a Commercial Vehicle for Explosive Devices
+# word = 0
+# lemma = search
+# stratum = imperative
+Search	VERB	unanimous
+a	DET	unanimous
+Commercial	ADJ	unanimous
+Vehicle	NOUN	unanimous
+for	ADP	unanimous
+Explosive	ADJ	unanimous
+Devices	NOUN	unanimous
+
+# sent_id = headings2-0139
+# source_id = army-stp-7-11-b-24-sm-tg-infantry-sl-2-4-2004
+# text = Conduct an Attack by a Platoon During an Urban Operation
+# word = 0
+# lemma = conduct
+# stratum = imperative
+Conduct	VERB	unanimous
+an	DET	unanimous
+Attack	NOUN	unanimous
+by	ADP	unanimous
+a	DET	unanimous
+Platoon	NOUN	unanimous
+During	ADP	unanimous
+an	DET	unanimous
+Urban	ADJ	unanimous
+Operation	NOUN	unanimous
+
+# sent_id = headings2-0140
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2008
+# text = Prepare a Duty Roster
+# word = 0
+# lemma = prepare
+# stratum = imperative
+Prepare	VERB	unanimous
+a	DET	unanimous
+Duty	NOUN	unanimous
+Roster	NOUN	unanimous
+
+# sent_id = headings2-0141
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Establish a Saline LOcK
+# word = 0
+# lemma = establish
+# stratum = imperative
+Establish	VERB	unanimous
+a	DET	unanimous
+Saline	ADJ	unanimous
+LOcK	NOUN	unanimous
+
+# sent_id = headings2-0142
+# source_id = army-reconnaissancere00unitrich
+# text = Flood Control
+# word = 0
+# lemma = flood
+# stratum = initial-noun
+Flood	NOUN	unanimous
+Control	NOUN	unanimous
+
+# sent_id = headings2-0143
+# source_id = army-tc-1-251-aircrew-training-manual-ah-64-d
+# text = Plan a Visual Flight Rules Flight
+# word = 0
+# lemma = plan
+# stratum = imperative
+Plan	VERB	unanimous
+a	DET	unanimous
+Visual	ADJ	unanimous
+Flight	NOUN	unanimous
+Rules	NOUN	unanimous
+Flight	NOUN	unanimous
+
+# sent_id = headings2-0144
+# source_id = army-stp-7-11-b-1-infantry-sl-1-2004
+# text = Restore an M202A1 Multishot Rocket Launcher to Carrying Configuration
+# word = 0
+# lemma = restore
+# stratum = imperative
+Restore	VERB	unanimous
+an	DET	unanimous
+M202A1	PROPN	unanimous
+Multishot	ADJ	unanimous
+Rocket	NOUN	unanimous
+Launcher	NOUN	unanimous
+to	ADP	unanimous
+Carrying	NOUN	unanimous
+Configuration	NOUN	unanimous
+
+# sent_id = headings2-0145
+# source_id = other-draftenvironment004unit
+# text = Brush Cutting and Seeding
+# word = 0
+# lemma = brush
+# stratum = initial-noun
+Brush	NOUN	unanimous
+Cutting	NOUN	unanimous
+and	CCONJ	unanimous
+Seeding	NOUN	unanimous
+
+# sent_id = headings2-0146
+# source_id = army-tc-21-305-20-manual-for-the-wheeled-vehicle-operator-2016
+# text = Jump Starting Vehicle
+# word = 0
+# lemma = jump
+# stratum = initial-noun
+Jump	NOUN	unanimous
+Starting	VERB	unanimous
+Vehicle	NOUN	unanimous
+
+# sent_id = headings2-0147
+# source_id = phs-ohioriverpollu0unit
+# text = Bleach Waste
+# word = 0
+# lemma = bleach
+# stratum = initial-noun
+Bleach	NOUN	unanimous
+Waste	NOUN	unanimous
+
+# sent_id = headings2-0148
+# source_id = army-fm-31-11-b-scm-special-forces-commanders-manual-mos-11-b-s-1979
+# text = Ground Surveillance Radar
+# word = 0
+# lemma = ground
+# stratum = initial-noun
+Ground	NOUN	unanimous
+Surveillance	NOUN	unanimous
+Radar	NOUN	unanimous
+
+# sent_id = headings2-0149
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Form the Platoon into a Riot Control Formation
+# word = 0
+# lemma = form
+# stratum = imperative
+Form	VERB	unanimous
+the	DET	unanimous
+Platoon	NOUN	unanimous
+into	ADP	unanimous
+a	DET	unanimous
+Riot	NOUN	unanimous
+Control	NOUN	unanimous
+Formation	NOUN	unanimous
+
+# sent_id = headings2-0150
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Conduct a Defense by a Squad
+# word = 0
+# lemma = conduct
+# stratum = imperative
+Conduct	VERB	unanimous
+a	DET	unanimous
+Defense	NOUN	unanimous
+by	ADP	unanimous
+a	DET	unanimous
+Squad	NOUN	unanimous
+
+# sent_id = headings2-0151
+# source_id = army-tc-7-100.4-hybrid-threat-force-structure-organization-guide-2015
+# text = Determine the Type and Size of Hybrid Threat Units
+# word = 0
+# lemma = determine
+# stratum = imperative
+Determine	VERB	unanimous
+the	DET	unanimous
+Type	NOUN	unanimous
+and	CCONJ	unanimous
+Size	NOUN	unanimous
+of	ADP	unanimous
+Hybrid	ADJ	unanimous
+Threat	NOUN	unanimous
+Units	NOUN	unanimous
+
+# sent_id = headings2-0152
+# source_id = army-fm-3-7-nbc-field-handbook-1994
+# text = Smoke Support Plan Development
+# word = 0
+# lemma = smoke
+# stratum = initial-noun
+Smoke	NOUN	unanimous
+Support	NOUN	unanimous
+Plan	NOUN	unanimous
+Development	NOUN	unanimous
+
+# sent_id = headings2-0153
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2009
+# text = Construct Field
+# word = 0
+# lemma = construct
+# stratum = imperative
+Construct	VERB	unanimous
+Field	NOUN	unanimous
+
+# sent_id = headings2-0154
+# source_id = army-tc-3-20.97-reconnaissance-troop-collective-task-publication-2013
+# text = Establish the Common Operational Picture
+# word = 0
+# lemma = establish
+# stratum = imperative
+Establish	VERB	unanimous
+the	DET	unanimous
+Common	ADJ	unanimous
+Operational	ADJ	unanimous
+Picture	NOUN	unanimous
+
+# sent_id = headings2-0155
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Load an M203 Grenade Launcher
+# word = 0
+# lemma = load
+# stratum = imperative
+Load	VERB	unanimous
+an	DET	unanimous
+M203	PROPN	unanimous
+Grenade	NOUN	unanimous
+Launcher	NOUN	unanimous
+
+# sent_id = headings2-0156
+# source_id = usda-CAT10682559
+# text = Group Enterprise Projects
+# word = 0
+# lemma = group
+# stratum = initial-noun
+Group	NOUN	unanimous
+Enterprise	NOUN	unanimous
+Projects	NOUN	unanimous
+
+# sent_id = headings2-0157
+# source_id = airforce-f-4e-1-flight-manual
+# text = Instrument Flight Procedures
+# word = 0
+# lemma = instrument
+# stratum = initial-noun
+Instrument	NOUN	unanimous
+Flight	NOUN	unanimous
+Procedures	NOUN	unanimous
+
+# sent_id = headings2-0158
+# source_id = army-fm-5-20-camouflage-basic-principles-and-field-camouflage-1959
+# text = Combat Concealment
+# word = 0
+# lemma = combat
+# stratum = initial-noun
+Combat	NOUN	unanimous
+Concealment	NOUN	unanimous
+
+# sent_id = headings2-0159
+# source_id = coastguard-instructionsforu1934unit
+# text = Motor Lifeboat
+# word = 0
+# lemma = motor
+# stratum = initial-noun
+Motor	NOUN	unanimous
+Lifeboat	NOUN	unanimous
+
+# sent_id = headings2-0160
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Transport a Casualty
+# word = 0
+# lemma = transport
+# stratum = imperative
+Transport	VERB	unanimous
+a	DET	unanimous
+Casualty	NOUN	unanimous
+
+# sent_id = headings2-0161
+# source_id = army-military-mountaineering-tc-3-97.61-november-2025
+# text = Ice Pillars, Ice Screws, and V-Threads
+# word = 0
+# lemma = ice
+# stratum = initial-noun
+Ice	NOUN	unanimous
+Pillars	NOUN	unanimous
+,	PUNCT	unanimous
+Ice	NOUN	unanimous
+Screws	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+V-Threads	NOUN	unanimous
+
+# sent_id = headings2-0162
+# source_id = army-tc-3-20.97-reconnaissance-troop-collective-task-publication-2013
+# text = Maneuver a Dismounted Platoon
+# word = 0
+# lemma = maneuver
+# stratum = imperative
+Maneuver	VERB	unanimous
+a	DET	unanimous
+Dismounted	ADJ	unanimous
+Platoon	NOUN	unanimous
+
+# sent_id = headings2-0163
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2006
+# text = Issue a Warning Order
+# word = 0
+# lemma = issue
+# stratum = imperative
+Issue	VERB	unanimous
+a	DET	unanimous
+Warning	NOUN	unanimous
+Order	NOUN	unanimous
+
+# sent_id = headings2-0164
+# source_id = army-stp-7-11-b-1-infantry-sl-1-2004
+# text = Perform a Function Check on an M9 Pistol
+# word = 0
+# lemma = perform
+# stratum = imperative
+Perform	VERB	unanimous
+a	DET	unanimous
+Function	NOUN	unanimous
+Check	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M9	PROPN	unanimous
+Pistol	NOUN	unanimous
+
+# sent_id = headings2-0165
+# source_id = army-soldiersmanualof00unit
+# text = Prepare An M72A2 Light
+# word = 0
+# lemma = prepare
+# stratum = imperative
+Prepare	VERB	unanimous
+An	DET	unanimous
+M72A2	PROPN	unanimous
+Light	ADJ	unanimous
+
+# sent_id = headings2-0166
+# source_id = army-fm-31-11-b-s-special-forces-soldiers-manual-mos-11-b-sqi-s-1979
+# text = Mark Landing Zone for Rotary Wing Aircraft
+# word = 0
+# lemma = mark
+# stratum = imperative
+Mark	VERB	unanimous
+Landing	NOUN	unanimous
+Zone	NOUN	unanimous
+for	ADP	unanimous
+Rotary	ADJ	unanimous
+Wing	NOUN	unanimous
+Aircraft	NOUN	unanimous
+
+# sent_id = headings2-0167
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Determine A Magnetic Azimuth
+# word = 0
+# lemma = determine
+# stratum = imperative
+Determine	VERB	unanimous
+A	DET	unanimous
+Magnetic	ADJ	unanimous
+Azimuth	NOUN	unanimous
+
+# sent_id = headings2-0168
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Measure Distance On a Map
+# word = 0
+# lemma = measure
+# stratum = imperative
+Measure	VERB	unanimous
+Distance	NOUN	unanimous
+On	ADP	unanimous
+a	DET	unanimous
+Map	NOUN	unanimous
+
+# sent_id = headings2-0169
+# source_id = usda-CAT78700064
+# text = Sediment Transport in Sand Bed Streams Not in Equilibrium
+# word = 0
+# lemma = sediment
+# stratum = initial-noun
+Sediment	NOUN	unanimous
+Transport	NOUN	unanimous
+in	ADP	unanimous
+Sand	NOUN	unanimous
+Bed	NOUN	unanimous
+Streams	NOUN	unanimous
+Not	PART	unanimous
+in	ADP	unanimous
+Equilibrium	NOUN	unanimous
+
+# sent_id = headings2-0170
+# source_id = army-tc-21-305-20-manual-for-the-wheeled-vehicle-operator-2016
+# text = Negotiate an InterSection
+# word = 0
+# lemma = negotiate
+# stratum = imperative
+Negotiate	VERB	unanimous
+an	DET	unanimous
+InterSection	NOUN	unanimous
+
+# sent_id = headings2-0171
+# source_id = army-tc-1-251-aircrew-training-manual-ah-64-d
+# text = Air Target
+# word = 0
+# lemma = air
+# stratum = initial-noun
+Air	NOUN	unanimous
+Target	NOUN	unanimous
+
+# sent_id = headings2-0172
+# source_id = airforce-f-4e-1-flight-manual
+# text = Zoom Climb
+# word = 0
+# lemma = zoom
+# stratum = initial-noun
+Zoom	NOUN	unanimous
+Climb	NOUN	unanimous
+
+# sent_id = headings2-0173
+# source_id = army-soldiersmanualof00unit
+# text = Orient A Map To The Ground
+# word = 0
+# lemma = orient
+# stratum = imperative
+Orient	VERB	unanimous
+A	DET	unanimous
+Map	NOUN	unanimous
+To	ADP	unanimous
+The	DET	unanimous
+Ground	NOUN	unanimous
+
+# sent_id = headings2-0174
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Unload an M60 Machine Gun
+# word = 0
+# lemma = unload
+# stratum = imperative
+Unload	VERB	unanimous
+an	DET	unanimous
+M60	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+
+# sent_id = headings2-0175
+# source_id = army-military-mountaineering-tc-3-97.61-november-2025
+# text = Rope Anchors
+# word = 0
+# lemma = rope
+# stratum = initial-noun
+Rope	NOUN	unanimous
+Anchors	NOUN	unanimous
+
+# sent_id = headings2-0176
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Evaluate a Casualty (Tactical Combat Casualty Care)
+# word = 0
+# lemma = evaluate
+# stratum = imperative
+Evaluate	VERB	unanimous
+a	DET	unanimous
+Casualty	NOUN	unanimous
+(	PUNCT	unanimous
+Tactical	ADJ	unanimous
+Combat	NOUN	unanimous
+Casualty	NOUN	unanimous
+Care	NOUN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings2-0177
+# source_id = army-military-mountaineering-tc-3-97.61-november-2025
+# text = Bivouac Site Location
+# word = 0
+# lemma = bivouac
+# stratum = initial-noun
+Bivouac	NOUN	unanimous
+Site	NOUN	unanimous
+Location	NOUN	unanimous
+
+# sent_id = headings2-0178
+# source_id = usda-CAT76671476
+# text = Clean Hair
+# word = 0
+# lemma = clean
+# stratum = imperative
+Clean	VERB	unanimous
+Hair	NOUN	unanimous
+
+# sent_id = headings2-0179
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2009
+# text = Engage an Enemy with a Bayonet
+# word = 0
+# lemma = engage
+# stratum = imperative
+Engage	VERB	unanimous
+an	DET	unanimous
+Enemy	NOUN	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+Bayonet	NOUN	unanimous
+
+# sent_id = headings2-0180
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Monitor For Operation
+# word = 0
+# lemma = monitor
+# stratum = imperative
+Monitor	VERB	unanimous
+For	ADP	unanimous
+Operation	NOUN	unanimous
+
+# sent_id = headings2-0181
+# source_id = army-fm-9-55-x-34-ammunition-inspector-sl-3-4-1977
+# text = Monitor Munition Inspections
+# word = 0
+# lemma = monitor
+# stratum = imperative
+Monitor	VERB	unanimous
+Munition	NOUN	unanimous
+Inspections	NOUN	unanimous
+
+# sent_id = headings2-0182
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2006
+# text = Consolidate a UNit
+# word = 0
+# lemma = consolidate
+# stratum = imperative
+Consolidate	VERB	unanimous
+a	DET	unanimous
+UNit	NOUN	unanimous
+
+# sent_id = headings2-0183
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Restore An M72A2 Light
+# word = 0
+# lemma = restore
+# stratum = imperative
+Restore	VERB	unanimous
+An	DET	unanimous
+M72A2	PROPN	unanimous
+Light	ADJ	unanimous
+
+# sent_id = headings2-0184
+# source_id = army-tc-21-305-7-training-program-for-light-vehicles-1992
+# text = Drive a Vehicle with Balanced (Pintle-Connected) Trailer
+# word = 0
+# lemma = drive
+# stratum = imperative
+Drive	VERB	unanimous
+a	DET	unanimous
+Vehicle	NOUN	unanimous
+with	ADP	unanimous
+Balanced	ADJ	unanimous
+(	PUNCT	unanimous
+Pintle-Connected	ADJ	unanimous
+)	PUNCT	unanimous
+Trailer	NOUN	unanimous
+
+# sent_id = headings2-0185
+# source_id = army-14220630R.nlm.nih.gov
+# text = Age Dose Age Dose
+# word = 0
+# lemma = age
+# stratum = initial-noun
+Age	NOUN	unanimous
+Dose	NOUN	unanimous
+Age	NOUN	unanimous
+Dose	NOUN	unanimous
+
+# sent_id = headings2-0186
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Zero an M4 or M4A1 Carbine
+# word = 0
+# lemma = zero
+# stratum = imperative
+Zero	VERB	unanimous
+an	DET	unanimous
+M4	PROPN	unanimous
+or	CCONJ	unanimous
+M4A1	PROPN	unanimous
+Carbine	NOUN	unanimous
+
+# sent_id = headings2-0187
+# source_id = army-stp-7-11-b-1-infantry-sl-1-2004
+# text = Unload a Dual Launcher While Mounted on an M901 Vehicle
+# word = 0
+# lemma = unload
+# stratum = imperative
+Unload	VERB	unanimous
+a	DET	unanimous
+Dual	ADJ	unanimous
+Launcher	NOUN	unanimous
+While	SCONJ	unanimous
+Mounted	VERB	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M901	PROPN	unanimous
+Vehicle	NOUN	unanimous
+
+# sent_id = headings2-0188
+# source_id = army-TM38-220StockControlManualForStations1945
+# text = Supply Plan for Schools, Replacement Training
+# word = 0
+# lemma = supply
+# stratum = initial-noun
+Supply	NOUN	unanimous
+Plan	NOUN	unanimous
+for	ADP	unanimous
+Schools	NOUN	unanimous
+,	PUNCT	unanimous
+Replacement	NOUN	unanimous
+Training	NOUN	unanimous
+
+# sent_id = headings2-0189
+# source_id = army-fm-9-55-x-34-ammunition-inspector-sl-3-4-1977
+# text = Monitor Inspection of Motor Vehicles
+# word = 0
+# lemma = monitor
+# stratum = imperative
+Monitor	VERB	unanimous
+Inspection	NOUN	unanimous
+of	ADP	unanimous
+Motor	NOUN	unanimous
+Vehicles	NOUN	unanimous
+
+# sent_id = headings2-0190
+# source_id = army-tc-3-20.97-reconnaissance-troop-collective-task-publication-2013
+# text = Evaluate a Bridge
+# word = 0
+# lemma = evaluate
+# stratum = imperative
+Evaluate	VERB	unanimous
+a	DET	unanimous
+Bridge	NOUN	unanimous
+
+# sent_id = headings2-0191
+# source_id = usda-CAT76671476
+# text = Let Your Family Help
+# word = 0
+# lemma = let
+# stratum = imperative
+Let	VERB	unanimous
+Your	DET	unanimous
+Family	NOUN	unanimous
+Help	VERB	unanimous
+
+# sent_id = headings2-0192
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Search a Detainee
+# word = 0
+# lemma = search
+# stratum = imperative
+Search	VERB	unanimous
+a	DET	unanimous
+Detainee	NOUN	unanimous
+
+# sent_id = headings2-0193
+# source_id = army-tc-3-20.97-reconnaissance-troop-collective-task-publication-2013
+# text = Treat Casualties (08-2-0003)
+# word = 0
+# lemma = treat
+# stratum = imperative
+Treat	VERB	unanimous
+Casualties	NOUN	unanimous
+(	PUNCT	unanimous
+08-2-0003	NUM	unanimous
+)	PUNCT	unanimous
+
+# sent_id = headings2-0194
+# source_id = army-fm-3-19.4-military-police-leaders-haandbook-2002
+# text = Posture Levels, Alarms, and Signals
+# word = 0
+# lemma = posture
+# stratum = initial-noun
+Posture	NOUN	unanimous
+Levels	NOUN	unanimous
+,	PUNCT	unanimous
+Alarms	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Signals	NOUN	unanimous
+
+# sent_id = headings2-0195
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Load an M240B Machine Gun
+# word = 0
+# lemma = load
+# stratum = imperative
+Load	VERB	unanimous
+an	DET	unanimous
+M240B	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+
+# sent_id = headings2-0196
+# source_id = army-military-mountaineering-tc-3-97.61-november-2025
+# text = Weather Forecasting
+# word = 0
+# lemma = weather
+# stratum = initial-noun
+Weather	NOUN	unanimous
+Forecasting	NOUN	unanimous
+
+# sent_id = headings2-0197
+# source_id = army-stp-7-11-b-24-sm-tg-infantry-sl-2-4-2004
+# text = Manage an M220 Launcher System Battery Program
+# word = 0
+# lemma = manage
+# stratum = imperative
+Manage	VERB	unanimous
+an	DET	unanimous
+M220	PROPN	unanimous
+Launcher	NOUN	unanimous
+System	NOUN	unanimous
+Battery	NOUN	unanimous
+Program	NOUN	unanimous
+
+# sent_id = headings2-0198
+# source_id = army-soldiersmanualof00unit
+# text = Unload An M60 Machine
+# word = 0
+# lemma = unload
+# stratum = imperative
+Unload	VERB	unanimous
+An	DET	unanimous
+M60	PROPN	unanimous
+Machine	NOUN	unanimous
+
+# sent_id = headings2-0199
+# source_id = usda-CAT76671476
+# text = Use Methods to Suit the Situation
+# word = 0
+# lemma = use
+# stratum = imperative
+Use	VERB	unanimous
+Methods	NOUN	unanimous
+to	PART	unanimous
+Suit	VERB	unanimous
+the	DET	unanimous
+Situation	NOUN	unanimous
+
+# sent_id = headings2-0200
+# source_id = army-tc-1-251-aircrew-training-manual-ah-64-d
+# text = Task Contents
+# word = 0
+# lemma = task
+# stratum = initial-noun
+Task	NOUN	unanimous
+Contents	NOUN	unanimous
+
+# sent_id = headings2-0201
+# source_id = army-stp-7-11-b-1-infantry-sl-1-2004
+# text = Zero an M16A4 Rifle
+# word = 0
+# lemma = zero
+# stratum = imperative
+Zero	VERB	unanimous
+an	DET	unanimous
+M16A4	PROPN	unanimous
+Rifle	NOUN	unanimous
+
+# sent_id = headings2-0202
+# source_id = usda-CAT76671476
+# text = Try These Back Savers
+# word = 0
+# lemma = try
+# stratum = imperative
+Try	VERB	unanimous
+These	DET	unanimous
+Back	NOUN	unanimous
+Savers	NOUN	unanimous
+
+# sent_id = headings2-0203
+# source_id = army-FM6-02-43
+# text = Command Relationships
+# word = 0
+# lemma = command
+# stratum = initial-noun
+Command	NOUN	unanimous
+Relationships	NOUN	unanimous
+
+# sent_id = headings2-0204
+# source_id = army-tc3-21-75
+# text = Scale Walls
+# word = 0
+# lemma = scale
+# stratum = imperative
+Scale	VERB	unanimous
+Walls	NOUN	unanimous
+
+# sent_id = headings2-0205
+# source_id = navy-NAVMC1008-PD
+# text = Fuse Setter
+# word = 0
+# lemma = fuse
+# stratum = initial-noun
+Fuse	NOUN	unanimous
+Setter	NOUN	unanimous
+
+# sent_id = headings2-0206
+# source_id = army-stp-10-92-g-25-cook-sl-2-5-2004
+# text = Coordinate With Civilian Personnel Officer or Contracting Officer
+# word = 0
+# lemma = coordinate
+# stratum = imperative
+Coordinate	VERB	unanimous
+With	ADP	unanimous
+Civilian	ADJ	unanimous
+Personnel	NOUN	unanimous
+Officer	NOUN	unanimous
+or	CCONJ	unanimous
+Contracting	NOUN	unanimous
+Officer	NOUN	unanimous
+
+# sent_id = headings2-0207
+# source_id = usda-CAT10682559
+# text = Certificate Showing Change in Name of District
+# word = 0
+# lemma = certificate
+# stratum = initial-noun
+Certificate	NOUN	unanimous
+Showing	VERB	unanimous
+Change	NOUN	unanimous
+in	ADP	unanimous
+Name	NOUN	unanimous
+of	ADP	unanimous
+District	NOUN	unanimous
+
+# sent_id = headings2-0208
+# source_id = usda-CAT76671476
+# text = Group Discussion
+# word = 0
+# lemma = group
+# stratum = initial-noun
+Group	NOUN	unanimous
+Discussion	NOUN	unanimous
+
+# sent_id = headings2-0209
+# source_id = airforce-f-4e-1-flight-manual
+# text = Bleed Air Check Valve Failure
+# word = 0
+# lemma = bleed
+# stratum = initial-noun
+Bleed	NOUN	unanimous
+Air	NOUN	unanimous
+Check	NOUN	unanimous
+Valve	NOUN	unanimous
+Failure	NOUN	unanimous
+
+# sent_id = headings2-0210
+# source_id = army-tc-3-23.30-grenades-and-pyrotechnic-signals-2013
+# text = Make Range Coordinations
+# word = 0
+# lemma = make
+# stratum = imperative
+Make	VERB	unanimous
+Range	NOUN	unanimous
+Coordinations	NOUN	unanimous
+
+# sent_id = headings2-0211
+# source_id = army-tc3-21-75
+# text = Machine Gun Fighting Position
+# word = 0
+# lemma = machine
+# stratum = initial-noun
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+Fighting	NOUN	unanimous
+Position	NOUN	unanimous
+
+# sent_id = headings2-0212
+# source_id = army-tc3-21-75
+# text = Open Airway and Restore Breathing
+# word = 0
+# lemma = open
+# stratum = imperative
+Open	VERB	unanimous
+Airway	NOUN	unanimous
+and	CCONJ	unanimous
+Restore	VERB	unanimous
+Breathing	NOUN	unanimous
+
+# sent_id = headings2-0213
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Maintain an M240B Machine Gun
+# word = 0
+# lemma = maintain
+# stratum = imperative
+Maintain	VERB	unanimous
+an	DET	unanimous
+M240B	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+
+# sent_id = headings2-0214
+# source_id = phs-ohioriverpollu0unit
+# text = Paper Mill Wastes
+# word = 0
+# lemma = paper
+# stratum = initial-noun
+Paper	NOUN	unanimous
+Mill	NOUN	unanimous
+Wastes	NOUN	unanimous
+
+# sent_id = headings2-0215
+# source_id = army-reconnaissancere00unitrich
+# text = Plan Descriptions
+# word = 0
+# lemma = plan
+# stratum = initial-noun
+Plan	NOUN	unanimous
+Descriptions	NOUN	unanimous
+
+# sent_id = headings2-0216
+# source_id = usda-CAT10682559
+# text = Design Check Sheet
+# word = 0
+# lemma = design
+# stratum = initial-noun
+Design	NOUN	unanimous
+Check	NOUN	unanimous
+Sheet	NOUN	unanimous
+
+# sent_id = headings2-0217
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Maintain an M4 or M4A1 Carbine
+# word = 0
+# lemma = maintain
+# stratum = imperative
+Maintain	VERB	unanimous
+an	DET	unanimous
+M4	PROPN	unanimous
+or	CCONJ	unanimous
+M4A1	PROPN	unanimous
+Carbine	NOUN	unanimous
+
+# sent_id = headings2-0218
+# source_id = army-stp-10-92-g-25-cook-sl-2-5-2004
+# text = Evaluate the Sanitation Program in a Garrison Dining Facility
+# word = 0
+# lemma = evaluate
+# stratum = imperative
+Evaluate	VERB	unanimous
+the	DET	unanimous
+Sanitation	NOUN	unanimous
+Program	NOUN	unanimous
+in	ADP	unanimous
+a	DET	unanimous
+Garrison	NOUN	unanimous
+Dining	NOUN	unanimous
+Facility	NOUN	unanimous
+
+# sent_id = headings2-0219
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Crowd Control
+# word = 0
+# lemma = crowd
+# stratum = initial-noun
+Crowd	NOUN	unanimous
+Control	NOUN	unanimous
+
+# sent_id = headings2-0220
+# source_id = army-stp-7-11-b-1-infantry-sl-1-2004
+# text = Perform a System Self-Test on an M220A1 Launcher System
+# word = 0
+# lemma = perform
+# stratum = imperative
+Perform	VERB	unanimous
+a	DET	unanimous
+System	NOUN	unanimous
+Self-Test	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M220A1	PROPN	unanimous
+Launcher	NOUN	unanimous
+System	NOUN	unanimous
+
+# sent_id = headings2-0221
+# source_id = phs-ohioriverpollu0unit
+# text = Type Of Plant General Dairy State Ohio
+# word = 0
+# lemma = type
+# stratum = initial-noun
+Type	NOUN	unanimous
+Of	ADP	unanimous
+Plant	NOUN	unanimous
+General	ADJ	unanimous
+Dairy	NOUN	unanimous
+State	NOUN	unanimous
+Ohio	PROPN	unanimous
+
+# sent_id = headings2-0222
+# source_id = army-stp-10-92-g-25-cook-sl-2-5-2004
+# text = Compute Food Service Requirements for the Budget Committee
+# word = 0
+# lemma = compute
+# stratum = imperative
+Compute	VERB	unanimous
+Food	NOUN	unanimous
+Service	NOUN	unanimous
+Requirements	NOUN	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+Budget	NOUN	unanimous
+Committee	NOUN	unanimous
+
+# sent_id = headings2-0223
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Transport A Casualty Using
+# word = 0
+# lemma = transport
+# stratum = imperative
+Transport	VERB	unanimous
+A	DET	unanimous
+Casualty	NOUN	unanimous
+Using	VERB	unanimous
+
+# sent_id = headings2-0224
+# source_id = army-fm-9-55-x-34-ammunition-inspector-sl-3-4-1977
+# text = Review Ammunition Surveillance Inspection Reports
+# word = 0
+# lemma = review
+# stratum = imperative
+Review	VERB	unanimous
+Ammunition	NOUN	unanimous
+Surveillance	NOUN	unanimous
+Inspection	NOUN	unanimous
+Reports	NOUN	unanimous
+
+# sent_id = headings2-0225
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-1990
+# text = Restore An M136 Launcher
+# word = 0
+# lemma = restore
+# stratum = imperative
+Restore	VERB	unanimous
+An	DET	unanimous
+M136	PROPN	unanimous
+Launcher	NOUN	unanimous
+
+# sent_id = headings2-0226
+# source_id = army-reconnaissancere00unitrich
+# text = Study Management Structure
+# word = 0
+# lemma = study
+# stratum = initial-noun
+Study	NOUN	unanimous
+Management	NOUN	unanimous
+Structure	NOUN	unanimous
+
+# sent_id = headings2-0227
+# source_id = army-stp-21-24-smct-warrior-leader-skills-sl-2-4-2006
+# text = Supervise the Escort of Detainees
+# word = 0
+# lemma = supervise
+# stratum = imperative
+Supervise	VERB	unanimous
+the	DET	unanimous
+Escort	NOUN	unanimous
+of	ADP	unanimous
+Detainees	NOUN	unanimous
+
+# sent_id = headings2-0228
+# source_id = other-draftenvironment004unit
+# text = Landscape Character
+# word = 0
+# lemma = landscape
+# stratum = initial-noun
+Landscape	NOUN	unanimous
+Character	NOUN	unanimous
+
+# sent_id = headings2-0229
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Use a Map Overlay
+# word = 0
+# lemma = use
+# stratum = imperative
+Use	VERB	unanimous
+a	DET	unanimous
+Map	NOUN	unanimous
+Overlay	NOUN	unanimous
+
+# sent_id = headings2-0230
+# source_id = army-tc-21-305-3-training-program-for-the-m-939-series-5-ton-tactical-cargo-truck-1997
+# text = Remove the Rear Wheel Valve from the M939A2 Series Vehicle
+# word = 0
+# lemma = remove
+# stratum = imperative
+Remove	VERB	unanimous
+the	DET	unanimous
+Rear	ADJ	unanimous
+Wheel	NOUN	unanimous
+Valve	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+M939A2	PROPN	unanimous
+Series	NOUN	unanimous
+Vehicle	NOUN	unanimous
+
+# sent_id = headings2-0231
+# source_id = usda-technologyonfar00unit
+# text = Soil Amendments
+# word = 0
+# lemma = soil
+# stratum = initial-noun
+Soil	NOUN	unanimous
+Amendments	NOUN	unanimous
+
+# sent_id = headings2-0232
+# source_id = army-stp-7-11-b-1-infantry-sl-1-2004
+# text = Perform a System Self-Test on an M220A2 Launcher System
+# word = 0
+# lemma = perform
+# stratum = imperative
+Perform	VERB	unanimous
+a	DET	unanimous
+System	NOUN	unanimous
+Self-Test	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M220A2	PROPN	unanimous
+Launcher	NOUN	unanimous
+System	NOUN	unanimous
+
+# sent_id = headings2-0233
+# source_id = army-fm-9-55-x-34-ammunition-inspector-sl-3-4-1977
+# text = Review Results of Inspection of Destruction Sites
+# word = 0
+# lemma = review
+# stratum = imperative
+Review	VERB	unanimous
+Results	NOUN	unanimous
+of	ADP	unanimous
+Inspection	NOUN	unanimous
+of	ADP	unanimous
+Destruction	NOUN	unanimous
+Sites	NOUN	unanimous
+
+# sent_id = headings2-0234
+# source_id = marine-fmfm08unit
+# text = Service Units
+# word = 0
+# lemma = service
+# stratum = initial-noun
+Service	NOUN	unanimous
+Units	NOUN	unanimous
+
+# sent_id = headings2-0235
+# source_id = phs-austeremedicalca00unit
+# text = Eye Irritations
+# word = 0
+# lemma = eye
+# stratum = initial-noun
+Eye	NOUN	unanimous
+Irritations	NOUN	unanimous
+
+# sent_id = headings2-0236
+# source_id = army-stp-21-24-smct-soldiers-manual-of-common-tasks-sl-2-4-2003
+# text = Establish an Observation Post
+# word = 0
+# lemma = establish
+# stratum = imperative
+Establish	VERB	unanimous
+an	DET	unanimous
+Observation	NOUN	unanimous
+Post	NOUN	unanimous
+
+# sent_id = headings2-0237
+# source_id = army-FM6-02-43
+# text = Network Transport Services
+# word = 0
+# lemma = network
+# stratum = initial-noun
+Network	NOUN	unanimous
+Transport	NOUN	unanimous
+Services	NOUN	unanimous
+
+# sent_id = headings2-0238
+# source_id = usfs-CAT10507070
+# text = Part Payment in Supplies
+# word = 0
+# lemma = part
+# stratum = initial-noun
+Part	NOUN	unanimous
+Payment	NOUN	unanimous
+in	ADP	unanimous
+Supplies	NOUN	unanimous
+
+# sent_id = headings2-0239
+# source_id = army-tc-21-305-7-training-program-for-light-vehicles-1992
+# text = Drive a Wheeled Vehicle in a Convoy Under Blackout Conditions
+# word = 0
+# lemma = drive
+# stratum = imperative
+Drive	VERB	unanimous
+a	DET	unanimous
+Wheeled	ADJ	unanimous
+Vehicle	NOUN	unanimous
+in	ADP	unanimous
+a	DET	unanimous
+Convoy	NOUN	unanimous
+Under	ADP	unanimous
+Blackout	NOUN	unanimous
+Conditions	NOUN	unanimous
+
+# sent_id = headings2-0240
+# source_id = army-survival-atp-3-50-21
+# text = Snow Cave
+# word = 0
+# lemma = snow
+# stratum = initial-noun
+Snow	NOUN	unanimous
+Cave	NOUN	unanimous
+
+# sent_id = headings2-0241
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Report Intelligence Information
+# word = 0
+# lemma = report
+# stratum = imperative
+Report	VERB	unanimous
+Intelligence	NOUN	unanimous
+Information	NOUN	unanimous
+
+# sent_id = headings2-0242
+# source_id = army-tc-3-20.97-reconnaissance-troop-collective-task-publication-2013
+# text = Plan Fire Support at Company-Troop Level
+# word = 0
+# lemma = plan
+# stratum = imperative
+Plan	VERB	unanimous
+Fire	NOUN	unanimous
+Support	NOUN	unanimous
+at	ADP	unanimous
+Company-Troop	NOUN	unanimous
+Level	NOUN	unanimous
+
+# sent_id = headings2-0243
+# source_id = army-fm-31-11-b-s-special-forces-soldiers-manual-mos-11-b-sqi-s-1979
+# text = Use the Automatic Chemical Agent Alarm and IM-174
+# word = 0
+# lemma = use
+# stratum = imperative
+Use	VERB	unanimous
+the	DET	unanimous
+Automatic	ADJ	unanimous
+Chemical	ADJ	unanimous
+Agent	NOUN	unanimous
+Alarm	NOUN	unanimous
+and	CCONJ	unanimous
+IM-174	PROPN	unanimous
+
+# sent_id = headings2-0244
+# source_id = usbr-CAT30964659
+# text = Farm Irrigation Systems
+# word = 0
+# lemma = farm
+# stratum = initial-noun
+Farm	NOUN	unanimous
+Irrigation	NOUN	unanimous
+Systems	NOUN	unanimous
+
+# sent_id = headings2-0245
+# source_id = army-stp-21-1-smct-soldiers-manual-of-common-tasks-sl-1-2003
+# text = Unload an M249 Machine Gun
+# word = 0
+# lemma = unload
+# stratum = imperative
+Unload	VERB	unanimous
+an	DET	unanimous
+M249	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+
+# sent_id = headings2-0246
+# source_id = navy-personnelrequire00unit
+# text = Machine Accounting Officer
+# word = 0
+# lemma = machine
+# stratum = initial-noun
+Machine	NOUN	unanimous
+Accounting	NOUN	unanimous
+Officer	NOUN	unanimous
+
+# sent_id = headings2-0247
+# source_id = army-stp-21-1-smct-warrior-skills-sl-1-2007
+# text = Zero an M1GAL Rifle
+# word = 0
+# lemma = zero
+# stratum = imperative
+Zero	VERB	unanimous
+an	DET	unanimous
+M1GAL	PROPN	unanimous
+Rifle	NOUN	unanimous
