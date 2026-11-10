@@ -164,9 +164,11 @@ training data: pre-registered retrain"); the results and the decision (the rule 
 are in the section "Compound and heading training data: results". `eval-arm` writes the tranches of this experiment under `shapesNew`.
 
 ```text
-pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/run_arms.ps1 -Out <runs> -Arms CMP -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/run_arms.ps1 -Out <runs> -Arms CMP -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <pycache> -PauseFile <pause-file>
 python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py --runs <runs> --out report.md --decision decision.json
 ```
+
+`-PyCache` and `-PauseFile` are local paths on drive C: that the caller chooses; the defaults inside the frozen driver are not meant for reuse.
 
 ### Held-out evaluation
 
