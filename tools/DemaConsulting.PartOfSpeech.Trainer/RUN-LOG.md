@@ -4985,6 +4985,18 @@ Projected imperative totals at the registered build caps (dry run of `heading_ca
 
 Set `DRAFT_SHA256` and `TOKENS_SHA256` to the values above (and `HMM_SHA256` with stream C), run `candidates --product headings-2` and `headings-2-train` (the pilot rows are the prior of each side), and record the candidate counts. Nothing else of this step is a pin.
 
+## Follow-up: amendment A2 (the HDG2 arms run with a short imperative supply; written before any further label)
+
+This section follows the commit `fd2ad25` (R3-H). **The only label that exists in the follow-up is the pilot (round `hdg-pilot`, 140 lines, R2); no other label was made or read, no candidate round beyond the pilot was written, no model of any experiment was trained or evaluated.** The amendment cannot have been chosen on a result. It is a decision of the owner, passed on by the orchestrator.
+
+| Item | Registered (R0 contingency table) | Amended (A2) |
+| --- | --- | --- |
+| Training imperative lines below 150 | the arms with `HDG2` are **not run** (the arm list shrinks to BASE, CMP2, CMP2-F5, stated at R3) | the arms `CMP2+HDG2` and `CMP2+HDG2+F5` **are run**, because the owner's request names them; the training source `headings2` and the development tranche `headings-2` are built with `build --allow-short` |
+| Disclosure of the shortfall | stated in R3 and in the results | stated **plainly** in the data README of `data/headings/` and of `data/eval/shapes-dev/`, in this RUN-LOG (the build and results sections) and in the pull request, against the owner's target of about 300 training and about 100 development imperative lines |
+| Every other floor, cap, gate, contingency and rule | as registered | **unchanged** (for example the compound floors: if a compound target is missed it is disclosed, never padded; the hand-check gate; the contingency for a failed hand check; the imperative-heading guard keeps its limit on the pooled items) |
+
+Basis (counts only, from the R3-H record above): the imperative supply is short and the sourcing of new Army soldier-training families is exhausted. Projected at the registered build caps, before any labeling loss, the development imperative lines are about **58** (floor 80, owner target about 100) and the training imperative lines about **128** (floor 150, owner target about 300). Wave 3 of stream H stands as it is (103 documents). No new label exists that could have informed this decision; no new selection rule is introduced; the floors are not lowered, they are waived only through the registered `--allow-short` path and disclosed. The consequence for the experiment is that the HDG2 arms train on a small imperative-heading source (about 120 lines against the owner's 300), so a null result for HDG2 is a result for that size of data, a limit to state in the E1 pre-registration and in the results.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
