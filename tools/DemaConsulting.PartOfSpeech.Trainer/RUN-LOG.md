@@ -4124,6 +4124,147 @@ Headroom is 100% minus the target accuracy (derived from the table above, not a 
 (15 of 95; 20.0% of the noun targets and 11.1% of the imperative targets) and 10.0% for `n-named-state` (10 of 100). The 95% intervals are 15 to 19 points wide for the first two shapes
 and 12 points for `n-named-state`, so a difference of a few items between variants is inside the interval.
 
+## Compound and heading training data: pre-registered selection rule
+
+This section is written and committed **before any label of the two new sources exists**. At this commit no candidate row has been written, no batch has been exported, no model has tagged a token of
+the new text, and no model of this experiment has been trained or evaluated; the only commands run on the new text are the document gate (`exclusions`) and the counts-only `preflight` of the builder
+(clean sentences, frame hits, lemmas and lines per stratum, nothing else). The git history shows the order: this commit (the builder `tools/data/compound_heading_data.py`, its tests and this rule), then
+the data and their registration (weight 0), then the optional feature, then the pre-registration of the retraining, then the runs, then the results. The SHA of this commit is recorded by the commit that
+follows it (a commit cannot contain its own SHA). The code base is `main` at `f91f25c` (PR #18); nothing outside `tools/data` and this file changed in this commit.
+
+### Goal and motive
+
+Add two targeted training sources, `compound` (about 800 sentences with a noun compound whose head can also be a verb) and `headings` (about 600 Title Case heading, caption and step-title lines), to
+`DemaConsulting.PartOfSpeech`, and test them in a pre-registered retraining. Motive: a consumer of the library reported confident errors on noun + noun compounds whose head can also be a verb
+(`[noun] split`, `[noun] check`, `[noun] stand`) and on Title Case headings and fragments tagged as proper nouns. The development tranches of PR #18 measure exactly these shapes; the shipped model
+(F2 plus the `imperative` source) scores, on the development files (`eval-shapes --tranche new`, reproduced at the start of this work on the unchanged `main`):
+
+| Shape | Target accuracy | Harmful per 1,000 decisions | Wrong at confidence >= 0.95 |
+| --- | --- | --- | --- |
+| `n-compound-head-ambiguous` | 60.0% | 390.0 | 5 |
+| `heading-titlecase` | 84.2% | 51.3 | 2 (both on noun targets) |
+| `n-named-state` | 90.0% | 81.1 | 0 |
+
+No text of the consumer report is used or was read for this work: **every sentence of the new sources comes from the recorded US federal public-domain documents below**, and none is supplied by any consumer.
+Nothing is adopted unless the retraining rule (a later section) selects it; both sources are committed with weight 0 first.
+
+### The documents (frozen)
+
+One shared pool of new US federal documents feeds both sources: 224 documents (1862 to 2008; 176,759 clean sentences), sourced from archive.org OCR text. The public-domain basis of every document
+is written in the `license_basis` cell of its row (17 U.S.C. 105, the agency named in the record, the Internet Archive record's own rights statement) and was checked one by one: the creator field of the
+record names a US federal agency, no copyright notice, claim or third-party permission statement was found in the text (the Google-scan boilerplate of the older scans, a mention of the word and the copyright policy
+that one manual describes are not claims), no FAA material, nothing in `data/eval/shapes-dev/excluded-sources.tsv`, and a document with a state, foreign, university, contractor or private co-author was dropped by hand.
+
+| Agency family | Documents | Clean sentences of the draft |
+| --- | ---: | ---: |
+| US Department of Agriculture (`usda`) | 60 | 35,549 |
+| US Forest Service | 28 | 20,566 |
+| US Geological Survey (`usgs`) | 24 | 36,213 |
+| US Public Health Service and Children's Bureau (`phs`) | 20 | 10,826 |
+| US War Department and Army (`army`) | 19 | 15,069 |
+| US Navy and Marine Corps (`navy`) | 19 | 13,246 |
+| Bureau of Land Management, Bureau of Fisheries, Office of Education, Bureau of Education and National Park Service (`other`) | 15 | 18,283 |
+| US Weather Bureau (`wxb`) | 14 | 8,043 |
+| US Bureau of Reclamation | 13 | 9,808 |
+| US National Bureau of Standards (`nbs`) | 6 | 3,820 |
+| US Bureau of Mines | 6 | 5,336 |
+| **All** | **224** | **176,759** |
+
+By decade of publication: 1860s 2, 1870s 3, 1880s 8, 1890s 7, 1900s 16, 1910s 17, 1920s 5, 1930s 4, 1940s 39, 1950s 24, 1960s 29, 1970s 27, 1980s 25, 1990s 13, 2000s 5. No NASA document was needed: both pool budgets were met
+without the NASA Technical Reports Server.
+
+How the pool was drawn (no model, no predicted tag, no label): archive.org advanced searches by federal creator name and by title words (manual, handbook, bulletin, circular, leaflet, instructions, guide,
+report, paper, ...) gave 7,709 candidate records; a record was dropped before any download when its id, normalized URL, archive.org identifier or Gutenberg number is in the used index (training and
+evaluation sources, all five shapes-dev tables, the imperative source and its exclusions, and every earlier sourcing draft of the shapes development set and of the imperative data, unused documents
+included) or when its title matches a closed list of non-expository words (index, catalog, hearing, regulations, ...). The remaining records were fetched in a round-robin over the agency families, inside a family in the
+order of a seeded hash of the identifier, at most 3 per title stem (a series). **One steer was introduced during the sourcing and is stated here**: a pilot over the first 95 documents showed that the headings pool was
+the binding budget (798 clean heading lines of 95 documents) and that the OCR of Google scans and of scans before 1940 holds almost no stand-alone heading lines, so from the 243rd record on, records dated 1940 or later
+and not a Google scan were fetched first. The steer is a property of the OCR text structure, was chosen before any label and used no model. 550 records were fetched: 274 passed the document checks, 242 were rejected
+(the reasons overlap, a record can have several: 92 downloads answered an HTTP error, 79 shared 3 or more sentences with a training or evaluation set or an earlier sourcing, 44 carried a copyright notice, 26 had too few sentences, 25 named a non-federal publisher or creator,
+9 showed no federal publisher, 1 was FAA material) and 34 were left for review (not used). Of the 92 HTTP answers, 71 were 404, 13 were 401, 7 were 500 and 1 was 403; a host that refuses is skipped, never worked around. 44 of the 274
+were then excluded by hand (state, foreign, university, contractor or private co-authors, 39; duplicate scans of a document already taken, 5), 3 had no usable publication year and 3 were left with fewer than 40 sentences after cross-document
+duplicates were removed. The list of the 44 exclusions and their reasons, the fetch records and the per-document hashes are in the work folder; the committed `sources.tsv` of each source lists only the documents that it uses,
+with `raw_sha256`, `text_sha256` and the retrieval date.
+
+| Frozen input | SHA-256 |
+| --- | --- |
+| `sources-draft.tsv` of the work folder (224 documents, 12 columns of `data/eval/gold-v2/sources.tsv`) | `81401c8328ac6335faf8aa8e5711079d07ce96aead587cae5fa5a894506a78de` |
+| `tokens.tsv` of the work folder (365,570 units: the sentences and the heading lines, tokenized by the library tokenizer through the trainer's `shapes-tokenize`) | `00c8d98e77cc538dc70b9e86959d3e56aa92e38804e53ba4ad61b452c8f28760` |
+| the labeler prompt template (the fenced block below, LF, 1,903 bytes) | `9f1da5238dbcd196ca95b0795194245846955d2bb3a95a70bf0540d112d17db5` |
+
+Independence from the other sets is enforced before any label: the document gate (`exclusions`) reports 0 problems for the draft (no used or excluded id, URL or archive.org identifier, a federal basis in every row, sound hashes and counts), every
+sentence goes through the unchanged candidate filters of `shapes_dev.py` (the held-out sets enter only as the opaque hash set of `LeakageFilter`: equal training or evaluation sentence, probe 5-gram) and is checked against all five tranches
+of the shapes development set, against `data/imperative/imperative.tsv` and against the cleaned text of every earlier sourcing (`equals-shapes-dev`, `near-shapes-dev`), and a document with 3 or more such sentences is rejected as a whole.
+No document was rejected as a whole in the final draft (the 79 that were had been removed at the fetch step by the same sentence-key test).
+
+### The rule (fixed now; applied as written; nothing is tuned after a label exists)
+
+The normative text is the docstring of `tools/data/compound_heading_data.py` at this commit; this is the same rule in short.
+
+1. **Frames (position and lexicon only; no PartOfSpeech or WordSense score; every frame hit is in the pool).** `compound`: a sentence of 3 to 30 tokens that passes the cleanliness filter and the equal and near-duplicate filters, with a hit of
+   `shapes_dev_extra.compound_ambiguous_hit` (the frame of `n-compound-head-ambiguous`, unchanged); a sentence whose key equals a heading line of the pool is dropped (`equals-a-heading-line`). `headings`: a line found by `shapes_dev_extra.heading_lines`
+   that passes `heading_noise_reason` (2 to 10 tokens, Title Case, no all-capital word, no unknown word, and the corrected trailing page number and page range rule) and has a hit of `heading_hits`; its stratum is the rarest hit (`proper`,
+   then `imperative`, then `noun`) and a line is one candidate.
+2. **Candidates.** `compound`: the seeded order `rank_of(20261110, "compound", sentence key)`, at most 6 per head lemma and 1,500 in all (gate: at least 1,200 candidates and 250 head lemmas). `headings`: strata in the order proper, imperative, noun, inside a
+   stratum the frame strength and then the seeded rank, at most 4 per lemma over all strata, 25 per document and 1,500 lines in all (gate: at least 1,000 lines and all three strata present).
+3. **Labels.** Two blind labelers, `claude-opus-5.5` and `gpt-6.1-sol` (general-purpose sub-agents, at most 4 at a time, one agent per labeler and batch), tag every token from scratch following `data/CONVENTIONS.md`, through the unchanged
+   `shapes_dev.py export`, `check-batches`, `validate-output`, `status` and `decide` commands (`--round compound`, `--round headings`). Each unit is labeled once per model; no re-roll. A refusal is requested again from a fresh agent and disclosed.
+4. **Kept items.** Both: every token agreed (`disputed_tokens == 0`) and no fix-tier violation of the convention linter (the item is dropped, no label is changed by hand). `compound`: the head read as NOUN or PROPN by both (kind `noun`), or read as VERB by both
+   with an agreed noun right before it (kind `verb`, a counter-example); any other combination is dropped and counted. `headings`: the stratum word has the exact tag of the convention on which both agree (initial imperative VERB in its base form, noun word NOUN,
+   proper noun PROPN); a line on which both agree on another tag is a `class-mismatch` and is dropped, never corrected.
+5. **Caps and quotas (seeded order).** `compound`: 4 per head lemma, 20 per document, 680 of kind `noun` and 120 of kind `verb`, 800 in all, the verb share at most 15 percent; floor 600 sentences and 200 head lemmas. `headings`: 4 per lemma, 25 per document, noun 340,
+   imperative 200, proper 60 (600 in all); floors noun 150, imperative 100, proper 40. `build` refuses (exit 1, nothing written) below a floor; `--allow-short` waives a floor or the minimum (the miss is disclosed, never padded), never a cap.
+6. **Hand check (a model review, not a human review).** 60 kept items per source (`headings`: noun 25, imperative 20, proper 15 by quota) and 4 leniency controls with a swapped tag, drawn with the fixed seeds 20261111 (`compound`) and 20261112 (`headings`), one draw each,
+   shown token by token to a third model (`claude-sonnet-5.5`). Gate per source: marked-word precision `correct / (correct + incorrect)` at least 95 percent (3 incorrect of 60 meets it), at most 1 of the 4 controls accepted, no unanswered item; below it, stop and report.
+7. **Not part of the rule:** no lexicon rebuild (the coverage of the new sources is reported); no weight tuning (a source is added at weight 1 or not at all).
+
+**Choices made while writing the builder, stated openly.** The `headings` source has no fourth stratum of "other Title Case lines" without a frame word: the shared decision tools need a judged word with an exact tag, so every kept line is a `noun`, `imperative` or `proper`
+line, and the noun cap is 340 (the 280 of the plan plus the 60 that the fourth stratum would have taken). The `compound` source keeps verb counter-examples (up to 15 percent) because the `imperative` source taught one reading only, which its README lists as a limit.
+
+### Pool sizes before the labeling (counts only; no label, no model)
+
+From `preflight` on the frozen inputs above (the budgets are met, so no stop condition of the plan applies):
+
+| Source | Pool and candidates |
+| --- | --- |
+| `compound` | 126,725 clean sentences; 17,783 frame hits over 1,935 head lemmas; 1,500 candidates over 694 head lemmas in 192 documents (budget: at least 1,200 candidates and 250 lemmas) |
+| `headings` | 2,976 clean heading lines; frame hits 1,424 noun, 505 imperative and 100 proper (505, 224 and 68 lemmas); 1,012 candidate lines over 560 lemmas in 124 documents: noun 560, imperative 356, proper 96 (budget: at least 1,000 lines, all three strata) |
+
+### Labeler prompt (frozen)
+
+The agent gets this text with `{ROUND}`, `{BATCH}` and `{MODEL}` filled in and nothing else (no stratum, source, lemma or intended class, no mention of compounds, headings or imperatives; the private folder of the round is never named):
+
+```text
+You are a part-of-speech tagger. Tag every token of every text unit from scratch with a Universal POS tag.
+
+Read exactly two files and nothing else:
+1. C:\work\DemaConsulting\Libraries\PartOfSpeech\data\CONVENTIONS.md  (read it in full first; it is the tagging convention you must follow)
+2. <W>\rounds\{ROUND}\batches\{BATCH}.tsv  (3 tab-separated columns with a header: id, token_index, token; one row per token, rows of one text unit are
+   consecutive and token_index counts from 0; a text unit is a sentence or a short line)
+
+Tag set (exactly these 17): ADJ ADP ADV AUX CCONJ DET INTJ NOUN NUM PART PRON PROPN PUNCT SCONJ SYM VERB X.
+For every row give a tag, a confidence (high | medium | low) and flags (one of: -  mentioned  foreign  foreign+mentioned; `-` when none applies).
+Decide each token from its context and the convention; the token column is what the tokenizer produced, keep it as it is.
+
+Write the result as 6-column tab-separated parts with the header line `id<TAB>token_index<TAB>token<TAB>tag<TAB>confidence<TAB>flags`,
+the first three cells copied byte for byte from the batch row (same order, every row, nothing added or dropped). Use parts of at most 400 rows,
+each with its own header line, in the folder <W>\rounds\{ROUND}\batches\out\{MODEL}\ named {BATCH}.p01.tsv, {BATCH}.p02.tsv, ... (two digits, consecutive,
+no gap). Create the files with your file-creation tool (no shell redirection).
+
+Rules: do not read, list or search any other file or folder (no repository search, no web, no other batch, no other tagger's output, no
+private folder); do not repair or post-process the output by script; do not ask questions; finish by listing the part files you wrote.
+```
+
+`<W>` is the work folder (outside the repository). The template differs from the one of the imperative data only in the round folder of the paths and in the words "text unit" for "sentence".
+
+### Compound and heading data: limits stated in advance
+
+- The pool is every frame hit and is not selected by a model, so the `compound` training data are on average easier than the development tranche (which kept only the contested band of a classifier); the data teach the frame, not the hard cases.
+- The documents are US federal text, mostly 1940 to 1990 (the register and the era differ from the consumer report); 58 of the 224 documents date from before 1930, and older scans yield few usable heading lines.
+- The labels are written by two models, without human review; the hand check is a model review (the error found by the same kind of review for the imperative data was about 0.1% of tokens).
+- A `headings` line has few tokens; a Title Case imperative that both labelers read as a compound noun is dropped (the yield of imperative lines is expected to be low), and the proper-noun stratum is small.
+- No NASA documents and no FAA documents are in the pool.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
