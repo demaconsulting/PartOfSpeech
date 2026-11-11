@@ -5264,6 +5264,8 @@ pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2-F5 -Runner $runner
 ```
 
+Note on the driver defaults: the defaults of the parameters `-PyCache` and `-PauseFile` of this driver are paths of the session that ran the experiment (folders under the session state of that machine), not settings. The driver is frozen by the SHA-256 recorded below, so it is not edited to remove them; a reproduction passes its own `-PyCache` and `-PauseFile` (the commands above rely on the defaults of the original session).
+
 A failed run without a result is repeated; **no run is repeated or replaced because of its result, and no arm is dropped** (the contingency of R0 for a short imperative supply was waived by amendment A2, so the arms with `HDG2` are run). The driver was tested without training: a dry run (`-DryRun`, which printed the commands of one arm and two seeds and wrote nothing) and the pause path (a temporary PAUSE file and a temporary output folder gave exit code 4 and `resume.txt`, before the build and before the first run).
 
 **Deviation record (Normal priority), again.** As in the earlier experiments, the runner starts `dotnet` at Normal priority (`start "" /normal /wait /b dotnet %*`), because BelowNormal receives almost no CPU on this shared machine. It changes the speed of the runs and nothing else. The training times and the single-thread throughput are measured on a loaded machine and are not comparable between arms or with earlier records; the throughput guard is an absolute floor far below the speeds recorded earlier (579,761 tokens per second for the shipped weights in the baseline).
