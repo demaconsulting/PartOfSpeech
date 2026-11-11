@@ -128,9 +128,9 @@ sections:
               (imperative, compound, headings), once it is weighted, as sentences without a masked token.
             justification: |
               The weight of a source is a selected training setting, so the epoch must contain exactly the repeats that
-              the configuration names. The imperative source is committed with weight 1, so it is in the mix of the
-              shipped weights; the compound and headings sources are committed with weight 0, so they add nothing until
-              a run weights them. A run that weights a source must get exactly its sentences, all with a gold tag.
+              the configuration names. The imperative and compound sources are committed with weight 1, so they are in
+              the mix of the shipped weights; the headings sources are committed with weight 0, so they add nothing
+              until a run weights them. A run that weights a source must get exactly its sentences, all with a gold tag.
             tests:
               - CorpusReader_LoadSources_Weight_RepeatsSentences
               - CorpusReader_LoadSources_ImperativeSource_ReadsUnmaskedWhenWeighted
@@ -452,7 +452,7 @@ sections:
           - id: PartOfSpeech-ModelTrainer-Configuration
             title: >-
               The training configuration shall be a valid, canonical file that names existing training corpora (the
-              imperative source with a positive weight, and the compound and headings sources with weight 0, so that
+              imperative and compound sources with a positive weight, and the headings sources with weight 0, so that
               they are committed and not trained on), and a misspelled setting or an out-of-range value shall be an
               error.
             justification: |

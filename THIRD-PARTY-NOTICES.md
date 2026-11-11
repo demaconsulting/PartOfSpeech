@@ -163,8 +163,9 @@ state or local government body as an author is not used, and neither is a docume
 co-author whose public-domain basis is uncertain (`data/eval/shapes-dev/excluded-sources.tsv`). Their annotations and
 their selection are dedicated to the
 public domain under CC0 1.0, and the license basis of every document is quoted in `data/compound/sources.tsv` and
-`data/headings/sources.tsv`. Both sources are registered in the training configuration with weight 0: they are committed
-data, they are not part of the mix that trained the embedded weights, and the weights were not learned from them.
+`data/headings/sources.tsv`. The compound source is registered in the training configuration with weight 1, so the
+embedded weights were learned from it; the headings source is registered with weight 0: it is committed data, it is not
+part of the mix that trained the embedded weights, and the weights were not learned from it.
 
 The two follow-up tranches of that set (`compound-head-2.tsv` and `headings-2.tsv` in `data/eval/shapes-dev/`) and
 the two follow-up training sources (`data/compound/compound-2.tsv` and `data/headings/headings-2.tsv`) are cut from
@@ -175,8 +176,9 @@ Service, Department of the Interior, Bureau of Standards and other federal publi
 of every document names a federal body as its creator and no state, local, foreign, university, contractor or private
 creator, publisher or co-author, and no document has a distribution statement other than public release, a copyright
 notice or a third-party credit; nothing is in `data/eval/shapes-dev/excluded-sources.tsv`. The tranches are
-development data and the sources are training data registered with weight 0, so the embedded weights were not learned
-from them. The annotations and the selection are dedicated to the public domain under CC0 1.0, and the license basis
+development data; the compound source is training data registered with weight 1 (so the embedded weights were learned
+from it) and the headings source is training data registered with weight 0 (so the embedded weights were not learned
+from it). The annotations and the selection are dedicated to the public domain under CC0 1.0, and the license basis
 of every document is quoted in `data/eval/shapes-dev/<tranche>-sources.tsv`, `data/compound/compound-2-sources.tsv`
 and `data/headings/headings-2-sources.tsv`. Numeric output of the WordSense Basic classifier (same owner, run
 unmodified) helped to choose the `compound-head-2` sentences; no WordSense text, label or data is copied.

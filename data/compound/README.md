@@ -12,8 +12,8 @@ sentence. Each sentence has a noun compound whose head can also be a verb
 (`the fuel pump seal`, `the oil level check`). Every token has a Universal POS tag on which two blind model labelers agree. They are
 **training** sources: they hold the noun + noun compounds with an ambiguous head (`[noun] check`, `[noun] split`, `[noun] stand`) that the
 other training corpora hold rarely, and a counter-example group in which the same kind of word is a verb. They are disjoint from every
-evaluation set. They are registered in the trainer configuration with weight 0, so they are not part of the mix that trained the embedded model
-(`--source compound:1` and `--source compound2:1` add them to a training run). The sections up to "Known Limits" describe `compound`; the
+evaluation set. The `compound` and `compound2` sources have weight 1 in the trainer configuration (the pre-registered follow-up re-test selected them, and the
+embedded model was retrained with them); `--source compound:0` and `--source compound2:0` leave them out of a training run. The sections up to "Known Limits" describe `compound`; the
 section "Second Source" describes `compound2`.
 
 ## Source and Provenance

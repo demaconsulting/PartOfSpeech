@@ -56,13 +56,14 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   lexicon frame and never by the PartOfSpeech model, and kept disjoint from every evaluation set), and two targeted
   sources built the same way: `data/compound/` (742 sentences with a noun compound whose head can also be a verb) and
   `data/headings/` (374 Title Case heading, caption and step-title lines). The weights are
-  trained from the sources that have a positive weight in `training.json`: the open corpus, MASC, silver and the
-  imperative source (weight 1, so it is in the mix of the embedded weights; `--source imperative:0` leaves it out of an
-  experimental run). The compound and headings sources have weight 0: they are committed training data that is not part
-  of the mix (`--source compound:1` and `--source headings:1` add them to an experimental run). A follow-up built two more
-  of the same kind, `data/compound/compound-2.tsv` (1,100 sentences, source `compound2`) and `data/headings/headings-2.tsv`
-  (247 Title Case lines, source `headings2`: imperative step titles and a contrast stratum of nouns), from US federal
-  documents that no other set uses, also at weight 0, so the embedded weights and the image are unchanged
+  trained from the sources that have a positive weight in `training.json`: the open corpus, MASC, silver, the
+  imperative source and the compound sources (weight 1, so they are in the mix of the embedded weights; `--source imperative:0`
+  or `--source compound:0` leaves one out of an experimental run). The headings source has weight 0: it
+  is committed training data that is not part of the mix (`--source headings:1` adds it to an experimental run). A
+  follow-up built two more of the same kind, `data/compound/compound-2.tsv` (1,100 sentences, source `compound2`,
+  weight 1, selected by the pre-registered re-test) and `data/headings/headings-2.tsv` (247 Title Case lines, source
+  `headings2`: imperative step titles and a contrast stratum of nouns, weight 0), from US federal
+  documents that no other set uses
 - **Evaluation sets**: a split of the open corpus, a single-target gold set, a probe of difficult noun and verb shapes
   and a challenge set; the UD English-EWT treebank is evaluation-only and is fetched on demand, never stored. Model
   configuration and thresholds are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard and hard
@@ -90,7 +91,7 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   "Context-feature experiment" and "Imperative training data") has the protocol and the selection history
 - **Lexicon**: a table that maps a lower-case spelling to the Universal POS tags it may carry, with a coverage report;
   compiled into the embedded `POSL` file
-- **Weights**: the trained `POSW` file, 521,695 bytes compressed and 1,157,499 bytes uncompressed, with the training
+- **Weights**: the trained `POSW` file, 537,650 bytes compressed and 1,196,142 bytes uncompressed, with the training
   configuration `training.json` (which records the SHA-256 of the uncompressed image) and the run log `RUN-LOG.md` next
   to the trainer
 - **Checks**: the checksum manifest and the leakage reports (which cover the six training sources against the evaluation
@@ -291,7 +292,7 @@ The data assets are protected by two release gates, which the data tests of the 
 5. **Compilation**: `tools/LexiconCompiler` compiles the lexicon table into `Resources/lexicon.bin`, which is committed
    and embedded in the assembly
 6. **Training**: the unit `ModelTrainer` reads the training corpora named in `training.json` that have a positive weight
-   (the open corpus, MASC, silver and the imperative source; the compound and headings sources have weight 0),
+   (the open corpus, MASC, silver, the imperative source and the compound sources; the headings sources have weight 0),
    extracts features with
    the same `FeatureExtractor`, restricts the tags with the same lexicon code, trains an averaged perceptron in integer
    arithmetic, quantizes and prunes the weights and writes the `POSW` file with `PerceptronModelWriter`; the file is

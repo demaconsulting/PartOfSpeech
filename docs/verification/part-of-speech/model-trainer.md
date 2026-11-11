@@ -180,10 +180,10 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   the sentences, weight 0 leaves a source out) and `CorpusReader_LoadSources_ImperativeSource_ReadsUnmaskedWhenWeighted`
   (the committed imperative file, weighted in a copy of the committed configuration, gives its 900 sentences with every
   token tagged and a VERB first token; the test sets the other sources to weight 0 in the copy) and
-  `CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted` (one case each for the committed compound file
-  with 742 sentences and the headings file with 374, which have weight 0 in the committed configuration: weighted alone
-  each gives its sentences with every token tagged, and adding one at weight 1 to the committed mix adds exactly its
-  sentences).
+  `CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted` (one case each for the committed compound files
+  with 742 and 1,100 sentences, which have weight 1 in the committed configuration, and the headings files with 374 and
+  247, which have weight 0: weighted alone each gives its sentences with every token tagged, and a source at weight 1
+  has exactly its sentences more in the committed mix than the same source at weight 0).
   The status flags are covered by `CorpusReader_Parse_StatusFlags_AreKeptAndDoNotChangeTagsOrMasking` (flags are kept per
   token, and tags and masking are those of the plain status, for open-style and silver-style rows),
   `CorpusReader_Parse_NoStatusFlags_GivesNoFlags` (the committed files stay valid),
@@ -287,7 +287,7 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   fresh image is current, another seed or another temperature is stale, no file is missing, bytes that are no weights file
   are invalid).
 - **Configuration**: `ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical` (on .NET 8 and later: six existing
-  corpora, the imperative source with weight 1 and the compound and headings sources with weight 0, and rewriting the
+  corpora, the imperative and compound sources with weight 1 and the headings sources with weight 0, and rewriting the
   file gives the
   same text) and `ConfigFile_Parse_UnknownMemberOrBadRange_Throws`.
 - **Development metrics**: `DevSets_ParseGoldDev_Fixture_ReadsTargetsAndMapsClasses`,

@@ -55,8 +55,8 @@ The package targets .NET Standard 2.0 (and so runs on .NET Framework 4.8.1 and e
 public API under its `api/` folder, generated from the XML documentation of the library.
 
 **The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
-compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (521,695 bytes compressed,
-1,157,499 bytes uncompressed, about 0.5 MB and 1.2 MB). `Tagger.Default` returns a shared tagger that uses them, so the
+compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (537,650 bytes compressed,
+1,196,142 bytes uncompressed, about 0.5 MB and 1.2 MB). `Tagger.Default` returns a shared tagger that uses them, so the
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
@@ -414,7 +414,7 @@ TaggedSentence sentence = tagger.Tag("Dogs bark.")[0];
 
 `Tagger.Default` is the shared tagger that uses the weights and the lexicon that are embedded in the package. It is
 created on first use, so a program that only tokenizes pays nothing; the first read inflates and validates the two
-embedded files once (the weights: 521,695 bytes compressed, 1,157,499 bytes uncompressed; the lexicon: 639,711 bytes
+embedded files once (the weights: 537,650 bytes compressed, 1,196,142 bytes uncompressed; the lexicon: 639,711 bytes
 compressed, 1,626,269 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
 same thread-safe instance. A read does not fail in a released package; an `InvalidOperationException` or an
 `InvalidDataException` would mean that the package is broken.
@@ -609,7 +609,8 @@ holds open data for the 17 Universal POS tags: training corpora, a part-of-speec
 in the [data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md). The parts of the data that
 the library uses at run time are the lexicon, which is compiled into a binary file that is embedded in the assembly and
 restricts the tags of known words, and the weights, which the trainer tool of the repository learned from the open
-corpus, MASC, the silver corpus and the imperative source and which are embedded as a binary file too. The attribution
+corpus, MASC, the silver corpus, the imperative source and the compound sources and which are embedded as a binary file
+too. The attribution
 and license notices of the third-party data are in
 [THIRD-PARTY-NOTICES.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md), which is also
 packed at the root of the NuGet package.

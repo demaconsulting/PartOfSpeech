@@ -5528,6 +5528,63 @@ The new `weights.bin` must be **byte-identical to the weights of the CMP2 run of
 - The seed-20260101 figures of the CMP2 run are the figures of the shipped model if and only if the byte identity holds; they are written beside the previous model's in the adoption result.
 - The adoption commit adds the development figures of the shipped model, the `thresholds` result and the list of the re-pinned figures to this section (development data only). The held-out evaluation is a **disclosed fifth look** at sets already seen by this model family (six models in all would have been scored on them), run **once**, as a new record (not an erratum), reported as produced, and is the step that follows the adoption commit; The pre-registration states **no rollback condition** for the held-out look: the stop conditions of the `evaluate` protocol, if they fire, are reported and nothing is selected, tuned or reverted because of a result; no second `evaluate` is run whatever the result, and any question whether a result should change what ships is put to the owner, not decided inside this run.
 
+### CMP2 adoption result (written by the adoption commit; development data only)
+
+The steps ran in the registered order from a clean tree at the commit of the plan above (`77753d7`), one process at a time at 8 threads at most; the PAUSE file did not exist before any of them. The trainer commands wrote their output under the working folder outside the repository (`files\compound-heading-followup\adopt\`).
+
+- **`train --output <file>`** (seed 20260101; 63,522 sentences, sources `open:2,masc:1,silver:1,imperative:1,compound:1,compound2:1`, 6,569,850 steps, 10.8 s): image 1,196,142 bytes, 126,087 rows, image SHA-256 `d916b0e775660f8aa3c18a2161369318dd07c182358e1503d0992b5d2b975e25`, 537,650 bytes deflated, file SHA-256 `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad`.
+- **`calibrate --weights <file> --update-config`**: best temperature on open dev **9.514** (NLL 0.10982, ECE 0.152%; gold v2 dev NLL 0.2564, ECE 2.25%), the same value as before, so `training.json` kept its temperature.
+- **`train --update-config`** wrote `imageSha256` `d916b0e7...5e25` (it was `6e1e4ade...`) and wrote `weights.bin` itself; **`train --check` exit 0** ("The weights ... are current").
+- **Byte identity: confirmed.** `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` has SHA-256 `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad` and 537,650 bytes, equal to the file written by `train --output`, to the weights of the CMP2 run of seed 20260101 of the re-test (`CMP2-s20260101.bin`) and to the `weights.sha256` of that run's result file. The model it replaces had SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` (521,695 bytes). The seed-20260101 figures of the re-test are therefore the figures of the shipped model.
+- **`training.json`**: the weights of `compound` and `compound2` 0 to 1, the `imageSha256` as above; nothing else.
+
+#### CMP2 adoption: development figures of the shipped model (dev data only)
+
+Seed 20260101, scored by `eval-arm` through the real decoder (the figures of the re-test's runs `CMP2-s20260101` for the shipped model and `BASE-s20260101` for the previous model, which was the shipped model before this adoption). The shapes development sets are development sets for this selection and not independent tests.
+
+| Measure | Previous model (BASE) | Shipped model (CMP2) |
+| --- | --- | --- |
+| Primary: pooled harmful per 1k, 470 decisions of the four tranches | 246.8 (116) | 195.7 (92) |
+| Wrong at >= 0.95, four tranches | 21 | 16 |
+| compound-head: accuracy %, harmful per 1k (100 decisions), wrong >= 0.95 | 60.0, 390.0 (39), 5 | 72.0, 280.0 (28), 2 |
+| compound-head-2: accuracy %, harmful per 1k (210 decisions), wrong >= 0.95 | 62.9, 338.1 (71), 13 | 70.5, 271.4 (57), 11 |
+| headings: accuracy %, harmful per 1k (78 decisions), wrong >= 0.95 | 84.2, 51.3 (4), 2 | 86.3, 64.1 (5), 2 |
+| headings-2: accuracy %, harmful per 1k (82 decisions), wrong >= 0.95 | 81.7, 24.4 (2), 1 | 84.4, 24.4 (2), 1 |
+| Imperative headings (104 targets, 60 decisions): accuracy %, harmful per 1k | 95.2, 50.0 (3) | 97.1, 33.3 (2) |
+| Compound controls (65), headings controls (40) | 65 of 65, 40 of 40 | 65 of 65, 40 of 40 |
+| Hard tranche harmful per 1k (400 target items) | 170.0 (68) | 135.0 (54) |
+| Hard tranche target / control accuracy % | 77.25 / 98.33 | 79.75 / 98.33 |
+| Standard tranche harmful per 1k (600 target items) | 15.0 (9) | 16.7 (10) |
+| Standard tranche target / control accuracy % | 97.83 / 99.00 | 97.50 / 99.00 |
+| Named-state target accuracy %, controls | 90.0, 12 of 12 | 94.0, 11 of 12 |
+| Open dev accuracy % (ambiguous %) | 96.57 (95.90) | 96.72 (96.10) |
+| Open dev harmful per 1k (of 4,451 decisions) | 20.44 (91) | **21.57 (96)** |
+| Open dev NLL, ECE % | 0.1125, 0.28 | 0.1098, 0.15 |
+| Gold v2 dev accuracy % | 95.04 | 95.24 |
+| Gold v2 dev harmful per 1k (of 611 decisions) | 22.91 (14) | **18.00 (11)** |
+| Gold v2 dev NLL, ECE % | 0.2498, 2.44 | 0.2564, 2.25 |
+| UD-EWT dev agreement % (25,148 tokens) | 92.962 | 92.974 |
+| UD-EWT dev harmful per 1k (of 4,570 decisions) | 20.57 (94) | 18.82 (86) |
+| Temperature | 9.514 | 9.514 |
+| Rows, weights | 122,088, 304,425 | 126,087, 314,640 |
+| Raw, deflated bytes | 1,157,499; 521,695 | 1,196,142; 537,650 |
+
+Throughput was not measured again for the adoption: the re-test recorded 389,968 tokens per second for this model's run (one thread, a loaded shared machine; the median over the eight seeds of the arm was 534,918), against the floor of 150,000. **What is worse (stated before the held-out evaluation).** (1) The shipped model is 15,955 bytes larger when deflated (+3.1%) and has 3,999 more rows. (2) Open dev harmful errors are 5 higher at this seed (96 against 91; the eight-seed difference of the re-test is +0.45 per 1k with an interval that contains 0). (3) The standard tranche has one more harmful error (10 against 9; 16.7 against 15.0 per 1k) and its target accuracy is 0.33 points lower. (4) The harmful errors on the old `headings` tranche are higher (5 against 4 at this seed) and, over the eight seeds, the imperative-heading harmful rate is higher (+14.58 per 1k, interval [+0.34, +28.83]), although at this seed it is lower. (5) One of the 12 named-state controls is now wrong (11 of 12). (6) The gain is on the compound tranches that are the frames of the data, so it is development evidence and not a held-out result. (7) **The operating points move** (below): the strict threshold falls from 0.95 to 0.90 and the balanced one rises from 0.75 to 0.80 under the unchanged pre-registered rule.
+
+#### CMP2 adoption: `thresholds` result (development data only; committed before the held-out run)
+
+`thresholds` (rule `nv-pooled-dev-v1`, grid, targets and floors unchanged) **refused to write** with the old constants (`At 0.45: harmful 96 (open dev), 11 (gold v2 dev), 107 (pooled); frozen figures 91, 14, 105`; nothing was written). The reason is that the model changed: the 0.45 row of the frozen figures is the development figure of the shipped model, and the new model's figures equal those of the re-test's `eval-arm` (open 96, gold 11). As in the two earlier adoptions the two constants `FrozenOpenHarmful` and `FrozenGoldHarmful` of the trainer were set to the figures that `thresholds` reported (**96** and **11**; they were 91 and 14), the comment of each constant records the history, the disclosure paragraph (`docs/evaluation/disclosure.md`) was revised for the **fifth look** (six models in all), and the command was run again: the 0.45 row reproduced the figures and the command wrote `docs/evaluation/operating-points.json` and `docs/evaluation/confidence-thresholds.md`.
+
+For the model image `d916b0e7...`, temperature 9.514 and the dev files unchanged: **strict 0.90** (coverage 87.4% [86.2, 88.6], 4.7 harmful per 1,000 answered [2.5, 7.5], 21 of 4,425) and **balanced 0.80** (coverage 92.4% [91.5, 93.4], 8.3 [5.5, 11.5], 39 of 4,677). The previous model had strict 0.95 (coverage 81.8%, 1.9 per 1,000, 8 of 4,139) and balanced 0.75 (coverage 94.1%, 9.9, 47 of 4,762): **both thresholds changed**, because the new model's confidence curve is different. The rule takes the first threshold of the grid, in ascending order, that meets both the harmful target and the coverage floor: the previous model first met the strict target (5.0 per 1,000 answered) at 0.95, the new one already at 0.90 (4.7); the previous model first met the balanced target (10.0) at 0.75 (9.9), the new one has 10.5 at 0.75 and first meets it at 0.80 (8.3). The pooled harmful count at 0.45 is 107 of 5,062 decisions (21.1 per 1,000; it was 105, 20.7). The guidance lines of the documents that quote a threshold (the user guide, the packed API reference, the root README) change with the held-out step, because they quote the held-out figures of the operating points beside them.
+
+#### CMP2 adoption: pinned figures and documents re-pinned by the adoption commit
+
+The size figures (537,650 bytes compressed, 1,196,142 uncompressed, 126,087 rows, 314,640 weights; about 0.5 MB and 1.2 MB) in the user guide, the packed API reference (`NamespaceDoc.cs`), the trainer README ("Current model"), `data/README.md`, the design documents of the system, of `ModelStorage`, `PerceptronModel` and `ModelTrainer`, and the system verification document; the development figures of the shipped model in the "Selection of the Shipped Model" section of the `ModelTrainer` design (the row of the compound and headings sources, open and gold development accuracy, pooled harmful rate, calibration error, step count); the weights of the sources `compound` and `compound2` (0 to 1) in `training.json`, in the configuration test (`ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical`), in the targeted-source test (`CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted` now has one case per compound and headings source with its committed weight) and in every document that described them as "weight 0" (the data READMEs, the trainer README, the design and verification documents of `ModelTrainer`, the requirements text of `PartOfSpeech-ModelTrainer-SourceWeights`, `PartOfSpeech-ModelTrainer-Configuration` and `PartOfSpeech-Data-TargetedSourcesAreOpen`); the third-party notice, the package license and the user guide, which now name the compound source among the corpora the weights were learned from (and the notice tests, which expect "weight 1", "were learned from it" and "compound source"). Nothing in the re-test's frozen files (`analyze_followup.py`, the driver, `arms.json`, the pre-registration, the results section) changed: the analysis script's acceptance test a, which compares BASE with the shipped weights, holds only at the pre-registration commit, as the trainer README now says.
+
+#### CMP2 adoption: pending for the held-out step (not changed by the adoption commit)
+
+The committed held-out record (`docs/evaluation/test-results.json` and `.md`) is still the record of the previous model, and the README tables are still its figures. These tests and figures follow the one `evaluate` of the next step and are not edited by hand: `PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs`, `PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports`, `PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures`, `PartOfSpeech_Evaluation_ConfidenceGuidance_MatchesTheCommittedFigures` and `DataGuard_CommittedReports_CarryCommittedDisclosureWhereGeneratorPutsIt` for `test-results.md` (they fail at the adoption commit by design: the record names the previous image and operating points, and `test-results.md` carries the fourth-look paragraph while `confidence-thresholds.md` already carries the fifth-look one), the held-out figures and thresholds of the two README tables, the guidance in the user guide and in `NamespaceDoc.cs`, the prose of `docs/evaluation/README.md` and the statement of `docs/design/part-of-speech.md` about the record.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

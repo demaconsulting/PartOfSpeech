@@ -59,8 +59,8 @@ and they are rejected together with `--check` and `--update-config`.
 
 ## Configuration
 
-`training.json` names the corpora (`open`, `masc`, `silver`, `imperative`, `compound` and `headings`; each with an integer `weight`, the number of times its
-sentences enter every epoch; the first four have a positive weight, `--source imperative:0` leaves the imperative source out of a run, and the compound and headings sources have weight 0, so `--source compound:1` and `--source headings:1` add them to a run) and every training setting. It contains no floating-point training setting except the
+`training.json` names the corpora (`open`, `masc`, `silver`, `imperative`, `compound`, `headings`, `compound2` and `headings2`; each with an integer `weight`, the number of times its
+sentences enter every epoch; open, MASC, silver, imperative, `compound` and `compound2` have a positive weight, `--source imperative:0` or `--source compound:0` leaves one of them out of a run, and the two headings sources have weight 0, so `--source headings:1` and `--source headings2:1` add them to a run) and every training setting. It contains no floating-point training setting except the
 softmax `temperature`, which is chosen once by `calibrate` and only written into the file header. The weight scale is
 `1 / quantScale` with `quantScale` a power of two, so it is exact in the file.
 
@@ -186,8 +186,16 @@ equals the shipped weights and the figures measured for the shipped model, the a
 every arm, the frozen development files), prints the primary metric (`shapesFollowup.pooledPrimary.harmfulPer1k`), the
 co-primary, every guard (the imperative-heading guard is new) and the verdict, and applies selection rule B of the run log
 ("Follow-up: pre-registered re-test (E1)"); it takes only `welch_diff` from `analyze_arms.py` and checks its own logic on
-synthetic runs with `--selftest`. The files are frozen by the hashes in that section. The experiment is run only after the
-pre-registration commit; until then no arm has been trained.
+synthetic runs with `--selftest`. The files are frozen by the hashes in that section. The experiment was run after the
+pre-registration commit (`0f0b595`); the results and the decision (rule B selected CMP2, the compound sources at weight 1) are in the section "Follow-up: re-test
+results" of the run log, and the adoption of CMP2 in "Follow-up: adoption of the CMP2 model". The harness encodes the **pre-registered state**,
+in which `training.json` carries `compound` and `compound2` at weight 0: there the base runner trains BASE (the shipped model at that
+time, the runner passes `train` unchanged, so the weights of `training.json` decide). **To reproduce the published comparison, check
+out the pre-registration commit `0f0b595`** (its `training.json` is the registered one, and the analysis script checks its hash). At the
+adopted state (weight 1) the base runner also trains CMP2, so BASE and CMP2 runs train on the same sentences and the acceptance test
+"BASE equals the shipped weights" does not hold; to train the BASE arm at the adopted state, add `--source compound:0 --source compound2:0`
+to a direct `train` command (the frozen runners do not add them). The frozen compound-heading experiment of the previous section has the
+same property.
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms BASE -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
@@ -221,10 +229,10 @@ Run the commands at below-normal priority, one process at a time (see _Machine l
 
 ## Current model
 
-`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%) and imperative (x1); restriction
+`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%), imperative (x1), and the two compound sources `compound` and `compound2` (x1 each); restriction
 mode `history` with predicted history; 6 epochs; 19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8;
-the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 122,088 rows and 304,425 weights, is
-1,157,499 bytes uncompressed and 521,695 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
+the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 126,087 rows and 314,640 weights, is
+1,196,142 bytes uncompressed and 537,650 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
 takes about 15 seconds and runs
 in `build.ps1` and in the CI build on all three operating systems. The glossary decision (boost only, no trained
 feature) and every experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and
