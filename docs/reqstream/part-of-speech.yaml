@@ -907,9 +907,10 @@ sections:
           from two blind labelers.
         tags: [system]
         justification: |
-          A tranche chosen where the tagger errs would measure the tagger against its own mistakes. The rule, the pins
-          and the quota gates were committed before any document was fetched and any label existed; the data test
-          scans the source of the builder.
+          A tranche chosen where the tagger errs would measure the tagger against its own mistakes. The rule was
+          committed before any document was fetched (R0); the pins were set after the sourcing, at R1 and R3, and the
+          caps were amended once (A1) after the sourcing and before any label existed; the data test scans the source
+          of the builder.
         tests:
           - PartOfSpeech_Followup_Selection_UsesNoPartOfSpeechModel
 
