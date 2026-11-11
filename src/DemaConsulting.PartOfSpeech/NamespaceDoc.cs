@@ -13,9 +13,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </para>
 ///     <para>
 ///     Package: the NuGet package <c>DemaConsulting.PartOfSpeech</c>, which targets <c>netstandard2.0</c>,
-///     <c>net8.0</c>, <c>net9.0</c> and <c>net10.0</c> and has no package dependencies, no native code and no model
-///     runtime. Everything is in the single namespace <c>DemaConsulting.PartOfSpeech</c>; there are no sub-namespaces to
-///     import.
+///     <c>net8.0</c>, <c>net9.0</c>, <c>net10.0</c> and <c>net11.0</c> and has no package dependencies, no native code and
+///     no model runtime. Everything is in the single namespace <c>DemaConsulting.PartOfSpeech</c>; there are no
+///     sub-namespaces to import.
 ///     </para>
 ///     <para>
 ///     What is in the package, in the order that you meet the types. <see cref="Tokenizer"/> splits a string into

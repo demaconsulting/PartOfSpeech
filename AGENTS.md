@@ -5,7 +5,7 @@
 - **project-tagline**: Part-of-speech tagging for .NET
 - **description**: PartOfSpeech is a .NET library for part-of-speech analysis of text.
 - **languages**: C#
-- **technologies**: .NET
+- **technologies**: .NET (netstandard2.0, net8.0, net9.0, net10.0, net11.0)
 
 # Project Structure
 

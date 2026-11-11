@@ -81,6 +81,13 @@ diagram or the prose below.
 
 ![Software Structure](SoftwareStructureView.svg)
 
+The diagram below complements the structure view by showing the library in its run-time context: the calling
+application invokes the public `Tagger`, which uses the `Tokenization` and `ModelStorage` subsystems and `Upos`, and the
+build-time tools `LexiconCompiler` and `ModelTrainer` produce the embedded lexicon and weights.
+
+![Architecture: an application calls the Tagger, which uses tokenization, the model and Upos; build-time tools produce
+the embedded lexicon and weights](architecture.svg)
+
 The system has two units directly under it (`Upos`, the tag vocabulary that every part uses, and `ModelTrainer`, the
 build-time tool that trains the embedded weights) and three subsystems:
 `Tokenization` (text to sentences and tokens), `ModelStorage` (the binary formats of the weights and the lexicon and the

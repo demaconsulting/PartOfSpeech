@@ -23,7 +23,7 @@
 - 🧩 **Pre-tokenized input** - tag tokens that you already have
 - 📦 **No dependencies** - lexicon and weights are embedded, nothing to download
 - ⚡ **Fast** - hundreds of thousands of tokens per second, thread-safe
-- 🎯 **Wide support** - .NET Standard 2.0 and .NET 8 to 10
+- 🎯 **Wide support** - .NET Standard 2.0 and .NET 8 to 11
 - 📄 **API reference** - generated Markdown reference packed with the library
 - ✅ [**Continuous Compliance**][link-continuous-compliance] - evidence generated on every CI run
 

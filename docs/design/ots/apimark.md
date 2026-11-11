@@ -64,7 +64,7 @@ The library project sets these properties:
 - **`ApiMarkLibraryDescription`**: the one-sentence description on the index page.
 
 The targets run once per build, for the first target framework only, which is correct because the
-public surface is identical across `netstandard2.0`, `net8.0`, `net9.0`, and `net10.0`. Regeneration
+public surface is identical across `netstandard2.0`, `net8.0`, `net9.0`, `net10.0`, and `net11.0`. Regeneration
 requires a real rebuild (`--no-incremental`), since an up-to-date incremental build skips the task.
 
 ### Documentation Enforcement

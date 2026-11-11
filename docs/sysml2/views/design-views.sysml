@@ -5,7 +5,8 @@
 // 'render' - is what scopes the rendered diagram content.
 package PartOfSpeech {
     view SoftwareStructureView {
-        expose PartOfSpeech;
+        expose PartOfSpeech::**;
+        render asInterconnectionDiagram;
     }
 
     view PartOfSpeechView {
