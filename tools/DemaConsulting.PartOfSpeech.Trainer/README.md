@@ -197,10 +197,21 @@ adopted state (weight 1) the base runner also trains CMP2, so BASE and CMP2 runs
 to a direct `train` command (the frozen runners do not add them). The frozen compound-heading experiment of the previous section has the
 same property.
 
+The analyzer needs all five arms (BASE, CMP2, CMP2-F5, CMP2-HDG2, CMP2-HDG2-F5) at all eight seeds (the seeds of `arms.json`, the
+default of the driver) in one `<runs>` folder, so run the driver once per arm (it is resumable and writes one `<label>.json` per arm
+and seed), then the analyzer. Do this at the pre-registration commit `0f0b595`:
+
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms BASE -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
-python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py --runs <runs> --out report.md --decision decision.json
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-F5 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2-F5 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py --runs <runs> --out <runs>\report.md --decision <runs>\decision.json
 ```
+
+The BASE acceptance test ("BASE equals the shipped weights") holds only at commit `0f0b595`; at the adopted state it does not
+hold, as described above.
 
 ### Held-out evaluation
 
