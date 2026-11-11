@@ -263,8 +263,8 @@ run log is excluded because it records the figures of historical runs.
 
 **Test**: `PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora` (in `PartOfSpeechDataTests.cs`)
 
-Reads the corpus paths of `training.json` and asserts for each that it is one of the six training corpora (open, MASC,
-silver, imperative, compound and headings), that the file
+Reads the corpus paths of `training.json` and asserts for each that it is one of the committed training corpora (open,
+MASC, silver, imperative, compound, headings and the two follow-up sources compound2 and headings2), that the file
 is committed, that it is not a restricted corpus, that its data folder declares an allowed license, and that the section
 of the third-party notice on the embedded weights names MASC, its license, the open corpus, the silver corpus and the
 imperative source. That

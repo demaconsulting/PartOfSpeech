@@ -49,7 +49,8 @@ into the binary resource `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`
 weights, which the unit `ModelTrainer` trains into `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, which the
 package embeds as well (the _Embedded Model_ system requirements cover it).
 
-- **Training corpora**: sentences labeled with the 17 Universal POS tags, from six sources: the open corpus, MASC, a
+- **Training corpora**: sentences labeled with the 17 Universal POS tags, from the sources listed in `training.json`: the
+  open corpus, MASC, a
   silver corpus whose labels were written by a model and mapped by documented rules, a small imperative source
   (`data/imperative/`: 900 sentences that start with an imperative verb, from US federal-government instructional
   text, tagged by two blind models that agree on every token, a model review of a sample, selected by position and
@@ -61,7 +62,7 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   or `--source compound:0` leaves one out of an experimental run). The headings source has weight 0: it
   is committed training data that is not part of the mix (`--source headings:1` adds it to an experimental run). A
   follow-up built two more of the same kind, `data/compound/compound-2.tsv` (1,100 sentences, source `compound2`,
-  weight 1, selected by the pre-registered re-test) and `data/headings/headings-2.tsv` (247 Title Case lines, source
+  weight 1, so it is in the mix of the embedded weights) and `data/headings/headings-2.tsv` (247 Title Case lines, source
   `headings2`: imperative step titles and a contrast stratum of nouns, weight 0), from US federal
   documents that no other set uses
 - **Evaluation sets**: a split of the open corpus, a single-target gold set, a probe of difficult noun and verb shapes
@@ -85,17 +86,16 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   those copies with the generated files. The record describes the embedded model: the corrected corpora minus the
   withdrawn `prenominal-ing` corrections, the clause-cue feature group (see _Context Features_ in the Data Flow section),
   the imperative training source and the two compound training sources. The held-out sets are evaluated once per model;
-  the record is a disclosed look at
-  sets that earlier models of the family also scored (`docs/evaluation/disclosure.md`, which both generated reports
-  carry) and stands as a record of its own model, not as a correction of another. The evaluation `README.md` shows the
-  previous model beside it and states which comparisons are fair, and the run log `RUN-LOG.md` ("Corpus cleanup C",
-  "Context-feature experiment", "Imperative training data" and "Follow-up") has the protocol and the selection history
+  the record is a disclosed look at those sets (`docs/evaluation/disclosure.md`, which both generated reports carry) and
+  stands as a record of its own model. Comparisons with other models, the protocols and the selection history are kept
+  in the evaluation `README.md` and in the run log `RUN-LOG.md`, not in this document
 - **Lexicon**: a table that maps a lower-case spelling to the Universal POS tags it may carry, with a coverage report;
   compiled into the embedded `POSL` file
 - **Weights**: the trained `POSW` file, 537,650 bytes compressed and 1,196,142 bytes uncompressed, with the training
   configuration `training.json` (which records the SHA-256 of the uncompressed image) and the run log `RUN-LOG.md` next
   to the trainer
-- **Checks**: the checksum manifest and the leakage reports (which cover the six training sources against the evaluation
+- **Checks**: the checksum manifest and the leakage reports (which cover the training sources of `training.json` against
+  the evaluation
   sets, and the compound and headings sources against the other training sources)
 - **Corrections overlay**: `data/corrections/` holds the label corrections for the three correctable training corpora (the
   imperative, compound and headings sources are linted by the conventions linter but never corrected) as tables, and
