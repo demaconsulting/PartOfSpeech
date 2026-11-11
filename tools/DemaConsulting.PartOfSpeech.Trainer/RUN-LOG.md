@@ -5226,6 +5226,146 @@ For the guards of the re-test, the same run gives (shipped model, seed 20260101 
 
 Observations (no rule is changed by them): the shipped model already reads the 59 real Title Case imperative headings of `headings-2` correctly (100.0%, 32 of them noun-verb decisions, no harmful error), so the imperative-heading guard of the re-test (harmful per 1,000 at most BASE + 25) has a BASE of 3 harmful errors in 60 decisions over the 104 imperative headings of the two tranches; a gain from the heading training data can be measured on the noun targets of `headings-2` (60.0%, 2 harmful) and not on its imperative stratum, which has no room left on this tranche. The compound measure is as hard as the old one (62.9% against 60.0%; 338.1 against 390.0 harmful per 1,000), as designed, because the band is the contested band of the WordSense Basic classifier.
 
+## Follow-up: pre-registered re-test (E1)
+
+This section is written and committed **before any arm of the re-test is trained or evaluated**. The git history shows the order: PR-A (`feature/compound-heading-followup`, tip `7a2e42e`: the builder, the pre-registered data rule, the pilot and the data records, the four registered products at weight 0, the two development tranches, the additive trainer change and the baseline of the shipped model on the new tranches) and, on the stacked branch `feature/compound-heading-followup-experiment`, this commit (**E1, the pre-registration of the re-test**), which adds the harness `compound-heading-2/` and this text. A commit cannot contain its own SHA: the next commit records the SHA of this one. At this commit no `train --output` of an arm and no `eval-arm` of an arm exists. Since the data were registered the trainer commands run were `train --check` (exit 0, image `6e1e4ade...`, unchanged), and, on the **shipped** `weights.bin` only (a baseline, not an arm), `eval-shapes --tranche followup` and one `eval-arm` (section "Follow-up: baseline of the shipped model on the new tranches"; its result file has SHA-256 `b2f651df5b13bc7950c607cfa918f428198a448c2a293bcfde1648ce2fab7cfc`). No held-out command (`evaluate`, `thresholds`, the probe or the challenge set) was run, and the re-test uses no held-out file. No consumer text was read. The code base of the runs is `main` at `7dba3c4` (PR #19) plus PR-A plus this commit; the trainer used for the runs is built from the commit at which the driver is started (the driver records the commit and a dirty flag in every result).
+
+### Attribution (who decided what)
+
+The rule below is **selection rule B**, the default **U1** that the implementing agent took in R0 and recorded there (not decided by the owner or the top-level orchestrator, who can overrule it before the runs). The amendment A2 (the arms with `HDG2` are run although the imperative supply is short) and the other defaults U2 to U6 are likewise decisions of the implementing agent, not of the owner (see "Attribution note" in the R0 section). The choices made while writing E1 and not fixed by R0 or by the plan are marked **(implementing agent)** below; none of them changes a pre-registered rule: the integrity checks of the analysis script that the plan did not list, the exact frozen-file table, the names of the JSON paths, and the use of the current `headings.tsv` (374 lines). Any change of a rule after this commit is put to the owner first.
+
+### What the re-test asks
+
+PR #19 kept BASE: its compound development measure had 100 targets and the arms moved by amounts inside the noise. The follow-up measures on a bigger development set (the enlarged compound dev `compound-head` plus `compound-head-2`: 310 targets, and all heading dev items `headings` plus `headings-2`: 204 targets) and trains on more data (`compound2`: 1,100 sentences; `headings2`: 247 lines). The question is whether the enlarged compound data (CMP2), the F5 feature (CMP2-F5), the heading data with the real imperative headings (CMP2-HDG2), or both (CMP2-HDG2-F5) lower the harmful errors on the pooled measure against the shipped model without breaking a guarded measure. Nothing is adopted unless rule B selects an arm.
+
+### Re-test: arms and runs
+
+| Arm | Feature groups | `--source` added to the shipped mix (weight 1) | Additions (tie rule) | Sentences added over BASE |
+| --- | --- | --- | ---: | ---: |
+| **BASE** | `clauseCues` | none (the shipped mix: open x2, MASC, silver >= 80, imperative at weight 1, exactly `training.json`) | 0 | 0 |
+| **CMP2** | `clauseCues` | `compound`, `compound2` | 1 (the enlarged compound data) | 1,842 (742 + 1,100) |
+| **CMP2-F5** | `clauseCues`, `titleCaseLine` | `compound`, `compound2` | 2 | 1,842 |
+| **CMP2-HDG2** | `clauseCues` | `compound`, `compound2`, `headings`, `headings2` | 2 | 2,463 (742 + 1,100 + 374 + 247) |
+| **CMP2-HDG2-F5** | `clauseCues`, `titleCaseLine` | `compound`, `compound2`, `headings`, `headings2` | 3 | 2,463 |
+
+BASE is the shipped model, so the experiment is judged against the model that ships. Eight seeds per arm, **20260101, 11, 12, 13, 14, 15, 16, 17** (the five seeds of the earlier experiments and three more), 40 runs. Every other setting is the shipped `training.json`; the temperature is refit on open dev for every run (`--calibrate`). The `headings` source has 374 lines (one line was removed after PR #19, "Amendment after the result" above), not the 375 of PR #19; the arms train what is committed **(implementing agent)**. Each run is `train --seed S --features <groups> --calibrate --output <arm>-sS.bin [--source NAME:1 ...]`, then the dev-only command `eval-arm`, which scores the weights on the development sets (open dev, gold v2 dev, UD-EWT dev, the hard and standard tranches of the shapes development set, the three tranches of the first generation, and the two follow-up tranches) and reads no held-out file.
+
+The mechanism is the driver `compound-heading-2/run_arms.ps1`: the driver of the compound-heading experiment with its own `arms.json` (the five arms and eight seeds), the follow-up default of `-PyCache` (`...\files\compound-heading-followup\pycache`) and its own documentation comment, nothing else. It is resumable (a run is complete when its JSON exists), checks the PAUSE file (default `...\files\PAUSE`, parameter `-PauseFile`) before the build and before every run (exit code 4 and `resume.txt`), requires at least 6 GB free on C: before every run, uses at most 8 threads (`DOTNET_PROCESSOR_COUNT`), uses only paths on C: and starts every process through the runner `imperative-data/runner-base.cmd`, **unchanged**. One driver invocation per arm, in this order, into one folder on C: outside the repository (`<runs>`):
+
+```text
+$runner = "<repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd"
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms BASE         -Runner $runner
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2         -Runner $runner
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-F5      -Runner $runner
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2    -Runner $runner
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2-F5 -Runner $runner
+```
+
+A failed run without a result is repeated; **no run is repeated or replaced because of its result, and no arm is dropped** (the contingency of R0 for a short imperative supply was waived by amendment A2, so the arms with `HDG2` are run). The driver was tested without training: a dry run (`-DryRun`, which printed the commands of one arm and two seeds and wrote nothing) and the pause path (a temporary PAUSE file and a temporary output folder gave exit code 4 and `resume.txt`, before the build and before the first run).
+
+**Deviation record (Normal priority), again.** As in the earlier experiments, the runner starts `dotnet` at Normal priority (`start "" /normal /wait /b dotnet %*`), because BelowNormal receives almost no CPU on this shared machine. It changes the speed of the runs and nothing else. The training times and the single-thread throughput are measured on a loaded machine and are not comparable between arms or with earlier records; the throughput guard is an absolute floor far below the speeds recorded earlier (579,761 tokens per second for the shipped weights in the baseline).
+
+### Frozen inputs (hashes; the analysis refuses to run if one differs)
+
+The text files are hashed with CRLF turned into LF; the weights and the development files as bytes.
+
+| File | SHA-256 |
+| --- | --- |
+| `compound-heading-2/run_arms.ps1` (driver) | `20a4b921045a422784abf9db18ff37ddaff631d247d19de4bc034b81f3175e52` |
+| `compound-heading-2/arms.json` | `88572609ce234dd6e4b33080cf5f61c9e28c353ca38d06d92d2df65c91f25440` |
+| `compound-heading-2/analyze_followup.py` (the analysis script; it cannot hold its own hash, so it is recorded here) | `f7dbe55608d1761354cf68722666ad179c4c982aa5b13109274abd0ba81840e0` |
+| `context-features/analyze_arms.py` (imported for `welch_diff` only; hash checked before the import) | `3d52825384b440c5786e1b241fc6f814e4e47a63f155414e0d6450107d33e494` |
+| `imperative-data/runner-base.cmd` (runner, unchanged; LF form) | `549a2c6ed8d1eaf00b30551fae14e546c51023dd79fe3a77810f39a1fe79ff3e` |
+| `data/compound/compound.tsv` (742 sentences) | `eb8c4708ba95fb370c885110e10eda0f1d826c5922876bd66e69389894bd5e3b` |
+| `data/compound/sources.tsv` | `8b861dd3ff2d5a3fd5e741f5fe2a906807f99afa562d7e294d4011d93ef15e02` |
+| `data/compound/compound-2.tsv` (1,100 sentences) | `2a9a98492afb1248623b50111ca62d8abd57e4569b1a5e52b3cff544bc0746cc` |
+| `data/compound/compound-2-sources.tsv` | `9c7ec7014ff115e745501706126b4637382c058783fdea43021b9f6cbfbd0b4f` |
+| `data/headings/headings.tsv` (374 lines, as committed after the removal of one line) | `cae45ff12cb4e7e9531a007beb8278b4014a8bdab9ae3e52b06ba46df4d48cde` |
+| `data/headings/sources.tsv` | `26ca020469ee3a396ba71bd7845030a516e612c44e887933b1fe8450445fbad7` |
+| `data/headings/headings-2.tsv` (247 lines) | `3f1fca247aa625c6f46269f5db5034540e4685fc55918dff5068da6ba591fca5` |
+| `data/headings/headings-2-sources.tsv` | `accd6790b8226e962d8d192b7658375f1bafb7e1721a11779ee55e05024b682d` |
+| `data/eval/shapes-dev/compound-head-2-sources.tsv` | `c183effb24a273307e710e0b82bbf45cbc7a43d4b9bf071521c20c5e4c88a31f` |
+| `data/eval/shapes-dev/headings-2-sources.tsv` | `62754e46c3306983ffd6ece5360257e023c8a7bc268668644d2edc4df5452edd` |
+| `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` (the shipped configuration with the four sources at weight 0; before any adoption) | `fe7e2d93b82cfdab53cd019350903b544005d3eecc6e9942315dce2f7d9f2973` |
+| `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (the shipped model; bytes) | `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` |
+
+The ten development files that every run scores (the per-run JSON `inputs.*Sha256`, which must agree in all 40 runs and equal these values; the seven of them in the repository are also hashed on disk):
+
+| `inputs` key | File | SHA-256 |
+| --- | --- | --- |
+| `devSha256` | `data/eval/shapes-dev/dev.tsv` | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
+| `hardSha256` | `data/eval/shapes-dev/hard.tsv` | `c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22` |
+| `udDevSha256` | `tools/data/cache/ud-ewt/ud_dev.tsv` (cache, not in the repository) | `0fc0b4a371ef6d0437e01e396762cdb600d0d7ff0d725ead00ac9f3c41f82037` |
+| `openDevSha256` | `data/open/dev.tsv` | `8caa822515cee179093f068ff4ea7fa62714830d4c50de696bd4403037fc05c7` |
+| `goldDevSha256` | `data/eval/gold-v2/dev.tsv` | `ffb2f3afd3460523656f5528a66094bad507982b15eb2b4a9341cdb78ff117f5` |
+| `compoundHeadSha256` | `data/eval/shapes-dev/compound-head.tsv` | `537e0be3923f585b8f084de4e88f4064624e4f5dc484f84ccd303fed3db924f5` |
+| `headingsSha256` | `data/eval/shapes-dev/headings.tsv` | `45a62a71837f02d1e76f0ad55a71a1770cb628ea8ca8765c0d4583f49b9da72a` |
+| `namedStateSha256` | `data/eval/shapes-dev/named-state.tsv` | `e08472387630368b7fb3fbaa5cd7b6187d0760608c93b55f19250c98f2d06d6e` |
+| `compoundHead2Sha256` | `data/eval/shapes-dev/compound-head-2.tsv` (210 targets, 45 controls) | `ffa7e5aef0cff05e6ef9227bce3544e4372109768685fcff8c0395e18220c527` |
+| `headings2Sha256` | `data/eval/shapes-dev/headings-2.tsv` (imperative 59, noun 50, proper controls 20) | `6c84419851bceebcb825fff6bc530fc3a3dc5bc5306da152bda349db00c4b4a7` |
+
+The sources of the four training files are the registered ones (section "Follow-up: hand check, registration of the four products"); the `--source` options reach them through `training.json` (`compound`, `compound2`, `headings`, `headings2`, all at weight 0 there).
+
+### Re-test: metrics and where each comes from
+
+A harmful error is a swapped noun-verb class at confidence >= 0.45 on a noun-verb decision; rates are per 1,000 decisions. Every figure is read from the per-run `eval-arm` JSON; the paths were confirmed against the code that writes it (`Evaluation/ArmEvaluation.cs`) and against the real result of the shipped weights (every path of the table below, and all 67 shipped figures of acceptance test a, were checked against that result file with the analysis script's own functions). All figures are means over the eight seeds unless stated.
+
+| Role | Quantity | JSON path (per run) |
+| --- | --- | --- |
+| **Primary** | pooled harmful per 1,000 noun-verb decisions over the enlarged compound dev (`compound-head` plus `compound-head-2` targets) and all heading dev items (`headings` plus `headings-2`) = 1000 x harmful / decisions of the four tranches; the script re-derives it from the counts of the four tranches and **a difference is an invalid run** | `shapesFollowup.pooledPrimary.harmfulPer1k` (counts: `shapesFollowup.{compoundHead,compoundHead2,headings,headings2}.shape.{decisions,harmful}` and `shapesFollowup.pooledPrimary.{decisions,harmful}`) |
+| **Co-primary** | wrong at confidence >= 0.95 summed over the four dev tranches; an arm's mean must be **<= the BASE mean** (it must not rise) | `shapesFollowup.{compoundHead,compoundHead2,headings,headings2}.shape.confidentWrong` (the script also checks `shapesFollowup.pooledPrimary.confidentWrongTotal`) |
+| Guard | hard tranche harmful per 1k <= BASE + 10 | `shapes.hard.pooled.harmfulPer1k` |
+| Guard | standard tranche harmful per 1k <= BASE + 5 | `shapes.standard.pooled.harmfulPer1k` |
+| Guard | open dev harmful per 1k <= BASE + 1.5 | `openDev.harmfulPer1k` |
+| Guard | UD-EWT dev harmful per 1k <= BASE + 1.5 | `udDev.harmfulPer1k` |
+| Guard | UD-EWT dev accuracy >= BASE - 0.15 points | `udDev.accuracy` |
+| Guard | `n-named-state` target accuracy >= BASE - 3 points | `shapesNew.namedState.shape.targetAccuracy` |
+| Guard | deflated weights bytes <= 1.5 x BASE | `weights.bytesDeflated` |
+| Guard | throughput >= 150,000 tokens per second (absolute): the median over the seeds of the runs' medians (each run's value is the median of five timed single-thread passes after one warm-up) | `throughput.tokensPerSecond` |
+| **Guard (new)** | imperative-heading harmful per 1,000 (kind `imperative` of `headings` plus `headings-2`, pooled) <= BASE + 25; re-derived from the counts of the two kinds (**implementing agent**: a difference is an invalid run) | `shapesFollowup.imperativeHeadings.harmfulPer1k` (counts: `shapesFollowup.{headings,headings2}.kinds.imperative.{decisions,harmful}`) |
+
+Every guard is judged against the **BASE mean over the eight seeds** (the throughput guard is absolute). Reported, not gated: each tranche's accuracy, harmful rate, wrong at >= 0.95 and control accuracy; the heading kinds; the compound controls (should stay 100%); the Welch interval of every arm against BASE for every guarded metric; the pairwise contrasts CMP2-F5 against CMP2, CMP2-HDG2 against CMP2 and CMP2-HDG2-F5 against CMP2-HDG2 on the primary and the co-primary; the per-seed table; the old-tranche-only primary (`shapesNew.pooledPrimary.harmfulPer1k`, the PR #19 measure; the old rows are part of the pool, not a second test).
+
+### The selection rule (rule B; fixed now; applied exactly as written; nothing is tuned afterwards)
+
+1. **Primary** = the eight-seed mean of the pooled harmful per 1,000 above. Lower is better.
+2. **Guards and co-primary**, each arm against the BASE eight-seed mean, all must hold (the table above).
+3. **Q** = the arms CMP2, CMP2-F5, CMP2-HDG2 and CMP2-HDG2-F5 that pass every guard and the co-primary **and** whose Welch 95% interval (Welch-Satterthwaite degrees of freedom) of (arm - BASE) on the primary has an upper bound **strictly below 0**. If Q is empty, **BASE stays**.
+4. **m** = the lowest primary mean in Q. **S** = the arms of Q within 10% relative of m (primary <= 1.10 x m).
+5. The **winner** is the arm of S with the **fewest additions** (CMP2 1, CMP2-F5 2, CMP2-HDG2 2, CMP2-HDG2-F5 3); ties: the lowest primary (then the order of `arms.json`).
+
+The difference against PR #19 is only that the significance test is part of the entry to Q (so an arm with the lowest primary whose interval contains 0 does not set m or the window) and that there is no separate fallback step.
+
+### Re-test: the analysis script and its self-test
+
+`compound-heading-2/analyze_followup.py` applies the rule mechanically (`--runs <runs> --out <report.md> --decision <decision.json>`; the report is a Markdown table per arm with the primary mean and standard deviation, the mean wrong at >= 0.95, each guard's delta with PASS or FAIL, then the verdict; it is printed and written to the path given). Its only use of the frozen `context-features/analyze_arms.py` is `welch_diff`, loaded by path after the file's SHA-256 has been checked. `--selftest` passes: it checks the t quantile against published values, the Welch case by hand, the exact mean and sample sd of the eight synthetic offsets, every one of the ten guards (the co-primary and the new imperative guard included) exactly at its limit and just beyond it (including the size guard at exactly 1.5 x the BASE mean, 1.5 x + 1 byte and 1.6 x, and the 150,000 floor), the 10% window (an arm at exactly 1.10 x the lowest is inside, at 1.105 x it is outside, and the window is taken over Q only), the preference order (1 before 2 before 3 additions, a fewer-additions arm beating a lower primary, the tie of the two 2-addition arms going to the lower primary), a guard or co-primary failure removing the arm with the lowest primary, an arm whose interval contains 0 not entering Q and not setting m, the strict inequality of the Welch rule (an upper bound of exactly 0 and of +1e-9 do not qualify, -1e-9 does), the nothing-qualifies and the BASE-stays cases (no winner is exit code 0 with a decision file that says BASE stays), each acceptance test failing when its condition is broken (shipped weights, a shipped figure of the old or the new tranches, an added sentence count for `compound2` and `headings2`, a source missing in the log, BASE listing a new source, the mix, an input hash that differs, is not the frozen value or is absent, a missing training log), invalid runs (a missing run, wrong feature groups, a primary that does not match the counts of the four tranches, a pooled count that is not the sum, a confident-wrong total that does not match, an imperative rate or count that does not match, an absent follow-up block, an absent required metric, a wrong seed field or sources field), the real shipped figures (every one of the 67 is enforced and the table is checked against itself: the pooled counts are the sums of the four tranches), the real frozen hashes, the sentence counts of the four data files against `ADDED_SENTENCES` (742, 1,100, 374, 247), the seeds, the arms, the additions and the exit codes. A mutation check (21 changes of a limit, the window, the strict inequality, the preference order, the entry to Q, a sentence count, a shipped figure, a re-derivation or the additions, applied to the source in memory) made the self-test fail every time.
+
+### Re-test: acceptance tests (run before the rule is applied; a failure stops without a selection)
+
+The script runs them first and makes no selection (exit code 1, no decision file) if one fails:
+
+1. **BASE seed 20260101 is the shipped model.** Its weights SHA-256 (the `weights.sha256` of its result file and the `.bin` of the run when present) equals that of `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (`48dd9188...413b`), and its figures equal those of the shipped model: the figures of the earlier experiment (compound-head 60.0% with 39 harmful of 100 decisions and 5 wrong at >= 0.95; headings 84.2% with 4 of 78 and 2; named-state 90.0% with 3 of 37; old pooled primary 241.57 per 1k; hard tranche 170.0, standard tranche 15.0; open dev 91 harmful of 4,451 decisions; UD-EWT dev 94 of 4,570) **and the figures measured in PR-A on the new tranches** (compound-head-2 210 targets, 62.9%, 210 decisions, 71 harmful, 338.1 per 1k, 13 wrong at >= 0.95, controls 45 of 45; headings-2 109 targets, 81.7%, 82 decisions, 2 harmful, 1 wrong at >= 0.95, imperative 59 of 59 with 32 decisions and 0 harmful, noun 30 of 50, proper controls 20 of 20; pooled primary 514 targets, 361 correct, **470 decisions, 116 harmful, 246.81 per 1k, 21 wrong at >= 0.95**; imperative headings 104 targets, 99 correct, **60 decisions, 3 harmful, 50.0 per 1k**, 0 wrong at >= 0.95; compound controls 65 of 65). The 67 figures are the table `SHIPPED_FIGURES` of the script.
+2. **The sources were really added.** From the line `Training on N sentences (...), sources=...` of every `<run>.train.txt`: BASE lists exactly the shipped mix (`open:2,masc:1,silver:1,imperative:1`) and no new source; every other arm lists the mix plus its own sources at weight 1 and trained on exactly the sentences of those sources more than the BASE run of the same seed (CMP2 and CMP2-F5 **1,842**, CMP2-HDG2 and CMP2-HDG2-F5 **2,463**). Every result names the feature groups of its arm (the `groups` of the weights header, the driver's `features` and `sources`).
+3. **Same inputs.** The `inputs.*Sha256` fields of all runs agree and equal the frozen hashes of the ten development files.
+4. **Frozen files.** The files of the table above (and the development files of the repository) have their frozen SHA-256; the analysis refuses to run if one differs.
+
+### Outcomes
+
+- **BASE stays** (Q is empty). The data stay committed at weight 0 and reproducible with the `--source` options, F5 stays off, the results section records the tables, the decision and the caveats; no `thresholds`, no `evaluate`, no README accuracy change; the log states that no held-out command was run.
+- **An arm wins.** An adoption plan is written in this log **before the retrain and before any held-out command**: `training.json` gets the weight 1 for the sources of the winning arm (`compound` and `compound2`, and for the HDG2 arms `headings` and `headings2`) and, for an F5 arm, the feature group `titleCaseLine`; `train --output <file outside the repository>` at seed 20260101, `calibrate --weights <file> --update-config`, `train --update-config`, `train --check` (exit 0); the written `weights.bin` must be byte-identical to the winning arm's seed-20260101 run; `thresholds` (development data only); the dependent figures and tests are re-pinned; and **one** `evaluate` (`--preflight` first), disclosed as a further look at sets already seen by this model family (a new record, not an erratum), then the README accuracy tables and the evaluation documents.
+- **An acceptance test fails.** The experiment stops without a selection; the cause is recorded, and any change to the protocol is an amendment written before the affected runs are repeated, never a choice made on a result.
+- **A run is missing** (a command failed without a result): it is repeated; the analysis refuses to select with a missing run.
+
+### Power note and limits stated in advance
+
+- **Power (no tuning).** With the PR #19 effect (about -18 per 1,000 on the old pooled primary, seed standard deviation about 10 to 22) eight seeds on about 2.5 times more decisions (470 against 178) give a Welch interval half-width of roughly 12 to 20 per 1,000 for the difference of means; an effect of that size is borderline, and an effect of 10% or more of the primary (about 25 per 1,000 at the shipped 246.8) is detectable. The registered rule is applied as written whatever the outcome.
+- **Small `headings2` imperative source.** The development imperative headings are 59 (the registered floor was 80, the owner's target about 100) and the training imperative lines 165 (target about 300), of which **41 come from the strength-1 `initial-noun` frame** (their word after token 0 is a capitalized noun-capable word) on which both labelers nevertheless tagged token 0 VERB (124 without them). The arms with `HDG2` were built with `--allow-short` and are run under amendment A2 (a decision of the implementing agent, open to the owner's review). A null result for HDG2 is a result for that size of data.
+- **The shipped model already reads the 59 dev imperative headings of `headings-2` correctly** (59 of 59, 0 harmful), so a gain from the heading data cannot show on that stratum; it can only show on the noun headings (60.0% on the 50 noun targets of `headings-2`), and the imperative-heading guard (BASE 3 harmful of 60 decisions, 50.0 per 1,000; one more harmful error in 60 decisions is about +16.7 per 1,000) can only detect a loss of imperative reading.
+- **Four arms against one baseline without a multiplicity correction**, and the seeds measure training noise only (the same data, the same order of sentences up to the seed): some winner's curse is possible.
+- **The development tranches are the frames the data were built from** (the compound frame and the band; the heading frames), so a gain on them is development evidence of that kind and not an independent test; `compound-head-2` is a set contested for the WordSense Basic classifier, not an intrinsically hard set.
+- The labels were written by two models without human review; the hand checks were model reviews (60 of 60 on every product).
+- The Title Case frame excludes ALL-CAPS and sentence-case step titles (U2). The compound controls are 17.6% of the new compound items (cap of 45), not about 20%.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

@@ -173,6 +173,27 @@ python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compou
 
 `-PyCache` and `-PauseFile` are local paths on drive C: that the caller chooses; the defaults inside the frozen driver are not meant for reuse.
 
+### Compound and heading follow-up experiment
+
+The re-test of the follow-up (the enlarged compound development tranche `compound-head-2`, the new real-text imperative headings
+`headings-2`, and the training sources `compound2` and `headings2`) is in `compound-heading-2/`. `arms.json` has five arms with
+eight seeds (`20260101` and `11` to `17`): BASE (the shipped configuration), CMP2 (`compound` and `compound2`), CMP2-F5 (the same
+sources and the group `titleCaseLine`), CMP2-HDG2 (all four sources) and CMP2-HDG2-F5 (all four sources and `titleCaseLine`).
+`run_arms.ps1` is the driver of the compound-heading experiment (resumable, PAUSE-file check with exit code 4, at least 6 GB free
+on C:, at most 8 threads, `-PyCache` and `-PauseFile` with the defaults of the session folder) with its own `arms.json`; it is
+used with `imperative-data/runner-base.cmd`, unchanged. `analyze_followup.py` runs the acceptance tests (BASE at the shipped seed
+equals the shipped weights and the figures measured for the shipped model, the added sentence counts, the feature groups of
+every arm, the frozen development files), prints the primary metric (`shapesFollowup.pooledPrimary.harmfulPer1k`), the
+co-primary, every guard (the imperative-heading guard is new) and the verdict, and applies selection rule B of the run log
+("Follow-up: pre-registered re-test (E1)"); it takes only `welch_diff` from `analyze_arms.py` and checks its own logic on
+synthetic runs with `--selftest`. The files are frozen by the hashes in that section. The experiment is run only after the
+pre-registration commit; until then no arm has been trained.
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms BASE -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py --runs <runs> --out report.md --decision decision.json
+```
+
 ### Held-out evaluation
 
 The protocol (definitions, selection rule, stop conditions) is the section "Phase 5 protocol" of `RUN-LOG.md`; it was

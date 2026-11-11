@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "experiment": "compound-heading-followup",
+  "note": "Arms of the pre-registered follow-up retraining (PR-B). Every arm uses the shipped training.json mix (open x2, MASC, silver >= 80, imperative at weight 1; compound, headings, compound2 and headings2 at weight 0) and its settings; only the feature groups, the added sources, the seed and the refit temperature differ. Group names are the values of the trainer option --features; a source of an arm is trained at weight 1 with the option --source NAME:1, which the driver appends after --calibrate --output. The arms run in file order, BASE first, one driver invocation per arm.",
+  "baseline": "BASE",
+  "primaryMetric": "shapesFollowup.pooledPrimary.harmfulPer1k",
+  "coPrimaryMetric": "sum of shapesFollowup.{compoundHead,compoundHead2,headings,headings2}.shape.confidentWrong",
+  "seeds": [20260101, 11, 12, 13, 14, 15, 16, 17],
+  "previewFolds": 5,
+  "groups": {
+    "F2": "clauseCues",
+    "F5": "titleCaseLine"
+  },
+  "sources": {
+    "compound": "data/compound/compound.tsv",
+    "compound2": "data/compound/compound-2.tsv",
+    "headings": "data/headings/headings.tsv",
+    "headings2": "data/headings/headings-2.tsv"
+  },
+  "skipped": [],
+  "arms": [
+    { "id": "BASE", "features": ["clauseCues"], "sources": [] },
+    { "id": "CMP2", "features": ["clauseCues"], "sources": ["compound", "compound2"] },
+    { "id": "CMP2-F5", "features": ["clauseCues", "titleCaseLine"], "sources": ["compound", "compound2"] },
+    { "id": "CMP2-HDG2", "features": ["clauseCues"], "sources": ["compound", "compound2", "headings", "headings2"] },
+    { "id": "CMP2-HDG2-F5", "features": ["clauseCues", "titleCaseLine"], "sources": ["compound", "compound2", "headings", "headings2"] }
+  ]
+}
