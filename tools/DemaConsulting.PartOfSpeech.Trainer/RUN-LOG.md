@@ -3849,8 +3849,8 @@ stop conditions below (findings, not failures of the run) and the committed file
 run was made and nothing was re-rolled.** Nothing was selected, tuned or reverted because of any result. The previous model (the
 clause-cue model, the record at `5f9a9f0`) was not evaluated again: its figures below are those of its committed record.
 
-Stop conditions of the protocol: **two fired** (the same two as in all earlier records; the third, the shape probe, did not fire
-this time):
+Stop conditions of the protocol: **two fired** (`gold-v2-test-to-not` and `ud-test-raw`, the same two as in all earlier records; the
+third, the shape probe, did not fire this time). The three bullets list the two that fired and the shape probe, which did not:
 
 - `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (the same); the `to`/`not` convention difference.
 - `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (the same). The primary mapped view is at 0.55% (138
@@ -5229,6 +5229,482 @@ For the guards of the re-test, the same run gives (shipped model, seed 20260101 
 
 Observations (no rule is changed by them): the shipped model already reads the 59 real Title Case imperative headings of `headings-2` correctly (100.0%, 32 of them noun-verb decisions, no harmful error), so the imperative-heading guard of the re-test (harmful per 1,000 at most BASE + 25) has a BASE of 3 harmful errors in 60 decisions over the 104 imperative headings of the two tranches; a gain from the heading training data can be measured on the noun targets of `headings-2` (60.0%, 2 harmful) and not on its imperative stratum, which has no room left on this tranche. The compound measure is as hard as the old one (62.9% against 60.0%; 338.1 against 390.0 harmful per 1,000), as designed, because the band is the contested band of the WordSense Basic classifier.
 
+## Follow-up: pre-registered re-test (E1)
+
+This section is written and committed **before any arm of the re-test is trained or evaluated**. The git history shows the order: PR-A (`feature/compound-heading-followup`, tip `7a2e42e`: the builder, the pre-registered data rule, the pilot and the data records, the four registered products at weight 0, the two development tranches, the additive trainer change and the baseline of the shipped model on the new tranches) and, on the stacked branch `feature/compound-heading-followup-experiment`, this commit (**E1, the pre-registration of the re-test**), which adds the harness `compound-heading-2/` and this text. A commit cannot contain its own SHA: the next commit records the SHA of this one. At this commit no `train --output` of an arm and no `eval-arm` of an arm exists. Since the data were registered the trainer commands run were `train --check` (exit 0, image `6e1e4ade...`, unchanged), and, on the **shipped** `weights.bin` only (a baseline, not an arm), `eval-shapes --tranche followup` and one `eval-arm` (section "Follow-up: baseline of the shipped model on the new tranches"; its result file has SHA-256 `b2f651df5b13bc7950c607cfa918f428198a448c2a293bcfde1648ce2fab7cfc`). No held-out command (`evaluate`, `thresholds`, the probe or the challenge set) was run, and the re-test uses no held-out file. No consumer text was read. The code base of the runs is `main` at `7dba3c4` (PR #19) plus PR-A plus this commit; the trainer used for the runs is built from the commit at which the driver is started (the driver records the commit and a dirty flag in every result).
+
+### Attribution (who decided what)
+
+The rule below is **selection rule B**, the default **U1** that the implementing agent took in R0 and recorded there (not decided by the owner or the top-level orchestrator, who can overrule it before the runs). The amendment A2 (the arms with `HDG2` are run although the imperative supply is short) and the other defaults U2 to U6 are likewise decisions of the implementing agent, not of the owner (see "Attribution note" in the R0 section). The choices made while writing E1 and not fixed by R0 or by the plan are marked **(implementing agent)** below; none of them changes a pre-registered rule: the integrity checks of the analysis script that the plan did not list, the exact frozen-file table, the names of the JSON paths, and the use of the current `headings.tsv` (374 lines). Any change of a rule after this commit is put to the owner first.
+
+### What the re-test asks
+
+PR #19 kept BASE: its compound development measure had 100 targets and the arms moved by amounts inside the noise. The follow-up measures on a bigger development set (the enlarged compound dev `compound-head` plus `compound-head-2`: 310 targets, and all heading dev items `headings` plus `headings-2`: 204 targets) and trains on more data (`compound2`: 1,100 sentences; `headings2`: 247 lines). The question is whether the enlarged compound data (CMP2), the F5 feature (CMP2-F5), the heading data with the real imperative headings (CMP2-HDG2), or both (CMP2-HDG2-F5) lower the harmful errors on the pooled measure against the shipped model without breaking a guarded measure. Nothing is adopted unless rule B selects an arm.
+
+### Re-test: arms and runs
+
+| Arm | Feature groups | `--source` added to the shipped mix (weight 1) | Additions (tie rule) | Sentences added over BASE |
+| --- | --- | --- | ---: | ---: |
+| **BASE** | `clauseCues` | none (the shipped mix: open x2, MASC, silver >= 80, imperative at weight 1, exactly `training.json`) | 0 | 0 |
+| **CMP2** | `clauseCues` | `compound`, `compound2` | 1 (the enlarged compound data) | 1,842 (742 + 1,100) |
+| **CMP2-F5** | `clauseCues`, `titleCaseLine` | `compound`, `compound2` | 2 | 1,842 |
+| **CMP2-HDG2** | `clauseCues` | `compound`, `compound2`, `headings`, `headings2` | 2 | 2,463 (742 + 1,100 + 374 + 247) |
+| **CMP2-HDG2-F5** | `clauseCues`, `titleCaseLine` | `compound`, `compound2`, `headings`, `headings2` | 3 | 2,463 |
+
+BASE is the shipped model, so the experiment is judged against the model that ships. Eight seeds per arm, **20260101, 11, 12, 13, 14, 15, 16, 17** (the five seeds of the earlier experiments and three more), 40 runs. Every other setting is the shipped `training.json`; the temperature is refit on open dev for every run (`--calibrate`). The `headings` source has 374 lines (one line was removed after PR #19, "Amendment after the result" above), not the 375 of PR #19; the arms train what is committed **(implementing agent)**. Each run is `train --seed S --features <groups> --calibrate --output <arm>-sS.bin [--source NAME:1 ...]`, then the dev-only command `eval-arm`, which scores the weights on the development sets (open dev, gold v2 dev, UD-EWT dev, the hard and standard tranches of the shapes development set, the three tranches of the first generation, and the two follow-up tranches) and reads no held-out file.
+
+The mechanism is the driver `compound-heading-2/run_arms.ps1`: the driver of the compound-heading experiment with its own `arms.json` (the five arms and eight seeds), the follow-up default of `-PyCache` (`...\files\compound-heading-followup\pycache`) and its own documentation comment, nothing else. It is resumable (a run is complete when its JSON exists), checks the PAUSE file (default `...\files\PAUSE`, parameter `-PauseFile`) before the build and before every run (exit code 4 and `resume.txt`), requires at least 6 GB free on C: before every run, uses at most 8 threads (`DOTNET_PROCESSOR_COUNT`), uses only paths on C: and starts every process through the runner `imperative-data/runner-base.cmd`, **unchanged**. One driver invocation per arm, in this order, into one folder on C: outside the repository (`<runs>`):
+
+```text
+$runner = "<repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd"
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms BASE         -Runner $runner
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2         -Runner $runner
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-F5      -Runner $runner
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2    -Runner $runner
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2-F5 -Runner $runner
+```
+
+Note on the driver defaults: the defaults of the parameters `-PyCache` and `-PauseFile` of this driver are paths of the session that ran the experiment (folders under the session state of that machine), not settings. The driver is frozen by the SHA-256 recorded below, so it is not edited to remove them; a reproduction passes its own `-PyCache` and `-PauseFile` (the commands above rely on the defaults of the original session).
+
+A failed run without a result is repeated; **no run is repeated or replaced because of its result, and no arm is dropped** (the contingency of R0 for a short imperative supply was waived by amendment A2, so the arms with `HDG2` are run). The driver was tested without training: a dry run (`-DryRun`, which printed the commands of one arm and two seeds and wrote nothing) and the pause path (a temporary PAUSE file and a temporary output folder gave exit code 4 and `resume.txt`, before the build and before the first run).
+
+**Deviation record (Normal priority), again.** As in the earlier experiments, the runner starts `dotnet` at Normal priority (`start "" /normal /wait /b dotnet %*`), because BelowNormal receives almost no CPU on this shared machine. It changes the speed of the runs and nothing else. The training times and the single-thread throughput are measured on a loaded machine and are not comparable between arms or with earlier records; the throughput guard is an absolute floor far below the speeds recorded earlier (579,761 tokens per second for the shipped weights in the baseline).
+
+### Frozen inputs (hashes; the analysis refuses to run if one differs)
+
+The text files are hashed with CRLF turned into LF; the weights and the development files as bytes.
+
+| File | SHA-256 |
+| --- | --- |
+| `compound-heading-2/run_arms.ps1` (driver) | `20a4b921045a422784abf9db18ff37ddaff631d247d19de4bc034b81f3175e52` |
+| `compound-heading-2/arms.json` | `88572609ce234dd6e4b33080cf5f61c9e28c353ca38d06d92d2df65c91f25440` |
+| `compound-heading-2/analyze_followup.py` (the analysis script; it cannot hold its own hash, so it is recorded here) | `f7dbe55608d1761354cf68722666ad179c4c982aa5b13109274abd0ba81840e0` |
+| `context-features/analyze_arms.py` (imported for `welch_diff` only; hash checked before the import) | `3d52825384b440c5786e1b241fc6f814e4e47a63f155414e0d6450107d33e494` |
+| `imperative-data/runner-base.cmd` (runner, unchanged; LF form) | `549a2c6ed8d1eaf00b30551fae14e546c51023dd79fe3a77810f39a1fe79ff3e` |
+| `data/compound/compound.tsv` (742 sentences) | `eb8c4708ba95fb370c885110e10eda0f1d826c5922876bd66e69389894bd5e3b` |
+| `data/compound/sources.tsv` | `8b861dd3ff2d5a3fd5e741f5fe2a906807f99afa562d7e294d4011d93ef15e02` |
+| `data/compound/compound-2.tsv` (1,100 sentences) | `2a9a98492afb1248623b50111ca62d8abd57e4569b1a5e52b3cff544bc0746cc` |
+| `data/compound/compound-2-sources.tsv` | `9c7ec7014ff115e745501706126b4637382c058783fdea43021b9f6cbfbd0b4f` |
+| `data/headings/headings.tsv` (374 lines, as committed after the removal of one line) | `cae45ff12cb4e7e9531a007beb8278b4014a8bdab9ae3e52b06ba46df4d48cde` |
+| `data/headings/sources.tsv` | `26ca020469ee3a396ba71bd7845030a516e612c44e887933b1fe8450445fbad7` |
+| `data/headings/headings-2.tsv` (247 lines) | `3f1fca247aa625c6f46269f5db5034540e4685fc55918dff5068da6ba591fca5` |
+| `data/headings/headings-2-sources.tsv` | `accd6790b8226e962d8d192b7658375f1bafb7e1721a11779ee55e05024b682d` |
+| `data/eval/shapes-dev/compound-head-2-sources.tsv` | `c183effb24a273307e710e0b82bbf45cbc7a43d4b9bf071521c20c5e4c88a31f` |
+| `data/eval/shapes-dev/headings-2-sources.tsv` | `62754e46c3306983ffd6ece5360257e023c8a7bc268668644d2edc4df5452edd` |
+| `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` (the shipped configuration with the four sources at weight 0; before any adoption) | `fe7e2d93b82cfdab53cd019350903b544005d3eecc6e9942315dce2f7d9f2973` |
+| `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (the shipped model; bytes) | `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` |
+
+The ten development files that every run scores (the per-run JSON `inputs.*Sha256`, which must agree in all 40 runs and equal these values; the seven of them in the repository are also hashed on disk):
+
+| `inputs` key | File | SHA-256 |
+| --- | --- | --- |
+| `devSha256` | `data/eval/shapes-dev/dev.tsv` | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
+| `hardSha256` | `data/eval/shapes-dev/hard.tsv` | `c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22` |
+| `udDevSha256` | `tools/data/cache/ud-ewt/ud_dev.tsv` (cache, not in the repository) | `0fc0b4a371ef6d0437e01e396762cdb600d0d7ff0d725ead00ac9f3c41f82037` |
+| `openDevSha256` | `data/open/dev.tsv` | `8caa822515cee179093f068ff4ea7fa62714830d4c50de696bd4403037fc05c7` |
+| `goldDevSha256` | `data/eval/gold-v2/dev.tsv` | `ffb2f3afd3460523656f5528a66094bad507982b15eb2b4a9341cdb78ff117f5` |
+| `compoundHeadSha256` | `data/eval/shapes-dev/compound-head.tsv` | `537e0be3923f585b8f084de4e88f4064624e4f5dc484f84ccd303fed3db924f5` |
+| `headingsSha256` | `data/eval/shapes-dev/headings.tsv` | `45a62a71837f02d1e76f0ad55a71a1770cb628ea8ca8765c0d4583f49b9da72a` |
+| `namedStateSha256` | `data/eval/shapes-dev/named-state.tsv` | `e08472387630368b7fb3fbaa5cd7b6187d0760608c93b55f19250c98f2d06d6e` |
+| `compoundHead2Sha256` | `data/eval/shapes-dev/compound-head-2.tsv` (210 targets, 45 controls) | `ffa7e5aef0cff05e6ef9227bce3544e4372109768685fcff8c0395e18220c527` |
+| `headings2Sha256` | `data/eval/shapes-dev/headings-2.tsv` (imperative 59, noun 50, proper controls 20) | `6c84419851bceebcb825fff6bc530fc3a3dc5bc5306da152bda349db00c4b4a7` |
+
+The sources of the four training files are the registered ones (section "Follow-up: hand check, registration of the four products"); the `--source` options reach them through `training.json` (`compound`, `compound2`, `headings`, `headings2`, all at weight 0 there).
+
+### Re-test: metrics and where each comes from
+
+A harmful error is a swapped noun-verb class at confidence >= 0.45 on a noun-verb decision; rates are per 1,000 decisions. Every figure is read from the per-run `eval-arm` JSON; the paths were confirmed against the code that writes it (`Evaluation/ArmEvaluation.cs`) and against the real result of the shipped weights (every path of the table below, and all 67 shipped figures of acceptance test a, were checked against that result file with the analysis script's own functions). All figures are means over the eight seeds unless stated.
+
+| Role | Quantity | JSON path (per run) |
+| --- | --- | --- |
+| **Primary** | pooled harmful per 1,000 noun-verb decisions over the enlarged compound dev (`compound-head` plus `compound-head-2` targets) and all heading dev items (`headings` plus `headings-2`) = 1000 x harmful / decisions of the four tranches; the script re-derives it from the counts of the four tranches and **a difference is an invalid run** | `shapesFollowup.pooledPrimary.harmfulPer1k` (counts: `shapesFollowup.{compoundHead,compoundHead2,headings,headings2}.shape.{decisions,harmful}` and `shapesFollowup.pooledPrimary.{decisions,harmful}`) |
+| **Co-primary** | wrong at confidence >= 0.95 summed over the four dev tranches; an arm's mean must be **<= the BASE mean** (it must not rise) | `shapesFollowup.{compoundHead,compoundHead2,headings,headings2}.shape.confidentWrong` (the script also checks `shapesFollowup.pooledPrimary.confidentWrongTotal`) |
+| Guard | hard tranche harmful per 1k <= BASE + 10 | `shapes.hard.pooled.harmfulPer1k` |
+| Guard | standard tranche harmful per 1k <= BASE + 5 | `shapes.standard.pooled.harmfulPer1k` |
+| Guard | open dev harmful per 1k <= BASE + 1.5 | `openDev.harmfulPer1k` |
+| Guard | UD-EWT dev harmful per 1k <= BASE + 1.5 | `udDev.harmfulPer1k` |
+| Guard | UD-EWT dev accuracy >= BASE - 0.15 points | `udDev.accuracy` |
+| Guard | `n-named-state` target accuracy >= BASE - 3 points | `shapesNew.namedState.shape.targetAccuracy` |
+| Guard | deflated weights bytes <= 1.5 x BASE | `weights.bytesDeflated` |
+| Guard | throughput >= 150,000 tokens per second (absolute): the median over the seeds of the runs' medians (each run's value is the median of five timed single-thread passes after one warm-up) | `throughput.tokensPerSecond` |
+| **Guard (new)** | imperative-heading harmful per 1,000 (kind `imperative` of `headings` plus `headings-2`, pooled) <= BASE + 25; re-derived from the counts of the two kinds (**implementing agent**: a difference is an invalid run) | `shapesFollowup.imperativeHeadings.harmfulPer1k` (counts: `shapesFollowup.{headings,headings2}.kinds.imperative.{decisions,harmful}`) |
+
+Every guard is judged against the **BASE mean over the eight seeds** (the throughput guard is absolute). Reported, not gated: each tranche's accuracy, harmful rate, wrong at >= 0.95 and control accuracy; the heading kinds; the compound controls (should stay 100%); the Welch interval of every arm against BASE for every guarded metric; the pairwise contrasts CMP2-F5 against CMP2, CMP2-HDG2 against CMP2 and CMP2-HDG2-F5 against CMP2-HDG2 on the primary and the co-primary; the per-seed table; the old-tranche-only primary (`shapesNew.pooledPrimary.harmfulPer1k`, the PR #19 measure; the old rows are part of the pool, not a second test).
+
+### The selection rule (rule B; fixed now; applied exactly as written; nothing is tuned afterwards)
+
+1. **Primary** = the eight-seed mean of the pooled harmful per 1,000 above. Lower is better.
+2. **Guards and co-primary**, each arm against the BASE eight-seed mean, all must hold (the table above).
+3. **Q** = the arms CMP2, CMP2-F5, CMP2-HDG2 and CMP2-HDG2-F5 that pass every guard and the co-primary **and** whose Welch 95% interval (Welch-Satterthwaite degrees of freedom) of (arm - BASE) on the primary has an upper bound **strictly below 0**. If Q is empty, **BASE stays**.
+4. **m** = the lowest primary mean in Q. **S** = the arms of Q within 10% relative of m (primary <= 1.10 x m).
+5. The **winner** is the arm of S with the **fewest additions** (CMP2 1, CMP2-F5 2, CMP2-HDG2 2, CMP2-HDG2-F5 3); ties: the lowest primary (then the order of `arms.json`).
+
+The difference against PR #19 is only that the significance test is part of the entry to Q (so an arm with the lowest primary whose interval contains 0 does not set m or the window) and that there is no separate fallback step.
+
+### Re-test: the analysis script and its self-test
+
+`compound-heading-2/analyze_followup.py` applies the rule mechanically (`--runs <runs> --out <report.md> --decision <decision.json>`; the report is a Markdown table per arm with the primary mean and standard deviation, the mean wrong at >= 0.95, each guard's delta with PASS or FAIL, then the verdict; it is printed and written to the path given). Its only use of the frozen `context-features/analyze_arms.py` is `welch_diff`, loaded by path after the file's SHA-256 has been checked. `--selftest` passes: it checks the t quantile against published values, the Welch case by hand, the exact mean and sample sd of the eight synthetic offsets, every one of the ten guards (the co-primary and the new imperative guard included) exactly at its limit and just beyond it (including the size guard at exactly 1.5 x the BASE mean, 1.5 x + 1 byte and 1.6 x, and the 150,000 floor), the 10% window (an arm at exactly 1.10 x the lowest is inside, at 1.105 x it is outside, and the window is taken over Q only), the preference order (1 before 2 before 3 additions, a fewer-additions arm beating a lower primary, the tie of the two 2-addition arms going to the lower primary), a guard or co-primary failure removing the arm with the lowest primary, an arm whose interval contains 0 not entering Q and not setting m, the strict inequality of the Welch rule (an upper bound of exactly 0 and of +1e-9 do not qualify, -1e-9 does), the nothing-qualifies and the BASE-stays cases (no winner is exit code 0 with a decision file that says BASE stays), each acceptance test failing when its condition is broken (shipped weights, a shipped figure of the old or the new tranches, an added sentence count for `compound2` and `headings2`, a source missing in the log, BASE listing a new source, the mix, an input hash that differs, is not the frozen value or is absent, a missing training log), invalid runs (a missing run, wrong feature groups, a primary that does not match the counts of the four tranches, a pooled count that is not the sum, a confident-wrong total that does not match, an imperative rate or count that does not match, an absent follow-up block, an absent required metric, a wrong seed field or sources field), the real shipped figures (every one of the 67 is enforced and the table is checked against itself: the pooled counts are the sums of the four tranches), the real frozen hashes, the sentence counts of the four data files against `ADDED_SENTENCES` (742, 1,100, 374, 247), the seeds, the arms, the additions and the exit codes. A mutation check (21 changes of a limit, the window, the strict inequality, the preference order, the entry to Q, a sentence count, a shipped figure, a re-derivation or the additions, applied to the source in memory) made the self-test fail every time.
+
+### Re-test: acceptance tests (run before the rule is applied; a failure stops without a selection)
+
+The script runs them first and makes no selection (exit code 1, no decision file) if one fails:
+
+1. **BASE seed 20260101 is the shipped model.** Its weights SHA-256 (the `weights.sha256` of its result file and the `.bin` of the run when present) equals that of `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (`48dd9188...413b`), and its figures equal those of the shipped model: the figures of the earlier experiment (compound-head 60.0% with 39 harmful of 100 decisions and 5 wrong at >= 0.95; headings 84.2% with 4 of 78 and 2; named-state 90.0% with 3 of 37; old pooled primary 241.57 per 1k; hard tranche 170.0, standard tranche 15.0; open dev 91 harmful of 4,451 decisions; UD-EWT dev 94 of 4,570) **and the figures measured in PR-A on the new tranches** (compound-head-2 210 targets, 62.9%, 210 decisions, 71 harmful, 338.1 per 1k, 13 wrong at >= 0.95, controls 45 of 45; headings-2 109 targets, 81.7%, 82 decisions, 2 harmful, 1 wrong at >= 0.95, imperative 59 of 59 with 32 decisions and 0 harmful, noun 30 of 50, proper controls 20 of 20; pooled primary 514 targets, 361 correct, **470 decisions, 116 harmful, 246.81 per 1k, 21 wrong at >= 0.95**; imperative headings 104 targets, 99 correct, **60 decisions, 3 harmful, 50.0 per 1k**, 0 wrong at >= 0.95; compound controls 65 of 65). The 67 figures are the table `SHIPPED_FIGURES` of the script.
+2. **The sources were really added.** From the line `Training on N sentences (...), sources=...` of every `<run>.train.txt`: BASE lists exactly the shipped mix (`open:2,masc:1,silver:1,imperative:1`) and no new source; every other arm lists the mix plus its own sources at weight 1 and trained on exactly the sentences of those sources more than the BASE run of the same seed (CMP2 and CMP2-F5 **1,842**, CMP2-HDG2 and CMP2-HDG2-F5 **2,463**). Every result names the feature groups of its arm (the `groups` of the weights header, the driver's `features` and `sources`).
+3. **Same inputs.** The `inputs.*Sha256` fields of all runs agree and equal the frozen hashes of the ten development files.
+4. **Frozen files.** The files of the table above (and the development files of the repository) have their frozen SHA-256; the analysis refuses to run if one differs.
+
+### Outcomes
+
+- **BASE stays** (Q is empty). The data stay committed at weight 0 and reproducible with the `--source` options, F5 stays off, the results section records the tables, the decision and the caveats; no `thresholds`, no `evaluate`, no README accuracy change; the log states that no held-out command was run.
+- **An arm wins.** An adoption plan is written in this log **before the retrain and before any held-out command**: `training.json` gets the weight 1 for the sources of the winning arm (`compound` and `compound2`, and for the HDG2 arms `headings` and `headings2`) and, for an F5 arm, the feature group `titleCaseLine`; `train --output <file outside the repository>` at seed 20260101, `calibrate --weights <file> --update-config`, `train --update-config`, `train --check` (exit 0); the written `weights.bin` must be byte-identical to the winning arm's seed-20260101 run; `thresholds` (development data only); the dependent figures and tests are re-pinned; and **one** `evaluate` (`--preflight` first), disclosed as a further look at sets already seen by this model family (a new record, not an erratum), then the README accuracy tables and the evaluation documents.
+- **An acceptance test fails.** The experiment stops without a selection; the cause is recorded, and any change to the protocol is an amendment written before the affected runs are repeated, never a choice made on a result.
+- **A run is missing** (a command failed without a result): it is repeated; the analysis refuses to select with a missing run.
+
+### Power note and limits stated in advance
+
+- **Power (no tuning).** With the PR #19 effect (about -18 per 1,000 on the old pooled primary, seed standard deviation about 10 to 22) eight seeds on about 2.5 times more decisions (470 against 178) give a Welch interval half-width of roughly 12 to 20 per 1,000 for the difference of means; an effect of that size is borderline, and an effect of 10% or more of the primary (about 25 per 1,000 at the shipped 246.8) is detectable. The registered rule is applied as written whatever the outcome.
+- **Small `headings2` imperative source.** The development imperative headings are 59 (the registered floor was 80, the owner's target about 100) and the training imperative lines 165 (target about 300), of which **41 come from the strength-1 `initial-noun` frame** (their word after token 0 is a capitalized noun-capable word) on which both labelers nevertheless tagged token 0 VERB (124 without them). The arms with `HDG2` were built with `--allow-short` and are run under amendment A2 (a decision of the implementing agent, open to the owner's review). A null result for HDG2 is a result for that size of data.
+- **The shipped model already reads the 59 dev imperative headings of `headings-2` correctly** (59 of 59, 0 harmful), so a gain from the heading data cannot show on that stratum; it can only show on the noun headings (60.0% on the 50 noun targets of `headings-2`), and the imperative-heading guard (BASE 3 harmful of 60 decisions, 50.0 per 1,000; one more harmful error in 60 decisions is about +16.7 per 1,000) can only detect a loss of imperative reading.
+- **Four arms against one baseline without a multiplicity correction**, and the seeds measure training noise only (the same data, the same order of sentences up to the seed): some winner's curse is possible.
+- **The development tranches are the frames the data were built from** (the compound frame and the band; the heading frames), so a gain on them is development evidence of that kind and not an independent test; `compound-head-2` is a set contested for the WordSense Basic classifier, not an intrinsically hard set.
+- The labels were written by two models without human review; the hand checks were model reviews (60 of 60 on every product).
+- The Title Case frame excludes ALL-CAPS and sentence-case step titles (U2). The compound controls are 17.6% of the new compound items (cap of 45), not about 20%.
+
+## Follow-up: re-test results (decision: CMP2 wins by rule B)
+
+Written after the 40 runs and the analysis of the pre-registration commit `0f0b595abaf6e9d02aef2ada2e1eb8be47da6c28` (E1). Every result file records `inputs.commit` = `0f0b595...` with `dirty` = false. Five arms (BASE, CMP2, CMP2-F5, CMP2-HDG2, CMP2-HDG2-F5), eight seeds each (20260101, 11 to 17), 40 runs, on 2026-11-10; the commands were those of the pre-registration (the frozen driver `compound-heading-2/run_arms.ps1` with `runner-base.cmd`, one invocation per arm, in the registered order). No run was repeated, replaced or dropped and no frozen file was edited. The frozen `analyze_followup.py` was applied to the 40 result files (`python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py --runs <runs> --out <runs>\report.md --decision <runs>\decision.json`; exit code 0) and the rule was applied mechanically. **No held-out set was read and no held-out command (`evaluate`, `thresholds`, `train --update-config`) was run for this section.** Nothing was changed in the weights, the operating points or the README accuracy tables by this commit; the adoption plan follows in its own section, committed before any retraining.
+
+As in the earlier experiment (PR #19), the analyzer's outputs are not committed: the tables below are copied from them, and their hashes are recorded here.
+
+| File (outside the repository, next to the run folders) | Size | SHA-256 |
+| --- | ---: | --- |
+| `report.md` (the analysis) | 29,591 bytes | `2ba5247917377e271dc67518186f5249eca982f9a0fef187080d0c99b1faac20` |
+| `decision.json` (per-arm values, intervals, guards, decision) | 19,391 bytes | `3f0a61ae60848234b489a2014e254c5c15b07c829b1b933d9f347ec46c11b3e0` |
+| `CMP2-s20260101.bin` (the seed-20260101 weights of the winning arm; 1,196,142 bytes raw, 126,087 rows, 314,640 weights) | 537,650 bytes deflated | `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad` |
+
+### Re-test results: acceptance tests (all passed; the analysis made a selection only after them)
+
+Every acceptance test of the pre-registration passed: the frozen files (15 text files, 7 development files, 1 raw file) have their frozen SHA-256; **a**, the BASE run at seed 20260101 has the weights SHA-256 `48dd9188...413b`, byte-identical to the shipped `weights.bin`, and all 67 shipped figures (the old and the new tranches; table `SHIPPED_FIGURES`) are reproduced; **b**, every BASE run trained on 61,680 sentences with the sources `open:2,masc:1,silver:1,imperative:1`, every CMP2 and CMP2-F5 run on exactly 1,842 sentences more (63,522; `compound:1,compound2:1`) and every CMP2-HDG2 and CMP2-HDG2-F5 run on exactly 2,463 more (64,143; `compound:1,headings:1,compound2:1,headings2:1`); **c**, the ten `inputs.*Sha256` fields agree in all 40 runs and equal the frozen hashes.
+
+### Re-test results: the arms
+
+Values are the mean ± sample standard deviation over the eight seeds; the baseline is BASE (the shipped model). Primary = pooled harmful per 1,000 noun-verb decisions over `compound-head`, `compound-head-2`, `headings` and `headings-2` (470 decisions for the shipped model); co-primary = wrong at confidence >= 0.95 summed over the same four tranches.
+
+| Arm | Feature groups | Sources added | Additions | Primary | Co-primary (wrong at >= 0.95) | Pooled target accuracy % |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| BASE | `clauseCues` | none | 0 | 238.8 ± 8.6 | 20.38 ± 3.11 | 71.25 ± 0.70 |
+| CMP2 | `clauseCues` | compound, compound2 | 1 | 193.1 ± 16.3 | 12.12 ± 3.00 | 76.51 ± 1.98 |
+| CMP2-F5 | `clauseCues`, `titleCaseLine` | compound, compound2 | 2 | 198.1 ± 20.5 | 11.88 ± 3.23 | 76.46 ± 2.32 |
+| CMP2-HDG2 | `clauseCues` | compound, compound2, headings, headings2 | 2 | 185.4 ± 10.3 | 10.50 ± 1.77 | 79.55 ± 1.15 |
+| CMP2-HDG2-F5 | `clauseCues`, `titleCaseLine` | compound, compound2, headings, headings2 | 3 | 195.5 ± 15.8 | 10.75 ± 2.38 | 79.43 ± 1.39 |
+
+Per tranche (target accuracy %, harmful per 1k, wrong at >= 0.95; the controls are 100.0% in every arm of `headings` and `headings-2`, and 99.6% to 100.0% on the compound controls of both tranches):
+
+| Arm | compound-head: acc | harmful | wrong | compound-head-2: acc | harmful | wrong | headings: acc | harmful | wrong | headings-2: acc | harmful | wrong |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 60.8 ± 2.3 | 382.5 ± 22.5 | 5.00 ± 1.77 | 64.8 ± 1.5 | 323.8 ± 13.5 | 13.00 ± 1.60 | 82.2 ± 1.9 | 46.5 ± 18.0 | 1.50 ± 0.76 | 83.8 ± 1.8 | 29.0 ± 6.3 | 0.88 ± 0.64 |
+| CMP2 | 69.1 ± 3.6 | 302.5 ± 34.1 | 1.62 ± 0.74 | 72.1 ± 2.3 | 253.6 ± 23.2 | 8.25 ± 2.19 | 85.4 ± 2.3 | 60.9 ± 11.4 | 1.50 ± 0.53 | 84.1 ± 1.8 | 30.5 ± 9.2 | 0.75 ± 0.71 |
+| CMP2-F5 | 68.9 ± 4.5 | 306.2 ± 43.4 | 1.75 ± 0.89 | 72.4 ± 3.0 | 251.2 ± 29.7 | 8.12 ± 2.75 | 82.4 ± 2.6 | 81.7 ± 16.7 | 0.25 ± 0.46 | 86.1 ± 1.4 | 41.2 ± 6.3 | 1.75 ± 0.46 |
+| CMP2-HDG2 | 72.2 ± 2.2 | 272.5 ± 21.9 | 1.88 ± 0.99 | 72.3 ± 2.0 | 251.2 ± 18.1 | 8.38 ± 1.06 | 90.8 ± 0.7 | 62.5 ± 10.7 | 0.12 ± 0.35 | 90.5 ± 1.0 | 27.4 ± 5.6 | 0.12 ± 0.35 |
+| CMP2-HDG2-F5 | 69.0 ± 2.7 | 303.8 ± 28.8 | 2.25 ± 1.04 | 71.7 ± 2.1 | 257.1 ± 21.0 | 8.00 ± 2.20 | 90.8 ± 1.6 | 70.5 ± 13.7 | 0.00 ± 0.00 | 93.9 ± 1.0 | 24.4 ± 6.5 | 0.50 ± 0.53 |
+
+Heading kinds (diagnostics) and the imperative-heading guard (kind `imperative` of `headings` plus `headings-2`, pooled; BASE 60 decisions):
+
+| Arm | headings noun acc % | headings-2 noun acc % | headings-2 noun harmful per 1k | headings imperative acc % | headings-2 imperative acc % | imperative acc % (pooled) | **imperative harmful per 1k (pooled)** | wrong >= 0.95 (pooled) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 74.2 ± 3.8 | 64.8 ± 3.8 | 47.5 ± 10.4 | 91.1 ± 1.7 | 100.0 ± 0.0 | 96.2 ± 0.7 | 33.3 ± 12.6 | 0.00 |
+| CMP2 | 77.8 ± 4.6 | 65.8 ± 3.6 | 45.0 ± 9.3 | 93.9 ± 1.0 | 99.6 ± 0.8 | 97.1 ± 0.7 | 47.9 ± 13.9 | 0.00 |
+| CMP2-F5 | 80.8 ± 3.2 | 71.8 ± 3.1 | 47.5 ± 10.4 | 84.2 ± 2.8 | 98.3 ± 0.0 | 92.2 ± 1.2 | 89.6 ± 23.5 | 0.00 |
+| CMP2-HDG2 | 88.2 ± 1.3 | 79.5 ± 2.3 | 42.5 ± 7.1 | 93.6 ± 1.4 | 99.8 ± 0.6 | 97.1 ± 0.7 | 50.0 ± 12.6 | 0.00 |
+| CMP2-HDG2-F5 | 90.2 ± 2.3 | 87.0 ± 1.9 | 37.5 ± 7.1 | 91.4 ± 2.5 | 99.8 ± 0.6 | 96.2 ± 1.4 | 60.4 ± 23.5 | 0.00 |
+
+Per-seed values (primary / wrong at >= 0.95):
+
+| Arm | 20260101 | 11 | 12 | 13 | 14 | 15 | 16 | 17 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 246.8 / 21 | 240.4 / 25 | 225.5 / 21 | 246.8 / 22 | 242.6 / 19 | 246.8 / 20 | 231.9 / 21 | 229.8 / 14 |
+| CMP2 | 195.7 / 16 | 197.9 / 12 | 212.8 / 11 | 191.5 / 14 | 200.0 / 11 | 168.1 / 6 | 208.5 / 14 | 170.2 / 13 |
+| CMP2-F5 | 212.8 / 17 | 202.1 / 8 | 214.9 / 15 | 178.7 / 10 | 189.4 / 11 | 168.1 / 8 | 189.4 / 13 | 229.8 / 13 |
+| CMP2-HDG2 | 178.7 / 11 | 172.3 / 9 | 183.0 / 9 | 197.9 / 14 | 202.1 / 10 | 189.4 / 9 | 178.7 / 12 | 180.9 / 10 |
+| CMP2-HDG2-F5 | 212.8 / 9 | 187.2 / 11 | 180.9 / 10 | 180.9 / 16 | 212.8 / 8 | 178.7 / 10 | 195.7 / 11 | 214.9 / 11 |
+
+### Re-test results: guards against BASE
+
+Each cell is the arm's delta against the BASE mean and the verdict (BASE means: wrong at >= 0.95 20.38, hard harmful 178.8, standard harmful 13.5, open dev harmful 20.19, UD-EWT dev harmful 20.84, UD-EWT dev accuracy 92.964, named-state target accuracy 92.6, deflated 522,174 bytes, imperative-heading harmful 33.3).
+
+| Guard (limit) | CMP2 | CMP2-F5 | CMP2-HDG2 | CMP2-HDG2-F5 |
+| --- | --- | --- | --- | --- |
+| wrong at >= 0.95 (<= BASE) | PASS -8.25 | PASS -8.50 | PASS -9.88 | PASS -9.62 |
+| hard harmful per 1k (<= BASE + 10) | PASS -19.06 | PASS -15.62 | PASS -23.44 | PASS -17.50 |
+| standard harmful per 1k (<= BASE + 5) | PASS -1.46 | PASS -1.46 | PASS -2.92 | PASS -1.67 |
+| open dev harmful per 1k (<= BASE + 1.5) | PASS +0.45 | PASS +0.73 | PASS +0.53 | PASS -0.08 |
+| UD-EWT dev harmful per 1k (<= BASE + 1.5) | PASS -1.12 | PASS -1.45 | PASS -0.49 | PASS -1.59 |
+| UD-EWT dev accuracy (>= BASE - 0.15) | PASS -0.00 | PASS -0.01 | PASS +0.02 | PASS +0.01 |
+| named-state target accuracy (>= BASE - 3) | PASS +0.25 | PASS +1.50 | PASS +0.38 | PASS +0.75 |
+| deflated bytes (<= 1.5 x BASE) | PASS 1.028x | PASS 1.058x | PASS 1.037x | PASS 1.065x |
+| tokens per second (>= 150,000, absolute) | PASS 534,918 | PASS 563,276 | PASS 787,103 | PASS 509,064 |
+| imperative-heading harmful per 1k (<= BASE + 25) | PASS +14.58 | **FAIL +56.25** | PASS +16.67 | **FAIL +27.08** |
+| all guards | PASS | **FAIL** | PASS | **FAIL** |
+
+Reported, not gated (open dev, gold v2 dev, UD-EWT dev, hard and standard tranches, named-state, model and training):
+
+| Arm | Open acc % | Open harmful per 1k | Open NLL | Open ECE % | Gold acc % | Gold harmful per 1k | UD acc % | UD harmful per 1k | Hard acc % | Standard acc % | Named-state harmful per 1k |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 96.67 ± 0.05 | 20.19 ± 1.12 | 0.1115 ± 0.0005 | 0.23 ± 0.05 | 95.17 ± 0.12 | 21.9 ± 2.5 | 92.964 ± 0.047 | 20.84 ± 0.42 | 76.72 ± 1.00 | 97.75 ± 0.42 | 91.2 ± 14.0 |
+| CMP2 | 96.70 ± 0.04 | 20.64 ± 0.99 | 0.1104 ± 0.0006 | 0.21 ± 0.05 | 95.31 ± 0.14 | 18.4 ± 2.7 | 92.962 ± 0.033 | 19.72 ± 0.62 | 78.97 ± 1.02 | 98.04 ± 0.23 | 91.2 ± 14.0 |
+| CMP2-F5 | 96.69 ± 0.04 | 20.92 ± 1.60 | 0.1108 ± 0.0010 | 0.25 ± 0.04 | 95.26 ± 0.14 | 19.4 ± 3.3 | 92.949 ± 0.047 | 19.39 ± 1.16 | 78.19 ± 0.69 | 98.12 ± 0.19 | 98.0 ± 20.1 |
+| CMP2-HDG2 | 96.69 ± 0.05 | 20.73 ± 0.75 | 0.1108 ± 0.0007 | 0.22 ± 0.07 | 95.34 ± 0.11 | 15.8 ± 2.8 | 92.986 ± 0.050 | 20.35 ± 1.27 | 79.62 ± 0.48 | 98.15 ± 0.30 | 101.4 ± 28.0 |
+| CMP2-HDG2-F5 | 96.75 ± 0.03 | 20.11 ± 0.79 | 0.1103 ± 0.0005 | 0.26 ± 0.04 | 95.30 ± 0.11 | 17.6 ± 3.2 | 92.976 ± 0.070 | 19.26 ± 1.21 | 78.53 ± 0.88 | 98.08 ± 0.31 | 94.6 ± 25.0 |
+
+| Arm | Temperature | Rows | Raw bytes | Deflated bytes | Tokens/s (1 thread) | Train wall s | Old-tranche primary (PR #19 measure, `shapesNew.pooledPrimary`) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 9.438 ± 0.106 | 122,188 ± 220 | 1,158,384 ± 1,828 | 522,174 ± 874 | 502,107 ± 184,083 | 30.3 ± 17.4 | 235.3 ± 15.4 |
+| CMP2 | 9.514 ± 0.000 | 125,842 ± 272 | 1,194,098 ± 2,106 | 536,826 ± 898 | 546,402 ± 102,714 | 19.4 ± 2.2 | 196.6 ± 18.5 |
+| CMP2-F5 | 10.208 ± 0.103 | 128,004 ± 223 | 1,222,966 ± 2,580 | 552,388 ± 1,045 | 557,708 ± 94,651 | 20.2 ± 3.5 | 207.9 ± 21.7 |
+| CMP2-HDG2 | 9.489 ± 0.072 | 126,935 ± 255 | 1,204,828 ± 2,246 | 541,326 ± 656 | 723,996 ± 133,774 | 19.8 ± 5.8 | 180.5 ± 11.4 |
+| CMP2-HDG2-F5 | 10.208 ± 0.103 | 128,992 ± 277 | 1,232,288 ± 2,392 | 556,165 ± 915 | 574,355 ± 150,863 | 33.6 ± 7.0 | 201.5 ± 17.9 |
+
+The training times and the single-thread throughput were measured on a loaded shared machine at Normal priority (the deviation record of the pre-registration); they do not separate the arms. The old-tranche primary is the PR #19 measure (`compound-head` plus `headings` decisions), kept so that the two experiments stay comparable.
+
+### Re-test results: Welch 95% intervals of (arm - BASE)
+
+Difference of the means with the Welch-Satterthwaite t interval over the seeds (seeds measure training noise only; four arms against one baseline, no multiplicity correction). The primary is the only interval that enters the rule; the others are reported, and in a table of this size one interval that excludes 0 is not evidence by itself.
+
+| Arm | Primary | Wrong at >= 0.95 | Hard harmful | Standard harmful | Open dev harmful | UD-EWT dev harmful | UD-EWT dev accuracy | Named-state accuracy | Imperative-heading harmful |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CMP2 | -45.74 [-60.12, -31.37] | -8.25 [-11.53, -4.97] | -19.06 [-31.81, -6.31] | -1.46 [-4.36, +1.44] | +0.45 [-0.68, +1.58] | -1.12 [-1.70, -0.54] | -0.00 [-0.05, +0.04] | +0.25 [-1.76, +2.26] | +14.58 [+0.34, +28.83] |
+| CMP2-F5 | -40.69 [-58.37, -23.02] | -8.50 [-11.90, -5.10] | -15.62 [-25.66, -5.59] | -1.46 [-4.22, +1.30] | +0.73 [-0.77, +2.23] | -1.45 [-2.44, -0.46] | -0.01 [-0.07, +0.04] | +1.50 [-0.51, +3.51] | +56.25 [+35.46, +77.04] |
+| CMP2-HDG2 | -53.46 [-63.63, -43.29] | -9.88 [-12.66, -7.09] | -23.44 [-31.06, -15.82] | -2.92 [-5.83, -0.00] | +0.53 [-0.50, +1.57] | -0.49 [-1.57, +0.59] | +0.02 [-0.03, +0.07] | +0.38 [-1.82, +2.57] | +16.67 [+3.16, +30.18] |
+| CMP2-HDG2-F5 | -43.35 [-57.38, -29.32] | -9.62 [-12.61, -6.64] | -17.50 [-27.60, -7.40] | -1.67 [-4.29, +0.95] | -0.08 [-1.13, +0.96] | -1.59 [-2.62, -0.56] | +0.01 [-0.05, +0.08] | +0.75 [-1.71, +3.21] | +27.08 [+6.29, +47.87] |
+
+Pairwise contrasts (reported, not gated): CMP2-F5 minus CMP2 on the primary +5.05 [-14.90, +25.01] and on wrong at >= 0.95 -0.25 [-3.59, +3.09]; **CMP2-HDG2 minus CMP2 on the primary -7.71 [-22.56, +7.13]** and on wrong at >= 0.95 -1.62 [-4.32, +1.07]; CMP2-HDG2-F5 minus CMP2-HDG2 on the primary +10.11 [-4.42, +24.63] and on wrong at >= 0.95 +0.25 [-2.01, +2.51]. None of the three pairwise intervals excludes 0, so the effect of the headings sources (CMP2-HDG2 against CMP2) and of F5 is not separable from training noise.
+
+### Decision: CMP2 wins
+
+Rule B, applied step by step (the analysis script's own table):
+
+1. Primary = the eight-seed mean (table above).
+2. Guards and the co-primary against the BASE mean: CMP2 and CMP2-HDG2 pass all ten; **CMP2-F5 and CMP2-HDG2-F5 fail the imperative-heading guard** (+56.25 and +27.08 against the limit +25) and are out.
+3. Q = {CMP2, CMP2-HDG2}; each one's Welch 95% interval of (arm - BASE) on the primary lies entirely below 0 (CMP2 [-60.12, -31.37], CMP2-HDG2 [-63.63, -43.29]).
+4. m = the lowest primary in Q = CMP2-HDG2 (185.37); S = the arms of Q within 10% (primary <= 203.91): CMP2 (193.09) and CMP2-HDG2.
+5. Winner = the arm of S with the fewest additions = **CMP2** (1 addition against 2).
+
+**The winner is CMP2: the compound sources `compound` and `compound2` at weight 1; the `headings` and `headings2` sources stay at weight 0 and F5 stays off.** CMP2 against BASE on the primary: -45.74 [-60.12, -31.37], df 10.60, p < 0.0001 (about -19% of the BASE primary). The pairwise contrast of the arm that the rule did not choose, CMP2-HDG2 against CMP2, is -7.71 [-22.56, +7.13]: not significant, and the rule's 10% window does not separate the two.
+
+### Re-test reading of the result (what can and cannot be said)
+
+- **What the figures show.** Rule B selected CMP2 mechanically. Against BASE the arm has 45.7 fewer harmful errors per 1,000 decisions on the pooled primary (193.1 against 238.8), 8.25 fewer wrong at confidence >= 0.95 (12.1 against 20.4; the BASE of PR #19 was 6.8 on the two old tranches), 19.1 fewer harmful per 1,000 on the hard tranche, and no guard fails. The gain is in the compound tranches (compound-head 382.5 to 302.5, compound-head-2 323.8 to 253.6 harmful per 1,000, target accuracy 60.8% to 69.1% and 64.8% to 72.1%); on the heading tranches CMP2 is not better (headings harmful 46.5 to 60.9, headings-2 29.0 to 30.5), the heading gains appear only in the arms that have the heading sources (HDG2: headings 90.8%, headings-2 90.5% against 82.2% and 83.8%).
+- **What is worse for the winner (stated before any adoption).** (1) The imperative-heading harmful rate rises from 33.3 to 47.9 per 1,000 (+14.58 [+0.34, +28.83]; on average about 0.9 more harmful errors in 60 decisions, since one decision is 16.7 per 1,000), inside the guard (+25) but with an interval that excludes 0. (2) Open dev harmful rises by +0.45 per 1,000 (interval contains 0), the deflated size by 2.8% (+14,652 bytes on the mean) and the rows by about 3,650. (3) The compound controls fall from 100.0% to 99.8% (mean over the eight seeds, both tranches). (4) The harmful rate on the old `headings` dev tranche rises (46.5 to 60.9).
+- **What the figures cannot show.** The seeds measure training noise only, not the choice of the 470 development decisions: one decision moves the pooled primary by 2.1 per 1,000. The tranches are the frames the data were built to target (the compound frame and the contested band for the WordSense Basic classifier; the heading frames), so the result is development evidence of that kind and not an independent test; a gain on text that is not of these frames is not shown. The held-out sets follow in the adoption only as a disclosed further look.
+- **Caveats stated in the pre-registration, still valid.** Four arms against one baseline without a multiplicity correction and a possible winner's curse (the interval of CMP2 is far from 0, so the sign is not in doubt; the size of the effect on other text is). The `headings2` imperative source is small (165 lines, 41 of them from the strength-1 `initial-noun` frame, against the target of about 300), and the shipped model already reads all 59 imperative dev headings of `headings-2` correctly (BASE 100.0%), so the imperative stratum of `headings-2` could not show a gain and the imperative-heading guard can only detect a loss. The labels were written by two models without human review and the hand checks were model reviews.
+- **Deviation record: Normal priority**, as in the earlier experiments: the runner starts `dotnet` at Normal priority; this changes the speed of the runs and nothing else. The training times and throughput are not comparable between arms or with earlier records.
+- **The PR #19 figures stay comparable.** The old-tranche primary of PR #19 (`shapesNew.pooledPrimary`) is in the last table: BASE 235.3 ± 15.4 (eight seeds; PR #19: 239.33 on five), CMP2 196.6 ± 18.5 (PR #19 CMP: 221.35), CMP2-HDG2 180.5 ± 11.4. The seed-20260101 BASE figure, 241.57, is the one PR #19 recorded and acceptance test a reproduces it.
+- **What the rule did not decide.** The decision between CMP2 and CMP2-HDG2 is the rule's tie-break by fewest additions (the point estimate is lower for CMP2-HDG2 by 7.7, not significant); the heading sources are not adopted by this rule, and the heading data stay at weight 0.
+
+### Basis of the adoption (who decided what)
+
+The adoption below was **not decided inside this run by the implementing agent**. The rule that selected the arm is rule B, the default U1 taken by the implementing agent in R0 and recorded as such (not approved by the owner); it selected CMP2 mechanically. The request given to the orchestration agent for this task (goal 5) says: "If a winner qualifies: adopt it, retrain and embed it; recompute the dev operating points; run ONE held-out evaluate, disclosed as a further look; update the README tables (the drift test) and the docs." The adoption and the one held-out `evaluate` follow from that request and from the outcome clause "An arm wins" of the pre-registration, and the owner confirmed the adoption afterwards (section "Owner decision, 2026-11-11" at the end of this log). Any change of a pre-registered rule would have been put to the owner; none is made.
+
+## Follow-up: adoption of the CMP2 model (plan written before the retraining and before any held-out command)
+
+The pre-registered rule B selected **CMP2** (results commit `a77263a`, section "Follow-up: re-test results"). The basis of the adoption is the request given to the orchestration agent (goal 5: if a winner qualifies, adopt it, retrain and embed it, recompute the development operating points, run one held-out `evaluate` disclosed as a further look, update the README tables and the documents) and the outcome clause "An arm wins" of the pre-registration; it is **not** a decision made inside this run by the implementing agent, the owner later confirmed it (see "Owner decision, 2026-11-11"), and no rule is changed. This section is committed **before the retraining of the shipped model**: no `train --output`, `calibrate --update-config`, `train --update-config`, `thresholds` or `evaluate` has been run for it, and no held-out file has been read. Git history shows the order: this plan, the adoption commit (the weights, the configuration, the operating points and the re-pinned figures; development data only), then the plan of the held-out look, the deletion of the previous record, the one `evaluate` and the evaluation record. No hyperparameter, corpus choice other than the two sources below, feature group or seed changes: the shipped seed 20260101 stays.
+
+### The CMP2 arm and the exact steps
+
+The adopted arm is **CMP2**: the shipped configuration (feature group `clauseCues`, the mix open x2, MASC, silver >= 80, imperative at weight 1, 6 epochs, 19 hash bits, prune 8, quantization scale 8, restriction `history`, predicted history, seed 20260101) plus the sources `compound` (`data/compound/compound.tsv`, 742 sentences) and `compound2` (`data/compound/compound-2.tsv`, 1,100 sentences) at **weight 1**: 63,522 training sentences. The sources `headings` and `headings2` stay at weight 0 and the feature group `titleCaseLine` (F5) stays off. The steps, as in the earlier adoptions, from a clean tree whose HEAD is the commit of this plan:
+
+1. In `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` set the weight of the sources `compound` and `compound2` from 0 to 1 (nothing else).
+2. `train --output <file outside the repository>` at the shipped seed (the trainer reads `training.json`).
+3. `calibrate --weights <file> --update-config` (refits the temperature on the open dev set and writes it to `training.json`).
+4. `train --update-config` (writes the image SHA-256 of the new model to `training.json` and `weights.bin` itself), then `train --check` (must exit 0).
+5. `thresholds` (development data only; recomputes `docs/evaluation/operating-points.json` and `confidence-thresholds.md`; it refuses to write anything if the 0.45 row does not reproduce the frozen figures `FrozenOpenHarmful` and `FrozenGoldHarmful`; if it refuses, the two constants are set to the figures it reports for the new model, with the reason recorded, as in the two earlier adoptions, and it is run again).
+6. Re-pin the figures and tests that depend on the weights (size figures, the embedded-model tests, the documents that describe the shipped model, the description of the sources at weight 1).
+
+One heavy process runs at a time, at most 8 threads, and the PAUSE file is checked before every heavy step. `evaluate` is **not** run in the adoption commit.
+
+### CMP2 byte-identity requirement (stated before the retraining)
+
+The new `weights.bin` must be **byte-identical to the weights of the CMP2 run of seed 20260101 of the re-test** (`CMP2-s20260101.bin`, outside the repository). Its SHA-256 is `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad`, its size 537,650 bytes deflated (1,196,142 bytes raw, 126,087 rows, 314,640 weights, image SHA-256 `d916b0e775660f8aa3c18a2161369318dd07c182358e1503d0992b5d2b975e25`, per the run's training output). The model it replaces has SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` (521,695 bytes; image `6e1e4ade...`). If the retrained file is **not** byte-identical, the adoption stops: nothing is committed except an account of the difference, the cause is investigated and recorded, no figure of the re-test is claimed for the shipped model, and no held-out command is run. The temperature of the run (9.514 in all eight CMP2 seeds) is the one in `training.json`; if `calibrate` reports a different value the difference is recorded and the byte-identity check decides.
+
+### What stays the same and what will be written afterwards (CMP2 adoption)
+
+- The data, the labels, the re-test's decision and its tables are not changed by the adoption.
+- The seed-20260101 figures of the CMP2 run are the figures of the shipped model if and only if the byte identity holds; they are written beside the previous model's in the adoption result.
+- The adoption commit adds the development figures of the shipped model, the `thresholds` result and the list of the re-pinned figures to this section (development data only). The held-out evaluation is a **disclosed fifth look** at sets already seen by this model family (six models in all would have been scored on them), run **once**, as a new record (not an erratum), reported as produced, and is the step that follows the adoption commit; The pre-registration states **no rollback condition** for the held-out look: the stop conditions of the `evaluate` protocol, if they fire, are reported and nothing is selected, tuned or reverted because of a result; no second `evaluate` is run whatever the result, and any question whether a result should change what ships is put to the owner, not decided inside this run.
+
+### CMP2 adoption result (written by the adoption commit; development data only)
+
+The steps ran in the registered order from a clean tree at the commit of the plan above (`77753d7`), one process at a time at 8 threads at most; the PAUSE file did not exist before any of them. The trainer commands wrote their output under the working folder outside the repository (`files\compound-heading-followup\adopt\`).
+
+- **`train --output <file>`** (seed 20260101; 63,522 sentences, sources `open:2,masc:1,silver:1,imperative:1,compound:1,compound2:1`, 6,569,850 steps, 10.8 s): image 1,196,142 bytes, 126,087 rows, image SHA-256 `d916b0e775660f8aa3c18a2161369318dd07c182358e1503d0992b5d2b975e25`, 537,650 bytes deflated, file SHA-256 `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad`.
+- **`calibrate --weights <file> --update-config`**: best temperature on open dev **9.514** (NLL 0.10982, ECE 0.152%; gold v2 dev NLL 0.2564, ECE 2.25%), the same value as before, so `training.json` kept its temperature.
+- **`train --update-config`** wrote `imageSha256` `d916b0e7...5e25` (it was `6e1e4ade...`) and wrote `weights.bin` itself; **`train --check` exit 0** ("The weights ... are current").
+- **Byte identity: confirmed.** `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` has SHA-256 `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad` and 537,650 bytes, equal to the file written by `train --output`, to the weights of the CMP2 run of seed 20260101 of the re-test (`CMP2-s20260101.bin`) and to the `weights.sha256` of that run's result file. The model it replaces had SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` (521,695 bytes). The seed-20260101 figures of the re-test are therefore the figures of the shipped model.
+- **`training.json`**: the weights of `compound` and `compound2` 0 to 1, the `imageSha256` as above; nothing else.
+
+#### CMP2 adoption: development figures of the shipped model (dev data only)
+
+Seed 20260101, scored by `eval-arm` through the real decoder (the figures of the re-test's runs `CMP2-s20260101` for the shipped model and `BASE-s20260101` for the previous model, which was the shipped model before this adoption). The shapes development sets are development sets for this selection and not independent tests.
+
+| Measure | Previous model (BASE) | Shipped model (CMP2) |
+| --- | --- | --- |
+| Primary: pooled harmful per 1k, 470 decisions of the four tranches | 246.8 (116) | 195.7 (92) |
+| Wrong at >= 0.95, four tranches | 21 | 16 |
+| compound-head: accuracy %, harmful per 1k (100 decisions), wrong >= 0.95 | 60.0, 390.0 (39), 5 | 72.0, 280.0 (28), 2 |
+| compound-head-2: accuracy %, harmful per 1k (210 decisions), wrong >= 0.95 | 62.9, 338.1 (71), 13 | 70.5, 271.4 (57), 11 |
+| headings: accuracy %, harmful per 1k (78 decisions), wrong >= 0.95 | 84.2, 51.3 (4), 2 | 86.3, 64.1 (5), 2 |
+| headings-2: accuracy %, harmful per 1k (82 decisions), wrong >= 0.95 | 81.7, 24.4 (2), 1 | 84.4, 24.4 (2), 1 |
+| Imperative headings (104 targets, 60 decisions): accuracy %, harmful per 1k | 95.2, 50.0 (3) | 97.1, 33.3 (2) |
+| Compound controls (65), headings controls (40) | 65 of 65, 40 of 40 | 65 of 65, 40 of 40 |
+| Hard tranche harmful per 1k (400 target items) | 170.0 (68) | 135.0 (54) |
+| Hard tranche target / control accuracy % | 77.25 / 98.33 | 79.75 / 98.33 |
+| Standard tranche harmful per 1k (600 target items) | 15.0 (9) | 16.7 (10) |
+| Standard tranche target / control accuracy % | 97.83 / 99.00 | 97.50 / 99.00 |
+| Named-state target accuracy %, controls | 90.0, 12 of 12 | 94.0, 11 of 12 |
+| Open dev accuracy % (ambiguous %) | 96.57 (95.90) | 96.72 (96.10) |
+| Open dev harmful per 1k (of 4,451 decisions) | 20.44 (91) | **21.57 (96)** |
+| Open dev NLL, ECE % | 0.1125, 0.28 | 0.1098, 0.15 |
+| Gold v2 dev accuracy % | 95.04 | 95.24 |
+| Gold v2 dev harmful per 1k (of 611 decisions) | 22.91 (14) | **18.00 (11)** |
+| Gold v2 dev NLL, ECE % | 0.2498, 2.44 | 0.2564, 2.25 |
+| UD-EWT dev agreement % (25,148 tokens) | 92.962 | 92.974 |
+| UD-EWT dev harmful per 1k (of 4,570 decisions) | 20.57 (94) | 18.82 (86) |
+| Temperature | 9.514 | 9.514 |
+| Rows, weights | 122,088, 304,425 | 126,087, 314,640 |
+| Raw, deflated bytes | 1,157,499; 521,695 | 1,196,142; 537,650 |
+
+Throughput was not measured again for the adoption: the re-test recorded 389,968 tokens per second for this model's run (one thread, a loaded shared machine; the median over the eight seeds of the arm was 534,918), against the floor of 150,000. **What is worse (stated before the held-out evaluation).** (1) The shipped model is 15,955 bytes larger when deflated (+3.1%) and has 3,999 more rows. (2) Open dev harmful errors are 5 higher at this seed (96 against 91; the eight-seed difference of the re-test is +0.45 per 1k with an interval that contains 0). (3) The standard tranche has one more harmful error (10 against 9; 16.7 against 15.0 per 1k) and its target accuracy is 0.33 points lower. (4) The harmful errors on the old `headings` tranche are higher (5 against 4 at this seed) and, over the eight seeds, the imperative-heading harmful rate is higher (+14.58 per 1k, interval [+0.34, +28.83]), although at this seed it is lower. (5) One of the 12 named-state controls is now wrong (11 of 12). (6) The gain is on the compound tranches that are the frames of the data, so it is development evidence and not a held-out result. (7) **The operating points move** (below): the strict threshold falls from 0.95 to 0.90 and the balanced one rises from 0.75 to 0.80 under the unchanged pre-registered rule.
+
+#### CMP2 adoption: `thresholds` result (development data only; committed before the held-out run)
+
+`thresholds` (rule `nv-pooled-dev-v1`, grid, targets and floors unchanged) **refused to write** with the old constants (`At 0.45: harmful 96 (open dev), 11 (gold v2 dev), 107 (pooled); frozen figures 91, 14, 105`; nothing was written). The reason is that the model changed: the 0.45 row of the frozen figures is the development figure of the shipped model, and the new model's figures equal those of the re-test's `eval-arm` (open 96, gold 11). As in the two earlier adoptions the two constants `FrozenOpenHarmful` and `FrozenGoldHarmful` of the trainer were set to the figures that `thresholds` reported (**96** and **11**; they were 91 and 14), the comment of each constant records the history, the disclosure paragraph (`docs/evaluation/disclosure.md`) was revised for the **fifth look** (six models in all), and the command was run again: the 0.45 row reproduced the figures and the command wrote `docs/evaluation/operating-points.json` and `docs/evaluation/confidence-thresholds.md`.
+
+For the model image `d916b0e7...`, temperature 9.514 and the dev files unchanged: **strict 0.90** (coverage 87.4% [86.2, 88.6], 4.7 harmful per 1,000 answered [2.5, 7.5], 21 of 4,425) and **balanced 0.80** (coverage 92.4% [91.5, 93.4], 8.3 [5.5, 11.5], 39 of 4,677). The previous model had strict 0.95 (coverage 81.8%, 1.9 per 1,000, 8 of 4,139) and balanced 0.75 (coverage 94.1%, 9.9, 47 of 4,762): **both thresholds changed**, because the new model's confidence curve is different. The rule takes the first threshold of the grid, in ascending order, that meets both the harmful target and the coverage floor: the previous model first met the strict target (5.0 per 1,000 answered) at 0.95, the new one already at 0.90 (4.7); the previous model first met the balanced target (10.0) at 0.75 (9.9), the new one has 10.5 at 0.75 and first meets it at 0.80 (8.3). The pooled harmful count at 0.45 is 107 of 5,062 decisions (21.1 per 1,000; it was 105, 20.7). The guidance lines of the documents that quote a threshold (the user guide, the packed API reference, the root README) change with the held-out step, because they quote the held-out figures of the operating points beside them.
+
+#### CMP2 adoption: pinned figures and documents re-pinned by the adoption commit
+
+The size figures (537,650 bytes compressed, 1,196,142 uncompressed, 126,087 rows, 314,640 weights; about 0.5 MB and 1.2 MB) in the user guide, the packed API reference (`NamespaceDoc.cs`), the trainer README ("Current model"), `data/README.md`, the design documents of the system, of `ModelStorage`, `PerceptronModel` and `ModelTrainer`, and the system verification document; the development figures of the shipped model in the "Selection of the Shipped Model" section of the `ModelTrainer` design (the row of the compound and headings sources, open and gold development accuracy, pooled harmful rate, calibration error, step count); the weights of the sources `compound` and `compound2` (0 to 1) in `training.json`, in the configuration test (`ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical`), in the targeted-source test (`CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted` now has one case per compound and headings source with its committed weight) and in every document that described them as "weight 0" (the data READMEs, the trainer README, the design and verification documents of `ModelTrainer`, the requirements text of `PartOfSpeech-ModelTrainer-SourceWeights`, `PartOfSpeech-ModelTrainer-Configuration` and `PartOfSpeech-Data-TargetedSourcesAreOpen`); the third-party notice, the package license and the user guide, which now name the compound source among the corpora the weights were learned from (and the notice tests, which expect "weight 1", "were learned from it" and "compound source"). Nothing in the re-test's frozen files (`analyze_followup.py`, the driver, `arms.json`, the pre-registration, the results section) changed: the analysis script's acceptance test a, which compares BASE with the shipped weights, holds only at the pre-registration commit, as the trainer README now says.
+
+#### CMP2 adoption: pending for the held-out step (not changed by the adoption commit)
+
+The committed held-out record (`docs/evaluation/test-results.json` and `.md`) is still the record of the previous model, and the README tables are still its figures. These tests and figures follow the one `evaluate` of the next step and are not edited by hand: `PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs`, `PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports`, `PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures`, `PartOfSpeech_Evaluation_ConfidenceGuidance_MatchesTheCommittedFigures` and `DataGuard_CommittedReports_CarryCommittedDisclosureWhereGeneratorPutsIt` for `test-results.md` (they fail at the adoption commit by design: the record names the previous image and operating points, and `test-results.md` carries the fourth-look paragraph while `confidence-thresholds.md` already carries the fifth-look one), the held-out figures and thresholds of the two README tables, the guidance in the user guide and in `NamespaceDoc.cs`, the prose of `docs/evaluation/README.md` and the statement of `docs/design/part-of-speech.md` about the record.
+
+## Follow-up: held-out look (plan written before the held-out command)
+
+The request given to the orchestration agent (goal 5) asks for **exactly one** held-out `evaluate` for the shipped CMP2 model, to be disclosed as a **further look** (the fifth look of the family at these sets; six models in all would have been scored on them), as a **new record and not an erratum**; it is not a decision made inside this run, and the stop conditions of the `evaluate` protocol and the rules below are the ones that existed before the run. This section is committed **before** the command: no `evaluate` (not even `--preflight`) has been run for this model, and no held-out file has been read by it. The adoption section above is the state of the development evidence (HEAD `400201f`).
+
+Plan (the procedure of the earlier held-out steps, followed exactly):
+
+1. The committed previous record (`docs/evaluation/test-results.md` and `.json`, the record of the F2+IMP model, last written by the commit of PR #13, `3414153` on `main`; `operating-points.json`, `confidence-thresholds.md`, `README.md` and `disclosure.md` as of `400201f` hold the new development selection) is copied to a folder outside the repository for the comparison. It stays in git history.
+2. `test-results.json` and `.md` are deleted in a commit of their own (`evaluate` refuses to run while one exists).
+3. `evaluate --preflight` (scores nothing), then `evaluate --dump-dir <folder outside the repository>` **once** (at most 8 threads, the treebank from the git-ignored cache). If the command fails for an infrastructure reason before it produces a result, the failure is reported precisely and nothing is retried to tune anything; **no second run is made after a result exists and there is no re-roll**. The stop conditions that fired in the earlier records (gold v2 `to`/`not`, UD-EWT raw gold outside the candidates, and sometimes the shape probe's harmful errors) may fire again; they are reported, not tuned.
+4. The results are committed **as produced**, whatever they are, including any regression against the previous model. The previous model is shown beside the new one from its committed record (it is not evaluated again). Between these two models every held-out set has the same labels, so all five are fair comparisons; intervals are the 95% percentile bootstrap over documents of each record, no paired interval is computed, so overlapping intervals are not a test.
+5. What is disclosed: `docs/evaluation/disclosure.md` (the fifth look; already revised in the adoption commit), the overview `docs/evaluation/README.md` (status, procedure, comparison with the previous and earlier models), the README tables and the guidance of the user guide and of the packed API reference (generated figures copied by test-guarded rules), and the record section that follows this one. Nothing is selected, tuned or reverted because of the result. The pre-registration states no rollback condition for this look; if the result seems to call for a change of what ships, that is put to the owner as a question and not decided in this run.
+6. The **operating points are the new ones** of the development selection (strict 0.90, balanced 0.80), fixed in the adoption commit before this look; the previous model's thresholds (0.95 and 0.75) are not re-applied to the new model, and the figures of the previous model are shown at its own thresholds from its record.
+
+## Follow-up: held-out evaluation of the shipped CMP2 model (disclosed fifth look; a new record, not an erratum)
+
+This is a **new** record for the shipped model. It does not correct or replace the earlier ones ("Outcome of the held-out run" and its errata, "Corpus cleanup C: held-out evaluation of the retrained model" for FULL, "Corpus cleanup C: held-out evaluation of the adopted NO-ING model", "Context-feature experiment: held-out evaluation of the shipped clause-cue model" and "Imperative training data: held-out evaluation of the shipped F2+IMP model"), which stay as written. Order (git history): the re-test results (`a77263a`), the adoption plan (`77753d7`), the adoption (`400201f`, development data only), the plan of this look (`0e69432`), the deletion of the previous record on purpose (`7e9fc02`; `evaluate` refuses to run while a record exists; the previous record stays in git at `3414153` and was copied outside the repository first, SHA-256 of its JSON `ab1f81b64d232af7a0249e0e62165dfff82542cb282bc513e2667d30b6c37bab`), the one `evaluate` and its generated record (`d7c07c8`), and this section with the documents after it.
+
+**This is the fifth look of the family at these held-out sets** (six models have now been scored on them; see the disclosure `docs/evaluation/disclosure.md`). It was run because the request given to the orchestration agent (goal 5) asked for one held-out `evaluate`, disclosed as a further look; it is not a decision made inside this run. `evaluate --preflight` passed first (it scores nothing: every input read, hash and header verified, counts equal the documented ones); `evaluate --dump-dir <folder outside the repository>` then ran **once** (`DOTNET_PROCESSOR_COUNT=8`, the treebank from the git-ignored cache). It exited with 1 because of the stop conditions below (findings, not failures of the run) and the committed files are the output as produced. **No second `evaluate` run was made and nothing was re-rolled.** Nothing was selected, tuned or reverted because of any result. The previous model (the imperative model, the record at `3414153`) was not evaluated again: its figures below are those of its committed record.
+
+### CMP2 held-out: stop conditions
+
+**Two stop conditions fired** (`gold-v2-test-to-not` and `ud-test-raw`, the same two as in all earlier records); the third, the shape probe, did not fire (as in the previous record). The three bullets below list the two that fired and the one that did not:
+
+- `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (the same); the `to`/`not` convention difference.
+- `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (the same). The primary mapped view is at 0.55% (138 words) (the same), under the limit.
+- `shape-probe`: **did not fire**: 27 harmful errors at 0.45 against a limit of 28 (5% of 560 rows), the same count as the previous model; the margin is one error.
+
+All other stop conditions held (the open test accuracy 96.73% against 96.72% on development; the harmful rates per 1,000 answered at the strict (3.8) and balanced (7.1) points on open test are below twice the pooled development rates (4.7 and 8.3); open test ECE 0.27%; open test gold outside the candidates 41 of 26,185 tokens). The pre-registration states no rollback condition for this look, and none was applied.
+
+### CMP2 held-out: what is comparable
+
+The previous model and the shipped one were scored on the same labels on all five held-out sets and the six input hashes are identical in the two records (the data did not change), so all five are fair comparisons between them. Intervals are the 95% percentile bootstrap over documents of each record (1,000 resamples, seed 1); no paired interval between the models was computed, so overlapping intervals are not a test: the intervals overlap on every row below. The sets are small and the shipped model is one seed. The two models also have **different operating points** (the previous 0.95 and 0.75, the shipped 0.90 and 0.80, both selected on development data), so the operating-point rows compare two models at two thresholds each.
+
+### CMP2 held-out: accuracy and harmful errors at the harmful limit 0.45 (previous = imperative model, shipped = CMP2 model)
+
+| Set | Model | Accuracy % | Ambiguous accuracy % | Decisions | Harmful | Harmful per 1,000 decisions | ECE % | NLL | Gold outside candidates |
+| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | ---: |
+| open-test | previous | 96.75 [96.39, 97.08] | 96.00 [95.66, 96.33] | 4,392 | 81 | 18.4 [14.1, 22.7] | 0.25 [0.20, 0.56] | 0.1068 [0.0928, 0.1217] | 41 |
+| | **shipped** | 96.73 [96.40, 97.03] | 95.94 [95.61, 96.28] | 4,392 | 88 | 20.0 [15.4, 24.7] | 0.27 [0.23, 0.55] | 0.1053 [0.0923, 0.1191] | 41 |
+| gold-v2-test | previous | 94.87 [93.99, 95.62] | 92.21 [90.85, 93.39] | 936 | 25 | 26.7 [15.7, 38.7] | 1.95 [1.53, 2.89] | 0.2307 [0.1897, 0.2787] | 12 |
+| | **shipped** | 94.57 [93.71, 95.35] | 91.70 [90.33, 92.90] | 936 | 28 | 29.9 [18.8, 41.3] | 2.14 [1.67, 3.00] | 0.2371 [0.1937, 0.2856] | 12 |
+| gold-v2-test-full-agreement | previous | 95.70 [94.92, 96.47] | 93.06 [91.79, 94.31] | 713 | 17 | 23.8 [12.6, 36.2] | 1.59 [1.21, 2.41] | 0.1802 [0.1409, 0.2201] | 5 |
+| | **shipped** | 95.39 [94.58, 96.18] | 92.49 [91.19, 93.77] | 713 | 20 | 28.1 [16.2, 41.5] | 1.71 [1.30, 2.60] | 0.1874 [0.1475, 0.2295] | 5 |
+| gold-v2-test-to-not | previous | 50.00 [12.50, 87.50] | 100.00 [100.00, 100.00] | 0 | 0 | 0.0 [0.0, 0.0] | 52.78 [22.38, 87.31] | 6.9578 [1.8650, 12.0905] | 4 |
+| | **shipped** | 50.00 [12.50, 87.50] | 100.00 [100.00, 100.00] | 0 | 0 | 0.0 [0.0, 0.0] | 52.59 [22.10, 87.25] | 6.9597 [1.8679, 12.0911] | 4 |
+| shape-probe | previous | 93.21 [91.07, 95.36] | 93.17 [91.06, 95.28] | 556 | 27 | 48.6 [30.5, 66.4] | 2.66 [2.16, 5.21] | 0.1841 [0.1383, 0.2331] | 0 |
+| | **shipped** | 93.39 [91.25, 95.36] | 93.35 [91.20, 95.32] | 556 | 27 | 48.6 [30.6, 66.4] | 2.34 [1.96, 4.62] | 0.1682 [0.1262, 0.2141] | 0 |
+| challenge-set | previous | 89.34 [83.86, 94.30] | 91.41 [85.78, 95.45] | 86 | 0 | 0.0 [0.0, 0.0] | 6.50 [3.68, 11.45] | 0.3033 [0.1563, 0.4681] | 0 |
+| | **shipped** | 88.97 [83.22, 94.27] | 89.90 [83.77, 94.76] | 86 | 0 | 0.0 [0.0, 0.0] | 7.16 [3.92, 12.10] | 0.3141 [0.1618, 0.4841] | 0 |
+| ud-test-mapped | previous | 93.03 [92.48, 93.51] | 92.74 [92.12, 93.32] | 4,410 | 82 | 18.6 [14.7, 23.1] | 2.23 [1.92, 2.66] | 0.2915 [0.2674, 0.3249] | 138 |
+| | **shipped** | 93.05 [92.52, 93.54] | 92.84 [92.22, 93.40] | 4,410 | 73 | 16.6 [12.6, 20.8] | 2.23 [1.92, 2.66] | 0.2917 [0.2671, 0.3248] | 138 |
+| ud-test-raw | previous | 89.08 [88.51, 89.57] | 88.46 [87.79, 89.08] | 4,007 | 82 | 20.5 [16.1, 25.6] | 6.17 [5.77, 6.66] | 0.6066 [0.5722, 0.6461] | 484 |
+| | **shipped** | 89.09 [88.54, 89.57] | 88.54 [87.86, 89.15] | 4,007 | 73 | 18.2 [13.8, 23.0] | 6.18 [5.81, 6.64] | 0.6097 [0.5755, 0.6501] | 484 |
+
+### CMP2 held-out: operating points (each model at its own thresholds: previous strict 0.95 and balanced 0.75, shipped strict 0.90 and balanced 0.80)
+
+| Set | Model | Point | Threshold | Coverage % | Harmful per 1,000 answered | Harmful of answered |
+| --- | --- | --- | ---: | ---: | --- | --- |
+| open-test | previous | strict | 0.95 | 83.7 | 2.4 [0.8, 4.6] | 9 of 3,677 |
+| open-test | previous | balanced | 0.75 | 94.7 | 7.5 [4.5, 10.6] | 31 of 4,159 |
+| open-test | **shipped** | strict | 0.90 | 89.4 | 3.8 [1.8, 6.4] | 15 of 3,925 |
+| open-test | **shipped** | balanced | 0.80 | 93.3 | 7.1 [4.1, 10.0] | 29 of 4,099 |
+| gold-v2-test | previous | strict | 0.95 | 81.1 | 1.3 [0.0, 4.3] | 1 of 759 |
+| gold-v2-test | previous | balanced | 0.75 | 92.7 | 12.7 [5.3, 21.9] | 11 of 868 |
+| gold-v2-test | **shipped** | strict | 0.90 | 86.1 | 3.7 [0.0, 8.1] | 3 of 806 |
+| gold-v2-test | **shipped** | balanced | 0.80 | 91.3 | 9.4 [3.5, 16.0] | 8 of 855 |
+| gold-v2-test-full-agreement | previous | strict | 0.95 | 80.6 | 1.7 [0.0, 6.2] | 1 of 575 |
+| gold-v2-test-full-agreement | previous | balanced | 0.75 | 92.7 | 12.1 [4.0, 22.7] | 8 of 661 |
+| gold-v2-test-full-agreement | **shipped** | strict | 0.90 | 85.8 | 3.3 [0.0, 8.0] | 2 of 612 |
+| gold-v2-test-full-agreement | **shipped** | balanced | 0.80 | 91.7 | 10.7 [3.2, 19.9] | 7 of 654 |
+| shape-probe | previous | strict | 0.95 | 66.9 | 8.1 [0.0, 18.2] | 3 of 372 |
+| shape-probe | previous | balanced | 0.75 | 87.2 | 24.7 [12.2, 38.9] | 12 of 485 |
+| shape-probe | **shipped** | strict | 0.90 | 75.4 | 11.9 [2.4, 22.0] | 5 of 419 |
+| shape-probe | **shipped** | balanced | 0.80 | 82.4 | 17.5 [6.4, 30.0] | 8 of 458 |
+| challenge-set | previous | strict | 0.95 | 76.7 | 0.0 [0.0, 0.0] | 0 of 66 |
+| challenge-set | previous | balanced | 0.75 | 88.4 | 0.0 [0.0, 0.0] | 0 of 76 |
+| challenge-set | **shipped** | strict | 0.90 | 83.7 | 0.0 [0.0, 0.0] | 0 of 72 |
+| challenge-set | **shipped** | balanced | 0.80 | 87.2 | 0.0 [0.0, 0.0] | 0 of 75 |
+| ud-test-mapped | previous | strict | 0.95 | 77.4 | 2.3 [0.9, 4.1] | 8 of 3,414 |
+| ud-test-mapped | previous | balanced | 0.75 | 91.8 | 8.6 [5.8, 12.2] | 35 of 4,049 |
+| ud-test-mapped | **shipped** | strict | 0.90 | 84.0 | 4.9 [2.7, 7.5] | 18 of 3,705 |
+| ud-test-mapped | **shipped** | balanced | 0.80 | 89.6 | 6.8 [4.0, 9.8] | 27 of 3,953 |
+| ud-test-raw | previous | strict | 0.95 | 77.9 | 2.6 [1.0, 4.5] | 8 of 3,120 |
+| ud-test-raw | previous | balanced | 0.75 | 91.6 | 9.5 [6.4, 13.4] | 35 of 3,671 |
+| ud-test-raw | **shipped** | strict | 0.90 | 84.1 | 5.3 [3.0, 8.3] | 18 of 3,369 |
+| ud-test-raw | **shipped** | balanced | 0.80 | 89.5 | 7.5 [4.5, 10.9] | 27 of 3,586 |
+
+The strict target of at most 5.0 per 1,000 answered: met by the point estimate on the open test split (3.8, interval [1.8, 6.4]: the upper bound is above 5.0) and on gold v2 (3.7, [0.0, 8.1]), **exceeded on the shape probe (11.9)**; the balanced target of at most 10.0: met on the open test split (7.1, [4.1, 10.0]) and gold v2 (9.4), exceeded on the gold v2 full-agreement view (10.7).
+
+### CMP2 held-out: shape probe by shape (harmful at 0.45; previous model from its record)
+
+| Shape | Rows | Accuracy % previous / shipped | Harmful previous / shipped |
+| --- | ---: | --- | --- |
+| n-obj-light | 80 | 95.00 / 96.25 | 1 / 0 |
+| n-compound-head | 80 | 78.75 / 78.75 | 14 / 14 |
+| n-modifier | 80 | 98.75 / 98.75 | 0 / 0 |
+| n-subject-initial | 80 | 90.00 / 86.25 | 6 / 8 |
+| n-measure | 80 | 96.25 / 95.00 | 3 / 4 |
+| v-imperative-initial | 80 | 95.00 / 98.75 | 3 / 1 |
+| v-after-modal | 80 | 98.75 / 100.00 | 0 / 0 |
+
+### CMP2 held-out: reading (as produced; nothing is selected, tuned or reverted)
+
+- **Worse than the previous model on the general sets.** The open test split has 88 harmful errors against 81 (20.0 against 18.4 per 1,000; accuracy 96.73% against 96.75%) and gold v2 has 28 against 25 (29.9 against 26.7; accuracy 94.57% against 94.87%); the gold v2 full-agreement view has 20 against 17. The calibration error is higher on the open test split, gold v2 and the challenge set. The challenge set accuracy is one token of 272 lower.
+- **Better on the treebank.** 73 harmful errors against 82 on the mapped and on the raw view (16.6 against 18.6, and 18.2 against 20.5 per 1,000); accuracy 93.05% against 93.03%.
+- **The same on the shape probe** (27 harmful at 0.45 in both). The shape that the compound sources target, `n-compound-head`, is **unchanged** (78.75% and 14 harmful errors); the imperative shape is better (1 harmful error against 3) and the noun that starts a sentence is worse (8 against 6).
+- **Development evidence against held-out evidence.** The development gain of the re-test was on frames that the data were built from (pooled primary 238.8 to 193.1 per 1,000, the compound tranches 382.5 to 302.5 and 323.8 to 253.6); the held-out sets do not repeat it on the compound-head shape of the probe or on the open and gold v2 sets, and agree with development on the direction of the open split (more harmful errors) and of the treebank (fewer). At the shipped seed the development open harmful count was higher (96 against 91) and the gold v2 and treebank development counts lower (11 against 14; 86 against 94); held-out gold v2 has more harmful errors (28 against 25).
+- **The operating points changed** with the model (strict 0.95 to 0.90, balanced 0.75 to 0.80); at the new thresholds the strict point answers more of the open test split (89.4% against 83.7%) with more harmful errors per 1,000 answered (3.8 against 2.4), and the balanced point answers slightly less (93.3% against 94.7%) with slightly fewer (7.1 against 7.5).
+- **Throughput** of the default tagger on the open test split, one thread: 460,042 tokens per second (the previous record: 528,578; a timing of the machine of the run, not a result of the model).
+- **Caveats.** One training seed; the sets are small and every interval overlaps; no paired interval was computed; the labels are model-written; this is the fifth look at these sets by the family, so none of the figures is a first look at unseen data.
+
+### CMP2 held-out: the record files
+
+`docs/evaluation/test-results.json` and `test-results.md` are the generated output of the one run (commit `d7c07c8`): model image `d916b0e775660f8aa3c18a2161369318dd07c182358e1503d0992b5d2b975e25`, selection artifact SHA-256 `e02cfb0c02dd626cc057995b5d02212d74fad724a3bfa3a1fac6d789c1d28de9` (rule `nv-pooled-dev-v1`); the six input hashes equal those of the previous record. The README tables, the user guide, the packed API reference, `.fileassert.yaml` (the two thresholds), `docs/evaluation/README.md` and `docs/design/part-of-speech.md` were updated after the run to quote this record; the tests that compare those copies with the record (`PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures`, `PartOfSpeech_Evaluation_ConfidenceGuidance_MatchesTheCommittedFigures`, `PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports`, `PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs`, and the disclosure test for `test-results.md`) pass.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
@@ -5297,4 +5773,19 @@ Every row is one run, scored on open dev and gold v2 dev only, at the run's own 
 
 ### 2026-11-11: license basis wording corrected after the run (text only; no data changed)
 
-The `license_basis` cell of one row of `data/compound/compound-2-sources.tsv` (`navy-abk7602.0001.001.umich.edu`, the 1928 general report by the governor of the Virgin Islands) said that no state, local, foreign, university, contractor or private author was named, which left the governor's standing unexplained. The cell now states why the 17 U.S.C. 105 basis holds: the islands were under US Navy administration, the governor, Capt. Waldo Evans, United States Navy (retired), was a naval officer appointed by the President (the document text says the governor has always been a naval officer of the rank of rear admiral or captain), and the report is his official report to the Secretary of the Navy, printed by the Government Printing Office. No row, sentence, label, document hash or count changed. The file's bytes and SHA-256 changed from 272,059 bytes and `9c7ec7014ff115e745501706126b4637382c058783fdea43021b9f6cbfbd0b4f` to 272,492 bytes and `c979850dd60921d209b7d918d953b53bee7af05f736a77896637665ace823cf4` (`data/MANIFEST.tsv` and the data README were updated); the hashes in the earlier entries of this log are the values at the time of those entries and are not rewritten.
+The `license_basis` cell of one row of `data/compound/compound-2-sources.tsv` (`navy-abk7602.0001.001.umich.edu`, the 1928 general report by the governor of the Virgin Islands) said that no state, local, foreign, university, contractor or private author was named, which left the governor's standing unexplained. The cell now states why the 17 U.S.C. 105 basis holds: the islands were under US Navy administration, the governor, Capt. Waldo Evans, United States Navy (retired), was a naval officer appointed by the President (the document text says the governor has always been a naval officer of the rank of rear admiral or captain), and the report is his official report to the Secretary of the Navy, printed by the Government Printing Office. No row, sentence, label, document hash or count changed. The file's bytes and SHA-256 changed from 272,059 bytes and `9c7ec7014ff115e745501706126b4637382c058783fdea43021b9f6cbfbd0b4f` to 272,492 bytes and `c979850dd60921d209b7d918d953b53bee7af05f736a77896637665ace823cf4` (`data/MANIFEST.tsv` and the data README were updated); the hashes in the earlier entries of this log are the values at the time of those entries and are not rewritten. The frozen analyzer `compound-heading-2/analyze_followup.py` (FROZEN_FILES) pins the earlier hash `9c7ec7014ff115e745501706126b4637382c058783fdea43021b9f6cbfbd0b4f` of this file; that frozen file is deliberately not edited, so its frozen-file check (d) reports a mismatch for `compound-2-sources.tsv` on the current tree. The mismatch is this wording change and nothing else: the runs, their inputs, the selection and every result were produced before it and are unaffected.
+
+**How to reproduce the analyzer's self-test.** The self-test passes on the as-run tree, the pre-registration commit `0f0b595` of PR #21 (it stays reachable from `refs/pull/21/head` after a squash merge). From a clone of the repository, in a temporary worktree that is removed afterwards:
+
+```text
+git fetch origin refs/pull/21/head
+git worktree add --detach <temporary-directory> 0f0b595
+cd <temporary-directory>
+python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py --selftest
+```
+
+This prints `selftest: ok` and exits with 0 (run on 2026-11-11 at `0f0b595`). On the current tree the same command prints `selftest: FAILED` and exits with 1, and the only failing check is the frozen-file check of the single wording-corrected file: `data/compound/compound-2-sources.tsv` has SHA-256 `c979850dd60921d209b7d918d953b53bee7af05f736a77896637665ace823cf4` against the frozen value `9c7ec7014ff115e745501706126b4637382c058783fdea43021b9f6cbfbd0b4f`. No other check fails. The analyzer is not changed to accept the current hash, so a failure on a later tree is never hidden.
+
+### Owner decision, 2026-11-11
+
+The owner decided to ship the CMP2 model. The decision was made after the owner reviewed the held-out record of this log and the evaluation record, and an off-repository regression check on consumer-supplied sentences. That check is kept outside the repository; it was not used for the selection, the training or any rule of this follow-up, and neither its sentences nor its figures are in this repository or in this log. The adoption described above followed the pre-registered rule B and the request given to the orchestration agent; the owner's decision confirms it. No rule, gate, threshold or result of the follow-up is changed by this decision.

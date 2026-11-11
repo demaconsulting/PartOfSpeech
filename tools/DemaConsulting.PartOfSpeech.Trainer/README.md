@@ -59,8 +59,8 @@ and they are rejected together with `--check` and `--update-config`.
 
 ## Configuration
 
-`training.json` names the corpora (`open`, `masc`, `silver`, `imperative`, `compound` and `headings`; each with an integer `weight`, the number of times its
-sentences enter every epoch; the first four have a positive weight, `--source imperative:0` leaves the imperative source out of a run, and the compound and headings sources have weight 0, so `--source compound:1` and `--source headings:1` add them to a run) and every training setting. It contains no floating-point training setting except the
+`training.json` names the corpora (`open`, `masc`, `silver`, `imperative`, `compound`, `headings`, `compound2` and `headings2`; each with an integer `weight`, the number of times its
+sentences enter every epoch; open, MASC, silver, imperative, `compound` and `compound2` have a positive weight, `--source imperative:0` or `--source compound:0` leaves one of them out of a run, and the two headings sources have weight 0, so `--source headings:1` and `--source headings2:1` add them to a run) and every training setting. It contains no floating-point training setting except the
 softmax `temperature`, which is chosen once by `calibrate` and only written into the file header. The weight scale is
 `1 / quantScale` with `quantScale` a power of two, so it is exact in the file.
 
@@ -112,7 +112,7 @@ the design). On a machine whose cores are saturated by other processes the below
 To run everything (writes below the given folder, which must be on C:):
 
 ```text
-pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <folder>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <folder> -PyCache <your-cache-dir>
 python tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py --runs <folder> --out <report.md>
 ```
 
@@ -142,7 +142,7 @@ shipped weights" does not hold. To train the F2 arm at the adopted state, add `-
 data"); the provenance of the data, including the refusals and retries of one labeler, is in `data/imperative/README.md`.
 
 ```text
-pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp -Arms F2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp -Arms F2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd -PyCache <your-cache-dir>
 python tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py --run F2=<runs>\f2 --run F2+IMP=<runs>\f2imp --run ALL+IMP=<runs>\allimp --out report.md --decision decision.json
 ```
 
@@ -173,6 +173,51 @@ python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compou
 
 `-PyCache` and `-PauseFile` are local paths on drive C: that the caller chooses; the defaults inside the frozen driver are not meant for reuse.
 
+### Compound and heading follow-up experiment
+
+The re-test of the follow-up (the enlarged compound development tranche `compound-head-2`, the new real-text imperative headings
+`headings-2`, and the training sources `compound2` and `headings2`) is in `compound-heading-2/`. `arms.json` has five arms with
+eight seeds (`20260101` and `11` to `17`): BASE (the shipped configuration), CMP2 (`compound` and `compound2`), CMP2-F5 (the same
+sources and the group `titleCaseLine`), CMP2-HDG2 (all four sources) and CMP2-HDG2-F5 (all four sources and `titleCaseLine`).
+`run_arms.ps1` is the driver of the compound-heading experiment (resumable, PAUSE-file check with exit code 4, at least 6 GB free
+on C:, at most 8 threads, `-PyCache` and `-PauseFile` with the defaults of the session folder) with its own `arms.json`; it is
+used with `imperative-data/runner-base.cmd`, unchanged. `analyze_followup.py` runs the acceptance tests (BASE at the shipped seed
+equals the shipped weights and the figures measured for the shipped model, the added sentence counts, the feature groups of
+every arm, the frozen development files), prints the primary metric (`shapesFollowup.pooledPrimary.harmfulPer1k`), the
+co-primary, every guard (the imperative-heading guard is new) and the verdict, and applies selection rule B of the run log
+("Follow-up: pre-registered re-test (E1)"); it takes only `welch_diff` from `analyze_arms.py` and checks its own logic on
+synthetic runs with `--selftest`. The files are frozen by the hashes in that section. The experiment was run after the
+pre-registration commit (`0f0b595`); the results and the decision (rule B selected CMP2, the compound sources at weight 1) are in the section "Follow-up: re-test
+results" of the run log, and the adoption of CMP2 in "Follow-up: adoption of the CMP2 model". The harness encodes the **pre-registered state**,
+in which `training.json` carries `compound` and `compound2` at weight 0: there the base runner trains BASE (the shipped model at that
+time, the runner passes `train` unchanged, so the weights of `training.json` decide). **To reproduce the published comparison, check
+out the pre-registration commit `0f0b595`** (its `training.json` is the registered one, and the analysis script checks its hash). At the
+adopted state (weight 1) the base runner also trains CMP2, so BASE and CMP2 runs train on the same sentences and the acceptance test
+"BASE equals the shipped weights" does not hold; to train the BASE arm at the adopted state, add `--source compound:0 --source compound2:0`
+to a direct `train` command (the frozen runners do not add them). The frozen compound-heading experiment of the previous section has the
+same property.
+
+The analyzer needs all five arms (BASE, CMP2, CMP2-F5, CMP2-HDG2, CMP2-HDG2-F5) at all eight seeds (the seeds of `arms.json`, the
+default of the driver) in one `<runs>` folder, so run the driver once per arm (it is resumable and writes one `<label>.json` per arm
+and seed), then the analyzer. Do this at the pre-registration commit `0f0b595`:
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms BASE -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-F5 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2-F5 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py --runs <runs> --out <runs>\report.md --decision <runs>\decision.json
+```
+
+`-PyCache` and `-PauseFile` are local paths on drive C: that the caller chooses (a cache folder that the caller may write to, and
+the path of a pause file that the caller controls: the driver stops with exit code 4 while that file exists); the defaults inside
+the frozen drivers belong to another user's session and are not meant for reuse. The earlier drivers take the same
+caller-chosen paths in their commands above (the `context-features` driver has `-PyCache` only).
+
+The BASE acceptance test ("BASE equals the shipped weights") holds only at commit `0f0b595`; at the adopted state it does not
+hold, as described above.
+
 ### Held-out evaluation
 
 The protocol (definitions, selection rule, stop conditions) is the section "Phase 5 protocol" of `RUN-LOG.md`; it was
@@ -200,10 +245,10 @@ Run the commands at below-normal priority, one process at a time (see _Machine l
 
 ## Current model
 
-`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%) and imperative (x1); restriction
+`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%), imperative (x1), and the two compound sources `compound` and `compound2` (x1 each); restriction
 mode `history` with predicted history; 6 epochs; 19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8;
-the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 122,088 rows and 304,425 weights, is
-1,157,499 bytes uncompressed and 521,695 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
+the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 126,087 rows and 314,640 weights, is
+1,196,142 bytes uncompressed and 537,650 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
 takes about 15 seconds and runs
 in `build.ps1` and in the CI build on all three operating systems. The glossary decision (boost only, no trained
 feature) and every experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and

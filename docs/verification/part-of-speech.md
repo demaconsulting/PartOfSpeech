@@ -152,7 +152,7 @@ are information for reviewers, not acceptance values:
   instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
-- The embedded weights are 521,695 bytes (1,157,499 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
+- The embedded weights are 537,650 bytes (1,196,142 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
   uncompressed); the package is larger because both resources are embedded once per target framework (the package size
   is stated, approximately, in the "Package size" item of the design document `part-of-speech.md`).
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
@@ -634,7 +634,8 @@ leakage-report and training-configuration tests read them. The `PartOfSpeech_Com
 - `TargetedSources_Selection_UsesNoPartOfSpeechModel` scans `compound_heading_data.py` for a weights file, a decoder, a
   tagger or the shapes evaluation and for a probe file or probe reader.
 - `TargetedSources_Notice_NamesTheSourcesAndTheirBasis` asserts that the third-party notice names `data/compound/` and
-  `data/headings/`, 17 U.S.C. 105, the CC0 dedication, the two source tables and weight 0 (not part of the mix).
+  `data/headings/`, 17 U.S.C. 105, the CC0 dedication, the two source tables, weight 1 (the weights were learned from
+  it) for the compound source and weight 0 (not part of the mix) for the headings source.
 - The follow-up sources `compound2` and `headings2` (`compound-2.tsv`, `headings-2.tsv`) are read by the same generic tests
   and by the same targeted-source tests (the leakage report, the source-table, the document and the license cases have
   one case per source, four in all): `Compound2_Corpus_IsWellFormedAndWithinQuotas` asserts the header lines, 600 to 1,100

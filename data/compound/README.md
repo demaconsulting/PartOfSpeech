@@ -12,8 +12,8 @@ sentence. Each sentence has a noun compound whose head can also be a verb
 (`the fuel pump seal`, `the oil level check`). Every token has a Universal POS tag on which two blind model labelers agree. They are
 **training** sources: they hold the noun + noun compounds with an ambiguous head (`[noun] check`, `[noun] split`, `[noun] stand`) that the
 other training corpora hold rarely, and a counter-example group in which the same kind of word is a verb. They are disjoint from every
-evaluation set. They are registered in the trainer configuration with weight 0, so they are not part of the mix that trained the embedded model
-(`--source compound:1` and `--source compound2:1` add them to a training run). The sections up to "Known Limits" describe `compound`; the
+evaluation set. The `compound` and `compound2` sources have weight 1 in the trainer configuration (the pre-registered follow-up re-test selected them, and the
+embedded model was retrained with them); `--source compound:0` and `--source compound2:0` leave them out of a training run. The sections up to "Known Limits" describe `compound`; the
 section "Second Source" describes `compound2`.
 
 ## Source and Provenance
@@ -212,9 +212,10 @@ lexicon misses is allowed, so these pairs do not block training.
 
 ## Use
 
-Train only. `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` lists the source as `compound` with `"weight": 0` (committed, not part of
-the shipped mix; `train --check` reproduces the shipped weights); `--source compound:1` adds it to a training run (the trainer run log, section
-"Compound and heading training data: results", has the measured effect of the source at weight 1). The trainer refuses the
+Train only. `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` lists the source as `compound` with `"weight": 1` (it is in the
+mix of the shipped weights, and `train --check` reproduces them with it); `--source compound:0` leaves it out of an experimental run (the
+trainer run log, section "Compound and heading training data: results", has the measured effect of the source at weight 1). The
+trainer refuses the
 evaluation files by name and admits this file because it is a training source under `data/`. Do not evaluate on it: its sentences are selected
 by a frame and labeled by models, so a score on them says nothing about held-out text.
 
@@ -317,6 +318,6 @@ them). `lexicon/lexicon.tsv` is unchanged.
   not selected.
 - **Caps shape the sample:** at most 4 sentences per head lemma and 20 per document.
 
-**Use.** Train only. `training.json` lists the source as `compound2` with `"weight": 0` (not part of the shipped mix; `train --check`
-reproduces the shipped weights); `--source compound2:1` adds it to a training run. The trainer refuses the evaluation files by name and admits this
+**Use.** Train only. `training.json` lists the source as `compound2` with `"weight": 1` (it is in the mix of the shipped weights, and
+`train --check` reproduces them with it); `--source compound2:0` leaves it out of an experimental run. The trainer refuses the evaluation files by name and admits this
 file because it is a training source under `data/`. Do not evaluate on it.

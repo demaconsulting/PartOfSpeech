@@ -39,7 +39,7 @@
     {
       "name": "compound",
       "path": "data/compound/compound.tsv",
-      "weight": 0,
+      "weight": 1,
       "maskDisputed": false,
       "minSilverProbability": 0,
       "samplePermille": 1000,
@@ -57,7 +57,7 @@
     {
       "name": "compound2",
       "path": "data/compound/compound-2.tsv",
-      "weight": 0,
+      "weight": 1,
       "maskDisputed": false,
       "minSilverProbability": 0,
       "samplePermille": 1000,
@@ -85,5 +85,5 @@
     "clauseCues"
   ],
   "temperature": 9.514,
-  "imageSha256": "6e1e4ade56aa277d79709c107000f10e99c6f4e55a097e872a9c38fa2e12e8d0"
+  "imageSha256": "d916b0e775660f8aa3c18a2161369318dd07c182358e1503d0992b5d2b975e25"
 }

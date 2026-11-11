@@ -1095,8 +1095,8 @@ sections:
           federal-work or public-domain license basis and its unit count, no source row shall name FAA material, no
           listed document shall be one that the owner excluded or that the record of left-out documents lists, the
           records of left-out documents and of dropped sentences shall hold ids, reasons and counts only, and the
-          READMEs and the third-party notice shall state the basis, the dedication of the labels and the weight 0 of
-          the sources.
+          READMEs and the third-party notice shall state the basis, the dedication of the labels and the weight (1 for
+          the compound sources, 0 for the headings sources).
         tags: [system]
         justification: |
           The sources are built from the text of real documents, so each document needs a recorded basis for its use.
@@ -1104,7 +1104,7 @@ sections:
           lists, a record that names a state or local government body as an author does not show a federal-only basis,
           and the license check scans the source tables for restricted text. The records of what the builder dropped
           carry no text, so they cannot reintroduce material that was left out. The notice says that the weights were
-          not learned from the sources while their weight is 0.
+          learned from the compound sources (weight 1) and not from the headings sources (weight 0).
         tests:
           - PartOfSpeech_TargetedSources_Sources_AreListedOpenAndNotExcluded
           - PartOfSpeech_TargetedSources_Notice_NamesTheSourcesAndTheirBasis

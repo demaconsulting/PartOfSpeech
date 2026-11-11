@@ -164,6 +164,7 @@ tools/DemaConsulting.PartOfSpeech.Trainer/
 │                                 context-feature experiment (pre-registration, results, adoption) and the protocol
 │                                 and outcome of the held-out evaluations
 ├── compound-heading/           — Harness of the compound and heading retraining: arms, resumable driver, analysis script
+├── compound-heading-2/         — Harness of the follow-up re-test: arms, resumable driver, analysis script
 ├── context-features/           — Harness of the context-feature experiment: arms, resumable driver, analysis script
 ├── imperative-data/            — Harness of the imperative-data experiment: two runners, analysis script
 ├── prenominal-ing/             — Harness of the pre-registered `prenominal-ing` follow-up: arms and scoring scripts
@@ -222,8 +223,9 @@ that import and convert data and build the lexicon), `PartOfSpeech-DataChecks` (
 verify it) and `PartOfSpeech-DataCorrections` (the conventions linter, the generator and validator of the
 corrections in `data/corrections/` and the adjudication tool, with their tests and fixtures); the system design and the
 system requirements are
-their context. The three frozen analysis scripts of the Trainer experiments,
+their context. The four frozen analysis scripts of the Trainer experiments,
 `tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py`,
+`tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py`,
 `tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py` and
 `tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py`, are reviewed in the review-set
 `PartOfSpeech-ModelTrainer`. The data tools run in two places: `lint.ps1` runs the unit tests of the correction tools,

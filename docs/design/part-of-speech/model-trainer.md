@@ -278,14 +278,15 @@ PartOfSpeech model, no held-out set except through the opaque keys, the numbers 
 builders are unchanged apart from an optional `skip_tranches` argument of the leakage helpers.
 
 The training sources of `training.json` are the open corpus, MASC, the silver corpus, the imperative source
-(`data/imperative/imperative.tsv`, weight 1), and the compound and headings sources (`data/compound/compound.tsv` and
-`data/headings/headings.tsv`, weight 0, so they are committed and not read by a default run) and their follow-up
-sources `compound2` (`data/compound/compound-2.tsv`) and `headings2` (`data/headings/headings-2.tsv`), also at
-weight 0 (so the image and `weights.bin` are unchanged, and `train --check` proves it). A source can only
+(`data/imperative/imperative.tsv`, weight 1), the compound sources `compound` and `compound2`
+(`data/compound/compound.tsv` and `data/compound/compound-2.tsv`, weight 1: the follow-up re-test selected them, and
+the embedded weights were retrained with them), and the headings sources `headings` and `headings2`
+(`data/headings/headings.tsv` and `data/headings/headings-2.tsv`, weight 0, so they are
+committed and not read by a default run). A source can only
 be added to a run through the
 configuration: `--source NAME:WEIGHT` changes the weight of a source that the configuration names and refuses an unknown
 name, and a source of weight 0 is not read (`CorpusReader.LoadSources` skips it), so `--source imperative:0` trains the
-model without the imperative source and `--source compound:1` trains with the compound source. The three targeted files
+model without the imperative source and `--source headings:1` trains with the headings source. The three targeted files
 are ordinary training files
 under `data/`, so the training guard admits them (the deny-list names no part of their path); they are disjoint from every
 evaluation set, and the builders `tools/data/imperative_data.py` and `tools/data/compound_heading_data.py` reuse the
@@ -418,7 +419,8 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | --- | --- | --- |
 | Sources | open x2, MASC, silver (probability at least 80%) | +0.57 points over open alone |
 | Imperative source | `imperative` at weight 1 (900 sentences) | the imperative-data experiment (`RUN-LOG.md`) |
-| Compound and headings | `compound` (742), `headings` (374), weight 0 | committed data, not in the mix |
+| Compound sources | `compound` (742), `compound2` (1,100) at weight 1 | the follow-up re-test (`RUN-LOG.md`) |
+| Headings sources | `headings` (374), `headings2` (247) at weight 0 | committed data, not in the mix |
 | `disputed` tokens | trained, not masked | accuracy +0.2 points, harmful errors tied |
 | Restriction, history | mode B (`History`), predicted history | fully restricted training (C) failed the floor |
 | Epochs | 6 | tied with 10 epochs, fewest within 0.05 points of the best |
@@ -430,11 +432,11 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 
 The settings above the last row were selected on the base feature set (before the groups existed) and were not selected
 again for the clause cues: the experiment compared the groups at those settings, and only the temperature was refit.
-The result is a file of 122,088 rows and 304,425 weights, 1,157,499 bytes uncompressed and 521,695 bytes compressed;
-training takes about 5 to 14 seconds on one thread (6,357,228 steps), and the check about 15 seconds. Development
-results through the real decoder: open development 96.57% accuracy (95.90% on lexicon-ambiguous tokens), gold
-development 95.04% (without the `to` and `not` targets, which follow another convention and are reported
-separately), harmful errors 20.7 per 1,000 noun-verb decisions pooled, calibration error 0.28% (open) and 2.44% (gold).
+The result is a file of 126,087 rows and 314,640 weights, 1,196,142 bytes uncompressed and 537,650 bytes compressed;
+training takes about 5 to 14 seconds on one thread (6,569,850 steps), and the check about 15 seconds. Development
+results through the real decoder: open development 96.72% accuracy (96.10% on lexicon-ambiguous tokens), gold
+development 95.24% (without the `to` and `not` targets, which follow another convention and are reported
+separately), harmful errors 21.1 per 1,000 noun-verb decisions pooled, calibration error 0.15% (open) and 2.25% (gold).
 These are development figures; they say nothing about held-out data.
 
 ### Glossary Decision
@@ -676,10 +678,9 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
   `InternalsVisibleTo` (the assembly name `DemaConsulting.PartOfSpeech.Trainer` is reserved there).
 - The base class library and, for `training.json`, `operating-points.json` and `test-results.json`, System.Text.Json
   (net10.0 only; the engine does not use it).
-- The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv`, `data/silver/silver.tsv` and
-  `data/imperative/imperative.tsv` (all four with a positive weight), `data/compound/compound.tsv` and
-  `data/headings/headings.tsv` (weight 0), `data/compound/compound-2.tsv` and `data/headings/headings-2.tsv`
-  (weight 0), and the two
+- The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv`, `data/silver/silver.tsv`,
+  `data/imperative/imperative.tsv`, `data/compound/compound.tsv` and `data/compound/compound-2.tsv` (all six with a
+  positive weight), `data/headings/headings.tsv` and `data/headings/headings-2.tsv` (weight 0), and the two
   development files plus the hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche),
   `data/eval/shapes-dev/hard.tsv` (hard tranche) and `compound-head.tsv`, `headings.tsv`, `named-state.tsv`,
   `compound-head-2.tsv` and `headings-2.tsv` of the same

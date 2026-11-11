@@ -3495,7 +3495,8 @@ public class PartOfSpeechDataTests
 
     /// <summary>
     ///     Proves that the third-party notice names the compound-head and the headings training source, their US federal-work basis, their CC0
-    ///     dedication of annotations and selection, and that they are committed at weight 0 and not part of the shipped mix.
+    ///     dedication of annotations and selection, and that the compound source has weight 1 (the embedded weights were learned from it) and
+    ///     the headings source weight 0 (not part of the shipped mix).
     /// </summary>
     [Fact]
     public void PartOfSpeech_TargetedSources_Notice_NamesTheSourcesAndTheirBasis()
@@ -3507,7 +3508,7 @@ public class PartOfSpeechDataTests
         var missing = MissingFragments(notice, new[]
         {
             "data/compound/", "data/headings/", "17 U.S.C. 105", "CC0 1.0", "data/compound/sources.tsv", "data/headings/sources.tsv", "weight 0",
-            "not part of the mix"
+            "weight 1", "were learned from it", "not part of the mix"
         });
 
         // Assert: the notice makes every statement
@@ -3826,7 +3827,7 @@ public class PartOfSpeechDataTests
         // Assert: at least one source, no problem, and the notice says which corpora the weights come from
         Assert.NotEmpty(paths);
         Assert.Empty(problems.Take(ShownProblems));
-        Assert.Empty(MissingFragments(notice, new[] { "MASC", "CC BY 3.0 US", "open corpus", "silver corpus", "imperative source" }));
+        Assert.Empty(MissingFragments(notice, new[] { "MASC", "CC BY 3.0 US", "open corpus", "silver corpus", "imperative source", "compound source" }));
     }
 
     /// <summary>

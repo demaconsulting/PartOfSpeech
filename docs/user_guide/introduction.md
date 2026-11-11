@@ -55,8 +55,8 @@ The package targets .NET Standard 2.0 (and so runs on .NET Framework 4.8.1 and e
 public API under its `api/` folder, generated from the XML documentation of the library.
 
 **The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
-compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (521,695 bytes compressed,
-1,157,499 bytes uncompressed, about 0.5 MB and 1.2 MB). `Tagger.Default` returns a shared tagger that uses them, so the
+compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (537,650 bytes compressed,
+1,196,142 bytes uncompressed, about 0.5 MB and 1.2 MB). `Tagger.Default` returns a shared tagger that uses them, so the
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
@@ -170,15 +170,16 @@ noun-verb decisions that is answered.
 
 | Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
 | --- | ---: | ---: | ---: |
-| strict | 0.95 | 83.7% | 2.4 |
-| balanced | 0.75 | 94.7% | 7.5 |
+| strict | 0.90 | 89.4% | 3.8 |
+| balanced | 0.80 | 93.3% | 7.1 |
 
-On the development data the same thresholds answered 81.8% (strict, 1.9 harmful errors in 1,000) and 94.1% (balanced, 9.9)
-of the decisions. The strict target of at most 5 in 1,000 was met on the open test split (its 95% interval is 0.8 to
-4.6) and on the held-out gold v2 test split (one harmful error in 759 answered decisions) and is exceeded on the shape
-probe of short technical and imperative sentences (8.1 in 1,000 answered, three errors in 372).
+On the development data the same thresholds answered 87.4% (strict, 4.7 harmful errors in 1,000) and 92.4% (balanced, 8.3)
+of the decisions. The strict target of at most 5 in 1,000 was met by the point estimates on the open test split (3.8; its
+95% interval is 1.8 to 6.4 and so includes 5) and on the held-out gold v2 test split (3 harmful errors in 806 answered
+decisions) and is exceeded on the shape probe of short technical and imperative sentences (11.9 in 1,000 answered, five
+errors in 419).
 
-Without a threshold, 18.4 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
+Without a threshold, 20.0 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
 
 - **A consumer that needs a low harmful rate must use a threshold.** A rule checker, for example, uses `strict`:
@@ -186,7 +187,7 @@ on short technical and imperative text. Use these rules:
   ```csharp
   foreach (TaggedToken token in Tagger.Default.Tag("Close the valve.")[0].Tokens)
   {
-      bool trusted = token.Confidence >= 0.95;
+      bool trusted = token.Confidence >= 0.90;
       Console.WriteLine($"{token.Text}: {(trusted ? token.Tag.ToTagString() : "unknown")}");
   }
   ```
@@ -414,7 +415,7 @@ TaggedSentence sentence = tagger.Tag("Dogs bark.")[0];
 
 `Tagger.Default` is the shared tagger that uses the weights and the lexicon that are embedded in the package. It is
 created on first use, so a program that only tokenizes pays nothing; the first read inflates and validates the two
-embedded files once (the weights: 521,695 bytes compressed, 1,157,499 bytes uncompressed; the lexicon: 639,711 bytes
+embedded files once (the weights: 537,650 bytes compressed, 1,196,142 bytes uncompressed; the lexicon: 639,711 bytes
 compressed, 1,626,269 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
 same thread-safe instance. A read does not fail in a released package; an `InvalidOperationException` or an
 `InvalidDataException` would mean that the package is broken.
@@ -609,7 +610,8 @@ holds open data for the 17 Universal POS tags: training corpora, a part-of-speec
 in the [data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md). The parts of the data that
 the library uses at run time are the lexicon, which is compiled into a binary file that is embedded in the assembly and
 restricts the tags of known words, and the weights, which the trainer tool of the repository learned from the open
-corpus, MASC, the silver corpus and the imperative source and which are embedded as a binary file too. The attribution
+corpus, MASC, the silver corpus, the imperative source and the compound sources and which are embedded as a binary file
+too. The attribution
 and license notices of the third-party data are in
 [THIRD-PARTY-NOTICES.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md), which is also
 packed at the root of the NuGet package.
