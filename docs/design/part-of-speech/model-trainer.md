@@ -269,7 +269,9 @@ hashed keys of `shapes_dev.LeakageFilter` only), a top-up round of a tranche is 
 the quota gate is a floor and a cap per stratum. The gold of a heading item is an exact tag, which the decision rule of
 `shapes_dev.py` checks for the heading shapes (`EXACT_TAGS`).
 The two follow-up tranches and the two follow-up training sources `compound2` and `headings2` come from one more builder,
-`tools/data/followup_data.py`, whose rule was committed before any document was fetched; it uses the same frozen
+`tools/data/followup_data.py`, whose rule was committed before any document was fetched (R0); the pins were set after
+the sourcing, at R1 and R3, and the caps were amended once (A1) after the sourcing and before any label existed; it
+uses the same frozen
 blind-labeling commands of `shapes_dev.py`, holds every constant of the rule, and obeys the same discipline (no
 PartOfSpeech model, no held-out set except through the opaque keys, the numbers of the contested band of
 `compound-head-2` from the pinned WordSense Basic classifier, a quota gate of floors and caps per group). The older

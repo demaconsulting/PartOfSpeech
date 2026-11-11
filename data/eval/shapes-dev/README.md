@@ -197,7 +197,9 @@ refuse when the record is missing or invalid; the optional work-folder table onl
 The record also lists eight documents of training sources, not of this set. `nbs-safehandlingofbo65unit` (National Bureau of Standards Handbook 65) was
 removed from `data/headings/` by the project owner on 2026-11-10 because its record lists a private non-profit organization as a co-author and its
 public-domain basis is uncertain. Seven more documents (one state-agency report and six `usda-` and `usfs-` documents) are listed because their
-records name a state or local government body as an author, so a federal-only basis is not verifiable (they are also in `data/compound/excluded-documents.tsv`
+records name a state or local government body as an author, so a federal-only basis is not verifiable; these seven rows were recorded by the implementing agent
+(not decided by the project owner; the date in the `decided` column is the date the row was recorded, whereas the NBS row and the two NIST rows are owner decisions)
+(they are also in `data/compound/excluded-documents.tsv`
 and `data/headings/excluded-documents.tsv`). The shapes development set has no text of any of them; `check_licenses.py` and the builders refuse them in the
 source tables and sentences of the training sources `data/compound/` and `data/headings/` (both sources of each folder) and of every tranche of this set.
 
