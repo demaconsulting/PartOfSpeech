@@ -592,7 +592,7 @@ shipped model"; the figures are kept there only.
 ## Follow-up Tranches
 
 Two more development files, `compound-head-2.tsv` and `headings-2.tsv`, extend the tranches `compound-head` and `headings` with items from **new**
-US federal documents (no document of any other table of this repository, and no document of the training sources). Each is for development only,
+US federal documents (no document of any earlier table of this repository, and no document of the training sources; the two files may share documents with each other). Each is for development only,
 and each gold tag is the agreement of two blind model labelers. They have the shapes, the block format and the conventions of the new tranches above
 (`n-compound-head-ambiguous` and `heading-titlecase`; ids `shapes-dev-compound-head-2-NNNN` and `shapes-dev-headings-2-NNNN`; the same comments
 `shape`, `role`, `target`, `lemma`, `origin` and, for headings, `kind`). They are built by `python tools/data/followup_data.py` (the normative text is
