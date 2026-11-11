@@ -5598,6 +5598,108 @@ Plan (the procedure of the earlier held-out steps, followed exactly):
 5. What is disclosed: `docs/evaluation/disclosure.md` (the fifth look; already revised in the adoption commit), the overview `docs/evaluation/README.md` (status, procedure, comparison with the previous and earlier models), the README tables and the guidance of the user guide and of the packed API reference (generated figures copied by test-guarded rules), and the record section that follows this one. Nothing is selected, tuned or reverted because of the result. The pre-registration states no rollback condition for this look; if the result seems to call for a change of what ships, that is put to the owner as a question and not decided in this run.
 6. The **operating points are the new ones** of the development selection (strict 0.90, balanced 0.80), fixed in the adoption commit before this look; the previous model's thresholds (0.95 and 0.75) are not re-applied to the new model, and the figures of the previous model are shown at its own thresholds from its record.
 
+## Follow-up: held-out evaluation of the shipped CMP2 model (disclosed fifth look; a new record, not an erratum)
+
+This is a **new** record for the shipped model. It does not correct or replace the earlier ones ("Outcome of the held-out run" and its errata, "Corpus cleanup C: held-out evaluation of the retrained model" for FULL, "Corpus cleanup C: held-out evaluation of the adopted NO-ING model", "Context-feature experiment: held-out evaluation of the shipped clause-cue model" and "Imperative training data: held-out evaluation of the shipped F2+IMP model"), which stay as written. Order (git history): the re-test results (`a77263a`), the adoption plan (`77753d7`), the adoption (`400201f`, development data only), the plan of this look (`0e69432`), the deletion of the previous record on purpose (`7e9fc02`; `evaluate` refuses to run while a record exists; the previous record stays in git at `3414153` and was copied outside the repository first, SHA-256 of its JSON `ab1f81b64d232af7a0249e0e62165dfff82542cb282bc513e2667d30b6c37bab`), the one `evaluate` and its generated record (`d7c07c8`), and this section with the documents after it.
+
+**This is the fifth look of the family at these held-out sets** (six models have now been scored on them; see the disclosure `docs/evaluation/disclosure.md`). It was run because the request given to the orchestration agent (goal 5) asked for one held-out `evaluate`, disclosed as a further look; it is not a decision made inside this run. `evaluate --preflight` passed first (it scores nothing: every input read, hash and header verified, counts equal the documented ones); `evaluate --dump-dir <folder outside the repository>` then ran **once** (`DOTNET_PROCESSOR_COUNT=8`, the treebank from the git-ignored cache). It exited with 1 because of the stop conditions below (findings, not failures of the run) and the committed files are the output as produced. **No second `evaluate` run was made and nothing was re-rolled.** Nothing was selected, tuned or reverted because of any result. The previous model (the imperative model, the record at `3414153`) was not evaluated again: its figures below are those of its committed record.
+
+### CMP2 held-out: stop conditions
+
+**Two fired** (the same two as in all earlier records; the shape probe's did not fire, as in the previous record):
+
+- `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (the same); the `to`/`not` convention difference.
+- `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (the same). The primary mapped view is at 0.55% (138 words) (the same), under the limit.
+- `shape-probe`: **did not fire**: 27 harmful errors at 0.45 against a limit of 28 (5% of 560 rows), the same count as the previous model; the margin is one error.
+
+All other stop conditions held (the open test accuracy 96.73% against 96.72% on development; the harmful rates per 1,000 answered at the strict (3.8) and balanced (7.1) points on open test are below twice the pooled development rates (4.7 and 8.3); open test ECE 0.27%; open test gold outside the candidates 41 of 26,185 tokens). The pre-registration states no rollback condition for this look, and none was applied.
+
+### CMP2 held-out: what is comparable
+
+The previous model and the shipped one were scored on the same labels on all five held-out sets and the six input hashes are identical in the two records (the data did not change), so all five are fair comparisons between them. Intervals are the 95% percentile bootstrap over documents of each record (1,000 resamples, seed 1); no paired interval between the models was computed, so overlapping intervals are not a test: the intervals overlap on every row below. The sets are small and the shipped model is one seed. The two models also have **different operating points** (the previous 0.95 and 0.75, the shipped 0.90 and 0.80, both selected on development data), so the operating-point rows compare two models at two thresholds each.
+
+### CMP2 held-out: accuracy and harmful errors at the harmful limit 0.45 (previous = imperative model, shipped = CMP2 model)
+
+| Set | Model | Accuracy % | Ambiguous accuracy % | Decisions | Harmful | Harmful per 1,000 decisions | ECE % | NLL | Gold outside candidates |
+| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | ---: |
+| open-test | previous | 96.75 [96.39, 97.08] | 96.00 [95.66, 96.33] | 4,392 | 81 | 18.4 [14.1, 22.7] | 0.25 [0.20, 0.56] | 0.1068 [0.0928, 0.1217] | 41 |
+| | **shipped** | 96.73 [96.40, 97.03] | 95.94 [95.61, 96.28] | 4,392 | 88 | 20.0 [15.4, 24.7] | 0.27 [0.23, 0.55] | 0.1053 [0.0923, 0.1191] | 41 |
+| gold-v2-test | previous | 94.87 [93.99, 95.62] | 92.21 [90.85, 93.39] | 936 | 25 | 26.7 [15.7, 38.7] | 1.95 [1.53, 2.89] | 0.2307 [0.1897, 0.2787] | 12 |
+| | **shipped** | 94.57 [93.71, 95.35] | 91.70 [90.33, 92.90] | 936 | 28 | 29.9 [18.8, 41.3] | 2.14 [1.67, 3.00] | 0.2371 [0.1937, 0.2856] | 12 |
+| gold-v2-test-full-agreement | previous | 95.70 [94.92, 96.47] | 93.06 [91.79, 94.31] | 713 | 17 | 23.8 [12.6, 36.2] | 1.59 [1.21, 2.41] | 0.1802 [0.1409, 0.2201] | 5 |
+| | **shipped** | 95.39 [94.58, 96.18] | 92.49 [91.19, 93.77] | 713 | 20 | 28.1 [16.2, 41.5] | 1.71 [1.30, 2.60] | 0.1874 [0.1475, 0.2295] | 5 |
+| gold-v2-test-to-not | previous | 50.00 [12.50, 87.50] | 100.00 [100.00, 100.00] | 0 | 0 | 0.0 [0.0, 0.0] | 52.78 [22.38, 87.31] | 6.9578 [1.8650, 12.0905] | 4 |
+| | **shipped** | 50.00 [12.50, 87.50] | 100.00 [100.00, 100.00] | 0 | 0 | 0.0 [0.0, 0.0] | 52.59 [22.10, 87.25] | 6.9597 [1.8679, 12.0911] | 4 |
+| shape-probe | previous | 93.21 [91.07, 95.36] | 93.17 [91.06, 95.28] | 556 | 27 | 48.6 [30.5, 66.4] | 2.66 [2.16, 5.21] | 0.1841 [0.1383, 0.2331] | 0 |
+| | **shipped** | 93.39 [91.25, 95.36] | 93.35 [91.20, 95.32] | 556 | 27 | 48.6 [30.6, 66.4] | 2.34 [1.96, 4.62] | 0.1682 [0.1262, 0.2141] | 0 |
+| challenge-set | previous | 89.34 [83.86, 94.30] | 91.41 [85.78, 95.45] | 86 | 0 | 0.0 [0.0, 0.0] | 6.50 [3.68, 11.45] | 0.3033 [0.1563, 0.4681] | 0 |
+| | **shipped** | 88.97 [83.22, 94.27] | 89.90 [83.77, 94.76] | 86 | 0 | 0.0 [0.0, 0.0] | 7.16 [3.92, 12.10] | 0.3141 [0.1618, 0.4841] | 0 |
+| ud-test-mapped | previous | 93.03 [92.48, 93.51] | 92.74 [92.12, 93.32] | 4,410 | 82 | 18.6 [14.7, 23.1] | 2.23 [1.92, 2.66] | 0.2915 [0.2674, 0.3249] | 138 |
+| | **shipped** | 93.05 [92.52, 93.54] | 92.84 [92.22, 93.40] | 4,410 | 73 | 16.6 [12.6, 20.8] | 2.23 [1.92, 2.66] | 0.2917 [0.2671, 0.3248] | 138 |
+| ud-test-raw | previous | 89.08 [88.51, 89.57] | 88.46 [87.79, 89.08] | 4,007 | 82 | 20.5 [16.1, 25.6] | 6.17 [5.77, 6.66] | 0.6066 [0.5722, 0.6461] | 484 |
+| | **shipped** | 89.09 [88.54, 89.57] | 88.54 [87.86, 89.15] | 4,007 | 73 | 18.2 [13.8, 23.0] | 6.18 [5.81, 6.64] | 0.6097 [0.5755, 0.6501] | 484 |
+
+### CMP2 held-out: operating points (each model at its own thresholds: previous strict 0.95 and balanced 0.75, shipped strict 0.90 and balanced 0.80)
+
+| Set | Model | Point | Threshold | Coverage % | Harmful per 1,000 answered | Harmful of answered |
+| --- | --- | --- | ---: | ---: | --- | --- |
+| open-test | previous | strict | 0.95 | 83.7 | 2.4 [0.8, 4.6] | 9 of 3,677 |
+| open-test | previous | balanced | 0.75 | 94.7 | 7.5 [4.5, 10.6] | 31 of 4,159 |
+| open-test | **shipped** | strict | 0.90 | 89.4 | 3.8 [1.8, 6.4] | 15 of 3,925 |
+| open-test | **shipped** | balanced | 0.80 | 93.3 | 7.1 [4.1, 10.0] | 29 of 4,099 |
+| gold-v2-test | previous | strict | 0.95 | 81.1 | 1.3 [0.0, 4.3] | 1 of 759 |
+| gold-v2-test | previous | balanced | 0.75 | 92.7 | 12.7 [5.3, 21.9] | 11 of 868 |
+| gold-v2-test | **shipped** | strict | 0.90 | 86.1 | 3.7 [0.0, 8.1] | 3 of 806 |
+| gold-v2-test | **shipped** | balanced | 0.80 | 91.3 | 9.4 [3.5, 16.0] | 8 of 855 |
+| gold-v2-test-full-agreement | previous | strict | 0.95 | 80.6 | 1.7 [0.0, 6.2] | 1 of 575 |
+| gold-v2-test-full-agreement | previous | balanced | 0.75 | 92.7 | 12.1 [4.0, 22.7] | 8 of 661 |
+| gold-v2-test-full-agreement | **shipped** | strict | 0.90 | 85.8 | 3.3 [0.0, 8.0] | 2 of 612 |
+| gold-v2-test-full-agreement | **shipped** | balanced | 0.80 | 91.7 | 10.7 [3.2, 19.9] | 7 of 654 |
+| shape-probe | previous | strict | 0.95 | 66.9 | 8.1 [0.0, 18.2] | 3 of 372 |
+| shape-probe | previous | balanced | 0.75 | 87.2 | 24.7 [12.2, 38.9] | 12 of 485 |
+| shape-probe | **shipped** | strict | 0.90 | 75.4 | 11.9 [2.4, 22.0] | 5 of 419 |
+| shape-probe | **shipped** | balanced | 0.80 | 82.4 | 17.5 [6.4, 30.0] | 8 of 458 |
+| challenge-set | previous | strict | 0.95 | 76.7 | 0.0 [0.0, 0.0] | 0 of 66 |
+| challenge-set | previous | balanced | 0.75 | 88.4 | 0.0 [0.0, 0.0] | 0 of 76 |
+| challenge-set | **shipped** | strict | 0.90 | 83.7 | 0.0 [0.0, 0.0] | 0 of 72 |
+| challenge-set | **shipped** | balanced | 0.80 | 87.2 | 0.0 [0.0, 0.0] | 0 of 75 |
+| ud-test-mapped | previous | strict | 0.95 | 77.4 | 2.3 [0.9, 4.1] | 8 of 3,414 |
+| ud-test-mapped | previous | balanced | 0.75 | 91.8 | 8.6 [5.8, 12.2] | 35 of 4,049 |
+| ud-test-mapped | **shipped** | strict | 0.90 | 84.0 | 4.9 [2.7, 7.5] | 18 of 3,705 |
+| ud-test-mapped | **shipped** | balanced | 0.80 | 89.6 | 6.8 [4.0, 9.8] | 27 of 3,953 |
+| ud-test-raw | previous | strict | 0.95 | 77.9 | 2.6 [1.0, 4.5] | 8 of 3,120 |
+| ud-test-raw | previous | balanced | 0.75 | 91.6 | 9.5 [6.4, 13.4] | 35 of 3,671 |
+| ud-test-raw | **shipped** | strict | 0.90 | 84.1 | 5.3 [3.0, 8.3] | 18 of 3,369 |
+| ud-test-raw | **shipped** | balanced | 0.80 | 89.5 | 7.5 [4.5, 10.9] | 27 of 3,586 |
+
+The strict target of at most 5.0 per 1,000 answered: met by the point estimate on the open test split (3.8, interval [1.8, 6.4]: the upper bound is above 5.0) and on gold v2 (3.7, [0.0, 8.1]), **exceeded on the shape probe (11.9)**; the balanced target of at most 10.0: met on the open test split (7.1, [4.1, 10.0]) and gold v2 (9.4), exceeded on the gold v2 full-agreement view (10.7).
+
+### CMP2 held-out: shape probe by shape (harmful at 0.45; previous model from its record)
+
+| Shape | Rows | Accuracy % previous / shipped | Harmful previous / shipped |
+| --- | ---: | --- | --- |
+| n-obj-light | 80 | 95.00 / 96.25 | 1 / 0 |
+| n-compound-head | 80 | 78.75 / 78.75 | 14 / 14 |
+| n-modifier | 80 | 98.75 / 98.75 | 0 / 0 |
+| n-subject-initial | 80 | 90.00 / 86.25 | 6 / 8 |
+| n-measure | 80 | 96.25 / 95.00 | 3 / 4 |
+| v-imperative-initial | 80 | 95.00 / 98.75 | 3 / 1 |
+| v-after-modal | 80 | 98.75 / 100.00 | 0 / 0 |
+
+### CMP2 held-out: reading (as produced; nothing is selected, tuned or reverted)
+
+- **Worse than the previous model on the general sets.** The open test split has 88 harmful errors against 81 (20.0 against 18.4 per 1,000; accuracy 96.73% against 96.75%) and gold v2 has 28 against 25 (29.9 against 26.7; accuracy 94.57% against 94.87%); the gold v2 full-agreement view has 20 against 17. The calibration error is higher on the open test split, gold v2 and the challenge set. The challenge set accuracy is one token of 272 lower.
+- **Better on the treebank.** 73 harmful errors against 82 on the mapped and on the raw view (16.6 against 18.6, and 18.2 against 20.5 per 1,000); accuracy 93.05% against 93.03%.
+- **The same on the shape probe** (27 harmful at 0.45 in both). The shape that the compound sources target, `n-compound-head`, is **unchanged** (78.75% and 14 harmful errors); the imperative shape is better (1 harmful error against 3) and the noun that starts a sentence is worse (8 against 6).
+- **Development evidence against held-out evidence.** The development gain of the re-test was on frames that the data were built from (pooled primary 238.8 to 193.1 per 1,000, the compound tranches 382.5 to 302.5 and 323.8 to 253.6); the held-out sets do not repeat it on the compound-head shape of the probe or on the open and gold v2 sets, and agree with development on the direction of the open split (more harmful errors) and of the treebank (fewer). At the shipped seed the development open harmful count was higher (96 against 91) and the gold v2 and treebank development counts lower (11 against 14; 86 against 94); held-out gold v2 has more harmful errors (28 against 25).
+- **The operating points changed** with the model (strict 0.95 to 0.90, balanced 0.75 to 0.80); at the new thresholds the strict point answers more of the open test split (89.4% against 83.7%) with more harmful errors per 1,000 answered (3.8 against 2.4), and the balanced point answers slightly less (93.3% against 94.7%) with slightly fewer (7.1 against 7.5).
+- **Throughput** of the default tagger on the open test split, one thread: 460,042 tokens per second (the previous record: 528,578; a timing of the machine of the run, not a result of the model).
+- **Caveats.** One training seed; the sets are small and every interval overlaps; no paired interval was computed; the labels are model-written; this is the fifth look at these sets by the family, so none of the figures is a first look at unseen data.
+
+### CMP2 held-out: the record files
+
+`docs/evaluation/test-results.json` and `test-results.md` are the generated output of the one run (commit `d7c07c8`): model image `d916b0e775660f8aa3c18a2161369318dd07c182358e1503d0992b5d2b975e25`, selection artifact SHA-256 `e02cfb0c02dd626cc057995b5d02212d74fad724a3bfa3a1fac6d789c1d28de9` (rule `nv-pooled-dev-v1`); the six input hashes equal those of the previous record. The README tables, the user guide, the packed API reference, `.fileassert.yaml` (the two thresholds), `docs/evaluation/README.md` and `docs/design/part-of-speech.md` were updated after the run to quote this record; the tests that compare those copies with the record (`PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures`, `PartOfSpeech_Evaluation_ConfidenceGuidance_MatchesTheCommittedFigures`, `PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports`, `PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs`, and the disclosure test for `test-results.md`) pass.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

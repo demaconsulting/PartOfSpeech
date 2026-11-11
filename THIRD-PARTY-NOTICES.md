@@ -97,8 +97,8 @@ Princeton University and LICENSEE agrees to preserve same.
 
 The weights embedded in the package (`Resources/weights.bin`) are the output of the Trainer tool of this repository
 (`tools/DemaConsulting.PartOfSpeech.Trainer`), which learned them from the open corpus (CC0 1.0), the written texts of
-MASC (CC BY 3.0 US, see the MASC section above), the silver corpus (CC0 1.0) and the imperative source (annotations and
-selection CC0 1.0, sentences from US federal government works, see below). The tool, its settings
+MASC (CC BY 3.0 US, see the MASC section above), the silver corpus (CC0 1.0), the imperative source and the compound
+source (annotations and selection CC0 1.0, sentences from US federal government works, see below). The tool, its settings
 (`training.json`) and its run log (`RUN-LOG.md`) are in the repository, and the committed corpora and the tool
 reproduce the model bit for bit. Because of the MASC part, the attribution of MASC applies to the weights.
 

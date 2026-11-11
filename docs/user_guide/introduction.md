@@ -170,15 +170,16 @@ noun-verb decisions that is answered.
 
 | Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
 | --- | ---: | ---: | ---: |
-| strict | 0.95 | 83.7% | 2.4 |
-| balanced | 0.75 | 94.7% | 7.5 |
+| strict | 0.90 | 89.4% | 3.8 |
+| balanced | 0.80 | 93.3% | 7.1 |
 
-On the development data the same thresholds answered 81.8% (strict, 1.9 harmful errors in 1,000) and 94.1% (balanced, 9.9)
-of the decisions. The strict target of at most 5 in 1,000 was met on the open test split (its 95% interval is 0.8 to
-4.6) and on the held-out gold v2 test split (one harmful error in 759 answered decisions) and is exceeded on the shape
-probe of short technical and imperative sentences (8.1 in 1,000 answered, three errors in 372).
+On the development data the same thresholds answered 87.4% (strict, 4.7 harmful errors in 1,000) and 92.4% (balanced, 8.3)
+of the decisions. The strict target of at most 5 in 1,000 was met by the point estimates on the open test split (3.8; its
+95% interval is 1.8 to 6.4 and so includes 5) and on the held-out gold v2 test split (3 harmful errors in 806 answered
+decisions) and is exceeded on the shape probe of short technical and imperative sentences (11.9 in 1,000 answered, five
+errors in 419).
 
-Without a threshold, 18.4 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
+Without a threshold, 20.0 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
 
 - **A consumer that needs a low harmful rate must use a threshold.** A rule checker, for example, uses `strict`:
@@ -186,7 +187,7 @@ on short technical and imperative text. Use these rules:
   ```csharp
   foreach (TaggedToken token in Tagger.Default.Tag("Close the valve.")[0].Tokens)
   {
-      bool trusted = token.Confidence >= 0.95;
+      bool trusted = token.Confidence >= 0.90;
       Console.WriteLine($"{token.Text}: {(trusted ? token.Tag.ToTagString() : "unknown")}");
   }
   ```
