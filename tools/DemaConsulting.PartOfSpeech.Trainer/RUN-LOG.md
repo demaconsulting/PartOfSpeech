@@ -5185,6 +5185,47 @@ All four products pass; all four are registered.
 - `headings2` (train) imperative: **165 against about 300 requested** (floor 150 met under the as-coded reading); **41 of the 165 come from the strength-1 `initial-noun` frame** whose lines both labelers tagged VERB, kept as coded (implementing-agent decision, flagged for the owner; 124 without them).
 - `compound-head-2` controls: **45 of 255 new items = 17.6% (the cap of 45 binds) against about 20% requested** (65 of 375 = 17.3% with the 20 old controls).
 
+## Follow-up: baseline of the shipped model on the new tranches (development data only; no training)
+
+This section records the BASE reference of the follow-up: the **shipped** model (`weights.bin` SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b`, unchanged) scored on the two new development tranches with the dev-only commands. **No model was trained, no held-out command (`evaluate`, `thresholds` against held-out data, the probe or the challenge set) was run, no rule, cap, floor, gate or pin was changed, no consumer text was read, nothing was pushed.** The figures are measurements of an existing model on data that no model has been selected on; they select nothing.
+
+### What was added to the trainer (additive; the old keys and outputs are unchanged)
+
+- `ShapesDevTranche.CompoundHead2 = 5` and `Headings2 = 6` (files `data/eval/shapes-dev/compound-head-2.tsv` and `headings-2.tsv`, appended to `DataGuard.ShapesDevelopmentFiles`, so the guard that refuses every file below `data/eval/` as a training file covers them), with the shape, scoring and kinds of their first tranches; the tranche of an item is the file it was read from, and the sentence-id prefix that decides it is now the longest matching one (`shapes-dev-compound-head-2-` against `shapes-dev-compound-head-`).
+- `eval-shapes --tranche compound-head-2 | headings-2 | followup` (`followup` scores both and notes an absent file; `new` still scores the three tranches of the first generation, its output is unchanged).
+- `eval-arm`: a new block `shapesFollowup` after `shapesNew` (schema stays 1; `shapesNew` and every old key are unchanged; two new hashes `compoundHead2Sha256` and `headings2Sha256` are appended to `inputs`). `shapesFollowup` has the rows of the four tranches (`compoundHead`, `compoundHead2`, `headings`, `headings2`, each `shape` and `kinds` with `confidentWrong`), `pooledPrimary` (harmful errors per 1,000 noun-verb decisions over the target items of the enlarged compound dev, `compound-head` plus `compound-head-2`, and of all heading dev items, `headings` plus `headings-2`, with `targetItems`, `targetCorrect`, `targetAccuracy`, `decisions`, `harmful` and `harmfulPer1k` so that an analyzer can re-derive it, and `confidentWrongTotal`, the target items wrong at a confidence of at least 0.95 summed over the four tranches), `imperativeHeadings` (the items of kind `imperative` of `headings` and `headings-2`, pooled: targets, correct, accuracy, decisions, harmful, `harmfulPer1k`, `confidentWrong`) and `compoundControls` (the controls of both compound tranches pooled).
+- Tests: the existing development-set data tests now run over the two new tranches and the two new training sources (quotas of the follow-up rule, ids, kinds, tags, never `disputed`, rejoin, tokenizer, source tables, leakage reports, exclusions, separation by generation); new tests for the parser, the reader (marker and longest id prefix), the `followup` selection and the `shapesFollowup` block.
+
+### Commands
+
+`eval-shapes --tranche followup --label shipped-model` and `eval-arm --weights src/DemaConsulting.PartOfSpeech/Resources/weights.bin --label shipped-base --json <work folder>\baseline\shipped-base-arm.json` (the result file lies outside the repository; the figures are copied here). Inputs: `compound-head-2.tsv` SHA-256 `ffa7e5aef0cff05e6ef9227bce3544e4372109768685fcff8c0395e18220c527`, `headings-2.tsv` `6c84419851bceebcb825fff6bc530fc3a3dc5bc5306da152bda349db00c4b4a7`; the code base is the commit `0f95af2` plus the uncommitted trainer change (the result file says `dirty`).
+
+### The shipped model on the two new tranches
+
+| Tranche and row | Target items | Target accuracy | Noun-verb decisions | Harmful | Harmful per 1,000 | Wrong at confidence >= 0.95 | Controls | Control accuracy |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `compound-head-2` | 210 | 62.9% (132 correct; 95% interval [56.1%, 69.1%]) | 210 | 71 | 338.1 | 13 | 45 | 100.0% (45) |
+| `headings-2` all targets | 109 | 81.7% (89) | 82 | 2 | 24.4 | 1 | 20 (PROPN) | 100.0% (20) |
+| `headings-2` noun targets | 50 | 60.0% (30) | 50 | 2 | 40.0 | 1 | - | - |
+| `headings-2` imperative targets | 59 | 100.0% (59; interval [93.9%, 100.0%]) | 32 | 0 | 0.0 | 0 | - | - |
+| `headings-2` PROPN controls | - | - | - | - | - | - | 20 | 100.0% |
+
+### The shipped model on the whole follow-up measure (`shapesFollowup`)
+
+| Figure | Value |
+| --- | --- |
+| `compoundHead` (the 100 old targets) | 60 of 100 correct (60.0%), 100 decisions, 39 harmful (390.0 per 1,000), 5 wrong at >= 0.95, controls 20 of 20 |
+| `headings` (old, 95 targets) | 80 of 95 correct (84.2%), 78 decisions, 4 harmful (51.3 per 1,000), 2 wrong at >= 0.95; imperative 40 of 45 (88.9%), 28 decisions, 3 harmful (107.1 per 1,000); noun 40 of 50 (80.0%), 50 decisions, 1 harmful (20.0 per 1,000), 2 wrong at >= 0.95; controls 20 of 20 |
+| `pooledPrimary` (enlarged compound dev plus all heading dev items) | 514 target items, 361 correct (70.2%), **470 decisions, 116 harmful, 246.8 per 1,000** |
+| wrong at confidence >= 0.95 summed over the four tranches (`confidentWrongTotal`) | **21** (5 + 13 + 2 + 1) |
+| `imperativeHeadings` (kind `imperative` of `headings` and `headings-2`) | 104 targets, 99 correct (95.2%), 60 decisions, **3 harmful, 50.0 per 1,000**, 0 wrong at >= 0.95 |
+| `compoundControls` | 65 of 65 correct (100.0%) |
+| `shapesNew.pooledPrimary` (old tranches only, PR #19 comparable) | 195 targets, 140 correct (71.8%), 178 decisions, 43 harmful, 241.6 per 1,000, 7 wrong at >= 0.95 (the PR #19 BASE seed 20260101 line, unchanged by this work) |
+
+For the guards of the re-test, the same run gives (shipped model, seed 20260101 reference): open dev harmful 20.4 per 1,000 (91 of 4,451 decisions), UD-EWT dev accuracy 92.96% and harmful 20.6 per 1,000, hard tranche harmful 170.0 per 1,000, standard tranche 15.0 per 1,000, `weights.bin` 521,695 bytes deflated (1,157,499 raw), throughput 579,761 tokens per second on this machine (single run).
+
+Observations (no rule is changed by them): the shipped model already reads the 59 real Title Case imperative headings of `headings-2` correctly (100.0%, 32 of them noun-verb decisions, no harmful error), so the imperative-heading guard of the re-test (harmful per 1,000 at most BASE + 25) has a BASE of 3 harmful errors in 60 decisions over the 104 imperative headings of the two tranches; a gain from the heading training data can be measured on the noun targets of `headings-2` (60.0%, 2 harmful) and not on its imperative stratum, which has no room left on this tranche. The compound measure is as hard as the old one (62.9% against 60.0%; 338.1 against 390.0 harmful per 1,000), as designed, because the band is the contested band of the WordSense Basic classifier.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

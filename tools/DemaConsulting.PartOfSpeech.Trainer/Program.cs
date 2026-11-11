@@ -119,7 +119,7 @@ Commands:
       --preview-folds folds (default 5) made by document hash. Both are experiment overrides.
   eval --weights FILE [--temperature T] [--label TEXT] [--log FILE]
       Scores a weights file on the development sets (open dev, gold v2 dev) through the real decoder.
-  eval-shapes [--weights FILE] [--label TEXT] [--tranche standard|hard|both|compound-head|headings|named-state|new]
+  eval-shapes [--weights FILE] [--label TEXT] [--tranche standard|hard|both|compound-head|headings|named-state|new|compound-head-2|headings-2|followup]
       Scores a weights file (default: the embedded model) on the hard-shape development set through the real decoder and
       prints Markdown: per shape the target-token accuracy, harmful errors and harmful errors per 1,000 noun-verb decisions,
       and the control accuracy. The standard tranche (dev.tsv) and the hard tranche (hard.tsv) each get a section, and a third
@@ -127,7 +127,9 @@ Commands:
       The single-shape tranches compound-head (compound-head.tsv), headings (headings.tsv, scored by exact tag) and named-state
       (named-state.tsv) each get a section of their own with the target accuracy, harmful errors, harmful errors per 1,000
       decisions, the target items wrong at a confidence of at least 0.95 and the control accuracy; --tranche NAME scores one of
-      them (the file is required), --tranche new scores all three (a missing file is noted, not scored).
+      them (the file is required), --tranche new scores all three (a missing file is noted, not scored). The two follow-up
+      tranches compound-head-2 (compound-head-2.tsv) and headings-2 (headings-2.tsv) have the shapes and scoring of the first
+      two and sections of their own; --tranche followup scores both (a missing file is noted), and new does not include them.
       Reads the shapes development files only; they are development sets, never a held-out figure.
   shapes-tokenize --in FILE --out FILE
       Tokenizes a text file with the library tokenizer, one sentence per line: each output line is the sentence, the number
@@ -136,7 +138,9 @@ Commands:
   eval-arm --weights FILE --label TEXT --json FILE
       Dev-only scoring of a trained weights file for the context-feature experiment: the shapes development set (standard and
       hard tranche, per shape, with per-item outcomes of the target items; and, under shapesNew, the compound-head, headings and
-      named-state tranches with their confident wrong answers and the pooled primary metric), open dev, gold v2 dev, the mapped development part of
+      named-state tranches with their confident wrong answers and the pooled primary metric; and, under shapesFollowup, the
+      compound-head, compound-head-2, headings and headings-2 tranches, the pooled primary metric of the follow-up measure, the pooled
+      imperative headings and the pooled compound controls), open dev, gold v2 dev, the mapped development part of
       the treebank (local cache, pinned SHA-256), the size of the file and the single-thread throughput of the default tagger
       (one warm-up pass and five timed passes over the open dev and treebank dev tokens, median). Writes the result as JSON to
       --json. It reads no held-out set and accepts no data path; --weights and --json must lie outside data/ and tools/data/.

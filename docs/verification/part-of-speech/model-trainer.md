@@ -147,8 +147,11 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
 - **Arm evaluation** (`ModelTrainer/ShapesDevEvaluationTests.cs`, fixtures and a tiny model):
   `ArmEvaluation_Evaluate_TinyWeights_WritesTheResultSchema` (every member of schema 1, the groups and sizes of the
   header, the token counts of the throughput, per-shape rows that add up to the pooled rows, per-item outcomes that add
-  up to the pooled counts, the inputs as given including the three hashes of the compound-head, headings and
-  named-state tranches, the block `shapesNew` behind `items` with its rows, kinds and pooled primary counts, the order
+  up to the pooled counts, the inputs as given including the five hashes of the compound-head, headings, named-state,
+  compound-head-2 and headings-2 tranches, the block `shapesNew` behind `items` with its rows, kinds and pooled primary
+  counts, the block `shapesFollowup` behind it (the four rows of the compound and heading tranches, the pooled primary
+  counts of the enlarged compound dev and all heading dev items re-derived from the rows, the confident wrong total of
+  the four tranches, the pooled imperative headings and the pooled compound controls), the order
   of the members that existed before, a label that survives escaping, the same result for the same inputs
   apart from the measured rate), `ArmEvaluation_Evaluate_NoGroupsAndBadInput_BehavesAsSpecified`,
   `HeldOutEvaluator_Throughput_TimedPasses_AtLeastOneAndPositiveRate` and
@@ -383,12 +386,23 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   `ShapesDevCommand_Run_New_ScoresPresentTranchesAndNotesMissingFiles` and
   `ShapesDevCommand_Run_StandardHardBoth_OutputIsUnchangedByTheNewFiles` (the standard, hard and both output
   equals the plain renderers whatever the new files are).
+- **Follow-up tranches** (same file, synthetic fixtures; requirement `PartOfSpeech-ModelTrainer-ShapesDevFollowupTranches`):
+  `ShapesDevSets_Parse_FollowupTranches_ValidFiles_ReturnItemsOfTheirOwnTranche` (the second tranches have the shape,
+  scoring, tags and kinds of the first ones and a specification of their own, and the rules of the first tranches hold),
+  `DevSets_ReadShapesDev_FollowupTranches_OwnFileOwnMarkerAndLongestIdPrefix` (each file has its own SHA-256 and marks its
+  items; a file of one tranche of a shape at the path of the other is refused by its corpus marker, and by the
+  sentence-id prefix when the marker is right, where the longer prefix `shapes-dev-compound-head-2-` decides),
+  `ShapesDevCommand_EnsureSelection_Value_AcceptedOrRefused` (the three new values) and
+  `ShapesDevCommand_Run_Followup_ScoresBothTranchesAndNewDoesNotIncludeThem` (`followup` scores both in order and
+  notes an absent file, an explicit follow-up tranche is scored alone and its missing file is an error that names the
+  file, and `new` stays at the three tranches of the first generation).
 - **The shapes development files are development only**:
   `DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted` (the files, also through a dotted detour),
   `DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused` (the two development files, a held-out file, the other
   files of its folder, the tables and report of the hard tranche),
   `DataGuard_EnsureShapesDevelopmentFile_NewTrancheFile_Admitted` and
-  `..._NewTrancheSourcesAndLeakage_Refused` (the three single-shape files are admitted, their sources and
+  `..._NewTrancheSourcesAndLeakage_Refused` (the five single-shape files, the three of the first generation and the two
+  follow-up files, are admitted, their sources and
   leakage files are not),
   `DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused` (a theory over both files: a link as the
   file or as its folder is refused, the real file admitted), `DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt`

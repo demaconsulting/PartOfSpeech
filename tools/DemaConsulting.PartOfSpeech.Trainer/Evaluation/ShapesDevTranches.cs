@@ -282,16 +282,26 @@ internal static class ShapesDevCommand
     /// <summary>
     ///     The values of the <c>--tranche</c> option.
     /// </summary>
-    public static readonly IReadOnlyList<string> Selections = new[] { "standard", "hard", "both", "compound-head", "headings", "named-state", "new" };
+    public static readonly IReadOnlyList<string> Selections = new[] { "standard", "hard", "both", "compound-head", "headings", "named-state", "new", "compound-head-2", "headings-2", "followup" };
 
     /// <summary>
-    ///     The single-shape tranches, in report order; <c>new</c> selects all of them.
+    ///     The single-shape tranches of the first generation, in report order; <c>new</c> selects all of them.
     /// </summary>
     public static readonly IReadOnlyList<ShapesDevTranche> NewTranches = new[]
     {
         ShapesDevTranche.CompoundHead,
         ShapesDevTranche.Headings,
         ShapesDevTranche.NamedState,
+    };
+
+    /// <summary>
+    ///     The single-shape tranches of the follow-up (the second compound-head and headings tranches), in report order; <c>followup</c>
+    ///     selects both. <c>new</c> does not select them, so its output does not change.
+    /// </summary>
+    public static readonly IReadOnlyList<ShapesDevTranche> FollowupTranches = new[]
+    {
+        ShapesDevTranche.CompoundHead2,
+        ShapesDevTranche.Headings2,
     };
 
     /// <summary>
@@ -304,7 +314,7 @@ internal static class ShapesDevCommand
         ArgumentNullException.ThrowIfNull(which);
         if (!Selections.Contains(which))
         {
-            throw new InvalidOperationException("--tranche must be standard, hard, both, compound-head, headings, named-state or new.");
+            throw new InvalidOperationException("--tranche must be standard, hard, both, compound-head, headings, named-state, new, compound-head-2, headings-2 or followup.");
         }
     }
 
@@ -315,10 +325,10 @@ internal static class ShapesDevCommand
     /// <param name="tagger">The tagger (created with all alternatives, see <see cref="DevEvaluator.CreateTagger"/>).</param>
     /// <param name="label">The label of the run.</param>
     /// <param name="weightsSha256">The SHA-256 of the weights file.</param>
-    /// <param name="which">The value of <c>--tranche</c>: <c>standard</c>, <c>hard</c> or <c>both</c> (the original sections), one single-shape tranche, or <c>new</c> (the three single-shape tranches).</param>
+    /// <param name="which">The value of <c>--tranche</c>: <c>standard</c>, <c>hard</c> or <c>both</c> (the original sections), one single-shape tranche, <c>new</c> (the three single-shape tranches of the first generation) or <c>followup</c> (the two of the follow-up).</param>
     /// <returns>The lines of the report, without line terminators.</returns>
     /// <exception cref="InvalidOperationException"><paramref name="which"/> is not a valid selection, or a link lies on the way to a development file.</exception>
-    /// <exception cref="FileNotFoundException">The file of an explicitly requested tranche does not exist (a missing file is only noted for <c>both</c> and <c>new</c>).</exception>
+    /// <exception cref="FileNotFoundException">The file of an explicitly requested tranche does not exist (a missing file is only noted for <c>both</c>, <c>new</c> and <c>followup</c>).</exception>
     /// <exception cref="InvalidDataException">A file does not announce its tranche or is malformed.</exception>
     public static List<string> Run(string root, Tagger tagger, string label, string weightsSha256, string which)
     {
@@ -332,11 +342,13 @@ internal static class ShapesDevCommand
             return RunOriginal(root, tagger, label, weightsSha256, which);
         }
 
-        // An explicit single-shape tranche needs its file; with "new" a missing file is noted and the others are scored
+        // An explicit single-shape tranche needs its file; with "new" or "followup" a missing file is noted and the others are scored
         var lines = new List<string>();
-        foreach (var tranche in NewTranches)
+        var group = which == "followup";
+        foreach (var tranche in NewTranches.Concat(FollowupTranches))
         {
-            if (which != "new" && DevSets.ShapesDevNameOf(tranche) != which)
+            var inGroup = which == "new" ? NewTranches.Contains(tranche) : group && FollowupTranches.Contains(tranche);
+            if (!inGroup && DevSets.ShapesDevNameOf(tranche) != which)
             {
                 continue;
             }
@@ -346,7 +358,7 @@ internal static class ShapesDevCommand
                 lines.Add(string.Empty);
             }
 
-            if (which == "new" && !DevSets.ShapesDevExists(root, tranche))
+            if ((which == "new" || group) && !DevSets.ShapesDevExists(root, tranche))
             {
                 lines.Add(ShapesDevReport.RenderTrancheMissing(tranche));
                 continue;

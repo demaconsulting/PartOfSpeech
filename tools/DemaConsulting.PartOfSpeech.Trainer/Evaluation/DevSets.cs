@@ -72,6 +72,20 @@ internal static class DataGuard
     public const string ShapesDevelopmentNamedStateFile = "data/eval/shapes-dev/named-state.tsv";
 
     /// <summary>
+    ///     The second compound-head tranche of the hard-shape development set (shape <c>n-compound-head-ambiguous</c>, the same shape as
+    ///     <see cref="ShapesDevelopmentCompoundHeadFile"/>), relative to the repository root with forward slashes. It shares the guard
+    ///     of the other tranches; it may be absent.
+    /// </summary>
+    public const string ShapesDevelopmentCompoundHead2File = "data/eval/shapes-dev/compound-head-2.tsv";
+
+    /// <summary>
+    ///     The second headings tranche of the hard-shape development set (shape <c>heading-titlecase</c>, scored by exact tag, the same
+    ///     shape as <see cref="ShapesDevelopmentHeadingsFile"/>), relative to the repository root with forward slashes. It shares the
+    ///     guard of the other tranches; it may be absent.
+    /// </summary>
+    public const string ShapesDevelopmentHeadings2File = "data/eval/shapes-dev/headings-2.tsv";
+
+    /// <summary>
     ///     The files of the hard-shape development set that the shapes guard admits, in the order of <see cref="ShapesDevTranche"/>.
     ///     The sources files and the leakage reports of the tranches are not listed, so the guard refuses them.
     /// </summary>
@@ -82,6 +96,8 @@ internal static class DataGuard
         ShapesDevelopmentCompoundHeadFile,
         ShapesDevelopmentHeadingsFile,
         ShapesDevelopmentNamedStateFile,
+        ShapesDevelopmentCompoundHead2File,
+        ShapesDevelopmentHeadings2File,
     };
 
     /// <summary>
@@ -819,7 +835,7 @@ internal static class DevSets
     ///     Gets the name of a tranche of the hard-shape development set, as the corpus comment and the command line spell it.
     /// </summary>
     /// <param name="tranche">The tranche.</param>
-    /// <returns>The name: <c>standard</c>, <c>hard</c>, <c>compound-head</c>, <c>headings</c> or <c>named-state</c>.</returns>
+    /// <returns>The name: <c>standard</c>, <c>hard</c>, <c>compound-head</c>, <c>headings</c>, <c>named-state</c>, <c>compound-head-2</c> or <c>headings-2</c>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tranche"/> is not a tranche.</exception>
     public static string ShapesDevNameOf(ShapesDevTranche tranche) => tranche switch
     {
@@ -828,6 +844,8 @@ internal static class DevSets
         ShapesDevTranche.CompoundHead => "compound-head",
         ShapesDevTranche.Headings => "headings",
         ShapesDevTranche.NamedState => "named-state",
+        ShapesDevTranche.CompoundHead2 => "compound-head-2",
+        ShapesDevTranche.Headings2 => "headings-2",
         _ => throw new ArgumentOutOfRangeException(nameof(tranche)),
     };
 
@@ -856,6 +874,8 @@ internal static class DevSets
         ShapesDevTranche.CompoundHead,
         ShapesDevTranche.Headings,
         ShapesDevTranche.NamedState,
+        ShapesDevTranche.CompoundHead2,
+        ShapesDevTranche.Headings2,
     };
 
     /// <summary>
@@ -863,10 +883,17 @@ internal static class DevSets
     /// </summary>
     /// <param name="id">The sentence id.</param>
     /// <returns>The tranche whose prefix the id starts with, and the standard tranche for every other id.</returns>
+    /// <remarks>
+    ///     The longest matching prefix decides: the prefix of the compound-head tranche (<c>shapes-dev-compound-head-</c>) is the start
+    ///     of the prefix of the second compound-head tranche (<c>shapes-dev-compound-head-2-</c>), and so is it for the headings.
+    /// </remarks>
     private static ShapesDevTranche ShapesDevTrancheOfId(string id)
     {
         // No marked tranche matches: default(ShapesDevTranche) is the standard tranche
-        return MarkedTranches.FirstOrDefault(t => id.StartsWith(ShapesDevIdPrefixOf(t)!, StringComparison.Ordinal));
+        return MarkedTranches
+            .Where(t => id.StartsWith(ShapesDevIdPrefixOf(t)!, StringComparison.Ordinal))
+            .OrderByDescending(t => ShapesDevIdPrefixOf(t)!.Length)
+            .FirstOrDefault();
     }
 
     /// <summary>

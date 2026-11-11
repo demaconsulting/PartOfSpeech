@@ -632,11 +632,41 @@ sections:
               - ShapesDevCommand_Run_New_ScoresPresentTranchesAndNotesMissingFiles
               - ShapesDevCommand_Run_StandardHardBoth_OutputIsUnchangedByTheNewFiles
 
+          - id: PartOfSpeech-ModelTrainer-ShapesDevFollowupTranches
+            title: >-
+              The shapes development evaluation shall read the two follow-up tranches (`compound-head-2.tsv`, with the
+              shape and the class scoring of `compound-head`, and `headings-2.tsv`, with the shape, the kinds and the
+              exact-tag scoring of `headings`) from their own files through the development guard, tell a tranche from
+              the first tranche of its shape by the corpus marker and by the longest sentence-id prefix, report them
+              with the same rows as the first-generation tranches, accept
+              `--tranche compound-head-2|headings-2|followup`
+              (an explicit file that is missing is an error, a missing file under `followup` is noted) without changing
+              the output of `new`, and let `eval-arm` write, behind the existing members, a block `shapesFollowup` with
+              the rows of the four compound and heading tranches, the pooled primary figure (harmful errors per 1,000
+              noun-verb decisions over the enlarged compound dev and all heading dev items, with the counts it is
+              derived from, and the target items wrong at a confidence of at least 0.95 summed over the four
+              tranches), the pooled imperative headings, the pooled compound controls and the two new file hashes in
+              `inputs`.
+            justification: |
+              The follow-up measure is bigger than the first one, but it is the same kind of measure, so it reuses the
+              shapes, the scoring and the report rows instead of a second definition, and it never changes an older
+              byte: the older tranches, the `new` selection and the `shapesNew` block keep what the recorded baselines
+              show, so a result file of the earlier experiment stays readable. A file of the first tranche at the path
+              of the second would be scored as the wrong tranche, and the id prefix of the second tranche starts with
+              the prefix of the first, so the marker and the longer prefix decide. The primary figure carries its counts
+              so that the analysis can re-derive it, and a mismatch is then visible.
+            tests:
+              - ShapesDevSets_Parse_FollowupTranches_ValidFiles_ReturnItemsOfTheirOwnTranche
+              - DevSets_ReadShapesDev_FollowupTranches_OwnFileOwnMarkerAndLongestIdPrefix
+              - ShapesDevCommand_EnsureSelection_Value_AcceptedOrRefused
+              - ShapesDevCommand_Run_Followup_ScoresBothTranchesAndNewDoesNotIncludeThem
+              - ArmEvaluation_Evaluate_TinyWeights_WritesTheResultSchema
+
           - id: PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
             title: >-
-              The files of the hard-shape development set (the standard and the hard tranche and the three single-shape
-              tranches) shall be readable only
-              through their own guard (exactly those five paths, also when spelled with a detour, refused when a link
+              The files of the hard-shape development set (the standard and the hard tranche, the three single-shape
+              tranches and the two follow-up tranches) shall be readable only
+              through their own guard (exactly those seven paths, also when spelled with a detour, refused when a link
               lies on the way, and a header that announces a development split), shall not be in the
               two-file development allow-list or the held-out list, shall be refused for training, and no source of the
               trainer other than the guard shall name a held-out set.
@@ -729,8 +759,9 @@ sections:
               items), on the compound-head, headings and named-state tranches (per tranche the row of its shape with the
               target items that are wrong at a confidence of at least 0.95, the kinds of the headings, and the pooled
               harmful errors per 1,000 noun-verb decisions and the confident wrong answers of the compound-head and the
-              headings tranche together), on the open and the gold v2 development splits and on the mapped development
-              part of the external
+              headings tranche together) and on the two follow-up tranches (the block `shapesFollowup`, see
+              `PartOfSpeech-ModelTrainer-ShapesDevFollowupTranches`), on the open and the gold v2 development splits and
+              on the mapped development part of the external
               treebank (read from the local cache with a pinned SHA-256), measure the size of the file and the
               single-thread throughput of the default tagger (one warm-up pass, five timed passes, the median), and
               write one JSON result in schema 1 with the groups of the weights header and the hashes of the inputs,

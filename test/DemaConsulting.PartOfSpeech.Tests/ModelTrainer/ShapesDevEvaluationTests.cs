@@ -1016,7 +1016,7 @@ public class ShapesDevEvaluationTests
     [Fact]
     public void DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt()
     {
-        // Arrange / Act / Assert: the list of the set is exactly the five tranches, the other allow-lists did not grow
+        // Arrange / Act / Assert: the list of the set is exactly the seven tranches, the other allow-lists did not grow
         Assert.Equal(
             new[]
             {
@@ -1025,6 +1025,8 @@ public class ShapesDevEvaluationTests
                 "data/eval/shapes-dev/compound-head.tsv",
                 "data/eval/shapes-dev/headings.tsv",
                 "data/eval/shapes-dev/named-state.tsv",
+                "data/eval/shapes-dev/compound-head-2.tsv",
+                "data/eval/shapes-dev/headings-2.tsv",
             },
             DataGuard.ShapesDevelopmentFiles);
         Assert.Equal(DataGuard.ShapesDevelopmentFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.Standard]);
@@ -1032,6 +1034,8 @@ public class ShapesDevEvaluationTests
         Assert.Equal(DataGuard.ShapesDevelopmentCompoundHeadFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.CompoundHead]);
         Assert.Equal(DataGuard.ShapesDevelopmentHeadingsFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.Headings]);
         Assert.Equal(DataGuard.ShapesDevelopmentNamedStateFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.NamedState]);
+        Assert.Equal(DataGuard.ShapesDevelopmentCompoundHead2File, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.CompoundHead2]);
+        Assert.Equal(DataGuard.ShapesDevelopmentHeadings2File, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.Headings2]);
         Assert.Equal(new[] { "data/open/dev.tsv", "data/eval/gold-v2/dev.tsv" }, DataGuard.DevelopmentFiles);
         Assert.Equal(4, DataGuard.HeldOutFiles.Count);
         foreach (var file in DataGuard.ShapesDevelopmentFiles)
@@ -1153,6 +1157,19 @@ public class ShapesDevEvaluationTests
             {
                 TrancheItem(ShapesDevTranche.NamedState, "ns1", "target", "cat", "NOUN"),
             },
+            CompoundHead2 = new List<ShapesDevItem>
+            {
+                TrancheItem(ShapesDevTranche.CompoundHead2, "c21", "target", "cat", "NOUN"),
+                TrancheItem(ShapesDevTranche.CompoundHead2, "c22", "target", "dog", "NOUN"),
+                TrancheItem(ShapesDevTranche.CompoundHead2, "c23", "control", "dog", "VERB"),
+            },
+            Headings2 = new List<ShapesDevItem>
+            {
+                TrancheItem(ShapesDevTranche.Headings2, "h21", "target", "cat", "NOUN", "noun"),
+                TrancheItem(ShapesDevTranche.Headings2, "h22", "target", "dog", "VERB", "imperative"),
+                TrancheItem(ShapesDevTranche.Headings2, "h23", "target", "cat", "VERB", "imperative"),
+                TrancheItem(ShapesDevTranche.Headings2, "h24", "control", "cat", "PROPN", "proper"),
+            },
             Inputs = new ArmInputs
             {
                 DevSha256 = "s1",
@@ -1163,6 +1180,8 @@ public class ShapesDevEvaluationTests
                 CompoundHeadSha256 = "s6",
                 HeadingsSha256 = "s7",
                 NamedStateSha256 = "s8",
+                CompoundHead2Sha256 = "s9",
+                Headings2Sha256 = "s10",
                 Commit = "abc123",
                 Dirty = true,
             },
@@ -1266,18 +1285,18 @@ public class ShapesDevEvaluationTests
         Assert.Equal(pooled.GetProperty("harmful").GetInt32(), items.GetProperty("hard").EnumerateObject().Sum(p => p.Value.GetProperty("h").GetInt32()));
         Assert.Equal(pooled.GetProperty("targetCorrect").GetInt32(), items.GetProperty("hard").EnumerateObject().Sum(p => p.Value.GetProperty("c").GetInt32()));
 
-        // Assert: the inputs are the ones that were given, the three new hashes after the old members
+        // Assert: the inputs are the ones that were given, the five new hashes after the old members
         var inputs = root.GetProperty("inputs");
         Assert.Equal(new[] { "s1", "s2", "s3", "s4", "s5", "abc123" }, new[] { "devSha256", "hardSha256", "udDevSha256", "openDevSha256", "goldDevSha256", "commit" }.Select(n => inputs.GetProperty(n).GetString()));
         Assert.True(inputs.GetProperty("dirty").GetBoolean());
-        Assert.Equal(new[] { "s6", "s7", "s8" }, new[] { "compoundHeadSha256", "headingsSha256", "namedStateSha256" }.Select(n => inputs.GetProperty(n).GetString()));
+        Assert.Equal(new[] { "s6", "s7", "s8", "s9", "s10" }, new[] { "compoundHeadSha256", "headingsSha256", "namedStateSha256", "compoundHead2Sha256", "headings2Sha256" }.Select(n => inputs.GetProperty(n).GetString()));
         Assert.Equal(
-            new[] { "devSha256", "hardSha256", "udDevSha256", "openDevSha256", "goldDevSha256", "commit", "dirty", "compoundHeadSha256", "headingsSha256", "namedStateSha256" },
+            new[] { "devSha256", "hardSha256", "udDevSha256", "openDevSha256", "goldDevSha256", "commit", "dirty", "compoundHeadSha256", "headingsSha256", "namedStateSha256", "compoundHead2Sha256", "headings2Sha256" },
             inputs.EnumerateObject().Select(p => p.Name));
 
-        // Assert: the new block is additive: the schema is still 1 and the members of before keep their order, the new block sits behind "items"
+        // Assert: the new blocks are additive: the schema is still 1 and the members of before keep their order, the new blocks sit behind "items"
         Assert.Equal(
-            new[] { "schema", "label", "groups", "temperature", "config", "weights", "throughput", "openDev", "goldDev", "udDev", "shapes", "items", "shapesNew", "inputs" },
+            new[] { "schema", "label", "groups", "temperature", "config", "weights", "throughput", "openDev", "goldDev", "udDev", "shapes", "items", "shapesNew", "shapesFollowup", "inputs" },
             root.EnumerateObject().Select(p => p.Name));
 
         // Assert: the three new tranches have their shape row (with the confident wrong count) and the kinds of the headings only
@@ -1320,6 +1339,64 @@ public class ShapesDevEvaluationTests
         Assert.True(pooledDecisions > 0);
         Assert.Equal(1000.0 * primary.GetProperty("harmful").GetInt32() / pooledDecisions, primary.GetProperty("harmfulPer1k").GetDouble(), 9);
         Assert.Equal(100.0 * primary.GetProperty("targetCorrect").GetInt32() / 3, primary.GetProperty("targetAccuracy").GetDouble(), 9);
+
+        // Assert: the follow-up block has the four tranches in order, each as a shapesNew row, and the three pooled blocks
+        var followup = root.GetProperty("shapesFollowup");
+        Assert.Equal(new[] { "compoundHead", "compoundHead2", "headings", "headings2", "pooledPrimary", "imperativeHeadings", "compoundControls" }, followup.EnumerateObject().Select(p => p.Name));
+        foreach (var name in new[] { "compoundHead", "compoundHead2", "headings", "headings2" })
+        {
+            Assert.Equal(new[] { "shape", "kinds" }, followup.GetProperty(name).EnumerateObject().Select(p => p.Name));
+            Assert.Equal(members, followup.GetProperty(name).GetProperty("shape").EnumerateObject().Select(p => p.Name));
+        }
+
+        // Assert: the old rows in the follow-up block are the rows of shapesNew, and the new rows hold the items of the new tranches
+        Assert.Equal(compound.GetRawText(), followup.GetProperty("compoundHead").GetProperty("shape").GetRawText());
+        Assert.Equal(headings.GetRawText(), followup.GetProperty("headings").GetProperty("shape").GetRawText());
+        var compound2 = followup.GetProperty("compoundHead2").GetProperty("shape");
+        var headings2 = followup.GetProperty("headings2").GetProperty("shape");
+        Assert.Equal((2, 1), (compound2.GetProperty("targetItems").GetInt32(), compound2.GetProperty("controlItems").GetInt32()));
+        Assert.Equal((3, 1), (headings2.GetProperty("targetItems").GetInt32(), headings2.GetProperty("controlItems").GetInt32()));
+        Assert.Empty(followup.GetProperty("compoundHead2").GetProperty("kinds").EnumerateObject());
+        var kinds2 = followup.GetProperty("headings2").GetProperty("kinds");
+        Assert.Equal(new[] { "noun", "imperative", "proper" }, kinds2.EnumerateObject().Select(p => p.Name));
+        Assert.Equal((1, 2, 0), (kinds2.GetProperty("noun").GetProperty("targetItems").GetInt32(), kinds2.GetProperty("imperative").GetProperty("targetItems").GetInt32(), kinds2.GetProperty("proper").GetProperty("targetItems").GetInt32()));
+
+        // Assert: the pooled primary of the follow-up adds the four tranche rows (all heading dev items, the enlarged compound dev) and its rate is read from the pooled counts
+        var pool = followup.GetProperty("pooledPrimary");
+        Assert.Equal(new[] { "targetItems", "targetCorrect", "targetAccuracy", "decisions", "harmful", "harmfulPer1k", "confidentWrongTotal" }, pool.EnumerateObject().Select(p => p.Name));
+        var rows = new[] { compound, compound2, headings, headings2 };
+        foreach (var (name, source) in new[] { ("targetItems", "targetItems"), ("targetCorrect", "targetCorrect"), ("decisions", "decisions"), ("harmful", "harmful"), ("confidentWrongTotal", "confidentWrong") })
+        {
+            Assert.Equal(rows.Sum(r => r.GetProperty(source).GetInt32()), pool.GetProperty(name).GetInt32());
+        }
+
+        Assert.Equal(1 + 2 + 2 + 3, pool.GetProperty("targetItems").GetInt32());
+        var poolDecisions = pool.GetProperty("decisions").GetInt32();
+        Assert.True(poolDecisions > 0);
+        Assert.Equal(1000.0 * pool.GetProperty("harmful").GetInt32() / poolDecisions, pool.GetProperty("harmfulPer1k").GetDouble(), 9);
+        Assert.Equal(100.0 * pool.GetProperty("targetCorrect").GetInt32() / 8, pool.GetProperty("targetAccuracy").GetDouble(), 9);
+
+        // Assert: the pooled imperative headings are the imperative rows of both headings tranches, no more
+        var imperative = followup.GetProperty("imperativeHeadings");
+        Assert.Equal(new[] { "targetItems", "targetCorrect", "targetAccuracy", "decisions", "harmful", "harmfulPer1k", "confidentWrong" }, imperative.EnumerateObject().Select(p => p.Name));
+        var imperativeRows = new[] { kinds.GetProperty("imperative"), kinds2.GetProperty("imperative") };
+        foreach (var name in new[] { "targetItems", "targetCorrect", "decisions", "harmful", "confidentWrong" })
+        {
+            Assert.Equal(imperativeRows.Sum(r => r.GetProperty(name).GetInt32()), imperative.GetProperty(name).GetInt32());
+        }
+
+        Assert.Equal(3, imperative.GetProperty("targetItems").GetInt32());
+        var imperativeDecisions = imperative.GetProperty("decisions").GetInt32();
+        Assert.True(imperativeDecisions > 0);
+        Assert.Equal(1000.0 * imperative.GetProperty("harmful").GetInt32() / imperativeDecisions, imperative.GetProperty("harmfulPer1k").GetDouble(), 9);
+        Assert.Equal(100.0 * imperative.GetProperty("targetCorrect").GetInt32() / 3, imperative.GetProperty("targetAccuracy").GetDouble(), 9);
+
+        // Assert: the compound controls pool the controls of both compound-head tranches
+        var controls = followup.GetProperty("compoundControls");
+        Assert.Equal(new[] { "controlItems", "controlCorrect", "controlAccuracy" }, controls.EnumerateObject().Select(p => p.Name));
+        Assert.Equal(2, controls.GetProperty("controlItems").GetInt32());
+        Assert.Equal(compound.GetProperty("controlCorrect").GetInt32() + compound2.GetProperty("controlCorrect").GetInt32(), controls.GetProperty("controlCorrect").GetInt32());
+        Assert.Equal(100.0 * controls.GetProperty("controlCorrect").GetInt32() / 2, controls.GetProperty("controlAccuracy").GetDouble(), 9);
 
         // Assert: the same weights and fixtures give the same result up to the measured throughput
         var again = ArmEvaluation.Evaluate(weights, Label, echo, data, timedPasses: 1);
@@ -1761,6 +1838,8 @@ public class ShapesDevEvaluationTests
     [InlineData("data/eval/shapes-dev/compound-head.tsv")]
     [InlineData("data/eval/shapes-dev/headings.tsv")]
     [InlineData("data/eval/shapes-dev/named-state.tsv")]
+    [InlineData("data/eval/shapes-dev/compound-head-2.tsv")]
+    [InlineData("data/eval/shapes-dev/headings-2.tsv")]
     [InlineData("data/eval/shapes-dev/../shapes-dev/headings.tsv")]
     public void DataGuard_EnsureShapesDevelopmentFile_NewTrancheFile_Admitted(string relativePath)
     {
@@ -1786,6 +1865,11 @@ public class ShapesDevEvaluationTests
     [InlineData("data/eval/shapes-dev/compound-head-leakage-report.tsv")]
     [InlineData("data/eval/shapes-dev/headings-leakage-report.tsv")]
     [InlineData("data/eval/shapes-dev/named-state-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/compound-head-2-sources.tsv")]
+    [InlineData("data/eval/shapes-dev/headings-2-sources.tsv")]
+    [InlineData("data/eval/shapes-dev/compound-head-2-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/headings-2-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/headings-2.tsv.bak")]
     [InlineData("data/eval/shapes-dev/headings.tsv.bak")]
     [InlineData("data/eval/shapes-dev/new.tsv")]
     public void DataGuard_EnsureShapesDevelopmentFile_NewTrancheSourcesAndLeakage_Refused(string relativePath)
@@ -2005,6 +2089,10 @@ public class ShapesDevEvaluationTests
     [InlineData("headings", true)]
     [InlineData("named-state", true)]
     [InlineData("new", true)]
+    [InlineData("compound-head-2", true)]
+    [InlineData("headings-2", true)]
+    [InlineData("followup", true)]
+    [InlineData("named-state-2", false)]
     [InlineData("all", false)]
     [InlineData("Headings", false)]
     [InlineData("", false)]
@@ -2128,6 +2216,188 @@ public class ShapesDevEvaluationTests
             Assert.Equal(ShapesDevReport.RenderHard("m", hardSha, both.Hard, "w"), ShapesDevCommand.Run(root, tagger, "m", "w", "hard"));
             Assert.Equal(ShapesDevReport.Render("m", standardSha, both.Standard, "w"), ShapesDevCommand.Run(root, tagger, "m", "w", "standard"));
             Assert.DoesNotContain(ShapesDevCommand.Run(root, tagger, "m", "w", "both"), l => l.Contains("compound-head tranche", StringComparison.Ordinal) || l.Contains("headings tranche", StringComparison.Ordinal) || l.Contains("named-state tranche", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     A valid file of the compound-head-2 tranche (the shape of the compound-head tranche, ids with the infix <c>compound-head-2</c>).
+    /// </summary>
+    private static List<string> CompoundHead2File() => TrancheFile(
+        "compound-head-2",
+        NewBlock(NewId("compound-head-2", 1), "n-compound-head-ambiguous", "target", "NOUN"),
+        NewBlock(NewId("compound-head-2", 2), "n-compound-head-ambiguous", "target", "PROPN"),
+        NewBlock(NewId("compound-head-2", 3), "n-compound-head-ambiguous", "control", "VERB"));
+
+    /// <summary>
+    ///     A valid file of the headings-2 tranche (the shape of the headings tranche, ids with the infix <c>headings-2</c>).
+    /// </summary>
+    private static List<string> Headings2File() => TrancheFile(
+        "headings-2",
+        NewBlock(NewId("headings-2", 1), "heading-titlecase", "target", "NOUN", "noun"),
+        NewBlock(NewId("headings-2", 2), "heading-titlecase", "target", "VERB", "imperative"),
+        NewBlock(NewId("headings-2", 3), "heading-titlecase", "control", "PROPN", "proper"));
+
+    /// <summary>
+    ///     Validates that valid files of the two follow-up tranches are read with the shape, roles, kinds and gold tags of their first tranches,
+    ///     that each item carries its own tranche, and that the two tranches have a specification of their own with the shape of the first.
+    /// </summary>
+    [Fact]
+    public void ShapesDevSets_Parse_FollowupTranches_ValidFiles_ReturnItemsOfTheirOwnTranche()
+    {
+        // Arrange / Act
+        var compound = ShapesDevSets.Parse(CompoundHead2File(), "fixture", ShapesDevTranche.CompoundHead2);
+        var headings = ShapesDevSets.Parse(Headings2File(), "fixture", ShapesDevTranche.Headings2);
+
+        // Assert: same shapes, roles, tags and kinds as the first tranches, own tranche
+        Assert.Equal(new[] { "NOUN", "PROPN", "VERB" }, compound.Select(i => i.GoldTag));
+        Assert.Equal(new[] { "target", "target", "control" }, compound.Select(i => i.Role));
+        Assert.All(compound, i => Assert.Equal(("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead2, string.Empty), (i.Shape, i.Tranche, i.Kind)));
+        Assert.Equal(new[] { "noun", "imperative", "proper" }, headings.Select(i => i.Kind));
+        Assert.Equal(new[] { "NOUN", "VERB", "PROPN" }, headings.Select(i => i.GoldTag));
+        Assert.Equal(new[] { true, true, false }, headings.Select(i => i.IsTarget));
+        Assert.All(headings, i => Assert.Equal(("heading-titlecase", ShapesDevTranche.Headings2), (i.Shape, i.Tranche)));
+
+        // Assert: the specifications of the follow-up tranches repeat those of the first tranches (shape, scoring, tags, kinds)
+        foreach (var (first, second) in new[] { (ShapesDevTranche.CompoundHead, ShapesDevTranche.CompoundHead2), (ShapesDevTranche.Headings, ShapesDevTranche.Headings2) })
+        {
+            var a = ShapesDevSets.SpecOf(first)!;
+            var b = ShapesDevSets.SpecOf(second)!;
+            Assert.NotSame(a, b);
+            Assert.Equal((a.Shape, a.Scoring), (b.Shape, b.Scoring));
+            Assert.Equal(a.TargetTags, b.TargetTags);
+            Assert.Equal(a.ControlTags, b.ControlTags);
+            Assert.Equal(a.Kinds.Select(k => (k.Name, k.Role, k.Tag)), b.Kinds.Select(k => (k.Name, k.Role, k.Tag)));
+            Assert.Equal(second, b.Tranche);
+            Assert.Same(a, ShapesDevSets.SpecOf(a.Shape));
+        }
+
+        // Assert: the rules of the first tranches hold for the follow-up tranches
+        var disputed = Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(TrancheFile("compound-head-2", NewBlock(NewId("compound-head-2", 1), "n-compound-head-ambiguous", "target", "NOUN", status: "disputed")), "fixture", ShapesDevTranche.CompoundHead2));
+        Assert.Contains("must not be disputed", disputed.Message, StringComparison.Ordinal);
+        var noKind = Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(TrancheFile("headings-2", NewBlock(NewId("headings-2", 1), "heading-titlecase", "target", "NOUN")), "fixture", ShapesDevTranche.Headings2));
+        Assert.Contains("the comment 'kind' is missing", noKind.Message, StringComparison.Ordinal);
+        var kindOnCompound = Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(TrancheFile("compound-head-2", NewBlock(NewId("compound-head-2", 1), "n-compound-head-ambiguous", "target", "NOUN", "noun")), "fixture", ShapesDevTranche.CompoundHead2));
+        Assert.Contains("belongs to the headings tranche only", kindOnCompound.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Validates that each follow-up tranche is read from its own file with its own SHA-256, that the first tranche of the same shape is read
+    ///     from its file next to it, and that a file cannot be read as the other tranche of its shape: the header marker and the id prefix of the
+    ///     second tranche (which starts with the prefix of the first) are told apart.
+    /// </summary>
+    [Fact]
+    public void DevSets_ReadShapesDev_FollowupTranches_OwnFileOwnMarkerAndLongestIdPrefix()
+    {
+        // Arrange: the first and the second tranches of both shapes
+        var root = TempRoot(null);
+        WriteShapes(root, "compound-head.tsv", CompoundHeadFile());
+        WriteShapes(root, "compound-head-2.tsv", CompoundHead2File());
+        WriteShapes(root, "headings.tsv", HeadingsFile());
+        WriteShapes(root, "headings-2.tsv", Headings2File());
+        try
+        {
+            // Act
+            var compound = DevSets.ReadShapesDev(root, ShapesDevTranche.CompoundHead, out var compoundSha);
+            var compound2 = DevSets.ReadShapesDev(root, ShapesDevTranche.CompoundHead2, out var compound2Sha);
+            var headings = DevSets.ReadShapesDev(root, ShapesDevTranche.Headings, out var headingsSha);
+            var headings2 = DevSets.ReadShapesDev(root, ShapesDevTranche.Headings2, out var headings2Sha);
+
+            // Assert: each file marks its items with its own tranche and holds its own ids
+            Assert.All(compound, i => Assert.Equal(ShapesDevTranche.CompoundHead, i.Tranche));
+            Assert.All(compound2, i => Assert.Equal(ShapesDevTranche.CompoundHead2, i.Tranche));
+            Assert.All(headings, i => Assert.Equal(ShapesDevTranche.Headings, i.Tranche));
+            Assert.All(headings2, i => Assert.Equal(ShapesDevTranche.Headings2, i.Tranche));
+            Assert.Equal(new[] { NewId("compound-head-2", 1), NewId("compound-head-2", 2), NewId("compound-head-2", 3) }, compound2.Select(i => i.Id));
+            Assert.Equal(new[] { NewId("headings-2", 1), NewId("headings-2", 2), NewId("headings-2", 3) }, headings2.Select(i => i.Id));
+            Assert.Equal(4, new[] { compoundSha, compound2Sha, headingsSha, headings2Sha }.Distinct().Count());
+            Assert.Equal("compound-head-2", DevSets.ShapesDevNameOf(ShapesDevTranche.CompoundHead2));
+            Assert.Equal("headings-2", DevSets.ShapesDevNameOf(ShapesDevTranche.Headings2));
+            Assert.Equal("data/eval/shapes-dev/compound-head-2.tsv", DevSets.ShapesDevFileOf(ShapesDevTranche.CompoundHead2));
+            Assert.Equal("data/eval/shapes-dev/headings-2.tsv", DevSets.ShapesDevFileOf(ShapesDevTranche.Headings2));
+            Assert.True(DevSets.ShapesDevExists(root, ShapesDevTranche.CompoundHead2));
+
+            // Assert: a file of the second tranche at the path of the first (marker and ids), and the other way round, is refused
+            WriteShapes(root, "compound-head.tsv", CompoundHead2File());
+            Assert.Contains("announces itself as the compound-head-2 tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.CompoundHead, out _)).Message);
+            WriteShapes(root, "compound-head-2.tsv", CompoundHeadFile());
+            Assert.Contains("announces itself as the compound-head tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.CompoundHead2, out _)).Message);
+            WriteShapes(root, "headings.tsv", Headings2File());
+            Assert.Contains("announces itself as the headings-2 tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Headings, out _)).Message);
+            WriteShapes(root, "headings-2.tsv", HeadingsFile());
+            Assert.Contains("announces itself as the headings tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Headings2, out _)).Message);
+
+            // Assert: the right marker with the ids of the other tranche of the shape is refused (the longer prefix decides)
+            WriteShapes(root, "compound-head.tsv", TrancheFile("compound-head", NewBlock(NewId("compound-head-2", 1), "n-compound-head-ambiguous", "target", "NOUN")));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.CompoundHead, out _)).Message);
+            WriteShapes(root, "compound-head-2.tsv", TrancheFile("compound-head-2", NewBlock(NewId("compound-head", 1), "n-compound-head-ambiguous", "target", "NOUN")));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.CompoundHead2, out _)).Message);
+            WriteShapes(root, "headings.tsv", TrancheFile("headings", NewBlock(NewId("headings-2", 1), "heading-titlecase", "target", "NOUN", "noun")));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Headings, out _)).Message);
+            WriteShapes(root, "headings-2.tsv", TrancheFile("headings-2", NewBlock(NewId("headings", 1), "heading-titlecase", "target", "NOUN", "noun")));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Headings2, out _)).Message);
+
+            // Assert: removing a file makes it absent and its read an error
+            System.IO.File.Delete(Path.Combine(root, "data", "eval", "shapes-dev", "headings-2.tsv"));
+            Assert.False(DevSets.ShapesDevExists(root, ShapesDevTranche.Headings2));
+            Assert.Throws<FileNotFoundException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Headings2, out _));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that <c>followup</c> scores the two follow-up tranches in the order compound-head-2, headings-2 (a section each, separated
+    ///     by an empty line, an absent file noted in its place), that an explicit follow-up tranche is scored alone and needs its file, and that
+    ///     <c>new</c> does not include them, so the output of <c>new</c> does not change.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCommand_Run_Followup_ScoresBothTranchesAndNewDoesNotIncludeThem()
+    {
+        // Arrange: only the headings-2 file exists of the follow-up, next to the three files of the first generation
+        var root = TempRoot(null);
+        WriteShapes(root, "compound-head.tsv", CompoundHeadFile());
+        WriteShapes(root, "headings.tsv", HeadingsFile());
+        WriteShapes(root, "named-state.tsv", NamedStateFile());
+        WriteShapes(root, "headings-2.tsv", Headings2File());
+        var tagger = FixtureTagger();
+        try
+        {
+            // Act
+            var lines = ShapesDevCommand.Run(root, tagger, "m", "w", "followup");
+            var headings2 = DevSets.ReadShapesDev(root, ShapesDevTranche.Headings2, out var sha);
+
+            // Assert: the missing file is noted, the present one scored with the renderer of the single-shape tranches
+            var expected = new List<string> { ShapesDevReport.RenderTrancheMissing(ShapesDevTranche.CompoundHead2), string.Empty };
+            expected.AddRange(ShapesDevReport.RenderTranche("m", ShapesDevTranche.Headings2, sha, ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.Headings2, headings2), "w"));
+            Assert.Equal(expected, lines);
+            Assert.Contains("## Shapes development set, headings-2 tranche: m", lines);
+            Assert.Equal("- The compound-head-2 tranche data/eval/shapes-dev/compound-head-2.tsv is not present; it is not scored.", lines[0]);
+
+            // Assert: an explicit follow-up tranche is scored alone, and its absent file is an error that names the file
+            var alone = ShapesDevCommand.Run(root, tagger, "m", "w", "headings-2");
+            Assert.Equal(ShapesDevReport.RenderTranche("m", ShapesDevTranche.Headings2, sha, ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.Headings2, headings2), "w"), alone);
+            Assert.Contains("compound-head-2.tsv", Assert.Throws<FileNotFoundException>(() => ShapesDevCommand.Run(root, tagger, "m", "w", "compound-head-2")).Message, StringComparison.Ordinal);
+
+            // Assert: "new" scores the three first-generation tranches only (the follow-up files are present but not selected)
+            var firstGeneration = ShapesDevCommand.Run(root, tagger, "m", "w", "new");
+            Assert.Equal(3, firstGeneration.Count(l => l.StartsWith("## ", StringComparison.Ordinal)));
+            Assert.DoesNotContain(firstGeneration, l => l.Contains("headings-2", StringComparison.Ordinal) || l.Contains("compound-head-2", StringComparison.Ordinal));
+
+            // Assert: with both files both sections come, in order
+            WriteShapes(root, "compound-head-2.tsv", CompoundHead2File());
+            var both = ShapesDevCommand.Run(root, tagger, "m", "w", "followup");
+            Assert.Equal(new[] { "## Shapes development set, compound-head-2 tranche: m", "## Shapes development set, headings-2 tranche: m" }, both.Where(l => l.StartsWith("## ", StringComparison.Ordinal)));
+            var compound2 = DevSets.ReadShapesDev(root, ShapesDevTranche.CompoundHead2, out var compound2Sha);
+            var expectedBoth = ShapesDevReport.RenderTranche("m", ShapesDevTranche.CompoundHead2, compound2Sha, ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.CompoundHead2, compound2), "w").ToList();
+            expectedBoth.Add(string.Empty);
+            expectedBoth.AddRange(ShapesDevReport.RenderTranche("m", ShapesDevTranche.Headings2, sha, ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.Headings2, headings2), "w"));
+            Assert.Equal(expectedBoth, both);
         }
         finally
         {
