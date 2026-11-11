@@ -199,8 +199,9 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   two files: a real file is admitted, and a link as the file, as its folder or as the `data` folder is refused; links as
   in the training test below; skipped where none can be made and on .NET Framework),
   `DataGuard_EnsureTrainable_HeldOutOrDevelopmentFile_Refused` (also in other spellings of the path),
-  `DataGuard_EnsureTrainable_TrainingCorpus_Admitted` (the six training corpora, the imperative, compound and headings
-  ones included),
+  `DataGuard_EnsureTrainable_TrainingCorpus_Admitted`   (the training corpora of `training.json`, the imperative,
+  compound, headings
+  and follow-up ones included),
   `DataGuard_EnsureTrainable_PathOutsideDataRoot_Refused` (a dotted
   detour or a path outside the `data` folder), `CorpusReader_LoadSources_RootedPathOutsideData_Refused` (a rooted source
   path, which `Path.Combine` lets replace the repository root),
@@ -286,8 +287,10 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
 - **The check**: `ModelBuilder_Check_CommittedFile_DetectsStaleMissingAndInvalid` (the compressed committed form of the
   fresh image is current, another seed or another temperature is stale, no file is missing, bytes that are no weights file
   are invalid).
-- **Configuration**: `ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical` (on .NET 8 and later: six existing
-  corpora, the imperative source with weight 1 and the compound and headings sources with weight 0, and rewriting the
+- **Configuration**: `ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical` (on .NET 8 and later: the named sources
+  of the configuration in order, each file existing, the
+  imperative source with weight 1 and the compound and headings sources, follow-up ones included, with weight 0,
+  and rewriting the
   file gives the
   same text) and `ConfigFile_Parse_UnknownMemberOrBadRange_Throws`.
 - **Development metrics**: `DevSets_ParseGoldDev_Fixture_ReadsTargetsAndMapsClasses`,
