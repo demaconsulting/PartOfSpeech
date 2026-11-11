@@ -212,6 +212,7 @@ Rules: do not read, list or search any other file or folder (no repository searc
 private folder); do not repair or post-process the output by script; do not ask questions; finish by listing the part files you wrote.
 """
 PR19_TEMPLATE_SHA256 = "9f1da5238dbcd196ca95b0795194245846955d2bb3a95a70bf0540d112d17db5"       # the template with the work folder of PR #19 filled in (1,903 bytes)
+# The two session paths below are part of the appendix text whose SHA-256 is recorded in the RUN-LOG and asserted by the tests: do not change them.
 PAUSE_FILE = r"C:\Users\mnixon\.copilot\session-state\217fb8fb-495d-4da7-89a1-b33f6a7805ad\files\PAUSE"
 IP_PATH = r"C:\Users\mnixon\.copilot\session-state\b6862325-7069-4ff9-a4fc-abb8ecb60acc"
 # Appended after the frozen block (hash recorded separately). The PAUSE rule is quoted verbatim; a labeler cannot update STATE.md or commit, so the

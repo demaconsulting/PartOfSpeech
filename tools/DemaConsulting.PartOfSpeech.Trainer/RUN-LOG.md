@@ -4680,6 +4680,7 @@ python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compou
 - Normal process priority for the runs (the owner's allowance, recorded in the pre-registration).
 - No held-out look: the held-out sets were never used by this experiment, so it adds no entry to the list of looks.
 - The driver `compound-heading/run_arms.ps1` is frozen by SHA-256, and its parameter defaults `$PyCache` and `$PauseFile` are paths of the session that ran the experiment (a folder under the session state of that machine). They are overridden by `-PyCache` and `-PauseFile` (the recorded commands pass `-PyCache`), and a reproduction must pass its own values. The file is not edited because that would change its frozen hash.
+- The same holds for the frozen driver `context-features/run_arms.ps1` (its `$PyCache` default is a path of that session; pass `-PyCache`). Neither driver is edited, for the same reason.
 - One heading line of the data of the arms (1 of the 375 lines, `headings-0150`, from the National Bureau of Standards Handbook 65, a document whose record also lists a private non-profit organization as a co-author) was later removed by the project owner; see "Amendment after the result: removal of one heading line" below. The arms were run with that line included.
 
 ### Open questions and possible follow-ups
@@ -4774,6 +4775,8 @@ The labeler prompt is the frozen block of PR #19 (section "Labeler prompt (froze
 | the sub-agent appendix (758 bytes: the PAUSE rule verbatim, the IP rule, the carve-out) | `27ba85551969b1ea3225c2417f6b1a66215c3a12c77b3cbe62c6af8b3c49ed19` |
 
 The appendix, appended after the frozen block (the `prompt` command prints both), reads: the PAUSE rule verbatim ("Before each heavy step (fetch, build, training run, labeling launch), check whether `...\files\PAUSE` exists. **If it does:** don't start the step; update `STATE.md` with the resume point, make a local WIP commit (no push), end the turn and reply "PAUSED"."), then: a labeler cannot update `STATE.md` or commit, so it writes nothing and replies "PAUSED" if that file exists, and testing the existence of that one path is the only other file access it is allowed; and: never open anything under the session folder of the earlier consumer-report work and never read or use any sentence supplied by a consumer. The orchestrator performs the check before every launch.
+
+Note on session paths: the SHA-256 values recorded here for the frozen block and for this appendix are computed over the exact text, which contains the session paths of the machine that ran the labeling (the PAUSE file, the work folder and the folder of the earlier consumer-report work). The constants in `tools/data/followup_data.py` and the matching values in `tools/data/tests/test_followup_data.py` therefore keep those paths, because replacing them with placeholders would change the recorded hashes. They are inputs of a past labeling run, not settings: a reproduction on another machine passes its own work folder (`--work`), sets its own two constants, and records its own hashes.
 
 ### Contingencies (pre-registered)
 
