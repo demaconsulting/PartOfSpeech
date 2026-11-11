@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore usfs usbm ncwm nltk fcda usbr safehandlingofbo -->
+<!-- cspell:ignore usfs usbm ncwm nltk fcda usbr safehandlingofbo airforce Jaccard -->
 
 # Shapes Development Set
 
@@ -14,7 +14,9 @@ never report it as a held-out figure (the [shape probe](../shapes/README.md) sta
 A second file, `hard.tsv`, is the **hard tranche**: 460 real sentences (400 target items and 60 controls) of the contested cases
 of four of the five shapes, built by a pre-registered, model-independent rule (see [Hard Tranche](#hard-tranche)). Three more
 files, `compound-head.tsv`, `headings.tsv` and `named-state.tsv`, are the **new tranches**: one shape each that the first two
-files do not measure (see [New Tranches](#new-tranches)). Everything above and below this paragraph that gives a count
+files do not measure (see [New Tranches](#new-tranches)). Two further files, `compound-head-2.tsv` and `headings-2.tsv`, are the
+**follow-up tranches**: 255 and 129 more items of the shapes of `compound-head` and `headings`, from new documents (see
+[Follow-up Tranches](#follow-up-tranches)). Everything above and below this paragraph that gives a count
 describes the standard tranche (`dev.tsv`) unless it says otherwise.
 
 ## Source and Provenance
@@ -77,7 +79,11 @@ describes the standard tranche (`dev.tsv`) unless it says otherwise.
 | `headings.tsv` | the 115 heading lines of the `headings` tranche (95 targets, 20 controls), same block format plus `# kind`; ids `shapes-dev-headings-NNNN` |
 | `named-state.tsv` | the 112 sentences of the `named-state` tranche (100 targets, 12 controls), same block format; ids `shapes-dev-named-state-NNNN` |
 | `<tranche>-sources.tsv` | the documents of a new tranche (74, 51 and 59), same columns as `sources.tsv` |
-| `<tranche>-leakage-report.tsv` | counts of a new tranche against every other evaluation set, the standard and the hard tranche included, and against the other new tranches (shared documents among the new tranches are reported, not gated) |
+| `<tranche>-leakage-report.tsv` | counts of a new tranche against every other evaluation set, the standard and the hard tranche included, and against the other new tranches (shared documents among the tranches of one generation are reported, not gated; a document shared between the first generation and the follow-up fails) |
+| `compound-head-2.tsv` | the 255 items of the `compound-head-2` tranche (210 targets, 45 controls), same block format as `compound-head.tsv`; ids `shapes-dev-compound-head-2-NNNN` |
+| `headings-2.tsv` | the 129 heading lines of the `headings-2` tranche (109 targets, 20 controls), same block format plus `# kind` as `headings.tsv`; ids `shapes-dev-headings-2-NNNN` |
+| `compound-head-2-sources.tsv`, `headings-2-sources.tsv` | the documents of the follow-up tranches (89 and 35), same columns as `sources.tsv` |
+| `compound-head-2-leakage-report.tsv`, `headings-2-leakage-report.tsv` | counts of a follow-up tranche against every other evaluation set; a shared document is allowed only with the other follow-up tranche (none with the first-generation tranches) |
 
 Each sentence block has the comments `sent_id`, `source_id`, `text`, `shape`, `role` (`target` or `control`), `target` (the
 zero-based index of the judged word), `lemma` and `origin` (`real` or `authored`), then one row `form`, `upos`, `status`
@@ -188,10 +194,14 @@ without its header or malformed, or when `sources.tsv` or the `source_id` of any
 the header is valid and means that nothing is excluded. The builder commands `exclusions`, `candidates`, `decide`, `sample`, `build` and `report` (both tranches)
 refuse when the record is missing or invalid; the optional work-folder table only adds rows, and every command uses the union of both tables (by id and normalized URL, through one loader), so a document listed by URL under another id is not collected either, and one id with two different URLs in the two tables is refused by every command.
 
-The record also lists one document of a training source, not of this set: `nbs-safehandlingofbo65unit` (National Bureau of Standards Handbook 65),
+The record also lists eight documents of training sources, not of this set. `nbs-safehandlingofbo65unit` (National Bureau of Standards Handbook 65) was
 removed from `data/headings/` by the project owner on 2026-11-10 because its record lists a private non-profit organization as a co-author and its
-public-domain basis is uncertain. The shapes development set has no text of it; `check_licenses.py` and the builders refuse it in the source tables
-and sentences of the training sources `data/compound/` and `data/headings/` too.
+public-domain basis is uncertain. Seven more documents (one state-agency report and six `usda-` and `usfs-` documents) are listed because their
+records name a state or local government body as an author, so a federal-only basis is not verifiable; these seven rows were recorded by the implementing agent
+(not decided by the project owner; the date in the `decided` column is the date the row was recorded, whereas the NBS row and the two NIST rows are owner decisions)
+(they are also in `data/compound/excluded-documents.tsv`
+and `data/headings/excluded-documents.tsv`). The shapes development set has no text of any of them; `check_licenses.py` and the builders refuse them in the
+source tables and sentences of the training sources `data/compound/` and `data/headings/` (both sources of each folder) and of every tranche of this set.
 
 ## Sources
 
@@ -580,6 +590,132 @@ shipped model"; the figures are kept there only.
 - **`compound-head` is the hardest block:** the band takes q ascending, so every target has q below 0.30 for the Basic classifier; it is "contested for the Basic classifier", not intrinsically hard.
 - **Same text family:** the tranches are cut from technical manuals and bulletins; the `headings` lines come from OCR and keep a few odd line joins that the filter could not see.
 - **Model labels:** two models, no human review; the hand check is a model review of 60 items.
+
+## Follow-up Tranches
+
+Two more development files, `compound-head-2.tsv` and `headings-2.tsv`, extend the tranches `compound-head` and `headings` with items from **new**
+US federal documents (no document of any earlier table of this repository, and no document of the training sources; the two files may share documents with each other). Each is for development only,
+and each gold tag is the agreement of two blind model labelers. They have the shapes, the block format and the conventions of the new tranches above
+(`n-compound-head-ambiguous` and `heading-titlecase`; ids `shapes-dev-compound-head-2-NNNN` and `shapes-dev-headings-2-NNNN`; the same comments
+`shape`, `role`, `target`, `lemma`, `origin` and, for headings, `kind`). They are built by `python tools/data/followup_data.py` (the normative text is
+its docstring; the pre-registered rule is at commit `8c9f17fc5cb7e5c35f91827fc242980f407bd42d`, and the trainer run log, section "Follow-up", records
+the amendments) and no PartOfSpeech model takes part in the selection.
+
+| Tranche | File | Items | Targets | Controls | Documents | Head or word lemmas | Tokens |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `compound-head-2` | `compound-head-2.tsv` | 255 | 210 (gold NOUN) | 45 (the same lemma as a verb, gold VERB) | 89 | 157 | 4,576 |
+| `headings-2` | `headings-2.tsv` | 129 | 109: `imperative` 59 (gold VERB), `noun` 50 (gold NOUN) | 20: `proper` (gold PROPN) | 35 | 85 | 678 |
+
+`compound-head.tsv` and `compound-head-2.tsv` together have 310 targets and 65 controls; `headings.tsv` and `headings-2.tsv` together have 204 targets
+(`imperative` 104 with the 45 of `headings.tsv`, `noun` 100 with its 50) and 40 controls. The two follow-up tranches share 30 documents and no sentence;
+each shares no document with any other tranche, no document with a training source, and no sentence or near duplicate with any set (see "Leakage and
+license checks" below). The judged word of an item is never `disputed`; other tokens may be: 34 sentences of `compound-head-2` (43 tokens) and 15 lines of
+`headings-2` (16 tokens) have a disputed non-target token (the tag in the file is the first labeler's, status `disputed`).
+
+### `compound-head-2`
+
+- **The judged word** is the head (the last noun) of a noun compound in a spelling that the lexicon lists as noun and verb, in the frame of
+  `n-compound-head-ambiguous` (`shapes_dev_extra.compound_ambiguous_hit`, as `compound-head`). 210 targets over 157 head lemmas in 79 documents; 26 of the
+  targets have an `-ing` head (36 of the 310 targets of both files, 11.6 percent; the registered limit is 25 percent). The controls are 45
+  sentences over 32 lemmas of the targets in which the same spelling is a verb.
+- **Selection signal:** the contested band of the pinned WordSense Basic classifier, `0.10 <= q < 0.97` of the noun-versus-verb mass of the head
+  (computed once from a fixed table, `hmm.tsv`; no PartOfSpeech model), taken with the smallest `q` first. The development side of the pool had
+  17,502 frame hits (6,229 in the band) in 104,010 clean sentences; 800 target candidates over 431 lemmas and 80 control candidates were labeled;
+  265 targets were kept by the decision rule and 210 by the caps.
+- **Caps:** at most 4 targets per head lemma counted over both files (so the 100 targets of `compound-head` count), 150 to 210 targets (210, the cap),
+  at most 2 controls per lemma, 30 to 45 controls (45, the cap; 47 were eligible), `-ing` heads at most 25 percent of the 310 targets. 57 items
+  (55 targets and 2 controls) were dropped by the caps.
+- **Controls are 17.6 percent of the new items** (45 of 255), below the requested share of about 20 percent: the cap of 45 binds, not the supply
+  (47 controls were eligible). With the 20 controls of `compound-head.tsv` the two files have 65 controls of 375 items (17.3 percent).
+
+| Family | Documents | Items |
+| --- | ---: | ---: |
+| `army` | 44 | 155 |
+| `usfs` | 12 | 39 |
+| `navy` | 8 | 17 |
+| `usda` | 9 | 13 |
+| `marine` | 2 | 7 |
+| `airforce` | 2 | 6 |
+| `other` | 3 | 5 |
+| `nbs` | 2 | 4 |
+| `phs` | 4 | 4 |
+| `interior` | 1 | 3 |
+| `usbr` | 2 | 2 |
+
+### `headings-2`
+
+- **The judged word** is a capitalized word of a Title Case line: `imperative` (token 0, the base-form verb that starts an instruction, gold VERB; frame
+  of `heading-titlecase` strength 0: token 1 is a determiner, an object pronoun, an adverb or a particle), `noun` (a non-initial common noun that ends its
+  noun phrase, gold NOUN) or `proper` (a control: a word that names one particular entity, gold PROPN). The lines come from heading lines, table-of-contents
+  lines and labeled step titles (`Task 3`, `Step 2.1`; the label is removed); ALL-CAPS and sentence-case step titles are not in scope. A line is dropped when
+  its lower-case token set has Jaccard similarity 0.8 or more with any training heading line (old, new, or of the training side of the pool). The
+  tranche has 27 imperative lemmas (59 lines in 8 documents), 44 noun lemmas, at most 6 lines per lemma over imperative and noun and at most 20 per document.
+- **Selection signal:** position and lexicon only; no band and no model.
+- **The imperative kind is short of the requested target: 59 lines against about 100** (the registered floor is 80, the cap 130; the tranche is built
+  with the registered waiver `--allow-short`). The supply of real Title Case instruction lines in the development documents is the limit, not a
+  labeling rule: 60 candidates were labeled and 59 kept (1 dropped as a class mismatch). The `noun` kind (floor 30, cap 50) and the `proper` controls
+  (floor 12, cap 20) are at their caps (109 and 24 were kept by the decision rule).
+
+| Family | Documents | Lines |
+| --- | ---: | ---: |
+| `army` | 20 | 88 |
+| `usfs` | 5 | 26 |
+| `usbr` | 2 | 3 |
+| `marine` | 1 | 3 |
+| `interior` | 1 | 2 |
+| `other` | 1 | 2 |
+| `usda` | 2 | 2 |
+| `airforce` | 1 | 1 |
+| `navy` | 1 | 1 |
+| `phs` | 1 | 1 |
+
+### Source and Basis
+
+The 89 and 35 documents are US federal government works (17 U.S.C. 105), one `license_basis` cell per document in `compound-head-2-sources.tsv` and
+`headings-2-sources.tsv` (the agency named in the record, the record's rights statement where it has one, and the check that the text carries no copyright,
+permission, third-party credit or distribution restriction), retrieved from the Internet Archive on 2026-11-10 and hashed. Publication years are 1881 to
+2017 (74 of the 89 documents are from 1940 or later) for `compound-head-2` and 1944 to 2013 (all 35 from 1940 or later) for `headings-2`. No document is in
+a table of used sources, in `excluded-sources.tsv` or in any `excluded-documents.tsv`; no FAA text, no Wikipedia, no share-alike or non-commercial text,
+no Universal Dependencies text, no sentence supplied by any consumer, and no document with a non-federal creator, publisher or co-author.
+
+### Inputs of the Follow-up Selection
+
+| Input | Value |
+| --- | --- |
+| Documents | 416 US federal documents of the follow-up (147 on the development side, 269 on the training side; whole title families are on one side); `sources-draft.tsv` SHA-256 `77e6a5250877694ae67e36a5a133d6cff6f8e245864ed1434f9fab6114d2f2c2` |
+| `tokens.tsv` SHA-256 (the units of the draft: 767,460) | `4387679a975ee8ca005f8d9267ab38e2bc414ee888d907701e25cff2cd406e98` |
+| WordSense commit and `DemaConsulting.WordSense.dll` SHA-256 | `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
+| `hmm.tsv` SHA-256 (the Basic classifier's noun and verb mass for every token of the text; `compound-head-2` only) | `42c7588b9c01632a96749a1a14248e8bdf2cb1be64999e177bd657f288276edb` |
+
+### Hand Check of the Follow-up Tranches
+
+`claude-sonnet-5.5` (a model review, not a human review) judged 60 items of each tranche as built and 4 control items whose tag had been swapped on
+purpose, once, from one sample drawn with a fixed seed (`compound-head-2` 20261121: 60 targets; `headings-2` 20261122: 30 imperative, 15 noun, 15 proper).
+
+| Measure | `compound-head-2` | `headings-2` |
+| --- | ---: | ---: |
+| judged word correct | 60 of 60 (100.0%) | 60 of 60 (100.0%) |
+| whole item correct (no other token marked wrong) | 59 of 60 (98.3%) | 59 of 60 (98.3%) |
+| token precision (reported, not gated) | 99.91% (1 wrong of 1,066) | 99.70% (1 wrong of 333) |
+| controls accepted | 0 of 4 | 0 of 4 |
+| gate (judged word at least 95%, at most 1 control accepted) | passed | passed |
+
+### Leakage and License Checks
+
+`python tools/data/check_leakage.py --write-report` writes `compound-head-2-leakage-report.tsv` and `headings-2-leakage-report.tsv` (counts only) and adds
+the two tranches to the rows of the other reports. Result for both tranches: **0 shared documents, 0 exact sentences and 0 near duplicates** against
+open dev and test, gold v2, the STE challenge set, UD English-EWT, the standard and the hard tranche and the other three new tranches, and 0 shared
+word 5-grams with the shape probe; against each other the two tranches share 30 documents (reported, not gated) and no sentence. Every training source
+(including `compound2` and `headings2`) shares no document, exact sentence or near duplicate with them (rows of `leakage-report.tsv`).
+`check_licenses.py` scans both source tables (restricted text, FAA material and `excluded-sources.tsv`).
+
+### Limits of the Follow-up Tranches
+
+- **`headings-2` imperatives are few:** 59 lines in 8 documents against the requested about 100; a per-kind figure of this kind has a wide uncertainty.
+- **`compound-head-2` is contested for the Basic classifier**, like `compound-head`: every target has a small `q`; it is not intrinsically hard.
+- **Controls are 17.6 percent** (45 of 255) against the requested about 20 percent, bound by the cap.
+- **Same register:** technical manuals and reports (Army 155 of the 255 `compound-head-2` items and 88 of the 129 `headings-2` lines), mostly OCR text.
+- **Model labels:** two models, no human review; the hand check is a model review of 60 items per tranche.
 
 ## Known Limits
 

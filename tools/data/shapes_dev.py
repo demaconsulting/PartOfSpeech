@@ -17,8 +17,8 @@ Input layout of the work folder W (`--work W`):
                                `control` (a control uses the lemma in the class other than the shape's class)
   W/tokens.tsv                 written by `tokenize`: the tokens of every sentence (the corpus tokenization of the library)
   W/excluded-sources.tsv       optional; documents that must not be in the set: header `source_id<TAB>reason<TAB>decided`, one row per
-                               document (a document the owner dropped after its text was sourced or even labeled; `decided` is the
-                               date of the decision, YYYY-MM-DD, required by `build`; the two-column header is read by the other commands)
+                               document (a document dropped after its text was sourced or even labeled; `decided` is the
+                               date of the exclusion decision, YYYY-MM-DD, required by `build`; the two-column header is read by the other commands)
 
 Excluded sources (W/excluded-sources.tsv). `candidates` (every round) skips every sentence of an excluded document (drop reason
 `excluded-source`, one count per sentence; the document is not a rejected document, it is no candidate source at all). Items of an excluded
@@ -523,7 +523,7 @@ def _read_work_exclusions(work):
     Only `load_exclusions` calls this. The work-folder file is optional because the committed record is the fail-closed one:
     `load_exclusions` reads that record first and refuses when it is missing.
 
-    The header is `source_id<TAB>reason` with an optional third column `decided` (the date of the owner's decision, `YYYY-MM-DD`);
+    The header is `source_id<TAB>reason` with an optional third column `decided` (the date of the exclusion decision, `YYYY-MM-DD`);
     `decided` is "" when the column is absent. `build` requires it, because it is written to data/eval/shapes-dev/excluded-sources.tsv."""
     path = shared_path(work, EXCLUDED_SOURCES_FILE)
     if not os.path.exists(path):
@@ -1247,11 +1247,12 @@ class LeakageFilter:
 
     `new_tranches` (default True: the builders of the standard and hard tranches) adds the sentence keys of the committed newer tranches
     (compound-head, headings, named-state) to the held-out keys, so that a rebuild of the standard or hard tranche cannot take a sentence of
-    one of them. The builder of the newer tranches (`shapes_dev_extra`) passes False: it must not see its own earlier build.
+    one of them. The builder of the newer tranches (`shapes_dev_extra`) passes False: it must not see its own earlier build. `skip_tranches`
+    leaves named newer tranches out (the follow-up builder passes the names of its own two tranches for the same reason).
     """
 
-    def __init__(self, data_dir, include_ud=True, new_tranches=True):
-        self.held_out = leakage.held_out_overlap_keys(include_ud, new_tranches=new_tranches)
+    def __init__(self, data_dir, include_ud=True, new_tranches=True, skip_tranches=()):
+        self.held_out = leakage.held_out_overlap_keys(include_ud, new_tranches=new_tranches, skip_tranches=skip_tranches)
         self.train = set()
         trains = {}
         for label, parts in (("open-train", ("open", "train.tsv")), ("masc", ("masc", "masc.tsv")), ("silver", ("silver", "silver.tsv"))):

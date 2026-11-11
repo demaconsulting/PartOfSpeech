@@ -257,11 +257,13 @@ The **hard tranche** is the file `data/eval/shapes-dev/hard.tsv` in the same for
 `hard-sources.tsv` (same columns as `sources.tsv`) and `hard-leakage-report.tsv` (same columns, plus a row for the standard tranche
 whose document count may be above zero: the tranches may share a source document, never a sentence).
 
-The **single-shape tranches** are the files `data/eval/shapes-dev/compound-head.tsv`, `headings.tsv` and `named-state.tsv` in the same format (ids
+The **single-shape tranches** are the files `data/eval/shapes-dev/compound-head.tsv`, `headings.tsv` and `named-state.tsv`, and the follow-up tranches
+`compound-head-2.tsv` and `headings-2.tsv`, in the same format (ids
 `shapes-dev-<tranche>-NNNN`; the header says `<tranche> tranche` and `dev split`; `origin = real` only), each with `<tranche>-sources.tsv` (same columns as
 `sources.tsv`) and `<tranche>-leakage-report.tsv` (same columns; no shared document with the standard or the hard tranche, a shared document with another new
-tranche is reported). The `# shape` is `n-compound-head-ambiguous`, `heading-titlecase` or `n-named-state`. In `compound-head.tsv` and `named-state.tsv` the
-judged word of a target is NOUN or PROPN and of a control VERB. In `headings.tsv` a unit is a heading line, not a sentence, and there is a last comment
+tranche is reported). The `# shape` is `n-compound-head-ambiguous` (`compound-head.tsv`, `compound-head-2.tsv`), `heading-titlecase` (`headings.tsv`,
+`headings-2.tsv`) or `n-named-state`. In the compound-head files and `named-state.tsv` the
+judged word of a target is NOUN or PROPN and of a control VERB. In the headings files a unit is a heading line, not a sentence, and there is a last comment
 `# kind = noun | imperative | proper`: the judged word is tagged exactly NOUN (kind `noun`, a target), VERB (kind `imperative`, a target, token 0) or PROPN (kind
 `proper`, role `control`).
 
@@ -286,6 +288,13 @@ judged word), `# lemma = <lemma>` and `# stratum = noun | imperative | proper`; 
 token 0, the base form) or PROPN (stratum `proper`), as the heading rule of "Annotation Conventions" says. Each folder has `sources.tsv` (the 12 columns of the gold v2
 source table, used documents only), `excluded-documents.tsv` (`document_id, reason`) and `dropped-sentences.tsv` (`reason, sentences`); ids and counts only,
 never text. The convention linter reads both files (the fix tier must find no violation) but the corrections overlay never addresses them.
+
+The **follow-up training sources** `data/compound/compound-2.tsv` (source `compound2`, ids `compound2-NNNN`) and `data/headings/headings-2.tsv` (source
+`headings2`, ids `headings2-NNNN`) have exactly this format, each with `compound-2-sources.tsv` / `headings-2-sources.tsv` (the 12 columns of the gold v2
+source table), `…-excluded-documents.tsv` and `…-dropped-sentences.tsv`. The only differences are the file names and, in `headings-2.tsv`, the stratum
+names: `# stratum = imperative | initial-noun` (the judged word of an `initial-noun` line is token 0, tagged NOUN: the contrast stratum of a first word that can
+also be a verb; there is no `noun` or `proper` stratum). The linter reads both files in their own columns (`compound2`, `headings2`; the fix tier must find no violation) and the corrections
+overlay never addresses them. No tag rule changes: the heading rule of "Annotation Conventions" already says that a base verb that starts an instruction is VERB.
 
 **Corrections overlay** (`data/corrections/`, specified in full in its `README.md`). Corrections to the labels of the open
 corpus, MASC and the silver data are rows of three tables; the rows are applied to the corpus files (`corrections.py apply

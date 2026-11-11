@@ -42,14 +42,26 @@ DOCUMENT_KEY_LENGTH = 25
 # The label of the hard-shape development set among the evaluation sets, and the word n-gram length of the probe gate.
 SHAPES_DEV_LABEL = "shapes-dev"
 SHAPES_DEV_HARD_LABEL = "shapes-dev-hard"
-# The three newer tranches of the set (data/eval/shapes-dev/<name>.tsv): optional files, included as evaluation sets once they exist.
-SHAPES_DEV_NEW_TRANCHES = ("compound-head", "headings", "named-state")
+# The newer tranches of the set (data/eval/shapes-dev/<name>.tsv): optional files, included as evaluation sets once they exist. The last two
+# (SHAPES_DEV_FOLLOWUP_TRANCHES) are the follow-up tranches built by followup_data.py, which leaves both out of its own filter so that a
+# rebuild never sees its own earlier output.
+SHAPES_DEV_FOLLOWUP_TRANCHES = ("compound-head-2", "headings-2")
+SHAPES_DEV_FIRST_TRANCHES = ("compound-head", "headings", "named-state")
+SHAPES_DEV_NEW_TRANCHES = SHAPES_DEV_FIRST_TRANCHES + SHAPES_DEV_FOLLOWUP_TRANCHES
+# The two generations of the newer tranches: tranches of one generation may share source documents (never a sentence); a document shared
+# between the two generations, or with the standard or hard tranche, is a leak (check_leakage.py gates it).
+SHAPES_DEV_GENERATIONS = (SHAPES_DEV_FIRST_TRANCHES, SHAPES_DEV_FOLLOWUP_TRANCHES)
 SHAPES_DEV_NEW_LABELS = tuple("shapes-dev-" + name for name in SHAPES_DEV_NEW_TRANCHES)
 SHAPES_DEV_LABELS = (SHAPES_DEV_LABEL, SHAPES_DEV_HARD_LABEL)
 SHAPES_DEV_ALL_LABELS = SHAPES_DEV_LABELS + SHAPES_DEV_NEW_LABELS
 # data/eval/shapes-dev/hard.tsv is committed: a missing hard tranche file fails loudly like every other required set.
 HARD_TRANCHE_REQUIRED = True
 PROBE_GRAM_WORDS = 5
+
+
+def same_generation(first, second):
+    """True when the two newer tranches (names such as "headings-2") belong to the same generation and may share source documents."""
+    return any(first in generation and second in generation for generation in SHAPES_DEV_GENERATIONS)
 
 
 def _tsv_rows(path):
@@ -185,8 +197,10 @@ def require_sets(sets, required, kind):
         raise SystemExit("missing committed %s sets: %s" % (kind, ", ".join(missing)))
 
 
-def evaluation_sets(include_ud=True, shapes_dev=True, new_tranches=False):
+def evaluation_sets(include_ud=True, shapes_dev=True, new_tranches=False, skip_tranches=()):
     """{label: [(document id, text)]} of every evaluation set; a missing required set is a loud failure.
+
+    `skip_tranches` names newer tranches (for example SHAPES_DEV_FOLLOWUP_TRANCHES) that are left out even with `new_tranches=True`.
 
     `shapes_dev=False` leaves the hard-shape development set (all its tranches) out (and does not require them): the builder of that set
     (shapes_dev.py) checks its candidates against all the other sets through `held_out_overlap_keys` only, and a stale earlier build must not count.
@@ -203,6 +217,8 @@ def evaluation_sets(include_ud=True, shapes_dev=True, new_tranches=False):
             if not (new_tranches and label in SHAPES_DEV_NEW_LABELS):
                 sets.pop(label, None)
         required = tuple(label for label in required if label not in SHAPES_DEV_LABELS)
+    for name in skip_tranches:
+        sets.pop("shapes-dev-" + name, None)
     require_sets(sets, required, "evaluation")
     if include_ud:
         sets.update(ud_sets())
@@ -231,7 +247,7 @@ def gram_hashes(text, n=PROBE_GRAM_WORDS):
     return {stable_hash("gram", " ".join(w[i:i + n])) for i in range(len(w) - n + 1)}
 
 
-def held_out_overlap_keys(include_ud=True, n=PROBE_GRAM_WORDS, new_tranches=False):
+def held_out_overlap_keys(include_ud=True, n=PROBE_GRAM_WORDS, new_tranches=False, skip_tranches=()):
     """The only view of the held-out sets that building a development set may have: an opaque frozen set of hashes.
 
     It holds the hashed sentence keys of every evaluation set but the hard-shape development set, and the hashed word
@@ -243,7 +259,7 @@ def held_out_overlap_keys(include_ud=True, n=PROBE_GRAM_WORDS, new_tranches=Fals
     newer tranches does not).
     """
     found = set()
-    for label, items in evaluation_sets(include_ud, shapes_dev=False, new_tranches=new_tranches).items():
+    for label, items in evaluation_sets(include_ud, shapes_dev=False, new_tranches=new_tranches, skip_tranches=skip_tranches).items():
         for _, text in items:
             h = key_hash(text)
             if h is not None:

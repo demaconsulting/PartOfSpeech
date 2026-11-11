@@ -263,8 +263,8 @@ run log is excluded because it records the figures of historical runs.
 
 **Test**: `PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora` (in `PartOfSpeechDataTests.cs`)
 
-Reads the corpus paths of `training.json` and asserts for each that it is one of the six training corpora (open, MASC,
-silver, imperative, compound and headings), that the file
+Reads the corpus paths of `training.json` and asserts for each that it is one of the committed training corpora (open,
+MASC, silver, imperative, compound, headings and the two follow-up sources compound2 and headings2), that the file
 is committed, that it is not a restricted corpus, that its data folder declares an allowed license, and that the section
 of the third-party notice on the embedded weights names MASC, its license, the open corpus, the silver corpus and the
 imperative source. That
@@ -414,7 +414,8 @@ and not just the project file. The reasons for a license file instead of an expr
 **Tests**: the `PartOfSpeech_ThirdPartyNotices_*`, `PartOfSpeech_DataLicensing_*`, `PartOfSpeech_DataProvenance_*`,
 `PartOfSpeech_DataCorrections_*`, `PartOfSpeech_TrainingData_*`, `PartOfSpeech_EvaluationData_*`, `PartOfSpeech_Leakage_*`,
 `PartOfSpeech_ShapesDev_*`, `PartOfSpeech_ShapesDevHard_*`, `PartOfSpeech_ShapesDevNew_*`, `PartOfSpeech_Imperative_*`,
-`PartOfSpeech_Compound_*`, `PartOfSpeech_Headings_*`, `PartOfSpeech_TargetedSources_*`
+`PartOfSpeech_Compound_*`, `PartOfSpeech_Headings_*`, `PartOfSpeech_Compound2_*`, `PartOfSpeech_Headings2_*`,
+`PartOfSpeech_Followup_*`, `PartOfSpeech_TargetedSources_*`
 and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
 
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
@@ -547,7 +548,9 @@ most 12 `headings` targets per document, no `headings` line that ends in a page 
 `Sources_AreListedOpenAndNotExcluded` asserts the exact documents with their counts, an open basis, no FAA mention
 and no excluded id or URL; `LeakageReports_RecordNoOverlap` asserts that every report names every other evaluation
 set and tranche, with no exact or near-duplicate overlap, no shared probe 5-gram and no shared document except
-among the three new tranches; `Sentences_AreDisjointFromTheOtherEvaluationSets` asserts, by reading the files,
+among the tranches of one generation (the three first-generation tranches, or the two follow-up tranches; the
+same rule `check_leakage.py` gates with `leakage.same_generation`); `Sentences_AreDisjointFromTheOtherEvaluationSets`
+asserts, by reading the files,
 that no sentence is shared with any other evaluation set, tranche or the imperative source and no document with
 any of them but a new tranche; and `Selection_UsesNoPartOfSpeechModel` scans `shapes_dev_extra.py` for a weights
 file, a decoder, a tagger or the shapes evaluation and for a direct read of a held-out set. The developer-run
@@ -557,6 +560,20 @@ number or page range is refused), the exact-tag decision and the frame rules aft
 quota gates, the hand-check sample and gate, and the registry of the shapes. `tools/data/tests/test_shapes_dev.py`
 covers that the builders of the standard and hard tranches see the sentence keys of the three newer tranches (a
 rebuild cannot take one of their sentences) and that the builder of the newer tranches does not see its own.
+
+The two follow-up tranches (`compound-head-2.tsv`, `headings-2.tsv`; requirements `PartOfSpeech-Data-ShapesDevFollowup*`)
+are covered by the same `PartOfSpeech_ShapesDevNew_*` data tests, whose list of tranches has five entries (the three
+above and the follow-up pair), each with its own quota groups: `compound-head-2` targets 150 to 210 and controls 30 to
+45, at most 4 targets per lemma, at most 25% `-ing` heads; `headings-2` noun 30 to 50, imperative 59 (the committed
+count; the registered floor of 80 was not reached, and the shortfall is disclosed in the README and the run log) to
+130 and proper controls 12 to 20, at most 6 targets per lemma and 20 per document. The tests choose the heading rules
+by the shape of the tranche, not by its name. The leakage test requires, for each tranche, a row for every other
+evaluation set and tranche, no shared document with a tranche of the other generation (the two follow-up tranches
+share documents with each other, as the first-generation tranches do) and no sentence shared; the separation test
+applies the same rule by reading the files. The test
+`PartOfSpeech_Followup_Selection_UsesNoPartOfSpeechModel` scans `followup_data.py` for a weights file, a decoder, a tagger
+or the shapes evaluation and for a probe file or probe reader. The developer-run Python tests
+`tools/data/tests/test_followup_data.py` cover the builder on a miniature work folder.
 
 The imperative training source (`data/imperative/`) is covered by the existing tests (its folder is among the licensed
 folders, its README among the provenance statements, its source table among the source tables, its corpus among the
@@ -618,6 +635,17 @@ leakage-report and training-configuration tests read them. The `PartOfSpeech_Com
   tagger or the shapes evaluation and for a probe file or probe reader.
 - `TargetedSources_Notice_NamesTheSourcesAndTheirBasis` asserts that the third-party notice names `data/compound/` and
   `data/headings/`, 17 U.S.C. 105, the CC0 dedication, the two source tables and weight 0 (not part of the mix).
+- The follow-up sources `compound2` and `headings2` (`compound-2.tsv`, `headings-2.tsv`) are read by the same generic tests
+  and by the same targeted-source tests (the leakage report, the source-table, the document and the license cases have
+  one case per source, four in all): `Compound2_Corpus_IsWellFormedAndWithinQuotas` asserts the header lines, 600 to 1,100
+  sentences with the ids `compound2-0001` upward without a gap, the head and tag rules of `Compound_Corpus_*`, at most 935
+  noun and 165 verb items, at least 200 head lemmas, at most 4 sentences per head lemma and 20 per document;
+  `Headings2_Corpus_IsWellFormedAndWithinQuotas` asserts the header lines, 2 to 10 tokens without a final period, the ids
+  `headings2-0001` upward, the judged word at token 0 tagged VERB (stratum `imperative`, 150 to 400 lines) or NOUN (the
+  contrast stratum `initial-noun`, at most half as many lines), at most 6 lines per lemma and 25 per document;
+  `Followup_TrainingSentences_AreDisjointFromEveryOtherTrainingSource` asserts, by reading the files, that no sentence of
+  either source is a sentence of any other training source (the older compound and headings sources included) or of the
+  other follow-up source, and that no document is a document of any other training source but the other follow-up source.
 
 The developer-run Python tests `tools/data/tests/test_compound_heading_data.py` cover the builder on a miniature folder,
 including the gate of `check_leakage.py` on the near duplicates of both sources and its comparison with the other

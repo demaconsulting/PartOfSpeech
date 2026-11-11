@@ -289,6 +289,14 @@ figure from it is optimistic by construction and is never reported as a held-out
   have a shipped-model baseline (including the wrong answers at a confidence of at least 0.95) in the
   [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: new tranches
   baseline of the shipped model").
+- **Two follow-up tranches** (`compound-head-2.tsv`, `headings-2.tsv`,
+  [README](../../data/eval/shapes-dev/README.md#follow-up-tranches)) add 255 and 129 items of the shapes of `compound-head`
+  and `headings` from other documents, so that the compound and heading measure is bigger (310 compound targets and
+  204 heading targets in all). They are for development only, were built by a pre-registered rule that uses no
+  PartOfSpeech output, and have
+  a shipped-model baseline in the
+  [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Follow-up: baseline of the shipped
+  model on the new tranches"). They are not held-out figures.
 
 ## Reproduce the Results
 

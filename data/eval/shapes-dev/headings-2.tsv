@@ -1,0 +1,1976 @@
+# corpus = DemaConsulting.PartOfSpeech shapes development set, headings-2 tranche (UPOS), dev split
+# license = CC0-1.0 for annotations and selection; sentences are US federal government works, US public domain, see headings-2-sources.tsv
+# columns = form, upos, status
+# status = unanimous | disputed (two blind model labelers; disputed = they differ, the tag is the first labeler's)
+# judged word = per sentence: shape (heading-titlecase), role (target | control), target (zero-based token index), lemma, origin (real), kind (noun | imperative | proper); the judged word is never disputed
+# selection = Title Case heading, table-of-contents and step-title lines of federal documents, by position and lexicon only; the gold is the agreement of two blind labelers (see README.md)
+# use = development only: select settings here, never train on it, never report it as a held-out figure
+# file = headings-2.tsv
+
+# sent_id = shapes-dev-headings-2-0001
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Maintain the Air Cleaner System on an M998-Series Vehicle
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = maintain
+# origin = real
+# kind = imperative
+Maintain	VERB	unanimous
+the	DET	unanimous
+Air	NOUN	unanimous
+Cleaner	NOUN	unanimous
+System	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M998-Series	PROPN	disputed
+Vehicle	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0002
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Conduct a Cordon and Search (Platoon-Company)
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = conduct
+# origin = real
+# kind = imperative
+Conduct	VERB	unanimous
+a	DET	unanimous
+Cordon	NOUN	unanimous
+and	CCONJ	unanimous
+Search	NOUN	unanimous
+(	PUNCT	unanimous
+Platoon-Company	NOUN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = shapes-dev-headings-2-0003
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Clear a Building
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = clear
+# origin = real
+# kind = imperative
+Clear	VERB	unanimous
+a	DET	unanimous
+Building	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0004
+# source_id = army-stp-31-18-e-34-sm-tg-special-forces-communications-sergeant-skill-levels-3-4-2003
+# text = Construct a Doublet Antenna
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+Construct	VERB	unanimous
+a	DET	unanimous
+Doublet	NOUN	unanimous
+Antenna	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0005
+# source_id = army-fm-31-11-c-s-special-forces-soldiers-manual-for-mos-11-c-sqi-s-1980
+# text = Make a Fishhook o-431
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = make
+# origin = real
+# kind = imperative
+Make	VERB	unanimous
+a	DET	unanimous
+Fishhook	NOUN	unanimous
+o-431	X	unanimous
+
+# sent_id = shapes-dev-headings-2-0006
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Lay a Mortar Using Direct AlignMent
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = lay
+# origin = real
+# kind = imperative
+Lay	VERB	unanimous
+a	DET	unanimous
+Mortar	NOUN	unanimous
+Using	VERB	unanimous
+Direct	ADJ	unanimous
+AlignMent	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0007
+# source_id = army-1944-12IntelligenceBulletinVol03No04
+# text = Watch Out for These Tricks
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = watch
+# origin = real
+# kind = imperative
+Watch	VERB	unanimous
+Out	ADV	unanimous
+for	ADP	unanimous
+These	DET	unanimous
+Tricks	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0008
+# source_id = army-tc-90-1-training-for-urban-operations
+# text = Need an Operations
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = need
+# origin = real
+# kind = imperative
+Need	VERB	unanimous
+an	DET	unanimous
+Operations	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0009
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Camouflage a Mortar Firing POSition
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = camouflage
+# origin = real
+# kind = imperative
+Camouflage	VERB	unanimous
+a	DET	unanimous
+Mortar	NOUN	unanimous
+Firing	NOUN	unanimous
+POSition	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0010
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Conduct a Raid by a Platoon
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = conduct
+# origin = real
+# kind = imperative
+Conduct	VERB	unanimous
+a	DET	unanimous
+Raid	NOUN	unanimous
+by	ADP	unanimous
+a	DET	unanimous
+Platoon	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0011
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Boresight a Mortar for Deflection Using an M2 Aiming Circle
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = boresight
+# origin = real
+# kind = imperative
+Boresight	VERB	unanimous
+a	DET	unanimous
+Mortar	NOUN	unanimous
+for	ADP	unanimous
+Deflection	NOUN	unanimous
+Using	VERB	unanimous
+an	DET	unanimous
+M2	PROPN	unanimous
+Aiming	NOUN	unanimous
+Circle	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0012
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Perform a Function Check on an M249 Machine Gun
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = perform
+# origin = real
+# kind = imperative
+Perform	VERB	unanimous
+a	DET	unanimous
+Function	NOUN	unanimous
+Check	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M249	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0013
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Boresight an M252 81-mM Mortal
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = boresight
+# origin = real
+# kind = imperative
+Boresight	VERB	unanimous
+an	DET	unanimous
+M252	PROPN	unanimous
+81-mM	ADJ	unanimous
+Mortal	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0014
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Maintain an M68 Sight (Close Combat Optic)
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = maintain
+# origin = real
+# kind = imperative
+Maintain	VERB	unanimous
+an	DET	unanimous
+M68	PROPN	unanimous
+Sight	NOUN	unanimous
+(	PUNCT	unanimous
+Close	ADJ	unanimous
+Combat	NOUN	unanimous
+Optic	NOUN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = shapes-dev-headings-2-0015
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Construct a Field-Expedient Antenna
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+Construct	VERB	unanimous
+a	DET	unanimous
+Field-Expedient	ADJ	unanimous
+Antenna	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0016
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Prepare a Mortar Ballistic Computer with Initialization Data
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = prepare
+# origin = real
+# kind = imperative
+Prepare	VERB	unanimous
+a	DET	unanimous
+Mortar	NOUN	unanimous
+Ballistic	ADJ	unanimous
+Computer	NOUN	unanimous
+with	ADP	unanimous
+Initialization	NOUN	unanimous
+Data	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0017
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Lay an M249 Machine Gun Using Field-Expedient Methods
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = lay
+# origin = real
+# kind = imperative
+Lay	VERB	unanimous
+an	DET	unanimous
+M249	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+Using	VERB	unanimous
+Field-Expedient	ADJ	unanimous
+Methods	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0018
+# source_id = army-stp-31-18-e-34-sm-tg-special-forces-communications-sergeant-skill-levels-3-4-2003
+# text = Sterilize A Transmission Site
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = sterilize
+# origin = real
+# kind = imperative
+Sterilize	VERB	unanimous
+A	DET	unanimous
+Transmission	NOUN	unanimous
+Site	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0019
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Drive an M998-Series Vehicle
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = drive
+# origin = real
+# kind = imperative
+Drive	VERB	unanimous
+an	DET	unanimous
+M998-Series	PROPN	disputed
+Vehicle	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0020
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Construct a Fighting Position for an M47 Medium Antitank Weapon
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+Construct	VERB	unanimous
+a	DET	unanimous
+Fighting	NOUN	unanimous
+Position	NOUN	unanimous
+for	ADP	unanimous
+an	DET	unanimous
+M47	PROPN	unanimous
+Medium	ADJ	unanimous
+Antitank	ADJ	unanimous
+Weapon	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0021
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Conduct a Displacement by a Mortar Platoon
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = conduct
+# origin = real
+# kind = imperative
+Conduct	VERB	unanimous
+a	DET	unanimous
+Displacement	NOUN	unanimous
+by	ADP	unanimous
+a	DET	unanimous
+Mortar	NOUN	unanimous
+Platoon	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0022
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Maintain an M16A1 or M16A2 Rifle
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = maintain
+# origin = real
+# kind = imperative
+Maintain	VERB	unanimous
+an	DET	unanimous
+M16A1	PROPN	unanimous
+or	CCONJ	unanimous
+M16A2	PROPN	unanimous
+Rifle	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0023
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Lay a Ground-Mounted Mortar Using an M2 Compass
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = lay
+# origin = real
+# kind = imperative
+Lay	VERB	unanimous
+a	DET	unanimous
+Ground-Mounted	ADJ	unanimous
+Mortar	NOUN	unanimous
+Using	VERB	unanimous
+an	DET	unanimous
+M2	PROPN	unanimous
+Compass	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0024
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Boresight a 120-mM Mortal
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = boresight
+# origin = real
+# kind = imperative
+Boresight	VERB	unanimous
+a	DET	unanimous
+120-mM	ADJ	unanimous
+Mortal	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0025
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Lay a Carrier-Mounted Mortar Using an M2 Compass
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = lay
+# origin = real
+# kind = imperative
+Lay	VERB	unanimous
+a	DET	unanimous
+Carrier-Mounted	ADJ	unanimous
+Mortar	NOUN	unanimous
+Using	VERB	unanimous
+an	DET	unanimous
+M2	PROPN	unanimous
+Compass	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0026
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Maintain a Bayonet
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = maintain
+# origin = real
+# kind = imperative
+Maintain	VERB	unanimous
+a	DET	unanimous
+Bayonet	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0027
+# source_id = army-stp-31-18-e-34-sm-tg-special-forces-communications-sergeant-skill-levels-3-4-2003
+# text = Prepare a Joint Communications Plan
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = prepare
+# origin = real
+# kind = imperative
+Prepare	VERB	unanimous
+a	DET	unanimous
+Joint	ADJ	unanimous
+Communications	NOUN	unanimous
+Plan	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0028
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Construct a Fighting Position for an M60 Machine Gun
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+Construct	VERB	unanimous
+a	DET	unanimous
+Fighting	NOUN	unanimous
+Position	NOUN	unanimous
+for	ADP	unanimous
+an	DET	unanimous
+M60	PROPN	unanimous
+Machine	NOUN	unanimous
+Gun	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0029
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Conduct a Delay (Platoon-Company) (07-2-9004)
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = conduct
+# origin = real
+# kind = imperative
+Conduct	VERB	unanimous
+a	DET	unanimous
+Delay	NOUN	unanimous
+(	PUNCT	unanimous
+Platoon-Company	NOUN	unanimous
+)	PUNCT	unanimous
+(	PUNCT	unanimous
+07-2-9004	NUM	unanimous
+)	PUNCT	unanimous
+
+# sent_id = shapes-dev-headings-2-0030
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Lay a 60-mm Mortar for Deflection and Elevation
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = lay
+# origin = real
+# kind = imperative
+Lay	VERB	unanimous
+a	DET	unanimous
+60-mm	ADJ	unanimous
+Mortar	NOUN	unanimous
+for	ADP	unanimous
+Deflection	NOUN	unanimous
+and	CCONJ	unanimous
+Elevation	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0031
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Knock Out Bunker (07-3-D9406)
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = knock
+# origin = real
+# kind = imperative
+Knock	VERB	unanimous
+Out	ADV	unanimous
+Bunker	NOUN	unanimous
+(	PUNCT	unanimous
+07-3-D9406	NUM	disputed
+)	PUNCT	unanimous
+
+# sent_id = shapes-dev-headings-2-0032
+# source_id = army-stp-31-18-e-34-sm-tg-special-forces-communications-sergeant-skill-levels-3-4-2003
+# text = Construct a 14 Percent Off-Center-Fed Antenna
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+Construct	VERB	unanimous
+a	DET	unanimous
+14	NUM	unanimous
+Percent	NOUN	unanimous
+Off-Center-Fed	ADJ	unanimous
+Antenna	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0033
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Maintain the Engine on an M998-Series Vehicle
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = maintain
+# origin = real
+# kind = imperative
+Maintain	VERB	unanimous
+the	DET	unanimous
+Engine	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M998-Series	PROPN	disputed
+Vehicle	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0034
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Unload an M243 or M259 Smoke Grenade Launcher
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = unload
+# origin = real
+# kind = imperative
+Unload	VERB	unanimous
+an	DET	unanimous
+M243	PROPN	unanimous
+or	CCONJ	unanimous
+M259	PROPN	unanimous
+Smoke	NOUN	unanimous
+Grenade	NOUN	unanimous
+Launcher	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0035
+# source_id = army-fm-7-15-the-army-universal-task-list-2003
+# text = Determine the Morale Establish Train
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = determine
+# origin = real
+# kind = imperative
+Determine	VERB	unanimous
+the	DET	unanimous
+Morale	NOUN	unanimous
+Establish	VERB	unanimous
+Train	VERB	unanimous
+
+# sent_id = shapes-dev-headings-2-0036
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Unload an M202A1 Multishot Rocket Launcher
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = unload
+# origin = real
+# kind = imperative
+Unload	VERB	unanimous
+an	DET	unanimous
+M202A1	PROPN	unanimous
+Multishot	ADJ	unanimous
+Rocket	NOUN	unanimous
+Launcher	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0037
+# source_id = army-stp-31-18-e-34-sm-tg-special-forces-communications-sergeant-skill-levels-3-4-2003
+# text = Plan a Single-Channel Tactical Satellite Communications Network
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = plan
+# origin = real
+# kind = imperative
+Plan	VERB	unanimous
+a	DET	unanimous
+Single-Channel	ADJ	unanimous
+Tactical	ADJ	unanimous
+Satellite	NOUN	unanimous
+Communications	NOUN	unanimous
+Network	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0038
+# source_id = army-stp-31-18-e-34-sm-tg-special-forces-communications-sergeant-skill-levels-3-4-2003
+# text = Establish a Forward Operational Base Signal Center
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = establish
+# origin = real
+# kind = imperative
+Establish	VERB	unanimous
+a	DET	unanimous
+Forward	ADJ	unanimous
+Operational	ADJ	unanimous
+Base	NOUN	unanimous
+Signal	NOUN	unanimous
+Center	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0039
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Start an M998-Series Vehicle Using Auxiliary Power
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = start
+# origin = real
+# kind = imperative
+Start	VERB	unanimous
+an	DET	unanimous
+M998-Series	PROPN	disputed
+Vehicle	NOUN	unanimous
+Using	VERB	unanimous
+Auxiliary	ADJ	unanimous
+Power	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0040
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Boresight a Mortar for Elevation Using an M2 Compass
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = boresight
+# origin = real
+# kind = imperative
+Boresight	VERB	unanimous
+a	DET	unanimous
+Mortar	NOUN	unanimous
+for	ADP	unanimous
+Elevation	NOUN	unanimous
+Using	VERB	unanimous
+an	DET	unanimous
+M2	PROPN	unanimous
+Compass	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0041
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Establish a Helicopter Landing Point
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = establish
+# origin = real
+# kind = imperative
+Establish	VERB	unanimous
+a	DET	unanimous
+Helicopter	NOUN	unanimous
+Landing	NOUN	unanimous
+Point	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0042
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Load an M243 or M259 Smoke Grenade Launcher
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = load
+# origin = real
+# kind = imperative
+Load	VERB	unanimous
+an	DET	unanimous
+M243	PROPN	unanimous
+or	CCONJ	unanimous
+M259	PROPN	unanimous
+Smoke	NOUN	unanimous
+Grenade	NOUN	unanimous
+Launcher	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0043
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Conduct a Bypass (Platoon-Company) (07-2-9002)
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = conduct
+# origin = real
+# kind = imperative
+Conduct	VERB	unanimous
+a	DET	unanimous
+Bypass	NOUN	unanimous
+(	PUNCT	unanimous
+Platoon-Company	NOUN	unanimous
+)	PUNCT	unanimous
+(	PUNCT	unanimous
+07-2-9002	NUM	unanimous
+)	PUNCT	unanimous
+
+# sent_id = shapes-dev-headings-2-0044
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Zero an M249 Machine Gum
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = zero
+# origin = real
+# kind = imperative
+Zero	VERB	unanimous
+an	DET	unanimous
+M249	PROPN	unanimous
+Machine	NOUN	unanimous
+Gum	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0045
+# source_id = army-stp-31-18-e-34-sm-tg-special-forces-communications-sergeant-skill-levels-3-4-2003
+# text = Construct a Long-Wire Antenna
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+Construct	VERB	unanimous
+a	DET	unanimous
+Long-Wire	ADJ	unanimous
+Antenna	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0046
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Prepare a Platoon Sector Sketch
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = prepare
+# origin = real
+# kind = imperative
+Prepare	VERB	unanimous
+a	DET	unanimous
+Platoon	NOUN	unanimous
+Sector	NOUN	unanimous
+Sketch	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0047
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Conduct a Displacement by a Mortar Squad
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = conduct
+# origin = real
+# kind = imperative
+Conduct	VERB	unanimous
+a	DET	unanimous
+Displacement	NOUN	unanimous
+by	ADP	unanimous
+a	DET	unanimous
+Mortar	NOUN	unanimous
+Squad	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0048
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Unload an M249 Machine Gum
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = unload
+# origin = real
+# kind = imperative
+Unload	VERB	unanimous
+an	DET	unanimous
+M249	PROPN	unanimous
+Machine	NOUN	unanimous
+Gum	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0049
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Enter a Trench to Secure a Foothold (07-3-D9410)
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = enter
+# origin = real
+# kind = imperative
+Enter	VERB	unanimous
+a	DET	unanimous
+Trench	NOUN	unanimous
+to	PART	unanimous
+Secure	VERB	unanimous
+a	DET	unanimous
+Foothold	NOUN	unanimous
+(	PUNCT	unanimous
+07-3-D9410	NUM	disputed
+)	PUNCT	unanimous
+
+# sent_id = shapes-dev-headings-2-0050
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Orient a Map Using an M2 Compass
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = orient
+# origin = real
+# kind = imperative
+Orient	VERB	unanimous
+a	DET	unanimous
+Map	NOUN	unanimous
+Using	VERB	unanimous
+an	DET	unanimous
+M2	PROPN	unanimous
+Compass	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0051
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Place a Mortar Ballistic Computer into Operation
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = place
+# origin = real
+# kind = imperative
+Place	VERB	unanimous
+a	DET	unanimous
+Mortar	NOUN	unanimous
+Ballistic	ADJ	unanimous
+Computer	NOUN	unanimous
+into	ADP	unanimous
+Operation	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0052
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Operate a Mortar Ballistic Computer Using a Digital Message Device
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = operate
+# origin = real
+# kind = imperative
+Operate	VERB	unanimous
+a	DET	unanimous
+Mortar	NOUN	unanimous
+Ballistic	ADJ	unanimous
+Computer	NOUN	unanimous
+Using	VERB	unanimous
+a	DET	unanimous
+Digital	ADJ	unanimous
+Message	NOUN	unanimous
+Device	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0053
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Lay a 120-mm Mortar for Deflection and Elevation
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = lay
+# origin = real
+# kind = imperative
+Lay	VERB	unanimous
+a	DET	unanimous
+120-mm	ADJ	unanimous
+Mortar	NOUN	unanimous
+for	ADP	unanimous
+Deflection	NOUN	unanimous
+and	CCONJ	unanimous
+Elevation	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0054
+# source_id = army-stp-7-11-c-14-mortarman-2004
+# text = Drive an M113-SerieS Vehicle
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = drive
+# origin = real
+# kind = imperative
+Drive	VERB	unanimous
+an	DET	unanimous
+M113-SerieS	PROPN	disputed
+Vehicle	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0055
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Decontaminate Your Skin and Personal Equipment Using an M258A1 FM3-5
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = decontaminate
+# origin = real
+# kind = imperative
+Decontaminate	VERB	unanimous
+Your	DET	unanimous
+Skin	NOUN	unanimous
+and	CCONJ	unanimous
+Personal	ADJ	unanimous
+Equipment	NOUN	unanimous
+Using	VERB	unanimous
+an	DET	unanimous
+M258A1	PROPN	unanimous
+FM3-5	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0056
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Prepare an M47 Medium Antitank Weapon for Firing
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = prepare
+# origin = real
+# kind = imperative
+Prepare	VERB	unanimous
+an	DET	unanimous
+M47	PROPN	unanimous
+Medium	ADJ	unanimous
+Antitank	ADJ	unanimous
+Weapon	NOUN	unanimous
+for	ADP	unanimous
+Firing	VERB	disputed
+
+# sent_id = shapes-dev-headings-2-0057
+# source_id = army-stp-7-11-bchm-1-sm-infantry-sl-1-2000
+# text = Maintain the Battery System on an M998-Series Vehicle
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = maintain
+# origin = real
+# kind = imperative
+Maintain	VERB	unanimous
+the	DET	unanimous
+Battery	NOUN	unanimous
+System	NOUN	unanimous
+on	ADP	unanimous
+an	DET	unanimous
+M998-Series	PROPN	disputed
+Vehicle	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0058
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Prepare a Route Reconnaissance Overlay
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = prepare
+# origin = real
+# kind = imperative
+Prepare	VERB	unanimous
+a	DET	unanimous
+Route	NOUN	unanimous
+Reconnaissance	NOUN	unanimous
+Overlay	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0059
+# source_id = army-stp-31-18-e-34-sm-tg-special-forces-communications-sergeant-skill-levels-3-4-2003
+# text = Operate a Computer System
+# shape = heading-titlecase
+# role = target
+# target = 0
+# lemma = operate
+# origin = real
+# kind = imperative
+Operate	VERB	unanimous
+a	DET	unanimous
+Computer	NOUN	unanimous
+System	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0060
+# source_id = usfs-federalinteragenunit_0
+# text = Non-Game Species of Special Interest or Concern
+# shape = heading-titlecase
+# role = target
+# target = 4
+# lemma = interest
+# origin = real
+# kind = noun
+Non-Game	ADJ	unanimous
+Species	NOUN	unanimous
+of	ADP	unanimous
+Special	ADJ	unanimous
+Interest	NOUN	unanimous
+or	CCONJ	unanimous
+Concern	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0061
+# source_id = usfs-federalinteragenunit_0
+# text = Bison Drive with Compound
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = drive
+# origin = real
+# kind = noun
+Bison	NOUN	unanimous
+Drive	NOUN	unanimous
+with	ADP	unanimous
+Compound	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0062
+# source_id = usfs-CAT78696462
+# text = Percent Level of Flood Control
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = level
+# origin = real
+# kind = noun
+Percent	NOUN	unanimous
+Level	NOUN	unanimous
+of	ADP	unanimous
+Flood	NOUN	unanimous
+Control	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0063
+# source_id = army-fm-7-22-army-physical-readiness-training-2012
+# text = Climbing Drills
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = drill
+# origin = real
+# kind = noun
+Climbing	NOUN	unanimous
+Drills	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0064
+# source_id = phs-institutionsserv00unit
+# text = Case Records
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = record
+# origin = real
+# kind = noun
+Case	NOUN	unanimous
+Records	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0065
+# source_id = army-fm-21-305-manual-for-the-wheeled-vehicle-driver-1993
+# text = Technical Orders
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = order
+# origin = real
+# kind = noun
+Technical	ADJ	unanimous
+Orders	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0066
+# source_id = army-fm-31-73-advisor-handbook-for-stability-operations-1967
+# text = Conduct of Assault
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = assault
+# origin = real
+# kind = noun
+Conduct	NOUN	unanimous
+of	ADP	unanimous
+Assault	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0067
+# source_id = marine-MCRP3-01B
+# text = Engaging Targets
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = target
+# origin = real
+# kind = noun
+Engaging	VERB	unanimous
+Targets	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0068
+# source_id = usfs-CAT84806723
+# text = Optimal Allocation of Time
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = time
+# origin = real
+# kind = noun
+Optimal	ADJ	unanimous
+Allocation	NOUN	unanimous
+of	ADP	unanimous
+Time	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0069
+# source_id = army-1944-12IntelligenceBulletinVol03No04
+# text = Artillery Fire Control
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = control
+# origin = real
+# kind = noun
+Artillery	NOUN	unanimous
+Fire	NOUN	unanimous
+Control	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0070
+# source_id = army-FM4-25.11
+# text = Goals of Psychological First Aid
+# shape = heading-titlecase
+# role = target
+# target = 4
+# lemma = aid
+# origin = real
+# kind = noun
+Goals	NOUN	unanimous
+of	ADP	unanimous
+Psychological	ADJ	unanimous
+First	ADJ	unanimous
+Aid	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0071
+# source_id = usbr-reportonresour8400unit
+# text = Description of the Land
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = land
+# origin = real
+# kind = noun
+Description	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Land	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0072
+# source_id = army-fm-7-20-the-infantry-battalion-1992
+# text = Air Defense Support
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = support
+# origin = real
+# kind = noun
+Air	NOUN	unanimous
+Defense	NOUN	unanimous
+Support	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0073
+# source_id = army-stp-31-18-e-34-sm-tg-special-forces-communications-sergeant-skill-levels-3-4-2003
+# text = Task Number of Total Number
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = number
+# origin = real
+# kind = noun
+Task	NOUN	unanimous
+Number	NOUN	unanimous
+of	ADP	unanimous
+Total	ADJ	unanimous
+Number	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0074
+# source_id = army-AirborneAssaultOnHollandAnInterimReport-nsia
+# text = Glider Phase of the Operation
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = phase
+# origin = real
+# kind = noun
+Glider	NOUN	unanimous
+Phase	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Operation	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0075
+# source_id = army-fm-7-22-army-physical-readiness-training-2012
+# text = Leg Press
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = press
+# origin = real
+# kind = noun
+Leg	NOUN	unanimous
+Press	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0076
+# source_id = usfs-CAT10506481
+# text = Recreation and Lands
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = land
+# origin = real
+# kind = noun
+Recreation	NOUN	unanimous
+and	CCONJ	unanimous
+Lands	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0077
+# source_id = usfs-CAT10506481
+# text = Rescue and First Aid
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = aid
+# origin = real
+# kind = noun
+Rescue	NOUN	unanimous
+and	CCONJ	unanimous
+First	ADJ	unanimous
+Aid	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0078
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Neutralize Booby Traps
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = trap
+# origin = real
+# kind = noun
+Neutralize	VERB	unanimous
+Booby	NOUN	unanimous
+Traps	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0079
+# source_id = usfs-blmfsinterchange1963unit
+# text = Proposed Handling - Shared Services
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = handling
+# origin = real
+# kind = noun
+Proposed	VERB	unanimous
+Handling	NOUN	unanimous
+-	PUNCT	unanimous
+Shared	VERB	disputed
+Services	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0080
+# source_id = interior-nps-1988-npssign-manual
+# text = Form 10-84a, Guide Sign Requisition
+# shape = heading-titlecase
+# role = target
+# target = 5
+# lemma = requisition
+# origin = real
+# kind = noun
+Form	NOUN	unanimous
+10-84a	NUM	disputed
+,	PUNCT	unanimous
+Guide	NOUN	unanimous
+Sign	NOUN	unanimous
+Requisition	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0081
+# source_id = usfs-CAT78696462
+# text = Channel Work
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = work
+# origin = real
+# kind = noun
+Channel	NOUN	unanimous
+Work	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0082
+# source_id = usda-usdaradiological1963unitrich
+# text = Monitoring Agricultural Land
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = land
+# origin = real
+# kind = noun
+Monitoring	VERB	unanimous
+Agricultural	ADJ	unanimous
+Land	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0083
+# source_id = usfs-CAT84806723
+# text = Develop Standard Volume Tables
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = table
+# origin = real
+# kind = noun
+Develop	VERB	unanimous
+Standard	ADJ	unanimous
+Volume	NOUN	unanimous
+Tables	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0084
+# source_id = army-sh-21-76-ranger-handbook-2000
+# text = Force on Force
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = force
+# origin = real
+# kind = noun
+Force	NOUN	unanimous
+on	ADP	unanimous
+Force	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0085
+# source_id = army-fm-31-73-advisor-handbook-for-stability-operations-1967
+# text = Outpost Under Attack
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = attack
+# origin = real
+# kind = noun
+Outpost	NOUN	unanimous
+Under	ADP	unanimous
+Attack	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0086
+# source_id = army-FM4-25.11
+# text = Biological Agents and First Aid
+# shape = heading-titlecase
+# role = target
+# target = 4
+# lemma = aid
+# origin = real
+# kind = noun
+Biological	ADJ	unanimous
+Agents	NOUN	unanimous
+and	CCONJ	unanimous
+First	ADJ	unanimous
+Aid	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0087
+# source_id = usfs-federalinteragenunit_0
+# text = Operation and Maintenance Impacts
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = impact
+# origin = real
+# kind = noun
+Operation	NOUN	unanimous
+and	CCONJ	unanimous
+Maintenance	NOUN	unanimous
+Impacts	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0088
+# source_id = army-fm-7-22-army-physical-readiness-training-2012
+# text = Shuttle Sprint
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = sprint
+# origin = real
+# kind = noun
+Shuttle	NOUN	unanimous
+Sprint	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0089
+# source_id = navy-navaleducationandtrainingprogrammanagementsupportactivity_standardfirstaidtrainingcourse_1991
+# text = Injuries to Bones, Joints, and Muscles
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = bone
+# origin = real
+# kind = noun
+Injuries	NOUN	unanimous
+to	ADP	unanimous
+Bones	NOUN	unanimous
+,	PUNCT	unanimous
+Joints	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Muscles	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0090
+# source_id = marine-MCRP3-01B
+# text = Cinder Blocks
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = block
+# origin = real
+# kind = noun
+Cinder	NOUN	unanimous
+Blocks	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0091
+# source_id = army-fm-7-22-army-physical-readiness-training-2012
+# text = Front Kick Alternate Toe Touch
+# shape = heading-titlecase
+# role = target
+# target = 4
+# lemma = touch
+# origin = real
+# kind = noun
+Front	ADJ	unanimous
+Kick	NOUN	unanimous
+Alternate	ADJ	unanimous
+Toe	NOUN	unanimous
+Touch	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0092
+# source_id = usbr-bq8techniquestoredu17413unitrich
+# text = Calculated Inflow Rates and Theoretical Detention
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = rat
+# origin = real
+# kind = noun
+Calculated	VERB	unanimous
+Inflow	NOUN	unanimous
+Rates	NOUN	unanimous
+and	CCONJ	unanimous
+Theoretical	ADJ	unanimous
+Detention	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0093
+# source_id = army-fm-31-73-advisor-handbook-for-stability-operations-1967
+# text = Duties of Gate and Fence
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = gate
+# origin = real
+# kind = noun
+Duties	NOUN	unanimous
+of	ADP	unanimous
+Gate	NOUN	unanimous
+and	CCONJ	unanimous
+Fence	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0094
+# source_id = army-fm-7-22-army-physical-readiness-training-2012
+# text = Supine Position
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = position
+# origin = real
+# kind = noun
+Supine	ADJ	unanimous
+Position	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0095
+# source_id = usfs-CAT84806723
+# text = Probability Model
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = model
+# origin = real
+# kind = noun
+Probability	NOUN	unanimous
+Model	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0096
+# source_id = army-tc-21-24-rappelling-2008
+# text = Figure-Eight Bend
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = bend
+# origin = real
+# kind = noun
+Figure-Eight	NOUN	unanimous
+Bend	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0097
+# source_id = usfs-CAT78696462
+# text = Agricultural Production and Demand
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = demand
+# origin = real
+# kind = noun
+Agricultural	ADJ	unanimous
+Production	NOUN	unanimous
+and	CCONJ	unanimous
+Demand	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0098
+# source_id = army-Fm24-6-nsia
+# text = Transmission Meaning
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = meaning
+# origin = real
+# kind = noun
+Transmission	NOUN	unanimous
+Meaning	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0099
+# source_id = army-FM4-25.11
+# text = Cyanogen (Blood) Agents
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = blood
+# origin = real
+# kind = noun
+Cyanogen	NOUN	unanimous
+(	PUNCT	unanimous
+Blood	NOUN	unanimous
+)	PUNCT	unanimous
+Agents	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0100
+# source_id = airforce-department-of-the-air-force-a-manual-52-8-radar-circuit-analysis-30-june-1951
+# text = Remote Cut-Off Tube
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = tube
+# origin = real
+# kind = noun
+Remote	ADJ	unanimous
+Cut-Off	NOUN	unanimous
+Tube	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0101
+# source_id = army-USAREURPam30-60-1IdentificationGuidePart2Volume2
+# text = Fuel Service Truck, 4x2, TZ-2
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = truck
+# origin = real
+# kind = noun
+Fuel	NOUN	unanimous
+Service	NOUN	unanimous
+Truck	NOUN	unanimous
+,	PUNCT	unanimous
+4x2	NUM	unanimous
+,	PUNCT	unanimous
+TZ-2	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0102
+# source_id = army-AirborneAssaultOnHollandAnInterimReport-nsia
+# text = Intention and Plan
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = plan
+# origin = real
+# kind = noun
+Intention	NOUN	unanimous
+and	CCONJ	unanimous
+Plan	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0103
+# source_id = army-FM4-25.11
+# text = Pressure Dressing
+# shape = heading-titlecase
+# role = target
+# target = 1
+# lemma = dressing
+# origin = real
+# kind = noun
+Pressure	NOUN	unanimous
+Dressing	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0104
+# source_id = army-fm-7-20-the-infantry-battalion-1992
+# text = Personnel Services Support
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = support
+# origin = real
+# kind = noun
+Personnel	NOUN	unanimous
+Services	NOUN	unanimous
+Support	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0105
+# source_id = army-tc-3-21.8-infantry-rifle-and-mechanized-platoon-collective-task-publication-2013
+# text = Perform Preventive Maintenance Checks
+# shape = heading-titlecase
+# role = target
+# target = 3
+# lemma = check
+# origin = real
+# kind = noun
+Perform	VERB	unanimous
+Preventive	ADJ	unanimous
+Maintenance	NOUN	unanimous
+Checks	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0106
+# source_id = army-1944-01IntelligenceBulletinVol02No05-nsia
+# text = Convoys and Shipping
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = shipping
+# origin = real
+# kind = noun
+Convoys	NOUN	unanimous
+and	CCONJ	unanimous
+Shipping	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0107
+# source_id = marine-MCRP3-01B
+# text = Isosceles Kneeling Position
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = position
+# origin = real
+# kind = noun
+Isosceles	ADJ	unanimous
+Kneeling	NOUN	unanimous
+Position	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0108
+# source_id = interior-nps-1988-npssign-manual
+# text = Special Informational Signs
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = sign
+# origin = real
+# kind = noun
+Special	ADJ	unanimous
+Informational	ADJ	unanimous
+Signs	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0109
+# source_id = army-fm-100-60-opfor-armor-and-mechanized-based-opposing-force-organization-guide-1997
+# text = Reconnaissance Aviation Regiment, Air Army
+# shape = heading-titlecase
+# role = target
+# target = 2
+# lemma = regiment
+# origin = real
+# kind = noun
+Reconnaissance	NOUN	unanimous
+Aviation	NOUN	unanimous
+Regiment	NOUN	unanimous
+,	PUNCT	unanimous
+Air	NOUN	unanimous
+Army	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0110
+# source_id = usfs-federalinteragenunit_0
+# text = Western Larch - Douglas Fir Forest
+# shape = heading-titlecase
+# role = control
+# target = 3
+# lemma = douglas
+# origin = real
+# kind = proper
+Western	ADJ	unanimous
+Larch	NOUN	unanimous
+-	PUNCT	unanimous
+Douglas	PROPN	unanimous
+Fir	NOUN	unanimous
+Forest	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0111
+# source_id = usfs-CAT84806723
+# text = Classification of the Landsat
+# shape = heading-titlecase
+# role = control
+# target = 3
+# lemma = landsat
+# origin = real
+# kind = proper
+Classification	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+Landsat	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0112
+# source_id = usfs-CAT84806723
+# text = Runoff from the Chihuahuan and Sonoran Deserts
+# shape = heading-titlecase
+# role = control
+# target = 3
+# lemma = chihuahuan
+# origin = real
+# kind = proper
+Runoff	NOUN	unanimous
+from	ADP	unanimous
+the	DET	unanimous
+Chihuahuan	PROPN	unanimous
+and	CCONJ	unanimous
+Sonoran	PROPN	unanimous
+Deserts	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0113
+# source_id = other-proposedtonopahr00unit
+# text = Service, Arlington, Virginia
+# shape = heading-titlecase
+# role = control
+# target = 2
+# lemma = arlington
+# origin = real
+# kind = proper
+Service	PROPN	disputed
+,	PUNCT	unanimous
+Arlington	PROPN	unanimous
+,	PUNCT	unanimous
+Virginia	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0114
+# source_id = army-FM4-25.11
+# text = C Celsius
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = celsius
+# origin = real
+# kind = proper
+C	PROPN	disputed
+Celsius	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0115
+# source_id = usfs-CAT84806723
+# text = The University of California
+# shape = heading-titlecase
+# role = control
+# target = 3
+# lemma = california
+# origin = real
+# kind = proper
+The	DET	unanimous
+University	PROPN	unanimous
+of	ADP	unanimous
+California	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0116
+# source_id = usbr-bq8techniquestoredu17413unitrich
+# text = Utilizing the San Luis Drain
+# shape = heading-titlecase
+# role = control
+# target = 3
+# lemma = luis
+# origin = real
+# kind = proper
+Utilizing	VERB	unanimous
+the	DET	unanimous
+San	PROPN	unanimous
+Luis	PROPN	unanimous
+Drain	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0117
+# source_id = usfs-blmfsinterchange1963unit
+# text = District Managers, Nevada
+# shape = heading-titlecase
+# role = control
+# target = 3
+# lemma = nevada
+# origin = real
+# kind = proper
+District	NOUN	unanimous
+Managers	NOUN	unanimous
+,	PUNCT	unanimous
+Nevada	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0118
+# source_id = usfs-federalinteragenunit_0
+# text = Lodgepole Pine - Douglas Fir Forest
+# shape = heading-titlecase
+# role = control
+# target = 3
+# lemma = douglas
+# origin = real
+# kind = proper
+Lodgepole	NOUN	unanimous
+Pine	NOUN	unanimous
+-	PUNCT	unanimous
+Douglas	PROPN	unanimous
+Fir	NOUN	unanimous
+Forest	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0119
+# source_id = usfs-federalinteragenunit_0
+# text = Western Montana Ponderosa Pine Forest 15 Sandy Grassland
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = montana
+# origin = real
+# kind = proper
+Western	ADJ	unanimous
+Montana	PROPN	unanimous
+Ponderosa	NOUN	unanimous
+Pine	NOUN	unanimous
+Forest	NOUN	unanimous
+15	NUM	unanimous
+Sandy	ADJ	unanimous
+Grassland	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0120
+# source_id = usfs-federalinteragenunit_0
+# text = John Evans
+# shape = heading-titlecase
+# role = control
+# target = 1
+# lemma = evans
+# origin = real
+# kind = proper
+John	PROPN	unanimous
+Evans	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0121
+# source_id = usfs-CAT84806723
+# text = History - the New Mexico State Heritage
+# shape = heading-titlecase
+# role = control
+# target = 4
+# lemma = mexico
+# origin = real
+# kind = proper
+History	NOUN	unanimous
+-	PUNCT	unanimous
+the	DET	unanimous
+New	PROPN	unanimous
+Mexico	PROPN	unanimous
+State	PROPN	disputed
+Heritage	PROPN	disputed
+
+# sent_id = shapes-dev-headings-2-0122
+# source_id = usda-CAT10679264
+# text = Assistant Secretary Allen
+# shape = heading-titlecase
+# role = control
+# target = 2
+# lemma = allen
+# origin = real
+# kind = proper
+Assistant	PROPN	unanimous
+Secretary	PROPN	unanimous
+Allen	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0123
+# source_id = usfs-CAT84806723
+# text = Acquisition and Processing of Landsat Imagery
+# shape = heading-titlecase
+# role = control
+# target = 4
+# lemma = landsat
+# origin = real
+# kind = proper
+Acquisition	NOUN	unanimous
+and	CCONJ	unanimous
+Processing	NOUN	unanimous
+of	ADP	unanimous
+Landsat	PROPN	unanimous
+Imagery	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0124
+# source_id = usfs-federalinteragenunit_0
+# text = Water Research Center, Sidney, Montana
+# shape = heading-titlecase
+# role = control
+# target = 4
+# lemma = sidney
+# origin = real
+# kind = proper
+Water	PROPN	unanimous
+Research	PROPN	unanimous
+Center	PROPN	unanimous
+,	PUNCT	unanimous
+Sidney	PROPN	unanimous
+,	PUNCT	unanimous
+Montana	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0125
+# source_id = usfs-federalinteragenunit_0
+# text = Administrator, Bonneville Power Administration
+# shape = heading-titlecase
+# role = control
+# target = 2
+# lemma = bonneville
+# origin = real
+# kind = proper
+Administrator	NOUN	disputed
+,	PUNCT	unanimous
+Bonneville	PROPN	unanimous
+Power	PROPN	unanimous
+Administration	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0126
+# source_id = usfs-federalinteragenunit_0
+# text = C Southeastern Montana Coal Fields
+# shape = heading-titlecase
+# role = control
+# target = 2
+# lemma = montana
+# origin = real
+# kind = proper
+C	X	unanimous
+Southeastern	ADJ	unanimous
+Montana	PROPN	unanimous
+Coal	NOUN	unanimous
+Fields	NOUN	unanimous
+
+# sent_id = shapes-dev-headings-2-0127
+# source_id = army-fm-7-15-the-army-universal-task-list-2003
+# text = United States Army Signal Center and Fort Gordon
+# shape = heading-titlecase
+# role = control
+# target = 7
+# lemma = gordon
+# origin = real
+# kind = proper
+United	PROPN	unanimous
+States	PROPN	unanimous
+Army	PROPN	unanimous
+Signal	PROPN	unanimous
+Center	PROPN	unanimous
+and	CCONJ	unanimous
+Fort	PROPN	unanimous
+Gordon	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0128
+# source_id = usfs-federalinteragenunit_0
+# text = Corps of Engineers, Omaha, Nebraska
+# shape = heading-titlecase
+# role = control
+# target = 6
+# lemma = nebraska
+# origin = real
+# kind = proper
+Corps	PROPN	unanimous
+of	ADP	unanimous
+Engineers	PROPN	unanimous
+,	PUNCT	unanimous
+Omaha	PROPN	unanimous
+,	PUNCT	unanimous
+Nebraska	PROPN	unanimous
+
+# sent_id = shapes-dev-headings-2-0129
+# source_id = other-proposedtonopahr00unit
+# text = State of Nevada Library
+# shape = heading-titlecase
+# role = control
+# target = 2
+# lemma = nevada
+# origin = real
+# kind = proper
+State	PROPN	unanimous
+of	ADP	unanimous
+Nevada	PROPN	unanimous
+Library	PROPN	unanimous

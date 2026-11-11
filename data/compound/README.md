@@ -1,16 +1,20 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore usfs usbm usbr usgs wxb nbs docstrings Lahontan -->
+<!-- cspell:ignore usfs usbm usbr usgs wxb nbs docstrings Lahontan airforce coastguard -->
 
-# Compound-Head Training Source
+# Compound-Head Training Sources
 
 License: CC0-1.0
 
-742 real sentences from 154 US federal-government documents, each with a noun compound whose head can also be a verb
-(`the fuel pump seal`, `the oil level check`). Every token has a Universal POS tag on which two blind model labelers agree. It is a
-**training** source: it holds the noun + noun compounds with an ambiguous head (`[noun] check`, `[noun] split`, `[noun] stand`) that the
-other training corpora hold rarely, and a counter-example group in which the same kind of word is a verb. It is disjoint from every
-evaluation set. It is registered in the trainer configuration with weight 0, so it is not part of the mix that trained the embedded model
-(`--source compound:1` adds it to a training run).
+This folder holds two training sources of the same kind, built from different documents. **`compound`** (`compound.tsv`): 742 real
+sentences from 154 US federal-government documents. **`compound2`** (`compound-2.tsv`): 1,100 real sentences from 209 further US
+federal-government documents (see [Second Source: `compound-2.tsv`](#second-source-compound-2tsv)); the two share no document and no
+sentence. Each sentence has a noun compound whose head can also be a verb
+(`the fuel pump seal`, `the oil level check`). Every token has a Universal POS tag on which two blind model labelers agree. They are
+**training** sources: they hold the noun + noun compounds with an ambiguous head (`[noun] check`, `[noun] split`, `[noun] stand`) that the
+other training corpora hold rarely, and a counter-example group in which the same kind of word is a verb. They are disjoint from every
+evaluation set. They are registered in the trainer configuration with weight 0, so they are not part of the mix that trained the embedded model
+(`--source compound:1` and `--source compound2:1` add them to a training run). The sections up to "Known Limits" describe `compound`; the
+section "Second Source" describes `compound2`.
 
 ## Source and Provenance
 
@@ -52,6 +56,7 @@ counts of every file of this folder.
 | `sources.tsv` | the 154 documents that the sentences come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used |
 | `excluded-documents.tsv` | documents left out: the 7 whose record lists a state or local government body as an author (the rule 1 check after the build) |
 | `dropped-sentences.tsv` | counts of candidate sentences dropped alone because they equal, or nearly equal, a sentence of a training or evaluation set (counts only, no text) |
+| `compound-2.tsv`, `compound-2-sources.tsv`, `compound-2-excluded-documents.tsv`, `compound-2-dropped-sentences.tsv` | the same four files for the second source `compound2` (see [Second Source](#second-source-compound-2tsv)); ids `compound2-NNNN` |
 
 Each sentence block has the comments `sent_id`, `source_id`, `text`, `head`, `lemma` and `kind`, then one row `form`, `upos`, `status` for
 each token. `head` is the zero-based token index of the head of the compound, `lemma` its lower-case form, and `kind` is `noun` (the head is
@@ -212,3 +217,106 @@ the shipped mix; `train --check` reproduces the shipped weights); `--source comp
 "Compound and heading training data: results", has the measured effect of the source at weight 1). The trainer refuses the
 evaluation files by name and admits this file because it is a training source under `data/`. Do not evaluate on it: its sentences are selected
 by a frame and labeled by models, so a score on them says nothing about held-out text.
+
+## Second Source: `compound-2.tsv`
+
+**What it is.** `compound2` has 1,100 real sentences (20,745 tokens, 4 to 30 tokens each) from 209 US federal-government documents, each
+with a noun compound whose head can also be a verb, in the frame of `n-compound-head-ambiguous`; every token has a tag on which two blind
+model labelers agree (every status is `unanimous`). It has the same format, the same head rule and the same two kinds as `compound.tsv`
+(`head`, `lemma`, `kind` comments; kind `noun` 935 sentences, kind `verb` 165 = 15.0%), and it is built from documents that `compound.tsv`,
+`headings.tsv`, the imperative source and every evaluation set do not use: together with `compound.tsv` it holds 742 + 1,100 = 1,842
+sentences. There are 670 distinct head lemmas (133 of them with a verb sentence; 112 sentences have an `-ing` head), at most 4 sentences per
+head lemma and at most 20 per document.
+
+**Files.**
+
+| File | Content |
+| --- | --- |
+| `compound-2.tsv` | the 1,100 sentences in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md); ids `compound2-NNNN` |
+| `compound-2-sources.tsv` | the 209 documents that the sentences come from: family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used |
+| `compound-2-excluded-documents.tsv` | documents left out after the build: none (header only) |
+| `compound-2-dropped-sentences.tsv` | counts of candidate sentences dropped alone because of an overlap with a set (2 near duplicates of a shapes development sentence, 1 shared word 5-gram with the shape probe; counts only, no text) |
+
+`compound-2.tsv` has SHA-256 `2a9a98492afb1248623b50111ca62d8abd57e4569b1a5e52b3cff544bc0746cc` and `compound-2-sources.tsv`
+`c979850dd60921d209b7d918d953b53bee7af05f736a77896637665ace823cf4` (the `license_basis` wording of one row was corrected on 2026-11-11, text only, see the run log); [MANIFEST.tsv](../MANIFEST.tsv) lists the size, hash and record counts of every
+file of this folder.
+
+**Source and basis.** The sentences are text of 209 documents that are US federal government works (17 U.S.C. 105), one `license_basis` cell
+per document in `compound-2-sources.tsv` (the agency named in the record, the record's rights statement where it has one, and the check that the text
+carries no copyright, permission, third-party credit or distribution restriction); the documents were retrieved from the Internet Archive on
+2026-11-10 and hashed (`raw_sha256` of the download, `text_sha256` of the extracted sentences). Publication years are 1852 to 2025 (182 of the
+documents are from 1940 or later). There is no FAA text, no Wikipedia, no share-alike or non-commercial text, no Universal Dependencies text, no
+sentence supplied by any consumer, and no document that lists a state, local, foreign, university, contractor or private creator, publisher or
+co-author. No document is in a table of used sources or in either excluded-sources record (`check_licenses.py` scans the table).
+
+| Family | Documents | Sentences | Origin |
+| --- | ---: | ---: | --- |
+| `army` | 111 | 612 | War Department and Department of the Army manuals, bulletins and reports |
+| `usda` | 26 | 165 | Department of Agriculture publications |
+| `navy` | 30 | 114 | Navy publications |
+| `usfs` | 13 | 59 | Forest Service publications |
+| `other` | 6 | 46 | other federal bodies |
+| `marine` | 5 | 38 | Marine Corps publications |
+| `airforce` | 2 | 24 | Air Force manuals |
+| `usbr` | 9 | 22 | Bureau of Reclamation publications |
+| `phs` | 6 | 17 | Public Health Service publications |
+| `coastguard` | 1 | 3 | Coast Guard publication |
+
+**Selection and labeling rule.** The normative text is the docstring of `tools/data/followup_data.py` (rules 1 to 10; the pre-registered rule
+at commit `8c9f17fc5cb7e5c35f91827fc242980f407bd42d`, with the amendments recorded in the trainer run log, section "Follow-up"). In short:
+
+1. **Documents** are assigned to the training side or the development side of the follow-up as whole title families (a seeded hash of the
+   family key); `compound-2.tsv` uses documents of the training side only, so no document of it is in a development tranche.
+2. **Candidates** are every frame hit of `compound_ambiguous_hit` in a clean sentence of the training side (224,925 clean sentences, 36,552
+   frame hits over 2,396 head lemmas; no model score and no band), taken in a seeded order, at most 6 per head lemma and 3,400 in all: 3,400
+   candidates over 1,219 head lemmas in 242 documents. A sentence that equals a training, evaluation or shapes development sentence, is a
+   heading line of the shared pool or shares a word 5-gram with the held-out shape probe is not a candidate.
+3. **Labels:** every candidate is tagged from scratch, token by token, by the two blind labelers (`claude-opus-5.5` and `gpt-6.1-sol`) of
+   `compound.tsv`. **No human reviewed a label.**
+4. **Kept sentences:** both labelers agree on every token, the convention linter reports no fix-tier violation, and the head is read as a noun
+   (NOUN or PROPN) by both with the frame still holding (kind `noun`) or as VERB by both after a noun that both agree on (kind `verb`).
+5. **Caps** in a seeded order: 4 per head lemma, 20 per document, at most 15 percent verb items, at most 1,100 sentences.
+6. **Quota gate:** `build` refuses below 600 sentences or 200 head lemmas unless `--allow-short`; a data test asserts the quotas and the format.
+
+| Stage | Items |
+| --- | ---: |
+| candidates labeled | 3,400 |
+| dropped: the labelers disagree on the head (target disagreement) | 10 |
+| dropped: head read as another class (class mismatch) | 211 |
+| dropped: a modifier or head read so that the frame no longer holds (frame mismatch) | 364 |
+| dropped: a disputed token elsewhere in the sentence | 387 |
+| kept by the labeling rules | 2,428 |
+| dropped by the caps: noun 791, verb 421, document 59, lemma 57 | 1,328 |
+| **in `compound-2.tsv`** | **1,100** |
+
+**Hand check (model review, not a human review).** One sample of 60 sentences (54 `noun`, 6 `verb`; seed 20261123) plus 4 control items whose
+head tag had been swapped on purpose was drawn once from the data as built and reviewed once by `claude-sonnet-5.5` against
+[CONVENTIONS.md](../CONVENTIONS.md): the head is correct in 60 of 60 (100.0 percent; the gate is 95 percent), 59 of 60 sentences (98.3 percent)
+have no other token marked wrong, token precision is 99.91 percent (1 token wrong of 1,145; reported, not gated), and 0 of the 4 controls
+were accepted (the gate allows 1). It is not independent of the labelers' shared blind spots.
+
+**Leakage and license checks.** `python tools/data/check_leakage.py` finds **0 document overlaps, 0 exact sentence overlaps and 0 near
+duplicates** against every evaluation set (open dev and test, gold v2, the shape probe, all seven tranches of the shapes development set,
+the STE challenge set, UD English-EWT) and against open train, MASC, silver, imperative, `compound` and `headings`; it shares 57 documents (and no
+sentence) with `headings2`, which is cut from the same pool of the training side (reported, not gated).
+[training-leakage-report.tsv](../training-leakage-report.tsv) and [leakage-report.tsv](../leakage-report.tsv) have the counts. `check_licenses.py` scans
+`compound-2-sources.tsv`. `check_conventions.py` lints `compound-2.tsv` (lint only; its own column `compound2`): the fix tier finds 0
+violations, and the check tier reports 2 hits (one `be-participle-adj-not-gradable` and one `infinitive-to`, both left as the labelers tagged
+them). `lexicon/lexicon.tsv` is unchanged.
+
+**Known limits.**
+
+- **Model labels, no human review.** Two models agree on every token, which removes the sentences where they differ, not the errors they share;
+  the review above is a sample of 60.
+- **No hard-case selection.** The pool is every frame hit in a seeded order, with no classifier score, so the sentences are easier on average
+  than the development tranches `compound-head.tsv` and `compound-head-2.tsv` (which keep only the contested band of a classifier).
+- **Few verb counter-examples.** 165 sentences (15.0 percent, the cap) use the head as a verb; 935 use it as a noun.
+- **Register.** The text is technical and descriptive (manuals, bulletins, reports); 111 of the 209 documents (612 of the sentences) are Army
+  publications; most documents are OCR scans with residue in some sentences.
+- **Frame, not coverage.** Compounds with an unambiguous head, compounds with a participle or gerund modifier, and heads after an adjective are
+  not selected.
+- **Caps shape the sample:** at most 4 sentences per head lemma and 20 per document.
+
+**Use.** Train only. `training.json` lists the source as `compound2` with `"weight": 0` (not part of the shipped mix; `train --check`
+reproduces the shipped weights); `--source compound2:1` adds it to a training run. The trainer refuses the evaluation files by name and admits this
+file because it is a training source under `data/`. Do not evaluate on it.

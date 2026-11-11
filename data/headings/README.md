@@ -1,16 +1,20 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore usfs usbm usbr usgs wxb nbs docstrings -->
+<!-- cspell:ignore usfs usbm usbr usgs wxb nbs docstrings airforce coastguard -->
 
-# Heading Training Source
+# Heading Training Sources
 
 License: CC0-1.0
 
-374 real Title Case heading, caption and step-title lines from 89 US federal-government documents (`Fuel Filter Replacement`,
-`Pacific Northwest Region`), each with a judged word in one of three groups: a common noun, an initial imperative verb or a true proper
-noun. Every token has a Universal POS tag on which two blind model labelers agree. It is a **training** source: it shows that the capital
-letters of a Title Case line do not make its words proper nouns, which the sentence-shaped training corpora rarely show, and it is disjoint
-from every evaluation set. It is registered in the trainer configuration with weight 0, so it is not part of the mix that trained the
-embedded model (`--source headings:1` adds it to a training run).
+This folder holds two training sources of the same kind, built from different documents. **`headings`** (`headings.tsv`): 374 real Title
+Case heading, caption and step-title lines from 89 US federal-government documents. **`headings2`** (`headings-2.tsv`): 247 real lines from 59
+further US federal-government documents, with a stratum of initial imperatives (see [Second Source: `headings-2.tsv`](#second-source-headings-2tsv));
+the two share no document and no line. The lines of `headings` (`Fuel Filter Replacement`,
+`Pacific Northwest Region`) each have a judged word in one of three groups: a common noun, an initial imperative verb or a true proper
+noun. Every token has a Universal POS tag on which two blind model labelers agree. They are **training** sources: they show that the capital
+letters of a Title Case line do not make its words proper nouns, which the sentence-shaped training corpora rarely show, and they are disjoint
+from every evaluation set. They are registered in the trainer configuration with weight 0, so they are not part of the mix that trained the
+embedded model (`--source headings:1` and `--source headings2:1` add them to a training run). The sections up to "Known Limits" describe
+`headings`; the section "Second Source" describes `headings2`.
 
 ## Source and Provenance
 
@@ -56,6 +60,7 @@ counts of every file of this folder.
 | `sources.tsv` | the 89 documents that the lines come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, lines used |
 | `excluded-documents.tsv` | documents left out: the 7 whose record lists a state or local government body as an author, and 1 with a private non-profit co-author and an uncertain public-domain basis (removed by the project owner; the rule 1 check after the build) |
 | `dropped-sentences.tsv` | counts of candidate lines dropped alone because they equal a sentence of a training or evaluation set or of the shapes development set (counts only, no text) |
+| `headings-2.tsv`, `headings-2-sources.tsv`, `headings-2-excluded-documents.tsv`, `headings-2-dropped-sentences.tsv` | the same four files for the second source `headings2` (see [Second Source](#second-source-headings-2tsv)); ids `headings2-NNNN` |
 
 Each block has the comments `sent_id`, `source_id`, `text`, `word`, `lemma` and `stratum`, then one row `form`, `upos`, `status` for each
 token. `word` is the zero-based token index of the judged word, `lemma` its lower-case form, and `stratum` is `noun`, `imperative` or
@@ -227,3 +232,123 @@ the shipped mix; `train --check` reproduces the shipped weights); `--source head
 "Compound and heading training data: results", has the measured effect of the source at weight 1). The trainer refuses the
 evaluation files by name and admits this file because it is a training source under `data/`. Do not evaluate on it: its lines are selected by
 a frame and labeled by models, so a score on them says nothing about held-out text.
+
+## Second Source: `headings-2.tsv`
+
+**What it is.** `headings2` has 247 real Title Case lines (1,160 tokens, 2 to 10 tokens each) from 59 US federal-government documents, in two
+strata, every token tagged by two blind model labelers who agree on it (every status is `unanimous`):
+
+| Stratum | Lines | Judged word (token 0 of the line) |
+| --- | ---: | --- |
+| `imperative` | 165 | the first word of an instruction line, a base verb: VERB (`Splint A Suspected Fracture`, `Locate a Target by Shift from a Known Point`) |
+| `initial-noun` | 82 | the first word of a noun-phrase heading whose first word can also be a verb: NOUN (the contrast stratum: the same kind of first word as a noun) |
+
+There are 144 distinct lemmas of the judged word (76 in the imperative stratum, 69 in the initial-noun stratum), at most 6 lines per lemma
+and at most 24 per document (the cap is 25); the imperative lines come from 30 of the 59 documents. The block format is that of `headings.tsv`
+(comments `sent_id`, `source_id`, `text`, `word`, `lemma`, `stratum`); the stratum names are `imperative` and `initial-noun`. The units are lines,
+not sentences: no final period, and a number or label in front of a step title (`Task 3`, `Step 2.1`) is not part of the text.
+
+**The imperative stratum is short of the requested target, plainly stated.** The request was about 300 imperative lines; the file has 165 (the
+registered floor is 150, the cap 400). The supply of real Title Case instruction lines in the new documents, not a labeling rule, is the limit:
+the strong frame found 193 candidate lines on the training side. Of the 165 lines, **41 come from the `initial-noun` frame** (the first word is
+a capitalized noun-capable word followed by another capitalized noun-capable word, the shape that the labelers read as a noun, an adjective or a name
+in 398 of 439 cases) **and are in the imperative stratum because both labelers tagged token 0 as VERB**; the other 124 come from the strong
+imperative frame. The 41 lines are kept as the rule's code assigns strata (the stratum of a kept line is decided by the agreed tag of the judged
+word, whatever frame the candidate came from); this reading is a decision of the implementing agent, not of the project owner. Without them the
+imperative stratum would be 124 lines and the initial-noun stratum at most 62. The `initial-noun` stratum is capped at half of the kept imperative
+lines (82); 235 further lines were dropped at that cap.
+
+`headings-2.tsv` has SHA-256 `3f1fca247aa625c6f46269f5db5034540e4685fc55918dff5068da6ba591fca5` and `headings-2-sources.tsv`
+`accd6790b8226e962d8d192b7658375f1bafb7e1721a11779ee55e05024b682d`; [MANIFEST.tsv](../MANIFEST.tsv) lists the size, hash and record counts of every file of this folder.
+
+**Files.**
+
+| File | Content |
+| --- | --- |
+| `headings-2.tsv` | the 247 lines in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md); ids `headings2-NNNN` |
+| `headings-2-sources.tsv` | the 59 documents that the lines come from: family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, lines used |
+| `headings-2-excluded-documents.tsv` | documents left out after the build: none (header only) |
+| `headings-2-dropped-sentences.tsv` | counts of candidate lines dropped alone because of an overlap with a set (3 equal a set sentence, 20 equal a shapes development sentence, 1 is a near duplicate of one; counts only, no text) |
+
+**Source and basis.** The lines are text of 59 documents that are US federal government works (17 U.S.C. 105), one `license_basis` cell per
+document in `headings-2-sources.tsv`, retrieved from the Internet Archive on 2026-11-10 and hashed; publication years are 1923 to 2025 (57 of the
+documents are from 1940 or later). The basis checks and exclusions are those of the second compound source (see
+[its README](../compound/README.md#second-source-compound-2tsv)): no FAA text, no Wikipedia, no share-alike or non-commercial text, no Universal
+Dependencies text, no sentence supplied by any consumer, no document with a non-federal creator, publisher or co-author, and no document in a table
+of used sources or in either excluded-sources record. The same pool of training-side documents feeds `compound2`: 57 documents contribute to
+both, and no line is a sentence of the other.
+
+| Family | Documents | Lines | Origin |
+| --- | ---: | ---: | --- |
+| `army` | 37 | 192 | War Department and Department of the Army manuals (soldier's manuals, field manuals, training publications) |
+| `usda` | 8 | 23 | Department of Agriculture publications |
+| `phs` | 2 | 11 | Public Health Service publications |
+| `airforce` | 1 | 5 | Air Force manuals |
+| `navy` | 3 | 5 | Navy publications |
+| `marine` | 2 | 3 | Marine Corps publications |
+| `usfs` | 3 | 3 | Forest Service publications |
+| `other` | 1 | 3 | other federal bodies |
+| `coastguard` | 1 | 1 | Coast Guard publication |
+| `usbr` | 1 | 1 | Bureau of Reclamation publications |
+
+**Selection and labeling rule.** The normative text is the docstring of `tools/data/followup_data.py` (the pre-registered rule at commit
+`8c9f17fc5cb7e5c35f91827fc242980f407bd42d`, with the amendments recorded in the trainer run log, section "Follow-up"). In short:
+
+1. **Lines** come from three places in the OCR text: a heading line that stands alone above a paragraph, a table-of-contents line (the dot
+   leaders and the page number are removed), and a labeled step title (`Task`, `Step`, `Procedure`, `Operation`, `Exercise` or `Job` plus a
+   number or letter, removed with the label); then the unchanged noise filter of the headings tranches (2 to 10 tokens, Title Case, no
+   all-capital word, no unknown word, no page number) and the equal and near-duplicate filters against every set. A title that stands in the table
+   of contents, on its task page and in a cross reference is one line. ALL-CAPS and sentence-case step titles are not in scope.
+2. **Frames** use position and lexicon only. `imperative`: token 0 is capitalized, is its own base form, is listed with VERB (a verb-only word, or
+   noun and verb), and token 1 is a determiner, an object pronoun, an adverb of the shared list or a particle (`up down out off back away`).
+   `initial-noun`: token 0 is capitalized, is its own base form, is listed as noun and verb, and token 1 is a capitalized noun-capable word
+   (`Mass Characteristics`). A line is one candidate.
+3. **Documents** are on the training side (whole title families, assigned by a seeded hash before any label); no document of the file is in a
+   development tranche.
+4. **Labels:** every candidate is tagged from scratch, token by token, by `claude-opus-5.5` and `gpt-6.1-sol`, which see opaque ids and tokens
+   only. **No human reviewed a label.**
+5. **Kept lines:** both labelers agree on every token, the convention linter reports no fix-tier violation, and token 0 has the tag of its
+   stratum (VERB in the base form for `imperative`, NOUN for `initial-noun`); any other combination is dropped and counted, never edited by hand.
+6. **Caps** in a seeded order: 6 lines per lemma, 25 per document, `imperative` 150 to 400 lines, `initial-noun` at most half of the kept
+   imperative lines. `build` refuses below a floor unless `--allow-short` (the miss is disclosed, never padded).
+
+| Stage | Lines |
+| --- | ---: |
+| candidates labeled (imperative frame 137, initial-noun frame 450) | 587 |
+| dropped: the labelers disagree on token 0 (target disagreement) | 11 |
+| dropped: token 0 read as another class (class mismatch) | 75 |
+| dropped: a disputed token elsewhere in the line | 19 |
+| dropped by the `initial-noun` cap (half of the kept imperative lines) | 235 |
+| **in `headings-2.tsv`** | **247** (imperative 165, initial-noun 82) |
+
+**Hand check (model review, not a human review).** One sample of 60 lines (40 `imperative`, 20 `initial-noun`; seed 20261124) plus 4 control
+items whose tag had been swapped on purpose was drawn once from the data as built and reviewed once by `claude-sonnet-5.5` against
+[CONVENTIONS.md](../CONVENTIONS.md): the judged word is correct in 60 of 60 (100.0 percent; the gate is 95 percent), 60 of 60 lines (100.0
+percent) have no other token marked wrong, token precision is 100.00 percent (0 tokens wrong of 295; reported, not gated), and 0 of the 4
+controls were accepted (the gate allows 1). It is not independent of the labelers' shared blind spots.
+
+**Leakage and license checks.** `python tools/data/check_leakage.py` finds **0 document overlaps, 0 exact sentence overlaps and 0 near
+duplicates** against every evaluation set (open dev and test, gold v2, the shape probe, all seven tranches of the shapes development set, the
+STE challenge set, UD English-EWT) and against open train, MASC, silver, imperative, `compound` and `headings`; it shares 57 documents (and no
+line) with `compound2` (reported, not gated). [training-leakage-report.tsv](../training-leakage-report.tsv) and
+[leakage-report.tsv](../leakage-report.tsv) have the counts. `check_licenses.py` scans `headings-2-sources.tsv`. `check_conventions.py` lints
+`headings-2.tsv` (lint only; its own column `headings2`): 0 violations at the fix tier and 0 at the check tier. `lexicon/lexicon.tsv` is unchanged.
+
+**Known limits.**
+
+- **Imperative mass is short.** 165 imperative lines against the requested about 300; 41 of them (24.8 percent) come from the `initial-noun`
+  frame, whose lines the labelers mostly read as nouns, adjectives or names. 158 of the 165 are from Army documents (usda 5, phs 1, marine 1);
+  30 documents supply the imperative lines.
+- **Strata are not independent samples of the text.** The `initial-noun` stratum is a contrast set that the rule caps at half of the imperative
+  lines; it teaches the noun reading of the same kind of first word and is not a random sample of noun headings.
+- **Model labels, no human review.** Two models agree on every token; the review above is a sample of 60.
+- **Short units.** A line has 2 to 10 tokens (4.7 on average), so the source adds few tokens (1,160) to a training run.
+- **Register.** Step titles and table-of-contents lines of manuals, mostly Army publications (192 of 247 lines, 158 of the 165 imperative lines); vocabulary and punctuation
+  differ from web text; OCR residue remains in some lines.
+- **Frame, not coverage.** Only the two frames above are selected; ALL-CAPS and sentence-case step titles, and instruction lines whose second token is
+  something else, are not.
+- **Caps shape the sample:** at most 6 lines per lemma and 25 per document.
+
+**Use.** Train only. `training.json` lists the source as `headings2` with `"weight": 0` (not part of the shipped mix; `train --check` reproduces the
+shipped weights); `--source headings2:1` adds it to a training run. The trainer refuses the evaluation files by name and admits this file because it
+is a training source under `data/`. Do not evaluate on it.

@@ -59,10 +59,12 @@ target framework, including .NET Framework.
   and requires a training source to lie below the `data` folder of the repository, and the held-out allow-list (the four
   repository sets and the cache of the external treebank), whose resolver and header check need a validated selection.
   `HeldOutReader` (same file) opens the held-out files and verifies their hashes against `data/MANIFEST.tsv` (the
-  treebank against its pins) and their headers. The five files of the hard-shape development set (its standard and hard
-  tranche and the three single-shape tranches `compound-head`, `headings` and `named-state`) have a guard of their own
+  treebank against its pins) and their headers. The seven files of the hard-shape development set (its standard and hard
+  tranche, the three single-shape tranches `compound-head`, `headings` and `named-state`, and the two follow-up tranches
+  `compound-head-2` and `headings-2`) have a guard of their own
   (`ShapesDevelopmentFile`, `ShapesDevelopmentHardFile`, `ShapesDevelopmentCompoundHeadFile`, `ShapesDevelopmentHeadingsFile`,
-  `ShapesDevelopmentNamedStateFile`, `ShapesDevelopmentFiles`, `EnsureShapesDevelopmentFile`), next to and not inside the
+  `ShapesDevelopmentNamedStateFile`, `ShapesDevelopmentCompoundHead2File`, `ShapesDevelopmentHeadings2File`,
+  `ShapesDevelopmentFiles`, `EnsureShapesDevelopmentFile`), next to and not inside the
   two-file allow-list; the sources and leakage files of a tranche are not in it, so the guard refuses them.
 - **`ShapesDevTranche`**, **`ShapesDevItem`**, **`ShapesDevSets`**, **`ShapesDevShapeResult`**, **`ShapesDevResult`**,
   **`ShapesDevTrancheResults`**, **`ShapesDevEvaluator`** and **`ShapesDevReport`** (`Evaluation/ShapesDev.cs`): one
@@ -73,10 +75,13 @@ target framework, including .NET Framework.
   cells are read by `CorpusReader.Parse` (one grammar for every corpus file); the extra comments `shape`, `role`,
   `target`, `lemma` and `origin` are read from the same lines.
 - **`ShapesDevShapeSpec`**, **`ShapesDevTrancheEvaluator`**, **`ShapesDevReport.RenderTranche`** and **`ShapesDevCommand`**
-  (`Evaluation/ShapesDevTranches.cs`, `ShapesDevSets.TrancheShapes` and `SpecOf`): the shape-spec table of the three
+  (`Evaluation/ShapesDevTranches.cs`, `ShapesDevSets.TrancheShapes` and `SpecOf`): the shape-spec table of the five
   single-shape tranches (the shape id, the tags of a target and of a control, and the scoring: by class for
   `n-compound-head-ambiguous` and `n-named-state`, by exact tag for `heading-titlecase`, whose items carry a `kind`
-  comment: noun NOUN, imperative VERB, proper PROPN), the evaluator that judges them through `Metrics.Judge` with a
+  comment: noun NOUN, imperative VERB, proper PROPN; the follow-up tranches `compound-head-2` and `headings-2`
+  (`ShapesDevTranche.CompoundHead2` and `Headings2`) have entries of their own with the shape, scoring and kinds of their
+  first tranches, so `SpecOf(tranche)` tells them apart and `SpecOf(shape)` returns the first), the evaluator that judges
+  them through `Metrics.Judge` with a
   label function, the new measure `Metrics.ConfidentWrongConfidence` (0.95: the target items that are answered wrongly
   at that confidence or higher), the section renderer, and the command logic of `eval-shapes --tranche` that `Program`
   calls. The original `ShapesDevSets.Shapes` (five shapes) and the standard, hard and combined output do not change.
@@ -217,15 +222,21 @@ measured with two more seeds. The settings were chosen by coordinate descent (no
 limitation, as are the small size of the gold development set (2,025 targets) and the fact that both development sets are
 labeled by language models.
 
-The hard-shape development set has five files, the standard tranche (`data/eval/shapes-dev/dev.tsv`), the hard tranche
-(`data/eval/shapes-dev/hard.tsv`) and three single-shape tranches (`compound-head.tsv`, `headings.tsv`, `named-state.tsv`),
-and they are development files of their own kind. They are not added to the
-two-file allow-list: `DataGuard.EnsureShapesDevelopmentFile` compares full paths against those five files
+The hard-shape development set has seven files, the standard tranche (`data/eval/shapes-dev/dev.tsv`), the hard tranche
+(`data/eval/shapes-dev/hard.tsv`), three single-shape tranches (`compound-head.tsv`, `headings.tsv`,
+`named-state.tsv`) and the
+two follow-up tranches `compound-head-2.tsv` and `headings-2.tsv` (more items of the shapes of `compound-head` and
+`headings`, from documents that no other set uses), and
+they are development files of their own kind. They are not added to the
+two-file allow-list: `DataGuard.EnsureShapesDevelopmentFile` compares full paths against those seven files
 (`ShapesDevelopmentFiles`) and the reader requires a development-split header, so a command that reads "the two
 development files" cannot reach them, the held-out list does not contain them (so `evaluate` cannot open them) and the
 training deny-list refuses them (folder `eval`, and `dev.tsv` by name). `DevSets.ReadShapesDev(root, tranche, out sha)`
-reads one tranche, and the tranche of an item is the file that it was read from (a comment in a file cannot set it).
-Both guards, `EnsureDevelopmentFile` for the two standard files and `EnsureShapesDevelopmentFile` for these five,
+reads one tranche, and the tranche of an item is the file that it was read from (a comment in a file cannot set it); the
+corpus marker of the header (`compound-head-2 tranche` is not `compound-head tranche`) and the longest matching
+sentence-id prefix (`shapes-dev-compound-head-2-` against `shapes-dev-compound-head-`) keep a file of the second
+tranche of a shape from being read as the first.
+Both guards, `EnsureDevelopmentFile` for the two standard files and `EnsureShapesDevelopmentFile` for these seven,
 canonicalize the requested path (symbolic links and junctions resolved) and require it to equal the canonical
 repository root plus the allowed relative file, so a link at or below the data folder is refused. A possible follow-up is
 to verify the manifest hash of a development file before each selection read. The shape probe, which shares the shapes,
@@ -257,10 +268,20 @@ heading lines are extracted from the text by a deterministic filter, no held-out
 hashed keys of `shapes_dev.LeakageFilter` only), a top-up round of a tranche is written down before its labels exist, and
 the quota gate is a floor and a cap per stratum. The gold of a heading item is an exact tag, which the decision rule of
 `shapes_dev.py` checks for the heading shapes (`EXACT_TAGS`).
+The two follow-up tranches and the two follow-up training sources `compound2` and `headings2` come from one more builder,
+`tools/data/followup_data.py`, whose rule was committed before any document was fetched (R0); the pins were set after
+the sourcing, at R1 and R3, and the caps were amended once (A1) after the sourcing and before any label existed; it
+uses the same frozen
+blind-labeling commands of `shapes_dev.py`, holds every constant of the rule, and obeys the same discipline (no
+PartOfSpeech model, no held-out set except through the opaque keys, the numbers of the contested band of
+`compound-head-2` from the pinned WordSense Basic classifier, a quota gate of floors and caps per group). The older
+builders are unchanged apart from an optional `skip_tranches` argument of the leakage helpers.
 
 The training sources of `training.json` are the open corpus, MASC, the silver corpus, the imperative source
 (`data/imperative/imperative.tsv`, weight 1), and the compound and headings sources (`data/compound/compound.tsv` and
-`data/headings/headings.tsv`, weight 0, so they are committed and not read by a default run). A source can only
+`data/headings/headings.tsv`, weight 0, so they are committed and not read by a default run) and their follow-up
+sources `compound2` (`data/compound/compound-2.tsv`) and `headings2` (`data/headings/headings-2.tsv`), also at
+weight 0 (so the image and `weights.bin` are unchanged, and `train --check` proves it). A source can only
 be added to a run through the
 configuration: `--source NAME:WEIGHT` changes the weight of a source that the configuration names and refuses an unknown
 name, and a source of weight 0 is not read (`CorpusReader.LoadSources` skips it), so `--source imperative:0` trains the
@@ -507,8 +528,10 @@ scores a weights file on it:
   and not scored, `--tranche standard` prints the standard section alone and `--tranche hard` needs the file. A shape
   without items in a tranche (n-measure has none in the hard tranche) prints dashes, never a score.
 - **Single-shape tranches** (`ShapesDevTrancheEvaluator`, `ShapesDevReport.RenderTranche`): `eval-shapes --tranche
-  compound-head|headings|named-state` prints one section for that tranche, `--tranche new` the three of them (a missing
-  file is noted in one line and not scored; an explicit request for a missing file is an error with exit code 2). A section
+  compound-head|headings|named-state|compound-head-2|headings-2` prints one section for that tranche, `--tranche new` the
+  three of the first generation and `--tranche followup` the two follow-up tranches (a missing
+  file is noted in one line and not scored; an explicit request for a missing file is an error with exit code 2); `new`
+  never includes the follow-up tranches, so its output does not change. A section
   has one table with the target items, the target accuracy and its Wilson interval, the noun-verb decisions, the harmful
   errors (the definition of the other sections), the harmful errors per 1,000 decisions, the target items wrong at a
   confidence of at least 0.95, and the control items and accuracy; the headings section adds a row per kind (noun
@@ -579,7 +602,14 @@ harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-featu
   of its shape with the target items that are wrong at a confidence of at least 0.95 as `confidentWrong`, and for the
   headings the rows of the kinds `noun`, `imperative` and `proper`; `pooledPrimary` pools the compound-head and the
   headings rows into the harmful errors per 1,000 noun-verb decisions over both and the total of their confident wrong
-  answers; the three file hashes are members of `inputs`), on the open and the gold v2 development splits and on the
+  answers; the three file hashes are members of `inputs`), on the follow-up tranches (the block `shapesFollowup`, after
+  `shapesNew`, with the rows of `compoundHead`, `compoundHead2`, `headings` and `headings2` as above; `pooledPrimary`
+  is the primary figure of the follow-up measure, the harmful errors per 1,000 noun-verb decisions over the target
+  items of the enlarged compound dev and of all heading dev items, with the counts it is derived from and the target
+  items wrong at a confidence of at least 0.95 summed over the four tranches as `confidentWrongTotal`;
+  `imperativeHeadings` pools the `imperative` kind of both headings tranches; `compoundControls` pools the controls of
+  both compound-head tranches; the two new file hashes are appended to `inputs`; `shapesNew` and every older member
+  stay as they were), on the open and the gold v2 development splits and on the
   mapped development part of the external
   treebank (the file `ud_dev.tsv` of the local, git-ignored treebank cache below `tools/data/cache`, whose SHA-256 is
   pinned in `DataGuard`; a missing or changed cache is an error with the fetch recipe, and judging uses the mapped tags
@@ -648,9 +678,11 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
   (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv`, `data/silver/silver.tsv` and
   `data/imperative/imperative.tsv` (all four with a positive weight), `data/compound/compound.tsv` and
-  `data/headings/headings.tsv` (weight 0), and the two
+  `data/headings/headings.tsv` (weight 0), `data/compound/compound-2.tsv` and `data/headings/headings-2.tsv`
+  (weight 0), and the two
   development files plus the hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche),
-  `data/eval/shapes-dev/hard.tsv` (hard tranche) and `compound-head.tsv`, `headings.tsv` and `named-state.tsv` of the same
+  `data/eval/shapes-dev/hard.tsv` (hard tranche) and `compound-head.tsv`, `headings.tsv`, `named-state.tsv`,
+  `compound-head-2.tsv` and `headings-2.tsv` of the same
   folder (for `eval-shapes` and `eval-arm`); for
   `evaluate` the held-out files of `data/`, `data/MANIFEST.tsv`, and the pinned local cache of the
   external treebank that the data tools fetch (the tool itself uses no network); `eval-arm` reads the mapped development

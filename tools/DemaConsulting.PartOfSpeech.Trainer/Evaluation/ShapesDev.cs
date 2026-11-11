@@ -5,12 +5,13 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 
 /// <summary>
 ///     The tranche of the hard-shape development set an item belongs to: the standard tranche (<c>dev.tsv</c>), the hard
-///     tranche (<c>hard.tsv</c>, selected by a pre-registered rule that favors the contested cases) or one of the three
-///     single-shape tranches (<c>compound-head.tsv</c>, <c>headings.tsv</c>, <c>named-state.tsv</c>).
+///     tranche (<c>hard.tsv</c>, selected by a pre-registered rule that favors the contested cases) or one of the five
+///     single-shape tranches (<c>compound-head.tsv</c>, <c>headings.tsv</c>, <c>named-state.tsv</c> and the second compound-head and
+///     headings tranches <c>compound-head-2.tsv</c> and <c>headings-2.tsv</c>).
 /// </summary>
 /// <remarks>
 ///     The tranche of an item is the file it was read from (see <see cref="DevSets.ReadShapesDev(string, ShapesDevTranche, out string)"/>);
-///     no comment in a file can set it. The values are the indexes of <see cref="DataGuard.ShapesDevelopmentFiles"/>. The three
+///     no comment in a file can set it. The values are the indexes of <see cref="DataGuard.ShapesDevelopmentFiles"/>. The five
 ///     single-shape tranches are scored by <see cref="ShapesDevTrancheEvaluator"/> and have their own report sections; the standard and the
 ///     hard tranche keep the five original shapes of <see cref="ShapesDevSets.Shapes"/>.
 /// </remarks>
@@ -40,6 +41,16 @@ internal enum ShapesDevTranche
     ///     The named-state tranche, <c>data/eval/shapes-dev/named-state.tsv</c> (shape <c>n-named-state</c>).
     /// </summary>
     NamedState = 4,
+
+    /// <summary>
+    ///     The second compound-head tranche, <c>data/eval/shapes-dev/compound-head-2.tsv</c> (the shape <c>n-compound-head-ambiguous</c> of <see cref="CompoundHead"/>).
+    /// </summary>
+    CompoundHead2 = 5,
+
+    /// <summary>
+    ///     The second headings tranche, <c>data/eval/shapes-dev/headings-2.tsv</c> (the shape <c>heading-titlecase</c> of <see cref="Headings"/>, scored by exact tag).
+    /// </summary>
+    Headings2 = 6,
 }
 
 /// <summary>
@@ -293,7 +304,7 @@ internal sealed class ShapesDevShapeSpec
 ///         disputed. An authored sentence belongs to the authored pseudo-document and no other sentence does.
 ///     </para>
 ///     <para>
-///         The three single-shape tranches (compound-head, headings, named-state) hold the one shape of their specification
+///         The five single-shape tranches (compound-head, headings, named-state, compound-head-2, headings-2) hold the one shape of their specification
 ///         (<see cref="ShapesDevSets.TrancheShapes"/>), and the judged word must carry a tag that the specification allows for its role. The
 ///         headings tranche has one more comment, <c>kind</c> (<c>noun</c>, <c>imperative</c> or <c>proper</c>), that fixes the role and
 ///         the exact gold tag of the heading; no other tranche may have it.
@@ -363,17 +374,22 @@ internal static class ShapesDevSets
     };
 
     /// <summary>
-    ///     The shape of each single-shape tranche, in the order of the tranches that have one (compound-head, headings, named-state).
+    ///     The shape of each single-shape tranche, in the order of the tranches that have one (compound-head, headings, named-state, compound-head-2, headings-2).
     /// </summary>
     /// <remarks>
     ///     The two noun shapes are scored by class (a PROPN target is a Noun, like in the five original shapes). The heading shape is
-    ///     scored by exact tag, because the class would hide a capitalized common noun that the tagger calls PROPN.
+    ///     scored by exact tag, because the class would hide a capitalized common noun that the tagger calls PROPN. The second
+    ///     compound-head and headings tranches hold the same shapes with the same scoring as their first tranches, so two entries of the
+    ///     table have the same shape id; <see cref="SpecOf(ShapesDevTranche)"/> is the lookup that tells them apart, and
+    ///     <see cref="SpecOf(string)"/> returns the first tranche of a shape.
     /// </remarks>
     public static readonly IReadOnlyList<ShapesDevShapeSpec> TrancheShapes = new[]
     {
         new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
         new ShapesDevShapeSpec("heading-titlecase", ShapesDevTranche.Headings, ShapesDevScoring.Exact, new[] { Upos.Noun, Upos.Verb }, new[] { Upos.Propn }, HeadingKinds),
         new ShapesDevShapeSpec("n-named-state", ShapesDevTranche.NamedState, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
+        new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead2, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
+        new ShapesDevShapeSpec("heading-titlecase", ShapesDevTranche.Headings2, ShapesDevScoring.Exact, new[] { Upos.Noun, Upos.Verb }, new[] { Upos.Propn }, HeadingKinds),
     };
 
     /// <summary>
@@ -388,7 +404,7 @@ internal static class ShapesDevSets
     ///     Gets the shape specification of a shape id of a single-shape tranche.
     /// </summary>
     /// <param name="shape">The shape id.</param>
-    /// <returns>The specification, or <c>null</c> when the id is not the shape of a single-shape tranche.</returns>
+    /// <returns>The specification of the first tranche that holds the shape (the second compound-head and headings tranches have the shapes of their first tranches), or <c>null</c> when the id is not the shape of a single-shape tranche.</returns>
     public static ShapesDevShapeSpec? SpecOf(string shape) =>
         TrancheShapes.FirstOrDefault(spec => string.Equals(spec.Shape, shape, StringComparison.Ordinal));
 
