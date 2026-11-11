@@ -5366,6 +5366,141 @@ The script runs them first and makes no selection (exit code 1, no decision file
 - The labels were written by two models without human review; the hand checks were model reviews (60 of 60 on every product).
 - The Title Case frame excludes ALL-CAPS and sentence-case step titles (U2). The compound controls are 17.6% of the new compound items (cap of 45), not about 20%.
 
+## Follow-up: re-test results (decision: CMP2 wins by rule B)
+
+Written after the 40 runs and the analysis of the pre-registration commit `0f0b595abaf6e9d02aef2ada2e1eb8be47da6c28` (E1). Every result file records `inputs.commit` = `0f0b595...` with `dirty` = false. Five arms (BASE, CMP2, CMP2-F5, CMP2-HDG2, CMP2-HDG2-F5), eight seeds each (20260101, 11 to 17), 40 runs, on 2026-11-10; the commands were those of the pre-registration (the frozen driver `compound-heading-2/run_arms.ps1` with `runner-base.cmd`, one invocation per arm, in the registered order). No run was repeated, replaced or dropped and no frozen file was edited. The frozen `analyze_followup.py` was applied to the 40 result files (`python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py --runs <runs> --out <runs>\report.md --decision <runs>\decision.json`; exit code 0) and the rule was applied mechanically. **No held-out set was read and no held-out command (`evaluate`, `thresholds`, `train --update-config`) was run for this section.** Nothing was changed in the weights, the operating points or the README accuracy tables by this commit; the adoption plan follows in its own section, committed before any retraining.
+
+As in the earlier experiment (PR #19), the analyzer's outputs are not committed: the tables below are copied from them, and their hashes are recorded here.
+
+| File (outside the repository, next to the run folders) | Size | SHA-256 |
+| --- | ---: | --- |
+| `report.md` (the analysis) | 29,591 bytes | `2ba5247917377e271dc67518186f5249eca982f9a0fef187080d0c99b1faac20` |
+| `decision.json` (per-arm values, intervals, guards, decision) | 19,391 bytes | `3f0a61ae60848234b489a2014e254c5c15b07c829b1b933d9f347ec46c11b3e0` |
+| `CMP2-s20260101.bin` (the seed-20260101 weights of the winning arm; 1,196,142 bytes raw, 126,087 rows, 314,640 weights) | 537,650 bytes deflated | `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad` |
+
+### Re-test results: acceptance tests (all passed; the analysis made a selection only after them)
+
+Every acceptance test of the pre-registration passed: the frozen files (15 text files, 7 development files, 1 raw file) have their frozen SHA-256; **a**, the BASE run at seed 20260101 has the weights SHA-256 `48dd9188...413b`, byte-identical to the shipped `weights.bin`, and all 67 shipped figures (the old and the new tranches; table `SHIPPED_FIGURES`) are reproduced; **b**, every BASE run trained on 61,680 sentences with the sources `open:2,masc:1,silver:1,imperative:1`, every CMP2 and CMP2-F5 run on exactly 1,842 sentences more (63,522; `compound:1,compound2:1`) and every CMP2-HDG2 and CMP2-HDG2-F5 run on exactly 2,463 more (64,143; `compound:1,headings:1,compound2:1,headings2:1`); **c**, the ten `inputs.*Sha256` fields agree in all 40 runs and equal the frozen hashes.
+
+### Re-test results: the arms
+
+Values are the mean ± sample standard deviation over the eight seeds; the baseline is BASE (the shipped model). Primary = pooled harmful per 1,000 noun-verb decisions over `compound-head`, `compound-head-2`, `headings` and `headings-2` (470 decisions for the shipped model); co-primary = wrong at confidence >= 0.95 summed over the same four tranches.
+
+| Arm | Feature groups | Sources added | Additions | Primary | Co-primary (wrong at >= 0.95) | Pooled target accuracy % |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| BASE | `clauseCues` | none | 0 | 238.8 ± 8.6 | 20.38 ± 3.11 | 71.25 ± 0.70 |
+| CMP2 | `clauseCues` | compound, compound2 | 1 | 193.1 ± 16.3 | 12.12 ± 3.00 | 76.51 ± 1.98 |
+| CMP2-F5 | `clauseCues`, `titleCaseLine` | compound, compound2 | 2 | 198.1 ± 20.5 | 11.88 ± 3.23 | 76.46 ± 2.32 |
+| CMP2-HDG2 | `clauseCues` | compound, compound2, headings, headings2 | 2 | 185.4 ± 10.3 | 10.50 ± 1.77 | 79.55 ± 1.15 |
+| CMP2-HDG2-F5 | `clauseCues`, `titleCaseLine` | compound, compound2, headings, headings2 | 3 | 195.5 ± 15.8 | 10.75 ± 2.38 | 79.43 ± 1.39 |
+
+Per tranche (target accuracy %, harmful per 1k, wrong at >= 0.95; the controls are 100.0% in every arm of `headings` and `headings-2`, and 99.6% to 100.0% on the compound controls of both tranches):
+
+| Arm | compound-head: acc | harmful | wrong | compound-head-2: acc | harmful | wrong | headings: acc | harmful | wrong | headings-2: acc | harmful | wrong |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 60.8 ± 2.3 | 382.5 ± 22.5 | 5.00 ± 1.77 | 64.8 ± 1.5 | 323.8 ± 13.5 | 13.00 ± 1.60 | 82.2 ± 1.9 | 46.5 ± 18.0 | 1.50 ± 0.76 | 83.8 ± 1.8 | 29.0 ± 6.3 | 0.88 ± 0.64 |
+| CMP2 | 69.1 ± 3.6 | 302.5 ± 34.1 | 1.62 ± 0.74 | 72.1 ± 2.3 | 253.6 ± 23.2 | 8.25 ± 2.19 | 85.4 ± 2.3 | 60.9 ± 11.4 | 1.50 ± 0.53 | 84.1 ± 1.8 | 30.5 ± 9.2 | 0.75 ± 0.71 |
+| CMP2-F5 | 68.9 ± 4.5 | 306.2 ± 43.4 | 1.75 ± 0.89 | 72.4 ± 3.0 | 251.2 ± 29.7 | 8.12 ± 2.75 | 82.4 ± 2.6 | 81.7 ± 16.7 | 0.25 ± 0.46 | 86.1 ± 1.4 | 41.2 ± 6.3 | 1.75 ± 0.46 |
+| CMP2-HDG2 | 72.2 ± 2.2 | 272.5 ± 21.9 | 1.88 ± 0.99 | 72.3 ± 2.0 | 251.2 ± 18.1 | 8.38 ± 1.06 | 90.8 ± 0.7 | 62.5 ± 10.7 | 0.12 ± 0.35 | 90.5 ± 1.0 | 27.4 ± 5.6 | 0.12 ± 0.35 |
+| CMP2-HDG2-F5 | 69.0 ± 2.7 | 303.8 ± 28.8 | 2.25 ± 1.04 | 71.7 ± 2.1 | 257.1 ± 21.0 | 8.00 ± 2.20 | 90.8 ± 1.6 | 70.5 ± 13.7 | 0.00 ± 0.00 | 93.9 ± 1.0 | 24.4 ± 6.5 | 0.50 ± 0.53 |
+
+Heading kinds (diagnostics) and the imperative-heading guard (kind `imperative` of `headings` plus `headings-2`, pooled; BASE 60 decisions):
+
+| Arm | headings noun acc % | headings-2 noun acc % | headings-2 noun harmful per 1k | headings imperative acc % | headings-2 imperative acc % | imperative acc % (pooled) | **imperative harmful per 1k (pooled)** | wrong >= 0.95 (pooled) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 74.2 ± 3.8 | 64.8 ± 3.8 | 47.5 ± 10.4 | 91.1 ± 1.7 | 100.0 ± 0.0 | 96.2 ± 0.7 | 33.3 ± 12.6 | 0.00 |
+| CMP2 | 77.8 ± 4.6 | 65.8 ± 3.6 | 45.0 ± 9.3 | 93.9 ± 1.0 | 99.6 ± 0.8 | 97.1 ± 0.7 | 47.9 ± 13.9 | 0.00 |
+| CMP2-F5 | 80.8 ± 3.2 | 71.8 ± 3.1 | 47.5 ± 10.4 | 84.2 ± 2.8 | 98.3 ± 0.0 | 92.2 ± 1.2 | 89.6 ± 23.5 | 0.00 |
+| CMP2-HDG2 | 88.2 ± 1.3 | 79.5 ± 2.3 | 42.5 ± 7.1 | 93.6 ± 1.4 | 99.8 ± 0.6 | 97.1 ± 0.7 | 50.0 ± 12.6 | 0.00 |
+| CMP2-HDG2-F5 | 90.2 ± 2.3 | 87.0 ± 1.9 | 37.5 ± 7.1 | 91.4 ± 2.5 | 99.8 ± 0.6 | 96.2 ± 1.4 | 60.4 ± 23.5 | 0.00 |
+
+Per-seed values (primary / wrong at >= 0.95):
+
+| Arm | 20260101 | 11 | 12 | 13 | 14 | 15 | 16 | 17 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 246.8 / 21 | 240.4 / 25 | 225.5 / 21 | 246.8 / 22 | 242.6 / 19 | 246.8 / 20 | 231.9 / 21 | 229.8 / 14 |
+| CMP2 | 195.7 / 16 | 197.9 / 12 | 212.8 / 11 | 191.5 / 14 | 200.0 / 11 | 168.1 / 6 | 208.5 / 14 | 170.2 / 13 |
+| CMP2-F5 | 212.8 / 17 | 202.1 / 8 | 214.9 / 15 | 178.7 / 10 | 189.4 / 11 | 168.1 / 8 | 189.4 / 13 | 229.8 / 13 |
+| CMP2-HDG2 | 178.7 / 11 | 172.3 / 9 | 183.0 / 9 | 197.9 / 14 | 202.1 / 10 | 189.4 / 9 | 178.7 / 12 | 180.9 / 10 |
+| CMP2-HDG2-F5 | 212.8 / 9 | 187.2 / 11 | 180.9 / 10 | 180.9 / 16 | 212.8 / 8 | 178.7 / 10 | 195.7 / 11 | 214.9 / 11 |
+
+### Re-test results: guards against BASE
+
+Each cell is the arm's delta against the BASE mean and the verdict (BASE means: wrong at >= 0.95 20.38, hard harmful 178.8, standard harmful 13.5, open dev harmful 20.19, UD-EWT dev harmful 20.84, UD-EWT dev accuracy 92.964, named-state target accuracy 92.6, deflated 522,174 bytes, imperative-heading harmful 33.3).
+
+| Guard (limit) | CMP2 | CMP2-F5 | CMP2-HDG2 | CMP2-HDG2-F5 |
+| --- | --- | --- | --- | --- |
+| wrong at >= 0.95 (<= BASE) | PASS -8.25 | PASS -8.50 | PASS -9.88 | PASS -9.62 |
+| hard harmful per 1k (<= BASE + 10) | PASS -19.06 | PASS -15.62 | PASS -23.44 | PASS -17.50 |
+| standard harmful per 1k (<= BASE + 5) | PASS -1.46 | PASS -1.46 | PASS -2.92 | PASS -1.67 |
+| open dev harmful per 1k (<= BASE + 1.5) | PASS +0.45 | PASS +0.73 | PASS +0.53 | PASS -0.08 |
+| UD-EWT dev harmful per 1k (<= BASE + 1.5) | PASS -1.12 | PASS -1.45 | PASS -0.49 | PASS -1.59 |
+| UD-EWT dev accuracy (>= BASE - 0.15) | PASS -0.00 | PASS -0.01 | PASS +0.02 | PASS +0.01 |
+| named-state target accuracy (>= BASE - 3) | PASS +0.25 | PASS +1.50 | PASS +0.38 | PASS +0.75 |
+| deflated bytes (<= 1.5 x BASE) | PASS 1.028x | PASS 1.058x | PASS 1.037x | PASS 1.065x |
+| tokens per second (>= 150,000, absolute) | PASS 534,918 | PASS 563,276 | PASS 787,103 | PASS 509,064 |
+| imperative-heading harmful per 1k (<= BASE + 25) | PASS +14.58 | **FAIL +56.25** | PASS +16.67 | **FAIL +27.08** |
+| all guards | PASS | **FAIL** | PASS | **FAIL** |
+
+Reported, not gated (open dev, gold v2 dev, UD-EWT dev, hard and standard tranches, named-state, model and training):
+
+| Arm | Open acc % | Open harmful per 1k | Open NLL | Open ECE % | Gold acc % | Gold harmful per 1k | UD acc % | UD harmful per 1k | Hard acc % | Standard acc % | Named-state harmful per 1k |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 96.67 ± 0.05 | 20.19 ± 1.12 | 0.1115 ± 0.0005 | 0.23 ± 0.05 | 95.17 ± 0.12 | 21.9 ± 2.5 | 92.964 ± 0.047 | 20.84 ± 0.42 | 76.72 ± 1.00 | 97.75 ± 0.42 | 91.2 ± 14.0 |
+| CMP2 | 96.70 ± 0.04 | 20.64 ± 0.99 | 0.1104 ± 0.0006 | 0.21 ± 0.05 | 95.31 ± 0.14 | 18.4 ± 2.7 | 92.962 ± 0.033 | 19.72 ± 0.62 | 78.97 ± 1.02 | 98.04 ± 0.23 | 91.2 ± 14.0 |
+| CMP2-F5 | 96.69 ± 0.04 | 20.92 ± 1.60 | 0.1108 ± 0.0010 | 0.25 ± 0.04 | 95.26 ± 0.14 | 19.4 ± 3.3 | 92.949 ± 0.047 | 19.39 ± 1.16 | 78.19 ± 0.69 | 98.12 ± 0.19 | 98.0 ± 20.1 |
+| CMP2-HDG2 | 96.69 ± 0.05 | 20.73 ± 0.75 | 0.1108 ± 0.0007 | 0.22 ± 0.07 | 95.34 ± 0.11 | 15.8 ± 2.8 | 92.986 ± 0.050 | 20.35 ± 1.27 | 79.62 ± 0.48 | 98.15 ± 0.30 | 101.4 ± 28.0 |
+| CMP2-HDG2-F5 | 96.75 ± 0.03 | 20.11 ± 0.79 | 0.1103 ± 0.0005 | 0.26 ± 0.04 | 95.30 ± 0.11 | 17.6 ± 3.2 | 92.976 ± 0.070 | 19.26 ± 1.21 | 78.53 ± 0.88 | 98.08 ± 0.31 | 94.6 ± 25.0 |
+
+| Arm | Temperature | Rows | Raw bytes | Deflated bytes | Tokens/s (1 thread) | Train wall s | Old-tranche primary (PR #19 measure, `shapesNew.pooledPrimary`) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 9.438 ± 0.106 | 122,188 ± 220 | 1,158,384 ± 1,828 | 522,174 ± 874 | 502,107 ± 184,083 | 30.3 ± 17.4 | 235.3 ± 15.4 |
+| CMP2 | 9.514 ± 0.000 | 125,842 ± 272 | 1,194,098 ± 2,106 | 536,826 ± 898 | 546,402 ± 102,714 | 19.4 ± 2.2 | 196.6 ± 18.5 |
+| CMP2-F5 | 10.208 ± 0.103 | 128,004 ± 223 | 1,222,966 ± 2,580 | 552,388 ± 1,045 | 557,708 ± 94,651 | 20.2 ± 3.5 | 207.9 ± 21.7 |
+| CMP2-HDG2 | 9.489 ± 0.072 | 126,935 ± 255 | 1,204,828 ± 2,246 | 541,326 ± 656 | 723,996 ± 133,774 | 19.8 ± 5.8 | 180.5 ± 11.4 |
+| CMP2-HDG2-F5 | 10.208 ± 0.103 | 128,992 ± 277 | 1,232,288 ± 2,392 | 556,165 ± 915 | 574,355 ± 150,863 | 33.6 ± 7.0 | 201.5 ± 17.9 |
+
+The training times and the single-thread throughput were measured on a loaded shared machine at Normal priority (the deviation record of the pre-registration); they do not separate the arms. The old-tranche primary is the PR #19 measure (`compound-head` plus `headings` decisions), kept so that the two experiments stay comparable.
+
+### Re-test results: Welch 95% intervals of (arm - BASE)
+
+Difference of the means with the Welch-Satterthwaite t interval over the seeds (seeds measure training noise only; four arms against one baseline, no multiplicity correction). The primary is the only interval that enters the rule; the others are reported, and in a table of this size one interval that excludes 0 is not evidence by itself.
+
+| Arm | Primary | Wrong at >= 0.95 | Hard harmful | Standard harmful | Open dev harmful | UD-EWT dev harmful | UD-EWT dev accuracy | Named-state accuracy | Imperative-heading harmful |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CMP2 | -45.74 [-60.12, -31.37] | -8.25 [-11.53, -4.97] | -19.06 [-31.81, -6.31] | -1.46 [-4.36, +1.44] | +0.45 [-0.68, +1.58] | -1.12 [-1.70, -0.54] | -0.00 [-0.05, +0.04] | +0.25 [-1.76, +2.26] | +14.58 [+0.34, +28.83] |
+| CMP2-F5 | -40.69 [-58.37, -23.02] | -8.50 [-11.90, -5.10] | -15.62 [-25.66, -5.59] | -1.46 [-4.22, +1.30] | +0.73 [-0.77, +2.23] | -1.45 [-2.44, -0.46] | -0.01 [-0.07, +0.04] | +1.50 [-0.51, +3.51] | +56.25 [+35.46, +77.04] |
+| CMP2-HDG2 | -53.46 [-63.63, -43.29] | -9.88 [-12.66, -7.09] | -23.44 [-31.06, -15.82] | -2.92 [-5.83, -0.00] | +0.53 [-0.50, +1.57] | -0.49 [-1.57, +0.59] | +0.02 [-0.03, +0.07] | +0.38 [-1.82, +2.57] | +16.67 [+3.16, +30.18] |
+| CMP2-HDG2-F5 | -43.35 [-57.38, -29.32] | -9.62 [-12.61, -6.64] | -17.50 [-27.60, -7.40] | -1.67 [-4.29, +0.95] | -0.08 [-1.13, +0.96] | -1.59 [-2.62, -0.56] | +0.01 [-0.05, +0.08] | +0.75 [-1.71, +3.21] | +27.08 [+6.29, +47.87] |
+
+Pairwise contrasts (reported, not gated): CMP2-F5 minus CMP2 on the primary +5.05 [-14.90, +25.01] and on wrong at >= 0.95 -0.25 [-3.59, +3.09]; **CMP2-HDG2 minus CMP2 on the primary -7.71 [-22.56, +7.13]** and on wrong at >= 0.95 -1.62 [-4.32, +1.07]; CMP2-HDG2-F5 minus CMP2-HDG2 on the primary +10.11 [-4.42, +24.63] and on wrong at >= 0.95 +0.25 [-2.01, +2.51]. None of the three pairwise intervals excludes 0, so the effect of the headings sources (CMP2-HDG2 against CMP2) and of F5 is not separable from training noise.
+
+### Decision: CMP2 wins
+
+Rule B, applied step by step (the analysis script's own table):
+
+1. Primary = the eight-seed mean (table above).
+2. Guards and the co-primary against the BASE mean: CMP2 and CMP2-HDG2 pass all ten; **CMP2-F5 and CMP2-HDG2-F5 fail the imperative-heading guard** (+56.25 and +27.08 against the limit +25) and are out.
+3. Q = {CMP2, CMP2-HDG2}; each one's Welch 95% interval of (arm - BASE) on the primary lies entirely below 0 (CMP2 [-60.12, -31.37], CMP2-HDG2 [-63.63, -43.29]).
+4. m = the lowest primary in Q = CMP2-HDG2 (185.37); S = the arms of Q within 10% (primary <= 203.91): CMP2 (193.09) and CMP2-HDG2.
+5. Winner = the arm of S with the fewest additions = **CMP2** (1 addition against 2).
+
+**The winner is CMP2: the compound sources `compound` and `compound2` at weight 1; the `headings` and `headings2` sources stay at weight 0 and F5 stays off.** CMP2 against BASE on the primary: -45.74 [-60.12, -31.37], df 10.60, p < 0.0001 (about -19% of the BASE primary). The pairwise contrast of the arm that the rule did not choose, CMP2-HDG2 against CMP2, is -7.71 [-22.56, +7.13]: not significant, and the rule's 10% window does not separate the two.
+
+### Re-test reading of the result (what can and cannot be said)
+
+- **What the figures show.** Rule B selected CMP2 mechanically. Against BASE the arm has 45.7 fewer harmful errors per 1,000 decisions on the pooled primary (193.1 against 238.8), 8.25 fewer wrong at confidence >= 0.95 (12.1 against 20.4; the BASE of PR #19 was 6.8 on the two old tranches), 19.1 fewer harmful per 1,000 on the hard tranche, and no guard fails. The gain is in the compound tranches (compound-head 382.5 to 302.5, compound-head-2 323.8 to 253.6 harmful per 1,000, target accuracy 60.8% to 69.1% and 64.8% to 72.1%); on the heading tranches CMP2 is not better (headings harmful 46.5 to 60.9, headings-2 29.0 to 30.5), the heading gains appear only in the arms that have the heading sources (HDG2: headings 90.8%, headings-2 90.5% against 82.2% and 83.8%).
+- **What is worse for the winner (stated before any adoption).** (1) The imperative-heading harmful rate rises from 33.3 to 47.9 per 1,000 (+14.58 [+0.34, +28.83]; on average about 0.9 more harmful errors in 60 decisions, since one decision is 16.7 per 1,000), inside the guard (+25) but with an interval that excludes 0. (2) Open dev harmful rises by +0.45 per 1,000 (interval contains 0), the deflated size by 2.8% (+14,652 bytes on the mean) and the rows by about 3,650. (3) The compound controls fall from 100.0% to 99.8% (mean over the eight seeds, both tranches). (4) The harmful rate on the old `headings` dev tranche rises (46.5 to 60.9).
+- **What the figures cannot show.** The seeds measure training noise only, not the choice of the 470 development decisions: one decision moves the pooled primary by 2.1 per 1,000. The tranches are the frames the data were built to target (the compound frame and the contested band for the WordSense Basic classifier; the heading frames), so the result is development evidence of that kind and not an independent test; a gain on text that is not of these frames is not shown. The held-out sets follow in the adoption only as a disclosed further look.
+- **Caveats stated in the pre-registration, still valid.** Four arms against one baseline without a multiplicity correction and a possible winner's curse (the interval of CMP2 is far from 0, so the sign is not in doubt; the size of the effect on other text is). The `headings2` imperative source is small (165 lines, 41 of them from the strength-1 `initial-noun` frame, against the target of about 300), and the shipped model already reads all 59 imperative dev headings of `headings-2` correctly (BASE 100.0%), so the imperative stratum of `headings-2` could not show a gain and the imperative-heading guard can only detect a loss. The labels were written by two models without human review and the hand checks were model reviews.
+- **Deviation record: Normal priority**, as in the earlier experiments: the runner starts `dotnet` at Normal priority; this changes the speed of the runs and nothing else. The training times and throughput are not comparable between arms or with earlier records.
+- **The PR #19 figures stay comparable.** The old-tranche primary of PR #19 (`shapesNew.pooledPrimary`) is in the last table: BASE 235.3 ± 15.4 (eight seeds; PR #19: 239.33 on five), CMP2 196.6 ± 18.5 (PR #19 CMP: 221.35), CMP2-HDG2 180.5 ± 11.4. The seed-20260101 BASE figure, 241.57, is the one PR #19 recorded and acceptance test a reproduces it.
+- **What the rule did not decide.** The decision between CMP2 and CMP2-HDG2 is the rule's tie-break by fewest additions (the point estimate is lower for CMP2-HDG2 by 7.7, not significant); the heading sources are not adopted by this rule, and the heading data stay at weight 0.
+
+### Basis of the adoption (who decided what)
+
+The adoption below is **not a decision made inside this run by the implementing agent or by the owner**. The rule that selected the arm is rule B, the default U1 taken by the implementing agent in R0 and recorded as such (not approved by the owner); it selected CMP2 mechanically. The request given to the orchestration agent for this task (goal 5) says: "If a winner qualifies: adopt it, retrain and embed it; recompute the dev operating points; run ONE held-out evaluate, disclosed as a further look; update the README tables (the drift test) and the docs." The adoption and the one held-out `evaluate` follow from that request and from the outcome clause "An arm wins" of the pre-registration. Any change of a pre-registered rule would have been put to the owner; none is made.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
