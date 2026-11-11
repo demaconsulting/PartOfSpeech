@@ -2,7 +2,7 @@
 # columns = path (relative to data/), bytes, sha256, lines, sentences
 compound/compound-2-dropped-sentences.tsv	312	033d9702bb1204df8e184a0f8bd80c04aff281d5a19e8994446ecd8950ccc569	2	-
 compound/compound-2-excluded-documents.tsv	260	84a864f548fb89068edec5e5c31037d2d07b94d1b6d6ca5bc5ce4165cd9734a8	0	-
-compound/compound-2-sources.tsv	272059	9c7ec7014ff115e745501706126b4637382c058783fdea43021b9f6cbfbd0b4f	210	-
+compound/compound-2-sources.tsv	272492	c979850dd60921d209b7d918d953b53bee7af05f736a77896637665ace823cf4	210	-
 compound/compound-2.tsv	684906	2a9a98492afb1248623b50111ca62d8abd57e4569b1a5e52b3cff544bc0746cc	20745	1100
 compound/compound.tsv	474726	eb8c4708ba95fb370c885110e10eda0f1d826c5922876bd66e69389894bd5e3b	14692	742
 compound/dropped-sentences.tsv	318	6713acf27466c295f42d66df25951bb8ba6c25d48faf1f6e709832a42f7186be	2	-
