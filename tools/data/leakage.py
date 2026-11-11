@@ -46,13 +46,22 @@ SHAPES_DEV_HARD_LABEL = "shapes-dev-hard"
 # (SHAPES_DEV_FOLLOWUP_TRANCHES) are the follow-up tranches built by followup_data.py, which leaves both out of its own filter so that a
 # rebuild never sees its own earlier output.
 SHAPES_DEV_FOLLOWUP_TRANCHES = ("compound-head-2", "headings-2")
-SHAPES_DEV_NEW_TRANCHES = ("compound-head", "headings", "named-state") + SHAPES_DEV_FOLLOWUP_TRANCHES
+SHAPES_DEV_FIRST_TRANCHES = ("compound-head", "headings", "named-state")
+SHAPES_DEV_NEW_TRANCHES = SHAPES_DEV_FIRST_TRANCHES + SHAPES_DEV_FOLLOWUP_TRANCHES
+# The two generations of the newer tranches: tranches of one generation may share source documents (never a sentence); a document shared
+# between the two generations, or with the standard or hard tranche, is a leak (check_leakage.py gates it).
+SHAPES_DEV_GENERATIONS = (SHAPES_DEV_FIRST_TRANCHES, SHAPES_DEV_FOLLOWUP_TRANCHES)
 SHAPES_DEV_NEW_LABELS = tuple("shapes-dev-" + name for name in SHAPES_DEV_NEW_TRANCHES)
 SHAPES_DEV_LABELS = (SHAPES_DEV_LABEL, SHAPES_DEV_HARD_LABEL)
 SHAPES_DEV_ALL_LABELS = SHAPES_DEV_LABELS + SHAPES_DEV_NEW_LABELS
 # data/eval/shapes-dev/hard.tsv is committed: a missing hard tranche file fails loudly like every other required set.
 HARD_TRANCHE_REQUIRED = True
 PROBE_GRAM_WORDS = 5
+
+
+def same_generation(first, second):
+    """True when the two newer tranches (names such as "headings-2") belong to the same generation and may share source documents."""
+    return any(first in generation and second in generation for generation in SHAPES_DEV_GENERATIONS)
 
 
 def _tsv_rows(path):

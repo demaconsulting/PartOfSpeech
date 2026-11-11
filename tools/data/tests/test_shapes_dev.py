@@ -1651,6 +1651,71 @@ class LeakageExtensionTests(MiniFolder):
         self.assertEqual(["s2"], failing)
         self.assertEqual(1, failures)
 
+    def write_tranche(self, name, items):
+        extra = [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"] for _ in items]
+        corpus_file(os.path.join(self.data, "eval", "shapes-dev", name + ".tsv"), items, extra)
+
+    def tranche_check(self, tranche, written):
+        """dev_check of one newer tranche, with the standard and hard tranche present and `written` ({name: items}) as the newer tranches."""
+        self.write_dev([("doc-std", "A brand new standard sentence about nothing in particular .")])
+        self.write_tranche("hard", [("doc-hard", "Another brand new hard sentence about nothing at all .")])
+        for name, items in written.items():
+            self.write_tranche(name, items)
+        return check_leakage.dev_check(include_ud=False, tranche=tranche)
+
+    def test_the_newer_tranches_are_grouped_in_two_generations_and_only_one_generation_may_share_documents(self):
+        self.assertEqual(("compound-head", "headings", "named-state"), leakage.SHAPES_DEV_FIRST_TRANCHES)
+        self.assertEqual(leakage.SHAPES_DEV_FIRST_TRANCHES + leakage.SHAPES_DEV_FOLLOWUP_TRANCHES, leakage.SHAPES_DEV_NEW_TRANCHES)
+        self.assertTrue(leakage.same_generation("compound-head-2", "headings-2"))
+        self.assertTrue(leakage.same_generation("compound-head", "named-state"))
+        for first in leakage.SHAPES_DEV_FIRST_TRANCHES:
+            for second in leakage.SHAPES_DEV_FOLLOWUP_TRANCHES:
+                self.assertFalse(leakage.same_generation(first, second), (first, second))
+                self.assertFalse(leakage.same_generation(second, first), (second, first))
+
+    def test_the_two_followup_tranches_may_share_a_document_but_never_a_sentence(self):
+        shared = {"compound-head-2": [("army-x", "The first follow-up sentence is about the hydraulic pump housing .")],
+                  "headings-2": [("army-x", "A second follow-up sentence is about the pressure relief valve .")]}
+        rows, failures, failing = self.tranche_check("headings-2", shared)
+        self.assertEqual((0, []), (failures, failing))
+        self.assertEqual(1, {row[0]: row for row in rows}["shapes-dev-compound-head-2"][2])                 # reported, not gated
+        self.assertEqual(0, check_leakage.dev_check(include_ud=False, tranche="compound-head-2")[1])
+        shared["headings-2"] = [("army-x", "The first follow-up sentence is about the hydraulic pump housing .")]
+        self.write_tranche("headings-2", shared["headings-2"])
+        self.assertEqual(["s1"], check_leakage.dev_check(include_ud=False, tranche="headings-2")[2])       # the same sentence fails
+
+    def test_a_document_shared_between_the_generations_fails_for_every_pair_of_a_first_generation_and_a_followup_tranche(self):
+        for first in leakage.SHAPES_DEV_FIRST_TRANCHES:
+            for followup in leakage.SHAPES_DEV_FOLLOWUP_TRANCHES:
+                with self.subTest(first=first, followup=followup):
+                    written = {first: [("army-y", "A first generation sentence about the left side of the vehicle .")],
+                               followup: [("army-y", "A follow-up sentence about the right side of the vehicle .")]}
+                    rows, failures, failing = self.tranche_check(followup, written)
+                    self.assertEqual((1, ["s1"]), (failures, failing))
+                    self.assertEqual(1, {row[0]: row for row in rows}["shapes-dev-" + first][2])
+                    rows, failures, failing = check_leakage.dev_check(include_ud=False, tranche=first)       # and from the other side
+                    self.assertEqual((1, ["s1"]), (failures, failing))
+                    for name in written:
+                        os.remove(os.path.join(self.data, "eval", "shapes-dev", name + ".tsv"))
+
+    def test_a_bad_rebuild_of_a_followup_tranche_that_reuses_a_first_generation_document_fails(self):
+        written = {"named-state": [("army-z", "A first generation sentence about the state of the valve .")],
+                   "compound-head-2": [("army-q", "A clean follow-up sentence about the cooling fan blade ."),
+                                       ("army-z", "A follow-up sentence about the position of the valve handle .")],
+                   "headings-2": [("army-q", "Another clean follow-up sentence about the oil filter housing .")]}
+        rows, failures, failing = self.tranche_check("compound-head-2", written)
+        self.assertEqual((1, ["s2"]), (failures, failing))                                                  # only the sentence of the shared document
+        self.assertEqual(0, check_leakage.dev_check(include_ud=False, tranche="headings-2")[1])            # sharing army-q with the same generation is fine
+
+    def test_the_first_generation_tranches_still_share_documents_among_themselves(self):
+        written = {"compound-head": [("army-w", "A sentence about the left side of the vehicle .")],
+                   "headings": [("army-w", "A different sentence about the right side of the vehicle .")],
+                   "named-state": [("army-w", "Another sentence about the top side of the vehicle .")]}
+        rows, failures, failing = self.tranche_check("headings", written)
+        self.assertEqual((0, []), (failures, failing))
+        by_set = {row[0]: row for row in rows}
+        self.assertEqual((1, 1), (by_set["shapes-dev-compound-head"][2], by_set["shapes-dev-named-state"][2]))     # reported, not gated
+
 
     def test_the_standard_and_hard_builders_see_the_newer_tranches_and_the_newer_builder_does_not(self):
         sentence = "A brand new heading style sentence about nothing in particular ."
