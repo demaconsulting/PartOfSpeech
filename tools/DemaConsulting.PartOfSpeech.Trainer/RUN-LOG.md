@@ -3849,8 +3849,8 @@ stop conditions below (findings, not failures of the run) and the committed file
 run was made and nothing was re-rolled.** Nothing was selected, tuned or reverted because of any result. The previous model (the
 clause-cue model, the record at `5f9a9f0`) was not evaluated again: its figures below are those of its committed record.
 
-Stop conditions of the protocol: **two fired** (the same two as in all earlier records; the third, the shape probe, did not fire
-this time):
+Stop conditions of the protocol: **two fired** (`gold-v2-test-to-not` and `ud-test-raw`, the same two as in all earlier records; the
+third, the shape probe, did not fire this time). The three bullets list the two that fired and the shape probe, which did not:
 
 - `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (the same); the `to`/`not` convention difference.
 - `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (the same). The primary mapped view is at 0.55% (138
@@ -5606,7 +5606,7 @@ This is a **new** record for the shipped model. It does not correct or replace t
 
 ### CMP2 held-out: stop conditions
 
-**Two fired** (the same two as in all earlier records; the shape probe's did not fire, as in the previous record):
+**Two stop conditions fired** (`gold-v2-test-to-not` and `ud-test-raw`, the same two as in all earlier records); the third, the shape probe, did not fire (as in the previous record). The three bullets below list the two that fired and the one that did not:
 
 - `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (the same); the `to`/`not` convention difference.
 - `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (the same). The primary mapped view is at 0.55% (138 words) (the same), under the limit.
