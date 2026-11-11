@@ -238,7 +238,7 @@ head lemma and at most 20 per document.
 | `compound-2-dropped-sentences.tsv` | counts of candidate sentences dropped alone because of an overlap with a set (2 near duplicates of a shapes development sentence, 1 shared word 5-gram with the shape probe; counts only, no text) |
 
 `compound-2.tsv` has SHA-256 `2a9a98492afb1248623b50111ca62d8abd57e4569b1a5e52b3cff544bc0746cc` and `compound-2-sources.tsv`
-`9c7ec7014ff115e745501706126b4637382c058783fdea43021b9f6cbfbd0b4f`; [MANIFEST.tsv](../MANIFEST.tsv) lists the size, hash and record counts of every
+`c979850dd60921d209b7d918d953b53bee7af05f736a77896637665ace823cf4` (the `license_basis` wording of one row was corrected on 2026-11-11, text only, see the run log); [MANIFEST.tsv](../MANIFEST.tsv) lists the size, hash and record counts of every
 file of this folder.
 
 **Source and basis.** The sentences are text of 209 documents that are US federal government works (17 U.S.C. 105), one `license_basis` cell
