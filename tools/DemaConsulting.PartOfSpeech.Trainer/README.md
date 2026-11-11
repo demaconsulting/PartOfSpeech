@@ -112,7 +112,7 @@ the design). On a machine whose cores are saturated by other processes the below
 To run everything (writes below the given folder, which must be on C:):
 
 ```text
-pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <folder>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <folder> -PyCache <your-cache-dir>
 python tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py --runs <folder> --out <report.md>
 ```
 
@@ -142,7 +142,7 @@ shipped weights" does not hold. To train the F2 arm at the adopted state, add `-
 data"); the provenance of the data, including the refusals and retries of one labeler, is in `data/imperative/README.md`.
 
 ```text
-pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp -Arms F2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp -Arms F2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd -PyCache <your-cache-dir>
 python tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py --run F2=<runs>\f2 --run F2+IMP=<runs>\f2imp --run ALL+IMP=<runs>\allimp --out report.md --decision decision.json
 ```
 
@@ -202,13 +202,18 @@ default of the driver) in one `<runs>` folder, so run the driver once per arm (i
 and seed), then the analyzer. Do this at the pre-registration commit `0f0b595`:
 
 ```text
-pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms BASE -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
-pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
-pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-F5 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
-pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
-pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2-F5 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms BASE -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-F5 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms CMP2-HDG2-F5 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
 python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py --runs <runs> --out <runs>\report.md --decision <runs>\decision.json
 ```
+
+`-PyCache` and `-PauseFile` are local paths on drive C: that the caller chooses (a cache folder that the caller may write to, and
+the path of a pause file that the caller controls: the driver stops with exit code 4 while that file exists); the defaults inside
+the frozen drivers belong to another user's session and are not meant for reuse. The earlier drivers take the same
+caller-chosen paths in their commands above (the `context-features` driver has `-PyCache` only).
 
 The BASE acceptance test ("BASE equals the shipped weights") holds only at commit `0f0b595`; at the adopted state it does not
 hold, as described above.
