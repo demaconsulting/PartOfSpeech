@@ -548,7 +548,9 @@ most 12 `headings` targets per document, no `headings` line that ends in a page 
 `Sources_AreListedOpenAndNotExcluded` asserts the exact documents with their counts, an open basis, no FAA mention
 and no excluded id or URL; `LeakageReports_RecordNoOverlap` asserts that every report names every other evaluation
 set and tranche, with no exact or near-duplicate overlap, no shared probe 5-gram and no shared document except
-among the three new tranches; `Sentences_AreDisjointFromTheOtherEvaluationSets` asserts, by reading the files,
+among the tranches of one generation (the three first-generation tranches, or the two follow-up tranches; the
+same rule `check_leakage.py` gates with `leakage.same_generation`); `Sentences_AreDisjointFromTheOtherEvaluationSets`
+asserts, by reading the files,
 that no sentence is shared with any other evaluation set, tranche or the imperative source and no document with
 any of them but a new tranche; and `Selection_UsesNoPartOfSpeechModel` scans `shapes_dev_extra.py` for a weights
 file, a decoder, a tagger or the shapes evaluation and for a direct read of a held-out set. The developer-run

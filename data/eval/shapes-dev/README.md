@@ -79,11 +79,11 @@ describes the standard tranche (`dev.tsv`) unless it says otherwise.
 | `headings.tsv` | the 115 heading lines of the `headings` tranche (95 targets, 20 controls), same block format plus `# kind`; ids `shapes-dev-headings-NNNN` |
 | `named-state.tsv` | the 112 sentences of the `named-state` tranche (100 targets, 12 controls), same block format; ids `shapes-dev-named-state-NNNN` |
 | `<tranche>-sources.tsv` | the documents of a new tranche (74, 51 and 59), same columns as `sources.tsv` |
-| `<tranche>-leakage-report.tsv` | counts of a new tranche against every other evaluation set, the standard and the hard tranche included, and against the other new tranches (shared documents among the new tranches are reported, not gated) |
+| `<tranche>-leakage-report.tsv` | counts of a new tranche against every other evaluation set, the standard and the hard tranche included, and against the other new tranches (shared documents among the tranches of one generation are reported, not gated; a document shared between the first generation and the follow-up fails) |
 | `compound-head-2.tsv` | the 255 items of the `compound-head-2` tranche (210 targets, 45 controls), same block format as `compound-head.tsv`; ids `shapes-dev-compound-head-2-NNNN` |
 | `headings-2.tsv` | the 129 heading lines of the `headings-2` tranche (109 targets, 20 controls), same block format plus `# kind` as `headings.tsv`; ids `shapes-dev-headings-2-NNNN` |
 | `compound-head-2-sources.tsv`, `headings-2-sources.tsv` | the documents of the follow-up tranches (89 and 35), same columns as `sources.tsv` |
-| `compound-head-2-leakage-report.tsv`, `headings-2-leakage-report.tsv` | counts of a follow-up tranche against every other evaluation set, same rule as the other new tranches |
+| `compound-head-2-leakage-report.tsv`, `headings-2-leakage-report.tsv` | counts of a follow-up tranche against every other evaluation set; a shared document is allowed only with the other follow-up tranche (none with the first-generation tranches) |
 
 Each sentence block has the comments `sent_id`, `source_id`, `text`, `shape`, `role` (`target` or `control`), `target` (the
 zero-based index of the judged word), `lemma` and `origin` (`real` or `authored`), then one row `form`, `upos`, `status`
