@@ -89,10 +89,10 @@ has consumed all input it was given and still needs data, which gives two facts 
 
 A complete stream that fills the region exactly (as every file the writers produce) never makes a read beyond the
 region and always requests the last byte, so it is accepted. The behavior was verified on `net481` (the managed
-inflater), `net8.0`, `net9.0` and `net10.0` (zlib-based inflaters) with the regression tests of the three units; the
-library itself is `netstandard2.0` and only uses `Stream.Read`, so the same contract applies to every host. If a host
-inflater asked for input differently, the result would be a rejected good file (the tests of that host would show it),
-never an accepted bad one.
+inflater), `net8.0`, `net9.0`, `net10.0` and `net11.0` (zlib-based inflaters) with the regression tests of the three
+units; the library itself is `netstandard2.0` and only uses `Stream.Read`, so the same contract applies to every host.
+If a host inflater asked for input differently, the result would be a rejected good file (the tests of that host would
+show it), never an accepted bad one.
 
 ##### Format version 2 and the integrity model
 

@@ -51,8 +51,8 @@ dotnet add package DemaConsulting.PartOfSpeech
 ```
 
 The package targets .NET Standard 2.0 (and so runs on .NET Framework 4.8.1 and every .NET version that implements it),
-.NET 8, .NET 9 and .NET 10. It has no package dependencies. The package also contains a Markdown API reference of the
-public API under its `api/` folder, generated from the XML documentation of the library.
+.NET 8, .NET 9, .NET 10 and .NET 11. It has no package dependencies. The package also contains a Markdown API reference
+of the public API under its `api/` folder, generated from the XML documentation of the library.
 
 **The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
 compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (537,650 bytes compressed,

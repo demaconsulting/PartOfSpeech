@@ -77,7 +77,7 @@ The lexicon resource is generated, not hand written. The tool `tools/LexiconComp
 `data/lexicon/lexicon.tsv` into `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin` with `LexiconWriter`, and the
 same tool with `--check` (run by `build.ps1`) and a unit test fail when the committed binary does not encode the table.
 Compilation at build time was
-rejected because the compiler needs the library, the library build has four target frameworks, and a clean checkout
+rejected because the compiler needs the library, the library build has five target frameworks, and a clean checkout
 should build with nothing to run. The weights resource is generated the same way by the unit `ModelTrainer`
 (`train` writes `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`; `train --check`, run by `build.ps1` and the CI
 build, and a unit test fail when the committed binary is not what the committed corpora and `training.json` produce).

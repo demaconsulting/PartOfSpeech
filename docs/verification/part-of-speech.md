@@ -97,8 +97,8 @@ fails; only a one-time or sporadic runtime allocation is filtered out.
 
 ## Test Environment
 
-- **Framework**: xUnit v3 running under the .NET SDK, on the target frameworks `net8.0`, `net9.0`, `net10.0` and
-  `net481` (which stands for `netstandard2.0`)
+- **Framework**: xUnit v3 running under the .NET SDK, on the target frameworks `net8.0`, `net9.0`, `net10.0`,
+  `net11.0` and `net481` (which stands for `netstandard2.0`)
 - **Configuration**: the throughput tests are meaningful in Release configuration, which `build.ps1` and the CI pipeline
   use; in Debug the gate may fail on a slow machine. The 50,000 tokens per second gate applies to runs without code
   coverage (`build.ps1`); the CI pipeline runs with coverage and the tests then apply the relaxed gate of 5,000 tokens
@@ -119,7 +119,7 @@ fails; only a one-time or sporadic runtime allocation is filtered out.
   the UD English-EWT treebank is not required (the treebank check of the evaluation record tests runs its cache part only
   where a developer has fetched the treebank).
 - **Platform evidence**: the platform requirements are proven by one end-to-end test that runs on the CI matrix (Windows,
-  Linux and macOS, with .NET 8, 9 and 10, and .NET Framework 4.8.1 for `netstandard2.0`); the requirements carry source
+  Linux and macOS, with .NET 8, 9, 10 and 11, and .NET Framework 4.8.1 for `netstandard2.0`); the requirements carry source
   filters so that only runs on that platform count.
 
 ## Acceptance Criteria
@@ -689,5 +689,5 @@ table is accepted in the pending and in the applied state (where the corpus file
 
 **Test**: `PartOfSpeech_Tagging_Text_TagsEveryTokenWithEmbeddedLexicon` with a source filter per requirement
 
-The platform requirements (Windows, Linux, macOS, .NET 8, .NET 9, .NET 10 and .NET Standard 2.0 through .NET Framework
+The platform requirements (Windows, Linux, macOS, .NET 8, .NET 9, .NET 10, .NET 11 and .NET Standard 2.0 through .NET Framework
 4.8.1) are proven by the scenario _Tagging: Embedded Lexicon, Whole Pipeline_ passing under each platform and framework.
