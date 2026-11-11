@@ -50,6 +50,7 @@ The decisions that matter most:
 | Quantity words | `many, much, few, several, enough, more, most, less, such, other` before a noun are ADJ; DET is a closed list; more in "Degree and Quantity Words" |
 | Participles | decided by the ordered tests in "Prenominal Modifiers and Predicate Participles" |
 | Names | PROPN only for names; members of a people or religion are NOUN; language names are PROPN; more in "Names and Labels" |
+| Capitalized defined terms | mid-sentence in technical text: NOUN (ADJ for an adjectival modifier) when ordinary English words name a kind, mode, setting, position, state, screen, document type or component class; PROPN only for one particular entity or a coined label; more in "Capitalized Defined Terms" |
 | Numbers | cardinals NUM; ordinals ADJ; `one` is NUM when it counts and PRON when it stands for a noun; more in "Numbers and Dates" |
 | Contraction stems | the stem gets the tag of the word it stands for: `ca` AUX (can), `wo` AUX (will), `ai` like `be` |
 
@@ -188,6 +189,34 @@ Source: UD English-EWT labels; [UD, PROPN](https://universaldependencies.org/u/p
   printed label and not a name of one particular entity. It is PROPN only when it is a coined or arbitrary label that is no
   English word (a made-up type code after `set to`) or the name of one particular entity. A letter or a number used as a label (`set to A`,
   `position 3`) is not a state name: it follows the rules for list labels and numbers.
+
+### Capitalized Defined Terms
+
+Applies to a run of capitalized words in the middle of a sentence of technical or procedural text (a manual, a procedure, a
+specification, a report). Such text capitalizes the names of modes, settings, positions, states, screens, document types,
+diagram types and component classes: `select the Manual Override mode`, `see the Wiring Schematic`, `in the Standby
+position`, `the Normal Operating Range`, `open the Parts List`. The capitals mark a defined term, not the name of one
+particular entity. Where the annotation practice of UD English is not uniform for such terms, this section decides.
+Stop at the first test that applies:
+
+1. **One particular entity** (an organization, a product or system with a coined name, a place, a person, a named program,
+   a named ship or aircraft) → PROPN for each word of the name; function words keep their own tag: `the Defense Logistics
+   Agency`, `Apollo Program`, `the National Park Service`, `the Gulf of Mexico`, `Houston`, `a Zodiac inflatable`.
+2. **A kind, mode, setting, position, state, screen, document type, diagram type or component class made of ordinary English
+   words** → each word keeps the tag of its lower-case use: the head NOUN, an adjective ADJ, a noun modifier NOUN, and an `-ing`
+   or `-ed` modifier by the tests of "Prenominal Modifiers and Predicate Participles": `the Manual Override mode` ADJ NOUN
+   NOUN, `the Wiring Schematic` NOUN NOUN, `in the Standby position` NOUN NOUN, `the Normal Operating Range` ADJ NOUN NOUN,
+   `the Hydraulic Pump` ADJ NOUN, `the Parts List` NOUN NOUN.
+3. **A coined or arbitrary label that is no English word** → PROPN: `set to XJ9`, `the XJ9 mode`. A letter or a number used
+   as a label follows "Numbers and Dates".
+4. A capital at the start of a sentence, heading or list item is never a signal. A lower-case kind word after the term (`mode`,
+   `screen`) or `the` before it supports test 2 and does not decide it.
+5. No test answers → `disputed`.
+
+PROPN (test 1): `the National Park Service`, `Houston`, `Apollo Program`. NOUN or ADJ (test 2): the examples above. The existing
+rules for headings, captions and step titles, for state names (`set to STANDBY`) and for language names are unchanged.
+Corpora labeled before this section (open, MASC, silver and the earlier training sources) are not relabeled; the counts of
+their labels that conflict with this section are in `data/technical/README.md`.
 
 ### The `get`-passive
 
