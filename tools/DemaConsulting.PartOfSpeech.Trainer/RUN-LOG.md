@@ -5501,6 +5501,33 @@ Rule B, applied step by step (the analysis script's own table):
 
 The adoption below is **not a decision made inside this run by the implementing agent or by the owner**. The rule that selected the arm is rule B, the default U1 taken by the implementing agent in R0 and recorded as such (not approved by the owner); it selected CMP2 mechanically. The request given to the orchestration agent for this task (goal 5) says: "If a winner qualifies: adopt it, retrain and embed it; recompute the dev operating points; run ONE held-out evaluate, disclosed as a further look; update the README tables (the drift test) and the docs." The adoption and the one held-out `evaluate` follow from that request and from the outcome clause "An arm wins" of the pre-registration. Any change of a pre-registered rule would have been put to the owner; none is made.
 
+## Follow-up: adoption of the CMP2 model (plan written before the retraining and before any held-out command)
+
+The pre-registered rule B selected **CMP2** (results commit `a77263a`, section "Follow-up: re-test results"). The basis of the adoption is the request given to the orchestration agent (goal 5: if a winner qualifies, adopt it, retrain and embed it, recompute the development operating points, run one held-out `evaluate` disclosed as a further look, update the README tables and the documents) and the outcome clause "An arm wins" of the pre-registration; it is **not** a decision made inside this run, and no rule is changed. This section is committed **before the retraining of the shipped model**: no `train --output`, `calibrate --update-config`, `train --update-config`, `thresholds` or `evaluate` has been run for it, and no held-out file has been read. Git history shows the order: this plan, the adoption commit (the weights, the configuration, the operating points and the re-pinned figures; development data only), then the plan of the held-out look, the deletion of the previous record, the one `evaluate` and the evaluation record. No hyperparameter, corpus choice other than the two sources below, feature group or seed changes: the shipped seed 20260101 stays.
+
+### The CMP2 arm and the exact steps
+
+The adopted arm is **CMP2**: the shipped configuration (feature group `clauseCues`, the mix open x2, MASC, silver >= 80, imperative at weight 1, 6 epochs, 19 hash bits, prune 8, quantization scale 8, restriction `history`, predicted history, seed 20260101) plus the sources `compound` (`data/compound/compound.tsv`, 742 sentences) and `compound2` (`data/compound/compound-2.tsv`, 1,100 sentences) at **weight 1**: 63,522 training sentences. The sources `headings` and `headings2` stay at weight 0 and the feature group `titleCaseLine` (F5) stays off. The steps, as in the earlier adoptions, from a clean tree whose HEAD is the commit of this plan:
+
+1. In `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` set the weight of the sources `compound` and `compound2` from 0 to 1 (nothing else).
+2. `train --output <file outside the repository>` at the shipped seed (the trainer reads `training.json`).
+3. `calibrate --weights <file> --update-config` (refits the temperature on the open dev set and writes it to `training.json`).
+4. `train --update-config` (writes the image SHA-256 of the new model to `training.json` and `weights.bin` itself), then `train --check` (must exit 0).
+5. `thresholds` (development data only; recomputes `docs/evaluation/operating-points.json` and `confidence-thresholds.md`; it refuses to write anything if the 0.45 row does not reproduce the frozen figures `FrozenOpenHarmful` and `FrozenGoldHarmful`; if it refuses, the two constants are set to the figures it reports for the new model, with the reason recorded, as in the two earlier adoptions, and it is run again).
+6. Re-pin the figures and tests that depend on the weights (size figures, the embedded-model tests, the documents that describe the shipped model, the description of the sources at weight 1).
+
+One heavy process runs at a time, at most 8 threads, and the PAUSE file is checked before every heavy step. `evaluate` is **not** run in the adoption commit.
+
+### CMP2 byte-identity requirement (stated before the retraining)
+
+The new `weights.bin` must be **byte-identical to the weights of the CMP2 run of seed 20260101 of the re-test** (`CMP2-s20260101.bin`, outside the repository). Its SHA-256 is `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad`, its size 537,650 bytes deflated (1,196,142 bytes raw, 126,087 rows, 314,640 weights, image SHA-256 `d916b0e775660f8aa3c18a2161369318dd07c182358e1503d0992b5d2b975e25`, per the run's training output). The model it replaces has SHA-256 `48dd9188c37fb0ba01458e45a28d7b4b66d6a14b9f57eaf2a621bddc0e9b413b` (521,695 bytes; image `6e1e4ade...`). If the retrained file is **not** byte-identical, the adoption stops: nothing is committed except an account of the difference, the cause is investigated and recorded, no figure of the re-test is claimed for the shipped model, and no held-out command is run. The temperature of the run (9.514 in all eight CMP2 seeds) is the one in `training.json`; if `calibrate` reports a different value the difference is recorded and the byte-identity check decides.
+
+### What stays the same and what will be written afterwards (CMP2 adoption)
+
+- The data, the labels, the re-test's decision and its tables are not changed by the adoption.
+- The seed-20260101 figures of the CMP2 run are the figures of the shipped model if and only if the byte identity holds; they are written beside the previous model's in the adoption result.
+- The adoption commit adds the development figures of the shipped model, the `thresholds` result and the list of the re-pinned figures to this section (development data only). The held-out evaluation is a **disclosed fifth look** at sets already seen by this model family (six models in all would have been scored on them), run **once**, as a new record (not an erratum), reported as produced, and is the step that follows the adoption commit; The pre-registration states **no rollback condition** for the held-out look: the stop conditions of the `evaluate` protocol, if they fire, are reported and nothing is selected, tuned or reverted because of a result; no second `evaluate` is run whatever the result, and any question whether a result should change what ships is put to the owner, not decided inside this run.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
