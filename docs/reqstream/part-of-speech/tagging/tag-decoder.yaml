@@ -97,18 +97,22 @@ sections:
                   A token shall report that it is a known word when its folded, lower-cased spelling has an entry in the
                   lexicon, whatever its letter case, its shape or any constraint on it, and shall report that it is not
                   when the lexicon has no entry, without a further lexicon lookup and for a model with or without
-                  feature groups.
+                  feature groups. A token that has one allowed tag shall have no alternatives and a token that has
+                  several allowed tags shall list the other allowed tags (up to the maximum of the options), also when a
+                  soft constraint rounds its confidence to 1.0.
                 justification: |
                   A rule checker must tell the tags that rest on evidence from the tags that are a guess for a word the
                   lexicon has never seen; the flag must be the lookup that already decides the allowed tags, so that it
                   costs nothing and cannot disagree with them, and it must not change when a dictionary or a constraint
-                  decides the tag.
+                  decides the tag. A checker also tells a tag that a dictionary forced from one that a soft constraint
+                  only favored by the number of alternatives, because the confidence cannot tell them apart.
                 tests:
                   - TagDecoder_Decode_KnownWord_ReportsLexiconMembership
                   - TagDecoder_Decode_KnownWord_IgnoresLetterCase
                   - TagDecoder_Decode_KnownWord_ShapeRulesDoNotMakeAWordKnown
                   - TagDecoder_Decode_KnownWord_IsIndependentOfConstraints
                   - TagDecoder_Decode_KnownWord_AllGroups_EqualsPlainDecode
+                  - TagDecoder_Decode_SingleAllowedTag_HasNoAlternativesAndSoftConstraintKeepsThem
 
               - id: PartOfSpeech-Tagging-TagDecoder-FeatureGroups
                 title: >-

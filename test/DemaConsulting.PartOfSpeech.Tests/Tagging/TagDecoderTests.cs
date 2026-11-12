@@ -542,6 +542,44 @@ public class TagDecoderTests
     }
 
     /// <summary>
+    ///     Proves that a token with one allowed tag has no alternatives at any maximum of 1 or more, while a soft constraint with
+    ///     an extreme boost (the confidence is exactly 1.0) keeps the other allowed tags as alternatives with the probability 0.
+    /// </summary>
+    /// <param name="alternatives">The maximum number of alternatives.</param>
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(16)]
+    public void TagDecoder_Decode_SingleAllowedTag_HasNoAlternativesAndSoftConstraintKeepsThem(int alternatives)
+    {
+        // Arrange: a lexicon that lists cat as a noun and verb, and constraints that leave one tag (hard), two tags and an extreme boost
+        var lexicon = TinyModels.CreateLexicon("cat NOUN VERB");
+        var constraints = new[]
+        {
+            TokenConstraint.Only(Upos.Verb),
+            TokenConstraint.Only(Upos.Noun, Upos.Verb),
+            TokenConstraint.Prefer(Upos.Verb, 1e9),
+            TokenConstraint.None
+        };
+
+        // Act: decode the same listed word four times, and an unlisted word with a single-tag constraint
+        var result = Decode(CatWeights(), lexicon, new[] { "cat", "cat", "cat", "cat" }, constraints, alternatives);
+        var unlisted = Decode(CatWeights(), lexicon, new[] { "zork" }, new[] { TokenConstraint.Only(Upos.Noun) }, alternatives)[0];
+
+        // Assert: one allowed tag gives no alternatives; the soft boost gives the confidence 1.0 and the alternative with the probability 0
+        Assert.Empty(result[0].Alternatives);
+        Assert.Empty(unlisted.Alternatives);
+        Assert.Equal(1.0, unlisted.Confidence);
+        Assert.Single(result[1].Alternatives);
+        Assert.Equal(Upos.Verb, result[2].Tag);
+        Assert.Equal(1.0, result[2].Confidence);
+        Assert.Single(result[2].Alternatives);
+        Assert.Equal(0.0, result[2].Alternatives[0].Probability);
+        Assert.Equal(1.0, result[2].Margin);
+        Assert.Single(result[3].Alternatives);
+    }
+
+    /// <summary>
     ///     Proves that a model with all feature groups (cached lexicon facts, two passes) reports the same flags as a model without groups.
     /// </summary>
     [Fact]

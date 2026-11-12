@@ -156,8 +156,9 @@ Read the numbers with these points in mind:
   lexicon and the token-shape rules allow (a capitalized word can also be PROPN or X, a token with a digit can also be NUM,
   SYM, X, NOUN, PROPN or ADJ, a token without a letter or digit can also be PUNCT, SYM or X). A word that is not in the
   lexicon can receive any of the 17 tags, so its confidence is spread over all of them. `TaggedToken.IsKnownWord` reports
-  which case a token is: it is true when the lexicon has an entry for the lower-cased spelling (`Cat` and `cat` are the
-  same word), whatever a glossary or a constraint did to the tag.
+  which case a token is: it is true when the lexicon has an entry for the spelling after the tagger folds it (Unicode
+  NFC normalization; typographic quotes, dashes and the ellipsis mapped to ASCII) and lower-cases it, so `Cat` and `cat`
+  are the same word, whatever a glossary or a constraint did to the tag.
 - **The margin shows a close call.** `TaggedToken.Margin` is the confidence minus the probability of the best alternative,
   from 0 to 1. It is exact when at least one alternative is reported (the default is 3); with `MaxAlternatives` 0 it is
   the smallest value that the confidence allows, and for a token with one allowed tag it is 1. See _Using the Tagger
@@ -416,11 +417,16 @@ error. Four things help:
   the lexicon lists are known, and a capital letter never makes a word known.
 
 A dictionary decides a token only when it leaves a single tag: a hard glossary entry or a `TokenConstraint.Only` with one
-tag. That token has `IsConstrained` set and the confidence 1.0; the head word of an entry that the lexicon does not list
-has `IsKnownWord` false, the tag of the entry and the confidence 1.0, and it is not inconclusive, because the dictionary
-decided it (its confidence and margin are no measurement). `IsConstrained` alone is not enough: a soft glossary entry, a
-`TokenConstraint.Prefer` or `Penalize`, and a constraint that allows several tags set it too, and the model can still
-disagree, so those tokens go through the same checks as every other token.
+tag. That token has `IsConstrained` set, the confidence 1.0 and no `Alternatives`; the head word of an entry that the
+lexicon does not list has `IsKnownWord` false, the tag of the entry and the confidence 1.0, and it is not inconclusive,
+because the dictionary decided it (its confidence and margin are no measurement). `IsConstrained` alone is not enough: a
+soft glossary entry, a `TokenConstraint.Prefer` or `Penalize`, and a constraint that allows several tags set it too, and
+the model can still disagree, so those tokens go through the same checks as every other token. The confidence cannot
+tell the cases apart, because a soft boost that is large enough rounds the confidence to exactly 1.0 while the other
+tags are still allowed. The number of allowed tags can: a token with one allowed tag has no alternatives, and a token
+with several allowed tags lists every other one (up to `MaxAlternatives`), also with the probability 0. So with
+`MaxAlternatives` of 1 or more, `IsConstrained && Alternatives.Count == 0` is the test that the dictionary decided the
+token; with `MaxAlternatives` 0 no token has alternatives and the test cannot be made.
 
 ```csharp
 Glossary dictionary = new GlossaryBuilder
@@ -434,9 +440,9 @@ const double MinimumMargin = 0.20;   // your own limit, chosen from your own mea
 
 string Judge(TaggedToken token)
 {
-    if (token.IsConstrained && token.Confidence >= 1.0)
+    if (token.IsConstrained && token.Alternatives.Count == 0)
     {
-        return "dictionary";                       // a constraint left one tag; IsConstrained alone is not enough
+        return "dictionary";                       // one allowed tag; IsConstrained alone, or confidence 1.0, is not enough
     }
 
     if (token.Confidence < Strict)
@@ -469,7 +475,8 @@ foreach (TaggedSentence sentence in Tagger.Default.Tag("Select the manual overri
 The order of the checks is: the dictionary left one tag, the confidence is below `strict`, the word is unknown and
 the tag is a noun, verb or proper noun, the margin is below your limit; otherwise the tag is conclusive. When the checker
 already knows the terms of each token, pass a `TokenConstraint.Only(Upos.Noun)` for those tokens to `Tag(sentence,
-constraints)` instead of a glossary (see _Constraints_); those tokens report `IsConstrained` and the confidence 1.0.
+constraints)` instead of a glossary (see _Constraints_); those tokens report `IsConstrained`, the confidence 1.0 and no
+alternatives.
 
 ## Loading a Weights File
 
@@ -580,8 +587,9 @@ The entry point. Immutable and thread-safe.
 - `double Confidence`: the probability of the tag among the considered tags.
 - `double Margin`: the confidence minus the probability of the best alternative, from 0 to 1; exact when at least one
   alternative is reported, otherwise `max(0, 2 * Confidence - 1)` (1 for a token with one allowed tag).
-- `bool IsKnownWord`: true when the lexicon has an entry for the lower-cased spelling of the token; not changed by a
-  glossary or a constraint.
+- `bool IsKnownWord`: true when the lexicon has an entry for the spelling of the token after it is folded (NFC
+  normalization, typographic quotes, dashes and ellipsis mapped to ASCII) and lower-cased; not changed by a glossary
+  or a constraint.
 - `IReadOnlyList<TagScore> Alternatives`: the other considered tags by descending probability; read-only.
 - `bool IsConstrained`: true when a `TokenConstraint` other than `None` applied to the token.
 - `GlossaryMatch? GlossaryMatch`: the match whose span contains the token, or `null`.

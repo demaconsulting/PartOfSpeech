@@ -333,15 +333,30 @@ in `build.ps1` and in the CI build, immediately after the API reference is gener
 ### Rule Checker Guidance Is Documented
 
 **Tests**: `PartOfSpeech_RuleChecker_DocumentedExample_GivesTheClaimedResults`,
-`PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced` and the FileAssert test
+`PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced`,
+`PartOfSpeech_RuleChecker_ExtremeSoftBoost_IsNotClassifiedAsForced`,
+`PartOfSpeech_RuleChecker_UserGuideExample_UsesTheDocumentedCriterionAndCompiles` and the FileAssert test
 `ApiMark_RuleCheckerGuidanceDocumented`
 
 `PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced` tags an invented word with a soft glossary
 entry, a hard glossary entry, a `Prefer` constraint and a
 single-tag constraint. All four are constrained and none is known; only the hard entry and the single-tag constraint give
-the confidence 1, while the soft entry and the `Prefer` constraint keep a confidence and a margin below 1. It proves the
-documented rule that `IsConstrained` alone does not mean that the dictionary decided the tag; the checker also needs the
-confidence 1.0.
+the confidence 1 and no alternatives, while the soft entry and the `Prefer` constraint keep a confidence and a margin
+below 1 and list their alternatives. It proves the documented rule that `IsConstrained` alone does not mean that the
+dictionary decided the tag.
+
+`PartOfSpeech_RuleChecker_ExtremeSoftBoost_IsNotClassifiedAsForced` is the boundary of the documented test for a token
+that the dictionary decided (`IsConstrained` and no `Alternatives`, with `MaxAlternatives` of 1 or more). A soft
+glossary entry with the strength 1e6 and a `Prefer` constraint with the boost 1e9 give the confidence exactly 1.0 and
+the margin 1.0, yet they list `MaxAlternatives` alternatives with the probability 0 and so are not forced; a hard entry
+and a single-tag constraint have no alternatives and are forced, and a constraint with two tags has one alternative. The
+theory runs with 1, 3 and 16 alternatives.
+
+`PartOfSpeech_RuleChecker_UserGuideExample_UsesTheDocumentedCriterionAndCompiles` reads the section "Using the Tagger in
+a Rule Checker" of the user guide, compiles its C# example against the real API with the compiler that compiles the
+documented examples (`XmlDocExampleVerifier.VerifySnippet`), asserts that the example and the namespace reference use
+`token.IsConstrained && token.Alternatives.Count == 0` and not the confidence 1.0, that the prose explains why, and that
+the guide describes the folded lookup form of the known-word flag.
 
 The documented-example test runs the dictionary of the documented example ("Manual Override" and "Wiring Schematic" as
 hard noun entries)

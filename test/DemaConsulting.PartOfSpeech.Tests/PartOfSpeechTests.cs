@@ -427,8 +427,8 @@ public class PartOfSpeechTests
 
     /// <summary>
     ///     Proves that a soft glossary entry and a Prefer constraint set IsConstrained without forcing the tag: the confidence stays
-    ///     below 1.0, so the documented rule checker does not treat such a token as decided by the dictionary, while a hard entry
-    ///     and a single-tag constraint report the confidence 1.0.
+    ///     below 1.0 and the alternatives are listed, so the documented rule checker does not treat such a token as decided by the
+    ///     dictionary, while a hard entry and a single-tag constraint report the confidence 1.0 and no alternatives.
     /// </summary>
     [Fact]
     public void PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced()
@@ -460,6 +460,110 @@ public class PartOfSpeechTests
         Assert.True(viaSoft.Confidence < 1.0, $"soft confidence {viaSoft.Confidence}");
         Assert.True(viaPrefer.Confidence < 1.0, $"prefer confidence {viaPrefer.Confidence}");
         Assert.True(viaSoft.Margin < 1.0 && viaPrefer.Margin < 1.0);
+        Assert.Empty(viaHard.Alternatives);
+        Assert.Empty(viaOnly.Alternatives);
+        Assert.NotEmpty(viaSoft.Alternatives);
+        Assert.NotEmpty(viaPrefer.Alternatives);
+    }
+
+    /// <summary>
+    ///     Proves the boundary of the documented test for a token that the dictionary decided (<c>IsConstrained</c> with no
+    ///     alternatives): a soft constraint with an extreme boost gives the confidence exactly 1.0 and the margin 1.0, yet it
+    ///     keeps the other allowed tags as alternatives (with the probability 0) and so is not classified as forced, while a
+    ///     hard entry and a single-tag constraint have no alternatives at any <c>MaxAlternatives</c> from 1 to 16.
+    /// </summary>
+    /// <param name="maxAlternatives">The number of alternatives that the tagger reports at most.</param>
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(16)]
+    public void PartOfSpeech_RuleChecker_ExtremeSoftBoost_IsNotClassifiedAsForced(int maxAlternatives)
+    {
+        // Arrange: the documented criterion, an invented word, and the variants that leave one tag and those that do not
+        static bool IsForced(TaggedToken token) => token.IsConstrained && token.Alternatives.Count == 0;
+        var tagger = Tagger.Load(new MemoryStream(TinyWeights), new TaggerOptions { MaxAlternatives = maxAlternatives });
+        var extreme = new GlossaryOptions { Mode = GlossaryMode.Soft, SoftStrength = 1e6 };
+        var soft = Glossary.Create(new[] { new GlossaryEntry("zorbulon", Upos.Noun) }, extreme);
+        var hard = Glossary.Create(new[] { new GlossaryEntry("zorbulon", Upos.Noun) });
+        var sentence = Tokenizer.Tokenize("Check the zorbulon now.")[0];
+        var index = sentence.Tokens.ToList().FindIndex(t => t.Text == "zorbulon");
+        TaggedToken Tag(TokenConstraint constraint)
+        {
+            var constraints = new TokenConstraint[sentence.Tokens.Count];
+            constraints[index] = constraint;
+            return tagger.Tag(sentence, constraints).Tokens[index];
+        }
+
+        // Act: tag the word with each variant
+        var viaSoft = tagger.Tag("Check the zorbulon now.", soft).Single().Tokens[index];
+        var viaPrefer = Tag(TokenConstraint.Prefer(Upos.Noun, 1e9));
+        var viaHard = tagger.Tag("Check the zorbulon now.", hard).Single().Tokens[index];
+        var viaOnly = Tag(TokenConstraint.Only(Upos.Noun));
+        var viaSeveral = Tag(TokenConstraint.Only(Upos.Noun, Upos.Verb));
+
+        // Assert: the extreme soft boost reaches the confidence 1.0 and the margin 1.0 and still lists the other tags with probability 0
+        foreach (var token in new[] { viaSoft, viaPrefer })
+        {
+            Assert.True(token.IsConstrained);
+            Assert.Equal(Upos.Noun, token.Tag);
+            Assert.Equal(1.0, token.Confidence);
+            Assert.Equal(1.0, token.Margin);
+            Assert.Equal(maxAlternatives, token.Alternatives.Count);
+            Assert.All(token.Alternatives, alternative => Assert.Equal(0.0, alternative.Probability));
+            Assert.False(IsForced(token));
+        }
+
+        // The tokens that one tag was allowed for have the confidence 1.0 and no alternatives, so the criterion holds
+        foreach (var token in new[] { viaHard, viaOnly })
+        {
+            Assert.Equal(1.0, token.Confidence);
+            Assert.Equal(1.0, token.Margin);
+            Assert.Empty(token.Alternatives);
+            Assert.True(IsForced(token));
+        }
+
+        // A constraint that allows two tags leaves one alternative, so it is not forced either
+        Assert.Single(viaSeveral.Alternatives);
+        Assert.False(IsForced(viaSeveral));
+    }
+
+    /// <summary>
+    ///     Proves that the rule checker example of the user guide uses the documented criterion for a token that the dictionary
+    ///     decided (the confidence 1.0 is not the test), that the guide and the namespace reference explain why, that the guide
+    ///     describes the full normalization of the known-word lookup, and that the example of the guide compiles against the
+    ///     real API (the documented examples of the reference are compiled by <c>PartOfSpeech_XmlDocExamples_Compile</c>).
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_RuleChecker_UserGuideExample_UsesTheDocumentedCriterionAndCompiles()
+    {
+        // Arrange: the section of the user guide, its code block and the namespace reference
+        const string criterion = "token.IsConstrained && token.Alternatives.Count == 0";
+        var guide = File.ReadAllText(DataFiles.Repository("docs/user_guide/introduction.md")).Replace("\r\n", "\n");
+        var namespaceDoc = File.ReadAllText(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/NamespaceDoc.cs")).Replace("\r\n", "\n");
+        var sectionStart = guide.IndexOf("## Using the Tagger in a Rule Checker\n", StringComparison.Ordinal);
+        Assert.True(sectionStart >= 0, "The user guide has no section 'Using the Tagger in a Rule Checker'.");
+        var sectionEnd = guide.IndexOf("\n## ", sectionStart + 1, StringComparison.Ordinal);
+        var section = guide.Substring(sectionStart, sectionEnd - sectionStart);
+        var fence = section.IndexOf("```csharp\n", StringComparison.Ordinal);
+        Assert.True(fence >= 0, "The section has no C# example.");
+        var codeStart = fence + "```csharp\n".Length;
+        var code = section.Substring(codeStart, section.IndexOf("\n```", codeStart, StringComparison.Ordinal) - codeStart);
+
+        // Act: compile the example of the guide
+        XmlDocExampleVerifier.VerifySnippet("docs/user_guide/introduction.md", code, "DemaConsulting.PartOfSpeech");
+
+        // Assert: the example and the prose use the allowed-tag test, and neither treats the confidence 1.0 as the test
+        Assert.Contains(criterion, code);
+        Assert.DoesNotContain("Confidence >= 1.0", code);
+        var prose = string.Join(" ", section.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        Assert.Contains("`IsConstrained && Alternatives.Count == 0`", prose);
+        Assert.Contains("rounds the confidence to exactly 1.0", prose);
+        Assert.Contains(criterion.Replace("&&", "&amp;&amp;"), namespaceDoc);
+        Assert.DoesNotContain("Confidence >= 1.0", namespaceDoc);
+
+        // The known-word lookup is described with its whole normalization, not only the lower-casing
+        var flatGuide = string.Join(" ", guide.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        Assert.Contains("(Unicode NFC normalization; typographic quotes, dashes and the ellipsis mapped to ASCII)", flatGuide);
     }
 
     /// <summary>

@@ -138,16 +138,18 @@ sections:
 
               - id: PartOfSpeech-Tagging-Tagger-KnownWord
                 title: >-
-                  A tagged token shall report whether the lexicon of the tagger has an entry for its spelling, whatever
-                  its letter case, and the flag shall not change when a glossary or a constraint decides the tag of the
-                  token, so that the head word of a hard glossary entry that the lexicon does not list is reported as
-                  not known and as constrained.
+                  A tagged token shall report whether the lexicon of the tagger has an entry for its spelling after the
+                  tagger folds it (Unicode normalization, typographic quotes, dashes and the ellipsis mapped to ASCII)
+                  and lower-cases it, and the flag shall not change when a glossary or a constraint decides the tag of
+                  the token, so that the head word of a hard glossary entry that the lexicon does not list is reported
+                  as not known and as constrained.
                 justification: |
                   A rule checker treats a tag on a word that the lexicon does not list as inconclusive, but must still
                   accept a tag that its own dictionary decided; both facts have to be readable on the token.
                 tests:
                   - Tagger_Tag_KnownWord_LexiconSpelling_IsTrueAndUnlistedSpellingIsFalse
                   - Tagger_Tag_KnownWord_CaseVariant_UsesTheLexiconLookup
+                  - Tagger_Tag_KnownWord_FoldedSpelling_UsesTheLexiconLookup
                   - Tagger_Tag_KnownWord_GlossaryHeadNotInLexicon_IsUnknownButConstrained
                   - Tagger_Tag_KnownWord_GlossaryHeadInLexicon_IsKnownAndConstrained
                   - Tagger_Tag_Glossary_EmptyGlossary_GivesTheResultWithoutGlossary

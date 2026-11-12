@@ -81,8 +81,12 @@ token grows beyond 48 bytes on a 64-bit process, or a token reports the known-wo
   `TagDecoder_Decode_KnownWord_ShapeRulesDoNotMakeAWordKnown` (an unlisted capitalized word, number and punctuation
   mark are unknown and keep 17 candidates, the listed ones are known),
   `TagDecoder_Decode_KnownWord_IsIndependentOfConstraints` (hard and soft constraints, also one that is disjoint from the
-  lexicon tags, leave the flag unchanged) and `TagDecoder_Decode_KnownWord_AllGroups_EqualsPlainDecode` (a model with
-  all groups, which uses the cached lexicon facts and two passes, reports the flags of a model without groups).
+  lexicon tags, leave the flag unchanged), `TagDecoder_Decode_KnownWord_AllGroups_EqualsPlainDecode` (a model with
+  all groups, which uses the cached lexicon facts and two passes, reports the flags of a model without groups) and
+  `TagDecoder_Decode_SingleAllowedTag_HasNoAlternativesAndSoftConstraintKeepsThem` (a theory over 1, 3 and 16
+  alternatives: a token with one allowed tag, from a hard constraint on a listed or an unlisted word, has no alternatives;
+  a constraint with two tags has one; a soft constraint with the boost 1e9 gives the confidence 1.0, the margin 1.0 and
+  the alternative with the probability 0, so the number of alternatives, not the confidence, tells a forced tag).
 - **Feature groups**: the decoder follows the groups of the weights header.
   `TagDecoder_Decode_ClauseCues_ImperativeBeforeDeterminer`
   (an ambiguous first word before a determiner becomes a verb; the same weights with a header without the group, and

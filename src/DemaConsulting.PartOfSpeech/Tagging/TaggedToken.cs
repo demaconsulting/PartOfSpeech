@@ -171,9 +171,12 @@ public readonly struct TaggedToken
     ///         is 0) the margin is the smallest value that the confidence allows, which is
     ///         <c>max(0, 2 * Confidence - 1)</c>: the unknown runner-up has at most the probability
     ///         <c>1 - Confidence</c>. The margin is therefore never larger than the true margin, and it is exactly 1.0
-    ///         for a token with one allowed tag (a forced tag has the confidence 1.0). The margin is exact whenever at
-    ///         least one alternative is reported, so keep <see cref="TaggerOptions.MaxAlternatives"/> at 1 or more when
-    ///         you read it. In every case <c>2 * Confidence - 1 &lt;= Margin &lt;= Confidence</c>.
+    ///         for a token with one allowed tag (a forced tag has the confidence 1.0). A margin of 1.0 alone does not
+    ///         prove a forced tag, because a soft constraint with a large boost can also give it; a token with one
+    ///         allowed tag is the one with no alternatives while <see cref="TaggerOptions.MaxAlternatives"/> is 1 or
+    ///         more. The margin is exact whenever at least one alternative is reported, so keep
+    ///         <see cref="TaggerOptions.MaxAlternatives"/> at 1 or more when you read it. In every case
+    ///         <c>2 * Confidence - 1 &lt;= Margin &lt;= Confidence</c>.
     ///     </para>
     ///     <para>
     ///         The margin is read from the stored alternatives without creating the list of
@@ -221,10 +224,12 @@ public readonly struct TaggedToken
     ///     <para>
     ///         The flag does not depend on a glossary or a <see cref="TokenConstraint"/>. A head word of a hard glossary
     ///         entry that the lexicon does not list is <c>false</c> and still has <see cref="IsConstrained"/> and
-    ///         <see cref="IsGlossaryHead"/> set and the confidence 1.0. A token that a constraint forced to one tag (the
-    ///         confidence 1.0 with <see cref="IsConstrained"/>) is not inconclusive because the lexicon does not list it;
+    ///         <see cref="IsGlossaryHead"/> set and the confidence 1.0. A token that a constraint forced to one tag (it has
+    ///         <see cref="IsConstrained"/> and no <see cref="Alternatives"/> while <see cref="TaggerOptions.MaxAlternatives"/>
+    ///         is 1 or more) is not inconclusive because the lexicon does not list it;
     ///         <see cref="IsConstrained"/> alone does not mean that, because a soft glossary entry or a
-    ///         <see cref="TokenConstraint.Prefer"/> leaves the model a choice. A default token has <c>false</c>.
+    ///         <see cref="TokenConstraint.Prefer"/> leaves the model a choice, even when a large boost rounds its confidence
+    ///         to 1.0. A default token has <c>false</c>.
     ///         See [Using the tagger in a rule checker](../../DemaConsulting.PartOfSpeech.md#using-the-tagger-in-a-rule-checker)
     ///         and [Terminology](../../DemaConsulting.PartOfSpeech.md#terminology).
     ///     </para>

@@ -563,11 +563,20 @@ namespace DemaConsulting.PartOfSpeech;
 ///     lexicon does not list has <see cref="TaggedToken.IsKnownWord"/> <c>false</c>). Its confidence and margin are no
 ///     measurement. <see cref="TaggedToken.IsConstrained"/> alone is not enough: it is also set by a soft glossary entry and
 ///     by a <c>TokenConstraint.Prefer</c> or <c>Penalize</c>, and by a constraint that allows several tags, and then the
-///     model can still disagree, so such a token goes through the same checks as every other token. In this order:
+///     model can still disagree, so such a token goes through the same checks as every other token.
+///     </para>
+///     <para>
+///     The confidence cannot tell the two cases apart: a soft boost that is large enough rounds the confidence to exactly
+///     1.0 while the other tags are still allowed. The reliable test is the number of allowed tags. A token with one
+///     allowed tag has no entry in <see cref="TaggedToken.Alternatives"/>, and a token with several allowed tags has
+///     one for every other allowed tag (up to <see cref="TaggerOptions.MaxAlternatives"/>), also when its probability is
+///     0. So, with <see cref="TaggerOptions.MaxAlternatives"/> of 1 or more, a token is decided by the dictionary exactly
+///     when <see cref="TaggedToken.IsConstrained"/> is <c>true</c> and <see cref="TaggedToken.Alternatives"/> is empty.
+///     With <c>MaxAlternatives</c> 0 no token has alternatives and the test cannot be made. The checks, in this order:
 ///     </para>
 ///     <list type="number">
 ///     <item><description>
-///     The token is constrained and has the confidence 1.0: the dictionary left one tag; use it as the answer of the
+///     The token is constrained and has no alternatives: the dictionary left one tag; use it as the answer of the
 ///     dictionary.
 ///     </description></item>
 ///     <item><description>
@@ -722,8 +731,10 @@ namespace DemaConsulting.PartOfSpeech;
 ///     string Judge(TaggedToken token)
 ///     {
 ///         // A constraint that left one tag decided this token; its confidence of 1.0 is no measurement.
-///         // IsConstrained alone is not enough: a soft entry or a Prefer constraint leaves the model a choice.
-///         if (token.IsConstrained &amp;&amp; token.Confidence >= 1.0)
+///         // IsConstrained alone is not enough: a soft entry or a Prefer constraint leaves the model a choice, and
+///         // a large boost can even round its confidence to 1.0. A single allowed tag has no alternatives, while a
+///         // soft constraint lists the other tags; this needs a tagger with MaxAlternatives of 1 or more (default 3).
+///         if (token.IsConstrained &amp;&amp; token.Alternatives.Count == 0)
 ///         {
 ///             return "dictionary";
 ///         }
@@ -773,9 +784,10 @@ namespace DemaConsulting.PartOfSpeech;
 ///     }
 ///     </code>
 ///     <para>
-///     In both examples the tokens that the dictionary forces to one tag report <c>IsConstrained</c> and the confidence 1.0,
-///     whether the lexicon knows the word or not. With a soft glossary or <c>TokenConstraint.Prefer</c> the model can still
-///     choose another tag, so those tokens keep their confidence and margin and need all the checks.
+///     In both examples the tokens that the dictionary forces to one tag report <c>IsConstrained</c>, the confidence 1.0 and
+///     no alternatives, whether the lexicon knows the word or not. With a soft glossary or <c>TokenConstraint.Prefer</c> the
+///     model can still choose another tag, so those tokens list their alternatives, keep their confidence and margin and
+///     need all the checks.
 ///     </para>
 /// </example>
 internal static class NamespaceDoc;

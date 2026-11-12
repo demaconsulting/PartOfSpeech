@@ -26,7 +26,7 @@ All tests pass on every target framework. A test fails when a tag, offset or tex
 rejected with the specified exception, the default tagger is not one shared instance or does not tag, a parallel result
 differs from the sequential one, a result can be modified after it is returned, or an alternative list violates its
 invariants (excludes the tag, sorted, limited, sums with the confidence to at most one), the known-word flag differs
-from the lexicon membership of the lower-cased spelling or changes with a glossary, or a margin differs from the
+from the lexicon membership of the folded, lower-cased spelling or changes with a glossary, or a margin differs from the
 confidence minus the best alternative (or from the smallest value that the confidence allows when there is none), is
 negative, or allocates.
 
@@ -63,7 +63,10 @@ negative, or allocates.
 - **Known word**: tests with hand-set weights and a lexicon of chosen rows (`CreateHandSet`).
   `Tagger_Tag_KnownWord_LexiconSpelling_IsTrueAndUnlistedSpellingIsFalse` (text input: listed words are known; an
   unlisted word and a period are not), `Tagger_Tag_KnownWord_CaseVariant_UsesTheLexiconLookup` (a theory over `cat`,
-  `Cat`, `CAT` and an unlisted spelling), `Tagger_Tag_KnownWord_GlossaryHeadNotInLexicon_IsUnknownButConstrained` (the
+  `Cat`, `CAT` and an unlisted spelling), `Tagger_Tag_KnownWord_FoldedSpelling_UsesTheLexiconLookup` (a theory over the
+  curly apostrophe, the em dash, the ellipsis and a decomposed accent, which match the lexicon rows `n't`, `--`, `...`
+  and `café`, and an unaccented spelling that does not),
+  `Tagger_Tag_KnownWord_GlossaryHeadNotInLexicon_IsUnknownButConstrained` (the
   head of a hard entry that the lexicon does not list is not known, is constrained, is the head, is a noun with the
   confidence 1, and its neighbor keeps its own flag) and
   `Tagger_Tag_KnownWord_GlossaryHeadInLexicon_IsKnownAndConstrained` (a listed head is

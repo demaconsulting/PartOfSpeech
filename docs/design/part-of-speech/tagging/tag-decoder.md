@@ -76,8 +76,11 @@ adjustment`, a `double`. The integer sum is exact; only the final multiplication
   or the cached lookup of the groups; it returns the allowed tags and, through `known`, whether the lexicon has an entry
   for the token.
 
-After the call: every result tag is a candidate; the confidence and the alternative probabilities are in (0, 1] and add
-up to 1 when all candidates are listed; a token with one candidate has confidence 1 and no alternatives. A token's
+After the call: every result tag is a candidate; the confidence and the alternative probabilities are in [0, 1] and add
+up to 1 when all candidates are listed; a token with one candidate has confidence 1 and no alternatives. A token with
+several candidates has `min(MaxAlternatives, candidates - 1)` alternatives, also when a soft constraint rounds its
+confidence to 1.0 (the alternatives then have the probability 0), so with `MaxAlternatives` of 1 or more the number of
+alternatives, not the confidence, tells a token with one allowed tag. A token's
 `IsKnownWord` is exactly the lexicon membership of its folded, lower-cased spelling: letter case, shape rules, a
 constraint and the feature groups do not change it. The `TaggedToken` struct has the size of 48 bytes on a 64-bit
 process, with and without the flag (the flag sits in the padding), so the allocation budget of the result array holds.

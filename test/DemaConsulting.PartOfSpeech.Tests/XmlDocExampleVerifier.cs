@@ -107,6 +107,22 @@ internal static class XmlDocExampleVerifier
     }
 
     /// <summary>
+    ///     Compiles one example that is not part of the XML documentation file, for example a code block of the user
+    ///     guide, with the same wrappings and references as the documented examples, and fails the calling test if it
+    ///     does not compile.
+    /// </summary>
+    /// <param name="source">The name of the document that holds the snippet, for the failure message.</param>
+    /// <param name="snippet">The snippet as written in the document.</param>
+    /// <param name="additionalUsings">The package namespaces that the snippet may use without a using directive.</param>
+    public static void VerifySnippet(string source, string snippet, params string[] additionalUsings)
+    {
+        Assert.False(string.IsNullOrWhiteSpace(snippet), $"No example was found in '{source}'.");
+
+        var failure = TryCompile(Dedent(snippet), BuildPrologue(additionalUsings), BuildReferences());
+        Assert.True(failure is null, $"The example in '{source}' does not compile against the real API:{failure}");
+    }
+
+    /// <summary>
     ///     Reads every <c>&lt;example&gt;&lt;code&gt;</c> block out of an XML documentation file.
     /// </summary>
     /// <remarks>

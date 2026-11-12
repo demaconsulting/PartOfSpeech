@@ -598,6 +598,33 @@ public class TaggerTests
     }
 
     /// <summary>
+    ///     Proves that the known-word flag uses the full lookup form of the tagger: the spelling is normalized (NFC), typographic
+    ///     apostrophes, dashes and the ellipsis are mapped to ASCII, and the result is lower-cased.
+    /// </summary>
+    /// <param name="spelling">The token text.</param>
+    /// <param name="expected">The expected flag.</param>
+    [Theory]
+    [InlineData("n't", true)]
+    [InlineData("n\u2019t", true)]
+    [InlineData("N\u2019T", true)]
+    [InlineData("\u2014", true)]
+    [InlineData("\u2026", true)]
+    [InlineData("caf\u00E9", true)]
+    [InlineData("CAFE\u0301", true)]
+    [InlineData("cafe", false)]
+    public void Tagger_Tag_KnownWord_FoldedSpelling_UsesTheLexiconLookup(string spelling, bool expected)
+    {
+        // Arrange: a tagger whose lexicon lists the folded forms of the apostrophe, the dash, the ellipsis and an accented word in NFC
+        var tagger = CreateHandSet(new TinyModels.WeightsBuilder(), new[] { "n't PART", "-- PUNCT", "... PUNCT", "caf\u00E9 NOUN" });
+
+        // Act: tag the spelling as a pre-tokenized token
+        var token = tagger.Tag(new[] { spelling }).Tokens[0];
+
+        // Assert: the flag follows the folded, lower-cased lookup
+        Assert.Equal(expected, token.IsKnownWord);
+    }
+
+    /// <summary>
     ///     Proves that the head of a hard glossary entry that the lexicon does not list is an unknown word that is constrained.
     /// </summary>
     [Fact]
