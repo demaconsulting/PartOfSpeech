@@ -50,10 +50,10 @@ SHAPES_DEV_FIRST_TRANCHES = ("compound-head", "headings", "named-state")
 # The third generation: the four technical-text tranches built by technical_data.py (beta.3 phase 1), which leaves all four out of its own filter.
 SHAPES_DEV_TECHNICAL_TRANCHES = ("deverbal-heads", "defined-terms", "step-lines", "clause-verbs")
 SHAPES_DEV_NEW_TRANCHES = SHAPES_DEV_FIRST_TRANCHES + SHAPES_DEV_FOLLOWUP_TRANCHES + SHAPES_DEV_TECHNICAL_TRANCHES
-# The training sources of the third generation (data/technical/<name>.tsv, built by technical_data.py). Like the hard tranche, they are optional
-# files until the commit that registers them sets TECHNICAL_REQUIRED to True; from then on a missing tranche or source is a loud failure.
+# The training sources of the third generation (data/technical/<name>.tsv, built by technical_data.py). They were optional files until the commit that registered
+# them; from the registration on (TECHNICAL_REQUIRED is True) a missing tranche or source is a loud failure, like the hard tranche.
 TECHNICAL_TRAINING = ("deverbal", "terms", "steps", "clauses")
-TECHNICAL_REQUIRED = False
+TECHNICAL_REQUIRED = True
 # The three generations of the newer tranches: tranches of one generation may share source documents (never a sentence); a document shared
 # between two generations, or with the standard or hard tranche, is a leak (check_leakage.py gates it).
 SHAPES_DEV_GENERATIONS = (SHAPES_DEV_FIRST_TRANCHES, SHAPES_DEV_FOLLOWUP_TRANCHES, SHAPES_DEV_TECHNICAL_TRANCHES)

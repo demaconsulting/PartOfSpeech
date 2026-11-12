@@ -1,0 +1,23 @@
+# Leakage report of the step-lines tranche of the hard-shape development set (tools/data/check_leakage.py); counts only
+# UD English-EWT checked in this run: yes (counts only; nothing from UD is stored)
+# probe_5gram_sentences = development sentences that share a word 5-gram with a shape probe sentence (gated, no probe text is stored)
+# shapes-dev and shapes-dev-hard rows: documents, exact sentences and same-document near duplicates are gated; rows of the other new tranches: documents are shared on purpose (reported, not gated)
+# columns = evaluation_set, dev_sentences, document_overlaps, exact_sentence_overlaps, near_duplicate_sentences, probe_5gram_sentences
+open-dev	236	0	0	0	-
+open-test	236	0	0	0	-
+ste-challenge	236	0	0	0	-
+gold-v2	236	0	0	0	-
+shapes-probe	236	0	0	0	0
+ud-ewt-dev	236	0	0	0	-
+ud-ewt-test	236	0	0	0	-
+ud-ewt-train	236	0	0	0	-
+shapes-dev	236	0	0	0	-
+shapes-dev-hard	236	0	0	0	-
+shapes-dev-compound-head	236	0	0	0	-
+shapes-dev-headings	236	0	0	0	-
+shapes-dev-named-state	236	0	0	0	-
+shapes-dev-compound-head-2	236	0	0	0	-
+shapes-dev-headings-2	236	0	0	0	-
+shapes-dev-deverbal-heads	236	71	0	0	-
+shapes-dev-defined-terms	236	48	0	0	-
+shapes-dev-clause-verbs	236	63	0	0	-

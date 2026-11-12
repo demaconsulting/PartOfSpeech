@@ -183,6 +183,27 @@ of every document is quoted in `data/eval/shapes-dev/<tranche>-sources.tsv`, `da
 and `data/headings/headings-2-sources.tsv`. Numeric output of the WordSense Basic classifier (same owner, run
 unmodified) helped to choose the `compound-head-2` sentences; no WordSense text, label or data is copied.
 
+The four technical-text tranches of that set (`deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv` and
+`clause-verbs.tsv` in `data/eval/shapes-dev/`) and the four technical-text training sources (`deverbal.tsv`,
+`terms.tsv`, `steps.tsv` and `clauses.tsv` in `data/technical/`) are cut from further US federal government documents
+(the tranches use 217 distinct documents, 156, 95, 97 and 139 for the four tranches, which share documents among them,
+and the sources use 218 distinct documents, 173, 102, 130 and 112 for the four sources, which share documents among
+them): publications of NASA (NASA Technical Reports Server records with the determination `GOV_PUBLIC_USE_PERMITTED`,
+no third-party material and no contractor or publisher ownership), the US Geological Survey (USGS Publications
+Warehouse records with all contributors flagged as USGS authors) and, as scans and electronic copies on the Internet
+Archive whose records carry the Public Domain Mark or a statement that the item is not in copyright, the Army, Navy,
+Air Force, Coast Guard, Marine Corps, Environmental Protection Agency, Department of Energy, Forest Service, National
+Park Service, Bureau of Reclamation, Bureau of Standards, NOAA, Public Health Service, Army Corps of Engineers and
+Department of Agriculture (17 U.S.C. 105). The record of every document names a federal body as its creator and no
+state, local, foreign, university, contractor or private creator, publisher or co-author, and no document has a
+distribution statement other than public release, a copyright notice or a third-party credit; no document is in
+`data/eval/shapes-dev/excluded-sources.tsv`. The tranches are development data; the four sources are training data
+registered with weight 0 (so the embedded weights were not learned from them). The annotations and the selection are
+dedicated to the public domain under CC0 1.0, and the license basis of every document is quoted in
+`data/eval/shapes-dev/<tranche>-sources.tsv` and `data/technical/<source>-sources.tsv`. Numeric output of the
+WordSense Basic classifier (same owner, run unmodified) helped to choose the `deverbal-heads`, `step-lines` and
+`clause-verbs` sentences; no WordSense text, label or data is copied.
+
 Language models wrote the tags, and no human has reviewed them. In the owner's position, GitHub claims no ownership of
 model outputs, so the repository owner, who prompted their creation, holds the rights in them and dedicates them to the
 public domain under CC0 1.0. That is the owner's position, not legal advice or a warranty.

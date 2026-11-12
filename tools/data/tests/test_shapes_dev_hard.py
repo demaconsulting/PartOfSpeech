@@ -875,8 +875,18 @@ class RequiredFilesFailClosedTests(base.MiniFolder):
                 "eval/shapes-dev/compound-head-sources.tsv", "eval/shapes-dev/headings-sources.tsv", "eval/shapes-dev/named-state-sources.tsv",
                 "eval/shapes-dev/compound-head.tsv", "eval/shapes-dev/headings.tsv", "eval/shapes-dev/named-state.tsv",
                 "eval/shapes-dev/compound-head-2-sources.tsv", "eval/shapes-dev/headings-2-sources.tsv",
-                "eval/shapes-dev/compound-head-2.tsv", "eval/shapes-dev/headings-2.tsv")
+                "eval/shapes-dev/compound-head-2.tsv", "eval/shapes-dev/headings-2.tsv",
+                "eval/shapes-dev/deverbal-heads-sources.tsv", "eval/shapes-dev/defined-terms-sources.tsv", "eval/shapes-dev/step-lines-sources.tsv",
+                "eval/shapes-dev/clause-verbs-sources.tsv", "technical/deverbal-sources.tsv", "technical/terms-sources.tsv", "technical/steps-sources.tsv",
+                "technical/clauses-sources.tsv", "eval/shapes-dev/deverbal-heads.tsv", "eval/shapes-dev/defined-terms.tsv", "eval/shapes-dev/step-lines.tsv",
+                "eval/shapes-dev/clause-verbs.tsv", "technical/deverbal.tsv", "technical/terms.tsv", "technical/steps.tsv", "technical/clauses.tsv")
     HARD = ("eval/shapes-dev/hard-sources.tsv", "eval/shapes-dev/hard.tsv")
+
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch.object(leakage, "TECHNICAL_REQUIRED", True)      # the technical-text files are required once registered
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def write_data(self):
         super().write_data()
@@ -888,13 +898,18 @@ class RequiredFilesFailClosedTests(base.MiniFolder):
                      os.path.join(self.data, "headings", "sources.tsv"), os.path.join(self.data, "compound", "compound-2-sources.tsv"),
                      os.path.join(self.data, "headings", "headings-2-sources.tsv"),
                      os.path.join(folder, "sources.tsv"), os.path.join(folder, "hard-sources.tsv")) + tuple(
-                         os.path.join(folder, name + "-sources.tsv") for name in ("compound-head", "headings", "named-state", "compound-head-2", "headings-2")):
+                         os.path.join(folder, name + "-sources.tsv") for name in ("compound-head", "headings", "named-state", "compound-head-2", "headings-2")
+                         + leakage.SHAPES_DEV_TECHNICAL_TRANCHES) + tuple(
+                         os.path.join(self.data, "technical", name + "-sources.tsv") for name in leakage.TECHNICAL_TRAINING):
             base.table_file(path, sd.SOURCE_COLUMNS, [row])
         extra = [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]]
-        for name in ("dev.tsv", "hard.tsv", "compound-head.tsv", "headings.tsv", "named-state.tsv", "compound-head-2.tsv", "headings-2.tsv"):
+        for name in ("dev.tsv", "hard.tsv", "compound-head.tsv", "headings.tsv", "named-state.tsv", "compound-head-2.tsv", "headings-2.tsv") + tuple(
+                n + ".tsv" for n in leakage.SHAPES_DEV_TECHNICAL_TRANCHES):
             base.corpus_file(os.path.join(folder, name), [("doc-a", "A brand new dev sentence about nothing in particular .")], extra)
         for name in ("compound-2.tsv", "headings-2.tsv"):
             base.corpus_file(os.path.join(self.data, name.split("-")[0], name), [("doc-a", "A brand new dev sentence about nothing in particular .")], extra)
+        for name in leakage.TECHNICAL_TRAINING:
+            base.corpus_file(os.path.join(self.data, "technical", name + ".tsv"), [("doc-a", "A brand new dev sentence about nothing in particular .")], extra)
         base.table_file(os.path.join(folder, "excluded-sources.tsv"), common.EXCLUDED_SOURCES_COLUMNS, [])
 
     def run_main(self, required=True):

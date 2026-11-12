@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore usfs usbm ncwm nltk fcda usbr safehandlingofbo airforce Jaccard -->
+<!-- cspell:ignore usfs usbm ncwm nltk fcda usbr safehandlingofbo airforce Jaccard coastguard usace -->
 
 # Shapes Development Set
 
@@ -16,7 +16,9 @@ of four of the five shapes, built by a pre-registered, model-independent rule (s
 files, `compound-head.tsv`, `headings.tsv` and `named-state.tsv`, are the **new tranches**: one shape each that the first two
 files do not measure (see [New Tranches](#new-tranches)). Two further files, `compound-head-2.tsv` and `headings-2.tsv`, are the
 **follow-up tranches**: 255 and 129 more items of the shapes of `compound-head` and `headings`, from new documents (see
-[Follow-up Tranches](#follow-up-tranches)). Everything above and below this paragraph that gives a count
+[Follow-up Tranches](#follow-up-tranches)). Four further files, `deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv` and
+`clause-verbs.tsv`, are the **technical tranches**: 450, 285, 236 and 446 sentences of four shapes of technical English, from further new
+documents (see [Technical Tranches](#technical-tranches)). Everything above and below this paragraph that gives a count
 describes the standard tranche (`dev.tsv`) unless it says otherwise.
 
 ## Source and Provenance
@@ -84,6 +86,9 @@ describes the standard tranche (`dev.tsv`) unless it says otherwise.
 | `headings-2.tsv` | the 129 heading lines of the `headings-2` tranche (109 targets, 20 controls), same block format plus `# kind` as `headings.tsv`; ids `shapes-dev-headings-2-NNNN` |
 | `compound-head-2-sources.tsv`, `headings-2-sources.tsv` | the documents of the follow-up tranches (89 and 35), same columns as `sources.tsv` |
 | `compound-head-2-leakage-report.tsv`, `headings-2-leakage-report.tsv` | counts of a follow-up tranche against every other evaluation set; a shared document is allowed only with the other follow-up tranche (none with the first-generation tranches) |
+| `deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv`, `clause-verbs.tsv` | the 450, 285, 236 and 446 sentences of the four technical tranches, same block format as `compound-head.tsv` (comments `shape`, `role`, `target`, `lemma`, `origin`, `kind`, and where the shape has them `term`, `frame` and `unit`); ids `shapes-dev-deverbal-heads-NNNN`, `shapes-dev-defined-terms-NNNN`, `shapes-dev-step-lines-NNNN`, `shapes-dev-clause-verbs-NNNN` |
+| `deverbal-heads-sources.tsv`, `defined-terms-sources.tsv`, `step-lines-sources.tsv`, `clause-verbs-sources.tsv` | the documents of the technical tranches (156, 95, 97 and 139), same columns as `sources.tsv` |
+| `deverbal-heads-leakage-report.tsv`, `defined-terms-leakage-report.tsv`, `step-lines-leakage-report.tsv`, `clause-verbs-leakage-report.tsv` | counts of a technical tranche against every other evaluation set; a shared document is allowed only with another technical tranche (none with any earlier tranche) |
 
 Each sentence block has the comments `sent_id`, `source_id`, `text`, `shape`, `role` (`target` or `control`), `target` (the
 zero-based index of the judged word), `lemma` and `origin` (`real` or `authored`), then one row `form`, `upos`, `status`
@@ -202,6 +207,12 @@ records name a state or local government body as an author, so a federal-only ba
 (they are also in `data/compound/excluded-documents.tsv`
 and `data/headings/excluded-documents.tsv`). The shapes development set has no text of any of them; `check_licenses.py` and the builders refuse them in the
 source tables and sentences of the training sources `data/compound/` and `data/headings/` (both sources of each folder) and of every tranche of this set.
+
+The record has 15 more rows, recorded by the implementing agent (not decided by the project owner) while the documents of the technical-text tranches and sources
+were sourced (dates 2026-11-11 and 2026-11-12): six documents whose records name a state or local government body as a creator or co-creator or that reproduce text written by one,
+one document whose creator is a foreign government body, five documents with a contractor author, one document whose creator is a volunteer civilian organization, one
+whose text is the terms of a private company and one with a university professor as editor. None of them is used by any tranche or training source, and the check refuses
+all 25 rows in every source table and every sentence of `data/technical/` and of this set.
 
 ## Sources
 
@@ -715,6 +726,143 @@ word 5-grams with the shape probe; against each other the two tranches share 30 
 - **`compound-head-2` is contested for the Basic classifier**, like `compound-head`: every target has a small `q`; it is not intrinsically hard.
 - **Controls are 17.6 percent** (45 of 255) against the requested about 20 percent, bound by the cap.
 - **Same register:** technical manuals and reports (Army 155 of the 255 `compound-head-2` items and 88 of the 129 `headings-2` lines), mostly OCR text.
+- **Model labels:** two models, no human review; the hand check is a model review of 60 items per tranche.
+
+## Technical Tranches
+
+Four more development files, `deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv` and `clause-verbs.tsv`, hold real sentences from **new**
+US federal documents (no document of any earlier table of this repository, of the training sources or of any other tranche except among
+themselves: the four may share a document). Each is for development only, and each gold tag is the agreement of two blind model labelers.
+They have the block format and the conventions of the new tranches above (ids `shapes-dev-<name>-NNNN`; the comments `shape`, `role`,
+`target`, `lemma`, `origin` and `kind`). Each is one shape of technical English, defined by position and lexicon only. They are built by
+`python tools/data/technical_data.py` (the normative text is its docstring; the pre-registered rule is described in the trainer run log,
+section "beta.3 phase 1: pre-registered rule (before any fetch)", which also records the amendments), and no PartOfSpeech model takes part in
+the selection. The four training sources of the same shapes are in [`data/technical/`](../../technical/README.md), cut from the other side of
+one partition of title families; no document is on both sides.
+
+| Tranche | File | Sentences | Targets | Controls | Scoring | Documents | Lemmas | Tokens |
+| --- | --- | ---: | --- | --- | --- | ---: | ---: | ---: |
+| `deverbal-heads` | `deverbal-heads.tsv` | 450 | 360 (gold NOUN): `pred` 62, `num` 60, `ing` 140, `other` 98 | 90: `verb` (the same lemma as a verb, gold VERB) | class (Noun or Verb) | 156 | 246 | 8,762 |
+| `defined-terms` | `defined-terms.tsv` | 285 | 215: `noun` 174 (gold NOUN), `adj` 41 (gold ADJ) | 70: `proper` (gold PROPN) | exact tag | 95 | 200 | 5,580 |
+| `step-lines` | `step-lines.tsv` | 236 | 166: `imperative` (gold VERB) | 70: `noun` (gold NOUN) | exact tag | 97 | 164 | 1,906 |
+| `clause-verbs` | `clause-verbs.tsv` | 446 | 356: `main` 288, `sub` 68 (gold VERB) | 90: `noun` 60 (gold NOUN), `adj` 30 (gold ADJ) | exact tag | 139 | 264 | 7,947 |
+
+The four tranches have 1,417 sentences and 24,195 tokens: 1,097 targets and 320 controls, in 217 distinct documents. Each tranche IS the size in the
+table (for example, `step-lines.tsv` has 166 imperative targets and 70 noun controls). The judged word of an item is never `disputed`. The scoring
+column says how a gold tag is compared: `deverbal-heads` scores the class of the judged word (a NOUN or PROPN answer is Noun, a VERB answer is Verb),
+the other three score the exact tag.
+
+### The Shapes
+
+- **`deverbal-heads` (S1)**: the judged word is the head of a noun-noun compound whose head is spelled like a verb (a zero-derived noun such as `check`
+  or an `-ing` gerund noun), lower case, ending its compound. Kind `pred` (the governor is a form of *be*, *become* or *remain*), `num` (a numeral
+  stands before the compound), `ing` (a gerund head in any other position) and `other` (a zero-derived head after a determiner, in subject or object
+  position) are targets with gold NOUN; kind `verb` is a control, a lemma of a target used as a verb in a similar frame (gold VERB). At most 4 targets
+  per head lemma (counted over the union with the targets of `compound-head.tsv` and `compound-head-2.tsv`), 2 controls per lemma and 15 items per
+  document (12 at most are present).
+- **`defined-terms` (S2)**: the judged word is part of a capitalized term, a run of 1 to 4 Title Case ordinary words inside a sentence: the last word
+  for kind `noun` (gold NOUN) and `proper` (a control, gold PROPN: a name of one particular entity), the first word for kind `adj` (gold ADJ). The
+  comment `term` holds the lower-case words of the term. The labeling convention is the section "Capitalized Defined Terms" of
+  [CONVENTIONS.md](../../CONVENTIONS.md): a term that names a kind, mode, setting, position, state, screen, document type or component class is NOUN
+  (ADJ for a modifier), and PROPN is for a name. 244 distinct terms (at most 2 items per term), at most 4 items per lemma and 15 per document.
+- **`step-lines` (S3)**: the judged word is token 0 of a step line, a list item, a short stand-alone line or an instruction sentence that starts with a
+  capitalized word. Kind `imperative` (gold VERB; the comments `frame` and `unit` say what follows the verb and where the line comes from: 166 targets,
+  of which 78 are sentence units, 50 enumerated lines, 23 short stand-alone lines and 15 bulleted lines, and 120 have a bare lower-case object); kind
+  `noun` (a control, gold NOUN: a short caption-like line of 2 to 6 tokens that starts with a capitalized noun-capable word, 70 lines). At most 6
+  targets per lemma, 2 controls per lemma, 30 items per title family and 15 per document.
+- **`clause-verbs` (S4)**: the judged word is a lower-case base-form word that can also be a noun or an adjective, right after a plural or coordinated
+  subject. Kind `main` (a main-clause verb) and `sub` (a subordinating conjunction stands within 5 tokens before the subject) are targets with gold VERB; kind
+  `noun` (the same frame, the word followed by a lower-case noun, gold NOUN) and `adj` (a determiner, the word and a plural noun, gold ADJ) are
+  controls. 87 of the 356 targets (24.4 percent; at most 60 percent are allowed) have a direct object without a determiner after the verb. At most 4
+  targets per lemma, 2 controls per lemma and 15 per document.
+
+### Selection Signal
+
+- **`deverbal-heads` and `step-lines`:** the contested band of the pinned WordSense Basic classifier, `0.10 <= q < 0.97` of the noun-versus-verb mass of the
+  judged word (class Noun for `deverbal-heads`, class Verb for `step-lines`; computed once from a fixed table, `hmm.tsv`; no PartOfSpeech model), taken with
+  the smallest `q` first.
+- **`clause-verbs`:** the same mass for class Verb with the lower bound only, `0.10 <= q`, smallest `q` first.
+- **`defined-terms` and every control:** position and lexicon only; no band and no model.
+
+The tranches are therefore, for three of the four shapes, the contested part of the Basic classifier's mass and not an intrinsic measure of difficulty.
+
+### Documents of the Technical Tranches
+
+| Family | `deverbal-heads` | `defined-terms` | `step-lines` | `clause-verbs` |
+| --- | ---: | ---: | ---: | ---: |
+| `nasa` (documents / sentences) | 67 / 155 | 30 / 90 | 33 / 56 | 52 / 144 |
+| `army` | 21 / 91 | 11 / 20 | 12 / 22 | 22 / 84 |
+| `navy` | 14 / 47 | 11 / 18 | 11 / 34 | 11 / 52 |
+| `usgs` | 10 / 15 | 11 / 32 | 9 / 16 | 12 / 20 |
+| `epa` | 10 / 37 | 8 / 33 | 9 / 36 | 9 / 43 |
+| `nps` | 9 / 30 | 11 / 45 | 5 / 17 | 10 / 33 |
+| `usfs` | 6 / 14 | 4 / 16 | 7 / 26 | 7 / 18 |
+| `airforce` | 5 / 16 | 1 / 1 | | 3 / 7 |
+| `doe` | 5 / 28 | 4 / 20 | 6 / 16 | 5 / 31 |
+| `nbs` | 3 / 4 | | 2 / 2 | 2 / 4 |
+| `noaa` | 2 / 5 | 1 / 2 | 1 / 1 | |
+| `coastguard` | 1 / 2 | 1 / 1 | 1 / 9 | 1 / 2 |
+| `phs` | 1 / 1 | 1 / 5 | 1 / 1 | 2 / 4 |
+| `usace` | 1 / 4 | 1 / 2 | | 2 / 3 |
+| `usbr` | 1 / 1 | | | 1 / 1 |
+
+The documents are US federal government works (17 U.S.C. 105), one `license_basis` cell per document in the `<tranche>-sources.tsv` tables (the agency
+named in the record, the record's rights statement where it has one, and the check that the text carries no copyright, permission, third-party credit or
+distribution restriction), retrieved from the NASA Technical Reports Server (59, 24, 26 and 44 documents), the USGS Publications Warehouse (8, 10, 8 and 11) and the
+Internet Archive (89, 61, 63 and 84) on 2026-11-11 and 2026-11-12 and hashed. Publication years are 1942 to 2024 (`deverbal-heads`), 1946 to 2024 (`defined-terms`),
+1945 to 2024 (`step-lines`) and 1942 to 2024 (`clause-verbs`); every document is from 1940 or later. No document is in a table of used sources, in either
+`excluded-sources.tsv` or in any `excluded-documents.tsv`; there is no FAA text, no Wikipedia, no share-alike or non-commercial text, no Universal Dependencies
+text, no sentence supplied by any consumer, and no document with a non-federal creator, publisher or co-author. The tranches share documents with each other
+(`deverbal-heads`/`defined-terms` 68, `deverbal-heads`/`step-lines` 71, `deverbal-heads`/`clause-verbs` 106, `defined-terms`/`step-lines` 48,
+`defined-terms`/`clause-verbs` 71, `step-lines`/`clause-verbs` 63; reported, not gated) and never a sentence.
+
+### Inputs of the Technical Selection
+
+| Input | Value |
+| --- | --- |
+| Documents | 572 US federal documents sourced for the technical-text data (303 on the development side, 269 on the training side; whole title families are on one side); `sources-draft.tsv` SHA-256 `b48d463364275182f4e704625d069b9c9ef06f48ca068405925c06ab0be142ae`; the tranches use 217 of the development documents |
+| `tokens.tsv` SHA-256 (the units of the draft: 459,396, with the step units) | `dfe0ba191496d53727c1dcea8d2d5e0841a7885a4ad9c489e7f8b81f6f7ef4aa` |
+| WordSense commit and `DemaConsulting.WordSense.dll` SHA-256 | `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
+| `hmm.tsv` SHA-256 (the Basic classifier's noun and verb mass for every token of the text; `deverbal-heads`, `step-lines`, `clause-verbs`) | `43432b1a2522bf6e85b7a6e380dfaa4d94a5b26a066e94fa0b8c127c9bf602f7` |
+| `data/CONVENTIONS.md` SHA-256 as the labelers read it | `42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2` |
+
+### Hand Check of the Technical Tranches
+
+`claude-sonnet-5.5` (a model review, not a human review) judged 60 items of each tranche as built and 4 control items whose tag had been swapped on
+purpose, once, from one sample drawn with a fixed seed (`deverbal-heads` 20261201, `defined-terms` 20261202, `step-lines` 20261203, `clause-verbs` 20261204).
+One blind reviewer judged each tranche.
+
+| Measure | `deverbal-heads` | `defined-terms` | `step-lines` | `clause-verbs` |
+| --- | ---: | ---: | ---: | ---: |
+| judged word correct / incorrect / unclear | 60 / 0 / 0 | 60 / 0 / 0 | 57 / 0 / 3 | 60 / 0 / 0 |
+| marked-word precision (gate at least 95%) | 100.0% | 100.0% | 100.0% | 100.0% |
+| whole item correct (no other token marked wrong) | 96.7% | 95.0% | 93.3% | 98.3% |
+| token precision (reported, not gated) | 99.83% (2 wrong of 1,160) | 99.74% (3 of 1,157) | 99.63% (2 of 539) | 99.91% (1 of 1,147) |
+| controls accepted | 0 of 4 | 0 of 4 | 0 of 4 | 0 of 4 |
+| gate (judged word at least 95%, at most 1 control accepted, no unanswered item) | passed | passed | passed | passed |
+
+### Leakage and License Checks of the Technical Tranches
+
+`python tools/data/check_leakage.py --write-report` writes `deverbal-heads-leakage-report.tsv`, `defined-terms-leakage-report.tsv`,
+`step-lines-leakage-report.tsv` and `clause-verbs-leakage-report.tsv` (counts only) and adds the four tranches to the rows of the other reports. Result for
+all four tranches: **0 shared documents, 0 exact sentences and 0 near duplicates** against open dev and test, gold v2, the STE challenge set, UD English-EWT,
+the standard and the hard tranche and the five earlier new tranches, and 0 shared word 5-grams with the shape probe; against each other the four tranches
+share documents (reported, not gated) and no sentence and no near duplicate. Every training source (including `deverbal`, `terms`, `steps` and `clauses`)
+shares no document, exact sentence or near duplicate with them (rows of `leakage-report.tsv`). `check_licenses.py` scans the four source tables (restricted
+text, FAA material and `excluded-sources.tsv`).
+
+### Limits of the Technical Tranches
+
+- **Three of the four are contested for the Basic classifier:** every target of `deverbal-heads`, `step-lines` and `clause-verbs` has a small `q`
+  (`clause-verbs` has no upper bound on `q`); they are not intrinsically hard.
+- **Per-kind figures are small:** `step-lines` has 166 imperative targets (65 from enumerated or bulleted lines, 39.2 percent), 70 `noun` controls and 97
+  documents; `defined-terms` has 41 `adj` targets; `clause-verbs` has 68 `sub` targets and 30 `adj` controls. A per-kind figure of this kind has a wide
+  uncertainty.
+- **Same register:** technical manuals, procedures and reports (NASA documents give 155 of the 450 `deverbal-heads` sentences and 144 of the 446
+  `clause-verbs` sentences), with OCR residue in some sentences.
+- **Convention-dependent gold:** the gold of `defined-terms` follows the section "Capitalized Defined Terms" of the conventions, which differs from the
+  practice of UD English-EWT and of the open corpus for such terms (see [`data/technical/README.md`](../../technical/README.md)); a score on it measures
+  agreement with that section.
 - **Model labels:** two models, no human review; the hand check is a model review of 60 items per tranche.
 
 ## Known Limits

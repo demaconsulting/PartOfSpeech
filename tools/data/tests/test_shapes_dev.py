@@ -12,7 +12,7 @@ import shutil
 import sys
 import tempfile
 import unittest
-
+from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import adjudicate
 import check_leakage
@@ -65,6 +65,11 @@ class MiniFolder(unittest.TestCase):
         self.saved = common.DATA
         common.DATA = self.data
         self.addCleanup(setattr, common, "DATA", self.saved)
+        # The committed data has the technical-text files (leakage.TECHNICAL_REQUIRED is True); a miniature folder has none, so every fixture
+        # runs in the optional state unless its test asks for the required one (the tests of the required files patch the flag to True again).
+        patcher = mock.patch.object(leakage, "TECHNICAL_REQUIRED", False)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         self.write_data()
 
     def write_data(self):
@@ -1680,7 +1685,6 @@ class LeakageExtensionTests(MiniFolder):
         for followup in leakage.SHAPES_DEV_FOLLOWUP_TRANCHES:
             for technical in leakage.SHAPES_DEV_TECHNICAL_TRANCHES:
                 self.assertFalse(leakage.same_generation(followup, technical), (followup, technical))
-        self.assertFalse(leakage.TECHNICAL_REQUIRED)                       # the technical-text files are optional until their data commit
         self.assertEqual(("deverbal", "terms", "steps", "clauses"), leakage.TECHNICAL_TRAINING)
 
     def test_the_two_followup_tranches_may_share_a_document_but_never_a_sentence(self):
@@ -1832,6 +1836,16 @@ class QuotaUnitTests(unittest.TestCase):
         targets[1]["origin"] = "real"
         controls[0]["origin"] = controls[1]["origin"] = "authored"
         self.assertTrue(any("controls: 2 of 4 are authored" in p for p in self.problems(targets, controls)))
+
+
+class TechnicalFilesRequiredTests(unittest.TestCase):
+    """The committed data holds the technical-text tranches and sources, so `leakage.TECHNICAL_REQUIRED` is True (the fixtures of MiniFolder patch it to False)."""
+
+    def test_the_technical_text_files_are_required_since_their_registration(self):
+        self.assertTrue(leakage.TECHNICAL_REQUIRED)
+        self.assertTrue(all(os.path.exists(os.path.join(common.DATA, *parts)) for parts in
+                            [("technical", name + ".tsv") for name in leakage.TECHNICAL_TRAINING] +
+                            [("eval", "shapes-dev", name + ".tsv") for name in leakage.SHAPES_DEV_TECHNICAL_TRANCHES]))
 
 
 class ExclusionRecordGateTests(MiniFolder):
