@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD060 -->
-<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite montanafinalstat unitrich usfs safehandlingofbo NCRP airforce antiarmor atsc ccceeee cexclude coastguard fmtv FOUO haandbook hacc hcands hemtt hexclude hfinal hget Jaccard OPFOR Readex unfetched usbm usbr deverbal dvhc dtmc stpc clvc -->
+<!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite montanafinalstat unitrich usfs safehandlingofbo NCRP airforce antiarmor atsc ccceeee cexclude coastguard fmtv FOUO haandbook hacc hcands hemtt hexclude hfinal hget Jaccard OPFOR Readex unfetched usbm usbr deverbal dvhc dtmc stpc clvc djvu nvlpubs osti govinfo memoranda bacc -->
 
 # Trainer Run Log
 
@@ -5902,6 +5902,59 @@ Wave 6 was deliberately partial (90 records) so that the stop rule "450 accepted
 ### The repository gate
 
 `python tools/data/technical_data.py --work W exclusions` with every extra table (the eight frozen PR #20 copies, `pr20-sources-draft.tsv` (the 416-document PR #20 draft), `pr20-cexclude.tsv`, `pr20-hexclude.tsv` and `beta3-hexclude.tsv`, the by-hand refusals of this phase): **451 documents in the draft, 0 problems** (28,269 index entries: 14,146 ids, 12,913 URLs, 1,210 archive.org identifiers). Two PR #20 extra tables had CRLF line ends; LF copies with the same ids and reasons are used, as in PR #20.
+
+## beta.3 phase 1: frozen inputs (R1)
+
+This section follows the documents record `e4b79a1` (a commit cannot contain its own SHA); the earlier steps are the frames `294570d`, the convention section and the frozen divergence detector `67d7dc2`, the builder `e84053e`, **the R0 pre-registration `265cba8`** and the divergence record `32db8cd`. **It is committed before any label exists**: no batch is exported, no candidate row is written, no model of any experiment was trained or evaluated, and no consumer text was read. It freezes the inputs of the pilot and of every candidate round: after this commit `pilot` and `candidates` refuse any input whose bytes differ from the pinned ones. The held-out sets were not touched (the divergence counts were the only access, in the earlier record). The run of this step is tokenization with the library tokenizer (`shapes-tokenize`, one heavy process, below normal priority, at most 8 threads), the WordSense Basic mass of the pinned DLL (`tools/data/hmm-tags`) and the counts-only `preflight`; every figure below is a count.
+
+### Frozen inputs (the pins are constants of `tools/data/technical_data.py` in this commit)
+
+| Frozen input | Value |
+| --- | --- |
+| `sources-draft.tsv` (451 documents; pin `DRAFT_SHA256`) | `c03a39752703408ee6daeb6d685fc97a3d1efe2504462f7f4ceb25f3f0af5792` |
+| `tokens.tsv` (373,490 units, 4,070,226 tokens; the sentences of `text/` and the step units of `steps/`; pin `TOKENS_SHA256`) | `aebca046f9da537c147be78020f74d0664ec53c78156293cc54170fab251f87e` |
+| `hmm.tsv` (357,270 tagged sentences, the single-sentence units; WordSense commit `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, DLL `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` verified from the copy that ran; header `input_sha256` equals the tokens pin; pin `HMM_SHA256`) | `71fa239d4f15b7b367a83203e77d7ff501055f85da7aca46b5d8ac41da8b7600` |
+| `data/CONVENTIONS.md` (the labelers' convention, the section "Capitalized Defined Terms" of `67d7dc2`, as it stands; **it must not change after this pin**; pin `CONVENTIONS_SHA256`) | `42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2` |
+| `streams.tsv` (451 rows: P 75, E 202, M 117, G 57) | `6c9fd6135005d77c642f9efb63e6b693fa049d53b166e5b1c4fc4f7904464b55` |
+| `partition.tsv` (451 rows; DEV 182 documents, TRAIN 269 documents; 450 title families) | `472a3e22cc95113e0d7cec980a904bc24aad8d665c607e4c3dbd70130eb18c5c` |
+| `step-kinds.tsv` (363,230 sentence keys with their unit kind) | `e037c02f53b1124fc93b75f06c78c287f98ea70190396923f168af801d545be9` |
+| `border.tsv` (the order file, 2,829 records, written before the first fetch) | `8b89800ccb149475376e448c4fe4fac866af9edcb958380371728db41722ee46` |
+| `bacc.jsonl` (the fetch record of the 1,170 records processed) | `ad66d6ce10841fdced6373074117451feaf1c54178af6b24e90730aed430b440` |
+| `beta3-hexclude.tsv` (the 34 by-hand refusals of this phase, ids and reasons; LF copy used as `--extra-table`) | `4f9c0d99a495cde739f280c8b1e637ef5d59d8bf2233d4e063c8c96bcad1251b` |
+| `pilot-documents.txt` (the 81 first-wave documents, see the pilot section) | `a88a566896127a51d4cc5417b1a74e414a1abc7dbeac77d4cf6db0a6eef3628d` |
+| **DEV share** | **0.40, frozen now and never changed** (an implementing-agent decision; PR #20 used 0.35 and 0.30) |
+
+Extra tables of the used-document index (`--extra-table`, all in the work folder; LF copies, read only): `compound-heading-draft.tsv` `81401c8328ac6335faf8aa8e5711079d07ce96aead587cae5fa5a894506a78de`, `compound-heading-hand-excluded.tsv` `13f41c9221bcfa83a779eff702b21b9b306ed59dd1595abea58cb6500d0bc6a2` (the LF copy of the table with SHA-256 `950120cc...` above), `imperative-draft.tsv` `bf42c15a811c2a8edb7388b4c4d0bcff39f592d7be39902e9b776ddf350d5551`, `shapes-dev-standard-draft.tsv` `e4b98441f7824c8fb4a2253bfd2e98fd5b2aee41c8feaf5de45de728e8e7cf42`, `shapes-dev-hard-draft.tsv` `39d26883fa156128d3d5759d9892cefa6aba3b9b7f5c05f71a67bddb91f6d352`, `shapes-dev-hard-draft-new.tsv` `f0604944690d8ceea542e7cba09880110c4b81f89038f5181683db2aa94b6133`, `shapes-dev-headings-draft.tsv` `8447e076e43100ca9937be92dc0e84f2231e22db89896d9f4b432bbf925b1337`, `shapes-dev-work-excluded.tsv` `b9ad2c84d8ed16e9ebc23b36d7aa7bef4da1f764606d7a8740c4b60e4ddf20f3` (the LF copy of `8471ae29...`), `pr20-sources-draft.tsv` (the 416-document draft of PR #20) `77e6a5250877694ae67e36a5a133d6cff6f8e245864ed1434f9fab6114d2f2c2`, `pr20-cexclude.tsv` `3166273722eeb53f095c2eaa8d4065a83ba8a33169b5ac78aad71351abb3f885`, `pr20-hexclude.tsv` `425f7adcd1a4fa7ca23fa7f9d418ccac65e44c9e2c33bde637de719eda832343` and `beta3-hexclude.tsv` above. `exclusions` with all of them: 451 documents in the draft, **0 problems**.
+
+The documents are 451 (P 75, E 202, M 117, G 57), DEV 182 and TRAIN 269 documents, 104,572 clean sentences (DEV 42,747, TRAIN 61,825) and 146,379 clean step units (DEV 60,889, TRAIN 85,490), in 16 agency families; no document is rejected as a whole by the sentence-key test at this stage (0 of 451). The tokenizer wrote 373,490 units (383,378 step units were written, of which the sentence units repeat sentences and many repeat each other; `step-kinds.tsv` holds 363,230 distinct kinds), all newly tokenized; `hmm-tags` tagged 357,270 of them (the single-sentence units).
+
+### Pool sizes against the gates (counts only; `preflight` and a dry run of the candidate builder, nothing written, nothing labeled)
+
+`preflight` (first stratum of a clean unit, the rarest first; no band, no caps):
+
+| Side | Clean sentences | S1 pred / num / ing / other | S2 proper / adj / noun | S3 noun / imperative (step units) | S4 adj / noun / sub / main |
+| --- | ---: | --- | --- | --- | --- |
+| DEV | 42,747 | 168 / 313 / 1,236 / 3,637 | 739 / 815 / 1,166 | 3,419 / 4,670 | 452 / 217 / 42 / 370 |
+| TRAIN | 61,825 | 331 / 420 / 1,846 / 5,380 | 644 / 1,030 / 1,623 | 4,500 / 6,752 | 754 / 321 / 92 / 591 |
+
+Dry run of `candidate_rows` on the frozen inputs in the order of the rounds of a side (the pilot first, then S1, S2, S3, S4 for DEV and the four training sources for TRAIN; a round never draws a sentence of an earlier round; the control top-up rounds are drawn after the decisions and are not part of it). `Band` is the number of frame hits inside the contested band 0.10 <= q < 0.97 of the pinned Basic mass (S1, S3, S4 development only). The gates are the pre-registered size gates of the candidates (`MIN_CANDIDATES`; the pilot rows of a side count). The real `candidates` commands run after this commit and give the same numbers.
+
+| Product | Frame hits | Band | Pools per stratum (before the caps) | Candidates (lemmas, documents) | Gate | Status |
+| --- | ---: | ---: | --- | --- | --- | --- |
+| `deverbal-heads` (DEV S1) | 5,349 | 1,761 | pred 56, num 88, ing 530, other 1,087 | 805 (387, 135): pred 48, num 71, ing 326, other 200, verb controls 160 | pred + num at least 150, targets at least 450, verb at least 60 | **pred + num 119: MISSED**; targets 645 and verb 160 met |
+| `defined-terms` (DEV S2) | 2,627 | none | noun 1,108, adj 797, proper 722 | 344 (234, 86): noun 160, adj 75, proper 109, plus pilot rows noun 39, adj 7, proper 1 | noun + adj at least 500, proper at least 40 | **noun + adj 281: MISSED**; proper 110 met |
+| `step-lines` (DEV S3) | 7,992 | 1,409 | imperative 1,409, noun 3,419 | 590 (365, 120): imperative 480, noun 110 | imperative at least 300, noun at least 50 | met |
+| `clause-verbs` (DEV S4) | 1,034 | 78 | main 67, sub 11, noun 203, adj 438 | 246 (181, 90): main 65, sub 11, noun 110, adj 60 | main + sub at least 500, sub at least 135, noun + adj at least 60 | **main + sub 76 and sub 11: MISSED**; noun + adj 170 met |
+| `deverbal` (TRAIN S1) | 7,972 | none | pred 331, num 420, ing 1,845, other 5,376 | 1,115 (553, 211): pred 215, num 250, ing 350, other 150, verb 150 | candidates at least 700, pred at least 150, num at least 80 | met |
+| `terms` (TRAIN S2) | 3,207 | none | noun 1,574, adj 1,002, proper 631 | 761 (395, 147): noun 386, adj 128, proper 247, plus pilot rows noun 31, adj 13, proper 3 | candidates at least 1,000, proper at least 100 | **808: MISSED**; proper met |
+| `steps` (TRAIN S3) | 11,121 | none | imperative 6,621, noun 4,500 | 1,500 (673, 214): imperative 1,100, noun 400 | candidates at least 800, noun at least 100 | met |
+| `clauses` (TRAIN S4) | 1,677 | none | main 544, sub 87, noun 313, adj 733 | 775 (358, 169): main 438, sub 87, noun 150, adj 100 | candidates at least 600, sub at least 100 | **sub 87: MISSED**; candidates met |
+
+Further counts that bear on the later floors: the S2 pool is dominated by the weakest cue tier. DEV pool tiers before the caps: noun T1 38, T2 172, T3 13, T4 885; adj T1 2, T2 28, T4 767; proper T1 3, T4 719; TRAIN: noun T1 66, T2 181, T3 35, T4 1,292; adj T1 3, T2 35, T3 9, T4 955; proper T1 4, T4 627. The DEV candidates by tier: noun T1 26, T2 27, T3 10, T4 97; adj T1 2, T2 22, T4 51; the TRAIN candidates: noun T1 62, T2 40, T3 30, T4 254; adj T1 3, T2 28, T3 9, T4 88. The imperative candidates of S3 by unit kind: DEV sentence 228, enumerated 122, short 106, bulleted 24 (bare-object frame 290 of 480); TRAIN sentence 487, short 301, enumerated 252, bulleted 60 (bare 463 of 1,100); the training build floor wants at least 50 percent of the imperatives from enumerated or bulleted lines, and the candidates hold 28 percent (312 of 1,100), so that floor is at risk. The S4 frames are rarer than the earlier estimate (about 5,557 per 100,000 clean sentences on the PR #19 and #20 text; here about 2,700 per 100,000 as first strata) and the Basic band keeps only 78 of 1,034 DEV hits (7.5 percent; the other hits have a Basic mass outside 0.10 to 0.97).
+
+**Reading, stated plainly (counts; nothing changed on these counts).** Six of the 19 size gates, in five of the eight products, are missed: S1 DEV `pred + num` (119 against 150), S2 DEV `noun + adj` (281 against 500), S4 DEV `main + sub` (76 against 500) and `sub` (11 against 135), S2 TRAIN (808 against 1,000) and S4 TRAIN `sub` (87 against 100). The S4 development tranche is the worst: at the planned keep rate (about 45 percent) it would hold well under 50 targets against a floor of 240. **No rule is changed.** The registered path stands: `candidates` writes the pool as it is and prints the missed gate to the error stream (exit 1), `build` refuses below a floor unless `--allow-short`, the shortage is disclosed in the README and the report and never padded, a cap is never waived, no band is relaxed (contingencies of the R0 section). A further sourcing wave is a decision on the sourcing rule and is not taken here; because the draft is frozen by this commit, any such extension would be a documented amendment (as the wave 3 of PR #20 was) and would change `DRAFT_SHA256` and `TOKENS_SHA256` and the partition of the new documents only.
+
+The pins are set in `tools/data/technical_data.py`; its test `test_the_four_pins_are_the_frozen_values_of_r1_and_a_changed_input_is_refused` replaces the R0 test that asserted that no pin was set, and `test_the_frozen_pins_refuse_a_changed_input` states that a work folder with other bytes is refused.
 
 ## Run table
 

@@ -77,7 +77,7 @@ RUN-LOG.md, section "beta.3 phase 1: pre-registered rule (before any fetch)")
 10. Format and amendments as in followup_data.py (block format of data/open/train.tsv; ids `shapes-dev-deverbal-heads-NNNN`, `shapes-dev-defined-terms-NNNN`, `shapes-dev-step-lines-NNNN`,
    `shapes-dev-clause-verbs-NNNN`, `deverbal-NNNN`, `terms-NNNN`, `steps-NNNN`, `clauses-NNNN`; `--omit-document ID[=REASON]` removes a document found unsound after the caps, nothing is added and the ids stay
    without a gap; the four training builds take the same `--omit-document` options because they write one shared excluded-documents.tsv). The pins DRAFT_SHA256, TOKENS_SHA256, HMM_SHA256 and CONVENTIONS_SHA256 are
-   None in the R0 commit: `candidates` and `pilot` refuse until the R1 commit sets them, and refuse any input whose SHA-256 is not the pinned one.
+   set (the R1 commit): `candidates` and `pilot` refuse any input whose SHA-256 is not the pinned one (the pin of hmm.tsv for the banded development products only).
 
 Work folder W (`--work W`, outside the repository): the layout of followup_data.py plus W/steps/<id>.txt and W/step-kinds.tsv (the `steps` command) and the rounds dtm-pilot, dvh, dtm, stp, clv, dvhc, dtmc,
 stpc, clvc, dvt, dtt, stt and clt; each round folder has private/extras.tsv (frame, unit kind, tier, term and flag of every candidate, written with the candidates and read by `build`).
@@ -215,13 +215,14 @@ def kind_of_label(product, label):
     return label
 
 
-# ---- pre-registered pins of the inputs (None until the R1 commit; `require_pins` refuses candidate and pilot commands while one is None)
-# R0 (this commit, before any fetch): no pin is set. The R1 commit sets them: the sources-draft.tsv of the first sourcing wave set, its tokens.tsv, the pinned WordSense Basic mass
-# (`hmm.tsv`, WordSense commit 6530de19..., DLL b96e0055..., made by tools/data/hmm-tags from tokens.tsv) and data/CONVENTIONS.md after its review.
-DRAFT_SHA256 = None
-TOKENS_SHA256 = None
-HMM_SHA256 = None
-CONVENTIONS_SHA256 = None
+# ---- pins of the inputs (set by the R1 commit; `require_pins` refuses candidate and pilot commands unless every pinned input still has these bytes)
+# R0 (the pre-registered rule, before any fetch) had no pin set. R1 freezes the sources-draft.tsv of the sourced documents (451 documents), its tokens.tsv (373,490 units, with the step units),
+# the pinned WordSense Basic mass (`hmm.tsv`, WordSense commit 6530de19..., DLL b96e0055..., made by tools/data/hmm-tags from tokens.tsv: 357,270 tagged sentences) and data/CONVENTIONS.md
+# as the labelers read it (the section "Capitalized Defined Terms" of the commit 67d7dc2); the convention file must not change after the pin.
+DRAFT_SHA256 = "c03a39752703408ee6daeb6d685fc97a3d1efe2504462f7f4ceb25f3f0af5792"
+TOKENS_SHA256 = "aebca046f9da537c147be78020f74d0664ec53c78156293cc54170fab251f87e"
+HMM_SHA256 = "71fa239d4f15b7b367a83203e77d7ff501055f85da7aca46b5d8ac41da8b7600"
+CONVENTIONS_SHA256 = "42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2"
 
 # ---- partition
 DEV_SHARE = 0.40

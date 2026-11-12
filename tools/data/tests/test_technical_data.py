@@ -260,8 +260,12 @@ class IndexTests(Mini):
 
     def test_the_pins_must_be_set_and_must_match_before_any_candidate(self):
         self.sound_draft({"army-a": ct.FRAME})
+        no_pins = [mock.patch.object(td, name, None) for name in ("DRAFT_SHA256", "TOKENS_SHA256", "HMM_SHA256", "CONVENTIONS_SHA256")]
+        for patch in no_pins:                                                         # the R0 state: no pin is set (the module holds the frozen values since R1)
+            patch.start()
+            self.addCleanup(patch.stop)
         for name in ("DRAFT_SHA256", "TOKENS_SHA256", "HMM_SHA256", "CONVENTIONS_SHA256"):
-            self.assertIsNone(getattr(td, name), name)                                # the R0 commit: no pin is set
+            self.assertIsNone(getattr(td, name), name)
         with self.assertRaises(td.PinError):
             td.require_pins(self.work)
         self.pins()
@@ -281,6 +285,21 @@ class IndexTests(Mini):
         self.pins(hmm=True)
         td.require_pins(self.work, "step-lines", self.data)
         self.assertEqual({"deverbal-heads": "Noun", "step-lines": "Verb", "clause-verbs": "Verb"}, td.BANDED)
+
+    def test_the_frozen_pins_refuse_a_changed_input(self):
+        self.sound_draft({"army-a": ct.FRAME})
+        with self.assertRaises(td.PinError) as raised:                                         # the work folder of the test is not the frozen one: refused with the pinned value
+            td.require_pins(self.work, None, self.data)
+        self.assertIn(td.DRAFT_SHA256, str(raised.exception))
+        self.pins(hmm=True)
+        with mock.patch.object(td, "HMM_SHA256", "71fa239d4f15b7b367a83203e77d7ff501055f85da7aca46b5d8ac41da8b7600"):
+            with self.assertRaises(td.PinError) as raised:                                     # a changed hmm.tsv is refused for a banded product
+                td.require_pins(self.work, "step-lines", self.data)
+            self.assertIn("71fa239d4f15b7b367a83203e77d7ff501055f85da7aca46b5d8ac41da8b7600", str(raised.exception))
+        with mock.patch.object(td, "CONVENTIONS_SHA256", "42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2"):     # a changed CONVENTIONS.md is refused too
+            with self.assertRaises(td.PinError) as raised:
+                td.require_pins(self.work, None, self.data)
+            self.assertIn("CONVENTIONS.md", str(raised.exception))
 
     def test_the_exclusions_and_lines_commands(self):
         extra = os.path.join(self.temp, "old-draft.tsv")
@@ -302,6 +321,10 @@ class IndexTests(Mini):
     def test_a_candidate_command_refuses_without_pins_and_writes_nothing(self):
         self.sound_draft({"army-a": ct.FRAME})
         self.sides(**{"army-a": "train"})
+        for name in ("DRAFT_SHA256", "TOKENS_SHA256", "HMM_SHA256", "CONVENTIONS_SHA256"):
+            patch = mock.patch.object(td, name, None)                                  # the R0 state; the module holds the frozen values since R1
+            patch.start()
+            self.addCleanup(patch.stop)
         before = self.snapshot()
         code, _, err = self.run_tool("candidates", "--product", "deverbal", "--no-ud")
         self.assertEqual(1, code)
@@ -1360,10 +1383,17 @@ class RegisteredConstantsTests(unittest.TestCase):
         self.assertEqual(("dtm-pilot", "dvt", "dtt", "stt", "clt"), td.ROUND_ORDER["train"])
         self.assertEqual((("pred", ("pred",), 100, None), ("num", ("num",), 50, None), ("ing", ("ing",), 150, None)), td.TRAIN_QUOTAS["deverbal"][1:])
 
-    def test_the_four_pins_are_not_set_in_the_r0_commit(self):
-        for pin in (td.DRAFT_SHA256, td.TOKENS_SHA256, td.HMM_SHA256, td.CONVENTIONS_SHA256):
-            self.assertTrue(pin is None or re.fullmatch(r"[0-9a-f]{64}", pin))
-        self.assertEqual((None, None, None, None), (td.DRAFT_SHA256, td.TOKENS_SHA256, td.HMM_SHA256, td.CONVENTIONS_SHA256))     # R1 sets them; this test moves with the R1 commit
+    def test_the_four_pins_are_the_frozen_values_of_r1_and_a_changed_input_is_refused(self):
+        frozen = {"DRAFT_SHA256": "c03a39752703408ee6daeb6d685fc97a3d1efe2504462f7f4ceb25f3f0af5792",
+                  "TOKENS_SHA256": "aebca046f9da537c147be78020f74d0664ec53c78156293cc54170fab251f87e",
+                  "HMM_SHA256": "71fa239d4f15b7b367a83203e77d7ff501055f85da7aca46b5d8ac41da8b7600",
+                  "CONVENTIONS_SHA256": "42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2"}
+        for name, value in frozen.items():
+            self.assertEqual(value, getattr(td, name), name)                                  # R1 froze the inputs of the real work (RUN-LOG, "frozen inputs (R1)")
+            self.assertRegex(getattr(td, name), r"^[0-9a-f]{64}$")
+        self.assertEqual(td.CONVENTIONS_SHA256, common.sha256_file(os.path.join(common.DATA, "CONVENTIONS.md")))     # the labelers' convention is the pinned file
+        self.assertEqual(0.40, td.DEV_SHARE)
+
 
 
 # ================================================================ no model, and the rule in the docstring
@@ -1422,7 +1452,7 @@ class NoModelTests(unittest.TestCase):
                      "at least 60", "noun 70, adj 20, proper 10", "claude-opus-5.5", "gpt-6.1-sol", "claude-sonnet-5.5", "20261201 to 20261208", "a model review, not a human review",
                      "3 incorrect of 60 passes, 4 fail", "targets 240 to 360", "sub at least 60", "imperative 180 to 300", "noun 120 to 200", "450 to 800", "500 to 900", "600 to 1,000",
                      "at least 30 percent of the imperatives with a bare object", "at least 50 percent from enumerated or bulleted lines", "ALL-CAPS", "shapes-dev-deverbal-heads-NNNN",
-                     "excluded-documents.tsv", "the tool never calls a tagger", "refuse until the R1 commit sets them", "a round is refused while a later round already has candidates",
+                     "excluded-documents.tsv", "the tool never calls a tagger", "refuse any input whose SHA-256 is not the pinned one", "a round is refused while a later round already has candidates",
                      "1. Documents.", "10. Format and amendments"):
             self.assertIn(part, doc, part)
         for command in ("exclusions", "partition", "lines", "steps", "tokenize", "preflight", "pilot", "pilot-result", "candidates", "build", "sample", "prompt"):
