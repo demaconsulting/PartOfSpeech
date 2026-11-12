@@ -332,10 +332,19 @@ in `build.ps1` and in the CI build, immediately after the API reference is gener
 
 ### Rule Checker Guidance Is Documented
 
-**Tests**: `PartOfSpeech_RuleChecker_DocumentedExample_GivesTheClaimedResults` and the FileAssert test
+**Tests**: `PartOfSpeech_RuleChecker_DocumentedExample_GivesTheClaimedResults`,
+`PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced` and the FileAssert test
 `ApiMark_RuleCheckerGuidanceDocumented`
 
-The first runs the dictionary of the documented example ("Manual Override" and "Wiring Schematic" as hard noun entries)
+`PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced` tags an invented word with a soft glossary
+entry, a hard glossary entry, a `Prefer` constraint and a
+single-tag constraint. All four are constrained and none is known; only the hard entry and the single-tag constraint give
+the confidence 1, while the soft entry and the `Prefer` constraint keep a confidence and a margin below 1. It proves the
+documented rule that `IsConstrained` alone does not mean that the dictionary decided the tag; the checker also needs the
+confidence 1.0.
+
+The documented-example test runs the dictionary of the documented example ("Manual Override" and "Wiring Schematic" as
+hard noun entries)
 with `Tagger.Default` and asserts only what the dictionary and the constraints guarantee: the heads are nouns with the
 confidence 1 and the margin 1, flagged as heads and as constrained; the known-word flag of every token equals the
 membership of its lower-cased spelling in the embedded lexicon (the test does not fix a value that the model decides);

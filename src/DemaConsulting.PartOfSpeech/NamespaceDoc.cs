@@ -557,15 +557,18 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </description></item>
 ///     </list>
 ///     <para>
-///     The dictionary decides a token, so look at <see cref="TaggedToken.IsConstrained"/> and
-///     <see cref="TaggedToken.IsGlossaryHead"/> before you apply the unknown-word rule: the head word of an entry that the
-///     lexicon does not list has <see cref="TaggedToken.IsKnownWord"/> <c>false</c>, the tag of the entry and the confidence
-///     1.0, and it is not inconclusive, because the dictionary decided it. Its confidence and margin are no measurement.
-///     In this order:
+///     A dictionary decides a token only when it leaves a single tag: a hard glossary entry or a
+///     <c>TokenConstraint.Only</c> with one tag. Such a token has <see cref="TaggedToken.IsConstrained"/> set and the
+///     confidence 1.0, and it is not inconclusive because the lexicon does not list it (the head word of an entry that the
+///     lexicon does not list has <see cref="TaggedToken.IsKnownWord"/> <c>false</c>). Its confidence and margin are no
+///     measurement. <see cref="TaggedToken.IsConstrained"/> alone is not enough: it is also set by a soft glossary entry and
+///     by a <c>TokenConstraint.Prefer</c> or <c>Penalize</c>, and by a constraint that allows several tags, and then the
+///     model can still disagree, so such a token goes through the same checks as every other token. In this order:
 ///     </para>
 ///     <list type="number">
 ///     <item><description>
-///     The token is constrained or a glossary head: the dictionary decided the tag; use it as the answer of the dictionary.
+///     The token is constrained and has the confidence 1.0: the dictionary left one tag; use it as the answer of the
+///     dictionary.
 ///     </description></item>
 ///     <item><description>
 ///     The confidence is below the strict threshold: inconclusive.
@@ -718,8 +721,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///
 ///     string Judge(TaggedToken token)
 ///     {
-///         // The dictionary decided this token; its confidence of 1.0 is no measurement
-///         if (token.IsConstrained || token.IsGlossaryHead)
+///         // A constraint that left one tag decided this token; its confidence of 1.0 is no measurement.
+///         // IsConstrained alone is not enough: a soft entry or a Prefer constraint leaves the model a choice.
+///         if (token.IsConstrained &amp;&amp; token.Confidence >= 1.0)
 ///         {
 ///             return "dictionary";
 ///         }
@@ -769,8 +773,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     }
 ///     </code>
 ///     <para>
-///     In both examples the tokens that the dictionary decides report <c>IsConstrained</c>, whether the lexicon knows the
-///     word or not.
+///     In both examples the tokens that the dictionary forces to one tag report <c>IsConstrained</c> and the confidence 1.0,
+///     whether the lexicon knows the word or not. With a soft glossary or <c>TokenConstraint.Prefer</c> the model can still
+///     choose another tag, so those tokens keep their confidence and margin and need all the checks.
 ///     </para>
 /// </example>
 internal static class NamespaceDoc;

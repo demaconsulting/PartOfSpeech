@@ -426,6 +426,43 @@ public class PartOfSpeechTests
     }
 
     /// <summary>
+    ///     Proves that a soft glossary entry and a Prefer constraint set IsConstrained without forcing the tag: the confidence stays
+    ///     below 1.0, so the documented rule checker does not treat such a token as decided by the dictionary, while a hard entry
+    ///     and a single-tag constraint report the confidence 1.0.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced()
+    {
+        // Arrange: a soft glossary and a hard glossary for an invented word, and a Prefer and a single-tag constraint
+        var tagger = Tagger.Default;
+        var soft = Glossary.Create(new[] { new GlossaryEntry("zorbulon", Upos.Noun) }, new GlossaryOptions { Mode = GlossaryMode.Soft });
+        var hard = Glossary.Create(new[] { new GlossaryEntry("zorbulon", Upos.Noun) });
+        var sentence = Tokenizer.Tokenize("Check the zorbulon now.")[0];
+        var index = sentence.Tokens.ToList().FindIndex(t => t.Text == "zorbulon");
+        TokenConstraint[] Constraints(TokenConstraint constraint)
+        {
+            var result = new TokenConstraint[sentence.Tokens.Count];
+            result[index] = constraint;
+            return result;
+        }
+
+        // Act: tag with each variant
+        var viaSoft = tagger.Tag("Check the zorbulon now.", soft).Single().Tokens[index];
+        var viaHard = tagger.Tag("Check the zorbulon now.", hard).Single().Tokens[index];
+        var viaPrefer = tagger.Tag(sentence, Constraints(TokenConstraint.Prefer(Upos.Noun, 1.0))).Tokens[index];
+        var viaOnly = tagger.Tag(sentence, Constraints(TokenConstraint.Only(Upos.Noun))).Tokens[index];
+
+        // Assert: all four are constrained, but only the hard entry and the single-tag constraint are forced; the word is unknown in all four
+        Assert.All(new[] { viaSoft, viaHard, viaPrefer, viaOnly }, t => Assert.True(t.IsConstrained));
+        Assert.All(new[] { viaSoft, viaHard, viaPrefer, viaOnly }, t => Assert.False(t.IsKnownWord));
+        Assert.Equal(1.0, viaHard.Confidence);
+        Assert.Equal(1.0, viaOnly.Confidence);
+        Assert.True(viaSoft.Confidence < 1.0, $"soft confidence {viaSoft.Confidence}");
+        Assert.True(viaPrefer.Confidence < 1.0, $"prefer confidence {viaPrefer.Confidence}");
+        Assert.True(viaSoft.Margin < 1.0 && viaPrefer.Margin < 1.0);
+    }
+
+    /// <summary>
     ///     Proves that a weights file can be loaded from a file stream and tags text.
     /// </summary>
     [Fact]

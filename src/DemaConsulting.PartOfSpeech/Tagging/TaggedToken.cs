@@ -221,8 +221,10 @@ public readonly struct TaggedToken
     ///     <para>
     ///         The flag does not depend on a glossary or a <see cref="TokenConstraint"/>. A head word of a hard glossary
     ///         entry that the lexicon does not list is <c>false</c> and still has <see cref="IsConstrained"/> and
-    ///         <see cref="IsGlossaryHead"/> set and the confidence 1.0, so check those two first: a token that the
-    ///         dictionary decided is not inconclusive because the lexicon does not list it. A default token has <c>false</c>.
+    ///         <see cref="IsGlossaryHead"/> set and the confidence 1.0. A token that a constraint forced to one tag (the
+    ///         confidence 1.0 with <see cref="IsConstrained"/>) is not inconclusive because the lexicon does not list it;
+    ///         <see cref="IsConstrained"/> alone does not mean that, because a soft glossary entry or a
+    ///         <see cref="TokenConstraint.Prefer"/> leaves the model a choice. A default token has <c>false</c>.
     ///         See [Using the tagger in a rule checker](../../DemaConsulting.PartOfSpeech.md#using-the-tagger-in-a-rule-checker)
     ///         and [Terminology](../../DemaConsulting.PartOfSpeech.md#terminology).
     ///     </para>

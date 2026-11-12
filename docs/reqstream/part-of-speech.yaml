@@ -1339,6 +1339,7 @@ sections:
           generated reference carries the guidance and the pages of both members.
         tests:
           - PartOfSpeech_RuleChecker_DocumentedExample_GivesTheClaimedResults
+          - PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced
           - ApiMark_RuleCheckerGuidanceDocumented
 
       - id: PartOfSpeech-Lib-ApiDocsPackaged

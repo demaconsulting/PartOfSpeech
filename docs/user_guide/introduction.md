@@ -415,9 +415,12 @@ error. Four things help:
   noun tag on such a word is a guess. The flag is about the lexicon, not about being a word: punctuation and numbers that
   the lexicon lists are known, and a capital letter never makes a word known.
 
-Check `IsConstrained` and `IsGlossaryHead` before the unknown-word rule: a head word of a hard entry that the lexicon
-does not list has `IsKnownWord` false, the tag of the entry and the confidence 1.0, and it is not inconclusive, because
-the dictionary decided it (its confidence and margin are no measurement).
+A dictionary decides a token only when it leaves a single tag: a hard glossary entry or a `TokenConstraint.Only` with one
+tag. That token has `IsConstrained` set and the confidence 1.0; the head word of an entry that the lexicon does not list
+has `IsKnownWord` false, the tag of the entry and the confidence 1.0, and it is not inconclusive, because the dictionary
+decided it (its confidence and margin are no measurement). `IsConstrained` alone is not enough: a soft glossary entry, a
+`TokenConstraint.Prefer` or `Penalize`, and a constraint that allows several tags set it too, and the model can still
+disagree, so those tokens go through the same checks as every other token.
 
 ```csharp
 Glossary dictionary = new GlossaryBuilder
@@ -431,9 +434,9 @@ const double MinimumMargin = 0.20;   // your own limit, chosen from your own mea
 
 string Judge(TaggedToken token)
 {
-    if (token.IsConstrained || token.IsGlossaryHead)
+    if (token.IsConstrained && token.Confidence >= 1.0)
     {
-        return "dictionary";                       // the dictionary decided this token
+        return "dictionary";                       // a constraint left one tag; IsConstrained alone is not enough
     }
 
     if (token.Confidence < Strict)
@@ -463,11 +466,10 @@ foreach (TaggedSentence sentence in Tagger.Default.Tag("Select the manual overri
 }
 ```
 
-The order of the checks is: the dictionary decided the token, the confidence is below `strict`, the word is unknown and
+The order of the checks is: the dictionary left one tag, the confidence is below `strict`, the word is unknown and
 the tag is a noun, verb or proper noun, the margin is below your limit; otherwise the tag is conclusive. When the checker
 already knows the terms of each token, pass a `TokenConstraint.Only(Upos.Noun)` for those tokens to `Tag(sentence,
-constraints)` instead of a glossary (see _Constraints_); those tokens report `IsConstrained` and the checks above apply
-in the same way.
+constraints)` instead of a glossary (see _Constraints_); those tokens report `IsConstrained` and the confidence 1.0.
 
 ## Loading a Weights File
 
