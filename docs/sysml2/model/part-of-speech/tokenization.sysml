@@ -5,7 +5,6 @@ package PartOfSpeech {
         doc /* Splits English text into sentences and tokens in the tokenization convention of the training data. */
 
         metadata info : SoftwareInfo {
-            description = "Splits English text into sentences and tokens in the tokenization convention of the training data.";
             testFiles = ("test/DemaConsulting.PartOfSpeech.Tests/Tokenization/TokenizationTests.cs");
             designFiles = ("docs/design/part-of-speech/tokenization.md");
             verificationFiles = ("docs/verification/part-of-speech/tokenization.md");

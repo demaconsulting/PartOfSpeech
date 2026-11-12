@@ -4,9 +4,10 @@
 // inside a named 'view' usage (not a 'view def' definition), and it - not
 // 'render' - is what scopes the rendered diagram content.
 package PartOfSpeech {
-    view SoftwareStructureView {
+    private import StandardViewDefinitions::*;
+
+    view SoftwareStructureView : InterconnectionView {
         expose PartOfSpeech::**;
-        render asInterconnectionDiagram;
     }
 
     view PartOfSpeechView {
