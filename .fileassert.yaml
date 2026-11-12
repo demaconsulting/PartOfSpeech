@@ -83,6 +83,22 @@ tests:
         text:
           - contains: "DemaConsulting.PartOfSpeech.md#confidence-thresholds"
 
+  - name: ApiMark_RuleCheckerGuidanceDocumented
+    description: "The packed API reference carries the rule checker guidance and the margin and known-word pages"
+    tags: [api-docs]
+    files:
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech.md"
+        count: 1
+        text:
+          - contains: "## Using the tagger in a rule checker"
+          - contains: "## Rule checker quick start"
+          - contains: "IsKnownWord"
+          - contains: "Margin"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/TaggedToken/IsKnownWord.md"
+        count: 1
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/TaggedToken/Margin.md"
+        count: 1
+
   - name: ApiMark_EntryPointDocumented
     description: "The tagger entry point is documented with thread safety, exceptions, examples and explanation links"
     tags: [api-docs]

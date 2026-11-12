@@ -34,7 +34,8 @@ Exposed (public API, namespace `DemaConsulting.PartOfSpeech`):
   `Tagger.Options`, and three `Tag` overloads: text, `Sentence`, and `IReadOnlyList<string>` tokens, the latter two with
   an optional constraint list, and the same three with a `Glossary` (the text overload without constraints).
 - `TaggerOptions` (`MaxAlternatives`, 0 to 16, default 3), `TaggedSentence` (also `GlossaryMatches`), `TaggedToken`
-  (text, offsets, tag, confidence, alternatives, `IsConstrained`, `GlossaryMatch`, `IsGlossaryHead`), `TagScore` (tag,
+  (text, offsets, tag, confidence, margin, known-word flag, alternatives, `IsConstrained`, `GlossaryMatch`,
+  `IsGlossaryHead`), `TagScore` (tag,
   probability) and `TokenConstraint` (`None`, `Only`, `Prefer`, `Penalize`, `And`).
 - `Glossary` (`Create`, `Empty`, `Entries`, `Options`, `FindMatches`), `GlossaryBuilder`, `GlossaryEntry` (with the
   `With...` methods), `GlossaryOptions`, `GlossaryMode` and `GlossaryMatch`.
@@ -66,7 +67,9 @@ For each sentence the decoder performs these steps (the detail is in _TagDecoder
    sees them for the next two tokens and produces the result.
 
 This design keeps one decision procedure in one place: restriction, constraints and confidence all work on the same
-candidate set, so a constraint can never produce a tag that the confidence does not describe.
+candidate set, so a constraint can never produce a tag that the confidence does not describe. The lexicon lookup that
+restricts the candidates also gives the known-word flag of the token, so the flag costs no extra lookup and cannot
+disagree with the restriction; the margin is computed from the confidence and the first alternative when it is read.
 
 **Glossary flow.** A call with a glossary adds two steps around the decoder and changes nothing inside it. Before
 decoding, the `Glossary` finds its terms in the sentence (the longest term at each position from the left, no overlaps)

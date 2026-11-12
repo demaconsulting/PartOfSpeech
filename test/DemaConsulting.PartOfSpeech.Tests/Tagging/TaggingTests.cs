@@ -202,6 +202,34 @@ public class TaggingTests
     }
 
     /// <summary>
+    ///     Proves through the public API that the tokens report the evidence for a rule checker: whether the lexicon knows the
+    ///     word and the margin to the runner-up.
+    /// </summary>
+    [Fact]
+    public void Tagging_Evidence_UnknownWordAndCloseCall_AreReported()
+    {
+        // Arrange: the tiny trained model with its fixture lexicon, all alternatives, and the spellings that the lexicon lists
+        var listed = new HashSet<string>(Lexicon.Load(FixtureLexicon).Enumerate().Select(e => e.Key), StringComparer.Ordinal);
+        var tagger = TinyModels.CreateTagger(Weights, FixtureLexicon, new TaggerOptions { MaxAlternatives = 16 });
+
+        // Act: tag a sentence with an invented word
+        var tokens = tagger.Tag("The cat sat on a zorbulon.").Single().Tokens;
+
+        // Assert: the flag equals the lexicon membership of the lower-cased spelling, the invented word is unknown, and the margin
+        // is the confidence minus the first alternative (1 when there is none)
+        Assert.All(tokens, t => Assert.Equal(listed.Contains(t.Text.ToLowerInvariant()), t.IsKnownWord));
+        Assert.True(tokens[1].IsKnownWord);
+        Assert.False(tokens[5].IsKnownWord);
+        Assert.Equal("zorbulon", tokens[5].Text);
+        foreach (var token in tokens)
+        {
+            var expected = token.Alternatives.Count == 0 ? 1.0 : token.Confidence - token.Alternatives[0].Probability;
+            Assert.Equal(expected, token.Margin, 12);
+            Assert.InRange(token.Margin, 0.0, 1.0);
+        }
+    }
+
+    /// <summary>
     ///     Describes tagged sentences with tags, confidences and alternatives.
     /// </summary>
     private static string Describe(IReadOnlyList<TaggedSentence> sentences) =>

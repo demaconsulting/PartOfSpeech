@@ -202,6 +202,17 @@ Tags "The cat saw a zorbulon." with 16 alternatives and asserts for every token 
 probabilities sum to one (to 9 decimal places) and are in descending order, and that the unknown word has 16
 alternatives.
 
+### Evidence: Known Word and Margin
+
+**Test**: `PartOfSpeech_Tagging_Evidence_UnknownWordAndCloseCall_AreReported`
+
+Tags a sentence with a listed word and an invented word through the public API with the embedded lexicon and 16
+alternatives and asserts that `cat` is a
+known word, that the invented word is not and has 16 alternatives, and that the margin of every token equals its
+confidence minus the probability of its first alternative (1 when it has none). Two hand-set models give the word `cat`
+a close call (NOUN 3 against VERB 2 at the temperature 4) and a large gap (NOUN 40 against VERB 0), and the test asserts
+that the close call has a margin below 0.2, the large gap one above 0.9, and that the first is smaller than the second.
+
 ### Lexicon Restriction: Known and Unknown Words
 
 **Tests**: `PartOfSpeech_Tagging_KnownWord_StaysWithinAllowedTags`, `PartOfSpeech_Tagging_UnknownWord_MayTakeAnyTag`
@@ -318,6 +329,22 @@ that no threshold is recommended. The FileAssert test opens the generated API re
 the namespace page carries the heading, both thresholds, the advice and the links and that the page of
 `TaggedToken.Confidence` links to the section, which proves the generated result and not only the source comment. It runs
 in `build.ps1` and in the CI build, immediately after the API reference is generated.
+
+### Rule Checker Guidance Is Documented
+
+**Tests**: `PartOfSpeech_RuleChecker_DocumentedExample_GivesTheClaimedResults` and the FileAssert test
+`ApiMark_RuleCheckerGuidanceDocumented`
+
+The first runs the dictionary of the documented example ("Manual Override" and "Wiring Schematic" as hard noun entries)
+with `Tagger.Default` and asserts only what the dictionary and the constraints guarantee: the heads are nouns with the
+confidence 1 and the margin 1, flagged as heads and as constrained; the known-word flag of every token equals the
+membership of its lower-cased spelling in the embedded lexicon (the test does not fix a value that the model decides);
+the tokens that no entry touched are not constrained and have no match; and the per-token constraint variant gives the
+listed token a certain noun. The FileAssert test opens the generated API reference after the build and asserts that the
+namespace page carries the headings of the rule checker section and the example, the names of the margin and the
+known-word flag, and that the pages of `TaggedToken.IsKnownWord` and `TaggedToken.Margin` exist, which proves the
+generated result and not only the source comment. The compilation of the two example blocks is proved by
+`PartOfSpeech_XmlDocExamples_Compile`.
 
 ### Root README Tables Equal the Record
 

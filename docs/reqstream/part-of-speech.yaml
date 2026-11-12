@@ -66,6 +66,20 @@ sections:
         tests:
           - PartOfSpeech_Tagging_Confidence_ProbabilitiesSumToOneAndAreOrdered
 
+      - id: PartOfSpeech-Lib-Evidence
+        title: >-
+          Each tag of a result shall also carry a margin between its confidence and the best alternative and a flag that
+          tells whether the lexicon knows its word.
+        tags: [system]
+        justification: |
+          A rule checker acts on a wrong noun or verb at a cost; it needs to tell a clear decision from a close call and
+          a tag that rests on lexicon evidence from a tag for a word that the lexicon does not list, in addition to the
+          confidence.
+        children:
+          - PartOfSpeech-Tagging-Evidence
+        tests:
+          - PartOfSpeech_Tagging_Evidence_UnknownWordAndCloseCall_AreReported
+
       - id: PartOfSpeech-Lib-LexiconRestriction
         title: >-
           A word that the lexicon knows shall receive only a tag that the lexicon and the token-shape rules allow for
@@ -1311,6 +1325,21 @@ sections:
           - PartOfSpeech_Evaluation_ConfidenceGuidance_MatchesTheCommittedFigures
           - PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures
           - ApiMark_ConfidenceGuidanceDocumented
+
+      - id: PartOfSpeech-Lib-RuleCheckerGuidance
+        title: >-
+          The documentation that is packed with the library and the user guide shall explain how a rule checker uses
+          the confidence, the margin, the alternatives, the known-word flag and a domain dictionary, with a compiled
+          example, and the generated reference shall carry the margin and the known-word flag of a token.
+        tags: [system]
+        justification: |
+          The signals only help a consumer that knows what they mean and in which order to read them; a consumer that
+          reads the packed reference, or an agent that works for it, never sees the repository. The documented
+          example is run by a test so that it gives what the documentation claims, and the build asserts that the
+          generated reference carries the guidance and the pages of both members.
+        tests:
+          - PartOfSpeech_RuleChecker_DocumentedExample_GivesTheClaimedResults
+          - ApiMark_RuleCheckerGuidanceDocumented
 
       - id: PartOfSpeech-Lib-ApiDocsPackaged
         title: >-

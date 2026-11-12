@@ -343,6 +343,89 @@ public class PartOfSpeechTests
     }
 
     /// <summary>
+    ///     Proves through the public API with the embedded lexicon that a token reports whether the lexicon knows it and its margin:
+    ///     a listed word is known, an invented word is not, and a close call has a small margin while a large gap has a large one.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Tagging_Evidence_UnknownWordAndCloseCall_AreReported()
+    {
+        // Arrange: a tagger with the embedded lexicon and all alternatives, and two hand-set models for cat (a close call and a large gap)
+        const string invented = "zzqxj";
+        var tagger = EmbeddedLexiconTagger(new TaggerOptions { MaxAlternatives = 16 });
+        var close = TinyModels.CreateTagger(new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 3).Word("cat", Upos.Verb, 2).Build(4f));
+        var gap = TinyModels.CreateTagger(new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 40).Word("cat", Upos.Verb, 0).Build(4f));
+
+        // Act: tag a sentence with a listed and an invented word, and the close and the clear case
+        var tokens = tagger.Tag(new[] { "The", "cat", invented }).Tokens;
+        var closeCall = close.Tag(new[] { "cat" }).Tokens[0];
+        var clearCase = gap.Tag(new[] { "cat" }).Tokens[0];
+
+        // Assert: the flags follow the lexicon, the margin is the confidence minus the runner-up (1 without one), and the close call is small
+        Assert.True(tokens[1].IsKnownWord);
+        Assert.False(tokens[2].IsKnownWord);
+        Assert.Equal(16, tokens[2].Alternatives.Count);
+        foreach (var token in tokens)
+        {
+            var expected = token.Alternatives.Count == 0 ? 1.0 : token.Confidence - token.Alternatives[0].Probability;
+            Assert.Equal(expected, token.Margin, 12);
+        }
+
+        Assert.True(closeCall.Margin < 0.2, $"close call margin {closeCall.Margin}");
+        Assert.True(clearCase.Margin > 0.9, $"clear margin {clearCase.Margin}");
+        Assert.True(closeCall.Margin < clearCase.Margin);
+    }
+
+    /// <summary>
+    ///     Proves that the rule checker examples of the documentation give the claimed results with the embedded default model: only
+    ///     what the constraints guarantee is asserted, and the known-word flag is compared with the embedded lexicon.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_RuleChecker_DocumentedExample_GivesTheClaimedResults()
+    {
+        // Arrange: the dictionary of the documentation, the spellings that the embedded lexicon lists, and the terms of the constraint variant
+        var tagger = Tagger.Default;
+        var dictionary = new GlossaryBuilder
+        {
+            { "manual override", Upos.Noun, "The mode in which an operator controls the unit by hand." },
+            { "wiring schematic", Upos.Noun },
+        }.Build();
+        var listed = new HashSet<string>(EmbeddedModel.Lexicon.Enumerate().Select(e => e.Key), StringComparer.Ordinal);
+        var terms = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "override", "schematic" };
+
+        // Act: tag the text with the glossary, and a sentence with the per-token constraints
+        var tokens = tagger.Tag("Select the manual override, then read the wiring schematic.", dictionary).Single().Tokens;
+        var sentence = Tokenizer.Tokenize("Read the wiring schematic.")[0];
+        var constraints = sentence.Tokens
+            .Select(token => terms.Contains(token.Text) ? TokenConstraint.Only(Upos.Noun) : TokenConstraint.None)
+            .ToArray();
+        var constrained = tagger.Tag(sentence, constraints).Tokens;
+
+        // Assert: the heads are certain, constrained nouns and the flag equals the lexicon membership; the other tokens are not constrained
+        foreach (var head in tokens.Where(t => t.IsGlossaryHead))
+        {
+            Assert.Equal(Upos.Noun, head.Tag);
+            Assert.Equal(1.0, head.Confidence);
+            Assert.True(head.IsConstrained);
+            Assert.Equal(1.0, head.Margin);
+        }
+
+        Assert.Equal(new[] { "override", "schematic" }, tokens.Where(t => t.IsGlossaryHead).Select(t => t.Text));
+        Assert.All(tokens, t => Assert.Equal(listed.Contains(t.Text.ToLowerInvariant()), t.IsKnownWord));
+        var untouched = tokens.Where(t => t.Text == "then" || t.Text == ",").ToList();
+        Assert.Equal(2, untouched.Count);
+        Assert.All(untouched, t => Assert.False(t.IsConstrained));
+        Assert.All(untouched, t => Assert.Null(t.GlossaryMatch));
+
+        // The constraint variant: the listed tokens are certain nouns
+        var schematic = constrained.Single(t => t.Text == "schematic");
+        Assert.Equal(Upos.Noun, schematic.Tag);
+        Assert.Equal(1.0, schematic.Confidence);
+        Assert.True(schematic.IsConstrained);
+        Assert.Equal(listed.Contains("schematic"), schematic.IsKnownWord);
+        Assert.False(constrained.Single(t => t.Text == "Read").IsConstrained);
+    }
+
+    /// <summary>
     ///     Proves that a weights file can be loaded from a file stream and tags text.
     /// </summary>
     [Fact]

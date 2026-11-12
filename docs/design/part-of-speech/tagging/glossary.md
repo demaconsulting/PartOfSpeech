@@ -116,7 +116,8 @@ tokens under the same effective case rule; the index and the compiled constraint
   (`TaggedToken.WithGlossaryMatch`) and the list to the sentence. The decoder is not changed by the glossary: its allowed
   tags, adjustments, confidence rules and history already do what the constraints ask. In particular a hard constraint
   with one tag gives confidence exactly 1 and no alternatives, and the tokens before the first match are decoded with
-  nothing that depends on the glossary, so they equal the result without a glossary.
+  nothing that depends on the glossary, so they equal the result without a glossary. The glossary changes no lexicon
+  fact, so the known-word flag of every token is the same with and without a glossary.
 
 #### Error Handling
 

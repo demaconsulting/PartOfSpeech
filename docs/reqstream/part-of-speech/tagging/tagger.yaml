@@ -135,3 +135,38 @@ sections:
                   - Tagger_Tag_Glossary_ConstraintLengthMismatch_Throws
                   - Tagger_Tag_Glossary_EmptyGlossary_GivesTheResultWithoutGlossary
                   - Tagger_Tag_Glossary_Match_IsAppliedAndReported
+
+              - id: PartOfSpeech-Tagging-Tagger-KnownWord
+                title: >-
+                  A tagged token shall report whether the lexicon of the tagger has an entry for its spelling, whatever
+                  its letter case, and the flag shall not change when a glossary or a constraint decides the tag of the
+                  token, so that the head word of a hard glossary entry that the lexicon does not list is reported as
+                  not known and as constrained.
+                justification: |
+                  A rule checker treats a tag on a word that the lexicon does not list as inconclusive, but must still
+                  accept a tag that its own dictionary decided; both facts have to be readable on the token.
+                tests:
+                  - Tagger_Tag_KnownWord_LexiconSpelling_IsTrueAndUnlistedSpellingIsFalse
+                  - Tagger_Tag_KnownWord_CaseVariant_UsesTheLexiconLookup
+                  - Tagger_Tag_KnownWord_GlossaryHeadNotInLexicon_IsUnknownButConstrained
+                  - Tagger_Tag_KnownWord_GlossaryHeadInLexicon_IsKnownAndConstrained
+                  - Tagger_Tag_Glossary_EmptyGlossary_GivesTheResultWithoutGlossary
+
+              - id: PartOfSpeech-Tagging-Tagger-Margin
+                title: >-
+                  A tagged token shall report a margin that is its confidence minus the probability of its best
+                  alternative; when the token has no alternative the margin shall be the smallest value that the
+                  confidence allows, which is 1 for a token with one allowed tag, and a default token shall have a
+                  margin of 0; reading the margin and the known-word flag shall not allocate.
+                justification: |
+                  A rule checker needs to tell a close call from a clear decision with one number; the margin must be
+                  exact when an alternative is listed and never larger than the true value when it is not, so that it
+                  cannot make a guess look safe, and a value that is read for every token must be free.
+                tests:
+                  - Tagger_Tag_Margin_SeveralAlternatives_IsConfidenceMinusRunnerUp
+                  - Tagger_Tag_Margin_OneAlternative_IsConfidenceMinusRunnerUp
+                  - Tagger_Tag_Margin_NoAlternativesRequested_IsTheSmallestMarginTheConfidenceAllows
+                  - Tagger_Tag_Margin_SingleAllowedTag_IsOne
+                  - Tagger_Tag_Margin_TiedTags_IsZero
+                  - Tagger_Tag_DefaultToken_HasNoMarginAndIsNotKnown
+                  - Tagger_Tag_Margin_DoesNotAllocate

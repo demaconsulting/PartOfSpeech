@@ -22,11 +22,20 @@ result types: `Tagger.cs`, `TaggerOptions.cs`, `TaggedSentence.cs`, `TaggedToken
 - **`TaggedToken`** (public, read-only struct): `Text`, `Start`, `Length`, `Tag` (`Upos`), `Confidence` (the probability
   of the tag among the candidates, calibrated by the model temperature), `Alternatives` (an `IReadOnlyList<TagScore>`
   backed by a `ScoreSlice` over the sentence's flat array; empty when only one tag was possible or none was requested)
-  and `IsConstrained`; `GlossaryMatch` (the match whose span contains the token, or `null`) and `IsGlossaryHead` (true
-  for the head token of its match). `ToString` gives `text/TAG`.
+  and `IsConstrained`; `IsKnownWord` (whether the lexicon has an entry for the folded, lower-cased spelling; a lexicon
+  fact that no glossary or constraint changes, so the head of a hard glossary entry that the lexicon does not list is
+  not known but constrained); `Margin` (the confidence minus the probability of the first alternative, read from the
+  backing array without creating the `ScoreSlice`; with no alternative `max(0, 2 * Confidence - 1)`, the smallest value
+  that the confidence allows, which is 1 for a token with one allowed tag; 0 for a default token); `GlossaryMatch` (the
+  match whose span contains the token, or `null`) and `IsGlossaryHead` (true for the head token of its match).
+  `ToString` gives `text/TAG`. The flag is a `bool` that sits in the padding of the struct, so the size is 48 bytes on a
+  64-bit process (verified with `Unsafe.SizeOf` before and after the field was added; a test guards it), and
+  `WithGlossaryMatch` copies it unchanged.
 - **`TagScore`** (public, read-only struct): `Tag` and `Probability`.
 - Invariants: the alternatives of a token exclude its tag, are in descending probability, number at most
-  `MaxAlternatives`, and together with the confidence sum to at most 1; the token text equals the source at its offset.
+  `MaxAlternatives`, and together with the confidence sum to at most 1; the token text equals the source at its offset;
+  `0 <= Margin <= Confidence` and `Margin >= 2 * Confidence - 1`, and the margin is exact when at least one
+  alternative is reported.
 
 #### Key Methods
 

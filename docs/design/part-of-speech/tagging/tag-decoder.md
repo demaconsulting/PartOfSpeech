@@ -54,13 +54,16 @@ adjustment`, a `double`. The integer sum is exact; only the final multiplication
      becomes `previous1`, the old `previous1` becomes `previous2`, and `FeatureExtractor.Advance` records the decision
      for the clause state. This is the pass that produces the result (in a preview model it is the second pass).
   6. Creates each `TaggedToken` with the original token text and offset, the tag, the confidence, a window of the flat
-     array and `IsConstrained` (the constraint is not `None`).
+     array, `IsConstrained` (the constraint is not `None`) and `IsKnownWord` (the lexicon fact that `DecodeToken`
+     returned).
 - **`DecodeToken`**: the work for one token.
   1. Clears the 17 integer scores, calls `FeatureExtractor.Extract`, and adds the weights of every bucket with
      `PerceptronModel.AddScores`.
   2. Computes the allowed tags: the lexicon lookup of the lower-cased folded token (or the cached lookup) and
      `Lexicon.AllowedTags` with the token facts. The candidates are the allowed set intersected with the constraint's
-     allowed set; when that is empty, the constraint's allowed set alone (the constraint wins over the dictionary).
+     allowed set; when that is empty, the constraint's allowed set alone (the constraint wins over the dictionary). The
+     result of the lookup (whether the lexicon has an entry) is also returned through the `known` out parameter, so the
+     known-word flag costs no further lookup; the first pass of a preview model discards it.
   3. For each candidate computes the real score and tracks the best; the lowest tag number wins a tie because the scan is
      in tag order and replaces the best only on a strictly greater score. In the first pass of a preview model the
      method returns here: only the tag is needed.
@@ -69,11 +72,15 @@ adjustment`, a `double`. The integer sum is exact; only the final multiplication
   5. Alternatives: repeatedly selects the most probable remaining candidate (lower tag number on a tie), up to
      `min(slots, candidates - 1)`, without sorting or allocating.
   6. Returns the tag.
-- **`AllowedTags(workspace, index)`**: the lexicon lookup with the workspace buffers and the shape facts, or the cached
-  lookup of the groups.
+- **`AllowedTags(workspace, index, out bool known)`**: the lexicon lookup with the workspace buffers and the shape facts,
+  or the cached lookup of the groups; it returns the allowed tags and, through `known`, whether the lexicon has an entry
+  for the token.
 
 After the call: every result tag is a candidate; the confidence and the alternative probabilities are in (0, 1] and add
-up to 1 when all candidates are listed; a token with one candidate has confidence 1 and no alternatives.
+up to 1 when all candidates are listed; a token with one candidate has confidence 1 and no alternatives. A token's
+`IsKnownWord` is exactly the lexicon membership of its folded, lower-cased spelling: letter case, shape rules, a
+constraint and the feature groups do not change it. The `TaggedToken` struct has the size of 48 bytes on a 64-bit
+process, with and without the flag (the flag sits in the padding), so the allocation budget of the result array holds.
 
 Complexity: 22 bucket lookups per token without groups (a bit test and about 2.7 additions each on a realistic model)
 and one lexicon lookup (about 14 block-head comparisons and at most 15 decoded spellings). The groups add up to 18

@@ -37,6 +37,8 @@ public sealed class TaggerOptions
     ///     so the confidence and all alternatives add up to 1 only when this number is not smaller than the number of
     ///     allowed tags minus one (an unknown word has 17 allowed tags, so that needs
     ///     <see cref="MaxAlternativesLimit"/>); with 0 no alternatives are reported and the confidence stands alone.
+    ///     <see cref="TaggedToken.Margin"/> is exact only when at least one alternative is requested; with 0 it is the
+    ///     smallest margin that the confidence allows.
     ///     See [Confidence and alternatives](../../DemaConsulting.PartOfSpeech.md#confidence-and-alternatives).
     /// </remarks>
     /// <value>From 0 to 16; the default is 3. A tagger rejects other values with an <see cref="ArgumentOutOfRangeException"/> when it is created.</value>

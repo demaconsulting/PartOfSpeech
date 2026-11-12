@@ -34,7 +34,8 @@ All tests pass on every target framework. A test fails when a training sentence 
 alternative tag is outside the allowed set, the same word gets the same tag in contexts that differ in the preceding
 tags, a constraint does not change the following token through the history, a glossary entry does not decide the tag of
 its head word or does not change the following token, a match is not reported on its tokens or on the sentence, or two
-runs (or two taggers loaded from the same bytes) differ in any tag, confidence or alternative.
+runs (or two taggers loaded from the same bytes) differ in any tag, confidence or alternative, or a token reports a
+known-word flag that differs from the lexicon or a margin that differs from its confidence minus the best alternative.
 
 ### Test Scenarios
 
@@ -55,6 +56,12 @@ runs (or two taggers loaded from the same bytes) differ in any tag, confidence o
   the model alone reads the first word of the noun term `run mat` as a verb, and asserts that with the glossary both words
   are nouns, that the sentence has one match with the first token, the token count, the head token, the text and the
   definition, that only the head token is flagged as head, and that exactly the two tokens of the span carry the match.
+- **Evidence for a rule checker**: `Tagging_Evidence_UnknownWordAndCloseCall_AreReported` tags a sentence with an
+  invented word with the tiny trained model, its fixture lexicon and 16 alternatives, and asserts that every token
+  reports the lexicon
+  membership of its lower-cased spelling (read from the lexicon file), that `cat` is known and the invented word is not,
+  and that the margin of every token equals its confidence minus the probability of its first alternative (1 when there
+  is none).
 - **Determinism**: `Tagging_Tag_SameInput_ProducesSameOutput` tags a text with an unknown word three times (twice with
   one tagger, once with a second tagger loaded from the same bytes) and asserts identical tags, offsets, confidences
   (round-trip format) and alternatives.

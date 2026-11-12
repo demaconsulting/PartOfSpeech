@@ -48,7 +48,8 @@ configuration. The allocation test is not compiled for `net481`.
 All tests pass. A test fails when a tag outside the candidates is chosen, a tie is not resolved to the lowest tag, a
 confidence differs from the softmax by more than the tolerance, an alternative list is unsorted, too long or does not
 sum with the confidence to one, a constraint does not have the specified effect, the throughput is 50,000 tokens per
-second or less (5,000 or less in a run with code coverage), or the allocation bound is exceeded.
+second or less (5,000 or less in a run with code coverage), the allocation bound is exceeded, the size of the result
+token grows beyond 48 bytes on a 64-bit process, or a token reports the known-word flag against the lexicon.
 
 #### Test Scenarios
 
@@ -70,9 +71,18 @@ second or less (5,000 or less in a run with code coverage), or the allocation bo
 - **Throughput**: `TagDecoder_Decode_SyntheticModel_ExceedsFiftyThousandTokensPerSecond`.
 - **No allocation**: `TagDecoder_Decode_DoesNotAllocateInHotPath` (.NET 8 and later) and
   `TagDecoder_Decode_AllGroups_DoesNotAllocateInHotPath` (the same bound for a model with all groups, which decodes in two
-  passes) and, for the lexicon shape rules
+  passes), `TagDecoder_Decode_ResultToken_KeepsItsSize` (the size of `TaggedToken` is at most 48 bytes on a 64-bit
+  process, which the per-token part of the allocation bound counts on) and, for the lexicon shape rules
   that the decoder applies to every known token, `Lexicon_AllowedTags_KnownTokenShapes_DoNotAllocate` (described in
   the Lexicon verification document).
+- **Known word**: `TagDecoder_Decode_KnownWord_ReportsLexiconMembership` (a word of one tag, a word of two tags and an
+  absent word), `TagDecoder_Decode_KnownWord_IgnoresLetterCase` (`cat`, `Cat`, `CAT` and `cAt` are known, an unlisted
+  spelling is not, and a typographic apostrophe variant of `don't` finds the entry),
+  `TagDecoder_Decode_KnownWord_ShapeRulesDoNotMakeAWordKnown` (an unlisted capitalized word, number and punctuation
+  mark are unknown and keep 17 candidates, the listed ones are known),
+  `TagDecoder_Decode_KnownWord_IsIndependentOfConstraints` (hard and soft constraints, also one that is disjoint from the
+  lexicon tags, leave the flag unchanged) and `TagDecoder_Decode_KnownWord_AllGroups_EqualsPlainDecode` (a model with
+  all groups, which uses the cached lexicon facts and two passes, reports the flags of a model without groups).
 - **Feature groups**: the decoder follows the groups of the weights header.
   `TagDecoder_Decode_ClauseCues_ImperativeBeforeDeterminer`
   (an ambiguous first word before a determiner becomes a verb; the same weights with a header without the group, and

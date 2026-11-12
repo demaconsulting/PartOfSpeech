@@ -139,7 +139,8 @@ The system exposes the following public API to external consumers (all in the na
 - **Tokenizer**: `Tokenize(string)` returns sentences with tokens; `CreateSentence(IReadOnlyList<string>)` builds a
   sentence from tokens.
 - **Results**: `TaggedSentence`, `TaggedToken`, `TagScore`, `Sentence` and `Token`, all immutable; a tagged token and a
-  tagged sentence also report the glossary matches.
+  tagged sentence also report the glossary matches, and a tagged token also reports the margin to its best alternative
+  and whether the lexicon knows its word.
 - **Control**: `TaggerOptions` (`MaxAlternatives`) and `TokenConstraint` (`None`, `Only`, `Prefer`, `Penalize`, `And`).
 - **Glossary**: `Glossary` (`Create`, `Empty`, `FindMatches`), `GlossaryBuilder`, `GlossaryEntry`, `GlossaryOptions`,
   `GlossaryMode` and `GlossaryMatch`.
@@ -268,10 +269,10 @@ The data assets are protected by two release gates, which the data tests of the 
    ASCII) and computes the hashed feature buckets of every token: the 22 base templates (four of them use the two
    previous tags) and the features of the feature groups that the weights file names (see _Context Features_ below).
 4. **Scoring**: the decoder sums the integer weights of the buckets for each tag.
-5. **Restriction**: the lexicon lookup gives the tags that a known word can carry; token-shape rules extend them; a
-   constraint narrows them or adds to the scores.
+5. **Restriction**: the lexicon lookup gives the tags that a known word can carry (and the known-word flag of the token);
+   token-shape rules extend them; a constraint narrows them or adds to the scores.
 6. **Decision**: the best candidate becomes the tag and the next token's history; a softmax at the model temperature
-   turns the candidate scores into the confidence and the ranked alternatives.
+   turns the candidate scores into the confidence and the ranked alternatives, from which the margin follows.
 7. **Output**: immutable `TaggedSentence` objects with `TaggedToken` values that carry the original text and offsets, and,
    with a glossary, the matches that were found.
 
