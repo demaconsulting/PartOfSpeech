@@ -18,7 +18,6 @@ package PartOfSpeech {
         doc /* The Part Of Speech system as a whole, including its system-level data, licensing, embedded model, evaluation record and confidence guidance requirements. */
 
         metadata info : SoftwareInfo {
-            description = "The Part Of Speech system as a whole, including its system-level data, licensing, embedded model, evaluation record and confidence guidance requirements.";
             testFiles = ("test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechTests.cs", "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechDataTests.cs", "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechEvaluationTests.cs", "test/DemaConsulting.PartOfSpeech.Tests/DataFiles.cs");
             designFiles = ("docs/design/part-of-speech.md");
             verificationFiles = ("docs/verification/part-of-speech.md");

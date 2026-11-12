@@ -5,7 +5,6 @@ package PartOfSpeech {
         doc /* The primitives that both file formats share: little-endian fields, varints, checksum, header validation, Deflate and population count. */
 
         metadata info : SoftwareInfo {
-            description = "The primitives that both file formats share: little-endian fields, varints, checksum, header validation, Deflate and population count.";
             sourceFiles = ("src/DemaConsulting.PartOfSpeech/ModelStorage/BinaryFormat.cs");
             testFiles = ("test/DemaConsulting.PartOfSpeech.Tests/ModelStorage/BinaryFormatTests.cs");
             designFiles = ("docs/design/part-of-speech/model-storage/binary-format.md");

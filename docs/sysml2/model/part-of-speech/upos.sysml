@@ -5,7 +5,6 @@ package PartOfSpeech {
         doc /* The tag vocabulary: the 17 Universal POS tags, their text forms and an immutable set of tags. */
 
         metadata info : SoftwareInfo {
-            description = "The tag vocabulary: the 17 Universal POS tags, their text forms and an immutable set of tags.";
             sourceFiles = ("src/DemaConsulting.PartOfSpeech/Upos.cs", "src/DemaConsulting.PartOfSpeech/UposExtensions.cs", "src/DemaConsulting.PartOfSpeech/UposSet.cs");
             testFiles = ("test/DemaConsulting.PartOfSpeech.Tests/UposTests.cs");
             designFiles = ("docs/design/part-of-speech/upos.md");
