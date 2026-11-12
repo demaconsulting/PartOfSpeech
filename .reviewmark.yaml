@@ -440,6 +440,9 @@ reviews:
       - "tools/data/imperative_data.py"                             # imperative source builder (blind labeling)
       - "tools/data/compound_heading_data.py"                       # compound and headings source builder
       - "tools/data/followup_data.py"                               # follow-up builder: second sources, tranches, pilot
+      - "tools/data/technical_frames.py"                            # frames of the technical-text shapes S1 to S4
+      - "tools/data/technical_data.py"                              # technical-text builder and S2 pilot
+      - "tools/data/term_divergence.py"                             # defined-terms detector and its count commands
       - "tools/data/hmm-tags/README.md"                             # hard tranche harness: usage, format, pinned build
       - "tools/data/hmm-tags/Program.cs"                            # hard tranche harness: WordSense Basic tags
       - "tools/data/tests/test_common.py"                           # tests of the shared helpers
@@ -449,6 +452,9 @@ reviews:
       - "tools/data/tests/test_imperative_data.py"                  # tests of the imperative training source builder
       - "tools/data/tests/test_compound_heading_data.py"            # tests of the compound and headings builder
       - "tools/data/tests/test_followup_data.py"                    # tests of the follow-up builder
+      - "tools/data/tests/test_technical_frames.py"                 # tests of the technical-text frames
+      - "tools/data/tests/test_technical_data.py"                   # tests of the technical-text builder
+      - "tools/data/tests/test_term_divergence.py"                  # tests of the defined-terms detector and counts
       - "tools/data/tests/status-cases.tsv"                         # shared parity cases of the status cell
       - "tools/data/tests/sentence-key-cases.tsv"                   # shared parity cases of the sentence key
       - "tools/data/make_sentence_key_cases.py"                     # writes the sentence key cases

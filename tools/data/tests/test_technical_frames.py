@@ -32,7 +32,7 @@ WORDS = {
     "quibble": "NOUN VERB", "flight": "NOUN", "pilot": "NOUN VERB", "very": "ADV", "long": "ADJ VERB", "assembly": "NOUN",
 }
 LEX = {word: frozenset(tags.split()) for word, tags in WORDS.items()}
-VOCAB = set(LEX) | set("proposed action hello 3 an".split())
+VOCAB = set(LEX) | set("proposed action hello 3 an tighten bolt".split())
 
 
 def tok(text):
@@ -395,6 +395,21 @@ and then the paragraph continues here.
         self.assertEqual("page-number", self.noise("Proposed Action 12", "short"))
         self.assertIsNone(self.noise("Proposed Action 12", "bulleted"))
         self.assertEqual("page-number", self.noise("Proposed Action 4-8", "bulleted"))
+
+    def test_a_short_line_that_ends_in_a_number_and_a_period_is_a_step(self):
+        # Arrange and act and assert
+        for text in ("Open valve 3.", "Tighten bolt 4."):
+            self.assertIsNone(self.noise(text, "short"), text)
+
+    def test_a_short_line_that_ends_in_a_number_without_a_period_stays_a_page_number(self):
+        # Arrange and act and assert
+        for text in ("Open valve 3", "Tighten bolt 4", "Control Panel 12"):
+            self.assertEqual("page-number", self.noise(text, "short"), text)
+
+    def test_a_page_range_with_a_period_is_still_a_page_number(self):
+        # Arrange and act and assert
+        self.assertEqual("page-number", self.noise("Proposed Action 4-8.", "short"))
+        self.assertEqual("page-number", self.noise("Proposed Action 4-8", "short"))
 
 
 class ClauseVerbTests(unittest.TestCase):

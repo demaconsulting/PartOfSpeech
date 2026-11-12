@@ -460,8 +460,9 @@ def step_noise_reason(text, tokens, lex, vocab, kind="short"):
     length       fewer than STEP_MIN_WORDS words (alphabetic or numeric tokens) or more than STEP_MAX_TOKENS tokens
     start-end    does not start with an upper-case letter, ends in `,`, `;`, `:` or `-`, or ends in a function word (a broken line)
     chars        a character outside ASCII letters, digits, space and `, ' ( ) - . / : ; " %`
-    page-number  a trailing page range (`4-8`); for a `short` unit also a trailing number (`Proposed Action 12`, a contents line);
-                 an enumerated or bulleted unit may end in a number (`Open valve 3`)
+    page-number  a trailing page range (`4-8`); for a `short` unit that does not end in a period also a trailing number
+                 (`Proposed Action 12`, a contents line); a `short` unit that ends in a number and a sentence-final period
+                 (`Open valve 3.`) and an enumerated or bulleted unit that ends in a number (`Open valve 3`) are steps
     junk         slash-punctuation junk, doubled or space-separated punctuation, a broken hyphen word, a lone lower-case letter other than `a`
     brackets     unbalanced parentheses
     enumeration  an inner list label (` (a) `, ` 2. x`) or an initial such as `M. `
@@ -477,8 +478,8 @@ def step_noise_reason(text, tokens, lex, vocab, kind="short"):
         return "start-end"
     if not STEP_ALLOWED.fullmatch(text):
         return "chars"
-    trailing_range = re.search(r"\s\d{1,4}\s?[-\u2013\u2014]\s?\d{1,4}$", text) is not None
-    if trailing_range or (kind == "short" and shapes_dev_extra.has_trailing_page_number(text.rstrip("."))):
+    trailing_range = re.search(r"\s\d{1,4}\s?[-\u2013\u2014]\s?\d{1,4}\.?$", text) is not None
+    if trailing_range or (kind == "short" and not text.endswith(".") and shapes_dev_extra.has_trailing_page_number(text)):
         return "page-number"
     if (any(junk in text for junk in shapes_dev.JUNK_PUNCT) or shapes_dev.HYPHEN_JUNK.search(text) or re.search(r"(?<![A-Za-z0-9])'", text)
             or any(len(t) == 1 and t.islower() and t != "a" and t.isalpha() for t in tokens)):
