@@ -6143,6 +6143,56 @@ The S4 development target candidates lie by q (the Basic mass of the judged word
 
 **What comes next (not done here).** Both blind labelers tag the 49 batches in the order `dvh`, `dtm`, `stp`, `clv`, `dvt`, `dtt`, `stt`, `clt`, with `validate-output`, `status` and `decide --round R`; then the four control top-up rounds `dvhc`, `dtmc`, `stpc`, `clvc` after the main development rounds are decided; then the builds (with `--allow-short` where a floor is missed and disclosed), the hand check, the data READMEs and the registration at weight 0.
 
+## beta.3 phase 1: labels decided (counts only)
+
+All blind labeling of the beta.3 phase-1 rounds is complete and every round is decided. Counts only: no sentence text, no label and no candidate is recorded here. No model of any experiment was trained or evaluated, no held-out file was opened, and no consumer text was read.
+
+### Labeling method (as registered, rule item 7)
+
+Two blind labelers, `claude-opus-5.5` (opus) and `gpt-6.1-sol` (sol), from scratch, with the frozen PR #19 labeler prompt and its appendix (`technical_data.py prompt`), reading the pinned `data/CONVENTIONS.md` and their own batch only. **One agent per labeler and batch, no re-roll**, run through the unchanged `shapes_dev.py` commands (`validate-output`, `status`, `decide --round R`). The labeling work was run by the implementing agent (the orchestrator), which launched the labeler agents. **106 labeler runs** in total: 98 for the 49 batches of the main rounds and 8 for the 4 batches of the control top-up rounds. All 106 outputs were accepted by `validate-output` (status ok / ok for every batch and model before any `decide`). The 94 pilot labels of `dtm-pilot` (two more runs, recorded in the pilot section) are not part of the 106. **No label was edited by hand.**
+
+Refusals and repairs: `validate-output` refused one labeler output, `stt` batch b003 by sol (1,283 of 1,284 token rows, one row dropped); no acceptance was recorded for it, its part files were deleted and the one (batch, model) was relaunched once with the same prompt, and the relaunch was accepted. A second event of another kind: after a machine reboot the earlier run of round `dvh` left partial part files for batches b001 and b002 (opus and sol; incomplete, `validate-output` invalid, no acceptance ever recorded); the six partial parts were deleted and each of the four (batch, model) pairs was relaunched once with the same prompt. No other (batch, model) was launched more than once.
+
+### Deviations from the registered procedure (stated plainly; implementing-agent errors, not owner decisions)
+
+- **Concurrency.** The rule allows at most 4 labelers at a time. Two blocks ran more: one block ran **6** labelers at once (`dvt` b004, b005, b006 by both models) and one block ran **5** (`stt` b008 by sol, b009 and b010 by both models). Every other block ran at most 4. The labelers write separate files, no heavy process was running, and no harm was observed.
+- **Extra reads.** An opus labeler occasionally re-read its own output files (a read-only look at its own files, beyond the two-input rule of the prompt: the conventions and its batch). Such a look changes nothing in the file and the output was accepted by `validate-output` like any other; it is disclosed here because the prompt names only two inputs.
+- No label was edited by hand and no round was labeled twice. The S2 pilot gate is unchanged (PROCEED, 61 of 70).
+
+### Decisions per round (`shapes_dev.py decide --round R`; items, kept, and the drops by reason)
+
+| Round | Shape and role | Items | Kept | Target disagreement | Class mismatch | Frame mismatch |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `dvh` | `n-deverbal-head` target | 851 | 588 | 4 | 233 | 26 |
+| `dvh` | `n-deverbal-head` control | 160 | 135 | 0 | 25 | 0 |
+| `dtm` | `term-noun` target | 217 | 143 | 20 | 54 | 0 |
+| `dtm` | `term-adj` target | 87 | 36 | 12 | 39 | 0 |
+| `dtm` | `term-proper` control | 109 | 100 | 2 | 7 | 0 |
+| `stp` | `step-imperative` target | 480 | 166 | 16 | 298 | 0 |
+| `stp` | `step-noun` control | 110 | 57 | 3 | 50 | 0 |
+| `clv` | `clause-verb` target | 437 | 356 | 2 | 74 | 5 |
+| `clv` | `clause-noun` control | 110 | 55 | 1 | 54 | 0 |
+| `clv` | `clause-adj` control | 60 | 37 | 0 | 23 | 0 |
+| `dvt` | `n-deverbal-head` target | 965 | 665 | 8 | 271 | 21 |
+| `dvt` | `n-deverbal-head` control | 150 | 130 | 0 | 20 | 0 |
+| `dtt` | `term-noun` target | 386 | 279 | 33 | 74 | 0 |
+| `dtt` | `term-adj` target | 128 | 57 | 19 | 52 | 0 |
+| `dtt` | `term-proper` control | 247 | 227 | 3 | 17 | 0 |
+| `stt` | `step-imperative` target | 1,100 | 456 | 17 | 627 | 0 |
+| `stt` | `step-noun` control | 400 | 185 | 14 | 201 | 0 |
+| `clt` | `clause-verb` target | 610 | 312 | 5 | 286 | 7 |
+| `clt` | `clause-noun` control | 150 | 86 | 1 | 63 | 0 |
+| `clt` | `clause-adj` control | 100 | 64 | 0 | 36 | 0 |
+| `dvhc` (top-up) | `n-deverbal-head` control | 30 | 21 | 0 | 9 | 0 |
+| `dtmc` (top-up) | `term-proper` control | 30 | 26 | 1 | 3 | 0 |
+| `stpc` (top-up) | `step-noun` control | 30 | 14 | 1 | 15 | 0 |
+| `clvc` (top-up) | `clause-noun` control | 40 | 27 | 1 | 12 | 0 |
+| `clvc` (top-up) | `clause-adj` control | 20 | 10 | 2 | 8 | 0 |
+
+The top-up rounds were drawn after the main development rounds were decided (`technical_data.py candidates --product P --round Rc`), then exported, checked with `check-batches` and labeled with the same two labelers (one batch of 30, 30, 30 and 60 candidates; 8 labeler runs). The decide reports of the rounds print no convention-divergence note for S2, so none is recorded here.
+
+**What comes next (not done here).** The builds of the eight products (`--allow-short` only where a floor is missed), the hand-check samples, the model review, and after it the data READMEs and the registration at weight 0.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
