@@ -3,7 +3,8 @@
   python tools/data/check_leakage.py [--no-ud] [--write-report]
 
 Training sets: data/open/train.tsv, data/masc/masc.tsv, data/silver/silver.tsv, data/imperative/imperative.tsv, data/compound/compound.tsv,
-data/headings/headings.tsv, data/compound/compound-2.tsv, data/headings/headings-2.tsv.
+data/headings/headings.tsv, data/compound/compound-2.tsv, data/headings/headings-2.tsv and the four technical-text sources data/technical/{deverbal,terms,steps,clauses}.tsv
+(optional files until leakage.TECHNICAL_REQUIRED is True; an absent one gives no row; the four share one pool of documents, like compound2 and headings2).
 Evaluation sets: data/open/{dev,test}.tsv, data/eval/gold-v2, data/eval/shapes/probe.tsv, data/eval/ste-challenge,
 data/eval/shapes-dev/dev.tsv (the hard-shape development set; required), and UD English-EWT train/dev/test when the
 git-ignored cache is present (fetch it with fetch_ud_ewt.py; nothing from UD is ever committed or written to the report
@@ -43,7 +44,8 @@ data/eval/shapes-dev/<tranche>-leakage-report.tsv): the same checks against ever
 row for each tranche file. The documents of a new tranche are new: a document, an exact sentence or a same-document near duplicate that the standard
 or the hard tranche shares is gated; against another new tranche of the same generation (the first generation: compound-head, headings, named-state; the
 follow-up: compound-head-2, headings-2) a shared document is reported, an exact sentence and a same-document near duplicate are gated (the tranches of one
-generation may share a source document, never a sentence); a document shared with a tranche of the other generation is gated.
+generation may share a source document, never a sentence); a document shared with a tranche of the other generation is gated. The third generation (the technical-text tranches
+deverbal-heads, defined-terms, step-lines, clause-verbs) is checked the same way, each when its file exists (leakage.TECHNICAL_REQUIRED makes the files required).
 
 Data removal, not evaluation removal, is the remedy: the importers (import_masc.py, import_silver.py) and the builder of
 the imperative source (imperative_data.py) and of the compound and headings sources (compound_heading_data.py) drop training documents (long matches) or sentences (short matches) that overlap an
@@ -64,16 +66,18 @@ NEAR_THRESHOLD = 0.8
 # Training sets whose near duplicates fail the check (requirements PartOfSpeech-Data-ImperativeIndependent and
 # PartOfSpeech-Data-TargetedSourcesIndependent); the near duplicates of every other training set are reported only (the older sources share
 # agency boilerplate with open dev, open test and gold v2).
-NEAR_GATED_TRAINING = ("imperative", "compound", "headings", "compound2", "headings2")
-# The new training sources, each compared with every other training set in training_check.
-NEW_TRAINING = ("compound", "headings", "compound2", "headings2")
+NEAR_GATED_TRAINING = ("imperative", "compound", "headings", "compound2", "headings2") + leakage.TECHNICAL_TRAINING
+# The new training sources, each compared with every other training set in training_check (the four technical-text sources are optional files
+# until leakage.TECHNICAL_REQUIRED is True: an absent source gives no row).
+NEW_TRAINING = ("compound", "headings", "compound2", "headings2") + leakage.TECHNICAL_TRAINING
 # The pairs of new sources that are cut from one shared pool of documents: a shared document is reported there, not gated (a shared sentence is
-# always gated). Every other pair of a new source with another training set must share no document.
-SHARED_POOL_PAIRS = (frozenset(("compound", "headings")), frozenset(("compound2", "headings2")))
+# always gated). Every other pair of a new source with another training set must share no document. The four technical-text sources share one pool.
+SHARED_POOL_PAIRS = (frozenset(("compound", "headings")), frozenset(("compound2", "headings2"))) + tuple(
+    frozenset((first, second)) for number, first in enumerate(leakage.TECHNICAL_TRAINING) for second in leakage.TECHNICAL_TRAINING[number + 1:])
 TRAINING_FILES = (("open-train", ("open", "train.tsv")), ("masc", ("masc", "masc.tsv")), ("silver", ("silver", "silver.tsv")),
                   ("imperative", ("imperative", "imperative.tsv")), ("compound", ("compound", "compound.tsv")),
                   ("headings", ("headings", "headings.tsv")), ("compound2", ("compound", "compound-2.tsv")),
-                  ("headings2", ("headings", "headings-2.tsv")))
+                  ("headings2", ("headings", "headings-2.tsv"))) + tuple((name, ("technical", name + ".tsv")) for name in leakage.TECHNICAL_TRAINING)
 
 
 def training_sets():
@@ -82,7 +86,8 @@ def training_sets():
         path = os.path.join(common.DATA, *parts)
         if os.path.exists(path):
             sets[label] = [(s["source_id"], s["text"]) for s in common.read_corpus(path)[1]]
-    leakage.require_sets(sets, tuple(label for label, _ in TRAINING_FILES), "training")
+    required = tuple(label for label, _ in TRAINING_FILES if leakage.TECHNICAL_REQUIRED or label not in leakage.TECHNICAL_TRAINING)
+    leakage.require_sets(sets, required, "training")
     return sets
 
 
@@ -143,6 +148,8 @@ def training_check(trains=None):
     trains = training_sets() if trains is None else trains
     rows, failures = [], 0
     for new_label in NEW_TRAINING:
+        if new_label not in trains:                      # an optional technical-text source that is not committed yet
+            continue
         new_items = trains[new_label]
         new_docs = {doc for doc, _ in new_items}
         for other_label, other_items in trains.items():
@@ -317,6 +324,8 @@ def main():
     new_lines = {}
     for name in leakage.SHAPES_DEV_NEW_TRANCHES:
         if not os.path.exists(os.path.join(common.DATA, "eval", "shapes-dev", name + ".tsv")):
+            if leakage.TECHNICAL_REQUIRED and name in leakage.SHAPES_DEV_TECHNICAL_TRANCHES:
+                raise SystemExit("missing committed development set: data/eval/shapes-dev/%s.tsv" % name)
             continue
         new_rows, new_failures, new_failing = dev_check(not args.no_ud, name)
         new_lines[name] = tranche_lines("the %s tranche of the hard-shape development set" % name, new_rows, ud_checked,

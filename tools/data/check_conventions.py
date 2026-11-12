@@ -11,7 +11,8 @@ The rules live in convention_rules.py and are shared with the generator of the s
 row or an exceptions.tsv entry resolves it. The STE challenge set is evaluation-only and never corrected: it is linted and
 shown in its own column, and it does not count for the exit code of `--enforce`. The imperative, compound and headings training
 sources (data/imperative/imperative.tsv, data/compound/compound.tsv, data/headings/headings.tsv) and the follow-up sources `compound2` and
-`headings2` (data/compound/compound-2.tsv, data/headings/headings-2.tsv) are linted and shown in their
+`headings2` (data/compound/compound-2.tsv, data/headings/headings-2.tsv) and the four technical-text sources `deverbal`, `terms`, `steps`, `clauses`
+(data/technical/<name>.tsv, optional files; their column appears in the report only when a violation of theirs exists) are linted and shown in their
 own columns too, but they are never corrected, they do not feed the corpus resources of the participle rules, and they DO count
 for `--enforce` (their fix tier must stay at zero).
 """
@@ -29,7 +30,11 @@ Violation = collections.namedtuple("Violation", "rule tier source split source_i
 
 COLUMN_ORDER = (("open", "train"), ("open", "dev"), ("open", "test"), ("masc", "-"), ("silver", "-"), ("ste", "-"), ("imperative", "-"),
                 ("compound", "-"), ("headings", "-"), ("compound2", "-"), ("headings2", "-"))
-RESOURCE_EXEMPT = ("ste", "imperative", "compound", "headings", "compound2", "headings2")   # linted only: these sources do not feed the corpus resources of the rules
+# The four technical-text sources (technical_data.py; data/technical/): linted like the other training sources, shown in their own column only when they have a
+# violation (so the report of a data folder without them is unchanged), and counted by `--enforce`.
+TECHNICAL_SOURCES = ("deverbal", "terms", "steps", "clauses")
+TECHNICAL_COLUMNS = tuple((name, "-") for name in TECHNICAL_SOURCES)
+RESOURCE_EXEMPT = ("ste", "imperative", "compound", "headings", "compound2", "headings2") + TECHNICAL_SOURCES   # linted only: these sources do not feed the corpus resources of the rules
 
 
 def load_sentences(data_dir=None, apply_overlay=False):
@@ -110,17 +115,19 @@ def format_report(violations, suppressed=0):
     """Text report: one line per rule with the counts per source and split, then the totals."""
     table = counts_table(violations)
     tiers = {item.id: item.tier for item in convention_rules.RULES}
-    heads = ["%s/%s" % key if key[1] != "-" else key[0] for key in COLUMN_ORDER]
+    present = {key for counts in table.values() for key in counts}
+    columns = COLUMN_ORDER + tuple(key for key in TECHNICAL_COLUMNS if key in present)
+    heads = ["%s/%s" % key if key[1] != "-" else key[0] for key in columns]
     lines = ["%-32s %-5s " % ("rule", "tier") + " ".join("%10s" % head for head in heads) + " %8s" % "total"]
     grand = collections.Counter()
     for item in convention_rules.RULES:
         counts = table.get(item.id, collections.Counter())
         if not counts:
             continue
-        row = [counts[key] for key in COLUMN_ORDER]
+        row = [counts[key] for key in columns]
         grand.update(counts)
         lines.append("%-32s %-5s " % (item.id, tiers[item.id]) + " ".join("%10d" % value for value in row) + " %8d" % sum(row))
-    lines.append("%-38s " % "total" + " ".join("%10d" % grand[key] for key in COLUMN_ORDER) + " %8d" % sum(grand.values()))
+    lines.append("%-38s " % "total" + " ".join("%10d" % grand[key] for key in columns) + " %8d" % sum(grand.values()))
     if suppressed:
         lines.append("suppressed by exceptions: %d" % suppressed)
     return lines
@@ -145,7 +152,8 @@ def main(argv=None):
     parser.add_argument("--data-dir", default=None, help="data folder (default: the repository's data/)")
     parser.add_argument("--enforce", action="store_true", help="exit code 1 when a violation is left (STE not counted)")
     parser.add_argument("--apply", action="store_true", help="lint the corpora as they would be after the staged corrections")
-    parser.add_argument("--source", choices=("open", "masc", "silver", "ste", "imperative", "compound", "headings", "compound2", "headings2"), default=None, help="report only this source")
+    parser.add_argument("--source", choices=("open", "masc", "silver", "ste", "imperative", "compound", "headings", "compound2", "headings2") + TECHNICAL_SOURCES,
+                        default=None, help="report only this source")
     parser.add_argument("--split", choices=("train", "dev", "test"), default=None, help="report only this split (open)")
     parser.add_argument("--tier", choices=("fix", "check", "all"), default="all")
     parser.add_argument("--rule", action="append", default=None, help="only this rule id (repeatable)")

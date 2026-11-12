@@ -1663,15 +1663,25 @@ class LeakageExtensionTests(MiniFolder):
             self.write_tranche(name, items)
         return check_leakage.dev_check(include_ud=False, tranche=tranche)
 
-    def test_the_newer_tranches_are_grouped_in_two_generations_and_only_one_generation_may_share_documents(self):
+    def test_the_newer_tranches_are_grouped_in_three_generations_and_only_one_generation_may_share_documents(self):
         self.assertEqual(("compound-head", "headings", "named-state"), leakage.SHAPES_DEV_FIRST_TRANCHES)
-        self.assertEqual(leakage.SHAPES_DEV_FIRST_TRANCHES + leakage.SHAPES_DEV_FOLLOWUP_TRANCHES, leakage.SHAPES_DEV_NEW_TRANCHES)
+        self.assertEqual(("deverbal-heads", "defined-terms", "step-lines", "clause-verbs"), leakage.SHAPES_DEV_TECHNICAL_TRANCHES)
+        self.assertEqual(leakage.SHAPES_DEV_FIRST_TRANCHES + leakage.SHAPES_DEV_FOLLOWUP_TRANCHES + leakage.SHAPES_DEV_TECHNICAL_TRANCHES,
+                         leakage.SHAPES_DEV_NEW_TRANCHES)
+        self.assertEqual((leakage.SHAPES_DEV_FIRST_TRANCHES, leakage.SHAPES_DEV_FOLLOWUP_TRANCHES, leakage.SHAPES_DEV_TECHNICAL_TRANCHES),
+                         leakage.SHAPES_DEV_GENERATIONS)
         self.assertTrue(leakage.same_generation("compound-head-2", "headings-2"))
         self.assertTrue(leakage.same_generation("compound-head", "named-state"))
+        self.assertTrue(leakage.same_generation("deverbal-heads", "clause-verbs"))
         for first in leakage.SHAPES_DEV_FIRST_TRANCHES:
-            for second in leakage.SHAPES_DEV_FOLLOWUP_TRANCHES:
+            for second in leakage.SHAPES_DEV_FOLLOWUP_TRANCHES + leakage.SHAPES_DEV_TECHNICAL_TRANCHES:
                 self.assertFalse(leakage.same_generation(first, second), (first, second))
                 self.assertFalse(leakage.same_generation(second, first), (second, first))
+        for followup in leakage.SHAPES_DEV_FOLLOWUP_TRANCHES:
+            for technical in leakage.SHAPES_DEV_TECHNICAL_TRANCHES:
+                self.assertFalse(leakage.same_generation(followup, technical), (followup, technical))
+        self.assertFalse(leakage.TECHNICAL_REQUIRED)                       # the technical-text files are optional until their data commit
+        self.assertEqual(("deverbal", "terms", "steps", "clauses"), leakage.TECHNICAL_TRAINING)
 
     def test_the_two_followup_tranches_may_share_a_document_but_never_a_sentence(self):
         shared = {"compound-head-2": [("army-x", "The first follow-up sentence is about the hydraulic pump housing .")],
@@ -1736,7 +1746,7 @@ class LeakageExtensionTests(MiniFolder):
         sentence = "A brand new heading style sentence about nothing in particular ."
         extra = [["# shape = n-measure", "# role = target", "# target = 0", "# lemma = x", "# origin = real"]]
         self.assertEqual(("compound-head-2", "headings-2"), leakage.SHAPES_DEV_FOLLOWUP_TRANCHES)
-        self.assertEqual(leakage.SHAPES_DEV_FOLLOWUP_TRANCHES, leakage.SHAPES_DEV_NEW_TRANCHES[-2:])
+        self.assertEqual(leakage.SHAPES_DEV_FOLLOWUP_TRANCHES, leakage.SHAPES_DEV_NEW_TRANCHES[3:5])
         for name in leakage.SHAPES_DEV_FOLLOWUP_TRANCHES:
             path = os.path.join(self.data, "eval", "shapes-dev", name + ".tsv")
             with self.subTest(tranche=name):

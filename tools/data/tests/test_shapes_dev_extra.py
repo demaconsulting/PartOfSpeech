@@ -500,9 +500,13 @@ class Independence(unittest.TestCase):
             self.assertNotIn(forbidden, source, forbidden)
 
     def test_tranches_and_shapes_are_registered(self):
-        self.assertEqual({"n-compound-head-ambiguous", "n-named-state", "heading-noun", "heading-imperative", "heading-proper"},
-                         set(sd.EXTRA_SHAPE_CLASS))
-        self.assertEqual({"heading-noun": "NOUN", "heading-imperative": "VERB", "heading-proper": "PROPN"}, sd.EXACT_TAGS)
+        old = {"n-compound-head-ambiguous", "n-named-state", "heading-noun", "heading-imperative", "heading-proper"}
+        technical = {"n-deverbal-head", "term-noun", "term-adj", "term-proper", "step-imperative", "step-noun", "clause-verb", "clause-noun", "clause-adj"}
+        self.assertEqual(old | technical, set(sd.EXTRA_SHAPE_CLASS))
+        self.assertEqual(technical, set(sd.TECHNICAL_SHAPES))
+        self.assertEqual({"heading-noun": "NOUN", "heading-imperative": "VERB", "heading-proper": "PROPN", "term-noun": "NOUN", "term-adj": "ADJ", "term-proper": "PROPN",
+                          "step-imperative": "VERB", "step-noun": "NOUN", "clause-verb": "VERB", "clause-noun": "NOUN", "clause-adj": "ADJ"}, sd.EXACT_TAGS)
+        self.assertNotIn("n-deverbal-head", sd.EXACT_TAGS)                  # S1 is scored by class: Noun for a head, Verb for the control
 
 
 if __name__ == "__main__":

@@ -413,10 +413,16 @@ class Scan:
         self.considered = 0
 
 
-def scan_units(work, data_dir, unit, extra_tables=(), include_ud=True, filt=None, reference=None, vocab=None, lex=None):
+def scan_units(work, data_dir, unit, extra_tables=(), include_ud=True, filt=None, reference=None, vocab=None, lex=None, lines_folder="lines", noise=None,
+               token_range=None):
     """The `Scan` of the real units. `unit` is `sentence` or `heading`. Every filter of the sentence candidates of `shapes_dev` applies (the
     cleanliness filter, duplicates, equal training or evaluation sentences through `leakage.held_out_overlap_keys` only, the probe 5-gram
-    rule, excluded and used documents, reprints through DOCUMENT_KEY_HITS) plus the sentences of dev.tsv, hard.tsv and imperative.tsv."""
+    rule, excluded and used documents, reprints through DOCUMENT_KEY_HITS) plus the sentences of dev.tsv, hard.tsv and imperative.tsv.
+
+    The three keyword arguments at the end keep the old behavior by default and let a later builder (technical_data.py: the step units of the
+    folder `steps`) reuse every filter: `lines_folder` is the folder of W read for a unit that is not `sentence`; `noise` is a function
+    (text, tokens, lex, vocab) -> rule or None used instead of `heading_noise_reason` for such a unit; `token_range` is (minimum, maximum) tokens
+    instead of the heading range."""
     scan = Scan()
     lex = lex or shapes_dev.lexicon_of(data_dir)
     vocab = vocab or shapes_dev.vocabulary_of(data_dir, lex)
@@ -429,9 +435,9 @@ def scan_units(work, data_dir, unit, extra_tables=(), include_ud=True, filt=None
     index = extra_index(data_dir, exclusions, extra_tables)
     require_sound_draft(work, rows, index, exclusions)                  # fail closed before any document is scanned
     sentences = shapes_dev.read_documents(work)
-    documents = sentences if unit == "sentence" else read_folder(work, "lines")
-    low_tokens, high_tokens = ((SENTENCE_MIN_TOKENS, SENTENCE_MAX_TOKENS) if unit == "sentence"
-                               else (HEADING_MIN_TOKENS, HEADING_MAX_TOKENS))
+    documents = sentences if unit == "sentence" else read_folder(work, lines_folder)
+    low_tokens, high_tokens = token_range or ((SENTENCE_MIN_TOKENS, SENTENCE_MAX_TOKENS) if unit == "sentence"
+                                              else (HEADING_MIN_TOKENS, HEADING_MAX_TOKENS))
     seen = set()
     for source_id in sorted(documents):
         if source_id not in draft:
@@ -457,11 +463,11 @@ def scan_units(work, data_dir, unit, extra_tables=(), include_ud=True, filt=None
             if not low_tokens <= len(tokens) <= high_tokens:
                 scan.drops["length"] += 1
                 continue
-            noise = (shapes_dev.noise_reason(text, tokens, lex, vocab) if unit == "sentence"
-                     else heading_noise_reason(text, tokens, lex, vocab))
+            noise_reason = (shapes_dev.noise_reason(text, tokens, lex, vocab) if unit == "sentence"
+                            else (noise or heading_noise_reason)(text, tokens, lex, vocab))
             key = shapes_dev.sent_key_of(text)
-            if noise:
-                scan.drops["noise-" + noise] += 1
+            if noise_reason:
+                scan.drops["noise-" + noise_reason] += 1
             elif key in seen:
                 scan.drops["duplicate"] += 1
             elif reference.reason(text):
@@ -650,7 +656,7 @@ def _command_tokenize(args):
     work = adjudicate.Work(args.work)
     drafted = {row["source_id"] for row in shapes_dev.read_draft(work)}
     texts = set()
-    for folder in ("text", "lines"):
+    for folder in ("text", "lines", "steps"):       # `steps` exists only for the technical-text builder (technical_data.py steps); a missing folder adds nothing
         for source_id, units in read_folder(work, folder).items():
             if source_id in drafted:
                 texts.update(text for _, text in units)

@@ -5,6 +5,7 @@ Run: python -m unittest discover -s tools/data/tests -p "test_compound_heading_d
 import ast
 import contextlib
 import io
+import itertools
 import os
 import re
 import sys
@@ -855,15 +856,23 @@ class TrainingLeakageGateTests(unittest.TestCase):
             self.assertEqual(1, failures, label)
         for label in ("open-train", "masc", "silver"):
             self.assertEqual(0, self.run_check(label, self.NEAR)[1], label)
-        self.assertEqual(("imperative", "compound", "headings", "compound2", "headings2"), check_leakage.NEAR_GATED_TRAINING)
+        self.assertEqual(("imperative", "compound", "headings", "compound2", "headings2", "deverbal", "terms", "steps", "clauses"),
+                         check_leakage.NEAR_GATED_TRAINING)
+        for label in ("deverbal", "terms", "steps", "clauses"):                            # the technical-text sources are gated like the older targeted ones
+            rows, failures, _ = self.run_check(label, self.NEAR)
+            self.assertEqual(1, failures, label)
 
     def test_the_training_files_include_the_new_sources(self):
-        self.assertEqual(["open-train", "masc", "silver", "imperative", "compound", "headings", "compound2", "headings2"],
+        self.assertEqual(["open-train", "masc", "silver", "imperative", "compound", "headings", "compound2", "headings2", "deverbal", "terms", "steps", "clauses"],
                          [label for label, _ in check_leakage.TRAINING_FILES])
         self.assertEqual(("compound/compound-2.tsv", "headings/headings-2.tsv"),
                          tuple("/".join(parts) for label, parts in check_leakage.TRAINING_FILES if label in ("compound2", "headings2")))
-        self.assertEqual(("compound", "headings", "compound2", "headings2"), check_leakage.NEW_TRAINING)
-        self.assertEqual({frozenset(("compound", "headings")), frozenset(("compound2", "headings2"))}, set(check_leakage.SHARED_POOL_PAIRS))
+        self.assertEqual(("technical/deverbal.tsv", "technical/terms.tsv", "technical/steps.tsv", "technical/clauses.tsv"),
+                         tuple("/".join(parts) for label, parts in check_leakage.TRAINING_FILES[-4:]))
+        self.assertEqual(("compound", "headings", "compound2", "headings2", "deverbal", "terms", "steps", "clauses"), check_leakage.NEW_TRAINING)
+        pools = {frozenset(("compound", "headings")), frozenset(("compound2", "headings2"))}
+        pools |= {frozenset(pair) for pair in itertools.combinations(("deverbal", "terms", "steps", "clauses"), 2)}       # the four technical sources: one pool
+        self.assertEqual(pools, set(check_leakage.SHARED_POOL_PAIRS))
 
     def trains(self, **changes):
         sets = {"open-train": [("open-1", "Open the door before the long flight starts today")], "masc": [("masc-1", "Masc sentence one is here")],
