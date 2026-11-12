@@ -6193,6 +6193,40 @@ The top-up rounds were drawn after the main development rounds were decided (`te
 
 **What comes next (not done here).** The builds of the eight products (`--allow-short` only where a floor is missed), the hand-check samples, the model review, and after it the data READMEs and the registration at weight 0.
 
+## beta.3 phase 1: builds and review samples (counts only)
+
+The eight products were built with `technical_data.py --work W build --product P` and every extra table, **each first without `--allow-short`**; where the build refused only because a floor was missed it was run again with `--allow-short` (the disclosed-shortfall path of rule item 8 and of decision O2, an implementing-agent decision, not an owner decision). No rule, cap, floor or pin was changed, no cap was waived, no label was edited by hand, no pool was re-sourced or amended, and no `--omit-document` was used. Every refusal was a plain floor miss. The four training builds share `data/technical/excluded-documents.tsv` and write one dropped-sentences table each. Nothing is registered (`training.json`, the READMEs and the leakage reports come after the hand check); `data/MANIFEST.tsv` was regenerated mechanically (`make_manifest.py`, 95 entries, 21 new rows) only because the committed-data test requires the manifest to match the files on disk. No model was trained or evaluated, no held-out file was opened, and no consumer text was read. Counts only.
+
+### Built sizes
+
+| Product | Sentences | Targets and controls (by kind) | Lemmas | Documents | Tokens | Dropped at the build (items) | Build |
+| --- | ---: | --- | ---: | ---: | ---: | --- | --- |
+| `deverbal-heads` (S1 DEV) | 450 | targets 360 (pred 62, num 60, ing 140, other 98), control verb 90 | 246 | 156 | 8,762 | cap 233, no-target-lemma 61 | no refusal |
+| `defined-terms` (S2 DEV) | 285 | targets 215 (noun 174, adj 41), control proper 70 | 200 | 95 | 5,580 | cap 57, document-cap 5 | no refusal |
+| `step-lines` (S3 DEV) | 236 | target imperative 166, control noun 70 | 164 | 97 | 1,906 | cap 1 | `--allow-short` |
+| `clause-verbs` (S4 DEV) | 446 | targets 356 (main 288, sub 68), controls 90 (noun 60, adj 30) | 264 | 139 | 7,947 | cap 38, document-cap 1 | no refusal |
+| `deverbal` (S1 TRAIN) | 637 | targets 542 (pred 136, num 160, ing 146, other 100), contrast verb 95 | 376 | 173 | 12,007 | class-mismatch 291, disputed-token 113, frame-mismatch 21, lemma-cap 33, cap 8, document-cap 4, target-disagreement 8 | `--allow-short` |
+| `terms` (S2 TRAIN) | 373 | targets 280 (noun 226, adj 54), contrast proper 93 | 241 | 102 | 7,472 | class-mismatch 153, disputed-token 98, target-disagreement 57, cap 111, term-cap 11, lemma-cap 5 | `--allow-short` |
+| `steps` (S3 TRAIN) | 531 | targets imperative 372, contrast noun-initial 159 | 292 | 130 | 4,894 | class-mismatch 828, document-cap 52, disputed-token 41, target-disagreement 31, cap 17 | `--allow-short` |
+| `clauses` (S4 TRAIN) | 310 | targets 248 (main 187, sub 61), contrast 62 (noun 34, adj 28) | 190 | 112 | 5,870 | class-mismatch 385, disputed-token 66, cap 68, lemma-cap 18, frame-mismatch 7, target-disagreement 6 | `--allow-short` |
+
+Development total 1,417 sentences, training total 1,851 sentences. The labeled items with a decision that each build read were 1,041 (`deverbal-heads`), 490 (`defined-terms`, with the 47 pilot items of the development side), 620 (`step-lines`), 667 (`clause-verbs`), 1,115, 808, 1,500 and 860 (the four training products). The S4 `np` targets (amendment A2): `clause-verbs` 87 of 356 targets (24.4 percent) and `clauses` 41 of 248 targets (16.5 percent), both within the cap of 60 percent; no `np-cap` drop occurred. The development builds hold the registered lemma caps (the build gate reports no cap miss), the S1 verb control is 90 of 450 and the S4 `clauses` contrast share is 20.0 percent (the cap).
+
+### Floors missed (the disclosed shortfalls; counts, nothing padded)
+
+- **S3 DEV `step-lines`:** imperative targets 166 (floor 180); enumerated or bulleted lines 65 of 166 imperatives (39.2 percent, the registered minimum is 50 percent). The bare-object minimum and every cap held.
+- **S1 TRAIN `deverbal`:** stratum `ing` 146 (floor 150). All other floors and caps held (the verb contrast is 95 of 637, 14.9 percent, cap 15).
+- **S2 TRAIN `terms`:** 373 sentences (floor 500; the candidate pool gate was 808 of 1,000). The contrast stratum proper is 93 of 373 (24.9 percent, cap 25).
+- **S3 TRAIN `steps`:** 531 sentences (floor 600); enumerated or bulleted lines 154 of 372 imperatives (41.4 percent, minimum 50). The noun-initial contrast is 159 of 531 (29.9 percent, cap 30).
+- **S4 TRAIN `clauses`:** 310 sentences (floor 450; the candidate pool was 860 and the build kept 310 after the drops above).
+- **Candidate-pool gates still missed at the pool stage but not refusals of the build:** S2 DEV `noun + adj` 350 of 500 candidates (the build kept 215, above the stratum floors noun 120 and adj 40, adj 41 is 1 above its floor), S4 DEV `main + sub` 437 of 500 and `sub` 75 of 135 candidates (the build kept 356 targets, above the floor of 240, `sub` 68, above its floor of 60), S2 TRAIN 808 of 1,000. **S2 DEV `defined-terms` and S4 DEV `clause-verbs` are therefore not short at the build**; S2 TRAIN `terms` is.
+
+No cap was missed or waived in any of the eight builds.
+
+### Review samples (rule item 9; one draw per product, not repeated)
+
+`technical_data.py --work W sample --product P` was run once per product with the built-in seeds 20261201 to 20261208 (the order of the eight products). Each sample is **64 items: 60 kept items and 4 swapped-tag controls**; the 60 follow `SAMPLE_PLAN` exactly (no kind was short). The sample files live in the work folder (`W/review/P/review-sample.md` and the private key `review-sample-key.tsv`, outside the repository; they hold sentence text and are not committed). The model review by `claude-sonnet-5.5`, `review-result` and the registration follow.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

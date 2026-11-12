@@ -1,0 +1,4747 @@
+# corpus = DemaConsulting.PartOfSpeech shapes development set, step-lines tranche (UPOS), dev split
+# license = CC0-1.0 for annotations and selection; sentences are US federal government works, US public domain, see step-lines-sources.tsv
+# columns = form, upos, status
+# status = unanimous | disputed (two blind model labelers; disputed = they differ, the tag is the first labeler's)
+# status flags = a status may be followed by +foreign (word of another language) and +mentioned (word talked about, not used), in that order; a flag never changes the tag (data/CONVENTIONS.md)
+# judged word = per sentence: shape (step-line), role (target | control), target (zero-based token index), lemma, origin (real), kind (imperative | noun), frame, unit (the frame and the unit kind of the line); the judged word is never disputed
+# selection = step lines, list items and short instructions that start with a capitalized word, by position and lexicon only; the gold is the agreement of two blind labelers (see README.md)
+# use = development only: select settings here, never train on it, never report it as a held-out figure
+# file = step-lines.tsv
+
+# sent_id = shapes-dev-step-lines-0001
+# source_id = army-FM19-25
+# text = Record location, Date, and Time of data the same as reported by victim
+# shape = step-line
+# role = target
+# target = 0
+# lemma = record
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Record	VERB	unanimous
+location	NOUN	unanimous
+,	PUNCT	unanimous
+Date	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+Time	NOUN	unanimous
+of	ADP	unanimous
+data	NOUN	unanimous
+the	DET	unanimous
+same	ADJ	unanimous
+as	SCONJ	unanimous
+reported	VERB	unanimous
+by	ADP	unanimous
+victim	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0002
+# source_id = navy-AviationStructuralMechanicHandbook10328
+# text = Pack part in sealed box containing bone and wood charcoal or charred leather.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = pack
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Pack	VERB	unanimous
+part	NOUN	unanimous
+in	ADP	unanimous
+sealed	ADJ	unanimous
+box	NOUN	unanimous
+containing	VERB	unanimous
+bone	NOUN	unanimous
+and	CCONJ	unanimous
+wood	NOUN	unanimous
+charcoal	NOUN	unanimous
+or	CCONJ	unanimous
+charred	ADJ	unanimous
+leather	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0003
+# source_id = doe-micro_IA41153407_0053
+# text = List each set of grid ticks separately.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = list
+# origin = real
+# kind = imperative
+# frame = det
+# unit = sentence
+List	VERB	unanimous
+each	DET	unanimous
+set	NOUN	unanimous
+of	ADP	unanimous
+grid	NOUN	unanimous
+ticks	NOUN	unanimous
+separately	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0004
+# source_id = nasa-micro_IA41153763_0383
+# text = Wet one finger and place 1.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = wet
+# origin = real
+# kind = imperative
+# frame = pron
+# unit = sentence
+Wet	VERB	unanimous
+one	NUM	unanimous
+finger	NOUN	unanimous
+and	CCONJ	unanimous
+place	VERB	unanimous
+1	NUM	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0005
+# source_id = usfs-CAT10508666
+# text = Exchange 1.4 million acres of land.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = exchange
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Exchange	VERB	unanimous
+1.4	NUM	unanimous
+million	NUM	unanimous
+acres	NOUN	unanimous
+of	ADP	unanimous
+land	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0006
+# source_id = doe-micro_IA41153407_0053
+# text = Pour 237 milliliters (1 cup) of hard tap water into the funnel and allow it to stand for three minutes.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = pour
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Pour	VERB	unanimous
+237	NUM	unanimous
+milliliters	NOUN	unanimous
+(	PUNCT	unanimous
+1	NUM	unanimous
+cup	NOUN	unanimous
+)	PUNCT	unanimous
+of	ADP	unanimous
+hard	ADJ	unanimous
+tap	NOUN	unanimous
+water	NOUN	unanimous
+into	ADP	unanimous
+the	DET	unanimous
+funnel	NOUN	unanimous
+and	CCONJ	unanimous
+allow	VERB	unanimous
+it	PRON	unanimous
+to	PART	unanimous
+stand	VERB	unanimous
+for	ADP	unanimous
+three	NUM	unanimous
+minutes	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0007
+# source_id = doe-micro_IA41152928_0675
+# text = List criteria for evaluating Federal programs.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = list
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+List	VERB	unanimous
+criteria	NOUN	unanimous
+for	ADP	unanimous
+evaluating	VERB	unanimous
+Federal	ADJ	unanimous
+programs	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0008
+# source_id = navy-micro_IA41152921_0960
+# text = Turn frequency control fully counterclockwise.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = turn
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Turn	VERB	unanimous
+frequency	NOUN	unanimous
+control	NOUN	unanimous
+fully	ADV	unanimous
+counterclockwise	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0009
+# source_id = navy-micro_IA41153336_0622
+# text = Review application.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = review
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Review	VERB	unanimous
+application	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0010
+# source_id = epa-micro_IA41159420_0763
+# text = Streamline analysis and data review.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = streamline
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+Streamline	VERB	unanimous
+analysis	NOUN	unanimous
+and	CCONJ	unanimous
+data	NOUN	unanimous
+review	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0011
+# source_id = epa-micro_IA41153562_0970
+# text = Display posters, make announcements in-school assembly or presentation to kick off the program.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = display
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Display	VERB	unanimous
+posters	NOUN	unanimous
+,	PUNCT	unanimous
+make	VERB	unanimous
+announcements	NOUN	unanimous
+in-school	ADJ	unanimous
+assembly	NOUN	unanimous
+or	CCONJ	unanimous
+presentation	NOUN	unanimous
+to	PART	unanimous
+kick	VERB	unanimous
+off	ADV	unanimous
+the	DET	unanimous
+program	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0012
+# source_id = usgs-tm9A6.0
+# text = Record at least five sets of measurements
+# shape = step-line
+# role = target
+# target = 0
+# lemma = record
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = short
+Record	VERB	unanimous
+at	ADP	unanimous
+least	ADJ	unanimous
+five	NUM	unanimous
+sets	NOUN	unanimous
+of	ADP	unanimous
+measurements	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0013
+# source_id = nasa-micro_IA41153763_0383
+# text = Position this circular cardboard piece into the end of the PVC pipe and glue it with white glue to form the eye piece of the kaleidoscope.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = position
+# origin = real
+# kind = imperative
+# frame = det
+# unit = enumerated
+Position	VERB	unanimous
+this	DET	unanimous
+circular	ADJ	unanimous
+cardboard	NOUN	unanimous
+piece	NOUN	unanimous
+into	ADP	unanimous
+the	DET	unanimous
+end	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+PVC	NOUN	unanimous
+pipe	NOUN	unanimous
+and	CCONJ	unanimous
+glue	VERB	unanimous
+it	PRON	unanimous
+with	ADP	unanimous
+white	ADJ	unanimous
+glue	NOUN	unanimous
+to	PART	unanimous
+form	VERB	unanimous
+the	DET	unanimous
+eye	NOUN	unanimous
+piece	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+kaleidoscope	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0014
+# source_id = doe-micro_IA41153511_0622
+# text = Study cost, stability, and durability of the various candidate materials.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = study
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Study	VERB	unanimous
+cost	NOUN	unanimous
+,	PUNCT	unanimous
+stability	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+durability	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+various	ADJ	unanimous
+candidate	NOUN	unanimous
+materials	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0015
+# source_id = nasa-20000025259
+# text = Notice objects played screen.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = notice
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Notice	VERB	unanimous
+objects	NOUN	unanimous
+played	VERB	unanimous
+screen	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0016
+# source_id = epa-micro_IA41153537_0722
+# text = Compost yard trimmings and some food scraps.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = compost
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Compost	VERB	unanimous
+yard	NOUN	unanimous
+trimmings	NOUN	unanimous
+and	CCONJ	unanimous
+some	DET	unanimous
+food	NOUN	unanimous
+scraps	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0017
+# source_id = navy-AviationStructuralMechanicHandbook10328
+# text = Solder cable end with class A solder, using a stearic acid flux.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = solder
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Solder	VERB	unanimous
+cable	NOUN	unanimous
+end	NOUN	unanimous
+with	ADP	unanimous
+class	NOUN	unanimous
+A	X	unanimous
+solder	NOUN	unanimous
+,	PUNCT	unanimous
+using	VERB	unanimous
+a	DET	unanimous
+stearic	ADJ	unanimous
+acid	NOUN	unanimous
+flux	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0018
+# source_id = army-ost-military-engineering-tm5_698_3
+# text = Institute configuration control.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = institute
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Institute	VERB	unanimous
+configuration	NOUN	unanimous
+control	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0019
+# source_id = usgs-tm2D4
+# text = Select sites where nearby non-groundwater mass changes are unlikely, for example, from excavation or erosion and deposition within a stream culvert or channel.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = select
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Select	VERB	unanimous
+sites	NOUN	unanimous
+where	ADV	unanimous
+nearby	ADJ	unanimous
+non-groundwater	NOUN	disputed
+mass	NOUN	unanimous
+changes	NOUN	unanimous
+are	VERB	unanimous
+unlikely	ADJ	unanimous
+,	PUNCT	unanimous
+for	ADP	unanimous
+example	NOUN	unanimous
+,	PUNCT	unanimous
+from	ADP	unanimous
+excavation	NOUN	unanimous
+or	CCONJ	unanimous
+erosion	NOUN	unanimous
+and	CCONJ	unanimous
+deposition	NOUN	unanimous
+within	ADP	unanimous
+a	DET	unanimous
+stream	NOUN	unanimous
+culvert	NOUN	unanimous
+or	CCONJ	unanimous
+channel	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0020
+# source_id = army-FM14-3-1
+# text = Close out all accounts.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = close
+# origin = real
+# kind = imperative
+# frame = particle
+# unit = enumerated
+Close	VERB	unanimous
+out	ADV	unanimous
+all	DET	unanimous
+accounts	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0021
+# source_id = navy-ColdWeatherMedicine1978
+# text = Exercise feet periodically to maintain adequate circulation.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = exercise
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Exercise	VERB	unanimous
+feet	NOUN	unanimous
+periodically	ADV	unanimous
+to	PART	unanimous
+maintain	VERB	unanimous
+adequate	ADJ	unanimous
+circulation	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0022
+# source_id = navy-micro_IA41152921_0954
+# text = Fine 2 of the parallel network and redraw the circuit to reflect R 2.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = fine
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Fine	VERB	unanimous
+2	NUM	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+parallel	ADJ	unanimous
+network	NOUN	unanimous
+and	CCONJ	unanimous
+redraw	VERB	unanimous
+the	DET	unanimous
+circuit	NOUN	unanimous
+to	PART	unanimous
+reflect	VERB	unanimous
+R	PROPN	disputed
+2	NUM	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0023
+# source_id = usfs-nfsl_2_354915
+# text = Upgrade access roads to the minimum standard necessary to remove timber efficiently and safely.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = upgrade
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Upgrade	VERB	unanimous
+access	NOUN	unanimous
+roads	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+minimum	ADJ	unanimous
+standard	NOUN	unanimous
+necessary	ADJ	unanimous
+to	PART	unanimous
+remove	VERB	unanimous
+timber	NOUN	unanimous
+efficiently	ADV	unanimous
+and	CCONJ	unanimous
+safely	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0024
+# source_id = usgs-tm9A6.0
+# text = Record field measurements at regular time intervals, about 3 to 5 minutes apart.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = record
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+Record	VERB	unanimous
+field	NOUN	unanimous
+measurements	NOUN	unanimous
+at	ADP	unanimous
+regular	ADJ	unanimous
+time	NOUN	unanimous
+intervals	NOUN	unanimous
+,	PUNCT	unanimous
+about	ADV	unanimous
+3	NUM	unanimous
+to	ADP	unanimous
+5	NUM	unanimous
+minutes	NOUN	unanimous
+apart	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0025
+# source_id = army-ost-military-engineering-tm5_698_1
+# text = Use for products that have "extended" periods of non-operating time or unusual nonoperating environmental conditions or high cycle on and off periods.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = use
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = sentence
+Use	VERB	unanimous
+for	ADP	unanimous
+products	NOUN	unanimous
+that	PRON	unanimous
+have	VERB	unanimous
+"	PUNCT	unanimous
+extended	ADJ	unanimous
+"	PUNCT	unanimous
+periods	NOUN	unanimous
+of	ADP	unanimous
+non-operating	ADJ	unanimous
+time	NOUN	unanimous
+or	CCONJ	unanimous
+unusual	ADJ	unanimous
+nonoperating	ADJ	unanimous
+environmental	ADJ	unanimous
+conditions	NOUN	unanimous
+or	CCONJ	unanimous
+high	ADJ	unanimous
+cycle	NOUN	unanimous
+on	ADJ	disputed
+and	CCONJ	unanimous
+off	ADJ	disputed
+periods	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0026
+# source_id = nasa-19790012581
+# text = Transfer control to N.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = transfer
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Transfer	VERB	unanimous
+control	NOUN	unanimous
+to	ADP	unanimous
+N	X	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0027
+# source_id = usfs-CAT76673543002
+# text = List by species on the form.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = list
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = sentence
+List	VERB	unanimous
+by	ADP	unanimous
+species	NOUN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+form	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0028
+# source_id = navy-micro_IA41153336_0622
+# text = Select institution and course(s).
+# shape = step-line
+# role = target
+# target = 0
+# lemma = select
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Select	VERB	unanimous
+institution	NOUN	unanimous
+and	CCONJ	unanimous
+course(s	NOUN	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0029
+# source_id = nasa-micro_IA41153307_0985
+# text = Pour vinegar on each rock sample
+# shape = step-line
+# role = target
+# target = 0
+# lemma = pour
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Pour	VERB	unanimous
+vinegar	NOUN	unanimous
+on	ADP	unanimous
+each	DET	unanimous
+rock	NOUN	unanimous
+sample	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0030
+# source_id = army-ost-military-engineering-tm5_698_3
+# text = Construct reliability block diagrams as necessary.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Construct	VERB	unanimous
+reliability	NOUN	unanimous
+block	NOUN	unanimous
+diagrams	NOUN	unanimous
+as	SCONJ	unanimous
+necessary	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0031
+# source_id = army-FM19-25
+# text = Secure traffic accident facts.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = secure
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Secure	VERB	unanimous
+traffic	NOUN	unanimous
+accident	NOUN	unanimous
+facts	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0032
+# source_id = usfs-CAT10681048
+# text = Audit cutting reports and scale books.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = audit
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Audit	VERB	unanimous
+cutting	NOUN	unanimous
+reports	NOUN	unanimous
+and	CCONJ	unanimous
+scale	NOUN	unanimous
+books	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0033
+# source_id = coastguard-helicopter-rescue-swimmer-manual-us-coast-guard
+# text = Grasp survivor's harness
+# shape = step-line
+# role = target
+# target = 0
+# lemma = grasp
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+Grasp	VERB	unanimous
+survivor	NOUN	unanimous
+'s	PART	unanimous
+harness	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0034
+# source_id = epa-radonreductionin1987unit
+# text = Seal edges to foundation walls.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = seal
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Seal	VERB	unanimous
+edges	NOUN	unanimous
+to	ADP	unanimous
+foundation	NOUN	unanimous
+walls	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0035
+# source_id = nps-yellowstonenatio00nati
+# text = Lap joints in the film at least 4 inches.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = lap
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Lap	VERB	unanimous
+joints	NOUN	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+film	NOUN	unanimous
+at	ADP	unanimous
+least	ADJ	unanimous
+4	NUM	unanimous
+inches	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0036
+# source_id = usfs-CAT10508666
+# text = Construct 1,000 miles of firebreaks.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Construct	VERB	unanimous
+1,000	NUM	unanimous
+miles	NOUN	unanimous
+of	ADP	unanimous
+firebreaks	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0037
+# source_id = navy-micro_IA41152921_0956
+# text = Plot 3 amps at T3 on the following graph.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = plot
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Plot	VERB	unanimous
+3	NUM	unanimous
+amps	NOUN	unanimous
+at	ADP	unanimous
+T3	PROPN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+following	ADJ	unanimous
+graph	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0038
+# source_id = navy-micro_IA41152921_0949
+# text = Point your index finger (forefinger) in the direction of the flux lines, from N pole to S pole of the magnet.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = point
+# origin = real
+# kind = imperative
+# frame = det
+# unit = enumerated
+Point	VERB	unanimous
+your	DET	unanimous
+index	NOUN	unanimous
+finger	NOUN	unanimous
+(	PUNCT	unanimous
+forefinger	NOUN	unanimous
+)	PUNCT	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+direction	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+flux	NOUN	unanimous
+lines	NOUN	unanimous
+,	PUNCT	unanimous
+from	ADP	unanimous
+N	NOUN	disputed
+pole	NOUN	unanimous
+to	ADP	unanimous
+S	NOUN	disputed
+pole	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+magnet	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0039
+# source_id = navy-ElectronicsInstallationAndMaintenanceBook
+# text = Substitute two known good tubes to eliminate the tubes from suspicion.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = substitute
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Substitute	VERB	unanimous
+two	NUM	unanimous
+known	ADJ	disputed
+good	ADJ	unanimous
+tubes	NOUN	unanimous
+to	PART	unanimous
+eliminate	VERB	unanimous
+the	DET	unanimous
+tubes	NOUN	unanimous
+from	ADP	unanimous
+suspicion	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0040
+# source_id = usfs-CAT76673543002
+# text = Duplicate forms on YELLOW PAPER.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = duplicate
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Duplicate	VERB	unanimous
+forms	NOUN	unanimous
+on	ADP	unanimous
+YELLOW	ADJ	unanimous
+PAPER	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0041
+# source_id = nasa-micro_IA41153763_0379
+# text = Hand out the materials (Student Page 1, tray, template, cutting and marking devices).
+# shape = step-line
+# role = target
+# target = 0
+# lemma = hand
+# origin = real
+# kind = imperative
+# frame = particle
+# unit = sentence
+Hand	VERB	unanimous
+out	ADV	unanimous
+the	DET	unanimous
+materials	NOUN	unanimous
+(	PUNCT	unanimous
+Student	NOUN	unanimous
+Page	NOUN	unanimous
+1	NUM	unanimous
+,	PUNCT	unanimous
+tray	NOUN	unanimous
+,	PUNCT	unanimous
+template	NOUN	unanimous
+,	PUNCT	unanimous
+cutting	NOUN	unanimous
+and	CCONJ	unanimous
+marking	NOUN	unanimous
+devices	NOUN	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0042
+# source_id = usgs-tm2D4
+# text = Record data using the procedure appropriate for the meter (appendixes 1 and 2).
+# shape = step-line
+# role = target
+# target = 0
+# lemma = record
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Record	VERB	unanimous
+data	NOUN	unanimous
+using	VERB	unanimous
+the	DET	unanimous
+procedure	NOUN	unanimous
+appropriate	ADJ	unanimous
+for	ADP	unanimous
+the	DET	unanimous
+meter	NOUN	unanimous
+(	PUNCT	unanimous
+appendixes	NOUN	unanimous
+1	NUM	unanimous
+and	CCONJ	unanimous
+2	NUM	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0043
+# source_id = usfs-programfornation794unit
+# text = Complete soil surveys on about 33 million acres, or 22 percent of the total area in need of survey.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = complete
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Complete	VERB	unanimous
+soil	NOUN	unanimous
+surveys	NOUN	unanimous
+on	ADP	unanimous
+about	ADV	unanimous
+33	NUM	unanimous
+million	NUM	unanimous
+acres	NOUN	unanimous
+,	PUNCT	unanimous
+or	CCONJ	unanimous
+22	NUM	unanimous
+percent	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+total	ADJ	unanimous
+area	NOUN	unanimous
+in	ADP	unanimous
+need	NOUN	unanimous
+of	ADP	unanimous
+survey	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0044
+# source_id = navy-micro_IA41152921_0946
+# text = Answer increase, decrease, or remain the same to each part.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = answer
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Answer	VERB	unanimous
+increase	VERB	unanimous+mentioned
+,	PUNCT	unanimous
+decrease	VERB	unanimous+mentioned
+,	PUNCT	unanimous
+or	CCONJ	unanimous
+remain	VERB	unanimous+mentioned
+the	DET	unanimous+mentioned
+same	ADJ	unanimous+mentioned
+to	ADP	unanimous
+each	DET	unanimous
+part	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0045
+# source_id = epa-micro_IA41153512_0621
+# text = Record results on the "Example Laboratory Data Sheet" in the column next to Column E.2.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = record
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Record	VERB	unanimous
+results	NOUN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+"	PUNCT	unanimous
+Example	NOUN	unanimous
+Laboratory	NOUN	unanimous
+Data	NOUN	unanimous
+Sheet	NOUN	unanimous
+"	PUNCT	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+column	NOUN	unanimous
+next	ADV	unanimous
+to	ADP	unanimous
+Column	NOUN	unanimous
+E.2	NUM	disputed
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0046
+# source_id = epa-micro_IA41153512_0621
+# text = Report results to the nearest whole microgram data in a laboratory per liter. notebook.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = report
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Report	VERB	unanimous
+results	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+nearest	ADJ	unanimous
+whole	ADJ	unanimous
+microgram	NOUN	unanimous
+data	NOUN	unanimous
+in	ADP	unanimous
+a	DET	unanimous
+laboratory	NOUN	unanimous
+per	ADP	unanimous
+liter	NOUN	unanimous
+.	PUNCT	unanimous
+notebook	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0047
+# source_id = usgs-tm5D4
+# text = Repeat step 3 using second beaker.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = repeat
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Repeat	VERB	unanimous
+step	NOUN	unanimous
+3	NUM	unanimous
+using	VERB	unanimous
+second	ADJ	unanimous
+beaker	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0048
+# source_id = army-ost-military-engineering-tm5_698_3
+# text = Select system.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = select
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Select	VERB	unanimous
+system	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0049
+# source_id = nasa-20140013262
+# text = Code routines to provide the derivatives of the four subroutines referred to in Step 2.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = code
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Code	VERB	unanimous
+routines	NOUN	unanimous
+to	PART	unanimous
+provide	VERB	unanimous
+the	DET	unanimous
+derivatives	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+four	NUM	unanimous
+subroutines	NOUN	unanimous
+referred	VERB	unanimous
+to	ADP	unanimous
+in	ADP	unanimous
+Step	NOUN	unanimous
+2	NUM	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0050
+# source_id = nps-yellowstonenatio00nati
+# text = Secure anchorages and connections to adjacent construction.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = secure
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Secure	VERB	unanimous
+anchorages	NOUN	unanimous
+and	CCONJ	unanimous
+connections	NOUN	unanimous
+to	ADP	unanimous
+adjacent	ADJ	unanimous
+construction	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0051
+# source_id = epa-micro_IA41153537_0722
+# text = Mend clothes instead of throwing them away.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = mend
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+Mend	VERB	unanimous
+clothes	NOUN	unanimous
+instead	ADV	unanimous
+of	ADP	unanimous
+throwing	VERB	unanimous
+them	PRON	unanimous
+away	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0052
+# source_id = nasa-nasa-reports_nas-12122106
+# text = Complete modal flutter analysis.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = complete
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Complete	VERB	unanimous
+modal	ADJ	unanimous
+flutter	NOUN	unanimous
+analysis	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0053
+# source_id = navy-micro_IA41152921_0954
+# text = Place values in blocks below.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = place
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Place	VERB	unanimous
+values	NOUN	unanimous
+in	ADP	unanimous
+blocks	NOUN	unanimous
+below	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0054
+# source_id = epa-micro_IA41153648_0501
+# text = Mist floor and clean with a wet mop using cleaning solution and the two-sided bucket.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = mist
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+Mist	VERB	unanimous
+floor	NOUN	unanimous
+and	CCONJ	unanimous
+clean	VERB	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+wet	ADJ	unanimous
+mop	NOUN	unanimous
+using	VERB	unanimous
+cleaning	NOUN	unanimous
+solution	NOUN	unanimous
+and	CCONJ	unanimous
+the	DET	unanimous
+two-sided	ADJ	unanimous
+bucket	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0055
+# source_id = navy-micro_IA41152921_0949
+# text = State the method used to produce AC.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = state
+# origin = real
+# kind = imperative
+# frame = det
+# unit = short
+State	VERB	unanimous
+the	DET	unanimous
+method	NOUN	unanimous
+used	VERB	unanimous
+to	PART	unanimous
+produce	VERB	unanimous
+AC	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0056
+# source_id = nasa-micro_IA41153763_0383
+# text = Experiment with polarized light at home.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = experiment
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = sentence
+Experiment	VERB	unanimous
+with	ADP	unanimous
+polarized	ADJ	unanimous
+light	NOUN	unanimous
+at	ADP	unanimous
+home	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0057
+# source_id = nasa-micro_IA41153763_0383
+# text = Pack foam behind each mirror to provide stability.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = pack
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Pack	VERB	unanimous
+foam	NOUN	unanimous
+behind	ADP	unanimous
+each	DET	unanimous
+mirror	NOUN	unanimous
+to	PART	unanimous
+provide	VERB	unanimous
+stability	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0058
+# source_id = usfs-nfsl_2_354915
+# text = Select harvest designs that blend with the landscape.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = select
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Select	VERB	unanimous
+harvest	NOUN	unanimous
+designs	NOUN	unanimous
+that	PRON	unanimous
+blend	VERB	unanimous
+with	ADP	unanimous
+the	DET	unanimous
+landscape	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0059
+# source_id = navy-micro_IA41152921_0956
+# text = State the percentage values found on the growth curve of a Universal Time Constant Chart.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = state
+# origin = real
+# kind = imperative
+# frame = det
+# unit = sentence
+State	VERB	unanimous
+the	DET	unanimous
+percentage	NOUN	unanimous
+values	NOUN	unanimous
+found	VERB	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+growth	NOUN	unanimous
+curve	NOUN	unanimous
+of	ADP	unanimous
+a	DET	unanimous
+Universal	ADJ	unanimous
+Time	NOUN	unanimous
+Constant	NOUN	unanimous
+Chart	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0060
+# source_id = nps-wildfreeroamingh00unit
+# text = List existing and needed range improvements, including a key to ownership, location, maintenance responsibility, maintenance cycle, etc.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = list
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+List	VERB	unanimous
+existing	ADJ	disputed
+and	CCONJ	unanimous
+needed	ADJ	unanimous
+range	NOUN	unanimous
+improvements	NOUN	unanimous
+,	PUNCT	unanimous
+including	ADP	unanimous
+a	DET	unanimous
+key	NOUN	unanimous
+to	ADP	unanimous
+ownership	NOUN	unanimous
+,	PUNCT	unanimous
+location	NOUN	unanimous
+,	PUNCT	unanimous
+maintenance	NOUN	unanimous
+responsibility	NOUN	unanimous
+,	PUNCT	unanimous
+maintenance	NOUN	unanimous
+cycle	NOUN	unanimous
+,	PUNCT	unanimous
+etc	X	disputed
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0061
+# source_id = usfs-CAT10508666
+# text = Construct 200 miles of firebreaks.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Construct	VERB	unanimous
+200	NUM	unanimous
+miles	NOUN	unanimous
+of	ADP	unanimous
+firebreaks	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0062
+# source_id = navy-ColdWeatherMedicine1978
+# text = Culture first, fifth, and every tenth exchange.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = culture
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Culture	VERB	unanimous
+first	ADJ	unanimous
+,	PUNCT	unanimous
+fifth	ADJ	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+every	DET	unanimous
+tenth	ADJ	unanimous
+exchange	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0063
+# source_id = usfs-CAT10681048
+# text = Study imprest cash fund.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = study
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Study	VERB	unanimous
+imprest	NOUN	disputed
+cash	NOUN	unanimous
+fund	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0064
+# source_id = epa-micro_IA41153648_0501
+# text = Mist surface and hand plane a chamfer edge.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = mist
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Mist	VERB	unanimous
+surface	NOUN	unanimous
+and	CCONJ	unanimous
+hand	NOUN	unanimous
+plane	VERB	unanimous
+a	DET	unanimous
+chamfer	NOUN	unanimous
+edge	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0065
+# source_id = nasa-48011357STS1OrbiterFinalMissionReport
+# text = Design motor end bell as a one piece unit and increase motor bearing shim shoulder.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = design
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Design	VERB	unanimous
+motor	NOUN	unanimous
+end	NOUN	unanimous
+bell	NOUN	unanimous
+as	ADP	unanimous
+a	DET	unanimous
+one	NUM	unanimous
+piece	NOUN	unanimous
+unit	NOUN	unanimous
+and	CCONJ	unanimous
+increase	VERB	unanimous
+motor	NOUN	unanimous
+bearing	NOUN	unanimous
+shim	NOUN	unanimous
+shoulder	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0066
+# source_id = navy-ColdWeatherMedicine1978
+# text = Limit fat intake if it is the etiological factor.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = limit
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Limit	VERB	unanimous
+fat	NOUN	unanimous
+intake	NOUN	unanimous
+if	SCONJ	unanimous
+it	PRON	unanimous
+is	VERB	unanimous
+the	DET	unanimous
+etiological	ADJ	unanimous
+factor	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0067
+# source_id = navy-micro_IA41153336_0622
+# text = Exercise tact in discussing personal matters.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = exercise
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Exercise	VERB	unanimous
+tact	NOUN	unanimous
+in	ADP	unanimous
+discussing	VERB	unanimous
+personal	ADJ	unanimous
+matters	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0068
+# source_id = usfs-nfsl_2_157363
+# text = Review existing natural areas established by Federal, State, and local agencies to see if sufficient examples of important botanic, aquatic, and geologic types are protected.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = review
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Review	VERB	unanimous
+existing	VERB	disputed
+natural	ADJ	unanimous
+areas	NOUN	unanimous
+established	VERB	unanimous
+by	ADP	unanimous
+Federal	ADJ	unanimous
+,	PUNCT	unanimous
+State	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+local	ADJ	unanimous
+agencies	NOUN	unanimous
+to	PART	unanimous
+see	VERB	unanimous
+if	SCONJ	unanimous
+sufficient	ADJ	unanimous
+examples	NOUN	unanimous
+of	ADP	unanimous
+important	ADJ	unanimous
+botanic	ADJ	unanimous
+,	PUNCT	unanimous
+aquatic	ADJ	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+geologic	ADJ	unanimous
+types	NOUN	unanimous
+are	AUX	unanimous
+protected	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0069
+# source_id = coastguard-helicopter-rescue-swimmer-manual-us-coast-guard
+# text = Place top foot just in front of the bottom.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = place
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Place	VERB	unanimous
+top	ADJ	unanimous
+foot	NOUN	unanimous
+just	ADV	unanimous
+in	ADP	unanimous
+front	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+bottom	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0070
+# source_id = army-ost-military-medical-tbmed293
+# text = Secure nail clippings or scrapings, if indicated.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = secure
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Secure	VERB	unanimous
+nail	NOUN	unanimous
+clippings	NOUN	unanimous
+or	CCONJ	unanimous
+scrapings	NOUN	unanimous
+,	PUNCT	unanimous
+if	SCONJ	unanimous
+indicated	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0071
+# source_id = coastguard-helicopter-rescue-swimmer-manual-us-coast-guard
+# text = Swap helmet (as required)
+# shape = step-line
+# role = target
+# target = 0
+# lemma = swap
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+Swap	VERB	unanimous
+helmet	NOUN	unanimous
+(	PUNCT	unanimous
+as	SCONJ	unanimous
+required	VERB	unanimous
+)	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0072
+# source_id = coastguard-helicopter-rescue-swimmer-manual-us-coast-guard
+# text = Rotate survivor onto back.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = rotate
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+Rotate	VERB	unanimous
+survivor	NOUN	unanimous
+onto	ADP	unanimous
+back	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0073
+# source_id = nasa-micro_IA41153763_0383
+# text = Place one Polarizing filter on top of the other filter.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = place
+# origin = real
+# kind = imperative
+# frame = pron
+# unit = enumerated
+Place	VERB	unanimous
+one	NUM	unanimous
+Polarizing	NOUN	unanimous
+filter	NOUN	unanimous
+on	ADP	unanimous
+top	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+other	ADJ	unanimous
+filter	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0074
+# source_id = army-ost-military-engineering-tm5_698_1
+# text = Address manufacturing processes.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = address
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Address	VERB	unanimous
+manufacturing	NOUN	unanimous
+processes	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0075
+# source_id = nps-yellowstonenatio00nati
+# text = Drill holes to correct size and make application so that work to surface is concealed by item with 1/4" tolerance.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = drill
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Drill	VERB	unanimous
+holes	NOUN	unanimous
+to	ADP	unanimous
+correct	ADJ	unanimous
+size	NOUN	unanimous
+and	CCONJ	unanimous
+make	VERB	unanimous
+application	NOUN	unanimous
+so	SCONJ	disputed
+that	SCONJ	unanimous
+work	NOUN	unanimous
+to	ADP	unanimous
+surface	NOUN	unanimous
+is	AUX	unanimous
+concealed	VERB	unanimous
+by	ADP	unanimous
+item	NOUN	unanimous
+with	ADP	unanimous
+1/4	NUM	unanimous
+"	SYM	unanimous
+tolerance	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0076
+# source_id = coastguard-helicopter-rescue-swimmer-manual-us-coast-guard
+# text = Pull on shroud line.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = pull
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = bulleted
+Pull	VERB	unanimous
+on	ADP	unanimous
+shroud	NOUN	unanimous
+line	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0077
+# source_id = nasa-micro_IA41153307_0985
+# text = Construct capsule according to sketch
+# shape = step-line
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Construct	VERB	unanimous
+capsule	NOUN	unanimous
+according	ADP	unanimous
+to	ADP	unanimous
+sketch	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0078
+# source_id = nps-yellowstonenatio00nati
+# text = Proportion ingredients to produce a well-graded mix of high density and maximum workability consistent with approved mix design.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = proportion
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Proportion	VERB	unanimous
+ingredients	NOUN	unanimous
+to	PART	unanimous
+produce	VERB	unanimous
+a	DET	unanimous
+well-graded	ADJ	unanimous
+mix	NOUN	unanimous
+of	ADP	unanimous
+high	ADJ	unanimous
+density	NOUN	unanimous
+and	CCONJ	unanimous
+maximum	ADJ	unanimous
+workability	NOUN	unanimous
+consistent	ADJ	unanimous
+with	ADP	unanimous
+approved	VERB	unanimous
+mix	NOUN	unanimous
+design	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0079
+# source_id = army-ost-military-engineering-tm5_698_3
+# text = Forecast impact of delivery schedules.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = forecast
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Forecast	VERB	unanimous
+impact	NOUN	unanimous
+of	ADP	unanimous
+delivery	NOUN	unanimous
+schedules	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0080
+# source_id = nps-yellowstonenatio00nati
+# text = Plug inlet and outlet pipes and fill manhole with water to lid seat ring inside the metal frame.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = plug
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Plug	VERB	unanimous
+inlet	NOUN	unanimous
+and	CCONJ	unanimous
+outlet	NOUN	unanimous
+pipes	NOUN	unanimous
+and	CCONJ	unanimous
+fill	VERB	unanimous
+manhole	NOUN	unanimous
+with	ADP	unanimous
+water	NOUN	unanimous
+to	ADP	unanimous
+lid	NOUN	unanimous
+seat	NOUN	unanimous
+ring	NOUN	unanimous
+inside	ADP	unanimous
+the	DET	unanimous
+metal	NOUN	unanimous
+frame	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0081
+# source_id = epa-micro_IA41153648_0501
+# text = Mist cabinets and pry loose from walls.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = mist
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Mist	VERB	unanimous
+cabinets	NOUN	unanimous
+and	CCONJ	unanimous
+pry	VERB	unanimous
+loose	ADJ	unanimous
+from	ADP	unanimous
+walls	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0082
+# source_id = epa-micro_IA41153512_0621
+# text = Pipet 100.0 ml of the inter4
+# shape = step-line
+# role = target
+# target = 0
+# lemma = pipet
+# origin = real
+# kind = imperative
+# frame = num
+# unit = bulleted
+Pipet	VERB	unanimous
+100.0	NUM	unanimous
+ml	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+inter4	X	unanimous
+
+# sent_id = shapes-dev-step-lines-0083
+# source_id = doe-micro_IA41153407_0053
+# text = Caution students that isopropyl alcohol is a flammable liquid and that they should avoid breathing large quantities of the fumes.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = caution
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Caution	VERB	unanimous
+students	NOUN	unanimous
+that	SCONJ	unanimous
+isopropyl	NOUN	unanimous
+alcohol	NOUN	unanimous
+is	VERB	unanimous
+a	DET	unanimous
+flammable	ADJ	unanimous
+liquid	NOUN	unanimous
+and	CCONJ	unanimous
+that	SCONJ	unanimous
+they	PRON	unanimous
+should	AUX	unanimous
+avoid	VERB	unanimous
+breathing	VERB	unanimous
+large	ADJ	unanimous
+quantities	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+fumes	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0084
+# source_id = epa-micro_IA41153648_0501
+# text = Seal over remaining items with polyethylene protective sheeting where possible.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = seal
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = sentence
+Seal	VERB	unanimous
+over	ADP	unanimous
+remaining	VERB	unanimous
+items	NOUN	unanimous
+with	ADP	unanimous
+polyethylene	NOUN	unanimous
+protective	ADJ	unanimous
+sheeting	NOUN	unanimous
+where	SCONJ	unanimous
+possible	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0085
+# source_id = nasa-20160006523
+# text = Set parameter values using API functions (if default value is not desired).
+# shape = step-line
+# role = target
+# target = 0
+# lemma = set
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Set	VERB	unanimous
+parameter	NOUN	unanimous
+values	NOUN	unanimous
+using	VERB	unanimous
+API	NOUN	unanimous
+functions	NOUN	unanimous
+(	PUNCT	unanimous
+if	SCONJ	unanimous
+default	NOUN	unanimous
+value	NOUN	unanimous
+is	AUX	unanimous
+not	PART	unanimous
+desired	VERB	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0086
+# source_id = nps-yellowstonenatio00nati
+# text = Dam edges of slab and pond water minimum two inches deep over entire surface.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = dam
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Dam	VERB	unanimous
+edges	NOUN	unanimous
+of	ADP	unanimous
+slab	NOUN	unanimous
+and	CCONJ	unanimous
+pond	VERB	unanimous
+water	NOUN	unanimous
+minimum	ADJ	unanimous
+two	NUM	unanimous
+inches	NOUN	unanimous
+deep	ADJ	unanimous
+over	ADP	unanimous
+entire	ADJ	unanimous
+surface	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0087
+# source_id = nasa-nasa-reports_nas-12122106
+# text = Compute One Eigenvalue and One Eigenvector
+# shape = step-line
+# role = target
+# target = 0
+# lemma = compute
+# origin = real
+# kind = imperative
+# frame = pron
+# unit = enumerated
+Compute	VERB	unanimous
+One	NUM	unanimous
+Eigenvalue	NOUN	unanimous
+and	CCONJ	unanimous
+One	NUM	unanimous
+Eigenvector	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0088
+# source_id = nasa-micro_IA41153307_0985
+# text = Record results on record sheet
+# shape = step-line
+# role = target
+# target = 0
+# lemma = record
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Record	VERB	unanimous
+results	NOUN	unanimous
+on	ADP	unanimous
+record	NOUN	unanimous
+sheet	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0089
+# source_id = epa-micro_IA41159420_0763
+# text = File report for use in making subsequent changes.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = file
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+File	VERB	unanimous
+report	NOUN	unanimous
+for	ADP	unanimous
+use	NOUN	unanimous
+in	ADP	unanimous
+making	VERB	unanimous
+subsequent	ADJ	unanimous
+changes	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0090
+# source_id = army-fm-31-22-command-control-and-support-of-special-forces-operations-1981
+# text = Attack terrorist installations and personnel to preclude their continued threat.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = attack
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Attack	VERB	unanimous
+terrorist	ADJ	unanimous
+installations	NOUN	unanimous
+and	CCONJ	unanimous
+personnel	NOUN	unanimous
+to	PART	unanimous
+preclude	VERB	unanimous
+their	DET	unanimous
+continued	ADJ	unanimous
+threat	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0091
+# source_id = epa-micro_IA41153648_0501
+# text = Vacuum floor with floor brush and carpet with a carpet tool.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = vacuum
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Vacuum	VERB	unanimous
+floor	NOUN	unanimous
+with	ADP	unanimous
+floor	NOUN	unanimous
+brush	NOUN	unanimous
+and	CCONJ	unanimous
+carpet	NOUN	unanimous
+with	ADP	unanimous
+a	DET	unanimous
+carpet	NOUN	unanimous
+tool	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0092
+# source_id = usfs-CAT10508666
+# text = Construct 11,000 miles of firebreaks.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Construct	VERB	unanimous
+11,000	NUM	unanimous
+miles	NOUN	unanimous
+of	ADP	unanimous
+firebreaks	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0093
+# source_id = navy-ColdWeatherMedicine1978
+# text = Limit coffee intake
+# shape = step-line
+# role = target
+# target = 0
+# lemma = limit
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Limit	VERB	unanimous
+coffee	NOUN	unanimous
+intake	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0094
+# source_id = usgs-tm5D4
+# text = Repeat step 3 using third beaker.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = repeat
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Repeat	VERB	unanimous
+step	NOUN	unanimous
+3	NUM	unanimous
+using	VERB	unanimous
+third	ADJ	unanimous
+beaker	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0095
+# source_id = navy-AviationStructuralMechanicHandbook10328
+# text = Bond at outboard end if resistance to ground exceeds
+# shape = step-line
+# role = target
+# target = 0
+# lemma = bond
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = short
+Bond	VERB	unanimous
+at	ADP	unanimous
+outboard	ADJ	unanimous
+end	NOUN	unanimous
+if	SCONJ	unanimous
+resistance	NOUN	unanimous
+to	ADP	unanimous
+ground	NOUN	unanimous
+exceeds	VERB	unanimous
+
+# sent_id = shapes-dev-step-lines-0096
+# source_id = nps-oilgasleasingoil8974unit
+# text = File case file with inactive cases.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = file
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+File	VERB	unanimous
+case	NOUN	unanimous
+file	NOUN	unanimous
+with	ADP	unanimous
+inactive	ADJ	unanimous
+cases	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0097
+# source_id = usgs-tm2D4
+# text = Scan field notes/field sheets and store them in the appropriate measurement directory.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = scan
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Scan	VERB	unanimous
+field	NOUN	unanimous
+notes/field	NOUN	unanimous
+sheets	NOUN	unanimous
+and	CCONJ	unanimous
+store	VERB	unanimous
+them	PRON	unanimous
+in	ADP	unanimous
+the	DET	unanimous
+appropriate	ADJ	unanimous
+measurement	NOUN	unanimous
+directory	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0098
+# source_id = nasa-micro_IA41153763_0379
+# text = Research the history of kites.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = research
+# origin = real
+# kind = imperative
+# frame = det
+# unit = short
+Research	VERB	unanimous
+the	DET	unanimous
+history	NOUN	unanimous
+of	ADP	unanimous
+kites	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0099
+# source_id = coastguard-helicopter-rescue-swimmer-manual-us-coast-guard
+# text = Average the times achieved during each evolution and record as final time.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = average
+# origin = real
+# kind = imperative
+# frame = det
+# unit = enumerated
+Average	VERB	unanimous
+the	DET	unanimous
+times	NOUN	unanimous
+achieved	VERB	unanimous
+during	ADP	unanimous
+each	DET	unanimous
+evolution	NOUN	unanimous
+and	CCONJ	unanimous
+record	VERB	unanimous
+as	ADP	unanimous
+final	ADJ	unanimous
+time	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0100
+# source_id = epa-micro_IA41153512_0621
+# text = Turn 0% T knob to adjust
+# shape = step-line
+# role = target
+# target = 0
+# lemma = turn
+# origin = real
+# kind = imperative
+# frame = num
+# unit = bulleted
+Turn	VERB	unanimous
+0	NUM	unanimous
+%	SYM	unanimous
+T	NOUN	unanimous
+knob	NOUN	unanimous
+to	PART	unanimous
+adjust	VERB	unanimous
+
+# sent_id = shapes-dev-step-lines-0101
+# source_id = usgs-micro_IA41153326_0605
+# text = Cheek all that apply; elaborate if desired
+# shape = step-line
+# role = target
+# target = 0
+# lemma = cheek
+# origin = real
+# kind = imperative
+# frame = det
+# unit = short
+Cheek	VERB	unanimous
+all	DET	disputed
+that	PRON	unanimous
+apply	VERB	unanimous
+;	PUNCT	unanimous
+elaborate	VERB	unanimous
+if	SCONJ	unanimous
+desired	VERB	unanimous
+
+# sent_id = shapes-dev-step-lines-0102
+# source_id = usfs-CAT10681048
+# text = Study forest organization chart and meet forest supervisor and staff.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = study
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Study	VERB	unanimous
+forest	NOUN	unanimous
+organization	NOUN	unanimous
+chart	NOUN	unanimous
+and	CCONJ	unanimous
+meet	VERB	unanimous
+forest	NOUN	unanimous
+supervisor	NOUN	unanimous
+and	CCONJ	unanimous
+staff	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0103
+# source_id = coastguard-helicopter-rescue-swimmer-manual-us-coast-guard
+# text = Disconnect leg fittings, if applicable.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = disconnect
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Disconnect	VERB	unanimous
+leg	NOUN	unanimous
+fittings	NOUN	unanimous
+,	PUNCT	unanimous
+if	SCONJ	unanimous
+applicable	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0104
+# source_id = nps-wildhorseburroad00unit
+# text = Issue national policy strongly encouraging seminars and training
+# shape = step-line
+# role = target
+# target = 0
+# lemma = issue
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Issue	VERB	unanimous
+national	ADJ	unanimous
+policy	NOUN	unanimous
+strongly	ADV	unanimous
+encouraging	VERB	unanimous
+seminars	NOUN	unanimous
+and	CCONJ	unanimous
+training	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0105
+# source_id = epa-micro_IA41153648_0501
+# text = Drill holes in inside Stop at 3 or 4 points.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = drill
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Drill	VERB	unanimous
+holes	NOUN	unanimous
+in	ADP	unanimous
+inside	ADJ	unanimous
+Stop	NOUN	unanimous
+at	ADP	unanimous
+3	NUM	unanimous
+or	CCONJ	unanimous
+4	NUM	unanimous
+points	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0106
+# source_id = epa-micro_IA41153648_0501
+# text = Mist surfaces before scraping and sanding.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = mist
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Mist	VERB	unanimous
+surfaces	NOUN	unanimous
+before	ADP	unanimous
+scraping	VERB	unanimous
+and	CCONJ	unanimous
+sanding	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0107
+# source_id = usgs-tm9A6.0
+# text = Redirect flow to chamber for next set of readings.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = redirect
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Redirect	VERB	unanimous
+flow	NOUN	unanimous
+to	ADP	unanimous
+chamber	NOUN	unanimous
+for	ADP	unanimous
+next	ADJ	unanimous
+set	NOUN	unanimous
+of	ADP	unanimous
+readings	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0108
+# source_id = navy-ColdWeatherMedicine1978
+# text = Lace boots securely but not so tight as to constrict.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = lace
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Lace	VERB	unanimous
+boots	NOUN	unanimous
+securely	ADV	unanimous
+but	CCONJ	unanimous
+not	PART	unanimous
+so	ADV	unanimous
+tight	ADJ	disputed
+as	SCONJ	unanimous
+to	PART	unanimous
+constrict	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0109
+# source_id = navy-micro_IA41153336_0622
+# text = Resume test administration only when authorized to do so by the Chief of Naval Personnel (Pers-C43).
+# shape = step-line
+# role = target
+# target = 0
+# lemma = resume
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Resume	VERB	unanimous
+test	NOUN	unanimous
+administration	NOUN	unanimous
+only	ADV	unanimous
+when	SCONJ	unanimous
+authorized	VERB	unanimous
+to	PART	unanimous
+do	VERB	unanimous
+so	ADV	unanimous
+by	ADP	unanimous
+the	DET	unanimous
+Chief	PROPN	unanimous
+of	ADP	unanimous
+Naval	PROPN	unanimous
+Personnel	PROPN	unanimous
+(	PUNCT	unanimous
+Pers-C43	PROPN	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0110
+# source_id = nasa-19940032824
+# text = View calibration
+# shape = step-line
+# role = target
+# target = 0
+# lemma = view
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+View	VERB	unanimous
+calibration	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0111
+# source_id = nps-yellowstonenatio00nati
+# text = Store aggregates in clean bins or platforms having hard, clean surfaces.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = store
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Store	VERB	unanimous
+aggregates	NOUN	unanimous
+in	ADP	unanimous
+clean	ADJ	unanimous
+bins	NOUN	unanimous
+or	CCONJ	unanimous
+platforms	NOUN	unanimous
+having	VERB	unanimous
+hard	ADJ	unanimous
+,	PUNCT	unanimous
+clean	ADJ	unanimous
+surfaces	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0112
+# source_id = nps-yellowstonenatio00nati
+# text = Backfill after approval oy Contracting Officer.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = backfill
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = sentence
+Backfill	VERB	unanimous
+after	ADP	unanimous
+approval	NOUN	unanimous
+oy	ADP	unanimous
+Contracting	PROPN	disputed
+Officer	PROPN	disputed
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0113
+# source_id = navy-AviationStructuralMechanicHandbook10328
+# text = Bond at outboard end if resistance to ground exceeds 0.01 ohm.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = bond
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = sentence
+Bond	VERB	unanimous
+at	ADP	unanimous
+outboard	ADJ	unanimous
+end	NOUN	unanimous
+if	SCONJ	unanimous
+resistance	NOUN	unanimous
+to	ADP	unanimous
+ground	NOUN	unanimous
+exceeds	VERB	unanimous
+0.01	NUM	unanimous
+ohm	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0114
+# source_id = nasa-19940032824
+# text = Print item statistics
+# shape = step-line
+# role = target
+# target = 0
+# lemma = print
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+Print	VERB	unanimous
+item	NOUN	unanimous
+statistics	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0115
+# source_id = army-FM19-25
+# text = Report observations and information
+# shape = step-line
+# role = target
+# target = 0
+# lemma = report
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Report	VERB	unanimous
+observations	NOUN	unanimous
+and	CCONJ	unanimous
+information	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0116
+# source_id = usgs-tm2D4
+# text = Sync field laptop computer with USB drive.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = sync
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Sync	VERB	unanimous
+field	NOUN	unanimous
+laptop	NOUN	unanimous
+computer	NOUN	unanimous
+with	ADP	unanimous
+USB	PROPN	disputed
+drive	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0117
+# source_id = navy-AviationStructuralMechanicHandbook10328
+# text = Bond across each piano hinge with shortest practicable jumper.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = bond
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = sentence
+Bond	VERB	unanimous
+across	ADP	unanimous
+each	DET	unanimous
+piano	NOUN	unanimous
+hinge	NOUN	unanimous
+with	ADP	unanimous
+shortest	ADJ	unanimous
+practicable	ADJ	unanimous
+jumper	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0118
+# source_id = coastguard-helicopter-rescue-swimmer-manual-us-coast-guard
+# text = Wave chemical light.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = wave
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Wave	VERB	unanimous
+chemical	ADJ	unanimous
+light	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0119
+# source_id = usfs-CAT76673543002
+# text = Attach crown cover photos to the form and identify trees by species as shown.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = attach
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Attach	VERB	unanimous
+crown	NOUN	unanimous
+cover	NOUN	unanimous
+photos	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+form	NOUN	unanimous
+and	CCONJ	unanimous
+identify	VERB	unanimous
+trees	NOUN	unanimous
+by	ADP	unanimous
+species	NOUN	unanimous
+as	SCONJ	unanimous
+shown	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0120
+# source_id = nasa-micro_IA41153763_0379
+# text = Experiment with different tongue lengths.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = experiment
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = sentence
+Experiment	VERB	unanimous
+with	ADP	unanimous
+different	ADJ	unanimous
+tongue	NOUN	unanimous
+lengths	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0121
+# source_id = epa-micro_IA41153512_0618
+# text = Inventory student reference texts.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = inventory
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Inventory	VERB	unanimous
+student	NOUN	unanimous
+reference	NOUN	unanimous
+texts	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0122
+# source_id = army-TBMED194
+# text = Spray mattresses, beds, and walls thoroughly.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = spray
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Spray	VERB	unanimous
+mattresses	NOUN	unanimous
+,	PUNCT	unanimous
+beds	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+walls	NOUN	unanimous
+thoroughly	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0123
+# source_id = nasa-20140013262
+# text = Code routines to provide the derivatives of the four subroutines referred to in Step
+# shape = step-line
+# role = target
+# target = 0
+# lemma = code
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Code	VERB	unanimous
+routines	NOUN	unanimous
+to	PART	unanimous
+provide	VERB	unanimous
+the	DET	unanimous
+derivatives	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+four	NUM	unanimous
+subroutines	NOUN	unanimous
+referred	VERB	unanimous
+to	ADP	unanimous
+in	ADP	unanimous
+Step	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0124
+# source_id = nasa-micro_IA41153763_0379
+# text = Research the development of airports.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = research
+# origin = real
+# kind = imperative
+# frame = det
+# unit = sentence
+Research	VERB	unanimous
+the	DET	unanimous
+development	NOUN	unanimous
+of	ADP	unanimous
+airports	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0125
+# source_id = epa-micro_IA41153512_0618
+# text = Inventory chemicals and laboratory equipment/supplies.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = inventory
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Inventory	VERB	unanimous
+chemicals	NOUN	unanimous
+and	CCONJ	unanimous
+laboratory	NOUN	unanimous
+equipment/supplies	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0126
+# source_id = doe-micro_IA41153407_0053
+# text = Count 124" west of 27'30" and mark a point on the map.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = count
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Count	VERB	unanimous
+124	NUM	unanimous
+"	SYM	unanimous
+west	ADV	unanimous
+of	ADP	unanimous
+27'30	NUM	unanimous
+"	SYM	unanimous
+and	CCONJ	unanimous
+mark	VERB	unanimous
+a	DET	unanimous
+point	NOUN	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+map	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0127
+# source_id = coastguard-helicopter-rescue-swimmer-manual-us-coast-guard
+# text = Don mask
+# shape = step-line
+# role = target
+# target = 0
+# lemma = don
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+Don	VERB	unanimous
+mask	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0128
+# source_id = epa-micro_IA41153648_0501
+# text = Mist surface or rag as you Clean.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = mist
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Mist	VERB	unanimous
+surface	NOUN	unanimous
+or	CCONJ	unanimous
+rag	NOUN	unanimous
+as	SCONJ	unanimous
+you	PRON	unanimous
+Clean	VERB	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0129
+# source_id = usfs-nfsl_2_354915
+# text = Select insect and disease control methods which will cause
+# shape = step-line
+# role = target
+# target = 0
+# lemma = select
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Select	VERB	unanimous
+insect	NOUN	unanimous
+and	CCONJ	unanimous
+disease	NOUN	unanimous
+control	NOUN	unanimous
+methods	NOUN	unanimous
+which	PRON	unanimous
+will	AUX	unanimous
+cause	VERB	unanimous
+
+# sent_id = shapes-dev-step-lines-0130
+# source_id = epa-micro_IA41153512_0618
+# text = Duplicate copies for each student of the two EMP data sheets.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = duplicate
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Duplicate	VERB	unanimous
+copies	NOUN	unanimous
+for	ADP	unanimous
+each	DET	unanimous
+student	NOUN	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+two	NUM	unanimous
+EMP	NOUN	unanimous
+data	NOUN	unanimous
+sheets	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0131
+# source_id = army-ost-military-engineering-tm5_626
+# text = Clear ditches every 1-2 years.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = clear
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Clear	VERB	unanimous
+ditches	NOUN	unanimous
+every	DET	unanimous
+1-2	NUM	unanimous
+years	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0132
+# source_id = usfs-CAT10508666
+# text = Construct 400 miles of firebreaks.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = construct
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Construct	VERB	unanimous
+400	NUM	unanimous
+miles	NOUN	unanimous
+of	ADP	unanimous
+firebreaks	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0133
+# source_id = nasa-nasa-reports_nas-1601441
+# text = Debug name and address tables
+# shape = step-line
+# role = target
+# target = 0
+# lemma = debug
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Debug	VERB	unanimous
+name	NOUN	unanimous
+and	CCONJ	unanimous
+address	NOUN	unanimous
+tables	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0134
+# source_id = nasa-19890005623
+# text = Note that this page is a sample of typesetting style and is not necessarily sensible writing.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = note
+# origin = real
+# kind = imperative
+# frame = det
+# unit = sentence
+Note	VERB	unanimous
+that	SCONJ	unanimous
+this	DET	unanimous
+page	NOUN	unanimous
+is	VERB	unanimous
+a	DET	unanimous
+sample	NOUN	unanimous
+of	ADP	unanimous
+typesetting	NOUN	unanimous
+style	NOUN	unanimous
+and	CCONJ	unanimous
+is	VERB	unanimous
+not	PART	unanimous
+necessarily	ADV	unanimous
+sensible	ADJ	unanimous
+writing	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0135
+# source_id = usfs-nfsl_2_354915
+# text = Base fire management programs on future needs and on past history.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = base
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Base	VERB	unanimous
+fire	NOUN	unanimous
+management	NOUN	unanimous
+programs	NOUN	unanimous
+on	ADP	unanimous
+future	ADJ	unanimous
+needs	NOUN	unanimous
+and	CCONJ	unanimous
+on	ADP	unanimous
+past	ADJ	unanimous
+history	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0136
+# source_id = nps-yellowstonenatio00nati
+# text = Grout frames to the concrete manhole section.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = grout
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Grout	VERB	unanimous
+frames	NOUN	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+concrete	NOUN	unanimous
+manhole	NOUN	unanimous
+section	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0137
+# source_id = army-ost-military-engineering-tm5_626
+# text = Increase stabilizer use.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = increase
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Increase	VERB	unanimous
+stabilizer	NOUN	unanimous
+use	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0138
+# source_id = epa-micro_IA41153648_0501
+# text = Review each of the reasons listed on the overhead.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = review
+# origin = real
+# kind = imperative
+# frame = det
+# unit = short
+Review	VERB	unanimous
+each	DET	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+reasons	NOUN	unanimous
+listed	VERB	unanimous
+on	ADP	unanimous
+the	DET	unanimous
+overhead	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0139
+# source_id = doe-micro_IA41153511_0622
+# text = Repeat above system analysis based on validated models and improved components.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = repeat
+# origin = real
+# kind = imperative
+# frame = prep
+# unit = sentence
+Repeat	VERB	unanimous
+above	ADJ	unanimous
+system	NOUN	unanimous
+analysis	NOUN	unanimous
+based	VERB	unanimous
+on	ADP	unanimous
+validated	ADJ	disputed
+models	NOUN	unanimous
+and	CCONJ	unanimous
+improved	ADJ	unanimous
+components	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0140
+# source_id = nasa-micro_IA41153763_0379
+# text = Smooth the edges of each part using sandpaper or an emery board.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = smooth
+# origin = real
+# kind = imperative
+# frame = det
+# unit = sentence
+Smooth	VERB	unanimous
+the	DET	unanimous
+edges	NOUN	unanimous
+of	ADP	unanimous
+each	DET	unanimous
+part	NOUN	unanimous
+using	VERB	unanimous
+sandpaper	NOUN	unanimous
+or	CCONJ	unanimous
+an	DET	unanimous
+emery	NOUN	unanimous
+board	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0141
+# source_id = usfs-nfsl_2_354915
+# text = Blend watershed restoration work into the natural setting.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = blend
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Blend	VERB	unanimous
+watershed	NOUN	unanimous
+restoration	NOUN	unanimous
+work	NOUN	unanimous
+into	ADP	unanimous
+the	DET	unanimous
+natural	ADJ	unanimous
+setting	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0142
+# source_id = nps-yellowstonenatio00nati
+# text = Store doors upright, in a protected dry area, at least 1 inch or more off the ground or floor and at least 1/4 inch between individual pieces.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = store
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Store	VERB	unanimous
+doors	NOUN	unanimous
+upright	ADV	disputed
+,	PUNCT	unanimous
+in	ADP	unanimous
+a	DET	unanimous
+protected	ADJ	unanimous
+dry	ADJ	unanimous
+area	NOUN	unanimous
+,	PUNCT	unanimous
+at	ADP	unanimous
+least	ADJ	unanimous
+1	NUM	unanimous
+inch	NOUN	unanimous
+or	CCONJ	unanimous
+more	ADJ	unanimous
+off	ADP	unanimous
+the	DET	unanimous
+ground	NOUN	unanimous
+or	CCONJ	unanimous
+floor	NOUN	unanimous
+and	CCONJ	unanimous
+at	ADP	unanimous
+least	ADJ	unanimous
+1/4	NUM	unanimous
+inch	NOUN	unanimous
+between	ADP	unanimous
+individual	ADJ	unanimous
+pieces	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0143
+# source_id = usfs-CAT10681048
+# text = Study printing authority and regulations.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = study
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Study	VERB	unanimous
+printing	NOUN	unanimous
+authority	NOUN	unanimous
+and	CCONJ	unanimous
+regulations	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0144
+# source_id = navy-ElectronicsInstallationAndMaintenanceBook
+# text = Disconnect plate bypass capacitor C6 and check continuity to ground with an ohmmeter, no continuity should exist and the resistance should be infinite.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = disconnect
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Disconnect	VERB	unanimous
+plate	NOUN	unanimous
+bypass	NOUN	unanimous
+capacitor	NOUN	unanimous
+C6	PROPN	unanimous
+and	CCONJ	unanimous
+check	VERB	unanimous
+continuity	NOUN	unanimous
+to	ADP	unanimous
+ground	NOUN	unanimous
+with	ADP	unanimous
+an	DET	unanimous
+ohmmeter	NOUN	unanimous
+,	PUNCT	unanimous
+no	DET	unanimous
+continuity	NOUN	unanimous
+should	AUX	unanimous
+exist	VERB	unanimous
+and	CCONJ	unanimous
+the	DET	unanimous
+resistance	NOUN	unanimous
+should	AUX	unanimous
+be	VERB	unanimous
+infinite	ADJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0145
+# source_id = doe-micro_IA41153407_0053
+# text = Pour 237 milliliters (one cup) of the hard water into one of the glass bottles.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = pour
+# origin = real
+# kind = imperative
+# frame = num
+# unit = sentence
+Pour	VERB	unanimous
+237	NUM	unanimous
+milliliters	NOUN	unanimous
+(	PUNCT	unanimous
+one	NUM	unanimous
+cup	NOUN	unanimous
+)	PUNCT	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+hard	ADJ	unanimous
+water	NOUN	unanimous
+into	ADP	unanimous
+one	NUM	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+glass	NOUN	unanimous
+bottles	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0146
+# source_id = usfs-CAT10681048
+# text = Study regulation on Government checks.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = study
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Study	VERB	unanimous
+regulation	NOUN	unanimous
+on	ADP	unanimous
+Government	NOUN	unanimous
+checks	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0147
+# source_id = navy-ColdWeatherMedicine1978
+# text = Dress bleeding, open wounds immediately.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = dress
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Dress	VERB	unanimous
+bleeding	VERB	unanimous
+,	PUNCT	unanimous
+open	ADJ	unanimous
+wounds	NOUN	unanimous
+immediately	ADV	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0148
+# source_id = usfs-nfsl_2_354915
+# text = Safeguard water, people, animals, and property in connection with use of pollutants.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = safeguard
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Safeguard	VERB	unanimous
+water	NOUN	unanimous
+,	PUNCT	unanimous
+people	NOUN	unanimous
+,	PUNCT	unanimous
+animals	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+property	NOUN	unanimous
+in	ADP	unanimous
+connection	NOUN	unanimous
+with	ADP	unanimous
+use	NOUN	unanimous
+of	ADP	unanimous
+pollutants	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0149
+# source_id = navy-AviationStructuralMechanicHandbook10328
+# text = Clean tube thoroughly to remove filings and burrs.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = clean
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Clean	VERB	unanimous
+tube	NOUN	unanimous
+thoroughly	ADV	unanimous
+to	PART	unanimous
+remove	VERB	unanimous
+filings	NOUN	unanimous
+and	CCONJ	unanimous
+burrs	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0150
+# source_id = epa-micro_IA41153512_0621
+# text = Turn 100% T knob to adjust
+# shape = step-line
+# role = target
+# target = 0
+# lemma = turn
+# origin = real
+# kind = imperative
+# frame = num
+# unit = bulleted
+Turn	VERB	unanimous
+100	NUM	unanimous
+%	SYM	unanimous
+T	NOUN	unanimous
+knob	NOUN	unanimous
+to	PART	unanimous
+adjust	VERB	unanimous
+
+# sent_id = shapes-dev-step-lines-0151
+# source_id = epa-micro_IA41153512_0618
+# text = Request training aids from lending sources.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = request
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Request	VERB	unanimous
+training	NOUN	unanimous
+aids	NOUN	unanimous
+from	ADP	unanimous
+lending	NOUN	unanimous
+sources	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0152
+# source_id = navy-micro_IA41152921_0949
+# text = State the rule pertaining to the direction of magnetic flux lines.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = state
+# origin = real
+# kind = imperative
+# frame = det
+# unit = enumerated
+State	VERB	unanimous
+the	DET	unanimous
+rule	NOUN	unanimous
+pertaining	VERB	unanimous
+to	ADP	unanimous
+the	DET	unanimous
+direction	NOUN	unanimous
+of	ADP	unanimous
+magnetic	ADJ	unanimous
+flux	NOUN	unanimous
+lines	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0153
+# source_id = usfs-CAT10681048
+# text = Study collection instructions.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = study
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Study	VERB	unanimous
+collection	NOUN	unanimous
+instructions	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0154
+# source_id = epa-micro_IA41153512_0621
+# text = Position memory to OFF if .
+# shape = step-line
+# role = target
+# target = 0
+# lemma = position
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = bulleted
+Position	VERB	unanimous
+memory	NOUN	unanimous
+to	ADP	unanimous
+OFF	NOUN	unanimous
+if	SCONJ	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0155
+# source_id = nasa-micro_IA41153307_0985
+# text = Assign crew positions.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = assign
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Assign	VERB	unanimous
+crew	NOUN	unanimous
+positions	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0156
+# source_id = nbs-micro_IA41153056_0773
+# text = State the functions required of the software in quantitative and qualitative terms, and how these functions will satisfy the performance objectives.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = state
+# origin = real
+# kind = imperative
+# frame = det
+# unit = sentence
+State	VERB	unanimous
+the	DET	unanimous
+functions	NOUN	unanimous
+required	VERB	unanimous
+of	ADP	unanimous
+the	DET	unanimous
+software	NOUN	unanimous
+in	ADP	unanimous
+quantitative	ADJ	unanimous
+and	CCONJ	unanimous
+qualitative	ADJ	unanimous
+terms	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+how	ADV	unanimous
+these	DET	unanimous
+functions	NOUN	unanimous
+will	AUX	unanimous
+satisfy	VERB	unanimous
+the	DET	unanimous
+performance	NOUN	unanimous
+objectives	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0157
+# source_id = epa-micro_IA41153512_0618
+# text = Stress importance of flow rate.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = stress
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Stress	VERB	unanimous
+importance	NOUN	unanimous
+of	ADP	unanimous
+flow	NOUN	unanimous
+rate	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0158
+# source_id = doe-micro_IA41153511_0622
+# text = Select techniques for development from among those found most promising in preliminary studies.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = select
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Select	VERB	unanimous
+techniques	NOUN	unanimous
+for	ADP	unanimous
+development	NOUN	unanimous
+from	ADP	unanimous
+among	ADP	unanimous
+those	PRON	unanimous
+found	VERB	unanimous
+most	ADV	unanimous
+promising	ADJ	unanimous
+in	ADP	unanimous
+preliminary	ADJ	unanimous
+studies	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0159
+# source_id = epa-micro_IA41153648_0501
+# text = Tap bolt to mark where you want to drill holes for bolt.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = tap
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Tap	VERB	unanimous
+bolt	NOUN	unanimous
+to	PART	unanimous
+mark	VERB	unanimous
+where	ADV	unanimous
+you	PRON	unanimous
+want	VERB	unanimous
+to	PART	unanimous
+drill	VERB	unanimous
+holes	NOUN	unanimous
+for	ADP	unanimous
+bolt	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0160
+# source_id = doe-micro_IA41153526_0609
+# text = Insert ceiling area (normally same as floor area on page 2).
+# shape = step-line
+# role = target
+# target = 0
+# lemma = insert
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Insert	VERB	unanimous
+ceiling	NOUN	unanimous
+area	NOUN	unanimous
+(	PUNCT	unanimous
+normally	ADV	unanimous
+same	ADJ	unanimous
+as	ADP	unanimous
+floor	NOUN	unanimous
+area	NOUN	unanimous
+on	ADP	unanimous
+page	NOUN	unanimous
+2	NUM	unanimous
+)	PUNCT	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0161
+# source_id = nasa-micro_IA41153763_0379
+# text = Research the history of your local airport.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = research
+# origin = real
+# kind = imperative
+# frame = det
+# unit = short
+Research	VERB	unanimous
+the	DET	unanimous
+history	NOUN	unanimous
+of	ADP	unanimous
+your	DET	unanimous
+local	ADJ	unanimous
+airport	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0162
+# source_id = epa-micro_IA41153537_0722
+# text = Reuse bags. containers, and other items.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = reuse
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Reuse	VERB	unanimous
+bags	NOUN	unanimous
+.	PUNCT	unanimous
+containers	NOUN	unanimous
+,	PUNCT	unanimous
+and	CCONJ	unanimous
+other	ADJ	unanimous
+items	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0163
+# source_id = usfs-nfsl_2_354915
+# text = Plan conversion projects to break up continuous fuel types to lessen the hazards in areas of significant value and high fire risk.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = plan
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Plan	VERB	unanimous
+conversion	NOUN	unanimous
+projects	NOUN	unanimous
+to	PART	unanimous
+break	VERB	unanimous
+up	ADV	unanimous
+continuous	ADJ	unanimous
+fuel	NOUN	unanimous
+types	NOUN	unanimous
+to	PART	unanimous
+lessen	VERB	unanimous
+the	DET	unanimous
+hazards	NOUN	unanimous
+in	ADP	unanimous
+areas	NOUN	unanimous
+of	ADP	unanimous
+significant	ADJ	unanimous
+value	NOUN	unanimous
+and	CCONJ	unanimous
+high	ADJ	unanimous
+fire	NOUN	unanimous
+risk	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0164
+# source_id = epa-arsenictreatment00unit
+# text = Change electrode cells every five years.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = change
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = sentence
+Change	VERB	unanimous
+electrode	NOUN	unanimous
+cells	NOUN	unanimous
+every	DET	unanimous
+five	NUM	unanimous
+years	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0165
+# source_id = navy-ColdWeatherMedicine1978
+# text = Force fluids
+# shape = step-line
+# role = target
+# target = 0
+# lemma = force
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = enumerated
+Force	VERB	unanimous
+fluids	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0166
+# source_id = usfs-nfsl_2_354915
+# text = Rotate use of campsites used by commercial outfitter.
+# shape = step-line
+# role = target
+# target = 0
+# lemma = rotate
+# origin = real
+# kind = imperative
+# frame = bare
+# unit = short
+Rotate	VERB	unanimous
+use	NOUN	unanimous
+of	ADP	unanimous
+campsites	NOUN	unanimous
+used	VERB	unanimous
+by	ADP	unanimous
+commercial	ADJ	unanimous
+outfitter	NOUN	unanimous
+.	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0167
+# source_id = nasa-20200002021
+# text = Surface temperature
+# shape = step-line
+# role = control
+# target = 0
+# lemma = surface
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Surface	NOUN	unanimous
+temperature	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0168
+# source_id = nasa-19690004676
+# text = Reference stable slope
+# shape = step-line
+# role = control
+# target = 0
+# lemma = reference
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Reference	NOUN	unanimous
+stable	ADJ	unanimous
+slope	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0169
+# source_id = nasa-20000014311
+# text = Load Converters
+# shape = step-line
+# role = control
+# target = 0
+# lemma = load
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Load	NOUN	unanimous
+Converters	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0170
+# source_id = nasa-19850023834
+# text = Strain gages were not oriented
+# shape = step-line
+# role = control
+# target = 0
+# lemma = strain
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Strain	NOUN	unanimous
+gages	NOUN	unanimous
+were	AUX	unanimous
+not	PART	unanimous
+oriented	VERB	unanimous
+
+# sent_id = shapes-dev-step-lines-0171
+# source_id = navy-AviationStructuralMechanicHandbook10328
+# text = Metal thickness
+# shape = step-line
+# role = control
+# target = 0
+# lemma = metal
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Metal	NOUN	unanimous
+thickness	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0172
+# source_id = nasa-19700015799
+# text = Probe Length
+# shape = step-line
+# role = control
+# target = 0
+# lemma = probe
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Probe	NOUN	unanimous
+Length	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0173
+# source_id = doe-sitecharacteriza11usde
+# text = Rock storage area
+# shape = step-line
+# role = control
+# target = 0
+# lemma = rock
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Rock	NOUN	unanimous
+storage	NOUN	unanimous
+area	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0174
+# source_id = nasa-micro_IA41153307_0985
+# text = Streak Sheet Test
+# shape = step-line
+# role = control
+# target = 0
+# lemma = streak
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Streak	NOUN	unanimous
+Sheet	NOUN	unanimous
+Test	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0175
+# source_id = epa-arsenictreatment00unit
+# text = Backwash Effluent
+# shape = step-line
+# role = control
+# target = 0
+# lemma = backwash
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Backwash	NOUN	unanimous
+Effluent	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0176
+# source_id = nps-oilgasleasingoil8974unit
+# text = Assistant Director - Associate Director
+# shape = step-line
+# role = control
+# target = 0
+# lemma = assistant
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Assistant	NOUN	unanimous
+Director	NOUN	unanimous
+-	PUNCT	unanimous
+Associate	ADJ	unanimous
+Director	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0177
+# source_id = nasa-19820025144
+# text = Gain integer
+# shape = step-line
+# role = control
+# target = 0
+# lemma = gain
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Gain	NOUN	unanimous
+integer	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0178
+# source_id = navy-ElectronicsInstallationAndMaintenanceBook
+# text = Crystal Equivalent Circuit
+# shape = step-line
+# role = control
+# target = 0
+# lemma = crystal
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Crystal	NOUN	unanimous
+Equivalent	ADJ	unanimous
+Circuit	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0179
+# source_id = usfs-nfsl_2_242376
+# text = Soils Texture Depth Parent Material
+# shape = step-line
+# role = control
+# target = 0
+# lemma = soil
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Soils	NOUN	unanimous
+Texture	NOUN	unanimous
+Depth	NOUN	unanimous
+Parent	NOUN	unanimous
+Material	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0180
+# source_id = nasa-20070035891
+# text = Mass Flow Rate
+# shape = step-line
+# role = control
+# target = 0
+# lemma = mass
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Mass	NOUN	unanimous
+Flow	NOUN	unanimous
+Rate	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0181
+# source_id = nbs-micro_IA41152924_0041
+# text = Code Audit
+# shape = step-line
+# role = control
+# target = 0
+# lemma = code
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Code	NOUN	unanimous
+Audit	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0182
+# source_id = nps-wildhorseburroav00unit
+# text = Ping Pong Ball
+# shape = step-line
+# role = control
+# target = 0
+# lemma = ping
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Ping	NOUN	unanimous
+Pong	NOUN	unanimous
+Ball	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0183
+# source_id = nasa-19720015808
+# text = Engineering Data Electronics Module
+# shape = step-line
+# role = control
+# target = 0
+# lemma = engineering
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Engineering	NOUN	unanimous
+Data	NOUN	unanimous
+Electronics	NOUN	unanimous
+Module	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0184
+# source_id = army-ost-military-engineering-tm5_686
+# text = Oil testing
+# shape = step-line
+# role = control
+# target = 0
+# lemma = oil
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Oil	NOUN	unanimous
+testing	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0185
+# source_id = nasa-19930018062
+# text = Fuel Press
+# shape = step-line
+# role = control
+# target = 0
+# lemma = fuel
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Fuel	NOUN	unanimous
+Press	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0186
+# source_id = army-ost-military-engineering-tm5_698_2
+# text = Motor Control Centers
+# shape = step-line
+# role = control
+# target = 0
+# lemma = motor
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Motor	NOUN	unanimous
+Control	NOUN	unanimous
+Centers	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0187
+# source_id = doe-micro_IA41153407_0053
+# text = Mineral Formula Anion
+# shape = step-line
+# role = control
+# target = 0
+# lemma = mineral
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Mineral	NOUN	unanimous
+Formula	NOUN	unanimous
+Anion	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0188
+# source_id = usgs-ds975
+# text = Point Id
+# shape = step-line
+# role = control
+# target = 0
+# lemma = point
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Point	NOUN	unanimous
+Id	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0189
+# source_id = nasa-20000025259
+# text = Figure Information
+# shape = step-line
+# role = control
+# target = 0
+# lemma = figure
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Figure	NOUN	unanimous
+Information	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0190
+# source_id = nasa-48011357STS1OrbiterFinalMissionReport
+# text = Mission phase
+# shape = step-line
+# role = control
+# target = 0
+# lemma = mission
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Mission	NOUN	unanimous
+phase	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0191
+# source_id = army-ost-military-engineering-tm5_698_2
+# text = Engineering drawings
+# shape = step-line
+# role = control
+# target = 0
+# lemma = engineering
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Engineering	NOUN	unanimous
+drawings	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0192
+# source_id = nasa-20080013239
+# text = Terminal Wire Rope Clevis End
+# shape = step-line
+# role = control
+# target = 0
+# lemma = terminal
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Terminal	NOUN	unanimous
+Wire	NOUN	unanimous
+Rope	NOUN	unanimous
+Clevis	NOUN	unanimous
+End	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0193
+# source_id = nasa-nasa-reports_nas-1263279
+# text = Block Variables Description
+# shape = step-line
+# role = control
+# target = 0
+# lemma = block
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Block	NOUN	unanimous
+Variables	NOUN	unanimous
+Description	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0194
+# source_id = nasa-19900014022
+# text = World Aircraft
+# shape = step-line
+# role = control
+# target = 0
+# lemma = world
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+World	NOUN	unanimous
+Aircraft	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0195
+# source_id = epa-micro_IA41153512_0621
+# text = Time Absorbances Read
+# shape = step-line
+# role = control
+# target = 0
+# lemma = time
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Time	NOUN	unanimous
+Absorbances	NOUN	unanimous
+Read	VERB	unanimous
+
+# sent_id = shapes-dev-step-lines-0196
+# source_id = nasa-micro_IA41153307_0985
+# text = Nose cone
+# shape = step-line
+# role = control
+# target = 0
+# lemma = nose
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Nose	NOUN	unanimous
+cone	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0197
+# source_id = epa-micro_IA41159419_0287
+# text = Remark Code Definition
+# shape = step-line
+# role = control
+# target = 0
+# lemma = remark
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Remark	NOUN	unanimous
+Code	NOUN	unanimous
+Definition	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0198
+# source_id = usgs-sir20195036
+# text = Water Mover
+# shape = step-line
+# role = control
+# target = 0
+# lemma = water
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Water	NOUN	unanimous
+Mover	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0199
+# source_id = usgs-sir20105090Z
+# text = Host rocks
+# shape = step-line
+# role = control
+# target = 0
+# lemma = host
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Host	NOUN	unanimous
+rocks	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0200
+# source_id = nasa-19940032824
+# text = Project information
+# shape = step-line
+# role = control
+# target = 0
+# lemma = project
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Project	NOUN	unanimous
+information	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0201
+# source_id = doe-sitecharacteriza11usde
+# text = Flow System
+# shape = step-line
+# role = control
+# target = 0
+# lemma = flow
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Flow	NOUN	unanimous
+System	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0202
+# source_id = phs-micro_IA41153550_0930
+# text = Funding Streams
+# shape = step-line
+# role = control
+# target = 0
+# lemma = funding
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Funding	NOUN	unanimous
+Streams	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0203
+# source_id = navy-naval-medical-center-portsmouth-charette-health-care-center-25th-anniversary-april-30-2024-program
+# text = Cake Cutting
+# shape = step-line
+# role = control
+# target = 0
+# lemma = cake
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Cake	NOUN	unanimous
+Cutting	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0204
+# source_id = nasa-19930089609
+# text = Combustion zone
+# shape = step-line
+# role = control
+# target = 0
+# lemma = combustion
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Combustion	NOUN	unanimous
+zone	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0205
+# source_id = nasa-19740023304
+# text = Wing simulator
+# shape = step-line
+# role = control
+# target = 0
+# lemma = wing
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Wing	NOUN	unanimous
+simulator	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0206
+# source_id = doe-micro_IA41153634_0807
+# text = Disk Array
+# shape = step-line
+# role = control
+# target = 0
+# lemma = disk
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Disk	NOUN	unanimous
+Array	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0207
+# source_id = nasa-19660030245
+# text = Lead wires
+# shape = step-line
+# role = control
+# target = 0
+# lemma = lead
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Lead	NOUN	unanimous
+wires	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0208
+# source_id = army-ost-military-engineering-tm5_623
+# text = Branch Number
+# shape = step-line
+# role = control
+# target = 0
+# lemma = branch
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Branch	NOUN	unanimous
+Number	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0209
+# source_id = nasa-19750014206
+# text = Swivel joint
+# shape = step-line
+# role = control
+# target = 0
+# lemma = swivel
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Swivel	NOUN	unanimous
+joint	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0210
+# source_id = epa-micro_IA41153562_0970
+# text = School Recycling
+# shape = step-line
+# role = control
+# target = 0
+# lemma = school
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+School	NOUN	unanimous
+Recycling	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0211
+# source_id = nasa-19690001402
+# text = Wing reference plane
+# shape = step-line
+# role = control
+# target = 0
+# lemma = wing
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Wing	NOUN	unanimous
+reference	NOUN	unanimous
+plane	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0212
+# source_id = nasa-19800023763
+# text = Task Activity Element (TAE)
+# shape = step-line
+# role = control
+# target = 0
+# lemma = task
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Task	NOUN	unanimous
+Activity	NOUN	unanimous
+Element	NOUN	unanimous
+(	PUNCT	unanimous
+TAE	NOUN	unanimous
+)	PUNCT	unanimous
+
+# sent_id = shapes-dev-step-lines-0213
+# source_id = navy-micro_IA41152921_0946
+# text = Progress Check Six-IV
+# shape = step-line
+# role = control
+# target = 0
+# lemma = progress
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Progress	NOUN	unanimous
+Check	NOUN	unanimous
+Six-IV	PROPN	unanimous
+
+# sent_id = shapes-dev-step-lines-0214
+# source_id = army-ost-military-engineering-tm5_623
+# text = Sample Units
+# shape = step-line
+# role = control
+# target = 0
+# lemma = sample
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Sample	NOUN	unanimous
+Units	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0215
+# source_id = epa-micro_IA41153512_0618
+# text = Sample Collector Tom Sampler
+# shape = step-line
+# role = control
+# target = 0
+# lemma = sample
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Sample	NOUN	unanimous
+Collector	NOUN	unanimous
+Tom	PROPN	unanimous
+Sampler	NOUN	disputed
+
+# sent_id = shapes-dev-step-lines-0216
+# source_id = doe-sitecharacteriza11usde
+# text = Metal Designators
+# shape = step-line
+# role = control
+# target = 0
+# lemma = metal
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Metal	NOUN	unanimous
+Designators	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0217
+# source_id = epa-micro_IA41159419_0287
+# text = Site emergency procedures
+# shape = step-line
+# role = control
+# target = 0
+# lemma = site
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Site	NOUN	unanimous
+emergency	NOUN	unanimous
+procedures	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0218
+# source_id = usgs-ofr20161086
+# text = Solute Retardation
+# shape = step-line
+# role = control
+# target = 0
+# lemma = solute
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Solute	NOUN	unanimous
+Retardation	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0219
+# source_id = nasa-19700015799
+# text = Bulk Memory Unit
+# shape = step-line
+# role = control
+# target = 0
+# lemma = bulk
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Bulk	NOUN	unanimous
+Memory	NOUN	unanimous
+Unit	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0220
+# source_id = usgs-tm2D4
+# text = Meter Orientation
+# shape = step-line
+# role = control
+# target = 0
+# lemma = meter
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Meter	NOUN	unanimous
+Orientation	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0221
+# source_id = usgs-sir20045108
+# text = Blood plasma
+# shape = step-line
+# role = control
+# target = 0
+# lemma = blood
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Blood	NOUN	unanimous
+plasma	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0222
+# source_id = nps-wildhorseburroav00unit
+# text = Animal Electronic Tracking
+# shape = step-line
+# role = control
+# target = 0
+# lemma = animal
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Animal	NOUN	unanimous
+Electronic	ADJ	unanimous
+Tracking	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0223
+# source_id = nps-yellowstonenatio00nati
+# text = Aluminum Handrails
+# shape = step-line
+# role = control
+# target = 0
+# lemma = aluminum
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Aluminum	NOUN	unanimous
+Handrails	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0224
+# source_id = army-FM19-25
+# text = Panel length
+# shape = step-line
+# role = control
+# target = 0
+# lemma = panel
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Panel	NOUN	unanimous
+length	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0225
+# source_id = army-ost-military-engineering-tm5_662
+# text = Leak Procedure
+# shape = step-line
+# role = control
+# target = 0
+# lemma = leak
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Leak	NOUN	unanimous
+Procedure	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0226
+# source_id = epa-micro_IA41153648_0501
+# text = Curb edge of protective
+# shape = step-line
+# role = control
+# target = 0
+# lemma = curb
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Curb	NOUN	unanimous
+edge	NOUN	unanimous
+of	ADP	unanimous
+protective	ADJ	unanimous
+
+# sent_id = shapes-dev-step-lines-0227
+# source_id = nasa-19810065590
+# text = Inlet capture area
+# shape = step-line
+# role = control
+# target = 0
+# lemma = inlet
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Inlet	NOUN	unanimous
+capture	NOUN	unanimous
+area	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0228
+# source_id = doe-micro_IA41153634_0807
+# text = Operating System Research and Related
+# shape = step-line
+# role = control
+# target = 0
+# lemma = operating
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Operating	NOUN	unanimous
+System	NOUN	unanimous
+Research	NOUN	unanimous
+and	CCONJ	unanimous
+Related	ADJ	unanimous
+
+# sent_id = shapes-dev-step-lines-0229
+# source_id = nasa-20070011635
+# text = Flight Management System
+# shape = step-line
+# role = control
+# target = 0
+# lemma = flight
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Flight	NOUN	unanimous
+Management	NOUN	unanimous
+System	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0230
+# source_id = nasa-19700015799
+# text = Mission time
+# shape = step-line
+# role = control
+# target = 0
+# lemma = mission
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Mission	NOUN	unanimous
+time	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0231
+# source_id = navy-micro_IA41152921_0950
+# text = Study Resources Three-IV
+# shape = step-line
+# role = control
+# target = 0
+# lemma = study
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Study	NOUN	unanimous
+Resources	NOUN	unanimous
+Three-IV	NUM	unanimous
+
+# sent_id = shapes-dev-step-lines-0232
+# source_id = nasa-19700015799
+# text = Docking Phase
+# shape = step-line
+# role = control
+# target = 0
+# lemma = docking
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Docking	NOUN	unanimous
+Phase	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0233
+# source_id = noaa-naosnorthamerica00unit
+# text = Baseline inventory and technology assessment
+# shape = step-line
+# role = control
+# target = 0
+# lemma = baseline
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Baseline	NOUN	unanimous
+inventory	NOUN	unanimous
+and	CCONJ	unanimous
+technology	NOUN	unanimous
+assessment	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0234
+# source_id = usfs-nfsl_2_354915
+# text = Water Influence Zone
+# shape = step-line
+# role = control
+# target = 0
+# lemma = water
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Water	NOUN	unanimous
+Influence	NOUN	unanimous
+Zone	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0235
+# source_id = navy-ElectronicsInstallationAndMaintenanceBook
+# text = Bootstrap Sweep Generator
+# shape = step-line
+# role = control
+# target = 0
+# lemma = bootstrap
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Bootstrap	NOUN	unanimous
+Sweep	NOUN	unanimous
+Generator	NOUN	unanimous
+
+# sent_id = shapes-dev-step-lines-0236
+# source_id = nasa-20090006964
+# text = Project Lead
+# shape = step-line
+# role = control
+# target = 0
+# lemma = project
+# origin = real
+# kind = noun
+# frame = caption
+# unit = short
+Project	NOUN	unanimous
+Lead	NOUN	unanimous
