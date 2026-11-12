@@ -18,7 +18,7 @@ frozen labeler template, partition key, caps, hand-check helpers and the data to
        training     `clauses`          data/technical/clauses*.tsv                strata main | sub, contrast strata noun | adj
 
 No model of this project is used: the tool never calls a tagger, reads no weights and no prediction, and a data test scans its source for that. The only non-frame
-input is the Basic mass of the WordSense library (the pinned `hmm.tsv`), for the development band of S1, S3 and S4, as in PR #18 and #20. Frames are position and lexicon
+input is the Basic mass of the WordSense library (the pinned `hmm.tsv`), for the development band of S1, S3 and S4 (S4 without an upper bound: amendment A1, rule item 5), as in PR #18 and #20. Frames are position and lexicon
 only (technical_frames.py, which holds the definition of every frame). The blind labeling is done by the frozen commands of shapes_dev.py (`export`, `check-batches`,
 `validate-output`, `status`, `decide` with `--round`); `decide` adds one report row per technical shape that is present.
 
@@ -48,7 +48,12 @@ RUN-LOG.md, section "beta.3 phase 1: pre-registered rule (before any fetch)")
    (and the verb control frames); S2 proper, adj, noun; S3 noun (caption control), imperative; S4 adj, noun (controls), sub, main. The judged word is the candidate token.
 5. Candidates (seeded order `rank_of(20261110, ...)`; the product and the stratum are in the label and in the candidate id prefix, for example `dh-pred-c00001`). Development targets
    of S1, S3 and S4 lie in the contested band 0.10 <= q < 0.97 of the pinned WordSense Basic mass (class Noun for S1, Verb for S3 and S4), q ascending, hardest first; S2, all
-   controls and all training candidates use no band. Candidate budgets (None = every candidate that the caps allow): development S1 pred None, num None, ing 450, other 200, verb controls 160
+   controls and all training candidates use no band.
+   AMENDMENT A1 (before any label other than the S2 pilot; an implementing-agent decision, not the owner's): for the S4 development targets ONLY the band has no upper bound
+   (0.10 <= q; `in_band`, `LOWER_BOUND_ONLY`), because the upper bound kept 78 of 1,034 frame hits (the verb frame after a plural subject is mostly easy for the Basic model). The
+   candidates stay in q-ascending order, hardest first, so the contested cases still come first and the budgets and caps decide how many easier ones follow. S1 and S3 keep
+   0.10 <= q < 0.97. The counts that motivated it (`bands`, counts only) are in the RUN-LOG.
+   Candidate budgets (None = every candidate that the caps allow): development S1 pred None, num None, ing 450, other 200, verb controls 160
    (first round, for the lemmas of the target candidates) and 30 (round dvhc); S2 noun 520, adj 260, proper 110 and 30 (dtmc), the right-cue, document-type and left-cue tiers T1 to T3 before
    T4, T4 at most 20 percent of a stratum; S3 imperative 480, noun 110 and 30 (stpc); S4 main 600, sub 200, noun 110, adj 60 and 40 + 20 (clvc). Training (lean volume, decision O5):
    S1 1,200 (pred 300, num 250, ing 350, other 150, verb 150), S2 2,000 (noun 1,300, adj 450, proper 250), S3 1,500 (imperative 1,100, noun 400), S4 1,000 (main 500, sub 250, noun 150, adj 100).
@@ -90,6 +95,7 @@ Commands (`--data-dir D` replaces the repository's data folder, for tests; --ext
   python tools/data/technical_data.py --work W steps                                     # step units of every document
   python tools/data/technical_data.py --work W tokenize [--cmd COMMAND]
   python tools/data/technical_data.py --work W preflight [--extra-table PATH ...] [--extra-text DIR ...] [--no-ud]       # counts only
+  python tools/data/technical_data.py --work W bands [--extra-table PATH ...] [--extra-text DIR ...] [--no-ud]           # counts only: S1, S3, S4 development target hits by band of q
   python tools/data/technical_data.py --work W pilot [--documents FILE] [--extra-table PATH ...] [--no-ud]               # round dtm-pilot (S2 only)
   python tools/data/technical_data.py --work W pilot-result                              # the S2 gate; exit 1 = S2 stops (the other products go on)
   python tools/data/technical_data.py --work W candidates --product P [--round dvhc|dtmc|stpc|clvc] [--extra-table PATH ...] [--no-ud]
@@ -153,6 +159,19 @@ EXPECTED_TAGS = {"deverbal": {"pred": NOUN_TAGS, "num": NOUN_TAGS, "ing": NOUN_T
 STRATUM_LABEL = {"steps": {"noun": "noun-initial"}}                               # the name of a kind in the `# stratum` line of a TRAINING source
 LABELED_UNITS = ("enumerated", "bulleted")                                        # step units that carry a label (an imperative context)
 BANDED = {"deverbal-heads": "Noun", "step-lines": "Verb", "clause-verbs": "Verb"}   # the development products with the Basic band, and the class of the mass
+LOWER_BOUND_ONLY = ("clause-verbs",)        # AMENDMENT A1: the development band of these products has the lower bound 0.10 only (no upper bound); S1 and S3 keep 0.10 <= q < 0.97
+Q_BAND_EDGES = (sx.BAND_MIN, 0.50, 0.90, sx.BAND_MAX, 0.995)                       # the counting bands of `bands`: below 0.10, [0.10, 0.50), [0.50, 0.90), [0.90, 0.97), [0.97, 0.995), 0.995 and more
+Q_BAND_LABELS = ("<0.10", "0.10-0.50", "0.50-0.90", "0.90-0.97", "0.97-0.995", ">=0.995")
+
+
+def in_band(product, q):
+    """True when the Basic mass `q` of a development target of `product` is eligible (rule 5): 0.10 <= q < 0.97, and for the products of LOWER_BOUND_ONLY (amendment A1) 0.10 <= q."""
+    return sx.BAND_MIN <= q and (product in LOWER_BOUND_ONLY or q < sx.BAND_MAX)
+
+
+def q_band(q):
+    """The index (into Q_BAND_LABELS) of the counting band of a mass `q` (counts only; the bands do not decide anything)."""
+    return sum(1 for edge in Q_BAND_EDGES if q >= edge)
 
 # ---- rounds, candidate ids
 PILOT_ROUND = "dtm-pilot"
@@ -216,12 +235,14 @@ def kind_of_label(product, label):
 
 
 # ---- pins of the inputs (set by the R1 commit; `require_pins` refuses candidate and pilot commands unless every pinned input still has these bytes)
-# R0 (the pre-registered rule, before any fetch) had no pin set. R1 freezes the sources-draft.tsv of the sourced documents (451 documents), its tokens.tsv (373,490 units, with the step units),
+# R0 (the pre-registered rule, before any fetch) had no pin set. R1 froze the sources-draft.tsv of the sourced documents (451 documents), its tokens.tsv (373,490 units, with the step units),
 # the pinned WordSense Basic mass (`hmm.tsv`, WordSense commit 6530de19..., DLL b96e0055..., made by tools/data/hmm-tags from tokens.tsv: 357,270 tagged sentences) and data/CONVENTIONS.md
 # as the labelers read it (the section "Capitalized Defined Terms" of the commit 67d7dc2); the convention file must not change after the pin.
-DRAFT_SHA256 = "c03a39752703408ee6daeb6d685fc97a3d1efe2504462f7f4ceb25f3f0af5792"
-TOKENS_SHA256 = "aebca046f9da537c147be78020f74d0664ec53c78156293cc54170fab251f87e"
-HMM_SHA256 = "71fa239d4f15b7b367a83203e77d7ff501055f85da7aca46b5d8ac41da8b7600"
+# R1 pins (commit 68fd57c): DRAFT c03a3975..., TOKENS aebca046..., HMM 71fa239d... . The commit C6 (amendment A1 and the DEV top-up of 121 documents) re-froze the three inputs below before any
+# label other than the S2 pilot: 572 documents (the 451 old rows and texts byte-identical, 121 DEV documents appended), 459,396 units, 439,507 tagged sentences; CONVENTIONS_SHA256 is unchanged.
+DRAFT_SHA256 = "b48d463364275182f4e704625d069b9c9ef06f48ca068405925c06ab0be142ae"
+TOKENS_SHA256 = "dfe0ba191496d53727c1dcea8d2d5e0841a7885a4ad9c489e7f8b81f6f7ef4aa"
+HMM_SHA256 = "43432b1a2522bf6e85b7a6e380dfaa4d94a5b26a066e94fa0b8c127c9bf602f7"
 CONVENTIONS_SHA256 = "42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2"
 
 # ---- partition
@@ -532,7 +553,7 @@ def _row(product, kind, hit, source_id, number, text, tokens, unit="sentence"):
 def build_pool(scan, product, lex, seed, hmm=None, exclude_keys=frozenset(), step_kinds=None, kinds=None, label=None):
     """({kind: [(rank, row)]}, Counter of frame counts, Counter of drops): one candidate per sentence, the rarest kind of PRIORITY that is wanted takes it.
 
-    Development targets of the banded products (S1, S3, S4) must lie in the band of `hmm` and are ranked by q ascending; S2 candidates rank T1 to T3 before T4; everything
+    Development targets of the banded products (S1, S3, S4) must lie in the band of `hmm` (`in_band`: 0.10 <= q < 0.97; S4 0.10 <= q, amendment A1) and are ranked by q ascending; S2 candidates rank T1 to T3 before T4; everything
     else is in the seeded order. `exclude_keys` are the sentences of earlier rounds. The verb control frames of S1 are not here (`verb_control_pool`)."""
     group, band = GROUP[product], BANDED.get(product)
     label = label or product
@@ -555,7 +576,7 @@ def build_pool(scan, product, lex, seed, hmm=None, exclude_keys=frozenset(), ste
             row["q"], rank = "", (0, shapes_dev.rank_of(seed, "control", label, kind, key))
         elif band is not None:
             q = hmm.q(tokens, hit.index, band)
-            if not sx.BAND_MIN <= q < sx.BAND_MAX:
+            if not in_band(product, q):
                 continue
             stats["band"] += 1
             row["q"], rank = shapes_dev.format_q(q), sx.rank_key(seed, label, key, q)
@@ -667,13 +688,30 @@ def candidate_rows(scan, product, lex, seed=SEED, hmm=None, old_counts=None, pri
                   pools={k: len(v) for k, v in pool.items()}, lemmas=len({r["lemma"] for r in rows}), documents=len({r["source_id"] for r in rows}), drops=dict(drops),
                   prior=dict(prior_kinds))
     report = ["# Candidates (%s%s)" % (product, ", control top-up round" if controls_only else ""), "", "Counts only; no text of any evaluation set.", ""] + chd.scan_lines(scan, "sentence")
-    report += ["", "frame hits: %d, in the band: %d (a development target of S1, S3 or S4 must lie in it)" % (counts["frame"], counts["band"]),
+    report += ["", "frame hits: %d, in the band: %d (a development target of S1, S3 or S4 must lie in it: 0.10 <= q < 0.97; S4 0.10 <= q, amendment A1)" % (counts["frame"], counts["band"]),
                "frame hits per kind (before the caps): " + (", ".join("%s %d" % item for item in sorted(counts["pools"].items())) or "none"),
                "dropped at the frame stage: " + (", ".join("%s %d" % item for item in sorted(drops.items())) or "none"),
                "pilot rows already drawn on this side: %d" % len(prior_rows),
                "candidates: %d over %d lemmas in %d documents (%s)" % (counts["candidates"], counts["lemmas"], counts["documents"],
                                                                      ", ".join("%s %d" % item for item in sorted(counts["kinds"].items())) or "none")]
     return rows, report, counts
+
+
+def band_counts(scan, product, lex, hmm, step_kinds=None):
+    """Counter {band index of Q_BAND_LABELS: hits} (counts only) of the development target hits of a banded product: the units that `build_pool` would take as a target kind
+    (the rarest wanted kind of a unit takes it; the control kinds are not counted), by the Basic mass of the judged word. No label, no PartOfSpeech model, nothing is written."""
+    group, band = GROUP[product], BANDED[product]
+    wanted = tuple(k for k in KINDS[group] if k not in CONTROL_KINDS[group])
+    kinds = tuple(k for k in KINDS[group] if not (group == "deverbal" and k == "verb"))
+    counts = collections.Counter()
+    for source_id, number, text, tokens in scan.units:
+        unit = (step_kinds or {}).get(shapes_dev.sent_key_of(text), "sentence") if group == "steps" else "sentence"
+        found = frame_hits(group, tokens, lex, unit in LABELED_UNITS)
+        kind = next((k for k in PRIORITY[group] if k in kinds and k in found), None)
+        if kind is None or kind not in wanted:
+            continue
+        counts[q_band(hmm.q(tokens, found[kind].index, band))] += 1
+    return counts
 
 
 def gate_messages(product, counts):
@@ -1439,6 +1477,31 @@ def _command_preflight(args):
     return 0
 
 
+def _command_bands(args):
+    """Counts only: the development target hits of S1, S3 and S4 by band of the Basic mass (pinned hmm.tsv; no label, no PartOfSpeech model); nothing is written."""
+    work = adjudicate.Work(args.work)
+    require_pins(work, "step-lines", args.data_dir)
+    draft = shapes_dev.read_draft(work)
+    draft_gate(work, args.data_dir, args.extra_table or ())
+    sides = fu.read_partition(work, draft)
+    lex = shapes_dev.lexicon_of(args.data_dir)
+    vocab = shapes_dev.vocabulary_of(args.data_dir, lex)
+    filt = shapes_dev.LeakageFilter(args.data_dir, not args.no_ud, new_tranches=True, skip_tranches=TECHNICAL_TRANCHES)
+    reference = Reference(args.data_dir, args.extra_text or ())
+    hmm = read_hmm_pinned(work)
+    step_kinds = read_step_kinds(work)
+    sentences = fu.restrict(scan_all(work, args.data_dir, "sentence", args.extra_table or (), (), not args.no_ud, filt, reference, lex, vocab), sides, "dev")
+    steps = fu.restrict(scan_all(work, args.data_dir, "step", args.extra_table or (), (), not args.no_ud, filt, reference, lex, vocab, step_kinds), sides, "dev")
+    print("development target hits by band of the Basic mass q of the judged word (counts only)")
+    print("| product | " + " | ".join(Q_BAND_LABELS) + " | all | in the band 0.10 <= q < 0.97 | kept by the rule in force |")
+    print("| --- | " + " | ".join("---:" for _ in Q_BAND_LABELS) + " | ---: | ---: | ---: |")
+    for product in BANDED:
+        counts = band_counts(steps if GROUP[product] == "steps" else sentences, product, lex, hmm, step_kinds)
+        kept = sum(counts[i] for i in range(len(Q_BAND_LABELS))) - counts[0] - (0 if product in LOWER_BOUND_ONLY else counts[4] + counts[5])
+        print("| %s | %s | %d | %d | %d |" % (product, " | ".join(str(counts[i]) for i in range(len(Q_BAND_LABELS))), sum(counts.values()), counts[1] + counts[2] + counts[3], kept))
+    return 0
+
+
 def _command_pilot(args):
     work = adjudicate.Work(args.work)
     require_pins(work, None, args.data_dir)
@@ -1605,7 +1668,8 @@ def main(argv=None):
     sub.add_parser("steps", help="step units of every document (W/steps and W/step-kinds.tsv)")
     tokenize = sub.add_parser("tokenize", help="tokenize every sentence and unit with the library tokenizer")
     tokenize.add_argument("--cmd", default=None)
-    for name, help_text in (("preflight", "counts only"), ("pilot", "the S2 pilot round dtm-pilot"), ("candidates", "the candidates of a product")):
+    for name, help_text in (("preflight", "counts only"), ("bands", "counts only: the development target hits of S1, S3 and S4 by band of the Basic mass"), ("pilot", "the S2 pilot round dtm-pilot"),
+                            ("candidates", "the candidates of a product")):
         p = sub.add_parser(name, help=help_text)
         options(p, product=name == "candidates")
         p.add_argument("--extra-text", action="append", default=None, metavar="DIR")
@@ -1638,10 +1702,10 @@ def main(argv=None):
     prompt.add_argument("--model", required=True)
     prompt.add_argument("--no-appendix", action="store_true")
     args = parser.parse_args(argv)
-    if getattr(args, "seed", None) is None and args.command in ("preflight", "pilot", "candidates", "build"):
+    if getattr(args, "seed", None) is None and args.command in ("preflight", "bands", "pilot", "candidates", "build"):
         args.seed = SEED
     handlers = {"exclusions": _command_exclusions, "partition": _command_partition, "lines": _command_lines, "steps": _command_steps, "tokenize": _command_tokenize,
-                "preflight": _command_preflight, "pilot": _command_pilot, "pilot-result": _command_pilot_result, "candidates": _command_candidates,
+                "preflight": _command_preflight, "bands": _command_bands, "pilot": _command_pilot, "pilot-result": _command_pilot_result, "candidates": _command_candidates,
                 "build": _command_build, "sample": _command_sample, "review-result": _command_review_result, "report": _command_report, "prompt": _command_prompt}
     try:
         return handlers[args.command](args)

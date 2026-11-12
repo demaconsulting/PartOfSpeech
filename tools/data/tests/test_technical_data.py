@@ -510,6 +510,43 @@ class PoolTests(Mini):
         pool, _, _ = td.build_pool(scan, "defined-terms", LEX, sd.SEED, kinds=("noun",))                      # the controls are left out of a round without them
         self.assertEqual({"noun"}, set(pool))
 
+    def test_amendment_a1_removes_the_upper_bound_of_the_s4_development_band_only(self):
+        self.assertEqual(("clause-verbs",), td.LOWER_BOUND_ONLY)
+        for q, outcome in ((0.0999, (False, False, False)), (0.10, (True, True, True)), (0.9699, (True, True, True)), (0.97, (False, False, True)), (0.995, (False, False, True)),
+                           (1.0, (False, False, True))):
+            self.assertEqual(outcome, (td.in_band("deverbal-heads", q), td.in_band("step-lines", q), td.in_band("clause-verbs", q)), q)      # S1 and S3 as before, S4 lower bound only
+        self.assertEqual(((0.10, 0.97)), (sx.BAND_MIN, sx.BAND_MAX))                                                          # the shared band constants are not changed
+        self.assertEqual(("<0.10", "0.10-0.50", "0.50-0.90", "0.90-0.97", "0.97-0.995", ">=0.995"), td.Q_BAND_LABELS)
+        edges = [(0.0, 0), (0.0999, 0), (0.10, 1), (0.4999, 1), (0.50, 2), (0.8999, 2), (0.90, 3), (0.9699, 3), (0.97, 4), (0.9949, 4), (0.995, 5), (1.0, 5)]
+        self.assertEqual([i for _, i in edges], [td.q_band(q) for q, _ in edges])
+
+    def test_the_amended_s4_pool_keeps_every_q_from_the_lower_bound_in_ascending_order_and_s1_s3_are_unchanged(self):
+        masses = (0.995, 0.5, 0.05, 0.97, 0.1, 0.3)
+        texts = ["The pumps drain the tank %d ." % n for n in range(1, 7)]
+        scan = scan_of([("army-a", t) for t in texts])
+        hmm = ft.FakeHmm({" ".join(base.simple_tokens(t)): q for t, q in zip(texts, masses)})
+        pool, stats, _ = td.build_pool(scan, "clause-verbs", LEX, sd.SEED, hmm)
+        self.assertEqual(6, stats["frame"])
+        self.assertEqual(5, stats["band"])                                                                  # only 0.05 is below the lower bound
+        self.assertEqual(["0.100", "0.300", "0.500", "0.970", "0.995"], [row["q"] for _, row in pool["main"]])     # hardest first, the easier ones follow
+        scan = scan_of([("army-a", "Check oil level %d ." % n) for n in range(1, 4)])
+        hmm = ft.FakeHmm({"Check oil level %d ." % n: q for n, q in zip(range(1, 4), (0.96, 0.97, 0.995))})
+        pool, stats, _ = td.build_pool(scan, "step-lines", LEX, sd.SEED, hmm, step_kinds={})
+        self.assertEqual(1, stats["band"])                                                                  # S3 keeps the upper bound 0.97
+        self.assertEqual(["0.960"], [row["q"] for _, row in pool["imperative"]])
+        texts = ["The oil check is full %d ." % n for n in range(1, 4)]
+        scan = scan_of([("army-a", t) for t in texts])
+        hmm = ft.FakeHmm({" ".join(base.simple_tokens(t)): q for t, q in zip(texts, (0.96, 0.97, 0.995))})
+        pool, stats, _ = td.build_pool(scan, "deverbal-heads", LEX, sd.SEED, hmm)
+        self.assertEqual(["0.960"], [row["q"] for _, row in pool["other"]])                                  # S1 keeps the upper bound 0.97
+
+    def test_the_band_counts_are_those_of_the_target_hits_of_the_rarest_kind(self):
+        texts = ["The pumps drain the tank %d ." % n for n in range(1, 7)] + [SENTENCES["clauses"]["noun"], SENTENCES["clauses"]["adj"]]
+        scan = scan_of([("army-a", t) for t in texts])
+        masses = {" ".join(base.simple_tokens(t)): q for t, q in zip(texts, (0.05, 0.1, 0.6, 0.95, 0.99, 0.999, 0.5, 0.5))}
+        counts = td.band_counts(scan, "clause-verbs", LEX, ft.FakeHmm(masses))
+        self.assertEqual({0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1}, dict(counts))                                 # the noun and adj controls are not counted
+
     def test_banded_targets_lie_in_the_band_and_are_ordered_by_q_with_empty_q_for_controls(self):
         texts = ["The oil check is full 1 .", "The oil check is full 2 .", "The oil check is full 3 .", "The oil check is full 4 .", "You must check the valve 5 ."]
         scan = scan_of([("army-a", t) for t in texts])
@@ -1322,6 +1359,26 @@ class PreflightTests(Mini):
         self.assertIn("clean step units: 2", out)
         self.assertIn("steps noun 0, imperative 1", out)
 
+    def test_the_bands_command_prints_counts_only_for_the_three_banded_products(self):
+        texts = [SENTENCES["deverbal"]["pred"], SENTENCES["clauses"]["main"], "The pumps drain the tank 1 ."]
+        self.sound_draft({"army-a": texts})
+        self.sides(**{"army-a": "dev"})
+        self.pins(hmm=True)
+        common.write_text(os.path.join(self.root, "steps", "army-a.txt"), ["Check oil level ."])
+        common.write_text(os.path.join(self.root, "tokens.tsv"), common.read_lines(os.path.join(self.root, "tokens.tsv")) + ["Check oil level .\t1\tCheck oil level ."])
+        adjudicate.write_rows(os.path.join(self.root, "step-kinds.tsv"), ("sent_key", "kind"), [(sd.sent_key_of("Check oil level ."), "enumerated")])
+        masses = {" ".join(base.simple_tokens(t)): q for t, q in zip(texts + ["Check oil level ."], (0.995, 0.99, 0.2, 0.5))}
+        self.pins(hmm=True)
+        with mock.patch.object(td, "read_hmm_pinned", return_value=ft.FakeHmm(masses)):
+            code, out, err = self.run_tool("bands", "--no-ud")
+        self.assertEqual(0, code, err)
+        self.assertIn("| deverbal-heads | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 |", out)
+        self.assertIn("| step-lines | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 1 | 1 |", out)
+        self.assertIn("| clause-verbs | 0 | 1 | 0 | 0 | 1 | 0 | 2 | 1 | 2 |", out)                 # the amended band keeps the 0.99 hit that the band 0.10 to 0.97 does not
+        for text in texts:
+            self.assertNotIn(text, out)                                                                          # counts only
+        self.assertEqual({"exclusions.tsv"} & set(os.listdir(self.root)), set())
+
 
 # ================================================================ the frozen prompt and the registered constants
 
@@ -1383,14 +1440,18 @@ class RegisteredConstantsTests(unittest.TestCase):
         self.assertEqual(("dtm-pilot", "dvt", "dtt", "stt", "clt"), td.ROUND_ORDER["train"])
         self.assertEqual((("pred", ("pred",), 100, None), ("num", ("num",), 50, None), ("ing", ("ing",), 150, None)), td.TRAIN_QUOTAS["deverbal"][1:])
 
-    def test_the_four_pins_are_the_frozen_values_of_r1_and_a_changed_input_is_refused(self):
-        frozen = {"DRAFT_SHA256": "c03a39752703408ee6daeb6d685fc97a3d1efe2504462f7f4ceb25f3f0af5792",
-                  "TOKENS_SHA256": "aebca046f9da537c147be78020f74d0664ec53c78156293cc54170fab251f87e",
-                  "HMM_SHA256": "71fa239d4f15b7b367a83203e77d7ff501055f85da7aca46b5d8ac41da8b7600",
+    def test_the_four_pins_are_the_frozen_values_of_c6_and_a_changed_input_is_refused(self):
+        frozen = {"DRAFT_SHA256": "b48d463364275182f4e704625d069b9c9ef06f48ca068405925c06ab0be142ae",
+                  "TOKENS_SHA256": "dfe0ba191496d53727c1dcea8d2d5e0841a7885a4ad9c489e7f8b81f6f7ef4aa",
+                  "HMM_SHA256": "43432b1a2522bf6e85b7a6e380dfaa4d94a5b26a066e94fa0b8c127c9bf602f7",
                   "CONVENTIONS_SHA256": "42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2"}
         for name, value in frozen.items():
-            self.assertEqual(value, getattr(td, name), name)                                  # R1 froze the inputs of the real work (RUN-LOG, "frozen inputs (R1)")
+            self.assertEqual(value, getattr(td, name), name)                                  # C6 re-froze the three inputs of the real work (RUN-LOG, "amendment A1 and DEV top-up")
             self.assertRegex(getattr(td, name), r"^[0-9a-f]{64}$")
+        r1 = {"DRAFT_SHA256": "c03a39752703408ee6daeb6d685fc97a3d1efe2504462f7f4ceb25f3f0af5792", "TOKENS_SHA256": "aebca046f9da537c147be78020f74d0664ec53c78156293cc54170fab251f87e",
+              "HMM_SHA256": "71fa239d4f15b7b367a83203e77d7ff501055f85da7aca46b5d8ac41da8b7600"}
+        for name, value in r1.items():
+            self.assertNotEqual(value, getattr(td, name), name)                               # the R1 values (commit 68fd57c) were replaced; the convention pin did not change
         self.assertEqual(td.CONVENTIONS_SHA256, common.sha256_file(os.path.join(common.DATA, "CONVENTIONS.md")))     # the labelers' convention is the pinned file
         self.assertEqual(0.40, td.DEV_SHARE)
 

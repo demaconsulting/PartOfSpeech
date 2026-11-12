@@ -5967,6 +5967,136 @@ This section follows the R1 commit `68fd57c` (a commit cannot contain its own SH
 - **Export.** `shapes_dev.py export --round dtm-pilot` wrote **1 batch** (`b001`, 94 sentences, 1,760 token rows); `check-batches` passed. `candidates.tsv` SHA-256 `53852b0b5b5746e27bc3970729cd31fdc051c38d59fec2f1acbe8341b4c24903`, `batches/b001.tsv` SHA-256 `68ada7592cdbd3ae632f17ab354f7089d2d20eda2fc28a056f41fdf8f75bd764`. The labeler runs are two (one per model); the frozen prompt is printed by `technical_data.py --work W prompt --round dtm-pilot --batch b001 --model opus` (and `--model sol`).
 - **What comes next.** Both blind labelers tag the batch; `validate-output` and `status`; `decide --round dtm-pilot`; `pilot-result` (the gate: at least 60 `noun` candidates and at least 40 percent of them tagged NOUN by both labelers). The S2 commands that draw or build refuse until it records PROCEED. The other three shapes do not depend on it.
 
+## beta.3 phase 1: S2 pilot (R2) result (counts only)
+
+This section follows the pilot export `4458dbe` (a commit cannot contain its own SHA). It records the **result** of the S2 pilot round `dtm-pilot` and nothing else. Every step of this section and of the next is an **implementing-agent and orchestrator decision, not an owner decision**; the gate itself is the one pre-registered in the R0 section (item 6).
+
+- **Label run.** Two blind labelers (`claude-opus-5.5` and `gpt-6.1-sol`) tagged the one batch `b001` (94 sentences, 1,760 token rows) with the frozen prompt of `technical_data.py prompt --round dtm-pilot --batch b001`: **2 labelers, 1 batch, 1 attempt each, no refusals**; `shapes_dev.py validate-output` accepted both outputs (`status`: `b001 ok ok`); `decide --round dtm-pilot` decided every sentence (0 incomplete sentences). The labelers read only `data/CONVENTIONS.md` (pin `42da154c...`) and their batch.
+- **Decisions of the round** (`decide`): `term-noun` 70 items, 61 kept, 2 target disagreements, 7 class mismatches; `term-adj` 20 items, 12 kept, 1 target disagreement, 7 class mismatches; `term-proper` 4 controls, 4 kept; 12 disputed non-target tokens in kept items.
+- **The record** (`technical_data.py pilot-result`, copied unchanged from `private/pilot-record.md`):
+
+```text
+# Pilot record (counts only)
+
+noun-stratum candidates 70, confirmed 61 (both labelers tag the judged word NOUN)
+
+| tier | noun candidates | confirmed |
+| --- | --- | --- |
+| T1 | 33 | 29 |
+| T2 | 22 | 20 |
+| T3 | 15 | 12 |
+
+| judged word of an unconfirmed noun candidate | candidates |
+| --- | --- |
+| ADJ | 2 |
+| ADP | 1 |
+| PROPN | 3 |
+| VERB | 1 |
+| disagreement | 2 |
+
+| other stratum | candidates | both labelers agree with the stratum tag |
+| --- | --- | --- |
+| adj | 20 | 12 |
+| proper | 4 | 4 |
+
+gate: PROCEED (61 of 70 confirmed (at least 28): proceed)
+```
+
+- **Decision rule applied** (R0 item 6, unchanged): let n be the pilot candidates of stratum `noun`; a candidate is confirmed when both labelers tag the judged word NOUN; the gate proceeds when n is at least 60 and confirmed / n is at least 0.40 (2 of 5); fewer than 60 is a scarcity stop and a lower ratio stops S2. Here n = 70 (at least 60) and confirmed = 61 of 70 = 87.1 percent (at least 28 needed): **PROCEED**. The shares of ADJ and PROPN and the tiers are reported, not gated: the 9 unconfirmed noun candidates are 3 PROPN, 2 ADJ, 1 ADP, 1 VERB and 2 disagreements; the `adj` stratum is confirmed 12 of 20 and the `proper` controls 4 of 4. The verdict file `private/pilot-verdict.txt` reads `PROCEED 61 of 70 confirmed (at least 28): proceed`; the S2 commands that draw or build are therefore open.
+- **What did not change.** The round folder `rounds/dtm-pilot` (candidates, batch, both labelers' outputs, decisions, record, verdict: 21 files) is untouched by the next section: the listing of the 21 file hashes (path and SHA-256 per file) has SHA-256 `34188bb4a0ea49cec2a2ac6458ee3f181808b1c82db08c435551b00229858e1f` before and after the re-freeze below, and `pilot-result` run again after it gives the same record (exit 0). The pilot rows keep the side of their document and count against the caps of their side (DEV 47: noun 39, adj 7, proper 1; TRAIN 47: noun 31, adj 13, proper 3).
+
+## beta.3 phase 1: amendment A1 and DEV top-up (counts only)
+
+This section follows the pilot result above and the section "frozen inputs (R1)" (commit `68fd57c`). **The only labels that exist are the 94 pilot labels of the S2 pilot round**; no other candidate was drawn, exported or labeled, no model of any experiment was trained or evaluated, no held-out file was opened, and no consumer text was read. The pre-label preflight of R1 missed 6 of the 19 pool gates (S1 DEV `pred + num` 119 of 150, S2 DEV `noun + adj` 281 of 500, S4 DEV `main + sub` 76 of 500 and `sub` 11 of 135, S2 TRAIN 808 of 1,000, S4 TRAIN `sub` 87 of 100), the worst on the development side. Because no label other than the pilot exists, the rule may still be amended before the labels, **as the PR #20 precedent did ("amendment A1" before any label)**. The two measures below, one amendment of the S4 development band and one top-up of development documents with the same gates and rules as the first sourcing, are **implementing-agent and orchestrator decisions, not owner decisions**, and the owner can overrule them.
+
+### Band counts at the R1 inputs (counts only; the Basic mass is the pinned `hmm.tsv`, no label, no PartOfSpeech model)
+
+`technical_data.py --work W bands` (new, counts only) counts the development target hits of the three banded products by the Basic mass q of the judged word (class Noun for S1, Verb for S3 and S4): the units that the candidate builder takes as a target kind (the rarest wanted kind of a unit takes it; the control frames are not counted), over all clean DEV units, before the exclusion of the sentences that earlier rounds take. At the R1 inputs (DEV 182 documents, 42,747 clean sentences):
+
+| Product | q < 0.10 | 0.10 to 0.50 | 0.50 to 0.90 | 0.90 to 0.97 | 0.97 to 0.995 | 0.995 or more | All hits | In the band 0.10 <= q < 0.97 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1 `deverbal-heads` | 860 | 346 | 694 | 723 | 1,164 | 1,567 | 5,354 | 1,763 |
+| S3 `step-lines` | 2,199 | 625 | 516 | 302 | 327 | 701 | 4,670 | 1,443 |
+| S4 `clause-verbs` | 137 | 31 | 25 | 30 | 45 | 144 | 412 | 86 |
+
+The numbers differ slightly from the R1 dry run (5,349, 1,761, 1,409 and 78) because the dry run had already removed the sentences that earlier rounds take. The "78 of 1,034 hits" of the R1 section counted the control frames in the 1,034; the S4 target hits are 393 in the dry run and 412 here, so the upper bound of the band kept about one in five of them (86 of 412, 21 percent), and the hits at 0.97 and above (189 of 412) were the larger part of what it removed. The verb frame after a plural subject is mostly easy for the Basic model.
+
+### Amendment A1 (S4 development targets only; before any label other than the S2 pilot)
+
+**Text.** For the development targets of S4 (`clause-verbs`, kinds `main` and `sub`) the band has **no upper bound**: a target is eligible when 0.10 <= q (the lower bound is kept). The candidates stay in q-ascending order, hardest first, so the contested cases still come first and the budgets (`main` 600, `sub` 200) and the caps (4 per lemma, 20 per document in the candidate round; 4 per lemma, 15 per document at the build) decide how many easier ones follow. **S1 and S3 are unchanged** (0.10 <= q < 0.97): their development pools meet their gates after the top-up below, so no amendment of them is needed. S2, all controls and all training candidates use no band, as before. The shared band constants `BAND_MIN` and `BAND_MAX` of `shapes_dev.py` are not changed; the new constant `LOWER_BOUND_ONLY = ("clause-verbs",)` and the function `in_band(product, q)` of `technical_data.py` carry the amendment, and the docstring rule item 5 is marked "AMENDMENT A1 (before any label other than the S2 pilot)". Tests: `in_band` at the edges for the three products (S1 and S3 as before, S4 lower bound only), the amended S4 order (q ascending from 0.10 on, 0.05 out, 0.995 in) with the old behavior of S1 and S3 asserted next to it, the band function `q_band` at its edges, `band_counts` (controls not counted) and the `bands` command (counts only).
+
+**Effect on the S4 development pool.** After the top-up below, the S4 target hits are 775 (q < 0.10: 250; 0.10 to 0.50: 63; 0.50 to 0.90: 56; 0.90 to 0.97: 49; 0.97 to 0.995: 81; 0.995 or more: 276); the old band would keep 168 of them and the amended band keeps 525. The S4 target candidates of the dry run (349) lie in 0.10 to 0.50: 56, 0.50 to 0.90: 40, 0.90 to 0.97: 40, 0.97 to 0.995: 53 and 0.995 or more: 160. The tranche therefore measures the verb frame of S4 across the range of the Basic mass from 0.10 up, hardest cases first, and not only the contested band; the S4 floors are unchanged (and missed, see the pool table).
+
+### The DEV top-up (waves 7 to 9; the same gates, helpers and document rules as the first sourcing)
+
+- **Order file `border2.tsv`** (1,127 records chosen from metadata and the TITLE family key before any fetch, written once before wave 7; SHA-256 `f14034944d87cf34d3197131d400fb0bd1603677fb1af0e3f33f2da2092e03dd`): the unprocessed records of `border.tsv` (from record 1,171; 577 of them) plus 550 new records of the metadata stores, both through the unchanged metadata gates of the first sourcing (used-document index, federal creator, NTRS rights record, USGS contributor flags, title words, family and stem caps). The side of every record was computed from the title alone (`technical_data.side_of(followup_data.family_key(title))`, the seeded rank rule, DEV share 0.40) **before any fetch**, and only DEV records were kept (1,777 records were left out as TRAIN side, 26 more because their title family belongs to an already processed record, 108 of stream G because G is not in the mix). Stream by the fixed cycle M 5, E 3, P 2 (50, 30 and 20 percent): M 266, E 790, P 71 in the file. The M rule was extended for this file (an implementing-agent decision): dated 1975 or later and a manual-or-guide, operator, user, software or display word in the title, not a Forest Service, USDA or Public Health Service record; the first rule left only 17 DEV records in stream M. New metadata queries (metadata only, polite, sequential; the stores grew to 6,655 archive.org records, 6,532 NTRS records and 3,887 USGS records): 14 archive.org queries (modern Army, Navy, Air Force, Marine Corps, Coast Guard, DoD, NASA and NIST manuals and guides), 21 NTRS queries (modern guides, manuals, operations, interfaces and displays, and the E-stream technical memoranda and notes) and 14 USGS queries (documentation, user and field-method records).
+- **Waves** (every wave began with the PAUSE check; sequential requests, one second before every download):
+
+| Wave | Records of the order file | Fetched | Accepted before the audit | In the final draft | P | E | M |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 7 | 1,171-1,280 | 110 | 49 | 48 | 5 | 19 | 24 |
+| 8 | 1,281-1,390 | 110 | 48 | 47 | 6 | 11 | 30 |
+| 9 (partial) | 1,391-1,450 | 60 | 26 | 26 | 4 | 7 | 15 |
+| Total | 1,171-1,450 | 280 | 123 | **121** | 15 | 37 | 69 |
+
+  Fetched by provider: archive.org 139, NTRS 116, USGS 25; by stream in the order: M 140, E 84, P 56. The stop rule was reached after 3 of the 4 waves: 120 accepted documents (123 before the audit, 121 after it); no wave gave fewer than 15; wave 9 was sized to stop near the target. Refused over the three waves (a record can have several reasons): sentence-key duplicate test 79, front matter names a non-federal body 37, copyright-like notice 23 (read by hand), fewer than 20 sentences 23, third-party credit or permission phrase 22, distribution statement other than public release 9, HTTP refusal 5, FAA wording 4, no OCR text 3, foreign body 1, non-federal entry 1. Stream P is again the weakest (15 of 56 fetched).
+
+- **By-hand decisions** (8 exclusions, 11 clearances; the ids and reasons are in the work folder, the by-hand exclusion table now has 42 lines and the table of clearances 32). Excluded **during the waves (6)**: a USGS report whose figure caption names a base image from Google with a copyright year, a USGS report with an Esri base-map copyright, a NASA CONNECT lesson guide with the notice "All Rights Reserved", a NASA software description with the notice "Copyright by Marshall Space Flight Center", a NASA report with a figure credited "with permission", and a guide whose creator field names the US Coast Guard Auxiliary (a volunteer civilian body). Excluded **by the audit of the text (2)**: a DOE-labeled record whose text is the sales and care terms of a private costume maker, and an EPA and USDA pesticide guide whose text names a university professor as joint consultant, organizer and editor. The last three (Auxiliary, private company, university co-author) are new rows of `data/eval/shapes-dev/excluded-sources.tsv` (25 rows, dated 2026-11-12; `data/MANIFEST.tsv` regenerated, `make_manifest.py --verify` 74 files, `check_licenses.py` passes). Cleared after reading: copyright signs that are OCR noise or bullet glyphs (6), menu or display parameter names that contain the word copyright (2), a USGS table reprinted from another chapter of the same series, a US Government "not subject to copyright" statement, a sentence stating that no copyrighted material is contained.
+- **Audit of the new rows** (the P2b method, before the freeze): the metadata cells (FAA, copyright, Inc, Corporation, University, state names, society words: no FAA hit; the university hits are scanning libraries named as contributors; the state hits are places of publication and "Washington, DC"), the first 5,000 characters of the text (state, local, private and contractor bodies), and the whole text (contract authorship, state and local bodies, copyright, credit and permission wording, letters); every hit was read in context. All basis fields are present in all 121 rows (agency, creator, rights statement, distribution check; no empty author, year, URL or terms URL).
+- **The new documents.** 121 documents (P 15, E 37, M 69), all on the DEV side by the partition rule; NTRS 54, archive.org 53, USGS 14; by agency family NASA 62, USGS 16, Army 12, EPA 8, Navy 8, Interior bureaus 8, DOE 3, Army Corps of Engineers 2, Air Force 1, NOAA 1 (10 families); decades 1940s 4, 1950s 1, 1960s 19, 1970s 17, 1980s 28, 1990s 19, 2000s 17, 2010s 10, 2020s 6; 91 of the 121 are dated 1975 or later; median year P 1967, E 1974, M 1993 (all M documents are 1975 or later); 38,336 sentences in the `sentences` column. **After the top-up: 572 documents** (P 90, E 239, M 186, G 57) in 17 agency families (NASA 54.7 percent, 53.1 percent of the development side); **DEV 303 documents** (P 43, E 115, M 115, G 30) and **TRAIN 269 documents** (unchanged: P 47, E 124, M 71, G 27) in 571 title families.
+- **`technical_data.py --work W exclusions`** with all 12 extra tables (the beta.3 by-hand table changed: `beta3-hexclude.tsv` is now `6d6b49b3c12904119a9b625ae4fa898df922d15645f7071250ceb1ef2fa0c709`): **572 documents in the draft, 0 problems** (28,283 index entries).
+
+### Processing, counts and what stays byte-identical
+
+- `partition` (seed 20261110, DEV share 0.40): 572 documents in 571 families, DEV 303 and TRAIN 269; the 451 partition rows of the earlier documents are **unchanged** (checked row by row). `steps`: 473,770 step units written; `tokenize`: **459,396 units, 85,906 newly tokenized**; `hmm-tags` with the pinned DLL (SHA-256 `b96e0055...` verified from the copy that ran, WordSense commit `6530de19...`): **439,507 sentences tagged**. The add-only builder appended the 121 rows to `sources-draft.tsv` and `streams.tsv` and wrote only the texts of the new documents; the helper that deleted the text of non-accepted documents in the first sourcing was not run on the old documents.
+- **Byte-identical:** the 451 old rows of `sources-draft.tsv` (the old file is a byte prefix of the new one; SHA-256 of the prefix `c03a3975...`, the R1 value) and of `streams.tsv`, the 451 old cleaned texts and the 451 old step files (hashes compared one by one), the 451 partition rows, **every row of the old `tokens.tsv`** (the 373,490 old rows are all in the new file; the file is sorted by text, so new rows are interleaved) and **every line of the old `hmm.tsv`** (all 357,270 old lines are in the new file, in the same relative order), and in particular the **94 pilot sentences: their token rows and their 94 Basic-mass lines are identical** to the R1 ones; the round folder `rounds/dtm-pilot` is untouched (listing hash above). `data/CONVENTIONS.md` is unchanged and its pin `CONVENTIONS_SHA256` (`42da154c...`) still equals its SHA-256.
+- **What does change** (disclosed): `step-kinds.tsv` assigns one unit kind to every text and the new documents made 144 old texts stricter (enumerated to short 91, sentence to short 18, bulleted to enumerated 16, bulleted to short 14, sentence to enumerated 5); and `scan_units` removes duplicate units in the order of the sorted document ids, so a new development document whose id sorts first now holds a short line that an old training document held before. The first-stratum counts of the TRAIN step units moved from noun 4,500 and imperative 6,752 to noun 4,418 and imperative 6,738 (clean TRAIN step units 85,490 to 84,959); the clean TRAIN sentences are unchanged (61,825) and no TRAIN gate depends on these step counts (the S3 candidate pools are capped far below them).
+- `preflight` (first stratum of a clean unit, the rarest first; no band, no caps), counts only:
+
+| Side | Clean sentences | S1 pred / num / ing / other | S2 proper / adj / noun | S3 noun / imperative (step units) | S4 adj / noun / sub / main |
+| --- | ---: | --- | --- | --- | --- |
+| DEV | 71,642 | 281 / 513 / 2,204 / 6,330 | 1,238 / 1,308 / 1,918 | 5,749 / 7,383 | 792 / 388 / 84 / 691 |
+| TRAIN | 61,825 | 331 / 420 / 1,846 / 5,380 | 644 / 1,030 / 1,623 | 4,418 / 6,738 | 754 / 321 / 92 / 591 |
+
+  The documents in the draft are 572 (DEV 303, TRAIN 269; 17 agency families), none rejected as a whole; the clean sentences are 133,467 and the clean step units 186,192.
+
+### New frozen hashes (the pins of `technical_data.py` in this commit)
+
+| Frozen input | R1 (commit `68fd57c`) | **New (this commit)** |
+| --- | --- | --- |
+| `sources-draft.tsv` (pin `DRAFT_SHA256`; 572 documents) | `c03a3975...5792` | `b48d463364275182f4e704625d069b9c9ef06f48ca068405925c06ab0be142ae` |
+| `tokens.tsv` (pin `TOKENS_SHA256`; 459,396 units) | `aebca046...f87e` | `dfe0ba191496d53727c1dcea8d2d5e0841a7885a4ad9c489e7f8b81f6f7ef4aa` |
+| `hmm.tsv` (pin `HMM_SHA256`; 439,507 tagged sentences; its header `input_sha256` equals the tokens pin) | `71fa239d...7600` | `43432b1a2522bf6e85b7a6e380dfaa4d94a5b26a066e94fa0b8c127c9bf602f7` |
+| `data/CONVENTIONS.md` (pin `CONVENTIONS_SHA256`) | `42da154c...5bb2` | **unchanged**, `42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2` |
+| `streams.tsv` (572 rows) | `6c9fd613...4b55` | `61065b584757d2e9fb564433f9441b31797ecfb554c081b61a2295628e9cabce` |
+| `partition.tsv` (572 rows) | `472a3e22...8c5c` | `b59827fc09578bc7f3d99f1b7251723091652c4577e3bfc901f8fb1c3098f87c` |
+| `step-kinds.tsv` | `e037c02f...5be9` | `c58d0114ecd86cd08d75186444315409027ea64b6af1ced33c46111286484bae` |
+| `border2.tsv` (the top-up order file, 1,127 records) | - | `f14034944d87cf34d3197131d400fb0bd1603677fb1af0e3f33f2da2092e03dd` |
+| `bacc.jsonl` (the fetch record of 1,450 records) | `ad66d6ce...b440` | `b10f72c506e1121ce7503635d739478c908e1f6b211081dd1db3eec19f85dffd` |
+| `beta3-hexclude.tsv` (42 by-hand refusals; LF copy used as `--extra-table`) | `4f9c0d99...251b` | `6d6b49b3c12904119a9b625ae4fa898df922d15645f7071250ceb1ef2fa0c709` |
+| `pilot-documents.txt` (the 81 first-wave documents) | `a88a5668...628d` | unchanged, `a88a566896127a51d4cc5417b1a74e414a1abc7dbeac77d4cf6db0a6eef3628d` |
+
+The DEV share 0.40 is unchanged. The pins are constants of `technical_data.py`; the test `test_the_four_pins_are_the_frozen_values_of_c6_and_a_changed_input_is_refused` asserts the new values, that the R1 values were replaced and that the convention pin did not change; `candidates` and `pilot` still refuse any input whose bytes differ.
+
+### Pool sizes against the gates after the top-up (counts only; dry run of the candidate builder with the committed pilot rows, nothing written, nothing labeled)
+
+The dry run draws in the order of the rounds of a side (the pilot rows first, then S1, S2, S3, S4 for DEV and the four training sources for TRAIN; a round never draws a sentence of an earlier round; the control top-up rounds are drawn after the decisions and are not part of it). `Band` is the number of target frame hits inside the band in force. The real `candidates` commands run after this commit and give the same numbers.
+
+| Product | Frame hits | Band | Pools per stratum (before the caps) | Candidates (lemmas, documents) | Gate | Status (R1 value) |
+| --- | ---: | ---: | --- | --- | --- | --- |
+| `deverbal-heads` (DEV S1) | 9,323 | 3,047 | pred 84, num 158, ing 895, other 1,910 | 1,011 (487, 215): pred 76, num 125, ing 450, other 200, verb controls 160 | pred + num at least 150, targets at least 450, verb at least 60 | **met**: pred + num 201 (R1 119: missed) |
+| `defined-terms` (DEV S2) | 4,361 | none | noun 1,854, adj 1,289, proper 1,218 | 413 (279, 121): noun 217, adj 87, proper 109, plus pilot rows noun 39, adj 7, proper 1 | noun + adj at least 500, proper at least 40 | **MISSED**: noun + adj 350 (R1 281); proper 110 met |
+| `step-lines` (DEV S3) | 13,003 | 2,129 | imperative 2,129, noun 5,747 | 590 (370, 169): imperative 480, noun 110 | imperative at least 300, noun at least 50 | met (as in R1) |
+| `clause-verbs` (DEV S4, band A1) | 1,889 | 500 | main 442, sub 58, noun 373, adj 775 | 519 (292, 147): main 293, sub 56, noun 110, adj 60 | main + sub at least 500, sub at least 135, noun + adj at least 60 | **MISSED**: main + sub 349 (R1 76) and sub 56 (R1 11); noun + adj 170 met |
+| `deverbal` (TRAIN S1) | 7,972 | none | pred 331, num 420, ing 1,845, other 5,376 | 1,115 (553, 211) | candidates at least 700, pred at least 150, num at least 80 | met (unchanged) |
+| `terms` (TRAIN S2) | 3,207 | none | noun 1,574, adj 1,002, proper 631 | 761 (395, 147), plus pilot rows noun 31, adj 13, proper 3 | candidates at least 1,000, proper at least 100 | **MISSED**: 808 (unchanged; the top-up is development only) |
+| `steps` (TRAIN S3) | 11,025 | none | imperative 6,607, noun 4,418 | 1,500 (673, 213) | candidates at least 800, noun at least 100 | met (unchanged) |
+| `clauses` (TRAIN S4) | 1,677 | none | main 544, sub 87, noun 313, adj 733 | 775 (358, 169) | candidates at least 600, sub at least 100 | **sub MISSED**: 87 (unchanged); candidates met |
+
+Five of the 19 size gates, in four of the eight products, are still missed (S2 DEV `noun + adj` 350 of 500, S4 DEV `main + sub` 349 of 500 and `sub` 56 of 135, S2 TRAIN 808 of 1,000, S4 TRAIN `sub` 87 of 100; R1 had six). The development misses are smaller than in R1 (281 to 350; 76 to 349 and 11 to 56), the S1 development miss is closed, and the two TRAIN misses did not move because the top-up is development only. **No further rule is changed**: the registered path stands (`candidates` writes the pool as it is and prints the missed gate, `build` refuses below a floor unless `--allow-short`, the shortage is disclosed in the README and the report and never padded, a cap is never waived). The S2 development pool tiers before the caps are noun T1 86, T2 263, T3 32, T4 1,473; adj T1 3, T2 37, T3 2, T4 1,247; proper T1 4, T3 3, T4 1,211 (T4 is still the bulk, so the limit of 20 percent T4 per stratum binds); the S3 development imperative candidates by unit kind are sentence 220, enumerated 133, short 107, bulleted 20 (bare-object frame 318 of 480).
+
+**What comes next (not done here).** The development rounds (labeling) of S1, S3 and S4 (with the amended S4 pool) and of S2 (open after the PROCEED of the pilot), the training rounds, the builds, the data READMEs and the registration at weight 0 are the next commits.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
