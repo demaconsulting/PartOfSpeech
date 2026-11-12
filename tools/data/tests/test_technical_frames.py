@@ -425,7 +425,7 @@ class ClauseVerbTests(unittest.TestCase):
         # Arrange and act
         found = self.hit("The pumps control the flow .")
         # Assert
-        self.assertEqual((2, "main", False, "control"), tuple(found))
+        self.assertEqual((2, "main", False, "control", False), tuple(found))
 
     def test_a_coordinated_subject_is_flagged(self):
         # Arrange and act
@@ -456,13 +456,47 @@ class ClauseVerbTests(unittest.TestCase):
         for text in sentences:
             self.assertIsNotNone(self.hit(text), text)
 
-    def test_a_verb_before_its_own_clause_or_a_noun_after_the_word_is_no_target(self):
-        # Arrange and act and assert: a verb before the plural noun phrase (a small clause), a noun after the word (a compound), a singular subject
+    def test_a_verb_before_its_own_clause_or_a_singular_subject_is_no_target(self):
+        # Arrange and act and assert: a verb before the plural noun phrase (a small clause), a singular subject
         self.assertIsNone(self.hit("The shop keeps the valves open ."))
-        self.assertIsNone(self.hit("The valves control panel is red ."))
         self.assertIsNone(self.hit("The valve control the flow ."))
         self.assertIsNone(self.hit("The gas control the flow ."))
         self.assertIsNone(self.hit("The pumps controls the flow ."))
+
+    def test_amendment_a2_a_noun_after_the_word_is_an_np_target(self):
+        # Arrange and act
+        compound = self.hit("The valves control panel is red .")
+        object_noun = self.hit("The valves control flow .")
+        bare_subject = self.hit("Valves control flow .")
+        # Assert
+        self.assertEqual((2, "main", False, "control", True), tuple(compound))
+        self.assertEqual((2, "main", False, "control", True), tuple(object_noun))
+        self.assertTrue(bare_subject.np)
+
+    def test_amendment_a2_an_adjective_and_noun_phrase_is_an_np_target(self):
+        # Arrange and act
+        found = self.hit("The pumps control hydraulic oil .")
+        two_adjectives = self.hit("When the pumps control new red valves the oil drops .")
+        # Assert
+        self.assertEqual((2, "main", False, "control", True), tuple(found))
+        self.assertEqual(("sub", True), (two_adjectives.stratum, two_adjectives.np))
+
+    def test_amendment_a2_the_np_flag_keeps_the_subject_context_and_the_stratum_conditions(self):
+        # Arrange and act and assert
+        self.assertIsNone(self.hit("The shop keeps valves control flow ."))                                   # a verb before the subject phrase: no clause
+        self.assertIsNone(self.hit("The valve control flow ."))                                              # a singular subject
+        self.assertIsNone(self.hit("The pumps control hydraulic ."))                                         # an adjective that no noun follows
+        self.assertEqual("sub", self.hit("The shop stops if pumps control flow .").stratum)
+
+    def test_amendment_a2_the_original_frame_has_no_np_flag_and_a_function_word_never_makes_one(self):
+        # Arrange and act and assert
+        for text in ("The valves open .", "The valves open in the shop .", "The valves open and the pressure drops .", "The valves control it .", "The valves open to the shop ."):
+            self.assertFalse(self.hit(text).np, text)
+        self.assertFalse(tf.clause_np_follower(tok("The valves open ."), LEX, 2))
+        self.assertFalse(tf.clause_np_follower(tok("The valves open in the shop ."), LEX, 2))
+        self.assertFalse(tf.clause_np_follower(tok("The valves control hydraulic ."), LEX, 2))
+        self.assertTrue(tf.clause_np_follower(tok("The valves control hydraulic oil ."), LEX, 2))
+        self.assertTrue(tf.clause_np_follower(tok("The valves control flow ."), LEX, 2))
 
     def test_a_preposition_before_the_subject_is_no_clause(self):
         # Arrange and act and assert
@@ -472,13 +506,13 @@ class ClauseVerbTests(unittest.TestCase):
         # Arrange and act
         found = self.control("The valves control panel is red .")
         # Assert
-        self.assertEqual((2, "noun", False, "control"), tuple(found))
+        self.assertEqual((2, "noun", False, "control", False), tuple(found))
 
     def test_the_adjective_control(self):
         # Arrange and act
         found = self.control("The shop did the open valves .")
         # Assert
-        self.assertEqual((4, "adj", False, "open"), tuple(found))
+        self.assertEqual((4, "adj", False, "open", False), tuple(found))
 
     def test_a_target_sentence_has_no_control_hit(self):
         # Arrange and act and assert

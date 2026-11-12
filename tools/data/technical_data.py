@@ -46,6 +46,13 @@ RUN-LOG.md, section "beta.3 phase 1: pre-registered rule (before any fetch)")
    `technical_frames.step_noise_reason` (sentence case and Title Case allowed, a capital first letter required). ALL-CAPS state labels and ALL-CAPS lines are out of scope.
 4. Frames (position and lexicon only; the word lists and strata are fixed in technical_frames.py). One candidate per sentence, the rarest stratum takes it: S1 pred, num, ing, other
    (and the verb control frames); S2 proper, adj, noun; S3 noun (caption control), imperative; S4 adj, noun (controls), sub, main. The judged word is the candidate token.
+   AMENDMENT A2 (before any label other than the S2 pilot; an implementing-agent decision, not the owner's): the S4 target frame also takes a verb V (same word, subject and context conditions)
+   that is followed by a lower-case noun or by an adjective and noun phrase, a direct object without a determiner (`Engineers check pressure gauges.`, `The valves control flow.`), with the
+   reported flag `np` (`technical_frames.clause_verb_hit`, `ClauseHit.np`), because the original frame refused every verb followed by a noun-capable word (to keep it apart from the noun control
+   frame) and so refused the most typical verb-object clauses. Still position and lexicon only, one candidate per sentence, strata main and sub unchanged. The controls are unchanged (the noun
+   and adjective control frames stay; a control is kept only when both labelers tag V NOUN or ADJ); a sentence of the noun control frame that is also an `np` frame is offered to both kinds and
+   `candidate_rows` draws the controls first and never gives one sentence to both. An `np` target that both labelers tag NOUN is a class-mismatch drop, never a control. The labelers' exact tag
+   alone decides the kind, so the wider frame only widens the pool of candidates. Pins: none covers a frame (DRAFT, TOKENS, HMM and CONVENTIONS are unchanged).
 5. Candidates (seeded order `rank_of(20261110, ...)`; the product and the stratum are in the label and in the candidate id prefix, for example `dh-pred-c00001`). Development targets
    of S1, S3 and S4 lie in the contested band 0.10 <= q < 0.97 of the pinned WordSense Basic mass (class Noun for S1, Verb for S3 and S4), q ascending, hardest first; S2, all
    controls and all training candidates use no band.
@@ -53,6 +60,7 @@ RUN-LOG.md, section "beta.3 phase 1: pre-registered rule (before any fetch)")
    (0.10 <= q; `in_band`, `LOWER_BOUND_ONLY`), because the upper bound kept 78 of 1,034 frame hits (the verb frame after a plural subject is mostly easy for the Basic model). The
    candidates stay in q-ascending order, hardest first, so the contested cases still come first and the budgets and caps decide how many easier ones follow. S1 and S3 keep
    0.10 <= q < 0.97. The counts that motivated it (`bands`, counts only) are in the RUN-LOG.
+   AMENDMENT A2 (item 4) leaves the budgets, caps and the band rule of S4 as they are; the `np` candidates count in the stratum budgets main and sub, and the controls of the round are drawn first.
    Candidate budgets (None = every candidate that the caps allow): development S1 pred None, num None, ing 450, other 200, verb controls 160
    (first round, for the lemmas of the target candidates) and 30 (round dvhc); S2 noun 520, adj 260, proper 110 and 30 (dtmc), the right-cue, document-type and left-cue tiers T1 to T3 before
    T4, T4 at most 20 percent of a stratum; S3 imperative 480, noun 110 and 30 (stpc); S4 main 600, sub 200, noun 110, adj 60 and 40 + 20 (clvc). Training (lean volume, decision O5):
@@ -77,6 +85,9 @@ RUN-LOG.md, section "beta.3 phase 1: pre-registered rule (before any fetch)")
    4 per lemma, 20 per document); S2 500 to 900 (proper 15 to 25 percent, 4 per lemma, 2 per term); S3 600 to 1,000 (noun-initial at most 30 percent, 6 per lemma, at least 30 percent of the imperatives with a bare
    object and at least 50 percent from enumerated or bulleted lines); S4 450 to 800 (noun and adj together at most 20 percent, 4 per lemma). The totals of S1 and S4 follow the lean volume (decision O5).
    `build` refuses below a floor unless `--allow-short` (the miss is disclosed, never padded) and never waives a cap.
+   AMENDMENT A2 (item 4): the kept S4 targets with the flag `np` are at most 60 percent of the kept targets of the product (development and training; `NP_SHARE_MAX_PERCENT`, `with_np_cap`, drop
+   reason `np-cap`: the np targets are taken in the order of the selection up to the largest number that keeps the share, the others are never removed) so that the original frame stays
+   represented; the share is reported by `candidates` and `build`. The S4 floors and caps above are unchanged.
 9. Hand check (a model review, not a human review). `claude-sonnet-5.5`, 60 kept items and 4 swapped-tag controls per product, one draw with the seeds 20261201 to 20261208 in the order of the eight products
    (SAMPLE_PLAN holds the split by kind). Gate: marked-word precision at least 95 percent (3 incorrect of 60 passes, 4 fail), at most 1 of 4 controls accepted, no unanswered item; below it the product is not registered.
 10. Format and amendments as in followup_data.py (block format of data/open/train.tsv; ids `shapes-dev-deverbal-heads-NNNN`, `shapes-dev-defined-terms-NNNN`, `shapes-dev-step-lines-NNNN`,
@@ -272,6 +283,7 @@ TERM_CAP = {"dev": 2, "train": 2}
 CANDIDATE_TERM_CAP = {"dev": 2, "train": 3}
 FAMILY_CAP = 30                                  # S3 development: items per title family
 TIER4_SHARE_PERCENT = 20                         # S2: T4 candidates at most this share of a stratum budget
+NP_SHARE_MAX_PERCENT = 60                        # S4, AMENDMENT A2: kept targets with the flag `np` (a direct object without a determiner) at most this share per product
 BARE_MIN_PERCENT, LABELED_MIN_PERCENT = 30, 50   # S3: shares of the imperatives with a bare object and from enumerated or bulleted lines
 MIN_CANDIDATES = {                               # size gate of the candidates: (label, kinds, minimum) (counted with the pilot rows on the same side)
     "deverbal-heads": (("pred+num", ("pred", "num"), 150), ("targets", ("pred", "num", "ing", "other"), 450), ("verb", ("verb",), 60)),
@@ -539,8 +551,21 @@ def frame_hits(group, tokens, lex, labeled=False):
     else:
         for hit in (tf.clause_verb_hit(tokens, lex), tf.clause_control_hit(tokens, lex)):
             if hit is not None:
-                found[hit.stratum] = Hit(hit.index, hit.lemma, "", "", "", "coordinated" if hit.coordinated else "")
+                found[hit.stratum] = Hit(hit.index, hit.lemma, "", "", "", ",".join(flag for flag, on in (("coordinated", hit.coordinated), ("np", hit.np)) if on))
     return found
+
+
+def is_np(row):
+    """True for an S4 row or entry that carries the flag `np` (AMENDMENT A2: the target frame with a direct object without a determiner after the word)."""
+    return "np" in (row.get("flag") or "").split(",")
+
+
+def np_second_kind(group, kind, found, wanted):
+    """AMENDMENT A2: the target stratum (`main` or `sub`) that an `np` hit also offers when the noun control frame took the sentence first, else None. Such a sentence is offered to both
+    kinds; `candidate_rows` draws the controls first and never gives a sentence to both."""
+    if group != "clauses" or kind != "noun":
+        return None
+    return next((k for k in tf.CLAUSE_STRATA if k in wanted and k in found and is_np(found[k]._asdict())), None)
 
 
 def _row(product, kind, hit, source_id, number, text, tokens, unit="sentence"):
@@ -569,22 +594,25 @@ def build_pool(scan, product, lex, seed, hmm=None, exclude_keys=frozenset(), ste
         kind = next((k for k in PRIORITY[group] if k in wanted and k in found), None)
         if kind is None:
             continue
-        hit = found[kind]
         stats["frame"] += 1
-        row = _row(product, kind, hit, source_id, number, text, tokens, unit)
-        if band is not None and kind in CONTROL_KINDS[group]:
-            row["q"], rank = "", (0, shapes_dev.rank_of(seed, "control", label, kind, key))
-        elif band is not None:
-            q = hmm.q(tokens, hit.index, band)
-            if not in_band(product, q):
+        for taken in (kind, np_second_kind(group, kind, found, wanted)):
+            if taken is None:
                 continue
-            stats["band"] += 1
-            row["q"], rank = shapes_dev.format_q(q), sx.rank_key(seed, label, key, q)
-        elif group == "terms":
-            rank = (hit.tier == "T4", shapes_dev.rank_of(seed, label, kind, key))
-        else:
-            rank = (0, shapes_dev.rank_of(seed, label, kind, key))
-        pool[kind].append((rank, row))
+            hit = found[taken]
+            row = _row(product, taken, hit, source_id, number, text, tokens, unit)
+            if band is not None and taken in CONTROL_KINDS[group]:
+                row["q"], rank = "", (0, shapes_dev.rank_of(seed, "control", label, taken, key))
+            elif band is not None:
+                q = hmm.q(tokens, hit.index, band)
+                if not in_band(product, q):
+                    continue
+                stats["band"] += 1
+                row["q"], rank = shapes_dev.format_q(q), sx.rank_key(seed, label, key, q)
+            elif group == "terms":
+                rank = (hit.tier == "T4", shapes_dev.rank_of(seed, label, taken, key))
+            else:
+                rank = (0, shapes_dev.rank_of(seed, label, taken, key))
+            pool[taken].append((rank, row))
     for ranked in pool.values():
         ranked.sort(key=lambda item: item[0])
     return pool, stats, drops
@@ -660,33 +688,50 @@ def candidate_rows(scan, product, lex, seed=SEED, hmm=None, old_counts=None, pri
     prior_kinds = collections.Counter() if controls_only else collections.Counter(r["kind"] for r in prior_rows)
     document_cap, term_cap = CANDIDATE_DOCUMENT_CAP[side], (CANDIDATE_TERM_CAP[side] if group == "terms" else None)
     rows, per_kind = [], {}
-    for kind in [k for k in PRIORITY[group] if k in kinds and k not in CONTROL_KINDS[group]]:
-        limit = None if budgets[kind] is None else max(0, budgets[kind] - prior_kinds[kind])
-        tier_limit = None if limit is None or group != "terms" else math.ceil(TIER4_SHARE_PERCENT * limit / 100)
-        taken = cap_rows(pool.get(kind, ()), limit, CANDIDATE_LEMMA_CAP[product], document_cap, target_lemmas, documents, terms, term_cap, tier_limit)
-        per_kind[kind] = taken
-    for kind in [k for k in KINDS[group] if k in kinds and k in CONTROL_KINDS[group]]:
-        if group == "deverbal":
-            lemmas = ({lemma for lemma in (room or {})} if controls_only else {r["lemma"] for taken in per_kind.values() for r in taken} if side == "dev" else None)
-            targeted = {shapes_dev.sent_key_of(r["text"]) for kind_taken in per_kind.values() for r in kind_taken}     # a control never shares a sentence with a target candidate
-            ranked = verb_control_pool(scan, product, lex, seed, lemmas, exclude | targeted)
-        else:
+
+    def draw_targets():
+        for kind in [k for k in PRIORITY[group] if k in kinds and k not in CONTROL_KINDS[group]]:
+            limit = None if budgets[kind] is None else max(0, budgets[kind] - prior_kinds[kind])
+            tier_limit = None if limit is None or group != "terms" else math.ceil(TIER4_SHARE_PERCENT * limit / 100)
             ranked = pool.get(kind, ())
-        if controls_only:
-            default = 0 if group == "deverbal" else CONTROL_LEMMA_CAP
-            lemma_cap = lambda lemma, room=room, default=default: (room or {}).get(lemma, default)
-        else:
-            lemma_cap = CONTROL_LEMMA_CAP if side == "dev" else CANDIDATE_LEMMA_CAP[product]
-        limit = None if budgets[kind] is None else max(0, budgets[kind] - prior_kinds[kind])
-        per_kind[kind] = cap_rows(ranked, limit, lemma_cap, document_cap, control_lemmas, documents, terms, term_cap)
+            if group == "clauses" and control_keys:                          # AMENDMENT A2: a sentence of the control draw is never a target candidate too
+                ranked = [item for item in ranked if shapes_dev.sent_key_of(item[1]["text"]) not in control_keys]
+            per_kind[kind] = cap_rows(ranked, limit, CANDIDATE_LEMMA_CAP[product], document_cap, target_lemmas, documents, terms, term_cap, tier_limit)
+
+    def draw_controls():
+        for kind in [k for k in KINDS[group] if k in kinds and k in CONTROL_KINDS[group]]:
+            if group == "deverbal":
+                lemmas = ({lemma for lemma in (room or {})} if controls_only else {r["lemma"] for taken in per_kind.values() for r in taken} if side == "dev" else None)
+                targeted = {shapes_dev.sent_key_of(r["text"]) for kind_taken in per_kind.values() for r in kind_taken}     # a control never shares a sentence with a target candidate
+                ranked = verb_control_pool(scan, product, lex, seed, lemmas, exclude | targeted)
+            else:
+                ranked = pool.get(kind, ())
+            if controls_only:
+                default = 0 if group == "deverbal" else CONTROL_LEMMA_CAP
+                lemma_cap = lambda lemma, room=room, default=default: (room or {}).get(lemma, default)
+            else:
+                lemma_cap = CONTROL_LEMMA_CAP if side == "dev" else CANDIDATE_LEMMA_CAP[product]
+            limit = None if budgets[kind] is None else max(0, budgets[kind] - prior_kinds[kind])
+            per_kind[kind] = cap_rows(ranked, limit, lemma_cap, document_cap, control_lemmas, documents, terms, term_cap)
+
+    control_keys = set()
+    if group == "clauses":                    # AMENDMENT A2: the control draw comes first (its frame is also the `np` target frame), the target draw skips its sentences
+        draw_controls()
+        control_keys = {shapes_dev.sent_key_of(r["text"]) for taken in per_kind.values() for r in taken}
+        draw_targets()
+        per_kind = {k: per_kind[k] for k in [k for k in PRIORITY[group] if k in per_kind and k not in CONTROL_KINDS[group]] + [k for k in KINDS[group] if k in per_kind and k in CONTROL_KINDS[group]]}
+    else:
+        draw_targets()
+        draw_controls()
     for kind, taken in per_kind.items():
         for row in taken:
             row["prefix"] = prefix_of(product, kind, controls_only)
         rows += taken
     fu.number_rows(rows, "", product + ("-controls" if controls_only else "") + "-order", seed)
+    np_rows = sum(1 for r in rows if r["role"] == "target" and is_np(r))
     counts = dict(clean=len(scan.units), frame=stats["frame"], band=stats["band"], candidates=len(rows), kinds={k: len(v) for k, v in per_kind.items()},
                   pools={k: len(v) for k, v in pool.items()}, lemmas=len({r["lemma"] for r in rows}), documents=len({r["source_id"] for r in rows}), drops=dict(drops),
-                  prior=dict(prior_kinds))
+                  prior=dict(prior_kinds), np=np_rows)
     report = ["# Candidates (%s%s)" % (product, ", control top-up round" if controls_only else ""), "", "Counts only; no text of any evaluation set.", ""] + chd.scan_lines(scan, "sentence")
     report += ["", "frame hits: %d, in the band: %d (a development target of S1, S3 or S4 must lie in it: 0.10 <= q < 0.97; S4 0.10 <= q, amendment A1)" % (counts["frame"], counts["band"]),
                "frame hits per kind (before the caps): " + (", ".join("%s %d" % item for item in sorted(counts["pools"].items())) or "none"),
@@ -694,12 +739,16 @@ def candidate_rows(scan, product, lex, seed=SEED, hmm=None, old_counts=None, pri
                "pilot rows already drawn on this side: %d" % len(prior_rows),
                "candidates: %d over %d lemmas in %d documents (%s)" % (counts["candidates"], counts["lemmas"], counts["documents"],
                                                                      ", ".join("%s %d" % item for item in sorted(counts["kinds"].items())) or "none")]
+    if group == "clauses":
+        targets = sum(n for k, n in counts["kinds"].items() if k not in CONTROL_KINDS[group])
+        report.append("np target candidates (amendment A2, a direct object without a determiner after the word): %d of %d target candidates" % (counts["np"], targets))
     return rows, report, counts
 
 
 def band_counts(scan, product, lex, hmm, step_kinds=None):
     """Counter {band index of Q_BAND_LABELS: hits} (counts only) of the development target hits of a banded product: the units that `build_pool` would take as a target kind
-    (the rarest wanted kind of a unit takes it; the control kinds are not counted), by the Basic mass of the judged word. No label, no PartOfSpeech model, nothing is written."""
+    (the rarest wanted kind of a unit takes it; the control kinds are not counted; an `np` hit of S4 that the noun control frame took first counts as a target hit, amendment A2),
+    by the Basic mass of the judged word. No label, no PartOfSpeech model, nothing is written."""
     group, band = GROUP[product], BANDED[product]
     wanted = tuple(k for k in KINDS[group] if k not in CONTROL_KINDS[group])
     kinds = tuple(k for k in KINDS[group] if not (group == "deverbal" and k == "verb"))
@@ -708,7 +757,9 @@ def band_counts(scan, product, lex, hmm, step_kinds=None):
         unit = (step_kinds or {}).get(shapes_dev.sent_key_of(text), "sentence") if group == "steps" else "sentence"
         found = frame_hits(group, tokens, lex, unit in LABELED_UNITS)
         kind = next((k for k in PRIORITY[group] if k in kinds and k in found), None)
-        if kind is None or kind not in wanted:
+        if kind is not None and kind not in wanted:
+            kind = np_second_kind(group, kind, found, wanted)
+        if kind is None:
             continue
         counts[q_band(hmm.q(tokens, found[kind].index, band))] += 1
     return counts
@@ -897,8 +948,9 @@ def title_family_of(draft):
 class Selector:
     """The counters of one selection (rule 8): per lemma, document, term (S2), title family (S3) and sentence. A sentence is taken once."""
 
-    def __init__(self, lemma_cap, document_cap, lemmas=None, term_cap=None, family_cap=None, family_of=None):
+    def __init__(self, lemma_cap, document_cap, lemmas=None, term_cap=None, family_cap=None, family_of=None, np_limit=None):
         self.lemma_cap, self.document_cap, self.term_cap, self.family_cap, self.family_of = lemma_cap, document_cap, term_cap, family_cap, family_of or {}
+        self.np_limit, self.np = np_limit, 0
         self.lemmas, self.documents, self.terms, self.families, self.keys = collections.Counter(lemmas or ()), collections.Counter(), collections.Counter(), collections.Counter(), set()
 
     def derived(self, lemma_cap):
@@ -919,12 +971,15 @@ class Selector:
             return "term-cap"
         if self.family_cap is not None and self.families[self.family_of.get(entry["source_id"], "")] >= self.family_cap:
             return "family-cap"
+        if self.np_limit is not None and is_np(entry) and self.np >= self.np_limit:
+            return "np-cap"
         return None
 
     def take(self, entry):
         self.keys.add(entry["sent_key"])
         self.lemmas[entry["lemma"]] += 1
         self.documents[entry["source_id"]] += 1
+        self.np += is_np(entry)
         if entry["term"]:
             self.terms[entry["term"]] += 1
         self.families[self.family_of.get(entry["source_id"], "")] += 1
@@ -983,13 +1038,36 @@ def quota_cap(product, name):
     return next((cap for quota_name, _, _, cap in DEV_QUOTAS[product] if quota_name == name), None)
 
 
+def np_over_cap(targets):
+    """True when the `np` targets are more than NP_SHARE_MAX_PERCENT of the targets (AMENDMENT A2)."""
+    return sum(1 for t in targets if is_np(t)) * 100 > NP_SHARE_MAX_PERCENT * len(targets)
+
+
+def with_np_cap(select, targets_of):
+    """The result of `select(np_limit)` for the largest `np_limit` (None = no limit, tried first) that keeps the `np` share of `targets_of(result)` within NP_SHARE_MAX_PERCENT: the np
+    entries come in the order of the selection and the others are never removed, so the original frame stays represented (AMENDMENT A2)."""
+    result = select(None)
+    targets = targets_of(result)
+    if not np_over_cap(targets):
+        return result
+    for limit in range(sum(1 for t in targets if is_np(t)) - 1, -1, -1):
+        result = select(limit)
+        if not np_over_cap(targets_of(result)):
+            return result
+    return result
+
+
 def select_dev(product, entries, family_of=None, old_counts=None, seed=SEED):
     """(targets, controls, drops) of a development product (rule 8): the targets kind by kind in BUILD_ORDER (q ascending for S1, S3, S4; S3 with the bare and labeled preference) with the
     cap of the kind and the total, 4 or 6 per lemma (S1 over the union `old_counts`), 15 per document, S2 2 per term, S3 30 per title family; the controls (S1: only for the lemmas of the
-    chosen targets) in the seeded order, 2 per lemma, with the cap of the kind and the total."""
+    chosen targets) in the seeded order, 2 per lemma, with the cap of the kind and the total. S4: the `np` targets are at most NP_SHARE_MAX_PERCENT of the targets (AMENDMENT A2; reason `np-cap`)."""
+    return with_np_cap(lambda np_limit: _select_dev(product, entries, family_of, old_counts, seed, np_limit), lambda result: result[0])
+
+
+def _select_dev(product, entries, family_of, old_counts, seed, np_limit):
     group = GROUP[product]
     drops = collections.Counter()
-    selector = Selector(LEMMA_CAP[product], DOCUMENT_CAP["dev"], old_counts, TERM_CAP["dev"] if group == "terms" else None, FAMILY_CAP if group == "steps" else None, family_of)
+    selector = Selector(LEMMA_CAP[product], DOCUMENT_CAP["dev"], old_counts, TERM_CAP["dev"] if group == "terms" else None, FAMILY_CAP if group == "steps" else None, family_of, np_limit)
     total = quota_cap(product, "targets")
     targets = []
     for kind in BUILD_ORDER[group]:
@@ -1016,12 +1094,18 @@ def select_dev(product, entries, family_of=None, old_counts=None, seed=SEED):
 
 def select_train(product, kept, seed=SEED):
     """(chosen, drops) of a training product (rule 8): the main strata in BUILD_ORDER (the cap of the stratum, S3 with the bare and labeled preference) up to the total cap minus the
-    goal of the contrast strata, then the contrast strata up to their maximum share of the file; lemma, document and term caps over both."""
+    goal of the contrast strata, then the contrast strata up to their maximum share of the file; lemma, document and term caps over both. S4: the `np` sentences are at most
+    NP_SHARE_MAX_PERCENT of the main strata (AMENDMENT A2; reason `np-cap`)."""
+    group = GROUP[product]
+    return with_np_cap(lambda np_limit: _select_train(product, kept, seed, np_limit), lambda result: [e for e in result[0] if e["kind"] not in CONTRAST_KINDS[group]])
+
+
+def _select_train(product, kept, seed, np_limit):
     group = GROUP[product]
     drops = collections.Counter()
     total = TRAIN_QUOTAS[product][0][3]
     _, share_max = TRAIN_SHARES[group]
-    selector = Selector(LEMMA_CAP[product], DOCUMENT_CAP["train"], None, TERM_CAP["train"] if group == "terms" else None)
+    selector = Selector(LEMMA_CAP[product], DOCUMENT_CAP["train"], None, TERM_CAP["train"] if group == "terms" else None, np_limit=np_limit)
     key = order_key(product, seed, "technical-build:" + product)
     contrast = sorted((e for e in kept if e["kind"] in CONTRAST_KINDS[group]), key=key)
     goal = min(len(contrast), total * share_max // 100)
@@ -1285,6 +1369,8 @@ def build(work, product, out_dir, seed=SEED, allow_short=False, data_dir=None, e
     refused = exclusions.problems(draft, built)
     if refused:
         raise shapes_dev.ExcludedSourceError("excluded sources are used:\n  " + "\n  ".join(refused[:20]))
+    kept_targets = [e for e in ordered if e["kind"] not in CONTROL_KINDS[group]]
+    np_kept = (sum(1 for e in kept_targets if is_np(e)), len(kept_targets))
     wrong_side = sorted({s["source_id"] for s in built if sides.get(s["source_id"]) != SIDE[product]})
     cross = (cross_side_problems(data_dir, product, built) + ["document %s is not on the %s side" % (d, SIDE[product]) for d in wrong_side]
              + cross_product_problems(out_dir, product, built))
@@ -1313,11 +1399,11 @@ def build(work, product, out_dir, seed=SEED, allow_short=False, data_dir=None, e
             "# Candidate sentences dropped alone because they equal or nearly equal a sentence of a training or evaluation set or of the shapes development set",
             "# (counted in private/candidates-report.md of the round folder; only counts are published, never text)", "# columns = reason, sentences"]
             + chd._drop_rows(shapes_dev.RoundWork(base, CANDIDATE_ROUND[product])))
-    return built, build_report(product, built, labeled, drops, draft)
+    return built, build_report(product, built, labeled, drops, draft, np_kept)
 
 
-def build_report(product, built, labeled, drops, draft):
-    """Markdown counts of a build: drops per reason, per family, per kind, lemma and document statistics."""
+def build_report(product, built, labeled, drops, draft, np_kept=None):
+    """Markdown counts of a build: drops per reason, per family, per kind, lemma and document statistics (S4: `np_kept` = (np targets, targets), AMENDMENT A2)."""
     family = {row["source_id"]: row["family"] for row in draft}
     kinds = collections.Counter(kind_label(product, judged(product, s)[1]) for s in built)
     lemmas = collections.Counter(judged(product, s)[2] for s in built)
@@ -1330,6 +1416,8 @@ def build_report(product, built, labeled, drops, draft):
     lines += ["", "- kinds: " + ", ".join("%s %d" % item for item in sorted(kinds.items())),
               "- lemmas: %d (most frequent: %s)" % (len(lemmas), ", ".join("%s %d" % item for item in sorted(lemmas.items(), key=lambda i: (-i[1], i[0]))[:8])),
               "- documents: %d" % len(documents), "- tokens: %d" % sum(len(s["rows"]) for s in built)]
+    if np_kept is not None and GROUP[product] == "clauses":
+        lines.append("- np targets (a direct object without a determiner after the word, amendment A2): %d of %d targets (at most %d percent)" % (np_kept[0], np_kept[1], NP_SHARE_MAX_PERCENT))
     return lines
 
 
@@ -1472,7 +1560,12 @@ def _command_preflight(args):
                 found = frame_hits(group, tokens, lex, unit in LABELED_UNITS)
                 kind = next((k for k in PRIORITY[group] if k in found), None)
                 first[kind] += kind is not None
-            parts.append("%s %s" % (group, ", ".join("%s %d" % (k, first[k]) for k in PRIORITY[group])))
+                if group == "clauses":                                          # AMENDMENT A2: the np target frame (counted apart; the noun control frame takes most of these first)
+                    both = np_second_kind(group, kind, found, TARGET_KINDS[group])
+                    first["np"] += both is not None or (kind in TARGET_KINDS[group] and is_np(found[kind]._asdict()))
+                    first["np+noun"] += both is not None
+            parts.append("%s %s" % (group, ", ".join("%s %d" % (k, first[k]) for k in PRIORITY[group])
+                                    + ((" (np target frame %d, of them in the noun control frame %d)" % (first["np"], first["np+noun"])) if group == "clauses" else "")))
         print("; ".join(parts))
     return 0
 

@@ -545,7 +545,35 @@ class PoolTests(Mini):
         scan = scan_of([("army-a", t) for t in texts])
         masses = {" ".join(base.simple_tokens(t)): q for t, q in zip(texts, (0.05, 0.1, 0.6, 0.95, 0.99, 0.999, 0.5, 0.5))}
         counts = td.band_counts(scan, "clause-verbs", LEX, ft.FakeHmm(masses))
-        self.assertEqual({0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1}, dict(counts))                                 # the noun and adj controls are not counted
+        self.assertEqual({0: 1, 1: 1, 2: 2, 3: 1, 4: 1, 5: 1}, dict(counts))                                 # the adj control is not counted; the noun-frame sentence is also an np target (0.5: band 2), amendment A2
+
+    def test_amendment_a2_an_np_sentence_is_offered_to_the_noun_control_and_to_the_target_stratum_with_the_flag(self):
+        text = SENTENCES["clauses"]["noun"]
+        scan = scan_of([("army-a", text)])
+        hmm = ft.FakeHmm({" ".join(base.simple_tokens(text)): 0.5})
+        pool, stats, _ = td.build_pool(scan, "clause-verbs", LEX, sd.SEED, hmm)
+        self.assertEqual({"noun": 1, "main": 1}, {k: len(v) for k, v in pool.items()})
+        self.assertEqual(1, stats["frame"])                                                                  # one sentence, however many kinds offer it
+        self.assertEqual(("np", "0.500", ""), (pool["main"][0][1]["flag"], pool["main"][0][1]["q"], pool["noun"][0][1]["q"]))
+        self.assertEqual("", pool["noun"][0][1]["flag"])
+        self.assertEqual("target", pool["main"][0][1]["role"])
+        self.assertEqual("control", pool["noun"][0][1]["role"])
+        low = ft.FakeHmm({" ".join(base.simple_tokens(text)): 0.05})
+        pool, _, _ = td.build_pool(scan, "clause-verbs", LEX, sd.SEED, low)
+        self.assertEqual({"noun"}, set(pool))                                                                # below the lower bound the sentence stays a control candidate
+        pool, _, _ = td.build_pool(scan, "clause-verbs", LEX, sd.SEED, hmm, kinds=("noun", "adj"))
+        self.assertEqual({"noun"}, set(pool))                                                                # the control top-up round draws no target
+        pool, _, _ = td.build_pool(scan, "clauses", LEX, sd.SEED)
+        self.assertEqual({"noun", "main"}, set(pool))                                                        # the training source offers it to both too, with no q
+
+    def test_amendment_a2_the_flags_of_a_hit_are_coordinated_and_np(self):
+        tokens = base.simple_tokens("The oil and pumps drain tank .")
+        self.assertEqual("coordinated,np", td.frame_hits("clauses", tokens, LEX)["main"].flag)
+        self.assertEqual("np", td.frame_hits("clauses", base.simple_tokens(SENTENCES["clauses"]["noun"]), LEX)["main"].flag)
+        self.assertEqual("", td.frame_hits("clauses", base.simple_tokens(SENTENCES["clauses"]["main"]), LEX)["main"].flag)
+        self.assertTrue(td.is_np(dict(flag="coordinated,np")))
+        self.assertFalse(td.is_np(dict(flag="coordinated")))
+        self.assertFalse(td.is_np(dict(flag="")))
 
     def test_banded_targets_lie_in_the_band_and_are_ordered_by_q_with_empty_q_for_controls(self):
         texts = ["The oil check is full 1 .", "The oil check is full 2 .", "The oil check is full 3 .", "The oil check is full 4 .", "You must check the valve 5 ."]
@@ -640,6 +668,22 @@ class CandidateRowTests(Mini):
         self.assertTrue(all("q" not in r for r in rows))
         self.assertEqual({"pred": 2, "verb": 2}, {k: v for k, v in counts["kinds"].items() if v})
         self.assertEqual(["dvt-pred-c", "dvt-verb-c"], sorted({r["cand_id"][:10] for r in rows}))
+
+    def test_amendment_a2_the_controls_are_drawn_first_and_a_sentence_is_never_both_a_control_and_an_np_target(self):
+        units = self.units("clauses", "noun", 6)
+        hmm = ft.FakeHmm({" ".join(base.simple_tokens(t)): 0.5 for _, t in units})
+        with mock.patch.dict(td.CANDIDATE_BUDGET, {"clause-verbs": {"main": 10, "sub": 5, "noun": 2, "adj": 1}}):
+            rows, report, counts = td.candidate_rows(scan_of(units), "clause-verbs", LEX, hmm=hmm)
+        self.assertEqual({"main": 4, "noun": 2}, {k: v for k, v in counts["kinds"].items() if v})              # 2 controls (2 per lemma), 4 np targets (4 per lemma): 6 sentences, none twice
+        self.assertEqual(6, len({r["text"] for r in rows}))
+        self.assertEqual(4, counts["np"])
+        self.assertEqual({"np"}, {r["flag"] for r in rows if r["role"] == "target"})
+        self.assertEqual({""}, {r["flag"] for r in rows if r["role"] == "control"})
+        self.assertIn("np target candidates (amendment A2, a direct object without a determiner after the word): 4 of 4 target candidates", "\n".join(report))
+        self.assertEqual(["cv-main-", "cv-noun-"], sorted({r["cand_id"].rsplit("c", 1)[0] for r in rows}))
+        rows, _, counts = td.candidate_rows(scan_of(units), "clauses", LEX)                                   # a training source: no band, the same rule
+        self.assertEqual(6, len({r["text"] for r in rows}))
+        self.assertEqual(len(rows), len({r["cand_id"] for r in rows}))
 
     def test_the_budgets_and_the_caps_of_the_candidates(self):
         units = self.units("clauses", "main", 12) + self.units("clauses", "sub", 12) + self.units("clauses", "noun", 5)
@@ -1031,6 +1075,43 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual((49, 16), (kinds["noun"], kinds["proper"]))                                                # proper at most 25 percent: 49 * 25 // 75 = 16
         self.assertEqual({"terms": (15, 25)}, {"terms": td.TRAIN_SHARES["terms"]})
 
+    def test_amendment_a2_the_np_targets_are_at_most_sixty_percent_of_the_development_targets(self):
+        np_entries = [entry("main", n, "n%d" % n, group="clauses", source="d%d" % (n % 9), q="0.%03d" % n, flag="np") for n in range(1, 21)]
+        plain = [entry("main", 100 + n, "p%d" % n, group="clauses", source="e%d" % (n % 9), q="0.9%02d" % n) for n in range(1, 7)]
+        self.assertEqual(60, td.NP_SHARE_MAX_PERCENT)
+        targets, _, drops = td.select_dev("clause-verbs", np_entries + plain)
+        nps = sum(td.is_np(t) for t in targets)
+        self.assertEqual((15, 9, 6), (len(targets), nps, len(targets) - nps))                                 # 9 np of 15 is exactly 60 percent; the 11 np beyond are dropped
+        self.assertEqual(11, drops["np-cap"])
+        self.assertEqual(["x-c%05d" % n for n in range(1, 10)], [t["cand_id"] for t in targets if td.is_np(t)])      # the np targets keep the order of the selection (q ascending)
+        targets, _, drops = td.select_dev("clause-verbs", np_entries[:6] + plain)
+        self.assertEqual((12, 0), (len(targets), drops["np-cap"]))                                            # 6 of 12 is under the cap: nothing is dropped
+        targets, _, drops = td.select_dev("clause-verbs", np_entries)
+        self.assertEqual((0, 20), (len(targets), drops["np-cap"]))                                            # an np-only pool keeps no target: the original frame must be represented
+        self.assertFalse(td.np_over_cap([]))
+        self.assertFalse(td.np_over_cap([dict(flag="np"), dict(flag="")]))
+        self.assertTrue(td.np_over_cap([dict(flag="np"), dict(flag="np"), dict(flag="")]))
+
+    def test_amendment_a2_the_np_cap_leaves_the_other_products_and_the_controls_alone(self):
+        entries = [entry("pred", n, "l%d" % n, source="d%d" % (n % 9), q="0.%03d" % n) for n in range(1, 20)]
+        targets, _, drops = td.select_dev("deverbal-heads", entries)
+        self.assertEqual((19, 0), (len(targets), drops["np-cap"]))
+        controls = [entry("noun", 200 + n, "c%d" % n, group="clauses") for n in range(5)]
+        _, kept, drops = td.select_dev("clause-verbs", [entry("main", 1, "m", group="clauses", q="0.5")] + controls)
+        self.assertEqual((5, 0), (len(kept), drops["np-cap"]))
+
+    def test_amendment_a2_the_np_sentences_are_at_most_sixty_percent_of_the_training_targets(self):
+        kept = ([entry("main", n, "n%d" % n, group="clauses", source="d%d" % (n % 30), flag="np") for n in range(1, 61)]
+                + [entry("main", 100 + n, "p%d" % n, group="clauses", source="e%d" % (n % 30)) for n in range(1, 21)]
+                + [entry("noun", 200 + n, "c%d" % n, group="clauses", source="f%d" % (n % 30)) for n in range(1, 6)])
+        chosen, drops = td.select_train("clauses", kept)
+        targets = [c for c in chosen if c["kind"] in td.TARGET_KINDS["clauses"]]
+        nps = sum(td.is_np(t) for t in targets)
+        self.assertEqual((20, 30), (len(targets) - nps, nps))                                                 # 20 plain sentences allow 30 np (60 percent of 50)
+        self.assertEqual(30, drops["np-cap"])
+        self.assertLessEqual(nps * 100, td.NP_SHARE_MAX_PERCENT * len(targets))
+        self.assertEqual(5, sum(1 for c in chosen if c["kind"] == "noun"))                                    # the contrast strata are not np and are not counted
+
     def test_a_sentence_is_taken_once_and_the_selector_counts(self):
         selector = td.Selector(4, 15)
         first, second = entry("pred", 1, "check"), entry("verb", 2, "check", sent_key="k00001")
@@ -1147,6 +1228,19 @@ class BuildDevTests(Mini):
         with mock.patch.object(td, "draft_gate"):
             td.build(self.work, "clause-verbs", out2, data_dir=self.data, allow_short=True)
         self.assertEqual(ft.read_bytes_of(out), ft.read_bytes_of(out2))                                      # deterministic
+
+    def test_amendment_a2_build_caps_the_np_targets_at_sixty_percent_and_reports_the_share(self):
+        specs = (many("cv-main-", "The pumps drain tank %d .", 8, 2, lemma="n%d", flag="np") + many("cv-main-", "The pumps drain the tank %d .", 4, 2, lemma="p%d", first=20)
+                 + many("cv-noun-", "The pumps fill tank %d .", 2, 2, lemma="fill", first=40))
+        self.sides(**{"army-a": "dev"})
+        built, report, out = self.build("clause-verbs", {"clv": (specs, False)}, allow_short=True)
+        _, sentences = common.read_corpus(os.path.join(out, "clause-verbs.tsv"))
+        targets = [s for s in sentences if s["comments"]["role"] == "target"]
+        self.assertEqual(10, len(targets))                                                                   # 4 plain targets allow 6 np targets
+        self.assertEqual(6, sum(1 for s in targets if "tank" in s["text"] and "the tank" not in s["text"]))
+        self.assertEqual(2, drops_of(report)["np-cap"])
+        self.assertIn("np targets (a direct object without a determiner after the word, amendment A2): 6 of 10 targets (at most 60 percent)", "\n".join(report))
+        self.assertEqual(2, sum(1 for s in sentences if s["comments"]["role"] == "control"))
 
     def test_the_development_quota_gates_have_floors_and_caps_for_every_product(self):
         self.sides(**{"army-a": "dev"})
@@ -1347,6 +1441,7 @@ class PreflightTests(Mini):
         self.assertIn("clean sentences: 6; clean step units: not tokenized yet (run `steps`)", out)
         self.assertIn("dev: 3 clean sentences; deverbal pred 1, num 0, ing 0, other 0; terms proper 0, adj 1, noun 0; clauses adj 0, noun 0, sub 0, main 1", out)
         self.assertIn("train: 3 clean sentences; deverbal pred 0, num 0, ing 0, other 1; terms proper 0, adj 0, noun 1; clauses adj 0, noun 0, sub 1, main 0", out)
+        self.assertIn("(np target frame 0, of them in the noun control frame 0)", out)
         for text in dev_texts + train_texts:
             self.assertNotIn(text, out)                                                                          # counts only
         self.assertEqual({"exclusions.tsv"} & set(os.listdir(self.root)), set())                                  # nothing is written, nothing is labeled

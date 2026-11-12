@@ -60,10 +60,16 @@ S4  base-form ambiguity in a clause (`clause_verb_hit`, `clause_control_hit`)
     Y` whose Y (optionally with a determiner) is noun-capable. The subject noun phrase (walked left over noun modifiers, adjectives and
     one determiner or numeral) opens a clause: before it stand the start of the sentence, a mark, a conjunction, a subordinator or a
     sentence adverb (never a verb or a preposition: `keep the valves open` is no clause). V is followed by the end, a mark, a determiner,
-    an object pronoun, a preposition, a quantity, `that`, `to`, `not`, a following adverb or a conjunction, and never by a noun-capable
-    word. Stratum `sub` when a subordinator of `SUBORDINATORS` stands within 5 tokens before the subject with no mark between,
-    otherwise `main`. Controls: `noun` (the same subject frame, V followed by a lower-case noun: `valves control panel`) and `adj`
-    (a determiner, V listed ADJ, a plural noun: `the open valves`).
+    an object pronoun, a preposition, a quantity, `that`, `to`, `not`, a following adverb or a conjunction (the original frame), or, since
+    AMENDMENT A2 (before any label other than the S2 pilot; an implementing-agent decision, not the owner's), by a lower-case noun that is
+    no function word or by an adjective and noun phrase without a determiner (a direct object: `Engineers check pressure gauges.`,
+    `The valves control flow.`, `Pumps supply cold water.`); such a hit carries the flag `np` (`ClauseHit.np`). The amendment only widens
+    the pool of candidates: the tag of V (VERB for a kept target) always comes from the two blind labelers, so an `np` candidate that both
+    label NOUN or ADJ is a class-mismatch drop, never a control. Stratum `sub` when a subordinator of `SUBORDINATORS` stands within 5 tokens
+    before the subject with no mark between, otherwise `main`. Still one candidate per sentence. Controls (unchanged): `noun` (the same
+    subject frame, V followed by a lower-case noun: `valves control panel`) and `adj` (a determiner, V listed ADJ, a plural noun: `the open
+    valves`). A sentence of the noun-control frame that is also an `np` target frame is offered to both kinds; the control draw comes first
+    and the target draw never takes the same sentence (`technical_data.candidate_rows`).
 """
 import collections
 import re
@@ -570,7 +576,7 @@ SUBORDINATORS = frozenset("when if because that which where after before while a
 SENTENCE_ADVERBS = frozenset("then thus therefore also so however".split())
 SUBORDINATOR_WINDOW = 5
 CLAUSE_FOLLOWERS = frozenset("that to not then again".split())
-ClauseHit = collections.namedtuple("ClauseHit", "index stratum coordinated lemma")
+ClauseHit = collections.namedtuple("ClauseHit", "index stratum coordinated lemma np", defaults=(False,))      # np: AMENDMENT A2, V is followed by a direct object without a determiner
 
 
 def clause_word(token, lex):
@@ -629,6 +635,19 @@ def clause_noun_follower(tokens, lex, verb):
     return is_lower_word(following) and has_tags(lex, following, "NOUN") and following.lower() not in shapes_dev.FUNCTION_WORDS
 
 
+def clause_np_follower(tokens, lex, verb):
+    """True (AMENDMENT A2) when `verb` starts a direct object without a determiner: the next token is a lower-case noun that is no function word (`clause_noun_follower`),
+    or one or more adjectives (listed only as ADJ, or an ordinal) and then such a noun (`cold water`). A token of the original follower classes never counts."""
+    if verb + 1 >= len(tokens) or clause_follower_ok(tokens, verb):
+        return False
+    if clause_noun_follower(tokens, lex, verb):
+        return True
+    j = verb + 1
+    while j < len(tokens) - 1 and is_lower_word(tokens[j]) and adjective_like(tokens[j], lex):
+        j += 1
+    return j > verb + 1 and clause_noun_follower(tokens, lex, j - 1)
+
+
 def clause_stratum(tokens, verb):
     """`sub` when a subordinator stands within SUBORDINATOR_WINDOW tokens before the subject head with no mark between, else `main`."""
     head = verb - 1
@@ -641,14 +660,17 @@ def clause_stratum(tokens, verb):
 
 
 def clause_verb_hit(tokens, lex):
-    """`ClauseHit(index, stratum, coordinated, lemma)` of the first target of S4 (stratum `main` or `sub`), or None. The module docstring has the rule."""
+    """`ClauseHit(index, stratum, coordinated, lemma, np)` of the first target of S4 (stratum `main` or `sub`), or None. The module docstring has the rule; `np` marks the frame of AMENDMENT A2."""
     for i in range(1, len(tokens)):
-        if not clause_word(tokens[i], lex) or not clause_follower_ok(tokens, i) or clause_noun_follower(tokens, lex, i):
+        if not clause_word(tokens[i], lex):
+            continue
+        original = clause_follower_ok(tokens, i) and not clause_noun_follower(tokens, lex, i)
+        if not original and not clause_np_follower(tokens, lex, i):
             continue
         subject = clause_subject(tokens, lex, i)
         if subject is None:
             continue
-        return ClauseHit(i, clause_stratum(tokens, i), subject[1], tokens[i].lower())
+        return ClauseHit(i, clause_stratum(tokens, i), subject[1], tokens[i].lower(), not original)
     return None
 
 
