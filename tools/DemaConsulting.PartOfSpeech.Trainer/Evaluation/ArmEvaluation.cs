@@ -81,6 +81,26 @@ internal sealed class ArmInputs
     public string Headings2Sha256 { get; set; } = string.Empty;
 
     /// <summary>
+    ///     Gets or sets the SHA-256 of the deverbal-heads tranche of the shapes development set.
+    /// </summary>
+    public string DeverbalHeadsSha256 { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     Gets or sets the SHA-256 of the defined-terms tranche of the shapes development set.
+    /// </summary>
+    public string DefinedTermsSha256 { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     Gets or sets the SHA-256 of the step-lines tranche of the shapes development set.
+    /// </summary>
+    public string StepLinesSha256 { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     Gets or sets the SHA-256 of the clause-verbs tranche of the shapes development set.
+    /// </summary>
+    public string ClauseVerbsSha256 { get; set; } = string.Empty;
+
+    /// <summary>
     ///     Gets or sets the commit of the repository (<c>unknown</c> when git does not answer).
     /// </summary>
     public string Commit { get; set; } = "unknown";
@@ -147,14 +167,34 @@ internal sealed class ArmEvaluationData
     public IReadOnlyList<ShapesDevItem> Headings2 { get; set; } = Array.Empty<ShapesDevItem>();
 
     /// <summary>
+    ///     Gets the items of the deverbal-heads tranche of the shapes development set.
+    /// </summary>
+    public IReadOnlyList<ShapesDevItem> DeverbalHeads { get; set; } = Array.Empty<ShapesDevItem>();
+
+    /// <summary>
+    ///     Gets the items of the defined-terms tranche of the shapes development set.
+    /// </summary>
+    public IReadOnlyList<ShapesDevItem> DefinedTerms { get; set; } = Array.Empty<ShapesDevItem>();
+
+    /// <summary>
+    ///     Gets the items of the step-lines tranche of the shapes development set.
+    /// </summary>
+    public IReadOnlyList<ShapesDevItem> StepLines { get; set; } = Array.Empty<ShapesDevItem>();
+
+    /// <summary>
+    ///     Gets the items of the clause-verbs tranche of the shapes development set.
+    /// </summary>
+    public IReadOnlyList<ShapesDevItem> ClauseVerbs { get; set; } = Array.Empty<ShapesDevItem>();
+
+    /// <summary>
     ///     Gets the hashes of the inputs (the commit and the dirty flag are set by the caller).
     /// </summary>
     public ArmInputs Inputs { get; set; } = new();
 
     /// <summary>
     ///     Reads the development sets of the arm evaluation: open dev, gold v2 dev, the standard and the hard tranche of the shapes
-    ///     development set, its compound-head, headings and named-state tranches, its compound-head-2 and headings-2 tranches, and the mapped
-    ///     development table of the treebank.
+    ///     development set, its compound-head, headings and named-state tranches, its compound-head-2 and headings-2 tranches, its four technical
+    ///     tranches (deverbal-heads, defined-terms, step-lines, clause-verbs), and the mapped development table of the treebank.
     /// </summary>
     /// <param name="repositoryRoot">The full path of the repository root.</param>
     /// <returns>The data.</returns>
@@ -169,6 +209,10 @@ internal sealed class ArmEvaluationData
         var namedState = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.NamedState, out var namedStateSha);
         var compound2 = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.CompoundHead2, out var compound2Sha);
         var headings2 = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.Headings2, out var headings2Sha);
+        var deverbal = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.DeverbalHeads, out var deverbalSha);
+        var terms = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.DefinedTerms, out var termsSha);
+        var steps = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.StepLines, out var stepsSha);
+        var clauses = DevSets.ReadShapesDev(repositoryRoot, ShapesDevTranche.ClauseVerbs, out var clausesSha);
         var ud = DevSets.ReadUdDev(repositoryRoot, out var udSha);
         return new ArmEvaluationData
         {
@@ -181,6 +225,10 @@ internal sealed class ArmEvaluationData
             NamedState = namedState,
             CompoundHead2 = compound2,
             Headings2 = headings2,
+            DeverbalHeads = deverbal,
+            DefinedTerms = terms,
+            StepLines = steps,
+            ClauseVerbs = clauses,
             Inputs = new ArmInputs
             {
                 DevSha256 = standardSha,
@@ -193,6 +241,10 @@ internal sealed class ArmEvaluationData
                 NamedStateSha256 = namedStateSha,
                 CompoundHead2Sha256 = compound2Sha,
                 Headings2Sha256 = headings2Sha,
+                DeverbalHeadsSha256 = deverbalSha,
+                DefinedTermsSha256 = termsSha,
+                StepLinesSha256 = stepsSha,
+                ClauseVerbsSha256 = clausesSha,
             },
         };
     }
@@ -249,6 +301,16 @@ internal sealed class ArmEvaluationData
 ///         appended to <c>inputs</c>.
 ///     </para>
 ///     <para>
+///         <b>Technical tranches.</b> <c>shapesTechnical</c> is a further additional block (every earlier block and key is unchanged, the schema
+///         stays 1): it holds the rows of the four technical tranches (<c>deverbalHeads</c>, <c>definedTerms</c>, <c>stepLines</c>,
+///         <c>clauseVerbs</c>, each as in <c>shapesNew</c> with the target items wrong at 0.90 as <c>wrong90</c> and the controls wrong at
+///         0.90 and 0.95 as <c>controlWrong90</c> and <c>controlConfidentWrong</c>), <c>pooledTechnical</c> (the target items, the noun-verb
+///         decisions and the harmful errors of the deverbal-heads, step-lines and clause-verbs tranches with the harmful errors per 1,000 decisions
+///         derived from them), <c>termError</c> (the exact-tag errors of the defined-terms targets per 1,000 target items) and <c>calibration</c>
+///         (see <see cref="ShapesDevCalibration"/>: the pooled scope of the four technical tranches, the pooled scope of all nine single-shape
+///         tranches and one scope per technical tranche). The four new file hashes are appended to <c>inputs</c>. No threshold is read, changed or written.
+///     </para>
+///     <para>
 ///         The JSON has no time stamp and no machine name, only invariant-culture numbers, and is written by hand because the engine
 ///         is compiled for .NET Framework by the tests. Stateless and thread-safe apart from the timed measurement.
 ///     </para>
@@ -289,11 +351,12 @@ internal static class ArmEvaluation
         var items = data.Shapes;
         var outcomes = ShapesDevEvaluator.Judge(tagger, items);
         var shapes = ShapesDevEvaluator.SummarizeTranches(items, outcomes);
-        var compoundHead = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.CompoundHead, data.CompoundHead);
-        var headings = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.Headings, data.Headings);
-        var namedState = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.NamedState, data.NamedState);
-        var compoundHead2 = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.CompoundHead2, data.CompoundHead2);
-        var headings2 = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.Headings2, data.Headings2);
+        var scores = ShapesDevCommand.AllSingleTranches.ToDictionary(t => t, t => Score(tagger, t, ItemsOf(data, t)));
+        var compoundHead = scores[ShapesDevTranche.CompoundHead].Result;
+        var headings = scores[ShapesDevTranche.Headings].Result;
+        var namedState = scores[ShapesDevTranche.NamedState].Result;
+        var compoundHead2 = scores[ShapesDevTranche.CompoundHead2].Result;
+        var headings2 = scores[ShapesDevTranche.Headings2].Result;
         var sentences = data.Open.Select(s => s.Tokens).Concat(data.UdDev.Select(s => s.Tokens)).ToList();
         var tokens = sentences.Sum(s => (long)s.Length);
         double rate;
@@ -360,6 +423,7 @@ internal static class ArmEvaluation
         WriteImperativeHeadings(json, headings, headings2);
         WriteCompoundControls(json, compoundHead.Overall, compoundHead2.Overall);
         json.Close('}');
+        WriteTechnical(json, scores);
         json.Open("inputs", '{');
         json.Text("devSha256", data.Inputs.DevSha256);
         json.Text("hardSha256", data.Inputs.HardSha256);
@@ -373,9 +437,198 @@ internal static class ArmEvaluation
         json.Text("namedStateSha256", data.Inputs.NamedStateSha256);
         json.Text("compoundHead2Sha256", data.Inputs.CompoundHead2Sha256);
         json.Text("headings2Sha256", data.Inputs.Headings2Sha256);
+        json.Text("deverbalHeadsSha256", data.Inputs.DeverbalHeadsSha256);
+        json.Text("definedTermsSha256", data.Inputs.DefinedTermsSha256);
+        json.Text("stepLinesSha256", data.Inputs.StepLinesSha256);
+        json.Text("clauseVerbsSha256", data.Inputs.ClauseVerbsSha256);
         json.Close('}');
         json.Close('}');
         return json.ToString() + "\n";
+    }
+
+    /// <summary>
+    ///     The result and the outcomes of one single-shape tranche.
+    /// </summary>
+    private sealed class TrancheScore
+    {
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="TrancheScore"/> class.
+        /// </summary>
+        /// <param name="result">The summary of the tranche.</param>
+        /// <param name="outcomes">The outcome of every item, in the order of the items.</param>
+        public TrancheScore(ShapesDevSingleShapeResult result, List<Outcome> outcomes)
+        {
+            Result = result;
+            Outcomes = outcomes;
+        }
+
+        /// <summary>
+        ///     Gets the summary of the tranche.
+        /// </summary>
+        public ShapesDevSingleShapeResult Result { get; }
+
+        /// <summary>
+        ///     Gets the outcome of every item, in the order of the items.
+        /// </summary>
+        public List<Outcome> Outcomes { get; }
+    }
+
+    /// <summary>
+    ///     Judges and summarizes the items of one single-shape tranche.
+    /// </summary>
+    /// <param name="tagger">The tagger.</param>
+    /// <param name="tranche">The tranche.</param>
+    /// <param name="items">The items of the tranche.</param>
+    /// <returns>The summary and the outcomes.</returns>
+    private static TrancheScore Score(Tagger tagger, ShapesDevTranche tranche, IReadOnlyList<ShapesDevItem> items)
+    {
+        var outcomes = ShapesDevTrancheEvaluator.Judge(tagger, items);
+        return new TrancheScore(ShapesDevTrancheEvaluator.Summarize(tranche, items, outcomes), outcomes);
+    }
+
+    /// <summary>
+    ///     Gets the items that the data holds for a single-shape tranche.
+    /// </summary>
+    /// <param name="data">The development sets.</param>
+    /// <param name="tranche">The single-shape tranche.</param>
+    /// <returns>The items.</returns>
+    private static IReadOnlyList<ShapesDevItem> ItemsOf(ArmEvaluationData data, ShapesDevTranche tranche) => tranche switch
+    {
+        ShapesDevTranche.CompoundHead => data.CompoundHead,
+        ShapesDevTranche.Headings => data.Headings,
+        ShapesDevTranche.NamedState => data.NamedState,
+        ShapesDevTranche.CompoundHead2 => data.CompoundHead2,
+        ShapesDevTranche.Headings2 => data.Headings2,
+        ShapesDevTranche.DeverbalHeads => data.DeverbalHeads,
+        ShapesDevTranche.DefinedTerms => data.DefinedTerms,
+        ShapesDevTranche.StepLines => data.StepLines,
+        ShapesDevTranche.ClauseVerbs => data.ClauseVerbs,
+        _ => throw new ArgumentOutOfRangeException(nameof(tranche)),
+    };
+
+    /// <summary>
+    ///     Writes the <c>shapesTechnical</c> block: the four technical tranches, the pooled counts and the calibration measurement.
+    /// </summary>
+    /// <param name="json">The writer.</param>
+    /// <param name="scores">The scores of the nine single-shape tranches.</param>
+    private static void WriteTechnical(JsonText json, IReadOnlyDictionary<ShapesDevTranche, TrancheScore> scores)
+    {
+        var deverbal = scores[ShapesDevTranche.DeverbalHeads].Result;
+        var terms = scores[ShapesDevTranche.DefinedTerms].Result;
+        var steps = scores[ShapesDevTranche.StepLines].Result;
+        var clauses = scores[ShapesDevTranche.ClauseVerbs].Result;
+        json.Open("shapesTechnical", '{');
+        WriteSingleShape(json, "deverbalHeads", deverbal, true);
+        WriteSingleShape(json, "definedTerms", terms, true);
+        WriteSingleShape(json, "stepLines", steps, true);
+        WriteSingleShape(json, "clauseVerbs", clauses, true);
+        WritePooledTechnical(json, deverbal.Overall, steps.Overall, clauses.Overall);
+        WriteTermError(json, terms.Overall);
+        json.Open("calibration", '{');
+        var technicalNames = ShapesDevCommand.TechnicalTranches.Select(t => new KeyValuePair<string, IReadOnlyList<Outcome>>(DevSets.ShapesDevNameOf(t), scores[t].Outcomes)).ToList();
+        var allNames = ShapesDevCommand.AllSingleTranches.Select(t => new KeyValuePair<string, IReadOnlyList<Outcome>>(DevSets.ShapesDevNameOf(t), scores[t].Outcomes)).ToList();
+        WriteCalibrationScope(json, "technical", ShapesDevCalibration.Measure(technicalNames).Pooled);
+        WriteCalibrationScope(json, "allSingle", ShapesDevCalibration.Measure(allNames).Pooled);
+        json.Open("tranches", '{');
+        var names = new[] { "deverbalHeads", "definedTerms", "stepLines", "clauseVerbs" };
+        var perTranche = ShapesDevCalibration.Measure(technicalNames).Tranches;
+        for (var i = 0; i < names.Length; i++)
+        {
+            WriteCalibrationScope(json, names[i], perTranche[i]);
+        }
+
+        json.Close('}');
+        json.Close('}');
+        json.Close('}');
+    }
+
+    /// <summary>
+    ///     Writes the pooled counts of the three noun-verb technical tranches (deverbal heads, step lines, clause verbs), from which an analyzer
+    ///     re-derives the harmful errors per 1,000 noun-verb decisions: the target items, the correct ones, the decisions and the harmful errors,
+    ///     and the target items that are wrong at 0.90 and 0.95.
+    /// </summary>
+    /// <param name="json">The writer.</param>
+    /// <param name="deverbal">The row of the deverbal-heads tranche.</param>
+    /// <param name="steps">The row of the step-lines tranche.</param>
+    /// <param name="clauses">The row of the clause-verbs tranche.</param>
+    private static void WritePooledTechnical(JsonText json, ShapesDevShapeResult deverbal, ShapesDevShapeResult steps, ShapesDevShapeResult clauses)
+    {
+        var rows = new[] { deverbal, steps, clauses };
+        var decisions = rows.Sum(r => r.NounVerbDecisions);
+        var harmful = rows.Sum(r => r.HarmfulErrors);
+        var targets = rows.Sum(r => r.TargetItems);
+        var correct = rows.Sum(r => r.TargetCorrect);
+        json.Open("pooledTechnical", '{');
+        json.Number("targetItems", targets);
+        json.Number("targetCorrect", correct);
+        json.Number("targetAccuracy", targets == 0 ? 0 : 100.0 * correct / targets);
+        json.Number("decisions", decisions);
+        json.Number("harmful", harmful);
+        json.Number("harmfulPer1k", decisions == 0 ? 0 : 1000.0 * harmful / decisions);
+        json.Number("confidentWrongTotal", rows.Sum(r => r.ConfidentWrong));
+        json.Number("wrong90Total", rows.Sum(r => r.ConfidentWrong90));
+        json.Close('}');
+    }
+
+    /// <summary>
+    ///     Writes the exact-tag error of the defined-terms targets (a tranche with almost no noun-verb decisions): the target items, the wrong ones
+    ///     and the wrong ones per 1,000 target items, with the wrong answers at 0.90 and 0.95.
+    /// </summary>
+    /// <param name="json">The writer.</param>
+    /// <param name="terms">The row of the defined-terms tranche.</param>
+    private static void WriteTermError(JsonText json, ShapesDevShapeResult terms)
+    {
+        var errors = terms.TargetItems - terms.TargetCorrect;
+        json.Open("termError", '{');
+        json.Number("targetItems", terms.TargetItems);
+        json.Number("targetCorrect", terms.TargetCorrect);
+        json.Number("errors", errors);
+        json.Number("errorPer1k", terms.TargetItems == 0 ? 0 : 1000.0 * errors / terms.TargetItems);
+        json.Number("confidentWrong", terms.ConfidentWrong);
+        json.Number("wrong90", terms.ConfidentWrong90);
+        json.Close('}');
+    }
+
+    /// <summary>
+    ///     Writes the calibration measurement of one scope: the judged words, the rows of the thresholds (answers, wrong, error per 1,000 answers,
+    ///     Wilson interval per 1,000) and the reliability bins.
+    /// </summary>
+    /// <param name="json">The writer.</param>
+    /// <param name="name">The name of the member.</param>
+    /// <param name="scope">The scope.</param>
+    private static void WriteCalibrationScope(JsonText json, string name, CalibrationScope scope)
+    {
+        json.Open(name, '{');
+        json.Number("judged", scope.Judged);
+        json.Open("thresholds", '[');
+        foreach (var row in scope.Thresholds)
+        {
+            json.Open(null, '{');
+            json.Number("threshold", row.Threshold);
+            json.Number("answers", row.Answers);
+            json.Number("wrong", row.Wrong);
+            json.Number("errorPer1k", row.ErrorPer1000);
+            json.Number("intervalLowPer1k", row.IntervalLowPer1000);
+            json.Number("intervalHighPer1k", row.IntervalHighPer1000);
+            json.Close('}');
+        }
+
+        json.Close(']');
+        json.Open("bins", '[');
+        foreach (var bin in scope.Bins)
+        {
+            json.Open(null, '{');
+            json.Number("low", bin.Low);
+            json.Number("high", bin.High);
+            json.Number("count", bin.Decisions);
+            json.Number("meanConfidence", bin.MeanConfidence);
+            json.Number("correctPercent", bin.CorrectPercent);
+            json.Number("harmful", bin.Harmful);
+            json.Close('}');
+        }
+
+        json.Close(']');
+        json.Close('}');
     }
 
     /// <summary>
@@ -456,7 +709,8 @@ internal static class ArmEvaluation
     /// <param name="name">The name of the member.</param>
     /// <param name="shape">The result of the shape.</param>
     /// <param name="confidentWrong">Whether to write the count of the confident wrong answers (only the new tranches count them).</param>
-    private static void WriteShape(JsonText json, string name, ShapesDevShapeResult shape, bool confidentWrong = false)
+    /// <param name="technical">Whether to write the counts of the technical measure (<c>wrong90</c>, <c>controlWrong90</c> and <c>controlConfidentWrong</c>) as well.</param>
+    private static void WriteShape(JsonText json, string name, ShapesDevShapeResult shape, bool confidentWrong = false, bool technical = false)
     {
         json.Open(name, '{');
         json.Number("targetItems", shape.TargetItems);
@@ -470,9 +724,20 @@ internal static class ArmEvaluation
             json.Number("confidentWrong", shape.ConfidentWrong);
         }
 
+        if (technical)
+        {
+            json.Number("wrong90", shape.ConfidentWrong90);
+        }
+
         json.Number("controlItems", shape.ControlItems);
         json.Number("controlCorrect", shape.ControlCorrect);
         json.Number("controlAccuracy", shape.ControlAccuracy);
+        if (technical)
+        {
+            json.Number("controlWrong90", shape.ControlConfidentWrong90);
+            json.Number("controlConfidentWrong", shape.ControlConfidentWrong);
+        }
+
         json.Close('}');
     }
 
@@ -482,14 +747,15 @@ internal static class ArmEvaluation
     /// <param name="json">The writer.</param>
     /// <param name="name">The name of the member.</param>
     /// <param name="result">The result of the tranche.</param>
-    private static void WriteSingleShape(JsonText json, string name, ShapesDevSingleShapeResult result)
+    /// <param name="technical">Whether to write the counts of the technical measure (<c>wrong90</c> and the wrong controls) as well.</param>
+    private static void WriteSingleShape(JsonText json, string name, ShapesDevSingleShapeResult result, bool technical = false)
     {
         json.Open(name, '{');
-        WriteShape(json, "shape", result.Overall, true);
+        WriteShape(json, "shape", result.Overall, true, technical);
         json.Open("kinds", '{');
         for (var i = 0; i < result.Kinds.Count; i++)
         {
-            WriteShape(json, result.Spec.Kinds[i].Name, result.Kinds[i], true);
+            WriteShape(json, result.Spec.Kinds[i].Name, result.Kinds[i], true, technical);
         }
 
         json.Close('}');

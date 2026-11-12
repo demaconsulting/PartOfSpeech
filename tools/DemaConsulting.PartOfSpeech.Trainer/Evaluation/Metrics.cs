@@ -157,6 +157,23 @@ internal static class Metrics
     }
 
     /// <summary>
+    ///     The lower confidence at and above which a wrong answer is counted as well, beside <see cref="ConfidentWrongConfidence"/>
+    ///     (a measure of the technical tranches of the shapes development set and of the calibration measurement).
+    /// </summary>
+    public const double ConfidentWrong90 = 0.90;
+
+    /// <summary>
+    ///     Tells whether an outcome is a wrong answer given with a confidence of at least <see cref="ConfidentWrong90"/>.
+    /// </summary>
+    /// <param name="outcome">The outcome.</param>
+    /// <returns><c>true</c> when the answer is wrong and its confidence is at least <see cref="ConfidentWrong90"/>.</returns>
+    public static bool IsConfidentlyWrong90(Outcome outcome)
+    {
+        ArgumentNullException.ThrowIfNull(outcome);
+        return !outcome.Correct && outcome.Confidence >= ConfidentWrong90;
+    }
+
+    /// <summary>
     ///     The probability that is used for the gold label when no candidate has it (keeps the log-likelihood finite).
     /// </summary>
     public const double ProbabilityFloor = 1e-6;

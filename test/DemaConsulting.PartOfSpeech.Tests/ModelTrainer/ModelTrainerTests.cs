@@ -2715,9 +2715,9 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates that the committed configuration is valid, names the eight corpora (the imperative, compound and compound2
-    ///     sources with weight 1, so they are in the mix of the shipped model; the headings and headings2 sources with weight 0, so they are not) and is in the
-    ///     canonical form that the tool writes.
+    ///     Validates that the committed configuration is valid, names the twelve corpora (the imperative, compound and compound2
+    ///     sources with weight 1, so they are in the mix of the shipped model; the headings and headings2 sources and the four technical
+    ///     sources deverbal, terms, steps and clauses with weight 0, so they are not) and is in the canonical form that the tool writes.
     /// </summary>
     [Fact]
     public void ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical()
@@ -2728,11 +2728,14 @@ public class ModelTrainerTests
         // Act
         var config = ConfigFile.Parse(text);
 
-        // Assert: valid, eight known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
-        Assert.Equal(new[] { "open", "masc", "silver", "imperative", "compound", "headings", "compound2", "headings2" }, config.Sources.Select(s => s.Name));
+        // Assert: valid, twelve known sources that exist, and rewriting gives the same text (so --update-config makes no noise)
+        Assert.Equal(new[] { "open", "masc", "silver", "imperative", "compound", "headings", "compound2", "headings2", "deverbal", "terms", "steps", "clauses" }, config.Sources.Select(s => s.Name));
         Assert.All(config.Sources, s => Assert.True(File.Exists(DataFiles.Repository(s.Path))));
         Assert.Equal(1, config.Sources.Single(s => s.Name == "imperative").Weight);
-        Assert.Equal(new[] { 2, 1, 1, 1, 1, 0, 1, 0 }, config.Sources.Select(s => s.Weight));
+        Assert.Equal(new[] { 2, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0 }, config.Sources.Select(s => s.Weight));
+        Assert.Equal(
+            new[] { "data/technical/deverbal.tsv", "data/technical/terms.tsv", "data/technical/steps.tsv", "data/technical/clauses.tsv" },
+            config.Sources.Skip(8).Select(s => s.Path));
         Assert.Equal(text.Replace("\r\n", "\n"), ConfigFile.Format(config));
     }
 
@@ -2760,16 +2763,21 @@ public class ModelTrainerTests
     }
 
     /// <summary>
-    ///     Validates that each committed compound and headings source is read by the corpus reader with no masked token when its
+    ///     Validates that each committed compound, headings and technical source is read by the corpus reader with no masked token when its
     ///     weight is raised to one (the way a training run adds it), that the compound sources have the committed weight 1 (they are
     ///     in the mix of the shipped model, the follow-up re-test selected them) and add exactly their sentences to it, and that the
-    ///     headings sources have the committed weight 0 and contribute nothing until a run adds them.
+    ///     headings sources and the four technical sources (deverbal, terms, steps, clauses) have the committed weight 0 and contribute
+    ///     nothing until a run adds them.
     /// </summary>
     [Theory]
     [InlineData("compound", 742, 1)]
     [InlineData("compound2", 1100, 1)]
     [InlineData("headings", 374, 0)]
     [InlineData("headings2", 247, 0)]
+    [InlineData("deverbal", 637, 0)]
+    [InlineData("terms", 373, 0)]
+    [InlineData("steps", 531, 0)]
+    [InlineData("clauses", 310, 0)]
     public void CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted(string name, int expected, int committedWeight)
     {
         // Arrange: the committed configuration, as it is, with this source left out and with it added, and with only this source weighted

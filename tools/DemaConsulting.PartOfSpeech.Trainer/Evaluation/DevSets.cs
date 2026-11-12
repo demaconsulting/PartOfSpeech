@@ -86,6 +86,30 @@ internal static class DataGuard
     public const string ShapesDevelopmentHeadings2File = "data/eval/shapes-dev/headings-2.tsv";
 
     /// <summary>
+    ///     The deverbal-heads tranche of the hard-shape development set (shape <c>n-deverbal-head</c>, scored by class), relative to the
+    ///     repository root with forward slashes. It shares the guard of the other tranches; it may be absent.
+    /// </summary>
+    public const string ShapesDevelopmentDeverbalHeadsFile = "data/eval/shapes-dev/deverbal-heads.tsv";
+
+    /// <summary>
+    ///     The defined-terms tranche of the hard-shape development set (shape <c>term-capitalized</c>, scored by exact tag), relative to
+    ///     the repository root with forward slashes. It shares the guard of the other tranches; it may be absent.
+    /// </summary>
+    public const string ShapesDevelopmentDefinedTermsFile = "data/eval/shapes-dev/defined-terms.tsv";
+
+    /// <summary>
+    ///     The step-lines tranche of the hard-shape development set (shape <c>step-line</c>, scored by exact tag), relative to the
+    ///     repository root with forward slashes. It shares the guard of the other tranches; it may be absent.
+    /// </summary>
+    public const string ShapesDevelopmentStepLinesFile = "data/eval/shapes-dev/step-lines.tsv";
+
+    /// <summary>
+    ///     The clause-verbs tranche of the hard-shape development set (shape <c>v-clause-ambiguous</c>, scored by exact tag), relative to
+    ///     the repository root with forward slashes. It shares the guard of the other tranches; it may be absent.
+    /// </summary>
+    public const string ShapesDevelopmentClauseVerbsFile = "data/eval/shapes-dev/clause-verbs.tsv";
+
+    /// <summary>
     ///     The files of the hard-shape development set that the shapes guard admits, in the order of <see cref="ShapesDevTranche"/>.
     ///     The sources files and the leakage reports of the tranches are not listed, so the guard refuses them.
     /// </summary>
@@ -98,6 +122,10 @@ internal static class DataGuard
         ShapesDevelopmentNamedStateFile,
         ShapesDevelopmentCompoundHead2File,
         ShapesDevelopmentHeadings2File,
+        ShapesDevelopmentDeverbalHeadsFile,
+        ShapesDevelopmentDefinedTermsFile,
+        ShapesDevelopmentStepLinesFile,
+        ShapesDevelopmentClauseVerbsFile,
     };
 
     /// <summary>
@@ -835,7 +863,7 @@ internal static class DevSets
     ///     Gets the name of a tranche of the hard-shape development set, as the corpus comment and the command line spell it.
     /// </summary>
     /// <param name="tranche">The tranche.</param>
-    /// <returns>The name: <c>standard</c>, <c>hard</c>, <c>compound-head</c>, <c>headings</c>, <c>named-state</c>, <c>compound-head-2</c> or <c>headings-2</c>.</returns>
+    /// <returns>The name: <c>standard</c>, <c>hard</c>, <c>compound-head</c>, <c>headings</c>, <c>named-state</c>, <c>compound-head-2</c>, <c>headings-2</c>, <c>deverbal-heads</c>, <c>defined-terms</c>, <c>step-lines</c> or <c>clause-verbs</c>.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="tranche"/> is not a tranche.</exception>
     public static string ShapesDevNameOf(ShapesDevTranche tranche) => tranche switch
     {
@@ -846,6 +874,10 @@ internal static class DevSets
         ShapesDevTranche.NamedState => "named-state",
         ShapesDevTranche.CompoundHead2 => "compound-head-2",
         ShapesDevTranche.Headings2 => "headings-2",
+        ShapesDevTranche.DeverbalHeads => "deverbal-heads",
+        ShapesDevTranche.DefinedTerms => "defined-terms",
+        ShapesDevTranche.StepLines => "step-lines",
+        ShapesDevTranche.ClauseVerbs => "clause-verbs",
         _ => throw new ArgumentOutOfRangeException(nameof(tranche)),
     };
 
@@ -876,6 +908,10 @@ internal static class DevSets
         ShapesDevTranche.NamedState,
         ShapesDevTranche.CompoundHead2,
         ShapesDevTranche.Headings2,
+        ShapesDevTranche.DeverbalHeads,
+        ShapesDevTranche.DefinedTerms,
+        ShapesDevTranche.StepLines,
+        ShapesDevTranche.ClauseVerbs,
     };
 
     /// <summary>

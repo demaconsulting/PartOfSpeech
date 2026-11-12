@@ -147,13 +147,21 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
 - **Arm evaluation** (`ModelTrainer/ShapesDevEvaluationTests.cs`, fixtures and a tiny model):
   `ArmEvaluation_Evaluate_TinyWeights_WritesTheResultSchema` (every member of schema 1, the groups and sizes of the
   header, the token counts of the throughput, per-shape rows that add up to the pooled rows, per-item outcomes that add
-  up to the pooled counts, the inputs as given including the five hashes of the compound-head, headings, named-state,
-  compound-head-2 and headings-2 tranches, the block `shapesNew` behind `items` with its rows, kinds and pooled primary
+  up to the pooled counts, the inputs as given including the nine hashes of the compound-head, headings, named-state,
+  compound-head-2, headings-2, deverbal-heads, defined-terms, step-lines and clause-verbs tranches, the block `shapesNew`
+  behind `items` with its rows, kinds and pooled primary
   counts, the block `shapesFollowup` behind it (the four rows of the compound and heading tranches, the pooled primary
   counts of the enlarged compound dev and all heading dev items re-derived from the rows, the confident wrong total of
-  the four tranches, the pooled imperative headings and the pooled compound controls), the order
+  the four tranches, the pooled imperative headings and the pooled compound controls), the block `shapesTechnical`
+  behind that, the order
   of the members that existed before, a label that survives escaping, the same result for the same inputs
-  apart from the measured rate), `ArmEvaluation_Evaluate_NoGroupsAndBadInput_BehavesAsSpecified`,
+  apart from the measured rate), `ArmEvaluation_Evaluate_TechnicalBlock_RowsPooledCountsCalibrationAndOldKeysUnchanged`
+  (the rows of the four technical tranches with their kinds and the counts at 0.90 and 0.95, the pooled counts of the
+  three noun-verb tranches and the rate re-derived from them, the exact-tag error of the defined terms, the calibration
+  scopes with two thresholds and seven bins that add up to the judged words, the pooled technical scope equal to the
+  sum of
+  its four tranche scopes, and every earlier member byte for byte the same when the technical items are left out),
+  `ArmEvaluation_Evaluate_NoGroupsAndBadInput_BehavesAsSpecified`,
   `HeldOutEvaluator_Throughput_TimedPasses_AtLeastOneAndPositiveRate` and
   `DevSets_ReadUdDev_MissingOrChangedTable_RefusedAndPinnedTableRead` (a missing cache, a cache that holds only the test
   table and a changed table are refused with the recipe; the cached table of the machine, when present, has the pinned
@@ -288,10 +296,12 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   fresh image is current, another seed or another temperature is stale, no file is missing, bytes that are no weights file
   are invalid).
 - **Configuration**: `ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical` (on .NET 8 and later: the named sources
-  of the configuration in order, each file existing, the imperative and compound sources and the second compound
-  source with weight 1, the headings sources with weight 0, and rewriting the
+  of the configuration in order (twelve), each file existing, the imperative and compound sources and the second compound
+  source with weight 1, the headings sources and the four technical sources with weight 0, and rewriting the
   file gives the
-  same text) and `ConfigFile_Parse_UnknownMemberOrBadRange_Throws`.
+  same text) and `ConfigFile_Parse_UnknownMemberOrBadRange_Throws`; `CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted`
+  (a theory over the compound, headings and technical sources: the whole file with every token gold-tagged when the
+  source is weighted, exactly its sentences more with weight 1 than without, nothing at weight 0).
 - **Development metrics**: `DevSets_ParseGoldDev_Fixture_ReadsTargetsAndMapsClasses`,
   `DevSets_ParseGoldDev_InvalidTarget_Throws` (a negative, non-numeric or out-of-sentence target index),
   `Metrics_Compute_KnownOutcomes_ExpectedNumbers`, `Metrics_Judge_TinyTagger_CorrectAndNounVerbError`,
@@ -387,7 +397,8 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   `ShapesDevCommand_Run_ExplicitNewTranche_ScoresItAloneAndMissingFileIsAnError`,
   `ShapesDevCommand_Run_New_ScoresPresentTranchesAndNotesMissingFiles` and
   `ShapesDevCommand_Run_StandardHardBoth_OutputIsUnchangedByTheNewFiles` (the standard, hard and both output
-  equals the plain renderers whatever the new files are).
+  equals the plain renderers whatever the new files are); `ShapesDevSets_Parse_KindCommentInStandardOrHardTranche_Throws`
+  (a `kind` comment belongs to the tranches that have kinds only).
 - **Follow-up tranches** (same file, synthetic fixtures; requirement `PartOfSpeech-ModelTrainer-ShapesDevFollowupTranches`):
   `ShapesDevSets_Parse_FollowupTranches_ValidFiles_ReturnItemsOfTheirOwnTranche` (the second tranches have the shape,
   scoring, tags and kinds of the first ones and a specification of their own, and the rules of the first tranches hold),
@@ -398,13 +409,52 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   `ShapesDevCommand_Run_Followup_ScoresBothTranchesAndNewDoesNotIncludeThem` (`followup` scores both in order and
   notes an absent file, an explicit follow-up tranche is scored alone and its missing file is an error that names the
   file, and `new` stays at the three tranches of the first generation).
+- **Technical tranches** (same file, synthetic fixtures; requirement `PartOfSpeech-ModelTrainer-ShapesDevTechnicalTranches`):
+  `ShapesDevSets_TechnicalSpecs_AreTheTableOfTheDataFiles` (the values 7 to 10, the names, files, shapes, scoring, kinds
+  with
+  their roles and tags, nine specifications in all, and that no tranche prefix starts another),
+  `ShapesDevSets_Parse_TechnicalTranches_ValidFiles_ReturnItemsWithKindAndGoldTag` (valid files with the extra comments
+  `term`, `frame` and `unit` of the committed files), `..._InvalidItems_AreRefused` (a wrong shape, a missing, unknown or
+  misplaced kind, a kind with the wrong role, a tag that the kind does not allow, a disputed judged word),
+  `DevSets_ReadShapesDev_TechnicalTranches_OwnFileOwnMarkerAndIdPrefix` (each file has its own SHA-256 and marks its items;
+  a file of another tranche at its path is refused by the marker, a right marker with the ids of another, the standard or
+  the hard tranche by the id prefix, a file without a marker, and an absent file by name),
+  `ShapesDevTrancheEvaluator_Summarize_Wrong90And95_CountTargetsAndControlsSeparately` (a wrong target counts at 0.90 from
+  0.90 and at 0.95 from 0.95, 0.899 and 0.949 do not, a correct answer does not, controls have their own two counts
+  and no
+  harmful error), `..._Evaluate_TechnicalShapes_AreScoredUnderTheirScoring` (a capitalized adjective answered PROPN is wrong
+  and not harmful, an adjective control answered VERB is wrong, a deverbal head answered PROPN is right by class, a
+  verb answer
+  for a noun head is harmful),
+  `ShapesDevReport_RenderCounts_PrintsOneRowPerTrancheAndKind` (the explanation, the header, a row per tranche and kind
+  with
+  dashes where a column does not apply, two renderings equal),
+  `ShapesDevReport_RenderTranche_TechnicalShapes_HaveTheirOwnScoringNote` (the note of the headings is the one it always
+  was), `ShapesDevCommand_TranchesOf_GroupsAndNames_SelectInReportOrder`,
+  `ShapesDevCommand_Run_Technical_ScoresTheFourTranchesWithTheCountsTable` (`technical` scores in order, notes an absent
+  file,
+  ends with the counts table; an explicit tranche is scored alone with its table and needs its file; `all-single` adds the
+  nine in the order of the generations) and
+  `ShapesDevCommand_Run_NewAndFollowup_AreByteIdenticalWithTheTechnicalFilesPresent` (`new`, `followup` and the first two
+  generations' names print the same lines with and without the technical files, no counts table, no calibration section).
+- **Calibration** (same file; requirement `PartOfSpeech-ModelTrainer-ShapesDevCalibration`):
+  `ShapesDevCalibration_Wilson_KnownCounts_MatchesTheReportInterval` (the values of the report, the bounds and the empty
+  case), `..._MeasureScope_SyntheticOutcomes_ArithmeticAndBins` (ten synthetic outcomes: the answers and wrong answers at
+  0.90
+  and 0.95 with the limit counted, the errors per 1,000 and the interval, the seven bins with the lower edge inclusive
+  and 1.0
+  in the last bin, counts, means, correct shares and harmful errors, the empty scope),
+  `..._MeasureAndRender_PooledAndPerTranche` (the pooled scope against the scope of all outcomes, the order of the tranches,
+  the text of the tables, a dash where there is no answer) and
+  `ShapesDevCommand_Run_Calibration_AppendsTheSectionForSingleShapeSelectionsOnly` (refused for `standard`, `hard` and `both`,
+  appended after the sections and the counts table, the plain output as its prefix).
 - **The shapes development files are development only**:
   `DataGuard_EnsureShapesDevelopmentFile_ShapesDevelopmentFile_Admitted` (the files, also through a dotted detour),
   `DataGuard_EnsureShapesDevelopmentFile_OtherFile_Refused` (the two development files, a held-out file, the other
   files of its folder, the tables and report of the hard tranche),
   `DataGuard_EnsureShapesDevelopmentFile_NewTrancheFile_Admitted` and
-  `..._NewTrancheSourcesAndLeakage_Refused` (the five single-shape files, the three of the first generation and the two
-  follow-up files, are admitted, their sources and
+  `..._NewTrancheSourcesAndLeakage_Refused` (the nine single-shape files, the three of the first generation, the two
+  follow-up files and the four technical files, are admitted, their sources and
   leakage files are not),
   `DataGuard_EnsureShapesDevelopmentFile_LinkInPlaceOfFileOrFolder_Refused` (a theory over both files: a link as the
   file or as its folder is refused, the real file admitted), `DataGuard_ShapesDevelopmentFile_OnlyItsOwnGuardAdmitsIt`

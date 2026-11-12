@@ -125,12 +125,14 @@ sections:
             title: >-
               The trainer shall repeat the sentences of a source in every epoch as many times as the weight of the
               source says, shall leave a source of weight 0 out, and shall read each committed targeted source
-              (imperative, compound, headings), once it is weighted, as sentences without a masked token.
+              (imperative, compound, headings, and the technical sources deverbal, terms, steps and clauses), once it is
+              weighted, as sentences without a masked token.
             justification: |
               The weight of a source is a selected training setting, so the epoch must contain exactly the repeats that
               the configuration names. The imperative and compound sources are committed with weight 1, so they are in
-              the mix of the shipped weights; the headings sources are committed with weight 0, so they add nothing
-              until a run weights them. A run that weights a source must get exactly its sentences, all with a gold tag.
+              the mix of the shipped weights; the headings sources and the four technical sources are committed with
+              weight 0, so they add nothing until a run weights them. A run that weights a source must get exactly its
+              sentences, all with a gold tag.
             tests:
               - CorpusReader_LoadSources_Weight_RepeatsSentences
               - CorpusReader_LoadSources_ImperativeSource_ReadsUnmaskedWhenWeighted
@@ -452,9 +454,9 @@ sections:
           - id: PartOfSpeech-ModelTrainer-Configuration
             title: >-
               The training configuration shall be a valid, canonical file that names existing training corpora (the
-              imperative and compound sources with a positive weight, and the headings sources with weight 0, so that
-              they are committed and not trained on), and a misspelled setting or an out-of-range value shall be an
-              error.
+              imperative and compound sources with a positive weight, and the headings sources and the four technical
+              sources with weight 0, so that they are committed and not trained on), and a misspelled setting or an
+              out-of-range value shall be an error.
             justification: |
               The configuration is the record of what the committed weights were trained from. A silently ignored
               misspelling would train something other than what the file says, and a file that the tool rewrites in
@@ -662,11 +664,77 @@ sections:
               - ShapesDevCommand_Run_Followup_ScoresBothTranchesAndNewDoesNotIncludeThem
               - ArmEvaluation_Evaluate_TinyWeights_WritesTheResultSchema
 
+          - id: PartOfSpeech-ModelTrainer-ShapesDevTechnicalTranches
+            title: >-
+              The shapes development evaluation shall read the four technical tranches (`deverbal-heads.tsv`, scored by
+              class, and `defined-terms.tsv`, `step-lines.tsv` and `clause-verbs.tsv`, scored by exact tag) from their
+              own files through the development guard, check their header marker, ids, shape, kinds with their roles
+              and tags and the never-disputed judged word, tell the four tranches from every other one by the marker
+              and the longest sentence-id prefix, report them with the rows and kinds of the other single-shape
+              tranches and, after the sections, a counts table per tranche and kind with the harmful errors at a
+              confidence of at least 0.45 and the target items and controls that are wrong at a confidence of at least
+              0.90 and of at least 0.95, accept the `--tranche` selections `deverbal-heads`, `defined-terms`,
+              `step-lines`, `clause-verbs`, `technical` and `all-single` (an explicit file that is missing is an error,
+              a
+              missing file of a group is noted)
+              without changing the output of `new` and `followup`, and let `eval-arm` write, behind the existing
+              members, a block `shapesTechnical` with the four tranche rows, the pooled counts of the deverbal-heads,
+              step-lines and clause-verbs tranches, the exact-tag error of the defined terms, the calibration scopes
+              and the four new file hashes in `inputs`, with the schema and every earlier member unchanged.
+            justification: |
+              The technical measure is bigger than the earlier ones but it is the same kind of measure, so it reuses the
+              shapes table, the scoring and the report rows instead of a second definition and never changes an older
+              byte: the older tranches, the `new` and `followup` selections and the earlier blocks keep what the
+              recorded baselines show. A wrong answer at a confidence of 0.90 or more is the figure that a consumer who
+              trusts the documented strict point meets, so it is counted beside the 0.95 figure. The adjective and
+              proper-name kinds make the noun-verb decisions rare for the defined terms, so their figure is the exact
+              error, not a harmful count. A file of one tranche at the path of another is refused by the marker and the
+              id prefix, and the analysis can re-derive every pooled figure from the counts it carries.
+            tests:
+              - ShapesDevSets_TechnicalSpecs_AreTheTableOfTheDataFiles
+              - ShapesDevSets_Parse_TechnicalTranches_ValidFiles_ReturnItemsWithKindAndGoldTag
+              - ShapesDevSets_Parse_TechnicalTranches_InvalidItems_AreRefused
+              - DevSets_ReadShapesDev_TechnicalTranches_OwnFileOwnMarkerAndIdPrefix
+              - ShapesDevTrancheEvaluator_Summarize_Wrong90And95_CountTargetsAndControlsSeparately
+              - ShapesDevTrancheEvaluator_Evaluate_TechnicalShapes_AreScoredUnderTheirScoring
+              - ShapesDevReport_RenderCounts_PrintsOneRowPerTrancheAndKind
+              - ShapesDevReport_RenderTranche_TechnicalShapes_HaveTheirOwnScoringNote
+              - ShapesDevCommand_EnsureSelection_Value_AcceptedOrRefused
+              - ShapesDevCommand_TranchesOf_GroupsAndNames_SelectInReportOrder
+              - ShapesDevCommand_Run_Technical_ScoresTheFourTranchesWithTheCountsTable
+              - ShapesDevCommand_Run_NewAndFollowup_AreByteIdenticalWithTheTechnicalFilesPresent
+              - ArmEvaluation_Evaluate_TechnicalBlock_RowsPooledCountsCalibrationAndOldKeysUnchanged
+              - ArmEvaluation_Evaluate_TinyWeights_WritesTheResultSchema
+
+          - id: PartOfSpeech-ModelTrainer-ShapesDevCalibration
+            title: >-
+              The shapes development evaluation shall, with `--calibration` on a single-shape selection (and refuse it
+              for `standard`, `hard` and `both`), measure over every judged word of the scored tranches, under the
+              scoring of its tranche, the answers at a confidence of at least 0.90 and at least 0.95, the wrong
+              answers among them, the errors per 1,000 answers with their 95 percent Wilson interval and a reliability
+              table of the bins below 0.5, 0.5 to 0.6, 0.6 to 0.7, 0.7 to 0.8, 0.8 to 0.9, 0.9 to 0.95 and 0.95 to 1.0
+              (count, mean confidence, correct share and harmful errors), pooled and per tranche, deterministically,
+              and `eval-arm` shall write the same measurement under `shapesTechnical`; the measurement shall choose,
+              change and propose no threshold.
+            justification: |
+              A consumer who trusts the strict confidence point needs to know how often a confident answer is wrong on
+              technical text, and an interval says how much the small tranches can support. The measurement is a
+              function
+              of the outcomes of the real decoder, so it is reproducible and cannot depend on a setting chosen with
+              the data in view. Reporting the bins with the counts shows where the confidence is not calibrated
+              without moving any threshold, which stays a decision that is recorded elsewhere.
+            tests:
+              - ShapesDevCalibration_Wilson_KnownCounts_MatchesTheReportInterval
+              - ShapesDevCalibration_MeasureScope_SyntheticOutcomes_ArithmeticAndBins
+              - ShapesDevCalibration_MeasureAndRender_PooledAndPerTranche
+              - ShapesDevCommand_Run_Calibration_AppendsTheSectionForSingleShapeSelectionsOnly
+              - ArmEvaluation_Evaluate_TechnicalBlock_RowsPooledCountsCalibrationAndOldKeysUnchanged
+
           - id: PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
             title: >-
               The files of the hard-shape development set (the standard and the hard tranche, the three single-shape
-              tranches and the two follow-up tranches) shall be readable only
-              through their own guard (exactly those seven paths, also when spelled with a detour, refused when a link
+              tranches, the two follow-up tranches and the four technical tranches) shall be readable only
+              through their own guard (exactly those eleven paths, also when spelled with a detour, refused when a link
               lies on the way, and a header that announces a development split), shall not be in the
               two-file development allow-list or the held-out list, shall be refused for training, and no source of the
               trainer other than the guard shall name a held-out set.
@@ -760,7 +828,9 @@ sections:
               target items that are wrong at a confidence of at least 0.95, the kinds of the headings, and the pooled
               harmful errors per 1,000 noun-verb decisions and the confident wrong answers of the compound-head and the
               headings tranche together) and on the two follow-up tranches (the block `shapesFollowup`, see
-              `PartOfSpeech-ModelTrainer-ShapesDevFollowupTranches`), on the open and the gold v2 development splits and
+              `PartOfSpeech-ModelTrainer-ShapesDevFollowupTranches`) and on the four technical tranches (the block
+              `shapesTechnical`, see `PartOfSpeech-ModelTrainer-ShapesDevTechnicalTranches` and
+              `PartOfSpeech-ModelTrainer-ShapesDevCalibration`), on the open and the gold v2 development splits and
               on the mapped development part of the external
               treebank (read from the local cache with a pinned SHA-256), measure the size of the file and the
               single-thread throughput of the default tagger (one warm-up pass, five timed passes, the median), and

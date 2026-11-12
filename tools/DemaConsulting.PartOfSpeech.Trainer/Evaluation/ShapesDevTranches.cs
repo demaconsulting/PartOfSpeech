@@ -134,7 +134,8 @@ internal static class ShapesDevTrancheEvaluator
     /// <returns>The counts of the row.</returns>
     private static ShapesDevShapeResult Count(string label, IReadOnlyList<ShapesDevItem> items, IReadOnlyList<Outcome> outcomes, Func<ShapesDevItem, bool> selected)
     {
-        int targets = 0, targetCorrect = 0, decisions = 0, harmful = 0, confident = 0, controls = 0, controlCorrect = 0, authoredTargets = 0, authoredControls = 0;
+        int targets = 0, targetCorrect = 0, decisions = 0, harmful = 0, confident = 0, confident90 = 0, controls = 0, controlCorrect = 0, authoredTargets = 0, authoredControls = 0;
+        int controlConfident = 0, controlConfident90 = 0;
         for (var i = 0; i < items.Count; i++)
         {
             if (!selected(items[i]))
@@ -150,17 +151,20 @@ internal static class ShapesDevTrancheEvaluator
                 decisions += outcomes[i].NounVerb ? 1 : 0;
                 harmful += outcomes[i].Harmful ? 1 : 0;
                 confident += Metrics.IsConfidentlyWrong(outcomes[i]) ? 1 : 0;
+                confident90 += Metrics.IsConfidentlyWrong90(outcomes[i]) ? 1 : 0;
                 authoredTargets += authored;
             }
             else
             {
                 controls++;
                 controlCorrect += outcomes[i].Correct ? 1 : 0;
+                controlConfident += Metrics.IsConfidentlyWrong(outcomes[i]) ? 1 : 0;
+                controlConfident90 += Metrics.IsConfidentlyWrong90(outcomes[i]) ? 1 : 0;
                 authoredControls += authored;
             }
         }
 
-        return new ShapesDevShapeResult(label, targets, targetCorrect, decisions, harmful, controls, controlCorrect, authoredTargets, authoredControls, confident);
+        return new ShapesDevShapeResult(label, targets, targetCorrect, decisions, harmful, controls, controlCorrect, authoredTargets, authoredControls, confident, confident90, controlConfident90, controlConfident);
     }
 }
 
@@ -226,15 +230,99 @@ internal static partial class ShapesDevReport
         $"- The {DevSets.ShapesDevNameOf(tranche)} tranche {DevSets.ShapesDevFileOf(tranche)} is not present; it is not scored.";
 
     /// <summary>
+    ///     Renders the counts table of the technical measure: for every scored tranche and every kind, the target and control items, the target accuracy,
+    ///     the noun-verb decisions, the harmful errors at the harmful confidence, and the wrong answers at confidence of at least 0.90 and 0.95.
+    /// </summary>
+    /// <param name="label">The label of the run.</param>
+    /// <param name="results">The results of the scored tranches, in report order.</param>
+    /// <returns>The lines of the section, without line terminators.</returns>
+    /// <remarks>
+    ///     The counts are the ones of <see cref="ShapesDevShapeResult"/>: a harmful error is a swapped noun-verb decision at a confidence of at least
+    ///     <see cref="Metrics.HarmfulConfidence"/>; a wrong answer at confidence of at least <see cref="Metrics.ConfidentWrong90"/> or
+    ///     <see cref="Metrics.ConfidentWrongConfidence"/> is any wrong answer (a target or, in the last two columns, a control) with that confidence.
+    ///     No threshold is chosen or changed here.
+    /// </remarks>
+    public static List<string> RenderCounts(string label, IReadOnlyList<ShapesDevSingleShapeResult> results)
+    {
+        ArgumentNullException.ThrowIfNull(label);
+        ArgumentNullException.ThrowIfNull(results);
+        var lines = new List<string>
+        {
+            "## Shapes development set, counts at the confidence limits: " + label,
+            string.Empty,
+            string.Format(
+                CultureInfo.InvariantCulture,
+                "- Harmful: a swapped noun-verb decision of a target item with a confidence of at least {0:0.00}. Wrong at confidence >= {1:0.00} and >= {2:0.00}: the items answered wrongly (under the scoring of the tranche) with a confidence of at least that limit; the columns of the targets come first, then those of the controls.",
+                Metrics.HarmfulConfidence,
+                Metrics.ConfidentWrong90,
+                Metrics.ConfidentWrongConfidence),
+            "- The counts are measurements at fixed limits; no threshold is chosen or changed here.",
+            string.Empty,
+            "| tranche | row | target items | target accuracy | noun-verb decisions | harmful at >= 0.45 | wrong at >= 0.90 | wrong at >= 0.95 | control items | control wrong at >= 0.90 | control wrong at >= 0.95 |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        };
+        foreach (var result in results)
+        {
+            var name = DevSets.ShapesDevNameOf(result.Spec.Tranche);
+            lines.Add(CountsRow(name, "all items", result.Overall));
+            for (var i = 0; i < result.Kinds.Count; i++)
+            {
+                var kind = result.Spec.Kinds[i];
+                lines.Add(CountsRow(name, kind.Name + " (" + kind.Role + ")", result.Kinds[i]));
+            }
+        }
+
+        return lines;
+    }
+
+    /// <summary>
+    ///     Renders one row of the counts table: a column that does not apply to the row (no target or no control items) is <c>-</c>.
+    /// </summary>
+    /// <param name="tranche">The name of the tranche.</param>
+    /// <param name="rowName">The name of the row.</param>
+    /// <param name="row">The counts of the row.</param>
+    /// <returns>The row.</returns>
+    private static string CountsRow(string tranche, string rowName, ShapesDevShapeResult row)
+    {
+        var hasTargets = row.TargetItems > 0;
+        var hasControls = row.ControlItems > 0;
+        return string.Format(
+            CultureInfo.InvariantCulture,
+            "| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9} | {10} |",
+            tranche,
+            rowName,
+            hasTargets ? row.TargetItems.ToString(CultureInfo.InvariantCulture) : "-",
+            hasTargets ? Percent(row.TargetAccuracy) : "-",
+            hasTargets ? row.NounVerbDecisions.ToString(CultureInfo.InvariantCulture) : "-",
+            hasTargets ? row.HarmfulErrors.ToString(CultureInfo.InvariantCulture) : "-",
+            hasTargets ? row.ConfidentWrong90.ToString(CultureInfo.InvariantCulture) : "-",
+            hasTargets ? row.ConfidentWrong.ToString(CultureInfo.InvariantCulture) : "-",
+            hasControls ? row.ControlItems.ToString(CultureInfo.InvariantCulture) : "-",
+            hasControls ? row.ControlConfidentWrong90.ToString(CultureInfo.InvariantCulture) : "-",
+            hasControls ? row.ControlConfidentWrong.ToString(CultureInfo.InvariantCulture) : "-");
+    }
+
+    /// <summary>
     ///     Renders the scoring note of a shape.
     /// </summary>
     /// <param name="spec">The specification of the shape.</param>
     /// <returns>The line.</returns>
     private static string ScoringLine(ShapesDevShapeSpec spec)
     {
-        var how = spec.Scoring == ShapesDevScoring.Class
-            ? "by class (Noun: NOUN and PROPN; Verb: VERB); a noun-verb decision is a target whose candidates include both classes; a harmful error is a swapped class"
-            : "by exact tag (a NOUN or VERB heading answered PROPN is wrong, but it is not harmful, and a PROPN control is never a noun-verb decision); a noun-verb decision is a target whose candidates include NOUN and VERB; a harmful error is NOUN answered for VERB or VERB for NOUN";
+        string how;
+        if (spec.Scoring == ShapesDevScoring.Class)
+        {
+            how = "by class (Noun: NOUN and PROPN; Verb: VERB); a noun-verb decision is a target whose candidates include both classes; a harmful error is a swapped class";
+        }
+        else if (spec.Shape == "heading-titlecase")
+        {
+            how = "by exact tag (a NOUN or VERB heading answered PROPN is wrong, but it is not harmful, and a PROPN control is never a noun-verb decision); a noun-verb decision is a target whose candidates include NOUN and VERB; a harmful error is NOUN answered for VERB or VERB for NOUN";
+        }
+        else
+        {
+            how = "by exact tag (the answer is right only when it is the gold tag; a wrong tag other than NOUN for VERB or VERB for NOUN is wrong but not harmful); a noun-verb decision is a target whose gold tag is NOUN or VERB and whose candidates include NOUN and VERB; a harmful error is NOUN answered for VERB or VERB for NOUN";
+        }
+
         return string.Format(
             CultureInfo.InvariantCulture,
             "- Scoring: the judged word of every item through the real decoder with all alternatives, {0} with a confidence of at least {1:0.00}; wrong at confidence >= {2:0.00} counts the target items answered wrongly with a confidence of at least {2:0.00}.",
@@ -282,7 +370,11 @@ internal static class ShapesDevCommand
     /// <summary>
     ///     The values of the <c>--tranche</c> option.
     /// </summary>
-    public static readonly IReadOnlyList<string> Selections = new[] { "standard", "hard", "both", "compound-head", "headings", "named-state", "new", "compound-head-2", "headings-2", "followup" };
+    public static readonly IReadOnlyList<string> Selections = new[]
+    {
+        "standard", "hard", "both", "compound-head", "headings", "named-state", "new", "compound-head-2", "headings-2", "followup",
+        "deverbal-heads", "defined-terms", "step-lines", "clause-verbs", "technical", "all-single",
+    };
 
     /// <summary>
     ///     The single-shape tranches of the first generation, in report order; <c>new</c> selects all of them.
@@ -305,6 +397,23 @@ internal static class ShapesDevCommand
     };
 
     /// <summary>
+    ///     The four technical single-shape tranches (deverbal heads, defined terms, step lines, clause verbs), in report order; <c>technical</c>
+    ///     selects all of them. <c>new</c> and <c>followup</c> do not select them, so their output does not change.
+    /// </summary>
+    public static readonly IReadOnlyList<ShapesDevTranche> TechnicalTranches = new[]
+    {
+        ShapesDevTranche.DeverbalHeads,
+        ShapesDevTranche.DefinedTerms,
+        ShapesDevTranche.StepLines,
+        ShapesDevTranche.ClauseVerbs,
+    };
+
+    /// <summary>
+    ///     All nine single-shape tranches of the three generations, in report order (first generation, follow-up, technical); <c>all-single</c> selects all of them.
+    /// </summary>
+    public static readonly IReadOnlyList<ShapesDevTranche> AllSingleTranches = NewTranches.Concat(FollowupTranches).Concat(TechnicalTranches).ToList();
+
+    /// <summary>
     ///     Checks the value of the <c>--tranche</c> option.
     /// </summary>
     /// <param name="which">The value.</param>
@@ -314,9 +423,34 @@ internal static class ShapesDevCommand
         ArgumentNullException.ThrowIfNull(which);
         if (!Selections.Contains(which))
         {
-            throw new InvalidOperationException("--tranche must be standard, hard, both, compound-head, headings, named-state, new, compound-head-2, headings-2 or followup.");
+            throw new InvalidOperationException("--tranche must be standard, hard, both, compound-head, headings, named-state, new, compound-head-2, headings-2, followup, deverbal-heads, defined-terms, step-lines, clause-verbs, technical or all-single.");
         }
     }
+
+    /// <summary>
+    ///     Gets the single-shape tranches that a selection names.
+    /// </summary>
+    /// <param name="which">The value of <c>--tranche</c>, a valid selection other than <c>standard</c>, <c>hard</c> and <c>both</c>.</param>
+    /// <returns>The tranches in report order: the group that <c>new</c>, <c>followup</c>, <c>technical</c> or <c>all-single</c> names, or the one tranche of its own name.</returns>
+    public static IReadOnlyList<ShapesDevTranche> TranchesOf(string which)
+    {
+        ArgumentNullException.ThrowIfNull(which);
+        return which switch
+        {
+            "new" => NewTranches,
+            "followup" => FollowupTranches,
+            "technical" => TechnicalTranches,
+            "all-single" => AllSingleTranches,
+            _ => AllSingleTranches.Where(t => DevSets.ShapesDevNameOf(t) == which).ToList(),
+        };
+    }
+
+    /// <summary>
+    ///     Tells whether a selection names a group of tranches (a missing file is noted, not an error) and not one tranche.
+    /// </summary>
+    /// <param name="which">The value of <c>--tranche</c>.</param>
+    /// <returns><c>true</c> for <c>new</c>, <c>followup</c>, <c>technical</c> and <c>all-single</c>.</returns>
+    public static bool IsGroup(string which) => which is "new" or "followup" or "technical" or "all-single";
 
     /// <summary>
     ///     Scores the tranches that the option names and renders the report.
@@ -325,12 +459,18 @@ internal static class ShapesDevCommand
     /// <param name="tagger">The tagger (created with all alternatives, see <see cref="DevEvaluator.CreateTagger"/>).</param>
     /// <param name="label">The label of the run.</param>
     /// <param name="weightsSha256">The SHA-256 of the weights file.</param>
-    /// <param name="which">The value of <c>--tranche</c>: <c>standard</c>, <c>hard</c> or <c>both</c> (the original sections), one single-shape tranche, <c>new</c> (the three single-shape tranches of the first generation) or <c>followup</c> (the two of the follow-up).</param>
+    /// <param name="which">The value of <c>--tranche</c>: <c>standard</c>, <c>hard</c> or <c>both</c> (the original sections), one single-shape tranche, or a group: <c>new</c> (the three single-shape tranches of the first generation), <c>followup</c> (the two of the follow-up), <c>technical</c> (the four technical tranches) or <c>all-single</c> (all nine).</param>
+    /// <param name="calibration">Whether to append the calibration section (see <see cref="ShapesDevCalibration"/>); it applies to the single-shape tranches only.</param>
     /// <returns>The lines of the report, without line terminators.</returns>
-    /// <exception cref="InvalidOperationException"><paramref name="which"/> is not a valid selection, or a link lies on the way to a development file.</exception>
-    /// <exception cref="FileNotFoundException">The file of an explicitly requested tranche does not exist (a missing file is only noted for <c>both</c>, <c>new</c> and <c>followup</c>).</exception>
+    /// <exception cref="InvalidOperationException"><paramref name="which"/> is not a valid selection, or a link lies on the way to a development file, or <paramref name="calibration"/> is set for <c>standard</c>, <c>hard</c> or <c>both</c>.</exception>
+    /// <exception cref="FileNotFoundException">The file of an explicitly requested tranche does not exist (a missing file is only noted for <c>both</c> and the groups).</exception>
     /// <exception cref="InvalidDataException">A file does not announce its tranche or is malformed.</exception>
-    public static List<string> Run(string root, Tagger tagger, string label, string weightsSha256, string which)
+    /// <remarks>
+    ///     A selection that includes a technical tranche adds the counts table of the technical measure (harmful at 0.45, wrong at 0.90 and
+    ///     0.95) after the tranche sections; <c>new</c>, <c>followup</c> and the first-generation and follow-up names print what they always
+    ///     printed, byte for byte.
+    /// </remarks>
+    public static List<string> Run(string root, Tagger tagger, string label, string weightsSha256, string which, bool calibration = false)
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(tagger);
@@ -339,33 +479,50 @@ internal static class ShapesDevCommand
         EnsureSelection(which);
         if (which is "standard" or "hard" or "both")
         {
+            if (calibration)
+            {
+                throw new InvalidOperationException("--calibration applies to the single-shape tranches only, not to standard, hard or both.");
+            }
+
             return RunOriginal(root, tagger, label, weightsSha256, which);
         }
 
-        // An explicit single-shape tranche needs its file; with "new" or "followup" a missing file is noted and the others are scored
+        // An explicit single-shape tranche needs its file; with a group a missing file is noted and the others are scored
         var lines = new List<string>();
-        var group = which == "followup";
-        foreach (var tranche in NewTranches.Concat(FollowupTranches))
+        var group = IsGroup(which);
+        var results = new List<ShapesDevSingleShapeResult>();
+        var judged = new List<KeyValuePair<string, IReadOnlyList<Outcome>>>();
+        foreach (var tranche in TranchesOf(which))
         {
-            var inGroup = which == "new" ? NewTranches.Contains(tranche) : group && FollowupTranches.Contains(tranche);
-            if (!inGroup && DevSets.ShapesDevNameOf(tranche) != which)
-            {
-                continue;
-            }
-
             if (lines.Count > 0)
             {
                 lines.Add(string.Empty);
             }
 
-            if ((which == "new" || group) && !DevSets.ShapesDevExists(root, tranche))
+            if (group && !DevSets.ShapesDevExists(root, tranche))
             {
                 lines.Add(ShapesDevReport.RenderTrancheMissing(tranche));
                 continue;
             }
 
             var items = DevSets.ReadShapesDev(root, tranche, out var sha256);
-            lines.AddRange(ShapesDevReport.RenderTranche(label, tranche, sha256, ShapesDevTrancheEvaluator.Evaluate(tagger, tranche, items), weightsSha256));
+            var outcomes = ShapesDevTrancheEvaluator.Judge(tagger, items);
+            var result = ShapesDevTrancheEvaluator.Summarize(tranche, items, outcomes);
+            lines.AddRange(ShapesDevReport.RenderTranche(label, tranche, sha256, result, weightsSha256));
+            results.Add(result);
+            judged.Add(new KeyValuePair<string, IReadOnlyList<Outcome>>(DevSets.ShapesDevNameOf(tranche), outcomes));
+        }
+
+        if (results.Any(r => TechnicalTranches.Contains(r.Spec.Tranche)))
+        {
+            lines.Add(string.Empty);
+            lines.AddRange(ShapesDevReport.RenderCounts(label, results));
+        }
+
+        if (calibration)
+        {
+            lines.Add(string.Empty);
+            lines.AddRange(ShapesDevCalibration.Render(label, ShapesDevCalibration.Measure(judged)));
         }
 
         return lines;

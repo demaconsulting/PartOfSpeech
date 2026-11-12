@@ -40,6 +40,11 @@ contains. The registered ranges, the floors and the history of the builds are in
   sources are cut from one pool of documents (the training side of one partition of title families, see below), so a document may feed
   more than one of them; the sentences are never shared. The development tranches of the same shapes
   (`data/eval/shapes-dev/`) are cut from the other side of the partition: no document is in both.
+- **Frozen inputs:** the inputs of the builds are pinned by SHA-256 in `tools/data/technical_data.py` and checked before every candidate
+  round: the draft document list `b48d463364275182f4e704625d069b9c9ef06f48ca068405925c06ab0be142ae`, the tokenized units
+  `dfe0ba191496d53727c1dcea8d2d5e0841a7885a4ad9c489e7f8b81f6f7ef4aa`, the classifier mass of every sentence for the band of the development
+  products (`hmm.tsv`) `43432b1a2522bf6e85b7a6e380dfaa4d94a5b26a066e94fa0b8c127c9bf602f7` and `data/CONVENTIONS.md`
+  `42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2`.
 - **How produced:** `python tools/data/technical_data.py --work <work-folder> build --product deverbal|terms|steps|clauses --allow-short`
   at the builder and the pre-registered rule of the commits recorded in the trainer run log (section "beta.3 phase 1: pre-registered
   rule"; the normative text is the docstring of `technical_data.py` and, for the frames, of `technical_frames.py`). The labeling used the
