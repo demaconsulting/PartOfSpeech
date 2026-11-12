@@ -18,6 +18,7 @@
 - 🔤 **Tokenizer** - English text to sentences and tokens with offsets
 - 🏷️ **Tagger** - 17 Universal POS tags from an averaged perceptron
 - 📊 **Confidences** - calibrated probabilities and ranked alternatives for every tag
+- 🚦 **Rule checker signals** - margin and known-word flag per token
 - 🔒 **Constraints** - restrict or steer the tag of single tokens
 - 📚 **Glossaries** - tag domain terms correctly, in hard or soft mode
 - 🧩 **Pre-tokenized input** - tag tokens that you already have
@@ -95,7 +96,8 @@ Recommended confidence thresholds, with the share of the noun-verb decisions tha
 | `strict` | 0.90 | 89.4 | 3.8 |
 | `balanced` | 0.80 | 93.3 | 7.1 |
 
-Rule checkers should use `strict`; treat tokens below the threshold as unknown.
+Rule checkers should use `strict`; treat tokens below the threshold as unknown, and also the tokens of words that the
+lexicon does not know (`IsKnownWord`) when their tag is a noun, a verb or a proper noun.
 
 The [evaluation report][link-evaluation] has the details.
 

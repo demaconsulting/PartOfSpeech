@@ -93,7 +93,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///         evidence that the entry is correct: a hard entry that leaves one tag always gives the confidence 1.0 and no
 ///         alternatives, also when the entry is wrong, and a head word with several tags or in soft mode gets the softmax
 ///         over the tags that remain, where a soft boost raises the confidence of a preferred tag. Do not use the
-///         confidence of a glossary head to judge the glossary.
+///         confidence of a glossary head to judge the glossary. A glossary does not change
+///         <see cref="TaggedToken.IsKnownWord"/>, which only reports the lexicon.
 ///     </para>
 ///     <para>
 ///         <strong>Combining with your own constraints:</strong> the tagging methods that take a glossary also take your

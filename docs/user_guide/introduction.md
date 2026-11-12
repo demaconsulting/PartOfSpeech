@@ -155,7 +155,14 @@ Read the numbers with these points in mind:
 - **Known words are restricted, unknown words are not.** A word that is in the lexicon receives only a tag that the
   lexicon and the token-shape rules allow (a capitalized word can also be PROPN or X, a token with a digit can also be NUM,
   SYM, X, NOUN, PROPN or ADJ, a token without a letter or digit can also be PUNCT, SYM or X). A word that is not in the
-  lexicon can receive any of the 17 tags, so its confidence is spread over all of them.
+  lexicon can receive any of the 17 tags, so its confidence is spread over all of them. `TaggedToken.IsKnownWord` reports
+  which case a token is: it is true when the lexicon has an entry for the spelling after the tagger folds it (Unicode
+  NFC normalization; typographic quotes, dashes and the ellipsis mapped to ASCII) and lower-cases it, so `Cat` and `cat`
+  are the same word, whatever a glossary or a constraint did to the tag.
+- **The margin shows a close call.** `TaggedToken.Margin` is the confidence minus the probability of the best alternative,
+  from 0 to 1. It is exact when at least one alternative is reported (the default is 3); with `MaxAlternatives` 0 it is
+  the smallest value that the confidence allows, and for a token with one allowed tag it is 1. See _Using the Tagger
+  in a Rule Checker_.
 - **The lexicon is not a gold standard.** It records which tags a word is attested with, including some annotation noise
   (for example `the` also appears as PROPN), so a tag in the allowed set is not necessarily correct.
 - **A low confidence is a reason to look.** Which confidence is low enough is measured: see _Choosing a Confidence
@@ -390,6 +397,87 @@ with the tags that fit the form:
   adds one array sized by its token count (no object per token) and a few objects per match.
 - **Thread safety.** A glossary and its entries are immutable and safe to share; a `GlossaryBuilder` is not thread-safe.
 
+## Using the Tagger in a Rule Checker
+
+A rule checker for controlled text acts on a tag only when the tag is trustworthy: a wrong noun or verb is the costly
+error. Four things help:
+
+- **The dictionary.** Give the terms that your domain knows to a `Glossary` (hard mode for a list that you trust
+  completely, soft mode for a list that may contain errors; a wrong hard entry forces a wrong tag with the confidence
+  1.0), or give a token that your checker already knows a constraint such as `TokenConstraint.Only(Upos.Noun)`.
+- **The confidence**, read against the `strict` threshold of _Choosing a Confidence Threshold_.
+- **The margin** and the runner-up `Alternatives[0]`: a margin near 0 is a close call. Keep `MaxAlternatives` at 1 or
+  more (the default is 3) so that the margin is exact; with 0 it is the smallest value that the confidence allows. The
+  margin is at least `2 * Confidence - 1`, so a token above the `strict` threshold has a large margin, and the margin
+  adds information for the tokens below the threshold or as a stricter filter that you choose. No margin limit is
+  measured and none is recommended: measure the limit on your own text.
+- **The known-word flag.** `IsKnownWord` is false when the lexicon has no entry for the word. All 17 tags were then
+  allowed (also for capitalized words, numbers and punctuation that the lexicon does not list), so a noun, verb or proper
+  noun tag on such a word is a guess. The flag is about the lexicon, not about being a word: punctuation and numbers that
+  the lexicon lists are known, and a capital letter never makes a word known.
+
+A dictionary decides a token only when it leaves a single tag: a hard glossary entry or a `TokenConstraint.Only` with one
+tag. That token has `IsConstrained` set, the confidence 1.0 and no `Alternatives`; the head word of an entry that the
+lexicon does not list has `IsKnownWord` false, the tag of the entry and the confidence 1.0, and it is not inconclusive,
+because the dictionary decided it (its confidence and margin are no measurement). `IsConstrained` alone is not enough: a
+soft glossary entry, a `TokenConstraint.Prefer` or `Penalize`, and a constraint that allows several tags set it too, and
+the model can still disagree, so those tokens go through the same checks as every other token. The confidence cannot
+tell the cases apart, because a soft boost that is large enough rounds the confidence to exactly 1.0 while the other
+tags are still allowed. The number of allowed tags can: a token with one allowed tag has no alternatives, and a token
+with several allowed tags lists every other one (up to `MaxAlternatives`), also with the probability 0. So with
+`MaxAlternatives` of 1 or more, `IsConstrained && Alternatives.Count == 0` is the test that the dictionary decided the
+token; with `MaxAlternatives` 0 no token has alternatives and the test cannot be made.
+
+```csharp
+Glossary dictionary = new GlossaryBuilder
+{
+    { "manual override", Upos.Noun, "The mode in which an operator controls the unit by hand." },
+    { "wiring schematic", Upos.Noun },
+}.Build();
+
+const double Strict = 0.90;          // the strict threshold from Choosing a Confidence Threshold
+const double MinimumMargin = 0.20;   // your own limit, chosen from your own measurements; the package gives none
+
+string Judge(TaggedToken token)
+{
+    if (token.IsConstrained && token.Alternatives.Count == 0)
+    {
+        return "dictionary";                       // one allowed tag; IsConstrained alone, or confidence 1.0, is not enough
+    }
+
+    if (token.Confidence < Strict)
+    {
+        return "inconclusive: low confidence";
+    }
+
+    if (!token.IsKnownWord && token.Tag is Upos.Noun or Upos.Verb or Upos.Propn)
+    {
+        return "inconclusive: unknown word";      // the lexicon has no evidence about the word
+    }
+
+    if (token.Margin < MinimumMargin)
+    {
+        return "inconclusive: close call";
+    }
+
+    return "conclusive";
+}
+
+foreach (TaggedSentence sentence in Tagger.Default.Tag("Select the manual override, then read the wiring schematic.", dictionary))
+{
+    foreach (TaggedToken token in sentence.Tokens)
+    {
+        Console.WriteLine($"{token.Text} {token.Tag.ToTagString()} {Judge(token)}");
+    }
+}
+```
+
+The order of the checks is: the dictionary left one tag, the confidence is below `strict`, the word is unknown and
+the tag is a noun, verb or proper noun, the margin is below your limit; otherwise the tag is conclusive. When the checker
+already knows the terms of each token, pass a `TokenConstraint.Only(Upos.Noun)` for those tokens to `Tag(sentence,
+constraints)` instead of a glossary (see _Constraints_); those tokens report `IsConstrained`, the confidence 1.0 and no
+alternatives.
+
 ## Loading a Weights File
 
 ```csharp
@@ -497,6 +585,11 @@ The entry point. Immutable and thread-safe.
 - `string Text`, `int Start`, `int Length`: the token and its place in the source string.
 - `Upos Tag`: the chosen tag.
 - `double Confidence`: the probability of the tag among the considered tags.
+- `double Margin`: the confidence minus the probability of the best alternative, from 0 to 1; exact when at least one
+  alternative is reported, otherwise `max(0, 2 * Confidence - 1)` (1 for a token with one allowed tag).
+- `bool IsKnownWord`: true when the lexicon has an entry for the spelling of the token after it is folded (NFC
+  normalization, typographic quotes, dashes and ellipsis mapped to ASCII) and lower-cased; not changed by a glossary
+  or a constraint.
 - `IReadOnlyList<TagScore> Alternatives`: the other considered tags by descending probability; read-only.
 - `bool IsConstrained`: true when a `TokenConstraint` other than `None` applied to the token.
 - `GlossaryMatch? GlossaryMatch`: the match whose span contains the token, or `null`.

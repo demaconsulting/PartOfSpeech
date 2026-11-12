@@ -144,6 +144,22 @@ sections:
               - Tagging_Context_PrecedingTags_ChangeTagOfAmbiguousWord
               - Tagging_Tag_SameInput_ProducesSameOutput
 
+          - id: PartOfSpeech-Tagging-Evidence
+            title: >-
+              Every token shall report, besides its tag, whether the lexicon knows its word and the margin between its
+              confidence and the best alternative, so that a caller can tell a tag that rests on evidence from a
+              guess and a clear decision from a close call.
+            justification: |
+              A rule checker that acts on a wrong noun or verb does harm; it needs a signal for a word that the lexicon
+              has never seen and a signal for a close call, in addition to the confidence, and both must come from the
+              same decoding without a second pass over the text.
+            children:
+              - PartOfSpeech-Tagging-TagDecoder-KnownWord
+              - PartOfSpeech-Tagging-Tagger-KnownWord
+              - PartOfSpeech-Tagging-Tagger-Margin
+            tests:
+              - Tagging_Evidence_UnknownWordAndCloseCall_AreReported
+
           - id: PartOfSpeech-Tagging-Determinism
             title: >-
               The same input shall give the same tags, confidences and alternatives each time, from the same tagger and

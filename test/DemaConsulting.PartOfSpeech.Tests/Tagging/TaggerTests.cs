@@ -1,4 +1,4 @@
-// cspell:ignore zorbulon Cquotes
+// cspell:ignore zorbulon zork Cquotes
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -553,9 +553,294 @@ public class TaggerTests
     }
 
     /// <summary>
+    ///     Creates a tagger from hand-set weights and a lexicon of the given rows.
+    /// </summary>
+    private static Tagger CreateHandSet(TinyModels.WeightsBuilder weights, string[] lexicon, int alternatives = 3) =>
+        TinyModels.CreateTagger(weights.Build(), TinyModels.CreateLexicon(lexicon), new TaggerOptions { MaxAlternatives = alternatives });
+
+    /// <summary>
+    ///     Proves that a spelling of the lexicon is a known word and an unlisted spelling is not, for text input.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_KnownWord_LexiconSpelling_IsTrueAndUnlistedSpellingIsFalse()
+    {
+        // Arrange: a tagger whose lexicon lists cat and sat
+        var tagger = CreateHandSet(new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 3), new[] { "cat NOUN", "sat VERB" });
+
+        // Act: tag a text with two listed words, an unlisted word and a period
+        var tokens = tagger.Tag("cat sat zorbulon.").Single().Tokens;
+
+        // Assert: the flag follows the lexicon, also for the period that the lexicon does not list
+        Assert.Equal(new[] { "cat", "sat", "zorbulon", "." }, tokens.Select(t => t.Text));
+        Assert.Equal(new[] { true, true, false, false }, tokens.Select(t => t.IsKnownWord));
+    }
+
+    /// <summary>
+    ///     Proves that the known-word flag uses the lower-cased lookup of the tagger for every letter case.
+    /// </summary>
+    /// <param name="spelling">The token text.</param>
+    /// <param name="expected">The expected flag.</param>
+    [Theory]
+    [InlineData("cat", true)]
+    [InlineData("Cat", true)]
+    [InlineData("CAT", true)]
+    [InlineData("Zorbulon", false)]
+    public void Tagger_Tag_KnownWord_CaseVariant_UsesTheLexiconLookup(string spelling, bool expected)
+    {
+        // Arrange: a tagger whose lexicon lists cat in lower case
+        var tagger = CreateHandSet(new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 3), new[] { "cat NOUN" });
+
+        // Act: tag the spelling as a pre-tokenized token
+        var token = tagger.Tag(new[] { spelling }).Tokens[0];
+
+        // Assert: the flag follows the lookup, not the letter case
+        Assert.Equal(expected, token.IsKnownWord);
+    }
+
+    /// <summary>
+    ///     Proves that the known-word flag uses the full lookup form of the tagger: the spelling is normalized (NFC), typographic
+    ///     apostrophes, dashes and the ellipsis are mapped to ASCII, and the result is lower-cased.
+    /// </summary>
+    /// <param name="spelling">The token text.</param>
+    /// <param name="expected">The expected flag.</param>
+    [Theory]
+    [InlineData("n't", true)]
+    [InlineData("n\u2019t", true)]
+    [InlineData("N\u2019T", true)]
+    [InlineData("\u2014", true)]
+    [InlineData("\u2026", true)]
+    [InlineData("caf\u00E9", true)]
+    [InlineData("CAFE\u0301", true)]
+    [InlineData("cafe", false)]
+    public void Tagger_Tag_KnownWord_FoldedSpelling_UsesTheLexiconLookup(string spelling, bool expected)
+    {
+        // Arrange: a tagger whose lexicon lists the folded forms of the apostrophe, the dash, the ellipsis and an accented word in NFC
+        var tagger = CreateHandSet(new TinyModels.WeightsBuilder(), new[] { "n't PART", "-- PUNCT", "... PUNCT", "caf\u00E9 NOUN" });
+
+        // Act: tag the spelling as a pre-tokenized token
+        var token = tagger.Tag(new[] { spelling }).Tokens[0];
+
+        // Assert: the flag follows the folded, lower-cased lookup
+        Assert.Equal(expected, token.IsKnownWord);
+    }
+
+    /// <summary>
+    ///     Proves that the head of a hard glossary entry that the lexicon does not list is an unknown word that is constrained.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_KnownWord_GlossaryHeadNotInLexicon_IsUnknownButConstrained()
+    {
+        // Arrange: the lexicon lists manual but not override, and a hard entry makes override a noun
+        var tagger = CreateHandSet(new TinyModels.WeightsBuilder(), new[] { "the DET", "manual ADJ NOUN", "is AUX VERB" });
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("Manual Override", Upos.Noun, "A mode of the unit.") });
+
+        // Act: tag the sentence with the glossary
+        var tokens = tagger.Tag(new[] { "the", "manual", "override", "is" }, glossary).Tokens;
+
+        // Assert: the head is a certain, constrained noun that the lexicon does not know; its neighbor keeps its own flag
+        var head = tokens[2];
+        Assert.Equal("override", head.Text);
+        Assert.False(head.IsKnownWord);
+        Assert.True(head.IsConstrained);
+        Assert.True(head.IsGlossaryHead);
+        Assert.Equal(Upos.Noun, head.Tag);
+        Assert.Equal(1.0, head.Confidence);
+        Assert.True(tokens[1].IsKnownWord);
+        Assert.False(tokens[1].IsGlossaryHead);
+    }
+
+    /// <summary>
+    ///     Proves that the head of a hard glossary entry that the lexicon lists is a known word, and that a glossary changes no flag.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_KnownWord_GlossaryHeadInLexicon_IsKnownAndConstrained()
+    {
+        // Arrange: the lexicon lists schematic, and a hard entry makes it a noun
+        var tagger = CreateHandSet(new TinyModels.WeightsBuilder(), new[] { "read VERB", "the DET", "wiring NOUN", "schematic ADJ NOUN" });
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("Wiring Schematic", Upos.Noun) });
+        var words = new[] { "read", "the", "wiring", "schematic", "now" };
+
+        // Act: tag with and without the glossary
+        var plain = tagger.Tag(words).Tokens;
+        var withGlossary = tagger.Tag(words, glossary).Tokens;
+
+        // Assert: the head is known, constrained and a head; every flag equals that of the text tagged without the glossary
+        var head = withGlossary[3];
+        Assert.True(head.IsKnownWord);
+        Assert.True(head.IsConstrained);
+        Assert.True(head.IsGlossaryHead);
+        Assert.Equal(plain.Select(t => t.IsKnownWord), withGlossary.Select(t => t.IsKnownWord));
+        Assert.Equal(new[] { true, true, true, true, false }, withGlossary.Select(t => t.IsKnownWord));
+    }
+
+    /// <summary>
+    ///     Proves that the margin of a token with several alternatives is the confidence minus the probability of the runner-up.
+    /// </summary>
+    /// <param name="alternatives">The number of requested alternatives.</param>
+    [Theory]
+    [InlineData(3)]
+    [InlineData(16)]
+    public void Tagger_Tag_Margin_SeveralAlternatives_IsConfidenceMinusRunnerUp(int alternatives)
+    {
+        // Arrange: cat has three allowed tags with the raw scores 3, 1 and 0 at the temperature 1
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 3).Word("cat", Upos.Verb, 1);
+        var tagger = CreateHandSet(weights, new[] { "cat NOUN VERB ADJ" }, alternatives);
+
+        // Act: tag the word
+        var token = tagger.Tag(new[] { "cat" }).Tokens[0];
+
+        // Assert: the margin is (1 - exp(-2)) / (1 + exp(-2) + exp(-3)) and equals the difference to the first alternative
+        var sum = 1 + Math.Exp(-2) + Math.Exp(-3);
+        Assert.Equal(Upos.Noun, token.Tag);
+        Assert.Equal((1 - Math.Exp(-2)) / sum, token.Margin, 9);
+        Assert.Equal(token.Confidence - token.Alternatives[0].Probability, token.Margin);
+        Assert.Equal(Upos.Verb, token.Alternatives[0].Tag);
+    }
+
+    /// <summary>
+    ///     Proves that one requested alternative is enough for the exact margin.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_Margin_OneAlternative_IsConfidenceMinusRunnerUp()
+    {
+        // Arrange: cat has three allowed tags, and two taggers report one and all alternatives
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 3).Word("cat", Upos.Verb, 1);
+        var one = CreateHandSet(weights, new[] { "cat NOUN VERB ADJ" }, 1);
+        var all = CreateHandSet(weights, new[] { "cat NOUN VERB ADJ" }, 16);
+
+        // Act: tag the word with both
+        var oneToken = one.Tag(new[] { "cat" }).Tokens[0];
+        var allToken = all.Tag(new[] { "cat" }).Tokens[0];
+
+        // Assert: one alternative is reported and the margin equals the one with all alternatives
+        Assert.Single(oneToken.Alternatives);
+        Assert.Equal(oneToken.Confidence - oneToken.Alternatives[0].Probability, oneToken.Margin);
+        Assert.Equal(allToken.Margin, oneToken.Margin, 12);
+    }
+
+    /// <summary>
+    ///     Proves that without alternatives the margin is the smallest value that the confidence allows.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_Margin_NoAlternativesRequested_IsTheSmallestMarginTheConfidenceAllows()
+    {
+        // Arrange: cat is clearly a noun (three allowed tags), tri is a three-way tie, and both taggers report no alternatives or all
+        var weights = new TinyModels.WeightsBuilder()
+            .Word("cat", Upos.Noun, 3)
+            .Word("cat", Upos.Verb, 1)
+            .Word("tri", Upos.Noun, 2)
+            .Word("tri", Upos.Verb, 2)
+            .Word("tri", Upos.Adj, 2);
+        var lexicon = new[] { "cat NOUN VERB ADJ", "tri NOUN VERB ADJ" };
+        var bare = CreateHandSet(weights, lexicon, 0);
+        var full = CreateHandSet(weights, lexicon, 16);
+
+        // Act: tag both words with both taggers
+        var bareTokens = bare.Tag(new[] { "cat", "tri" }).Tokens;
+        var fullTokens = full.Tag(new[] { "cat", "tri" }).Tokens;
+
+        // Assert: the margin is 2c - 1 for a confidence above one half, 0 below it, and never above the exact margin
+        Assert.Empty(bareTokens[0].Alternatives);
+        Assert.Equal((2 * bareTokens[0].Confidence) - 1, bareTokens[0].Margin, 12);
+        Assert.True(bareTokens[0].Margin <= fullTokens[0].Margin);
+        Assert.True(bareTokens[0].Margin < fullTokens[0].Margin);
+        Assert.True(bareTokens[1].Confidence < 0.5);
+        Assert.Equal(0.0, bareTokens[1].Margin);
+        Assert.Equal(0.0, fullTokens[1].Margin, 12);
+    }
+
+    /// <summary>
+    ///     Proves that a token with one allowed tag has the margin 1 whatever the number of requested alternatives.
+    /// </summary>
+    /// <param name="alternatives">The number of requested alternatives.</param>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(3)]
+    public void Tagger_Tag_Margin_SingleAllowedTag_IsOne(int alternatives)
+    {
+        // Arrange: the lexicon lists the as DET only and cat with two tags, and cat gets a hard constraint
+        var tagger = CreateHandSet(new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 3).Word("cat", Upos.Verb, 1), new[] { "the DET", "cat NOUN VERB" }, alternatives);
+        var constraints = new[] { TokenConstraint.None, TokenConstraint.Only(Upos.Verb), TokenConstraint.Only(Upos.Noun) };
+
+        // Act: tag a listed single-tag word, a constrained word and a constrained unlisted word
+        var tokens = tagger.Tag(new[] { "the", "cat", "zork" }, constraints).Tokens;
+
+        // Assert: all three have one allowed tag, the confidence 1 and the margin 1
+        Assert.All(tokens, t => Assert.Equal(1.0, t.Confidence));
+        Assert.All(tokens, t => Assert.Equal(1.0, t.Margin));
+    }
+
+    /// <summary>
+    ///     Proves that two tied tags give the margin 0, with and without alternatives.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_Margin_TiedTags_IsZero()
+    {
+        // Arrange: cat has two allowed tags with the same score
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 2).Word("cat", Upos.Verb, 2);
+        var withAlternatives = CreateHandSet(weights, new[] { "cat NOUN VERB" }, 3);
+        var without = CreateHandSet(weights, new[] { "cat NOUN VERB" }, 0);
+
+        // Act: tag the word with both
+        var first = withAlternatives.Tag(new[] { "cat" }).Tokens[0];
+        var second = without.Tag(new[] { "cat" }).Tokens[0];
+
+        // Assert: the margin is 0
+        Assert.Equal(0.0, first.Margin, 12);
+        Assert.Equal(0.5, first.Confidence, 12);
+        Assert.Equal(0.0, second.Margin, 12);
+    }
+
+    /// <summary>
+    ///     Proves that the default token has the margin 0 and is not a known word.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_DefaultToken_HasNoMarginAndIsNotKnown()
+    {
+        // Arrange: the default value of the struct
+        TaggedToken token = default;
+
+        // Act: read the new members
+        var margin = token.Margin;
+        var known = token.IsKnownWord;
+
+        // Assert: zero and false
+        Assert.Equal(0.0, margin);
+        Assert.False(known);
+    }
+
+#if NET
+    /// <summary>
+    ///     Proves that reading the margin and the known-word flag allocates nothing, also for a token with alternatives.
+    /// </summary>
+    [Fact]
+    public void Tagger_Tag_Margin_DoesNotAllocate()
+    {
+        // Arrange: a token that has three alternatives
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 3).Word("cat", Upos.Verb, 1);
+        var token = CreateHandSet(weights, new[] { "cat NOUN VERB ADJ" }).Tag(new[] { "cat" }).Tokens[0];
+        var sink = 0.0;
+
+        // Act: read both members in many rounds
+        var bytes = AllocationMeter.MinimumBatchBytes(
+            () =>
+            {
+                sink += token.Margin;
+                sink += token.IsKnownWord ? 1 : 0;
+            },
+            100);
+
+        // Assert: nothing is allocated per batch (reading through the alternatives would allocate a wrapper per read)
+        Assert.Equal(0, bytes);
+        Assert.True(sink > 0);
+    }
+#endif
+
+    /// <summary>
     ///     Describes a tagged text with tags, confidences and alternatives, for equality comparisons.
     /// </summary>
     private static string Describe(IReadOnlyList<TaggedSentence> sentences) =>
         string.Join("|", sentences.SelectMany(s => s.Tokens).Select(t =>
-            $"{t.Text}@{t.Start}/{t.Tag}/{t.Confidence:R}/{string.Join(",", t.Alternatives)}"));
+            $"{t.Text}@{t.Start}/{t.Tag}/{t.Confidence:R}/{t.IsKnownWord}/{string.Join(",", t.Alternatives)}"));
 }

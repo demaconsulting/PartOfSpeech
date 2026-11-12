@@ -22,7 +22,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <see cref="Sentence"/> objects whose <see cref="Token"/> items know their exact offsets in the source string.
 ///     <see cref="Tagger"/> tags a text, a <see cref="Sentence"/> or a list of tokens that you already split, and
 ///     returns <see cref="TaggedSentence"/> objects of <see cref="TaggedToken"/> items; each token carries its
-///     <see cref="Upos"/> tag, a confidence, and its ranked alternatives as <see cref="TagScore"/> items.
+///     <see cref="Upos"/> tag, a confidence, a margin to the runner-up, a flag that tells whether the lexicon knows the
+///     word, and its ranked alternatives as <see cref="TagScore"/> items.
 ///     <see cref="TaggerOptions"/> sets how many alternatives are reported. <see cref="TokenConstraint"/> lets you
 ///     restrict or nudge the tag of one token, and <see cref="Glossary"/> (with <see cref="GlossaryBuilder"/>,
 ///     <see cref="GlossaryEntry"/>, <see cref="GlossaryOptions"/>, <see cref="GlossaryMode"/> and
@@ -65,6 +66,14 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <c>PROPN</c> or <c>ADJ</c>; a token that starts with an upper-case letter also <c>PROPN</c> or <c>X</c>). A word
 ///     that is not in the lexicon may take any of the 17 tags. The tags that remain for a token, after the lexicon, the
 ///     shape rules and any hard constraint, are its **allowed tags**.
+///     </description></item>
+///     <item><description>
+///     A **known word** is a token whose spelling has an entry in the lexicon (<see cref="TaggedToken.IsKnownWord"/>);
+///     otherwise it is an **unknown word**. The spelling is folded (Unicode normalization, typographic quotes and
+///     dashes mapped to ASCII) and lower-cased before the lookup, so <c>Cat</c>, <c>CAT</c> and <c>cat</c> are the
+///     same word. A capital letter or a digit does not make a word known, and a glossary entry or a constraint does
+///     not change the flag. For an unknown word the lexicon has no evidence: all 17 tags were allowed before any
+///     constraint, which includes capitalized words, numbers and punctuation that the lexicon does not list.
 ///     </description></item>
 ///     <item><description>
 ///     The **weights** are the trained model: a <c>POSW</c> file that you load with
@@ -141,6 +150,15 @@ namespace DemaConsulting.PartOfSpeech;
 ///     When the lexicon and the shape rules leave a single allowed tag, the confidence is exactly 1.0 and there are no
 ///     alternatives, whatever the model thinks: the value then says that there was no choice, not that the model is
 ///     sure. Judge the confidence on tokens that had several allowed tags.
+///     </description></item>
+///     <item><description>
+///     <see cref="TaggedToken.Margin"/> is the confidence minus the probability of the first alternative, that is how far
+///     the chosen tag is ahead of the runner-up, from 0 to 1; it is 0 when two tags tie. When no alternative is
+///     reported the margin is the smallest value that the confidence allows, <c>max(0, 2 * Confidence - 1)</c>, and it
+///     is exactly 1.0 for a token with a single allowed tag. It is exact whenever at least one alternative is reported,
+///     so keep <see cref="TaggerOptions.MaxAlternatives"/> at 1 or more when you read it. It always holds that
+///     <c>2 * Confidence - 1 &lt;= Margin &lt;= Confidence</c>, so a token with a high confidence has a large margin;
+///     the margin adds information for tokens with a lower confidence. No measured limit for the margin exists.
 ///     </description></item>
 ///     <item><description>
 ///     The confidence and the probabilities of all alternatives add up to 1 (up to floating-point rounding) only when no
@@ -349,7 +367,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     evidence that the entry is correct. A head word that a hard entry limits to one tag always has the confidence exactly
 ///     1.0 and no alternatives, also when the entry is wrong: there was no choice, so the value does not say that the model is
 ///     sure. With several tags or in soft mode the confidence is the softmax over the tags that remain, so a soft preference
-///     shows in the number.
+///     shows in the number. A glossary entry does not change <see cref="TaggedToken.IsKnownWord"/>, which only reports
+///     the lexicon.
 ///     </description></item>
 ///     </list>
 ///     <para>
@@ -504,6 +523,79 @@ namespace DemaConsulting.PartOfSpeech;
 ///     that gives the cost; the other pages refer to this section.
 ///     </para>
 ///     <para>
+///     ## Using the tagger in a rule checker
+///     </para>
+///     <para>
+///     A rule checker for controlled text (for example a rule that says the name of a mode, such as
+///     <c>Manual Override</c>, must be a noun, or a check of a <c>Wiring Schematic</c> against a list of approved terms) acts
+///     on a tag only when the tag is trustworthy. The tagger reports three signals for this and takes your domain dictionary:
+///     </para>
+///     <list type="bullet">
+///     <item><description>
+///     **Confidence** (<see cref="TaggedToken.Confidence"/>) read against the strict threshold of
+///     [Confidence thresholds](#confidence-thresholds).
+///     </description></item>
+///     <item><description>
+///     **Margin** (<see cref="TaggedToken.Margin"/>) and the runner-up (the first entry of
+///     <see cref="TaggedToken.Alternatives"/>): a close call is a small margin. Tag with
+///     <see cref="TaggerOptions.MaxAlternatives"/> of 1 or more (the default is 3) so that the margin is exact. The margin
+///     is at least <c>2 * Confidence - 1</c>, so it adds information for the tokens below the strict threshold and as a
+///     stricter filter that you choose. No measured limit for the margin exists and the package states none: measure
+///     your own limit on your own text.
+///     </description></item>
+///     <item><description>
+///     **Known word** (<see cref="TaggedToken.IsKnownWord"/>): when it is <c>false</c> the lexicon has no evidence about the
+///     word, so a tag that is <c>NOUN</c>, <c>VERB</c> or <c>PROPN</c> is inconclusive. This is the usual case for a product
+///     name, a part number or a technical term that the lexicon does not list.
+///     </description></item>
+///     <item><description>
+///     **Dictionary.** Give the terms that your domain knows to a <see cref="Glossary"/>: in
+///     <see cref="GlossaryMode.Hard"/> mode for a list that you trust completely, in <see cref="GlossaryMode.Soft"/> mode
+///     for a list that may contain errors (a wrong hard entry forces a wrong tag with the confidence 1.0). When your
+///     checker already knows the terms of each token, give the token a <see cref="TokenConstraint"/> instead, for example
+///     <c>TokenConstraint.Only(Upos.Noun)</c>.
+///     </description></item>
+///     </list>
+///     <para>
+///     A dictionary decides a token only when it leaves a single tag: a hard glossary entry or a
+///     <c>TokenConstraint.Only</c> with one tag. Such a token has <see cref="TaggedToken.IsConstrained"/> set and the
+///     confidence 1.0, and it is not inconclusive because the lexicon does not list it (the head word of an entry that the
+///     lexicon does not list has <see cref="TaggedToken.IsKnownWord"/> <c>false</c>). Its confidence and margin are no
+///     measurement. <see cref="TaggedToken.IsConstrained"/> alone is not enough: it is also set by a soft glossary entry and
+///     by a <c>TokenConstraint.Prefer</c> or <c>Penalize</c>, and by a constraint that allows several tags, and then the
+///     model can still disagree, so such a token goes through the same checks as every other token.
+///     </para>
+///     <para>
+///     The confidence cannot tell the two cases apart: a soft boost that is large enough rounds the confidence to exactly
+///     1.0 while the other tags are still allowed. The reliable test is the number of allowed tags. A token with one
+///     allowed tag has no entry in <see cref="TaggedToken.Alternatives"/>, and a token with several allowed tags has
+///     one for every other allowed tag (up to <see cref="TaggerOptions.MaxAlternatives"/>), also when its probability is
+///     0. So, with <see cref="TaggerOptions.MaxAlternatives"/> of 1 or more, a token is decided by the dictionary exactly
+///     when <see cref="TaggedToken.IsConstrained"/> is <c>true</c> and <see cref="TaggedToken.Alternatives"/> is empty.
+///     With <c>MaxAlternatives</c> 0 no token has alternatives and the test cannot be made. The checks, in this order:
+///     </para>
+///     <list type="number">
+///     <item><description>
+///     The token is constrained and has no alternatives: the dictionary left one tag; use it as the answer of the
+///     dictionary.
+///     </description></item>
+///     <item><description>
+///     The confidence is below the strict threshold: inconclusive.
+///     </description></item>
+///     <item><description>
+///     The word is unknown and the tag is <c>NOUN</c>, <c>VERB</c> or <c>PROPN</c>: inconclusive.
+///     </description></item>
+///     <item><description>
+///     The margin is below the limit that you chose and measured: a close call, inconclusive.
+///     </description></item>
+///     <item><description>
+///     Otherwise the tag is conclusive.
+///     </description></item>
+///     </list>
+///     <para>
+///     The rule checker quick start at the end of this page is a complete example.
+///     </para>
+///     <para>
 ///     ## Thread safety
 ///     </para>
 ///     <para>
@@ -617,6 +709,85 @@ namespace DemaConsulting.PartOfSpeech;
 ///     The confidence of every head here is 1.00 because each hard entry leaves one tag: it says that there was no choice, not
 ///     that the entries were checked. The word <c>down</c> is limited to adposition, adverb and particle and the model picks
 ///     among them; <c>Contoso</c> is a proper noun because of <see cref="GlossaryEntry.WithTokenTags(int, UposSet)"/>.
+///     </para>
+///     <para>
+///     ## Rule checker quick start
+///     </para>
+///     <para>
+///     A rule checker that gives its dictionary to a glossary and applies the checks in the order of
+///     [Using the tagger in a rule checker](#using-the-tagger-in-a-rule-checker). The limit of the margin is a
+///     placeholder: the package gives none, so choose your own from your own measurements.
+///     </para>
+///     <code>
+///     Glossary dictionary = new GlossaryBuilder
+///     {
+///         { "manual override", Upos.Noun, "The mode in which an operator controls the unit by hand." },
+///         { "wiring schematic", Upos.Noun },
+///     }.Build();
+///
+///     const double Strict = 0.90;          // the strict threshold of the confidence thresholds section
+///     const double MinimumMargin = 0.20;   // your own limit, chosen from your own measurements; the package gives none
+///
+///     string Judge(TaggedToken token)
+///     {
+///         // A constraint that left one tag decided this token; its confidence of 1.0 is no measurement.
+///         // IsConstrained alone is not enough: a soft entry or a Prefer constraint leaves the model a choice, and
+///         // a large boost can even round its confidence to 1.0. A single allowed tag has no alternatives, while a
+///         // soft constraint lists the other tags; this needs a tagger with MaxAlternatives of 1 or more (default 3).
+///         if (token.IsConstrained &amp;&amp; token.Alternatives.Count == 0)
+///         {
+///             return "dictionary";
+///         }
+///
+///         if (token.Confidence &lt; Strict)
+///         {
+///             return "inconclusive: low confidence";
+///         }
+///
+///         // The lexicon has no evidence about the word, so a noun, verb or proper noun is a guess
+///         if (!token.IsKnownWord &amp;&amp; token.Tag is Upos.Noun or Upos.Verb or Upos.Propn)
+///         {
+///             return "inconclusive: unknown word";
+///         }
+///
+///         if (token.Margin &lt; MinimumMargin)
+///         {
+///             string runnerUp = token.Alternatives.Count > 0 ? token.Alternatives[0].Tag.ToTagString() : "none";
+///             return $"inconclusive: close call with {runnerUp}";
+///         }
+///
+///         return "conclusive";
+///     }
+///
+///     foreach (TaggedSentence sentence in tagger.Tag("Select the manual override, then read the wiring schematic.", dictionary))
+///     {
+///         foreach (TaggedToken token in sentence.Tokens)
+///         {
+///             Console.WriteLine($"{token.Text} {token.Tag.ToTagString()} {Judge(token)}");
+///         }
+///     }
+///     </code>
+///     <para>
+///     When the checker already knows the terms of each token, a <see cref="TokenConstraint"/> replaces the glossary:
+///     </para>
+///     <code>
+///     var terms = new HashSet&lt;string&gt;(StringComparer.OrdinalIgnoreCase) { "override", "schematic" };
+///
+///     Sentence sentence = Tokenizer.Tokenize("Read the wiring schematic.")[0];
+///     TokenConstraint[] constraints = sentence.Tokens
+///         .Select(token => terms.Contains(token.Text) ? TokenConstraint.Only(Upos.Noun) : TokenConstraint.None)
+///         .ToArray();
+///
+///     foreach (TaggedToken token in tagger.Tag(sentence, constraints).Tokens)
+///     {
+///         Console.WriteLine($"{token.Text} {token.Tag.ToTagString()} constrained: {token.IsConstrained}, known: {token.IsKnownWord}");
+///     }
+///     </code>
+///     <para>
+///     In both examples the tokens that the dictionary forces to one tag report <c>IsConstrained</c>, the confidence 1.0 and
+///     no alternatives, whether the lexicon knows the word or not. With a soft glossary or <c>TokenConstraint.Prefer</c> the
+///     model can still choose another tag, so those tokens list their alternatives, keep their confidence and margin and
+///     need all the checks.
 ///     </para>
 /// </example>
 internal static class NamespaceDoc;

@@ -441,7 +441,184 @@ public class TagDecoderTests
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
+    /// <summary>
+    ///     Proves that a token reports whether the lexicon has an entry for its spelling.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_KnownWord_ReportsLexiconMembership()
+    {
+        // Arrange: a lexicon with a word of one tag and a word of two tags
+        var lexicon = TinyModels.CreateLexicon("cat NOUN", "run NOUN VERB");
+
+        // Act: decode a single-tag word, a multi-tag word and a word that the lexicon does not list
+        var result = Decode(CatWeights(), lexicon, new[] { "cat", "run", "zork" });
+
+        // Assert: the listed words are known, the absent one is not
+        Assert.True(result[0].IsKnownWord);
+        Assert.True(result[1].IsKnownWord);
+        Assert.False(result[2].IsKnownWord);
+    }
+
+    /// <summary>
+    ///     Proves that the lookup of the known-word flag ignores letter case and folds typographic characters.
+    /// </summary>
+    /// <param name="spelling">The token text.</param>
+    /// <param name="expected">The expected flag.</param>
+    [Theory]
+    [InlineData("cat", true)]
+    [InlineData("Cat", true)]
+    [InlineData("CAT", true)]
+    [InlineData("cAt", true)]
+    [InlineData("don't", true)]
+    [InlineData("don\u2019t", true)]
+    [InlineData("zork", false)]
+    [InlineData("Zork", false)]
+    public void TagDecoder_Decode_KnownWord_IgnoresLetterCase(string spelling, bool expected)
+    {
+        // Arrange: a lexicon that lists cat and don't in lower case
+        var lexicon = TinyModels.CreateLexicon("cat NOUN", "don't AUX");
+
+        // Act: decode the spelling alone
+        var result = Decode(CatWeights(), lexicon, new[] { spelling });
+
+        // Assert: the flag follows the lower-cased, folded lookup
+        Assert.Equal(expected, result[0].IsKnownWord);
+    }
+
+    /// <summary>
+    ///     Proves that the token-shape rules never make a word known: an unlisted capitalized word, number or punctuation
+    ///     mark is unknown and keeps all 17 candidates.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_KnownWord_ShapeRulesDoNotMakeAWordKnown()
+    {
+        // Arrange: a lexicon that lists paris, b2b and ~ but not the other tokens
+        var lexicon = TinyModels.CreateLexicon("paris NOUN", "b2b NOUN", "~ SYM");
+
+        // Act: decode unlisted tokens of each shape and the listed ones, with all alternatives
+        var result = Decode(CatWeights(), lexicon, new[] { "Zorbulon", "42", "!!", "Paris", "b2b", "~" }, alternatives: 16);
+
+        // Assert: the unlisted tokens are unknown with 17 candidates (the best tag and 16 alternatives), the listed ones known
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.False(result[i].IsKnownWord, result[i].Text);
+            Assert.Equal(16, result[i].Alternatives.Count);
+        }
+
+        for (var i = 3; i < 6; i++)
+        {
+            Assert.True(result[i].IsKnownWord, result[i].Text);
+        }
+    }
+
+    /// <summary>
+    ///     Proves that the known-word flag is a lexicon fact that a constraint does not change.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_KnownWord_IsIndependentOfConstraints()
+    {
+        // Arrange: a lexicon that lists cat as a noun only
+        var lexicon = TinyModels.CreateLexicon("cat NOUN");
+        var constraints = new[]
+        {
+            TokenConstraint.Only(Upos.Noun),
+            TokenConstraint.Only(Upos.Adj),
+            TokenConstraint.Prefer(Upos.Noun, 2),
+            TokenConstraint.None
+        };
+
+        // Act: decode an unlisted word with a hard constraint, a listed word with a disjoint hard constraint, an unlisted word with a soft one and a plain unlisted word
+        var result = Decode(CatWeights(), lexicon, new[] { "zork", "cat", "zork", "zork" }, constraints);
+
+        // Assert: the flag follows the lexicon in every case
+        Assert.False(result[0].IsKnownWord);
+        Assert.True(result[0].IsConstrained);
+        Assert.Equal(1.0, result[0].Confidence);
+        Assert.True(result[1].IsKnownWord);
+        Assert.Equal(Upos.Adj, result[1].Tag);
+        Assert.False(result[2].IsKnownWord);
+        Assert.False(result[3].IsKnownWord);
+        Assert.False(result[3].IsConstrained);
+    }
+
+    /// <summary>
+    ///     Proves that a token with one allowed tag has no alternatives at any maximum of 1 or more, while a soft constraint with
+    ///     an extreme boost (the confidence is exactly 1.0) keeps the other allowed tags as alternatives with the probability 0.
+    /// </summary>
+    /// <param name="alternatives">The maximum number of alternatives.</param>
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(16)]
+    public void TagDecoder_Decode_SingleAllowedTag_HasNoAlternativesAndSoftConstraintKeepsThem(int alternatives)
+    {
+        // Arrange: a lexicon that lists cat as a noun and verb, and constraints that leave one tag (hard), two tags and an extreme boost
+        var lexicon = TinyModels.CreateLexicon("cat NOUN VERB");
+        var constraints = new[]
+        {
+            TokenConstraint.Only(Upos.Verb),
+            TokenConstraint.Only(Upos.Noun, Upos.Verb),
+            TokenConstraint.Prefer(Upos.Verb, 1e9),
+            TokenConstraint.None
+        };
+
+        // Act: decode the same listed word four times, and an unlisted word with a single-tag constraint
+        var result = Decode(CatWeights(), lexicon, new[] { "cat", "cat", "cat", "cat" }, constraints, alternatives);
+        var unlisted = Decode(CatWeights(), lexicon, new[] { "zork" }, new[] { TokenConstraint.Only(Upos.Noun) }, alternatives)[0];
+
+        // Assert: one allowed tag gives no alternatives; the soft boost gives the confidence 1.0 and the alternative with the probability 0
+        Assert.Empty(result[0].Alternatives);
+        Assert.Empty(unlisted.Alternatives);
+        Assert.Equal(1.0, unlisted.Confidence);
+        Assert.Single(result[1].Alternatives);
+        Assert.Equal(Upos.Verb, result[2].Tag);
+        Assert.Equal(1.0, result[2].Confidence);
+        Assert.Single(result[2].Alternatives);
+        Assert.Equal(0.0, result[2].Alternatives[0].Probability);
+        Assert.Equal(1.0, result[2].Margin);
+        Assert.Single(result[3].Alternatives);
+    }
+
+    /// <summary>
+    ///     Proves that a model with all feature groups (cached lexicon facts, two passes) reports the same flags as a model without groups.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_KnownWord_AllGroups_EqualsPlainDecode()
+    {
+        // Arrange: a lexicon and a sentence with listed, differently cased and unlisted words
+        var lexicon = TinyModels.CreateLexicon("cat NOUN VERB", "the DET", "sat VERB");
+        var words = new[] { "The", "cat", "Cat", "zork", "sat", "." };
+        const FeatureGroups groups = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine;
+
+        // Act: decode with and without groups
+        var plain = Decode(CatWeights(), lexicon, words);
+        var grouped = Decode(CatWeights(), lexicon, words, groups: groups);
+
+        // Assert: both report the lexicon facts of the spellings
+        var expected = new[] { true, true, true, false, true, false };
+        Assert.Equal(expected, plain.Select(t => t.IsKnownWord));
+        Assert.Equal(expected, grouped.Select(t => t.IsKnownWord));
+    }
+
 #if NET
+    /// <summary>
+    ///     Proves that the result token keeps its size, which the allocation budget of the decoder counts on.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_Decode_ResultToken_KeepsItsSize()
+    {
+        // Arrange: the budget of the allocation tests counts 64 bytes per token, which holds for a struct of 48 bytes on 64-bit
+
+        // Act: measure the real type
+        var size = System.Runtime.CompilerServices.Unsafe.SizeOf<TaggedToken>();
+
+        // Assert: it is at most 48 bytes on a 64-bit process
+        if (IntPtr.Size == 8)
+        {
+            Assert.True(size <= 48, $"TaggedToken is {size} bytes");
+        }
+    }
+
     /// <summary>
     ///     Proves that decoding allocates only its result arrays: the bytes allocated per sentence are bounded by the size of the results.
     /// </summary>

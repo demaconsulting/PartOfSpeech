@@ -9,7 +9,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///         tokens), sums the integer weights of every tag, restricts the candidates to the tags that the lexicon and
 ///         the token-shape rules allow (and to what a <see cref="TokenConstraint"/> demands), picks the best-scoring
 ///         candidate (the lowest tag index wins a tie, so results do not depend on the platform) and converts the
-///         scores into probabilities with a softmax at the temperature stored in the model.
+///         scores into probabilities with a softmax at the temperature stored in the model. The result token also
+///         reports whether the lexicon has an entry for the word; that is the result of the lexicon lookup that
+///         already decides the allowed tags, so it costs no further lookup and no allocation.
 ///     </para>
 ///     <para>
 ///         The groups of context features of the model (<see cref="PerceptronModel.FeatureGroups"/>) decide which extra
@@ -134,8 +136,8 @@ internal sealed class TagDecoder
         for (var i = 0; i < count; i++)
         {
             var constraint = snapshot == null ? default : snapshot[i];
-            var best = DecodeToken(workspace, i, previous1, previous2, constraint, slots, alternatives, false, out var confidence, out var alternativeCount);
-            result[i] = new TaggedToken(tokens[i].Text, tokens[i].Start, (Upos)best, confidence, alternatives, i * slots, alternativeCount, !constraint.IsNone);
+            var best = DecodeToken(workspace, i, previous1, previous2, constraint, slots, alternatives, false, out var confidence, out var alternativeCount, out var known);
+            result[i] = new TaggedToken(tokens[i].Text, tokens[i].Start, (Upos)best, confidence, alternatives, i * slots, alternativeCount, !constraint.IsNone, known);
 
             // The decision becomes history for the next two tokens, like any other decision
             FeatureExtractor.Advance(workspace, i, best);
@@ -161,7 +163,7 @@ internal sealed class TagDecoder
         for (var i = 0; i < count; i++)
         {
             var constraint = constraints == null ? default : constraints[i];
-            var best = DecodeToken(workspace, i, previous1, previous2, constraint, 0, null, true, out _, out _);
+            var best = DecodeToken(workspace, i, previous1, previous2, constraint, 0, null, true, out _, out _, out _);
             workspace.Preview[i] = best;
             FeatureExtractor.Advance(workspace, i, best);
             previous2 = previous1;
@@ -241,6 +243,7 @@ internal sealed class TagDecoder
     /// <param name="choiceOnly">Whether only the tag is wanted (the first pass of the right preview group): the probabilities are not computed.</param>
     /// <param name="confidence">Receives the probability of the chosen tag.</param>
     /// <param name="alternativeCount">Receives the number of alternatives written for the token.</param>
+    /// <param name="known">Receives whether the lexicon has an entry for the token; it is the result of the lookup that decides the allowed tags, so no further lookup is made.</param>
     /// <returns>The chosen tag ordinal.</returns>
     private int DecodeToken(
         DecoderWorkspace workspace,
@@ -252,7 +255,8 @@ internal sealed class TagDecoder
         TagScore[]? alternatives,
         bool choiceOnly,
         out double confidence,
-        out int alternativeCount)
+        out int alternativeCount,
+        out bool known)
     {
         // Sum the integer weights of all features of the token for every tag
         var scores = workspace.Scores;
@@ -265,7 +269,7 @@ internal sealed class TagDecoder
         }
 
         // Candidates: what the lexicon and the shape allow, narrowed by the constraint (the constraint wins if nothing is left)
-        var allowed = AllowedTags(workspace, index);
+        var allowed = AllowedTags(workspace, index, out known);
         var effective = constraint.Allowed.Intersect(allowed);
         if (effective.IsEmpty)
         {
@@ -343,12 +347,12 @@ internal sealed class TagDecoder
     /// </summary>
     /// <param name="workspace">The workspace.</param>
     /// <param name="index">The token.</param>
+    /// <param name="known">Receives whether the lexicon has an entry for the token (the lookup result that is used here).</param>
     /// <returns>The allowed tags.</returns>
-    private UposSet AllowedTags(DecoderWorkspace workspace, int index)
+    private UposSet AllowedTags(DecoderWorkspace workspace, int index, out bool known)
     {
         // The groups that read the lexicon already looked every token up when the sentence was prepared
         var flags = workspace.Flags[index];
-        bool known;
         UposSet tags;
         if (workspace.LexCached)
         {

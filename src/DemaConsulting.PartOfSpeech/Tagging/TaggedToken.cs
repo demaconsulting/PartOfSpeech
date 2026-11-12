@@ -17,18 +17,26 @@ namespace DemaConsulting.PartOfSpeech;
 ///         [Terminology](../DemaConsulting.PartOfSpeech.md#terminology).
 ///     </para>
 ///     <para>
+///         <see cref="Margin"/> is the confidence minus the probability of the best alternative: how far the chosen
+///         tag is ahead of the runner-up. <see cref="IsKnownWord"/> tells whether the lexicon has an entry for the
+///         word. A rule checker reads both next to the confidence; see
+///         [Using the tagger in a rule checker](../DemaConsulting.PartOfSpeech.md#using-the-tagger-in-a-rule-checker).
+///     </para>
+///     <para>
 ///         The struct is immutable. The alternatives are a view of one array that the tagger allocated per sentence;
-///         the property creates a small wrapper when it is read.
+///         the property creates a small wrapper when it is read. The margin and the known-word flag allocate nothing.
 ///     </para>
 /// </remarks>
 /// <example>
-///     Read the tag, the confidence and the alternatives of a token, and cut the source string with its offsets:
+///     Read the tag, the confidence, the margin, the known-word flag and the alternatives of a token, and cut the
+///     source string with its offsets:
 ///     <code>
 ///     string text = "The cat sat.";
 ///     TaggedToken token = tagger.Tag(text)[0].Tokens[1];
 ///
 ///     Console.WriteLine(token.Text == text.Substring(token.Start, token.Length));   // True
 ///     Console.WriteLine($"{token.Text}: {token.Tag.ToTagString()} ({token.Confidence:P0})");
+///     Console.WriteLine($"margin {token.Margin:P0}, known word: {token.IsKnownWord}");
 ///     foreach (TagScore alternative in token.Alternatives)
 ///     {
 ///         Console.WriteLine($"  {alternative.Tag.ToTagString()} {alternative.Probability:P0}");
@@ -73,8 +81,9 @@ public readonly struct TaggedToken
     /// <param name="scoreOffset">The index of the first alternative of this token in <paramref name="scores"/>.</param>
     /// <param name="scoreCount">The number of alternatives.</param>
     /// <param name="isConstrained">Whether a constraint was applied to the token.</param>
+    /// <param name="isKnownWord">Whether the lexicon has an entry for the token.</param>
     /// <param name="glossaryMatch">The glossary match that the token belongs to, or <c>null</c>.</param>
-    internal TaggedToken(string text, int start, Upos tag, double confidence, TagScore[]? scores, int scoreOffset, int scoreCount, bool isConstrained, GlossaryMatch? glossaryMatch = null)
+    internal TaggedToken(string text, int start, Upos tag, double confidence, TagScore[]? scores, int scoreOffset, int scoreCount, bool isConstrained, bool isKnownWord, GlossaryMatch? glossaryMatch = null)
     {
         Text = text;
         Start = start;
@@ -84,6 +93,7 @@ public readonly struct TaggedToken
         _scoreOffset = scoreOffset;
         _scoreCount = scoreCount;
         IsConstrained = isConstrained;
+        IsKnownWord = isKnownWord;
         _glossaryMatch = glossaryMatch;
     }
 
@@ -147,6 +157,88 @@ public readonly struct TaggedToken
         _scores == null ? new ScoreSlice(NoScores, 0, 0) : new ScoreSlice(_scores, _scoreOffset, _scoreCount);
 
     /// <summary>
+    ///     Gets how far the chosen tag is ahead of the best alternative, from 0 to 1.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         The margin is <see cref="Confidence"/> minus the probability of the first entry of
+    ///         <see cref="Alternatives"/>, which is the runner-up because the alternatives are in descending order. A margin
+    ///         near 0 means a close call between two tags, and a margin near the confidence means that the runner-up is
+    ///         negligible. It is 0 when two tags tie.
+    ///     </para>
+    ///     <para>
+    ///         When no alternative is reported (only one tag was allowed, or <see cref="TaggerOptions.MaxAlternatives"/>
+    ///         is 0) the margin is the smallest value that the confidence allows, which is
+    ///         <c>max(0, 2 * Confidence - 1)</c>: the unknown runner-up has at most the probability
+    ///         <c>1 - Confidence</c>. The margin is therefore never larger than the true margin, and it is exactly 1.0
+    ///         for a token with one allowed tag (a forced tag has the confidence 1.0). A margin of 1.0 alone does not
+    ///         prove a forced tag, because a soft constraint with a large boost can also give it; a token with one
+    ///         allowed tag is the one with no alternatives while <see cref="TaggerOptions.MaxAlternatives"/> is 1 or
+    ///         more. The margin is exact whenever at least one alternative is reported, so keep
+    ///         <see cref="TaggerOptions.MaxAlternatives"/> at 1 or more when you read it. In every case
+    ///         <c>2 * Confidence - 1 &lt;= Margin &lt;= Confidence</c>.
+    ///     </para>
+    ///     <para>
+    ///         The margin is read from the stored alternatives without creating the list of
+    ///         <see cref="Alternatives"/>, so reading it allocates nothing. For a token that a glossary entry or a
+    ///         constraint limited to one tag it is 1.0 and says nothing about the entry. The package gives no measured
+    ///         limit for the margin; a limit that a checker chooses needs its own measurements. See
+    ///         [Confidence and alternatives](../../DemaConsulting.PartOfSpeech.md#confidence-and-alternatives) and
+    ///         [Using the tagger in a rule checker](../../DemaConsulting.PartOfSpeech.md#using-the-tagger-in-a-rule-checker).
+    ///     </para>
+    /// </remarks>
+    /// <seealso cref="Confidence"/>
+    /// <seealso cref="Alternatives"/>
+    /// <seealso cref="IsKnownWord"/>
+    public double Margin
+    {
+        get
+        {
+            // The runner-up is the first alternative; the array is read directly so that nothing is allocated
+            if (_scores != null && _scoreCount > 0)
+            {
+                return Confidence - _scores[_scoreOffset].Probability;
+            }
+
+            // No runner-up is known: it has at most 1 - Confidence, so this is the smallest margin that is possible
+            return Math.Max(0.0, (2.0 * Confidence) - 1.0);
+        }
+    }
+
+    /// <summary>
+    ///     Gets a value that indicates whether the lexicon has an entry for the spelling of this token.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         It is the result of the lexicon lookup that the tagger makes anyway to decide the allowed tags, so it is
+    ///         free. The lookup key is the token text after the tagger folds it (Unicode normalization and typographic
+    ///         quotes and dashes mapped to ASCII) and lower-cases it, so <c>Cat</c>, <c>CAT</c> and <c>cat</c> give the
+    ///         same value. The lexicon is the embedded one or the one that was passed to <c>Tagger.Load</c>.
+    ///     </para>
+    ///     <para>
+    ///         <c>false</c> means that the lexicon has no evidence about the word: before any constraint all 17 tags were
+    ///         allowed, including for capitalized words, numbers and punctuation that the lexicon does not list. A
+    ///         capital letter or a digit never makes a word known. The flag is about the lexicon, not about being a word:
+    ///         punctuation and numbers that the lexicon lists are known.
+    ///     </para>
+    ///     <para>
+    ///         The flag does not depend on a glossary or a <see cref="TokenConstraint"/>. A head word of a hard glossary
+    ///         entry that the lexicon does not list is <c>false</c> and still has <see cref="IsConstrained"/> and
+    ///         <see cref="IsGlossaryHead"/> set and the confidence 1.0. A token that a constraint forced to one tag (it has
+    ///         <see cref="IsConstrained"/> and no <see cref="Alternatives"/> while <see cref="TaggerOptions.MaxAlternatives"/>
+    ///         is 1 or more) is not inconclusive because the lexicon does not list it;
+    ///         <see cref="IsConstrained"/> alone does not mean that, because a soft glossary entry or a
+    ///         <see cref="TokenConstraint.Prefer"/> leaves the model a choice, even when a large boost rounds its confidence
+    ///         to 1.0. A default token has <c>false</c>.
+    ///         See [Using the tagger in a rule checker](../../DemaConsulting.PartOfSpeech.md#using-the-tagger-in-a-rule-checker)
+    ///         and [Terminology](../../DemaConsulting.PartOfSpeech.md#terminology).
+    ///     </para>
+    /// </remarks>
+    /// <seealso cref="Margin"/>
+    /// <seealso cref="IsConstrained"/>
+    public bool IsKnownWord { get; }
+
+    /// <summary>
     ///     Gets a value that indicates whether a <see cref="TokenConstraint"/> restricted or adjusted this token.
     /// </summary>
     /// <remarks>
@@ -183,7 +275,7 @@ public readonly struct TaggedToken
     /// <param name="match">The match.</param>
     /// <returns>The copy.</returns>
     internal TaggedToken WithGlossaryMatch(GlossaryMatch match) =>
-        new(Text, Start, Tag, Confidence, _scores, _scoreOffset, _scoreCount, IsConstrained, match);
+        new(Text, Start, Tag, Confidence, _scores, _scoreOffset, _scoreCount, IsConstrained, IsKnownWord, match);
 
     /// <summary>
     ///     Formats the token for diagnostics.
