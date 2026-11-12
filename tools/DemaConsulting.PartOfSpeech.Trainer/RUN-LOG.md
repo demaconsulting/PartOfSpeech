@@ -5798,6 +5798,41 @@ The text comes from US federal public-domain documents of four streams (procedur
 - The labels are written by two models without human review; the hand check is a model review.
 - The seeds of the later experiment measure training noise only, and the experiment compares several arms against one baseline without a multiplicity correction.
 
+## beta.3 phase 1: divergence of the Capitalized Defined Terms rule from the existing labels (counts only)
+
+Record of the two counting commands of `tools/data/term_divergence.py`, run once each after the R0 commit `265cba8` (the commit of the section "beta.3 phase 1: pre-registered rule (before any fetch)"). The detector `defined_term_conflicts` is frozen at commit `67d7dc2`; between `67d7dc2` and `265cba8` the file `term_divergence.py` is byte-identical, and the only change of `technical_frames.py` (which the detector imports) is the page-number noise rule of the step units (`step_noise_reason`), which the detector does not call. No document was fetched, no model was run, no label was written, and no corpus was relabeled. The held-out files were opened only by `count-held-out`, which prints integers and nothing else; the UD English-EWT cache was already present (`present=1` for all four sets), so nothing was downloaded. The method, the classes and the reading are in `data/technical/README.md`, section "Divergence from UD Practice"; this section is the record.
+
+- **Commands.** `python tools/data/term_divergence.py count-training` (writes `data/technical/term-conflict-ids.tsv`, 156 rows of ids: source, class, sentence id, token index; at most 25 per source and class, seeded by `rank_of(20261110, "term-conflict", source, sent_id)`) and `python tools/data/term_divergence.py count-held-out`, each once. Python caches were pinned outside the repository. The `data/MANIFEST.tsv` gets one row for the ids file.
+- **Classes.** A = a run with a right cue, a document-type head or a left verb cue; B = the other runs of two or more words; org-like = a run whose last word is an organization or place head (a name under the rule, never a conflict). Head tag of the last word of a run: PROPN (conflict with the rule), NOUN or ADJ (agreement), other.
+
+Training sources (counts of runs):
+
+| Source | Sentences | A runs | A PROPN | A NOUN | A ADJ | A other | B runs | B PROPN | B NOUN | B ADJ | B other | Org-like runs | Org-like PROPN | Org-like NOUN |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `open` (train) | 11,990 | 26 | 21 | 2 | 3 | 0 | 858 | 796 | 44 | 16 | 2 | 263 | 261 | 2 |
+| `masc` | 22,829 | 41 | 20 | 14 | 7 | 0 | 1,710 | 1,107 | 538 | 44 | 21 | 395 | 353 | 42 |
+| `silver` | 13,971 | 14 | 0 | 0 | 8 | 6 | 405 | 1 | 0 | 9 | 395 | 86 | 0 | 0 |
+| `imperative` | 900 | 1 | 0 | 0 | 0 | 1 | 2 | 1 | 1 | 0 | 0 | 3 | 3 | 0 |
+| `compound` | 742 | 5 | 3 | 1 | 1 | 0 | 40 | 37 | 3 | 0 | 0 | 10 | 10 | 0 |
+| `compound2` | 1,100 | 5 | 2 | 3 | 0 | 0 | 33 | 31 | 2 | 0 | 0 | 19 | 19 | 0 |
+| `headings` | 374 | 3 | 0 | 3 | 0 | 0 | 101 | 6 | 94 | 0 | 1 | 8 | 7 | 1 |
+| `headings2` | 247 | 7 | 0 | 7 | 0 | 0 | 82 | 2 | 78 | 0 | 2 | 2 | 0 | 2 |
+
+The `silver` "other" cells are the masked tag `_` (no training signal). The sample file holds, for class A, 21 rows of `open`, 20 of `masc`, 3 of `compound` and 2 of `compound2`; for class B, 25 rows each of `open`, `masc`, `compound` and `compound2`, 6 of `headings`, 2 of `headings2` and 1 each of `imperative` and `silver`.
+
+Held-out sets (integers only, through the opaque command; `open/dev.tsv` is counted as well as the files the plan named, an implementing-agent decision of the detector commit):
+
+| Set | Sentences | A runs | A PROPN | A NOUN | A ADJ | A other | B runs | B PROPN | B NOUN | B ADJ | B other | Org-like runs | Org-like PROPN | Org-like NOUN |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `open/dev.tsv` | 1,489 | 1 | 0 | 1 | 0 | 0 | 101 | 93 | 8 | 0 | 0 | 27 | 27 | 0 |
+| `open/test.tsv` | 1,501 | 2 | 2 | 0 | 0 | 0 | 117 | 102 | 8 | 7 | 0 | 29 | 29 | 0 |
+| UD English-EWT dev (raw UPOS) | 2,001 | 3 | 1 | 0 | 2 | 0 | 114 | 84 | 24 | 5 | 1 | 29 | 23 | 6 |
+| UD English-EWT test (raw UPOS) | 2,077 | 8 | 4 | 3 | 1 | 0 | 148 | 100 | 41 | 5 | 2 | 13 | 11 | 2 |
+
+**What the numbers mean.** Where a Title Case run of ordinary words stands inside a sentence, the open and MASC labels and the UD English-EWT labels say PROPN for most of the class B runs (796 of 858 in `open` train, 1,107 of 1,710 in `masc`, 84 of 114 and 100 of 148 in UD English-EWT dev and test, 93 of 101 and 102 of 117 in `open` dev and test), so the convention rule is a real change of practice for the runs that really are defined terms. The cue-based class A is rare in every set (1 to 41 runs), and the heading sources, labeled by heading rules, already agree with the rule. A model trained on the PROPN practice learns PROPN for these runs, and the held-out figures of the sets would count a NOUN answer for a defined term as an error.
+
+**What the numbers do not mean.** They are not an error rate of any corpus: class B is a broad position-and-lexicon selection that also holds work titles, names made of ordinary words and headings, for which PROPN may be right, and the detector reads no meaning. The counts were used for no choice: no relabeling, no threshold, no selection, no change of the rule or of the detector. A change of the detector after this record would be a new, disclosed version.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
