@@ -6269,6 +6269,144 @@ All eight products pass the registered gate (marked-word precision at least 95 p
 
 **What comes next (not done here).** The C# trainer (evaluation of the four tranches, tests, requirements, design, verification, SysML2 and review sets), then the baseline of the shipped model on the new tranches (development data only), the calibration, and the pre-registration of the arm experiment in a later pull request.
 
+## beta.3 phase 1: baseline of the shipped model on the technical dev tranches (dev look only)
+
+This section follows the commit `cb3fdea` (the trainer commit, C10; a commit cannot contain its own SHA). **This is a dev look only.** The **shipped** model (`weights.bin` SHA-256 `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad`, unchanged, the CMP2 model, image SHA-256 `d916b0e775660f8aa3c18a2161369318dd07c182358e1503d0992b5d2b975e25`) was scored on the four technical development tranches with the dev-only commands. **No training arm was run, no model was trained or selected, no held-out command was run (`evaluate`, `thresholds`, the shape probe, the challenge set), no threshold was changed or proposed, no rule, cap, floor, gate or pin was changed, nothing was pushed.** The figures are measurements of an existing model on data that no model was selected on; they select nothing. No interpretation rule for this baseline was pre-registered, so this section reports the measurements and a few plain observations only. **The pre-registered experiment that may use the four weight-0 training sources is a later, separate pull request.**
+
+### What the trainer measures (C10; additive, the old outputs and keys are unchanged)
+
+`eval-shapes` has the selections `deverbal-heads`, `defined-terms`, `step-lines`, `clause-verbs`, `technical` (the four) and `all-single` (all nine single-shape tranches of the three generations), a counts table (harmful at a confidence of at least 0.45, wrong at least 0.90 and 0.95) and the flag `--calibration`; `eval-arm` has a block `shapesTechnical` after `shapesFollowup` (schema 1) and four more hashes in `inputs`. Scoring: `n-deverbal-head` by class, the other three shapes by exact tag. Under exact scoring a harmful error keeps its definition (NOUN answered for VERB or the reverse at a confidence of at least 0.45), so `defined-terms`, whose targets are mostly not noun-verb decisions, has few decisions and its measure is the target accuracy and the wrong answers at 0.90 and 0.95.
+
+### Commands, code base and inputs
+
+All from the repository root, one process at a time, below-normal priority, the PAUSE file absent before each run; the outputs lie outside the repository (the figures are copied here). Code base: commit `cb3fdea`, tree clean (`dirty: false` in the result file).
+
+| Command | Exit |
+| --- | --- |
+| `dotnet run --no-build -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eval-shapes --tranche technical --calibration --label shipped-cmp2` | 0 |
+| `dotnet run --no-build -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eval-shapes --tranche all-single --calibration` | 0 |
+| `dotnet run --no-build -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- eval-arm --weights src/DemaConsulting.PartOfSpeech/Resources/weights.bin --label shipped-cmp2 --json <work folder>\baseline\shipped-arm.json` | 0 |
+
+Input SHA-256 (from the output): `deverbal-heads.tsv` `6159099f5fc59187f9486070439e552358abf19fb95742e20c54dbcf17400c5a`, `defined-terms.tsv` `6bca83a8e63589152cf3a37661e328a187323612b06344c6c402921f1c2478c8`, `step-lines.tsv` `c06bc3138b92cd3baafec1a9a210110daafee69846dd83c77ba70b4fc09f4ad8`, `clause-verbs.tsv` `d35e7a259140614d6f0057fe7f3fd5d545cdf478971ac7f77088dc2789db4e06`.
+
+### The shipped model on the four technical tranches (per tranche and kind)
+
+Target and control items, accuracy (correct of items), noun-verb decisions, harmful errors at a confidence of at least 0.45, and the items wrong at a confidence of at least 0.90 and 0.95 (targets first; controls in the last four columns).
+
+| Tranche and row | Target items | Target accuracy | Noun-verb decisions | Harmful at >= 0.45 | Wrong at >= 0.90 | Wrong at >= 0.95 | Control items | Control accuracy | Control wrong at >= 0.90 | Control wrong at >= 0.95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `deverbal-heads` (S1, class scoring), all | 360 | 69.7% (251) | 360 | 104 | 17 | 6 | 90 | 98.9% (89) | 0 | 0 |
+| `deverbal-heads` kind `pred` | 62 | 87.1% (54) | 62 | 8 | 0 | 0 | - | - | - | - |
+| `deverbal-heads` kind `num` | 60 | 91.7% (55) | 60 | 4 | 0 | 0 | - | - | - | - |
+| `deverbal-heads` kind `ing` | 140 | 49.3% (69) | 140 | 71 | 16 | 6 | - | - | - | - |
+| `deverbal-heads` kind `other` | 98 | 74.5% (73) | 98 | 21 | 1 | 0 | - | - | - | - |
+| `deverbal-heads` kind `verb` (control) | - | - | - | - | - | - | 90 | 98.9% (89) | 0 | 0 |
+| `defined-terms` (S2, exact tag), all | 215 | 30.7% (66) | 99 | 0 | 51 | 26 | 70 | 95.7% (67) | 0 | 0 |
+| `defined-terms` kind `noun` | 174 | 27.0% (47) | 99 | 0 | 45 | 24 | - | - | - | - |
+| `defined-terms` kind `adj` | 41 | 46.3% (19) | 0 | 0 | 6 | 2 | - | - | - | - |
+| `defined-terms` kind `proper` (control, PROPN) | - | - | - | - | - | - | 70 | 95.7% (67) | 0 | 0 |
+| `step-lines` (S3, exact tag), all | 166 | 44.6% (74) | 155 | 57 | 7 | 1 | 70 | 68.6% (48) | 0 | 0 |
+| `step-lines` kind `imperative` | 166 | 44.6% (74) | 155 | 57 | 7 | 1 | - | - | - | - |
+| `step-lines` kind `noun` (control) | - | - | - | - | - | - | 70 | 68.6% (48) | 0 | 0 |
+| `clause-verbs` (S4, exact tag), all | 356 | 88.5% (315) | 302 | 36 | 10 | 1 | 90 | 97.8% (88) | 1 | 0 |
+| `clause-verbs` kind `main` | 288 | 88.9% (256) | 242 | 28 | 9 | 0 | - | - | - | - |
+| `clause-verbs` kind `sub` | 68 | 86.8% (59) | 60 | 8 | 1 | 1 | - | - | - | - |
+| `clause-verbs` kind `noun` (control) | - | - | - | - | - | - | 60 | 96.7% (58) | 1 | 0 |
+| `clause-verbs` kind `adj` (control) | - | - | - | - | - | - | 30 | 100.0% (30) | 0 | 0 |
+
+The 95% Wilson intervals of the target accuracy (from the output): `deverbal-heads` [64.8%, 74.2%] (`ing` [41.1%, 57.5%]), `defined-terms` [24.9%, 37.2%], `step-lines` [37.2%, 52.2%], `clause-verbs` [84.7%, 91.4%].
+
+**Pooled over the four tranches** (`shapesTechnical.pooledTechnical` and `termError`): the targets of S1, S3 and S4 together are 882 items, 640 correct (72.6%), **817 noun-verb decisions, 197 harmful errors (104 + 57 + 36), 241.1 per 1,000 decisions**, 34 items wrong at a confidence of at least 0.90 (17 + 7 + 10) and 8 at least 0.95 (6 + 1 + 1). The S2 targets (`defined-terms`) are 215 items, 66 correct, **149 errors, 693.0 per 1,000 targets, 51 wrong at least 0.90 and 26 at least 0.95** (no harmful error; the harmful count of S2 is 0 of 99 decisions). All four tranches together: 1,097 target items, 706 correct (64.4%), and 320 control items (90 + 70 + 70 + 90), 1 of them wrong at a confidence of at least 0.90 (a NOUN control of `clause-verbs`), none at 0.95.
+
+Observations (no rule is changed by them): the shipped model is weakest on S1 words ending in `ing` (49.3%, 71 harmful errors in 140 decisions, 16 wrong at 0.90 or above) and on the Capitalized Defined Terms (30.7%; its errors are not NOUN-for-VERB swaps, since the harmful count is 0, so they are other tags; the tool does not print the wrong tag and this run did not break it down), and on the imperative step lines (44.6%, 57 harmful errors in 155 decisions; its 70 NOUN controls are 68.6%, so 22 of them were answered with another tag). It is strongest on S4 clause verbs (88.5%) and on the S1 kinds `pred` and `num` (87.1% and 91.7%). The deverbal controls (VERB, 98.9%) and the S2 controls (PROPN, 95.7%) are nearly all correct. These tranches are built from frames chosen to hold contested words (the Basic band for S1, S3 and S4 targets), so they are not samples of running text and their rates are not rates of ordinary text.
+
+### Calibration of the confidence on the technical tranches (`eval-shapes --tranche technical --calibration`)
+
+Judged words are every target and control item of the four tranches (1,417), each scored under the scoring of its tranche, through the real decoder at the existing temperature; the confidence is that of the chosen tag. The measurement reports what the model does; **no threshold is chosen, changed or proposed here.** Error per 1,000 answers at a threshold = the wrong answers per 1,000 of the judged words whose confidence is at least the threshold, with the 95% Wilson score interval of that share.
+
+| Scope | Judged words | Answers at >= 0.90 | Wrong at >= 0.90 | Errors per 1,000 answers at >= 0.90 | 95% interval | Answers at >= 0.95 | Wrong at >= 0.95 | Errors per 1,000 answers at >= 0.95 | 95% interval |
+| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |
+| `technical` (the four tranches) | 1,417 | 733 | 86 | 117.3 | [96.0, 142.6] | 595 | 34 | 57.1 | [41.2, 78.8] |
+| `deverbal-heads` | 450 | 241 | 17 | 70.5 | [44.5, 110.1] | 199 | 6 | 30.2 | [13.9, 64.2] |
+| `defined-terms` | 285 | 122 | 51 | 418.0 | [334.3, 506.7] | 86 | 26 | 302.3 | [215.4, 406.1] |
+| `step-lines` | 236 | 42 | 7 | 166.7 | [83.2, 306.0] | 20 | 1 | 50.0 | [8.9, 236.1] |
+| `clause-verbs` | 446 | 328 | 11 | 33.5 | [18.8, 59.0] | 290 | 1 | 3.4 | [0.6, 19.3] |
+
+Reliability, the four tranches pooled (count, mean confidence, correct share, harmful errors of the judged words whose confidence lies in the bin; the harmful errors count targets and controls):
+
+| Confidence | Judged words | Mean confidence | Correct | Harmful errors |
+| --- | ---: | ---: | ---: | ---: |
+| below 0.50 | 55 | 0.433 | 30.9% | 14 |
+| 0.50 to 0.60 | 143 | 0.549 | 43.4% | 53 |
+| 0.60 to 0.70 | 155 | 0.651 | 49.0% | 41 |
+| 0.70 to 0.80 | 144 | 0.752 | 54.2% | 36 |
+| 0.80 to 0.90 | 187 | 0.851 | 63.1% | 32 |
+| 0.90 to 0.95 | 138 | 0.927 | 62.3% | 23 |
+| 0.95 to 1.00 | 595 | 0.987 | 94.3% | 7 |
+
+The per-tranche reliability tables are in the output of the run (kept outside the repository) and are not repeated here; their bin counts add up to the judged words of the tranche (`deverbal-heads` 450, `defined-terms` 285, `step-lines` 236, `clause-verbs` 446).
+
+### Calibration over all nine single-shape tranches (`eval-shapes --tranche all-single --calibration`)
+
+The nine tranches are `compound-head`, `headings`, `named-state`, `compound-head-2`, `headings-2` and the four above; 2,148 judged words. The four technical rows equal the table above (same judged words, same scoring); the five earlier tranches are scored by the current shipped model (the CMP2 model; the figures of the PR #20 baseline are of the model before it) with the counts table (the counts of `compound-head`: 100 targets, 72.0%, 28 harmful, 8 wrong at 0.90, 2 at 0.95; `headings`: 95 targets, 86.3%, 5 harmful, 2 and 2; `named-state`: 100 targets, 94.0%, 37 decisions, 3 harmful, 2 and 1; `compound-head-2`: 210 targets, 70.5%, 57 harmful, 18 and 11; `headings-2`: 109 targets, 84.4%, 2 harmful, 1 and 1).
+
+| Scope | Judged words | Answers at >= 0.90 | Wrong at >= 0.90 | Errors per 1,000 answers at >= 0.90 | 95% interval | Answers at >= 0.95 | Wrong at >= 0.95 | Errors per 1,000 answers at >= 0.95 | 95% interval |
+| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |
+| `all-single` (nine tranches) | 2,148 | 1,121 | 117 | 104.4 | [87.8, 123.6] | 893 | 51 | 57.1 | [43.7, 74.3] |
+| `compound-head` | 120 | 58 | 8 | 137.9 | [71.6, 249.3] | 38 | 2 | 52.6 | [14.6, 172.9] |
+| `headings` | 115 | 66 | 2 | 30.3 | [8.3, 103.9] | 51 | 2 | 39.2 | [10.8, 132.2] |
+| `named-state` | 112 | 51 | 2 | 39.2 | [10.8, 132.2] | 38 | 1 | 26.3 | [4.7, 134.9] |
+| `compound-head-2` | 255 | 125 | 18 | 144.0 | [93.1, 216.2] | 96 | 11 | 114.6 | [65.2, 193.6] |
+| `headings-2` | 129 | 88 | 1 | 11.4 | [2.0, 61.6] | 75 | 1 | 13.3 | [2.4, 71.7] |
+| `deverbal-heads` | 450 | 241 | 17 | 70.5 | [44.5, 110.1] | 199 | 6 | 30.2 | [13.9, 64.2] |
+| `defined-terms` | 285 | 122 | 51 | 418.0 | [334.3, 506.7] | 86 | 26 | 302.3 | [215.4, 406.1] |
+| `step-lines` | 236 | 42 | 7 | 166.7 | [83.2, 306.0] | 20 | 1 | 50.0 | [8.9, 236.1] |
+| `clause-verbs` | 446 | 328 | 11 | 33.5 | [18.8, 59.0] | 290 | 1 | 3.4 | [0.6, 19.3] |
+
+Reliability, the nine tranches pooled:
+
+| Confidence | Judged words | Mean confidence | Correct | Harmful errors |
+| --- | ---: | ---: | ---: | ---: |
+| below 0.50 | 67 | 0.431 | 31.3% | 15 |
+| 0.50 to 0.60 | 217 | 0.548 | 52.5% | 70 |
+| 0.60 to 0.70 | 219 | 0.649 | 53.4% | 62 |
+| 0.70 to 0.80 | 222 | 0.754 | 61.3% | 51 |
+| 0.80 to 0.90 | 302 | 0.851 | 69.5% | 46 |
+| 0.90 to 0.95 | 228 | 0.926 | 71.1% | 36 |
+| 0.95 to 1.00 | 893 | 0.986 | 94.3% | 21 |
+
+### Comparison with the documented strict and balanced points
+
+The documented strict and balanced operating points of the shipped model (`docs/evaluation/confidence-thresholds.md` and `docs/evaluation/operating-points.json`, rule `nv-pooled-dev-v1`, checked against both files before this was written) are **0.90 and 0.80**, with **4.7 and 8.3 harmful errors per 1,000 answered noun-verb decisions** on the pooled open dev and gold v2 dev decisions (21 of 4,425 and 39 of 4,677 answered of 5,062 decisions; the intervals are [2.5, 7.5] and [5.5, 11.5]). The measures here are not the same: the calibration counts **wrong answers (under the scoring of the tranche) per 1,000 answered judged words**, targets and controls, on tranches built to hold contested words, not harmful errors per 1,000 answered noun-verb decisions of two ordinary development sets. With that caveat, the shipped model's confidence is much less reliable on these tranches than at the documented points: 117.3 wrong per 1,000 answers at a confidence of at least 0.90 on the four technical tranches (104.4 on all nine) and 57.1 at least 0.95 (both), and the mean confidence is above the correct share in every reliability bin (0.927 against 62.3% at 0.90 to 0.95 and 0.987 against 94.3% at 0.95 to 1.00 on the technical tranches). Counting only the harmful errors of the reliability table (targets and controls together, so not the documented decision rate), the technical tranches have 30 harmful errors in 733 answers at a confidence of at least 0.90, 7 in 595 at least 0.95 and 62 in 920 at least 0.80 (sums of the bins above); `defined-terms`, whose errors are not noun-verb swaps, accounts for 26 of the 34 wrong answers at 0.95 and above. This is a description of the shipped model on dev data: the documented thresholds were selected on the two development sets by the registered rule and are not changed or proposed for change by anything in this section, and the tranches are development data that the later experiment may be judged on.
+
+### The whole result file (`eval-arm`)
+
+`shapesTechnical` holds the four tranche rows (`deverbalHeads`, `definedTerms`, `stepLines`, `clauseVerbs`, each with `shape` and `kinds`: `confidentWrong`, `wrong90`, the controls), `pooledTechnical` (S1 + S3 + S4: 882 targets, 640 correct, 817 decisions, 197 harmful, 241.1 per 1,000, `confidentWrongTotal` 8, `wrong90Total` 34), `termError` (215 targets, 66 correct, 149 errors, 693.0 per 1,000, 26 at 0.95, 51 at 0.90) and `calibration`. The values equal the `eval-shapes` runs above.
+
+### Byte identity of the old outputs (the gate G8)
+
+The branch base is `893344e` (`origin/main` has moved on to `ebc1b4b` since the branch was cut, so the comparison uses the base the branch was cut from). A separate worktree of `893344e` was built (`dotnet build -c Release`, exit 0) and removed afterwards (`git worktree remove`); both builds ran the same commands with the same label (`shipped-cmp2`) and the same weights (`weights.bin` SHA-256 identical in both trees), the standard output written by the shell as raw bytes:
+
+- `eval-shapes --tranche new --label shipped-cmp2`: **byte-identical** (3,926 bytes, equal SHA-256).
+- `eval-shapes --tranche followup --label shipped-cmp2`: **byte-identical** (2,762 bytes, equal SHA-256).
+- `eval-arm --weights src/DemaConsulting.PartOfSpeech/Resources/weights.bin --label shipped-cmp2`: every old top-level member (`schema`, `label`, `groups`, `temperature`, `config`, `weights`, `openDev`, `goldDev`, `udDev`, `shapes`, `items`, `shapesNew`, `shapesFollowup`) and every old member of `inputs` except `commit` is **equal** (compared as parsed values, serialized the same way); `throughput` is a timing and differs by run (921,119 against 820,418 tokens per second on this machine). The only differences: the new block `shapesTechnical`, the four new `inputs` hashes, and `inputs.commit` (the commit that built the file). The treebank cache `tools/data/cache/ud-ewt` was copied into the temporary worktree for this run (a local cache, not tracked); the first attempt without it exited 2 as documented.
+
+The unit test of C10 (`new` and `followup` byte-identical with the technical files present, old keys unchanged) covers the same property on every build.
+
+## beta.3 phase 1: disclosed shortfalls (implementing-agent decisions, none an owner decision)
+
+The data are built and registered as they are; nothing was padded and no registered rule, cap, floor or gate was changed. Sizes (sentences; targets and controls for the development tranches): `deverbal-heads` 450 (360 and 90), `defined-terms` 285 (215 and 70), `step-lines` 236 (166 and 70), `clause-verbs` 446 (356 and 90); training sources `deverbal` 637, `terms` 373, `steps` 531, `clauses` 310. The build floors that were missed, each built with `--allow-short` as the pre-registered contingency says (an implementing-agent decision, taken under the pre-registered table "contingencies" and the decision O2 above; **not an owner decision**; the repository records no owner decision on them):
+
+| Product | Floor missed | Counts |
+| --- | --- | --- |
+| `step-lines` (DEV) | imperative targets and the bulleted share | 166 of the floor 180; enumerated or bulleted lines 65 of 166 (39.2%, minimum 50%) |
+| `deverbal` (TRAIN) | stratum `ing` | 146 of the floor 150 |
+| `terms` (TRAIN) | sentences | 373 of the floor 500 |
+| `steps` (TRAIN) | sentences and the bulleted share | 531 of the floor 600; bulleted lines 154 of 372 imperatives (41.4%, minimum 50%) |
+| `clauses` (TRAIN) | sentences | 310 of the floor 450 |
+
+The earlier pool-stage misses (S2 DEV `noun + adj` 350 of 500, S4 DEV `main + sub` 437 of 500 and `sub` 75 of 135, S2 TRAIN 808 of 1,000) are in the sections "Pool sizes against the gates" and "Floors missed" above; they are not repeated here. Consequences for reading the baseline: the development tranches are smaller than a full-size tranche where the floors were missed (`step-lines` has 166 targets, `defined-terms` 215), so their intervals are wider; and the training sources are short of their floors, which the later experiment has to take into account.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

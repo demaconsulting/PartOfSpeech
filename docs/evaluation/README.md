@@ -312,6 +312,15 @@ figure from it is optimistic by construction and is never reported as a held-out
   a shipped-model baseline in the
   [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Follow-up: baseline of the shipped
   model on the new tranches"). They are not held-out figures.
+- **Four technical tranches** (`deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv`, `clause-verbs.tsv`,
+  [README](../../data/eval/shapes-dev/README.md#technical-tranches)) add 1,097 target items and 320 control items of four
+  shapes of technical writing: the head of a deverbal compound, Capitalized Defined Terms, imperative step lines and
+  base-form verbs in a clause. They are for development only, were built by a pre-registered rule that uses no
+  PartOfSpeech output, and have a shipped-model baseline and a calibration measurement (errors per 1,000 answers at the
+  confidences 0.90 and 0.95, and a reliability table) in the
+  [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (sections "beta.3 phase 1: baseline of the
+  shipped model on the technical dev tranches (dev look only)" and "beta.3 phase 1: disclosed shortfalls"). The
+  measurement changes and proposes no threshold. They are not held-out figures.
 
 ## Reproduce the Results
 
