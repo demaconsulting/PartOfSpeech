@@ -21,13 +21,13 @@ embedded model (`--source headings:1` and `--source headings2:1` add them to a t
 - **Source:** the lines are text of 89 documents that are US federal government works (17 U.S.C. 105): Department of Agriculture, Forest
   Service, Bureau of Reclamation, Public Health Service, Bureau of Land Management, Bureau of Mines, Geological Survey, War Department and
   Army, Navy, Bureau of Standards and Weather Bureau publications, quoted per document in `sources.tsv`. No document is in any other
-  source table of this repository, none is in an evaluation set, and nothing was written for this source: all lines are real text (0
+  source table of this repository, none is in an evaluation set, and nothing is written for this source: all lines are real text (0
   authored).
 - **How produced:** `python tools/data/compound_heading_data.py --work <work-folder> build --source headings --allow-short` with the
   `--omit-document` options for the documents listed in `excluded-documents.tsv`, at the builder and the rule of commit `e776f5693739900d91e63fd2a12451da1f4ba90b`
-  (the builder, its tests and the pre-registered rule, committed before any label of this source existed; the option `--omit-document` (with an optional
-  reason per document) was added after the labeling and is the only change of the builder since). `--allow-short` is the waiver that the rule registers for a stratum floor
-  that the labelers' agreement does not fill (see "Counts"). The labeling used the unchanged commands of `tools/data/shapes_dev.py` (`export`,
+  (the builder, its tests and the rule; the option `--omit-document`, with an optional
+  reason per document, is the only part of the builder that is not at that commit). `--allow-short` is the waiver that the rule registers for a stratum floor
+  that the labelers' agreement does not fill (see "Counts"). The labeling uses the commands of `tools/data/shapes_dev.py` (`export`,
   `check-batches`, `validate-output`, `status`, `decide`) with `--round headings`. The global `--work` argument (a folder outside the
   repository, required) comes before the command; the other options keep their defaults (`--seed` 20261110, the caps below). The work
   folder is not committed. It holds the extracted text of the sources (`sources-draft.tsv`, `raw/<source_id>.txt` with the OCR line
@@ -85,8 +85,7 @@ mass.**
 
 ## Labeling and Decision Rule
 
-The rule was fixed before any label of this source was seen (the commit above); the docstring of `tools/data/compound_heading_data.py` is its
-normative text.
+The docstring of `tools/data/compound_heading_data.py` is the normative text of the rule.
 
 1. **Documents.** US federal authorship, with the public-domain basis checked one document at a time and written in the `license_basis`
    cell. The id, the normalized URL and the Internet Archive identifier of a document are in no table of used sources (training and
@@ -174,8 +173,8 @@ One sample was drawn and reviewed once; it was not drawn again.
 | `wxb` | 1 | 1 | Weather Bureau publication (Internet Archive); 17 U.S.C. 105 |
 
 `sources.tsv` lists only these used documents. Publication years are 1890 to 2008 (83 of the documents are from 1940 or later; older scans hold
-few stand-alone heading lines); every document was retrieved on 2026-11-09 and hashed (`raw_sha256` of the download, `text_sha256` of the
-extracted text). The same pool of documents feeds [the compound source](../compound/README.md): 73 documents contribute to both, and no
+few stand-alone heading lines); every document is hashed (`raw_sha256` of the download, `text_sha256` of the
+extracted text) and carries its retrieval date in `sources.tsv`. The same pool of documents feeds [the compound source](../compound/README.md): 73 documents contribute to both, and no
 sentence is in both.
 
 ## Leakage and License Checks
@@ -271,7 +270,7 @@ lines (82); 235 further lines were dropped at that cap.
 | `headings-2-dropped-sentences.tsv` | counts of candidate lines dropped alone because of an overlap with a set (3 equal a set sentence, 20 equal a shapes development sentence, 1 is a near duplicate of one; counts only, no text) |
 
 **Source and basis.** The lines are text of 59 documents that are US federal government works (17 U.S.C. 105), one `license_basis` cell per
-document in `headings-2-sources.tsv`, retrieved from the Internet Archive on 2026-11-10 and hashed; publication years are 1923 to 2025 (57 of the
+document in `headings-2-sources.tsv`, from the Internet Archive and hashed (the retrieval date is in the sources table); publication years are 1923 to 2025 (57 of the
 documents are from 1940 or later). The basis checks and exclusions are those of the second compound source (see
 [its README](../compound/README.md#second-source-compound-2tsv)): no FAA text, no Wikipedia, no share-alike or non-commercial text, no Universal
 Dependencies text, no sentence supplied by any consumer, no document with a non-federal creator, publisher or co-author, and no document in a table
@@ -291,8 +290,8 @@ both, and no line is a sentence of the other.
 | `coastguard` | 1 | 1 | Coast Guard publication |
 | `usbr` | 1 | 1 | Bureau of Reclamation publications |
 
-**Selection and labeling rule.** The normative text is the docstring of `tools/data/followup_data.py` (the pre-registered rule at commit
-`8c9f17fc5cb7e5c35f91827fc242980f407bd42d`, with the amendments recorded in the trainer run log, section "Follow-up"). In short:
+**Selection and labeling rule.** The normative text is the docstring of `tools/data/followup_data.py` (the trainer run log, section
+"Follow-up", records the rule, its pins and its amendments). In short:
 
 1. **Lines** come from three places in the OCR text: a heading line that stands alone above a paragraph, a table-of-contents line (the dot
    leaders and the page number are removed), and a labeled step title (`Task`, `Step`, `Procedure`, `Operation`, `Exercise` or `Job` plus a

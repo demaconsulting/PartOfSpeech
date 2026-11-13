@@ -61,7 +61,7 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   imperative source and the compound sources (weight 1, so they are in the mix of the embedded weights; `--source imperative:0`
   or `--source compound:0` leaves one out of an experimental run). The headings source has weight 0: it
   is committed training data that is not part of the mix (`--source headings:1` adds it to an experimental run). A
-  follow-up built two more of the same kind, `data/compound/compound-2.tsv` (1,100 sentences, source `compound2`,
+  Two more sources of the same kind are `data/compound/compound-2.tsv` (1,100 sentences, source `compound2`,
   weight 1, so it is in the mix of the embedded weights) and `data/headings/headings-2.tsv` (247 Title Case lines, source
   `headings2`: imperative step titles and a contrast stratum of nouns, weight 0), from US federal
   documents that no other set uses. Four more technical-text sources, `data/technical/deverbal.tsv` (637 sentences with
@@ -76,7 +76,7 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   tranches) and UD-EWT dev; the other sets are evaluated once for each frozen model by the trainer (see _ModelTrainer
   Design_). The hard-shape
   development set (`data/eval/shapes-dev/`: real US federal-government sentences, five shapes, controls, labeled blind
-  by two models; a standard tranche and a harder second tranche that a pre-registered rule selects from the contested
+  by two models; a standard tranche and a harder second tranche whose items a rule selects from the contested
   cases of another model family, never from the PartOfSpeech model) is development only, read by the trainer
   through a guard of its own, never trained on, kept disjoint from the training sets and from every other evaluation set
   (the two tranches share documents but no sentence), and never reported as a held-out figure. Nine more development
@@ -92,9 +92,9 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   in it. The packed API reference and the user guide quote a few of its figures; tests compare
   those copies with the generated files. The record describes the embedded model: the corrected corpora minus the
   withdrawn `prenominal-ing` corrections, the clause-cue feature group (see _Context Features_ in the Data Flow section),
-  the imperative training source and the two compound training sources. The held-out sets are evaluated once per model;
-  the record is a disclosed look at those sets (`docs/evaluation/disclosure.md`, which both generated reports carry) and
-  stands as a record of its own model. Comparisons with other models, the protocols and the selection history are kept
+  the imperative training source and the two compound training sources. The held-out sets are evaluated once per model.
+  Both generated reports carry the notice in `docs/evaluation/disclosure.md`, and the record stands as the record of its
+  own model alone. Comparisons with other models and the protocols are kept
   in the evaluation `README.md` and in the run log `RUN-LOG.md`, not in this document
 - **Lexicon**: a table that maps a lower-case spelling to the Universal POS tags it may carry, with a coverage report;
   compiled into the embedded `POSL` file
@@ -114,15 +114,16 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   and `exceptions.tsv` the reviewed cases that stay as they are. A row addresses one token (source, split, sentence id,
   token index) and carries the old and the new tag and status and its provenance; the key is unique in each table, and
   an adjudicated row replaces the mechanical row of the same token (the mechanical row stays in its file and is ignored
-  by the validator and by the application). Adjudicated rows that were withdrawn on purpose (`corrections.py withdraw`:
-  the 878 rows of the detector `prenominal-ing`, after the pre-registered follow-up of the trainer run log) stay in
+  by the validator and by the application). Adjudicated rows that are withdrawn on purpose (`corrections.py withdraw`:
+  the 878 rows of the detector `prenominal-ing`, withdrawn so that the open train, dev and test splits follow one
+  convention for `-ing` words) stay in
   `withdrawn-<detector>.tsv` as provenance; that table is never applied, the validator checks its header and its `# input`
   lines as those of `adjudicated.tsv`, and requires the old value in the
   corpora for every row of it, in both states. A table is valid against the corpora when all of its rows in effect match
   them before the application or all after it (a mixture is an error, and a second application is refused). The
   corpora, the lexicon and the weights are built from the corrected files, and the tables stay as the provenance of the
   change; the generator check reverses the applied rows in a temporary copy to prove that the tables are still its
-  output. The held-out evaluation record was reissued for the retrained model (see _Evaluation record_ above)
+  output
 - **Package license and third-party notice**: `PACKAGE-LICENSE.md` (the license of the package: the MIT code and the
   CC BY data) and `THIRD-PARTY-NOTICES.md` (attribution and change statements, also for the weights), both packed at
   the package root
@@ -237,9 +238,9 @@ integrity of what the library ships:
   the header values and the SHA-256 of the uncompressed image that `training.json` records, and the `train --check` step
   of the build and of the CI build (on all three operating systems) retrains the model from the committed corpora and
   fails when the result is not identical to the committed weights.
-- **Development-only selection**: no setting of the model or of the confidence thresholds was chosen on the data that
+- **Development-only selection**: no setting of the model or of the confidence thresholds is chosen on the data that
   measures it. The trainer opens a held-out evaluation set only in the `evaluate` command, only with a selection of the
-  thresholds that is valid for the frozen model and was committed first, and only once; the other commands have no code
+  thresholds that is valid for the frozen model and is committed first, and only once; the other commands have no code
   path to a held-out file (see _ModelTrainer Design_). The hard-shape development set is a development file with a guard
   of its own (`eval-shapes` only; both tranches): it may select settings, it is never trained on and the shape probe
   stays held-out.
@@ -318,7 +319,7 @@ The data assets are protected by two release gates, which the data tests of the 
 finds the terms and gives their tokens hard (`TokenConstraint.Only`) or soft (`TokenConstraint.Prefer`) constraints, so
 the decoder is unchanged and the feature set is not extended for it: a trained "glossary says X" feature was measured on
 development data only and rejected in favor of score boosts (see _ModelTrainer Design_, _Glossary Decision_). The
-default soft strength and the rule for the other words of a term were chosen on development data with the glossary
+default soft strength and the rule for the other words of a term are chosen on development data with the glossary
 evaluation of the trainer; the protocol and the measured effect, including the cost of wrong entries, are in section E9
 of `RUN-LOG.md` next to the trainer and are not repeated here. See _Glossary Design_ for the data model and algorithms.
 
@@ -341,16 +342,17 @@ has the definitions):
   title: at least 60% of its words after the first one start with a capital letter and it does not end as a sentence),
   together with the capitalization of the token and whether it is the first token.
 
-The embedded model enables the clause cues only. The choice is the result of a pre-registered experiment on development
-data: every group alone, all four, and all four minus one were trained with five seeds each and scored on the hard
+The embedded model enables the clause cues only. The groups are selected by a rule on development data: every group
+alone, all four, and all four minus one are trained with five seeds each and scored on the hard
 tranche of the shapes development set (the primary measure), with guards on the other development measures, the size
-and the speed. The rule picked the arm with the fewest groups among those within 10% of the best primary measure,
-provided that the 95% interval over the seeds of its difference from the previous model's arm lay entirely below
-zero. The other groups stay in the code as switches that are off in `training.json` (the trainer tests prove each of
+and the speed. The rule picks the arm with the fewest groups among those within 10% of the best primary measure,
+provided that the 95% interval over the seeds of its difference from the arm of the base feature set lies entirely below
+zero, and the clause cues are the arm that it picks. The other groups stay in the code as switches that are off in
+`training.json` (the trainer tests prove each of
 them against the decoder); a model that enables one of them needs a new training run, a new selection of the
-thresholds and a new held-out record. The title-case line group (F5) is off in the embedded model. The protocol, the
-results with their caveats (the evidence is development evidence from one set that the groups were designed against)
-and the adoption are in `RUN-LOG.md`, "Context-feature experiment". At run time the clause cues cost
+thresholds and a new held-out record. The title-case line group (F5) is off in the embedded model. The evidence is
+development evidence from one set that the groups were designed against; the protocol and the results with their
+caveats are in `RUN-LOG.md`, "Context-feature experiment". At run time the clause cues cost
 seven more buckets per token, the lexicon lookup that the decoder already does for the restriction, and a clause state
 that the decoder carries from token to token; the speed is measured by the throughput requirement and by the trainer,
 and the size of the weights is stated under _Data Assets_.

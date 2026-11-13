@@ -59,11 +59,11 @@ Deflate validation in the `BinaryFormat` design.
 
 **Feature group mask and compatibility.** The mask (bit 0 position cues, bit 1 clause cues, bit 2 right preview,
 bit 3 inflection, bit 4 title-case line; bit 5 and every higher bit are reserved for later groups) occupies the first
-four of the eight bytes that were reserved (and zero) before the groups existed, so the format version stays 2 and
+four of the eight reserved bytes (zero in a file without groups), so the format version stays 2 and
 the layout is unchanged. The feature set number
-follows from the mask: 1 if and only if the mask is 0, otherwise 2. A file without groups is therefore byte-identical to
-a file written before the mask existed, and this build reads such files (backward compatible). A reader from before the
-mask existed fails loudly on a file with groups, twice over: it expects feature set 1 and finds 2, and it finds
+follows from the mask: 1 if and only if the mask is 0, otherwise 2. A file without groups therefore has zero reserved
+bytes and feature set 1, and this build reads it (backward compatible). A reader that does not know the
+mask fails loudly on a file with groups, twice over: it expects feature set 1 and finds 2, and it finds
 non-zero reserved bytes; so it never tags with the wrong features (not forward compatible by design).
 
 #### Key Methods
@@ -85,7 +85,7 @@ non-zero reserved bytes; so it never tags with the wrong features (not forward c
 - **`PerceptronModelWriter.Compile(hashBits, temperature, scale, featureSetVersion, rows, compress, featureGroups = 0)`
   and `Write`**: takes the occupied buckets as a bucket and a dense 17-element `int16` vector each, orders them by
   bucket, skips rows whose weights are all zero, and writes the sparse layout above, with the group mask at offset 40.
-  The default mask 0 gives the file that was written before the mask existed, byte for byte. The caller chooses the
+  The default mask 0 writes zero at that offset, the layout of a model without feature groups. The caller chooses the
   feature set number (`FeatureExtractor.FeatureSetVersionFor(groups)`); the writer refuses unknown mask bits.
   Postcondition: the file loads with the same weights.
 
@@ -98,8 +98,7 @@ non-zero reserved bytes; so it never tags with the wrong features (not forward c
   An invalid file throws `InvalidDataException`.
 
 Size note: the shipped model (selected on development data, see _ModelTrainer Design_) has 126,087 rows and 314,640
-weights at 19 hash bits and scale 1/8, which is 1,196,142 bytes uncompressed and 537,650 bytes with Deflate. The spike's
-sparse `int16` model, for comparison, had about 105,000 rows and 286,000 weights at 13 classes.
+weights at 19 hash bits and scale 1/8, which is 1,196,142 bytes uncompressed and 537,650 bytes with Deflate.
 
 #### Error Handling
 

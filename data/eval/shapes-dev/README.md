@@ -12,7 +12,7 @@ the sentence-context work: use it to select settings and to compare variants. **
 never report it as a held-out figure (the [shape probe](../shapes/README.md) stays the held-out evaluation).
 
 A second file, `hard.tsv`, is the **hard tranche**: 460 real sentences (400 target items and 60 controls) of the contested cases
-of four of the five shapes, built by a pre-registered, model-independent rule (see [Hard Tranche](#hard-tranche)). Three more
+of four of the five shapes, built by a model-independent rule (see [Hard Tranche](#hard-tranche)). Three more
 files, `compound-head.tsv`, `headings.tsv` and `named-state.tsv`, are the **new tranches**: one shape each that the first two
 files do not measure (see [New Tranches](#new-tranches)). Two further files, `compound-head-2.tsv` and `headings-2.tsv`, are the
 **follow-up tranches**: 255 and 129 more items of the shapes of `compound-head` and `headings`, from new documents (see
@@ -27,7 +27,7 @@ describes the standard tranche (`dev.tsv`) unless it says otherwise.
   Bureau of Mines, Department of Agriculture, Forest Service and NASA publications, quoted per document in
   `sources.tsv`. No document is in any other file of this repository except `hard-sources.tsv` (the hard tranche
   shares part of these documents on purpose; no sentence is shared), and no sentence is in a training or evaluation set.
-  Nothing was written for this set: all 700 sentences are real text (0 authored). Two documents are excluded (see
+  Nothing is written for this set: all 700 sentences are real text (0 authored). Two documents are excluded (see
   [Excluded Sources](#excluded-sources)).
 - **How produced:** `python tools/data/shapes_dev.py --work <work-folder> build --shape-lemma-cap n-measure=12`. The current standard
   profile rebuilds the committed files byte for byte (see `StandardRebuildTests`).
@@ -54,7 +54,7 @@ describes the standard tranche (`dev.tsv`) unless it says otherwise.
 - **Excluded documents:** the builder and `check_licenses.py` read `excluded-sources.tsv` and refuse any used document, by id or by
   normalized URL (see [Excluded Sources](#excluded-sources)).
 - **Process record:** this README states what the data is. The order of decisions, the labeling rounds, the top-up rounds, the build
-  commits and the earlier hand-check passes are in the trainer
+  commits and the hand-check passes are in the trainer
   [run log](../../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md), sections "Shapes development set: standard tranche, build
   record", "Shapes development set: hard tranche, pre-registered selection rule" and "Shapes development set: new tranches,
   pre-registered selection rule".
@@ -152,9 +152,9 @@ documents are in the second table instead, whatever their labels were):
 
 ## Labeling and Decision Rule
 
-This section states the whole rule as applied to the committed data. Pre-registration: only rules 1 and 2 and the treatment of
-disputed tokens were fixed before any label existed; rules 3 to 5 and the cleaning filters were added later and only remove items
-(no label was changed). Both labelers tag every token of a sentence blind: they see no shape, no
+This section states the whole rule as applied to the committed data. Rules 1 and 2 and the treatment of
+disputed tokens are the labeling rules; rules 3 to 5 and the cleaning filters only remove items
+(they change no label). Both labelers tag every token of a sentence blind: they see no shape, no
 source, no intended class and no other labeler's answer, only the tokens under an opaque id. Sentences are never labeled twice.
 
 For the judged word (the target):
@@ -224,8 +224,8 @@ all 25 rows in every source table and every sentence of `data/technical/` and of
 | `navy` | 3 | 81 | Navy training and medical manuals (scans on the Internet Archive); 17 U.S.C. 105 |
 | `usbm` | 2 | 50 | Bureau of Mines first-aid instructions (scans on the Internet Archive); 17 U.S.C. 105 |
 
-`sources.tsv` lists only these used documents. Publication years are 1917 to 2007; every document was retrieved on 2026-11-06
-and hashed (`raw_sha256` of the download, `text_sha256` of the extracted sentences).
+`sources.tsv` lists only these used documents. Publication years are 1917 to 2007; every document is hashed
+(`raw_sha256` of the download, `text_sha256` of the extracted sentences) and carries its retrieval date in `sources.tsv`.
 
 ## Noise Filter
 
@@ -252,9 +252,9 @@ left to gain are:
 | `v-after-modal` | 1.7% | 2 |
 | all shapes | 3.7% | 22 |
 
-The set was not made harder on purpose: choosing items by the errors of the shipped model would bias it against that model.
+The set is not made harder on purpose: choosing items by the errors of the shipped model would bias it against that model.
 The hard tranche is chosen by model-independent criteria and is described in [Hard Tranche](#hard-tranche); its
-selection rule is pre-registered there and its headroom is stated there too.
+selection rule and its headroom are stated there.
 
 ## Hard Tranche
 
@@ -262,9 +262,9 @@ A second development file, `hard.tsv`, holds the contested cases of four shapes 
 `v-imperative-initial`, `v-after-modal`; `n-measure` has no hard cases and stays at zero items). It is built from the same kind of
 federal documents, labeled by the same two blind model labelers, and is for development only, like `dev.tsv`.
 
-**The selection rule (the inputs table and the rule below) was pre-registered: fixed before any label of the tranche existed**,
-and before the candidates were generated; one amendment (the `n-subject-initial` cap, rule 9) also preceded labeling.
-Two top-up rounds exist, `h2` (rule 4 provides for it) and `h3` (the pre-registration did not name it; rule 9 states its floor). The
+**The selection rule (the inputs table and the rule below)** uses no label of the tranche and no PartOfSpeech result: it selects
+the candidates that are then labeled. The caps and floors are in rule 9. Rule 4 provides a top-up
+round `h2`, and the floor of rule 9 is served by a further round `h3`. The
 order, the commits and the round sizes are in the run log.
 
 Inputs of the selection:
@@ -302,7 +302,7 @@ The rule (`python tools/data/shapes_dev.py --tranche hard`; the docstring of the
    before the head, and so on), and filling a shape from them would need on the order of 1,500 labeled sentences per shape. The
    real pools of candidates with q < 0.5 are 668, 275, 220 and 189 (in the order above). So disagreement (q < 0.5) is inside the
    band and very confident disagreement (q < 0.10) is outside it. The band and the budgets come from how the
-   standard tranche's labels distribute over the Basic classifier's q (yield only), never from a PartOfSpeech result. This was the project owner's decision.
+   standard tranche's labels distribute over the Basic classifier's q (yield only), never from a PartOfSpeech result.
 6. **Controls.** Real sentences of the other class for the lemmas of the chosen targets of the shape (hard or not; no band),
    at most 2 per lemma and 50 candidates per shape, labeled blind like the targets.
 7. **Gold.** Unchanged: two blind labelers (`claude-opus-5.5`, `gpt-6.1-sol`), agreement, target disagreement and class mismatch
@@ -383,7 +383,7 @@ license basis of every document is quoted in `hard-sources.tsv`; the two exclude
 **Selection harness:** the WordSense Basic classifier numbers come from the harness `tools/data/hmm-tags` (a standalone program
 outside the solution) run on the pinned DLL: WordSense commit `6530de1928baf30f9a14446a54bfb5dd5f67b41c`,
 `DemaConsulting.WordSense.dll` SHA-256 `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf`, `hmm.tsv` SHA-256
-`3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c` (inputs table above). The voters were not run (no diagnostic).
+`3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c` (inputs table above). The voters are not run (no diagnostic).
 q is in no committed file.
 
 ### Hand Check of the Hard Tranche
@@ -422,11 +422,11 @@ figures are kept there only.
 ## New Tranches
 
 Three more development files hold shapes that `dev.tsv` and `hard.tsv` do not measure: `compound-head.tsv`, `headings.tsv` and
-`named-state.tsv`. Each is a real-text tranche for development only, built by a pre-registered rule that is independent of the
+`named-state.tsv`. Each is a real-text tranche for development only, built by a rule that is independent of the
 PartOfSpeech model (`python tools/data/shapes_dev_extra.py`), and each gold tag is the agreement of two blind model labelers. The
 rule is stated once below ("The Rule"), as applied to the committed data.
 
-- **Pre-registered:** the rule and the inputs were fixed before any candidate or label of the three tranches existed.
+- **Label-independent rule:** the rule and its inputs use no label and no candidate result of the three tranches.
 - **Top-up rounds:** two exist: round `h2` (more `headings` imperative candidates) and round `h3` (more `compound-head` controls; no
   target).
 
@@ -607,9 +607,8 @@ Two more development files, `compound-head-2.tsv` and `headings-2.tsv`, extend t
 US federal documents (no document of any earlier table of this repository, and no document of the training sources; the two files may share documents with each other). Each is for development only,
 and each gold tag is the agreement of two blind model labelers. They have the shapes, the block format and the conventions of the new tranches above
 (`n-compound-head-ambiguous` and `heading-titlecase`; ids `shapes-dev-compound-head-2-NNNN` and `shapes-dev-headings-2-NNNN`; the same comments
-`shape`, `role`, `target`, `lemma`, `origin` and, for headings, `kind`). They are built by `python tools/data/followup_data.py` (the normative text is
-its docstring; the pre-registered rule is at commit `8c9f17fc5cb7e5c35f91827fc242980f407bd42d`, and the trainer run log, section "Follow-up", records
-the amendments) and no PartOfSpeech model takes part in the selection.
+`shape`, `role`, `target`, `lemma`, `origin` and, for headings, `kind`). They are built by `python tools/data/followup_data.py` (the normative text of the rule is
+its docstring; the trainer run log, section "Follow-up", records the rule, its pins and its amendments) and no PartOfSpeech model takes part in the selection.
 
 | Tranche | File | Items | Targets | Controls | Documents | Head or word lemmas | Tokens |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -683,7 +682,7 @@ license checks" below). The judged word of an item is never `disputed`; other to
 
 The 89 and 35 documents are US federal government works (17 U.S.C. 105), one `license_basis` cell per document in `compound-head-2-sources.tsv` and
 `headings-2-sources.tsv` (the agency named in the record, the record's rights statement where it has one, and the check that the text carries no copyright,
-permission, third-party credit or distribution restriction), retrieved from the Internet Archive on 2026-11-10 and hashed. Publication years are 1881 to
+permission, third-party credit or distribution restriction), from the Internet Archive and hashed (the retrieval date of each document is in its row of the sources table). Publication years are 1881 to
 2017 (74 of the 89 documents are from 1940 or later) for `compound-head-2` and 1944 to 2013 (all 35 from 1940 or later) for `headings-2`. No document is in
 a table of used sources, in `excluded-sources.tsv` or in any `excluded-documents.tsv`; no FAA text, no Wikipedia, no share-alike or non-commercial text,
 no Universal Dependencies text, no sentence supplied by any consumer, and no document with a non-federal creator, publisher or co-author.
@@ -807,8 +806,8 @@ The tranches are therefore, for three of the four shapes, the contested part of 
 
 The documents are US federal government works (17 U.S.C. 105), one `license_basis` cell per document in the `<tranche>-sources.tsv` tables (the agency
 named in the record, the record's rights statement where it has one, and the check that the text carries no copyright, permission, third-party credit or
-distribution restriction), retrieved from the NASA Technical Reports Server (59, 24, 26 and 44 documents), the USGS Publications Warehouse (8, 10, 8 and 11) and the
-Internet Archive (89, 61, 63 and 84) on 2026-11-11 and 2026-11-12 and hashed. Publication years are 1942 to 2024 (`deverbal-heads`), 1946 to 2024 (`defined-terms`),
+distribution restriction), taken from the NASA Technical Reports Server (59, 24, 26 and 44 documents), the USGS Publications Warehouse (8, 10, 8 and 11) and the
+Internet Archive (89, 61, 63 and 84) and hashed (the retrieval date of each document is in its row of the sources table). Publication years are 1942 to 2024 (`deverbal-heads`), 1946 to 2024 (`defined-terms`),
 1945 to 2024 (`step-lines`) and 1942 to 2024 (`clause-verbs`); every document is from 1940 or later. No document is in a table of used sources, in either
 `excluded-sources.tsv` or in any `excluded-documents.tsv`; there is no FAA text, no Wikipedia, no share-alike or non-commercial text, no Universal Dependencies
 text, no sentence supplied by any consumer, and no document with a non-federal creator, publisher or co-author. The tranches share documents with each other
@@ -846,7 +845,7 @@ section "beta.3 phase 1: hand checks and registration", has the record.
 `python tools/data/check_leakage.py --write-report` writes `deverbal-heads-leakage-report.tsv`, `defined-terms-leakage-report.tsv`,
 `step-lines-leakage-report.tsv` and `clause-verbs-leakage-report.tsv` (counts only) and adds the four tranches to the rows of the other reports. Result for
 all four tranches: **0 shared documents, 0 exact sentences and 0 near duplicates** against open dev and test, gold v2, the STE challenge set, UD English-EWT,
-the standard and the hard tranche and the five earlier new tranches, and 0 shared word 5-grams with the shape probe; against each other the four tranches
+the standard and the hard tranche and the five other single-shape tranches, and 0 shared word 5-grams with the shape probe; against each other the four tranches
 share documents (reported, not gated) and no sentence and no near duplicate. Every training source (including `deverbal`, `terms`, `steps` and `clauses`)
 shares no document, exact sentence or near duplicate with them (rows of `leakage-report.tsv`). `check_licenses.py` scans the four source tables (restricted
 text, FAA material and `excluded-sources.tsv`).

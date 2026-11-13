@@ -16,10 +16,10 @@ part of the mix that trained the embedded model (`--source imperative:0` trains 
 - **Source:** the sentences are text of 122 documents that are US federal government works (17 U.S.C. 105): War Department and Army
   field and technical manuals, Navy training manuals, Department of Agriculture bulletins, Forest Service, Bureau of Mines and Public
   Health Service publications, quoted per document in `sources.tsv`. No document is in any other source table of this repository,
-  none is in an evaluation set, and nothing was written for this source: all 900 sentences are real text (0 authored).
+  none is in an evaluation set, and nothing is written for this source: all 900 sentences are real text (0 authored).
 - **How produced:** `python tools/data/imperative_data.py --work <work-folder> build` at commit
-  `100e747cb0b31deff4f10d89b426001bf8c95f16` (the builder and the rule below, committed before any label of this source existed),
-  after the unchanged blind-labeling commands of `tools/data/shapes_dev.py` (`export`, `check-batches`, `validate-output`, `decide`).
+  `100e747cb0b31deff4f10d89b426001bf8c95f16` (the builder and the rule below),
+  after the blind-labeling commands of `tools/data/shapes_dev.py` (`export`, `check-batches`, `validate-output`, `decide`).
   The global `--work` argument (a folder outside the repository, required) comes before the command; the other options keep their
   defaults (`--lemma-cap 6`, `--document-cap 30`, `--max 900`, `--min 600`, `--out-dir` the repository's `data/imperative`). The work
   folder is not committed. It holds the extracted text of the sources (`sources-draft.tsv`, `text/<source_id>.txt`, one sentence per
@@ -61,9 +61,8 @@ Token 0 of every sentence is tagged VERB and is the base form of the verb; a dat
 
 ## Labeling and Decision Rule
 
-The rule was fixed before any label of this source was seen (the commit above); the docstring of `tools/data/imperative_data.py` is its
-normative text. Later commits changed only the wording of the source families in the docstring and made the fix-tier lint of `build`
-take the resources of its participle rules from the correctable corpora only (as `check_conventions.py` does); the output of `build`
+The docstring of `tools/data/imperative_data.py` is the normative text of the rule. The fix-tier lint of `build` takes the
+resources of its participle rules from the correctable corpora only (as `check_conventions.py` does), and the output of `build`
 is byte-identical to the committed files.
 
 1. **Documents.** US federal authorship, with the public-domain basis checked one document at a time and written in the `license_basis`
@@ -88,10 +87,10 @@ is byte-identical to the committed files.
 6. **Quota gate.** `build` refuses (exit code 1, nothing written) unless there are 600 to 900 sentences, at most 6 per lemma, at most 30
    per document, token 0 is VERB in the base form in every sentence, every token is `unanimous` and the tokens rejoin to the text.
 
-Order of events (all on 2026-11-08): the documents were sourced and the builder with this rule was committed (`100e747`, 15:29); the
-2,300 candidates were exported in 16 blind batches and both labelers tagged every batch; the decision and the build followed; the
-hand check below was run on the built data; then the checks, the leakage report and this registration. Every candidate was
-labeled before the build; the caps, the quota gate and the hand check were applied to the output of the labelers and changed no label.
+The 2,300 candidates are exported in 16 blind batches and both labelers tag every batch; the decision and the build follow. Every
+candidate is labeled before the build; the caps, the quota gate and the hand check are applied to the output of the labelers and
+change no label. The builder, the decision, the hand check and the registration are in the trainer `RUN-LOG.md`, "Imperative
+training data: pre-registration".
 
 Numbers of the run:
 
@@ -112,11 +111,10 @@ Candidate sentences dropped alone because of an overlap (`dropped-sentences.tsv`
 duplicates of a shapes development sentence; 1 more shares a word 5-gram with the held-out probe. Of the 171 sourced documents, 49
 contribute no sentence (their candidates were cut by a cap or by the decision).
 
-**Refusals of one labeler.** `claude-opus-5.5` had no refusals. `gpt-6.1-sol` returned empty refusals (`cannot assist`, with no labels) for
-several requests, and those batches were requested again from fresh agents: batch b001 twice (one earlier output set was invalid and
-partial and was set aside, unused), b004 three times, b006 twice, b007 three times, b008 twice, b010 four times and b012 twice. Every batch
-ended with one valid output per labeler, and each labeler's accepted output for a batch is the only labeling used. Which request
-produced the accepted output does not enter the data.
+**Refusals of one labeler.** `claude-opus-5.5` has no refusals. `gpt-6.1-sol` returns empty refusals (`cannot assist`, with no labels)
+for some batch requests, and such a batch is requested again from a fresh agent until each batch has one valid output per labeler;
+each labeler's accepted output for a batch is the only labeling used. Which request produced the accepted output does not enter
+the data. The batch-by-batch record is in the trainer `RUN-LOG.md`.
 
 ## Hand Check
 
@@ -144,8 +142,8 @@ One sample was drawn and reviewed once; it was not drawn again.
 | `usbm` | 1 | 7 | Bureau of Mines ground-control instructions (Internet Archive); 17 U.S.C. 105 |
 | `phs` | 1 | 5 | Public Health Service handbook (Internet Archive); 17 U.S.C. 105 |
 
-`sources.tsv` lists only these used documents. Publication years are 1889 to 2011 (most are from 1940 to 1969); every document was
-retrieved on 2026-11-08 and hashed (`raw_sha256` of the download, `text_sha256` of the extracted sentences).
+`sources.tsv` lists only these used documents. Publication years are 1889 to 2011 (most are from 1940 to 1969); every document is
+hashed (`raw_sha256` of the download, `text_sha256` of the extracted sentences) and carries its retrieval date in `sources.tsv`.
 
 ## Leakage and License Checks
 

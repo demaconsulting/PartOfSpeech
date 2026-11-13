@@ -171,10 +171,10 @@ tools/DemaConsulting.PartOfSpeech.Trainer/
 │                                 context-feature experiment (pre-registration, results, adoption) and the protocol
 │                                 and outcome of the held-out evaluations
 ├── compound-heading/           — Harness of the compound and heading retraining: arms, resumable driver, analysis script
-├── compound-heading-2/         — Harness of the follow-up re-test: arms, resumable driver, analysis script
+├── compound-heading-2/         — Harness of the second compound and heading re-test: arms, resumable driver, analysis script
 ├── context-features/           — Harness of the context-feature experiment: arms, resumable driver, analysis script
 ├── imperative-data/            — Harness of the imperative-data experiment: two runners, analysis script
-├── prenominal-ing/             — Harness of the pre-registered `prenominal-ing` follow-up: arms and scoring scripts
+├── prenominal-ing/             — Harness of the `prenominal-ing` experiment: arms and scoring scripts
 ├── Training/                   — Corpus reader, random generator, integer averaged perceptron, trainer, jackknife folds,
 │                                 builder, predictor
 └── Evaluation/                 — Data guard, development and held-out sets, metrics, bootstrap, calibration, confidence

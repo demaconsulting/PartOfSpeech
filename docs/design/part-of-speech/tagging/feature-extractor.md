@@ -57,7 +57,7 @@ the preview tags), which the decoder keeps per thread.
 
 ##### Feature groups
 
-The groups are fixed by the pre-registration section of the trainer run log. Every group adds features behind the base
+The groups are defined in the protocol section of the trainer run log. Every group adds features behind the base
 ones; the order of the buckets is: the base buckets that do not depend on tags, then those of `PositionCues`,
 `ClauseCues`, `Inflection` and `TitleCaseLine`, then the four tag features, then the history features of `ClauseCues`
 and `Inflection`, then those of `RightPreview`. With the 22 base templates, at most 18 + 5 + 5 + 1 + 2 tag-independent
@@ -102,7 +102,7 @@ and 4 + 2 + 1 + 4 tag-dependent features give the capacity of 42.
   token: the upper-first and all-upper shape bits) and `TitleLineFirst` (the line flag with whether the token is the
   first token of the sentence); on a line that is not Title Case both have one constant value for every token. The
   decision is made once per sentence in `Finish` from the token facts of the workspace and allocates nothing. A
-  capital that starts a word of a heading therefore no longer has to mean a proper name to the model.
+  capital that starts a word of a heading therefore need not mean a proper name to the model.
 
 #### Key Methods
 
@@ -118,7 +118,7 @@ and 4 + 2 + 1 + 4 tag-dependent features give the capacity of 42.
   appends the four buckets that depend on the two previous tags, then the history and preview buckets of the groups;
   returns the number of buckets (15 to 22 without groups, at most `BucketCapacity` with them).
 - **`DecoderWorkspace.Configure(groups, lexicon)`**: selects the groups and the lexicon that they read, before
-  `Prepare`; with `None` the workspace behaves as before the groups existed, and a workspace that was never configured
+  `Prepare`; with `None` the workspace has no group features, and a workspace that was never configured
   is such a workspace.
 - **`Advance(workspace, index, tag)`**: records the decision for a token as history for the following tokens (the
   clause state); the caller passes the tag that becomes `previous1` of the next token. A no-op without

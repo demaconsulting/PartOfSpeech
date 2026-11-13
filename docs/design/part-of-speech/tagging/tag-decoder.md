@@ -91,7 +91,7 @@ bucket lookups and, for the inflection group, up to three more lexicon lookups f
 `s`; a preview model decodes every token twice. The embedded model (clause cues) adds seven bucket lookups per token,
 the class of the two neighbors from the cached lexicon lookup of the token (the decoder looks every token up once for
 the restriction anyway) and a two-bit clause state per token. Without groups nothing of this runs, and the decode is
-the one-pass decode that the model had before the groups existed. Measured speed is in the verification design.
+the one-pass decode of a model without groups. Measured speed is in the verification design.
 
 #### Error Handling
 

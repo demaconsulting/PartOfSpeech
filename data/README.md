@@ -12,7 +12,7 @@ lexicon and the trained weights, which are embedded in the package in compact bi
 trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC, silver and
 imperative and compound corpora with settings that are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard, hard and the nine single-shape tranches) and UD-EWT dev (the run log is
 [RUN-LOG.md](../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md)). The corpora and the evaluation sets are not
-shipped. How the model scores on the evaluation sets, the confidence thresholds that were chosen on the development
+shipped. How the model scores on the evaluation sets, the confidence thresholds that are chosen on the development
 sets, and how to reproduce the evaluation (including the local UD English-EWT run) are in the
 [evaluation record](../docs/evaluation/README.md).
 
@@ -37,7 +37,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
 masked); the fourth training source, `imperative/`, holds 11,946 tokens and is configured with weight 1, so it is part of the
-mix that trained the shipped weights. The fifth and seventh, `compound/` (`compound.tsv`, 14,692 tokens) and `compound-2.tsv` (20,745 tokens), are configured with weight 1 too (the pre-registered follow-up re-test selected them). The sixth and eighth, `headings/` (`headings.tsv`, 1,664 tokens) and `headings-2.tsv` (1,160 tokens), are configured
+mix that trained the shipped weights. The fifth and seventh, `compound/` (`compound.tsv`, 14,692 tokens) and `compound-2.tsv` (20,745 tokens), are configured with weight 1 too (the re-test of the compound sources selects them; trainer `RUN-LOG.md`, "Follow-up: re-test results"). The sixth and eighth, `headings/` (`headings.tsv`, 1,664 tokens) and `headings-2.tsv` (1,160 tokens), are configured
 with weight 0: they are committed training data that are not part of the shipped mix. The ninth to twelfth, `technical/` (`deverbal.tsv` 12,007 tokens, `terms.tsv` 7,472, `steps.tsv` 4,894 and `clauses.tsv` 5,870), are configured with weight 0 too. Total size of `data/`: 48.6 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
 WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.md` at the repository root.
 
@@ -85,7 +85,7 @@ python tools/data/make_manifest.py                                              
 
 `--source-dir` and `--wordsense-dir` are optional: without them the pinned files are downloaded into the git-ignored
 `tools/data/cache/`. The silver labeling itself (`import_silver.py export-spike`) is a documented one-off that needs the
-earlier experiment's model output (`silver/README.md`). The importers write the uncorrected files (the pending state);
+WordSense experiment's model output (`silver/README.md`). The importers write the uncorrected files (the pending state);
 the corrections are applied after them, and every artifact that depends on the labels (the lexicon, then the weights) is
 built from the corrected files.
 
@@ -137,7 +137,7 @@ characters, such as `Thank you .`; 36 equal to a UD English-EWT dev sentence, 36
 `What should I do ?`), listed in `masc/dropped-sentences.tsv` (392 tokens); silver 27 Tatoeba sentences whose id is
 the id of an open dev or test sentence (found by the document rule), listed in `silver/excluded-documents.tsv`, 2 short
 Gutenberg sentences equal to UD English-EWT dev and train sentences (11 tokens), listed in `silver/dropped-sentences.tsv`,
-plus the 1,840 documents the selection run of the earlier
+plus the 1,840 documents the selection run of the WordSense
 experiment removed against the WordSense evaluation sets (informational); imperative no document and 5 candidate sentences before labeling (1 equal to a set
 sentence and 4 near duplicates of shapes development sentences, counted in `imperative/dropped-sentences.tsv`); compound no document and 5 candidate sentences before labeling (3 equal to and 2 near duplicates of
 shapes development sentences, `compound/dropped-sentences.tsv`) and headings no document and 118 candidate lines before labeling (equal to shapes development sentences,

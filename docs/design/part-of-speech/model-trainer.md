@@ -114,7 +114,7 @@ target framework, including .NET Framework.
   `Metrics.Compute`.
 - **`ConfidenceCurve`**, **`CurveRow`**, **`ReliabilityRow`**, **`SelectedPoint`** and **`OperatingPointRule`**
   (`Evaluation/ConfidenceCurve.cs`): the threshold grid (0.45 to 0.95 in steps of 0.05, then 0.96 to 0.99, built from
-  integer hundredths), the curve of a tally, the reliability table and the pre-registered selection rule.
+  integer hundredths), the curve of a tally, the reliability table and the selection rule.
 - **`ClusterBootstrap`** (`Evaluation/ClusterBootstrap.cs`): percentile intervals of any statistic of a tally over
   resampled clusters (documents, or single rows or sentences for a set without documents); a paired difference is the
   statistic `f - g` on the same draw.
@@ -208,9 +208,9 @@ of the few non-ASCII tokens of the corpora, which are stable by Unicode policy; 
 failing `train --check` or golden test in the CI job of that system.
 
 With no feature group (no `features` in the configuration, no `--features` option or `--features none`) none of the
-group code runs and the training is the base training, the one that the trainer had before the groups existed: the
-golden hashes of the small reference runs are unchanged, and the BASE arm of the context-feature experiment reproduced
-the weights file of the model before the groups byte for byte (`RUN-LOG.md`). The embedded model, which enables the
+group code runs and the training is the base training: the
+golden hashes of the small reference runs are fixed, and the BASE arm of the context-feature experiment reproduces
+the weights file of the base feature set byte for byte (`RUN-LOG.md`). The embedded model, which enables the
 clause cues, is the one that `train --check` reproduces from `training.json`, and the calibrated run with the
 committed seed is byte-identical to the committed weights file. The jackknife is deterministic too: its folds depend
 on the document ids and the sentence keys only, and the fold models are trained like any other run.
@@ -230,11 +230,11 @@ the data folder is refused) and symbolic links and junctions are resolved with
 which only compiles this file for the tests, links are not resolved. The held-out names (the open and gold test
 splits, the shape probe, the challenge set and the external treebank) are spelled in `DevSets.cs` only, and a test scans
 every other trainer source for them, so the development and training commands have no code path that opens such a file;
-the one command that reads them is described in _Held-Out Evaluation_. The selection protocol was written into
-`RUN-LOG.md` before the first experiment: the primary criterion is
+the one command that reads them is described in _Held-Out Evaluation_. The selection protocol is in
+`RUN-LOG.md`: the primary criterion is
 the pooled harmful errors per 1,000 noun-verb decisions, an option must stay within 0.30 accuracy points of the best, ties
-(paired bootstrap intervals containing zero) go to the smaller model and then to fewer sources, and a noise floor was
-measured with two more seeds. The settings were chosen by coordinate descent (no interactions), which is a stated
+(paired bootstrap intervals containing zero) go to the smaller model and then to fewer sources, and a noise floor is
+measured with two more seeds. The settings are chosen by coordinate descent (no interactions), which is a stated
 limitation, as are the small size of the gold development set (2,025 targets) and the fact that both development sets are
 labeled by language models.
 
@@ -287,14 +287,15 @@ heading lines are extracted from the text by a deterministic filter, no held-out
 hashed keys of `shapes_dev.LeakageFilter` only), a top-up round of a tranche is written down before its labels exist, and
 the quota gate is a floor and a cap per stratum. The gold of a heading item is an exact tag, which the decision rule of
 `shapes_dev.py` checks for the heading shapes (`EXACT_TAGS`).
-The two follow-up tranches and the two follow-up training sources `compound2` and `headings2` come from one more builder,
-`tools/data/followup_data.py`, whose rule was committed before any document was fetched (R0); the pins were set after
-the sourcing, at R1 and R3, and the caps were amended once (A1) after the sourcing and before any label existed; it
-uses the same frozen
-blind-labeling commands of `shapes_dev.py`, holds every constant of the rule, and obeys the same discipline (no
+The two follow-up tranches and the two follow-up training sources `compound2` and `headings2` come from
+one more builder, `tools/data/followup_data.py`. Its rule and every constant of it are in the tool, among them the SHA-256
+pins of its inputs (`candidates` refuses an input whose bytes differ) and the caps and floors of the quota gates;
+it uses the same frozen
+blind-labeling commands of `shapes_dev.py` and obeys the same discipline (no
 PartOfSpeech model, no held-out set except through the opaque keys, the numbers of the contested band of
-`compound-head-2` from the pinned WordSense Basic classifier, a quota gate of floors and caps per group). The older
-builders are unchanged apart from an optional `skip_tranches` argument of the leakage helpers.
+`compound-head-2` from the pinned WordSense Basic classifier, a quota gate of floors and caps per group). The leakage
+helpers take an optional `skip_tranches` argument, which the builder uses to skip its own two tranches, so that a
+rebuild never sees its own output.
 The four technical tranches and the four technical training sources `deverbal`, `terms`, `steps` and `clauses` come from
 one more tool, `tools/data/technical_data.py` (its frames are in `technical_frames.py`, and `term_divergence.py`
 counts the runs that the convention of the capitalized defined terms changes in the other sources). It uses the same
@@ -307,8 +308,8 @@ build refuses below a floor unless `--allow-short` is given and never waives a c
 
 The training sources of `training.json` are the open corpus, MASC, the silver corpus, the imperative source
 (`data/imperative/imperative.tsv`, weight 1), the compound sources `compound` and `compound2`
-(`data/compound/compound.tsv` and `data/compound/compound-2.tsv`, weight 1: the follow-up re-test selected them, and
-the embedded weights were retrained with them), the headings sources `headings` and `headings2`
+(`data/compound/compound.tsv` and `data/compound/compound-2.tsv`, weight 1: the compound sources are in the mix of
+the embedded weights, see _Selection of the Shipped Model_), the headings sources `headings` and `headings2`
 (`data/headings/headings.tsv` and `data/headings/headings-2.tsv`, weight 0, so they are
 committed and not read by a default run) and the technical sources `deverbal`, `terms`, `steps` and `clauses`
 (`data/technical/deverbal.tsv`, `terms.tsv`, `steps.tsv` and `clauses.tsv`, weight 0, committed in the same way).
@@ -327,8 +328,7 @@ tagger. The rule of each source and its record are in its `README.md` under `dat
 ### Confidence Thresholds
 
 A consumer who wants to avoid confident noun-verb mistakes needs a threshold below which it abstains. The `thresholds`
-command measures that on **development data only**, with a rule that is written in the protocol section of `RUN-LOG.md`
-before any curve existed.
+command measures that on **development data only**, with a rule that is written in the protocol section of `RUN-LOG.md`.
 
 - **Decisions and rates.** A decision is a token whose gold label is a noun or a verb and for which both were candidates
   (the existing `Outcome.NounVerb`). It is answered at a threshold t when the confidence of the chosen tag is at least
@@ -338,7 +338,7 @@ before any curve existed.
   decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 91, 14 and 105 harmful
   errors on open dev, gold v2 dev and pooled for the embedded model). The constants of
   the command are the development figures of the embedded model; the command refuses to write when its own 0.45 row
-  differs from them (`RUN-LOG.md`, "Imperative training data: adoption", has their history). The reliability table
+  differs from them (`RUN-LOG.md`, "Imperative training data: adoption", records how they were fixed). The reliability table
   groups the decisions by confidence.
 - **Rule `nv-pooled-dev-v1`.** On the pooled development decisions the first grid threshold with at most 5.0 harmful
   errors per 1,000 answered and a coverage of at least 60% is the `strict` point, the first with at most 10.0 and at
@@ -382,9 +382,8 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   is a data error (exit code 2) before any line is parsed.
 - **Run once.** `evaluate` refuses to start when `docs/evaluation/test-results.json` or its lock file
   `docs/evaluation/test-results.json.running` exists. There is no `--force`: a repeat needs that committed file to be
-  deleted, which is visible in the history and must be recorded in the run log. That was done for the evaluation of
-  the embedded model: the record of the previous model was deleted on purpose before the run and stays in the history
-  (the run log, "Context-feature experiment", has the procedure). Immediately before
+  deleted, which is visible in the git history and must be recorded in the run log (the run log, "Context-feature
+  experiment", has the procedure). Immediately before
   the first held-out
   token is scored, `evaluate` creates the lock file with `FileMode.CreateNew` (`DataGuard.AcquireRunLock`), so of two
   concurrent runs exactly one proceeds. The results file is written last, exclusively, and only then is the lock file
@@ -394,8 +393,8 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   after their introduction, the one-paragraph disclosure that `EvaluationReport.ReadDisclosure` reads from the committed
   file `docs/evaluation/disclosure.md` (the line breaks of the file collapse to single spaces; a missing or blank file
   means no notice, and `RenderDev` and `RenderResults` take the text as an optional `disclosure` argument, so the renderer
-  itself holds no claim about any model). For the embedded model the text says that the record belongs to a later
-  held-out evaluation of the model family, a disclosed look at sets that earlier models had been scored on, with a link
+  itself holds no claim about any model). For the embedded model the text states how many models of the family the
+  held-out sets have scored, so that the record is not read as a first look at unseen data, with a link
   to the run log and the evaluation
   overview. The text describes one model and one evaluation: it must be revised or removed (the file deleted or
   emptied) before a later evaluation of a different model is rendered, so that no record inherits a stale claim. The notice
@@ -435,7 +434,7 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   treebank appears only as aggregate figures and tag-level confusion. `docs/evaluation/README.md` is written by hand: it
   explains how to read the two reports, the mapping of the evaluation sets to the library conventions, the limits of the
   measurement and the commands that reproduce it, and states no figure that is not in a generated file or in its
-  "Earlier Model" table (a test compares the few it states; the earlier-model figures are copied from the trainer
+  "Earlier Model" table (a test compares the few it states; the figures of that table are copied from the trainer
   `RUN-LOG.md`, which is their record). The figures that the package documentation and the user guide
   quote are verified against the committed JSON by the system tests, not by this unit. The root `README.md` repeats the
   held-out results and the threshold figures of the generated reports in two tables, checked by a system test, and links
@@ -459,10 +458,10 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | Pruning | minimum count 1, magnitude threshold 8 units | largest tied threshold; the next is not tied |
 | Quantization | `quantScale` 8 (scale 1/8) | tied with the unpruned scale 16; scale 4 is not tied |
 | Temperature | 9.514 | minimum log-likelihood on open development data |
-| Feature groups | `clauseCues` | the context-feature experiment (`RUN-LOG.md`): pre-registered rule, five seeds |
+| Feature groups | `clauseCues` | the context-feature experiment (`RUN-LOG.md`): fixed rule, five seeds |
 
-The settings above the last row were selected on the base feature set (before the groups existed) and were not selected
-again for the clause cues: the experiment compared the groups at those settings, and only the temperature was refit.
+The settings above the last row are selected on the base feature set and are not selected
+again for the clause cues: the experiment compares the groups at those settings, and only the temperature is refit.
 The result is a file of 126,087 rows and 314,640 weights, 1,196,142 bytes uncompressed and 537,650 bytes compressed;
 training takes about 5 to 14 seconds on one thread (6,569,850 steps), and the check about 15 seconds. Development
 results through the real decoder: open development 96.72% accuracy (96.10% on lexicon-ambiguous tokens), gold
@@ -472,22 +471,21 @@ These are development figures; they say nothing about held-out data.
 
 ### Glossary Decision
 
-The later glossary mode (`TokenConstraint.Prefer`) needs to know whether the model should learn how far to trust a
-glossary. The question was answered by an experiment on development data with thresholds fixed beforehand: a model M1
+The glossary mode (`TokenConstraint.Prefer`) applies a score boost; the model does not learn how far to trust a
+glossary. The reason is an experiment on development data with thresholds fixed in `RUN-LOG.md` (E8): a model M1
 with trained "glossary says X" features (trained with simulated hints on 30% of the lexicon-ambiguous tokens, 10% of
-them wrong) against the shipped model M0 with a score boost on type-level simulated glossaries. M1 lost more accuracy
-without a glossary than the rule allows and did not beat the boost on covered tokens or on the neighbors of
+them wrong) against the shipped model M0 with a score boost on type-level simulated glossaries. M1 loses more accuracy
+without a glossary than the rule allows and does not beat the boost on covered tokens or on the neighbors of
 covered tokens. (The eligibility of a training token for a hint uses the allowed tags of the token as written, the same
-mask as the runtime decoder, so a capitalized token also allows PROPN and X; a first run that lower-cased the token was
-corrected and repeated, with the same decision.) **Decision: boost only.** The library's extractor and decoder were
-left unchanged by it. The measured boost curve was the starting point for calibrating the boosts: up to about two temperatures
+mask as the runtime decoder, so a capitalized token also allows PROPN and X.) **Decision: boost only.** The library's
+extractor and decoder are not extended by it. The measured boost curve is the basis of the calibration of the boosts:
+up to about two temperatures
 (a log-odds shift of 2) give most of the benefit of right entries and cost at most 0.5 points on wrong entries at 10%
-wrong; larger boosts cost more on wrong entries, and eight or more behave like a hard constraint. This curve is not the
-final word on the default: the strength that the library ships as `GlossaryOptions.DefaultSoftStrength` was chosen
-later, in the evaluation of the real glossary (see _Glossary Evaluation_ and
-section E9 of `RUN-LOG.md`), first by a rule that was fixed beforehand and then, after the first run, by a
-replacement rule whose reason is recorded as a dated change; the cost of that choice on wrong entries is also recorded
-there. The experiment code
+wrong; larger boosts cost more on wrong entries, and eight or more behave like a hard constraint. This curve does not
+fix the default: the strength that the library ships as `GlossaryOptions.DefaultSoftStrength` is fixed by the
+evaluation of the real glossary (see _Glossary Evaluation_ and
+section E9 of `RUN-LOG.md`) with the rule `ChooseSoftStrength`; the cost of that choice on wrong entries is also
+recorded there. The experiment code
 (`glossary-probe`, `glossary-experiment`, `GlossaryFeatures`, and the optional `glossary` parameter of the trainer, which
 is `null` for the shipped model and does not change its pinned hash) stays in the tool so that the decision can be
 reproduced. The experiment's own decoder takes the feature groups of the configuration (it configures its workspace
@@ -497,12 +495,12 @@ it before anything is trained. The probe and the evaluation tag through the real
 
 ### Glossary Evaluation
 
-The glossary that the library ships (see _Glossary Design_) was measured with the command `glossary-eval` before its
-defaults were fixed. The evaluation tags the development data through the real `Tagger` with real `Glossary` objects, so
+The glossary that the library ships (see _Glossary Design_) is measured with the command `glossary-eval`. The evaluation
+tags the development data through the real `Tagger` with real `Glossary` objects, so
 what is measured is what a caller gets. It reads only the two development sets, through `DevSets` and `DataGuard`, and
 has no path parameter at all (a test checks that the sources contain no file API and no data file name), so it cannot
-open a held-out set. Its protocol, the simulated glossaries and the two decision rules were written into `RUN-LOG.md`
-before the evaluation code existed, and the results and decisions are in section E9 of the same file; this design does
+open a held-out set. Its protocol, the simulated glossaries and the two decision rules are in `RUN-LOG.md`,
+and the results and decisions are in section E9 of the same file; this design does
 not repeat any measured figure.
 
 - **Simulated glossaries**, all reproducible from a seed (`DeterministicRandom`, types sorted before they are shuffled):
@@ -523,12 +521,12 @@ not repeat any measured figure.
 - **Decision rules**, implemented as functions of the result tables (`ChooseSoftStrength`, `ChooseNonHeadRule`) and
   tested on synthetic tables: `ChooseSoftStrength` is the rule that fixes the default soft strength of the library (the
   largest strength of the grid whose paired accuracy interval in the scenario AB at full coverage with 30% wrong entries
-  does not lie below zero and whose confident swaps do not rise), which replaced the first-run rule after the first run
-  (`RUN-LOG.md` records the reason as a dated change); a test applies it to the recorded cells and requires the shipped
-  default. The first-run rule (`ChooseFirstRunSoftStrength`, the strength chosen among the admissible strengths of one
-  pre-registered scenario) is kept and printed as the historical decision, so that the first run stays reproducible. The
+  does not lie below zero and whose confident swaps do not rise); a test applies it to the recorded cells and requires the
+  shipped default. A second rule (`ChooseFirstRunSoftStrength`, the strength chosen among the admissible strengths of
+  one fixed scenario) does not decide the default; the report prints its choice next to the decision, so that
+  both readings of the same result tables stay visible. The
   particle rule for the second word of a two-word verb
-  term with the head first was adopted because its bar was met; the shipped scope of that rule is the measured shape
+  term with the head first is adopted because its bar was met; the shipped scope of that rule is the measured shape
   (two-token verb terms, head first), and other shapes were not measured.
 
 ### Shapes Development Evaluation
@@ -606,9 +604,9 @@ what the model does at the thresholds that other documents define.
 
 The context feature groups (position cues F1, clause cues F2, right preview F3, inflection F4, title-case line F5;
 their definitions are
-in `feature-extractor.md` and in the pre-registration section of `RUN-LOG.md`) are switches of the shared
+in `feature-extractor.md` and in the protocol section of `RUN-LOG.md`) are switches of the shared
 `FeatureExtractor`. The trainer is the side that trains them and measures them; the protocol (arms, seeds, metrics, guards
-and the selection rule) was fixed before any candidate model was trained and is recorded in `RUN-LOG.md`, and the
+and the selection rule) is recorded in `RUN-LOG.md`, and the
 harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-features/` (`arms.json`, `run_arms.ps1`,
 `analyze_arms.py`; frozen by the hashes in the run log, resumable: a run is complete when its JSON exists).
 
@@ -620,14 +618,14 @@ harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-featu
   10% of the best primary measure is the candidate, and it is adopted only if the Welch 95% interval of its primary
   measure minus that of the base arm lies entirely below zero; there is no fallback to another arm. The word-cluster
   group of the plan was not built (it needs a new resource and format).
-- **Outcome.** The rule selected the clause cues. The all-groups arm had the lowest primary measure but is not the
+- **Outcome.** The rule selects the clause cues. The all-groups arm has the lowest primary measure but is not the
   candidate, because the clause cues are within the window and have fewer groups. `training.json` therefore selects
-  `clauseCues`, the temperature was refit, the two thresholds were selected again on development data (the balanced
-  point moved), and the model was evaluated once on held-out data (see _Held-Out Evaluation_). The groups that were not
+  `clauseCues`, the temperature is refit, the two thresholds are selected on development data, and the model is
+  evaluated once on held-out data (see _Held-Out Evaluation_). The groups that are not
   selected remain switches of the shared extractor, the trainer, the loader and the decoder, off in `training.json`;
   the run log states the caveats of the evidence (development data only, one set that the groups were designed
   against, nine candidate arms, seeds that measure training noise only, and a shipped seed that is worse than the
-  previous model on two development measures).
+  base feature set (the BASE arm) on two development measures).
 - **Training with groups** (`PerceptronTrainer.Train`): the workspace is configured with the groups and the lexicon
   (`DecoderWorkspace.Configure`) before a sentence is prepared, the buckets of a token are the base ones, the static
   buckets of the groups and the history buckets (`BucketCapacity` elements), and `FeatureExtractor.Advance` is called
@@ -670,8 +668,9 @@ harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-featu
   items of the enlarged compound dev and of all heading dev items, with the counts it is derived from and the target
   items wrong at a confidence of at least 0.95 summed over the four tranches as `confidentWrongTotal`;
   `imperativeHeadings` pools the `imperative` kind of both headings tranches; `compoundControls` pools the controls of
-  both compound-head tranches; the two new file hashes are appended to `inputs`; `shapesNew` and every older member
-  stay as they were), on the four technical tranches (the block `shapesTechnical`, after `shapesFollowup`: the rows of
+  both compound-head tranches; the two file hashes are appended to `inputs`; `shapesNew` and the other members of the
+  object do not depend on them), on the four technical tranches (the block `shapesTechnical`, after
+  `shapesFollowup`: the rows of
   `deverbalHeads`, `definedTerms`, `stepLines` and `clauseVerbs` as above with the target items wrong at 0.90 as
   `wrong90` and
   the controls wrong at 0.90 and 0.95 as `controlWrong90` and `controlConfidentWrong`; `pooledTechnical`, the target items,
@@ -701,8 +700,8 @@ The training source `imperative` (`data/imperative/imperative.tsv`) has weight 1
 shipped model; `--source imperative:0` trains without it, so the same trainer trains with and without it. The protocol
 (arms F2, F2+IMP and ALL+IMP, the
 reference arm ALL, five seeds, the primary measure on the hard tranche, the guards against the F2 mean with a size limit
-of 1.5 x F2, the selection rule without a fallback, and the acceptance tests) was fixed before any model of it was
-trained and is recorded in `RUN-LOG.md`. The harness is the frozen driver of the context-feature experiment, unchanged,
+of 1.5 x F2, the selection rule without a fallback, and the acceptance tests) is recorded in `RUN-LOG.md`. The harness is
+the frozen driver of the context-feature experiment,
 with two runners in `tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/` (`runner-base.cmd`, and
 `runner-imp.cmd`, which appends the source option to the `train` command) and the analysis script
 `analyze_imperative.py`, which takes only the Welch interval from the frozen `analyze_arms.py` and is frozen by the

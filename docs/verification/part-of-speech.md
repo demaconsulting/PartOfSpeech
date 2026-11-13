@@ -16,9 +16,10 @@ The tiny models are test infrastructure in `TestSupport/` (`TinyModels.cs`, `Tin
 feature extractor and the same weights writer that the trainer uses, so the tests also prove that those can be reused
 unchanged. The tests of the default tagger and of the embedded weights use the real shipped model, but only for
 properties that do not depend on its accuracy: that it loads, that it is one shared instance, and that it gives the
-unmistakable tags of a few hand-written sentences (these sentences were written once and not tuned; the accuracy of the
+unmistakable tags of a few hand-written sentences (these sentences are fixed and not tuned; the accuracy of the
 model is measured by the held-out evaluation of the trainer, which is a documented procedure (once for each frozen
-model; each evaluation of the model family is disclosed as such in the evaluation record) and not a test,
+model; the evaluation record carries a disclosure notice about the models of the family that the sets have scored)
+and not a test,
 and its committed results are tied to the shipped model by the evaluation record tests, never by the tests of the tagger).
 
 System tests reside in `PartOfSpeechTests.cs` within the `DemaConsulting.PartOfSpeech.Tests` project. The data and
@@ -268,7 +269,7 @@ Verification_). The check is supplementary evidence of the requirement, since a 
 The same requirement is also served by a test that reads the embedded weights and asserts that the size figures stated in
 the documentation (compressed and uncompressed bytes, and the number of rows where a document states it) equal the
 embedded file, so a retrained model cannot leave a stale number behind; the message names the document to update. The
-run log is excluded because it records the figures of historical runs.
+run log is excluded because it records the figures of every run, not only of the current model.
 
 ### Weights Come From Committed, Allowed Corpora
 
@@ -381,7 +382,7 @@ its set in `test-results.json`, and each row of the table of thresholds must sta
 `operating-points.json` (two decimals) with the coverage and the harmful-error rate per 1,000 answered decisions (one
 decimal each) of its point on the open test split in `test-results.json`. It also asserts that the open test split is in
 the first table and that the second table has exactly the two points `strict` and `balanced`. The README copy cannot
-drift from the record: a reissued evaluation fails this test until the README is updated.
+drift from the record: a new evaluation record fails this test until the README is updated.
 
 ### Glossary: Hard and Soft Entries
 

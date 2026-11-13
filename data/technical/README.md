@@ -26,7 +26,7 @@ contains. The record of the builds is in the trainer run log (sections "beta.3 p
 
 ## Source and Provenance
 
-- **Source:** the sentences are text of US federal-government works (17 U.S.C. 105), retrieved from the NASA Technical Reports Server
+- **Source:** the sentences are text of US federal-government works (17 U.S.C. 105) from the NASA Technical Reports Server
   (NTRS), the USGS Publications Warehouse and the Internet Archive: publications of the National Aeronautics and Space Administration, the
   Geological Survey, the Army, Navy, Air Force, Coast Guard and Marine Corps, the Environmental Protection Agency, the Department of Energy,
   the Forest Service, the National Park Service, the Bureau of Reclamation, the National Bureau of Standards, NOAA and the Department of
