@@ -349,8 +349,8 @@ procedure, not a test: `make_corrections.py sample` draws rows with ten tokens o
 (an automated agent, one rater) reads every row against CONVENTIONS.md and records the verdict with its reason in a scratch file
 (not committed). A wrong row means the rule is tightened with a guard or demoted to `check`/candidates, the tables are
 regenerated and a **fresh** sample is drawn. Because 50 random rows undersample small rules, the sample has a stratified
-supplement (`--per-rule`, all rows of a rule with fewer rows), and a rule with fewer than 20 rows is read in
-full.
+supplement (`--per-rule`: all rows of a rule that has no more rows than the `--per-rule` value, a random sample of that size
+otherwise).
 
 The rules as committed have **553 distinct rows of the final tables read** (the censuses and the samples of the last rounds): 551
 correct, 1 wrong (`for-subject-to`: `called for a match to light his pipe with`, the noun is not the subject of the infinitive;
@@ -542,18 +542,13 @@ the labels the importers wrote (and the mechanical rows changed) for these token
 | silver | 117 | 0 | 53 | 170 |
 | **all** | **683** | **1** | **194** | **878** |
 
-- **Why.** The model without these rows has the lower pooled harmful noun-verb error rate on the development sets (21.711 per
-  1,000 against 22.685 with them, mean of five seeds, by a fixed selection rule; both constraints held; the experiment is in the
-  trainer `RUN-LOG.md`, "Corpus cleanup C: pre-registered `prenominal-ing` follow-up"). Caveats, as recorded there: the evidence is thin
-  (the Welch interval of the difference excludes 0, the bootstrap interval contains it), a comparable removal of another
-  detector lowered the rate by about half as much, and the model without the rows tags 2.4 points fewer of the verbal `-ing`
-  tokens of the development set as VERB (not covered by the rule). The corrections themselves are not found wrong by the
+- **Why.** Training without these rows gives the lower pooled harmful noun-verb error rate on the development sets, so the
+  rows are not applied. The experiment, its measured rates and its caveats are in the trainer `RUN-LOG.md`, "Corpus cleanup C:
+  pre-registered `prenominal-ing` follow-up". The corrections themselves are not found wrong by the
   quality gate of the adjudication (class `prenominal-ing`: 12 of 13 correct).
-- **All 878, not only the 861 of the experiment arm.** The arm leaves the 17 open test rows out so that no held-out file is read;
-  here every row of the detector is withdrawn, so that open train, dev and test follow the same convention for these tokens.
-  The 17 test rows have no influence on training, on calibration or on any selection (the test split is never trained on), so the
-  weights are byte-identical to those of the arm at the shipped seed. The open test file carries the importer labels for these 17
-  tokens.
+- **All 878.** Every row of the detector is withdrawn, so that open train, dev and test follow the same convention for these
+  tokens. The 17 open test rows have no influence on training, on calibration or on any selection (the test split is never trained
+  on). The open test file carries the importer labels for these tokens.
 - **Mechanism.** `corrections.py withdraw --detector prenominal-ing --reason ... --write` works only in the pending state (the
   corrections were reversed first: `apply --write --reverse`, then withdrawn, then `apply --write` again; no corpus file is
   edited by hand). It refuses when a withdrawn row would replace a mechanical row (none does). `corrections.py validate` and

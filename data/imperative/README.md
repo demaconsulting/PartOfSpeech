@@ -111,10 +111,9 @@ Candidate sentences dropped alone because of an overlap (`dropped-sentences.tsv`
 duplicates of a shapes development sentence; 1 more shares a word 5-gram with the held-out probe. Of the 171 sourced documents, 49
 contribute no sentence (their candidates were cut by a cap or by the decision).
 
-**Refusals of one labeler.** `claude-opus-5.5` has no refusals. `gpt-6.1-sol` returns empty refusals (`cannot assist`, with no labels)
-for some batch requests, and such a batch is requested again from a fresh agent until each batch has one valid output per labeler;
-each labeler's accepted output for a batch is the only labeling used. Which request produced the accepted output does not enter
-the data. The batch-by-batch record is in the trainer `RUN-LOG.md`.
+**Refusals of one labeler.** Some batches of one labeler are requested again until each batch has one valid output per labeler;
+each labeler's accepted output for a batch is the only labeling used, and which request produced it does not enter the data.
+The record of the refusals is in the trainer `RUN-LOG.md`.
 
 ## Hand Check
 

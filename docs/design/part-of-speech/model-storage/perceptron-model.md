@@ -61,8 +61,8 @@ Deflate validation in the `BinaryFormat` design.
 bit 3 inflection, bit 4 title-case line; bit 5 and every higher bit are reserved for later groups) occupies the first
 four of the eight reserved bytes (zero in a file without groups), so the format version stays 2 and
 the layout is unchanged. The feature set number
-follows from the mask: 1 if and only if the mask is 0, otherwise 2. A file without groups therefore has zero reserved
-bytes and feature set 1, and this build reads it (backward compatible). A reader that does not know the
+follows from the mask: 1 if and only if the mask is 0, otherwise 2. A file without groups therefore keeps all eight reserved
+bytes at zero and feature set 1, and this build reads it (backward compatible). A reader that does not know the
 mask fails loudly on a file with groups, twice over: it expects feature set 1 and finds 2, and it finds
 non-zero reserved bytes; so it never tags with the wrong features (not forward compatible by design).
 

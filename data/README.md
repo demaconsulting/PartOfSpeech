@@ -37,7 +37,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
 masked); the fourth training source, `imperative/`, holds 11,946 tokens and is configured with weight 1, so it is part of the
-mix that trained the shipped weights. The fifth and seventh, `compound/` (`compound.tsv`, 14,692 tokens) and `compound-2.tsv` (20,745 tokens), are configured with weight 1 too (the re-test of the compound sources selects them; trainer `RUN-LOG.md`, "Follow-up: re-test results"). The sixth and eighth, `headings/` (`headings.tsv`, 1,664 tokens) and `headings-2.tsv` (1,160 tokens), are configured
+mix that trained the shipped weights. The fifth and seventh, `compound/` (`compound.tsv`, 14,692 tokens) and `compound-2.tsv` (20,745 tokens), are configured with weight 1 too. The sixth and eighth, `headings/` (`headings.tsv`, 1,664 tokens) and `headings-2.tsv` (1,160 tokens), are configured
 with weight 0: they are committed training data that are not part of the shipped mix. The ninth to twelfth, `technical/` (`deverbal.tsv` 12,007 tokens, `terms.tsv` 7,472, `steps.tsv` 4,894 and `clauses.tsv` 5,870), are configured with weight 0 too. Total size of `data/`: 48.6 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
 WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.md` at the repository root.
 
@@ -137,8 +137,7 @@ characters, such as `Thank you .`; 36 equal to a UD English-EWT dev sentence, 36
 `What should I do ?`), listed in `masc/dropped-sentences.tsv` (392 tokens); silver 27 Tatoeba sentences whose id is
 the id of an open dev or test sentence (found by the document rule), listed in `silver/excluded-documents.tsv`, 2 short
 Gutenberg sentences equal to UD English-EWT dev and train sentences (11 tokens), listed in `silver/dropped-sentences.tsv`,
-plus the 1,840 documents the selection run of the WordSense
-experiment removed against the WordSense evaluation sets (informational); imperative no document and 5 candidate sentences before labeling (1 equal to a set
+plus 1,840 documents that are removed against the WordSense evaluation sets (informational); imperative no document and 5 candidate sentences before labeling (1 equal to a set
 sentence and 4 near duplicates of shapes development sentences, counted in `imperative/dropped-sentences.tsv`); compound no document and 5 candidate sentences before labeling (3 equal to and 2 near duplicates of
 shapes development sentences, `compound/dropped-sentences.tsv`) and headings no document and 118 candidate lines before labeling (equal to shapes development sentences,
 `headings/dropped-sentences.tsv`); compound2 no document and 3 candidate sentences before labeling (2 near duplicates of shapes development sentences and 1 sharing a word 5-gram with the probe, `compound/compound-2-dropped-sentences.tsv`) and headings2 no document and 24 candidate lines before labeling (3 equal to set sentences, 20 equal to and 1 near duplicate of shapes development sentences, `headings/headings-2-dropped-sentences.tsv`); deverbal, terms and clauses no document and 1 candidate sentence each before labeling (sharing a word 5-gram with the probe) and steps no document and 132 candidate sentences before labeling (98 equal to set sentences, 33 equal to shapes development sentences and 1 sharing a word 5-gram with the probe; `technical/<name>-dropped-sentences.tsv`). The open corpus is split by document hash, so

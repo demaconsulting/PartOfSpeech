@@ -60,7 +60,7 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   trained from the sources that have a positive weight in `training.json`: the open corpus, MASC, silver, the
   imperative source and the compound sources (weight 1, so they are in the mix of the embedded weights; `--source imperative:0`
   or `--source compound:0` leaves one out of an experimental run). The headings source has weight 0: it
-  is committed training data that is not part of the mix (`--source headings:1` adds it to an experimental run). A
+  is committed training data that is not part of the mix (`--source headings:1` adds it to an experimental run).
   Two more sources of the same kind are `data/compound/compound-2.tsv` (1,100 sentences, source `compound2`,
   weight 1, so it is in the mix of the embedded weights) and `data/headings/headings-2.tsv` (247 Title Case lines, source
   `headings2`: imperative step titles and a contrast stratum of nouns, weight 0), from US federal
@@ -123,7 +123,7 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   them before the application or all after it (a mixture is an error, and a second application is refused). The
   corpora, the lexicon and the weights are built from the corrected files, and the tables stay as the provenance of the
   change; the generator check reverses the applied rows in a temporary copy to prove that the tables are still its
-  output
+  output.
 - **Package license and third-party notice**: `PACKAGE-LICENSE.md` (the license of the package: the MIT code and the
   CC BY data) and `THIRD-PARTY-NOTICES.md` (attribution and change statements, also for the weights), both packed at
   the package root

@@ -55,11 +55,9 @@ part-of-speech standoff layer. The history matters:
 - We found no document that describes how the bracketing of the whole corpus was produced or validated. The statement
   that it is manually validated is the ANC's; it was not independently verified here.
 
-The effect is therefore measured, not assumed: for the WordSense tagger (13-class tag space) adding the mapped MASC trees to
-the open training split improves accuracy on UD English-EWT by 2.7 points and
-reduces the harmful noun/verb confusions from 148 to 96. The conversion to UPOS adds its own rule-based noise (see the
-known mapping noise in `../CONVENTIONS.md` and `mapping-audit.tsv`); the effect of MASC on the PartOfSpeech model is measured on
-the open dev split in the data-mix experiment of the trainer `RUN-LOG.md`. Source tags are kept in column 4 so any rule can be re-derived.
+The effect is therefore measured, not assumed; the measured effect of MASC on the PartOfSpeech model is in the data-mix
+experiment (E2) of the trainer `RUN-LOG.md`. The conversion to UPOS adds its own rule-based noise (see the
+known mapping noise in `../CONVENTIONS.md` and `mapping-audit.tsv`). Source tags are kept in column 4 so any rule can be re-derived.
 
 ## Genres and License Basis
 

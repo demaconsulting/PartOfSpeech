@@ -25,8 +25,7 @@ Nothing is trained on any of them.
 Only the development splits (the open corpus and gold v2) and the development files of the hard-shape set and of the
 treebank are used to select the model, its feature group and the confidence thresholds. The test splits, the shape
 probe, the challenge set and the UD English-EWT test file are evaluated once for each frozen model of one family;
-the evaluation record carries a disclosure notice (`docs/evaluation/disclosure.md`) that states how many models of the family
-those sets have scored. The
+the evaluation record carries a disclosure notice (`docs/evaluation/disclosure.md`) about these sets; the
 [evaluation record](../../docs/evaluation/README.md) explains how to read the results, lists the limits of
 the measurement (for example the convention differences for `to` and `not` in gold v2 and the weakness that the shape
 probe shows) and gives the commands that reproduce them, including the local UD English-EWT run. The figures are in

@@ -167,9 +167,8 @@ tools/DemaConsulting.PartOfSpeech.Trainer/
 ├── RunLog.cs                   — Formats the rows of the run log table
 ├── training.json               — The selected, committed configuration (including imageSha256)
 ├── README.md                   — How to run it, the determinism contract, the held-out gate
-├── RUN-LOG.md                  — The pre-registered rules, the dev-only run log, the glossary decisions, the
-│                                 context-feature experiment (pre-registration, results, adoption) and the protocol
-│                                 and outcome of the held-out evaluations
+├── RUN-LOG.md                  — The selection rules and protocols, the run log of the experiments, the glossary decisions,
+│                                 the context-feature experiment and the outcome of the held-out evaluations
 ├── compound-heading/           — Harness of the compound and heading retraining: arms, resumable driver, analysis script
 ├── compound-heading-2/         — Harness of the second compound and heading re-test: arms, resumable driver, analysis script
 ├── context-features/           — Harness of the context-feature experiment: arms, resumable driver, analysis script

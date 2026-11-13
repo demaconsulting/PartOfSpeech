@@ -18,7 +18,7 @@ unchanged. The tests of the default tagger and of the embedded weights use the r
 properties that do not depend on its accuracy: that it loads, that it is one shared instance, and that it gives the
 unmistakable tags of a few hand-written sentences (these sentences are fixed and not tuned; the accuracy of the
 model is measured by the held-out evaluation of the trainer, which is a documented procedure (once for each frozen
-model; the evaluation record carries a disclosure notice about the models of the family that the sets have scored)
+model; the evaluation record carries a disclosure notice about the models of the family that have scored the sets)
 and not a test,
 and its committed results are tied to the shipped model by the evaluation record tests, never by the tests of the tagger).
 

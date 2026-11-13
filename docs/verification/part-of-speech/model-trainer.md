@@ -48,7 +48,7 @@ is mocked. The tests use four kinds of method:
   treebank rows, hand-computed outcomes for the curve and the rule, and the tiny trained model for the judging. No test,
   build step or CI job reads a real held-out file through this code, so CI never looks at held-out data. The real held-out
   run is a documented procedure that runs once for each frozen model (the protocol section of the run log; the evaluation
-  record carries a disclosure notice about the models of the family that the sets have scored), not a test: it would be
+  record carries a disclosure notice about the models of the family that have scored the sets), not a test: it would be
   wrong for a
   test to run it, because its value is that it happens once, after the selection is committed. Its output is a committed,
   generated report; the system-level tests that tie it to the shipped model and to the selection accompany the report.
