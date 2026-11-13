@@ -382,7 +382,7 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   is a data error (exit code 2) before any line is parsed.
 - **Run once.** `evaluate` refuses to start when `docs/evaluation/test-results.json` or its lock file
   `docs/evaluation/test-results.json.running` exists. There is no `--force`: a repeat needs that committed file to be
-  deleted, which is visible in the git history and must be recorded in the run log (the run log, "Context-feature
+  deleted, a deliberate change that must be recorded in the run log (the run log, "Context-feature
   experiment", has the procedure). Immediately before
   the first held-out
   token is scored, `evaluate` creates the lock file with `FileMode.CreateNew` (`DataGuard.AcquireRunLock`), so of two
@@ -393,11 +393,11 @@ fetched into a git-ignored cache) are evaluated **once**, by the `evaluate` comm
   after their introduction, the one-paragraph disclosure that `EvaluationReport.ReadDisclosure` reads from the committed
   file `docs/evaluation/disclosure.md` (the line breaks of the file collapse to single spaces; a missing or blank file
   means no notice, and `RenderDev` and `RenderResults` take the text as an optional `disclosure` argument, so the renderer
-  itself holds no claim about any model). For the embedded model the text states how many models of the family the
-  held-out sets have scored, so that the record is not read as a first look at unseen data, with a link
+  itself holds no claim about any model). For the embedded model the text is the disclosure about the sets that its held-out
+  evaluation used, so that the record is not read as a first look at unseen data, with a link
   to the run log and the evaluation
   overview. The text describes one model and one evaluation: it must be revised or removed (the file deleted or
-  emptied) before a later evaluation of a different model is rendered, so that no record inherits a stale claim. The notice
+  emptied) before the evaluation of a different model is rendered, so that no record inherits a stale claim. The notice
   is in the Markdown only; the JSON artifacts, and so the pinned selection hash, do not carry it. The held-out report
   needs the judged tokens, so it cannot be re-rendered without reading held-out files; the committed `test-results.md`
   therefore holds the notice at the position of the generator (a unit test pins it against the committed file), and
