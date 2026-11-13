@@ -10,7 +10,6 @@ import hashlib
 import io
 import itertools
 import os
-import re
 import sys
 import unittest
 from unittest import mock
@@ -746,7 +745,7 @@ class CandidateRowTests(Mini):
                   "clauses": dict(main=400, sub=100, noun=60, adj=40)}
         for product, kinds in enough.items():
             self.assertEqual([], td.gate_messages(product, dict(kinds=kinds, prior={})), product)
-            for label, gated, minimum in td.MIN_CANDIDATES[product]:
+            for label, gated, _minimum in td.MIN_CANDIDATES[product]:
                 short = dict(kinds, **{k: 0 for k in gated})
                 self.assertTrue(td.gate_messages(product, dict(kinds=short, prior={})), (product, label))
         self.assertEqual([], td.gate_messages("defined-terms", dict(kinds=dict(noun=290, adj=200, proper=40), prior={"noun": 10})))     # the pilot rows count

@@ -753,7 +753,7 @@ def band_counts(scan, product, lex, hmm, step_kinds=None):
     wanted = tuple(k for k in KINDS[group] if k not in CONTROL_KINDS[group])
     kinds = tuple(k for k in KINDS[group] if not (group == "deverbal" and k == "verb"))
     counts = collections.Counter()
-    for source_id, number, text, tokens in scan.units:
+    for _source_id, _number, text, tokens in scan.units:
         unit = (step_kinds or {}).get(shapes_dev.sent_key_of(text), "sentence") if group == "steps" else "sentence"
         found = frame_hits(group, tokens, lex, unit in LABELED_UNITS)
         kind = next((k for k in PRIORITY[group] if k in kinds and k in found), None)

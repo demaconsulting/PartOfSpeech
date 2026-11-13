@@ -112,7 +112,7 @@ def add_sentence(counts, conflicts):
 
 def format_counts(label, counts):
     """`label key=int key=int ...`: the output line of a counter. `label` is a fixed name of a set (never data); every value is an integer."""
-    for key, value in counts.items():
+    for value in counts.values():
         if not isinstance(value, int) or isinstance(value, bool):
             raise TypeError("the counters print integers only")
     return label + " " + " ".join("%s=%d" % (key, value) for key, value in counts.items())

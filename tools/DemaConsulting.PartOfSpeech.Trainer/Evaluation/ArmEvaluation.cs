@@ -527,11 +527,12 @@ internal static class ArmEvaluation
         json.Open("calibration", '{');
         var technicalNames = ShapesDevCommand.TechnicalTranches.Select(t => new KeyValuePair<string, IReadOnlyList<Outcome>>(DevSets.ShapesDevNameOf(t), scores[t].Outcomes)).ToList();
         var allNames = ShapesDevCommand.AllSingleTranches.Select(t => new KeyValuePair<string, IReadOnlyList<Outcome>>(DevSets.ShapesDevNameOf(t), scores[t].Outcomes)).ToList();
-        WriteCalibrationScope(json, "technical", ShapesDevCalibration.Measure(technicalNames).Pooled);
+        var technicalCalibration = ShapesDevCalibration.Measure(technicalNames);
+        WriteCalibrationScope(json, "technical", technicalCalibration.Pooled);
         WriteCalibrationScope(json, "allSingle", ShapesDevCalibration.Measure(allNames).Pooled);
         json.Open("tranches", '{');
         var names = new[] { "deverbalHeads", "definedTerms", "stepLines", "clauseVerbs" };
-        var perTranche = ShapesDevCalibration.Measure(technicalNames).Tranches;
+        var perTranche = technicalCalibration.Tranches;
         for (var i = 0; i < names.Length; i++)
         {
             WriteCalibrationScope(json, names[i], perTranche[i]);

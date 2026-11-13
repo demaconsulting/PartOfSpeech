@@ -193,17 +193,18 @@ internal enum ShapesDevScoring
 }
 
 /// <summary>
-///     One kind of heading in the headings tranche: the role it has and the tag its judged word must carry.
+///     One kind of a shape: the role it has and the tag its judged word must carry (the kinds of the heading, deverbal-head, defined-term, step-line and
+///     clause-verb shapes).
 /// </summary>
-internal sealed class ShapesDevHeadingKind
+internal sealed class ShapesDevKind
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ShapesDevHeadingKind"/> class.
+    ///     Initializes a new instance of the <see cref="ShapesDevKind"/> class.
     /// </summary>
-    /// <param name="name">The kind as the <c>kind</c> comment spells it (<c>noun</c>, <c>imperative</c> or <c>proper</c>).</param>
+    /// <param name="name">The kind as the <c>kind</c> comment spells it (for example <c>noun</c>, <c>imperative</c> or <c>proper</c>).</param>
     /// <param name="role">The role of the items of the kind (<c>target</c> or <c>control</c>).</param>
     /// <param name="tag">The gold tag of the judged word of the kind.</param>
-    public ShapesDevHeadingKind(string name, string role, Upos tag)
+    public ShapesDevKind(string name, string role, Upos tag)
     {
         Name = name;
         Role = role;
@@ -244,7 +245,7 @@ internal sealed class ShapesDevShapeSpec
     /// <param name="targetTags">The gold tags a target may carry.</param>
     /// <param name="controlTags">The gold tags a control may carry.</param>
     /// <param name="kinds">The kinds of the shape (the headings and the four technical shapes; empty otherwise).</param>
-    public ShapesDevShapeSpec(string shape, ShapesDevTranche tranche, ShapesDevScoring scoring, IReadOnlyList<Upos> targetTags, IReadOnlyList<Upos> controlTags, IReadOnlyList<ShapesDevHeadingKind> kinds)
+    public ShapesDevShapeSpec(string shape, ShapesDevTranche tranche, ShapesDevScoring scoring, IReadOnlyList<Upos> targetTags, IReadOnlyList<Upos> controlTags, IReadOnlyList<ShapesDevKind> kinds)
     {
         Shape = shape;
         Tranche = tranche;
@@ -282,7 +283,7 @@ internal sealed class ShapesDevShapeSpec
     /// <summary>
     ///     Gets the kinds of the shape (the headings and the four technical shapes; empty otherwise).
     /// </summary>
-    public IReadOnlyList<ShapesDevHeadingKind> Kinds { get; }
+    public IReadOnlyList<ShapesDevKind> Kinds { get; }
 
     /// <summary>
     ///     Gets the label that stands for nouns in the scoring (<c>Noun</c> by class, <c>NOUN</c> by exact tag).
@@ -390,53 +391,53 @@ internal static class ShapesDevSets
     /// <summary>
     ///     The kinds of the heading shape: a noun heading and an imperative heading are targets, a proper-name heading is a control.
     /// </summary>
-    private static readonly IReadOnlyList<ShapesDevHeadingKind> HeadingKinds = new[]
+    private static readonly IReadOnlyList<ShapesDevKind> HeadingKinds = new[]
     {
-        new ShapesDevHeadingKind("noun", TargetRole, Upos.Noun),
-        new ShapesDevHeadingKind("imperative", TargetRole, Upos.Verb),
-        new ShapesDevHeadingKind("proper", ControlRole, Upos.Propn),
+        new ShapesDevKind("noun", TargetRole, Upos.Noun),
+        new ShapesDevKind("imperative", TargetRole, Upos.Verb),
+        new ShapesDevKind("proper", ControlRole, Upos.Propn),
     };
 
     /// <summary>
     ///     The kinds of the deverbal-head shape: a head after a predicate, after a number, an <c>-ing</c> head and every other noun head are targets (NOUN), the same spelling as a verb is a control (VERB).
     /// </summary>
-    private static readonly IReadOnlyList<ShapesDevHeadingKind> DeverbalKinds = new[]
+    private static readonly IReadOnlyList<ShapesDevKind> DeverbalKinds = new[]
     {
-        new ShapesDevHeadingKind("pred", TargetRole, Upos.Noun),
-        new ShapesDevHeadingKind("num", TargetRole, Upos.Noun),
-        new ShapesDevHeadingKind("ing", TargetRole, Upos.Noun),
-        new ShapesDevHeadingKind("other", TargetRole, Upos.Noun),
-        new ShapesDevHeadingKind("verb", ControlRole, Upos.Verb),
+        new ShapesDevKind("pred", TargetRole, Upos.Noun),
+        new ShapesDevKind("num", TargetRole, Upos.Noun),
+        new ShapesDevKind("ing", TargetRole, Upos.Noun),
+        new ShapesDevKind("other", TargetRole, Upos.Noun),
+        new ShapesDevKind("verb", ControlRole, Upos.Verb),
     };
 
     /// <summary>
     ///     The kinds of the defined-term shape: a capitalized common noun (NOUN) and a capitalized adjective (ADJ) are targets, a proper name (PROPN) is a control.
     /// </summary>
-    private static readonly IReadOnlyList<ShapesDevHeadingKind> TermKinds = new[]
+    private static readonly IReadOnlyList<ShapesDevKind> TermKinds = new[]
     {
-        new ShapesDevHeadingKind("noun", TargetRole, Upos.Noun),
-        new ShapesDevHeadingKind("adj", TargetRole, Upos.Adj),
-        new ShapesDevHeadingKind("proper", ControlRole, Upos.Propn),
+        new ShapesDevKind("noun", TargetRole, Upos.Noun),
+        new ShapesDevKind("adj", TargetRole, Upos.Adj),
+        new ShapesDevKind("proper", ControlRole, Upos.Propn),
     };
 
     /// <summary>
     ///     The kinds of the step-line shape: an imperative (VERB) is a target, a noun at the start of the line (NOUN) is a control.
     /// </summary>
-    private static readonly IReadOnlyList<ShapesDevHeadingKind> StepKinds = new[]
+    private static readonly IReadOnlyList<ShapesDevKind> StepKinds = new[]
     {
-        new ShapesDevHeadingKind("imperative", TargetRole, Upos.Verb),
-        new ShapesDevHeadingKind("noun", ControlRole, Upos.Noun),
+        new ShapesDevKind("imperative", TargetRole, Upos.Verb),
+        new ShapesDevKind("noun", ControlRole, Upos.Noun),
     };
 
     /// <summary>
     ///     The kinds of the clause-verb shape: a base-form verb of a main clause and of a subordinate clause (VERB) are targets, the same spelling as a noun (NOUN) or an adjective (ADJ) is a control.
     /// </summary>
-    private static readonly IReadOnlyList<ShapesDevHeadingKind> ClauseKinds = new[]
+    private static readonly IReadOnlyList<ShapesDevKind> ClauseKinds = new[]
     {
-        new ShapesDevHeadingKind("main", TargetRole, Upos.Verb),
-        new ShapesDevHeadingKind("sub", TargetRole, Upos.Verb),
-        new ShapesDevHeadingKind("noun", ControlRole, Upos.Noun),
-        new ShapesDevHeadingKind("adj", ControlRole, Upos.Adj),
+        new ShapesDevKind("main", TargetRole, Upos.Verb),
+        new ShapesDevKind("sub", TargetRole, Upos.Verb),
+        new ShapesDevKind("noun", ControlRole, Upos.Noun),
+        new ShapesDevKind("adj", ControlRole, Upos.Adj),
     };
 
     /// <summary>
@@ -452,10 +453,10 @@ internal static class ShapesDevSets
     /// </remarks>
     public static readonly IReadOnlyList<ShapesDevShapeSpec> TrancheShapes = new[]
     {
-        new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
+        new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevKind>()),
         new ShapesDevShapeSpec("heading-titlecase", ShapesDevTranche.Headings, ShapesDevScoring.Exact, new[] { Upos.Noun, Upos.Verb }, new[] { Upos.Propn }, HeadingKinds),
-        new ShapesDevShapeSpec("n-named-state", ShapesDevTranche.NamedState, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
-        new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead2, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
+        new ShapesDevShapeSpec("n-named-state", ShapesDevTranche.NamedState, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevKind>()),
+        new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead2, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevKind>()),
         new ShapesDevShapeSpec("heading-titlecase", ShapesDevTranche.Headings2, ShapesDevScoring.Exact, new[] { Upos.Noun, Upos.Verb }, new[] { Upos.Propn }, HeadingKinds),
         new ShapesDevShapeSpec("n-deverbal-head", ShapesDevTranche.DeverbalHeads, ShapesDevScoring.Class, new[] { Upos.Noun }, new[] { Upos.Verb }, DeverbalKinds),
         new ShapesDevShapeSpec("term-capitalized", ShapesDevTranche.DefinedTerms, ShapesDevScoring.Exact, new[] { Upos.Noun, Upos.Adj }, new[] { Upos.Propn }, TermKinds),
