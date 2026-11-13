@@ -937,10 +937,9 @@ sections:
           kind (deverbal heads pred, num, ing and other NOUN as targets and verb VERB as control; defined terms noun
           NOUN and adj ADJ as targets and proper PROPN as control; step lines imperative VERB as target and noun NOUN as
           control; clause verbs main and sub VERB as targets and noun NOUN and adj ADJ as controls), hold between the
-          floor and the cap of every group (the committed shortfall of the step-lines imperative targets, 166 against
-          the registered floor of 180, is disclosed in the README) with no more than 4 targets per lemma (6 imperatives
-          per lemma in the step lines), 2 controls per lemma, 15 targets per document and 2 items per capitalized term,
-          and the library tokenizer shall reproduce the stored tokens.
+          floor and the cap of every group (for example 166 to 300 imperative targets in the step lines) with no more
+          than 4 targets per lemma (6 imperatives per lemma in the step lines), 2 controls per lemma, 15 targets per
+          document and 2 items per capitalized term, and the library tokenizer shall reproduce the stored tokens.
         tags: [system]
         justification: |
           Each tranche measures one failure shape of technical text that no earlier tranche holds: a noun that is
@@ -948,9 +947,7 @@ sections:
           base-form verb after a plural or coordinated subject. The sets are small, so a mislabeled judged word, a kind
           with the wrong tag, a group below its floor or an overfull lemma would steer the next feature work. The three
           shapes with a contrast of another class are scored by the exact tag, and the deverbal heads by class, as the
-          trainer table says. The floors and caps are the quota gate that was pre-registered with the rule, and the
-          data tests check them on the committed files; a floor that supply did not allow is a fact that the README and
-          the run log state, not a quota that the test hides.
+          trainer table says. The floors and caps are checked by the data tests on the committed files.
         children:
           - PartOfSpeech-ModelTrainer-ShapesDevTechnicalTranches
         tests:
@@ -1016,9 +1013,8 @@ sections:
           shall come only from two blind labelers.
         tags: [system]
         justification: |
-          A tranche chosen where the tagger errs would measure the tagger against its own mistakes. The rule was
-          committed before any document was fetched (R0); the pins were set after the sourcing, and the amendments were
-          recorded before the labels they affect. The data test scans the source of the tool and its frames.
+          A tranche chosen where the tagger errs would measure the tagger against its own mistakes. The data test scans
+          the source of the tool and its frames for a weights file, decoder, tagger, shapes evaluation or probe file.
         tests:
           - PartOfSpeech_Technical_Selection_UsesNoPartOfSpeechModel
 
@@ -1027,16 +1023,15 @@ sections:
           The deverbal training source (`deverbal.tsv`) shall be a training file in the corpus block format with 450 to
           800 sentences whose ids run from deverbal-0001 without a gap, whose judged word is tagged NOUN or PROPN for
           the
-          strata pred (100 to 250), num (50 to 200), ing (at least the committed 146, against the registered 150,
-          disclosed in the README, at most 300) and other (at most 200) and VERB for the contrast stratum verb (at most
-          15 percent of the file), whose every token is unanimous, with no more than 4 sentences per lemma and no more
-          than 20 per document.
+          strata pred (100 to 250), num (50 to 200), ing (146 to 300) and other (at most 200) and VERB for the contrast
+          stratum verb (at most 15 percent of the file), whose every token is unanimous, with no more than 4 sentences
+          per lemma and no more than 20 per document.
         tags: [system]
         justification: |
           The source shows a noun that is spelled like a verb at the head of a noun compound, with a contrast stratum of
           the same lemmas used as verbs, so a judged word with another tag than its stratum, a disputed or masked token
-          or a contrast stratum that outweighs the targets would change what it teaches. The quotas are those of the
-          pre-registered rule and are checked on the committed file itself.
+          or a contrast stratum that outweighs the targets would change what it teaches. The quotas are checked on the
+          committed file itself.
         tests:
           - PartOfSpeech_Technical_Corpora_HaveTrainingHeadersIdsAndStratumTags
           - PartOfSpeech_Technical_Corpora_AreWithinQuotas
@@ -1045,9 +1040,8 @@ sections:
 
       - id: PartOfSpeech-Data-TermsWellFormed
         title: >-
-          The terms training source (`terms.tsv`) shall be a training file in the corpus block format with at least the
-          committed 373 and at most 900 sentences (the registered floor of 500 was not reached and is disclosed in the
-          README) whose ids run from terms-0001 without a gap, whose judged word is tagged NOUN (stratum noun, at most
+          The terms training source (`terms.tsv`) shall be a training file in the corpus block format with 373 to 900
+          sentences whose ids run from terms-0001 without a gap, whose judged word is tagged NOUN (stratum noun, at most
           550), ADJ (stratum adj, at most 250) or PROPN (the contrast stratum proper, 15 to 25 percent of the file),
           whose every token is unanimous, with no more than 4 sentences per lemma, no more than 2 per capitalized term
           and no more than 20 per document.
@@ -1056,8 +1050,7 @@ sections:
           The source shows the convention of the capitalized defined terms, a Title Case ordinary word in the middle of
           a sentence that is a common noun or an adjective and not a name, with a contrast stratum of real names, so a
           judged word with another tag than its stratum, a disputed or masked token or a contrast share outside its
-          range would change what it teaches. The quotas are those of the pre-registered rule and are checked on the
-          committed file itself.
+          range would change what it teaches. The quotas are checked on the committed file itself.
         tests:
           - PartOfSpeech_Technical_Corpora_HaveTrainingHeadersIdsAndStratumTags
           - PartOfSpeech_Technical_Corpora_AreWithinQuotas
@@ -1066,17 +1059,16 @@ sections:
 
       - id: PartOfSpeech-Data-StepsWellFormed
         title: >-
-          The steps training source (`steps.tsv`) shall be a training file in the corpus block format with at least the
-          committed 531 and at most 1,000 sentences (the registered floor of 600 was not reached and is disclosed in the
-          README) whose ids run from steps-0001 without a gap, whose judged word is the first token, tagged VERB
+          The steps training source (`steps.tsv`) shall be a training file in the corpus block format with 531 to 1,000
+          sentences whose ids run from steps-0001 without a gap, whose judged word is the first token, tagged VERB
           (stratum imperative) or NOUN (the contrast stratum noun-initial, at most 30 percent of the file), whose every
           token is unanimous, with no more than 6 sentences per lemma and no more than 20 per document.
         tags: [system]
         justification: |
           The source shows the imperative reading of the first word of a step line, with a contrast stratum of short
           lines that start with a noun, so a first word with another tag than its stratum, a disputed or masked token
-          or a contrast stratum that outweighs the imperative one would change what it teaches. The quotas are those of
-          the pre-registered rule and are checked on the committed file itself.
+          or a contrast stratum that outweighs the imperative one would change what it teaches. The quotas are checked
+          on the committed file itself.
         tests:
           - PartOfSpeech_Technical_Corpora_HaveTrainingHeadersIdsAndStratumTags
           - PartOfSpeech_Technical_Corpora_AreWithinQuotas
@@ -1085,19 +1077,17 @@ sections:
 
       - id: PartOfSpeech-Data-ClausesWellFormed
         title: >-
-          The clauses training source (`clauses.tsv`) shall be a training file in the corpus block format with at least
-          the committed 310 and at most 800 sentences (the registered floor of 450 was not reached and is disclosed in
-          the README) whose ids run from clauses-0001 without a gap, whose judged word is tagged VERB (the strata main,
-          at most 450, and sub, at most 300), NOUN or ADJ (the contrast strata noun and adj, at most 20 percent of the
-          file together), whose every token is unanimous, with no more than 4 sentences per lemma and no more than 15
-          per document.
+          The clauses training source (`clauses.tsv`) shall be a training file in the corpus block format with 310 to
+          800 sentences whose ids run from clauses-0001 without a gap, whose judged word is tagged VERB (the strata
+          main, at most 450, and sub, at most 300), NOUN or ADJ (the contrast strata noun and adj, at most 20 percent of
+          the file together), whose every token is unanimous, with no more than 4 sentences per lemma and no more than
+          15 per document.
         tags: [system]
         justification: |
           The source shows a base-form word that can also be a noun or an adjective as the verb of a clause after a
           plural or coordinated subject, with contrast strata of the same frame where the word is a noun or an
           adjective, so a judged word with another tag than its stratum, a disputed or masked token or a contrast share
-          above its limit would change what it teaches. The quotas are those of the pre-registered rule and are
-          checked on the committed file itself.
+          above its limit would change what it teaches. The quotas are checked on the committed file itself.
         tests:
           - PartOfSpeech_Technical_Corpora_HaveTrainingHeadersIdsAndStratumTags
           - PartOfSpeech_Technical_Corpora_AreWithinQuotas

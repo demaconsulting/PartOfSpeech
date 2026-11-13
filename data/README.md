@@ -38,7 +38,7 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
 masked); the fourth training source, `imperative/`, holds 11,946 tokens and is configured with weight 1, so it is part of the
 mix that trained the shipped weights. The fifth and seventh, `compound/` (`compound.tsv`, 14,692 tokens) and `compound-2.tsv` (20,745 tokens), are configured with weight 1 too (the pre-registered follow-up re-test selected them). The sixth and eighth, `headings/` (`headings.tsv`, 1,664 tokens) and `headings-2.tsv` (1,160 tokens), are configured
-with weight 0: they are committed training data that are not part of the shipped mix. The ninth to twelfth, `technical/` (`deverbal.tsv` 12,007 tokens, `terms.tsv` 7,472, `steps.tsv` 4,894 and `clauses.tsv` 5,870), are configured with weight 0 too. Total size of `data/`: 48.5 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
+with weight 0: they are committed training data that are not part of the shipped mix. The ninth to twelfth, `technical/` (`deverbal.tsv` 12,007 tokens, `terms.tsv` 7,472, `steps.tsv` 4,894 and `clauses.tsv` 5,870), are configured with weight 0 too. Total size of `data/`: 48.6 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
 WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.md` at the repository root.
 
 ## Rules of This Folder

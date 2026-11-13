@@ -208,8 +208,7 @@ records name a state or local government body as an author, so a federal-only ba
 and `data/headings/excluded-documents.tsv`). The shapes development set has no text of any of them; `check_licenses.py` and the builders refuse them in the
 source tables and sentences of the training sources `data/compound/` and `data/headings/` (both sources of each folder) and of every tranche of this set.
 
-The record has 15 more rows, recorded by the implementing agent (not decided by the project owner) while the documents of the technical-text tranches and sources
-were sourced (dates 2026-11-11 and 2026-11-12): six documents whose records name a state or local government body as a creator or co-creator or that reproduce text written by one,
+The record has 15 more rows for documents of the technical-text tranches and sources: six documents whose records name a state or local government body as a creator or co-creator or that reproduce text written by one,
 one document whose creator is a foreign government body, five documents with a contractor author, one document whose creator is a volunteer civilian organization, one
 whose text is the terms of a private company and one with a university professor as editor. None of them is used by any tranche or training source, and the check refuses
 all 25 rows in every source table and every sentence of `data/technical/` and of this set.

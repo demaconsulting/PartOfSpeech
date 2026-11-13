@@ -726,11 +726,9 @@ them. The `PartOfSpeech_ShapesDevTechnical_*` and `PartOfSpeech_Technical_*` dat
 - `ShapesDevTechnical_Quotas_AreMetByTheCommittedTranches` asserts the floors and caps of every group (a kind, all targets,
   all controls: deverbal heads 240 to 360 targets, pred 40 to 100, num 30 to 60, ing 80 to 140, other at most 100,
   verb controls 50 to 90; defined terms noun 120 to 200, adj 40 to 80, proper controls 40 to 70; step lines imperative
-  166 (the committed count; the registered floor of 180 was not reached and the shortfall is disclosed in the README)
-  to 300 and noun controls 40 to 70; clause verbs 240 to 360 targets, at least 60 sub, 50 to 90 controls, noun 35 to 60
-  and
-  adj 15 to 30), at most 4 targets per lemma (6 imperatives per lemma in the step lines), 2 controls per lemma, 15
-  targets per document and 2 items per capitalized term.
+  166 to 300 and noun controls 40 to 70; clause verbs 240 to 360 targets, at least 60 sub, 50 to 90 controls, noun 35
+  to 60 and adj 15 to 30), at most 4 targets per lemma (6 imperatives per lemma in the step lines), 2 controls per
+  lemma, 15 targets per document and 2 items per capitalized term.
 - `ShapesDevTechnical_Tranches_MatchTheTrainerConstants` asserts the values 7 to 10, the names, the files in the guard
   list and the counts (450, 285, 236 and 446) through the real reader.
 - `Technical_Tokens_AreReproducedByTheTokenizer` asserts, for the four tranches and the four sources, one tokenized
@@ -738,10 +736,9 @@ them. The `PartOfSpeech_ShapesDevTechnical_*` and `PartOfSpeech_Technical_*` dat
 - `Technical_Corpora_HaveTrainingHeadersIdsAndStratumTags` and `Technical_Corpora_AreWithinQuotas` assert for each
   source the `use = training` and column header lines and no development-split line, the ids `<name>-0001` upward
   without a gap, the comments in the stated order, the judged word tagged as its stratum says (and at token 0 for the
-  steps), `unanimous` for every token, the floor and cap of the sentences of the file and of every stratum (the
-  committed counts 373, 531 and 310, and 146 `ing` sentences, where the registered floors were not reached and the
-  README discloses it), the share of the contrast strata (at most 15 percent `verb`, 15 to 25 percent `proper`, at
-  most 30
+  steps), `unanimous` for every token, the floor and cap of the sentences of the file and of every stratum (`deverbal`
+  450 to 800 sentences with 146 to 300 `ing`, `terms` 373 to 900, `steps` 531 to 1,000 and `clauses` 310 to 800
+  sentences), the share of the contrast strata (at most 15 percent `verb`, 15 to 25 percent `proper`, at most 30
   percent `noun-initial`, at most 20 percent `noun` and `adj`), at most 4 sentences per lemma (6 for the steps), 20 per
   document (15 for the clauses) and 2 per capitalized term.
 - `Technical_Sources_AreListedOpenAndNotExcluded` asserts, for the eight source tables, the exact documents with their

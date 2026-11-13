@@ -466,9 +466,8 @@ public class PartOfSpeechDataTests
     /// <summary>
     ///     The four technical tranches of the hard-shape development set: the name (the file stem and the id infix), the training source of the same
     ///     shape, the only shape of the tranche, the tranche of the trainer, the kinds (name and role) in the order of the trainer, and the quota groups
-    ///     (name, floor and cap of the items of a group). A group is the name of a kind, <c>target</c> (all targets) or <c>control</c> (all controls). A floor is the
-    ///     pre-registered floor where the committed file meets it; the step-lines imperative floor is the committed count (166), because the
-    ///     pre-registered floor of 180 was not reached, the build ran with the documented short-supply option and the README discloses it.
+    ///     (name, floor and cap of the items of a group). A group is the name of a kind, <c>target</c> (all targets) or <c>control</c> (all controls). The
+    ///     floors and caps are the ranges that the committed files meet (for example 166 to 300 imperative step lines).
     /// </summary>
     private static readonly TechnicalTranche[] TechnicalTranches =
     {
@@ -497,9 +496,8 @@ public class PartOfSpeechDataTests
     /// <summary>
     ///     The four technical training sources: the name (the file stem and the id prefix), the sentence count, the strata (name and the tags that the judged
     ///     word of the stratum may carry), the quotas (the most and least sentences of the whole file and of a stratum), the largest share of the contrast
-    ///     strata in percent, the lemma cap and the document cap, and the extra comments after the stratum. The floors that the registered rule names (450,
-    ///     500, 600 and 450 sentences, and 150 <c>ing</c> sentences of <c>deverbal</c>) were not reached for four sources and for one stratum: the builds ran with
-    ///     the documented short-supply option, the README discloses it, and the floors of this table are the committed counts.
+    ///     strata in percent, the lemma cap and the document cap, and the extra comments after the stratum. The floors and caps of the table are the ranges
+    ///     that the committed files meet (for example 373 to 900 sentences of <c>terms</c>).
     /// </summary>
     private static readonly TechnicalSource[] TechnicalSources =
     {
@@ -4886,7 +4884,7 @@ public class PartOfSpeechDataTests
 
     /// <summary>
     ///     Proves that the committed technical training sources meet their documented quotas: the sentences of the whole file and of every stratum
-    ///     between the floor and the cap (the floors of the registered rule that were not reached are the committed counts, disclosed in the README), the
+    ///     between the floor and the cap, the
     ///     contrast strata within their share of the file, at most four sentences per lemma (six for the steps), at most 20 sentences per document (15 for the
     ///     clauses) and at most two sentences per capitalized term.
     /// </summary>

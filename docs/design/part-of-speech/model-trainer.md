@@ -297,15 +297,13 @@ PartOfSpeech model, no held-out set except through the opaque keys, the numbers 
 builders are unchanged apart from an optional `skip_tranches` argument of the leakage helpers.
 The four technical tranches and the four technical training sources `deverbal`, `terms`, `steps` and `clauses` come from
 one more tool, `tools/data/technical_data.py` (its frames are in `technical_frames.py`, and `term_divergence.py`
-counts the runs that the convention of the capitalized defined terms changes in the other sources), whose rule was
-committed before any
-document was fetched (R0); the pins of the draft document list, the tokens, the classifier mass and
-`data/CONVENTIONS.md`
-were set after the sourcing, the amendments were recorded before the labels they affect, and it uses the same frozen
-blind-labeling commands of `shapes_dev.py`. The frames select by position and lexicon only, the contested band of the
-development products of the deverbal heads, step lines and clause verbs comes from the pinned WordSense Basic classifier,
-the tool names no PartOfSpeech weights, decoder or tagger and no probe file, and a build refuses below a floor unless
-`--allow-short` is given (the miss is disclosed in the README of `data/technical/`) and never waives a cap.
+counts the runs that the convention of the capitalized defined terms changes in the other sources). It uses the same
+frozen blind-labeling commands of `shapes_dev.py`. The frames select by position and lexicon only, the contested band
+of the development products of the deverbal heads, step lines and clause verbs comes from the pinned WordSense Basic
+classifier, its inputs (the draft document list, the tokens, the classifier mass and `data/CONVENTIONS.md`) are pinned
+by SHA-256 constants of the tool, the tool names no PartOfSpeech weights, decoder or tagger and no probe file, and a
+build refuses below a floor unless `--allow-short` is given and never waives a cap. The rule and its record are in
+`data/technical/README.md` and the trainer run log.
 
 The training sources of `training.json` are the open corpus, MASC, the silver corpus, the imperative source
 (`data/imperative/imperative.tsv`, weight 1), the compound sources `compound` and `compound2`

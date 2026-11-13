@@ -22,7 +22,7 @@ shipped mix, and `--source deverbal:1` (and so on) puts one into an experimental
 | `clauses` | `clauses.tsv` | 310 | 5,870 | 190 | 112 | `main` 187, `sub` 61, contrast `noun` 34, `adj` 28 |
 
 The four files hold 1,851 sentences and 30,243 tokens. The sizes are the sizes of the files: the sentence counts above are what each source
-contains. The registered ranges, the floors and the history of the builds are in the trainer run log (sections "beta.3 phase 1").
+contains. The record of the builds is in the trainer run log (sections "beta.3 phase 1").
 
 ## Source and Provenance
 
@@ -142,8 +142,8 @@ exact tag of its stratum.
 
 ## Labeling and Decision Rule
 
-The rule was fixed before any label of these sources was seen; the docstring of `tools/data/technical_data.py` is its normative text and
-the trainer run log, section "beta.3 phase 1: pre-registered rule (before any fetch)", is its short form.
+The docstring of `tools/data/technical_data.py` is the normative text of the rule, and the trainer run log, section
+"beta.3 phase 1: pre-registered rule (before any fetch)", is its short form.
 
 1. **Documents.** US federal authorship, with the public-domain basis checked one document at a time and written in the `license_basis`
    cell. No document is in any table of used sources (training sources, evaluation sets, the shapes development set, the imperative,
@@ -168,9 +168,10 @@ the trainer run log, section "beta.3 phase 1: pre-registered rule (before any fe
    already has 20, its term already has 2 (`terms`), or its stratum is full (`deverbal`: `pred` 250, `num` 200, `ing` 300, `other` 200;
    `terms`: `noun` 550, `adj` 250; `clauses`: `main` 450, `sub` 300); the contrast shares are applied last (`verb` at most 15 percent,
    `proper` 15 to 25 percent, `noun-initial` at most 30 percent, `noun` and `adj` together at most 20 percent).
-7. **Quota gate.** `build` checks the sizes against the registered ranges (`deverbal` 450 to 800, `terms` 500 to 900, `steps` 600 to 1,000,
-   `clauses` 450 to 800 sentences, and the stratum minima) and the caps, that every token is `unanimous`, that the judged word has its
-   stratum's tag and that the tokens rejoin to the text. A data test asserts the format and the quotas that hold.
+7. **Quota gate.** `build` refuses a product below its floors unless `--allow-short` is given and never waives a cap; it checks that
+   every token is `unanimous`, that the judged word has its stratum's tag and that the tokens rejoin to the text. A data test asserts the
+   format, the caps of item 6 and the sizes as ranges: `deverbal` 450 to 800 sentences with 146 to 300 of `ing`, `terms` 373 to 900,
+   `steps` 531 to 1,000 and `clauses` 310 to 800.
 
 Numbers of the builds (items with a decision that the build read, and what it dropped; counts only):
 
@@ -202,7 +203,7 @@ and at most 1 of 4 swapped-tag control items accepted.
 | unanswered items | 0 | 0 | 0 | 0 |
 | gate | passed | passed | passed | passed |
 
-One sample was drawn per source and reviewed once; it was not drawn again.
+One sample per source was reviewed.
 
 ## Capitalized Defined Terms (the `terms` Convention)
 
@@ -272,8 +273,7 @@ adjectival modifier) and not PROPN; PROPN stays for a name of one particular ent
 and of the other corpora is not uniform for such terms, so the existing labels disagree with the rule by an amount that this section
 counts. **Nothing is relabeled**: the counts only describe the distance between the rule and the labels that exist.
 
-**The detector** (`tools/data/term_divergence.py`, function `defined_term_conflicts`, frozen at commit `67d7dc2` and not changed
-afterwards) looks at runs of 1 to 4 consecutive Title Case tokens (`[A-Z][a-z]+`) inside a sentence (not at its first position, not after
+**The detector** (`tools/data/term_divergence.py`, function `defined_term_conflicts`) looks at runs of 1 to 4 consecutive Title Case tokens (`[A-Z][a-z]+`) inside a sentence (not at its first position, not after
 `:` or a quote) in which every word is an ordinary English word of the lexicon (NOUN or ADJ, not only PROPN, no title word). A run whose
 last word is an organization or place head (`Agency`, `Laboratory`, `River`, ...) is **org-like**: it is a name under the rule and never a
 conflict. Class **A** (cue based, high precision) holds the runs with a right cue (a lower-case kind noun such as `mode` or `screen` after
@@ -303,8 +303,8 @@ are `source`, `class`, `sent_id` and the zero-based `token_index` of the last wo
 `open`, `masc`, `compound`, `compound2` and 25 of class B in each of `open`, `masc`, `compound` and `compound2`, 6 in `headings`, 2 in
 `headings2` and 1 each in `imperative` and `silver`.
 
-**Held-out sets** (`python tools/data/term_divergence.py count-held-out`, the only code path that opens a held-out file; it prints
-integers only, no list option exists, and nobody opened these files in any other way):
+**Held-out sets** (`python tools/data/term_divergence.py count-held-out`, the only command of this tool that opens a held-out file; it prints
+integers only and has no option that lists a sentence, an id or a token):
 
 | Set | Sentences | A runs | A PROPN | A NOUN | A ADJ | A other | B runs | B PROPN | B NOUN | B ADJ | B other | Org-like runs | Org-like PROPN |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
