@@ -12,7 +12,9 @@ them and states what they do not show.
 > plus the 900-sentence imperative source, plus the two compound sources) plus four more training sources of US
 > federal-government text for technical shapes (the **technical sources** `deverbal`, `terms`, `steps` and `clauses`,
 > weight 1 each; see the trainer run log, sections "beta.3 phase 1" and "beta.3 phase 2"). A pre-registered experiment
-> compared five candidate arms with the previous model on development data only (eight training seeds each) and
+> compared six arms (the baseline BASE, the previous model's configuration; four selectable candidate arms, TECH,
+> TECH-ND, TECH-T2 and TECH-W2; and one attribution-only arm, TECH-NT, which was reported but could never be selected)
+> on development data only (eight training seeds each) and
 > selected this one by a rule that was fixed before any arm was trained; its two thresholds were selected on
 > development data only (strict 0.90, unchanged, and balanced **0.75**, where the previous model had 0.80), a technical
 > operating point (0.99) was computed on development data, and the model was then evaluated on held-out data. **That is

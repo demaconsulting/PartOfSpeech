@@ -224,13 +224,13 @@ hold, as described above.
 The pre-registered experiment on the four technical training sources (`deverbal`, `terms`, `steps`,
 `clauses`) is in `beta3-tech/`; its rules, arms, guards, hashes and decision rule are the section
 "beta.3 phase 2 (E2)" of `RUN-LOG.md`, and its winner, TECH (all four sources at weight 1), is the shipped model. `arms.json` has six arms with eight seeds (`20260101` and `11` to `17`): BASE (the
-shipped configuration of the time, no option), TECH (all four sources at weight 1), TECH-NT (without `terms`; attribution only, it cannot be
+configuration without the four technical sources, no option), TECH (all four sources at weight 1), TECH-NT (without `terms`; attribution only, it cannot be
 selected), TECH-ND (without `deverbal`), TECH-T2 (`terms` at weight 2) and TECH-W2 (all four at weight 2); a source of an arm is a
 member `NAME: WEIGHT` and is passed as `--source NAME:WEIGHT`. `run_arms.ps1` is the driver of the follow-up with its own
 `arms.json`: resumable (a run is complete when its JSON exists), it **waits** while the PAUSE file exists (polling every 60 s;
 `-PollSeconds`), needs at least 6 GB free on C:, uses at most 8 threads and the priority `-Priority` (`BelowNormal`, or `Normal`
-when BelowNormal is starved), and writes only outside the repository (`-Out`, `-PyCache` and `-PauseFile` default to folders of the
-session that ran the experiment; a reproduction passes its own). `analyze_tech.py` runs the acceptance tests (BASE at the shipped
+when BelowNormal is starved), and writes only outside the repository (`-Out`, `-PyCache` and `-PauseFile` are the caller's own
+local paths on drive C:, see the commands below). `analyze_tech.py` runs the acceptance tests (BASE at the shipped
 seed equals the shipped weights and the 208 figures of `shipped_figures.json`, the eight BASE seeds equal the eight CMP2 weights of
 the follow-up, the training logs, the frozen development files and trainer commit, the frozen files, and that the sources share
 no document or sentence with the development tranches), then applies rule T (20 guards, a Welch interval below 0 on the
@@ -246,14 +246,30 @@ pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <run
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-ND -PyCache <your-cache-dir> -PauseFile <your-pause-file>
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-T2 -PyCache <your-cache-dir> -PauseFile <your-pause-file>
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-W2 -PyCache <your-cache-dir> -PauseFile <your-pause-file>
-python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py --runs <runs> --out <runs>\report.md --decision <runs>\decision.json
-python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py --arm-json <eval-arm result of the shipped weights> --out technical-operating-points.json
+python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py --runs <runs> --shipped-weights <weights.bin of the BASE checkout> --out <runs>\report.md --decision <runs>\decision.json
+python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py --arm-json <eval-arm result of the shipped weights> --out <output-folder>\technical-operating-points.json
 ```
 
+`-Out` (the folder of the run results and weights), `-PyCache` (a Python cache folder the caller may write to) and `-PauseFile`
+(the path of a pause file the caller controls; the driver waits while it exists) are local paths on drive C: that the caller
+chooses. The defaults inside the frozen driver are folders of the session of the machine that ran the experiment and are not
+meant for reuse. The other two path parameters of the driver, `-Repo` and `-Dll`, default to the checkout that contains the
+driver and to its Release build of the trainer, and are normally not passed.
+
 The analyzer needs all six arms at all eight seeds in one `<runs>` folder, and the working tree must be clean and at one commit
-while the runs are made (the result files record the commit and a dirty flag). The acceptance test "BASE equals the shipped weights"
-holds only while `training.json` and `weights.bin` are the pre-adoption state recorded in the run log; the shipped weights are
-the TECH model, so at the current state the test does not hold and the analyzer is run from the pre-adoption commit.
+while the runs are made (the result files record the commit and a dirty flag). The acceptance test "BASE equals the shipped
+weights" compares BASE at the shipped seed with the `weights.bin` given by `--shipped-weights` and checks the `training.json` of the
+checkout; both must be those of BASE (the configuration without the four technical sources). The shipped model is TECH, so the test
+cannot hold in a checkout of the shipped state: the analyzer runs in a checkout of commit `c56e091`, whose `training.json` and
+`weights.bin` are BASE's, with `--shipped-weights` naming that checkout's `weights.bin`.
+
+The independent audit `beta3-tech-audit/audit_runs.py` (not part of the frozen set; see its `README.md`) checks the run inputs
+fail-closed:
+
+```text
+python -B tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py --runs <runs>
+python -B tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py --selftest
+```
 
 ### Held-out evaluation
 
