@@ -34,13 +34,15 @@ them and states what they do not show.
 > harmful rate at its balanced point (see _Earlier Models_ below); the pre-registered primary measure (the technical
 > development tranches) favors the technical sources on the eight-seed means, which is development evidence on the
 > frames the data were built from and is not measured by any held-out set. The trainer run log has the complete
-> side-by-side tables, the gates and the decisions.
+> side-by-side tables, the gates and the decisions. **Owner decision (2026-11-13):** the owner decided to ship the
+> technical-mix model with the mixed held-out result and the fired shape-probe stop condition disclosed, and to keep the
+> balanced threshold at 0.75 (see _Owner Decision_ below).
 
 | File | What it is |
 | --- | --- |
 | [confidence-thresholds.md](confidence-thresholds.md) | Selection of the two recommended thresholds on development data only: curves, reliability table, the rule, the bootstrap intervals. It reads no held-out file, so it cannot show the held-out outcome: the strict point meets its target of 5.0 by the point estimates on the open test split (4.6; the 95% interval [2.4, 7.2] includes 5.0) and on gold v2 test (2.4), and exceeds it on the shape probe (9.3; see _Reading the Results_ below and [test-results.md](test-results.md)). |
 | [operating-points.json](operating-points.json) | The selection as data. The `evaluate` command refuses to read a held-out file without it. |
-| [technical-operating-points.json](technical-operating-points.json) | The technical operating point of the embedded model (rule `nv-technical-dev-v1`: the first threshold with at most 10 wrong answers in 1,000 answers and at least 25% of the judged words answered on the four technical development tranches) with the whole curve and the caveats, as data; the same table is the section "Technical text" of `confidence-thresholds.md`. Development data only; no held-out set carries these shapes, and `evaluate` does not read it. |
+| [technical-operating-points.json](technical-operating-points.json) | The technical operating point of the embedded model (rule `nv-technical-dev-v1`: the first threshold with at most 10 wrong answers in 1,000 answers and at least 25% of the judged words answered on the four technical development tranches) with the whole curve and the caveats, as data; the same table is the section "Technical text" of `confidence-thresholds.md`. Development data only; no held-out set carries these shapes, and `evaluate` does not read it. The point (0.99) is a measured fact that rests on a single wrong answer, not a recommended gate. |
 | [test-results.md](test-results.md) | The one held-out run of the embedded model, every set and view, and the hashes of the inputs. |
 | [test-results.json](test-results.json) | The same results as data; it is also the marker that the run was done. |
 | [disclosure.md](disclosure.md) | The one paragraph that both generated reports carry after their introduction (here: the disclosed sixth look). The `thresholds` and `evaluate` commands read it; a missing or blank file means no notice. It describes the embedded model and this evaluation only, so it must be revised or removed before an evaluation of a different model is rendered. |
@@ -137,7 +139,9 @@ What the held-out run shows, in plain terms (the tables are in [test-results.md]
   A consumer that can tolerate more errors, or that shows the tag to a person, can use the balanced threshold. The
   threshold applies to the confidence of the chosen tag; a token with a single allowed tag has confidence 1.0 and is not
   a decision. The threshold lowers the harmful rate of the answered tokens; it does not make the unanswered tokens
-  right.
+  right. A rule checker reaches a low error rate with the strict threshold together with `Margin`, `IsKnownWord` and a
+  domain glossary or `TokenConstraint`; a confident error on a term that the dictionary knows is best removed with the
+  glossary, not with a higher threshold.
 - **The UD treebank is lower than the open test split** after the convention mapping, and lower again against the raw
   treebank tags. The model is trained on other corpora with other conventions, and the treebank is web text, e-mail
   and reviews. The harmful rate on the treebank is in the same range as on the open test split.
@@ -157,7 +161,8 @@ These are findings of the run. They are reported and the model was not changed i
    are not a
    forecast for ordinary text, but short technical and imperative text is a use that the library targets: use the strict
    threshold there, or give the tagger a glossary or constraints for the words that matter. It is a limitation of the
-   model, and the thresholds and the model were not tuned on it.
+   model, and the thresholds and the model were not tuned on it. The owner decided on 2026-11-13 to ship the model with
+   this finding disclosed (see _Owner Decision_ below).
 2. **The two candidate-limit stop conditions are views, not model defects.** The protocol limits the share of tokens whose
    correct tag is outside the tagger's candidates to 1%. It fired for the eight `to` and `not` targets of gold v2 and for
    the raw view of the treebank. In both the cause is a convention difference, not an error of the tagger: see the next
@@ -184,6 +189,34 @@ These are findings of the run. They are reported and the model was not changed i
 
 The earlier model was also compared with earlier WordSense taggers outside this repository; that comparison is not part
 of this record, was not repeated for the embedded model and no figure of it is published here.
+
+## Owner Decision (2026-11-13)
+
+The owner reviewed the held-out record of the embedded technical-mix model (TECH) and decided three things. The decision
+changes no figure, rule, threshold or weight of this record; the held-out record is as produced.
+
+1. **TECH ships, with a mixed held-out result disclosed.** Against the previous (compound) model, harmful errors in
+   1,000 decisions at 0.45 and accuracy are, old to new: open test split 20.0 to 19.1 (88 to 84 errors), accuracy 96.73%
+   to 96.70%; gold v2 29.9 to 22.4 (28 to 21), 94.57% to 94.77%; shape probe 48.6 to 54.0 (27 to 30), 93.39% to 93.04%;
+   challenge set 0.0 to 0.0, 88.97% to 92.28%; treebank mapped 16.6 to 17.9 (73 to 79), 93.05% to 93.17%; treebank raw
+   18.2 to 19.5 (73 to 78), 89.09% to 89.19%. The 95% intervals of the two records overlap on every set, no paired
+   interval between the models was computed, and the figures come from one training seed, so no set establishes a
+   difference. **The shape-probe stop condition fired: 30 harmful errors at 0.45 against a limit of 28** (the previous
+   model had 27); the verb that starts an instruction went from 1 to 3 harmful errors and the noun in a measurement from
+   4 to 6. No rollback condition was registered and none was applied; the model was not tuned or reverted because of this
+   result. The owner also reviewed an off-repository regression check on consumer-supplied sentences. That check is kept
+   outside the repository; it was not used for selection, training or any rule, and neither its sentences nor its figures
+   are in this repository.
+2. **The balanced threshold stays at 0.75**, the value that the pre-registered procedure produced. On held-out data it
+   exceeds its target of 10 in 1,000 answered decisions on gold v2 (10.2, 9 harmful errors of 881 answered decisions;
+   interval [3.9, 17.5]) and on the shape probe (20.2, 10 of 495; interval [8.1, 32.3]); on the open test split it is 9.1
+   (interval [6.1, 12.2]). The strict threshold 0.90 also exceeds its target of 5 on the shape probe (9.3).
+3. **The technical operating point 0.99 is published as a measured fact, not as a recommended gate.** On the four
+   technical development tranches it is 1 wrong answer in 357 (2.8 in 1,000; 95% interval [0.5, 15.7] in 1,000) at a
+   coverage of 25.19%, and it rests on a single wrong answer. No held-out set carries those shapes. The recommended way
+   for a rule checker to reach a low error rate is the strict threshold together with `Margin`, `IsKnownWord` and a domain
+   glossary or `TokenConstraint`; a confident error on a term that the dictionary knows is best removed with the
+   glossary, not with a higher threshold.
 
 ## Earlier Models
 
