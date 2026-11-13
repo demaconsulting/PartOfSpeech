@@ -6411,6 +6411,223 @@ The earlier pool-stage misses (S2 DEV `noun + adj` 350 of 500, S4 DEV `main + su
 
 The branch `feature/beta3-shapes-data` was cut from `893344e` and later rebased onto `origin/main` `2f86616` (the library API addition `TaggedToken.IsKnownWord` and `Margin`, and the sysml2tools 0.3.0-beta.3 standard views); the one conflict was the `sourceFiles` line of `model-trainer.sysml` in the commit "trainer tranches, counts, calibration, tests and companion docs (C10)" (the deletion of the `description` attribute on `origin/main` was kept together with the longer `sourceFiles` line of the branch). The commits of this phase got new SHAs; the SHAs cited in the sections above are those of the branch before the rebase, which stays on the local branch `backup/beta3-pre-rebase`. Old to new: `294570d` to `3e710a9`, `67d7dc2` to `3caf9e4`, `e84053e` to `1d910b1`, `265cba8` to `dc76f23`, `32db8cd` to `ff9cc3a`, `e4b79a1` to `70c242c`, `68fd57c` to `c3f7090`, `4458dbe` to `0640b30`, `55a3140` to `463b1b9`, `59e7b2f` to `f976c64`, `1188e4c` to `57c5585`, `8d8dcd7` to `13568b4`, `f8edd27` to `aa916a6`, `cb3fdea` to `4e78008`, `4c6c0b9` to `db7d9be`. The rebased tree has the same `weights.bin` (SHA-256 `f384a877...`) and `train --check` is current.
 
+## beta.3 phase 2 (E2): pre-registered technical-mix experiment
+
+This section is written and committed **before any arm of the experiment is trained or evaluated**. The history shows the order: the trainer change **T0** (the confidence curve of the technical calibration in `eval-arm`, additive; a separate commit with its tests and companion documents) and then this commit (**E2, the pre-registration**), which adds the harness `beta3-tech/` and this text. A commit cannot contain its own SHA: the pull request description and the next commit record the SHA of this one. The code base is `main` at `b68307f` (PR #25, beta.3 phase 1) plus T0 plus this commit; the trainer used for the runs is built from the commit at which the driver is started (the driver records the commit and a dirty-tree flag in every result, and the analysis refuses a dirty or mixed-commit run set).
+
+What was run before this commit (all development data only; no arm was trained or evaluated, no held-out command was run, no consumer text was read, and nothing under a held-out path was opened):
+
+- `dotnet test` of the trainer tests and `pwsh ./build.ps1`, the self-tests of the two Python scripts, and the driver without training (a dry run that printed the commands of two arms, and the pause path with a temporary PAUSE file in a temporary folder, polled every second).
+- One `eval-arm` on the **shipped** `weights.bin` only (a baseline, not an arm): its result equals the earlier baseline file of phase 1 in every earlier member and value (compared as parsed values; only the new members `curve` and `nounVerbPooled`, the commit and the timing differ), so T0 changes nothing that was measured before. Its figures are the table of `beta3-tech/shipped_figures.json` (208 figures, pinned below).
+- One **hash-only determinism probe**: `train --seed 11 --features clauseCues --calibrate --output <scratch file outside the repository>` with the shipped configuration, no `--source` option. It is the BASE configuration at one seed, not an arm of the experiment, and only the SHA-256 of its weights file was read: `ad200b097ea153e58291a9875c406fd2ae1c3921f779c3b24205045578810598`, equal to the weights of the CMP2 run of seed 11 of the compound and heading follow-up. Training is deterministic and unchanged, so acceptance test a2 below is expected to hold for all eight seeds; the probe is disclosed because it is a training run.
+- The **technical curve of the shipped model** was first computed by the `eval-arm` above, so it was seen before this pre-registration was committed: at the confidence thresholds 0.90 and 0.95 it has the figures that phase 1 already recorded (733 answers with 86 wrong, 117.3 per 1,000; 595 answers with 34 wrong, 57.1 per 1,000), and its error first falls to at most 10 per 1,000 at the threshold 0.99 (2 wrong of 333 answers, 6.0 per 1,000), where it answers 23.5% of the judged words. The parameters of the technical operating point rule below (10 per 1,000 and the coverage floor of 25%) were fixed by the planning step of this task **before the curve existed** and are not changed because of it; with them the shipped model has **no** technical point (the rule says so below). This is a plain observation about an existing model on development data and selects nothing.
+
+### Attribution of the decisions of E2 (who decided what)
+
+The request that started this work fixed only the family of the experiment (the four weight-0 technical sources of PR #25 mixed into the shipped CMP2 model, judged by a pooled harmful rate and the defined-terms tranche, guarded against losses elsewhere), that calibration of the confidence is wanted (the strict gate should have an error of about 1%; the shipped model's technical calibration shows 117.3 wrong per 1,000 at 0.90 and above and 57.1 at 0.95 and above) and that nothing may be tuned on the consumer's text or on a held-out set. **Everything below is a decision of the implementing agent** (planning and development agents of this task), **not** a decision of the owner: the arms, the primary and the co-primary, the guards and their limits, the entry condition on the calibration, rule T, the noise model, the technical operating point rule and every number in them. Any change of a rule after this commit is put to the owner first and recorded as an amendment before the affected runs are repeated.
+
+### What the experiment asks
+
+Phase 1 built four technical training sources (`deverbal` 637 sentences, `terms` 373, `steps` 531, `clauses` 310; document-disjoint from every development and held-out set) and four development tranches (`deverbal-heads` S1, `defined-terms` S2, `step-lines` S3, `clause-verbs` S4) and scored the shipped model on the tranches: 197 harmful errors of 817 noun-verb decisions on S1, S3 and S4 pooled (241.1 per 1,000), 66 of 215 defined-term targets right (30.7%) and 8 confident wrong answers (at 0.95 and above) on S1, S3 and S4. The question of the experiment: does training on the four sources (all four, three of them, or a higher weight) lower the pooled harmful rate on S1, S3 and S4 together with the four compound and heading tranches, and raise the defined-terms accuracy, without breaking a guarded measure and without making the confidence worse calibrated? Nothing is adopted unless rule T selects an arm.
+
+### Arms and runs of E2
+
+All arms: the shipped `training.json` mix and settings (open x2, MASC, silver >= 80, imperative, compound and compound2 at weight 1; headings, headings2 and the four technical sources at weight 0), `--features clauseCues`, `--calibrate`; only `--source NAME:WEIGHT` options differ. F5 (`titleCaseLine`) is not used (nothing in the data of phase 1 asks for it), and no model feature changes.
+
+| Arm | Role | `--source` options added to the shipped mix | Weighted sentences added | Trained sentences |
+| --- | --- | --- | ---: | ---: |
+| **BASE** | baseline | none (exactly the shipped `training.json`; the shipped model) | 0 | 63,522 |
+| **TECH** | candidate | `deverbal:1 terms:1 steps:1 clauses:1` | 1,851 (637 + 373 + 531 + 310) | 65,373 |
+| **TECH-NT** | attribution only (cannot win) | `deverbal:1 steps:1 clauses:1` | 1,478 | 65,000 |
+| **TECH-ND** | candidate (leave one out) | `terms:1 steps:1 clauses:1` | 1,214 | 64,736 |
+| **TECH-T2** | candidate (dose) | `deverbal:1 terms:2 steps:1 clauses:1` | 2,224 | 65,746 |
+| **TECH-W2** | candidate (dose) | all four at `:2` | 3,702 | 67,224 |
+
+Why these arms. TECH is the arm of the request. **TECH-NT** leaves out `terms`: the 373 defined-term sentences face about 2,000 existing labels that call such runs PROPN (the divergence record above: 2,027 PROPN-tagged runs of classes A and B in the training sources, open 817, MASC 1,127, compound 40, compound2 33, headings 6, headings2 2, imperative 1, silver 1), so it tells whether a gain or a guard loss comes from `terms`; it is judged and reported but never selected. **TECH-ND** leaves out `deverbal`: its stratum `ing` is the largest harmful block on S1 (71 of the 197 pooled harmful errors, 49.3% accuracy), so the fewest-additions rule can drop the source if it adds nothing. **TECH-T2** doubles only `terms` and **TECH-W2** doubles all four: the dose arms test whether the conflicting labels dilute the defined-terms sentences (the cheapest honest substitute for the overlay arm below) and whether more weight helps (still +5.8% sentences). Eight seeds per arm, **20260101, 11, 12, 13, 14, 15, 16, 17** (the seeds of the follow-up), 48 runs.
+
+Not run, with the reasons recorded here and not hidden: **leave-out `clauses`** (S4 has 302 decisions, a baseline of 119 harmful per 1,000 and a detectable change of about 26 per 1,000, 22% of the baseline: underpowered); **leave-out `steps`** (S3 has 155 decisions, a detectable change of about 36 per 1,000, borderline; left out only to keep the experiment at six arms, a listed follow-up); **F5 variants** (not justified by anything measured); and the **overlay arm**, a relabel of the conflicting defined-term runs, which the plan considered and **dropped**: the file `data/technical/term-conflict-ids.tsv` has 156 rows, a seeded sample capped at 25 per source and class, not the conflict set; of its rows 92 lie in files that the offline tool `tools/data/corrections.py` can rewrite (open, MASC, silver) and 64 (compound, compound2, headings, headings2, imperative) do not; the 156 ids are 7.7% of the 2,027 conflict runs; class B is a broad position-and-lexicon selection that also contains work titles and names made of ordinary words for which PROPN may be right, so a faithful overlay needs a judgment for each of about 2,000 runs (nearly the labeling effort of phase 1); `corrections.py` is an offline rewrite of the corpus files and there is no training-time overlay (a new trainer option or per-arm corpus copies would be needed); and the 156 ids are 0.14% of the 1.09 million tokens of an epoch, undetectable at the power of this experiment. TECH-NT and TECH-T2 test the same question without new labeling. If TECH wins but the defined-terms error stays high, a full relabel of the conflicts with the two-model method of phase 1 becomes a separately pre-registered phase 3 (a follow-up, not decided here).
+
+**Mechanism.** The driver `beta3-tech/run_arms.ps1` is the driver of the compound and heading follow-up (`compound-heading-2/run_arms.ps1`) with five changes and nothing else, all described in its header: it reads its own `arms.json` (a source of an arm is a member `NAME: WEIGHT` and is passed as `--source NAME:WEIGHT`), it **waits** while the PAUSE file exists and polls it every 60 s (the follow-up exited with code 4; the check is made before the Release build, before every train, between train and `eval-arm` and before every `eval-arm`, one line is logged when a wait starts and one when it ends), the process priority is the parameter `-Priority` (BelowNormal by default; Normal only when BelowNormal is starved by other load, and then the choice is recorded in `driver.priority` of every result and in this log; the follow-up used the runner `imperative-data/runner-base.cmd` for that, which this driver does not need), the work folder is outside the repository (the defaults of `-Out`, `-PyCache` and `-PauseFile` are folders of the session that ran the experiment, not settings, as in the follow-up; a reproduction passes its own), and the documentation comment. It is resumable (a run is complete when `<arm>-s<seed>.json` exists, written atomically from `*.json.part`; a run without it is redone from scratch), runs one process at a time with `DOTNET_PROCESSOR_COUNT` capped at 8, requires 6 GB free on C: before every run, uses only paths on C:, and sets the Python environment variables that keep bytecode caches out of the repository. One invocation per arm, in this order, into one folder outside the repository (`<runs>`):
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms BASE
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-NT
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-ND
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-T2
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-W2
+```
+
+Each run is `train --seed S --features clauseCues --calibrate --output <arm>-sS.bin [--source NAME:WEIGHT ...]`, then the development-only command `eval-arm` (open dev, gold v2 dev, UD-EWT dev, the hard and standard tranches, the three tranches of the first generation, the two follow-up tranches and the four technical tranches; no held-out file). The repository must not be edited between the first run and the last (the `dirty` flag of every result is checked). Expected cost: about 25 s per run, 20 to 30 minutes in all at Normal priority; about 30 MB of artifacts (all `.bin` files are kept: the seed-20260101 `.bin` of the winner is needed for the byte-identity check of the adoption). A failed run without a result is repeated; **no run is repeated or replaced because of its result, and no arm is dropped.**
+
+### Frozen inputs of E2 (hashes; the analysis refuses to run if one differs)
+
+Text files are hashed with CRLF turned into LF, the weights and the development files as bytes. The analysis script cannot hold its own hash, so the hashes of the two scripts and the driver are recorded here.
+
+| File | SHA-256 |
+| --- | --- |
+| `beta3-tech/run_arms.ps1` (driver) | `3fac2cb1961642ca34404d6418447f88e29a3b5709861f9ca1b1cde844cf1135` |
+| `beta3-tech/arms.json` | `de2b4da2d52a5067bbed20e8c3b03c99372c259684eecdd0b4223478834c60c0` |
+| `beta3-tech/shipped_figures.json` (the 208 figures of the shipped model, acceptance test a) | `a29c890d9a053e4aaf486d8e41ecef7c19f035a6891279b91f8c8e0caeb8582c` |
+| `beta3-tech/analyze_tech.py` (the analysis script) | `5c0edebf2cd22dffd0928331377b9961ae663a6ec5d04006ab92cb37a0002f6d` |
+| `beta3-tech/technical_points.py` (the technical operating point script; not an input of the analysis) | `7079184a31550b2a0d9a7f6bc0ea05a11653772c6b56e909e1b94ffe227084b9` |
+| `context-features/analyze_arms.py` (imported for `welch_diff` only; hash checked before the import) | `3d52825384b440c5786e1b241fc6f814e4e47a63f155414e0d6450107d33e494` |
+| `training.json` (the shipped configuration, before any adoption) | `7ecdcaec1ebf2511a17f0445dbd2e5e27df849a75572031f748e14dab0c9fd6c` |
+| `src/DemaConsulting.PartOfSpeech/Resources/weights.bin` (the shipped model; bytes) | `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad` |
+| `data/technical/deverbal.tsv` (637) | `e8f8484c0f27fe47d1df08cfa71fd3340ebed71feb5b0877398b0c7d562b886b` |
+| `data/technical/deverbal-sources.tsv` | `fe5a67dbdc84e08e6a1c5dce04dd509132fcfb472430db09f272e937a3e3c4e7` |
+| `data/technical/terms.tsv` (373) | `12b8e37a6fab492e50457cfd6985388597ae3879242b4172aa778dfaca089a91` |
+| `data/technical/terms-sources.tsv` | `6f374876a2fb9134badb4eef434ca4a305bdcf562635e8a724d5730fb33c1e3b` |
+| `data/technical/steps.tsv` (531) | `ca54a39f9ae7a1d964662d46533cba1a4b0754553c1e3b5b18f49f386e8fb519` |
+| `data/technical/steps-sources.tsv` | `bd7356734882906cb4d8d6d3710fcaafc7da405b78220c48f87cb40b91a6ae80` |
+| `data/technical/clauses.tsv` (310) | `b28ae036f51e49417c43d750aa3bfc809175e69ab86d36f0e81078be3360cef2` |
+| `data/technical/clauses-sources.tsv` | `2617694c907c45c7f9fb9b2eb9c942347aaf61b4f761d20c3a4de3fdac9b1e3e` |
+| `data/technical/term-conflict-ids.tsv` | `515276862c7205e931f454d37326269b1dfb0dbc6416d69bfa59f428be532f77` |
+| `data/eval/shapes-dev/deverbal-heads-sources.tsv` | `a39dec4fc0fffd822b2ecbdb7244f34a99090bcf121f1c5e83fe146f29636da2` |
+| `data/eval/shapes-dev/deverbal-heads-leakage-report.tsv` | `c366505d3f19dad21d2b0893e9d34fa14dde2ad810f47d441f45ee5692af1619` |
+| `data/eval/shapes-dev/defined-terms-sources.tsv` | `807f556b238eb3407a2bf115aa095361d643bb338f28e358a5336c34b053aef1` |
+| `data/eval/shapes-dev/defined-terms-leakage-report.tsv` | `06037c354b0d37115a3fe4a1cb455ea634598daccdd55b70b4b6cf6228042ea7` |
+| `data/eval/shapes-dev/step-lines-sources.tsv` | `64254a5da71cfbbe1ac7d2b54db513803d20e560e92e00957fdae20973840ae4` |
+| `data/eval/shapes-dev/step-lines-leakage-report.tsv` | `a34ee813186ce026fac9012a2962dd49c71305f7f62f44e6fb2cb80c64fa3223` |
+| `data/eval/shapes-dev/clause-verbs-sources.tsv` | `505da20c8ad9d46854e6b04fa70f73676e3b88ff9d42871e12e823212dc8decd` |
+| `data/eval/shapes-dev/clause-verbs-leakage-report.tsv` | `25d45235f1db02300f5ea1c7cb7d501852f0e4f54686a700309ca46fbc9c81da` |
+| `data/leakage-report.tsv` | `3fc2362ef40e422b10fc8ea50b27ddf542b9830ff788beaa8adf56204eb0747b` |
+| `data/training-leakage-report.tsv` | `4919d20dcb3a792863729e73172781a1ad444232fd38857be2ed1c1e7ab85f7b` |
+| `data/CONVENTIONS.md` | `42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2` |
+| `data/compound/compound.tsv` (742) | `eb8c4708ba95fb370c885110e10eda0f1d826c5922876bd66e69389894bd5e3b` |
+| `data/compound/sources.tsv` | `8b861dd3ff2d5a3fd5e741f5fe2a906807f99afa562d7e294d4011d93ef15e02` |
+| `data/compound/compound-2.tsv` (1,100) | `2a9a98492afb1248623b50111ca62d8abd57e4569b1a5e52b3cff544bc0746cc` |
+| `data/compound/compound-2-sources.tsv` | `c979850dd60921d209b7d918d953b53bee7af05f736a77896637665ace823cf4` |
+
+The fourteen development files that every run scores (the per-run JSON `inputs.*Sha256`, which must agree in all 48 runs and equal these values; the thirteen of them in the repository are also hashed on disk):
+
+| `inputs` key | File | SHA-256 |
+| --- | --- | --- |
+| `devSha256` | `data/eval/shapes-dev/dev.tsv` | `bbc94e42693d92a7e948598d5ea8a2c58274d3e4e5e6e4d0ed7d8a5c10963290` |
+| `hardSha256` | `data/eval/shapes-dev/hard.tsv` | `c041ae3d8b4b948326d002176bdffa0e5eb2ac0a6fe7d12daed7c3d289db8b22` |
+| `udDevSha256` | `tools/data/cache/ud-ewt/ud_dev.tsv` (cache, not in the repository) | `0fc0b4a371ef6d0437e01e396762cdb600d0d7ff0d725ead00ac9f3c41f82037` |
+| `openDevSha256` | `data/open/dev.tsv` | `8caa822515cee179093f068ff4ea7fa62714830d4c50de696bd4403037fc05c7` |
+| `goldDevSha256` | `data/eval/gold-v2/dev.tsv` | `ffb2f3afd3460523656f5528a66094bad507982b15eb2b4a9341cdb78ff117f5` |
+| `compoundHeadSha256` | `data/eval/shapes-dev/compound-head.tsv` | `537e0be3923f585b8f084de4e88f4064624e4f5dc484f84ccd303fed3db924f5` |
+| `headingsSha256` | `data/eval/shapes-dev/headings.tsv` | `45a62a71837f02d1e76f0ad55a71a1770cb628ea8ca8765c0d4583f49b9da72a` |
+| `namedStateSha256` | `data/eval/shapes-dev/named-state.tsv` | `e08472387630368b7fb3fbaa5cd7b6187d0760608c93b55f19250c98f2d06d6e` |
+| `compoundHead2Sha256` | `data/eval/shapes-dev/compound-head-2.tsv` | `ffa7e5aef0cff05e6ef9227bce3544e4372109768685fcff8c0395e18220c527` |
+| `headings2Sha256` | `data/eval/shapes-dev/headings-2.tsv` | `6c84419851bceebcb825fff6bc530fc3a3dc5bc5306da152bda349db00c4b4a7` |
+| `deverbalHeadsSha256` | `data/eval/shapes-dev/deverbal-heads.tsv` (S1, 360 targets, 90 controls) | `6159099f5fc59187f9486070439e552358abf19fb95742e20c54dbcf17400c5a` |
+| `definedTermsSha256` | `data/eval/shapes-dev/defined-terms.tsv` (S2, 215 targets, 70 controls) | `6bca83a8e63589152cf3a37661e328a187323612b06344c6c402921f1c2478c8` |
+| `stepLinesSha256` | `data/eval/shapes-dev/step-lines.tsv` (S3, 166 targets, 70 controls) | `c06bc3138b92cd3baafec1a9a210110daafee69846dd83c77ba70b4fc09f4ad8` |
+| `clauseVerbsSha256` | `data/eval/shapes-dev/clause-verbs.tsv` (S4, 356 targets, 90 controls) | `d35e7a259140614d6f0057fe7f3fd5d545cdf478971ac7f77088dc2789db4e06` |
+
+The weights SHA-256 of the eight CMP2 runs of the follow-up, which the eight BASE runs must reproduce (acceptance test a2): seed 20260101 `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad` (the shipped weights), 11 `ad200b09...0598`, 12 `48b90cb8...5c6a`, 13 `e7e171ba...7b86`, 14 `c1a40e27...e5fa`, 15 `de33b5bc...a776`, 16 `eadae0d6...3d2a`, 17 `93476821...58b0` (the full values are in `analyze_tech.py`).
+
+### Metrics of E2 and where each comes from
+
+A harmful error is a swapped noun-verb class at confidence >= 0.45 on a noun-verb decision; rates are per 1,000 decisions. Every figure is read from the per-run `eval-arm` JSON; the analysis re-derives the figures it uses from the counts and **a difference is an invalid run** (no selection). All figures are means over the eight seeds unless stated. The shipped model's values are the table `shipped_figures.json`.
+
+| Role | Quantity (shipped model) | JSON path (per run) |
+| --- | --- | --- |
+| **Primary** | pooled harmful per 1,000 decisions over S1, S3, S4 and the four compound and heading tranches: 1000 x (harmful of `deverbalHeads`, `stepLines`, `clauseVerbs` + harmful of `compoundHead`, `compoundHead2`, `headings`, `headings2`) / (their decisions); shipped 289 of 1,287 = 224.55. Lower is better. | counts: `shapesTechnical.{deverbalHeads,stepLines,clauseVerbs}.shape.{decisions,harmful}` and `shapesFollowup.{compoundHead,compoundHead2,headings,headings2}.shape.{decisions,harmful}`; the pooled blocks `shapesTechnical.pooledTechnical` and `shapesFollowup.pooledPrimary` must be the sums of their tranches |
+| **Co-primary (S2)** | defined-terms target accuracy = 100 x `targetCorrect` / `targetItems`; shipped 66 of 215 = 30.7%. Higher is better. | `shapesTechnical.termError.{targetCorrect,targetItems}` (checked against `definedTerms.shape.targetAccuracy`) |
+| **Calibration** | wrong answers per 1,000 answers at confidence >= 0.90 and >= 0.95 over the judged words (targets and controls) of the four technical tranches, 1,417 words; shipped 117.3 (86 of 733) and 57.1 (34 of 595) | `shapesTechnical.calibration.technical.thresholds.{0,1}.{answers,wrong,errorPer1k}`; checked against the curve rows `curve.9` and `curve.10` |
+| Guards | see the next table | |
+
+Reported, not gated: every tranche's accuracy, harmful rate, wrong at >= 0.90 and >= 0.95 and control accuracy, the per-kind rows (S1 `pred`, `num`, `ing`, `other`; S2 `noun`, `adj`, `proper`; S3 `imperative`, `noun`; S4 `main`, `sub`; kept in every run JSON), the reliability bins, temperature, rows, bytes, training seconds, the Welch interval of every arm against BASE for every guarded metric, the pairwise contrasts TECH-NT, TECH-ND, TECH-T2 and TECH-W2 against TECH on the primary, the S2 accuracy and the two calibration figures, and the per-seed table. The all-nine-tranche calibration (`allSingle`) is reported only.
+
+### Guards (each arm against the BASE eight-seed mean; every comparison has a tolerance of 1e-9)
+
+The limit of a guard is the larger of 1.5 times the seed standard deviation of the shipped configuration (from the eight CMP2 runs of the follow-up, which are the same configuration as BASE) and the limit of the follow-up, rounded as shown; the measures that did not exist before use the noise model below (c = 0.3). The values are fixed now.
+
+| Guard | Limit against the BASE mean | Derivation |
+| --- | --- | --- |
+| Old pool (compound-head, compound-head-2, headings, headings-2) harmful per 1,000 (470 decisions) | <= +25 | 1.5 x 16.3 = 24.4; stops technical gains from hiding an old-tranche loss |
+| S1 `deverbal-heads` harmful per 1,000 | <= +25 | 1.5 x (0.3 x 1000 / sqrt(360)) = 23.7 |
+| S3 `step-lines` harmful per 1,000 | <= +35 | 1.5 x 23.6 |
+| S4 `clause-verbs` harmful per 1,000 | <= +25 | 1.5 x 17.3 = 26, rounded to 25 |
+| Hard tranche harmful per 1,000 | <= +22 | 1.5 x 14.5 = 21.7 (the follow-up limit was +10) |
+| Standard tranche harmful per 1,000 | <= +5 | the follow-up limit (1.5 x 2.3 = 3.5) |
+| Open dev harmful per 1,000 | <= +1.5 | the follow-up limit (1.5 x 0.99) |
+| Open dev accuracy | >= -0.10 points | 1.5 x 0.04, floored at 0.10 (open dev holds 93 to 102 PROPN-labeled defined-term-like runs, the S2 conflict surface) |
+| Gold v2 dev harmful per 1,000 | <= +4.5 | 1.5 x 2.73 = 4.1 |
+| Gold v2 dev accuracy | >= -0.25 points | 1.5 x 0.14 = 0.21 |
+| UD-EWT dev harmful per 1,000 | <= +1.5 | the follow-up limit |
+| UD-EWT dev accuracy | >= -0.15 points | the follow-up limit |
+| `n-named-state` target accuracy | >= -3 points | the follow-up limit |
+| Imperative headings harmful per 1,000 | <= +25 | the follow-up limit |
+| Technical controls (320 items) pooled accuracy | >= -3 points | new measure, about 10 items, no seed history |
+| S2 `proper` control accuracy (70 items; shipped 95.7%) | >= -5 points | new; a regression of PROPN is the S2 risk (3.5 items) |
+| Deflated weights bytes | <= 1.5 x BASE | the follow-up limit |
+| Throughput | >= 150,000 tokens/s (absolute); the median over the seeds of each run's median | the follow-up limit |
+| Calibration at >= 0.90 | mean wrong per 1,000 <= the BASE mean | the entry condition on the confidence: it must not get worse |
+| Calibration at >= 0.95 | mean wrong per 1,000 <= the BASE mean | as above |
+
+The calibration guards are non-inferiority conditions, **not** a target of 1%: no arm is required to reach any error rate. **Throughput re-measure rule.** The throughput guard is timing-sensitive. If an arm fails it, only that guard is re-measured: `eval-arm` is run again on the saved `.bin` files of that arm when the machine is idle (no training), the `throughput` member of each run JSON is replaced by the re-measure and the replacement is recorded here; the re-measure replaces the first value (the better of the two is not used) and the floor is never loosened.
+
+### Rule T (fixed now; applied exactly as written; nothing is tuned afterwards)
+
+1. Invalid or missing runs or a failed acceptance test: stop (exit code 1), no decision file.
+2. **Candidates** = TECH, TECH-ND, TECH-T2, TECH-W2. TECH-NT is attribution only: it is reported and never selected, never part of Q and never sets m.
+3. **Q** = the candidates that pass **every** guard and whose Welch 95% interval (Welch-Satterthwaite degrees of freedom) of (arm - BASE) has an upper bound **strictly below 0 on the primary** **and** a lower bound **strictly above 0 on the S2 target accuracy** (a significant gain on both). If Q is empty, **BASE stays** (exit code 0, the decision file says BASE stays).
+4. **m** = the lowest primary mean in Q. **S** = the arms of Q within 10% of m (primary <= 1.10 x m).
+5. The **winner** is the arm of S with the **fewest weighted added sentences** (TECH-ND 1,214 < TECH 1,851 < TECH-T2 2,224 < TECH-W2 3,702); ties: the lowest primary, then the order of `arms.json`.
+6. Nothing is applied afterwards. The verdict is printed by the script.
+
+### Noise model and power
+
+Seeds measure **training noise only**: the interval of an arm against BASE is a Welch interval of eight against eight seeds. It does not contain item-sampling noise (which items were drawn), there is no multiplicity correction for four candidates against one baseline, and the tranches are the frames the sources were built from, so a gain is development evidence, not a held-out figure. The standard deviation of a rate over seeds is modeled as c x 1000 / sqrt(N) with c between 0.2 and 0.35 and N the decisions; with eight seeds the standard error of a difference is half a standard deviation and the smallest difference detected with 80% power at a 95% interval is about 1.5 standard deviations. The standard deviations of the old measures are those of the eight CMP2 runs of the follow-up (pooled follow-up primary 193.1 +/- 16.3 per 1,000, hard 159.7 +/- 14.5, standard 12.1 +/- 2.3, open harmful 20.64 +/- 0.99, open accuracy 96.703 +/- 0.040, UD harmful 19.72 +/- 0.62, UD accuracy 92.962 +/- 0.033, gold harmful 18.4 +/- 2.7, gold accuracy 95.315 +/- 0.143, named-state 92.9 +/- 1.25, imperative headings 47.9 +/- 13.9). No seed data on the technical tranches exist yet (an assumption: the analysis reports BASE's actual spread, and the rule is applied as written whatever it is).
+
+| Measure | Decisions or items | Shipped value | Assumed seed SD | Smallest detectable change | Share of the shipped value |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **Primary** (pooled harmful) | 1,287 | 224.6 per 1,000 | 9 to 17 per 1,000 | 13 to 26 per 1,000 | 6 to 12% |
+| S1 harmful | 360 | 288.9 per 1,000 | 15.8 | 24 | 8% |
+| S3 harmful | 155 | 367.7 per 1,000 | 24 | 36 | 10% |
+| S4 harmful | 302 | 119.2 per 1,000 | 17 | 26 | 22% |
+| **S2 accuracy** (co-primary) | 215 targets | 30.7% | 2 to 4 points | 3 to 6 points | 10 to 20% |
+| Calibration at >= 0.90 / >= 0.95 | 733 / 595 answers | 117.3 / 57.1 per 1,000 | 8 to 12 / 6 to 10 | 12 to 18 / 9 to 15 | 10 to 15% / 16 to 26% |
+
+The pooled primary is detectable at 6 to 12% of its value; single technical tranches only at 8 to 22%; S2 is the best powered and is where the largest effect is expected. The leave-one-out arms are contrasted with TECH at the same power, so the small effects of S3 and S4 are not separable; this is why only S2 and S1 have leave-out arms.
+
+### Acceptance tests of E2 (run before the rule is applied; a failure stops without a selection)
+
+1. **BASE seed 20260101 is the shipped model** (a): its weights SHA-256 (and its `.bin`) equals that of `weights.bin` (see the table of frozen inputs), and each of the 208 figures of `shipped_figures.json` (the shipped model on every development measure, including the technical tranches, the two thresholds and the whole curve) is reproduced after rounding to the decimals of the table.
+2. **The eight BASE runs are the eight CMP2 runs of the follow-up** (a2): the weights SHA-256 of every BASE seed equals the pinned value. The hash-only probe above confirmed seed 11. If a2 failed for some seed other than 20260101 while a holds, a2 would become report-only and the cause would be recorded here before the rule is applied (training would be non-deterministic for that seed, which does not change a); a itself is never waived.
+3. **The training logs** (b): the line `Training on N sentences (...), sources=...` of every run: BASE lists exactly `open:2,masc:1,silver:1,imperative:1,compound:1,compound2:1` and trained 63,522 sentences; every other arm lists exactly that mix plus its own sources at its own weights and trained exactly the weighted sentences of those sources (637, 373, 531, 310 times the weight) more than the BASE run of the same seed; each result's `groups`, `features` and `sources` agree with `arms.json`.
+4. **The inputs** (c): the fourteen `inputs.*Sha256` of all 48 runs agree and equal the frozen values; all runs name one trainer commit and none was made from a dirty tree.
+5. **Frozen files** (d): every file of the table above has its SHA-256 (the development files and the pre-adoption state included).
+6. **Leakage re-derived** (e): from the pinned files, no document id (`# source_id`) and no exact sentence (`# text`) is shared between any of the six training sources of the mix (`deverbal`, `terms`, `steps`, `clauses`, `compound`, `compound2`) and any of the nine single-shape development tranches (54 pairs; checked at this commit: no overlap). This is independent of `tools/data/check_leakage.py` and its reports (the reports are pinned too). It is a statement about documents and sentences only: **about half of the judged lemmas of each development tranche also occur in the training source of its shape** (S1 54.9% of the items, S2 44.9%, S3 50.4%, S4 51.8%), by design of frame-based sources, as in the compound sources of the follow-up, so a development gain may partly be a gain on the same ambiguous words in other documents; it is disclosed here and in the adoption record, and nothing prevents it.
+
+### The analysis script of E2 and its self-test
+
+`beta3-tech/analyze_tech.py` applies the rule mechanically (`--runs <runs> --out <report.md> --decision <decision.json>`; the report has the acceptance table, the selection table, the Welch intervals, the pairwise intervals, the per-seed table and the full tables). Its only use of the frozen `context-features/analyze_arms.py` is `welch_diff`, loaded by path after its SHA-256 has been checked. `--selftest` (about 100 s) checks the t quantile against published values, the Welch case by hand, every one of the 20 guards exactly at its limit and just beyond it (the old-pool and the three tranche guards by their own counts), the 10% window (exactly 1.10 x m inside, 1.105 x outside, the window taken over Q only), the preference order (fewest weighted sentences, a fewer-sentence arm beating a lower primary, ties by the lowest primary and then the order of `arms.json`), the attribution arm never entering Q or setting m, the S2 requirement (a low primary without an S2 gain is not in Q), the strict inequalities of both interval conditions (an upper bound of exactly 0 or +1e-9 on the primary and a lower bound of exactly 0 or -1e-9 on S2 do not qualify), the nothing-qualifies and BASE-stays cases (exit code 0 with a decision file that says BASE stays), each acceptance test failing when its condition is broken (shipped weights, a shipped figure, a BASE seed hash, an added sentence count, a dose that the log does not show, BASE listing a technical source, the mix, the BASE sentence count, an input hash that differs, is not the frozen value or is absent, a second trainer commit, a dirty run, a missing log, a leakage overlap in documents or in sentences), invalid runs (wrong feature groups or sources, a pooled block that is not the sum of its tranches, a primary or rate that does not match the counts, an S2 row that does not match, a calibration rate that does not match its counts, a curve row that differs from the threshold row, an absent curve or block or metric, a wrong seed field), the real shipped figures (all 208 are enforced one by one, and the table is checked against itself: the pooled counts are the sums of the tranches, the curve rows at 0.90 and 0.95 are the threshold rows, 733/86 and 595/34, the 320 controls), the real frozen hashes, the sentence counts of the four data files, the leakage of the real files, the seeds, the arms, the weighted additions and the exit codes. A mutation check (36 changes of a limit, the window, the tolerance, a strict inequality, the preference order, the entry to Q, the S2 requirement, a sentence count, a dose, a re-derivation, an acceptance test or a frozen hash, applied to the source in memory) first left two changes undetected (the strict comparison of the window, and a primary that leaves out the old pool); two checks were added (a window at 110 + 5e-10 and 110 + 5e-9, and a primary of tranches with different rates) and the check was repeated: every change then made the self-test fail. The same check on `technical_points.py` (15 changes: the two comparisons, both constants, the grid, the order of the search, the coverage floor in the point and in the minimum, the tie rule, the Wilson interval, the harmful rate and three input checks) made its self-test fail every time.
+
+`beta3-tech/technical_points.py` (self-test included) turns the `eval-arm` result of the weights that ship into the technical operating point of the next section; it is not an input of the experiment's decision.
+
+### Threshold procedure for the model that ships (win or not)
+
+**General points (only when an arm wins).** Unchanged: the rule `nv-pooled-dev-v1` of the `thresholds` command on the open dev and gold v2 dev sets: the grid 0.45 to 0.95 in steps of 0.05 and then 0.96 to 0.99, the first ascending threshold that meets the strict targets (at most 5.0 harmful errors per 1,000 answered noun-verb decisions and a coverage of at least 60%) and the balanced targets (at most 10.0 and at least 85%), `none` when no threshold meets them; targets and floors are not relaxed. `thresholds` refuses to write unless its 0.45 row reproduces `FrozenOpenHarmful` and `FrozenGoldHarmful` (96 and 11 for the shipped model): an adoption sets them to the new model's reported figures with the reason recorded, as the two earlier adoptions did. If BASE stays, `operating-points.json` and `confidence-thresholds.md` are untouched.
+
+**Technical operating point (new; computed for the model that ships, whether an arm wins or not; rule id `nv-technical-dev-v1`).**
+
+- Scope: the judged words (targets and controls) of the four technical development tranches pooled (1,417 for the shipped model), scored per tranche (class for S1, exact tag for the others); the measure is **wrong answers per 1,000 answered judged words**, the calibration measure above. Beside it is reported the costly error of the consumer: harmful NOUN<->VERB errors per 1,000 answered noun-verb decisions of the target items of S1, S3 and S4 (817 decisions for the shipped model; the curve of `calibration.nounVerbPooled`).
+- Grid: the same 15 thresholds as the general points.
+- The point is the first ascending threshold with **at most 10 wrong answers per 1,000 answers (1%) and a coverage of at least 25% of the judged words** (the floor keeps the point from being a handful of answers; the shipped model answers 42% at 0.95 and above). The comparisons are integer comparisons, so a point at exactly 10 per 1,000 or exactly 25% qualifies.
+- **Honest minimum.** If no threshold has both, the technical point is `none` and the achievable minimum is reported: the lowest error rate over the grid thresholds with a coverage of at least 25% (a tie goes to the lowest threshold), with its 95% Wilson interval and its coverage, and the whole curve. **No threshold, floor, grid or definition is changed toward 1%**, and the target is not tuned to what the model can do. For the shipped model the rule gives `none`; the minimum at a coverage of at least 25% is 11 wrong of 427 answers (25.8 per 1,000) at 0.98, and the error at 0.99 is 6.0 per 1,000 at a coverage of 23.5%, below the floor.
+- Caveats written with it: development figures are optimistic; the tranches are band-selected contested words in technical sentences and not running text, so the rate is not the rate on ordinary text; no held-out set carries these shapes, and the held-out evaluation applies only the general points.
+- Artifacts (a later commit): `docs/evaluation/technical-operating-points.json` and a section of `docs/evaluation/confidence-thresholds.md`, written by `technical_points.py`; `operating-points.json`, which the C# parser and the evaluator read, keeps its schema.
+
+### What happens on each outcome of E2
+
+- **An arm wins.** An adoption plan is written in this log **before** the retraining and before any held-out command; `training.json` gets the weights of the winner's sources; the shipped weights are retrained at seed 20260101 (`train --output <file outside the repository>`, `calibrate --update-config`, `train --update-config`, `train --check` exit 0), and the new `weights.bin` must be **byte-identical** to the winner's `*-s20260101.bin` (else stop and record); the general points are recomputed (development data only) with the figures re-pinned; the technical point is computed; the pinned documents and tests are updated; a plan of the held-out look is committed; the old held-out record is deleted in its own commit; `evaluate --preflight` and then **one** `evaluate --dump-dir <outside the repository>`; the record is committed as produced and disclosed as the next look (the held-out sets were already seen by six models; the count is verified against `docs/evaluation/disclosure.md` before it is written). No rollback condition is added.
+- **BASE stays.** The shipped model, its thresholds and the README tables stay; the tables and the decision are recorded; the technical operating point of the shipped model is computed and documented; no held-out command is run.
+- **Acceptance failure or a missing run.** Stop; any protocol change is an amendment written before the affected runs are repeated.
+
+### What is a protocol deviation
+
+Training or evaluating anything not listed above before this commit is pushed; a run, arm, seed, guard, limit, window, tolerance or rule that differs from this section; selecting, repeating, replacing or dropping a run or an arm because of its result; changing a frozen file after this commit (any hash above differing); reading a held-out file, consumer text, or the result of a held-out model for the decision; applying the technical rule with another floor, target or grid; running the experiment from a dirty tree or from two commits. A deviation that is needed (a crash, the Normal priority, an interrupted run that is redone) is recorded here with its reason before the analysis is read; a changed rule is an amendment decided by the owner and written before the affected runs are repeated.
+
+### Limits that stay disclosed
+
+The interval measures training noise only. Four candidates are compared with one baseline without correction, so the winner is subject to a winner's curse; the held-out look that follows an adoption is the independent check. The tranches are the frames that the training sources were built from and the Basic band, about half of the judged lemmas of a tranche also occur in its training source, and the defined-terms convention (Capitalized Defined Terms are PROPN) disagrees with about 2,000 existing training labels, so a development gain on S2 may not carry to other text. The guards cover the old tranches and the open, gold and UD development sets; they cannot see a loss that these sets do not hold. Nothing here predicts the error of the consumer on its own text, which was not read and is not used.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

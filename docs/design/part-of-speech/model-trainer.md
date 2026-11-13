@@ -600,14 +600,14 @@ technical tranche under `shapesTechnical.calibration`. The measurement chooses, 
 reports
 what the model does at the thresholds that other documents define.
 
-`MeasureCurve` extends the measurement to the grid of the operating points (`ConfidenceCurve.Grid`: 0.45 to 0.95 in steps
-of 0.05, then 0.96 to 0.99, 15 thresholds). A `CalibrationCurveRow` has the answers at or above the threshold, their share of
-the judged words, the wrong answers, the errors per 1,000 answers with the Wilson interval, the noun-verb decisions among the
-answers, the harmful errors and the harmful errors per 1,000 answered decisions, counted with the same comparison
-(`Confidence >= threshold`) as `EvalTally`. Only `eval-arm` uses it: it appends `curve` to the pooled technical scope and
-`nounVerbPooled` (the target items of the deverbal-heads, step-lines and clause-verbs tranches, with `judged`, `decisions`
-and `curve`) after `tranches`. Both are additional members; the thresholds, bins and every other member are written as
-before, and the rendered report of `eval-shapes` does not change.
+`MeasureCurve` extends the measurement to the grid of the operating points (`ConfidenceCurve.Grid`: 0.45 to 0.95 in
+steps of 0.05, then 0.96 to 0.99, 15 thresholds). A `CalibrationCurveRow` has the answers at or above the threshold,
+their share of the judged words, the wrong answers, the errors per 1,000 answers with the Wilson interval, the noun-verb
+decisions among the answers, the harmful errors and the harmful errors per 1,000 answered decisions, counted with the
+same comparison (`Confidence >= threshold`) as `EvalTally`. Only `eval-arm` uses it: it appends `curve` to the pooled
+technical scope and `nounVerbPooled` (the target items of the deverbal-heads, step-lines and clause-verbs tranches,
+with `judged`, `decisions` and `curve`) after `tranches`. Both are additional members; the thresholds, bins and every
+other member are written as before, and the rendered report of `eval-shapes` does not change.
 
 ### Context-Feature Experiment
 

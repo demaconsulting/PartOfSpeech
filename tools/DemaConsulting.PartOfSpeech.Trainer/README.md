@@ -219,6 +219,42 @@ caller-chosen paths in their commands above (the `context-features` driver has `
 The BASE acceptance test ("BASE equals the shipped weights") holds only at commit `0f0b595`; at the adopted state it does not
 hold, as described above.
 
+### Technical-mix experiment (beta.3 phase 2)
+
+The pre-registered experiment that decides whether the four weight-0 technical training sources (`deverbal`, `terms`, `steps`,
+`clauses`) are mixed into the shipped model is in `beta3-tech/`; its rules, arms, guards, hashes and decision rule are the section
+"beta.3 phase 2 (E2)" of `RUN-LOG.md`. `arms.json` has six arms with eight seeds (`20260101` and `11` to `17`): BASE (the
+shipped configuration, no option), TECH (all four sources at weight 1), TECH-NT (without `terms`; attribution only, it cannot be
+selected), TECH-ND (without `deverbal`), TECH-T2 (`terms` at weight 2) and TECH-W2 (all four at weight 2); a source of an arm is a
+member `NAME: WEIGHT` and is passed as `--source NAME:WEIGHT`. `run_arms.ps1` is the driver of the follow-up with its own
+`arms.json`: resumable (a run is complete when its JSON exists), it **waits** while the PAUSE file exists (polling every 60 s;
+`-PollSeconds`), needs at least 6 GB free on C:, uses at most 8 threads and the priority `-Priority` (`BelowNormal`, or `Normal`
+when BelowNormal is starved), and writes only outside the repository (`-Out`, `-PyCache` and `-PauseFile` default to folders of the
+session that ran the experiment; a reproduction passes its own). `analyze_tech.py` runs the acceptance tests (BASE at the shipped
+seed equals the shipped weights and the 208 figures of `shipped_figures.json`, the eight BASE seeds equal the eight CMP2 weights of
+the follow-up, the training logs, the frozen development files and trainer commit, the frozen files, and that the sources share
+no document or sentence with the development tranches), then applies rule T (20 guards, a Welch interval below 0 on the
+pooled harmful rate and above 0 on the defined-terms accuracy, the fewest weighted added sentences within 10% of the best); it takes
+only `welch_diff` from `analyze_arms.py` and checks its own logic on synthetic runs with `--selftest`. `technical_points.py` turns
+the `eval-arm` result of the shipped weights into the technical operating point (rule `nv-technical-dev-v1`) and has its own
+`--selftest`. `eval-arm` writes the confidence curve of the technical calibration (`shapesTechnical.calibration`) that both read.
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms BASE -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-NT -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-ND -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-T2 -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-W2 -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py --runs <runs> --out <runs>\report.md --decision <runs>\decision.json
+python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py --arm-json <eval-arm result of the shipped weights> --out technical-operating-points.json
+```
+
+The analyzer needs all six arms at all eight seeds in one `<runs>` folder, and the working tree must be clean and at one commit
+while the runs are made (the result files record the commit and a dirty flag). The acceptance test "BASE equals the shipped weights"
+holds while `training.json` and `weights.bin` are the state recorded in the run log (the shipped CMP2 model); an adoption changes
+both by design, so the analysis is made before it.
+
 ### Held-out evaluation
 
 The protocol (definitions, selection rule, stop conditions) is the section "Phase 5 protocol" of `RUN-LOG.md`; it was
