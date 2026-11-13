@@ -173,6 +173,7 @@ tools/DemaConsulting.PartOfSpeech.Trainer/
 ├── compound-heading-2/         — Harness of the second compound and heading re-test: arms, resumable driver, analysis script
 ├── beta3-tech/                 — Harness of the technical-mix experiment: arms, resumable driver, analysis script, the
 │                                 script of the technical operating point, the figures of the shipped model
+├── beta3-tech-audit/           — Independent, fail-closed audit script of the technical-mix run inputs (not frozen)
 ├── context-features/           — Harness of the context-feature experiment: arms, resumable driver, analysis script
 ├── imperative-data/            — Harness of the imperative-data experiment: two runners, analysis script
 ├── prenominal-ing/             — Harness of the `prenominal-ing` experiment: arms and scoring scripts
@@ -237,7 +238,8 @@ their context. The five frozen analysis scripts of the Trainer experiments,
 `tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py`,
 `tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py` and
 `tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py` (with the technical operating point script
-`tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py`), are reviewed in the review-set
+`tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py`), and the independent audit script
+`tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py` (not frozen), are reviewed in the review-set
 `PartOfSpeech-ModelTrainer`. The data tools run in two places: `lint.ps1` runs the unit tests of the correction tools,
 the validation
 and the state-aware regeneration check of the correction tables, the fix tier of the linter with `--enforce` and a

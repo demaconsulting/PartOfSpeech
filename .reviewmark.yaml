@@ -27,6 +27,8 @@ needs-review:
   - "tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py"
   - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py"
   - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py"
+  # Independent audit of the technical-mix run inputs (written after the results; outside the pinned set)
+  - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py"
   - "tools/data/**/*.py"         # Build-time Python tools of the data assets, and their tests
   - "tools/data/README.md"       # Documentation of the data tools
   - "tools/data/hmm-tags/README.md"  # Standalone WordSense Basic tagging harness (not in the solution)
@@ -177,6 +179,9 @@ reviews:
       - "tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py"
       - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py"
       - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py"
+      # independent audit of the technical-mix run inputs (not part of the pinned set)
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py"
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/README.md"
       - "tools/data/tests/sentence-key-cases.tsv"                    # shared parity cases of the sentence key
       - "docs/evaluation/**/*.md"                                    # evaluation record (thresholds, held-out results)
       - "docs/evaluation/**/*.json"                                  # selection artifact and run-once results
