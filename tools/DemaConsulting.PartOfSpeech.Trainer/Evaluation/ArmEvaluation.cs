@@ -311,6 +311,12 @@ internal sealed class ArmEvaluationData
 ///         tranches and one scope per technical tranche). The four new file hashes are appended to <c>inputs</c>. No threshold is read, changed or written.
 ///     </para>
 ///     <para>
+///         <b>Technical curve.</b> The pooled technical scope of <c>calibration</c> ends with <c>curve</c> and <c>calibration</c> ends with
+///         <c>nounVerbPooled</c> (see <see cref="ShapesDevCalibration.MeasureCurve"/>): the answers, wrong answers and harmful errors at each of
+///         the 15 thresholds of the operating-point grid, for the judged words of the four technical tranches and for the target items of the
+///         three noun-verb technical tranches. Both are additional members; every other member and value is unchanged.
+///     </para>
+///     <para>
 ///         The JSON has no time stamp and no machine name, only invariant-culture numbers, and is written by hand because the engine
 ///         is compiled for .NET Framework by the tests. Stateless and thread-safe apart from the timed measurement.
 ///     </para>
@@ -423,7 +429,7 @@ internal static class ArmEvaluation
         WriteImperativeHeadings(json, headings, headings2);
         WriteCompoundControls(json, compoundHead.Overall, compoundHead2.Overall);
         json.Close('}');
-        WriteTechnical(json, scores);
+        WriteTechnical(json, scores, data);
         json.Open("inputs", '{');
         json.Text("devSha256", data.Inputs.DevSha256);
         json.Text("hardSha256", data.Inputs.HardSha256);
@@ -511,7 +517,8 @@ internal static class ArmEvaluation
     /// </summary>
     /// <param name="json">The writer.</param>
     /// <param name="scores">The scores of the nine single-shape tranches.</param>
-    private static void WriteTechnical(JsonText json, IReadOnlyDictionary<ShapesDevTranche, TrancheScore> scores)
+    /// <param name="data">The development sets (the items tell which outcomes are targets).</param>
+    private static void WriteTechnical(JsonText json, IReadOnlyDictionary<ShapesDevTranche, TrancheScore> scores, ArmEvaluationData data)
     {
         var deverbal = scores[ShapesDevTranche.DeverbalHeads].Result;
         var terms = scores[ShapesDevTranche.DefinedTerms].Result;
@@ -528,7 +535,7 @@ internal static class ArmEvaluation
         var technicalNames = ShapesDevCommand.TechnicalTranches.Select(t => new KeyValuePair<string, IReadOnlyList<Outcome>>(DevSets.ShapesDevNameOf(t), scores[t].Outcomes)).ToList();
         var allNames = ShapesDevCommand.AllSingleTranches.Select(t => new KeyValuePair<string, IReadOnlyList<Outcome>>(DevSets.ShapesDevNameOf(t), scores[t].Outcomes)).ToList();
         var technicalCalibration = ShapesDevCalibration.Measure(technicalNames);
-        WriteCalibrationScope(json, "technical", technicalCalibration.Pooled);
+        WriteCalibrationScope(json, "technical", technicalCalibration.Pooled, ShapesDevCalibration.MeasureCurve(technicalNames.SelectMany(t => t.Value).ToList()));
         WriteCalibrationScope(json, "allSingle", ShapesDevCalibration.Measure(allNames).Pooled);
         json.Open("tranches", '{');
         var names = new[] { "deverbalHeads", "definedTerms", "stepLines", "clauseVerbs" };
@@ -539,8 +546,68 @@ internal static class ArmEvaluation
         }
 
         json.Close('}');
+        WriteNounVerbPooledCurve(json, scores, data);
         json.Close('}');
         json.Close('}');
+    }
+
+    /// <summary>
+    ///     Writes the <c>nounVerbPooled</c> member of the calibration: the confidence curve of the target items of the three noun-verb technical
+    ///     tranches (deverbal heads, step lines, clause verbs; the scope of <c>pooledTechnical</c>), so that the harmful errors per 1,000 answered
+    ///     noun-verb decisions can be read at every threshold of the grid. Its <c>judged</c> is the number of target items and its <c>decisions</c>
+    ///     the number of noun-verb decisions among them (the <c>decisions</c> of <c>pooledTechnical</c>).
+    /// </summary>
+    /// <param name="json">The writer.</param>
+    /// <param name="scores">The scores of the single-shape tranches.</param>
+    /// <param name="data">The development sets.</param>
+    private static void WriteNounVerbPooledCurve(JsonText json, IReadOnlyDictionary<ShapesDevTranche, TrancheScore> scores, ArmEvaluationData data)
+    {
+        var targets = new List<Outcome>();
+        foreach (var tranche in new[] { ShapesDevTranche.DeverbalHeads, ShapesDevTranche.StepLines, ShapesDevTranche.ClauseVerbs })
+        {
+            var items = ItemsOf(data, tranche);
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (items[i].IsTarget)
+                {
+                    targets.Add(scores[tranche].Outcomes[i]);
+                }
+            }
+        }
+
+        json.Open("nounVerbPooled", '{');
+        json.Number("judged", targets.Count);
+        json.Number("decisions", targets.Count(o => o.NounVerb));
+        WriteCurve(json, ShapesDevCalibration.MeasureCurve(targets));
+        json.Close('}');
+    }
+
+    /// <summary>
+    ///     Writes the <c>curve</c> member: one object for each threshold of the grid with the answers, the coverage, the wrong answers, the error
+    ///     per 1,000 answers with its Wilson interval, and the noun-verb decisions, harmful errors and harmful errors per 1,000 decisions among the answers.
+    /// </summary>
+    /// <param name="json">The writer.</param>
+    /// <param name="curve">The rows of the curve.</param>
+    private static void WriteCurve(JsonText json, IReadOnlyList<CalibrationCurveRow> curve)
+    {
+        json.Open("curve", '[');
+        foreach (var row in curve)
+        {
+            json.Open(null, '{');
+            json.Number("threshold", row.Threshold);
+            json.Number("answers", row.Answers);
+            json.Number("coverage", row.Coverage);
+            json.Number("wrong", row.Wrong);
+            json.Number("errorPer1k", row.ErrorPer1000);
+            json.Number("intervalLowPer1k", row.IntervalLowPer1000);
+            json.Number("intervalHighPer1k", row.IntervalHighPer1000);
+            json.Number("nounVerbAnswers", row.NounVerbAnswers);
+            json.Number("harmful", row.Harmful);
+            json.Number("harmfulPer1k", row.HarmfulPer1000);
+            json.Close('}');
+        }
+
+        json.Close(']');
     }
 
     /// <summary>
@@ -597,7 +664,8 @@ internal static class ArmEvaluation
     /// <param name="json">The writer.</param>
     /// <param name="name">The name of the member.</param>
     /// <param name="scope">The scope.</param>
-    private static void WriteCalibrationScope(JsonText json, string name, CalibrationScope scope)
+    /// <param name="curve">The confidence curve to append after the bins, or <see langword="null"/> for none.</param>
+    private static void WriteCalibrationScope(JsonText json, string name, CalibrationScope scope, IReadOnlyList<CalibrationCurveRow>? curve = null)
     {
         json.Open(name, '{');
         json.Number("judged", scope.Judged);
@@ -629,6 +697,11 @@ internal static class ArmEvaluation
         }
 
         json.Close(']');
+        if (curve != null)
+        {
+            WriteCurve(json, curve);
+        }
+
         json.Close('}');
     }
 

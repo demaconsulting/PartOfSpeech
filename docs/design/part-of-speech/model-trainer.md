@@ -312,7 +312,8 @@ The training sources of `training.json` are the open corpus, MASC, the silver co
 the embedded weights, see _Selection of the Shipped Model_), the headings sources `headings` and `headings2`
 (`data/headings/headings.tsv` and `data/headings/headings-2.tsv`, weight 0, so they are
 committed and not read by a default run) and the technical sources `deverbal`, `terms`, `steps` and `clauses`
-(`data/technical/deverbal.tsv`, `terms.tsv`, `steps.tsv` and `clauses.tsv`, weight 0, committed in the same way).
+(`data/technical/deverbal.tsv`, `terms.tsv`, `steps.tsv` and `clauses.tsv`, weight 1: the technical sources are in the
+mix of the embedded weights too).
 A source can only
 be added to a run through the
 configuration: `--source NAME:WEIGHT` changes the weight of a source that the configuration names and refuses an unknown
@@ -335,7 +336,7 @@ command measures that on **development data only**, with a rule that is written 
   t, and
   a harmful error is an answered decision with the other one of the two tags. The curve gives, for every threshold of the
   grid, the answered decisions, the coverage, the harmful errors, the harmful errors per 1,000 answered and per 1,000
-  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 91, 14 and 105 harmful
+  decisions (the 0.45 row of the last column is the figure of the freeze table of the run log: 92, 8 and 100 harmful
   errors on open dev, gold v2 dev and pooled for the embedded model). The constants of
   the command are the development figures of the embedded model; the command refuses to write when its own 0.45 row
   differs from them (`RUN-LOG.md`, "Imperative training data: adoption", records how they were fixed). The reliability table
@@ -350,6 +351,19 @@ command measures that on **development data only**, with a rule that is written 
   rule, points with bootstrap intervals over documents). Both are written by the command and committed; the command
   refuses to write when the 0.45 row does not reproduce the frozen figures or when the embedded weights are not the model
   of `training.json`.
+- **Technical operating point.** The script `beta3-tech/technical_points.py` (standard library only) turns the
+  `eval-arm` result of the embedded weights (the confidence curve under `shapesTechnical.calibration`) into the
+  technical operating point of the rule `nv-technical-dev-v1`: on the judged words (targets and controls) of the four
+  technical development tranches pooled, the first grid threshold with at most 10 wrong answers per 1,000 answers and
+  a coverage of at least 25% of the
+  judged words (integer comparisons, so a point at exactly 10 per 1,000 or 25% qualifies). If no threshold has both, the
+  point is none and the lowest error rate at a coverage of at least 25% is reported with its interval; the point, the
+  curve (wrong answers, Wilson interval, answered noun-verb decisions and harmful errors per threshold) and the
+  caveats are written to `docs/evaluation/technical-operating-points.json`, and the same table is a section of
+  `confidence-thresholds.md`. The artifact names the weights file by its SHA-256 and the four tranche files by
+  theirs; it is development data only, read by no other command, and the held-out evaluation applies the general
+  points only. The documentation states the point as a measured fact (with its interval and coverage), not as a
+  recommended gate.
 - **Limitation.** A threshold chosen on development data is optimistic, and the gold v2 development set has few harmful
   errors; the held-out run reports what the thresholds do on data that played no part in choosing them.
 
@@ -450,7 +464,7 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 | Imperative source | `imperative` at weight 1 (900 sentences) | the imperative-data experiment (`RUN-LOG.md`) |
 | Compound sources | `compound` (742), `compound2` (1,100) at weight 1 | the follow-up re-test (`RUN-LOG.md`) |
 | Headings sources | `headings` (374), `headings2` (247) at weight 0 | committed data, not in the mix |
-| Technical sources | `deverbal` (637), `terms` (373), `steps` (531), `clauses` (310), weight 0 | not in the mix |
+| Technical sources | `deverbal` 637, `terms` 373, `steps` 531, `clauses` 310 at weight 1 | technical-mix experiment |
 | `disputed` tokens | trained, not masked | accuracy +0.2 points, harmful errors tied |
 | Restriction, history | mode B (`History`), predicted history | fully restricted training (C) failed the floor |
 | Epochs | 6 | tied with 10 epochs, fewest within 0.05 points of the best |
@@ -462,11 +476,11 @@ The committed `training.json` (`RUN-LOG.md` has every run and the analysis):
 
 The settings above the last row are selected on the base feature set and are not selected
 again for the clause cues: the experiment compares the groups at those settings, and only the temperature is refit.
-The result is a file of 126,087 rows and 314,640 weights, 1,196,142 bytes uncompressed and 537,650 bytes compressed;
-training takes about 5 to 14 seconds on one thread (6,569,850 steps), and the check about 15 seconds. Development
-results through the real decoder: open development 96.72% accuracy (96.10% on lexicon-ambiguous tokens), gold
+The result is a file of 129,882 rows and 324,906 weights, 1,234,530 bytes uncompressed and 553,641 bytes compressed;
+training takes about 5 to 14 seconds on one thread (6,751,308 steps), and the check about 15 seconds. Development
+results through the real decoder: open development 96.69% accuracy (96.07% on lexicon-ambiguous tokens), gold
 development 95.24% (without the `to` and `not` targets, which follow another convention and are reported
-separately), harmful errors 21.1 per 1,000 noun-verb decisions pooled, calibration error 0.15% (open) and 2.25% (gold).
+separately), harmful errors 19.8 per 1,000 noun-verb decisions pooled, calibration error 0.22% (open) and 2.17% (gold).
 These are development figures; they say nothing about held-out data.
 
 ### Glossary Decision
@@ -599,6 +613,15 @@ each
 technical tranche under `shapesTechnical.calibration`. The measurement chooses, changes and proposes no threshold: it
 reports
 what the model does at the thresholds that other documents define.
+
+`MeasureCurve` extends the measurement to the grid of the operating points (`ConfidenceCurve.Grid`: 0.45 to 0.95 in
+steps of 0.05, then 0.96 to 0.99, 15 thresholds). A `CalibrationCurveRow` has the answers at or above the threshold,
+their share of the judged words, the wrong answers, the errors per 1,000 answers with the Wilson interval, the noun-verb
+decisions among the answers, the harmful errors and the harmful errors per 1,000 answered decisions, counted with the
+same comparison (`Confidence >= threshold`) as `EvalTally`. Only `eval-arm` uses it: it appends `curve` to the pooled
+technical scope and `nounVerbPooled` (the target items of the deverbal-heads, step-lines and clause-verbs tranches,
+with `judged`, `decisions` and `curve`) after `tranches`. Both are additional members; the thresholds, bins and every
+other member are written as before, and the rendered report of `eval-shapes` does not change.
 
 ### Context-Feature Experiment
 
@@ -746,9 +769,9 @@ inside the engine; `Program.cs` is the only place that maps exceptions to exit c
 - The base class library and, for `training.json`, `operating-points.json` and `test-results.json`, System.Text.Json
   (net10.0 only; the engine does not use it).
 - The committed corpora `data/open/train.tsv`, `data/masc/masc.tsv`, `data/silver/silver.tsv`,
-  `data/imperative/imperative.tsv`, `data/compound/compound.tsv` and `data/compound/compound-2.tsv` (all six with a
-  positive weight), `data/headings/headings.tsv` and `data/headings/headings-2.tsv` (weight 0), the four technical sources
-  `data/technical/deverbal.tsv`, `terms.tsv`, `steps.tsv` and `clauses.tsv` (weight 0), and the two
+  `data/imperative/imperative.tsv`, `data/compound/compound.tsv` and `data/compound/compound-2.tsv` and the four
+  technical sources `data/technical/deverbal.tsv`, `terms.tsv`, `steps.tsv` and `clauses.tsv` (all ten with a
+  positive weight), `data/headings/headings.tsv` and `data/headings/headings-2.tsv` (weight 0), and the two
   development files plus the hard-shape development files `data/eval/shapes-dev/dev.tsv` (standard tranche),
   `data/eval/shapes-dev/hard.tsv` (hard tranche) and `compound-head.tsv`, `headings.tsv`, `named-state.tsv`,
   `compound-head-2.tsv`, `headings-2.tsv`, `deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv` and

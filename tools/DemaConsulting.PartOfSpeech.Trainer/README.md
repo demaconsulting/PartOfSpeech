@@ -59,8 +59,8 @@ and they are rejected together with `--check` and `--update-config`.
 
 ## Configuration
 
-`training.json` names the corpora (`open`, `masc`, `silver`, `imperative`, `compound`, `headings`, `compound2` and `headings2`; each with an integer `weight`, the number of times its
-sentences enter every epoch; open, MASC, silver, imperative, `compound` and `compound2` have a positive weight, `--source imperative:0` or `--source compound:0` leaves one of them out of a run, and the two headings sources have weight 0, so `--source headings:1` and `--source headings2:1` add them to a run) and every training setting. It contains no floating-point training setting except the
+`training.json` names the corpora (`open`, `masc`, `silver`, `imperative`, `compound`, `headings`, `compound2`, `headings2`, `deverbal`, `terms`, `steps` and `clauses`; each with an integer `weight`, the number of times its
+sentences enter every epoch; open, MASC, silver, imperative, `compound`, `compound2` and the four technical sources `deverbal`, `terms`, `steps` and `clauses` have a positive weight, `--source imperative:0` or `--source terms:0` leaves one of them out of a run, and the two headings sources have weight 0, so `--source headings:1` and `--source headings2:1` add them to a run) and every training setting. It contains no floating-point training setting except the
 softmax `temperature`, which is chosen once by `calibrate` and only written into the file header. The weight scale is
 `1 / quantScale` with `quantScale` a power of two, so it is exact in the file.
 
@@ -219,6 +219,58 @@ caller-chosen paths in their commands above (the `context-features` driver has `
 The BASE acceptance test ("BASE equals the shipped weights") holds only at commit `0f0b595`; at the adopted state it does not
 hold, as described above.
 
+### Technical-mix experiment (beta.3 phase 2)
+
+The pre-registered experiment on the four technical training sources (`deverbal`, `terms`, `steps`,
+`clauses`) is in `beta3-tech/`; its rules, arms, guards, hashes and decision rule are the section
+"beta.3 phase 2 (E2)" of `RUN-LOG.md`, and its winner, TECH (all four sources at weight 1), is the shipped model. `arms.json` has six arms with eight seeds (`20260101` and `11` to `17`): BASE (the
+configuration without the four technical sources, no option), TECH (all four sources at weight 1), TECH-NT (without `terms`; attribution only, it cannot be
+selected), TECH-ND (without `deverbal`), TECH-T2 (`terms` at weight 2) and TECH-W2 (all four at weight 2); a source of an arm is a
+member `NAME: WEIGHT` and is passed as `--source NAME:WEIGHT`. `run_arms.ps1` is the driver of the follow-up with its own
+`arms.json`: resumable (a run is complete when its JSON exists), it **waits** while the PAUSE file exists (polling every 60 s;
+`-PollSeconds`), needs at least 6 GB free on C:, uses at most 8 threads and the priority `-Priority` (`BelowNormal`, or `Normal`
+when BelowNormal is starved), and writes only outside the repository (`-Out`, `-PyCache` and `-PauseFile` are the caller's own
+local paths on drive C:, see the commands below). `analyze_tech.py` runs the acceptance tests (BASE at the shipped
+seed equals the shipped weights and the 208 figures of `shipped_figures.json`, the eight BASE seeds equal the eight CMP2 weights of
+the follow-up, the training logs, the frozen development files and trainer commit, the frozen files, and that the sources share
+no document or sentence with the development tranches), then applies rule T (20 guards, a Welch interval below 0 on the
+pooled harmful rate and above 0 on the defined-terms accuracy, the fewest weighted added sentences within 10% of the best); it takes
+only `welch_diff` from `analyze_arms.py` and checks its own logic on synthetic runs with `--selftest`. `technical_points.py` turns
+the `eval-arm` result of the shipped weights into the technical operating point (rule `nv-technical-dev-v1`) and has its own
+`--selftest`. `eval-arm` writes the confidence curve of the technical calibration (`shapesTechnical.calibration`) that both read.
+
+```text
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms BASE -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-NT -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-ND -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-T2 -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms TECH-W2 -PyCache <your-cache-dir> -PauseFile <your-pause-file>
+python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py --runs <runs> --shipped-weights <weights.bin of the BASE checkout> --out <runs>\report.md --decision <runs>\decision.json
+python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py --arm-json <eval-arm result of the shipped weights> --out <output-folder>\technical-operating-points.json
+```
+
+`-Out` (the folder of the run results and weights), `-PyCache` (a Python cache folder the caller may write to) and `-PauseFile`
+(the path of a pause file the caller controls; the driver waits while it exists) are local paths on drive C: that the caller
+chooses. The defaults inside the frozen driver are folders of the session of the machine that ran the experiment and are not
+meant for reuse. The other two path parameters of the driver, `-Repo` and `-Dll`, default to the checkout that contains the
+driver and to its Release build of the trainer, and are normally not passed.
+
+The analyzer needs all six arms at all eight seeds in one `<runs>` folder, and the working tree must be clean and at one commit
+while the runs are made (the result files record the commit and a dirty flag). The acceptance test "BASE equals the shipped
+weights" compares BASE at the shipped seed with the `weights.bin` given by `--shipped-weights` and checks the `training.json` of the
+checkout; both must be those of BASE (the configuration without the four technical sources). The shipped model is TECH, so the test
+cannot hold in a checkout of the shipped state: the analyzer runs in a checkout of commit `c56e091`, whose `training.json` and
+`weights.bin` are BASE's, with `--shipped-weights` naming that checkout's `weights.bin`.
+
+The independent audit `beta3-tech-audit/audit_runs.py` (not part of the frozen set; see its `README.md`) checks the run inputs
+fail-closed:
+
+```text
+python -B tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py --runs <runs>
+python -B tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py --selftest
+```
+
 ### Held-out evaluation
 
 The protocol (definitions, selection rule, stop conditions) is the section "Phase 5 protocol" of `RUN-LOG.md`; it was
@@ -246,10 +298,10 @@ Run the commands at below-normal priority, one process at a time (see _Machine l
 
 ## Current model
 
-`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%), imperative (x1), and the two compound sources `compound` and `compound2` (x1 each); restriction
+`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%), imperative (x1), the two compound sources `compound` and `compound2` (x1 each) and the four technical sources `deverbal`, `terms`, `steps` and `clauses` (x1 each; 65,373 training sentences); restriction
 mode `history` with predicted history; 6 epochs; 19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8;
-the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 126,087 rows and 314,640 weights, is
-1,196,142 bytes uncompressed and 537,650 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
+the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 129,882 rows and 324,906 weights, is
+1,234,530 bytes uncompressed and 553,641 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
 takes about 15 seconds and runs
 in `build.ps1` and in the CI build on all three operating systems. The glossary decision (boost only, no trained
 feature) and every experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and

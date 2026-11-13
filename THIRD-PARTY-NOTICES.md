@@ -97,8 +97,9 @@ Princeton University and LICENSEE agrees to preserve same.
 
 The weights embedded in the package (`Resources/weights.bin`) are the output of the Trainer tool of this repository
 (`tools/DemaConsulting.PartOfSpeech.Trainer`), which learned them from the open corpus (CC0 1.0), the written texts of
-MASC (CC BY 3.0 US, see the MASC section above), the silver corpus (CC0 1.0), the imperative source and the compound
-source (annotations and selection CC0 1.0, sentences from US federal government works, see below). The tool, its settings
+MASC (CC BY 3.0 US, see the MASC section above), the silver corpus (CC0 1.0), the imperative source, the compound
+source and the technical source (annotations and selection CC0 1.0, sentences from US federal government works, see
+below). The tool, its settings
 (`training.json`) and its run log (`RUN-LOG.md`) are in the repository, and the committed corpora and the tool
 reproduce the model bit for bit. Because of the MASC part, the attribution of MASC applies to the weights.
 
@@ -198,7 +199,7 @@ Department of Agriculture (17 U.S.C. 105). The record of every document names a 
 state, local, foreign, university, contractor or private creator, publisher or co-author, and no document has a
 distribution statement other than public release, a copyright notice or a third-party credit; no document is in
 `data/eval/shapes-dev/excluded-sources.tsv`. The tranches are development data; the four sources are training data
-registered with weight 0 (so the embedded weights were not learned from them). The annotations and the selection are
+registered with weight 1 (so the embedded weights were learned from them). The annotations and the selection are
 dedicated to the public domain under CC0 1.0, and the license basis of every document is quoted in
 `data/eval/shapes-dev/<tranche>-sources.tsv` and `data/technical/<source>-sources.tsv`. Numeric output of the
 WordSense Basic classifier (same owner, run unmodified) helped to choose the `deverbal-heads`, `step-lines` and

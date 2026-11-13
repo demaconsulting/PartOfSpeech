@@ -38,6 +38,16 @@ public class PartOfSpeechEvaluationTests
     private const string SelectionReportPath = "docs/evaluation/confidence-thresholds.md";
 
     /// <summary>
+    ///     The technical operating point (rule <c>nv-technical-dev-v1</c>), as data.
+    /// </summary>
+    private const string TechnicalPointsPath = "docs/evaluation/technical-operating-points.json";
+
+    /// <summary>
+    ///     The weights file that the library embeds.
+    /// </summary>
+    private const string WeightsPath = "src/DemaConsulting.PartOfSpeech/Resources/weights.bin";
+
+    /// <summary>
     ///     The explanation of the evaluation record.
     /// </summary>
     private const string EvaluationReadmePath = "docs/evaluation/README.md";
@@ -93,7 +103,7 @@ public class PartOfSpeechEvaluationTests
     /// </summary>
     private static readonly string[] RecordFiles =
     {
-        EvaluationReadmePath, DisclosurePath, SelectionReportPath, OperatingPointsPath, ReportPath, ResultsPath
+        EvaluationReadmePath, DisclosurePath, SelectionReportPath, OperatingPointsPath, TechnicalPointsPath, ReportPath, ResultsPath
     };
 
     /// <summary>
@@ -324,6 +334,105 @@ public class PartOfSpeechEvaluationTests
             resultRows.Select(row => row[0]).ToArray());
         Assert.Equal(new[] { "`strict`", "`balanced`" }, thresholdRows.Select(row => row[0]).ToArray());
         Assert.Empty(problems);
+    }
+
+    /// <summary>
+    ///     Proves that the technical operating point is the one of the model that ships and of the rule that was registered for it:
+    ///     the artifact names the SHA-256 of the embedded weights file and the temperature of the configuration, the hashes of the four
+    ///     technical tranche files equal the manifest, the first grid threshold with at most 10 wrong answers per 1,000 answers and at
+    ///     least 25% of the judged words answered (integer comparisons) is the recorded point (or there is none), and the table of the
+    ///     section "Technical text" of the selection report equals the curve of the artifact row by row. A retrained model or a changed
+    ///     tranche fails here until the point is computed again.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Evaluation_TechnicalOperatingPoint_MatchesTheShippedModelAndTheRule()
+    {
+        // Arrange: the artifact, the configuration, the manifest, the embedded weights file and the selection report
+        var json = ReadText(TechnicalPointsPath);
+        var config = ReadText(TrainingConfigPath);
+        var manifest = ReadManifest();
+        var report = ReadText(SelectionReportPath);
+        var curveStart = json.IndexOf("\"curve\"", StringComparison.Ordinal);
+        var curveEnd = json.IndexOf("\"nounVerbDecisions\"", StringComparison.Ordinal);
+        Assert.True(curveStart >= 0 && curveEnd > curveStart, "The artifact has no curve");
+        var curve = Regex.Matches(
+                json.Substring(curveStart, curveEnd - curveStart),
+                "\"threshold\":\\s*([0-9.]+),\\s*\"answers\":\\s*([0-9]+),\\s*\"coveragePercent\":\\s*([0-9.eE+-]+),\\s*\"wrong\":\\s*([0-9]+),\\s*\"errorPer1k\":\\s*([0-9.eE+-]+)",
+                RegexOptions.CultureInvariant)
+            .Cast<Match>()
+            .Select(match => (
+                Threshold: double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture),
+                Answers: int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture),
+                Coverage: double.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture),
+                Wrong: int.Parse(match.Groups[4].Value, CultureInfo.InvariantCulture),
+                Error: double.Parse(match.Groups[5].Value, CultureInfo.InvariantCulture)))
+            .ToList();
+        var judged = (int)NumberMember(json, "judged");
+
+        // Act: collect what differs
+        var problems = new List<string>();
+        Check(problems, "rule", "nv-technical-dev-v1", StringMember(json, "rule"));
+        Check(problems, "weights", DataFiles.Sha256Hex(DataFiles.Repository(WeightsPath)), StringMember(json, "weightsSha256"));
+        Check(problems, "temperature", One(NumberMember(config, "temperature")), One(NumberMember(json, "temperature")));
+        Check(problems, "target", "10", Whole(NumberMember(json, "targetErrorsPer1000")));
+        Check(problems, "coverage floor", "25", Whole(NumberMember(json, "coverageFloorPercent")));
+        foreach (var (member, manifestPath) in new[]
+                 {
+                     ("deverbalHeadsSha256", "eval/shapes-dev/deverbal-heads.tsv"),
+                     ("definedTermsSha256", "eval/shapes-dev/defined-terms.tsv"),
+                     ("stepLinesSha256", "eval/shapes-dev/step-lines.tsv"),
+                     ("clauseVerbsSha256", "eval/shapes-dev/clause-verbs.tsv")
+                 })
+        {
+            Check(problems, member, manifest[manifestPath], StringMember(json, member));
+        }
+
+        Check(problems, "grid", "0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 0.96 0.97 0.98 0.99",
+            string.Join(" ", curve.Select(row => row.Threshold.ToString("F2", CultureInfo.InvariantCulture))));
+        var firstQualifying = curve.FindIndex(row => row.Wrong * 1000 <= 10 * row.Answers && row.Answers * 100 >= 25 * judged);
+        if (firstQualifying < 0)
+        {
+            Check(problems, "status", "none", StringMember(json, "status"));
+            if (report.IndexOf("**Technical point: none.**", StringComparison.Ordinal) < 0)
+            {
+                problems.Add("the section of the report does not say that there is no technical point");
+            }
+        }
+        else
+        {
+            var threshold = curve[firstQualifying].Threshold.ToString("F2", CultureInfo.InvariantCulture);
+            Check(problems, "status", "found", StringMember(json, "status"));
+            Check(problems, "point", threshold,
+                NumberMember(json, "threshold", json.IndexOf("\"point\"", StringComparison.Ordinal)).ToString("F2", CultureInfo.InvariantCulture));
+            Check(problems, "section point", "**Technical point: " + threshold + "**",
+                Regex.Match(report, @"\*\*Technical point: [0-9.]+\*\*").Value);
+            var point = curve[firstQualifying];
+            problems.AddRange(Missing("user guide", Collapse(ReadText(UserGuidePath)), new[]
+            {
+                $"**{threshold}**", $"{point.Wrong} wrong answer", $"in {point.Answers} ({One(point.Error)} in 1,000", $"coverage of {One(point.Coverage)}%",
+                "not a recommended gate"
+            }));
+            problems.AddRange(Missing("namespace reference", DocumentationText(NamespaceDocPath), new[]
+            {
+                "not a recommended gate"
+            }));
+            problems.AddRange(Missing("selection report", report, new[] { "not as a recommended gate" }));
+        }
+
+        var section = Between(report, "## Technical text (rule `nv-technical-dev-v1`", "\n- The figures are development figures");
+        foreach (var row in curve)
+        {
+            var prefix = $"| {row.Threshold.ToString("F2", CultureInfo.InvariantCulture)} | {row.Answers} | {One(row.Coverage)}% | {row.Wrong} | {One(row.Error)} | ";
+            if (section.IndexOf("\n" + prefix, StringComparison.Ordinal) < 0)
+            {
+                problems.Add("the section of the report has no row that starts with: " + prefix);
+            }
+        }
+
+        // Assert: nothing differs, the grid has 15 rows, and the report states the judged words of the artifact
+        Assert.Empty(problems);
+        Assert.Equal(15, curve.Count);
+        Assert.Contains($"Judged words: {judged} (", section, StringComparison.Ordinal);
     }
 
     /// <summary>

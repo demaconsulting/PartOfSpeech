@@ -193,19 +193,19 @@ namespace DemaConsulting.PartOfSpeech;
 ///     sentence: a word that is a noun and is
 ///     tagged as a verb, or the other way round (a <em>harmful error</em>). A token is <em>answered</em> at a threshold
 ///     when the confidence of its tag is at least the threshold, and <em>coverage</em> is the share of the noun-verb
-///     decisions that is answered. Without a threshold, 20.0 of 1,000 noun-verb decisions of the open test split are
+///     decisions that is answered. Without a threshold, 19.1 of 1,000 noun-verb decisions of the open test split are
 ///     harmful errors. Two thresholds are recommended for the confidence of <see cref="Tagger.Default"/>
 ///     (<see cref="TaggedToken.Confidence"/>):
 ///     </para>
 ///     <list type="bullet">
 ///     <item><description>
-///     **strict**, 0.90: on the development data it answered 87.4% of the decisions with 4.7 harmful errors in 1,000
-///     answered decisions; on the open test split it answered 89.4% with 3.8 in 1,000. Use it when a wrong noun or verb
+///     **strict**, 0.90: on the development data it answered 87.9% of the decisions with 4.3 harmful errors in 1,000
+///     answered decisions; on the open test split it answered 89.7% with 4.6 in 1,000. Use it when a wrong noun or verb
 ///     does harm, for example in a rule checker.
 ///     </description></item>
 ///     <item><description>
-///     **balanced**, 0.80: on the development data it answered 92.4% of the decisions with 8.3 harmful errors in 1,000
-///     answered decisions; on the open test split it answered 93.3% with 7.1 in 1,000. Use it when more errors are
+///     **balanced**, 0.75: on the development data it answered 94.1% of the decisions with 8.8 harmful errors in 1,000
+///     answered decisions; on the open test split it answered 94.9% with 9.1 in 1,000. Use it when more errors are
 ///     acceptable or when a person sees the result.
 ///     </description></item>
 ///     </list>
@@ -214,14 +214,31 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <see cref="TaggedToken.Alternatives"/> and give the word a <see cref="TokenConstraint"/> or a
 ///     <see cref="Glossary"/> entry. A consumer that needs a low harmful rate must use a threshold, because the harmful
 ///     rate without one is two to eight times higher; the rate is higher still on short technical and imperative text
-///     (48.6 in 1,000 on a probe of such sentences without a threshold). The strict target of at most 5 in 1,000 was met on
-///     the development data, on the open test split (3.8; its 95% interval of 1.8 to 6.4 includes 5) and on the held-out
-///     gold v2 test split (three harmful errors in 806 answered decisions), and is exceeded on the probe (11.9 in 1,000
-///     answered, five harmful errors in 419 answered decisions). The thresholds
+///     (54.0 in 1,000 on a probe of such sentences without a threshold). The strict target of at most 5 in 1,000 was met on
+///     the development data, on the open test split (4.6; its 95% interval of 2.4 to 7.2 includes 5) and on the held-out
+///     gold v2 test split (two harmful errors in 821 answered decisions), and is exceeded on the probe (9.3 in 1,000
+///     answered, four harmful errors in 429 answered decisions). The balanced target of at most 10 in 1,000 was met on the
+///     development data and on the open test split (9.1; its interval of 6.1 to 12.2 includes 10), and is exceeded on the
+///     gold v2 test split (10.2, nine harmful errors in 881 answered decisions) and on the probe (20.2). The thresholds
 ///     apply to the embedded model:
 ///     weights that you load need their own measurement. A token with only one allowed tag has the confidence 1.0 and
 ///     is not a decision, and the confidence of a token that a hard glossary entry limits to one tag says nothing about
 ///     whether the entry is right.
+///     </para>
+///     <para>
+///     Technical text is harder than ordinary text: a noun that is spelled like a verb, a Capitalized Defined Term, the first
+///     word of a step line and a base-form word in a clause are where a confident wrong tag is most likely, and the held-out
+///     evaluation does not measure these shapes. On four development tranches of such words (1,417 judged words) the
+///     technical operating point, the first threshold with at most 10 wrong answers in 1,000 answers and at least 25% of the
+///     judged words answered, is 0.99: 1 wrong answer in 357 (2.8 in 1,000, 95% interval 0.5 to 15.7 in 1,000) at a coverage
+///     of 25.2%. It is a measured fact about the development tranches, not a recommended gate: it rests on one wrong answer
+///     and its interval reaches above 1%, so read it as an estimate and not as a guarantee; at the strict threshold the
+///     wrong answers on these words are 54.2 in 1,000 answers. These are development
+///     figures (https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/technical-operating-points.json).
+///     The recommended way for a rule checker to reach a low error rate is the strict threshold together with
+///     <see cref="TaggedToken.Margin"/>, <see cref="TaggedToken.IsKnownWord"/> and a domain <see cref="Glossary"/> or
+///     <see cref="TokenConstraint"/>; a confident error on a term that the dictionary knows is best removed with the
+///     glossary, not with a higher threshold.
 ///     </para>
 ///     <para>
 ///     The development selection, the held-out results on every set, the limits of the measurement and how to reproduce
@@ -272,8 +289,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     weights (the embedded lexicon is used unless you pass one as well).
 ///     </para>
 ///     <para>
-///     The embedded weights file (<c>weights.bin</c>) is 537,650 bytes compressed and 1,196,142 bytes uncompressed (about
-///     0.5 MB and 1.2 MB); it holds 126,087 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
+///     The embedded weights file (<c>weights.bin</c>) is 553,641 bytes compressed and 1,234,530 bytes uncompressed (about
+///     0.6 MB and 1.2 MB); it holds 129,882 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
 ///     bytes compressed and 1,626,269 bytes uncompressed and holds 262,635 spellings. Both files are stored as resources
 ///     of the assembly, so the package grows by their compressed sizes for each target framework. The first read of
 ///     <see cref="Tagger.Default"/> inflates and validates both files once in the process (tens of milliseconds on a
@@ -593,7 +610,10 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </description></item>
 ///     </list>
 ///     <para>
-///     The rule checker quick start at the end of this page is a complete example.
+///     The rule checker quick start at the end of this page is a complete example. The recommended way to reach a low error
+///     rate is the strict threshold together with the margin, the known-word flag and a domain <see cref="Glossary"/> or
+///     <see cref="TokenConstraint"/>; a confident error on a term that the dictionary knows is best removed with the
+///     glossary, not with a higher threshold. No threshold above the strict one is recommended.
 ///     </para>
 ///     <para>
 ///     ## Thread safety

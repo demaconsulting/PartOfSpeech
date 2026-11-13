@@ -56,6 +56,87 @@ internal sealed class CalibrationThresholdRow
 }
 
 /// <summary>
+///     One point of the confidence curve of a scope: the answers given with at least a confidence of the threshold, how many of them were wrong, and
+///     the noun-verb decisions among them with their harmful errors.
+/// </summary>
+internal sealed class CalibrationCurveRow
+{
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="CalibrationCurveRow"/> class.
+    /// </summary>
+    /// <param name="threshold">The confidence threshold (inclusive).</param>
+    /// <param name="judged">The judged words of the scope.</param>
+    /// <param name="answers">The judged words whose confidence is at least the threshold.</param>
+    /// <param name="wrong">The wrong answers among them.</param>
+    /// <param name="nounVerbAnswers">The noun-verb decisions among the answers.</param>
+    /// <param name="harmful">The harmful errors among the answers.</param>
+    public CalibrationCurveRow(double threshold, int judged, int answers, int wrong, int nounVerbAnswers, int harmful)
+    {
+        Threshold = threshold;
+        Answers = answers;
+        Wrong = wrong;
+        NounVerbAnswers = nounVerbAnswers;
+        Harmful = harmful;
+        var (low, high) = ShapesDevCalibration.Wilson(wrong, answers);
+        Coverage = judged == 0 ? 0 : (double)answers / judged;
+        ErrorPer1000 = answers == 0 ? 0 : 1000.0 * wrong / answers;
+        IntervalLowPer1000 = 1000.0 * low;
+        IntervalHighPer1000 = 1000.0 * high;
+        HarmfulPer1000 = nounVerbAnswers == 0 ? 0 : 1000.0 * harmful / nounVerbAnswers;
+    }
+
+    /// <summary>
+    ///     Gets the confidence threshold (inclusive).
+    /// </summary>
+    public double Threshold { get; }
+
+    /// <summary>
+    ///     Gets the number of judged words whose confidence is at least the threshold.
+    /// </summary>
+    public int Answers { get; }
+
+    /// <summary>
+    ///     Gets the share of the judged words that are answered (0 to 1; 0 without judged words).
+    /// </summary>
+    public double Coverage { get; }
+
+    /// <summary>
+    ///     Gets the number of wrong answers among the answers.
+    /// </summary>
+    public int Wrong { get; }
+
+    /// <summary>
+    ///     Gets the wrong answers per 1,000 answers (0 without answers).
+    /// </summary>
+    public double ErrorPer1000 { get; }
+
+    /// <summary>
+    ///     Gets the lower end of the 95% Wilson interval of the error rate, per 1,000 answers (0 without answers).
+    /// </summary>
+    public double IntervalLowPer1000 { get; }
+
+    /// <summary>
+    ///     Gets the upper end of the 95% Wilson interval of the error rate, per 1,000 answers (0 without answers).
+    /// </summary>
+    public double IntervalHighPer1000 { get; }
+
+    /// <summary>
+    ///     Gets the number of noun-verb decisions among the answers.
+    /// </summary>
+    public int NounVerbAnswers { get; }
+
+    /// <summary>
+    ///     Gets the number of harmful errors among the answers.
+    /// </summary>
+    public int Harmful { get; }
+
+    /// <summary>
+    ///     Gets the harmful errors per 1,000 answered noun-verb decisions (0 without such decisions).
+    /// </summary>
+    public double HarmfulPer1000 { get; }
+}
+
+/// <summary>
 ///     The calibration measurement of one scope (all selected tranches pooled, or one tranche): the error at the thresholds and the reliability bins.
 /// </summary>
 internal sealed class CalibrationScope
@@ -125,7 +206,8 @@ internal sealed class CalibrationReport
 
 /// <summary>
 ///     Measures the calibration of the confidence of a tagger on the single-shape tranches of the hard-shape development set: the error per
-///     1,000 answers at the thresholds 0.90 and 0.95 with a Wilson interval, and a reliability table.
+///     1,000 answers at the thresholds 0.90 and 0.95 with a Wilson interval, and a reliability table. <see cref="MeasureCurve"/> adds the
+///     error and the harmful errors on the grid of the operating points, for <c>eval-arm</c> only; the rendered report does not use it.
 /// </summary>
 /// <remarks>
 ///     <para>
@@ -240,6 +322,36 @@ internal static class ShapesDevCalibration
         }
 
         return new CalibrationScope(name, outcomes.Count, thresholds, bins);
+    }
+
+    /// <summary>
+    ///     Measures the confidence curve of a scope on the grid of the operating points (<see cref="ConfidenceCurve.Grid"/>: 0.45 to 0.95 in steps
+    ///     of 0.05, then 0.96 to 0.99).
+    /// </summary>
+    /// <param name="outcomes">The outcomes of the judged words of the scope.</param>
+    /// <returns>One row for each threshold of the grid, in ascending order; the answers of a row are the outcomes whose confidence is at least the threshold.</returns>
+    public static List<CalibrationCurveRow> MeasureCurve(IReadOnlyList<Outcome> outcomes)
+    {
+        ArgumentNullException.ThrowIfNull(outcomes);
+        var rows = new List<CalibrationCurveRow>(ConfidenceCurve.Grid.Count);
+        foreach (var threshold in ConfidenceCurve.Grid)
+        {
+            int answers = 0, wrong = 0, nounVerb = 0, harmful = 0;
+            foreach (var outcome in outcomes)
+            {
+                if (outcome.Confidence >= threshold)
+                {
+                    answers++;
+                    wrong += outcome.Correct ? 0 : 1;
+                    nounVerb += outcome.NounVerb ? 1 : 0;
+                    harmful += outcome.Harmful ? 1 : 0;
+                }
+            }
+
+            rows.Add(new CalibrationCurveRow(threshold, outcomes.Count, answers, wrong, nounVerb, harmful));
+        }
+
+        return rows;
     }
 
     /// <summary>

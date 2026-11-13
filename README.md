@@ -82,22 +82,24 @@ is per 1,000 noun-verb decisions. `shape-probe` and `challenge-set` are small se
 
 | Set | Accuracy (%) | Harmful per 1,000 |
 | --- | ---: | ---: |
-| `open-test` | 96.73 | 20.0 |
-| `gold-v2-test` | 94.57 | 29.9 |
-| `shape-probe` | 93.39 | 48.6 |
-| `challenge-set` | 88.97 | 0.0 |
-| `ud-test-mapped` | 93.05 | 16.6 |
+| `open-test` | 96.70 | 19.1 |
+| `gold-v2-test` | 94.77 | 22.4 |
+| `shape-probe` | 93.04 | 54.0 |
+| `challenge-set` | 92.28 | 0.0 |
+| `ud-test-mapped` | 93.17 | 17.9 |
 
 Recommended confidence thresholds, with the share of the noun-verb decisions that they answer and the harmful errors per
 1,000 answered decisions on the open test split:
 
 | Threshold | Value | Coverage (%) | Harmful per 1,000 answered |
 | --- | ---: | ---: | ---: |
-| `strict` | 0.90 | 89.4 | 3.8 |
-| `balanced` | 0.80 | 93.3 | 7.1 |
+| `strict` | 0.90 | 89.7 | 4.6 |
+| `balanced` | 0.75 | 94.9 | 9.1 |
 
-Rule checkers should use `strict`; treat tokens below the threshold as unknown, and also the tokens of words that the
-lexicon does not know (`IsKnownWord`) when their tag is a noun, a verb or a proper noun.
+Rule checkers should use `strict` together with `Margin`, `IsKnownWord` and a domain `Glossary` or `TokenConstraint`;
+treat tokens below the threshold as unknown, and also the tokens of words that the
+lexicon does not know (`IsKnownWord`) when their tag is a noun, a verb or a proper noun. A confident error on a term that
+the dictionary knows is best removed with the glossary, not with a higher threshold.
 
 The [evaluation report][link-evaluation] has the details.
 
@@ -129,14 +131,15 @@ NuGet package.
   reduced to the lexicon.
 - **The open part-of-speech corpus** of the [WordSense][link-wordsense] project (a related project with taggers of its
   own): annotations and selection are CC0 1.0, and the sentences are public domain in the United States or come from the
-  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative, compound and headings training
-  sources (text of US federal government documents; 17 U.S.C. 105) and the evaluation sets follow the same terms.
+  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative, compound, headings and
+  technical-text training sources (text of US federal government documents; 17 U.S.C. 105) and the evaluation sets follow
+  the same terms.
 - **UD English-EWT** (CC BY-SA 4.0) is used for **evaluation only**: it is not distributed, nothing is trained on it,
   and the repository ignores its files.
 
 No CC BY-SA or NonCommercial data is committed to this repository or included in the package. Language models wrote the
-tags of the open corpus, of the silver data and of the imperative, compound and headings sources, and no human has
-reviewed them. In the owner's
+tags of the open corpus, of the silver data and of the imperative, compound, headings and technical-text sources, and no
+human has reviewed them. In the owner's
 position, GitHub claims no ownership of model outputs, so the repository owner holds the rights in them and dedicates
 them to the public domain under CC0 1.0. That is the owner's position, not legal advice or a warranty.
 

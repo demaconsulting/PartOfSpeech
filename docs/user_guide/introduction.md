@@ -55,8 +55,8 @@ The package targets .NET Standard 2.0 (and so runs on .NET Framework 4.8.1 and e
 of the public API under its `api/` folder, generated from the XML documentation of the library.
 
 **The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
-compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (537,650 bytes compressed,
-1,196,142 bytes uncompressed, about 0.5 MB and 1.2 MB). `Tagger.Default` returns a shared tagger that uses them, so the
+compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (553,641 bytes compressed,
+1,234,530 bytes uncompressed, about 0.6 MB and 1.2 MB). `Tagger.Default` returns a shared tagger that uses them, so the
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
@@ -177,16 +177,18 @@ noun-verb decisions that is answered.
 
 | Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
 | --- | ---: | ---: | ---: |
-| strict | 0.90 | 89.4% | 3.8 |
-| balanced | 0.80 | 93.3% | 7.1 |
+| strict | 0.90 | 89.7% | 4.6 |
+| balanced | 0.75 | 94.9% | 9.1 |
 
-On the development data the same thresholds answered 87.4% (strict, 4.7 harmful errors in 1,000) and 92.4% (balanced, 8.3)
-of the decisions. The strict target of at most 5 in 1,000 was met by the point estimates on the open test split (3.8; its
-95% interval is 1.8 to 6.4 and so includes 5) and on the held-out gold v2 test split (3 harmful errors in 806 answered
-decisions) and is exceeded on the shape probe of short technical and imperative sentences (11.9 in 1,000 answered, five
-errors in 419).
+On the development data the same thresholds answered 87.9% (strict, 4.3 harmful errors in 1,000) and 94.1% (balanced, 8.8)
+of the decisions. The strict target of at most 5 in 1,000 was met by the point estimates on the open test split (4.6; its
+95% interval is 2.4 to 7.2 and so includes 5) and on the held-out gold v2 test split (2 harmful errors in 821 answered
+decisions) and is exceeded on the shape probe of short technical and imperative sentences (9.3 in 1,000 answered, four
+errors in 429). The balanced target of at most 10 in 1,000 was met on the open test split (9.1; its interval is 6.1 to
+12.2 and so includes 10) and exceeded on the gold v2 test split (10.2, 9 errors in 881 answered decisions) and on the
+shape probe (20.2, 10 errors in 495).
 
-Without a threshold, 20.0 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
+Without a threshold, 19.1 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
 
 - **A consumer that needs a low harmful rate must use a threshold.** A rule checker, for example, uses `strict`:
@@ -209,6 +211,36 @@ on short technical and imperative text. Use these rules:
 The development selection, the results on every evaluation set and their limits are in the
 [evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md); the same
 guidance is in the API reference that is packed with the library.
+
+### Technical Text
+
+The thresholds above are chosen on ordinary text. Technical text is harder for the model: a noun that is spelled like a
+verb (the head of a compound such as _the pressure check_ or a gerund such as _the shutdown testing_), a Capitalized
+Defined Term (_Safe Mode_), the first word of a step line (_Close the valve._) and a base-form word in a clause
+(_The pumps run._) are the words where a confident wrong tag is most likely, and the held-out evaluation does not
+measure them. The model was therefore measured on four development tranches of such words (1,417 judged words, targets
+and controls, from US federal technical documents; development data only, chosen from the contested words of another
+classifier, so not the error rate of ordinary technical prose). At the strict threshold of the development selection
+(0.90) 53.4% of the judged words are answered with 54.2 wrong answers in 1,000, and the harmful noun-verb errors are
+48.7 in 1,000 answered decisions; at the balanced threshold (0.75) 73.7% are answered with 118.8 wrong answers in 1,000
+and 121.6 harmful errors in 1,000 decisions. On such text the strict threshold is therefore far from the target of 5 in
+1,000 that it reaches on ordinary text.
+
+The development measurement has a technical operating point: the first threshold with at most 10 wrong answers in
+1,000 answers (1%) and at least 25% of the judged words answered. For the embedded model it is **0.99**: 1 wrong
+answer in 357 (2.8 in 1,000, 95% interval 0.5 to 15.7 in 1,000) at a coverage of 25.2%. It is a measured fact about
+the development tranches, not a recommended gate. It rests on one wrong answer, it clears the coverage floor by two
+answers, its interval reaches above 1%, the threshold below it (0.98) has 13.2 wrong answers in 1,000 (6 in 454), and
+the figures are development figures; about three in four of such contested words fall below it, and 1% is not a
+guarantee. The curve of every threshold, the rule and its caveats are in
+[`technical-operating-points.json`](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/technical-operating-points.json)
+and in the section "Technical text" of the
+[selection report](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/confidence-thresholds.md).
+
+The recommended way for a rule checker to reach a low error rate, on technical text as on any other, is the strict
+threshold together with `TaggedToken.Margin`, `TaggedToken.IsKnownWord` and a domain `Glossary` or `TokenConstraint`
+(see _Using the Tagger in a Rule Checker_). A confident error on a term that the dictionary knows is best removed with
+the glossary, which fixes the term wherever it occurs, and not with a higher threshold.
 
 ## Constraints
 
@@ -416,6 +448,12 @@ error. Four things help:
   noun tag on such a word is a guess. The flag is about the lexicon, not about being a word: punctuation and numbers that
   the lexicon lists are known, and a capital letter never makes a word known.
 
+The recommended way for a rule checker to reach a low error rate is the strict threshold together with the margin, the
+known-word flag and a domain `Glossary` or `TokenConstraint`. A confident error on a term that the dictionary knows is
+best removed with the glossary, not with a higher threshold: a glossary entry fixes the term wherever it occurs, while a
+higher threshold gives up coverage on every token. No threshold above `strict` is recommended (see _Technical Text_ for
+the measured point at 0.99).
+
 A dictionary decides a token only when it leaves a single tag: a hard glossary entry or a `TokenConstraint.Only` with one
 tag. That token has `IsConstrained` set, the confidence 1.0 and no `Alternatives`; the head word of an entry that the
 lexicon does not list has `IsKnownWord` false, the tag of the entry and the confidence 1.0, and it is not inconclusive,
@@ -503,7 +541,7 @@ TaggedSentence sentence = tagger.Tag("Dogs bark.")[0];
 
 `Tagger.Default` is the shared tagger that uses the weights and the lexicon that are embedded in the package. It is
 created on first use, so a program that only tokenizes pays nothing; the first read inflates and validates the two
-embedded files once (the weights: 537,650 bytes compressed, 1,196,142 bytes uncompressed; the lexicon: 639,711 bytes
+embedded files once (the weights: 553,641 bytes compressed, 1,234,530 bytes uncompressed; the lexicon: 639,711 bytes
 compressed, 1,626,269 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
 same thread-safe instance. A read does not fail in a released package; an `InvalidOperationException` or an
 `InvalidDataException` would mean that the package is broken.
@@ -703,7 +741,8 @@ holds open data for the 17 Universal POS tags: training corpora, a part-of-speec
 in the [data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md). The parts of the data that
 the library uses at run time are the lexicon, which is compiled into a binary file that is embedded in the assembly and
 restricts the tags of known words, and the weights, which the trainer tool of the repository learned from the open
-corpus, MASC, the silver corpus, the imperative source and the compound sources and which are embedded as a binary file
+corpus, MASC, the silver corpus, the imperative source, the compound sources and the technical-text sources and which
+are embedded as a binary file
 too. The attribution
 and license notices of the third-party data are in
 [THIRD-PARTY-NOTICES.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md), which is also
@@ -720,8 +759,9 @@ packed at the root of the NuGet package.
   carry; the lexicon is embedded in the package in a compiled form.
 - **The open part-of-speech corpus** of the WordSense project (<https://github.com/demaconsulting/WordSense>): the
   annotations and the selection are CC0 1.0, and the sentences are public domain in the United States or come from the
-  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative, compound and headings training
-  sources (text of US federal government documents; 17 U.S.C. 105) and the evaluation sets follow the same terms.
+  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative, compound, headings and
+  technical-text training sources (text of US federal government documents; 17 U.S.C. 105) and the evaluation sets follow
+  the same terms.
 
 ## Evaluation-Only Data
 

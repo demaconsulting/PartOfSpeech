@@ -129,8 +129,8 @@ sections:
               weighted, as sentences without a masked token.
             justification: |
               The weight of a source is a selected training setting, so the epoch must contain exactly the repeats that
-              the configuration names. The imperative and compound sources are committed with weight 1, so they are in
-              the mix of the shipped weights; the headings sources and the four technical sources are committed with
+              the configuration names. The imperative, compound and the four technical sources are committed with
+              weight 1, so they are in the mix of the shipped weights; the headings sources are committed with
               weight 0, so they add nothing until a run weights them. A run that weights a source must get exactly its
               sentences, all with a gold tag.
             tests:
@@ -454,8 +454,8 @@ sections:
           - id: PartOfSpeech-ModelTrainer-Configuration
             title: >-
               The training configuration shall be a valid, canonical file that names existing training corpora (the
-              imperative and compound sources with a positive weight, and the headings sources and the four technical
-              sources with weight 0, so that they are committed and not trained on), and a misspelled setting or an
+              imperative, compound and the four technical sources with a positive weight, and the headings sources
+              with weight 0, so that they are committed and not trained on), and a misspelled setting or an
               out-of-range value shall be an error.
             justification: |
               The configuration is the record of what the committed weights were trained from. A silently ignored
@@ -714,21 +714,28 @@ sections:
               answers among them, the errors per 1,000 answers with their 95 percent Wilson interval and a reliability
               table of the bins below 0.5, 0.5 to 0.6, 0.6 to 0.7, 0.7 to 0.8, 0.8 to 0.9, 0.9 to 0.95 and 0.95 to 1.0
               (count, mean confidence, correct share and harmful errors), pooled and per tranche, deterministically,
-              and `eval-arm` shall write the same measurement under `shapesTechnical`; the measurement shall choose,
-              change and propose no threshold.
+              and `eval-arm` shall write the same measurement under `shapesTechnical`, with, behind the existing
+              members, the answers, wrong answers, errors per 1,000 answers with their Wilson interval and harmful
+              errors at each of the 15 thresholds of the operating-point grid (0.45 to 0.95 in steps of 0.05, then
+              0.96 to 0.99) for the pooled technical scope and for the target items of the three noun-verb technical
+              tranches; the measurement shall choose, change and propose no threshold.
             justification: |
               A consumer who trusts the strict confidence point needs to know how often a confident answer is wrong on
               technical text, and an interval says how much the small tranches can support. The measurement is a
               function
               of the outcomes of the real decoder, so it is reproducible and cannot depend on a setting chosen with
               the data in view. Reporting the bins with the counts shows where the confidence is not calibrated
-              without moving any threshold, which stays a decision that is recorded elsewhere.
+              without moving any threshold, which stays a decision that is recorded elsewhere. The curve over the
+              grid lets a later step read the error at any candidate point from the same code that every trained
+              model passes through, and it is an additional member, so no earlier figure changes.
             tests:
               - ShapesDevCalibration_Wilson_KnownCounts_MatchesTheReportInterval
               - ShapesDevCalibration_MeasureScope_SyntheticOutcomes_ArithmeticAndBins
+              - ShapesDevCalibration_MeasureCurve_SyntheticOutcomes_GridCountsAndRates
               - ShapesDevCalibration_MeasureAndRender_PooledAndPerTranche
               - ShapesDevCommand_Run_Calibration_AppendsTheSectionForSingleShapeSelectionsOnly
               - ArmEvaluation_Evaluate_TechnicalBlock_RowsPooledCountsCalibrationAndOldKeysUnchanged
+              - ArmEvaluation_Evaluate_TechnicalCurve_GridRowsAgreeWithThresholdsAndPooledTechnical
 
           - id: PartOfSpeech-ModelTrainer-ShapesDevIsDevelopmentOnly
             title: >-

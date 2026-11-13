@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "experiment": "beta3-technical-mix",
+  "note": "Arms of the pre-registered beta.3 phase 2 experiment (E2). Every arm uses the shipped training.json mix and settings (open x2, MASC, silver >= 80, imperative, compound and compound2 at weight 1; headings, headings2 and the four technical sources at weight 0) with --features clauseCues and --calibrate; only the weights of the four technical sources and the seed differ. A source of an arm is trained at the weight given here with the option --source NAME:WEIGHT, which the driver appends after --calibrate --output; BASE has none (it is exactly the shipped training.json). The arms run in file order, BASE first, one driver invocation per arm. TECH-NT is for attribution only and cannot win (role attribution).",
+  "baseline": "BASE",
+  "primaryMetric": "derived.primary = 1000 x (shapesTechnical.pooledTechnical.harmful + shapesFollowup.pooledPrimary.harmful) / (shapesTechnical.pooledTechnical.decisions + shapesFollowup.pooledPrimary.decisions)",
+  "coPrimaryMetric": "derived.s2Accuracy = 100 x shapesTechnical.termError.targetCorrect / shapesTechnical.termError.targetItems",
+  "seeds": [20260101, 11, 12, 13, 14, 15, 16, 17],
+  "groups": {
+    "F2": "clauseCues"
+  },
+  "sources": {
+    "deverbal": "data/technical/deverbal.tsv",
+    "terms": "data/technical/terms.tsv",
+    "steps": "data/technical/steps.tsv",
+    "clauses": "data/technical/clauses.tsv"
+  },
+  "skipped": [
+    "overlay arm (relabel of the conflicting defined-term runs): dropped, see RUN-LOG section beta.3 phase 2 (E2)",
+    "leave-out clauses, leave-out steps, F5 (titleCaseLine) variants: not run, see RUN-LOG section beta.3 phase 2 (E2)"
+  ],
+  "arms": [
+    { "id": "BASE", "role": "baseline", "features": ["clauseCues"], "sources": {} },
+    { "id": "TECH", "role": "candidate", "features": ["clauseCues"], "sources": { "deverbal": 1, "terms": 1, "steps": 1, "clauses": 1 } },
+    { "id": "TECH-NT", "role": "attribution", "features": ["clauseCues"], "sources": { "deverbal": 1, "steps": 1, "clauses": 1 } },
+    { "id": "TECH-ND", "role": "candidate", "features": ["clauseCues"], "sources": { "terms": 1, "steps": 1, "clauses": 1 } },
+    { "id": "TECH-T2", "role": "candidate", "features": ["clauseCues"], "sources": { "deverbal": 1, "terms": 2, "steps": 1, "clauses": 1 } },
+    { "id": "TECH-W2", "role": "candidate", "features": ["clauseCues"], "sources": { "deverbal": 2, "terms": 2, "steps": 2, "clauses": 2 } }
+  ]
+}

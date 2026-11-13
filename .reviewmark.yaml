@@ -20,11 +20,15 @@ needs-review:
   - "docs/verification/**/*.md"  # Verification documentation files
   - "docs/user_guide/**/*.md"    # User guide documentation
   - "docs/sysml2/**/*.sysml"     # SysML2 architecture model
-  # Frozen analysis scripts of the context-feature, imperative-data and compound-heading experiments
+  # Frozen analysis scripts of the context-feature, imperative-data, compound-heading and technical-mix experiments
   - "tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py"
   - "tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py"
   - "tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py"
   - "tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py"
+  - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py"
+  - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py"
+  # Independent audit of the technical-mix run inputs (written after the results; outside the pinned set)
+  - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py"
   - "tools/data/**/*.py"         # Build-time Python tools of the data assets, and their tests
   - "tools/data/README.md"       # Documentation of the data tools
   - "tools/data/hmm-tags/README.md"  # Standalone WordSense Basic tagging harness (not in the solution)
@@ -168,11 +172,16 @@ reviews:
       - "tools/DemaConsulting.PartOfSpeech.Trainer/training.json"    # the selected configuration
       - "tools/DemaConsulting.PartOfSpeech.Trainer/README.md"        # how to run the tool
       - "tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md"       # pre-registered rule, run log and decisions
-      # frozen analysis scripts (context features, imperative data, compound-heading data)
+      # frozen analysis scripts (context features, imperative data, compound-heading data, technical mix)
       - "tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py"
       - "tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperative.py"
       - "tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py"
       - "tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py"
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py"
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py"
+      # independent audit of the technical-mix run inputs (not part of the pinned set)
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py"
+      - "tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/README.md"
       - "tools/data/tests/sentence-key-cases.tsv"                    # shared parity cases of the sentence key
       - "docs/evaluation/**/*.md"                                    # evaluation record (thresholds, held-out results)
       - "docs/evaluation/**/*.json"                                  # selection artifact and run-once results

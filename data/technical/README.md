@@ -11,8 +11,8 @@ and excluded-document records and the shared `term-conflict-ids.tsv`. Each sente
 every token has a Universal POS tag on which two blind model labelers agree. The four sources are **training** data: they hold the
 patterns that the other training corpora hold rarely, and each has a contrast stratum in which the same kind of word has the other
 reading. They are disjoint from every evaluation set and from every other training source, and share no sentence with each other. The
-four sources have weight 0 in the trainer configuration (`training.json`): they are committed training data that are not part of the
-shipped mix, and `--source deverbal:1` (and so on) puts one into an experimental run.
+four sources have weight 1 in the trainer configuration (`training.json`): they are part of the shipped mix (1,851 of its 65,373 training
+sentences), and `--source deverbal:0` (and so on) leaves one out of an experimental run.
 
 | Source | File | Sentences | Tokens | Lemmas | Documents | Strata (sentences) |
 | --- | --- | ---: | ---: | ---: | ---: | --- |
@@ -237,8 +237,8 @@ and `clauses`.
 - **No hard-case selection.** The pool is every frame hit in a seeded order; no classifier score chooses it. The sentences are therefore
   easier on average than the development tranches, which kept the contested band of a classifier for `deverbal-heads`, `step-lines` and
   `clause-verbs`. The data teach the frame, not the hard cases.
-- **Small sources.** The sources hold 310 to 637 sentences each, and 4,894 to 12,007 tokens. A model that trains on one of them at weight 1
-  is trained on a small amount of such text next to 63,522 sentences of the shipped mix.
+- **Small sources.** The sources hold 310 to 637 sentences each, and 4,894 to 12,007 tokens: together 1,851 of the 65,373 sentences of
+  the shipped mix, so each pattern is a small amount of text next to the other corpora.
 - **Contrast strata are small.** The `verb` stratum is 14.9 percent of `deverbal`, `proper` 24.9 percent of `terms`, `noun-initial` 29.9
   percent of `steps` and `noun` and `adj` 20.0 percent of `clauses`; a model can lean toward the target reading.
 - **Few enumerated lines.** 154 of the 372 `steps` imperatives (41.4 percent) come from enumerated or bulleted lines, the others from short
@@ -257,8 +257,8 @@ and `clauses`.
 ## Use
 
 Train only. `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` lists the sources as `deverbal`, `terms`, `steps` and `clauses`, each
-with `"weight": 0` (they are not in the mix of the shipped weights, and `train --check` reproduces the shipped weights without them);
-`--source deverbal:1` leaves one in a run. The trainer refuses the evaluation files by name and admits these files because they are training
+with `"weight": 1` (they are in the mix of the shipped weights, and `train --check` reproduces the shipped weights with them);
+`--source deverbal:0` leaves one out of a run. The trainer refuses the evaluation files by name and admits these files because they are training
 sources under `data/`. Do not evaluate on them: their sentences are selected by a frame and labeled by models, so a score on them says
 nothing about held-out text.
 

@@ -48,7 +48,7 @@ Moby Part-of-Speech List, which is in the public domain.
 
 ### The weights (`weights.bin`): CC BY 3.0 US
 
-The weights are the trained model of the tagger. They were learned from five corpora of this project, which are not
+The weights are the trained model of the tagger. They were learned from six corpora of this project, which are not
 part of the package:
 
 - the open corpus (CC0 1.0), with Universal POS tags that language models wrote;
@@ -58,6 +58,9 @@ part of the package:
 - an imperative source of sentences from US federal government documents (public domain under 17 U.S.C. 105), tagged by
   language models (CC0 1.0);
 - a compound source of sentences with a noun compound, from US federal government documents (public domain under
+  17 U.S.C. 105), tagged by language models (CC0 1.0);
+- a technical source of sentences of technical text (deverbal compound heads, capitalized defined terms, step-line
+  imperatives and base-form ambiguity in a clause), from US federal government documents (public domain under
   17 U.S.C. 105), tagged by language models (CC0 1.0).
 
 A further training source of the repository (heading lines from US federal government documents, tagged by language
