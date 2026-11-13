@@ -190,7 +190,8 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   (the committed imperative file, weighted in a copy of the committed configuration, gives its 900 sentences with every
   token tagged and a VERB first token; the test sets the other sources to weight 0 in the copy) and
   `CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted` (one case each for the committed compound files
-  with 742 and 1,100 sentences, which have weight 1 in the committed configuration, and the headings files with 374 and
+  with 742 and 1,100 sentences and the four technical files with 637, 373, 531 and 310, which have weight 1 in the committed
+  configuration, and the headings files with 374 and
   247, which have weight 0: weighted alone each gives its sentences with every token tagged, and a source at weight 1
   has exactly its sentences more in the committed mix than the same source at weight 0).
   The status flags are covered by `CorpusReader_Parse_StatusFlags_AreKeptAndDoNotChangeTagsOrMasking` (flags are kept per
@@ -297,8 +298,8 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   fresh image is current, another seed or another temperature is stale, no file is missing, bytes that are no weights file
   are invalid).
 - **Configuration**: `ConfigFile_Parse_CommittedConfiguration_ValidAndCanonical` (on .NET 8 and later: the named sources
-  of the configuration in order (twelve), each file existing, the imperative and compound sources and the second compound
-  source with weight 1, the headings sources and the four technical sources with weight 0, and rewriting the
+  of the configuration in order (twelve), each file existing, the imperative, compound and second compound
+  source and the four technical sources with weight 1, the headings sources with weight 0, and rewriting the
   file gives the
   same text) and `ConfigFile_Parse_UnknownMemberOrBadRange_Throws`; `CorpusReader_LoadSources_TargetedSource_ReadsUnmaskedOnlyWhenWeighted`
   (a theory over the compound, headings and technical sources: the whole file with every token gold-tagged when the

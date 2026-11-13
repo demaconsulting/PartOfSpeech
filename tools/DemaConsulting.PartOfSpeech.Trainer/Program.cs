@@ -82,10 +82,11 @@ internal static class Program
     ///     90 of 4,451 decisions for the model adopted after the pre-registered <c>-ing</c> follow-up, 100 of 4,451
     ///     decisions for the model with the clause-cue feature group that the context-feature experiment selected, and
     ///     91 of 4,451 decisions for the model that adds the imperative training source, and 96 of 4,451 decisions for the
-    ///     model that adds the two compound training sources (the figures that <c>thresholds</c>
+    ///     model that adds the two compound training sources, and 92 of 4,451 decisions for the model that adds the four
+    ///     technical training sources (the figures that <c>thresholds</c>
     ///     reported for these models before it wrote anything).
     /// </summary>
-    private const int FrozenOpenHarmful = 96;
+    private const int FrozenOpenHarmful = 92;
 
     /// <summary>
     ///     The harmful errors at 0.45 of the frozen model on the gold v2 development split (the freeze table of the run log;
@@ -93,10 +94,11 @@ internal static class Program
     ///     of the run log replaces the first freeze figure of 9: 14 of 611 decisions for the first retrained model,
     ///     11 of 611 decisions for the model adopted after the pre-registered <c>-ing</c> follow-up, 16 of 611 decisions
     ///     for the model with the clause-cue feature group, 14 of 611 decisions for the model that adds the imperative
-    ///     training source, and 11 of 611 decisions for the model that adds the two compound training sources, as
+    ///     training source, 11 of 611 decisions for the model that adds the two compound training sources, and 8 of 611
+    ///     decisions for the model that adds the four technical training sources, as
     ///     reported by <c>thresholds</c>).
     /// </summary>
-    private const int FrozenGoldHarmful = 11;
+    private const int FrozenGoldHarmful = 8;
 
     /// <summary>
     ///     The usage text.

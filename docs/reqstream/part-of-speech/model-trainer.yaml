@@ -129,8 +129,8 @@ sections:
               weighted, as sentences without a masked token.
             justification: |
               The weight of a source is a selected training setting, so the epoch must contain exactly the repeats that
-              the configuration names. The imperative and compound sources are committed with weight 1, so they are in
-              the mix of the shipped weights; the headings sources and the four technical sources are committed with
+              the configuration names. The imperative, compound and the four technical sources are committed with
+              weight 1, so they are in the mix of the shipped weights; the headings sources are committed with
               weight 0, so they add nothing until a run weights them. A run that weights a source must get exactly its
               sentences, all with a gold tag.
             tests:
@@ -454,8 +454,8 @@ sections:
           - id: PartOfSpeech-ModelTrainer-Configuration
             title: >-
               The training configuration shall be a valid, canonical file that names existing training corpora (the
-              imperative and compound sources with a positive weight, and the headings sources and the four technical
-              sources with weight 0, so that they are committed and not trained on), and a misspelled setting or an
+              imperative, compound and the four technical sources with a positive weight, and the headings sources
+              with weight 0, so that they are committed and not trained on), and a misspelled setting or an
               out-of-range value shall be an error.
             justification: |
               The configuration is the record of what the committed weights were trained from. A silently ignored

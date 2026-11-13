@@ -153,7 +153,7 @@ are information for reviewers, not acceptance values:
   instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
-- The embedded weights are 537,650 bytes (1,196,142 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
+- The embedded weights are 553,641 bytes (1,234,530 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
   uncompressed); the package is larger because both resources are embedded once per target framework (the package size
   is stated, approximately, in the "Package size" item of the design document `part-of-speech.md`).
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
@@ -279,8 +279,8 @@ Reads the corpus paths of `training.json` and asserts for each that it is one of
 MASC, silver, imperative, compound, headings, the two follow-up sources compound2 and headings2 and the four technical sources
 deverbal, terms, steps and clauses), that the file
 is committed, that it is not a restricted corpus, that its data folder declares an allowed license, and that the section
-of the third-party notice on the embedded weights names MASC, its license, the open corpus, the silver corpus and the
-imperative source. That
+of the third-party notice on the embedded weights names MASC, its license, the open corpus, the silver corpus, the
+imperative source, the compound source and the technical source. That
 nothing was selected on held-out data is verified by the guard tests of the `ModelTrainer` unit.
 
 ### Evaluation Results Record the Shipped Model
@@ -297,6 +297,21 @@ file therefore fails until the evaluation is redone. The held-out run itself is 
 procedure of the trainer that runs once for each frozen model (see _ModelTrainer Verification_), and no test opens a
 held-out data file.
 
+### Technical Operating Point Matches the Shipped Model and the Rule
+
+**Test**: `PartOfSpeech_Evaluation_TechnicalOperatingPoint_MatchesTheShippedModelAndTheRule` (in `PartOfSpeechEvaluationTests.cs`)
+
+Reads `technical-operating-points.json`, `training.json`, the manifest, the selection report and the user guide and
+asserts that the artifact has the rule id `nv-technical-dev-v1`, the target of 10 wrong answers per 1,000 answers and
+the coverage floor of 25%, that its weights hash equals the SHA-256 of the embedded `weights.bin` and its temperature
+the one of the configuration, that the hashes of the four technical tranche files equal the manifest, that its curve
+has the 15 thresholds of the grid, that the first threshold of the curve with at most 10 wrong answers per 1,000
+answers and at least 25% of the judged words answered (integer comparisons) is the recorded point (or that the
+artifact says none when no threshold qualifies), that the section "Technical text" of `confidence-thresholds.md`
+states the same point and has the answers, coverage, wrong answers and error rate of every threshold row of the curve,
+and that the user guide states the point with its wrong answers, answers, error rate and coverage. A retrained model
+or a changed tranche fails until the point is computed again. The test opens no held-out data file.
+
 ### Evaluation Record States the Figures of the Reports
 
 **Test**: `PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports`
@@ -310,7 +325,7 @@ figures are quoted from the generated reports, never typed independently.
 
 **Test**: `PartOfSpeech_Evaluation_Record_ContainsNoTreebankText`
 
-Asserts that the five files of the evaluation record exist, that none contains a text in the form of a treebank sentence
+Asserts that the seven files of the evaluation record exist, that none contains a text in the form of a treebank sentence
 id, and, when the git-ignored cache of the pinned treebank test file is present, that none contains one of its sentence
 ids or one of its sentences of 25 or more characters. The cache part is skipped silently in CI, where the treebank is not
 fetched; the form check always runs, and the data licensing test `PartOfSpeech_DataLicensing_UdEwt_IsNotCommitted`
@@ -760,7 +775,7 @@ them. The `PartOfSpeech_ShapesDevTechnical_*` and `PartOfSpeech_Technical_*` dat
   a
   decoder, a tagger or the shapes evaluation and for a probe file, a probe reader or a direct read of a held-out set.
 - `Technical_Notice_NamesTheSourcesAndTheirBasis` asserts that the third-party notice names the eight files, `data/technical/`,
-  17 U.S.C. 105, the CC0 dedication, the source tables and weight 0.
+  17 U.S.C. 105, the CC0 dedication, the source tables and weight 1 (the weights were learned from the sources).
 - `Technical_Conventions_PinMatchesTheCommittedFileAndNamesDefinedTerms` asserts that the SHA-256 that `technical_data.py`
   pins for `data/CONVENTIONS.md` is the hash of the committed file and that the file has the row and the section of the
   capitalized defined terms.

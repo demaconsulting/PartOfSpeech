@@ -75,7 +75,7 @@
     {
       "name": "deverbal",
       "path": "data/technical/deverbal.tsv",
-      "weight": 0,
+      "weight": 1,
       "maskDisputed": false,
       "minSilverProbability": 0,
       "samplePermille": 1000,
@@ -84,7 +84,7 @@
     {
       "name": "terms",
       "path": "data/technical/terms.tsv",
-      "weight": 0,
+      "weight": 1,
       "maskDisputed": false,
       "minSilverProbability": 0,
       "samplePermille": 1000,
@@ -93,7 +93,7 @@
     {
       "name": "steps",
       "path": "data/technical/steps.tsv",
-      "weight": 0,
+      "weight": 1,
       "maskDisputed": false,
       "minSilverProbability": 0,
       "samplePermille": 1000,
@@ -102,7 +102,7 @@
     {
       "name": "clauses",
       "path": "data/technical/clauses.tsv",
-      "weight": 0,
+      "weight": 1,
       "maskDisputed": false,
       "minSilverProbability": 0,
       "samplePermille": 1000,
@@ -121,5 +121,5 @@
     "clauseCues"
   ],
   "temperature": 9.514,
-  "imageSha256": "d916b0e775660f8aa3c18a2161369318dd07c182358e1503d0992b5d2b975e25"
+  "imageSha256": "42352bed32845de78380dcda387aac3915468ed9cf4929e8571b95486f7e245b"
 }

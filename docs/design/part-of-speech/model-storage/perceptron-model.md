@@ -97,8 +97,8 @@ non-zero reserved bytes; so it never tags with the wrong features (not forward c
   committed file is current. Postcondition: the compressed and the plain form of the same weights give the same image.
   An invalid file throws `InvalidDataException`.
 
-Size note: the shipped model (selected on development data, see _ModelTrainer Design_) has 126,087 rows and 314,640
-weights at 19 hash bits and scale 1/8, which is 1,196,142 bytes uncompressed and 537,650 bytes with Deflate.
+Size note: the shipped model (selected on development data, see _ModelTrainer Design_) has 129,882 rows and 324,906
+weights at 19 hash bits and scale 1/8, which is 1,234,530 bytes uncompressed and 553,641 bytes with Deflate.
 
 #### Error Handling
 

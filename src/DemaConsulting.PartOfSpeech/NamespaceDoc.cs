@@ -224,6 +224,16 @@ namespace DemaConsulting.PartOfSpeech;
 ///     whether the entry is right.
 ///     </para>
 ///     <para>
+///     Technical text is harder than ordinary text: a noun that is spelled like a verb, a Capitalized Defined Term, the first
+///     word of a step line and a base-form word in a clause are where a confident wrong tag is most likely, and the held-out
+///     evaluation does not measure these shapes. On four development tranches of such words (1,417 judged words) the
+///     technical operating point, the first threshold with at most 10 wrong answers in 1,000 answers and at least 25% of the
+///     judged words answered, is 0.99: 1 wrong answer in 357 (2.8 in 1,000, 95% interval 0.5 to 15.7 in 1,000) at a coverage
+///     of 25.2%. It rests on one wrong answer and its interval reaches above 1%, so read it as an estimate and not as a
+///     guarantee; at the strict threshold the wrong answers on these words are 54.2 in 1,000 answers. These are development
+///     figures (https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/technical-operating-points.json).
+///     </para>
+///     <para>
 ///     The development selection, the held-out results on every set, the limits of the measurement and how to reproduce
 ///     it are in the evaluation record of the repository:
 ///     https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/confidence-thresholds.md (the selection),
@@ -272,8 +282,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///     weights (the embedded lexicon is used unless you pass one as well).
 ///     </para>
 ///     <para>
-///     The embedded weights file (<c>weights.bin</c>) is 537,650 bytes compressed and 1,196,142 bytes uncompressed (about
-///     0.5 MB and 1.2 MB); it holds 126,087 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
+///     The embedded weights file (<c>weights.bin</c>) is 553,641 bytes compressed and 1,234,530 bytes uncompressed (about
+///     0.6 MB and 1.2 MB); it holds 129,882 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
 ///     bytes compressed and 1,626,269 bytes uncompressed and holds 262,635 spellings. Both files are stored as resources
 ///     of the assembly, so the package grows by their compressed sizes for each target framework. The first read of
 ///     <see cref="Tagger.Default"/> inflates and validates both files once in the process (tens of milliseconds on a

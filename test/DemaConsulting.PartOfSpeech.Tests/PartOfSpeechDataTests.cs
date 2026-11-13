@@ -3959,7 +3959,7 @@ public class PartOfSpeechDataTests
         // Assert: at least one source, no problem, and the notice says which corpora the weights come from
         Assert.NotEmpty(paths);
         Assert.Empty(problems.Take(ShownProblems));
-        Assert.Empty(MissingFragments(notice, new[] { "MASC", "CC BY 3.0 US", "open corpus", "silver corpus", "imperative source", "compound source" }));
+        Assert.Empty(MissingFragments(notice, new[] { "MASC", "CC BY 3.0 US", "open corpus", "silver corpus", "imperative source", "compound source", "technical source" }));
     }
 
     /// <summary>
@@ -5125,7 +5125,7 @@ public class PartOfSpeechDataTests
     /// <summary>
     ///     Proves that the third-party notice names the four technical tranches and the four technical training sources, their US federal-work basis
     ///     (17 U.S.C. 105), the CC0 dedication of annotations and selection, the tables that quote the license basis of every document, and that the
-    ///     sources are registered with weight 0 (the embedded weights were not learned from them).
+    ///     sources are registered with weight 1 (the embedded weights were learned from them).
     /// </summary>
     [Fact]
     public void PartOfSpeech_Technical_Notice_NamesTheSourcesAndTheirBasis()
@@ -5138,7 +5138,7 @@ public class PartOfSpeechDataTests
         {
             "`deverbal-heads.tsv`", "`defined-terms.tsv`", "`step-lines.tsv`", "`clause-verbs.tsv`", "`deverbal.tsv`", "`terms.tsv`", "`steps.tsv`", "`clauses.tsv`",
             "data/technical/", "17 U.S.C. 105", "CC0 1.0", "data/eval/shapes-dev/<tranche>-sources.tsv", "data/technical/<source>-sources.tsv",
-            "registered with weight 0 (so the embedded weights were not learned from them)"
+            "registered with weight 1 (so the embedded weights were learned from them)"
         });
 
         // Assert: the notice makes every statement

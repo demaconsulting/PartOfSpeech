@@ -1,0 +1,350 @@
+{
+  "schema": 1,
+  "rule": "nv-technical-dev-v1",
+  "ruleText": "The first threshold of the grid of nv-pooled-dev-v1 (0.45 to 0.95 in steps of 0.05, then 0.96 to 0.99) with at most 10 wrong answers per 1,000 answers and a coverage of at least 25% of the judged words, on the pooled judged words of the four technical development tranches; none when no threshold has both.",
+  "weightsSha256": "a1aab1ca0314a4a8b78fdf983987b49cf9f9981ec98d6ea06468e64a10d20d25",
+  "temperature": 9.514,
+  "inputs": {
+    "deverbalHeadsSha256": "6159099f5fc59187f9486070439e552358abf19fb95742e20c54dbcf17400c5a",
+    "definedTermsSha256": "6bca83a8e63589152cf3a37661e328a187323612b06344c6c402921f1c2478c8",
+    "stepLinesSha256": "c06bc3138b92cd3baafec1a9a210110daafee69846dd83c77ba70b4fc09f4ad8",
+    "clauseVerbsSha256": "d35e7a259140614d6f0057fe7f3fd5d545cdf478971ac7f77088dc2789db4e06"
+  },
+  "scope": "the judged words (targets and controls) of deverbal-heads, defined-terms, step-lines and clause-verbs, pooled",
+  "judged": 1417,
+  "grid": [
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95,
+    0.96,
+    0.97,
+    0.98,
+    0.99
+  ],
+  "targetErrorsPer1000": 10,
+  "coverageFloorPercent": 25,
+  "curve": [
+    {
+      "threshold": 0.45,
+      "answers": 1397,
+      "coveragePercent": 98.58856739590685,
+      "wrong": 290,
+      "errorPer1k": 207.58768790264853,
+      "intervalLowPer1k": 187.13562261447555,
+      "intervalHighPer1k": 229.64348909710134,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.5,
+      "answers": 1379,
+      "coveragePercent": 97.31827805222301,
+      "wrong": 286,
+      "errorPer1k": 207.39666424945614,
+      "intervalLowPer1k": 186.82472560636378,
+      "intervalHighPer1k": 229.594275417185,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.55,
+      "answers": 1301,
+      "coveragePercent": 91.8136908962597,
+      "wrong": 247,
+      "errorPer1k": 189.85395849346656,
+      "intervalLowPer1k": 169.46798442398347,
+      "intervalHighPer1k": 212.06607512997923,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.6,
+      "answers": 1238,
+      "coveragePercent": 87.36767819336627,
+      "wrong": 212,
+      "errorPer1k": 171.24394184168014,
+      "intervalLowPer1k": 151.28372992867142,
+      "intervalHighPer1k": 193.23807341546387,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.65,
+      "answers": 1164,
+      "coveragePercent": 82.1453775582216,
+      "wrong": 178,
+      "errorPer1k": 152.92096219931273,
+      "intervalLowPer1k": 133.3890916389631,
+      "intervalHighPer1k": 174.7361732630015,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.7,
+      "answers": 1102,
+      "coveragePercent": 77.76993648553281,
+      "wrong": 152,
+      "errorPer1k": 137.93103448275863,
+      "intervalLowPer1k": 118.82616257115478,
+      "intervalHighPer1k": 159.5514081094726,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.75,
+      "answers": 1044,
+      "coveragePercent": 73.67678193366267,
+      "wrong": 124,
+      "errorPer1k": 118.77394636015326,
+      "intervalLowPer1k": 100.53310038636592,
+      "intervalHighPer1k": 139.80999421705704,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.8,
+      "answers": 967,
+      "coveragePercent": 68.24276640790403,
+      "wrong": 103,
+      "errorPer1k": 106.51499482936919,
+      "intervalLowPer1k": 88.60417489823499,
+      "intervalHighPer1k": 127.53972476906708,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.85,
+      "answers": 871,
+      "coveragePercent": 61.46788990825688,
+      "wrong": 71,
+      "errorPer1k": 81.51549942594718,
+      "intervalLowPer1k": 65.128463635539,
+      "intervalHighPer1k": 101.57769483549511,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.9,
+      "answers": 756,
+      "coveragePercent": 53.35215243472124,
+      "wrong": 41,
+      "errorPer1k": 54.232804232804234,
+      "intervalLowPer1k": 40.22638550709871,
+      "intervalHighPer1k": 72.74646939302635,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.95,
+      "answers": 605,
+      "coveragePercent": 42.695836273817925,
+      "wrong": 16,
+      "errorPer1k": 26.446280991735538,
+      "intervalLowPer1k": 16.343076551006167,
+      "intervalHighPer1k": 42.525218895155135,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.96,
+      "answers": 574,
+      "coveragePercent": 40.50811573747354,
+      "wrong": 12,
+      "errorPer1k": 20.905923344947734,
+      "intervalLowPer1k": 11.998765107690597,
+      "intervalHighPer1k": 36.1830647928451,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.97,
+      "answers": 527,
+      "coveragePercent": 37.191249117854625,
+      "wrong": 9,
+      "errorPer1k": 17.077798861480076,
+      "intervalLowPer1k": 9.010196157467535,
+      "intervalHighPer1k": 32.13477945789802,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.98,
+      "answers": 454,
+      "coveragePercent": 32.03952011291461,
+      "wrong": 6,
+      "errorPer1k": 13.215859030837004,
+      "intervalLowPer1k": 6.070643933094708,
+      "intervalHighPer1k": 28.52967146866797,
+      "meetsError": false,
+      "meetsCoverage": true
+    },
+    {
+      "threshold": 0.99,
+      "answers": 357,
+      "coveragePercent": 25.19407198306281,
+      "wrong": 1,
+      "errorPer1k": 2.8011204481792715,
+      "intervalLowPer1k": 0.4946377843807947,
+      "intervalHighPer1k": 15.693798265639806,
+      "meetsError": true,
+      "meetsCoverage": true
+    }
+  ],
+  "nounVerbDecisions": 817,
+  "nounVerbTargets": 882,
+  "nounVerbCurve": [
+    {
+      "threshold": 0.45,
+      "answeredDecisions": 801,
+      "harmful": 171,
+      "harmfulPer1k": 213.48314606741573,
+      "intervalLowPer1k": 186.5083878816213,
+      "intervalHighPer1k": 243.1929589674893
+    },
+    {
+      "threshold": 0.5,
+      "answeredDecisions": 794,
+      "harmful": 170,
+      "harmfulPer1k": 214.1057934508816,
+      "intervalLowPer1k": 186.98570289828956,
+      "intervalHighPer1k": 243.9789393295258
+    },
+    {
+      "threshold": 0.55,
+      "answeredDecisions": 744,
+      "harmful": 144,
+      "harmfulPer1k": 193.5483870967742,
+      "intervalLowPer1k": 166.76312618962078,
+      "intervalHighPer1k": 223.48196575522104
+    },
+    {
+      "threshold": 0.6,
+      "answeredDecisions": 704,
+      "harmful": 126,
+      "harmfulPer1k": 178.97727272727272,
+      "intervalLowPer1k": 152.42629896161392,
+      "intervalHighPer1k": 209.01263015344418
+    },
+    {
+      "threshold": 0.65,
+      "answeredDecisions": 660,
+      "harmful": 108,
+      "harmfulPer1k": 163.63636363636363,
+      "intervalLowPer1k": 137.37367198345126,
+      "intervalHighPer1k": 193.79193381009514
+    },
+    {
+      "threshold": 0.7,
+      "answeredDecisions": 619,
+      "harmful": 90,
+      "harmfulPer1k": 145.39579967689824,
+      "intervalLowPer1k": 119.81331571619792,
+      "intervalHighPer1k": 175.3524223056401
+    },
+    {
+      "threshold": 0.75,
+      "answeredDecisions": 584,
+      "harmful": 71,
+      "harmfulPer1k": 121.57534246575342,
+      "intervalLowPer1k": 97.51522084843944,
+      "intervalHighPer1k": 150.58136485145766
+    },
+    {
+      "threshold": 0.8,
+      "answeredDecisions": 537,
+      "harmful": 56,
+      "harmfulPer1k": 104.28305400372439,
+      "intervalLowPer1k": 81.18323469091352,
+      "intervalHighPer1k": 133.00422630904083
+    },
+    {
+      "threshold": 0.85,
+      "answeredDecisions": 482,
+      "harmful": 39,
+      "harmfulPer1k": 80.91286307053942,
+      "intervalLowPer1k": 59.7524751657139,
+      "intervalHighPer1k": 108.70054049446682
+    },
+    {
+      "threshold": 0.9,
+      "answeredDecisions": 411,
+      "harmful": 20,
+      "harmfulPer1k": 48.661800486618006,
+      "intervalLowPer1k": 31.71892449952135,
+      "intervalHighPer1k": 73.96351861868428
+    },
+    {
+      "threshold": 0.95,
+      "answeredDecisions": 316,
+      "harmful": 7,
+      "harmfulPer1k": 22.151898734177216,
+      "intervalLowPer1k": 10.770923808280209,
+      "intervalHighPer1k": 45.01127198240861
+    },
+    {
+      "threshold": 0.96,
+      "answeredDecisions": 299,
+      "harmful": 6,
+      "harmfulPer1k": 20.066889632107024,
+      "intervalLowPer1k": 9.228499183599029,
+      "intervalHighPer1k": 43.08091360226836
+    },
+    {
+      "threshold": 0.97,
+      "answeredDecisions": 273,
+      "harmful": 5,
+      "harmfulPer1k": 18.315018315018314,
+      "intervalLowPer1k": 7.8478202819091925,
+      "intervalHighPer1k": 42.14996161545805
+    },
+    {
+      "threshold": 0.98,
+      "answeredDecisions": 231,
+      "harmful": 4,
+      "harmfulPer1k": 17.316017316017316,
+      "intervalLowPer1k": 6.753942918406638,
+      "intervalHighPer1k": 43.66926147533474
+    },
+    {
+      "threshold": 0.99,
+      "answeredDecisions": 173,
+      "harmful": 1,
+      "harmfulPer1k": 5.780346820809249,
+      "intervalLowPer1k": 1.0211029299696355,
+      "intervalHighPer1k": 32.01107695731037
+    }
+  ],
+  "status": "found",
+  "point": {
+    "threshold": 0.99,
+    "answers": 357,
+    "coveragePercent": 25.19407198306281,
+    "wrong": 1,
+    "errorPer1k": 2.8011204481792715,
+    "intervalLowPer1k": 0.4946377843807947,
+    "intervalHighPer1k": 15.693798265639806
+  },
+  "achievableMinimum": {
+    "threshold": 0.99,
+    "answers": 357,
+    "coveragePercent": 25.19407198306281,
+    "wrong": 1,
+    "errorPer1k": 2.8011204481792715,
+    "intervalLowPer1k": 0.4946377843807947,
+    "intervalHighPer1k": 15.693798265639806
+  },
+  "caveats": [
+    "The figures are development figures: the tranches are the data the model was compared on, so they are optimistic for any other text.",
+    "The tranches are band-selected contested words in technical sentences (deverbal heads, defined terms, step lines, clause verbs), not running text, so the rates are not the error rates on ordinary text.",
+    "No held-out set carries these shapes, and the held-out evaluation applies the general operating points only.",
+    "The measure counts every wrong answer of a judged word (targets and controls) under the scoring of its tranche, not the harmful NOUN<->VERB errors of the general operating points; the harmful rate is reported beside it."
+  ]
+}

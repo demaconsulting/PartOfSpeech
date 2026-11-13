@@ -59,8 +59,8 @@ and they are rejected together with `--check` and `--update-config`.
 
 ## Configuration
 
-`training.json` names the corpora (`open`, `masc`, `silver`, `imperative`, `compound`, `headings`, `compound2` and `headings2`; each with an integer `weight`, the number of times its
-sentences enter every epoch; open, MASC, silver, imperative, `compound` and `compound2` have a positive weight, `--source imperative:0` or `--source compound:0` leaves one of them out of a run, and the two headings sources have weight 0, so `--source headings:1` and `--source headings2:1` add them to a run) and every training setting. It contains no floating-point training setting except the
+`training.json` names the corpora (`open`, `masc`, `silver`, `imperative`, `compound`, `headings`, `compound2`, `headings2`, `deverbal`, `terms`, `steps` and `clauses`; each with an integer `weight`, the number of times its
+sentences enter every epoch; open, MASC, silver, imperative, `compound`, `compound2` and the four technical sources `deverbal`, `terms`, `steps` and `clauses` have a positive weight, `--source imperative:0` or `--source terms:0` leaves one of them out of a run, and the two headings sources have weight 0, so `--source headings:1` and `--source headings2:1` add them to a run) and every training setting. It contains no floating-point training setting except the
 softmax `temperature`, which is chosen once by `calibrate` and only written into the file header. The weight scale is
 `1 / quantScale` with `quantScale` a power of two, so it is exact in the file.
 
@@ -221,10 +221,10 @@ hold, as described above.
 
 ### Technical-mix experiment (beta.3 phase 2)
 
-The pre-registered experiment that decides whether the four weight-0 technical training sources (`deverbal`, `terms`, `steps`,
-`clauses`) are mixed into the shipped model is in `beta3-tech/`; its rules, arms, guards, hashes and decision rule are the section
-"beta.3 phase 2 (E2)" of `RUN-LOG.md`. `arms.json` has six arms with eight seeds (`20260101` and `11` to `17`): BASE (the
-shipped configuration, no option), TECH (all four sources at weight 1), TECH-NT (without `terms`; attribution only, it cannot be
+The pre-registered experiment on the four technical training sources (`deverbal`, `terms`, `steps`,
+`clauses`) is in `beta3-tech/`; its rules, arms, guards, hashes and decision rule are the section
+"beta.3 phase 2 (E2)" of `RUN-LOG.md`, and its winner, TECH (all four sources at weight 1), is the shipped model. `arms.json` has six arms with eight seeds (`20260101` and `11` to `17`): BASE (the
+shipped configuration of the time, no option), TECH (all four sources at weight 1), TECH-NT (without `terms`; attribution only, it cannot be
 selected), TECH-ND (without `deverbal`), TECH-T2 (`terms` at weight 2) and TECH-W2 (all four at weight 2); a source of an arm is a
 member `NAME: WEIGHT` and is passed as `--source NAME:WEIGHT`. `run_arms.ps1` is the driver of the follow-up with its own
 `arms.json`: resumable (a run is complete when its JSON exists), it **waits** while the PAUSE file exists (polling every 60 s;
@@ -252,8 +252,8 @@ python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py 
 
 The analyzer needs all six arms at all eight seeds in one `<runs>` folder, and the working tree must be clean and at one commit
 while the runs are made (the result files record the commit and a dirty flag). The acceptance test "BASE equals the shipped weights"
-holds while `training.json` and `weights.bin` are the state recorded in the run log (the shipped CMP2 model); an adoption changes
-both by design, so the analysis is made before it.
+holds only while `training.json` and `weights.bin` are the pre-adoption state recorded in the run log; the shipped weights are
+the TECH model, so at the current state the test does not hold and the analyzer is run from the pre-adoption commit.
 
 ### Held-out evaluation
 
@@ -282,10 +282,10 @@ Run the commands at below-normal priority, one process at a time (see _Machine l
 
 ## Current model
 
-`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%), imperative (x1), and the two compound sources `compound` and `compound2` (x1 each); restriction
+`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%), imperative (x1), the two compound sources `compound` and `compound2` (x1 each) and the four technical sources `deverbal`, `terms`, `steps` and `clauses` (x1 each; 65,373 training sentences); restriction
 mode `history` with predicted history; 6 epochs; 19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8;
-the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 126,087 rows and 314,640 weights, is
-1,196,142 bytes uncompressed and 537,650 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
+the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 129,882 rows and 324,906 weights, is
+1,234,530 bytes uncompressed and 553,641 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
 takes about 15 seconds and runs
 in `build.ps1` and in the CI build on all three operating systems. The glossary decision (boost only, no trained
 feature) and every experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and

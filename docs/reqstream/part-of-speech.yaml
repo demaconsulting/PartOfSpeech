@@ -988,7 +988,7 @@ sections:
           FAA material or a restricted license, no source row and no sentence document shall have an id or normalized
           URL that the excluded-sources table lists, the records of left-out documents and of dropped sentences shall
           hold ids, reasons and counts only, and the README and the third-party notice shall state the basis, the
-          dedication of the labels and the weight 0 of the training sources.
+          dedication of the labels and the weight 1 of the technical training sources.
         tags: [system]
         justification: |
           The documents are NASA and USGS technical reports and military and agency manuals; each needs a recorded
@@ -1487,6 +1487,26 @@ sections:
           - PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs
           - PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports
           - PartOfSpeech_Evaluation_Record_ContainsNoTreebankText
+
+      - id: PartOfSpeech-Model-TechnicalOperatingPoint
+        title: >-
+          The repository shall record, for the embedded model and from development data only, the technical operating
+          point (the first grid threshold with at most 10 wrong answers per 1,000 answers and at least 25% of the judged
+          words answered on the four technical tranches pooled, or none with the lowest error rate at that coverage),
+          the whole curve and its caveats, as a committed artifact that names the SHA-256 of the embedded weights file
+          and of the four tranche files, and as a section of the selection report that equals the artifact.
+        tags: [system]
+        justification: |
+          A consumer that checks technical text needs to know how often a confident answer is wrong on such text, which
+          the general operating points (noun-verb decisions of ordinary text) do not say. The rule and its numbers were
+          fixed before the model was trained and are applied without tuning: the point is whatever the curve gives,
+          including none, and the lowest error that is reachable is reported next to it. The artifact is derived from
+          the model, so a test recomputes the point from the committed curve with integer comparisons and compares the
+          model hash, the tranche hashes and the table of the report, so that a retrained model or a changed tranche
+          fails until the point is computed again. No held-out set carries these shapes, so the figures are development
+          figures and the artifact states that.
+        tests:
+          - PartOfSpeech_Evaluation_TechnicalOperatingPoint_MatchesTheShippedModelAndTheRule
 
   - title: API Documentation
     requirements:
