@@ -33,7 +33,7 @@ contains. The record of the builds is in the trainer run log (sections "beta.3 p
   Agriculture (the families of the table under "Counts"). Every
   document is one row of the `*-sources.tsv` table of its source (URL, title, author, year, the quoted license basis, retrieval date and
   the SHA-256 of the download and of the extracted sentences). No document is in any other source table of this repository, none is in an
-  evaluation set, none is in either `excluded-sources.tsv`, and nothing was written for these sources: all sentences are real text
+  evaluation set, none is in either `excluded-sources.tsv`, and no sentence is authored: all sentences are real text
   (0 authored). Publication years are 1940 to 2025.
 - **Documents of the four sources:** `deverbal` 173, `terms` 102, `steps` 130 and `clauses` 112, 218 distinct documents in all. The four
   sources are cut from one pool of documents (the training side of one partition of title families, see below), so a document may feed

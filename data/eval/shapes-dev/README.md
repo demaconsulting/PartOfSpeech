@@ -827,9 +827,10 @@ text, no sentence supplied by any consumer, and no document with a non-federal c
 
 ### Hand Check of the Technical Tranches
 
-`claude-sonnet-5.5` (a model review, not a human review) judged 60 items of each tranche as built and 4 control items whose tag had been swapped on
-purpose, once, from one sample drawn with a fixed seed (`deverbal-heads` 20261201, `defined-terms` 20261202, `step-lines` 20261203, `clause-verbs` 20261204).
-One blind reviewer judged each tranche.
+`claude-sonnet-5.5` (a model review, not a human review) judges a sample of 60 items of each tranche and 4 control items whose tag is swapped on
+purpose (the samples are drawn with the fixed seeds `deverbal-heads` 20261201, `defined-terms` 20261202, `step-lines` 20261203 and `clause-verbs`
+20261204; one blind reviewer per tranche). The judged word agrees with the label for 100% of the judged items in every tranche; the trainer run log,
+section "beta.3 phase 1: hand checks and registration", has the record.
 
 | Measure | `deverbal-heads` | `defined-terms` | `step-lines` | `clause-verbs` |
 | --- | ---: | ---: | ---: | ---: |
