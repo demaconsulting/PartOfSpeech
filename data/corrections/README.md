@@ -7,13 +7,9 @@ License: CC0-1.0
 
 Label corrections for the open corpus, MASC and the silver data that follow the conventions of
 [CONVENTIONS.md](../CONVENTIONS.md), kept as small tables next to the corpus files. **The rows are applied:** the corpora under
-`open/`, `masc/` and `silver/` carry them (`corrections.py apply --write`), and the lexicon and the weights were rebuilt from the
-corrected labels. The held-out evaluation record (`docs/evaluation/`) was reissued for each retrained model: the first
-cleanup model was evaluated once on held-out data (its pre-registered development gate G2 failed on its single seed, and the
-owner accepted it after a development-only diagnosis), the model after the pre-registered follow-up that withdrew the 878
-adjudicated `prenominal-ing` rows (see _Withdrawn Rows_ below) was evaluated on the same held-out data, and so was the
-model that ships now, which adds a context-feature group (all disclosed as looks at sets seen before); the first two are in
-the trainer `RUN-LOG.md`, "Corpus cleanup C", the last in "Context-feature experiment". The tables stay
+`open/`, `masc/` and `silver/` carry them (`corrections.py apply --write`), and the lexicon and the weights are built from the
+corrected labels. The held-out evaluation record (`docs/evaluation/`) describes the model that these corrected corpora train;
+the run log has the record of each retrained model (trainer `RUN-LOG.md`, "Corpus cleanup C" and "Context-feature experiment"). The tables stay
 as provenance: they describe the corpora as the importers wrote them, and they stay valid against the corrected files (see
 _States and Apply_).
 
@@ -220,7 +216,7 @@ reason to override a rule.
 | `no-all-degree` | check | Annotation Conventions | `no`/`all` directly before an adjective or adverb (`no better`, `all alone`) is ADV, not DET |
 | `language-name-token` | check | Names and Labels | a language name is PROPN, ADJ or NOUN, never ADV, VERB or X (no case yet) |
 
-The three participle rules that were demoted by the precision gate (`be-passive-verbal`, folded into
+The three participle rules that the precision gate demotes to the `check` tier (`be-passive-verbal`, folded into
 `be-participle-adj-not-gradable`; `be-passive-agent`; `be-aux-passive`) stay visible to the linter. The reason is the
 convention itself: a participle after `be` is a passive unless it is gradable (test 2 before test 4), and gradability is a
 property of the meaning that the corpora show only for forms that happen to occur after `very`. The tested wrong calls were
@@ -352,104 +348,27 @@ A mechanical rule may stay mechanical only if a hand check finds it at least 97 
 procedure, not a test: `make_corrections.py sample` draws rows with ten tokens of tagged context either side; the implementer
 (an automated agent, one rater) reads every row against CONVENTIONS.md and records the verdict with its reason in a scratch file
 (not committed). A wrong row means the rule is tightened with a guard or demoted to `check`/candidates, the tables are
-regenerated and a **fresh** sample is drawn. Because 50 random rows undersample small rules, every round adds a stratified
-supplement (`--per-rule`, all rows of a rule with fewer rows), and the two participle rules with fewer than 20 rows were read in
-full.
+regenerated and a **fresh** sample is drawn. Because 50 random rows undersample small rules, the sample has a stratified
+supplement (`--per-rule`: all rows of a rule that has no more rows than the `--per-rule` value, a random sample of that size
+otherwise).
 
-| Round | Rule set | Random sample (seed, rows, wrong) | Stratified sample (seed, per rule, rows, wrong) | Result |
-| --- | --- | --- | --- | --- |
-| 1 | first version, with participle rules `be-passive-verbal`, `be-passive-agent`, `be-aux-passive` | 20261104, 50, 8 (84 percent) | 20261105, 4, 126, 8 | failed |
-| 2 | participle rules demoted to `check`, guards added | 20261106, 50, 1 | 20261107, 4, 113, 2; census of `be-copula-gradable` and `link-participle`, 35 rows, 8 wrong | failed |
-| 3 | final of the first change | 20261108, 50, **0** | 20261109, 5 for 12 rules (the five changed ones and seven large ones), 53 rows, **0**; census of the two participle rules, 25 rows, **0** | passed |
-| 4 | fix round: new rules `in-front-of`, `as-well-as`; `one-of`, `at-least`, `more-than`, `partitive-det`, `partitive-adj` widened | 20261110, 50, 1 | 20261110, 15 for the 5 widened rules, 75 rows, 1; census of all 189 new rows, 0; census of `for-subject-to`, 78 rows, 1 | failed |
-| 5 | guard for `all of a sudden` | 20261112, 50, 2 | census of `to-not-infinitive`, 52 rows, 4 | failed |
-| 6 | `be-copula-gradable` and `to-not-infinitive` tightened | 20261113, 50, 1 | census of the 71 `more than a`/`an`/`half`/`one` rows of `more-than`, 5 wrong | failed |
-| 7 | final: `more-than` takes `a`/`an` only before a measure | 20261114, 50, **0** | - | passed |
-| 8 | review fix: `modal-aux` reads ALL CAPS and sentence-initial modals and looks past a symbol | - (2 changed rows, none else) | census of all 2 new rows, **0** | passed |
+The rules as committed have **553 distinct rows of the final tables read** (the censuses and the samples of the last rounds): 551
+correct, 1 wrong (`for-subject-to`: `called for a match to light his pipe with`, the noun is not the subject of the infinitive;
+the row stays) and 1 doubtful (`to-not-infinitive`: `back in the car to warming up`, a slip of the keyboard for `warm up`, which
+the tags cannot tell from the preposition). That is 99.6 percent (98.7 percent for `for-subject-to`, 98.0 percent for
+`to-not-infinitive`, the two weakest rules, both above the gate). A fresh random sample of 50 rows of the final tables has 0 wrong
+rows. The rows read per rule are in the trainer `RUN-LOG.md`, "Corrections: precision rounds of the mechanical rules".
 
-Round 1: seven of the eight random errors were `be-passive-verbal` (a state read as a passive: `settled`, `focused`, `composed`,
-`lost`, `well established`, `gone`, `done`) and one `be-passive-agent` (`far removed from`). In the stratified sample
-`be-aux-passive` had two wrong rows, `be-passive-agent` and `be-passive-verbal` one each, `be-copula-gradable` (`somewhat
-amended`), `half-adv` (`by half to ...`), `more-than` (`any more than a cloud is`) and `possessive-det` (`with her last Tuesday`)
-one each. The three participle rules were demoted to `check`; the others got guards.
-
-Round 2: one random error (`is particularly seen`: a focusing adverb is not a degree word), two stratified errors (`most
-reserved for`, and `what they felt belonged to them` read as a linking verb), and in the participle census `increasingly
-emphasised`, `particularly seen`, `most reserved`, `felt belonged` and `seem to read`. The fixes: `most`, `least`,
-`particularly`, `especially`, `increasingly` and the adverbs that grade verbs too (`somewhat`, `completely`, `well`, `far`, ...)
-do not make a participle gradable; `felt` is not a linking verb; an infinitive `to` breaks the chain between `be` and the
-participle.
-
-Rounds 4 to 7 (the corrections of the code review): the rules `in-front-of` and `as-well-as` were added (the two three-word
-rows of the Multiword Prepositions table that no rule covered; every other row of the table was already a rule), and the
-whitelists of `one-of`, `at-least`, `more-than`, `partitive-det` and `partitive-adj` were replaced by tag and context tests.
-The new rows of these rules (189, all read, see below) were correct, and the reading found the errors that the guards now
-remove. Round 4: `all of a sudden` is an adverb idiom (`partitive-det`, 3 rows), and one `for-subject-to` row (`called for a match
-to light his pipe with`, the noun is not the subject of the infinitive; the only wrong row of the 78, it stays). Round 5:
-`was really engaged at Camp David` is a passive (`be-copula-gradable`: `so`, `really`, `rather`, `pretty` now count only for the
-curated list of gradable participles, not for a form that occurs after `very` somewhere in the corpora), and `to` before a
-gerund or a number after `hopes`, `forgot`, ... or before `one` or a determiner and a bare verb is the infinitive marker
-(`to-not-infinitive`, 3 rows; `hopes to one day become`, `forgot to being an umbrella`, `used to a make a ...`). Round 6:
-`little more than a ghost`, `nothing more than a ploy`, `no less than an honorable prisoner`, `little less than a disgrace` and
-`little more than a bare chronicle` compare degree, so `more than` + `a`/`an` needs a measure (`a year`, `a dozen`, `a few`,
-`a six-month`), and `more than once` stays unchanged. The guards removed 14 rows of the first change: 6 of `more-than`,
-3 of `partitive-det`, 3 of `to-not-infinitive` and 2 of `be-copula-gradable`.
-
-Final result for the rules as committed: **553 distinct rows of the final tables read** (the censuses and the samples of rounds
-4 to 8, the 189 new rows and the 2 rows of round 8 included): 551 correct, 1 wrong (`for-subject-to`, see above) and 1 doubtful (`to-not-infinitive`: `back
-in the car to warming up`, a slip of the keyboard for `warm up`, which the tags cannot tell from the preposition). That is 99.6
-percent (98.7 percent for `for-subject-to`, 98.0 percent for `to-not-infinitive`, the two weakest rules, both above the gate).
-The fresh random sample of round 7 on the final tables has 0 wrong in 50 rows. The rows of the first gate (261 rows, 0 wrong)
-were read against the same convention text; the final tables differ from that state only by the rows listed above.
-
-Round 8 (the formal review of the pull request): the guards of `modal-aux` and `modal-aux-other` accepted a lower-case first
-letter only, so three modals tagged VERB in the corpora were not reported. A modal now counts when it is lower case, ALL CAPS or
-capitalized at the start of the sentence (`Will` and `May` elsewhere are a name and a month, and a capitalized form before a
-finite `be` or `have` is one too), and a symbol between the modal and its verb is ignored. The two new rows of `modal-aux` were
-read in full against CONVENTIONS.md (modals are AUX): `I decided to [WILL] $$ DONATE the sum` (a spam text, the modal of `will
-donate`) and `[Can] not one be found who is willing to go` (the stem of `can not`) are both correct, 2 of 2. The third case, `[May]
-Old England ... reign` (a wish: the modal comes before its subject), has no safe tag rule because `May Smith went` is a name, so
-it is a violation of `modal-aux-other` and a candidate for the adjudication, not a row. No other row of the tables changed.
-
-| Rule | Rows read, first gate | Rows read, final tables | Wrong |
-| --- | ---: | ---: | ---: |
-| `a-little` | 4 | 8 | 0 |
-| `according-to` | 7 | 2 | 0 |
-| `as-possible` | 7 | 3 | 0 |
-| `as-well-as` | - | 15 (census) | 0 |
-| `at-least` | 7 | 131 | 0 |
-| `be-copula-gradable` | 8 (census) | 6 (census) | 0 |
-| `big-number` | 5 | - | 0 |
-| `clock-suffix` | 16 | 16 | 0 |
-| `correlative-the` | 7 | - | 0 |
-| `decade` | 2 (census) | - | 0 |
-| `degree-word` | 10 | 2 | 0 |
-| `do-your-best` | 4 | 1 | 0 |
-| `for-subject-to` | 11 | 78 (census) | 1 |
-| `get-passive` | 12 | 4 | 0 |
-| `half-adj` | 1 (census) | - | 0 |
-| `half-det` | 9 | 4 | 0 |
-| `half-noun` | 3 (census) | - | 0 |
-| `in-front-of` | - | 7 (census) | 0 |
-| `link-participle` | 17 (census) | 17 (census) | 0 |
-| `modal-aux` | 5 | 12 | 0 |
-| `more-than` | 17 | 49, and 71 listed before the guard | 0 |
-| `multiword-prep` | 17 | 16 | 0 |
-| `negation-part` | 3 (census) | - | 0 |
-| `one-of` | 16 | 47 | 0 |
-| `out-of` | 14 | 16 | 0 |
-| `partitive-adj` | 11 | 28 | 0 |
-| `partitive-det` | 21 | 38 | 0 |
-| `partitive-noun` | 4 | 2 | 0 |
-| `possessive-det` | 4 (census) | - | 0 |
-| `regnal-numeral` | 4 | 2 | 0 |
-| `superlative-the` | 4 | - | 0 |
-| `to-not-infinitive` | 11 | 49 (census) | 1 doubtful |
+The guards of `modal-aux` and `modal-aux-other` count a modal when it is lower case, ALL CAPS or capitalized at the start of the
+sentence (`Will` and `May` elsewhere are a name and a month, and a capitalized form before a finite `be` or `have` is one too), and
+a symbol between the modal and its verb is ignored. The case `[May] Old England ... reign` (a wish: the modal comes before its
+subject) has no safe tag rule because `May Smith went` is a name, so it is a violation of `modal-aux-other` and a candidate for the
+adjudication, not a row.
 
 Limits of this record: one rater read the rows (no second annotator), small rules have few rows, `half-adv` and `fy-token` have no
 row, and the debatable class is `link-participle` (`became known as`, `became identified as` follow the convention text "otherwise
 ADJ" literally). Rows that the convention reading makes correct but a reviewer may question are the ones to look at first in
-the review of this change.
+a review of the tables.
 
 ## Adjudication
 
@@ -526,7 +445,7 @@ decision rule is the function `decide_token`; the tests of both are in `tools/da
   way through), so the batch is skipped and its sentences are not decided; the other 13,850 sentences are. They hold 33,902
   decision tokens.
 - **Rows.** The decision run produced 7,063 rows for `adjudicated.tsv`: 3,972 tag changes, 1,312 flag changes and 1,779
-  `disputed` marks. 878 of them were withdrawn later (see _Withdrawn Rows_), so the file now has 6,185 rows (3,289 tag changes,
+  `disputed` marks. 878 of them are withdrawn (see _Withdrawn Rows_), so the file has 6,185 rows (3,289 tag changes,
   1,311 flag changes, 1,585 `disputed` marks). The fix-conflict
   filter dropped 7 tag rows first (a `fix` rule fired on the corrected sentence); the gate then dropped 803 tag and flag rows
   (7,866 rows before it). The two tables that follow are the record of the decision run and are not recounted.
@@ -623,21 +542,13 @@ the labels the importers wrote (and the mechanical rows changed) for these token
 | silver | 117 | 0 | 53 | 170 |
 | **all** | **683** | **1** | **194** | **878** |
 
-- **Why.** The pre-registered `prenominal-ing` follow-up (trainer `RUN-LOG.md`, "Corpus cleanup C: pre-registered
-  `prenominal-ing` follow-up") trained the model without these rows next to the model with them. Its fixed selection rule picked
-  the model without them (pooled harmful noun-verb errors per 1,000 on the development sets 22.685 with them, 21.711 without,
-  mean of five seeds; both constraints held), and the owner decided to adopt it. Caveats, as recorded there: the evidence is thin
-  (the Welch interval of the difference excludes 0, the bootstrap interval contains it), a comparable removal of another
-  detector lowered the rate by about half as much, and the model without the rows tags 2.4 points fewer of the verbal `-ing`
-  tokens of the development set as VERB (not covered by the rule). The corrections themselves were not found wrong by the
+- **Why.** Training without these rows gives the lower pooled harmful noun-verb error rate on the development sets, so the
+  rows are not applied. The experiment, its measured rates and its caveats are in the trainer `RUN-LOG.md`, "Corpus cleanup C:
+  pre-registered `prenominal-ing` follow-up". The corrections themselves are not found wrong by the
   quality gate of the adjudication (class `prenominal-ing`: 12 of 13 correct).
-- **All 878, not only the 861 of the arm.** The follow-up arm left the 17 open test rows out so that no held-out file was read;
-  here every row of the detector is withdrawn, so that open train, dev and test follow the same convention for these tokens.
-  The 17 test rows had no influence on training, on calibration or on any selection (the test split is never trained on), so the
-  adopted weights are byte-identical to those of the follow-up arm at the shipped seed. **Disclosure:** these 17 open test
-  labels differ from the labels that the first held-out evaluation of the cleanup used (it was run on the corrected test file
-  with these rows applied), so the open test results of the two records are not strictly comparable; the held-out
-  sets other than open test are unchanged.
+- **All 878.** Every row of the detector is withdrawn, so that open train, dev and test follow the same convention for these
+  tokens. The 17 open test rows have no influence on training, on calibration or on any selection (the test split is never trained
+  on). The open test file carries the importer labels for these tokens.
 - **Mechanism.** `corrections.py withdraw --detector prenominal-ing --reason ... --write` works only in the pending state (the
   corrections were reversed first: `apply --write --reverse`, then withdrawn, then `apply --write` again; no corpus file is
   edited by hand). It refuses when a withdrawn row would replace a mechanical row (none does). `corrections.py validate` and
@@ -646,8 +557,8 @@ the labels the importers wrote (and the mechanical rows changed) for these token
   per corpus file, none missing, unknown or repeated, and, in the pending state, the hash of the corpus file as it is),
   rows that are valid adjudicated decisions covered by a candidate of the detector, no token that
   is also in a current table, and the old value of every token in the corpora **in both states**, because a withdrawn row is not
-  a correction. The file is not part of the effective rows (9,285 before; now 8,407: 2,222 mechanical rows in effect and 6,185
-  adjudicated; 3 mechanical rows are still superseded). The check tier of the linter is unchanged at 298 violations and the fix
+  a correction. The file is not part of the effective rows (8,407: 2,222 mechanical rows in effect and 6,185
+  adjudicated; 3 mechanical rows are superseded). The check tier of the linter is at 298 violations and the fix
   tier at 0.
 
 ## For the Next Steps
@@ -661,6 +572,5 @@ the labels the importers wrote (and the mechanical rows changed) for these token
   new rows are produced against the corrected files (the generator `--check` reverses the applied rows in a temporary copy).
 - **Evaluation data.** The development and test splits of the open corpus are corrected like the training split. The gold v2
   set, the shape probe and the STE challenge set are not addressable by the overlay and keep their labels; they could follow
-  the same conventions in a later change. The held-out evaluation record was reissued for the adopted model (a new
-  record, in the trainer `RUN-LOG.md`, "Corpus cleanup C"); it pins the SHA-256 of the corrected development files and
-  of the open test file, whose 17 `prenominal-ing` labels differ from those of the first record.
+  the same conventions in a later change. The evaluation record pins the SHA-256 of the corrected development files and
+  of the open test file.

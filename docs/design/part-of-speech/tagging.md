@@ -95,13 +95,13 @@ it):
 - **Folding.** Features, the lexicon key and the neighbors use a folded token: NFC normalization, typographic quotes
   mapped to `'` and `"`, dashes to `--` and the ellipsis character to `...`, because the corpora are ASCII-normalized
   while real text is not. Token text and offsets always keep the original characters.
-- **The 17-tag set.** The spike was calibrated for its own target set. This library tags with all 17 Universal POS
-  tags, so the temperature of the trained model was refitted for 17 tags (on open development data, by the trainer's
-  `calibrate` command and recorded in `training.json`). The lexicon restriction at decode time was kept. For training
-  the restriction mode was chosen by measurement on development data: the spike's unrestricted training broke with its
-  lexicon, which missed 2% of the gold tags, but the present lexicon covers the training data by construction, so three
-  modes were compared (unrestricted, restricted history, fully restricted) and mode B (the history comes from the
-  restricted guess, the update from the unrestricted guess) was selected; the log is in `RUN-LOG.md` of the trainer.
+- **The 17-tag set.** The model tags with all 17 Universal POS
+  tags, so the temperature of the trained model is fitted for 17 tags (on open development data, by the trainer's
+  `calibrate` command and recorded in `training.json`). The lexicon restriction applies at decode time. For training
+  the restriction mode is chosen by measurement on development data: the lexicon covers the training data by
+  construction, so three
+  modes are compared (unrestricted, restricted history, fully restricted) and mode B (the history comes from the
+  restricted guess, the update from the unrestricted guess) is selected; the log is in `RUN-LOG.md` of the trainer.
 - **Extra features.** The feature set also contains the previous-two-tags pair (`p12`) and the previous-and-next
   neighbor pair (`m1n1`), which are not in the spike's base template list.
 - **Context features.** The spike scores a token from its own spelling, two words on each side and two tags only. The
@@ -120,7 +120,7 @@ the weights file, so a model is always scored with the features it was trained w
 the hash, the fold or a group requires a new feature set version; readers refuse a weights file of an unknown version or
 mask. The trainer also chooses `hashBits` (18 to 24; the shipped model uses 19), the
 temperature (fitted for 17 tags) and the weight scale (the shipped model uses 1/8). The byte layouts are in
-_ModelStorage_ (`POSW` and `POSL`). The feature set was not extended for glossary support: a trained "glossary says X"
+_ModelStorage_ (`POSW` and `POSL`). The feature set has no glossary feature: a trained "glossary says X"
 feature was measured on development data and rejected in favor of score boosts of
 `TokenConstraint.Prefer` (see _ModelTrainer Design_, _Glossary Decision_), so the glossary does not change the feature
 set.

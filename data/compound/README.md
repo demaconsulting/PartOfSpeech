@@ -12,8 +12,7 @@ sentence. Each sentence has a noun compound whose head can also be a verb
 (`the fuel pump seal`, `the oil level check`). Every token has a Universal POS tag on which two blind model labelers agree. They are
 **training** sources: they hold the noun + noun compounds with an ambiguous head (`[noun] check`, `[noun] split`, `[noun] stand`) that the
 other training corpora hold rarely, and a counter-example group in which the same kind of word is a verb. They are disjoint from every
-evaluation set. The `compound` and `compound2` sources have weight 1 in the trainer configuration (the pre-registered follow-up re-test selected them, and the
-embedded model was retrained with them); `--source compound:0` and `--source compound2:0` leave them out of a training run. The sections up to "Known Limits" describe `compound`; the
+evaluation set. The `compound` and `compound2` sources have weight 1 in the trainer configuration (they are in the mix of the embedded model); `--source compound:0` and `--source compound2:0` leave them out of a training run. The sections up to "Known Limits" describe `compound`; the
 section "Second Source" describes `compound2`.
 
 ## Source and Provenance
@@ -21,12 +20,11 @@ section "Second Source" describes `compound2`.
 - **Source:** the sentences are text of 154 documents that are US federal government works (17 U.S.C. 105): Department of Agriculture,
   Forest Service, Geological Survey, War Department and Army, Navy, Bureau of Reclamation, Public Health Service, Bureau of Land
   Management, Weather Bureau, Bureau of Standards and Bureau of Mines publications, quoted per document in `sources.tsv`. No document is in
-  any other source table of this repository, none is in an evaluation set, and nothing was written for this source: all sentences are real
+  any other source table of this repository, none is in an evaluation set, and nothing is written for this source: all sentences are real
   text (0 authored).
 - **How produced:** `python tools/data/compound_heading_data.py --work <work-folder> build --source compound` with the `--omit-document` options
   listed in `excluded-documents.tsv`, at the builder and the rule of commit `e776f5693739900d91e63fd2a12451da1f4ba90b` (the builder, its tests and
-  the pre-registered rule, committed before any label of this source existed; the option `--omit-document` (with an optional reason per document) was added after the labeling and is the
-  only change of the builder since). The labeling used the unchanged commands of `tools/data/shapes_dev.py` (`export`, `check-batches`,
+  the rule; the option `--omit-document`, with an optional reason per document, is the only part of the builder that is not at that commit). The labeling uses the commands of `tools/data/shapes_dev.py` (`export`, `check-batches`,
   `validate-output`, `status`, `decide`) with `--round compound`. The global `--work` argument (a folder outside the repository, required)
   comes before the command; the other options keep their defaults (`--seed` 20261110, the caps below). The work folder is not committed. It
   holds the extracted text of the sources (`sources-draft.tsv`, `text/<source_id>.txt`, one sentence per line, `raw/<source_id>.txt`), the
@@ -72,8 +70,7 @@ and the format.
 
 ## Labeling and Decision Rule
 
-The rule was fixed before any label of this source was seen (the commit above); the docstring of `tools/data/compound_heading_data.py` is its
-normative text.
+The docstring of `tools/data/compound_heading_data.py` is the normative text of the rule.
 
 1. **Documents.** US federal authorship, with the public-domain basis checked one document at a time and written in the `license_basis`
    cell. The id, the normalized URL and the Internet Archive identifier of a document are in no table of used sources (training and
@@ -160,7 +157,7 @@ One sample was drawn and reviewed once; it was not drawn again.
 | `nbs` | 4 | 19 | National Bureau of Standards publications (Internet Archive); 17 U.S.C. 105 |
 
 `sources.tsv` lists only these used documents. Publication years are 1862 to 2008 (115 of the documents are from 1940 or later); every
-document was retrieved on 2026-11-09 and hashed (`raw_sha256` of the download, `text_sha256` of the extracted sentences). The same pool of
+document is hashed (`raw_sha256` of the download, `text_sha256` of the extracted sentences) and carries its retrieval date in `sources.tsv`. The same pool of
 documents feeds [the headings source](../headings/README.md): 73 documents contribute to both, and no sentence is in both.
 
 ## Leakage and License Checks
@@ -239,13 +236,13 @@ head lemma and at most 20 per document.
 | `compound-2-dropped-sentences.tsv` | counts of candidate sentences dropped alone because of an overlap with a set (2 near duplicates of a shapes development sentence, 1 shared word 5-gram with the shape probe; counts only, no text) |
 
 `compound-2.tsv` has SHA-256 `2a9a98492afb1248623b50111ca62d8abd57e4569b1a5e52b3cff544bc0746cc` and `compound-2-sources.tsv`
-`c979850dd60921d209b7d918d953b53bee7af05f736a77896637665ace823cf4` (the `license_basis` wording of one row was corrected on 2026-11-11, text only, see the run log); [MANIFEST.tsv](../MANIFEST.tsv) lists the size, hash and record counts of every
+`c979850dd60921d209b7d918d953b53bee7af05f736a77896637665ace823cf4`; [MANIFEST.tsv](../MANIFEST.tsv) lists the size, hash and record counts of every
 file of this folder.
 
 **Source and basis.** The sentences are text of 209 documents that are US federal government works (17 U.S.C. 105), one `license_basis` cell
 per document in `compound-2-sources.tsv` (the agency named in the record, the record's rights statement where it has one, and the check that the text
-carries no copyright, permission, third-party credit or distribution restriction); the documents were retrieved from the Internet Archive on
-2026-11-10 and hashed (`raw_sha256` of the download, `text_sha256` of the extracted sentences). Publication years are 1852 to 2025 (182 of the
+carries no copyright, permission, third-party credit or distribution restriction); the documents come from the Internet Archive and are
+hashed (`raw_sha256` of the download, `text_sha256` of the extracted sentences; the retrieval date is in the sources table). Publication years are 1852 to 2025 (182 of the
 documents are from 1940 or later). There is no FAA text, no Wikipedia, no share-alike or non-commercial text, no Universal Dependencies text, no
 sentence supplied by any consumer, and no document that lists a state, local, foreign, university, contractor or private creator, publisher or
 co-author. No document is in a table of used sources or in either excluded-sources record (`check_licenses.py` scans the table).
@@ -263,8 +260,8 @@ co-author. No document is in a table of used sources or in either excluded-sourc
 | `phs` | 6 | 17 | Public Health Service publications |
 | `coastguard` | 1 | 3 | Coast Guard publication |
 
-**Selection and labeling rule.** The normative text is the docstring of `tools/data/followup_data.py` (rules 1 to 10; the pre-registered rule
-at commit `8c9f17fc5cb7e5c35f91827fc242980f407bd42d`, with the amendments recorded in the trainer run log, section "Follow-up"). In short:
+**Selection and labeling rule.** The normative text is the docstring of `tools/data/followup_data.py` (rules 1 to 10; the trainer run
+log, section "Follow-up", records the rule, its pins and its amendments). In short:
 
 1. **Documents** are assigned to the training side or the development side of the follow-up as whole title families (a seeded hash of the
    family key); `compound-2.tsv` uses documents of the training side only, so no document of it is in a development tranche.

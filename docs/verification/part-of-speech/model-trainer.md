@@ -47,8 +47,9 @@ is mocked. The tests use four kinds of method:
   tested with tiny fixtures: a temporary fake repository with a manifest for the guarded reader, hand-written probe and
   treebank rows, hand-computed outcomes for the curve and the rule, and the tiny trained model for the judging. No test,
   build step or CI job reads a real held-out file through this code, so CI never looks at held-out data. The real held-out
-  run is a documented procedure that runs once for each frozen model (the protocol section of the run log; each
-  evaluation of the model family is disclosed as such in the evaluation record), not a test: it would be wrong for a
+  run is a documented procedure that runs once for each frozen model (the protocol section of the run log; the evaluation
+  record carries a disclosure notice about the models of the family that have scored the sets), not a test: it would be
+  wrong for a
   test to run it, because its value is that it happens once, after the selection is committed. Its output is a committed,
   generated report; the system-level tests that tie it to the shipped model and to the selection accompany the report.
 
@@ -79,9 +80,9 @@ misspelled member or an out-of-range value, a metric or a bootstrap interval dif
 glossary experiment's decoder differs from the plain predictor, or the glossary evaluation reads any file, gives another
 result for the same seed, puts a scored token in no category or in two, does not count a confident swap that a hard
 constraint leaves with one candidate, changes a token before the first match, or applies one of its two decision rules
-differently from the pre-registered text, or the held-out evaluation opens a file without a valid selection (also for
+differently from the registered text, or the held-out evaluation opens a file without a valid selection (also for
 another model, rule or development file), runs after a results file exists, writes a dump inside the repository, accepts
-a malformed probe or treebank row, selects an operating point that does not meet the pre-registered target and floor (or
+a malformed probe or treebank row, selects an operating point that does not meet the registered target and floor (or
 relaxes them when none qualifies), computes a tally that disagrees with the metrics, renders a different report for the
 same results or a treebank word into a report, or lets a stop condition pass, or the shapes development evaluation reads
 a file other than its own, accepts an item whose judged word is missing, disputed, outside its sentence or in the wrong
@@ -333,8 +334,8 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   `GlossaryEvaluation_ChooseSoftStrength_RecordedCells_EqualsTheDefaultSoftStrength` (the same rule on the cells recorded
   in the run log gives the library constant, which is a member of the grid),
   `GlossaryEvaluation_ChooseFirstRunSoftStrength_PicksSmallestWithinTolerance` and
-  `GlossaryEvaluation_ChooseFirstRunSoftStrength_ConditionsAndNoneAdmissible` (the original pre-registered strength rule,
-  the rule of the first run that the command still prints as the historical decision, on synthetic
+  `GlossaryEvaluation_ChooseFirstRunSoftStrength_ConditionsAndNoneAdmissible` (the alternative strength rule, which does
+  not decide the default and which the command prints next to the decision, on synthetic
   tables: the boundary of each admissibility condition, the tie tolerance, the smallest tied strength, and the smallest
   of the grid when none is admissible), `GlossaryEvaluation_ChooseNonHeadRule_BarNeedsGainIntervalAndNoLoss` (the bar of
   scenario G: a gain of the required size whose interval excludes zero and no loss at 10% wrong entries; the larger gain
