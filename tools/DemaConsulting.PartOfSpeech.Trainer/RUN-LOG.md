@@ -6726,6 +6726,34 @@ Every candidate passes every guard except **TECH-T2, which fails the imperative-
 
 What happens next is in the outcome section above: an adoption plan (retraining the shipped weights at seed 20260101 byte-identically to `TECH-s20260101.bin`, the general points and the technical point on development data, a plan of the held-out look) is written in this log before any retraining and before any held-out command. Nothing of it is started by this commit.
 
+## beta.3 phase 2: adoption plan of the TECH model (written before the retraining and before any held-out command)
+
+Rule T selected **TECH** (the results section above). The basis of the adoption is the outcome clause "An arm wins" of the pre-registration and the instruction of the task that ran this experiment; it is not a decision made by the implementing agent inside the run, and no rule is changed. This section is committed **before the retraining of the shipped model**: no `train --output`, `calibrate --update-config`, `train --update-config`, `thresholds` or `eval-arm` of the adopted model has been run for it, no `evaluate` (not even `--preflight`) has been run, no held-out file has been read, and no consumer text has been read. The work is split in two steps that have separate commits: the **adoption without the held-out evaluation** (this step: the configuration, the weights, the development operating points, the technical operating point and every document or test that states the shipped model and is not held-out output) and the **held-out evaluation** of the adopted model (a later step with its own plan; it deletes the previous record, runs one `evaluate` and updates the README tables and every statement that quotes held-out figures).
+
+### The TECH arm and the exact steps
+
+The adopted arm is **TECH**: the shipped configuration (feature group `clauseCues`, the mix open x2, MASC, silver >= 80, imperative, compound and compound2 at weight 1, 6 epochs, 19 hash bits, prune 8, quantization scale 8, restriction `history`, predicted history, seed 20260101, temperature 9.514) plus the sources `deverbal` (`data/technical/deverbal.tsv`, 637 sentences), `terms` (373), `steps` (531) and `clauses` (310) at **weight 1**: 65,373 training sentences. The sources `headings` and `headings2` stay at weight 0 and the feature group `titleCaseLine` (F5) stays off. The steps, from a clean tree whose HEAD is the commit of this plan:
+
+1. In `tools/DemaConsulting.PartOfSpeech.Trainer/training.json` set the weight of the four technical sources from 0 to 1 (nothing else).
+2. `train --output <file outside the repository>` at the shipped seed (the trainer reads `training.json`).
+3. `calibrate --weights <file> --update-config` (refits the temperature on the open development set and writes it to `training.json`).
+4. `train --update-config` (writes the image SHA-256 of the new model to `training.json` and writes `weights.bin` itself), then `train --check` (must exit 0).
+5. `thresholds` (development data only: it scores the open dev and gold v2 dev sets and nothing else; it recomputes `docs/evaluation/operating-points.json` and `confidence-thresholds.md` by the rule `nv-pooled-dev-v1`; it refuses to write unless its 0.45 row reproduces `FrozenOpenHarmful` and `FrozenGoldHarmful`; if it refuses, the two constants are set to the figures it reports for the new model, with the reason recorded, as in the earlier adoptions, and it is run again). Grid, targets and floors are not changed.
+6. `eval-arm` on the adopted `weights.bin` (development data only), then `beta3-tech/technical_points.py --arm-json <that result>` for the technical operating point of rule `nv-technical-dev-v1` (parameters as registered: at most 10 wrong answers per 1,000 answered judged words and a coverage of at least 25%; nothing is tuned; if no threshold qualifies the point is `none`, with the achievable minimum, its interval, its coverage and the whole curve). The script writes `docs/evaluation/technical-operating-points.json` and a Markdown section for `confidence-thresholds.md`.
+7. Re-pin the figures and tests that depend on the weights and on the weights of the sources, and update the documents that state the shipped model (current facts only; history stays in this log and in `docs/evaluation/disclosure.md`).
+
+One heavy process runs at a time, at most 8 threads, and the PAUSE file is checked before every heavy step. `evaluate` is not run in this step.
+
+### TECH byte-identity requirement (stated before the retraining)
+
+The new `weights.bin` must be **byte-identical to `TECH-s20260101.bin`** of the experiment (outside the repository): SHA-256 `a1aab1ca0314a4a8b78fdf983987b49cf9f9981ec98d6ea06468e64a10d20d25`, 553,641 bytes deflated (1,234,530 bytes raw, 129,882 rows, 324,906 weights). The model it replaces has SHA-256 `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad` (537,650 bytes; image `d916b0e7...5e25`). If the retrained file is not byte-identical, the adoption stops: nothing is committed except an account of the difference, the cause is investigated and recorded, no figure of the experiment is claimed for the shipped model, and no held-out command is run. If `calibrate` reports a temperature other than 9.514 the difference is recorded and the byte-identity check decides.
+
+### What changes meaning after the adoption
+
+- Acceptance test **a** of the experiment (BASE at seed 20260101 equals the shipped weights) holds only at the commits up to the pre-registration and results of E2; after this adoption the shipped weights are the TECH model by design, and the frozen analysis script is not re-run against the new `training.json` (its frozen pre-adoption hashes of `training.json` and `weights.bin` differ by design). The trainer README says so.
+- The general operating points are recomputed by the unchanged rule; the previous thresholds (strict 0.90, balanced 0.80) are not carried over, whatever the new ones are.
+- Held-out figures (README tables, the figures in the guidance text of the user guide and of the packed API reference that quote the held-out evaluation, the committed held-out record and the tests that pin it) are **not** changed by this step: they still describe the previous model and wait for the held-out step. The tests that pin the held-out record fail at the adoption commit by design (the record names the previous model); they are listed in the result section of this step.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
