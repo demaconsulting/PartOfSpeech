@@ -34,8 +34,7 @@ contains. The record of the builds is in the trainer run log (sections "beta.3 p
   document is one row of the `*-sources.tsv` table of its source (URL, title, author, year, the quoted license basis, retrieval date and
   the SHA-256 of the download and of the extracted sentences). No document is in any other source table of this repository, none is in an
   evaluation set, none is in either `excluded-sources.tsv`, and nothing was written for these sources: all sentences are real text
-  (0 authored). The documents were retrieved on 2026-11-11 and 2026-11-12; publication years are 1940 to 2025 (every document is from 1940
-  or later).
+  (0 authored). Publication years are 1940 to 2025.
 - **Documents of the four sources:** `deverbal` 173, `terms` 102, `steps` 130 and `clauses` 112, 218 distinct documents in all. The four
   sources are cut from one pool of documents (the training side of one partition of title families, see below), so a document may feed
   more than one of them; the sentences are never shared. The development tranches of the same shapes
@@ -46,13 +45,13 @@ contains. The record of the builds is in the trainer run log (sections "beta.3 p
   products (`hmm.tsv`) `43432b1a2522bf6e85b7a6e380dfaa4d94a5b26a066e94fa0b8c127c9bf602f7` and `data/CONVENTIONS.md`
   `42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2`.
 - **How produced:** `python tools/data/technical_data.py --work <work-folder> build --product deverbal|terms|steps|clauses --allow-short`
-  at the builder and the pre-registered rule of the commits recorded in the trainer run log (section "beta.3 phase 1: pre-registered
-  rule"; the normative text is the docstring of `technical_data.py` and, for the frames, of `technical_frames.py`). The labeling used the
+  (the builder and its rule are in `technical_data.py`; the normative text is its docstring and, for the frames, the docstring of
+  `technical_frames.py`). The labeling uses the
   unchanged commands of `tools/data/shapes_dev.py` (`export`, `check-batches`, `validate-output`, `status`, `decide`) with the rounds
   `dvt` (`deverbal`), `dtt` (`terms`), `stt` (`steps`) and `clt` (`clauses`). The global `--work` argument (a folder outside the
   repository, required) comes before the command. The work folder is not committed; it holds the extracted text, the tokens of every
   unit, the candidates, the blind batches, the two labeler outputs and the private decisions. The scripts that found and fetched the
-  documents are one-off helpers and are not committed; the record of what was fetched is the `*-sources.tsv` tables. The files are never
+  documents are not committed; the record of the documents is the `*-sources.tsv` tables. The files are never
   edited by hand.
 - **Labels:** written by two language models that followed [CONVENTIONS.md](../CONVENTIONS.md) and saw only a batch of opaque ids and
   tokens: `claude-opus-5.5` and `gpt-6.1-sol`. A sentence is kept only when the two agree on the tag of every token. **No human reviewed a
@@ -142,8 +141,8 @@ exact tag of its stratum.
 
 ## Labeling and Decision Rule
 
-The docstring of `tools/data/technical_data.py` is the normative text of the rule, and the trainer run log, section
-"beta.3 phase 1: pre-registered rule (before any fetch)", is its short form.
+The docstring of `tools/data/technical_data.py` is the normative text of the rule; the trainer run log (sections "beta.3 phase 1") records
+its application.
 
 1. **Documents.** US federal authorship, with the public-domain basis checked one document at a time and written in the `license_basis`
    cell. No document is in any table of used sources (training sources, evaluation sets, the shapes development set, the imperative,
@@ -182,14 +181,14 @@ Numbers of the builds (items with a decision that the build read, and what it dr
 | `steps` | 1,500 | 828 | 41 | 31 | 0 | 17 + 52 = 69 | **531** |
 | `clauses` | 860 | 385 | 66 | 6 | 7 | 68 + 18 = 86 | **310** |
 
-The labeling record (refusals, repairs and the decisions per round) is in the trainer run log, section "beta.3 phase 1: labels decided".
+The trainer run log, section "beta.3 phase 1: labels decided", has the decisions per round.
 
 ## Hand Check
 
-A third model, `claude-sonnet-5.5`, reviewed 60 random sentences of each source as built (one blind agent per source, drawn once with a fixed
-seed: `deverbal` 20261205, `terms` 20261206, `steps` 20261207, `clauses` 20261208) against the conventions. It saw each sentence with every token
-and its tag and judged the marked word (and marked any other wrong token). This is a **model review, not a human review**, and it is not
-independent of the labelers' shared blind spots. The gate was a marked-word precision of at least 95 percent (3 incorrect of 60 passes, 4 fail)
+A third model, `claude-sonnet-5.5`, reviews 60 random sentences of each source as built (one blind agent per source, drawn with a fixed
+seed: `deverbal` 20261205, `terms` 20261206, `steps` 20261207, `clauses` 20261208) against the conventions. It sees each sentence with every token
+and its tag and judges the marked word (and marks any other wrong token). This is a **model review, not a human review**, and it is not
+independent of the labelers' shared blind spots. The gate is a marked-word precision of at least 95 percent (3 incorrect of 60 passes, 4 fail)
 and at most 1 of 4 swapped-tag control items accepted.
 
 | Measure | `deverbal` | `terms` | `steps` | `clauses` |
@@ -203,8 +202,6 @@ and at most 1 of 4 swapped-tag control items accepted.
 | unanswered items | 0 | 0 | 0 | 0 |
 | gate | passed | passed | passed | passed |
 
-One sample per source was reviewed.
-
 ## Capitalized Defined Terms (the `terms` Convention)
 
 [CONVENTIONS.md](../CONVENTIONS.md) has a section "Capitalized Defined Terms": a capitalized term made of ordinary English words that names a
@@ -214,7 +211,7 @@ program) or a coined non-English label. The labelers of `terms` and of the devel
 stratum `proper` of `terms` holds the names that the section keeps as PROPN. The linter does not enforce the section (no rule of
 `convention_rules.py` addresses it); the section "Divergence from UD Practice" below counts how far the labels of the other corpora are from
 it (the counts are those of the trainer run log, section "beta.3 phase 1: divergence of the Capitalized Defined Terms rule from the existing
-labels"), and nothing in the other corpora was relabeled. Of the 373 sentences of `terms`, 226 have a NOUN term, 54 an ADJ term and 93 a PROPN
+labels"), and no other corpus is relabeled. Of the 373 sentences of `terms`, 226 have a NOUN term, 54 an ADJ term and 93 a PROPN
 name.
 
 ## Leakage and License Checks
@@ -317,12 +314,12 @@ integers only and has no option that lists a sentence, an id or a token):
 holds about 7 runs per 100 sentences in `open` and `masc` and 6 to 8 per 100 sentences in the held-out sets. Where such a run exists,
 the existing labels mostly say PROPN: 93% of the class B runs of `open` (train), 92% and 87% of those of `open` dev and test, 65% of those of
 `masc`, and 74% and 68% of those of UD English-EWT dev and test; for class A the numbers are too small to give a share. The heading
-sources (`headings`, `headings2`) agree with the rule (NOUN) because they were labeled by the heading rules of PR #19 and #20. A model
+sources (`headings`, `headings2`) agree with the rule (NOUN) because their labels follow the heading rules. A model
 trained on `open`, `masc` and the UD practice therefore learns PROPN for a Title Case word in the middle of a sentence far more often
 than the rule asks, and the held-out figures of those sets would count a NOUN answer for a defined term as an error.
 
 **What the numbers do not mean.** They are neither an error rate of the corpora nor a count of wrong labels: class B is a broad,
 position-and-lexicon selection (a Title Case work title, a person name made of ordinary words or a heading is in it too, and for those
 PROPN may be right), and a verdict says only that the tag of the last word differs from what the rule asks for a defined term. The
-detector reads no meaning. The held-out counts were used for no choice (no threshold, selection or relabeling), and a change of the
-detector after a count would be a new, disclosed version.
+detector reads no meaning. The held-out counts are used for no choice (no threshold, selection or relabeling). The detector is a frozen
+version; a changed detector is a new version.

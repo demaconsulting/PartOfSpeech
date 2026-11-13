@@ -386,6 +386,7 @@ reviews:
       - "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryConstraints.cs"  # unit source (constraints of a match)
       - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryTests.cs"            # unit tests
       - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryMatchingTests.cs"    # unit tests
+      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryDocumentationTests.cs"  # unit tests (doc examples)
       - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryThroughputTests.cs"  # throughput test
 
   # PartOfSpeech-Tagging-Tagger Review (one per unit)

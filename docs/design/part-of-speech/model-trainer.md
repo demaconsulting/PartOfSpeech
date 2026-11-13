@@ -95,8 +95,8 @@ target framework, including .NET Framework.
   them through `Metrics.Judge` with a
   label function, the measures `Metrics.ConfidentWrongConfidence` (0.95) and `Metrics.ConfidentWrong90` (0.90: the
   items that are answered wrongly at that confidence or higher), the section renderer, the counts table
-  and the command logic of `eval-shapes --tranche` that `Program` calls. The original `ShapesDevSets.Shapes` (five shapes)
-  and the standard, hard and combined output do not change.
+  and the command logic of `eval-shapes --tranche` that `Program` calls. The standard, hard and combined output is
+  independent of the technical files (`ShapesDevSets.Shapes` has the five original shapes).
 - **`ShapesDevCalibration`**, **`CalibrationReport`**, **`CalibrationScope`** and **`CalibrationThresholdRow`**
   (`Evaluation/ShapesDevCalibration.cs`): the calibration measurement of the single-shape tranches, a function of the
   outcomes of `ShapesDevTrancheEvaluator.Judge` (see _Calibration of the Single-Shape Tranches_), with the Wilson score
@@ -567,7 +567,7 @@ scores a weights file on it:
   tranches and `--tranche all-single` all nine, in the order of the generations (a missing
   file of a group is noted in one line and not scored; an explicit request for a missing file is an error with exit
   code 2); `new`
-  and `followup` never include the technical tranches, so their output does not change. A section
+  and `followup` never include the technical tranches, so their output is independent of the technical files. A section
   has one table with the target items, the target accuracy and its Wilson interval, the noun-verb decisions, the harmful
   errors (the definition of the other sections), the harmful errors per 1,000 decisions, the target items wrong at a
   confidence of at least 0.95, and the control items and accuracy; the headings section adds a row per kind (noun
@@ -678,9 +678,8 @@ harness that runs it is `tools/DemaConsulting.PartOfSpeech.Trainer/context-featu
   noun-verb decisions and harmful errors of the deverbal-heads, step-lines and clause-verbs tranches with the harmful errors
   per 1,000 decisions that follow from them and the wrong answers at 0.95 and 0.90 summed; `termError`, the exact-tag errors
   of the defined-term targets and their rate per 1,000 target items; `calibration`, the scopes of _Calibration of the
-  Single-Shape Tranches_; the four new file hashes are appended to `inputs`; the schema stays 1 and every earlier
-  member stays
-  as it was), on the open and the gold v2 development splits and on the
+  Single-Shape Tranches_; the four file hashes of the technical tranches are members of `inputs`; the schema is 1), on the
+  open and the gold v2 development splits and on the
   mapped development part of the external
   treebank (the file `ud_dev.tsv` of the local, git-ignored treebank cache below `tools/data/cache`, whose SHA-256 is
   pinned in `DataGuard`; a missing or changed cache is an error with the fetch recipe, and judging uses the mapped tags

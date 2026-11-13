@@ -734,8 +734,8 @@ US federal documents (no document of any earlier table of this repository, of th
 themselves: the four may share a document). Each is for development only, and each gold tag is the agreement of two blind model labelers.
 They have the block format and the conventions of the new tranches above (ids `shapes-dev-<name>-NNNN`; the comments `shape`, `role`,
 `target`, `lemma`, `origin` and `kind`). Each is one shape of technical English, defined by position and lexicon only. They are built by
-`python tools/data/technical_data.py` (the normative text is its docstring; the pre-registered rule is described in the trainer run log,
-section "beta.3 phase 1: pre-registered rule (before any fetch)", which also records the amendments), and no PartOfSpeech model takes part in
+`python tools/data/technical_data.py` (the normative text is its docstring; the trainer run log, sections "beta.3 phase 1", records the
+rule and its application), and no PartOfSpeech model takes part in
 the selection. The four training sources of the same shapes are in [`data/technical/`](../../technical/README.md), cut from the other side of
 one partition of title families; no document is on both sides.
 
@@ -778,7 +778,7 @@ the other three score the exact tag.
 ### Selection Signal
 
 - **`deverbal-heads` and `step-lines`:** the contested band of the pinned WordSense Basic classifier, `0.10 <= q < 0.97` of the noun-versus-verb mass of the
-  judged word (class Noun for `deverbal-heads`, class Verb for `step-lines`; computed once from a fixed table, `hmm.tsv`; no PartOfSpeech model), taken with
+  judged word (class Noun for `deverbal-heads`, class Verb for `step-lines`; read from a fixed table, `hmm.tsv`; no PartOfSpeech model), taken with
   the smallest `q` first.
 - **`clause-verbs`:** the same mass for class Verb with the lower bound only, `0.10 <= q`, smallest `q` first.
 - **`defined-terms` and every control:** position and lexicon only; no band and no model.
