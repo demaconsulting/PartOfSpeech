@@ -353,7 +353,7 @@ public class ShapesDevEvaluationTests
     }
 
     /// <summary>
-    ///     Validates that the kind comment belongs to the headings tranche only: the standard and the hard tranche refuse it.
+    ///     Validates that the kind comment belongs to the tranches that have kinds only: the standard and the hard tranche refuse it.
     /// </summary>
     [Theory]
     [InlineData(false)]
@@ -371,7 +371,7 @@ public class ShapesDevEvaluationTests
 
         // Assert
         Assert.Contains("'kind'", exception.Message);
-        Assert.Contains("headings tranche only", exception.Message);
+        Assert.Contains("tranches that have kinds", exception.Message);
     }
 
     /// <summary>
@@ -1027,6 +1027,10 @@ public class ShapesDevEvaluationTests
                 "data/eval/shapes-dev/named-state.tsv",
                 "data/eval/shapes-dev/compound-head-2.tsv",
                 "data/eval/shapes-dev/headings-2.tsv",
+                "data/eval/shapes-dev/deverbal-heads.tsv",
+                "data/eval/shapes-dev/defined-terms.tsv",
+                "data/eval/shapes-dev/step-lines.tsv",
+                "data/eval/shapes-dev/clause-verbs.tsv",
             },
             DataGuard.ShapesDevelopmentFiles);
         Assert.Equal(DataGuard.ShapesDevelopmentFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.Standard]);
@@ -1036,6 +1040,10 @@ public class ShapesDevEvaluationTests
         Assert.Equal(DataGuard.ShapesDevelopmentNamedStateFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.NamedState]);
         Assert.Equal(DataGuard.ShapesDevelopmentCompoundHead2File, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.CompoundHead2]);
         Assert.Equal(DataGuard.ShapesDevelopmentHeadings2File, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.Headings2]);
+        Assert.Equal(DataGuard.ShapesDevelopmentDeverbalHeadsFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.DeverbalHeads]);
+        Assert.Equal(DataGuard.ShapesDevelopmentDefinedTermsFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.DefinedTerms]);
+        Assert.Equal(DataGuard.ShapesDevelopmentStepLinesFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.StepLines]);
+        Assert.Equal(DataGuard.ShapesDevelopmentClauseVerbsFile, DataGuard.ShapesDevelopmentFiles[(int)ShapesDevTranche.ClauseVerbs]);
         Assert.Equal(new[] { "data/open/dev.tsv", "data/eval/gold-v2/dev.tsv" }, DataGuard.DevelopmentFiles);
         Assert.Equal(4, DataGuard.HeldOutFiles.Count);
         foreach (var file in DataGuard.ShapesDevelopmentFiles)
@@ -1170,6 +1178,32 @@ public class ShapesDevEvaluationTests
                 TrancheItem(ShapesDevTranche.Headings2, "h23", "target", "cat", "VERB", "imperative"),
                 TrancheItem(ShapesDevTranche.Headings2, "h24", "control", "cat", "PROPN", "proper"),
             },
+            DeverbalHeads = new List<ShapesDevItem>
+            {
+                TrancheItem(ShapesDevTranche.DeverbalHeads, "dv1", "target", "cat", "NOUN", "pred"),
+                TrancheItem(ShapesDevTranche.DeverbalHeads, "dv2", "target", "dog", "NOUN", "ing"),
+                TrancheItem(ShapesDevTranche.DeverbalHeads, "dv3", "target", "cat", "NOUN", "other"),
+                TrancheItem(ShapesDevTranche.DeverbalHeads, "dv4", "control", "dog", "VERB", "verb"),
+            },
+            DefinedTerms = new List<ShapesDevItem>
+            {
+                TrancheItem(ShapesDevTranche.DefinedTerms, "dt1", "target", "cat", "NOUN", "noun"),
+                TrancheItem(ShapesDevTranche.DefinedTerms, "dt2", "target", "dog", "ADJ", "adj"),
+                TrancheItem(ShapesDevTranche.DefinedTerms, "dt3", "control", "cat", "PROPN", "proper"),
+            },
+            StepLines = new List<ShapesDevItem>
+            {
+                TrancheItem(ShapesDevTranche.StepLines, "st1", "target", "dog", "VERB", "imperative"),
+                TrancheItem(ShapesDevTranche.StepLines, "st2", "target", "cat", "VERB", "imperative"),
+                TrancheItem(ShapesDevTranche.StepLines, "st3", "control", "cat", "NOUN", "noun"),
+            },
+            ClauseVerbs = new List<ShapesDevItem>
+            {
+                TrancheItem(ShapesDevTranche.ClauseVerbs, "cv1", "target", "dog", "VERB", "main"),
+                TrancheItem(ShapesDevTranche.ClauseVerbs, "cv2", "target", "cat", "VERB", "sub"),
+                TrancheItem(ShapesDevTranche.ClauseVerbs, "cv3", "control", "cat", "NOUN", "noun"),
+                TrancheItem(ShapesDevTranche.ClauseVerbs, "cv4", "control", "dog", "ADJ", "adj"),
+            },
             Inputs = new ArmInputs
             {
                 DevSha256 = "s1",
@@ -1182,6 +1216,10 @@ public class ShapesDevEvaluationTests
                 NamedStateSha256 = "s8",
                 CompoundHead2Sha256 = "s9",
                 Headings2Sha256 = "s10",
+                DeverbalHeadsSha256 = "s11",
+                DefinedTermsSha256 = "s12",
+                StepLinesSha256 = "s13",
+                ClauseVerbsSha256 = "s14",
                 Commit = "abc123",
                 Dirty = true,
             },
@@ -1285,18 +1323,18 @@ public class ShapesDevEvaluationTests
         Assert.Equal(pooled.GetProperty("harmful").GetInt32(), items.GetProperty("hard").EnumerateObject().Sum(p => p.Value.GetProperty("h").GetInt32()));
         Assert.Equal(pooled.GetProperty("targetCorrect").GetInt32(), items.GetProperty("hard").EnumerateObject().Sum(p => p.Value.GetProperty("c").GetInt32()));
 
-        // Assert: the inputs are the ones that were given, the five new hashes after the old members
+        // Assert: the inputs are the ones that were given, the nine tranche hashes after the old members
         var inputs = root.GetProperty("inputs");
         Assert.Equal(new[] { "s1", "s2", "s3", "s4", "s5", "abc123" }, new[] { "devSha256", "hardSha256", "udDevSha256", "openDevSha256", "goldDevSha256", "commit" }.Select(n => inputs.GetProperty(n).GetString()));
         Assert.True(inputs.GetProperty("dirty").GetBoolean());
-        Assert.Equal(new[] { "s6", "s7", "s8", "s9", "s10" }, new[] { "compoundHeadSha256", "headingsSha256", "namedStateSha256", "compoundHead2Sha256", "headings2Sha256" }.Select(n => inputs.GetProperty(n).GetString()));
+        Assert.Equal(new[] { "s6", "s7", "s8", "s9", "s10", "s11", "s12", "s13", "s14" }, new[] { "compoundHeadSha256", "headingsSha256", "namedStateSha256", "compoundHead2Sha256", "headings2Sha256", "deverbalHeadsSha256", "definedTermsSha256", "stepLinesSha256", "clauseVerbsSha256" }.Select(n => inputs.GetProperty(n).GetString()));
         Assert.Equal(
-            new[] { "devSha256", "hardSha256", "udDevSha256", "openDevSha256", "goldDevSha256", "commit", "dirty", "compoundHeadSha256", "headingsSha256", "namedStateSha256", "compoundHead2Sha256", "headings2Sha256" },
+            new[] { "devSha256", "hardSha256", "udDevSha256", "openDevSha256", "goldDevSha256", "commit", "dirty", "compoundHeadSha256", "headingsSha256", "namedStateSha256", "compoundHead2Sha256", "headings2Sha256", "deverbalHeadsSha256", "definedTermsSha256", "stepLinesSha256", "clauseVerbsSha256" },
             inputs.EnumerateObject().Select(p => p.Name));
 
         // Assert: the new blocks are additive: the schema is still 1 and the members of before keep their order, the new blocks sit behind "items"
         Assert.Equal(
-            new[] { "schema", "label", "groups", "temperature", "config", "weights", "throughput", "openDev", "goldDev", "udDev", "shapes", "items", "shapesNew", "shapesFollowup", "inputs" },
+            new[] { "schema", "label", "groups", "temperature", "config", "weights", "throughput", "openDev", "goldDev", "udDev", "shapes", "items", "shapesNew", "shapesFollowup", "shapesTechnical", "inputs" },
             root.EnumerateObject().Select(p => p.Name));
 
         // Assert: the three new tranches have their shape row (with the confident wrong count) and the kinds of the headings only
@@ -1401,6 +1439,144 @@ public class ShapesDevEvaluationTests
         // Assert: the same weights and fixtures give the same result up to the measured throughput
         var again = ArmEvaluation.Evaluate(weights, Label, echo, data, timedPasses: 1);
         Assert.Equal(System.Text.RegularExpressions.Regex.Replace(text, "\"tokensPerSecond\":[^,]+", string.Empty), System.Text.RegularExpressions.Regex.Replace(again, "\"tokensPerSecond\":[^,]+", string.Empty));
+    }
+
+    /// <summary>
+    ///     Validates the <c>shapesTechnical</c> block of <c>eval-arm</c>: the four tranche rows with their kinds and the counts at 0.90 and 0.95,
+    ///     the pooled counts of the three noun-verb tranches, the exact-tag error of the defined terms, the calibration scopes (pooled technical,
+    ///     all nine tranches and one per technical tranche), and that every member of before is unchanged when the technical items are added.
+    /// </summary>
+    [Fact]
+    public void ArmEvaluation_Evaluate_TechnicalBlock_RowsPooledCountsCalibrationAndOldKeysUnchanged()
+    {
+        // Arrange
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 40).Word("dog", Upos.Verb, 40).Build(temperature: 1f, scale: 0.125f, compress: true);
+        var echo = new ArmConfigEcho { PreviewFolds = 5, Epochs = 6, Prune = 8 };
+        var data = ArmData();
+
+        // Act
+        var text = ArmEvaluation.Evaluate(weights, "arm", echo, data, timedPasses: 1);
+        using var document = System.Text.Json.JsonDocument.Parse(text);
+        var technical = document.RootElement.GetProperty("shapesTechnical");
+
+        // Assert: the members of the block, in order, and the members of a tranche row
+        Assert.Equal(new[] { "deverbalHeads", "definedTerms", "stepLines", "clauseVerbs", "pooledTechnical", "termError", "calibration" }, technical.EnumerateObject().Select(p => p.Name));
+        var members = new[] { "targetItems", "targetCorrect", "targetAccuracy", "decisions", "harmful", "harmfulPer1k", "confidentWrong", "wrong90", "controlItems", "controlCorrect", "controlAccuracy", "controlWrong90", "controlConfidentWrong" };
+        var expectedKinds = new Dictionary<string, string[]>
+        {
+            ["deverbalHeads"] = new[] { "pred", "num", "ing", "other", "verb" },
+            ["definedTerms"] = new[] { "noun", "adj", "proper" },
+            ["stepLines"] = new[] { "imperative", "noun" },
+            ["clauseVerbs"] = new[] { "main", "sub", "noun", "adj" },
+        };
+        var expectedItems = new Dictionary<string, (int Targets, int Controls)>
+        {
+            ["deverbalHeads"] = (3, 1),
+            ["definedTerms"] = (2, 1),
+            ["stepLines"] = (2, 1),
+            ["clauseVerbs"] = (2, 2),
+        };
+        foreach (var (name, kinds) in expectedKinds)
+        {
+            var row = technical.GetProperty(name);
+            Assert.Equal(new[] { "shape", "kinds" }, row.EnumerateObject().Select(p => p.Name));
+            var shape = row.GetProperty("shape");
+            Assert.Equal(members, shape.EnumerateObject().Select(p => p.Name));
+            Assert.Equal(expectedItems[name], (shape.GetProperty("targetItems").GetInt32(), shape.GetProperty("controlItems").GetInt32()));
+            Assert.Equal(kinds, row.GetProperty("kinds").EnumerateObject().Select(p => p.Name));
+            foreach (var member in new[] { "targetItems", "targetCorrect", "decisions", "harmful", "confidentWrong", "wrong90", "controlItems", "controlCorrect", "controlWrong90", "controlConfidentWrong" })
+            {
+                Assert.Equal(shape.GetProperty(member).GetInt32(), row.GetProperty("kinds").EnumerateObject().Sum(p => p.Value.GetProperty(member).GetInt32()));
+            }
+
+            Assert.True(shape.GetProperty("wrong90").GetInt32() >= shape.GetProperty("confidentWrong").GetInt32());
+            Assert.True(shape.GetProperty("controlWrong90").GetInt32() >= shape.GetProperty("controlConfidentWrong").GetInt32());
+        }
+
+        // Assert: the pooled block adds the deverbal-heads, step-lines and clause-verbs rows (not the defined terms), and its rate is derived from the counts
+        var pooled = technical.GetProperty("pooledTechnical");
+        Assert.Equal(new[] { "targetItems", "targetCorrect", "targetAccuracy", "decisions", "harmful", "harmfulPer1k", "confidentWrongTotal", "wrong90Total" }, pooled.EnumerateObject().Select(p => p.Name));
+        var rows = new[] { "deverbalHeads", "stepLines", "clauseVerbs" }.Select(n => technical.GetProperty(n).GetProperty("shape")).ToList();
+        foreach (var (name, source) in new[] { ("targetItems", "targetItems"), ("targetCorrect", "targetCorrect"), ("decisions", "decisions"), ("harmful", "harmful"), ("confidentWrongTotal", "confidentWrong"), ("wrong90Total", "wrong90") })
+        {
+            Assert.Equal(rows.Sum(r => r.GetProperty(source).GetInt32()), pooled.GetProperty(name).GetInt32());
+        }
+
+        Assert.Equal(7, pooled.GetProperty("targetItems").GetInt32());
+        var decisions = pooled.GetProperty("decisions").GetInt32();
+        Assert.True(decisions > 0);
+        Assert.Equal(1000.0 * pooled.GetProperty("harmful").GetInt32() / decisions, pooled.GetProperty("harmfulPer1k").GetDouble(), 9);
+        Assert.Equal(100.0 * pooled.GetProperty("targetCorrect").GetInt32() / 7, pooled.GetProperty("targetAccuracy").GetDouble(), 9);
+
+        // Assert: the defined-terms error is the exact-tag error per 1,000 target items
+        var terms = technical.GetProperty("definedTerms").GetProperty("shape");
+        var termError = technical.GetProperty("termError");
+        Assert.Equal(new[] { "targetItems", "targetCorrect", "errors", "errorPer1k", "confidentWrong", "wrong90" }, termError.EnumerateObject().Select(p => p.Name));
+        Assert.Equal(2, termError.GetProperty("targetItems").GetInt32());
+        Assert.Equal(terms.GetProperty("targetCorrect").GetInt32(), termError.GetProperty("targetCorrect").GetInt32());
+        Assert.Equal(2 - terms.GetProperty("targetCorrect").GetInt32(), termError.GetProperty("errors").GetInt32());
+        Assert.Equal(1000.0 * termError.GetProperty("errors").GetInt32() / 2, termError.GetProperty("errorPer1k").GetDouble(), 9);
+        Assert.Equal((terms.GetProperty("confidentWrong").GetInt32(), terms.GetProperty("wrong90").GetInt32()), (termError.GetProperty("confidentWrong").GetInt32(), termError.GetProperty("wrong90").GetInt32()));
+
+        // Assert: the calibration scopes, the thresholds 0.90 and 0.95 and seven bins that add up to the judged words
+        var calibration = technical.GetProperty("calibration");
+        Assert.Equal(new[] { "technical", "allSingle", "tranches" }, calibration.EnumerateObject().Select(p => p.Name));
+        Assert.Equal(new[] { "deverbalHeads", "definedTerms", "stepLines", "clauseVerbs" }, calibration.GetProperty("tranches").EnumerateObject().Select(p => p.Name));
+        Assert.Equal(14, calibration.GetProperty("technical").GetProperty("judged").GetInt32());
+        Assert.Equal(14 + 2 + 3 + 1 + 3 + 4, calibration.GetProperty("allSingle").GetProperty("judged").GetInt32());
+        Assert.Equal(new[] { 4, 3, 3, 4 }, calibration.GetProperty("tranches").EnumerateObject().Select(p => p.Value.GetProperty("judged").GetInt32()));
+        foreach (var scope in new[] { calibration.GetProperty("technical"), calibration.GetProperty("allSingle") }.Concat(calibration.GetProperty("tranches").EnumerateObject().Select(p => p.Value)))
+        {
+            Assert.Equal(new[] { "judged", "thresholds", "bins" }, scope.EnumerateObject().Select(p => p.Name));
+            var thresholds = scope.GetProperty("thresholds").EnumerateArray().ToList();
+            Assert.Equal(new[] { 0.9, 0.95 }, thresholds.Select(t => t.GetProperty("threshold").GetDouble()));
+            foreach (var row in thresholds)
+            {
+                Assert.Equal(new[] { "threshold", "answers", "wrong", "errorPer1k", "intervalLowPer1k", "intervalHighPer1k" }, row.EnumerateObject().Select(p => p.Name));
+                var answers = row.GetProperty("answers").GetInt32();
+                Assert.InRange(row.GetProperty("wrong").GetInt32(), 0, answers);
+                Assert.Equal(answers == 0 ? 0.0 : 1000.0 * row.GetProperty("wrong").GetInt32() / answers, row.GetProperty("errorPer1k").GetDouble(), 9);
+            }
+
+            var bins = scope.GetProperty("bins").EnumerateArray().ToList();
+            Assert.Equal(new[] { 0.0, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95 }, bins.Select(b => b.GetProperty("low").GetDouble()));
+            Assert.Equal(new[] { "low", "high", "count", "meanConfidence", "correctPercent", "harmful" }, bins[0].EnumerateObject().Select(p => p.Name));
+            Assert.Equal(scope.GetProperty("judged").GetInt32(), bins.Sum(b => b.GetProperty("count").GetInt32()));
+        }
+
+        // Assert: the pooled technical scope is the sum of its four tranche scopes
+        var perTranche = calibration.GetProperty("tranches").EnumerateObject().Select(p => p.Value).ToList();
+        foreach (var index in new[] { 0, 1 })
+        {
+            Assert.Equal(
+                perTranche.Sum(s => s.GetProperty("thresholds")[index].GetProperty("answers").GetInt32()),
+                calibration.GetProperty("technical").GetProperty("thresholds")[index].GetProperty("answers").GetInt32());
+            Assert.Equal(
+                perTranche.Sum(s => s.GetProperty("thresholds")[index].GetProperty("wrong").GetInt32()),
+                calibration.GetProperty("technical").GetProperty("thresholds")[index].GetProperty("wrong").GetInt32());
+        }
+
+        // Act: the same data without the technical items and hashes
+        var without = ArmData();
+        without.DeverbalHeads = Array.Empty<ShapesDevItem>();
+        without.DefinedTerms = Array.Empty<ShapesDevItem>();
+        without.StepLines = Array.Empty<ShapesDevItem>();
+        without.ClauseVerbs = Array.Empty<ShapesDevItem>();
+        using var before = System.Text.Json.JsonDocument.Parse(ArmEvaluation.Evaluate(weights, "arm", echo, without, timedPasses: 1));
+
+        // Assert: every member of before is byte for byte the same (the throughput is a measurement), the block is present with zero counts, and the inputs differ by the new hashes only
+        foreach (var name in new[] { "schema", "label", "groups", "temperature", "config", "weights", "openDev", "goldDev", "udDev", "shapes", "items", "shapesNew", "shapesFollowup" })
+        {
+            Assert.Equal(before.RootElement.GetProperty(name).GetRawText(), document.RootElement.GetProperty(name).GetRawText());
+        }
+
+        Assert.Equal(before.RootElement.GetProperty("throughput").GetProperty("tokens").GetRawText(), document.RootElement.GetProperty("throughput").GetProperty("tokens").GetRawText());
+        Assert.Equal(0, before.RootElement.GetProperty("shapesTechnical").GetProperty("pooledTechnical").GetProperty("targetItems").GetInt32());
+        Assert.Equal(0, before.RootElement.GetProperty("shapesTechnical").GetProperty("calibration").GetProperty("technical").GetProperty("judged").GetInt32());
+        foreach (var name in new[] { "devSha256", "hardSha256", "udDevSha256", "openDevSha256", "goldDevSha256", "commit", "dirty", "compoundHeadSha256", "headingsSha256", "namedStateSha256", "compoundHead2Sha256", "headings2Sha256" })
+        {
+            Assert.Equal(before.RootElement.GetProperty("inputs").GetProperty(name).GetRawText(), document.RootElement.GetProperty("inputs").GetProperty(name).GetRawText());
+        }
     }
 
     /// <summary>
@@ -1704,7 +1880,7 @@ public class ShapesDevEvaluationTests
             (compound.Item1, NewBlock(NewId("compound-head", 1), compound.Item2, "target", "VERB"), "must be tagged NOUN or PROPN but is tagged VERB"),
             (compound.Item1, NewBlock(NewId("compound-head", 1), compound.Item2, "control", "NOUN"), "must be tagged VERB but is tagged NOUN"),
             (named.Item1, NewBlock(NewId("named-state", 1), named.Item2, "target", "ADJ"), "must be tagged NOUN or PROPN but is tagged ADJ"),
-            (compound.Item1, NewBlock(NewId("compound-head", 1), compound.Item2, "target", "NOUN", "noun"), "belongs to the headings tranche only"),
+            (compound.Item1, NewBlock(NewId("compound-head", 1), compound.Item2, "target", "NOUN", "noun"), "belongs to the tranches that have kinds"),
             (compound.Item1, NewBlock(NewId("compound-head", 1), compound.Item2, "target", "NOUN", status: "disputed"), "must not be disputed"),
             (headings.Item1, NewBlock(NewId("headings", 1), headings.Item2, "target", "NOUN"), "the comment 'kind' is missing"),
             (headings.Item1, NewBlock(NewId("headings", 1), headings.Item2, "target", "NOUN", "adjective"), "the kind 'adjective' is not one of noun, imperative, proper"),
@@ -1840,7 +2016,12 @@ public class ShapesDevEvaluationTests
     [InlineData("data/eval/shapes-dev/named-state.tsv")]
     [InlineData("data/eval/shapes-dev/compound-head-2.tsv")]
     [InlineData("data/eval/shapes-dev/headings-2.tsv")]
+    [InlineData("data/eval/shapes-dev/deverbal-heads.tsv")]
+    [InlineData("data/eval/shapes-dev/defined-terms.tsv")]
+    [InlineData("data/eval/shapes-dev/step-lines.tsv")]
+    [InlineData("data/eval/shapes-dev/clause-verbs.tsv")]
     [InlineData("data/eval/shapes-dev/../shapes-dev/headings.tsv")]
+    [InlineData("data/eval/shapes-dev/../shapes-dev/step-lines.tsv")]
     public void DataGuard_EnsureShapesDevelopmentFile_NewTrancheFile_Admitted(string relativePath)
     {
         // Arrange / Act
@@ -1869,6 +2050,15 @@ public class ShapesDevEvaluationTests
     [InlineData("data/eval/shapes-dev/headings-2-sources.tsv")]
     [InlineData("data/eval/shapes-dev/compound-head-2-leakage-report.tsv")]
     [InlineData("data/eval/shapes-dev/headings-2-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/deverbal-heads-sources.tsv")]
+    [InlineData("data/eval/shapes-dev/defined-terms-sources.tsv")]
+    [InlineData("data/eval/shapes-dev/step-lines-sources.tsv")]
+    [InlineData("data/eval/shapes-dev/clause-verbs-sources.tsv")]
+    [InlineData("data/eval/shapes-dev/deverbal-heads-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/defined-terms-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/step-lines-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/clause-verbs-leakage-report.tsv")]
+    [InlineData("data/eval/shapes-dev/step-lines.tsv.bak")]
     [InlineData("data/eval/shapes-dev/headings-2.tsv.bak")]
     [InlineData("data/eval/shapes-dev/headings.tsv.bak")]
     [InlineData("data/eval/shapes-dev/new.tsv")]
@@ -2092,6 +2282,13 @@ public class ShapesDevEvaluationTests
     [InlineData("compound-head-2", true)]
     [InlineData("headings-2", true)]
     [InlineData("followup", true)]
+    [InlineData("deverbal-heads", true)]
+    [InlineData("defined-terms", true)]
+    [InlineData("step-lines", true)]
+    [InlineData("clause-verbs", true)]
+    [InlineData("technical", true)]
+    [InlineData("all-single", true)]
+    [InlineData("Technical", false)]
     [InlineData("named-state-2", false)]
     [InlineData("all", false)]
     [InlineData("Headings", false)]
@@ -2281,7 +2478,7 @@ public class ShapesDevEvaluationTests
         var noKind = Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(TrancheFile("headings-2", NewBlock(NewId("headings-2", 1), "heading-titlecase", "target", "NOUN")), "fixture", ShapesDevTranche.Headings2));
         Assert.Contains("the comment 'kind' is missing", noKind.Message, StringComparison.Ordinal);
         var kindOnCompound = Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(TrancheFile("compound-head-2", NewBlock(NewId("compound-head-2", 1), "n-compound-head-ambiguous", "target", "NOUN", "noun")), "fixture", ShapesDevTranche.CompoundHead2));
-        Assert.Contains("belongs to the headings tranche only", kindOnCompound.Message, StringComparison.Ordinal);
+        Assert.Contains("belongs to the tranches that have kinds", kindOnCompound.Message, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -2403,6 +2600,800 @@ public class ShapesDevEvaluationTests
         {
             Directory.Delete(root, true);
         }
+    }
+
+    /// <summary>
+    ///     Adds comments (<c>key = value</c>) to a block, behind its kind or origin comment.
+    /// </summary>
+    private static string[] WithComments(string[] block, params string[] comments)
+    {
+        var lines = block.ToList();
+        var at = lines.FindLastIndex(l => l.StartsWith("# ", StringComparison.Ordinal)) + 1;
+        lines.InsertRange(at, comments.Select(c => "# " + c));
+        return lines.ToArray();
+    }
+
+    /// <summary>
+    ///     A valid file of the deverbal-heads tranche: the four target kinds (NOUN) and the verb control (VERB), with the comments of the committed file.
+    /// </summary>
+    private static List<string> DeverbalHeadsFile() => TrancheFile(
+        "deverbal-heads",
+        NewBlock(NewId("deverbal-heads", 1), "n-deverbal-head", "target", "NOUN", "pred"),
+        NewBlock(NewId("deverbal-heads", 2), "n-deverbal-head", "target", "NOUN", "num"),
+        NewBlock(NewId("deverbal-heads", 3), "n-deverbal-head", "target", "NOUN", "ing"),
+        NewBlock(NewId("deverbal-heads", 4), "n-deverbal-head", "target", "NOUN", "other"),
+        NewBlock(NewId("deverbal-heads", 5), "n-deverbal-head", "control", "VERB", "verb"));
+
+    /// <summary>
+    ///     A valid file of the defined-terms tranche: a noun and an adjective target and a proper-name control; every item has the <c>term</c> comment.
+    /// </summary>
+    private static List<string> DefinedTermsFile() => TrancheFile(
+        "defined-terms",
+        WithComments(NewBlock(NewId("defined-terms", 1), "term-capitalized", "target", "NOUN", "noun"), "term = cat"),
+        WithComments(NewBlock(NewId("defined-terms", 2), "term-capitalized", "target", "ADJ", "adj"), "term = cat"),
+        WithComments(NewBlock(NewId("defined-terms", 3), "term-capitalized", "control", "PROPN", "proper"), "term = cat"));
+
+    /// <summary>
+    ///     A valid file of the step-lines tranche: an imperative target and a noun control; every item has the <c>frame</c> and <c>unit</c> comments.
+    /// </summary>
+    private static List<string> StepLinesFile() => TrancheFile(
+        "step-lines",
+        WithComments(NewBlock(NewId("step-lines", 1), "step-line", "target", "VERB", "imperative"), "frame = bare", "unit = enumerated"),
+        WithComments(NewBlock(NewId("step-lines", 2), "step-line", "control", "NOUN", "noun"), "frame = bare", "unit = bulleted"));
+
+    /// <summary>
+    ///     A valid file of the clause-verbs tranche: a main and a subordinate target (VERB), a noun and an adjective control.
+    /// </summary>
+    private static List<string> ClauseVerbsFile() => TrancheFile(
+        "clause-verbs",
+        NewBlock(NewId("clause-verbs", 1), "v-clause-ambiguous", "target", "VERB", "main"),
+        NewBlock(NewId("clause-verbs", 2), "v-clause-ambiguous", "target", "VERB", "sub"),
+        NewBlock(NewId("clause-verbs", 3), "v-clause-ambiguous", "control", "NOUN", "noun"),
+        NewBlock(NewId("clause-verbs", 4), "v-clause-ambiguous", "control", "ADJ", "adj"));
+
+    /// <summary>
+    ///     Writes the four technical files into the shapes development folder of a temporary repository root.
+    /// </summary>
+    private static void WriteTechnical(string root)
+    {
+        WriteShapes(root, "deverbal-heads.tsv", DeverbalHeadsFile());
+        WriteShapes(root, "defined-terms.tsv", DefinedTermsFile());
+        WriteShapes(root, "step-lines.tsv", StepLinesFile());
+        WriteShapes(root, "clause-verbs.tsv", ClauseVerbsFile());
+    }
+
+    /// <summary>
+    ///     Writes the five files of the first generation and the follow-up into the shapes development folder of a temporary repository root.
+    /// </summary>
+    private static void WriteEarlier(string root)
+    {
+        WriteShapes(root, "compound-head.tsv", CompoundHeadFile());
+        WriteShapes(root, "headings.tsv", HeadingsFile());
+        WriteShapes(root, "named-state.tsv", NamedStateFile());
+        WriteShapes(root, "compound-head-2.tsv", CompoundHead2File());
+        WriteShapes(root, "headings-2.tsv", Headings2File());
+    }
+
+    /// <summary>
+    ///     Validates the table of the four technical tranches: their values, names, files, shapes, scoring, kinds with their roles and tags,
+    ///     and that no tranche name is the start of another name (the longest-prefix rule needs no extra case).
+    /// </summary>
+    [Fact]
+    public void ShapesDevSets_TechnicalSpecs_AreTheTableOfTheDataFiles()
+    {
+        // Arrange
+        var expected = new (ShapesDevTranche Tranche, int Value, string Name, string Shape, ShapesDevScoring Scoring, string[] Kinds)[]
+        {
+            (ShapesDevTranche.DeverbalHeads, 7, "deverbal-heads", "n-deverbal-head", ShapesDevScoring.Class, new[] { "pred:target:Noun", "num:target:Noun", "ing:target:Noun", "other:target:Noun", "verb:control:Verb" }),
+            (ShapesDevTranche.DefinedTerms, 8, "defined-terms", "term-capitalized", ShapesDevScoring.Exact, new[] { "noun:target:Noun", "adj:target:Adj", "proper:control:Propn" }),
+            (ShapesDevTranche.StepLines, 9, "step-lines", "step-line", ShapesDevScoring.Exact, new[] { "imperative:target:Verb", "noun:control:Noun" }),
+            (ShapesDevTranche.ClauseVerbs, 10, "clause-verbs", "v-clause-ambiguous", ShapesDevScoring.Exact, new[] { "main:target:Verb", "sub:target:Verb", "noun:control:Noun", "adj:control:Adj" }),
+        };
+
+        // Act / Assert: value, name, file, specification
+        foreach (var (tranche, value, name, shape, scoring, kinds) in expected)
+        {
+            var spec = ShapesDevSets.SpecOf(tranche)!;
+            Assert.Equal(value, (int)tranche);
+            Assert.Equal(name, DevSets.ShapesDevNameOf(tranche));
+            Assert.Equal($"data/eval/shapes-dev/{name}.tsv", DevSets.ShapesDevFileOf(tranche));
+            Assert.Equal((shape, scoring, tranche), (spec.Shape, spec.Scoring, spec.Tranche));
+            Assert.Equal(kinds, spec.Kinds.Select(k => $"{k.Name}:{k.Role}:{k.Tag}"));
+            Assert.Same(spec, ShapesDevSets.SpecOf(shape));
+        }
+
+        // Assert: nine single-shape tranches in all, the four technical ones last and in the order of the files
+        Assert.Equal(9, ShapesDevSets.TrancheShapes.Count);
+        Assert.Equal(new[] { ShapesDevTranche.DeverbalHeads, ShapesDevTranche.DefinedTerms, ShapesDevTranche.StepLines, ShapesDevTranche.ClauseVerbs }, ShapesDevCommand.TechnicalTranches);
+        Assert.Equal(ShapesDevCommand.NewTranches.Concat(ShapesDevCommand.FollowupTranches).Concat(ShapesDevCommand.TechnicalTranches), ShapesDevCommand.AllSingleTranches);
+        Assert.Equal(ShapesDevSets.TrancheShapes.Select(s => s.Tranche), ShapesDevCommand.AllSingleTranches.OrderBy(t => (int)t));
+
+        // Assert: the id prefix of a tranche (shapes-dev-<name>-) is not the start of the prefix of another tranche
+        var prefixes = Enum.GetValues(typeof(ShapesDevTranche)).Cast<ShapesDevTranche>().Where(t => t > ShapesDevTranche.Standard).Select(t => "shapes-dev-" + DevSets.ShapesDevNameOf(t) + "-").ToList();
+        foreach (var technical in ShapesDevCommand.TechnicalTranches)
+        {
+            var own = "shapes-dev-" + DevSets.ShapesDevNameOf(technical) + "-";
+            Assert.DoesNotContain(prefixes, p => p != own && (p.StartsWith(own, StringComparison.Ordinal) || own.StartsWith(p, StringComparison.Ordinal)));
+        }
+    }
+
+    /// <summary>
+    ///     Validates that valid files of the four technical tranches are read with their kinds, the role each kind fixes, the exact gold tag
+    ///     and the class of the tag, and that the extra comments of the committed files (<c>term</c>, <c>frame</c>, <c>unit</c>) are accepted.
+    /// </summary>
+    [Fact]
+    public void ShapesDevSets_Parse_TechnicalTranches_ValidFiles_ReturnItemsWithKindAndGoldTag()
+    {
+        // Arrange / Act
+        var deverbal = ShapesDevSets.Parse(DeverbalHeadsFile(), "fixture", ShapesDevTranche.DeverbalHeads);
+        var terms = ShapesDevSets.Parse(DefinedTermsFile(), "fixture", ShapesDevTranche.DefinedTerms);
+        var steps = ShapesDevSets.Parse(StepLinesFile(), "fixture", ShapesDevTranche.StepLines);
+        var clauses = ShapesDevSets.Parse(ClauseVerbsFile(), "fixture", ShapesDevTranche.ClauseVerbs);
+
+        // Assert: kinds, roles, exact tags and classes
+        Assert.Equal(new[] { "pred", "num", "ing", "other", "verb" }, deverbal.Select(i => i.Kind));
+        Assert.Equal(new[] { "NOUN", "NOUN", "NOUN", "NOUN", "VERB" }, deverbal.Select(i => i.GoldTag));
+        Assert.Equal(new[] { true, true, true, true, false }, deverbal.Select(i => i.IsTarget));
+        Assert.Equal(new[] { "Noun", "Noun", "Noun", "Noun", "Verb" }, deverbal.Select(i => i.GoldClass));
+        Assert.Equal(new[] { "noun", "adj", "proper" }, terms.Select(i => i.Kind));
+        Assert.Equal(new[] { "NOUN", "ADJ", "PROPN" }, terms.Select(i => i.GoldTag));
+        Assert.Equal(new[] { true, true, false }, terms.Select(i => i.IsTarget));
+        Assert.Equal(new[] { "imperative", "noun" }, steps.Select(i => i.Kind));
+        Assert.Equal(new[] { "VERB", "NOUN" }, steps.Select(i => i.GoldTag));
+        Assert.Equal(new[] { true, false }, steps.Select(i => i.IsTarget));
+        Assert.Equal(new[] { "main", "sub", "noun", "adj" }, clauses.Select(i => i.Kind));
+        Assert.Equal(new[] { "VERB", "VERB", "NOUN", "ADJ" }, clauses.Select(i => i.GoldTag));
+        Assert.Equal(new[] { true, true, false, false }, clauses.Select(i => i.IsTarget));
+
+        // Assert: shape and tranche of every item
+        Assert.All(deverbal, i => Assert.Equal(("n-deverbal-head", ShapesDevTranche.DeverbalHeads), (i.Shape, i.Tranche)));
+        Assert.All(terms, i => Assert.Equal(("term-capitalized", ShapesDevTranche.DefinedTerms), (i.Shape, i.Tranche)));
+        Assert.All(steps, i => Assert.Equal(("step-line", ShapesDevTranche.StepLines), (i.Shape, i.Tranche)));
+        Assert.All(clauses, i => Assert.Equal(("v-clause-ambiguous", ShapesDevTranche.ClauseVerbs), (i.Shape, i.Tranche)));
+    }
+
+    /// <summary>
+    ///     Validates that each invalid item of a technical tranche is refused with a message that names the rule: another shape, a missing,
+    ///     unknown or misplaced kind, a kind with the wrong role, a tag that the kind does not allow and a disputed judged word.
+    /// </summary>
+    [Fact]
+    public void ShapesDevSets_Parse_TechnicalTranches_InvalidItems_AreRefused()
+    {
+        // Arrange: one broken file per rule, with the text the message must contain
+        const string Dv = "n-deverbal-head";
+        const string Dt = "term-capitalized";
+        const string St = "step-line";
+        const string Cv = "v-clause-ambiguous";
+        var cases = new List<(ShapesDevTranche Tranche, string[] Block, string Expected)>
+        {
+            (ShapesDevTranche.DeverbalHeads, NewBlock(NewId("deverbal-heads", 1), "n-compound-head-ambiguous", "target", "NOUN", "pred"), "the only shape of the deverbal-heads tranche"),
+            (ShapesDevTranche.DefinedTerms, NewBlock(NewId("defined-terms", 1), Dv, "target", "NOUN", "noun"), "the only shape of the defined-terms tranche"),
+            (ShapesDevTranche.DeverbalHeads, NewBlock(NewId("deverbal-heads", 1), Dv, "target", "NOUN"), "the comment 'kind' is missing"),
+            (ShapesDevTranche.DeverbalHeads, NewBlock(NewId("deverbal-heads", 1), Dv, "target", "NOUN", "heading"), "the kind 'heading' is not one of pred, num, ing, other, verb"),
+            (ShapesDevTranche.DeverbalHeads, NewBlock(NewId("deverbal-heads", 1), Dv, "target", "VERB", "pred"), "must be tagged NOUN but is tagged VERB"),
+            (ShapesDevTranche.DeverbalHeads, NewBlock(NewId("deverbal-heads", 1), Dv, "target", "PROPN", "ing"), "must be tagged NOUN but is tagged PROPN"),
+            (ShapesDevTranche.DeverbalHeads, NewBlock(NewId("deverbal-heads", 1), Dv, "control", "NOUN", "other"), "does not match the kind 'other'"),
+            (ShapesDevTranche.DeverbalHeads, NewBlock(NewId("deverbal-heads", 1), Dv, "target", "VERB", "verb"), "does not match the kind 'verb'"),
+            (ShapesDevTranche.DeverbalHeads, NewBlock(NewId("deverbal-heads", 1), Dv, "control", "NOUN", "verb"), "must be tagged VERB but is tagged NOUN"),
+            (ShapesDevTranche.DeverbalHeads, NewBlock(NewId("deverbal-heads", 1), Dv, "target", "NOUN", "num", "disputed"), "must not be disputed"),
+            (ShapesDevTranche.DefinedTerms, NewBlock(NewId("defined-terms", 1), Dt, "target", "NOUN", "adj"), "must be tagged ADJ but is tagged NOUN"),
+            (ShapesDevTranche.DefinedTerms, NewBlock(NewId("defined-terms", 1), Dt, "target", "PROPN", "noun"), "must be tagged NOUN but is tagged PROPN"),
+            (ShapesDevTranche.DefinedTerms, NewBlock(NewId("defined-terms", 1), Dt, "target", "PROPN", "proper"), "does not match the kind 'proper'"),
+            (ShapesDevTranche.DefinedTerms, NewBlock(NewId("defined-terms", 1), Dt, "control", "NOUN", "proper"), "must be tagged PROPN but is tagged NOUN"),
+            (ShapesDevTranche.DefinedTerms, NewBlock(NewId("defined-terms", 1), Dt, "target", "VERB", "imperative"), "the kind 'imperative' is not one of noun, adj, proper"),
+            (ShapesDevTranche.StepLines, NewBlock(NewId("step-lines", 1), St, "target", "NOUN", "imperative"), "must be tagged VERB but is tagged NOUN"),
+            (ShapesDevTranche.StepLines, NewBlock(NewId("step-lines", 1), St, "target", "NOUN", "noun"), "does not match the kind 'noun'"),
+            (ShapesDevTranche.StepLines, NewBlock(NewId("step-lines", 1), St, "control", "VERB", "noun"), "must be tagged NOUN but is tagged VERB"),
+            (ShapesDevTranche.StepLines, NewBlock(NewId("step-lines", 1), St, "control", "VERB", "imperative"), "does not match the kind 'imperative'"),
+            (ShapesDevTranche.ClauseVerbs, NewBlock(NewId("clause-verbs", 1), Cv, "target", "NOUN", "main"), "must be tagged VERB but is tagged NOUN"),
+            (ShapesDevTranche.ClauseVerbs, NewBlock(NewId("clause-verbs", 1), Cv, "target", "ADJ", "sub"), "must be tagged VERB but is tagged ADJ"),
+            (ShapesDevTranche.ClauseVerbs, NewBlock(NewId("clause-verbs", 1), Cv, "control", "NOUN", "adj"), "must be tagged ADJ but is tagged NOUN"),
+            (ShapesDevTranche.ClauseVerbs, NewBlock(NewId("clause-verbs", 1), Cv, "control", "VERB", "main"), "does not match the kind 'main'"),
+            (ShapesDevTranche.ClauseVerbs, NewBlock(NewId("clause-verbs", 1), Cv, "target", "NOUN", "noun"), "does not match the kind 'noun'"),
+            (ShapesDevTranche.ClauseVerbs, NewBlock(NewId("clause-verbs", 1), Cv, "target", "VERB", "main", "disputed"), "must not be disputed"),
+        };
+
+        // Act / Assert
+        foreach (var (tranche, block, expected) in cases)
+        {
+            var exception = Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(TrancheFile(DevSets.ShapesDevNameOf(tranche), block), "fixture", tranche));
+            Assert.Contains(expected, exception.Message, StringComparison.Ordinal);
+        }
+
+        // Assert: the shape of a technical tranche is not a shape of the standard tranche, and a file of the standard tranche is no technical file
+        Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(DeverbalHeadsFile(), "fixture"));
+        Assert.Throws<InvalidDataException>(() => ShapesDevSets.Parse(File(CompoundHead()), "fixture", ShapesDevTranche.StepLines));
+    }
+
+    /// <summary>
+    ///     Validates that each technical tranche is read from its own file with its own SHA-256 and marks its items, that the longest id prefix
+    ///     decides, and that a file cannot be read as another tranche: the corpus marker and the sentence-id prefix are both checked.
+    /// </summary>
+    [Fact]
+    public void DevSets_ReadShapesDev_TechnicalTranches_OwnFileOwnMarkerAndIdPrefix()
+    {
+        // Arrange: the four technical files next to a first-generation file
+        var root = TempRoot(null);
+        WriteTechnical(root);
+        WriteShapes(root, "headings.tsv", HeadingsFile());
+        var files = new (ShapesDevTranche Tranche, string Name, Func<List<string>> Make)[]
+        {
+            (ShapesDevTranche.DeverbalHeads, "deverbal-heads", DeverbalHeadsFile),
+            (ShapesDevTranche.DefinedTerms, "defined-terms", DefinedTermsFile),
+            (ShapesDevTranche.StepLines, "step-lines", StepLinesFile),
+            (ShapesDevTranche.ClauseVerbs, "clause-verbs", ClauseVerbsFile),
+        };
+        try
+        {
+            // Act / Assert: each file is read as its own tranche, with a distinct hash and ids that carry the prefix of the tranche
+            var hashes = new List<string>();
+            foreach (var (tranche, name, _) in files)
+            {
+                var items = DevSets.ReadShapesDev(root, tranche, out var sha);
+                hashes.Add(sha);
+                Assert.All(items, i => Assert.Equal(tranche, i.Tranche));
+                Assert.All(items, i => Assert.StartsWith($"shapes-dev-{name}-", i.Id, StringComparison.Ordinal));
+                Assert.True(DevSets.ShapesDevExists(root, tranche));
+            }
+
+            Assert.Equal(4, hashes.Distinct().Count());
+
+            // Assert: a file of another tranche at the path of a technical tranche is refused, by the marker first
+            foreach (var (tranche, name, _) in files)
+            {
+                foreach (var (_, otherName, otherMake) in files.Where(f => f.Tranche != tranche))
+                {
+                    WriteShapes(root, name + ".tsv", otherMake());
+                    Assert.Contains($"announces itself as the {otherName} tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, tranche, out _)).Message, StringComparison.Ordinal);
+                }
+
+                WriteShapes(root, name + ".tsv", HeadingsFile());
+                Assert.Contains("announces itself as the headings tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, tranche, out _)).Message, StringComparison.Ordinal);
+                WriteShapes(root, name + ".tsv", files.First(f => f.Tranche == tranche).Make());
+            }
+
+            // Assert: the right marker with a sentence id of another tranche, of the standard tranche or of the hard tranche is refused
+            WriteShapes(root, "step-lines.tsv", TrancheFile("step-lines", WithComments(NewBlock(NewId("clause-verbs", 1), "step-line", "target", "VERB", "imperative"), "frame = bare", "unit = enumerated")));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.StepLines, out _)).Message, StringComparison.Ordinal);
+            WriteShapes(root, "step-lines.tsv", TrancheFile("step-lines", NewBlock("shapes-dev-0001", "step-line", "target", "VERB", "imperative")));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.StepLines, out _)).Message, StringComparison.Ordinal);
+            WriteShapes(root, "deverbal-heads.tsv", TrancheFile("deverbal-heads", NewBlock("shapes-dev-hard-0001", "n-deverbal-head", "target", "NOUN", "pred")));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.DeverbalHeads, out _)).Message, StringComparison.Ordinal);
+
+            // Assert: a file that names no marker at all is refused, and a technical id at the standard path is refused
+            WriteShapes(root, "defined-terms.tsv", File(CompoundHead(NewId("defined-terms", 1))));
+            Assert.Contains("does not announce itself as the defined-terms tranche", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.DefinedTerms, out _)).Message, StringComparison.Ordinal);
+            WriteShapes(root, "dev.tsv", File(CompoundHead(NewId("clause-verbs", 1))));
+            Assert.Contains("sentence id", Assert.Throws<InvalidDataException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.Standard, out _)).Message, StringComparison.Ordinal);
+
+            // Assert: removing a file makes it absent and its read an error that names the file
+            System.IO.File.Delete(Path.Combine(root, "data", "eval", "shapes-dev", "clause-verbs.tsv"));
+            Assert.False(DevSets.ShapesDevExists(root, ShapesDevTranche.ClauseVerbs));
+            Assert.Contains("clause-verbs.tsv", Assert.Throws<FileNotFoundException>(() => DevSets.ReadShapesDev(root, ShapesDevTranche.ClauseVerbs, out _)).Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates the counts at the confidence limits: a wrong target counts at 0.90 from 0.90 on and at 0.95 from 0.95 on (0.899 and 0.949 do
+    ///     not), a correct answer does not, a wrong control is counted in its own two columns, and the counts do not change the harmful errors.
+    /// </summary>
+    [Fact]
+    public void ShapesDevTrancheEvaluator_Summarize_Wrong90And95_CountTargetsAndControlsSeparately()
+    {
+        // Arrange
+        var tranche = ShapesDevTranche.StepLines;
+        var items = new List<ShapesDevItem>
+        {
+            TrancheItem(tranche, "a", "target", "cat", "VERB", "imperative"),
+            TrancheItem(tranche, "b", "target", "cat", "VERB", "imperative"),
+            TrancheItem(tranche, "c", "target", "cat", "VERB", "imperative"),
+            TrancheItem(tranche, "d", "target", "cat", "VERB", "imperative"),
+            TrancheItem(tranche, "e", "target", "cat", "VERB", "imperative"),
+            TrancheItem(tranche, "f", "control", "cat", "NOUN", "noun"),
+            TrancheItem(tranche, "g", "control", "cat", "NOUN", "noun"),
+            TrancheItem(tranche, "h", "control", "cat", "NOUN", "noun"),
+        };
+        var outcomes = new List<Outcome>
+        {
+            new("d", false, 0.95, 0.05, true, true, true),
+            new("d", false, 0.90, 0.10, true, true, true),
+            new("d", false, 0.899, 0.10, true, true, true),
+            new("d", true, 0.99, 0.99, true, true, false),
+            new("d", false, 0.999, 0.0, true, false, false),
+            new("d", false, 0.97, 0.03, true, false, false),
+            new("d", false, 0.92, 0.08, true, false, false),
+            new("d", true, 0.99, 0.99, true, false, false),
+        };
+
+        // Act
+        var result = ShapesDevTrancheEvaluator.Summarize(tranche, items, outcomes);
+
+        // Assert: the limits and the predicates
+        Assert.Equal(0.90, Metrics.ConfidentWrong90);
+        Assert.Equal(0.95, Metrics.ConfidentWrongConfidence);
+        Assert.True(Metrics.IsConfidentlyWrong90(outcomes[1]));
+        Assert.False(Metrics.IsConfidentlyWrong90(outcomes[2]));
+        Assert.False(Metrics.IsConfidentlyWrong90(outcomes[3]));
+        Assert.Throws<ArgumentNullException>(() => Metrics.IsConfidentlyWrong90(null!));
+
+        // Assert: the targets (wrong at 0.90: a, b, e; wrong at 0.95: a, e) and the controls (f, g at 0.90; f at 0.95)
+        Assert.Equal((5, 1, 4, 3), (result.Overall.TargetItems, result.Overall.TargetCorrect, result.Overall.NounVerbDecisions, result.Overall.HarmfulErrors));
+        Assert.Equal((3, 2), (result.Overall.ConfidentWrong90, result.Overall.ConfidentWrong));
+        Assert.Equal((3, 1, 2, 1), (result.Overall.ControlItems, result.Overall.ControlCorrect, result.Overall.ControlConfidentWrong90, result.Overall.ControlConfidentWrong));
+
+        // Assert: the kinds split the same counts
+        Assert.Equal(new[] { "step-line: imperative targets", "step-line: NOUN controls" }, result.Kinds.Select(k => k.Shape));
+        Assert.Equal((5, 3, 2, 0, 0), (result.Kinds[0].TargetItems, result.Kinds[0].ConfidentWrong90, result.Kinds[0].ConfidentWrong, result.Kinds[0].ControlItems, result.Kinds[0].ControlConfidentWrong90));
+        Assert.Equal((0, 3, 2, 1), (result.Kinds[1].TargetItems, result.Kinds[1].ControlItems, result.Kinds[1].ControlConfidentWrong90, result.Kinds[1].ControlConfidentWrong));
+    }
+
+    /// <summary>
+    ///     Validates the exact-tag scoring of the technical shapes through the real decoder: a capitalized adjective answered PROPN or NOUN is
+    ///     wrong and not harmful, a noun-verb swap on an imperative is harmful, an adjective control answered as a verb is wrong and never
+    ///     harmful, and the deverbal-head shape is scored by class (a PROPN answer for a NOUN head is right).
+    /// </summary>
+    [Fact]
+    public void ShapesDevTrancheEvaluator_Evaluate_TechnicalShapes_AreScoredUnderTheirScoring()
+    {
+        // Arrange: "cat" is answered PROPN (NOUN is the other candidate), "dog" is answered VERB (NOUN is the other candidate)
+        var tagger = PropnCatVerbDogTagger();
+        var terms = new List<ShapesDevItem>
+        {
+            TrancheItem(ShapesDevTranche.DefinedTerms, "a", "target", "cat", "ADJ", "adj"),
+            TrancheItem(ShapesDevTranche.DefinedTerms, "b", "target", "cat", "NOUN", "noun"),
+            TrancheItem(ShapesDevTranche.DefinedTerms, "c", "control", "cat", "PROPN", "proper"),
+        };
+        var clauses = new List<ShapesDevItem>
+        {
+            TrancheItem(ShapesDevTranche.ClauseVerbs, "d", "target", "dog", "VERB", "main"),
+            TrancheItem(ShapesDevTranche.ClauseVerbs, "e", "control", "dog", "ADJ", "adj"),
+            TrancheItem(ShapesDevTranche.ClauseVerbs, "f", "control", "dog", "NOUN", "noun"),
+        };
+        var steps = new List<ShapesDevItem> { TrancheItem(ShapesDevTranche.StepLines, "g", "target", "cat", "VERB", "imperative") };
+        var deverbal = new List<ShapesDevItem>
+        {
+            TrancheItem(ShapesDevTranche.DeverbalHeads, "h", "target", "cat", "NOUN", "pred"),
+            TrancheItem(ShapesDevTranche.DeverbalHeads, "i", "target", "dog", "NOUN", "ing"),
+            TrancheItem(ShapesDevTranche.DeverbalHeads, "j", "control", "dog", "VERB", "verb"),
+        };
+
+        // Act
+        var termResult = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.DefinedTerms, terms);
+        var clauseResult = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.ClauseVerbs, clauses);
+        var stepResult = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.StepLines, steps);
+        var deverbalResult = ShapesDevTrancheEvaluator.Evaluate(tagger, ShapesDevTranche.DeverbalHeads, deverbal);
+
+        // Assert: both defined-term targets are wrong (PROPN is not ADJ and not NOUN), neither is a noun-verb decision, the PROPN control is right
+        Assert.Equal((2, 0, 0, 0, 1, 1), (termResult.Overall.TargetItems, termResult.Overall.TargetCorrect, termResult.Overall.NounVerbDecisions, termResult.Overall.HarmfulErrors, termResult.Overall.ControlItems, termResult.Overall.ControlCorrect));
+        Assert.Equal(new[] { "term-capitalized: noun targets", "term-capitalized: adj targets", "term-capitalized: PROPN controls" }, termResult.Kinds.Select(k => k.Shape));
+
+        // Assert: the main-clause verb answered VERB is right, the adjective and noun controls answered VERB are wrong and never harmful
+        Assert.Equal((1, 1, 1, 0, 2, 0), (clauseResult.Overall.TargetItems, clauseResult.Overall.TargetCorrect, clauseResult.Overall.NounVerbDecisions, clauseResult.Overall.HarmfulErrors, clauseResult.Overall.ControlItems, clauseResult.Overall.ControlCorrect));
+
+        // Assert: the imperative answered PROPN is wrong and not a noun-verb swap
+        Assert.Equal((1, 0, 0), (stepResult.Overall.TargetItems, stepResult.Overall.TargetCorrect, stepResult.Overall.HarmfulErrors));
+
+        // Assert: by class the PROPN answer for a NOUN head is right, the verb answer for the other head is a harmful swap, the verb control is right
+        Assert.Equal((2, 1, 1, 1, 1, 1), (deverbalResult.Overall.TargetItems, deverbalResult.Overall.TargetCorrect, deverbalResult.Overall.NounVerbDecisions, deverbalResult.Overall.HarmfulErrors, deverbalResult.Overall.ControlItems, deverbalResult.Overall.ControlCorrect));
+    }
+
+    /// <summary>
+    ///     Validates the counts table: heading, the explanation of the three counts, the note that no threshold is chosen, and one row per
+    ///     tranche and one per kind with a dash for a column that does not apply.
+    /// </summary>
+    [Fact]
+    public void ShapesDevReport_RenderCounts_PrintsOneRowPerTrancheAndKind()
+    {
+        // Arrange: a step-lines result (kinds: imperative targets, noun controls) and a compound-head result (no kinds)
+        var stepItems = new List<ShapesDevItem>
+        {
+            TrancheItem(ShapesDevTranche.StepLines, "a", "target", "cat", "VERB", "imperative"),
+            TrancheItem(ShapesDevTranche.StepLines, "b", "target", "cat", "VERB", "imperative"),
+            TrancheItem(ShapesDevTranche.StepLines, "c", "control", "cat", "NOUN", "noun"),
+        };
+        var stepOutcomes = new List<Outcome>
+        {
+            new("d", false, 0.96, 0.04, true, true, true),
+            new("d", true, 0.99, 0.99, true, true, false),
+            new("d", false, 0.91, 0.09, true, false, false),
+        };
+        var steps = ShapesDevTrancheEvaluator.Summarize(ShapesDevTranche.StepLines, stepItems, stepOutcomes);
+        var compound = ShapesDevTrancheEvaluator.Summarize(ShapesDevTranche.CompoundHead, new List<ShapesDevItem> { TrancheItem(ShapesDevTranche.CompoundHead, "x", "target", "cat", "NOUN") }, new List<Outcome> { new("d", true, 0.7, 0.7, true, true, false) });
+
+        // Act
+        var first = ShapesDevReport.RenderCounts("m", new[] { steps, compound });
+        var second = ShapesDevReport.RenderCounts("m", new[] { steps, compound });
+
+        // Assert
+        Assert.Equal(first, second);
+        Assert.Equal("## Shapes development set, counts at the confidence limits: m", first[0]);
+        Assert.Contains(first, l => l.StartsWith("- Harmful: a swapped noun-verb decision of a target item with a confidence of at least 0.45. Wrong at confidence >= 0.90 and >= 0.95", StringComparison.Ordinal));
+        Assert.Contains("- The counts are measurements at fixed limits; no threshold is chosen or changed here.", first);
+        Assert.Equal("| tranche | row | target items | target accuracy | noun-verb decisions | harmful at >= 0.45 | wrong at >= 0.90 | wrong at >= 0.95 | control items | control wrong at >= 0.90 | control wrong at >= 0.95 |", first[5]);
+        Assert.Equal("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |", first[6]);
+        Assert.Equal(
+            new[]
+            {
+                "| step-lines | all items | 2 | 50.0% | 2 | 1 | 1 | 1 | 1 | 1 | 0 |",
+                "| step-lines | imperative (target) | 2 | 50.0% | 2 | 1 | 1 | 1 | - | - | - |",
+                "| step-lines | noun (control) | - | - | - | - | - | - | 1 | 1 | 0 |",
+                "| compound-head | all items | 1 | 100.0% | 1 | 0 | 0 | 0 | - | - | - |",
+            },
+            first.Skip(7));
+    }
+
+    /// <summary>
+    ///     Validates that the scoring note of a technical shape (exact tag) does not speak of headings, that the note of the headings is the
+    ///     one it always was, and that the deverbal-head shape (class) has the note of the class-scored shapes.
+    /// </summary>
+    [Fact]
+    public void ShapesDevReport_RenderTranche_TechnicalShapes_HaveTheirOwnScoringNote()
+    {
+        // Arrange
+        string Scoring(ShapesDevTranche tranche, string goldTag, string kind) =>
+            ShapesDevReport.RenderTranche("m", tranche, string.Empty, ShapesDevTrancheEvaluator.Summarize(tranche, new List<ShapesDevItem> { TrancheItem(tranche, "a", "target", "cat", goldTag, kind) }, new List<Outcome> { new("d", true, 0.9, 0.9, true, true, false) })).Single(l => l.StartsWith("- Scoring:", StringComparison.Ordinal));
+
+        // Act
+        var steps = Scoring(ShapesDevTranche.StepLines, "VERB", "imperative");
+        var headings = Scoring(ShapesDevTranche.Headings, "NOUN", "noun");
+        var deverbal = Scoring(ShapesDevTranche.DeverbalHeads, "NOUN", "pred");
+
+        // Assert
+        Assert.Contains("by exact tag (the answer is right only when it is the gold tag;", steps, StringComparison.Ordinal);
+        Assert.DoesNotContain("heading", steps, StringComparison.Ordinal);
+        Assert.Contains("by exact tag (a NOUN or VERB heading answered PROPN is wrong", headings, StringComparison.Ordinal);
+        Assert.Contains("by class (Noun: NOUN and PROPN; Verb: VERB)", deverbal, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    ///     Validates that the groups and the names select the tranches in report order: <c>technical</c> the four, <c>all-single</c> all nine,
+    ///     <c>new</c> and <c>followup</c> their groups, a tranche name the one tranche, and that only the groups are groups.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCommand_TranchesOf_GroupsAndNames_SelectInReportOrder()
+    {
+        // Arrange / Act / Assert
+        Assert.Equal(ShapesDevCommand.TechnicalTranches, ShapesDevCommand.TranchesOf("technical"));
+        Assert.Equal(ShapesDevCommand.AllSingleTranches, ShapesDevCommand.TranchesOf("all-single"));
+        Assert.Equal(ShapesDevCommand.NewTranches, ShapesDevCommand.TranchesOf("new"));
+        Assert.Equal(ShapesDevCommand.FollowupTranches, ShapesDevCommand.TranchesOf("followup"));
+        Assert.Equal(9, ShapesDevCommand.AllSingleTranches.Distinct().Count());
+        foreach (var tranche in ShapesDevCommand.AllSingleTranches)
+        {
+            Assert.Equal(new[] { tranche }, ShapesDevCommand.TranchesOf(DevSets.ShapesDevNameOf(tranche)));
+            Assert.False(ShapesDevCommand.IsGroup(DevSets.ShapesDevNameOf(tranche)));
+        }
+
+        Assert.All(new[] { "new", "followup", "technical", "all-single" }, which => Assert.True(ShapesDevCommand.IsGroup(which)));
+        Assert.Empty(ShapesDevCommand.TranchesOf("standard"));
+    }
+
+    /// <summary>
+    ///     Validates that <c>technical</c> scores the four tranches in order, each as a section, followed by the counts table, that an absent
+    ///     file of the group is noted, that an explicit technical tranche is scored alone with its counts table and needs its file, and that
+    ///     <c>all-single</c> adds the nine tranches in the order of the generations.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCommand_Run_Technical_ScoresTheFourTranchesWithTheCountsTable()
+    {
+        // Arrange: the step-lines file is absent
+        var root = TempRoot(null);
+        WriteShapes(root, "deverbal-heads.tsv", DeverbalHeadsFile());
+        WriteShapes(root, "defined-terms.tsv", DefinedTermsFile());
+        WriteShapes(root, "clause-verbs.tsv", ClauseVerbsFile());
+        var tagger = FixtureTagger();
+        try
+        {
+            // Act
+            var lines = ShapesDevCommand.Run(root, tagger, "m", "w", "technical");
+
+            // Assert: sections in order with the missing file noted in its place, then one counts table over the scored tranches
+            var expected = new List<string>();
+            var results = new List<ShapesDevSingleShapeResult>();
+            foreach (var tranche in ShapesDevCommand.TechnicalTranches)
+            {
+                if (expected.Count > 0)
+                {
+                    expected.Add(string.Empty);
+                }
+
+                if (tranche == ShapesDevTranche.StepLines)
+                {
+                    expected.Add(ShapesDevReport.RenderTrancheMissing(tranche));
+                    continue;
+                }
+
+                var items = DevSets.ReadShapesDev(root, tranche, out var sha);
+                var result = ShapesDevTrancheEvaluator.Evaluate(tagger, tranche, items);
+                results.Add(result);
+                expected.AddRange(ShapesDevReport.RenderTranche("m", tranche, sha, result, "w"));
+            }
+
+            expected.Add(string.Empty);
+            expected.AddRange(ShapesDevReport.RenderCounts("m", results));
+            Assert.Equal(expected, lines);
+            Assert.Equal(
+                new[] { "## Shapes development set, deverbal-heads tranche: m", "## Shapes development set, defined-terms tranche: m", "## Shapes development set, clause-verbs tranche: m", "## Shapes development set, counts at the confidence limits: m" },
+                lines.Where(l => l.StartsWith("## ", StringComparison.Ordinal)));
+            Assert.DoesNotContain(lines, l => l.Contains("calibration", StringComparison.Ordinal));
+
+            // Assert: an explicit technical tranche is scored alone, with its counts table, and needs its file
+            var alone = ShapesDevCommand.Run(root, tagger, "m", "w", "defined-terms");
+            Assert.Equal(new[] { "## Shapes development set, defined-terms tranche: m", "## Shapes development set, counts at the confidence limits: m" }, alone.Where(l => l.StartsWith("## ", StringComparison.Ordinal)));
+            Assert.Contains("step-lines.tsv", Assert.Throws<FileNotFoundException>(() => ShapesDevCommand.Run(root, tagger, "m", "w", "step-lines")).Message, StringComparison.Ordinal);
+
+            // Assert: all-single notes the five earlier files that are absent and scores the technical ones after them
+            var all = ShapesDevCommand.Run(root, tagger, "m", "w", "all-single");
+            Assert.Equal(6, all.Count(l => l.StartsWith("- The ", StringComparison.Ordinal) && l.EndsWith("is not present; it is not scored.", StringComparison.Ordinal)));
+            Assert.Equal(
+                new[] { "## Shapes development set, deverbal-heads tranche: m", "## Shapes development set, defined-terms tranche: m", "## Shapes development set, clause-verbs tranche: m", "## Shapes development set, counts at the confidence limits: m" },
+                all.Where(l => l.StartsWith("## ", StringComparison.Ordinal)));
+            var order = all.Where(l => l.StartsWith("- The ", StringComparison.Ordinal) && l.EndsWith("is not present; it is not scored.", StringComparison.Ordinal)).Select(l => l.Split(' ')[2]);
+            Assert.Equal(new[] { "compound-head", "headings", "named-state", "compound-head-2", "headings-2", "step-lines" }, order);
+
+            // Assert: with no file at all every tranche of a group is noted and there is no counts table
+            Directory.Delete(Path.Combine(root, "data", "eval", "shapes-dev"), true);
+            Directory.CreateDirectory(Path.Combine(root, "data", "eval", "shapes-dev"));
+            var none = ShapesDevCommand.Run(root, tagger, "m", "w", "technical");
+            Assert.Equal(7, none.Count);
+            Assert.Equal(ShapesDevCommand.TechnicalTranches.Select(ShapesDevReport.RenderTrancheMissing), none.Where(l => l.Length > 0));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that <c>new</c> and <c>followup</c> and the names of the first two generations print exactly what they printed before: the
+    ///     same lines whether or not the four technical files are present, no counts table and no calibration section, and the sections of the
+    ///     renderer of the single-shape tranches.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCommand_Run_NewAndFollowup_AreByteIdenticalWithTheTechnicalFilesPresent()
+    {
+        // Arrange: two roots, with and without the technical files
+        var without = TempRoot(null);
+        var with = TempRoot(null);
+        WriteEarlier(without);
+        WriteEarlier(with);
+        WriteTechnical(with);
+        var tagger = FixtureTagger();
+        try
+        {
+            foreach (var which in new[] { "new", "followup", "compound-head", "headings", "named-state", "compound-head-2", "headings-2" })
+            {
+                // Act
+                var before = ShapesDevCommand.Run(without, tagger, "m", "w", which);
+                var after = ShapesDevCommand.Run(with, tagger, "m", "w", which);
+
+                // Assert: identical lines, built only from the sections of the renderer
+                Assert.Equal(string.Join("\n", before), string.Join("\n", after));
+                Assert.DoesNotContain(after, l => l.Contains("counts at the confidence limits", StringComparison.Ordinal) || l.Contains("calibration", StringComparison.Ordinal));
+                var expected = new List<string>();
+                foreach (var tranche in ShapesDevCommand.TranchesOf(which))
+                {
+                    if (expected.Count > 0)
+                    {
+                        expected.Add(string.Empty);
+                    }
+
+                    var items = DevSets.ReadShapesDev(without, tranche, out var sha);
+                    expected.AddRange(ShapesDevReport.RenderTranche("m", tranche, sha, ShapesDevTrancheEvaluator.Evaluate(tagger, tranche, items), "w"));
+                }
+
+                Assert.Equal(expected, after);
+            }
+
+            // Assert: the technical tranches and the groups that contain them add their own sections after the earlier ones, never inside new or followup
+            var allSingle = ShapesDevCommand.Run(with, tagger, "m", "w", "all-single");
+            var newLines = ShapesDevCommand.Run(with, tagger, "m", "w", "new");
+            var followupLines = ShapesDevCommand.Run(with, tagger, "m", "w", "followup");
+            Assert.Equal(newLines.Concat(new[] { string.Empty }).Concat(followupLines), allSingle.Take(newLines.Count + 1 + followupLines.Count));
+            Assert.Equal(9 + 1, allSingle.Count(l => l.StartsWith("## ", StringComparison.Ordinal)));
+        }
+        finally
+        {
+            Directory.Delete(without, true);
+            Directory.Delete(with, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates that the calibration section applies to the single-shape tranches only: it is refused with the original selections and
+    ///     is appended after the tranche sections (and the counts table) otherwise, pooled and per tranche.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCommand_Run_Calibration_AppendsTheSectionForSingleShapeSelectionsOnly()
+    {
+        // Arrange
+        var root = TempRoot(File(CompoundHead("shapes-dev-0001")));
+        WriteTechnical(root);
+        WriteEarlier(root);
+        var tagger = FixtureTagger();
+        try
+        {
+            // Act / Assert: refused for standard, hard and both
+            foreach (var which in new[] { "standard", "hard", "both" })
+            {
+                Assert.Contains("--calibration applies to the single-shape tranches only", Assert.Throws<InvalidOperationException>(() => ShapesDevCommand.Run(root, tagger, "m", "w", which, true)).Message, StringComparison.Ordinal);
+            }
+
+            // Act: technical selection with the calibration
+            var plain = ShapesDevCommand.Run(root, tagger, "m", "w", "technical");
+            var calibrated = ShapesDevCommand.Run(root, tagger, "m", "w", "technical", true);
+
+            // Assert: the plain output is the prefix, then an empty line and the section of the measurement of the four tranches
+            Assert.Equal(plain, calibrated.Take(plain.Count));
+            Assert.Equal(string.Empty, calibrated[plain.Count]);
+            var judged = ShapesDevCommand.TechnicalTranches.Select(t =>
+            {
+                var items = DevSets.ReadShapesDev(root, t, out _);
+                return new KeyValuePair<string, IReadOnlyList<Outcome>>(DevSets.ShapesDevNameOf(t), ShapesDevTrancheEvaluator.Judge(tagger, items));
+            }).ToList();
+            Assert.Equal(ShapesDevCalibration.Render("m", ShapesDevCalibration.Measure(judged)), calibrated.Skip(plain.Count + 1));
+            Assert.Equal(14, judged.Sum(j => j.Value.Count));
+            Assert.Contains("| all selected tranches | 14 |", calibrated.Skip(plain.Count + 1).Single(l => l.StartsWith("| all selected", StringComparison.Ordinal)), StringComparison.Ordinal);
+
+            // Assert: for "new" the sections are the old ones followed by the calibration, and a group without any file has nothing to measure
+            var newPlain = ShapesDevCommand.Run(root, tagger, "m", "w", "new");
+            var newCalibrated = ShapesDevCommand.Run(root, tagger, "m", "w", "new", true);
+            Assert.Equal(newPlain, newCalibrated.Take(newPlain.Count));
+            Assert.DoesNotContain(newPlain, l => l.Contains("calibration", StringComparison.Ordinal));
+            Assert.Contains(newCalibrated, l => l.StartsWith("## Shapes development set, calibration of the confidence: m", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    /// <summary>
+    ///     Validates the Wilson score interval: the known values (agreeing with the interval of the report), the bounds for no or all successes,
+    ///     and the empty case.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCalibration_Wilson_KnownCounts_MatchesTheReportInterval()
+    {
+        // Arrange / Act
+        var none = ShapesDevCalibration.Wilson(0, 10);
+        var most = ShapesDevCalibration.Wilson(8, 10);
+        var all = ShapesDevCalibration.Wilson(10, 10);
+        var empty = ShapesDevCalibration.Wilson(0, 0);
+
+        // Assert: the values of the report test ([0.0%, 27.8%], [49.0%, 94.3%], [72.2%, 100.0%])
+        Assert.Equal((0.0, 0.278), (Math.Round(none.Low, 3), Math.Round(none.High, 3)));
+        Assert.Equal((0.490, 0.943), (Math.Round(most.Low, 3), Math.Round(most.High, 3)));
+        Assert.Equal((0.722, 1.0), (Math.Round(all.Low, 3), Math.Round(all.High, 3)));
+        Assert.Equal((0.0, 0.0), empty);
+        Assert.Equal((0.0, 0.0), ShapesDevCalibration.Wilson(3, -1));
+
+        // Assert: the interval of the report is the same one, formatted
+        foreach (var (successes, total) in new[] { (0, 10), (8, 10), (10, 10), (1, 4), (37, 1000) })
+        {
+            var (low, high) = ShapesDevCalibration.Wilson(successes, total);
+            Assert.Equal("[" + (100.0 * low).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "%, " + (100.0 * high).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "%]", ShapesDevReport.Interval(successes, total));
+            Assert.InRange(low, 0.0, successes / (double)total + 1e-9);
+            Assert.InRange(high, successes / (double)total - 1e-9, 1.0);
+        }
+    }
+
+    /// <summary>
+    ///     Builds ten synthetic outcomes for the calibration tests: confidences 0.99, 0.97, 0.95, 0.90, 0.899, 0.60, 0.50, 0.49, 1.0 and 0.70,
+    ///     with the wrong ones at 0.97, 0.90, 0.60, 0.49 and 0.70 and harmful errors at 0.97, 0.90 and 0.60.
+    /// </summary>
+    private static List<Outcome> SyntheticOutcomes() => new()
+    {
+        new("d", true, 0.99, 0.99, true, true, false),
+        new("d", false, 0.97, 0.03, true, true, true),
+        new("d", true, 0.95, 0.95, true, true, false),
+        new("d", false, 0.90, 0.10, true, true, true),
+        new("d", true, 0.899, 0.899, true, true, false),
+        new("d", false, 0.60, 0.40, true, true, true),
+        new("d", true, 0.50, 0.50, true, true, false),
+        new("d", false, 0.49, 0.10, true, false, false),
+        new("d", true, 1.0, 1.0, true, true, false),
+        new("d", false, 0.70, 0.30, true, false, false),
+    };
+
+    /// <summary>
+    ///     Validates the arithmetic of the calibration on synthetic outcomes: the answers and wrong answers at 0.90 and 0.95 (the limit counts),
+    ///     the errors per 1,000 answers, the Wilson interval per 1,000, and the reliability bins with their edges (the lower edge belongs to the
+    ///     bin, 1.0 to the last bin), counts, mean confidence, correct share and harmful errors.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCalibration_MeasureScope_SyntheticOutcomes_ArithmeticAndBins()
+    {
+        // Arrange / Act
+        var scope = ShapesDevCalibration.MeasureScope("synthetic", SyntheticOutcomes());
+
+        // Assert: thresholds
+        Assert.Equal(new[] { 0.90, 0.95 }, ShapesDevCalibration.Thresholds);
+        Assert.Equal(("synthetic", 10), (scope.Name, scope.Judged));
+        var at90 = scope.Thresholds[0];
+        var at95 = scope.Thresholds[1];
+        Assert.Equal((0.90, 5, 2), (at90.Threshold, at90.Answers, at90.Wrong));
+        Assert.Equal(400.0, at90.ErrorPer1000, 9);
+        Assert.Equal((0.95, 4, 1), (at95.Threshold, at95.Answers, at95.Wrong));
+        Assert.Equal(250.0, at95.ErrorPer1000, 9);
+        var wilson90 = ShapesDevCalibration.Wilson(2, 5);
+        Assert.Equal(1000.0 * wilson90.Low, at90.IntervalLowPer1000, 9);
+        Assert.Equal(1000.0 * wilson90.High, at90.IntervalHighPer1000, 9);
+        Assert.True(at90.IntervalLowPer1000 < at90.ErrorPer1000 && at90.ErrorPer1000 < at90.IntervalHighPer1000);
+        Assert.True(at95.IntervalLowPer1000 <= at95.ErrorPer1000 && at95.ErrorPer1000 <= at95.IntervalHighPer1000);
+
+        // Assert: the bins, the lower edge inclusive: below 0.5, 0.5, 0.6, 0.7, 0.8, 0.9 and 0.95 to 1.0
+        Assert.Equal(new[] { 0.0, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95 }, scope.Bins.Select(b => b.Low));
+        Assert.Equal(new[] { 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0 }, scope.Bins.Select(b => b.High));
+        Assert.Equal(new long[] { 1, 1, 1, 1, 1, 1, 4 }, scope.Bins.Select(b => b.Decisions));
+        Assert.Equal(10L, scope.Bins.Sum(b => b.Decisions));
+        Assert.Equal(new long[] { 0, 0, 1, 0, 0, 1, 1 }, scope.Bins.Select(b => b.Harmful));
+        Assert.Equal(new[] { 0.0, 100.0, 0.0, 0.0, 100.0, 0.0, 75.0 }, scope.Bins.Select(b => b.CorrectPercent));
+        Assert.Equal(0.49, scope.Bins[0].MeanConfidence, 9);
+        Assert.Equal(0.899, scope.Bins[4].MeanConfidence, 9);
+        Assert.Equal((0.99 + 0.97 + 0.95 + 1.0) / 4, scope.Bins[6].MeanConfidence, 9);
+
+        // Assert: no outcome at all gives no answer, zero rates and empty bins
+        var empty = ShapesDevCalibration.MeasureScope("none", new List<Outcome>());
+        Assert.Equal(0, empty.Judged);
+        Assert.All(empty.Thresholds, t => Assert.Equal((0, 0, 0.0, 0.0, 0.0), (t.Answers, t.Wrong, t.ErrorPer1000, t.IntervalLowPer1000, t.IntervalHighPer1000)));
+        Assert.All(empty.Bins, b => Assert.Equal((0L, 0.0, 0.0, 0L), (b.Decisions, b.MeanConfidence, b.CorrectPercent, b.Harmful)));
+    }
+
+    /// <summary>
+    ///     Validates that the measurement pools the outcomes of all tranches and keeps one scope per tranche in the order given, and that the
+    ///     rendering is deterministic Markdown with the pooled table, one row per tranche and one reliability table per scope, with a dash where
+    ///     there is no answer, and that it states that no threshold is chosen.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCalibration_MeasureAndRender_PooledAndPerTranche()
+    {
+        // Arrange: the synthetic outcomes split into two tranches (the second has no answer at 0.90)
+        var all = SyntheticOutcomes();
+        var tranches = new List<KeyValuePair<string, IReadOnlyList<Outcome>>>
+        {
+            new("one", new[] { all[0], all[1], all[2], all[3], all[4], all[8] }),
+            new("two", new[] { all[5], all[6], all[7], all[9] }),
+        };
+
+        // Act
+        var report = ShapesDevCalibration.Measure(tranches);
+        var lines = ShapesDevCalibration.Render("m", report);
+
+        // Assert: pooled has the counts of the scope of all outcomes; the scopes keep the order
+        var pooled = ShapesDevCalibration.MeasureScope("all selected tranches", all);
+        Assert.Equal(pooled.Name, report.Pooled.Name);
+        Assert.Equal(pooled.Judged, report.Pooled.Judged);
+        Assert.Equal(pooled.Thresholds.Select(t => (t.Answers, t.Wrong)), report.Pooled.Thresholds.Select(t => (t.Answers, t.Wrong)));
+        Assert.Equal(pooled.Bins.Select(b => b.Decisions), report.Pooled.Bins.Select(b => b.Decisions));
+        Assert.Equal(new[] { "one", "two" }, report.Tranches.Select(t => t.Name));
+        Assert.Equal((6, 4), (report.Tranches[0].Judged, report.Tranches[1].Judged));
+        Assert.Equal((5, 0), (report.Tranches[0].Thresholds[0].Answers, report.Tranches[1].Thresholds[0].Answers));
+        Assert.Equal(report.Pooled.Thresholds[0].Answers, report.Tranches.Sum(t => t.Thresholds[0].Answers));
+        Assert.Equal(report.Pooled.Thresholds[1].Wrong, report.Tranches.Sum(t => t.Thresholds[1].Wrong));
+
+        // Assert: the text
+        Assert.Equal(lines, ShapesDevCalibration.Render("m", ShapesDevCalibration.Measure(tranches)));
+        Assert.Equal("## Shapes development set, calibration of the confidence: m", lines[0]);
+        Assert.Contains("- The measurement reports what the model does; no threshold is chosen, changed or proposed here.", lines);
+        Assert.Contains("| scope | judged words | answers at >= 0.90 | wrong at >= 0.90 | errors per 1,000 answers at >= 0.90 | 95% interval at >= 0.90 | answers at >= 0.95 | wrong at >= 0.95 | errors per 1,000 answers at >= 0.95 | 95% interval at >= 0.95 |", lines);
+        var interval = pooled.Thresholds[0];
+        Assert.Contains(
+            "| all selected tranches | 10 | 5 | 2 | 400.0 | [" + interval.IntervalLowPer1000.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + ", " + interval.IntervalHighPer1000.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "] | 4 | 1 | 250.0 | [",
+            lines.Single(l => l.StartsWith("| all selected tranches |", StringComparison.Ordinal)),
+            StringComparison.Ordinal);
+        Assert.Equal("| two | 4 | 0 | 0 | - | - | 0 | 0 | - | - |", lines.Single(l => l.StartsWith("| two |", StringComparison.Ordinal)));
+        Assert.Equal(new[] { "### Reliability: all selected tranches", "### Reliability: one", "### Reliability: two" }, lines.Where(l => l.StartsWith("### ", StringComparison.Ordinal)));
+        Assert.Contains("| below 0.50 | 1 | 0.490 | 0.0% | 0 |", lines);
+        Assert.Contains("| 0.90 to 0.95 | 1 | 0.900 | 0.0% | 1 |", lines);
+        var last = lines.Where(l => l.StartsWith("| 0.95 to 1.00 | 4 | ", StringComparison.Ordinal)).ToList();
+        Assert.Equal(2, last.Count);
+        Assert.All(last, line => Assert.EndsWith("| 75.0% | 1 |", line, StringComparison.Ordinal));
+        Assert.Contains("| 0.80 to 0.90 | 0 | - | - | 0 |", lines.Skip(lines.IndexOf("### Reliability: two")));
     }
 
     /// <summary>

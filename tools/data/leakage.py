@@ -47,10 +47,16 @@ SHAPES_DEV_HARD_LABEL = "shapes-dev-hard"
 # rebuild never sees its own earlier output.
 SHAPES_DEV_FOLLOWUP_TRANCHES = ("compound-head-2", "headings-2")
 SHAPES_DEV_FIRST_TRANCHES = ("compound-head", "headings", "named-state")
-SHAPES_DEV_NEW_TRANCHES = SHAPES_DEV_FIRST_TRANCHES + SHAPES_DEV_FOLLOWUP_TRANCHES
-# The two generations of the newer tranches: tranches of one generation may share source documents (never a sentence); a document shared
-# between the two generations, or with the standard or hard tranche, is a leak (check_leakage.py gates it).
-SHAPES_DEV_GENERATIONS = (SHAPES_DEV_FIRST_TRANCHES, SHAPES_DEV_FOLLOWUP_TRANCHES)
+# The third generation: the four technical-text tranches built by technical_data.py (beta.3 phase 1), which leaves all four out of its own filter.
+SHAPES_DEV_TECHNICAL_TRANCHES = ("deverbal-heads", "defined-terms", "step-lines", "clause-verbs")
+SHAPES_DEV_NEW_TRANCHES = SHAPES_DEV_FIRST_TRANCHES + SHAPES_DEV_FOLLOWUP_TRANCHES + SHAPES_DEV_TECHNICAL_TRANCHES
+# The training sources of the third generation (data/technical/<name>.tsv, built by technical_data.py). They were optional files until the commit that registered
+# them; from the registration on (TECHNICAL_REQUIRED is True) a missing tranche or source is a loud failure, like the hard tranche.
+TECHNICAL_TRAINING = ("deverbal", "terms", "steps", "clauses")
+TECHNICAL_REQUIRED = True
+# The three generations of the newer tranches: tranches of one generation may share source documents (never a sentence); a document shared
+# between two generations, or with the standard or hard tranche, is a leak (check_leakage.py gates it).
+SHAPES_DEV_GENERATIONS = (SHAPES_DEV_FIRST_TRANCHES, SHAPES_DEV_FOLLOWUP_TRANCHES, SHAPES_DEV_TECHNICAL_TRANCHES)
 SHAPES_DEV_NEW_LABELS = tuple("shapes-dev-" + name for name in SHAPES_DEV_NEW_TRANCHES)
 SHAPES_DEV_LABELS = (SHAPES_DEV_LABEL, SHAPES_DEV_HARD_LABEL)
 SHAPES_DEV_ALL_LABELS = SHAPES_DEV_LABELS + SHAPES_DEV_NEW_LABELS

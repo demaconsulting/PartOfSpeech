@@ -5,13 +5,14 @@ namespace DemaConsulting.PartOfSpeech.Trainer;
 
 /// <summary>
 ///     The tranche of the hard-shape development set an item belongs to: the standard tranche (<c>dev.tsv</c>), the hard
-///     tranche (<c>hard.tsv</c>, selected by a pre-registered rule that favors the contested cases) or one of the five
-///     single-shape tranches (<c>compound-head.tsv</c>, <c>headings.tsv</c>, <c>named-state.tsv</c> and the second compound-head and
-///     headings tranches <c>compound-head-2.tsv</c> and <c>headings-2.tsv</c>).
+///     tranche (<c>hard.tsv</c>, selected by a pre-registered rule that favors the contested cases) or one of the nine
+///     single-shape tranches (<c>compound-head.tsv</c>, <c>headings.tsv</c>, <c>named-state.tsv</c>, the second compound-head and
+///     headings tranches <c>compound-head-2.tsv</c> and <c>headings-2.tsv</c>, and the four technical tranches <c>deverbal-heads.tsv</c>,
+///     <c>defined-terms.tsv</c>, <c>step-lines.tsv</c> and <c>clause-verbs.tsv</c>).
 /// </summary>
 /// <remarks>
 ///     The tranche of an item is the file it was read from (see <see cref="DevSets.ReadShapesDev(string, ShapesDevTranche, out string)"/>);
-///     no comment in a file can set it. The values are the indexes of <see cref="DataGuard.ShapesDevelopmentFiles"/>. The five
+///     no comment in a file can set it. The values are the indexes of <see cref="DataGuard.ShapesDevelopmentFiles"/>. The nine
 ///     single-shape tranches are scored by <see cref="ShapesDevTrancheEvaluator"/> and have their own report sections; the standard and the
 ///     hard tranche keep the five original shapes of <see cref="ShapesDevSets.Shapes"/>.
 /// </remarks>
@@ -51,6 +52,26 @@ internal enum ShapesDevTranche
     ///     The second headings tranche, <c>data/eval/shapes-dev/headings-2.tsv</c> (the shape <c>heading-titlecase</c> of <see cref="Headings"/>, scored by exact tag).
     /// </summary>
     Headings2 = 6,
+
+    /// <summary>
+    ///     The deverbal-heads tranche, <c>data/eval/shapes-dev/deverbal-heads.tsv</c> (shape <c>n-deverbal-head</c>, scored by class; kinds <c>pred</c>, <c>num</c>, <c>ing</c>, <c>other</c> and the control kind <c>verb</c>).
+    /// </summary>
+    DeverbalHeads = 7,
+
+    /// <summary>
+    ///     The defined-terms tranche, <c>data/eval/shapes-dev/defined-terms.tsv</c> (shape <c>term-capitalized</c>, scored by exact tag; kinds <c>noun</c>, <c>adj</c> and the control kind <c>proper</c>).
+    /// </summary>
+    DefinedTerms = 8,
+
+    /// <summary>
+    ///     The step-lines tranche, <c>data/eval/shapes-dev/step-lines.tsv</c> (shape <c>step-line</c>, scored by exact tag; kind <c>imperative</c> and the control kind <c>noun</c>).
+    /// </summary>
+    StepLines = 9,
+
+    /// <summary>
+    ///     The clause-verbs tranche, <c>data/eval/shapes-dev/clause-verbs.tsv</c> (shape <c>v-clause-ambiguous</c>, scored by exact tag; kinds <c>main</c>, <c>sub</c> and the control kinds <c>noun</c> and <c>adj</c>).
+    /// </summary>
+    ClauseVerbs = 10,
 }
 
 /// <summary>
@@ -71,7 +92,7 @@ internal sealed class ShapesDevItem
     /// <param name="lemma">The lemma of the judged word.</param>
     /// <param name="origin">The origin, <c>real</c> or <c>authored</c>.</param>
     /// <param name="tranche">The tranche of the file the item was read from.</param>
-    /// <param name="kind">The kind of a heading (<c>noun</c>, <c>imperative</c> or <c>proper</c>); empty for every other item.</param>
+    /// <param name="kind">The kind of a judged word in a tranche that has kinds (<c>noun</c>, <c>imperative</c> or <c>proper</c> for a heading, <c>pred</c>, <c>num</c>, <c>ing</c>, <c>other</c> or <c>verb</c> for a deverbal head, and so on); empty for every other item.</param>
     /// <param name="goldTag">The gold tag of the judged word as its UPOS name (<c>NOUN</c>, <c>PROPN</c> or <c>VERB</c>); empty for an item of the standard or hard tranche, whose class is the gold.</param>
     public ShapesDevItem(string id, string sourceId, string[] tokens, int target, string goldClass, string shape, string role, string lemma, string origin, ShapesDevTranche tranche = ShapesDevTranche.Standard, string kind = "", string goldTag = "")
     {
@@ -90,7 +111,7 @@ internal sealed class ShapesDevItem
     }
 
     /// <summary>
-    ///     Gets the kind of a heading (<c>noun</c>, <c>imperative</c> or <c>proper</c>); empty for every other item.
+    ///     Gets the kind of a judged word in a tranche that has kinds (see <see cref="ShapesDevShapeSpec.Kinds"/>); empty for every other item.
     /// </summary>
     public string Kind { get; }
 
@@ -172,17 +193,18 @@ internal enum ShapesDevScoring
 }
 
 /// <summary>
-///     One kind of heading in the headings tranche: the role it has and the tag its judged word must carry.
+///     One kind of a shape: the role it has and the tag its judged word must carry (the kinds of the heading, deverbal-head, defined-term, step-line and
+///     clause-verb shapes).
 /// </summary>
-internal sealed class ShapesDevHeadingKind
+internal sealed class ShapesDevKind
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ShapesDevHeadingKind"/> class.
+    ///     Initializes a new instance of the <see cref="ShapesDevKind"/> class.
     /// </summary>
-    /// <param name="name">The kind as the <c>kind</c> comment spells it (<c>noun</c>, <c>imperative</c> or <c>proper</c>).</param>
+    /// <param name="name">The kind as the <c>kind</c> comment spells it (for example <c>noun</c>, <c>imperative</c> or <c>proper</c>).</param>
     /// <param name="role">The role of the items of the kind (<c>target</c> or <c>control</c>).</param>
     /// <param name="tag">The gold tag of the judged word of the kind.</param>
-    public ShapesDevHeadingKind(string name, string role, Upos tag)
+    public ShapesDevKind(string name, string role, Upos tag)
     {
         Name = name;
         Role = role;
@@ -222,8 +244,8 @@ internal sealed class ShapesDevShapeSpec
     /// <param name="scoring">How the judged word is scored.</param>
     /// <param name="targetTags">The gold tags a target may carry.</param>
     /// <param name="controlTags">The gold tags a control may carry.</param>
-    /// <param name="kinds">The kinds of the shape (headings only; empty otherwise).</param>
-    public ShapesDevShapeSpec(string shape, ShapesDevTranche tranche, ShapesDevScoring scoring, IReadOnlyList<Upos> targetTags, IReadOnlyList<Upos> controlTags, IReadOnlyList<ShapesDevHeadingKind> kinds)
+    /// <param name="kinds">The kinds of the shape (the headings and the four technical shapes; empty otherwise).</param>
+    public ShapesDevShapeSpec(string shape, ShapesDevTranche tranche, ShapesDevScoring scoring, IReadOnlyList<Upos> targetTags, IReadOnlyList<Upos> controlTags, IReadOnlyList<ShapesDevKind> kinds)
     {
         Shape = shape;
         Tranche = tranche;
@@ -259,9 +281,9 @@ internal sealed class ShapesDevShapeSpec
     public IReadOnlyList<Upos> ControlTags { get; }
 
     /// <summary>
-    ///     Gets the kinds of the shape (headings only; empty otherwise).
+    ///     Gets the kinds of the shape (the headings and the four technical shapes; empty otherwise).
     /// </summary>
-    public IReadOnlyList<ShapesDevHeadingKind> Kinds { get; }
+    public IReadOnlyList<ShapesDevKind> Kinds { get; }
 
     /// <summary>
     ///     Gets the label that stands for nouns in the scoring (<c>Noun</c> by class, <c>NOUN</c> by exact tag).
@@ -304,10 +326,13 @@ internal sealed class ShapesDevShapeSpec
 ///         disputed. An authored sentence belongs to the authored pseudo-document and no other sentence does.
 ///     </para>
 ///     <para>
-///         The five single-shape tranches (compound-head, headings, named-state, compound-head-2, headings-2) hold the one shape of their specification
+///         The nine single-shape tranches (compound-head, headings, named-state, compound-head-2, headings-2, deverbal-heads, defined-terms,
+///         step-lines, clause-verbs) hold the one shape of their specification
 ///         (<see cref="ShapesDevSets.TrancheShapes"/>), and the judged word must carry a tag that the specification allows for its role. The
-///         headings tranche has one more comment, <c>kind</c> (<c>noun</c>, <c>imperative</c> or <c>proper</c>), that fixes the role and
-///         the exact gold tag of the heading; no other tranche may have it.
+///         tranches with kinds (the two headings tranches and the four technical tranches) have one more comment, <c>kind</c> (for example
+///         <c>noun</c>, <c>imperative</c> or <c>proper</c> for a heading), that fixes the role and the exact gold tag of the judged word; no
+///         other tranche may have it. The other comments of the technical files (<c>term</c>, <c>frame</c>, <c>unit</c>) describe the
+///         selection, are not part of the judgment and are not read.
 ///     </para>
 ///     <para>
 ///         The class is stateless and thread-safe.
@@ -366,30 +391,77 @@ internal static class ShapesDevSets
     /// <summary>
     ///     The kinds of the heading shape: a noun heading and an imperative heading are targets, a proper-name heading is a control.
     /// </summary>
-    private static readonly IReadOnlyList<ShapesDevHeadingKind> HeadingKinds = new[]
+    private static readonly IReadOnlyList<ShapesDevKind> HeadingKinds = new[]
     {
-        new ShapesDevHeadingKind("noun", TargetRole, Upos.Noun),
-        new ShapesDevHeadingKind("imperative", TargetRole, Upos.Verb),
-        new ShapesDevHeadingKind("proper", ControlRole, Upos.Propn),
+        new ShapesDevKind("noun", TargetRole, Upos.Noun),
+        new ShapesDevKind("imperative", TargetRole, Upos.Verb),
+        new ShapesDevKind("proper", ControlRole, Upos.Propn),
     };
 
     /// <summary>
-    ///     The shape of each single-shape tranche, in the order of the tranches that have one (compound-head, headings, named-state, compound-head-2, headings-2).
+    ///     The kinds of the deverbal-head shape: a head after a predicate, after a number, an <c>-ing</c> head and every other noun head are targets (NOUN), the same spelling as a verb is a control (VERB).
+    /// </summary>
+    private static readonly IReadOnlyList<ShapesDevKind> DeverbalKinds = new[]
+    {
+        new ShapesDevKind("pred", TargetRole, Upos.Noun),
+        new ShapesDevKind("num", TargetRole, Upos.Noun),
+        new ShapesDevKind("ing", TargetRole, Upos.Noun),
+        new ShapesDevKind("other", TargetRole, Upos.Noun),
+        new ShapesDevKind("verb", ControlRole, Upos.Verb),
+    };
+
+    /// <summary>
+    ///     The kinds of the defined-term shape: a capitalized common noun (NOUN) and a capitalized adjective (ADJ) are targets, a proper name (PROPN) is a control.
+    /// </summary>
+    private static readonly IReadOnlyList<ShapesDevKind> TermKinds = new[]
+    {
+        new ShapesDevKind("noun", TargetRole, Upos.Noun),
+        new ShapesDevKind("adj", TargetRole, Upos.Adj),
+        new ShapesDevKind("proper", ControlRole, Upos.Propn),
+    };
+
+    /// <summary>
+    ///     The kinds of the step-line shape: an imperative (VERB) is a target, a noun at the start of the line (NOUN) is a control.
+    /// </summary>
+    private static readonly IReadOnlyList<ShapesDevKind> StepKinds = new[]
+    {
+        new ShapesDevKind("imperative", TargetRole, Upos.Verb),
+        new ShapesDevKind("noun", ControlRole, Upos.Noun),
+    };
+
+    /// <summary>
+    ///     The kinds of the clause-verb shape: a base-form verb of a main clause and of a subordinate clause (VERB) are targets, the same spelling as a noun (NOUN) or an adjective (ADJ) is a control.
+    /// </summary>
+    private static readonly IReadOnlyList<ShapesDevKind> ClauseKinds = new[]
+    {
+        new ShapesDevKind("main", TargetRole, Upos.Verb),
+        new ShapesDevKind("sub", TargetRole, Upos.Verb),
+        new ShapesDevKind("noun", ControlRole, Upos.Noun),
+        new ShapesDevKind("adj", ControlRole, Upos.Adj),
+    };
+
+    /// <summary>
+    ///     The shape of each single-shape tranche, in the order of the tranches that have one (compound-head, headings, named-state, compound-head-2, headings-2, deverbal-heads, defined-terms, step-lines, clause-verbs).
     /// </summary>
     /// <remarks>
-    ///     The two noun shapes are scored by class (a PROPN target is a Noun, like in the five original shapes). The heading shape is
-    ///     scored by exact tag, because the class would hide a capitalized common noun that the tagger calls PROPN. The second
+    ///     The two noun shapes of the first generation and the deverbal-head shape are scored by class (a PROPN target is a Noun, like in the
+    ///     five original shapes). The heading shape and the three other technical shapes are scored by exact tag, because the class would hide a
+    ///     capitalized common noun that the tagger calls PROPN, a capitalized adjective, or an adjective where a verb stands. The second
     ///     compound-head and headings tranches hold the same shapes with the same scoring as their first tranches, so two entries of the
     ///     table have the same shape id; <see cref="SpecOf(ShapesDevTranche)"/> is the lookup that tells them apart, and
     ///     <see cref="SpecOf(string)"/> returns the first tranche of a shape.
     /// </remarks>
     public static readonly IReadOnlyList<ShapesDevShapeSpec> TrancheShapes = new[]
     {
-        new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
+        new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevKind>()),
         new ShapesDevShapeSpec("heading-titlecase", ShapesDevTranche.Headings, ShapesDevScoring.Exact, new[] { Upos.Noun, Upos.Verb }, new[] { Upos.Propn }, HeadingKinds),
-        new ShapesDevShapeSpec("n-named-state", ShapesDevTranche.NamedState, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
-        new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead2, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevHeadingKind>()),
+        new ShapesDevShapeSpec("n-named-state", ShapesDevTranche.NamedState, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevKind>()),
+        new ShapesDevShapeSpec("n-compound-head-ambiguous", ShapesDevTranche.CompoundHead2, ShapesDevScoring.Class, new[] { Upos.Noun, Upos.Propn }, new[] { Upos.Verb }, Array.Empty<ShapesDevKind>()),
         new ShapesDevShapeSpec("heading-titlecase", ShapesDevTranche.Headings2, ShapesDevScoring.Exact, new[] { Upos.Noun, Upos.Verb }, new[] { Upos.Propn }, HeadingKinds),
+        new ShapesDevShapeSpec("n-deverbal-head", ShapesDevTranche.DeverbalHeads, ShapesDevScoring.Class, new[] { Upos.Noun }, new[] { Upos.Verb }, DeverbalKinds),
+        new ShapesDevShapeSpec("term-capitalized", ShapesDevTranche.DefinedTerms, ShapesDevScoring.Exact, new[] { Upos.Noun, Upos.Adj }, new[] { Upos.Propn }, TermKinds),
+        new ShapesDevShapeSpec("step-line", ShapesDevTranche.StepLines, ShapesDevScoring.Exact, new[] { Upos.Verb }, new[] { Upos.Noun }, StepKinds),
+        new ShapesDevShapeSpec("v-clause-ambiguous", ShapesDevTranche.ClauseVerbs, ShapesDevScoring.Exact, new[] { Upos.Verb }, new[] { Upos.Noun, Upos.Adj }, ClauseKinds),
     };
 
     /// <summary>
@@ -541,7 +613,7 @@ internal static class ShapesDevSets
         // Only the headings tranche has a kind: the standard and the hard tranche refuse the comment
         if (block.Comments.ContainsKey("kind"))
         {
-            throw Fail(origin, id, $"the comment 'kind' belongs to the headings tranche only, not to the {DevSets.ShapesDevNameOf(tranche)} tranche.");
+            throw Fail(origin, id, $"the comment 'kind' belongs to the tranches that have kinds (the headings and the technical tranches) only, not to the {DevSets.ShapesDevNameOf(tranche)} tranche.");
         }
 
         var goldClass = ReadTargetClass(sentence, target, shape, role, block, origin);
@@ -559,7 +631,7 @@ internal static class ShapesDevSets
     /// <param name="target">The index of the judged word, already checked to lie in the sentence.</param>
     /// <param name="sourceOrigin">The origin of the sentence, already checked.</param>
     /// <param name="tranche">The tranche of the file.</param>
-    /// <returns>The item, with its gold tag and, for a heading, its kind.</returns>
+    /// <returns>The item, with its gold tag and, for a tranche with kinds, its kind.</returns>
     /// <exception cref="InvalidDataException">The kind, the role or the gold tag of the judged word breaks the specification, or the judged word is disputed.</exception>
     private static ShapesDevItem ReadSpecItem(TrainingSentence sentence, Block block, string origin, ShapesDevShapeSpec spec, string role, int target, string sourceOrigin, ShapesDevTranche tranche)
     {
@@ -569,10 +641,10 @@ internal static class ShapesDevSets
         var kindName = string.Empty;
         if (spec.Kinds.Count == 0)
         {
-            // Only the headings tranche has a kind
+            // Only the tranches with kinds have a kind comment
             if (block.Comments.ContainsKey("kind"))
             {
-                throw Fail(origin, id, $"the comment 'kind' belongs to the headings tranche only, not to the {DevSets.ShapesDevNameOf(tranche)} tranche.");
+                throw Fail(origin, id, $"the comment 'kind' belongs to the tranches that have kinds (the headings and the technical tranches) only, not to the {DevSets.ShapesDevNameOf(tranche)} tranche.");
             }
 
             var allowed = role == TargetRole ? spec.TargetTags : spec.ControlTags;
@@ -583,7 +655,7 @@ internal static class ShapesDevSets
         }
         else
         {
-            // The kind fixes the role and the exact gold tag of a heading
+            // The kind fixes the role and the exact gold tag of the judged word
             if (!block.Comments.TryGetValue("kind", out var named) || named.Length == 0)
             {
                 throw Fail(origin, id, "the comment 'kind' is missing.");
@@ -597,12 +669,12 @@ internal static class ShapesDevSets
 
             if (role != kind.Role)
             {
-                throw Fail(origin, id, $"the role '{role}' does not match the kind '{named}' (a {named} heading is a {kind.Role}).");
+                throw Fail(origin, id, $"the role '{role}' does not match the kind '{named}' (a {named} item is a {kind.Role}).");
             }
 
             if (gold < 0 || tag != kind.Tag)
             {
-                throw Fail(origin, id, $"the judged word of a {named} heading must be tagged {kind.Tag.ToTagString()} but is tagged {(gold < 0 ? "nothing" : tag.ToTagString())}.");
+                throw Fail(origin, id, $"the judged word of a {named} item must be tagged {kind.Tag.ToTagString()} but is tagged {(gold < 0 ? "nothing" : tag.ToTagString())}.");
             }
 
             kindName = named;
@@ -713,6 +785,9 @@ internal sealed class ShapesDevShapeResult
     /// <param name="authoredTargets">The number of authored target items.</param>
     /// <param name="authoredControls">The number of authored control items.</param>
     /// <param name="confidentWrong">The target items that were wrong with a confidence of at least <see cref="Metrics.ConfidentWrongConfidence"/>.</param>
+    /// <param name="confidentWrong90">The target items that were wrong with a confidence of at least <see cref="Metrics.ConfidentWrong90"/>.</param>
+    /// <param name="controlConfidentWrong90">The control items that were wrong with a confidence of at least <see cref="Metrics.ConfidentWrong90"/>.</param>
+    /// <param name="controlConfidentWrong">The control items that were wrong with a confidence of at least <see cref="Metrics.ConfidentWrongConfidence"/>.</param>
     public ShapesDevShapeResult(
         string shape,
         int targetItems,
@@ -723,7 +798,10 @@ internal sealed class ShapesDevShapeResult
         int controlCorrect,
         int authoredTargets,
         int authoredControls,
-        int confidentWrong = 0)
+        int confidentWrong = 0,
+        int confidentWrong90 = 0,
+        int controlConfidentWrong90 = 0,
+        int controlConfidentWrong = 0)
     {
         Shape = shape;
         TargetItems = targetItems;
@@ -735,6 +813,9 @@ internal sealed class ShapesDevShapeResult
         AuthoredTargets = authoredTargets;
         AuthoredControls = authoredControls;
         ConfidentWrong = confidentWrong;
+        ConfidentWrong90 = confidentWrong90;
+        ControlConfidentWrong90 = controlConfidentWrong90;
+        ControlConfidentWrong = controlConfidentWrong;
     }
 
     /// <summary>
@@ -742,6 +823,22 @@ internal sealed class ShapesDevShapeResult
     ///     Only <see cref="ShapesDevTrancheEvaluator"/> counts it; it is 0 in the results of the standard and the hard tranche, whose report does not print it.
     /// </summary>
     public int ConfidentWrong { get; }
+
+    /// <summary>
+    ///     Gets the number of target items that were wrong with a confidence of at least <see cref="Metrics.ConfidentWrong90"/>
+    ///     (counted by <see cref="ShapesDevTrancheEvaluator"/> only; printed in the counts table of the technical tranches and written under <c>shapesTechnical</c>).
+    /// </summary>
+    public int ConfidentWrong90 { get; }
+
+    /// <summary>
+    ///     Gets the number of control items that were wrong with a confidence of at least <see cref="Metrics.ConfidentWrong90"/>.
+    /// </summary>
+    public int ControlConfidentWrong90 { get; }
+
+    /// <summary>
+    ///     Gets the number of control items that were wrong with a confidence of at least <see cref="Metrics.ConfidentWrongConfidence"/>.
+    /// </summary>
+    public int ControlConfidentWrong { get; }
 
     /// <summary>
     ///     Gets the shape id, or the label of the pooled row.

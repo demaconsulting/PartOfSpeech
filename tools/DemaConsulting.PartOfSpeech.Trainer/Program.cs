@@ -62,7 +62,7 @@ internal static class Program
     /// <summary>
     ///     The options that are switches.
     /// </summary>
-    private static readonly string[] FlagOptions = { "--check", "--update-config", "--eval", "--calibrate", "--preflight" };
+    private static readonly string[] FlagOptions = { "--check", "--update-config", "--eval", "--calibrate", "--preflight", "--calibration" };
 
     /// <summary>
     ///     The repository-relative folder of the evaluation record (the selection artifact and the held-out results).
@@ -121,7 +121,8 @@ Commands:
       --preview-folds folds (default 5) made by document hash. Both are experiment overrides.
   eval --weights FILE [--temperature T] [--label TEXT] [--log FILE]
       Scores a weights file on the development sets (open dev, gold v2 dev) through the real decoder.
-  eval-shapes [--weights FILE] [--label TEXT] [--tranche standard|hard|both|compound-head|headings|named-state|new|compound-head-2|headings-2|followup]
+  eval-shapes [--weights FILE] [--label TEXT] [--tranche standard|hard|both|compound-head|headings|named-state|new|compound-head-2|headings-2|followup|
+                                                        deverbal-heads|defined-terms|step-lines|clause-verbs|technical|all-single] [--calibration]
       Scores a weights file (default: the embedded model) on the hard-shape development set through the real decoder and
       prints Markdown: per shape the target-token accuracy, harmful errors and harmful errors per 1,000 noun-verb decisions,
       and the control accuracy. The standard tranche (dev.tsv) and the hard tranche (hard.tsv) each get a section, and a third
@@ -132,6 +133,12 @@ Commands:
       them (the file is required), --tranche new scores all three (a missing file is noted, not scored). The two follow-up
       tranches compound-head-2 (compound-head-2.tsv) and headings-2 (headings-2.tsv) have the shapes and scoring of the first
       two and sections of their own; --tranche followup scores both (a missing file is noted), and new does not include them.
+      The four technical tranches deverbal-heads (class scoring), defined-terms, step-lines and clause-verbs (exact tag) have
+      sections of their own; --tranche technical scores the four, --tranche all-single all nine single-shape tranches (a missing
+      file of a group is noted), and a selection with a technical tranche adds a counts table (harmful at 0.45, wrong at 0.90 and
+      0.95, per tranche and kind). --calibration (single-shape selections only) appends the calibration measurement: the error per
+      1,000 answers at the confidences 0.90 and 0.95 with a Wilson interval and a reliability table, pooled and per tranche; it
+      chooses and changes no threshold. new and followup print what they always printed.
       Reads the shapes development files only; they are development sets, never a held-out figure.
   shapes-tokenize --in FILE --out FILE
       Tokenizes a text file with the library tokenizer, one sentence per line: each output line is the sentence, the number
@@ -142,7 +149,8 @@ Commands:
       hard tranche, per shape, with per-item outcomes of the target items; and, under shapesNew, the compound-head, headings and
       named-state tranches with their confident wrong answers and the pooled primary metric; and, under shapesFollowup, the
       compound-head, compound-head-2, headings and headings-2 tranches, the pooled primary metric of the follow-up measure, the pooled
-      imperative headings and the pooled compound controls), open dev, gold v2 dev, the mapped development part of
+      imperative headings and the pooled compound controls; and, under shapesTechnical, the four technical tranches, their pooled
+      counts and the calibration measurement), open dev, gold v2 dev, the mapped development part of
       the treebank (local cache, pinned SHA-256), the size of the file and the single-thread throughput of the default tagger
       (one warm-up pass and five timed passes over the open dev and treebank dev tokens, median). Writes the result as JSON to
       --json. It reads no held-out set and accepts no data path; --weights and --json must lie outside data/ and tools/data/.
@@ -438,7 +446,7 @@ Exit codes: 0 success, 1 stale weights (train --check) or a stop condition fired
 
         var label = line.Value("--label") ?? Path.GetFileName(path);
         var tagger = DevEvaluator.CreateTagger(file);
-        var lines = ShapesDevCommand.Run(root, tagger, label, ModelBuilder.Sha256Hex(file), which);
+        var lines = ShapesDevCommand.Run(root, tagger, label, ModelBuilder.Sha256Hex(file), which, line.Flag("--calibration"));
         foreach (var text in lines)
         {
             Console.WriteLine(text);

@@ -251,8 +251,13 @@ class ImperativeSourceTests(unittest.TestCase):
         # Assert: the violation of the open sentence is the same, so the resources came from the correctable corpora only
         self.assertIn("be-participle-adj-not-gradable", without)
         self.assertEqual(without, with_source)
-        self.assertEqual(("ste", "imperative", "compound", "headings", "compound2", "headings2"), check_conventions.RESOURCE_EXEMPT)
+        self.assertEqual(("ste", "imperative", "compound", "headings", "compound2", "headings2"), check_conventions.RESOURCE_EXEMPT[:6])
+        self.assertEqual(("deverbal", "terms", "steps", "clauses"), check_conventions.RESOURCE_EXEMPT[6:])         # the technical-text sources are lint-only too
         self.assertEqual((("imperative", "-"), ("compound", "-"), ("headings", "-"), ("compound2", "-"), ("headings2", "-")), check_conventions.COLUMN_ORDER[-5:])
+        self.assertEqual((("deverbal", "-"), ("terms", "-"), ("steps", "-"), ("clauses", "-")), check_conventions.TECHNICAL_COLUMNS)
+        for name in check_conventions.TECHNICAL_SOURCES:
+            self.assertEqual("technical/%s.tsv" % name, corrections.LINT_ONLY_FILES[(name, "-")])
+            self.assertNotIn((name, "-"), corrections.CORPUS_FILES)
         self.assertIn(("imperative", "-"), corrections.LINT_ONLY_FILES)
         self.assertNotIn(("imperative", "-"), corrections.CORPUS_FILES)
 
@@ -276,6 +281,34 @@ class TargetedSourcesTests(unittest.TestCase):
             self.assertIn(source, check_conventions.RESOURCE_EXEMPT)
             self.assertEqual("%s/%s.tsv" % (source, source), corrections.LINT_ONLY_FILES[(source, "-")])
             self.assertNotIn((source, "-"), corrections.CORPUS_FILES)
+
+    def test_the_technical_text_sources_are_linted_in_their_own_column_only_when_they_have_a_violation(self):
+        files, _, _, _, _ = make_corrections.generate_all(self.data)
+        make_corrections.write_files(files, self.data)
+        code, plain = run(["--data-dir", self.data, "--apply", "--tier", "fix", "--enforce"])
+        self.assertEqual(0, code)
+        for source in check_conventions.TECHNICAL_SOURCES:
+            self.assertNotIn(source, plain)                                                    # no technical file, no column: the old report is unchanged
+        for source in check_conventions.TECHNICAL_SOURCES:
+            path = os.path.join(self.data, "technical", source + ".tsv")
+            common.write_text(path, IMPERATIVE_VIOLATING.replace("imperative", source).rstrip("\n").split("\n"))
+            code, text = run(["--data-dir", self.data, "--apply", "--tier", "fix", "--enforce"])
+            self.assertEqual(1, code, source)
+            self.assertIn(source, text.splitlines()[0])
+            self.assertIn("FAILED: 1 convention violations", text)
+            os.remove(path)
+
+    def test_the_old_columns_and_totals_of_the_report_are_unchanged_by_the_technical_columns(self):
+        violation = check_conventions.Violation("out-of", "fix", "open", "train", "d", "s1", 0, "x", "ADP", "", "ctx")
+        old = check_conventions.format_report([violation])
+        technical = check_conventions.Violation("out-of", "fix", "terms", "-", "d", "s2", 0, "x", "ADP", "", "ctx")
+        new = check_conventions.format_report([violation, technical])
+        self.assertEqual(len(old[0].split()) + 1, len(new[0].split()))                         # one more column, `terms`
+        self.assertEqual(["rule", "tier"], old[0].split()[:2])
+        self.assertNotIn("terms", old[0])
+        self.assertIn("terms", new[0])
+        self.assertEqual(old[0].split()[:-1], new[0].split()[:-2])                             # the old columns come first, in order
+        self.assertEqual(old[0].split()[-1], new[0].split()[-1])
 
     def test_the_follow_up_sources_are_registered_like_the_old_ones_and_a_fix_tier_violation_fails_enforce(self):
         files = {"compound2": "compound/compound-2.tsv", "headings2": "headings/headings-2.tsv"}

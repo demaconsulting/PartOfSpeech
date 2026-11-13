@@ -275,7 +275,8 @@ run log is excluded because it records the figures of historical runs.
 **Test**: `PartOfSpeech_Model_TrainingConfig_UsesOnlyCommittedTrainingCorpora` (in `PartOfSpeechDataTests.cs`)
 
 Reads the corpus paths of `training.json` and asserts for each that it is one of the committed training corpora (open,
-MASC, silver, imperative, compound, headings and the two follow-up sources compound2 and headings2), that the file
+MASC, silver, imperative, compound, headings, the two follow-up sources compound2 and headings2 and the four technical sources
+deverbal, terms, steps and clauses), that the file
 is committed, that it is not a restricted corpus, that its data folder declares an allowed license, and that the section
 of the third-party notice on the embedded weights names MASC, its license, the open corpus, the silver corpus and the
 imperative source. That
@@ -704,6 +705,70 @@ including the gate of `check_leakage.py` on the near duplicates of both sources 
 training sets, and the lint-only registration of both sources is covered by `tools/data/tests/test_corrections_linter.py`;
 the checks `check_leakage.py`, `check_licenses.py` and `check_conventions.py` (fix tier, enforced, both sources
 included) run on the committed files.
+
+The four technical tranches (`deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv`, `clause-verbs.tsv`) and the four
+technical training sources (`data/technical/deverbal.tsv`, `terms.tsv`, `steps.tsv`, `clauses.tsv`) are covered the same
+way: the tranche corpora are among the evaluation corpora, the source corpora among the training corpora, the
+source tables among the source tables, `data/technical/` among the licensed folders and its README among the provenance
+statements, so the tag set, rejoin, manifest, document, sentence, leakage-report and training-configuration tests read
+them. The `PartOfSpeech_ShapesDevTechnical_*` and `PartOfSpeech_Technical_*` data tests read the committed files
+(requirements `PartOfSpeech-Data-ShapesDevTechnical*`, `PartOfSpeech-Data-DeverbalWellFormed`, `TermsWellFormed`,
+`StepsWellFormed`, `ClausesWellFormed` and `ConventionDefinedTerms`):
+
+- `ShapesDevTechnical_Headers_AnnounceTheTrancheAndTheDevSplit` asserts the `<tranche> tranche` and `dev split` header,
+  the use line, a selection line without a number, only documented comment keys, the ids `shapes-dev-<name>-0001`
+  upward without a gap, and the comments of every sentence in the stated order with the extra comments (`term`, or
+  `frame` and `unit`) behind the kind.
+- `ShapesDevTechnical_Items_AreWellFormedRealAndNeverDisputed` parses each file with the parser of the trainer and
+  with the
+  real reader (`DevSets.ReadShapesDev`), asserts the shape, the kinds and roles of the trainer table, the exact tag of
+  the kind, that no judged word is `disputed`, that no item is authored, and that the tokens rejoin to the text.
+- `ShapesDevTechnical_Quotas_AreMetByTheCommittedTranches` asserts the floors and caps of every group (a kind, all targets,
+  all controls: deverbal heads 240 to 360 targets, pred 40 to 100, num 30 to 60, ing 80 to 140, other at most 100,
+  verb controls 50 to 90; defined terms noun 120 to 200, adj 40 to 80, proper controls 40 to 70; step lines imperative
+  166 to 300 and noun controls 40 to 70; clause verbs 240 to 360 targets, at least 60 sub, 50 to 90 controls, noun 35
+  to 60 and adj 15 to 30), at most 4 targets per lemma (6 imperatives per lemma in the step lines), 2 controls per
+  lemma, 15 targets per document and 2 items per capitalized term.
+- `ShapesDevTechnical_Tranches_MatchTheTrainerConstants` asserts the values 7 to 10, the names, the files in the guard
+  list and the counts (450, 285, 236 and 446) through the real reader.
+- `Technical_Tokens_AreReproducedByTheTokenizer` asserts, for the four tranches and the four sources, one tokenized
+  sentence with the stored tokens.
+- `Technical_Corpora_HaveTrainingHeadersIdsAndStratumTags` and `Technical_Corpora_AreWithinQuotas` assert for each
+  source the `use = training` and column header lines and no development-split line, the ids `<name>-0001` upward
+  without a gap, the comments in the stated order, the judged word tagged as its stratum says (and at token 0 for the
+  steps), `unanimous` for every token, the floor and cap of the sentences of the file and of every stratum (`deverbal`
+  450 to 800 sentences with 146 to 300 `ing`, `terms` 373 to 900, `steps` 531 to 1,000 and `clauses` 310 to 800
+  sentences), the share of the contrast strata (at most 15 percent `verb`, 15 to 25 percent `proper`, at most 30
+  percent `noun-initial`, at most 20 percent `noun` and `adj`), at most 4 sentences per lemma (6 for the steps), 20 per
+  document (15 for the clauses) and 2 per capitalized term.
+- `Technical_Sources_AreListedOpenAndNotExcluded` asserts, for the eight source tables, the exact documents with their
+  counts, an open basis, no FAA mention, no restricted license text, no excluded id or URL, no used document in the
+  record of left-out documents, and the columns of the records of dropped sentences.
+- `ShapesDevTechnical_Sentences_AreDisjointFromEveryOtherSet` and `Technical_Sources_AreInOnePoolAndDisjointFromEveryOtherSet`
+  assert, by reading the files, that no sentence of a tranche is a sentence of another evaluation set or of a training
+  source and no document of a tranche is a document of another evaluation set or of a training source but another
+  technical tranche, that no document or sentence of a source is in another table, evaluation set or training source,
+  that the four sources share documents (one pool, 218 distinct documents) and no sentence.
+- `ShapesDevTechnical_LeakageReports_RecordNoOverlapAndSharedDocuments`, the cases of
+  `TargetedSources_LeakageReport_RecordsNoOverlapWithAnyEvaluationSet` for the four sources,
+  `TargetedSources_TrainingLeakageReport_RecordsNoOverlapWithAnotherTrainingSet` (all 60 pairs of the report) and
+  `Technical_TrainingLeakageReport_RecordsTheSharedPoolAndNoOtherOverlap` assert that the committed reports name every
+  evaluation set and every other training set once, with no exact or near-duplicate overlap and no shared document
+  except among the four tranches and among the four sources.
+- `Technical_Selection_UsesNoPartOfSpeechModel` scans `technical_data.py` and `technical_frames.py` for a weights file,
+  a
+  decoder, a tagger or the shapes evaluation and for a probe file, a probe reader or a direct read of a held-out set.
+- `Technical_Notice_NamesTheSourcesAndTheirBasis` asserts that the third-party notice names the eight files, `data/technical/`,
+  17 U.S.C. 105, the CC0 dedication, the source tables and weight 0.
+- `Technical_Conventions_PinMatchesTheCommittedFileAndNamesDefinedTerms` asserts that the SHA-256 that `technical_data.py`
+  pins for `data/CONVENTIONS.md` is the hash of the committed file and that the file has the row and the section of the
+  capitalized defined terms.
+
+The developer-run Python tests `tools/data/tests/test_technical_data.py`, `test_technical_frames.py` and
+`test_term_divergence.py` cover the tool on a miniature work folder (the frames, the caps, the quota gates, the pilot gate,
+the rounds, the builds, the hand-check samples and the divergence counts), and the checks `check_leakage.py`,
+`check_licenses.py` and `check_conventions.py` (fix tier, enforced, all eight products included) run on the committed
+files.
 
 ### Adjudication Tool
 

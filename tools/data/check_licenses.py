@@ -19,9 +19,12 @@ Checks (exit code 1 on any finding):
      or headerless is a finding; header-only is valid), and neither its sources.tsv nor the source_id of any sentence of its dev.tsv
      matches an excluded id or normalized URL; the same for the hard tranche (hard-sources.tsv and hard.tsv) and the three newer tranches
      (<tranche>-sources.tsv and <tranche>.tsv), which share the record; the compound and headings training sources (sources.tsv and the corpus
-     file) and their follow-up sources (compound-2 and headings-2, each with its -sources.tsv) take the same check.
+     file) and their follow-up sources (compound-2 and headings-2, each with its -sources.tsv) take the same check; so do the technical-text tranches and
+     training sources of technical_data.py (eval/shapes-dev/{deverbal-heads,defined-terms,step-lines,clause-verbs} and technical/{deverbal,terms,steps,clauses}, each with its
+     -sources.tsv), when present.
   6. fail closed: every source table and corpus above must exist (missing is a finding, not a skip or a traceback); the two files of the hard
-     tranche are required while leakage.HARD_TRANCHE_REQUIRED is True and skipped when missing while it is False.
+     tranche are required while leakage.HARD_TRANCHE_REQUIRED is True and skipped when missing while it is False; the technical-text files (and the README of
+     data/technical) are required while leakage.TECHNICAL_REQUIRED is True and scanned when present while it is False.
 """
 import os
 import re
@@ -34,7 +37,7 @@ import leakage
 FORBIDDEN_TEXT = re.compile(r"share-?alike|by-sa|by-nc|by-nd|non-?commercial|no-?derivat|cc by|wikipedia|creativecommons\.org/licenses/by", re.I)
 FORBIDDEN_PATH = re.compile(r"semcor|brown|ewt", re.I)
 ALLOWED_LICENSES = {"CC0-1.0", "CC-BY-3.0-US", "CC-BY-4.0", "Public-Domain", "MIT"}
-NEW_TRANCHES = leakage.SHAPES_DEV_NEW_TRANCHES            # the newer tranches of the development set (compound-head, headings, named-state, compound-head-2, headings-2)
+NEW_TRANCHES = leakage.SHAPES_DEV_FIRST_TRANCHES + leakage.SHAPES_DEV_FOLLOWUP_TRANCHES   # the older newer tranches (compound-head, headings, named-state, compound-head-2, headings-2): required
 NEW_SOURCES_TABLES = tuple("eval/shapes-dev/%s-sources.tsv" % name for name in NEW_TRANCHES)
 NEW_CORPORA = tuple("eval/shapes-dev/%s.tsv" % name for name in NEW_TRANCHES)
 TARGETED_SOURCES = ("compound", "headings")              # the two targeted training sources (compound-head sentences, Title Case heading lines)
@@ -42,19 +45,30 @@ TARGETED_TABLES = (tuple("%s/sources.tsv" % name for name in TARGETED_SOURCES)
                    + ("compound/compound-2-sources.tsv", "headings/headings-2-sources.tsv"))     # and their follow-up sources (compound2, headings2)
 TARGETED_CORPORA = (tuple("%s/%s.tsv" % (name, name) for name in TARGETED_SOURCES)
                     + ("compound/compound-2.tsv", "headings/headings-2.tsv"))
-SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv",
-                 "eval/shapes-dev/hard-sources.tsv", "imperative/sources.tsv") + TARGETED_TABLES + NEW_SOURCES_TABLES
+# The technical-text products of technical_data.py (four development tranches, four training sources in data/technical/): scanned when present, required
+# (like the hard tranche) only once leakage.TECHNICAL_REQUIRED is True.
+TECHNICAL_DEV_SOURCES_TABLES = tuple("eval/shapes-dev/%s-sources.tsv" % name for name in leakage.SHAPES_DEV_TECHNICAL_TRANCHES)
+TECHNICAL_DEV_CORPORA = tuple("eval/shapes-dev/%s.tsv" % name for name in leakage.SHAPES_DEV_TECHNICAL_TRANCHES)
+TECHNICAL_TRAINING_TABLES = tuple("technical/%s-sources.tsv" % name for name in leakage.TECHNICAL_TRAINING)
+TECHNICAL_TRAINING_CORPORA = tuple("technical/%s.tsv" % name for name in leakage.TECHNICAL_TRAINING)
+TECHNICAL_TABLES = TECHNICAL_DEV_SOURCES_TABLES + TECHNICAL_TRAINING_TABLES
+TECHNICAL_CORPORA = TECHNICAL_DEV_CORPORA + TECHNICAL_TRAINING_CORPORA
+TECHNICAL_README = "technical"
+BASE_SOURCE_TABLES = ("open/sources.tsv", "eval/gold-v2/sources.tsv", "silver/sources.tsv", "eval/shapes-dev/sources.tsv",
+                      "eval/shapes-dev/hard-sources.tsv", "imperative/sources.tsv") + TARGETED_TABLES + NEW_SOURCES_TABLES
+SOURCE_TABLES = BASE_SOURCE_TABLES + TECHNICAL_TABLES
 HARD_SOURCES_TABLE = "eval/shapes-dev/hard-sources.tsv"   # scanned when it exists; a missing one fails once leakage.HARD_TRANCHE_REQUIRED is True
 HARD_CORPUS = "eval/shapes-dev/hard.tsv"                  # likewise
 HARD_FILES = (HARD_SOURCES_TABLE, HARD_CORPUS)            # optional only while leakage.HARD_TRANCHE_REQUIRED is False
 # Every table and corpus whose absence is a finding (the hard tranche's two files only while the tranche is required); each consumer below
-# skips a file that is missing, because required_file_findings reports it once. The files of the three newer tranches are required too.
-REQUIRED_FILES = SOURCE_TABLES + ("masc/sources.tsv", "eval/shapes-dev/dev.tsv", HARD_CORPUS) + NEW_CORPORA + TARGETED_CORPORA
+# skips a file that is missing, because required_file_findings reports it once. The files of the three newer tranches are required too; the files of the
+# technical-text products are required only while leakage.TECHNICAL_REQUIRED is True (they are optional, scanned when present, before).
+REQUIRED_FILES = BASE_SOURCE_TABLES + ("masc/sources.tsv", "eval/shapes-dev/dev.tsv", HARD_CORPUS) + NEW_CORPORA + TARGETED_CORPORA
 MASC_LICENSE = "CC BY 3.0 US"
 # The hard-shape development set (all tranches) and the imperative, compound and headings training sources take no FAA material (host,
 # publisher or handbook); see data/eval/shapes-dev/README.md, data/imperative/README.md, data/compound/README.md and data/headings/README.md.
 FAA_TEXT = re.compile(r"faa\.gov|\bFAA\b|Federal Aviation", re.I)
-FAA_TABLES = ("eval/shapes-dev/sources.tsv", HARD_SOURCES_TABLE, "imperative/sources.tsv") + TARGETED_TABLES + NEW_SOURCES_TABLES
+FAA_TABLES = ("eval/shapes-dev/sources.tsv", HARD_SOURCES_TABLE, "imperative/sources.tsv") + TARGETED_TABLES + NEW_SOURCES_TABLES + TECHNICAL_TABLES
 READMES = ("open", "masc", "silver", "imperative", "compound", "headings", "eval/shapes", "eval/shapes-dev", "eval/gold-v2", "eval/ste-challenge",
            "lexicon", "corrections")
 ALLOWED_PATHS = {"data/eval/ud-ewt/README.md"}
@@ -64,6 +78,12 @@ MASC_ATTRIBUTION_LINK = "](../masc/ATTRIBUTION.md)"
 MASC_ATTRIBUTION_FILE = "masc/ATTRIBUTION.md"
 
 
+def readme_folders(base=None):
+    """The data folders of the technical-text sources whose README is checked: `technical` once its folder exists or leakage.TECHNICAL_REQUIRED is True."""
+    base = base or common.DATA
+    return (TECHNICAL_README,) if leakage.TECHNICAL_REQUIRED or os.path.isdir(os.path.join(base, TECHNICAL_README)) else ()
+
+
 def required_file_findings(base=None):
     """Fail closed: a missing required source table or corpus is a finding, never a skip and never a traceback.
 
@@ -71,7 +91,8 @@ def required_file_findings(base=None):
     (skipped when missing, scanned when present) while it is False. The READMEs are checked separately in main."""
     base = base or common.DATA
     findings = []
-    for table in REQUIRED_FILES:
+    required = REQUIRED_FILES + (TECHNICAL_TABLES + TECHNICAL_CORPORA if leakage.TECHNICAL_REQUIRED else ())
+    for table in required:
         if table in HARD_FILES and not leakage.HARD_TRANCHE_REQUIRED:
             continue
         if not os.path.isfile(os.path.join(base, *table.split("/"))):
@@ -188,7 +209,7 @@ def excluded_source_findings(base=None):
     except ValueError as error:
         return ["eval/shapes-dev/excluded-sources.tsv: " + str(error)]
     findings = []
-    for name in ("sources.tsv", "hard-sources.tsv") + tuple(t.rsplit("/", 1)[1] for t in NEW_SOURCES_TABLES):
+    for name in ("sources.tsv", "hard-sources.tsv") + tuple(t.rsplit("/", 1)[1] for t in NEW_SOURCES_TABLES + TECHNICAL_DEV_SOURCES_TABLES):
         path = os.path.join(folder, name)
         if os.path.isfile(path):
             for line in common.read_lines(path):
@@ -198,15 +219,15 @@ def excluded_source_findings(base=None):
                 hit = common.excluded_match(lookup, cells[0], cells[3] if len(cells) > 3 else "")
                 if hit:
                     findings.append("eval/shapes-dev/%s: row %s uses the excluded source %s" % (name, cells[0], hit))
-    for name in ("dev.tsv", "hard.tsv") + tuple(c.rsplit("/", 1)[1] for c in NEW_CORPORA):
+    for name in ("dev.tsv", "hard.tsv") + tuple(c.rsplit("/", 1)[1] for c in NEW_CORPORA + TECHNICAL_DEV_CORPORA):
         path = os.path.join(folder, name)
         if os.path.isfile(path):
             for source_id in sorted({s["source_id"] for s in common.read_corpus(path)[1]}):
                 hit = common.excluded_match(lookup, source_id)
                 if hit:
                     findings.append("eval/shapes-dev/%s: sentences of %s use the excluded source %s" % (name, source_id, hit))
-    # The compound and headings training sources take no excluded document either (their builder refuses one; this is the independent check).
-    for table in TARGETED_TABLES:
+    # The compound and headings training sources (and the technical-text sources) take no excluded document either (their builder refuses one; this is the independent check).
+    for table in TARGETED_TABLES + TECHNICAL_TRAINING_TABLES:
         path = os.path.join(base, *table.split("/"))
         if os.path.isfile(path):
             for line in common.read_lines(path):
@@ -216,7 +237,7 @@ def excluded_source_findings(base=None):
                 hit = common.excluded_match(lookup, cells[0], cells[3] if len(cells) > 3 else "")
                 if hit:
                     findings.append("%s: row %s uses the excluded source %s" % (table, cells[0], hit))
-    for corpus in TARGETED_CORPORA:
+    for corpus in TARGETED_CORPORA + TECHNICAL_TRAINING_CORPORA:
         path = os.path.join(base, *corpus.split("/"))
         if os.path.isfile(path):
             for source_id in sorted({s["source_id"] for s in common.read_corpus(path)[1]}):
@@ -257,7 +278,7 @@ def main():
     findings.extend(excluded_source_findings())
     findings.extend(corrections_findings())
     pattern = re.compile(r"^License: (\S+)", re.M)
-    for folder in READMES:
+    for folder in READMES + readme_folders():
         path = os.path.join(common.DATA, *folder.split("/"), "README.md")
         if not os.path.exists(path):
             findings.append("missing README: data/%s/README.md" % folder)

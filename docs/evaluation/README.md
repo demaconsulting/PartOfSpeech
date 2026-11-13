@@ -61,11 +61,14 @@ them and states what they do not show.
    before the first curve was computed, and it applied unchanged to every later model.
 3. **The thresholds were selected on development data only** and committed with the selection artifact
    ([operating-points.json](operating-points.json)) before the held-out run.
-4. **The held-out sets were evaluated once for this model.** The `evaluate` command is the only code that opens a
-   held-out file, only with a valid selection for the frozen model, and it refuses to run when `test-results.json`
-   exists (the previous record was deleted on purpose, in a commit of its own, before the run). The results were
-   committed as produced, from one run, with no later change of the report. The same sets had
-   been evaluated before for earlier models of the family, so this run is a fifth look.
+4. **The held-out sets were evaluated once for this model.** The `evaluate` command is the only code of the trainer that
+   opens a held-out file, only with a valid selection for the frozen model, and it refuses to run when
+   `test-results.json` exists (the previous record was deleted on purpose, in a commit of its own, before the run). The
+   results were committed as produced, from one run, with no later change of the report. The same sets had
+   been evaluated before for earlier models of the family, so this run is a fifth look. The Python data tools read
+   held-out sentences only as hashed keys (the leakage checks) and, in one command, as integer counts
+   (`tools/data/term_divergence.py count-held-out`, recorded in `data/technical/README.md`, section "Divergence from UD
+   Practice"); neither scores a model, so neither is a look at a model result.
 
 The evaluation sets are described in [data/eval](../../data/eval/README.md). In short:
 
@@ -312,6 +315,15 @@ figure from it is optimistic by construction and is never reported as a held-out
   a shipped-model baseline in the
   [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Follow-up: baseline of the shipped
   model on the new tranches"). They are not held-out figures.
+- **Four technical tranches** (`deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv`, `clause-verbs.tsv`,
+  [README](../../data/eval/shapes-dev/README.md#technical-tranches)) add 1,097 target items and 320 control items of four
+  shapes of technical writing: the head of a deverbal compound, Capitalized Defined Terms, imperative step lines and
+  base-form verbs in a clause. They are for development only, were built by a pre-registered rule that uses no
+  PartOfSpeech output, and have a shipped-model baseline and a calibration measurement (errors per 1,000 answers at the
+  confidences 0.90 and 0.95, and a reliability table) in the
+  [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (sections "beta.3 phase 1: baseline of the
+  shipped model on the technical dev tranches (dev look only)" and "beta.3 phase 1: disclosed shortfalls"). The
+  measurement changes and proposes no threshold. They are not held-out figures.
 
 ## Reproduce the Results
 

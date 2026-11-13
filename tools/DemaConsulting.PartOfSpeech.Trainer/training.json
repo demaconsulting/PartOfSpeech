@@ -71,6 +71,42 @@
       "minSilverProbability": 0,
       "samplePermille": 1000,
       "maxSentences": 0
+    },
+    {
+      "name": "deverbal",
+      "path": "data/technical/deverbal.tsv",
+      "weight": 0,
+      "maskDisputed": false,
+      "minSilverProbability": 0,
+      "samplePermille": 1000,
+      "maxSentences": 0
+    },
+    {
+      "name": "terms",
+      "path": "data/technical/terms.tsv",
+      "weight": 0,
+      "maskDisputed": false,
+      "minSilverProbability": 0,
+      "samplePermille": 1000,
+      "maxSentences": 0
+    },
+    {
+      "name": "steps",
+      "path": "data/technical/steps.tsv",
+      "weight": 0,
+      "maskDisputed": false,
+      "minSilverProbability": 0,
+      "samplePermille": 1000,
+      "maxSentences": 0
+    },
+    {
+      "name": "clauses",
+      "path": "data/technical/clauses.tsv",
+      "weight": 0,
+      "maskDisputed": false,
+      "minSilverProbability": 0,
+      "samplePermille": 1000,
+      "maxSentences": 0
     }
   ],
   "epochs": 6,

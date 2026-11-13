@@ -61,12 +61,14 @@ SOURCES = {"open": ("train", "dev", "test"), "masc": ("-",), "silver": ("-",)}
 
 # Corpus file of every (source, split), relative to the data folder. The STE challenge set and the imperative, compound and headings training
 # sources are linted but never corrected (the staged corrections address the three correctable training sources and the open dev and test
-# splits only).
+# splits only). The four technical-text sources (technical_data.py) are lint-only files too and optional: an absent file is skipped by `load_corpora`.
 CORPUS_FILES = {("open", "train"): "open/train.tsv", ("open", "dev"): "open/dev.tsv", ("open", "test"): "open/test.tsv",
                 ("masc", "-"): "masc/masc.tsv", ("silver", "-"): "silver/silver.tsv"}
 LINT_ONLY_FILES = {("ste", "-"): "eval/ste-challenge/test.tsv", ("imperative", "-"): "imperative/imperative.tsv",
                    ("compound", "-"): "compound/compound.tsv", ("headings", "-"): "headings/headings.tsv",
-                   ("compound2", "-"): "compound/compound-2.tsv", ("headings2", "-"): "headings/headings-2.tsv"}
+                   ("compound2", "-"): "compound/compound-2.tsv", ("headings2", "-"): "headings/headings-2.tsv",
+                   ("deverbal", "-"): "technical/deverbal.tsv", ("terms", "-"): "technical/terms.tsv", ("steps", "-"): "technical/steps.tsv",
+                   ("clauses", "-"): "technical/clauses.tsv"}
 
 CORRECTIONS_FOLDER = "corrections"
 MECHANICAL_TABLE = "mechanical.tsv"

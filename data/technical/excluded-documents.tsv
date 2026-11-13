@@ -1,0 +1,3 @@
+# Documents left out of the technical-text training sources because the document is a reprint of, or shares sentences with, a training or evaluation set, was already used, or has no verifiable federal-only basis
+# (only ids and reasons, never text)
+# columns = document_id, reason

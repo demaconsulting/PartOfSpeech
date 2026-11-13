@@ -216,6 +216,16 @@ SHAPE_CLASS = {shape: ("Noun" if shape.startswith("n-") else "Verb") for shape i
 EXTRA_SHAPE_CLASS = {"n-compound-head-ambiguous": "Noun", "n-named-state": "Noun", "heading-noun": "Noun", "heading-imperative": "Verb",
                      "heading-proper": "Noun"}
 EXACT_TAGS = {"heading-noun": "NOUN", "heading-imperative": "VERB", "heading-proper": "PROPN"}
+# The candidate shapes of the four technical-text tranches (technical_data.py; beta.3 phase 1): S1 deverbal compound heads are scored by class (a
+# head is Noun, the control is Verb), the shapes of S2 (capitalized defined terms), S3 (step lines) and S4 (clause verbs) have an exact gold tag.
+# `term-adj` and `clause-adj` have no Noun/Verb class: their entry in the class table only keeps it total (the exact tag decides).
+TECHNICAL_SHAPE_CLASS = {"n-deverbal-head": "Noun", "term-noun": "Noun", "term-adj": "Noun", "term-proper": "Noun", "step-imperative": "Verb",
+                         "step-noun": "Noun", "clause-verb": "Verb", "clause-noun": "Noun", "clause-adj": "Noun"}
+TECHNICAL_EXACT_TAGS = {"term-noun": "NOUN", "term-adj": "ADJ", "term-proper": "PROPN", "step-imperative": "VERB", "step-noun": "NOUN",
+                        "clause-verb": "VERB", "clause-noun": "NOUN", "clause-adj": "ADJ"}
+TECHNICAL_SHAPES = tuple(TECHNICAL_SHAPE_CLASS)                  # the order of the rows that `decide_report` adds for the shapes that are present
+EXTRA_SHAPE_CLASS.update(TECHNICAL_SHAPE_CLASS)
+EXACT_TAGS.update(TECHNICAL_EXACT_TAGS)
 SHAPE_CLASS.update(EXTRA_SHAPE_CLASS)
 OTHER_CLASS = {"Noun": "Verb", "Verb": "Noun"}
 CLASS_TAG = {"Noun": "NOUN", "Verb": "VERB"}
@@ -1878,6 +1888,12 @@ def frame_mismatch(item, opus, sol, form=None, lex=None):
     v-imperative-initial  the target is token 0 (a verb at the start of the sentence is an instruction) and is in the base form
     v-after-modal         the token before is AUX (a modal) or PART (`to`) and the target is in the base form
 
+    The shapes of the technical-text tranches (technical_data.py) follow the same rule (remove-only, agreed neighbors only):
+    n-deverbal-head       the token before is NOUN or PROPN (as n-compound-head-ambiguous)
+    term-noun, term-adj   the target is not token 0; for term-adj the token after is also NOUN, PROPN or ADJ
+    step-imperative       the target is token 0 and is in the base form
+    clause-verb           the target is in the base form and the token before is NOUN, PROPN or PRON
+
     Base form rule (v-imperative-initial and v-after-modal only; deterministic, from the surface form `form` and the lexicon `lex`): the
     lower-cased surface form must equal its base form (`base_form_of`: no listed noun-verb stem behind an `-s` or `-es` ending, no
     listed VERB stem behind an `-ing` or `-ed` ending). `Wring`, `Bring`, `Ring`, `Process`, `Pass`, `Focus` pass; `Avoiding`,
@@ -1895,18 +1911,22 @@ def frame_mismatch(item, opus, sol, form=None, lex=None):
         return False
     shape, i = item["shape"], item["target"]
     votes = (opus, sol)
-    if (shape in ("v-imperative-initial", "v-after-modal", "heading-imperative") and form is not None and lex is not None
+    if (shape in ("v-imperative-initial", "v-after-modal", "heading-imperative", "step-imperative", "clause-verb") and form is not None and lex is not None
             and form.lower() != base_form_of(form, lex)):
         return True
-    if shape == "n-compound-head-ambiguous":          # the head of a compound; the nominal-gerund rule does not apply (`finding` is wanted)
+    if shape in ("n-compound-head-ambiguous", "n-deverbal-head"):     # the head of a compound; the nominal-gerund rule does not apply (`finding` is wanted)
         return vote_tag(votes, i - 1) not in ("NOUN", "PROPN")
     if shape == "n-named-state":                       # directly after a preposition or `to`, an optional determiner between
         before = vote_tag(votes, i - 1)
         return not (before in ("ADP", "PART") or (before == "DET" and vote_tag(votes, i - 2) in ("ADP", "PART")))
-    if shape == "heading-imperative":                  # the first word of the heading
+    if shape in ("heading-imperative", "step-imperative"):   # the first word of the heading or step line
         return i != 0
     if shape == "heading-noun":                        # never the first word
         return i == 0
+    if shape in ("term-noun", "term-adj"):             # a word of a capitalized term in the middle of a sentence (never token 0); an adjective modifies a nominal
+        return i == 0 or (shape == "term-adj" and vote_tag(votes, i + 1) not in ("NOUN", "PROPN", "ADJ"))
+    if shape == "clause-verb":                         # a verb after its subject: the token before is a noun, a name or a pronoun
+        return vote_tag(votes, i - 1) not in ("NOUN", "PROPN", "PRON")
     if shape in NOMINAL_GERUND_SHAPES and form is not None and lex is not None and possible_gerund(form, lex):
         return True
     if shape in ("n-subject-initial", "v-imperative-initial"):
@@ -1986,6 +2006,13 @@ def decide_report(items, incomplete):
             lines.append("| %s | %s | %d | %d | %d | %d | %d | %d | |" % (shape, role, len(members), count["kept"], count["target-disagreement"],
                                                                          count["class-mismatch"], count["frame-mismatch"],
                                                                          count[EXCLUDED_REASON]))
+    for shape in TECHNICAL_SHAPES:                     # the technical-text tranches: a row only for a shape that is present (the old report is unchanged)
+        for role in ROLES:
+            members = [i for i in items if i["shape"] == shape and i["role"] == role]
+            if members:
+                count = collections.Counter(i["reason"] or "kept" for i in members)
+                lines.append("| %s | %s | %d | %d | %d | %d | %d | %d | |" % (shape, role, len(members), count["kept"], count["target-disagreement"],
+                                                                             count["class-mismatch"], count["frame-mismatch"], count[EXCLUDED_REASON]))
     lines += ["", "incomplete sentences (not decided): %d" % len(incomplete),
               "disputed non-target tokens in kept items: %d" % sum(i["disputed_tokens"] for i in items if i["outcome"] == "keep")]
     return lines
