@@ -445,6 +445,13 @@ schema or its own counts, or reaches a held-out file or writes into a data folde
   and 0.95 with the limit counted, the errors per 1,000 and the interval, the seven bins with the lower edge inclusive
   and 1.0
   in the last bin, counts, means, correct shares and harmful errors, the empty scope),
+  `..._MeasureCurve_SyntheticOutcomes_GridCountsAndRates` (the 15 thresholds of the grid, the answers, wrong answers,
+  noun-verb decisions and harmful errors at each with the limit counted, the coverage, the error, the harmful rate and the
+  interval, the agreement with the rows at 0.90 and 0.95, the empty case),
+  `ArmEvaluation_Evaluate_TechnicalCurve_GridRowsAgreeWithThresholdsAndPooledTechnical` (the members and the grid of
+  `curve` and `nounVerbPooled` in the result of `eval-arm`, the rows at 0.90 and 0.95 equal to the threshold rows, the
+  answers falling with the threshold, and the noun-verb pool equal to the target items, decisions and harmful errors of
+  `pooledTechnical`; the existing members stay as the technical-block test asserts),
   `..._MeasureAndRender_PooledAndPerTranche` (the pooled scope against the scope of all outcomes, the order of the tranches,
   the text of the tables, a dash where there is no answer) and
   `ShapesDevCommand_Run_Calibration_AppendsTheSectionForSingleShapeSelectionsOnly` (refused for `standard`, `hard` and `both`,

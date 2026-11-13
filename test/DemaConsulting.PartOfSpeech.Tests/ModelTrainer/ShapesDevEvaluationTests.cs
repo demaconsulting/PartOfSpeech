@@ -1520,14 +1520,16 @@ public class ShapesDevEvaluationTests
 
         // Assert: the calibration scopes, the thresholds 0.90 and 0.95 and seven bins that add up to the judged words
         var calibration = technical.GetProperty("calibration");
-        Assert.Equal(new[] { "technical", "allSingle", "tranches" }, calibration.EnumerateObject().Select(p => p.Name));
+        Assert.Equal(new[] { "technical", "allSingle", "tranches", "nounVerbPooled" }, calibration.EnumerateObject().Select(p => p.Name));
         Assert.Equal(new[] { "deverbalHeads", "definedTerms", "stepLines", "clauseVerbs" }, calibration.GetProperty("tranches").EnumerateObject().Select(p => p.Name));
         Assert.Equal(14, calibration.GetProperty("technical").GetProperty("judged").GetInt32());
         Assert.Equal(14 + 2 + 3 + 1 + 3 + 4, calibration.GetProperty("allSingle").GetProperty("judged").GetInt32());
         Assert.Equal(new[] { 4, 3, 3, 4 }, calibration.GetProperty("tranches").EnumerateObject().Select(p => p.Value.GetProperty("judged").GetInt32()));
         foreach (var scope in new[] { calibration.GetProperty("technical"), calibration.GetProperty("allSingle") }.Concat(calibration.GetProperty("tranches").EnumerateObject().Select(p => p.Value)))
         {
-            Assert.Equal(new[] { "judged", "thresholds", "bins" }, scope.EnumerateObject().Select(p => p.Name));
+            // the pooled technical scope alone carries the curve, after the bins; every other scope has the three members of before
+            var hasCurve = scope.GetRawText() == calibration.GetProperty("technical").GetRawText();
+            Assert.Equal(hasCurve ? new[] { "judged", "thresholds", "bins", "curve" } : new[] { "judged", "thresholds", "bins" }, scope.EnumerateObject().Select(p => p.Name));
             var thresholds = scope.GetProperty("thresholds").EnumerateArray().ToList();
             Assert.Equal(new[] { 0.9, 0.95 }, thresholds.Select(t => t.GetProperty("threshold").GetDouble()));
             foreach (var row in thresholds)
@@ -1597,6 +1599,66 @@ public class ShapesDevEvaluationTests
         Assert.Equal(0, document.RootElement.GetProperty("config").GetProperty("previewFolds").GetInt32());
         Assert.Throws<InvalidDataException>(() => ArmEvaluation.Evaluate(new byte[16], "x", echo, ArmData(), timedPasses: 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => ArmEvaluation.Evaluate(weights, "x", echo, ArmData(), timedPasses: 0));
+    }
+
+    /// <summary>
+    ///     Validates the curve members of <c>eval-arm</c>: <c>curve</c> in the pooled technical scope and <c>nounVerbPooled</c> in the
+    ///     calibration, both with one row for each threshold of the grid and the members in order, the rows at 0.90 and 0.95 equal to the
+    ///     existing threshold rows, the answers falling with the threshold, and the noun-verb pool agreeing with <c>pooledTechnical</c>.
+    /// </summary>
+    [Fact]
+    public void ArmEvaluation_Evaluate_TechnicalCurve_GridRowsAgreeWithThresholdsAndPooledTechnical()
+    {
+        // Arrange
+        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 40).Word("dog", Upos.Verb, 40).Build(temperature: 1f, scale: 0.125f, compress: true);
+        var echo = new ArmConfigEcho { PreviewFolds = 5, Epochs = 6, Prune = 8 };
+
+        // Act
+        using var document = System.Text.Json.JsonDocument.Parse(ArmEvaluation.Evaluate(weights, "arm", echo, ArmData(), timedPasses: 1));
+        var technical = document.RootElement.GetProperty("shapesTechnical");
+        var calibration = technical.GetProperty("calibration");
+        var pooledScope = calibration.GetProperty("technical");
+        var nounVerb = calibration.GetProperty("nounVerbPooled");
+        var members = new[] { "threshold", "answers", "coverage", "wrong", "errorPer1k", "intervalLowPer1k", "intervalHighPer1k", "nounVerbAnswers", "harmful", "harmfulPer1k" };
+
+        // Assert: the grid and the members, in order
+        Assert.Equal(new[] { "judged", "decisions", "curve" }, nounVerb.EnumerateObject().Select(p => p.Name));
+        foreach (var curve in new[] { pooledScope.GetProperty("curve"), nounVerb.GetProperty("curve") })
+        {
+            var rows = curve.EnumerateArray().ToList();
+            Assert.Equal(ConfidenceCurve.Grid, rows.Select(r => r.GetProperty("threshold").GetDouble()));
+            Assert.All(rows, r => Assert.Equal(members, r.EnumerateObject().Select(p => p.Name)));
+            Assert.Equal(rows.Select(r => r.GetProperty("answers").GetInt32()).OrderByDescending(a => a), rows.Select(r => r.GetProperty("answers").GetInt32()));
+            Assert.All(rows, r => Assert.InRange(r.GetProperty("wrong").GetInt32(), 0, r.GetProperty("answers").GetInt32()));
+        }
+
+        // Assert: the rows at 0.90 and 0.95 of the pooled technical curve are the existing threshold rows (index 9 and 10 of the grid)
+        var technicalCurve = pooledScope.GetProperty("curve").EnumerateArray().ToList();
+        var judged = pooledScope.GetProperty("judged").GetInt32();
+        Assert.Equal(14, judged);
+        foreach (var (gridIndex, thresholdIndex) in new[] { (9, 0), (10, 1) })
+        {
+            var existing = pooledScope.GetProperty("thresholds")[thresholdIndex];
+            foreach (var member in new[] { "threshold", "answers", "wrong", "errorPer1k", "intervalLowPer1k", "intervalHighPer1k" })
+            {
+                Assert.Equal(existing.GetProperty(member).GetRawText(), technicalCurve[gridIndex].GetProperty(member).GetRawText());
+            }
+        }
+
+        Assert.All(technicalCurve, r => Assert.Equal(r.GetProperty("answers").GetInt32() / (double)judged, r.GetProperty("coverage").GetDouble(), 9));
+
+        // Assert: the noun-verb pool is the target items and the decisions of pooledTechnical, and the harmful errors at 0.45 are all of its harmful errors
+        var pooled = technical.GetProperty("pooledTechnical");
+        Assert.Equal(pooled.GetProperty("targetItems").GetInt32(), nounVerb.GetProperty("judged").GetInt32());
+        Assert.Equal(pooled.GetProperty("decisions").GetInt32(), nounVerb.GetProperty("decisions").GetInt32());
+        var nounVerbCurve = nounVerb.GetProperty("curve").EnumerateArray().ToList();
+        Assert.Equal(pooled.GetProperty("harmful").GetInt32(), nounVerbCurve[0].GetProperty("harmful").GetInt32());
+        Assert.True(nounVerbCurve[0].GetProperty("nounVerbAnswers").GetInt32() <= nounVerb.GetProperty("decisions").GetInt32());
+        Assert.All(nounVerbCurve, r =>
+        {
+            var decisions = r.GetProperty("nounVerbAnswers").GetInt32();
+            Assert.Equal(decisions == 0 ? 0.0 : 1000.0 * r.GetProperty("harmful").GetInt32() / decisions, r.GetProperty("harmfulPer1k").GetDouble(), 9);
+        });
     }
 #endif
 
@@ -3342,6 +3404,55 @@ public class ShapesDevEvaluationTests
         Assert.Equal(0, empty.Judged);
         Assert.All(empty.Thresholds, t => Assert.Equal((0, 0, 0.0, 0.0, 0.0), (t.Answers, t.Wrong, t.ErrorPer1000, t.IntervalLowPer1000, t.IntervalHighPer1000)));
         Assert.All(empty.Bins, b => Assert.Equal((0L, 0.0, 0.0, 0L), (b.Decisions, b.MeanConfidence, b.CorrectPercent, b.Harmful)));
+    }
+
+    /// <summary>
+    ///     Validates the confidence curve on synthetic outcomes: one row for each of the 15 thresholds of the operating-point grid, the answers,
+    ///     wrong answers, noun-verb decisions and harmful errors at each (the limit counts, as at 0.90 and 0.95), the derived rates, the agreement
+    ///     with the rows at 0.90 and 0.95 of <see cref="ShapesDevCalibration.MeasureScope"/>, and the empty case.
+    /// </summary>
+    [Fact]
+    public void ShapesDevCalibration_MeasureCurve_SyntheticOutcomes_GridCountsAndRates()
+    {
+        // Arrange / Act
+        var curve = ShapesDevCalibration.MeasureCurve(SyntheticOutcomes());
+
+        // Assert: the grid of the operating points, 0.45 to 0.95 in steps of 0.05, then 0.96 to 0.99
+        Assert.Equal(15, curve.Count);
+        Assert.Equal(new[] { 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 0.96, 0.97, 0.98, 0.99 }, curve.Select(r => r.Threshold));
+        Assert.Equal(ConfidenceCurve.Grid, curve.Select(r => r.Threshold));
+
+        // Assert: the counts at every threshold (hand-computed from the ten outcomes)
+        Assert.Equal(new[] { 10, 9, 8, 8, 7, 7, 6, 6, 6, 5, 4, 3, 3, 2, 2 }, curve.Select(r => r.Answers));
+        Assert.Equal(new[] { 5, 4, 4, 4, 3, 3, 2, 2, 2, 2, 1, 1, 1, 0, 0 }, curve.Select(r => r.Wrong));
+        Assert.Equal(new[] { 8, 8, 7, 7, 6, 6, 6, 6, 6, 5, 4, 3, 3, 2, 2 }, curve.Select(r => r.NounVerbAnswers));
+        Assert.Equal(new[] { 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 1, 1, 1, 0, 0 }, curve.Select(r => r.Harmful));
+
+        // Assert: the derived rates
+        Assert.All(curve, row =>
+        {
+            Assert.Equal(row.Answers / 10.0, row.Coverage, 9);
+            Assert.Equal(1000.0 * row.Wrong / row.Answers, row.ErrorPer1000, 9);
+            Assert.Equal(1000.0 * row.Harmful / row.NounVerbAnswers, row.HarmfulPer1000, 9);
+            var wilson = ShapesDevCalibration.Wilson(row.Wrong, row.Answers);
+            Assert.Equal(1000.0 * wilson.Low, row.IntervalLowPer1000, 9);
+            Assert.Equal(1000.0 * wilson.High, row.IntervalHighPer1000, 9);
+        });
+        Assert.Equal(1.0, curve[0].Coverage, 9);
+        Assert.Equal(500.0, curve[0].ErrorPer1000, 9);
+        Assert.Equal(375.0, curve[0].HarmfulPer1000, 9);
+        Assert.Equal(0.0, curve[14].ErrorPer1000, 9);
+        Assert.Equal(0.0, curve[14].HarmfulPer1000, 9);
+
+        // Assert: the rows at 0.90 and 0.95 are the thresholds of the scope
+        var scope = ShapesDevCalibration.MeasureScope("synthetic", SyntheticOutcomes());
+        Assert.Equal((scope.Thresholds[0].Answers, scope.Thresholds[0].Wrong, scope.Thresholds[0].ErrorPer1000), (curve[9].Answers, curve[9].Wrong, curve[9].ErrorPer1000));
+        Assert.Equal((scope.Thresholds[1].Answers, scope.Thresholds[1].Wrong, scope.Thresholds[1].ErrorPer1000), (curve[10].Answers, curve[10].Wrong, curve[10].ErrorPer1000));
+
+        // Assert: no outcome gives no answer and zero rates
+        var empty = ShapesDevCalibration.MeasureCurve(new List<Outcome>());
+        Assert.Equal(15, empty.Count);
+        Assert.All(empty, r => Assert.Equal((0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0), (r.Answers, r.Wrong, r.NounVerbAnswers, r.Harmful, r.Coverage, r.ErrorPer1000, r.HarmfulPer1000, r.IntervalLowPer1000, r.IntervalHighPer1000)));
     }
 
     /// <summary>
