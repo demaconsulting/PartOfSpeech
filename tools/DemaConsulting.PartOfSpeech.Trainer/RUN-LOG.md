@@ -6635,6 +6635,95 @@ Training or evaluating anything not listed above before this commit is pushed; a
 
 The interval measures training noise only. Four candidates are compared with one baseline without correction, so the winner is subject to a winner's curse; the held-out look that follows an adoption is the independent check. The tranches are the frames that the training sources were built from and the Basic band, about half of the judged lemmas of a tranche also occur in its training source, and the defined-terms convention (Capitalized Defined Terms are PROPN) disagrees with about 2,000 existing training labels, so a development gain on S2 may not carry to other text. The guards cover the old tranches and the open, gold and UD development sets; they cannot see a loss that these sets do not hold. Nothing here predicts the error of the consumer on its own text, which was not read and is not used.
 
+## beta.3 phase 2 (E2): results (decision: TECH wins by rule T)
+
+Written after the 48 runs and the analysis, in a commit that follows the clarification commit `c04609325c093225e87a01f5effe74f3ce18beb7` (which followed the pre-registration commit `067c11a0a7a3339647ad5644be667ea2ee53e38a` and was committed before any arm was trained). Every result file records `inputs.commit` = `c046093...` with `dirty` = false, and the tracked working tree was clean from the first run to the last. Six arms (BASE, TECH, TECH-NT, TECH-ND, TECH-T2, TECH-W2), eight seeds each (20260101, 11 to 17), 48 runs, on 2026-11-13; the commands were those of the pre-registration (the frozen driver `beta3-tech/run_arms.ps1`, one invocation per arm in the registered order, with `-Out`, `-PyCache` and `-PauseFile` in the session folder and with `-Priority Normal`, see the deviation below). Every frozen file had its recorded hash before the runs (checked again by the analysis). The frozen `analyze_tech.py` was applied to the 48 result files (`python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py --runs <runs> --out <runs>\report.md --decision <runs>\decision.json`, with the Python bytecode cache directed outside the repository; exit code 0) and rule T was applied mechanically by the script; nothing below reinterprets it. **No held-out set was read and no held-out command (`evaluate`, `thresholds`, `train --update-config`) was run for this section; no consumer text was read.** Nothing was changed in `training.json`, the weights, the operating points or the README tables by this commit; the adoption is a separate step and its plan is written in this log before any retraining (the outcome section above).
+
+As in the earlier experiments, the analyzer's outputs are not committed: the tables below are copied from them and their hashes are recorded here.
+
+| File (outside the repository, next to the run folders) | Size | SHA-256 |
+| --- | ---: | --- |
+| `report.md` (the analysis) | 56,206 bytes | `313d3ea52297e2002365c52bac7f8e4d0217e584c82affa9c02476b75a2d81e6` |
+| `decision.json` (per-arm values, intervals, guards, decision) | 45,284 bytes | `0a425acf0fc576dfa0874432a5a2ab12e60c72b7f1385cd56a50f3bcfdd7e7a4` |
+| `TECH-s20260101.bin` (the seed-20260101 weights of the winning arm; 1,234,530 bytes raw, 129,882 rows, 324,906 weights) | 553,641 bytes deflated | `a1aab1ca0314a4a8b78fdf983987b49cf9f9981ec98d6ea06468e64a10d20d25` |
+| `BASE-s20260101.bin` (identical to the shipped `weights.bin`, acceptance test a) | 537,650 bytes deflated | `f384a877756dd2a646ce0e087ad034014f3bdfd2395b5f3751af152d2208ddad` |
+
+### Deviation, recorded (infrastructure; no rule changed)
+
+The first start of the driver ran at BelowNormal priority. Other processes on the machine took all the CPU (the machine showed 100% load; the training process gained about 2 CPU seconds per minute, while a run takes about 25 seconds of wall time on an idle machine), so the first run, `BASE-s20260101`, did not finish in more than eight minutes. The driver was stopped (its process tree, by PID) at that point, **before any result file of any run existed** (the run had no `.json`; its partial files were deleted by the driver when the run was redone), and the same six commands were started again with `-Priority Normal`, which the pre-registration allows when BelowNormal is starved ("Normal only when BelowNormal is starved by other load, and then the choice is recorded"). All 48 runs were made after the restart at Normal priority (`driver.priority` = `Normal` in every result), from one commit and one tree, one process at a time with `DOTNET_PROCESSOR_COUNT` = 8. The abandoned first attempt of `BASE-s20260101` was not scored and not read. This is an implementing-agent decision taken before the analysis was run; it is written here, in the first commit after the runs, because the tracked tree could not be edited between the first and the last run (acceptance test c). The throughput measurements were made on a machine that other processes loaded; no guard failed on throughput (the lowest arm median is 278,118 tokens per second against the floor of 150,000), so the re-measure rule was not used. No run was repeated, replaced or dropped because of its result and no arm was dropped; free space on C: stayed at or above 15.2 GB.
+
+### E2 results: acceptance tests (all passed; the analysis made a selection only after them)
+
+All acceptance tests of the pre-registration passed (285 PASS rows, no FAIL row among the acceptance tests): the frozen files (29 text files, 13 development files, 1 raw file) have their frozen SHA-256; **a**, `BASE-s20260101` has the weights SHA-256 `f384a877...` (the shipped value, full hash in the table above), byte-identical to the shipped `weights.bin`, and all 208 shipped figures are reproduced; **a2**, every one of the eight BASE seeds has the weights SHA-256 of the corresponding CMP2 run of the follow-up (so a2 did not have to be waived and the contingency in the clarification above was not needed); **b**, every BASE run trained on 63,522 sentences with the sources `open:2,masc:1,silver:1,imperative:1,compound:1,compound2:1` and every other arm on exactly its weighted additions more (TECH 65,373; TECH-NT 65,000; TECH-ND 64,736; TECH-T2 65,746; TECH-W2 67,224); **c**, the fourteen `inputs.*Sha256` fields agree in all 48 runs and equal the frozen values, all runs name the one commit `c04609325c093225e87a01f5effe74f3ce18beb7` and none was made from a dirty tree; **d**, see the frozen files above; **e**, the leakage re-derived from the pinned files: no shared document id or exact sentence between the six training sources and the nine development tranches (54 pairs).
+
+### E2 results: the arms
+
+Values are the mean ± sample standard deviation over the eight seeds; the baseline is BASE (the shipped configuration; its mean is not the shipped model's value, which is seed 20260101 only: 224.55, 30.7%, 117.3 and 57.1). Primary = pooled harmful per 1,000 noun-verb decisions over S1, S3, S4 and the four compound and heading tranches (lower is better); S2 accuracy = defined-terms target accuracy in percent (higher is better); calibration = wrong answers per 1,000 answers at a confidence of at least 0.90 and at least 0.95 over the judged words of the four technical tranches (lower is better).
+
+| Arm | Weighted sentences added | Primary | S2 accuracy % | Wrong per 1k at >= 0.90 | Wrong per 1k at >= 0.95 | Passes every guard | In Q |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| BASE | 0 | 217.07 ± 11.48 | 32.97 ± 2.01 | 119.5 ± 6.4 | 70.5 ± 9.1 | - | - |
+| TECH | 1,851 | 196.97 ± 8.53 | 59.53 ± 2.11 | 60.1 ± 5.1 | 29.3 ± 5.6 | yes | **yes** |
+| TECH-NT | 1,478 | 196.48 ± 10.49 | 37.85 ± 2.14 | 88.4 ± 6.1 | 50.3 ± 7.9 | yes | no (attribution only) |
+| TECH-ND | 1,214 | 212.80 ± 4.38 | 58.55 ± 3.33 | 67.3 ± 4.6 | 28.1 ± 4.6 | yes | no (primary interval not below 0) |
+| TECH-T2 | 2,224 | 191.92 ± 6.94 | 64.53 ± 1.72 | 59.2 ± 5.3 | 26.1 ± 5.7 | **no** | no |
+| TECH-W2 | 3,702 | 183.08 ± 3.62 | 66.92 ± 1.23 | 53.2 ± 3.2 | 25.1 ± 4.1 | yes | **yes** |
+
+Welch 95% interval of (arm - BASE) (Welch-Satterthwaite degrees of freedom; training noise only; five arms against one baseline, no correction):
+
+| Arm | Primary | S2 accuracy (points) | Wrong per 1k at >= 0.90 | Wrong per 1k at >= 0.95 |
+| --- | --- | --- | --- | --- |
+| TECH | -20.10 [-31.04, -9.17] | +26.57 [+24.36, +28.78] | -59.39 [-65.59, -53.18] | -41.16 [-49.45, -32.87] |
+| TECH-NT | -20.59 [-32.39, -8.79] | +4.88 [+2.66, +7.11] | -31.11 [-37.79, -24.43] | -20.21 [-29.38, -11.04] |
+| TECH-ND | -4.27 [-14.10, +5.55] | +25.58 [+22.57, +28.59] | -52.16 [-58.18, -46.14] | -42.41 [-50.42, -34.40] |
+| TECH-T2 | -25.16 [-35.54, -14.77] | +31.57 [+29.56, +33.58] | -60.32 [-66.64, -54.00] | -44.36 [-52.67, -36.06] |
+| TECH-W2 | -33.99 [-43.73, -24.26] | +33.95 [+32.13, +35.78] | -66.26 [-71.86, -60.67] | -45.38 [-53.30, -37.46] |
+
+Pairwise contrasts against TECH (reported, not gated): TECH-NT - TECH on the primary -0.49 [-10.78, +9.81], on S2 -21.69 [-23.96, -19.41], on the calibration +28.28 [+22.27, +34.28] and +20.94 [+13.51, +28.38]; TECH-ND - TECH on the primary +15.83 [+8.32, +23.34], on S2 -0.99 [-4.03, +2.05]; TECH-T2 - TECH on the primary -5.05 [-13.42, +3.32], on S2 +5.00 [+2.93, +7.07]; TECH-W2 - TECH on the primary -13.89 [-21.25, -6.53], on S2 +7.38 [+5.49, +9.28], on the calibration at >= 0.90 -6.88 [-11.49, -2.27] and at >= 0.95 -4.23 [-9.58, +1.13].
+
+The technical tranches, the old tranches and the guarded measures (mean ± sample standard deviation; `harmful` per 1,000 noun-verb decisions):
+
+| Arm | S1 harmful | S3 harmful | S4 harmful | Old pool harmful | Hard harmful | Standard harmful | Imperative-heading harmful |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 270.5 ± 15.7 | 363.7 ± 33.6 | 115.5 ± 7.6 | 193.1 ± 16.3 | 159.7 ± 14.5 | 12.1 ± 2.3 | 47.9 ± 13.9 |
+| TECH | 206.6 ± 15.6 | 393.5 ± 33.3 | 110.9 ± 5.3 | 180.1 ± 17.2 | 153.8 ± 10.5 | 10.0 ± 2.0 | 72.9 ± 25.1 |
+| TECH-NT | 211.1 ± 24.7 | 380.6 ± 35.8 | 111.3 ± 8.7 | 179.3 ± 11.6 | 164.1 ± 15.3 | 9.2 ± 1.5 | 62.5 ± 23.1 |
+| TECH-ND | 252.1 ± 14.3 | 372.6 ± 36.8 | 111.3 ± 11.3 | 195.2 ± 11.2 | 163.1 ± 9.3 | 10.2 ± 1.9 | 56.2 ± 8.6 |
+| TECH-T2 | 191.0 ± 9.8 | 392.7 ± 46.7 | 115.1 ± 8.6 | 175.8 ± 9.6 | 158.4 ± 9.6 | 10.4 ± 1.7 | 85.4 ± 35.0 |
+| TECH-W2 | 182.3 ± 14.5 | 371.8 ± 25.3 | 108.0 ± 7.1 | 169.7 ± 9.4 | 154.7 ± 16.6 | 8.3 ± 1.5 | 62.5 ± 19.4 |
+
+| Arm | Open dev accuracy % | Open dev harmful | Gold v2 dev accuracy % | Gold v2 dev harmful | UD-EWT dev accuracy % | UD-EWT dev harmful | Named-state accuracy % | Technical controls (320) accuracy % | Deflated bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BASE | 96.703 ± 0.040 | 20.64 ± 0.99 | 95.315 ± 0.143 | 18.4 ± 2.7 | 92.962 ± 0.033 | 19.72 ± 0.62 | 92.9 ± 1.2 | 92.27 ± 1.17 | 536,826 ± 898 |
+| TECH | 96.695 ± 0.055 | 20.73 ± 1.11 | 95.321 ± 0.109 | 14.3 ± 2.7 | 93.009 ± 0.048 | 19.91 ± 1.27 | 93.6 ± 1.9 | 94.30 ± 0.91 | 553,154 ± 764 |
+| TECH-NT | 96.694 ± 0.026 | 20.50 ± 1.09 | 95.346 ± 0.128 | 17.4 ± 2.5 | 92.978 ± 0.063 | 19.97 ± 0.66 | 92.6 ± 1.4 | 94.69 ± 0.78 | 547,597 ± 681 |
+| TECH-ND | 96.683 ± 0.030 | 20.36 ± 0.82 | 95.321 ± 0.102 | 16.2 ± 3.2 | 93.012 ± 0.054 | 20.65 ± 1.26 | 93.6 ± 2.6 | 94.30 ± 1.00 | 548,548 ± 927 |
+| TECH-T2 | 96.665 ± 0.027 | 20.33 ± 0.54 | 95.333 ± 0.146 | 14.9 ± 1.4 | 92.967 ± 0.046 | 20.65 ± 0.82 | 93.9 ± 0.6 | 94.88 ± 0.78 | 555,388 ± 444 |
+| TECH-W2 | 96.702 ± 0.041 | 20.47 ± 0.78 | 95.358 ± 0.102 | 15.5 ± 3.2 | 93.013 ± 0.055 | 20.10 ± 1.76 | 93.8 ± 1.6 | 94.45 ± 0.62 | 559,571 ± 633 |
+
+Per seed (primary / S2 accuracy % / wrong per 1k at >= 0.90 / at >= 0.95; the per-seed tables of all arms are in `report.md`): BASE 20260101 224.6 / 30.7 / 117.3 / 57.1 (the shipped model); TECH 20260101 196.6 / 61.4 / 54.2 / 26.4. In all eight seeds every arm that contains `terms` has an S2 accuracy above the highest BASE seed (35.8) and a calibration at both thresholds below the lowest BASE seed (112.6 and 57.1).
+
+### E2 results: the guards and rule T
+
+Every candidate passes every guard except **TECH-T2, which fails the imperative-heading guard** (harmful +37.50 per 1,000 against the limit +25; its Welch interval of the difference to BASE, +37.50 [+7.45, +67.55], excludes 0). The other guarded differences to the BASE mean (TECH; the limit in brackets): old pool -13.03 (+25), S1 -63.89 (+25), S3 +29.84 (+35), S4 -4.55 (+25), hard -5.94 (+22), standard -2.08 (+5), open dev harmful +0.08 (+1.5), open dev accuracy -0.01 points (-0.10), gold harmful -4.09 (+4.5), gold accuracy +0.01 (-0.25), UD harmful +0.19 (+1.5), UD accuracy +0.05 (-0.15), named state +0.75 (-3), imperative headings **+25.00 (+25; passes at the limit: 1.5 more harmful errors on average in the 60 decisions, within the tolerance of 1e-9)**, technical controls +2.03 (-3), S2 proper-noun controls -1.96 (-5), deflated bytes 1.030 times BASE (1.5), throughput 558,446 tokens per second (150,000), calibration -59.39 and -41.16 (0). The two limits closest to being crossed by TECH are therefore the imperative-heading guard (at the limit) and S3 (+29.84 of +35); the Welch interval of TECH - BASE for the imperative headings is +25.00 [+2.65, +47.35] and for S3 +29.84 [-6.01, +65.69]. These are reported, not re-weighed: the rule has no other criterion.
+
+- Candidates passing every guard: TECH, TECH-ND, TECH-W2.
+- Q (every guard passed, Welch interval of the primary entirely below 0, Welch interval of S2 entirely above 0): **TECH, TECH-W2**. TECH-ND has S2 above 0 but a primary interval [-14.10, +5.55] that includes 0; TECH-T2 passes both intervals but fails a guard; TECH-NT is never in Q.
+- m = TECH-W2 (primary 183.08); the window is primary <= 1.10 x m = 201.39: TECH (196.97) and TECH-W2.
+- Winner: the arm of the window with the fewest weighted added sentences, **TECH** (1,851 against 3,702).
+- Welch 95% interval of (TECH - BASE): primary -20.10 [-31.04, -9.17] (df 12.93, p 0.0016); S2 accuracy +26.57 [+24.36, +28.78] points (df 13.97, p < 0.0001).
+
+**Decision (as the script prints it): TECH WINS.** "TECH wins: it has the fewest weighted added sentences (1,851) among the arms of Q within 10% of the lowest primary (TECH-W2, 183.08); the Welch 95% interval of (TECH - BASE) is [-31.04, -9.17] on the primary (entirely below 0) and [24.36, 28.78] on the S2 target accuracy (entirely above 0)."
+
+### E2 results: reading, without a change of the rule (implementing-agent observations)
+
+- Attribution (reported, not gated). TECH-NT shows that the primary gain does not need `terms` (TECH-NT - TECH on the primary -0.49 [-10.78, +9.81]) while the S2 gain does (37.85% against 59.53%, difference -21.69 [-23.96, -19.41]); TECH-ND shows that `deverbal` carries the S1 gain (S1 harmful 252.1 without it against 206.6 with it) and that without it the primary interval no longer excludes 0 (TECH-ND - TECH on the primary +15.83 [+8.32, +23.34]). The dose arms (1.2 and 2.0 times the added sentences of TECH): doubling `terms` (TECH-T2 - TECH) raises S2 by 5.00 points [+2.93, +7.07] without a significant change of the primary (-5.05 [-13.42, +3.32]) and fails the imperative-heading guard; doubling all four sources (TECH-W2 - TECH) raises S2 by 7.38 points and lowers the primary by 13.89 [-21.25, -6.53].
+- Calibration: both calibration measures fall by 44 to 64% in every arm with `terms` and by 26 to 29% in TECH-NT. The figures are still above the 10 wrong per 1,000 (1%) of the technical operating point rule: TECH answers with 29.3 wrong per 1,000 at a confidence of at least 0.95 (mean over the seeds) and TECH-W2 with 25.1. The technical operating point of the model that ships is computed only after the adoption (`technical_points.py`, rule `nv-technical-dev-v1`; its parameters are the fixed ones) and nothing here changes it.
+- Strength of the evidence: the intervals are training noise only; four candidates against one baseline without correction (winner's curse); the tranches are the frames the sources were built from and about half of their judged lemmas also occur in the training source of their shape, and the defined-terms convention disagrees with about 2,000 existing training labels (all as disclosed in the pre-registration); the S2 gain in particular may not carry to other text. The held-out look that follows an adoption is the independent check; it has not been made.
+- The sentence "TECH wins" is a statement about development data under rule T. It does not mean that the strict gate of the shipped model is calibrated to 1% on technical text.
+
+What happens next is in the outcome section above: an adoption plan (retraining the shipped weights at seed 20260101 byte-identically to `TECH-s20260101.bin`, the general points and the technical point on development data, a plan of the held-out look) is written in this log before any retraining and before any held-out command. Nothing of it is started by this commit.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.
