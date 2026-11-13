@@ -362,7 +362,8 @@ command measures that on **development data only**, with a rule that is written 
   caveats are written to `docs/evaluation/technical-operating-points.json`, and the same table is a section of
   `confidence-thresholds.md`. The artifact names the weights file by its SHA-256 and the four tranche files by
   theirs; it is development data only, read by no other command, and the held-out evaluation applies the general
-  points only.
+  points only. The documentation states the point as a measured fact (with its interval and coverage), not as a
+  recommended gate.
 - **Limitation.** A threshold chosen on development data is optimistic, and the gold v2 development set has few harmful
   errors; the held-out run reports what the thresholds do on data that played no part in choosing them.
 

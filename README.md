@@ -96,8 +96,10 @@ Recommended confidence thresholds, with the share of the noun-verb decisions tha
 | `strict` | 0.90 | 89.7 | 4.6 |
 | `balanced` | 0.75 | 94.9 | 9.1 |
 
-Rule checkers should use `strict`; treat tokens below the threshold as unknown, and also the tokens of words that the
-lexicon does not know (`IsKnownWord`) when their tag is a noun, a verb or a proper noun.
+Rule checkers should use `strict` together with `Margin`, `IsKnownWord` and a domain `Glossary` or `TokenConstraint`;
+treat tokens below the threshold as unknown, and also the tokens of words that the
+lexicon does not know (`IsKnownWord`) when their tag is a noun, a verb or a proper noun. A confident error on a term that
+the dictionary knows is best removed with the glossary, not with a higher threshold.
 
 The [evaluation report][link-evaluation] has the details.
 

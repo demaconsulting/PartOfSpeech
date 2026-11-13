@@ -309,7 +309,9 @@ has the 15 thresholds of the grid, that the first threshold of the curve with at
 answers and at least 25% of the judged words answered (integer comparisons) is the recorded point (or that the
 artifact says none when no threshold qualifies), that the section "Technical text" of `confidence-thresholds.md`
 states the same point and has the answers, coverage, wrong answers and error rate of every threshold row of the curve,
-and that the user guide states the point with its wrong answers, answers, error rate and coverage. A retrained model
+and that the user guide states the point with its wrong answers, answers, error rate and coverage. The user guide and
+the namespace reference call the point "not a recommended gate", and the selection report calls it "not as a
+recommended gate". A retrained model
 or a changed tranche fails until the point is computed again. The test opens no held-out data file.
 
 ### Evaluation Record States the Figures of the Reports
@@ -372,7 +374,10 @@ theory runs with 1, 3 and 16 alternatives.
 `PartOfSpeech_RuleChecker_UserGuideExample_UsesTheDocumentedCriterionAndCompiles` reads the section "Using the Tagger in
 a Rule Checker" of the user guide, compiles its C# example against the real API with the compiler that compiles the
 documented examples (`XmlDocExampleVerifier.VerifySnippet`), asserts that the example and the namespace reference use
-`token.IsConstrained && token.Alternatives.Count == 0` and not the confidence 1.0, that the prose explains why, and that
+`token.IsConstrained && token.Alternatives.Count == 0` and not the confidence 1.0, that the prose explains why, that the
+guide and the namespace reference give the strict threshold together with the margin, the known-word flag and a domain
+glossary or constraint as the recommended way to a low error rate and the glossary, not a higher threshold, as the way to
+remove confident errors on known terms, and that
 the guide describes the folded lookup form of the known-word flag.
 
 The documented-example test runs the dictionary of the documented example ("Manual Override" and "Wiring Schematic" as

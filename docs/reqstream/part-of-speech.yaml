@@ -1494,7 +1494,8 @@ sections:
           point (the first grid threshold with at most 10 wrong answers per 1,000 answers and at least 25% of the judged
           words answered on the four technical tranches pooled, or none with the lowest error rate at that coverage),
           the whole curve and its caveats, as a committed artifact that names the SHA-256 of the embedded weights file
-          and of the four tranche files, and as a section of the selection report that equals the artifact.
+          and of the four tranche files, and as a section of the selection report that equals the artifact. The
+          documentation shall state the point as a measured fact and not as a recommended gate.
         tags: [system]
         justification: |
           A consumer that checks technical text needs to know how often a confident answer is wrong on such text, which
@@ -1504,7 +1505,8 @@ sections:
           the model, so a test recomputes the point from the committed curve with integer comparisons and compares the
           model hash, the tranche hashes and the table of the report, so that a retrained model or a changed tranche
           fails until the point is computed again. No held-out set carries these shapes, so the figures are development
-          figures and the artifact states that.
+          figures and the artifact states that. The point rests on few answers (one wrong answer for the embedded
+          model), so it is documented as a measurement with its interval and coverage and not as a threshold to gate on.
         tests:
           - PartOfSpeech_Evaluation_TechnicalOperatingPoint_MatchesTheShippedModelAndTheRule
 
@@ -1535,7 +1537,10 @@ sections:
           the confidence, the margin, the alternatives, the known-word flag and a domain dictionary, including how it
           tells a token that the dictionary forced to one tag (a constrained token without alternatives) from one that
           a soft constraint only favored (whose confidence can round to exactly 1.0), with a compiled example, and the
-          generated reference shall carry the margin and the known-word flag of a token.
+          generated reference shall carry the margin and the known-word flag of a token. They shall give the strict
+          threshold together with the margin, the known-word flag and a domain glossary or constraint as the recommended
+          way to a low error rate, and the glossary rather than a higher threshold as the way to remove confident errors
+          on terms that the dictionary knows.
         tags: [system]
         justification: |
           The signals only help a consumer that knows what they mean and in which order to read them; a consumer that

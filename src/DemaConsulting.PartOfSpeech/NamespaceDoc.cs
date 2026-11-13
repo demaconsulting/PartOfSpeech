@@ -231,9 +231,14 @@ namespace DemaConsulting.PartOfSpeech;
 ///     evaluation does not measure these shapes. On four development tranches of such words (1,417 judged words) the
 ///     technical operating point, the first threshold with at most 10 wrong answers in 1,000 answers and at least 25% of the
 ///     judged words answered, is 0.99: 1 wrong answer in 357 (2.8 in 1,000, 95% interval 0.5 to 15.7 in 1,000) at a coverage
-///     of 25.2%. It rests on one wrong answer and its interval reaches above 1%, so read it as an estimate and not as a
-///     guarantee; at the strict threshold the wrong answers on these words are 54.2 in 1,000 answers. These are development
+///     of 25.2%. It is a measured fact about the development tranches, not a recommended gate: it rests on one wrong answer
+///     and its interval reaches above 1%, so read it as an estimate and not as a guarantee; at the strict threshold the
+///     wrong answers on these words are 54.2 in 1,000 answers. These are development
 ///     figures (https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/technical-operating-points.json).
+///     The recommended way for a rule checker to reach a low error rate is the strict threshold together with
+///     <see cref="TaggedToken.Margin"/>, <see cref="TaggedToken.IsKnownWord"/> and a domain <see cref="Glossary"/> or
+///     <see cref="TokenConstraint"/>; a confident error on a term that the dictionary knows is best removed with the
+///     glossary, not with a higher threshold.
 ///     </para>
 ///     <para>
 ///     The development selection, the held-out results on every set, the limits of the measurement and how to reproduce
@@ -605,7 +610,10 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </description></item>
 ///     </list>
 ///     <para>
-///     The rule checker quick start at the end of this page is a complete example.
+///     The rule checker quick start at the end of this page is a complete example. The recommended way to reach a low error
+///     rate is the strict threshold together with the margin, the known-word flag and a domain <see cref="Glossary"/> or
+///     <see cref="TokenConstraint"/>; a confident error on a term that the dictionary knows is best removed with the
+///     glossary, not with a higher threshold. No threshold above the strict one is recommended.
 ///     </para>
 ///     <para>
 ///     ## Thread safety

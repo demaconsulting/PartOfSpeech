@@ -409,8 +409,14 @@ public class PartOfSpeechEvaluationTests
             var point = curve[firstQualifying];
             problems.AddRange(Missing("user guide", Collapse(ReadText(UserGuidePath)), new[]
             {
-                $"**{threshold}**", $"{point.Wrong} wrong answer", $"in {point.Answers} ({One(point.Error)} in 1,000", $"coverage of {One(point.Coverage)}%"
+                $"**{threshold}**", $"{point.Wrong} wrong answer", $"in {point.Answers} ({One(point.Error)} in 1,000", $"coverage of {One(point.Coverage)}%",
+                "not a recommended gate"
             }));
+            problems.AddRange(Missing("namespace reference", DocumentationText(NamespaceDocPath), new[]
+            {
+                "not a recommended gate"
+            }));
+            problems.AddRange(Missing("selection report", report, new[] { "not as a recommended gate" }));
         }
 
         var section = Between(report, "## Technical text (rule `nv-technical-dev-v1`", "\n- The figures are development figures");

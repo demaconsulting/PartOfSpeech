@@ -226,17 +226,21 @@ classifier, so not the error rate of ordinary technical prose). At the strict th
 and 121.6 harmful errors in 1,000 decisions. On such text the strict threshold is therefore far from the target of 5 in
 1,000 that it reaches on ordinary text.
 
-A consumer that needs a low error on technical text has a technical operating point: the first threshold with at most
-10 wrong answers in 1,000 answers (1%) and at least 25% of the judged words answered. For the embedded model it is
-**0.99**: 1 wrong answer in 357 (2.8 in 1,000, 95% interval 0.5 to 15.7 in 1,000) at a coverage of 25.2%. Read it with
-its limits: it rests on one wrong answer, it clears the coverage floor by two answers, its interval reaches above 1%,
-the threshold below it (0.98) has 13.2 wrong answers in 1,000 (6 in 454), and the figures are development figures. Use
-`0.99` as the confidence below which a token in technical text is treated as unknown, expect about three in four of
-such contested words to fall below it, and do not read 1% as a guarantee. The curve of every threshold, the rule and
-its caveats are in
+The development measurement has a technical operating point: the first threshold with at most 10 wrong answers in
+1,000 answers (1%) and at least 25% of the judged words answered. For the embedded model it is **0.99**: 1 wrong
+answer in 357 (2.8 in 1,000, 95% interval 0.5 to 15.7 in 1,000) at a coverage of 25.2%. It is a measured fact about
+the development tranches, not a recommended gate. It rests on one wrong answer, it clears the coverage floor by two
+answers, its interval reaches above 1%, the threshold below it (0.98) has 13.2 wrong answers in 1,000 (6 in 454), and
+the figures are development figures; about three in four of such contested words fall below it, and 1% is not a
+guarantee. The curve of every threshold, the rule and its caveats are in
 [`technical-operating-points.json`](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/technical-operating-points.json)
 and in the section "Technical text" of the
 [selection report](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/confidence-thresholds.md).
+
+The recommended way for a rule checker to reach a low error rate, on technical text as on any other, is the strict
+threshold together with `TaggedToken.Margin`, `TaggedToken.IsKnownWord` and a domain `Glossary` or `TokenConstraint`
+(see _Using the Tagger in a Rule Checker_). A confident error on a term that the dictionary knows is best removed with
+the glossary, which fixes the term wherever it occurs, and not with a higher threshold.
 
 ## Constraints
 
@@ -443,6 +447,12 @@ error. Four things help:
   allowed (also for capitalized words, numbers and punctuation that the lexicon does not list), so a noun, verb or proper
   noun tag on such a word is a guess. The flag is about the lexicon, not about being a word: punctuation and numbers that
   the lexicon lists are known, and a capital letter never makes a word known.
+
+The recommended way for a rule checker to reach a low error rate is the strict threshold together with the margin, the
+known-word flag and a domain `Glossary` or `TokenConstraint`. A confident error on a term that the dictionary knows is
+best removed with the glossary, not with a higher threshold: a glossary entry fixes the term wherever it occurs, while a
+higher threshold gives up coverage on every token. No threshold above `strict` is recommended (see _Technical Text_ for
+the measured point at 0.99).
 
 A dictionary decides a token only when it leaves a single tag: a hard glossary entry or a `TokenConstraint.Only` with one
 tag. That token has `IsConstrained` set, the confidence 1.0 and no `Alternatives`; the head word of an entry that the

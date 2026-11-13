@@ -561,6 +561,15 @@ public class PartOfSpeechTests
         Assert.Contains(criterion.Replace("&&", "&amp;&amp;"), namespaceDoc);
         Assert.DoesNotContain("Confidence >= 1.0", namespaceDoc);
 
+        // The guidance for a low error rate: the strict threshold with the margin, the known-word flag and a domain
+        // glossary or constraint, and the glossary (not a higher threshold) for confident errors on known terms
+        var flatNamespace = string.Join(" ", namespaceDoc.Split('\n').Select(line => line.TrimStart().TrimStart('/')))
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        var namespaceProse = string.Join(" ", flatNamespace);
+        Assert.Contains("strict threshold together with the margin, the known-word flag and a domain `Glossary` or `TokenConstraint`", prose);
+        Assert.Contains("best removed with the glossary, not with a higher threshold", prose);
+        Assert.Contains("the strict threshold together with the margin, the known-word flag and a domain <see cref=\"Glossary\"/> or <see cref=\"TokenConstraint\"/>", namespaceProse);
+        Assert.Contains("best removed with the glossary, not with a higher threshold", namespaceProse);
         // The known-word lookup is described with its whole normalization, not only the lower-casing
         var flatGuide = string.Join(" ", guide.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
         Assert.Contains("(Unicode NFC normalization; typographic quotes, dashes and the ellipsis mapped to ASCII)", flatGuide);
