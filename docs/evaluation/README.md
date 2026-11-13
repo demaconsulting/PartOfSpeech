@@ -61,11 +61,14 @@ them and states what they do not show.
    before the first curve was computed, and it applied unchanged to every later model.
 3. **The thresholds were selected on development data only** and committed with the selection artifact
    ([operating-points.json](operating-points.json)) before the held-out run.
-4. **The held-out sets were evaluated once for this model.** The `evaluate` command is the only code that opens a
-   held-out file, only with a valid selection for the frozen model, and it refuses to run when `test-results.json`
-   exists (the previous record was deleted on purpose, in a commit of its own, before the run). The results were
-   committed as produced, from one run, with no later change of the report. The same sets had
-   been evaluated before for earlier models of the family, so this run is a fifth look.
+4. **The held-out sets were evaluated once for this model.** The `evaluate` command is the only code of the trainer that
+   opens a held-out file, only with a valid selection for the frozen model, and it refuses to run when
+   `test-results.json` exists (the previous record was deleted on purpose, in a commit of its own, before the run). The
+   results were committed as produced, from one run, with no later change of the report. The same sets had
+   been evaluated before for earlier models of the family, so this run is a fifth look. The Python data tools read
+   held-out sentences only as hashed keys (the leakage checks) and, in one command, as integer counts
+   (`tools/data/term_divergence.py count-held-out`, recorded in `data/technical/README.md`, section "Divergence from UD
+   Practice"); neither scores a model, so neither is a look at a model result.
 
 The evaluation sets are described in [data/eval](../../data/eval/README.md). In short:
 
