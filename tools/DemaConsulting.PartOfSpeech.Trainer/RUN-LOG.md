@@ -6848,6 +6848,111 @@ What is run (the procedure of the earlier held-out steps, followed exactly):
 8. **This is the sixth look at these sets**, so none of the figures is a first look at unseen data; the development gain of the adoption is on the frames that the technical sources were built from, and the held-out sets contain no technical text of that kind, so a held-out result is not expected to repeat it.
 9. What is disclosed afterwards: `docs/evaluation/disclosure.md` (already revised in the adoption commit), the overview `docs/evaluation/README.md`, the README tables, the confidence guidance of the user guide and of the packed API reference (generated figures copied by test-guarded rules), `.fileassert.yaml`, and the record section that follows this one.
 
+## beta.3 phase 2: held-out evaluation of the shipped TECH model (disclosed sixth look; a new record, not an erratum)
+
+This is a **new** record for the shipped model. It does not correct or replace the earlier ones (the sections "Outcome of the held-out run" and its errata, "Corpus cleanup C: held-out evaluation of the retrained model", "Corpus cleanup C: held-out evaluation of the adopted NO-ING model", "Context-feature experiment: held-out evaluation of the shipped clause-cue model", "Imperative training data: held-out evaluation of the shipped F2+IMP model" and "Follow-up: held-out evaluation of the shipped CMP2 model"), which stay as written. Order (git history of this branch): the results of the experiment (`b3dc715`), the adoption plan (`c56e091`), the adoption (`0d69b8f`, development data only) and its record (`2fc79d2`), the plan of this look (`76ebad2`), the deletion of the previous record on purpose (`502bf75`; `evaluate` refuses to run while a record exists; the previous record stays in git at `ebddca4` and was copied outside the repository first, SHA-256 of its JSON `5ae34ae4382da3ba87f56a691df9cce54b8c0f70778ffa69e4d6d67bc5138791`), the one `evaluate` and its generated record (`6f0ac52`), and this section with the documents after it.
+
+**This is the sixth look of the family at these held-out sets** (seven models have now been scored on them; see `docs/evaluation/disclosure.md`), so none of the figures below is a first look at unseen data. It was run because the instruction of the implementing agent's task (step D3b; not a decision of the owner) asked for exactly one held-out `evaluate`, as the registration of the experiment provided. `evaluate --preflight` passed first (it scores nothing: every input read, hash and header verified, counts equal the documented ones); `evaluate --dump-dir <folder outside the repository>` then ran **once** (BelowNormal, `DOTNET_PROCESSOR_COUNT=8`, the treebank from the git-ignored cache; the PAUSE file did not exist). It exited with 1 because of the stop conditions below (findings, not failures of the run) and the committed files are the output as produced. **No second `evaluate` run was made and nothing was re-rolled.** Nothing was selected, tuned or reverted because of any result, and the model, the thresholds and every rule are those of the adoption commit. The previous model (CMP2, the record at `ebddca4`) was not evaluated again: its figures below are those of its committed record.
+
+### TECH held-out: stop conditions
+
+**Three fired**, one more than in the previous record:
+
+- `gold-v2-test-to-not`: gold outside the candidates for 50.00% of the 8 targets (the same as in all earlier records); the `to`/`not` convention difference.
+- `ud-test-raw`: gold outside the candidates for 1.93% (484 of 25,094 words) (the same); the primary mapped view is at 0.55% (138 words) (the same), under the limit.
+- `shape-probe`: **fired**: 30 harmful errors at 0.45 against a limit of 28 (5% of 560 rows). The previous model had 27 (limit not reached, margin one error); the stop condition had last fired in the records before the imperative model (37 and more). It is above the limit by two errors.
+
+All other stop conditions held: the counts equal the documented ones; the open test accuracy is 96.70%; the harmful rates per 1,000 answered at the strict (4.6) and balanced (9.1) points on the open test split are below twice the pooled development rates (2 x 4.3 and 2 x 8.8); the open test ECE is 0.23%; the open test gold outside the candidates is 41 of 26,185 tokens. The registration states **no rollback condition** for this look ("No rollback condition is added"), none was applied, and a fired stop condition is reported, not tuned.
+
+### TECH held-out: what is comparable
+
+The two models were scored on the same labels on all five held-out sets, and the six input hashes are identical in the two records, so all sets are fair comparisons between them. Intervals are the 95% percentile bootstrap over documents of each record (1,000 resamples, seed 1). **No paired interval between the models was computed**, so overlapping intervals are not a test: the intervals overlap on every row below. The sets are small and the shipped model is one training seed. The two models also have different balanced thresholds (previous 0.80, shipped 0.75; strict 0.90 for both), so the balanced rows compare two models at two thresholds.
+
+### TECH held-out: accuracy and harmful errors at the harmful limit 0.45 (previous = CMP2 model, shipped = TECH model)
+
+| Set | Model | Accuracy % | Ambiguous accuracy % | Decisions | Harmful | Harmful per 1,000 decisions | ECE % | NLL | Gold outside candidates |
+| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | ---: |
+| open-test | previous | 96.73 [96.40, 97.03] | 95.94 [95.61, 96.28] | 4,392 | 88 | 20.0 [15.4, 24.7] | 0.27 [0.23, 0.55] | 0.1053 [0.0923, 0.1191] | 41 |
+| | **shipped** | 96.70 [96.37, 97.00] | 95.92 [95.59, 96.26] | 4,392 | 84 | 19.1 [14.8, 23.7] | 0.23 [0.21, 0.52] | 0.1065 [0.0929, 0.1205] | 41 |
+| gold-v2-test | previous | 94.57 [93.71, 95.35] | 91.70 [90.33, 92.90] | 936 | 28 | 29.9 [18.8, 41.3] | 2.14 [1.67, 3.00] | 0.2371 [0.1937, 0.2856] | 12 |
+| | **shipped** | 94.77 [93.94, 95.50] | 92.00 [90.79, 93.16] | 936 | 21 | 22.4 [13.1, 32.7] | 2.10 [1.58, 2.91] | 0.2346 [0.1927, 0.2820] | 12 |
+| gold-v2-test-full-agreement | previous | 95.39 [94.58, 96.18] | 92.49 [91.19, 93.77] | 713 | 20 | 28.1 [16.2, 41.5] | 1.71 [1.30, 2.60] | 0.1874 [0.1475, 0.2295] | 5 |
+| | **shipped** | 95.62 [94.83, 96.38] | 92.87 [91.56, 94.13] | 713 | 16 | 22.4 [12.3, 34.8] | 1.54 [1.14, 2.39] | 0.1842 [0.1437, 0.2279] | 5 |
+| gold-v2-test-to-not | previous | 50.00 [12.50, 87.50] | 100.00 [100.00, 100.00] | 0 | 0 | 0.0 [0.0, 0.0] | 52.59 [22.10, 87.25] | 6.9597 [1.8679, 12.0911] | 4 |
+| | **shipped** | 50.00 [12.50, 87.50] | 100.00 [100.00, 100.00] | 0 | 0 | 0.0 [0.0, 0.0] | 51.59 [18.84, 87.22] | 6.9429 [1.8186, 12.0914] | 4 |
+| shape-probe | previous | 93.39 [91.25, 95.36] | 93.35 [91.20, 95.32] | 556 | 27 | 48.6 [30.6, 66.4] | 2.34 [1.96, 4.62] | 0.1682 [0.1262, 0.2141] | 0 |
+| | **shipped** | 93.04 [90.89, 95.18] | 92.99 [90.81, 95.14] | 556 | 30 | 54.0 [35.8, 73.5] | 2.48 [2.09, 4.88] | 0.1591 [0.1206, 0.2022] | 0 |
+| challenge-set | previous | 88.97 [83.22, 94.27] | 89.90 [83.77, 94.76] | 86 | 0 | 0.0 [0.0, 0.0] | 7.16 [3.92, 12.10] | 0.3141 [0.1618, 0.4841] | 0 |
+| | **shipped** | 92.28 [88.26, 96.18] | 94.44 [90.24, 97.89] | 86 | 0 | 0.0 [0.0, 0.0] | 4.50 [2.48, 8.15] | 0.2073 [0.1096, 0.3172] | 0 |
+| ud-test-mapped | previous | 93.05 [92.52, 93.54] | 92.84 [92.22, 93.40] | 4,410 | 73 | 16.6 [12.6, 20.8] | 2.23 [1.92, 2.66] | 0.2917 [0.2671, 0.3248] | 138 |
+| | **shipped** | 93.17 [92.64, 93.64] | 92.98 [92.41, 93.53] | 4,410 | 79 | 17.9 [13.8, 22.4] | 2.14 [1.86, 2.56] | 0.2883 [0.2637, 0.3216] | 138 |
+| ud-test-raw | previous | 89.09 [88.54, 89.57] | 88.54 [87.86, 89.15] | 4,007 | 73 | 18.2 [13.8, 23.0] | 6.18 [5.81, 6.64] | 0.6097 [0.5755, 0.6501] | 484 |
+| | **shipped** | 89.19 [88.63, 89.68] | 88.65 [88.01, 89.28] | 4,007 | 78 | 19.5 [15.0, 24.4] | 6.12 [5.71, 6.59] | 0.6082 [0.5750, 0.6483] | 484 |
+
+### TECH held-out: operating points (each model at its own thresholds: previous strict 0.90 and balanced 0.80, shipped strict 0.90 and balanced 0.75)
+
+| Set | Model | Point | Threshold | Coverage % | Harmful per 1,000 answered | Harmful of answered |
+| --- | --- | --- | ---: | ---: | --- | --- |
+| open-test | previous | strict | 0.90 | 89.4 | 3.8 [1.8, 6.4] | 15 of 3,925 |
+| open-test | previous | balanced | 0.80 | 93.3 | 7.1 [4.1, 10.0] | 29 of 4,099 |
+| open-test | **shipped** | strict | 0.90 | 89.7 | 4.6 [2.4, 7.2] | 18 of 3,940 |
+| open-test | **shipped** | balanced | 0.75 | 94.9 | 9.1 [6.1, 12.2] | 38 of 4,169 |
+| gold-v2-test | previous | strict | 0.90 | 86.1 | 3.7 [0.0, 8.1] | 3 of 806 |
+| gold-v2-test | previous | balanced | 0.80 | 91.3 | 9.4 [3.5, 16.0] | 8 of 855 |
+| gold-v2-test | **shipped** | strict | 0.90 | 87.7 | 2.4 [0.0, 6.3] | 2 of 821 |
+| gold-v2-test | **shipped** | balanced | 0.75 | 94.1 | 10.2 [3.9, 17.5] | 9 of 881 |
+| gold-v2-test-full-agreement | previous | strict | 0.90 | 85.8 | 3.3 [0.0, 8.0] | 2 of 612 |
+| gold-v2-test-full-agreement | previous | balanced | 0.80 | 91.7 | 10.7 [3.2, 19.9] | 7 of 654 |
+| gold-v2-test-full-agreement | **shipped** | strict | 0.90 | 87.7 | 1.6 [0.0, 5.2] | 1 of 625 |
+| gold-v2-test-full-agreement | **shipped** | balanced | 0.75 | 94.2 | 8.9 [2.8, 16.4] | 6 of 672 |
+| shape-probe | previous | strict | 0.90 | 75.4 | 11.9 [2.4, 22.0] | 5 of 419 |
+| shape-probe | previous | balanced | 0.80 | 82.4 | 17.5 [6.4, 30.0] | 8 of 458 |
+| shape-probe | **shipped** | strict | 0.90 | 77.2 | 9.3 [2.2, 18.9] | 4 of 429 |
+| shape-probe | **shipped** | balanced | 0.75 | 89.0 | 20.2 [8.1, 32.3] | 10 of 495 |
+| challenge-set | previous | strict | 0.90 | 83.7 | 0.0 [0.0, 0.0] | 0 of 72 |
+| challenge-set | previous | balanced | 0.80 | 87.2 | 0.0 [0.0, 0.0] | 0 of 75 |
+| challenge-set | **shipped** | strict | 0.90 | 86.0 | 0.0 [0.0, 0.0] | 0 of 74 |
+| challenge-set | **shipped** | balanced | 0.75 | 93.0 | 0.0 [0.0, 0.0] | 0 of 80 |
+| ud-test-mapped | previous | strict | 0.90 | 84.0 | 4.9 [2.7, 7.5] | 18 of 3,705 |
+| ud-test-mapped | previous | balanced | 0.80 | 89.6 | 6.8 [4.0, 9.8] | 27 of 3,953 |
+| ud-test-mapped | **shipped** | strict | 0.90 | 84.8 | 4.5 [2.5, 7.2] | 17 of 3,738 |
+| ud-test-mapped | **shipped** | balanced | 0.75 | 92.4 | 8.1 [5.3, 11.2] | 33 of 4,073 |
+| ud-test-raw | previous | strict | 0.90 | 84.1 | 5.3 [3.0, 8.3] | 18 of 3,369 |
+| ud-test-raw | previous | balanced | 0.80 | 89.5 | 7.5 [4.5, 10.9] | 27 of 3,586 |
+| ud-test-raw | **shipped** | strict | 0.90 | 84.8 | 5.0 [2.8, 7.9] | 17 of 3,398 |
+| ud-test-raw | **shipped** | balanced | 0.75 | 92.2 | 8.9 [5.9, 12.5] | 33 of 3,693 |
+
+The strict target of at most 5.0 per 1,000 answered: met by the point estimate on the open test split (4.6, interval [2.4, 7.2]: the upper bound is above 5.0) and on gold v2 (2.4, [0.0, 6.3]), **exceeded on the shape probe (9.3)**. The balanced target of at most 10.0: met by the point estimate on the open test split (9.1, [6.1, 12.2]: the upper bound is above 10.0) and on the gold v2 full-agreement view (8.9), **exceeded on gold v2 (10.2, nine harmful errors of 881 answered)** where the previous model's balanced point (0.80) was at 9.4, and exceeded on the shape probe (20.2).
+
+### TECH held-out: shape probe by shape (harmful at 0.45; previous model from its record)
+
+| Shape | Rows | Accuracy % previous / shipped | Harmful previous / shipped |
+| --- | ---: | --- | --- |
+| n-obj-light | 80 | 96.25 / 95.00 | 0 / 1 |
+| n-compound-head | 80 | 78.75 / 80.00 | 14 / 13 |
+| n-modifier | 80 | 98.75 / 98.75 | 0 / 0 |
+| n-subject-initial | 80 | 86.25 / 90.00 | 8 / 7 |
+| n-measure | 80 | 95.00 / 92.50 | 4 / 6 |
+| v-imperative-initial | 80 | 98.75 / 96.25 | 1 / 3 |
+| v-after-modal | 80 | 100.00 / 98.75 | 0 / 0 |
+
+### TECH held-out: reading (as produced; nothing is selected, tuned or reverted)
+
+- **Mixed against the previous model; no set shows a difference that the intervals establish.** The open test split has 84 harmful errors against 88 (19.1 against 20.0 per 1,000) with an accuracy 0.03 points lower (96.70% against 96.73%); gold v2 has 21 against 28 (22.4 against 29.9) and an accuracy 0.20 points higher (94.77% against 94.57%); the gold v2 full-agreement view 16 against 20. The calibration error is lower on the open test split (0.23% against 0.27%), gold v2 and the challenge set.
+- **Worse on the shape probe, and the tripwire fired.** 30 harmful errors at 0.45 against 27 (54.0 against 48.6 per 1,000; accuracy 93.04% against 93.39%). By shape: the verb that starts an instruction has 3 harmful errors against 1 (96.25% against 98.75%; the same kind of text as the imperative-heading development tranche whose guard the experiment passed exactly at its limit), the noun in a measurement 6 against 4, and a noun that is the object of a light verb 1 against 0; the compound head (13 against 14) and the noun that starts a sentence (7 against 8) are one error better each. These are differences of one to two errors on 80 rows, all within noise, but the total crosses the limit that was written before any model of this family was scored on the probe.
+- **Worse on the treebank in harmful errors, slightly better in accuracy.** 79 harmful errors against 73 on the mapped view (17.9 against 16.6 per 1,000) and 78 against 73 on the raw view (19.5 against 18.2), with accuracy 0.12 and 0.10 points higher (93.17% and 89.19%).
+- **The challenge set** has an accuracy of 92.28% against 88.97% (nine tokens of 272; a smoke test that supports no figure) and no harmful error in either.
+- **The balanced threshold moved from 0.80 to 0.75 with the model** (the first threshold of the grid that met the development targets for the new model; strict stayed at 0.90). At the new balanced point the held-out harmful rate per 1,000 answered is higher than that of the previous model's point on every general set (open test 9.1 against 7.1, gold v2 10.2 against 9.4, treebank mapped 8.1 against 6.8, shape probe 20.2 against 17.5) while it answers more (open test 94.9% against 93.3%, gold v2 94.1% against 91.3%, treebank 92.4% against 89.6%, shape probe 89.0% against 82.4%); it is the price of the lower threshold and it moves the balanced point to the edge of its target on held-out data (9.1 on the open test split with an upper bound of 12.2; 10.2 on gold v2). The strict point (unchanged threshold) answers a little more on every set (open test 89.7% against 89.4%) with 4.6 against 3.8 per 1,000 answered on the open test split and lower figures on gold v2 (2.4 against 3.7), the shape probe (9.3 against 11.9) and the treebank (4.5 against 4.9).
+- **The technical operating point is not measured here.** No held-out set carries the shapes of the four technical tranches, so the development point of 0.99 (1 wrong of 357 answers, coverage 25.2%; fragile, see the adoption section) has no held-out confirmation, and this look says nothing about technical text; it is reported as a development figure everywhere.
+- **Development evidence against held-out evidence.** The development gain of the experiment (technical tranches; primary measure; the second-stage rates) is on frames that the technical sources were built from. The held-out general sets do not repeat a gain: gold v2 and the open test split are a little better in harmful errors, the shape probe and the treebank are worse, and the differences are inside the intervals. What the held-out look does show is that adopting the technical sources did not make the general sets uniformly better and that the shape probe tripwire fired; the shape probe regressions are an instruction start (the same kind of text as the imperative headings, whose development guard was already at its limit) and a noun in a measurement.
+- **Throughput** of the default tagger on the open test split, one thread: 726,338 tokens per second (the previous record: 460,042; a timing of the machine of the run, which differs between the runs, not a result of the model).
+- **Caveats.** One training seed; the sets are small and every interval overlaps; no paired interval was computed; the labels are model-written; this is the sixth look at these sets by the family, so none of the figures is a first look at unseen data.
+- **Question put by the implementing agent (not a decision, and not the owner's):** the registration states no rollback condition and none was applied, so the TECH model stays as adopted on the strength of the pre-registered development rule. Whether a fired shape-probe tripwire (30 against a limit of 28) should change what ships is for the owner to decide; this run does not decide it.
+
+### TECH held-out: the record files
+
+`docs/evaluation/test-results.json` and `test-results.md` are the generated output of the one run (commit `6f0ac52`): model image `42352bed32845de78380dcda387aac3915468ed9cf4929e8571b95486f7e245b`, selection artifact SHA-256 `07b961017501ef54db083285375ce749f4580d5d3993cc4e4044f8ba8f0b273f` (rule `nv-pooled-dev-v1`); the six input hashes equal those of the previous record. The README tables, the user guide, the packed API reference, `.fileassert.yaml` (the balanced threshold 0.75), `docs/evaluation/README.md` and the documents that quote the record were updated after the run to quote this record; the tests that compare those copies with the record (`PartOfSpeech_Evaluation_ReadmeTables_MatchTheCommittedFigures`, `PartOfSpeech_Evaluation_ConfidenceGuidance_MatchesTheCommittedFigures`, `PartOfSpeech_Evaluation_Record_StatesTheFiguresOfTheReports`, `PartOfSpeech_Evaluation_Results_RecordTheShippedModelAndInputs`, and the disclosure test for `test-results.md`) are the check that they agree.
+
 ## Run table
 
 Every row is one run, scored on open dev and gold v2 dev only, at the run's own fitted temperature.

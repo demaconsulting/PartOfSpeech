@@ -82,19 +82,19 @@ is per 1,000 noun-verb decisions. `shape-probe` and `challenge-set` are small se
 
 | Set | Accuracy (%) | Harmful per 1,000 |
 | --- | ---: | ---: |
-| `open-test` | 96.73 | 20.0 |
-| `gold-v2-test` | 94.57 | 29.9 |
-| `shape-probe` | 93.39 | 48.6 |
-| `challenge-set` | 88.97 | 0.0 |
-| `ud-test-mapped` | 93.05 | 16.6 |
+| `open-test` | 96.70 | 19.1 |
+| `gold-v2-test` | 94.77 | 22.4 |
+| `shape-probe` | 93.04 | 54.0 |
+| `challenge-set` | 92.28 | 0.0 |
+| `ud-test-mapped` | 93.17 | 17.9 |
 
 Recommended confidence thresholds, with the share of the noun-verb decisions that they answer and the harmful errors per
 1,000 answered decisions on the open test split:
 
 | Threshold | Value | Coverage (%) | Harmful per 1,000 answered |
 | --- | ---: | ---: | ---: |
-| `strict` | 0.90 | 89.4 | 3.8 |
-| `balanced` | 0.80 | 93.3 | 7.1 |
+| `strict` | 0.90 | 89.7 | 4.6 |
+| `balanced` | 0.75 | 94.9 | 9.1 |
 
 Rule checkers should use `strict`; treat tokens below the threshold as unknown, and also the tokens of words that the
 lexicon does not know (`IsKnownWord`) when their tag is a noun, a verb or a proper noun.

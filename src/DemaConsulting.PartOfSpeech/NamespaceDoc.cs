@@ -193,19 +193,19 @@ namespace DemaConsulting.PartOfSpeech;
 ///     sentence: a word that is a noun and is
 ///     tagged as a verb, or the other way round (a <em>harmful error</em>). A token is <em>answered</em> at a threshold
 ///     when the confidence of its tag is at least the threshold, and <em>coverage</em> is the share of the noun-verb
-///     decisions that is answered. Without a threshold, 20.0 of 1,000 noun-verb decisions of the open test split are
+///     decisions that is answered. Without a threshold, 19.1 of 1,000 noun-verb decisions of the open test split are
 ///     harmful errors. Two thresholds are recommended for the confidence of <see cref="Tagger.Default"/>
 ///     (<see cref="TaggedToken.Confidence"/>):
 ///     </para>
 ///     <list type="bullet">
 ///     <item><description>
-///     **strict**, 0.90: on the development data it answered 87.4% of the decisions with 4.7 harmful errors in 1,000
-///     answered decisions; on the open test split it answered 89.4% with 3.8 in 1,000. Use it when a wrong noun or verb
+///     **strict**, 0.90: on the development data it answered 87.9% of the decisions with 4.3 harmful errors in 1,000
+///     answered decisions; on the open test split it answered 89.7% with 4.6 in 1,000. Use it when a wrong noun or verb
 ///     does harm, for example in a rule checker.
 ///     </description></item>
 ///     <item><description>
-///     **balanced**, 0.80: on the development data it answered 92.4% of the decisions with 8.3 harmful errors in 1,000
-///     answered decisions; on the open test split it answered 93.3% with 7.1 in 1,000. Use it when more errors are
+///     **balanced**, 0.75: on the development data it answered 94.1% of the decisions with 8.8 harmful errors in 1,000
+///     answered decisions; on the open test split it answered 94.9% with 9.1 in 1,000. Use it when more errors are
 ///     acceptable or when a person sees the result.
 ///     </description></item>
 ///     </list>
@@ -214,10 +214,12 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <see cref="TaggedToken.Alternatives"/> and give the word a <see cref="TokenConstraint"/> or a
 ///     <see cref="Glossary"/> entry. A consumer that needs a low harmful rate must use a threshold, because the harmful
 ///     rate without one is two to eight times higher; the rate is higher still on short technical and imperative text
-///     (48.6 in 1,000 on a probe of such sentences without a threshold). The strict target of at most 5 in 1,000 was met on
-///     the development data, on the open test split (3.8; its 95% interval of 1.8 to 6.4 includes 5) and on the held-out
-///     gold v2 test split (three harmful errors in 806 answered decisions), and is exceeded on the probe (11.9 in 1,000
-///     answered, five harmful errors in 419 answered decisions). The thresholds
+///     (54.0 in 1,000 on a probe of such sentences without a threshold). The strict target of at most 5 in 1,000 was met on
+///     the development data, on the open test split (4.6; its 95% interval of 2.4 to 7.2 includes 5) and on the held-out
+///     gold v2 test split (two harmful errors in 821 answered decisions), and is exceeded on the probe (9.3 in 1,000
+///     answered, four harmful errors in 429 answered decisions). The balanced target of at most 10 in 1,000 was met on the
+///     development data and on the open test split (9.1; its interval of 6.1 to 12.2 includes 10), and is exceeded on the
+///     gold v2 test split (10.2, nine harmful errors in 881 answered decisions) and on the probe (20.2). The thresholds
 ///     apply to the embedded model:
 ///     weights that you load need their own measurement. A token with only one allowed tag has the confidence 1.0 and
 ///     is not a decision, and the confidence of a token that a hard glossary entry limits to one tag says nothing about

@@ -177,16 +177,18 @@ noun-verb decisions that is answered.
 
 | Threshold | Value | Coverage on the open test split | Harmful errors in 1,000 answered decisions |
 | --- | ---: | ---: | ---: |
-| strict | 0.90 | 89.4% | 3.8 |
-| balanced | 0.80 | 93.3% | 7.1 |
+| strict | 0.90 | 89.7% | 4.6 |
+| balanced | 0.75 | 94.9% | 9.1 |
 
-On the development data the same thresholds answered 87.4% (strict, 4.7 harmful errors in 1,000) and 92.4% (balanced, 8.3)
-of the decisions. The strict target of at most 5 in 1,000 was met by the point estimates on the open test split (3.8; its
-95% interval is 1.8 to 6.4 and so includes 5) and on the held-out gold v2 test split (3 harmful errors in 806 answered
-decisions) and is exceeded on the shape probe of short technical and imperative sentences (11.9 in 1,000 answered, five
-errors in 419).
+On the development data the same thresholds answered 87.9% (strict, 4.3 harmful errors in 1,000) and 94.1% (balanced, 8.8)
+of the decisions. The strict target of at most 5 in 1,000 was met by the point estimates on the open test split (4.6; its
+95% interval is 2.4 to 7.2 and so includes 5) and on the held-out gold v2 test split (2 harmful errors in 821 answered
+decisions) and is exceeded on the shape probe of short technical and imperative sentences (9.3 in 1,000 answered, four
+errors in 429). The balanced target of at most 10 in 1,000 was met on the open test split (9.1; its interval is 6.1 to
+12.2 and so includes 10) and exceeded on the gold v2 test split (10.2, 9 errors in 881 answered decisions) and on the
+shape probe (20.2, 10 errors in 495).
 
-Without a threshold, 20.0 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
+Without a threshold, 19.1 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
 
 - **A consumer that needs a low harmful rate must use a threshold.** A rule checker, for example, uses `strict`:
