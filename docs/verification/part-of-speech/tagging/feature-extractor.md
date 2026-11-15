@@ -39,7 +39,15 @@ or the shape bits differ, or extraction allocates after warm-up.
 - **Initial flag**: `FeatureExtractor_Extract_InitialFlag_SkipsLeadingPunctuation`.
 - **Context**: `FeatureExtractor_Extract_Neighbors_UseSentinelsAtBoundaries`.
 - **Fold**: `FeatureExtractor_Extract_Fold_MapsTypographicQuotesAndDashes` and
-  `FeatureExtractor_Extract_Fold_NfcNormalizesNonAscii` (decomposed and composed spellings give the same features).
+  `FeatureExtractor_Extract_Fold_NfcNormalizesNonAscii` (decomposed and composed spellings give the same features);
+  `FeatureExtractor_SetFolded_NormalizedText_EqualsSetToken` (the folding core, given the normalized text, records the same
+  characters, flags, shape and hashes as `SetToken` for the raw text, for ASCII, capitalized, typographic, decomposed,
+  malformed, supplementary and hyphenated tokens, which makes the word lookup and the decoder see identical tokens),
+  `FeatureExtractor_SetFolded_SpanSlice_EqualsTheSameTextAsAToken` (.NET 8 and later: a slice of a longer text folds as
+  the same text alone) and `FeatureExtractor_FoldsToDoubleHyphen_AgreesWithTheFoldingOfEveryCodeUnit` (for each of the
+  65,536 UTF-16 code units the helper is true exactly when folding the unit gives `--`). The string-and-offset form of
+  the core
+  (`SetFoldedPart`, `netstandard2.0` only) is exercised by the word lookup tests that run on `net481`.
 - **Malformed text**: `FeatureExtractor_Extract_Fold_UnpairedSurrogate_UsesReplacementCharacter` (a lone high, a lone
   low and a reversed pair give the features of the same token with U+FFFD, the rest is still normalized, a valid pair is
   kept, and the fast path equals the reference).

@@ -107,9 +107,20 @@ and 4 + 2 + 1 + 4 tag-dependent features give the capacity of 42.
 #### Key Methods
 
 - **`Prepare(workspace, tokens, hashBits)`**: `workspace.Begin`, `SetToken` for every token, then `Finish`.
-- **`SetToken(workspace, index, text)`**: folds one token into the character buffer (NFC only when the token has
-  non-ASCII characters, so pure ASCII allocates nothing), writes the lower-cased copy right behind it, and records the
-  facts, the shape bits and the two hashes. Preconditions: tokens are set in order from 0.
+- **`SetToken(workspace, index, text)`**: normalizes the token (NFC only when it has non-ASCII characters, so pure ASCII
+  allocates nothing; `NormalizeNonAscii`, internal) and passes it to `SetFolded`. Preconditions: tokens are set in order
+  from 0.
+- **`SetFolded(workspace, index, source)`**: the folding core of `SetToken` for text that is already NFC-normalized (or
+  pure ASCII) with well-formed UTF-16: folds it into the character buffer, writes the lower-cased copy right behind it,
+  and records the facts, the shape bits and the two hashes. The parameter is a `ReadOnlySpan<char>` on .NET 8 and later,
+  so the word lookup can fold a word or a part of a longer text without a copy, and a `string` on `netstandard2.0`
+  (which has no span without an extra package), where `SetFoldedPart(workspace, index, source, offset, count)` folds a
+  part of a string and `SetFolded(string)` calls it for the whole string. Both give the same characters, flags, shape
+  and hashes as `SetToken` for the same text (a test compares them over texts of every kind), which is what makes the
+  decoder and the word lookup see identical tokens.
+- **`FoldsToDoubleHyphen(char)`**: whether folding turns a character into `--` (U+2013, U+2014, U+2015). It restates the
+  dash cases of the character folding for the word lookup, which has to find an empty part between hyphens in a word
+  that it does not fold; a test proves it equals the folding for every UTF-16 code unit.
 - **`Finish(workspace, hashBits)`**: computes the 18 tag-independent buckets of every token, including the neighbors;
   when the workspace has groups it then looks the tokens up once in the workspace lexicon (position cues, clause cues
   and right preview) and appends the tag-independent buckets of the groups. It starts the first pass (clause state
@@ -158,7 +169,8 @@ token as not in the lexicon.
 
 #### Callers
 
-- **TagDecoder** (`SetToken`, `Finish`, `Extract`, `Advance`, `StartPass`, constants) and **EmbeddedModel**,
+- **TagDecoder** (`SetToken`, `SetFolded`, `SetFoldedPart`, `NormalizeNonAscii`, `FoldsToDoubleHyphen`, `Finish`,
+  `Extract`, `Advance`, `StartPass`, constants) and **EmbeddedModel**,
   **Tagger** and **PerceptronModel** (`FeatureSetVersion`, `GroupsFeatureSetVersion`, `FeatureSetVersionFor`,
   `KnownGroupsMask`).
 - The test suite and the trainer.

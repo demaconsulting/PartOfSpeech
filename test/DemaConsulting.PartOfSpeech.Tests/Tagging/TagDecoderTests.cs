@@ -1187,30 +1187,37 @@ public class TagDecoderTests
 
 #if NET
     /// <summary>
-    ///     Proves that a huge input is answered without growing the thread's buffers: a call with a million ASCII characters allocates nothing.
+    ///     Proves that a huge input is answered without growing the thread's buffers: a call with a million ASCII characters allocates nothing,
+    ///     also when the word is a compound with a known last part (only that last part is folded).
     /// </summary>
     [Fact]
     public void TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing()
     {
-        // Arrange: a decoder, a million-character word, and a first call that creates the thread's workspace
+        // Arrange: a decoder, a million-character word, a huge compound, and a first call that creates the thread's workspace
         var decoder = EmbeddedDecoder(false);
         var huge = new string('a', 1_000_000);
         var hugeCompound = new string('a', 500_000) + "-tested";
+        var hugeUnknownHead = new string('a', 500_000) + "-zzqxv";
         decoder.GetPossibleTags("valve", PossibleTagsMode.WithShapeRules);
+        decoder.GetPossibleTags("well-tested", PossibleTagsMode.WithShapeRules);
 
         // Act: measure the allocation of the calls
         var before = GC.GetAllocatedBytesForCurrentThread();
         var raw = decoder.GetPossibleTags(huge, PossibleTagsMode.LexiconOnly);
         var shape = decoder.GetPossibleTags(huge, PossibleTagsMode.WithShapeRules);
         var compound = decoder.GetPossibleTags(hugeCompound, PossibleTagsMode.WithShapeRules);
+        var unknownHead = decoder.GetPossibleTags(hugeUnknownHead, PossibleTagsMode.WithShapeRules);
         var form = decoder.IsFormOf(huge, "a", Upos.Noun);
+        var compoundForm = decoder.IsFormOf(hugeCompound, "test", Upos.Verb);
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
 
-        // Assert: not recognized, no allocation (the workspace buffers would have been megabytes)
+        // Assert: the plain word is not recognized, the compound has its head, and nothing allocates (the workspace buffers would have been megabytes)
         Assert.Equal(WordMatch.NotRecognized, raw.Match);
         Assert.Equal(WordMatch.NotRecognized, shape.Match);
-        Assert.Equal(WordMatch.NotRecognized, compound.Match);
+        Assert.Equal(WordMatch.CompoundHead, compound.Match);
+        Assert.Equal(WordMatch.NotRecognized, unknownHead.Match);
         Assert.False(form);
+        Assert.True(compoundForm);
         Assert.Equal(0, allocated);
     }
 #endif

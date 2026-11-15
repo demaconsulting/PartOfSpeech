@@ -2,7 +2,7 @@ package PartOfSpeech {
     private import SoftwareItemMetadata::*;
 
     part def TagDecoder {
-        doc /* Tags a sentence greedily from left to right (in two passes for a model with the right preview group): scores the features of the groups that the weights name (including the clause state that it carries from the tags chosen so far), restricts the candidates, computes confidences and alternatives, and reports whether the lexicon knew each word. */
+        doc /* Tags a sentence greedily from left to right (in two passes for a model with the right preview group): scores the features of the groups that the weights name (including the clause state that it carries from the tags chosen so far), restricts the candidates, computes confidences and alternatives, and reports whether the lexicon knew each word. It also answers the lookup of one word with the same folding, lexicon read and shape rules (tags, match kind and the analyses of a spelling or of the last part of a hyphenated compound). */
 
         metadata info : SoftwareInfo {
             sourceFiles = ("src/DemaConsulting.PartOfSpeech/Tagging/TagDecoder.cs", "src/DemaConsulting.PartOfSpeech/Tagging/DecoderWorkspace.cs", "src/DemaConsulting.PartOfSpeech/Tagging/ScoreSlice.cs");

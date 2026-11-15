@@ -1048,6 +1048,37 @@ public class FeatureExtractorTests
         }
     }
 
+    /// <summary>
+    ///     Proves that <see cref="FeatureExtractor.FoldsToDoubleHyphen"/> agrees with the folding for every UTF-16 code unit: it is true
+    ///     exactly for the characters that fold to two hyphen-minus characters.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_FoldsToDoubleHyphen_AgreesWithTheFoldingOfEveryCodeUnit()
+    {
+        // Arrange: one workspace for all code units
+        var workspace = new DecoderWorkspace();
+        var mismatches = new List<int>();
+
+        for (var unit = 0; unit <= char.MaxValue; unit++)
+        {
+            // Act: fold the single character and look at the folded characters
+            workspace.Begin(1);
+            FeatureExtractor.SetFolded(workspace, 0, ((char)unit).ToString());
+            var folded = new string(workspace.Chars, workspace.Start[0], workspace.Length[0]);
+            var doubled = folded == "--" && unit != '-';
+
+            // Assert (collected): the helper says "double hyphen" exactly when the folded text is two hyphens from another character
+            if (FeatureExtractor.FoldsToDoubleHyphen((char)unit) != doubled)
+            {
+                mismatches.Add(unit);
+            }
+        }
+
+        Assert.Empty(mismatches);
+        Assert.True(FeatureExtractor.FoldsToDoubleHyphen('\u2014'));
+        Assert.False(FeatureExtractor.FoldsToDoubleHyphen('-'));
+    }
+
 #if NET
     /// <summary>
     ///     Proves that the folding core folds a slice of a longer text exactly like the same characters as a token of their own.

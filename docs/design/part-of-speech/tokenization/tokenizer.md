@@ -44,6 +44,10 @@ stateless class.
   accepted while the token keeps the original character.
 - **`CreateSentence(IReadOnlyList<string> tokens)`**: validates every token (not `null`, not empty, no white space),
   joins them with single spaces and returns a sentence with `Start` 0 whose token offsets index the joined string.
+- **`ContainsWhiteSpace(string)`** (internal): whether a string has a `char.IsWhiteSpace` character, the rule that
+  `CreateSentence` applies to a token. `Tagger.GetPossibleTags` and `Tagger.IsFormOf` apply the same method to a word
+  (the span overload tests `char.IsWhiteSpace` per character, and a test checks all 65,536 UTF-16 code units against
+  `CreateSentence`), so a word is valid for the lookup exactly when it is valid as a token.
 
 The word rules, as implemented (the rule table in `data/CONVENTIONS.md` is the normative copy):
 
@@ -75,6 +79,7 @@ and `ArgumentException` (naming the token index) for a null, empty or white-spac
 
 #### Callers
 
-- **Tagger** (Tagging) calls `Tokenize` for text input and `CreateSentence` for token lists.
+- **Tagger** (Tagging) calls `Tokenize` for text input and `CreateSentence` for token lists, and `ContainsWhiteSpace` to
+  validate the word of a lookup.
 - Library consumers call both public methods directly.
 - The test suite calls `TokenizeWords` for the corpus conformance measure.

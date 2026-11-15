@@ -450,24 +450,44 @@ internal sealed class TagDecoder
     /// <returns><c>true</c> if an analysis of the word has this base word and this tag.</returns>
     internal bool IsFormOf(string word, string lemma, Upos tag)
     {
-        // Normalize first and test the lengths: a base word is at most MaxLemmaBytes bytes and a spelling at most MaxSpellingBytes
+        // Normalize first and test the lengths: a base word is at most MaxLemmaBytes bytes
         var wordText = NormalizeForLookup(word);
         var lemmaText = NormalizeForLookup(lemma);
-        if (wordText.Length > _lexicon.MaxSpellingBytes || lemmaText.Length > Lexicon.MaxLemmaBytes)
+        if (lemmaText.Length > Lexicon.MaxLemmaBytes)
         {
             return false;
         }
 
-        // Fold both into the workspace: token 0 is the word, token 1 the base word
+        // A word longer than the longest spelling is not a spelling; only the last part of a compound can match (nothing else is folded)
+        var head = 0;
+        if (wordText.Length > _lexicon.MaxSpellingBytes)
+        {
+            head = OverlongHeadStart(wordText);
+            if (head < 0)
+            {
+                return false;
+            }
+        }
+
+        // Fold both into the workspace: token 0 is the word (or its last part), token 1 the base word
         var workspace = GetWorkspace();
         workspace.Configure(_groups, _lexicon);
         workspace.Begin(2);
-        FeatureExtractor.SetFolded(workspace, 0, wordText);
+#if NET
+        FeatureExtractor.SetFolded(workspace, 0, wordText.AsSpan(head));
+#else
+        FeatureExtractor.SetFoldedPart(workspace, 0, wordText, head, wordText.Length - head);
+#endif
         FeatureExtractor.SetFolded(workspace, 1, lemmaText);
         workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
 
         // Find the spelling whose analyses count (the key stays UTF-8 encoded in the scratch buffer)
-        if (Find(workspace, 0, out var ordinal, out var keyLength, out _) == WordMatch.NotRecognized)
+        var ordinal = -1;
+        var keyLength = 0;
+        var found = head > 0
+            ? _lexicon.TryFindKey(workspace.Chars, workspace.Start[0] + workspace.Length[0], workspace.Length[0], workspace.LexiconScratch, out ordinal, out _, out keyLength)
+            : Find(workspace, 0, out ordinal, out keyLength, out _) != WordMatch.NotRecognized;
+        if (!found)
         {
             return false;
         }
@@ -502,8 +522,9 @@ internal sealed class TagDecoder
     /// </summary>
     /// <remarks>
     ///     A word longer than the longest spelling of the lexicon cannot be a spelling (folding and lower-casing never
-    ///     shorten it and a character takes at least one UTF-8 byte), so it is answered before the workspace is touched:
-    ///     a huge input never makes the per-thread buffers grow.
+    ///     shorten it and a character takes at least one UTF-8 byte), so the whole-spelling lookup is skipped for it and
+    ///     it is never folded as a whole: a huge input never makes the per-thread buffers grow. Its last part can still be
+    ///     a spelling, so the compound rule runs on the last part alone (see <see cref="LookupOverlong"/>).
     /// </remarks>
     /// <param name="text">The word, NFC-normalized (or pure ASCII).</param>
     /// <param name="mode">Which tags to report.</param>
@@ -516,9 +537,8 @@ internal sealed class TagDecoder
     {
         if (text.Length > _lexicon.MaxSpellingBytes)
         {
-            return new WordTags(null, -1, mode == PossibleTagsMode.WithShapeRules ? UposSet.All : UposSet.Empty, WordMatch.NotRecognized, UposSet.Empty);
+            return LookupOverlong(text, mode);
         }
-
         // Prepare the workspace for one token; Configure first, because it clears the lexicon facts of an earlier sentence
         var workspace = GetWorkspace();
         workspace.Configure(_groups, _lexicon);
@@ -535,6 +555,102 @@ internal sealed class TagDecoder
         return match == WordMatch.NotRecognized
             ? new WordTags(null, -1, tags, match, UposSet.Empty)
             : new WordTags(_lexicon, ordinal, tags, match, _lexicon.AnalysedTags(ordinal));
+    }
+
+    /// <summary>
+    ///     Looks up a word that is longer than the longest spelling of the lexicon: it cannot be a spelling as a whole, but
+    ///     the last part of a hyphenated compound can be.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         The compound rule is the one of <see cref="Find"/>: the word must contain the hyphen-minus and no empty part
+    ///         between hyphens, and the last part must be a spelling. Only the last part is folded into the workspace and only
+    ///         when it is no longer than the longest spelling, so the per-thread buffers never grow beyond what a word that
+    ///         fits needs, whatever the length of the whole word. Finding the last part costs one scan of the word and
+    ///         allocates nothing.
+    ///     </para>
+    ///     <para>
+    ///         The tags are those of the whole word, which is not a spelling: empty in the lexicon mode and all tags with
+    ///         the shape rules, as for any word that is not a spelling.
+    ///     </para>
+    /// </remarks>
+    /// <param name="text">The word, NFC-normalized (or pure ASCII), longer than the longest spelling.</param>
+    /// <param name="mode">Which tags to report.</param>
+    /// <returns>The compound-head result, or the not-recognized result.</returns>
+#if NET
+    private WordTags LookupOverlong(ReadOnlySpan<char> text, PossibleTagsMode mode)
+#else
+    private WordTags LookupOverlong(string text, PossibleTagsMode mode)
+#endif
+    {
+        var tags = mode == PossibleTagsMode.WithShapeRules ? UposSet.All : UposSet.Empty;
+        var head = OverlongHeadStart(text);
+        if (head >= 0)
+        {
+            // Fold the last part alone and look it up as a whole
+            var workspace = GetWorkspace();
+            workspace.Configure(_groups, _lexicon);
+            workspace.Begin(1);
+#if NET
+            FeatureExtractor.SetFolded(workspace, 0, text.Slice(head));
+#else
+            FeatureExtractor.SetFoldedPart(workspace, 0, text, head, text.Length - head);
+#endif
+            workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
+            var length = workspace.Length[0];
+            if (_lexicon.TryFindKey(workspace.Chars, workspace.Start[0] + length, length, workspace.LexiconScratch, out var ordinal, out _, out _))
+            {
+                return new WordTags(_lexicon, ordinal, tags, WordMatch.CompoundHead, _lexicon.AnalysedTags(ordinal));
+            }
+        }
+
+        return new WordTags(null, -1, tags, WordMatch.NotRecognized, UposSet.Empty);
+    }
+
+    /// <summary>
+    ///     Finds where the last part of an over-long hyphenated compound starts, without folding the word.
+    /// </summary>
+    /// <remarks>
+    ///     The scan applies the compound rule of <see cref="Find"/> to the characters as written: only the hyphen-minus is a
+    ///     hyphen, and a character that folds to <c>--</c> (see <see cref="FeatureExtractor.FoldsToDoubleHyphen"/>) makes an
+    ///     empty part, exactly as it does in the folded word. A last part longer than the longest spelling cannot be a
+    ///     spelling (folding never shortens it), so it is refused here, before anything is folded.
+    /// </remarks>
+    /// <param name="text">The word, NFC-normalized (or pure ASCII).</param>
+    /// <returns>The index of the first character of the last part, or -1 when the word is not a compound or its last part cannot be a spelling.</returns>
+#if NET
+    private int OverlongHeadStart(ReadOnlySpan<char> text)
+#else
+    private int OverlongHeadStart(string text)
+#endif
+    {
+        var lastHyphen = -1;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (c == '-')
+            {
+                // A leading or doubled hyphen leaves an empty part
+                if (i == lastHyphen + 1)
+                {
+                    return -1;
+                }
+
+                lastHyphen = i;
+            }
+            else if (FeatureExtractor.FoldsToDoubleHyphen(c))
+            {
+                return -1;
+            }
+        }
+
+        // No hyphen, a trailing hyphen or a last part that cannot fit is not a compound head
+        if (lastHyphen < 0 || lastHyphen == text.Length - 1 || text.Length - lastHyphen - 1 > _lexicon.MaxSpellingBytes)
+        {
+            return -1;
+        }
+
+        return lastHyphen + 1;
     }
 
     /// <summary>

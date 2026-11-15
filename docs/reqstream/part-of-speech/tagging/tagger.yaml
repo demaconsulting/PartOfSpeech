@@ -172,3 +172,125 @@ sections:
                   - Tagger_Tag_Margin_TiedTags_IsZero
                   - Tagger_Tag_DefaultToken_HasNoMarginAndIsNotKnown
                   - Tagger_Tag_Margin_DoesNotAllocate
+
+              - id: PartOfSpeech-Tagging-Tagger-PossibleTags
+                title: >-
+                  A lookup of one word shall report, from the lexicon of the tagger and without a sentence, a model or a
+                  glossary, either the tags that the lexicon lists for the folded, lower-cased word (the empty set when
+                  the word is not a spelling; the default mode) or exactly the tags that the tagger allows for that word
+                  as a token on its own (all 17 tags when the word is not a spelling); the word shall be folded like a
+                  token of the tagger, so that letter case, typographic quotes and dashes and the Unicode composition
+                  of the word never change the result; the known flag of the result shall equal that of the token; and
+                  the lookup shall be safe from any number of threads, also while other threads tag, and allocate
+                  nothing for a word of ASCII characters.
+                justification: |
+                  A rule checker that asks whether a word may be a verb needs the dictionary answer for the word alone,
+                  and needs it to agree with what the tagger would allow for the same spelling in a sentence, or its
+                  conclusions contradict the tagger. The lexicon of the tagger is the one that decides, so a tagger
+                  with a custom lexicon answers from its own. The lookup runs for many words of a text, so it must be
+                  free of allocation for ASCII and safe for the parallel use that tagging already supports.
+                tests:
+                  - Tagger_GetPossibleTags_DefaultMode_IsLexiconOnly
+                  - Tagger_GetPossibleTags_Case_IgnoresLetterCase
+                  - Tagger_GetPossibleTags_ShapeRules_ExtendTheLexiconTags
+                  - Tagger_GetPossibleTags_FoldedSpelling_UsesTheTaggerLookup
+                  - Tagger_GetPossibleTags_CustomLexicon_UsesItsOwnLexicon
+                  - Tagger_GetPossibleTags_Glossary_DoesNotChangeTheResult
+                  - Tagger_GetPossibleTags_ConcurrentCalls_GiveTheSameResultsAsOneThread
+                  - Tagger_GetPossibleTags_Span_EqualsStringOverload
+                  - Tagger_GetPossibleTags_DoesNotAllocate
+                  - Tagger_GetPossibleTags_AllocationOfTheOtherCases_IsRecordedAndBounded
+
+              - id: PartOfSpeech-Tagging-Tagger-PossibleTagsInput
+                title: >-
+                  A lookup shall refuse a null word, an empty word, a word that contains white space and a mode or tag
+                  that is not a defined value, each with the documented exception, shall not fail for a word with an
+                  unpaired surrogate (which counts as U+FFFD, like in a token), and shall answer a word that is longer
+                  than any spelling of the lexicon without an error, without growing the per-thread buffers and in time
+                  linear in its length.
+                justification: |
+                  The lexicon holds no phrases, so a text with white space can only be answered wrongly as unknown; the
+                  caller must split the text into tokens (or use a glossary for a term). Text that a caller did not
+                  validate, including a very long string, must neither crash the lookup nor make a service allocate
+                  megabytes per thread.
+                tests:
+                  - Tagger_GetPossibleTags_NullWord_Throws
+                  - Tagger_GetPossibleTags_EmptyOrWhiteSpace_Throws
+                  - Tagger_GetPossibleTags_WhiteSpaceRule_EqualsTokenizerRule
+                  - Tagger_GetPossibleTags_UndefinedModeOrTag_Throws
+                  - Tagger_GetPossibleTags_Span_InvalidInput_Throws
+                  - Tagger_GetPossibleTags_UnpairedSurrogate_DoesNotThrow
+                  - Tagger_GetPossibleTags_VeryLongWord_IsNotRecognizedWithoutError
+                  - TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing
+
+              - id: PartOfSpeech-Tagging-Tagger-WordAnalyses
+                title: >-
+                  The result of a lookup shall tell whether the word is recognized (as a spelling, as a compound head
+                  or not at all) separately from its tags, so that an unrecognized word cannot be mistaken for a word
+                  with no tags; for a recognized word it shall list every analysis (base word, tag and features in
+                  Universal Dependencies notation) of the matched spelling in a fixed order, report the tags of the
+                  result that no analysis names, and give an empty list and no tags with an analysis when the lexicon
+                  has no analyses.
+                justification: |
+                  A rule checker must tell a word that the lexicon has never seen from a word that it knows but lists
+                  no tag for, and must read the base word and the form of each reading (the third person of a verb, a
+                  plural noun) to decide whether a word is an inflected form of another. The lexicon is a restriction
+                  list, not a gold dictionary, so the tags that no analysis supports (added by a rule, by a list or by
+                  corpus counts) are reported instead of hidden. A lexicon that was built without an analyses table is
+                  valid and must answer with tags only.
+                tests:
+                  - Tagger_GetPossibleTags_Tests_ReturnsBothAnalysesInDocumentedOrder
+                  - Tagger_GetPossibleTags_UnknownWord_IsNotRecognizedNotEmptyKnown
+                  - Tagger_GetPossibleTags_TagsWithoutAnalysis_ReportsRuleAndAttestedTags
+                  - Tagger_GetPossibleTags_ClosedClassAndIrregularForms_HaveTheBaseWord
+                  - Tagger_GetPossibleTags_CustomLexiconWithoutAnalyses_HasNoAnalyses
+                  - Tagger_GetPossibleTags_CustomLexiconWithAnalyses_ReportsItsAnalyses
+                  - WordTags_Equality_FollowsTheLookupResult
+                  - WordAnalysis_Members_WorkOnRealAndDefaultValues
+
+              - id: PartOfSpeech-Tagging-Tagger-CompoundHead
+                title: >-
+                  A word that is not a lexicon spelling but is a hyphenated compound (it contains the hyphen-minus and
+                  no empty part between hyphens) shall match as a compound head when its last part, looked up as a
+                  whole and nowhere else, is a spelling, and shall then carry the analyses of that last part; a word
+                  that is a spelling shall always match as a spelling; a compound without a spelling as last part, a
+                  word with an empty part and a word that contains a dash character (which folds to two hyphens)
+                  shall not be recognized; the same rule shall apply to a word that is longer than any spelling of
+                  the lexicon (only the lookup of the whole word is skipped, only the last part is folded, and the
+                  per-thread buffers do not grow); and the tags of the result shall always be those of the whole word
+                  as the tagger sees it, so that a compound head never narrows the tags or changes the known flag.
+                justification: |
+                  Compound words (well-tested, pre-flight) are common in technical text and the lexicon lists few of
+                  them; their last part tells what kind of word they are. The tagger itself looks up the whole token
+                  only and has no hyphen rule, so the lookup must not give the tags a meaning that the tagger does not
+                  share: the head is extra evidence, never a restriction. The rule must be the same for a long word
+                  and a short one, or the answer would depend on the length of the prefix.
+                tests:
+                  - Tagger_GetPossibleTags_CompoundHead_UsesLastPartAndTagsStayTheWholeToken
+                  - Tagger_GetPossibleTags_CompoundHead_HeadIsTheLastPartOnly
+                  - Tagger_GetPossibleTags_CompoundWhole_PrefersTheSpelling
+                  - Tagger_GetPossibleTags_CompoundHead_Malformed_IsNotRecognized
+                  - Tagger_GetPossibleTags_CompoundHead_TooLongWhole_UsesTheLastPart
+                  - Tagger_GetPossibleTags_CompoundHead_TooLongWhole_Otherwise_IsNotRecognized
+                  - Tagger_GetPossibleTags_TooLongWhole_EqualsTheAnswerOfTheNormalPath
+                  - TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing
+
+              - id: PartOfSpeech-Tagging-Tagger-IsFormOf
+                title: >-
+                  A call shall tell whether a word is a form of a base word with a given tag, that is whether an
+                  analysis of the word (found with the rule of the lookup, compound heads included) has that base word
+                  and that tag; word and base word shall be folded like a token of the tagger; the call shall be false
+                  for an unrecognized word, a tag without analysis and a lexicon without analyses; it shall refuse
+                  null, empty and white-space arguments and an undefined tag; and it shall allocate nothing for ASCII
+                  text.
+                justification: |
+                  Whether "tests" is a form of the verb "test" is the question that a rule checker really asks; the
+                  answer must follow from the same analyses that the lookup lists, so that the two cannot disagree, and
+                  it must not cost an allocation per question.
+                tests:
+                  - Tagger_IsFormOf_Analyses_AnswerTheQuestion
+                  - Tagger_IsFormOf_EveryAnalysisOfSampleWords_IsAForm
+                  - Tagger_GetPossibleTags_NullWord_Throws
+                  - Tagger_GetPossibleTags_EmptyOrWhiteSpace_Throws
+                  - Tagger_GetPossibleTags_UndefinedModeOrTag_Throws
+                  - Tagger_IsFormOf_DoesNotAllocate

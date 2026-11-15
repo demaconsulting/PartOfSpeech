@@ -517,18 +517,32 @@ internal static class FeatureExtractor
     /// <param name="source">The token, NFC-normalized (or pure ASCII), with well-formed UTF-16.</param>
 #if NET
     internal static void SetFolded(DecoderWorkspace workspace, int index, ReadOnlySpan<char> source)
-#else
-    internal static void SetFolded(DecoderWorkspace workspace, int index, string source)
-#endif
     {
+        const int offset = 0;
+        var count = source.Length;
+#else
+    internal static void SetFolded(DecoderWorkspace workspace, int index, string source) =>
+        SetFoldedPart(workspace, index, source, 0, source.Length);
+
+    /// <summary>
+    ///     Folds a part of an NFC-normalized (or pure ASCII) string as one token; the string twin of a span slice on <c>netstandard2.0</c>.
+    /// </summary>
+    /// <param name="workspace">The workspace.</param>
+    /// <param name="index">The index of the token.</param>
+    /// <param name="source">The text that holds the token, NFC-normalized (or pure ASCII), with well-formed UTF-16.</param>
+    /// <param name="offset">The index of the first character of the token in <paramref name="source"/>.</param>
+    /// <param name="count">The number of characters of the token.</param>
+    internal static void SetFoldedPart(DecoderWorkspace workspace, int index, string source, int offset, int count)
+    {
+#endif
         // Fold into the character buffer: every folded character takes at most three characters, plus the lower copy
-        workspace.EnsureChars(6 * source.Length);
+        workspace.EnsureChars(6 * count);
         var chars = workspace.Chars;
         var start = workspace.CharsUsed;
         var length = 0;
-        foreach (var c in source)
+        for (var k = 0; k < count; k++)
         {
-            length = AppendFolded(chars, start, length, c);
+            length = AppendFolded(chars, start, length, source[offset + k]);
         }
 
         // Lower-case copy right behind the folded form, with the facts that the shape and the allowed-tag rules need
@@ -2083,6 +2097,17 @@ internal static class FeatureExtractor
         hash = (hash << 13) | (hash >> 19);
         return (hash * 5) + 0xE6546B64u;
     }
+
+    /// <summary>
+    ///     Tells whether folding turns a character into two hyphen-minus characters (the en dash, the em dash and the horizontal bar).
+    /// </summary>
+    /// <remarks>
+    ///     This restates the dash cases of <see cref="AppendFolded"/> for the word lookup, which must decide whether a word that is
+    ///     too long to fold contains an empty part between hyphens; a test proves that the two agree for every UTF-16 code unit.
+    /// </remarks>
+    /// <param name="c">The character.</param>
+    /// <returns><c>true</c> if the folded form of the character is <c>--</c>.</returns>
+    internal static bool FoldsToDoubleHyphen(char c) => c is '\u2013' or '\u2014' or '\u2015';
 
     /// <summary>
     ///     Appends the folded form of one character to a buffer.

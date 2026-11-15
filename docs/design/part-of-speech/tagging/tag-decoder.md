@@ -7,8 +7,9 @@
 `TagDecoder` tags the tokens of one sentence with a greedy left-to-right decoder over the averaged-perceptron scores:
 it scores the features, restricts the candidates with the lexicon and the constraints, chooses the best candidate, and
 converts the scores into a calibrated confidence and ranked alternatives. A model with the right-preview feature group is
-decoded in two passes (see `Decode`). The source files are `TagDecoder.cs`, the per-thread scratch memory
-`DecoderWorkspace.cs` and the list `ScoreSlice.cs`.
+decoded in two passes (see `Decode`). It also answers the context-free lookup of one word (`GetPossibleTags`,
+`IsFormOf`) with the same folding, the same lexicon read and the same shape rules as the decode. The source files are
+`TagDecoder.cs`, the per-thread scratch memory `DecoderWorkspace.cs` and the list `ScoreSlice.cs`.
 
 #### Data Model
 
@@ -20,10 +21,14 @@ decoded in two passes (see `Decode`). The source files are `TagDecoder.cs`, the 
   sentence, per token the start, length, facts, hashes, shape bits and tag-independent buckets, the bucket array of the
   token being scored (`BucketCapacity`, 40, so that group features fit), the integer scores (17), the real scores (17)
   and the lexicon scratch buffer; for the feature groups also the cached lexicon facts of the tokens, the token
-  classes, the clause state and the tags of the first pass. It grows geometrically to the largest sentence seen and is
+  classes, the clause state and the tags of the first pass; and `LemmaBytes`, a 255-byte buffer (the longest base word
+  that the lexicon format allows, so it never grows) in which `IsFormOf` encodes the base word it compares. It grows
+  geometrically to the largest sentence seen and is
   kept in a `[ThreadStatic]` field of the decoder; it is used by one thread at a time. The decoder resolves a
   caller-supplied constraint list before it takes the workspace and runs no caller code while it holds it, so a list
-  that tags other text from its indexer (a nested call) cannot corrupt it.
+  that tags other text from its indexer (a nested call) cannot corrupt it. The word lookup uses the same workspace as a
+  one- or two-token sentence: it calls `Configure` first (which clears the cached lexicon facts of a sentence decoded
+  earlier on the thread) and `Begin`, so a lookup between two decodes leaves no state behind that a decode reads.
 - **`ScoreSlice`** (internal, sealed): an `IReadOnlyList<TagScore>` over a segment of the flat result array
   (`ArraySegment<T>` was not used because it exposes a writable `IList<T>` indexer). It is the type behind
   `TaggedToken.Alternatives`.
@@ -74,7 +79,48 @@ adjustment`, a `double`. The integer sum is exact; only the final multiplication
   6. Returns the tag.
 - **`AllowedTags(workspace, index, out bool known)`**: the lexicon lookup with the workspace buffers and the shape facts,
   or the cached lookup of the groups; it returns the allowed tags and, through `known`, whether the lexicon has an entry
-  for the token.
+  for the token. It reads the lexicon through `Lexicon.TryGetTags` and turns the facts into allowed tags with
+  `ApplyShapeRules`.
+- **`ApplyShapeRules(flags, known, tags)`**: the one place that turns the folded token's shape flags (letter or digit,
+  digit, first upper-case letter, recorded by `FeatureExtractor.SetFolded`) and the lexicon tags into the allowed tags
+  (`Lexicon.AllowedTags`). The decode and the word lookup both call it, so the tags of the lookup in the
+  `WithShapeRules` mode are the decoder's allowed tags by construction, not by a copy of the rules.
+- **`GetPossibleTags(string word, PossibleTagsMode mode)`** (and the `ReadOnlySpan<char>` twin on .NET 8 and later): the
+  lookup of one word, called by `Tagger` after it validated the arguments. Non-ASCII text is NFC-normalized first
+  (`NormalizeForLookup`, which returns an ASCII string as it is and otherwise calls `FeatureExtractor.NormalizeNonAscii`;
+  a span with a character above U+007F is copied to a string first) so that the length test sees the real length. A
+  word longer than the longest spelling goes to `LookupOverlong`; any other word is folded into the thread's workspace
+  with `FeatureExtractor.SetFolded` (the folding core of `SetToken`, which takes a span or a string that is already
+  normalized and gives identical characters, flags, shape and hashes), the scratch buffer is sized, and `Find` returns
+  the match. The tags come from the whole word only: `LexiconOnly` gives the lexicon tags of the whole word (empty
+  unless it is a spelling), `WithShapeRules` gives `ApplyShapeRules` of the whole word with `known` true only for a
+  spelling (so all 17 tags for a not-recognized word or a compound head). The result (`WordTags`) keeps the lexicon, the
+  ordinal of the matched spelling and `Lexicon.AnalysedTags` of it, so that no analysis is decoded unless asked for.
+- **`Find(workspace, index, out ordinal, out keyLength, out wholeTags)`**: the whole spelling with `Lexicon.TryFindKey`;
+  if it is not one, the compound rule on the folded, lower-cased characters: one scan that returns not recognized for a
+  leading, doubled or trailing hyphen-minus (and for no hyphen at all), then `TryFindKey` of the last part only, at its
+  offset in the same buffer and with the same scratch (no copy, no recursion). It returns `Spelling`, `CompoundHead` or
+  `NotRecognized`; the key of the matched spelling stays UTF-8 encoded in the scratch buffer.
+- **`LookupOverlong(text, mode)` and `OverlongHeadStart(text)`**: the same compound rule for a word longer than the longest
+  spelling, which is never folded as a whole. `OverlongHeadStart` scans the normalized characters as written once (the
+  hyphen-minus is the only hyphen; `FeatureExtractor.FoldsToDoubleHyphen` marks the three dash characters that fold to
+  `--`, which leave an empty part exactly as in the folded word, and a test proves the helper agrees with the folding for
+  every UTF-16 code unit) and returns where the last part starts, or -1 when there is no hyphen, a part is empty, or the
+  last part is itself longer than the longest spelling (folding never shortens it, so it cannot be a spelling). Only
+  then `LookupOverlong` folds the last part alone into the workspace (`SetFolded` of a span slice on .NET 8 and later,
+  `SetFoldedPart` of the string and an offset on `netstandard2.0`, so nothing is copied) and looks it up as a whole with
+  `TryFindKey`: found gives `CompoundHead` with that spelling's analyses, otherwise `NotRecognized`; the tags are those
+  of any word that is not a spelling. The workspace therefore grows at most to what a word that fits needs, whatever the
+  length of the whole word, and the cost beyond a normal lookup is one scan of the characters. A differential test looks
+  up generated words (hyphens, doubled hyphens, dash characters, ellipsis, case, accents, prefixes that make the word
+  too long) in a lexicon whose longest spelling is short and in one that also lists a 200-character spelling, and requires
+  identical results.
+- **`IsFormOf(string word, string lemma, Upos tag)`**: normalizes both texts, returns false when the base word is longer
+  than 255 bytes, takes the last part with `OverlongHeadStart` when the word is longer than the longest spelling,
+  folds the word (or its last part) as token 0 and the base word as token 1, finds the spelling (`Find`, or `TryFindKey`
+  of the last part), encodes the lower-cased base word to UTF-8 in `workspace.LemmaBytes`, and asks
+  `Lexicon.HasAnalysis`, which compares the bytes of each template of that tag with the key (still in the lexicon
+  scratch) and the base word. It allocates nothing for ASCII text.
 
 After the call: every result tag is a candidate; the confidence and the alternative probabilities are in [0, 1] and add
 up to 1 when all candidates are listed; a token with one candidate has confidence 1 and no alternatives. A token with
@@ -93,22 +139,40 @@ the class of the two neighbors from the cached lexicon lookup of the token (the 
 the restriction anyway) and a two-bit clause state per token. Without groups nothing of this runs, and the decode is
 the one-pass decode of a model without groups. Measured speed is in the verification design.
 
+**Word lookup parity.** The lookup in `WithShapeRules` mode returns exactly `{Tag} U Alternatives` of a decode of the same
+word (with 16 alternatives and no constraint), at the first, a middle and the last position of a sentence, for a model
+with and without feature groups, and its known flag equals the token's; the tests check this for every spelling of the
+embedded lexicon, its title-case form, and 52 samples of other shapes (digits, punctuation, upper case, typographic
+characters, decomposed text, hyphenated words, malformed compounds, unknown words, supplementary characters), about
+525,000 words per model, with no difference. The `LexiconOnly` mode equals the lexicon tags. Some lexicon spellings are
+not stable under the fold (for example a spelling with U+2015, which folds to `--`, or one with the modifier apostrophe
+U+02BC, which folds to `'`): no input reaches them, because
+every word is folded before the lookup, so the raw-parity check applies to the fold-stable spellings only. All 8,711
+hyphenated spellings are found as `Spelling` and never as a compound head, and an unlisted prefix and a hyphen in
+front of the last part of each give a compound head with that last part's analyses. The decode's hot path is the same
+code as without the lookup
+(`SetToken` normalizes and calls `SetFolded`; the allocation tests and the throughput gates of the decoder, the
+tagger and the glossary pass unchanged on every target framework).
+
 #### Error Handling
 
 Argument errors are reported as described. Scores and probabilities cannot be `NaN` because the temperature of a loaded
 model is finite and greater than zero and the adjustments of a constraint are finite. The decoder catches nothing; an
 exception inside `Decode` (for example an out-of-memory condition) leaves the thread's workspace in a state that the
-next call resets with `Begin`.
+next call resets with `Begin`. The lookup (`GetPossibleTags`, `IsFormOf`) receives arguments that `Tagger` has validated
+and fails for no text: a word that the lexicon does not know, an unpaired surrogate and a word of a million characters
+are answered.
 
 #### Dependencies
 
 - **PerceptronModel** (`AddScores`, `HashBits`, `Temperature`, `Scale`, `FeatureGroups`) and **Lexicon** (`TryGetTags`,
-  `AllowedTags`, `ScratchSize`) from ModelStorage.
-- **FeatureExtractor** (including `Advance` and `StartPass`), **TokenConstraint**, the result types (`TaggedToken`,
-  `TagScore`) and **Token** (Tokenization).
+  `TryFindKey`, `AllowedTags`, `AnalysedTags`, `HasAnalysis`, `ScratchSize`, `MaxSpellingBytes`) from ModelStorage.
+- **FeatureExtractor** (including `Advance`, `StartPass`, `SetFolded`, `SetFoldedPart`, `NormalizeNonAscii` and
+  `FoldsToDoubleHyphen`), **TokenConstraint**, the result types (`TaggedToken`, `TagScore`, `WordTags`, `WordMatch`,
+  `PossibleTagsMode`) and **Token** (Tokenization).
 - **Upos** (`UposSet` for candidate sets).
 
 #### Callers
 
-- **Tagger** (every `Tag` overload).
+- **Tagger** (every `Tag` overload, `GetPossibleTags` and `IsFormOf`).
 - The test suite, which also runs the decoder directly with synthetic models.

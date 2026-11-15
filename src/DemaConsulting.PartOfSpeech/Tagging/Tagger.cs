@@ -143,8 +143,8 @@ public sealed class Tagger
     ///     Loading reads the whole stream into memory and decompresses and validates the whole file before it returns,
     ///     so do it once and share the tagger across threads. The stream is read from its current position to its end
     ///     and is not closed; the tagger keeps no reference to it, so it may be disposed as soon as this method has
-    ///     returned. The first tagger of the process also loads the embedded lexicon (639,711 bytes compressed, 262,635
-    ///     spellings), which later taggers reuse. See
+    ///     returned. The first tagger of the process also loads the embedded lexicon (762,836 bytes compressed, 262,635
+    ///     spellings with the analyses of their forms), which later taggers reuse. See
     ///     [Default model and loading cost](../../DemaConsulting.PartOfSpeech.md#default-model-and-loading-cost).
     /// </remarks>
     /// <param name="weights">A stream that holds a <c>POSW</c> weights file, read from its current position to its end; it is not closed and may be disposed after this method returns.</param>
@@ -535,8 +535,11 @@ public sealed class Tagger
     ///     </para>
     ///     <para>
     ///         <strong>Edge cases:</strong> a word that is longer than the longest spelling of the lexicon (122 UTF-8 bytes in the
-    ///         embedded lexicon) is not recognized, even when it is hyphenated, and costs one pass over the text without growing
-    ///         any buffer. A lexicon without an analyses table (a custom lexicon file) gives no analyses and
+    ///         embedded lexicon) cannot be a spelling as a whole, so only the compound rule can recognize it: it is
+    ///         <see cref="WordMatch.CompoundHead"/> when it is a hyphenated compound whose last part is a spelling, and
+    ///         <see cref="WordMatch.NotRecognized"/> otherwise (no hyphen, an empty part, or a last part that is not a spelling or is itself
+    ///         longer than the longest spelling). Such a word costs one pass over the text, folds at most its last part, and never
+    ///         grows a buffer beyond what a word that fits needs. A lexicon without an analyses table (a custom lexicon file) gives no analyses and
     ///         <see cref="WordTags.TagsWithoutAnalysis"/> equals <see cref="WordTags.Tags"/>. The lexicon has no phrases, so text with white
     ///         space is refused rather than answered "unknown".
     ///     </para>

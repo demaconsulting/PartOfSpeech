@@ -1281,29 +1281,163 @@ public class TaggerTests
     }
 
     /// <summary>
-    ///     Proves that a word longer than the longest spelling is not recognized, even when it ends in a known part, and that the limit
-    ///     is the length of the longest spelling.
+    ///     Proves that a word longer than the longest spelling is recognized only through the compound rule: a hyphenated word whose last
+    ///     part is a spelling has that head, however long the whole word is, and the limit is the length of the longest spelling.
     /// </summary>
     [Fact]
-    public void Tagger_GetPossibleTags_CompoundHead_TooLong_IsNotRecognized()
+    public void Tagger_GetPossibleTags_CompoundHead_TooLongWhole_UsesTheLastPart()
     {
-        // Arrange: the longest spelling of the embedded lexicon, and words around that length
+        // Arrange: the longest spelling of the embedded lexicon, words that fit and words that are one character and a million characters too long
         var tagger = Tagger.Default;
         var longest = EmbeddedModel.Lexicon.MaxSpellingBytes;
         var fits = new string('a', longest - "-tested".Length) + "-tested";
         var tooLong = new string('a', longest - "-tested".Length + 1) + "-tested";
+        var huge = new string('a', 1_000_000) + "-tested";
+        var head = tagger.GetPossibleTags("tested");
 
-        // Act: look them up
-        var inside = tagger.GetPossibleTags(fits);
-        var outside = tagger.GetPossibleTags(tooLong);
-        var outsideShape = tagger.GetPossibleTags(tooLong, PossibleTagsMode.WithShapeRules);
+        // Act: look them up in both modes and ask for a form
+        var results = new[] { fits, tooLong, huge }
+            .Select(w => (Raw: tagger.GetPossibleTags(w), Shape: tagger.GetPossibleTags(w, PossibleTagsMode.WithShapeRules), Form: tagger.IsFormOf(w, "test", Upos.Verb)))
+            .ToList();
 
-        // Assert: the limit is 122 bytes; a compound within it has a head, one beyond it is not recognized without error
+        // Assert: the limit is 122 bytes; whether or not the whole word fits, the head is the last part and the tags are those of the whole word
         Assert.Equal(122, longest);
-        Assert.Equal(WordMatch.CompoundHead, inside.Match);
-        Assert.Equal(WordMatch.NotRecognized, outside.Match);
-        Assert.Empty(outside.GetAnalyses());
-        Assert.Equal(UposSet.All, outsideShape.Tags);
+        Assert.All(
+            results,
+            r =>
+            {
+                Assert.Equal(WordMatch.CompoundHead, r.Raw.Match);
+                Assert.Equal(WordMatch.CompoundHead, r.Shape.Match);
+                Assert.False(r.Raw.IsKnownWord);
+                Assert.True(r.Raw.Tags.IsEmpty);
+                Assert.Equal(UposSet.All, r.Shape.Tags);
+                Assert.Equal(AnalysesOf(head), AnalysesOf(r.Raw));
+                Assert.NotEmpty(r.Raw.GetAnalyses());
+                Assert.True(r.Form);
+            });
+    }
+
+    /// <summary>
+    ///     Proves that a word longer than the longest spelling is not recognized when it is not a hyphenated compound with a known last part
+    ///     of a length that fits: no hyphen, an empty part, a dash character, an unknown last part, or a last part that is itself too long.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_CompoundHead_TooLongWhole_Otherwise_IsNotRecognized()
+    {
+        // Arrange: words that are longer than the longest spelling and fail the compound rule in different ways
+        var tagger = Tagger.Default;
+        var longest = EmbeddedModel.Lexicon.MaxSpellingBytes;
+        var prefix = new string('a', longest + 1);
+        var words = new[]
+        {
+            prefix,
+            prefix + "tested",
+            prefix + "-zzqxv",
+            prefix + "-" + new string('a', longest + 1),
+            prefix + "-" + new string('a', longest - 1) + "-",
+            "-" + prefix + "-tested",
+            prefix + "--tested",
+            prefix + "-",
+            prefix + "\u2013tested",
+            prefix + "-\u2014tested",
+            prefix + "\u2010tested",
+        };
+
+        // Act: look each up in both modes and ask for a form
+        var results = words
+            .Select(w => (Raw: tagger.GetPossibleTags(w), Shape: tagger.GetPossibleTags(w, PossibleTagsMode.WithShapeRules), Form: tagger.IsFormOf(w, "test", Upos.Verb)))
+            .ToList();
+
+        // Assert: nothing is recognized, nothing is analyzed, and the tags are those of any word that is not a spelling
+        Assert.All(
+            results,
+            r =>
+            {
+                Assert.Equal(WordMatch.NotRecognized, r.Raw.Match);
+                Assert.Equal(WordMatch.NotRecognized, r.Shape.Match);
+                Assert.True(r.Raw.Tags.IsEmpty);
+                Assert.Equal(UposSet.All, r.Shape.Tags);
+                Assert.Empty(r.Raw.GetAnalyses());
+                Assert.False(r.Form);
+            });
+    }
+
+    /// <summary>
+    ///     Proves that the answer for a word that is longer than the longest spelling is the answer that the same word gets from a lexicon
+    ///     whose longest spelling is long enough to look the whole word up: the over-long path applies the compound rule exactly as the
+    ///     normal path does, for words made of every kind of piece (hyphens, dash characters, ellipsis, case, accents).
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_TooLongWhole_EqualsTheAnswerOfTheNormalPath()
+    {
+        // Arrange: two lexicons with the same spellings; the second also lists a spelling of 200 characters, so no word below is too long for it
+        static KeyValuePair<string, UposSet> Entry(string spelling, params Upos[] tags) => new(spelling, UposSet.Of(tags));
+        static KeyValuePair<string, IReadOnlyList<DemaConsulting.PartOfSpeech.Lexicon.Analysis>> Readings(string spelling, params DemaConsulting.PartOfSpeech.Lexicon.Analysis[] analyses) => new(spelling, analyses);
+
+        var entries = new List<KeyValuePair<string, UposSet>>
+        {
+            Entry("ab", Upos.Noun),
+            Entry("well", Upos.Adv, Upos.Noun),
+            Entry("tested", Upos.Adj, Upos.Verb),
+            Entry("a-b", Upos.Noun),
+        };
+        var analyses = new[]
+        {
+            Readings("tested", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("tested", Upos.Adj, "Degree=Pos"), new DemaConsulting.PartOfSpeech.Lexicon.Analysis("test", Upos.Verb, "Tense=Past|VerbForm=Part")),
+            Readings("well", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("well", Upos.Noun, "Number=Sing")),
+        };
+        var shortLexicon = TinyModels.CreateTagger(Weights, TinyModels.CreateLexicon(entries, analyses: analyses));
+        var withLong = new List<KeyValuePair<string, UposSet>>(entries) { Entry(new string('q', 200), Upos.Noun) };
+        var longLexicon = TinyModels.CreateTagger(Weights, TinyModels.CreateLexicon(withLong, analyses: analyses));
+        var pieces = new[] { "ab", "well", "tested", "zz", "-", "--", "\u2013", "\u2026", "AB", "Well", "\u00E9", "\u2010" };
+        var words = new List<string>();
+        void Add(string prefix, int depth)
+        {
+            if (prefix.Length > 0)
+            {
+                words.Add(prefix);
+            }
+
+            if (depth == 0)
+            {
+                return;
+            }
+
+            foreach (var piece in pieces)
+            {
+                Add(prefix + piece, depth - 1);
+            }
+        }
+
+        Add(string.Empty, 4);
+        var plain = words.Where(w => w.Length <= 12).ToList();
+        words.AddRange(plain.SelectMany(w => new[] { "aaaaaaaa-" + w, "aaaaaaaa" + w, "aaaaaaaa-well-" + w }));
+
+        // Act / Assert: every word gets the same result and the same answers from both lexicons, in both modes
+        var overlong = 0;
+        foreach (var word in words)
+        {
+            // The longest spelling of the short lexicon is tested, six bytes
+            if (word.Length > 6)
+            {
+                overlong++;
+            }
+
+            foreach (var mode in new[] { PossibleTagsMode.LexiconOnly, PossibleTagsMode.WithShapeRules })
+            {
+                var expected = longLexicon.GetPossibleTags(word, mode);
+                var actual = shortLexicon.GetPossibleTags(word, mode);
+                Assert.True(expected.Match == actual.Match, $"{word}: {expected.Match} / {actual.Match}");
+                Assert.True(expected.Tags == actual.Tags, $"{word}: tags");
+                Assert.True(expected.TagsWithoutAnalysis == actual.TagsWithoutAnalysis, $"{word}: tags without analysis");
+                Assert.True(AnalysesOf(expected).SequenceEqual(AnalysesOf(actual)), $"{word}: analyses");
+            }
+
+            Assert.True(longLexicon.IsFormOf(word, "test", Upos.Verb) == shortLexicon.IsFormOf(word, "test", Upos.Verb), $"{word}: IsFormOf");
+            Assert.True(longLexicon.IsFormOf(word, "well", Upos.Noun) == shortLexicon.IsFormOf(word, "well", Upos.Noun), $"{word}: IsFormOf well");
+        }
+
+        Assert.True(overlong > 10_000);
     }
 
     /// <summary>
@@ -1656,9 +1790,14 @@ public class TaggerTests
     }
 
     /// <summary>
-    ///     The words of the allocation tests: known, capitalized, unknown, digit, punctuation, case variants, compounds and upper case.
+    ///     The words of the allocation tests: known, capitalized, unknown, digit, punctuation, case variants, compounds, upper case, and
+    ///     words longer than the longest spelling (a compound with a known last part, and one without).
     /// </summary>
-    private static readonly string[] AsciiWords = { "valve", "Valve", "zzqxv", "1st", "--", "TESTS", "tests", "well-tested", "built-in", "pre-flight", "-ed", "state-of-the-art-style" };
+    private static readonly string[] AsciiWords =
+    {
+        "valve", "Valve", "zzqxv", "1st", "--", "TESTS", "tests", "well-tested", "built-in", "pre-flight", "-ed", "state-of-the-art-style",
+        new string('a', 300) + "-tested", new string('a', 300) + "-zzqxv",
+    };
 
     /// <summary>
     ///     Proves that the lookup allocates nothing for ASCII words in both modes, through the string and the span overload, and that
@@ -1702,6 +1841,11 @@ public class TaggerTests
     }
 
     /// <summary>
+    ///     A compound with a known last part that is longer than the longest spelling of the embedded lexicon.
+    /// </summary>
+    private static readonly string LongCompound = new string('a', 300) + "-tested";
+
+    /// <summary>
     ///     Proves that the form question allocates nothing for ASCII words, for a whole spelling and for a compound head.
     /// </summary>
     [Fact]
@@ -1718,6 +1862,8 @@ public class TaggerTests
                 sink += tagger.IsFormOf("tests", "test", Upos.Verb) ? 1 : 0;
                 sink += tagger.IsFormOf("TESTS", "Test", Upos.Noun) ? 1 : 0;
                 sink += tagger.IsFormOf("well-tested", "test", Upos.Verb) ? 1 : 0;
+                sink += tagger.IsFormOf(LongCompound, "test", Upos.Verb) ? 1 : 0;
+                sink += tagger.IsFormOf(LongCompound, "test", Upos.Noun) ? 1 : 0;
                 sink += tagger.IsFormOf("tests", "test", Upos.Adj) ? 1 : 0;
                 sink += tagger.IsFormOf("zzqxv", "zzqxv", Upos.Noun) ? 1 : 0;
             },

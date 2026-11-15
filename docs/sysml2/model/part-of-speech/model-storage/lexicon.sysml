@@ -2,7 +2,7 @@ package PartOfSpeech {
     private import SoftwareItemMetadata::*;
 
     part def Lexicon {
-        doc /* Reads, searches and writes the compiled word lexicon and applies the token-shape rules that give the allowed tags of a token. */
+        doc /* Reads, searches and writes the compiled word lexicon (spellings with their tags, and the analyses of their forms: base word, tag and features) and applies the token-shape rules that give the allowed tags of a token. */
 
         metadata info : SoftwareInfo {
             sourceFiles = ("src/DemaConsulting.PartOfSpeech/ModelStorage/Lexicon.cs", "src/DemaConsulting.PartOfSpeech/ModelStorage/LexiconWriter.cs");

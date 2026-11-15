@@ -415,6 +415,10 @@ reviews:
       - "src/DemaConsulting.PartOfSpeech/Tagging/TaggedSentence.cs"  # unit source
       - "src/DemaConsulting.PartOfSpeech/Tagging/TaggedToken.cs"     # unit source
       - "src/DemaConsulting.PartOfSpeech/Tagging/TagScore.cs"        # unit source
+      - "src/DemaConsulting.PartOfSpeech/Tagging/PossibleTagsMode.cs"  # unit source (word lookup mode)
+      - "src/DemaConsulting.PartOfSpeech/Tagging/WordMatch.cs"       # unit source (word lookup match kind)
+      - "src/DemaConsulting.PartOfSpeech/Tagging/WordAnalysis.cs"    # unit source (one reading of a form)
+      - "src/DemaConsulting.PartOfSpeech/Tagging/WordTags.cs"        # unit source (word lookup result)
       - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/TaggerTests.cs"  # unit tests
 
   # PartOfSpeech-LexiconCompiler Review (build-time tool that compiles the lexicon table into the embedded binary)

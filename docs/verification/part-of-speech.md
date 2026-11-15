@@ -153,9 +153,15 @@ are information for reviewers, not acceptance values:
   instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
 - The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
   to be smaller.
-- The embedded weights are 553,641 bytes (1,234,530 uncompressed) and the embedded lexicon 639,711 bytes (1,626,269
-  uncompressed); the package is larger because both resources are embedded once per target framework (the package size
+- The embedded weights are 553,641 bytes (1,234,530 uncompressed) and the embedded lexicon 762,836 bytes (2,157,499
+  uncompressed, of which the analyses of the forms are 531,214 bytes); the package is larger because both resources are
+  embedded once per target framework (the package size
   is stated, approximately, in the "Package size" item of the design document `part-of-speech.md`).
+- The first access of `Tagger.Default` (inflating and validating the lexicon, including every analysis, and loading the
+  weights) takes about 50 ms in a cold process, and loading a tagger from streams in a warm process about 25 ms
+  (.NET 10, median of repeated runs on the development machine); these are information, not acceptance values.
+- The word lookup (`Tagger.GetPossibleTags`, ASCII words, shape mode, one thread) runs at about 1.3 to 1.4 million calls
+  per second on .NET 10; the tests assert only that it allocates nothing for ASCII input.
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
   consecutive sentences: recall 100.00 percent and precision 99.95 percent (the splitter lists were tuned while looking
   at these documents, so these two values are optimistic).
@@ -213,6 +219,20 @@ known word, that the invented word is not and has 16 alternatives, and that the 
 confidence minus the probability of its first alternative (1 when it has none). Two hand-set models give the word `cat`
 a close call (NOUN 3 against VERB 2 at the temperature 4) and a large gap (NOUN 40 against VERB 0), and the test asserts
 that the close call has a margin below 0.2, the large gap one above 0.9, and that the first is smaller than the second.
+
+### Word Lookup: Embedded Lexicon, Agreement With the Tagger
+
+**Test**: `PartOfSpeech_Tagging_WordLookup_EmbeddedLexicon_AgreesWithTheTagger`
+
+Tags a sentence of fifteen words of every kind (listed, capitalized, invented, number, digit-first, punctuation, a dash,
+a hyphenated compound, a decomposed accent, a typographic apostrophe) through the public API with the embedded lexicon and
+16 alternatives, looks every word up with `GetPossibleTags` in the shape mode, and asserts that the tags of the lookup
+equal the tag of the token together with its alternatives and that `IsKnownWord` equals the token's flag. It asserts that
+`valve` has only the tag NOUN, that an invented word is `NotRecognized`, that `well-tested` is a `CompoundHead`, that
+`tests` has the analyses `test NOUN Number=Plur` and `test VERB Person=3|Tense=Pres`, and that `IsFormOf("TESTS", "test",
+Upos.Verb)` is true. The word-by-word rules (modes, compound rule, long words, arguments, allocation) are verified at unit
+level in _Tagger Verification_ and _TagDecoder Verification_, and the lookup of every spelling of the lexicon against the
+decoder in _TagDecoder Verification_.
 
 ### Lexicon Restriction: Known and Unknown Words
 
@@ -451,13 +471,27 @@ reference), so that none flows to consumers, and that the lexicon and the weight
 
 ### Embedded Lexicon Is Current
 
-**Test**: `PartOfSpeech_Lexicon_Embedded_EncodesLexiconTsv` (in `PartOfSpeechDataTests.cs`)
+**Tests**: `PartOfSpeech_Lexicon_Embedded_EncodesLexiconTsv` and
+`PartOfSpeech_Data_EmbeddedLexicon_EncodesAnalysesTsv` (in `PartOfSpeechDataTests.cs`)
 
-Reads `data/lexicon/lexicon.tsv` with the test helper (independent of the compiler), looks every spelling up in the
-embedded lexicon and compares its tags, and asserts that the embedded lexicon has the same number of spellings and tag
-entries, so that nothing is missing, different or extra. The subsystem test
-`ModelStorage_EmbeddedLexicon_EncodesLexiconTsv` and the build step `LexiconCompiler --check` additionally compare the
-committed binary with a fresh compilation.
+The first reads `data/lexicon/lexicon.tsv` with the test helper (independent of the compiler), looks every spelling up
+in the embedded lexicon and compares its tags, and asserts that the embedded lexicon has the same number of spellings
+and tag entries, so that nothing is missing, different or extra. The second reads `data/lexicon/analyses.tsv` with the
+same kind of independent reader and asserts that every spelling of the lexicon has exactly the analyses of its row, in
+the same order, and none when it has no row. The subsystem tests
+`ModelStorage_EmbeddedLexicon_EncodesLexiconTsv` and `ModelStorage_EmbeddedLexicon_EncodesAnalysesTsv` and the build step
+`LexiconCompiler --check` additionally compare the committed binary with a fresh compilation.
+
+### Analyses Table Is Well Formed
+
+**Test**: `PartOfSpeech_Data_Analyses_WellFormed` (in `PartOfSpeechDataTests.cs`)
+
+Parses `data/lexicon/analyses.tsv` without the compiler and asserts for every row that the spelling is a spelling of the
+lexicon table and the rows ascend by the UTF-8 bytes of the spelling, that every analysis has a base word without white
+space, a tag that the lexicon lists for the spelling, and features of the recorded vocabulary (`Degree`, `Number`,
+`Person`, `Tense`, `VerbForm` with their values) in ascending name order, that the analyses of a row ascend strictly by
+tag, base word and features, that the header states the number of analyses that the rows hold, and that the table has more
+than 250,000 analyses.
 
 ### API Documentation Is Packaged
 
@@ -489,7 +523,8 @@ and not just the project file. The reasons for a license file instead of an expr
 `PartOfSpeech_ShapesDev_*`, `PartOfSpeech_ShapesDevHard_*`, `PartOfSpeech_ShapesDevNew_*`, `PartOfSpeech_Imperative_*`,
 `PartOfSpeech_Compound_*`, `PartOfSpeech_Headings_*`, `PartOfSpeech_Compound2_*`, `PartOfSpeech_Headings2_*`,
 `PartOfSpeech_Followup_*`, `PartOfSpeech_TargetedSources_*`
-and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`
+and `PartOfSpeech_Lexicon_*` tests of `PartOfSpeechDataTests.cs`, and the `PartOfSpeech_Data_*` tests of the analyses table
+(described above)
 
 One test per obligation, as named in the requirements of the _Data and Licensing_ section; each reads the committed files
 and fails when a file is missing or empty.

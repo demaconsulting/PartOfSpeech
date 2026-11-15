@@ -1,7 +1,7 @@
 ### Tagger Verification
 
 This document describes the unit-level verification strategy for the `Tagger` unit (`Tagger`, `TaggerOptions`,
-`TaggedSentence`, `TaggedToken`, `TagScore`).
+`TaggedSentence`, `TaggedToken`, `TagScore`, `PossibleTagsMode`, `WordMatch`, `WordAnalysis`, `WordTags`).
 
 #### Verification Approach
 
@@ -13,7 +13,11 @@ thread-safety test shares one tagger between 8 threads and compares every result
 test tries to modify results and options through the interfaces that they expose. The tests of `Tagger.Default` use the
 shipped model, but only for properties that do not depend on its accuracy (it exists, it is one shared instance, and it
 tags four hand-written sentences whose tags are unmistakable; the sentences were written once and are not tuned, and
-the accuracy of the model is measured by the trainer's evaluation, never by these tests).
+the accuracy of the model is measured by the trainer's evaluation, never by these tests). The word lookup is verified on
+the real embedded lexicon (its `tests`, `the`, `is`, `went`, `well-tested` and similar entries are real data) and,
+where a test needs exact control of the analyses or of the longest spelling, on small custom lexicons that `TinyModels`
+compiles with the real writer; the tests for a word that is longer than the longest spelling compare the answer with
+the answer of a lexicon that can look the whole word up.
 
 #### Test Environment
 
@@ -28,7 +32,11 @@ differs from the sequential one, a result can be modified after it is returned, 
 invariants (excludes the tag, sorted, limited, sums with the confidence to at most one), the known-word flag differs
 from the lexicon membership of the folded, lower-cased spelling or changes with a glossary, or a margin differs from the
 confidence minus the best alternative (or from the smallest value that the confidence allows when there is none), is
-negative, or allocates.
+negative, or allocates; or a word lookup differs from the documented rule: a word that is not recognized is reported
+as a word with no tags, a tag, analysis or match differs from the lexicon, a hyphenated word is matched against
+anything but its whole spelling or its last part (whatever the length of the word), the tags of a compound head are
+not those of the whole word, the answer to the form question disagrees with the analyses, an invalid word, mode or tag
+is accepted, a parallel lookup differs from the sequential one, or a lookup of an ASCII word allocates.
 
 #### Test Scenarios
 
@@ -87,3 +95,82 @@ negative, or allocates.
   loads through the public loader, its header names all four groups, and the tagger, which decodes the right preview
   group in two passes, tags at least 90% of the fixture tokens right; what each group does is verified in
   _FeatureExtractor Verification_ and _TagDecoder Verification_).
+- **Word lookup, tags and modes** (embedded lexicon unless a custom lexicon is named; real data, no mock):
+  `Tagger_GetPossibleTags_DefaultMode_IsLexiconOnly`, `Tagger_GetPossibleTags_Case_IgnoresLetterCase` (a theory:
+  `TESTS`, `Tests` and `tESTS` give a result equal to the one of `tests`, analyses included),
+  `Tagger_GetPossibleTags_ShapeRules_ExtendTheLexiconTags` (a theory over `valve`, `Valve`, `VALVE`, `vALVE`, `1st`,
+  `--`, the em dash and `n't` forms: the raw tags are the lexicon's, the shape tags add PROPN and X for a capital first
+  letter, the digit tags for a digit and the punctuation tags for a word without a letter or digit, and both modes
+  know the word), `Tagger_GetPossibleTags_FoldedSpelling_UsesTheTaggerLookup` (a theory over the curly apostrophe, the
+  en dash, em dash and ellipsis characters, a decomposed accent, an unlisted spelling: the same lookup as a token),
+  `Tagger_GetPossibleTags_UnknownWord_IsNotRecognizedNotEmptyKnown` (a made-up word gives `NotRecognized`, empty tags
+  in the lexicon mode and all 17 in the shape mode, and equals `default` in the lexicon mode),
+  `Tagger_GetPossibleTags_CustomLexicon_UsesItsOwnLexicon` (two taggers with different lexicons do not mix their
+  answers) and `Tagger_GetPossibleTags_Glossary_DoesNotChangeTheResult` (a glossary changes the tag of a token in a
+  sentence and not the lookup of the word).
+- **Word lookup, analyses**: `Tagger_GetPossibleTags_Tests_ReturnsBothAnalysesInDocumentedOrder` (`test NOUN
+  Number=Plur` then `test VERB Person=3|Tense=Pres`, `GetFeature`, the UD notation),
+  `Tagger_GetPossibleTags_TagsWithoutAnalysis_ReportsRuleAndAttestedTags` (`the` with ADV, PRON and PROPN without an
+  analysis, `testing` with the rule-added ADJ, `ran`, and `paris`, a proper noun without any analysis),
+  `Tagger_GetPossibleTags_ClosedClassAndIrregularForms_HaveTheBaseWord` (`of` is its own base word, `is` has `be` as AUX
+  and as VERB, `went` has `go`, and an empty feature set reads as an empty string),
+  `Tagger_GetPossibleTags_CustomLexiconWithoutAnalyses_HasNoAnalyses` (tags and match, no analyses,
+  `TagsWithoutAnalysis` equals `Tags`, `IsFormOf` false),
+  `Tagger_GetPossibleTags_CustomLexiconWithAnalyses_ReportsItsAnalyses` (a custom lexicon with non-ASCII and
+  apostrophe base words), `WordTags_Equality_FollowsTheLookupResult` (equality, hash code, `==`, `default`,
+  `ToString`) and `WordAnalysis_Members_WorkOnRealAndDefaultValues` (equality, `GetFeature` for present, absent and
+  null names, `ToString`, the default value).
+- **Word lookup, hyphenated words and long words**:
+  `Tagger_GetPossibleTags_CompoundHead_UsesLastPartAndTagsStayTheWholeToken` (`well-tested`: `CompoundHead`, the
+  analyses of `tested`, `IsKnownWord` false, empty tags in the lexicon mode and all 17 in the shape mode),
+  `Tagger_GetPossibleTags_CompoundHead_HeadIsTheLastPartOnly` (a theory over `pre-flight`, `WELL-Tested`,
+  `very-state-of-the-art`, a made-up prefix before `flight`, and `state-of-the-art-style`: only the last part counts,
+  nothing is split further), `Tagger_GetPossibleTags_CompoundWhole_PrefersTheSpelling` (`built-in` and `User-Friendly`
+  are spellings with their own analyses, not those of `in` or `friendly`),
+  `Tagger_GetPossibleTags_CompoundHead_Malformed_IsNotRecognized` (a theory: `-ed`, `well-`, `a--b`, `well--tested`, a
+  leading or trailing hyphen, an unknown last part, the en dash, the em dash, and the typographic hyphens U+2010 and
+  U+2011 as separators), `Tagger_GetPossibleTags_CompoundHead_TooLongWhole_UsesTheLastPart` (a word that fits, one
+  character too long and one with a million characters, each with the known last part `tested`: all `CompoundHead`
+  with the analyses of `tested`, `IsFormOf` true, empty or full tags by mode),
+  `Tagger_GetPossibleTags_CompoundHead_TooLongWhole_Otherwise_IsNotRecognized` (an over-long word with no hyphen, an
+  unknown last part, a last part that is itself too long, a leading, doubled or trailing hyphen, or a dash character:
+  `NotRecognized`, no analyses, `IsFormOf` false) and
+  `Tagger_GetPossibleTags_TooLongWhole_EqualsTheAnswerOfTheNormalPath` (tens of thousands of generated words made of
+  pieces such as `ab`, `well`, `tested`, `-`, `--`, en dash, ellipsis, upper case, accents and U+2010, with and
+  without over-long prefixes, are looked up in a lexicon whose longest spelling is six bytes and in the same lexicon
+  plus a 200-character spelling, so that no word is too long for the second; `Match`, `Tags` in both modes,
+  `TagsWithoutAnalysis`, the analyses and `IsFormOf` must be identical, and more than 10,000 of the words are too long
+  for the first), `Tagger_GetPossibleTags_VeryLongWord_IsNotRecognizedWithoutError` (a million ASCII characters, a
+  million non-ASCII characters and a hyphenated word with halves of 500,000 characters: `NotRecognized`, no
+  exception, and the next lookup of an ordinary word is right) and
+  `Tagger_GetPossibleTags_UnpairedSurrogate_DoesNotThrow`.
+- **Word lookup, arguments**: `Tagger_GetPossibleTags_NullWord_Throws` (also a null base word of `IsFormOf`),
+  `Tagger_GetPossibleTags_EmptyOrWhiteSpace_Throws` (a theory over an empty word, a space, a tab, a no-break space, a
+  newline, an em space and a phrase, for the word and the base word),
+  `Tagger_GetPossibleTags_WhiteSpaceRule_EqualsTokenizerRule` (all 65,536 UTF-16 code units: the lookup refuses a word
+  exactly when `Tokenizer.CreateSentence` refuses it as a token) and
+  `Tagger_GetPossibleTags_UndefinedModeOrTag_Throws`.
+- **Form question**: `Tagger_IsFormOf_Analyses_AnswerTheQuestion` (a theory of true and false cases: `tests` of `test`
+  as noun and as verb, `TESTS` of `Test`, `went` of `go`, `is` of `be`, an apostrophe base word with typographic
+  apostrophe and case, compound heads in any case, a wrong tag, a base word that is not an analysis, an unknown word,
+  a proper noun without analysis, a tag without analysis, the whole spelling `built-in` against its head, an unknown
+  head and a malformed compound) and `Tagger_IsFormOf_EveryAnalysisOfSampleWords_IsAForm` (every analysis of a sample
+  of words, compound heads included, is a form, and a decomposed non-ASCII word and base word and a curly apostrophe
+  are normalized in a custom lexicon).
+- **Thread safety**: `Tagger_GetPossibleTags_ConcurrentCalls_GiveTheSameResultsAsOneThread` (eight threads look up words,
+  ask the form question and tag text in between; every answer equals the one of a single thread).
+- **Span overload** (.NET 8 and later): `Tagger_GetPossibleTags_Span_EqualsStringOverload` (words of every kind, also
+  a slice of a longer text, give the result of the string overload in both modes) and
+  `Tagger_GetPossibleTags_Span_InvalidInput_Throws`.
+- **Allocation** (.NET 8 and later, where the per-thread allocation counter exists; `TestSupport/AllocationMeter.cs`, the
+  minimum of the batches after warm-up): `Tagger_GetPossibleTags_DoesNotAllocate` (14 ASCII words in both modes through
+  the string and the span overload: known, capitalized, unknown, digit, punctuation, case variants, compounds, malformed
+  compounds and two words of 307 characters, one with a known last part, allocate 0 bytes per batch of 100 rounds,
+  including reading `TagsWithoutAnalysis`), `Tagger_IsFormOf_DoesNotAllocate` (true and false cases, a compound head and
+  an over-long compound: 0 bytes) and `Tagger_GetPossibleTags_AllocationOfTheOtherCases_IsRecordedAndBounded` (records,
+  without a threshold, what the cases that may allocate cost, and asserts only the statements of the documentation: a
+  million ASCII characters allocate 0 bytes and `GetAnalyses` allocates, except for a word without analyses). Measured
+  values (.NET 10, Windows x64, bytes per call): non-ASCII word that is already NFC 0, curly apostrophe 0, decomposed
+  word 32, span with an NFC non-ASCII character 32, with a decomposed one 64, a million non-ASCII characters that are
+  already NFC 0, `GetAnalyses` of `tests` 360, of `well` (five analyses) 600, of the head of `well-tested` 368, of an
+  unknown word 0. The tests do not run for `net481` (no per-thread allocation counter).

@@ -160,6 +160,39 @@ sections:
             tests:
               - Tagging_Evidence_UnknownWordAndCloseCall_AreReported
 
+          - id: PartOfSpeech-Tagging-PossibleTags
+            title: >-
+              The tags that the lookup of one word reports in the shape mode shall be the tags that the decoder allows
+              for the same word as a token, and the known flag of the lookup shall be the flag of the token, for words
+              of every kind, including hyphenated compounds and words that the lexicon does not know.
+            justification: |
+              A rule checker combines the lookup of a word with the tag that the tagger chose for it in a sentence; if
+              the two used different restrictions, the checker could conclude that a word cannot be a verb while the
+              tagger tags it as one.
+            children:
+              - PartOfSpeech-Tagging-Tagger-PossibleTags
+              - PartOfSpeech-Tagging-Tagger-PossibleTagsInput
+              - PartOfSpeech-Tagging-TagDecoder-PossibleTags
+            tests:
+              - Tagging_WordLookup_AgreesWithTheTokensOfTheSameWord
+
+          - id: PartOfSpeech-Tagging-WordAnalyses
+            title: >-
+              The match kind, the analyses and the answer to the form question of a lookup shall be consistent with the
+              tokens that the tagger sees for the same word: a word that the tagger knows is a spelling, a hyphenated
+              word that it does not know is recognized only through the last part and never changes the tags, and the
+              form question agrees with the listed analyses.
+            justification: |
+              The analyses give the base word and the form of each reading; they are only useful if they describe the
+              same words that the tagger tags, and the rule for hyphenated words is the one place where the lookup goes
+              beyond what the tagger does, so it must be pinned down together with the tagger.
+            children:
+              - PartOfSpeech-Tagging-Tagger-WordAnalyses
+              - PartOfSpeech-Tagging-Tagger-CompoundHead
+              - PartOfSpeech-Tagging-Tagger-IsFormOf
+            tests:
+              - Tagging_WordLookup_AgreesWithTheTokensOfTheSameWord
+
           - id: PartOfSpeech-Tagging-Determinism
             title: >-
               The same input shall give the same tags, confidences and alternatives each time, from the same tagger and
