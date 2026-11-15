@@ -633,14 +633,14 @@ results.
 **Thread safety.** The lookup is safe from any number of threads at the same time, also while other threads tag text; it
 uses the same per-thread scratch memory as tagging. `WordTags` and `WordAnalysis` are immutable values.
 
-**Allocation.** After the first call on a thread, the lookup of an ASCII word allocates nothing in both modes, and neither
-does `IsFormOf`; the same holds for a word with other characters that is already in NFC (`café`, a typographic
-apostrophe). A word that is not in NFC allocates the normalized string (32 bytes for an `e` with a combining acute
-accent). A span of ASCII characters allocates nothing; a span with another character is copied to a string first (32 bytes
-for one NFC character). `GetAnalyses()` allocates its list: 360 bytes for the two analyses of `tests`, 600 bytes for the
-five of `well`, 368 bytes for the compound head `well-tested` and nothing for a word without analyses. These numbers
-were measured on .NET 10 on Windows x64 (the smallest of ten batches after warm-up). The allocation tests run on .NET 8
-and later and assert the zero cases; the others are only bounded.
+**Allocation.** After the first call on a thread, the lookup of an ASCII word allocates nothing in both modes, and
+neither does `IsFormOf`; the same holds for a word with other characters that is already in NFC (`café`, a typographic
+apostrophe). A word that is not in NFC allocates the normalized string (32 bytes for `café` written with a combining
+acute accent). A span of ASCII characters allocates nothing; a span with another character is copied to a string first
+(24 bytes for one NFC character). `GetAnalyses()` allocates its list: 360 bytes for the two analyses of `tests`, 600
+bytes for the five of `well`, 368 bytes for the compound head `well-tested` and nothing for a word without analyses.
+These numbers were measured on .NET 10 on Windows x64 (the smallest of ten batches after warm-up). The allocation tests
+run on .NET 8 and later and assert the zero cases; the others are only bounded.
 
 ## Loading a Weights File
 

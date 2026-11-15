@@ -144,7 +144,8 @@ files also hold the options and the result types: `Tagger.cs`, `TaggerOptions.cs
   1,000,000-character word
   (asserted by tests on .NET 8 and later). A word with a non-ASCII character that is already NFC allocates nothing; a
   decomposed word allocates the normalized string (32 bytes for `cafe` plus U+0301); a span with an NFC non-ASCII
-  character allocates its `ToString` (32 bytes), a decomposed one 64 bytes. `GetAnalyses()` allocates its array and the
+  word allocates its `ToString` (32 bytes for `café`), a decomposed one 64 bytes. `GetAnalyses()` allocates its array
+  and the
   base word strings (measured per call: 360 bytes for `tests`, 600 for `well` with five analyses, 368 for the head of
   `well-tested`, 0 for a word without analyses). Measured on .NET 10, Windows x64, minimum of ten batches after warm-up;
   `Tag(...)` of a 25-token sentence allocates 4,872 bytes (the result arrays), which the lookup does not change.

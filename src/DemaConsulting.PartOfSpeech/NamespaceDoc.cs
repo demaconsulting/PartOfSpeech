@@ -711,7 +711,7 @@ namespace DemaConsulting.PartOfSpeech;
 ///     and neither does <see cref="Tagger.IsFormOf(string, string, Upos)"/>; the same holds for a word with other characters
 ///     that is already in NFC (<c>café</c>, a typographic apostrophe) and for a word of a million ASCII characters, which is
 ///     answered without an error after one pass over its characters. A word that is not in NFC allocates the normalized
-///     string (32 bytes for an <c>e</c> with a combining acute accent). <see cref="WordTags.GetAnalyses"/> allocates its
+///     string (32 bytes for <c>café</c> written with a combining acute accent). <see cref="WordTags.GetAnalyses"/> allocates its
 ///     list: 360 bytes for the two analyses of <c>tests</c>, 600 bytes for the five of <c>well</c>, 368 bytes for the
 ///     compound head <c>well-tested</c> and nothing for a word without analyses. These numbers were measured on .NET 10 on
 ///     Windows x64 (the smallest of ten batches after warm-up); the allocation tests run on .NET 8 and later and assert
