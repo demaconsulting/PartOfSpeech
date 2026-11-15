@@ -1015,7 +1015,68 @@ public class FeatureExtractorTests
         Assert.Equal(FeatureExtractor.StaticFeatureCount, FeatureExtractor.StaticStrideFor(FeatureGroups.RightPreview));
     }
 
+    /// <summary>
+    ///     Proves that the folding core, given text that is already normalized, records the same characters, facts and hashes as
+    ///     <see cref="FeatureExtractor.SetToken"/> does for the raw text, so the word lookup and the decoder see the same token.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_SetFolded_NormalizedText_EqualsSetToken()
+    {
+        // Arrange: texts of every kind: ASCII, capitalized, typographic, decomposed, malformed, supplementary, digits, hyphens
+        var texts = new[] { "cat", "Cat", "CAT", "don\u2019t", "a\u2014b", "wait\u2026", "cafe\u0301", "caf\u00E9", "a\uD800b", "\U0001F600", "1,000", "-", "X-Ray", "\u201Chi\u201D" };
+
+        foreach (var text in texts)
+        {
+            // Act: fold the raw text with SetToken, and the normalized text with the core
+            var viaToken = new DecoderWorkspace();
+            viaToken.Begin(1);
+            FeatureExtractor.SetToken(viaToken, 0, text);
+            var normalized = text.Any(c => c >= 0x80) ? FeatureExtractor.NormalizeNonAscii(text) : text;
+            var viaCore = new DecoderWorkspace();
+            viaCore.Begin(1);
+            FeatureExtractor.SetFolded(viaCore, 0, normalized);
+
+            // Assert: the same folded and lower-cased characters, flags, shape and hashes
+            var size = (2 * viaToken.Length[0]);
+            Assert.Equal(viaToken.Length[0], viaCore.Length[0]);
+            Assert.Equal(viaToken.CharsUsed, viaCore.CharsUsed);
+            Assert.Equal(new string(viaToken.Chars, viaToken.Start[0], size), new string(viaCore.Chars, viaCore.Start[0], size));
+            Assert.Equal(viaToken.Flags[0], viaCore.Flags[0]);
+            Assert.Equal(viaToken.Shape[0], viaCore.Shape[0]);
+            Assert.Equal(viaToken.WordHash[0], viaCore.WordHash[0]);
+            Assert.Equal(viaToken.LowerHash[0], viaCore.LowerHash[0]);
+        }
+    }
+
 #if NET
+    /// <summary>
+    ///     Proves that the folding core folds a slice of a longer text exactly like the same characters as a token of their own.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_SetFolded_SpanSlice_EqualsTheSameTextAsAToken()
+    {
+        // Arrange: a token inside a longer text, and the same token alone
+        const string text = "xxCaf\u00E9-Bar\u2019sxx";
+        var inner = text.AsSpan(2, text.Length - 4);
+        var alone = new DecoderWorkspace();
+        alone.Begin(1);
+        FeatureExtractor.SetToken(alone, 0, inner.ToString());
+        var sliced = new DecoderWorkspace();
+        sliced.Begin(1);
+
+        // Act: fold the slice without copying it
+        FeatureExtractor.SetFolded(sliced, 0, inner);
+
+        // Assert: the same characters, flags and hashes
+        var size = 2 * alone.Length[0];
+        Assert.Equal(new string(alone.Chars, alone.Start[0], size), new string(sliced.Chars, sliced.Start[0], size));
+        Assert.Equal(alone.Flags[0], sliced.Flags[0]);
+        Assert.Equal(alone.Shape[0], sliced.Shape[0]);
+        Assert.Equal(alone.WordHash[0], sliced.WordHash[0]);
+        Assert.Equal(alone.LowerHash[0], sliced.LowerHash[0]);
+    }
+
+
     /// <summary>
     ///     Proves that extracting the buckets of all groups, with a stem lookup and both passes, does not allocate once the workspace has grown.
     /// </summary>

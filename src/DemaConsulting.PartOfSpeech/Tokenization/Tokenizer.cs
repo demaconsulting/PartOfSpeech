@@ -265,7 +265,7 @@ public static class Tokenizer
     /// </summary>
     /// <param name="value">The string.</param>
     /// <returns><c>true</c> if any character is white space.</returns>
-    private static bool ContainsWhiteSpace(string value)
+    internal static bool ContainsWhiteSpace(string value)
     {
         for (var i = 0; i < value.Length; i++)
         {

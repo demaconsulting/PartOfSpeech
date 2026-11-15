@@ -1,4 +1,4 @@
-// cspell:ignore zorbulon zzqxj Cquoted
+// cspell:ignore zorbulon zzqxj Cquoted zzqxv Zzqxv
 using System.Xml.Linq;
 
 namespace DemaConsulting.PartOfSpeech.Tests;
@@ -748,6 +748,41 @@ public class PartOfSpeechTests
         Assert.Empty(exposed);
         Assert.Contains(project.Descendants("EmbeddedResource"), r => ((string?)r.Attribute("Include") ?? string.Empty).Replace('\\', '/').EndsWith("Resources/lexicon.bin", StringComparison.Ordinal));
         Assert.Contains(project.Descendants("EmbeddedResource"), r => ((string?)r.Attribute("Include") ?? string.Empty).Replace('\\', '/').EndsWith("Resources/weights.bin", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    ///     Proves the word lookup with the embedded lexicon through the public API: known words with their tags and analyses, a
+    ///     capitalized word, an invented word, a compound, and agreement with the tagger for every kind of token.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Tagging_WordLookup_EmbeddedLexicon_AgreesWithTheTagger()
+    {
+        // Arrange: a tagger with the embedded lexicon that reports all alternatives, and words of every kind
+        var tagger = EmbeddedLexiconTagger(new TaggerOptions { MaxAlternatives = 16 });
+        var words = new[] { "valve", "Valve", "zzqxv", "Zzqxv", "42", "1st", ".", "--", "well-tested", "pre-flight", "tests", "CAFE\u0301", "n\u2019t", "The", "is" };
+
+        // Act: tag the words as one sentence and look every word up
+        var sentence = tagger.Tag(words);
+        var valve = tagger.GetPossibleTags("Valve");
+        var invented = tagger.GetPossibleTags("zzqxv");
+        var compound = tagger.GetPossibleTags("well-tested");
+        var tests = tagger.GetPossibleTags("tests");
+
+        // Assert: the shape-rule lookup is the set of tags that the tagger considered, and the known flag is the tagger's
+        for (var i = 0; i < words.Length; i++)
+        {
+            var token = sentence.Tokens[i];
+            var allowed = UposSet.Of(token.Tag).Union(UposSet.Of(token.Alternatives.Select(a => a.Tag).ToArray()));
+            var lookup = tagger.GetPossibleTags(words[i], PossibleTagsMode.WithShapeRules);
+            Assert.Equal(allowed, lookup.Tags);
+            Assert.Equal(token.IsKnownWord, lookup.IsKnownWord);
+        }
+
+        Assert.Equal(UposSet.Of(Upos.Noun), valve.Tags);
+        Assert.Equal(WordMatch.NotRecognized, invented.Match);
+        Assert.Equal(WordMatch.CompoundHead, compound.Match);
+        Assert.Equal(new[] { "test NOUN Number=Plur", "test VERB Person=3|Tense=Pres" }, tests.GetAnalyses().Select(a => a.ToString()));
+        Assert.True(tagger.IsFormOf("TESTS", "test", Upos.Verb));
     }
 
     /// <summary>

@@ -315,14 +315,14 @@ internal sealed class Lexicon
     /// <param name="tags">Receives the tags of the spelling; the empty set when it is not in the lexicon.</param>
     /// <returns><c>true</c> if the spelling is in the lexicon.</returns>
     public bool TryGetTags(char[] chars, int offset, int length, byte[] scratch, out UposSet tags) =>
-        TryFind(chars, offset, length, scratch, out _, out tags);
+        TryFindKey(chars, offset, length, scratch, out _, out tags, out _);
 
     /// <summary>
     ///     Looks up a lower-cased spelling and reports its position in the table.
     /// </summary>
     /// <remarks>
-    ///     This is the core of <see cref="TryGetTags"/>: the same search, the same allocation-free behavior, plus the
-    ///     ordinal that addresses the analyses of the spelling.
+    ///     The same search as <see cref="TryFindKey"/>, for callers
+    ///     that do not need the length of the key.
     /// </remarks>
     /// <param name="chars">The buffer that holds the characters of the key, already folded and lower-cased.</param>
     /// <param name="offset">The index of the first key character in <paramref name="chars"/>.</param>
@@ -331,19 +331,41 @@ internal sealed class Lexicon
     /// <param name="ordinal">Receives the zero-based position of the spelling in ascending UTF-8 order; -1 when it is not in the lexicon.</param>
     /// <param name="tags">Receives the tags of the spelling; the empty set when it is not in the lexicon.</param>
     /// <returns><c>true</c> if the spelling is in the lexicon.</returns>
-    public bool TryFind(char[] chars, int offset, int length, byte[] scratch, out int ordinal, out UposSet tags)
+    public bool TryFind(char[] chars, int offset, int length, byte[] scratch, out int ordinal, out UposSet tags) =>
+        TryFindKey(chars, offset, length, scratch, out ordinal, out tags, out _);
+
+    /// <summary>
+    ///     Looks up a lower-cased spelling and reports its position in the table and the length of its UTF-8 key.
+    /// </summary>
+    /// <remarks>
+    ///     This is the core of <see cref="TryGetTags"/>: the same search, the same allocation-free behavior, plus the
+    ///     ordinal that addresses the analyses of the spelling and the length of the UTF-8 key, which stays in the first
+    ///     half of <paramref name="scratch"/> after a successful call (the base word of an analysis is composed from it,
+    ///     see <see cref="HasAnalysis"/>).
+    /// </remarks>
+    /// <param name="chars">The buffer that holds the characters of the key, already folded and lower-cased.</param>
+    /// <param name="offset">The index of the first key character in <paramref name="chars"/>.</param>
+    /// <param name="length">The number of characters of the key.</param>
+    /// <param name="scratch">A buffer of at least <see cref="ScratchSize"/> bytes that the caller owns exclusively for the call.</param>
+    /// <param name="ordinal">Receives the zero-based position of the spelling in ascending UTF-8 order; -1 when it is not in the lexicon.</param>
+    /// <param name="tags">Receives the tags of the spelling; the empty set when it is not in the lexicon.</param>
+    /// <param name="keyLength">Receives the number of UTF-8 bytes of the key at the start of <paramref name="scratch"/>; meaningful only when the result is <c>true</c>.</param>
+    /// <returns><c>true</c> if the spelling is in the lexicon.</returns>
+    public bool TryFindKey(char[] chars, int offset, int length, byte[] scratch, out int ordinal, out UposSet tags, out int keyLength)
     {
         tags = UposSet.Empty;
         ordinal = -1;
+        keyLength = 0;
         if (length == 0 || length > MaxSpellingBytes)
         {
             return false;
         }
 
         // Encode the key as UTF-8 into the first half of the scratch buffer; a longer key cannot be present
-        var keyLength = EncodeUtf8(chars, offset, length, scratch, MaxSpellingBytes);
+        keyLength = EncodeUtf8(chars, offset, length, scratch, MaxSpellingBytes);
         if (keyLength < 0)
         {
+            keyLength = 0;
             return false;
         }
 

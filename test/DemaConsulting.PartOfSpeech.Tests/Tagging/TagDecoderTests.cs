@@ -1,4 +1,4 @@
-// cspell:ignore zorbulon zork unknownword
+// cspell:ignore zorbulon zork unknownword zzqxv Zzqxv zzqx ZZQXV
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -894,6 +894,326 @@ public class TagDecoderTests
             Assert.Equal(expected[i % sentences.Count], concurrent[i]);
         }
     }
+
+    /// <summary>
+    ///     The mask of all groups, as a flag for the word lookup tests.
+    /// </summary>
+    private static FeatureGroups GroupsFor(bool withGroups) => withGroups ? FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine : FeatureGroups.None;
+
+    /// <summary>
+    ///     Creates a decoder over the embedded lexicon whose model has the groups of a switch.
+    /// </summary>
+    private static TagDecoder EmbeddedDecoder(bool withGroups) =>
+        new(PerceptronModel.Load(CatWeights().Build(groups: GroupsFor(withGroups))), EmbeddedModel.Lexicon);
+
+    /// <summary>
+    ///     The tokens of the shape samples: capitalized, upper case, digits, punctuation, unknown, typographic, decomposed, hyphenated and malformed.
+    /// </summary>
+    private static readonly string[] ShapeSamples =
+    {
+        "cat", "Cat", "CAT", "cAT", "42", "3.14", "1,000", "1st", "1ST", "...", "--", "!", "@#$", "zzqxv", "Zzqxv", "ZZQXV", "n't", "n\u2019t", "N\u2019T",
+        "caf\u00E9", "CAFE\u0301", "Cafe\u0301", "\u2014", "\u2013", "\u2026", "\u201Chi\u201D", "well-tested", "Well-Tested", "pre-flight", "built-in", "Built-In",
+        "user-friendly", "a--b", "-ed", "well-", "-", "x\uFFFD", "a\uD800b", "\uDC00", "\U0001F600", "e-mail", "E-MAIL", "the", "The", "THE", "is", "Is", "a", "A", "I", "valve", "Valve",
+    };
+
+    /// <summary>
+    ///     Compares the lookup of every word with what the decoder allows for the same word as a token, in batches of one sentence.
+    /// </summary>
+    /// <param name="decoder">The decoder.</param>
+    /// <param name="words">The words.</param>
+    /// <returns>The words (with the reason) for which the lookup and the decoder differ.</returns>
+    private static List<string> ParityFailures(TagDecoder decoder, IReadOnlyList<string> words)
+    {
+        var failures = new List<string>();
+        for (var offset = 0; offset < words.Count; offset += 50)
+        {
+            // The oracle: the decoder with all 16 alternatives and no constraint considers exactly the allowed set
+            var batch = words.Skip(offset).Take(50).ToArray();
+            var decoded = decoder.Decode(Tokens(batch), null, 16);
+            for (var i = 0; i < batch.Length; i++)
+            {
+                var token = decoded[i];
+                var expected = UposSet.Of(token.Tag).Union(UposSet.Of(token.Alternatives.Select(a => a.Tag).ToArray()));
+                var lookup = decoder.GetPossibleTags(batch[i], PossibleTagsMode.WithShapeRules);
+                if (lookup.Tags != expected)
+                {
+                    failures.Add($"{batch[i]}: tags {lookup.Tags} instead of {expected}");
+                }
+
+                if (lookup.IsKnownWord != token.IsKnownWord || (lookup.Match == WordMatch.Spelling) != token.IsKnownWord)
+                {
+                    failures.Add($"{batch[i]}: known {lookup.IsKnownWord} instead of {token.IsKnownWord}");
+                }
+            }
+        }
+
+        return failures;
+    }
+
+    /// <summary>
+    ///     Proves that, with a hand-set lexicon, the tags of the shape-rule lookup equal the tags that the decoder considers for the same
+    ///     token in the first, a middle and the last position of a sentence, for a model without and with feature groups.
+    /// </summary>
+    /// <param name="withGroups">Whether the model has all feature groups (the lexicon facts are then cached while decoding).</param>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TagDecoder_GetPossibleTags_WithShapeRules_SampleTokens_EqualTheDecodeCandidates(bool withGroups)
+    {
+        // Arrange: a lexicon that lists plain, digit, punctuation, folded and accented spellings, and a decoder for it
+        var lexicon = TinyModels.CreateLexicon("cat NOUN VERB", "the DET", "1st ADJ", "-- PUNCT", "... PUNCT", "n't PART", "caf\u00E9 NOUN", "well-tested ADJ", "e-mail NOUN VERB", "is AUX VERB", "a DET", "i PRON");
+        var decoder = TinyModels.CreateDecoder(CatWeights().Build(groups: GroupsFor(withGroups)), lexicon);
+        var failures = new List<string>();
+
+        // Act: put every sample first, in the middle and last of a sentence, and compare with the lookup
+        foreach (var sample in ShapeSamples)
+        {
+            foreach (var (words, index) in new[] { (new[] { sample, "cat", "the" }, 0), (new[] { "the", sample, "cat" }, 1), (new[] { "the", "cat", sample }, 2) })
+            {
+                var decoded = decoder.Decode(Tokens(words), null, 16);
+                var token = decoded[index];
+                var expected = UposSet.Of(token.Tag).Union(UposSet.Of(token.Alternatives.Select(a => a.Tag).ToArray()));
+                var lookup = decoder.GetPossibleTags(sample, PossibleTagsMode.WithShapeRules);
+                if (lookup.Tags != expected || lookup.IsKnownWord != token.IsKnownWord)
+                {
+                    failures.Add($"{sample} at {index}: {lookup.Tags} / {lookup.IsKnownWord} instead of {expected} / {token.IsKnownWord}");
+                }
+            }
+        }
+
+        // Assert: the lookup is the decoder's allowed set whatever the position or the model
+        Assert.Empty(failures);
+    }
+
+    /// <summary>
+    ///     Proves that the raw lookup is the lexicon fact of the folded, lower-cased word, which differs from the decoder's allowed set
+    ///     exactly by the shape rules.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_GetPossibleTags_LexiconOnly_EqualsLexiconTryGetTags()
+    {
+        // Arrange: a lexicon and the folded, lower-cased keys of some inputs
+        var lexicon = TinyModels.CreateLexicon("cat NOUN VERB", "n't PART", "-- PUNCT", "caf\u00E9 NOUN");
+        var decoder = TinyModels.CreateDecoder(CatWeights().Build(), lexicon);
+        var reference = DemaConsulting.PartOfSpeech.Lexicon.Load(lexicon);
+        var inputs = new[] { "cat", "CAT", "Cat", "n\u2019t", "N\u2019T", "\u2014", "CAFE\u0301", "dog", "Dog", "well-cat" };
+        var scratch = new byte[reference.ScratchSize];
+
+        // Act / Assert: the tags are those of the lookup of the folded key, empty when it is not listed
+        foreach (var input in inputs)
+        {
+            var key = FeatureExtractor.Fold(input).ToLowerInvariant().ToCharArray();
+            var known = reference.TryGetTags(key, 0, key.Length, scratch, out var tags);
+            var word = decoder.GetPossibleTags(input, PossibleTagsMode.LexiconOnly);
+            Assert.Equal(tags, word.Tags);
+            Assert.Equal(known, word.IsKnownWord);
+        }
+    }
+
+    /// <summary>
+    ///     Proves that no spelling of the embedded lexicon contains white space or is empty (so no multiword spelling is lost by refusing
+    ///     such input) and that the longest spelling is the length that the lookup guards.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_GetPossibleTags_EmbeddedLexicon_HasNoWhiteSpaceSpellings()
+    {
+        // Arrange: every spelling of the embedded lexicon
+        var lexicon = EmbeddedModel.Lexicon;
+
+        // Act: enumerate them
+        var spellings = lexicon.Enumerate().Select(e => e.Key).ToList();
+
+        // Assert: none is empty or contains a white-space character, and the longest has the bytes that the lexicon reports
+        Assert.True(spellings.Count > 262_000);
+        Assert.DoesNotContain(spellings, s => s.Length == 0 || s.Any(char.IsWhiteSpace));
+        Assert.Equal(lexicon.MaxSpellingBytes, spellings.Max(s => System.Text.Encoding.UTF8.GetByteCount(s)));
+    }
+
+    /// <summary>
+    ///     Proves, over every spelling of the embedded lexicon, in lower case and in Title case, plus the shape samples, that the
+    ///     shape-rule lookup equals the decoder's allowed set and known flag, and that the raw lookup equals the lexicon, for a model
+    ///     without and with feature groups.
+    /// </summary>
+    /// <param name="withGroups">Whether the model has all feature groups.</param>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TagDecoder_GetPossibleTags_EmbeddedLexicon_EverySpellingEqualsTheDecoder(bool withGroups)
+    {
+        // Arrange: the decoder, every spelling, the Title-case variant of each, and the shape samples
+        var decoder = EmbeddedDecoder(withGroups);
+        var entries = EmbeddedModel.Lexicon.Enumerate().ToList();
+        var words = new List<string>(entries.Count * 2 + ShapeSamples.Length);
+        foreach (var entry in entries)
+        {
+            words.Add(entry.Key);
+            words.Add(char.ToUpperInvariant(entry.Key[0]) + entry.Key.Substring(1));
+        }
+
+        words.AddRange(ShapeSamples);
+
+        // Act: compare every word with the decoder, and the raw tags of every spelling that a word can reach with the enumerated tags
+        // (a spelling that the fold would change, such as one with a modifier apostrophe or a horizontal bar, is not reachable by any input)
+        var failures = ParityFailures(decoder, words);
+        var reachable = entries.Where(e => new string(FeatureExtractor.Fold(e.Key).Select(char.ToLowerInvariant).ToArray()) == e.Key).ToList();
+        var rawFailures = reachable
+            .Where(e => decoder.GetPossibleTags(e.Key, PossibleTagsMode.LexiconOnly).Tags != e.Value)
+            .Select(e => e.Key)
+            .ToList();
+        TestContext.Current.SendDiagnosticMessage($"Spellings of the embedded lexicon: {entries.Count:N0}, reachable by an input (fold-stable): {reachable.Count:N0}, parity failures: {failures.Count}.");
+
+        // Assert: no difference at all
+        Assert.Empty(failures);
+        Assert.Empty(rawFailures);
+        Assert.True(reachable.Count > entries.Count - 1000);
+    }
+
+    /// <summary>
+    ///     Proves over all hyphenated spellings that a listed spelling always wins over its last part, and that the last part of a
+    ///     compound of an unlisted prefix gives exactly the analyses of that part.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_GetPossibleTags_HyphenatedSpellings_SpellingWinsAndHeadsMatchTheirPart()
+    {
+        // Arrange: the decoder, all spellings, and the hyphenated ones
+        var decoder = EmbeddedDecoder(false);
+        var spellings = EmbeddedModel.Lexicon.Enumerate().Select(e => e.Key).ToList();
+        var set = new HashSet<string>(spellings);
+        var hyphenated = spellings.Where(s => s.IndexOf('-') >= 0).ToList();
+        var failures = new List<string>();
+
+        // Act: look up each hyphenated spelling and a compound of an unlisted prefix and its last part
+        foreach (var spelling in hyphenated)
+        {
+            if (decoder.GetPossibleTags(spelling, PossibleTagsMode.LexiconOnly).Match != WordMatch.Spelling)
+            {
+                failures.Add($"{spelling} is not a spelling");
+            }
+
+            var part = spelling.Substring(spelling.LastIndexOf('-') + 1);
+            var compound = decoder.GetPossibleTags("zzqx-" + part, PossibleTagsMode.LexiconOnly);
+            var expected = part.Length > 0 && set.Contains(part) ? WordMatch.CompoundHead : WordMatch.NotRecognized;
+            if (compound.Match != expected)
+            {
+                failures.Add($"zzqx-{part} is {compound.Match}");
+            }
+            else if (expected == WordMatch.CompoundHead
+                && !compound.GetAnalyses().SequenceEqual(decoder.GetPossibleTags(part, PossibleTagsMode.LexiconOnly).GetAnalyses()))
+            {
+                failures.Add($"zzqx-{part} has other analyses than {part}");
+            }
+        }
+
+        // Assert: there are thousands of them and no case differs
+        Assert.True(hyphenated.Count > 8000);
+        Assert.Empty(failures);
+    }
+
+    /// <summary>
+    ///     Proves that every analysis of every spelling of the embedded lexicon is a form (also in Title case), and that a changed base
+    ///     word or a tag that the spelling's analyses lack is not.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_IsFormOf_EveryAnalysisOfEverySpelling_IsAForm()
+    {
+        // Arrange: the decoder and every spelling with its analyses
+        var decoder = EmbeddedDecoder(false);
+        var failures = new List<string>();
+        var count = 0;
+
+        // Act: ask for each analysis, and for two changed questions
+        foreach (var entry in EmbeddedModel.Lexicon.EnumerateAnalyses())
+        {
+            var title = char.ToUpperInvariant(entry.Key[0]) + entry.Key.Substring(1);
+            foreach (var analysis in entry.Value)
+            {
+                count++;
+                if (!decoder.IsFormOf(entry.Key, analysis.Lemma, analysis.Tag) || !decoder.IsFormOf(title, analysis.Lemma.ToUpperInvariant(), analysis.Tag))
+                {
+                    failures.Add($"{entry.Key} {analysis.Lemma} {analysis.Tag}");
+                }
+
+                if (decoder.IsFormOf(entry.Key, analysis.Lemma + "x", analysis.Tag))
+                {
+                    failures.Add($"{entry.Key} {analysis.Lemma}x {analysis.Tag}");
+                }
+
+                var otherTags = entry.Value.Where(a => a.Lemma == analysis.Lemma).Select(a => a.Tag).ToHashSet();
+                var absent = Enumerable.Range(0, UposExtensions.Count).Select(t => (Upos)t).First(t => !otherTags.Contains(t));
+                if (decoder.IsFormOf(entry.Key, analysis.Lemma, absent))
+                {
+                    failures.Add($"{entry.Key} {analysis.Lemma} {absent}");
+                }
+            }
+        }
+
+        // Assert: all 290,365 analyses answered right
+        Assert.Equal(EmbeddedModel.Lexicon.AnalysisCount, count);
+        Assert.Empty(failures);
+    }
+
+    /// <summary>
+    ///     Proves that looking words up between decodes, and between two decoders with different lexicons on one thread, never disturbs
+    ///     the decode or the lookup.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_GetPossibleTags_BetweenDecodes_DoesNotDisturbTheWorkspace()
+    {
+        // Arrange: two decoders with different lexicons (one with groups, so that its decode caches lexicon facts) and a sentence
+        var first = TinyModels.CreateDecoder(CatWeights().Build(groups: GroupsFor(true)), TinyModels.CreateLexicon("cat NOUN VERB", "the DET", "sat VERB"));
+        var second = TinyModels.CreateDecoder(CatWeights().Build(), TinyModels.CreateLexicon("cat ADJ", "dog NOUN"));
+        var tokens = Tokens("The", "cat", "sat", "on", "Dog", ".");
+        string Render(TaggedToken[] decoded) => string.Join(" ", decoded.Select(t => $"{t.Tag}/{t.Confidence:R}/{t.IsKnownWord}/{string.Join(",", t.Alternatives)}"));
+        var expected = Render(first.Decode(tokens, null, 3));
+
+        // Act: look up with both decoders in between decodes, and decode again
+        var catFirst = first.GetPossibleTags("cat", PossibleTagsMode.LexiconOnly);
+        var catSecond = second.GetPossibleTags("cat", PossibleTagsMode.LexiconOnly);
+        var dogFirst = first.GetPossibleTags("dog", PossibleTagsMode.WithShapeRules);
+        var middle = Render(first.Decode(tokens, null, 3));
+        var secondDecode = Render(second.Decode(tokens, null, 3));
+        var catFirstAgain = first.GetPossibleTags("cat", PossibleTagsMode.LexiconOnly);
+        var again = Render(first.Decode(tokens, null, 3));
+
+        // Assert: every decode gives the same text, and every lookup answers from its own lexicon
+        Assert.Equal(expected, middle);
+        Assert.Equal(expected, again);
+        Assert.NotEqual(expected, secondDecode);
+        Assert.Equal(UposSet.Of(Upos.Noun, Upos.Verb), catFirst.Tags);
+        Assert.Equal(UposSet.Of(Upos.Adj), catSecond.Tags);
+        Assert.Equal(UposSet.All, dogFirst.Tags);
+        Assert.Equal(catFirst, catFirstAgain);
+    }
+
+#if NET
+    /// <summary>
+    ///     Proves that a huge input is answered without growing the thread's buffers: a call with a million ASCII characters allocates nothing.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing()
+    {
+        // Arrange: a decoder, a million-character word, and a first call that creates the thread's workspace
+        var decoder = EmbeddedDecoder(false);
+        var huge = new string('a', 1_000_000);
+        var hugeCompound = new string('a', 500_000) + "-tested";
+        decoder.GetPossibleTags("valve", PossibleTagsMode.WithShapeRules);
+
+        // Act: measure the allocation of the calls
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var raw = decoder.GetPossibleTags(huge, PossibleTagsMode.LexiconOnly);
+        var shape = decoder.GetPossibleTags(huge, PossibleTagsMode.WithShapeRules);
+        var compound = decoder.GetPossibleTags(hugeCompound, PossibleTagsMode.WithShapeRules);
+        var form = decoder.IsFormOf(huge, "a", Upos.Noun);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        // Assert: not recognized, no allocation (the workspace buffers would have been megabytes)
+        Assert.Equal(WordMatch.NotRecognized, raw.Match);
+        Assert.Equal(WordMatch.NotRecognized, shape.Match);
+        Assert.Equal(WordMatch.NotRecognized, compound.Match);
+        Assert.False(form);
+        Assert.Equal(0, allocated);
+    }
+#endif
 
     /// <summary>
     ///     Decodes with the string-based reference features and the plain rules of the decoder (lexicon restriction, lowest tag wins a tie),

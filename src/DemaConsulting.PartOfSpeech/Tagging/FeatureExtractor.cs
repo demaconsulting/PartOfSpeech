@@ -499,6 +499,28 @@ internal static class FeatureExtractor
             }
         }
 
+        SetFolded(workspace, index, source);
+    }
+
+    /// <summary>
+    ///     Folds one token that is already NFC-normalized (or pure ASCII) into the workspace and records its facts and hashes.
+    /// </summary>
+    /// <remarks>
+    ///     This is the folding core of <see cref="SetToken"/>, split off so that the word lookup can fold a span without a copy
+    ///     and can normalize once itself (to decide on the length of the text before it touches the workspace). It does
+    ///     the same work for the same characters, so the lookup and the decoder see identical folded characters, flags and
+    ///     hashes. The parameter is a span on .NET 8 and later and a string on <c>netstandard2.0</c>, which has no span
+    ///     without an extra package; the body is the same.
+    /// </remarks>
+    /// <param name="workspace">The workspace.</param>
+    /// <param name="index">The index of the token.</param>
+    /// <param name="source">The token, NFC-normalized (or pure ASCII), with well-formed UTF-16.</param>
+#if NET
+    internal static void SetFolded(DecoderWorkspace workspace, int index, ReadOnlySpan<char> source)
+#else
+    internal static void SetFolded(DecoderWorkspace workspace, int index, string source)
+#endif
+    {
         // Fold into the character buffer: every folded character takes at most three characters, plus the lower copy
         workspace.EnsureChars(6 * source.Length);
         var chars = workspace.Chars;
@@ -1382,7 +1404,7 @@ internal static class FeatureExtractor
     /// </remarks>
     /// <param name="text">The token as written.</param>
     /// <returns>The normalized, well-formed text.</returns>
-    private static string NormalizeNonAscii(string text)
+    internal static string NormalizeNonAscii(string text)
     {
         var clean = ReplaceUnpairedSurrogates(text);
         try

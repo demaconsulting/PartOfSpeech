@@ -367,11 +367,226 @@ internal sealed class TagDecoder
             known = _lexicon.TryGetTags(workspace.Chars, lowerStart, length, workspace.LexiconScratch, out tags);
         }
 
-        return Lexicon.AllowedTags(
+        return ApplyShapeRules(flags, known, tags);
+    }
+
+    /// <summary>
+    ///     Applies the token-shape rules to the lexicon tags of a token: the one place that turns the facts of a folded token into its allowed tags.
+    /// </summary>
+    /// <remarks>
+    ///     The decoder (<see cref="AllowedTags"/>) and the word lookup (<see cref="GetPossibleTags(string, PossibleTagsMode)"/>)
+    ///     both call this, so the tags that the lookup reports in <see cref="PossibleTagsMode.WithShapeRules"/> mode are the
+    ///     allowed tags of the decoder by construction.
+    /// </remarks>
+    /// <param name="flags">The shape facts that <see cref="FeatureExtractor.SetFolded"/> recorded for the token.</param>
+    /// <param name="known">Whether the lower-cased token is in the lexicon.</param>
+    /// <param name="tags">The lexicon tags of the token; ignored when <paramref name="known"/> is <c>false</c>.</param>
+    /// <returns>The allowed tags; never empty.</returns>
+    private static UposSet ApplyShapeRules(byte flags, bool known, UposSet tags) =>
+        Lexicon.AllowedTags(
             known,
             tags,
             (flags & FeatureExtractor.FlagLetterOrDigit) != 0,
             (flags & FeatureExtractor.FlagDigit) != 0,
             (flags & FeatureExtractor.FlagFirstUpper) != 0);
+
+    /// <summary>
+    ///     Looks up one word on its own: the tags it can take, whether the lexicon knows it, and its analyses.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         The word is folded exactly like a token of the decoder (NFC, typographic quotes, dashes and ellipsis, lower
+    ///         case) through the same code, so the result does not depend on the position of the word in a sentence or on
+    ///         the model. The caller (<see cref="Tagger"/>) has already rejected null, empty and white-space input and an
+    ///         undefined mode.
+    ///     </para>
+    ///     <para>
+    ///         Non-ASCII text is normalized first, before the thread's workspace is touched, so that the length test below
+    ///         sees the real length. ASCII text allocates nothing.
+    ///     </para>
+    /// </remarks>
+    /// <param name="word">The word as written.</param>
+    /// <param name="mode">Which tags to report.</param>
+    /// <returns>The result of the lookup; see <see cref="WordTags"/>.</returns>
+    internal WordTags GetPossibleTags(string word, PossibleTagsMode mode) => Lookup(NormalizeForLookup(word), mode);
+
+#if NET
+    /// <summary>
+    ///     Looks up one word given as a span; see <see cref="GetPossibleTags(string, PossibleTagsMode)"/>.
+    /// </summary>
+    /// <remarks>
+    ///     A span of pure ASCII is looked up without a copy. A span with a character above U+007F is copied to a string
+    ///     first (the normalization needs one), which allocates.
+    /// </remarks>
+    /// <param name="word">The word as written.</param>
+    /// <param name="mode">Which tags to report.</param>
+    /// <returns>The result of the lookup; see <see cref="WordTags"/>.</returns>
+    internal WordTags GetPossibleTags(ReadOnlySpan<char> word, PossibleTagsMode mode)
+    {
+        for (var i = 0; i < word.Length; i++)
+        {
+            if (word[i] >= 0x80)
+            {
+                return Lookup(FeatureExtractor.NormalizeNonAscii(word.ToString()), mode);
+            }
+        }
+
+        return Lookup(word, mode);
+    }
+#endif
+
+    /// <summary>
+    ///     Tells whether a word is a form of a base word with a tag, using the analyses of the lexicon.
+    /// </summary>
+    /// <remarks>
+    ///     Word and base word are folded like a token of the decoder. The word is found with the rule of the word lookup
+    ///     (the whole spelling, otherwise the last part of a hyphenated compound), and the base word is compared as UTF-8
+    ///     bytes with the base words that the templates of the analyses compose, so the call allocates nothing for text
+    ///     that is pure ASCII.
+    /// </remarks>
+    /// <param name="word">The word as written.</param>
+    /// <param name="lemma">The base word as written.</param>
+    /// <param name="tag">The tag; the caller has checked that it is defined.</param>
+    /// <returns><c>true</c> if an analysis of the word has this base word and this tag.</returns>
+    internal bool IsFormOf(string word, string lemma, Upos tag)
+    {
+        // Normalize first and test the lengths: a base word is at most MaxLemmaBytes bytes and a spelling at most MaxSpellingBytes
+        var wordText = NormalizeForLookup(word);
+        var lemmaText = NormalizeForLookup(lemma);
+        if (wordText.Length > _lexicon.MaxSpellingBytes || lemmaText.Length > Lexicon.MaxLemmaBytes)
+        {
+            return false;
+        }
+
+        // Fold both into the workspace: token 0 is the word, token 1 the base word
+        var workspace = GetWorkspace();
+        workspace.Configure(_groups, _lexicon);
+        workspace.Begin(2);
+        FeatureExtractor.SetFolded(workspace, 0, wordText);
+        FeatureExtractor.SetFolded(workspace, 1, lemmaText);
+        workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
+
+        // Find the spelling whose analyses count (the key stays UTF-8 encoded in the scratch buffer)
+        if (Find(workspace, 0, out var ordinal, out var keyLength, out _) == WordMatch.NotRecognized)
+        {
+            return false;
+        }
+
+        // Encode the lower-cased base word and compare it with the base word that each analysis of the right tag composes
+        var lemmaLength = workspace.Length[1];
+        var lemmaBytes = Lexicon.EncodeUtf8(workspace.Chars, workspace.Start[1] + lemmaLength, lemmaLength, workspace.LemmaBytes, Lexicon.MaxLemmaBytes);
+        return lemmaBytes >= 0
+            && _lexicon.HasAnalysis(ordinal, tag, workspace.LexiconScratch, 0, keyLength, workspace.LemmaBytes, 0, lemmaBytes);
+    }
+
+    /// <summary>
+    ///     Normalizes non-ASCII text to NFC for a lookup; ASCII text is returned as it is.
+    /// </summary>
+    /// <param name="text">The text as written.</param>
+    /// <returns>The text itself when it is pure ASCII, otherwise the normalized, well-formed text.</returns>
+    private static string NormalizeForLookup(string text)
+    {
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] >= 0x80)
+            {
+                return FeatureExtractor.NormalizeNonAscii(text);
+            }
+        }
+
+        return text;
+    }
+
+    /// <summary>
+    ///     Looks up a normalized word: folds it into the thread's workspace, finds it and builds the result.
+    /// </summary>
+    /// <remarks>
+    ///     A word longer than the longest spelling of the lexicon cannot be a spelling (folding and lower-casing never
+    ///     shorten it and a character takes at least one UTF-8 byte), so it is answered before the workspace is touched:
+    ///     a huge input never makes the per-thread buffers grow.
+    /// </remarks>
+    /// <param name="text">The word, NFC-normalized (or pure ASCII).</param>
+    /// <param name="mode">Which tags to report.</param>
+    /// <returns>The result of the lookup.</returns>
+#if NET
+    private WordTags Lookup(ReadOnlySpan<char> text, PossibleTagsMode mode)
+#else
+    private WordTags Lookup(string text, PossibleTagsMode mode)
+#endif
+    {
+        if (text.Length > _lexicon.MaxSpellingBytes)
+        {
+            return new WordTags(null, -1, mode == PossibleTagsMode.WithShapeRules ? UposSet.All : UposSet.Empty, WordMatch.NotRecognized, UposSet.Empty);
+        }
+
+        // Prepare the workspace for one token; Configure first, because it clears the lexicon facts of an earlier sentence
+        var workspace = GetWorkspace();
+        workspace.Configure(_groups, _lexicon);
+        workspace.Begin(1);
+        FeatureExtractor.SetFolded(workspace, 0, text);
+        workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
+
+        // The tags are those of the whole token only, as the decoder sees it; a compound head adds analyses but never tags
+        var match = Find(workspace, 0, out var ordinal, out _, out var wholeTags);
+        var known = match == WordMatch.Spelling;
+        var tags = mode == PossibleTagsMode.WithShapeRules
+            ? ApplyShapeRules(workspace.Flags[0], known, wholeTags)
+            : wholeTags;
+        return match == WordMatch.NotRecognized
+            ? new WordTags(null, -1, tags, match, UposSet.Empty)
+            : new WordTags(_lexicon, ordinal, tags, match, _lexicon.AnalysedTags(ordinal));
+    }
+
+    /// <summary>
+    ///     Finds a folded token in the lexicon: the whole spelling first, otherwise the last part of a hyphenated compound.
+    /// </summary>
+    /// <remarks>
+    ///     A hyphenated compound contains the hyphen-minus and no empty part between hyphens; only its last part is looked
+    ///     up, as a whole and not split any further. The whole spelling always wins.
+    /// </remarks>
+    /// <param name="workspace">The workspace that holds the folded token.</param>
+    /// <param name="index">The token.</param>
+    /// <param name="ordinal">Receives the position of the spelling that matched (the whole word or the last part), or -1.</param>
+    /// <param name="keyLength">Receives the number of UTF-8 bytes of the matched key, which stays in the lexicon scratch buffer.</param>
+    /// <param name="wholeTags">Receives the lexicon tags of the whole token; the empty set unless the whole token is a spelling.</param>
+    /// <returns>How the word matched.</returns>
+    private WordMatch Find(DecoderWorkspace workspace, int index, out int ordinal, out int keyLength, out UposSet wholeTags)
+    {
+        // The whole spelling: the same lookup the decoder makes
+        var length = workspace.Length[index];
+        var lowerStart = workspace.Start[index] + length;
+        var chars = workspace.Chars;
+        var scratch = workspace.LexiconScratch;
+        if (_lexicon.TryFindKey(chars, lowerStart, length, scratch, out ordinal, out wholeTags, out keyLength))
+        {
+            return WordMatch.Spelling;
+        }
+
+        // A compound: every part between hyphen-minus characters must be non-empty (a leading, trailing or doubled hyphen is not one)
+        var lastHyphen = -1;
+        for (var i = 0; i < length; i++)
+        {
+            if (chars[lowerStart + i] != '-')
+            {
+                continue;
+            }
+
+            if (i == lastHyphen + 1)
+            {
+                return WordMatch.NotRecognized;
+            }
+
+            lastHyphen = i;
+        }
+
+        if (lastHyphen < 0 || lastHyphen == length - 1)
+        {
+            return WordMatch.NotRecognized;
+        }
+
+        // Look up the last part as it is (no recursion); ordinal is -1 again when it is not a spelling
+        return _lexicon.TryFindKey(chars, lowerStart + lastHyphen + 1, length - lastHyphen - 1, scratch, out ordinal, out _, out keyLength)
+            ? WordMatch.CompoundHead
+            : WordMatch.NotRecognized;
     }
 }

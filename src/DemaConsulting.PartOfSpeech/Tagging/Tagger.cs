@@ -30,6 +30,11 @@ namespace DemaConsulting.PartOfSpeech;
 ///         [Default model and loading cost](../DemaConsulting.PartOfSpeech.md#default-model-and-loading-cost).
 ///     </para>
 ///     <para>
+///         <strong>Word lookup:</strong> <see cref="GetPossibleTags(string, PossibleTagsMode)"/> and
+///         <see cref="IsFormOf(string, string, Upos)"/> answer questions about one word without a sentence: which tags the
+///         lexicon lists or the tagger can give it, whether the lexicon recognizes it, and its base word and features.
+///     </para>
+///     <para>
 ///         <strong>Exceptions:</strong> creating a tagger throws <see cref="ArgumentNullException"/> for a <c>null</c>
 ///         stream, <see cref="ArgumentOutOfRangeException"/> for options out of range and
 ///         <see cref="InvalidDataException"/> for a damaged file or one of an unsupported version or feature set. The
@@ -57,6 +62,12 @@ namespace DemaConsulting.PartOfSpeech;
 /// </example>
 public sealed class Tagger
 {
+    /// <summary>
+    ///     The message for a word that is empty or contains white space.
+    /// </summary>
+    private const string WordRuleMessage =
+        "A word must be one token: not empty and without white space. Split a text into tokens first, or use a Glossary for multiword terms.";
+
     /// <summary>
     ///     The lazily created default tagger.
     /// </summary>
@@ -485,6 +496,180 @@ public sealed class Tagger
         Tag(Tokenizer.CreateSentence(tokens), glossary, constraints);
 
     /// <summary>
+    ///     Looks up one word on its own: the tags it can take, whether the lexicon recognizes it, and its analyses.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         This is a context-free lookup in the lexicon of this tagger, for callers that need the dictionary roles of a
+    ///         single word (for example a rule checker that asks "may this word be a verb?") and not the tag in a sentence.
+    ///         It never uses a sentence, the model or a glossary. For the tag of a word in context, tag the sentence with
+    ///         <see cref="Tag(string)"/> and read <see cref="TaggedToken.Tag"/> and <see cref="TaggedToken.Confidence"/>; for domain
+    ///         terms and phrases use a <see cref="Glossary"/>.
+    ///     </para>
+    ///     <para>
+    ///         <strong>Normalization:</strong> the word is folded exactly like a token of the tagger: Unicode normalization form C,
+    ///         typographic quotes, dashes and the ellipsis mapped to their ASCII forms, then lower case. Capitalization
+    ///         never changes the lexicon result (<c>Valve</c> and <c>valve</c> are the same spelling); in
+    ///         <see cref="PossibleTagsMode.WithShapeRules"/> mode a leading capital letter also allows PROPN and X, as it does
+    ///         for the tagger. An unpaired surrogate counts as U+FFFD and never throws.
+    ///     </para>
+    ///     <para>
+    ///         <strong>Modes:</strong> see <see cref="PossibleTagsMode"/>. The result tells the match (<see cref="WordMatch"/>):
+    ///         test <see cref="WordTags.Match"/> or <see cref="WordTags.IsKnownWord"/> to find out whether the lexicon knows the word,
+    ///         never whether <see cref="WordTags.Tags"/> is empty. <see cref="WordTags.IsKnownWord"/> equals
+    ///         <see cref="TaggedToken.IsKnownWord"/> of the same word as a token.
+    ///     </para>
+    ///     <para>
+    ///         <strong>Hyphenated words:</strong> a word is looked up as a whole first. If the folded, lower-cased word is a
+    ///         lexicon spelling, the result is <see cref="WordMatch.Spelling"/> and the analyses are those of that spelling
+    ///         (<c>built-in</c> has its own analyses, not those of <c>in</c>). If it is not, and it is a hyphenated word, the last
+    ///         part is tried: a word is a hyphenated compound when it contains the hyphen-minus and every part between hyphens is
+    ///         non-empty (<c>well-tested</c>; not <c>-ed</c>, <c>well-</c> or <c>a--b</c>). The last part is looked up as a whole and
+    ///         nothing is split, stripped or looked up recursively. If it is a spelling, the result is
+    ///         <see cref="WordMatch.CompoundHead"/> and the analyses are those of the last part; otherwise the result is
+    ///         <see cref="WordMatch.NotRecognized"/>. Only the hyphen-minus counts: a dash character is folded to <c>--</c>, which is
+    ///         not a word hyphen. The tagger looks only at the whole token, so for a compound head <see cref="WordTags.Tags"/>
+    ///         is what the tagger allows for the whole token (empty in <see cref="PossibleTagsMode.LexiconOnly"/> mode, all 17 tags
+    ///         in <see cref="PossibleTagsMode.WithShapeRules"/> mode), <see cref="WordTags.IsKnownWord"/> is <c>false</c>, and the analyses of
+    ///         the head are extra evidence that never narrows the tags and never changes the tagging.
+    ///     </para>
+    ///     <para>
+    ///         <strong>Edge cases:</strong> a word that is longer than the longest spelling of the lexicon (122 UTF-8 bytes in the
+    ///         embedded lexicon) is not recognized, even when it is hyphenated, and costs one pass over the text without growing
+    ///         any buffer. A lexicon without an analyses table (a custom lexicon file) gives no analyses and
+    ///         <see cref="WordTags.TagsWithoutAnalysis"/> equals <see cref="WordTags.Tags"/>. The lexicon has no phrases, so text with white
+    ///         space is refused rather than answered "unknown".
+    ///     </para>
+    ///     <para>
+    ///         <strong>Thread safety and cost:</strong> the call is safe from any number of threads, also while other threads
+    ///         tag text, and uses the same per-thread scratch memory as tagging. After the first call on a thread, a word of
+    ///         ASCII characters allocates nothing; a word with other characters allocates only what the normalization needs
+    ///         (nothing when it is already normalized on .NET 8 and later). <see cref="WordTags.GetAnalyses"/> allocates its list.
+    ///     </para>
+    ///     <para>
+    ///         On .NET 8 and later an overload takes a <c>ReadOnlySpan&lt;char&gt;</c> for callers that hold the word
+    ///         inside a larger text; it has the same rules and results. <c>netstandard2.0</c> has no such overload.
+    ///     </para>
+    /// </remarks>
+    /// <param name="word">The word as written; one token, not empty and without white space.</param>
+    /// <param name="mode">Which tags to report; <see cref="PossibleTagsMode.LexiconOnly"/> by default.</param>
+    /// <returns>The tags, the match and the analyses of the word.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="word"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="word"/> is empty or contains a white-space character (the same rule as for a token of <see cref="Tag(IReadOnlyList{string}, IReadOnlyList{TokenConstraint}?)"/>); split a text into tokens with <see cref="Tokenizer"/> first, or use a <see cref="Glossary"/> for a multiword term.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="mode"/> is not a defined value.</exception>
+    /// <example>
+    ///     Find out whether the lexicon knows a word and which tags it can take, in both modes:
+    ///     <code>
+    ///     WordTags valve = tagger.GetPossibleTags("Valve");
+    ///     Console.WriteLine($"{valve.Match} {valve.Tags}");     // Spelling NOUN
+    ///
+    ///     WordTags unknown = tagger.GetPossibleTags("zzqxv");
+    ///     Console.WriteLine(unknown.Match);                      // NotRecognized (the tag set is empty)
+    ///
+    ///     WordTags forTagger = tagger.GetPossibleTags("zzqxv", PossibleTagsMode.WithShapeRules);
+    ///     Console.WriteLine(forTagger.Tags.Count);               // 17: the tagger may choose any tag
+    ///     </code>
+    ///     Read the base word, tag and features of each form of a word:
+    ///     <code>
+    ///     foreach (WordAnalysis analysis in tagger.GetPossibleTags("tests").GetAnalyses())
+    ///     {
+    ///         // test NOUN Number=Plur, then test VERB Person=3|Tense=Pres
+    ///         Console.WriteLine($"{analysis.Lemma} {analysis.Tag} {analysis.Features}");
+    ///     }
+    ///     </code>
+    /// </example>
+    public WordTags GetPossibleTags(string word, PossibleTagsMode mode = PossibleTagsMode.LexiconOnly)
+    {
+        ArgumentNullException.ThrowIfNull(word);
+        ValidateMode(mode);
+        ValidateWord(word, nameof(word));
+        return _decoder.GetPossibleTags(word, mode);
+    }
+
+#if NET
+    /// <summary>
+    ///     Looks up one word given as a span of characters; this is <see cref="GetPossibleTags(string, PossibleTagsMode)"/> without the string.
+    /// </summary>
+    /// <remarks>
+    ///     Available on .NET 8 and later only. The rules, the result and the thread safety are those of the string overload. A span
+    ///     of ASCII characters is looked up without a copy and allocates nothing after the first call on the thread; a span that contains
+    ///     other characters is copied to a string for the normalization, which allocates.
+    /// </remarks>
+    /// <param name="word">The word as written; one token, not empty and without white space.</param>
+    /// <param name="mode">Which tags to report; <see cref="PossibleTagsMode.LexiconOnly"/> by default.</param>
+    /// <returns>The tags, the match and the analyses of the word.</returns>
+    /// <exception cref="ArgumentException"><paramref name="word"/> is empty or contains a white-space character.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="mode"/> is not a defined value.</exception>
+    public WordTags GetPossibleTags(ReadOnlySpan<char> word, PossibleTagsMode mode = PossibleTagsMode.LexiconOnly)
+    {
+        ValidateMode(mode);
+        if (word.IsEmpty)
+        {
+            throw new ArgumentException(WordRuleMessage, nameof(word));
+        }
+
+        for (var i = 0; i < word.Length; i++)
+        {
+            if (char.IsWhiteSpace(word[i]))
+            {
+                throw new ArgumentException(WordRuleMessage, nameof(word));
+            }
+        }
+
+        return _decoder.GetPossibleTags(word, mode);
+    }
+#endif
+
+    /// <summary>
+    ///     Tells whether a word is a form of a base word with a tag, according to the analyses of the lexicon.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         This is the convenient answer to "is <paramref name="word"/> an inflected form of the verb (or noun, or adjective)
+    ///         <paramref name="lemma"/>?": it is <c>true</c> when <see cref="WordTags.GetAnalyses"/> of the word contains an analysis
+    ///         with this base word and this tag. It does not allocate for text that is pure ASCII, unlike reading the analyses.
+    ///     </para>
+    ///     <para>
+    ///         Word and base word are folded like a token of the tagger, so case never matters:
+    ///         <c>IsFormOf("TESTS", "Test", Upos.Noun)</c> is <c>true</c>. A word is found with the rule of
+    ///         <see cref="GetPossibleTags(string, PossibleTagsMode)"/>, including its hyphenated compound rule, so
+    ///         <c>IsFormOf("well-tested", "test", Upos.Verb)</c> is <c>true</c> because the analysis of the head <c>tested</c> has the
+    ///         base word <c>test</c>; a caller who must exclude compounds checks <see cref="WordTags.Match"/> first. A form that
+    ///         the lexicon records no analysis for (a tag that is attested without one, see <see cref="WordTags.TagsWithoutAnalysis"/>)
+    ///         is not a form of anything and gives <c>false</c>, as does an unrecognized word and a lexicon without analyses. The
+    ///         answer does not depend on the mode, the model or a glossary, and the call is thread-safe.
+    ///     </para>
+    /// </remarks>
+    /// <param name="word">The word as written; one token, not empty and without white space.</param>
+    /// <param name="lemma">The base word as written; one token, not empty and without white space (a phrase such as <c>give up</c> is refused).</param>
+    /// <param name="tag">The tag of the analysis.</param>
+    /// <returns><c>true</c> if the word has an analysis with this base word and tag.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="word"/> or <paramref name="lemma"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="word"/> or <paramref name="lemma"/> is empty or contains a white-space character.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tag"/> is not one of the 17 defined values.</exception>
+    /// <example>
+    ///     Check the dictionary role of a word without reading all its analyses:
+    ///     <code>
+    ///     bool isVerbForm = tagger.IsFormOf("tests", "test", Upos.Verb);   // true
+    ///     bool isAdjForm = tagger.IsFormOf("tests", "test", Upos.Adj);     // false
+    ///     bool irregular = tagger.IsFormOf("went", "go", Upos.Verb);       // true
+    ///     </code>
+    /// </example>
+    public bool IsFormOf(string word, string lemma, Upos tag)
+    {
+        ArgumentNullException.ThrowIfNull(word);
+        ArgumentNullException.ThrowIfNull(lemma);
+        if ((uint)tag >= UposExtensions.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(tag), tag, "The value is not one of the 17 Universal POS tags.");
+        }
+
+        ValidateWord(word, nameof(word));
+        ValidateWord(lemma, nameof(lemma));
+        return _decoder.IsFormOf(word, lemma, tag);
+    }
+
+    /// <summary>
     ///     Creates the default tagger from the embedded model.
     /// </summary>
     /// <returns>The tagger.</returns>
@@ -492,6 +677,33 @@ public sealed class Tagger
     /// <exception cref="InvalidDataException">An embedded resource is damaged.</exception>
     private static Tagger CreateDefault() =>
         new(EmbeddedModel.Weights, EmbeddedModel.Lexicon, new TaggerOptions().MaxAlternatives);
+
+    /// <summary>
+    ///     Validates the mode of a word lookup.
+    /// </summary>
+    /// <param name="mode">The mode.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The mode is not a defined value.</exception>
+    private static void ValidateMode(PossibleTagsMode mode)
+    {
+        if (mode != PossibleTagsMode.LexiconOnly && mode != PossibleTagsMode.WithShapeRules)
+        {
+            throw new ArgumentOutOfRangeException(nameof(mode), mode, "The value is not a defined PossibleTagsMode.");
+        }
+    }
+
+    /// <summary>
+    ///     Validates a word or base word of a lookup: one non-empty token without white space.
+    /// </summary>
+    /// <param name="value">The text, already checked for <c>null</c>.</param>
+    /// <param name="parameterName">The name of the parameter for the exception.</param>
+    /// <exception cref="ArgumentException">The text is empty or contains a white-space character.</exception>
+    private static void ValidateWord(string value, string parameterName)
+    {
+        if (value.Length == 0 || Tokenizer.ContainsWhiteSpace(value))
+        {
+            throw new ArgumentException(WordRuleMessage, parameterName);
+        }
+    }
 
     /// <summary>
     ///     Validates the options.
