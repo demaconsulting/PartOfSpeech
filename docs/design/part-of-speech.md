@@ -44,7 +44,8 @@ visible to the test project, to the tool `tools/LexiconCompiler` and to the trai
 
 The repository also holds data assets: training corpora, evaluation sets and the lexicon. They are files, not software
 items, so they have no unit design, and the system requirements in the _Data and Licensing_ section of the system
-requirements cover them. Two compiled forms are consumed at run time: the lexicon, which `tools/LexiconCompiler` compiles
+requirements cover them. Two compiled forms are consumed at run time: the lexicon (the spelling-to-tags table and the
+analyses table), which `tools/LexiconCompiler` compiles
 into the binary resource `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin` that the package embeds, and the
 weights, which the unit `ModelTrainer` trains into `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, which the
 package embeds as well (the _Embedded Model_ system requirements cover it).
@@ -100,8 +101,10 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
   Both generated reports carry the notice in `docs/evaluation/disclosure.md`, and the record stands as the record of its
   own model alone. Comparisons with other models and the protocols are kept
   in the evaluation `README.md` and in the run log `RUN-LOG.md`, not in this document
-- **Lexicon**: a table that maps a lower-case spelling to the Universal POS tags it may carry, with a coverage report;
-  compiled into the embedded `POSL` file
+- **Lexicon**: a table that maps a lower-case spelling to the Universal POS tags it may carry, with a coverage report,
+  and the analyses table `data/lexicon/analyses.tsv` that lists, for 258,255 of its 262,635 spellings, the base word, tag
+  and features of each form that the spelling can be (290,365 analyses, from the same word-form tables); both are
+  compiled into the embedded `POSL` file, 762,836 bytes compressed and 2,157,499 bytes uncompressed
 - **Weights**: the trained `POSW` file, 553,641 bytes compressed and 1,234,530 bytes uncompressed, with the training
   configuration `training.json` (which records the SHA-256 of the uncompressed image) and the run log `RUN-LOG.md` next
   to the trainer
@@ -148,12 +151,17 @@ The system exposes the following public API to external consumers (all in the na
   TaggerOptions?)` create a tagger; `Tagger.Default` returns the one shared tagger that uses the embedded weights and
   lexicon (created on first use, thread-safe, no file needed); `Tag(string)`,
   `Tag(Sentence, constraints)` and `Tag(IReadOnlyList<string>, constraints)` tag text, a sentence or tokens, and the
-  same three with a `Glossary` tag them with the terms of a glossary applied.
+  same three with a `Glossary` tag them with the terms of a glossary applied. `GetPossibleTags(string, PossibleTagsMode)`
+  (and on .NET 8 and later a `ReadOnlySpan<char>` overload) looks up one word on its own, without a sentence, and
+  `IsFormOf(string word, string lemma, Upos tag)` asks whether a word is a form of a base word with a tag.
 - **Tokenizer**: `Tokenize(string)` returns sentences with tokens; `CreateSentence(IReadOnlyList<string>)` builds a
   sentence from tokens.
 - **Results**: `TaggedSentence`, `TaggedToken`, `TagScore`, `Sentence` and `Token`, all immutable; a tagged token and a
   tagged sentence also report the glossary matches, and a tagged token also reports the margin to its best alternative
   and whether the lexicon knows its word.
+- **Word lookup**: `PossibleTagsMode` (`LexiconOnly`, `WithShapeRules`), `WordTags` (a value that carries the tags of
+  the lookup, the `WordMatch` result `NotRecognized`, `Spelling` or `CompoundHead`, `IsKnownWord`, `TagsWithoutAnalysis`
+  and `GetAnalyses()`) and `WordAnalysis` (the base word, tag and UD features of one reading), all immutable values.
 - **Control**: `TaggerOptions` (`MaxAlternatives`) and `TokenConstraint` (`None`, `Only`, `Prefer`, `Penalize`, `And`).
 - **Glossary**: `Glossary` (`Create`, `Empty`, `FindMatches`), `GlossaryBuilder`, `GlossaryEntry`, `GlossaryOptions`,
   `GlossaryMode` and `GlossaryMatch`.
@@ -162,12 +170,13 @@ The system exposes the following public API to external consumers (all in the na
 | Interface | Direction | Format | Constraints |
 | --- | --- | --- | --- |
 | `Tagger.Load(Stream, ...)` | Inbound | `POSW` weights file | Valid file of a supported version |
-| `Tagger.Load(Stream, Stream, ...)` | Inbound | `POSW` and `POSL` files | Both valid; streams read to the end |
+| `Tagger.Load(Stream, Stream, ...)` | Inbound | `POSW` and `POSL` files | Valid files; lexicon version 3; read fully |
 | `Tagger.Default` | Outbound | `Tagger` instance | Created on first use from the embedded data; one shared instance |
 | `Tagger.Tag(...)`, `Tokenizer.*` | Inbound/Outbound | `string` or tokens in, results out | Arguments not null |
+| `Tagger.GetPossibleTags(...)`, `IsFormOf(...)` | Inbound/Outbound | One word in, result out | Valid word, mode, tag |
 | `TokenConstraint` | Inbound | Value passed with the tokens | One per token, same count |
 | `Glossary` | Inbound | Immutable set of terms passed with the text | Not null; built from valid entries |
-| Embedded lexicon resource | Internal | `POSL` file in the assembly | Matches `data/lexicon/lexicon.tsv` |
+| Embedded lexicon resource | Internal | `POSL` file in the assembly | Matches `lexicon.tsv` and `analyses.tsv` |
 | Embedded weights resource | Internal | `POSW` file in the assembly | Matches `training.json` and its image hash |
 | `PACKAGE-LICENSE.md` | Outbound | Markdown file at the package root | Named by the nuspec; starts with the SPDX line |
 | `THIRD-PARTY-NOTICES.md` | Outbound | Markdown file at the package root | Present in every package |
@@ -238,7 +247,8 @@ integrity of what the library ships:
   has trailing bytes), so a damaged or incompatible file fails when it is
   loaded and never yields wrong tags.
 - **Embedded data checks**: a unit test and the `--check` step of the build fail when the embedded lexicon does not
-  encode `data/lexicon/lexicon.tsv`; a unit test fails when the embedded weights differ from the committed file or from
+  encode `data/lexicon/lexicon.tsv` and `data/lexicon/analyses.tsv` (a second test compares the analyses of every
+  spelling with the table); a unit test fails when the embedded weights differ from the committed file or from
   the header values and the SHA-256 of the uncompressed image that `training.json` records, and the `train --check` step
   of the build and of the CI build (on all three operating systems) retrains the model from the committed corpora and
   fails when the result is not identical to the committed weights.
@@ -289,6 +299,13 @@ The data assets are protected by two release gates, which the data tests of the 
 7. **Output**: immutable `TaggedSentence` objects with `TaggedToken` values that carry the original text and offsets, and,
    with a glossary, the matches that were found.
 
+**Word lookup path** (runtime, on request): `Tagger.GetPossibleTags` validates one word, `TagDecoder` folds it with the
+same code as a token (NFC, quotes, dashes, ellipsis, lower case), looks up the whole spelling in the lexicon, and for a
+hyphenated word that is not a spelling looks up its last part; the result carries the tags (the lexicon tags, or the tags
+that the shape rules allow as for a token), the match kind and a reference to the matched spelling, from which
+`GetAnalyses()` reads the analyses on demand. No sentence, model or glossary is involved, and the same per-thread
+workspace as tagging is used.
+
 **Data path** (build time, not part of the runtime):
 
 1. **Sources**: the open corpus, MASC, Tatoeba and Project Gutenberg text and the dictionary tables are read from
@@ -303,9 +320,11 @@ The data assets are protected by two release gates, which the data tests of the 
    in effect to the corpus files once. The steps below read the corrected files; `lint.ps1` enforces that the fix tier
    of the linter finds nothing left
 4. **Lexicon**: the tools build the spelling-to-tags lexicon from the dictionary tables and the tags attested in the
-   training corpora, then measure its coverage of the open training and development sets
-5. **Compilation**: `tools/LexiconCompiler` compiles the lexicon table into `Resources/lexicon.bin`, which is committed
-   and embedded in the assembly
+   training corpora, then measure its coverage of the open training and development sets; `build_lexicon.py` then
+   derives the analyses table from the form rows of the same dictionary tables (each form row's own part of speech, base
+   word and features, kept when its tag is a tag of the spelling in the committed lexicon)
+5. **Compilation**: `tools/LexiconCompiler` compiles the lexicon table and the analyses table into `Resources/lexicon.bin`,
+   which is committed and embedded in the assembly
 6. **Training**: the unit `ModelTrainer` reads the training corpora named in `training.json` that have a positive weight
    (the open corpus, MASC, silver, the imperative source, the compound sources and the four technical sources; the headings
    sources have weight 0),
@@ -377,9 +396,9 @@ and the size of the weights is stated under _Data Assets_.
   coverage; coverage
   instrumentation slows the hot loops too much to prove it, so a run with coverage (CI) applies a relaxed gate (see the
   verification document)
-- **Package size**: the lexicon resource is 639,711 bytes and the weights resource is stated under _Data Assets_ (both
-  already compressed), embedded once per target framework, so the four assemblies are 1.2 to 1.3 MB each as stored in
-  the package and the package (with the API reference and the XML documentation files) is about 5.7 MB, measured with
+- **Package size**: the lexicon resource is 762,836 bytes and the weights resource is stated under _Data Assets_ (both
+  already compressed), embedded once per target framework, so the five assemblies are 1.4 to 1.5 MB each as stored in
+  the package and the package (with the API reference and the XML documentation files) is about 8.0 MB, measured with
   `dotnet pack` of the Release build (the exact size is not stated because it
   is not reproducible: the package holds timestamps and the SBOM)
 - **Open licenses only**: No share-alike, non-commercial or no-derivatives data; attribution notices for every

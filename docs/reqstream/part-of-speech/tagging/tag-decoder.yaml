@@ -153,3 +153,32 @@ sections:
                   An empty sentence is valid input and must not fail.
                 tests:
                   - TagDecoder_Decode_EmptySentence_ReturnsEmpty
+
+              - id: PartOfSpeech-Tagging-TagDecoder-PossibleTags
+                title: >-
+                  The decoder shall answer the lookup of one word with the same lexicon read, the same folding and the
+                  same shape rules that it uses to allow tags for a token, so that the tags of the lookup in the shape
+                  mode equal the tags that a decode allows for that token (the tag and its alternatives) at any
+                  position, with and without feature groups and for every spelling of the lexicon, its title-case form
+                  and tokens of every shape, and the known flag equals that of the token; the lookup of the lexicon mode
+                  shall equal the tags of the lexicon; a hyphenated spelling shall match as a spelling and a compound
+                  whose last part is a spelling shall carry the analyses of that part, however long the word is; a
+                  lookup shall not disturb a decode that runs on the same thread before or after it; and every analysis
+                  of every spelling shall be found by the form question.
+                justification: |
+                  A lookup that disagreed with the decoder about the allowed tags of a word would make a rule checker
+                  contradict the tagger; one that shared the decoder's thread-local buffers carelessly would corrupt the
+                  tags of a sentence. The lookup therefore reuses the decoder's own folding and shape rules, and the
+                  tests compare it with the decoder over all of the lexicon rather than over samples.
+                tests:
+                  - TagDecoder_GetPossibleTags_WithShapeRules_SampleTokens_EqualTheDecodeCandidates
+                  - TagDecoder_GetPossibleTags_LexiconOnly_EqualsLexiconTryGetTags
+                  - TagDecoder_GetPossibleTags_EmbeddedLexicon_HasNoWhiteSpaceSpellings
+                  - TagDecoder_GetPossibleTags_EmbeddedLexicon_EverySpellingEqualsTheDecoder
+                  - TagDecoder_GetPossibleTags_HyphenatedSpellings_SpellingWinsAndHeadsMatchTheirPart
+                  - TagDecoder_IsFormOf_EveryAnalysisOfEverySpelling_IsAForm
+                  - TagDecoder_GetPossibleTags_BetweenDecodes_DoesNotDisturbTheWorkspace
+                  - TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing
+                  - FeatureExtractor_SetFolded_NormalizedText_EqualsSetToken
+                  - FeatureExtractor_SetFolded_SpanSlice_EqualsTheSameTextAsAToken
+                  - FeatureExtractor_FoldsToDoubleHyphen_AgreesWithTheFoldingOfEveryCodeUnit

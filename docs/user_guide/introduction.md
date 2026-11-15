@@ -1,3 +1,5 @@
+<!-- cspell:ignore zorbulon -->
+
 # Introduction
 
 ## Purpose
@@ -22,6 +24,8 @@ This user guide covers:
 - Reading confidences and alternatives, and choosing a confidence threshold
 - Constraining the tag of a token
 - Giving the tagger a glossary of domain terms
+- Using the tagger in a rule checker
+- Looking up the possible tags, base words and forms of one word
 - Loading a weights file, and the default model
 - The tokenization conventions of the library
 - API reference
@@ -55,8 +59,9 @@ The package targets .NET Standard 2.0 (and so runs on .NET Framework 4.8.1 and e
 of the public API under its `api/` folder, generated from the XML documentation of the library.
 
 **The trained model is part of the package.** The package contains the tokenizer, the tagger, the file formats, the
-compiled word lexicon (639,711 bytes compressed) and the trained averaged-perceptron weights (553,641 bytes compressed,
-1,234,530 bytes uncompressed, about 0.6 MB and 1.2 MB). `Tagger.Default` returns a shared tagger that uses them, so the
+compiled word lexicon with the analyses of its spellings (762,836 bytes compressed) and the trained averaged-perceptron
+weights (553,641 bytes compressed, 1,234,530 bytes uncompressed, about 0.6 MB and 1.2 MB). `Tagger.Default` returns a
+shared tagger that uses them, so the
 samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
 Weights File_).
 
@@ -516,6 +521,129 @@ already knows the terms of each token, pass a `TokenConstraint.Only(Upos.Noun)` 
 constraints)` instead of a glossary (see _Constraints_); those tokens report `IsConstrained`, the confidence 1.0 and no
 alternatives.
 
+A rule checker can also ask the dictionary about one word before it reads a tagged sentence. Check the dictionary roles
+of the word with the lookup (`GetPossibleTags`, its `Match` and `IsFormOf`, see _Looking Up a Word_), then use the
+tagger and the `Margin` for the word in its context: the lookup says which parts of speech the lexicon allows for the
+word, and only the tagger says which one the sentence uses.
+
+## Looking Up a Word
+
+A rule checker sometimes needs the dictionary role of a single word and not the tag that the tagger chooses in a
+sentence: may the word be a verb, what is its base word, is it a form of a given verb. `Tagger.GetPossibleTags` and
+`Tagger.IsFormOf` answer from the lexicon of the tagger. They use no sentence, no model and no glossary, so the answer
+for a word is always the same.
+
+```csharp
+Tagger words = Tagger.Default;
+
+// The default mode is the raw dictionary answer. Match, not Tags.IsEmpty, says whether the lexicon knows the word.
+WordTags tests = words.GetPossibleTags("tests");
+Console.WriteLine($"{tests.Match} {tests.Tags}");                 // Spelling NOUN|VERB
+
+WordTags unknown = words.GetPossibleTags("zorbulon");
+Console.WriteLine($"{unknown.Match} {unknown.Tags.IsEmpty}");     // NotRecognized True
+
+// The forms behind the tags: base word, tag and features of each analysis
+foreach (WordAnalysis analysis in tests.GetAnalyses())
+{
+    Console.WriteLine($"{analysis.Lemma} {analysis.Tag.ToTagString()} {analysis.Features}");
+    // test NOUN Number=Plur, then test VERB Person=3|Tense=Pres
+}
+
+// Is the word a form of a base word with a tag? Letter case never matters.
+Console.WriteLine(words.IsFormOf("Went", "go", Upos.Verb));       // True
+Console.WriteLine(words.IsFormOf("tests", "test", Upos.Adj));     // False
+
+// A hyphenated word that is not a spelling is recognized by its last part; its tags stay those of the whole token
+WordTags compound = words.GetPossibleTags("well-tested");
+Console.WriteLine($"{compound.Match} {compound.Tags.IsEmpty} {compound.GetAnalyses().Count}");   // CompoundHead True 2
+
+// With the shape rules the answer is the set of tags that the tagger may give the token on its own
+WordTags allowed = words.GetPossibleTags("Valve", PossibleTagsMode.WithShapeRules);
+Console.WriteLine($"{allowed.Tags} {allowed.TagsWithoutAnalysis}");   // NOUN|PROPN|X PROPN|X
+```
+
+**Two modes.** `PossibleTagsMode.LexiconOnly` (the default) is the raw answer: the tags that the lexicon lists for the
+spelling, and the empty set when the word is not a spelling. `PossibleTagsMode.WithShapeRules` is the set of tags that
+the tagger itself may choose for the token on its own: the tags of the lexicon plus what the token-shape rules add
+(a leading capital letter allows `PROPN` and `X`, a digit allows `NUM` and others), and all 17 tags when the word is not
+a spelling. Use the raw mode to ask what the dictionary says, and the shape rules to ask which tags the tagger can
+return for the word.
+
+**The result.** `WordTags` has `Tags`, `Match`, `IsKnownWord`, `TagsWithoutAnalysis` and `GetAnalyses()`. `Match` is a
+`WordMatch`: `Spelling` (the folded, lower-case word is a spelling of the lexicon), `CompoundHead` (a hyphenated word
+that is not a spelling whose last part is one) or `NotRecognized`. `IsKnownWord` is `Match == Spelling` and equals
+`TaggedToken.IsKnownWord` of the same word as a token. Test `Match` (or `IsKnownWord`) to learn whether the lexicon
+knows a word and never `Tags.IsEmpty`: with the shape rules a word that is not recognized has all 17 tags, and in the raw
+mode a `CompoundHead` has an empty tag set. A `default(WordTags)` is `NotRecognized` with no tags.
+
+**Forms.** `GetAnalyses()` lists the readings of the matched spelling as `WordAnalysis` values: `Lemma` (the base word,
+lower case and in NFC: `went` has the base word `go`), `Tag` (an `Upos`), `Features` and `GetFeature(name)` (the value of
+one feature, or `null`). One spelling can have several readings: `tests` is the plural of the noun `test` and the third
+person of the verb `test`. The analyses are in the order of their tag, then base word, then features. Features use the
+Universal Dependencies notation: `Name=Value` pairs joined by `|` and sorted by name (`Person=3|Tense=Pres`), empty when
+a reading has none; the lexicon uses `Degree`, `Number`, `Person`, `Tense` and `VerbForm`, and the project's
+`Capitalization` feature is not reported. `IsFormOf(word, lemma, tag)` is true when an analysis of the word has this
+base word and tag; it ignores letter case and, for an ASCII word, allocates nothing. A lexicon file of your own without
+an analyses table has no analyses: `GetAnalyses()` is empty and `IsFormOf` is false.
+
+**Case and normalization.** The word is folded exactly like a token of the tagger (Unicode NFC normalization;
+typographic quotes, dashes and the ellipsis mapped to ASCII) and lower-cased before the lookup, so `Valve`, `VALVE` and
+`valve` have the same lexicon answer and the same analyses; only the shape rules add `PROPN` and `X` for a capital
+letter. An unpaired surrogate counts as U+FFFD and never fails.
+
+**Tags without an analysis.** The lexicon is a restriction list, not a gold dictionary, and not every tag that it lists
+has a reading behind it. `TagsWithoutAnalysis` is `Tags` minus the tags that an analysis names, so it shows how much of
+an answer is only attested. For example `the` lists `ADV`, `DET`, `PRON` and `PROPN` and has one analysis, `the DET`: the
+other three tags come from the corpora that attest them (annotation noise included). `went` lists `ADJ` and `VERB` and
+has the analysis `go VERB Tense=Past`: the `ADJ` comes from the rule that gives a past tense form an adjective reading.
+With the shape rules the tags that the rules add have no analysis either (`PROPN` and `X` of `Valve` above).
+
+**Hyphenated words.** A word is looked up as a whole first: when the folded, lower-case word is a lexicon spelling, the
+result is `Spelling` with the analyses of that spelling (`built-in` has its own analyses, not those of `in`). Otherwise,
+when the word contains the hyphen-minus and every part between hyphens is not empty (`well-tested`, not `-ed`, `well-` or
+`a--b`), only its last part is looked up, as a whole, and nothing is split further, stripped or tried again. When the last
+part is a spelling the result is `CompoundHead` with the analyses of that part (`well-tested` has those of `tested`);
+otherwise it is `NotRecognized`. Only the hyphen-minus counts: an en dash, an em dash and U+2010 do not make a compound.
+The tagger treats a hyphenated token that is not a spelling as one unknown word, so for a `CompoundHead` `Tags` is the
+answer for the whole token (empty in the raw mode, all 17 tags with the shape rules) and `IsKnownWord` is false. The
+analyses of the head are extra evidence for a rule checker, for example that `well-tested` ends in a form of the verb
+`test`: they never narrow `Tags` and never change the tagging. `IsFormOf` follows the same rule, so
+`IsFormOf("well-tested", "test", Upos.Verb)` is true; check `Match` first when compounds must not count. A word that has
+more characters than the longest spelling of the lexicon has UTF-8 bytes (122 UTF-8 bytes in the embedded lexicon)
+cannot be a spelling as a whole, so only the compound rule can recognize it, by a last part that does not itself have
+more characters than that.
+
+**Phrases.** The lexicon has no phrases: no spelling contains white space, and the lookup is for one word. A text with
+white space (`give up`, `manual override`) is refused with an `ArgumentException` and is not answered as unknown, so
+that "not recognized" never hides a phrase. Split a text into words with `Tokenizer` first, and use a `Glossary` for a
+multiword term.
+
+**Glossary.** The lookup ignores a glossary: `GetPossibleTags` has no glossary parameter, and a term that you gave to a
+`Glossary` is not found by the lookup and does not change its answer. A glossary belongs to a `Tag` call and sets the tag
+of a term in a sentence (see _Glossary_). Give the domain terms of your checker to a `Glossary`, and use the lookup for
+the words of the general dictionary.
+
+**Edge cases and exceptions.** A `null` word, lemma or text throws `ArgumentNullException`; a word or lemma that is empty
+or contains white space throws `ArgumentException` (a base word that is a phrase, such as `give up`, is refused too); a
+mode or tag that is not a defined value throws `ArgumentOutOfRangeException`. A word of any length is accepted: a very
+long word is answered without an error and without growing the per-thread memory beyond what a word of the length of the
+longest spelling needs, and an ASCII word of a million characters allocates nothing. On .NET 8 and later
+`GetPossibleTags` also takes a `ReadOnlySpan<char>` with the same rules and
+results.
+
+**Thread safety.** The lookup is safe from any number of threads at the same time, also while other threads tag text; it
+uses the same per-thread scratch memory as tagging. `WordTags` and `WordAnalysis` are immutable values.
+
+**Allocation.** After the first call on a thread, the lookup of an ASCII word allocates nothing in both modes, and
+neither does `IsFormOf`; the same holds for a word with other characters that is already in NFC (`café`, a typographic
+apostrophe). A word that is not in NFC allocates the normalized string (32 bytes for `café` written with a combining
+acute accent). A span of ASCII characters allocates nothing; a span with another character is copied to a string first
+(24 bytes for one NFC character). `GetAnalyses()` allocates its list: 360 bytes for the two analyses of `tests`, 600
+bytes for the five of `well`, 368 bytes for the compound head `well-tested` and nothing for a word without analyses.
+These numbers were measured on .NET 10 on Windows x64 (the smallest of ten batches after warm-up). The allocation tests
+run on .NET 8 and later and assert the zero cases; the others are only bounded.
+
 ## Loading a Weights File
 
 ```csharp
@@ -532,6 +660,18 @@ The stream is read to its end and is not closed. `Load` throws `InvalidDataExcep
 a weights file, or is of a format or feature set version that this build does not read; `ArgumentNullException` for a
 `null` stream and `ArgumentOutOfRangeException` for options outside their range.
 
+**Custom lexicon compatibility.** The loader reads exactly lexicon format version 3 (`Lexicon.FormatVersion`). A custom
+lexicon file of version 2 is refused with an `InvalidDataException` whose message names both versions (`Unsupported
+lexicon file version 2; this build reads version 3.`). Regenerate such a file as version 3 with the lexicon compiler of
+the repository, from the lexicon table that the file was built from (`spelling`, a tab and the space-separated tags per
+line), and add the analyses table (`--analyses`) when the lexicon answers base words and forms:
+
+```text
+dotnet run --project tools/LexiconCompiler -- --input my-lexicon.tsv --analyses my-analyses.tsv --output my-lexicon.posl
+```
+
+Without `--analyses` the compiler writes a lexicon without analyses, which gives tags and no base words.
+
 ## The Default Tagger
 
 ```csharp
@@ -541,8 +681,8 @@ TaggedSentence sentence = tagger.Tag("Dogs bark.")[0];
 
 `Tagger.Default` is the shared tagger that uses the weights and the lexicon that are embedded in the package. It is
 created on first use, so a program that only tokenizes pays nothing; the first read inflates and validates the two
-embedded files once (the weights: 553,641 bytes compressed, 1,234,530 bytes uncompressed; the lexicon: 639,711 bytes
-compressed, 1,626,269 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
+embedded files once (the weights: 553,641 bytes compressed, 1,234,530 bytes uncompressed; the lexicon: 762,836 bytes
+compressed, 2,157,499 bytes uncompressed; tens of milliseconds on a current machine), and every later read returns the
 same thread-safe instance. A read does not fail in a released package; an `InvalidOperationException` or an
 `InvalidDataException` would mean that the package is broken.
 
@@ -593,7 +733,8 @@ The entry point. Immutable and thread-safe.
 - `static Tagger Default`: the shared tagger that uses the embedded model and lexicon; created on first use.
 - `static Tagger Load(Stream weights, TaggerOptions? options = null)`: creates a tagger from a weights stream with the
   embedded lexicon.
-- `static Tagger Load(Stream weights, Stream lexicon, TaggerOptions? options = null)`: with your own lexicon file.
+- `static Tagger Load(Stream weights, Stream lexicon, TaggerOptions? options = null)`: with your own lexicon file, which
+  must be of format version 3 (see _Loading a Weights File_).
 - `TaggerOptions Options`: a copy of the options the tagger was created with.
 - `IReadOnlyList<TaggedSentence> Tag(string text)`: tokenizes, splits into sentences and tags.
 - `TaggedSentence Tag(Sentence sentence, IReadOnlyList<TokenConstraint>? constraints = null)`: tags a sentence from
@@ -606,6 +747,13 @@ The entry point. Immutable and thread-safe.
   `TaggedSentence Tag(IReadOnlyList<string> tokens, Glossary glossary, IReadOnlyList<TokenConstraint>? constraints = null)`:
   as the overloads without a glossary; your constraints are combined with those of the glossary and win where the two
   allow no tag in common. A `null` glossary throws `ArgumentNullException` (use `Glossary.Empty` for none).
+- `WordTags GetPossibleTags(string word, PossibleTagsMode mode = PossibleTagsMode.LexiconOnly)`: looks up one word in
+  the lexicon of the tagger, without a sentence, the model or a glossary (see _Looking Up a Word_). A `null` word throws
+  `ArgumentNullException`, an empty word or one with white space throws `ArgumentException` and a mode that is not
+  defined throws `ArgumentOutOfRangeException`. On .NET 8 and later an overload takes a `ReadOnlySpan<char>` with the
+  same rules.
+- `bool IsFormOf(string word, string lemma, Upos tag)`: true when an analysis of the word (a compound head included)
+  has this base word and tag; letter case never matters.
 
 ## TaggerOptions
 
@@ -636,6 +784,38 @@ The entry point. Immutable and thread-safe.
 ## TagScore
 
 - `Upos Tag`, `double Probability`.
+
+## WordTags
+
+The result of a word lookup; an immutable value type with equality by content and a `ToString` such as
+`Spelling NOUN|VERB`.
+
+- `UposSet Tags`: the tags of the whole word, by the mode of the lookup.
+- `WordMatch Match`: `Spelling`, `CompoundHead` or `NotRecognized`; the default value is `NotRecognized`.
+- `bool IsKnownWord`: `Match == Spelling`; equals `TaggedToken.IsKnownWord` of the same word.
+- `UposSet TagsWithoutAnalysis`: `Tags` minus the tags that an analysis of the matched spelling names.
+- `IReadOnlyList<WordAnalysis> GetAnalyses()`: the analyses of the spelling, or of the last part for a `CompoundHead`;
+  empty otherwise; allocates the list.
+
+## WordAnalysis
+
+One reading of a spelling; an immutable value type with equality by content and a `ToString` such as
+`test VERB Person=3|Tense=Pres`.
+
+- `string Lemma`: the base word, lower case and in NFC.
+- `Upos Tag`, `string Features`: the Universal Dependencies notation, `Name=Value` pairs joined by `|` and sorted by
+  name; empty when there are none.
+- `string? GetFeature(string name)`: the value of one feature, or `null`; the name is case-sensitive.
+
+## WordMatch
+
+`NotRecognized` (the default), `Spelling` (the folded, lower-case word is a spelling of the lexicon) and `CompoundHead`
+(a hyphenated word that is not a spelling whose last part is one).
+
+## PossibleTagsMode
+
+`LexiconOnly` (the default; the tags that the lexicon lists for the spelling, empty when the word is not one) and
+`WithShapeRules` (the tags that the tagger may choose for the token on its own; all 17 when the word is not a spelling).
 
 ## TokenConstraint
 
@@ -739,8 +919,9 @@ covers which part, and is used instead of a license expression because nuget.org
 that the Open Source Initiative or the Free Software Foundation approve, which CC BY 3.0 US is not. The repository also
 holds open data for the 17 Universal POS tags: training corpora, a part-of-speech lexicon and evaluation sets, described
 in the [data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md). The parts of the data that
-the library uses at run time are the lexicon, which is compiled into a binary file that is embedded in the assembly and
-restricts the tags of known words, and the weights, which the trainer tool of the repository learned from the open
+the library uses at run time are the lexicon, which is compiled into a binary file that is embedded in the assembly,
+restricts the tags of known words and carries the base word, tag and features of the forms of its spellings, and the
+weights, which the trainer tool of the repository learned from the open
 corpus, MASC, the silver corpus, the imperative source, the compound sources and the technical-text sources and which
 are embedded as a binary file
 too. The attribution
@@ -756,7 +937,8 @@ packed at the root of the NuGet package.
   under the terms of this license.
 - **Open English WordNet** is licensed CC BY 4.0 (<https://creativecommons.org/licenses/by/4.0/>) and carries the
   Princeton WordNet notice. Its word forms were reduced to a lexicon of spellings and the Universal POS tags they may
-  carry; the lexicon is embedded in the package in a compiled form.
+  carry, and to the base word, tag and features of each form (the analyses); the lexicon is embedded in the package in a
+  compiled form.
 - **The open part-of-speech corpus** of the WordSense project (<https://github.com/demaconsulting/WordSense>): the
   annotations and the selection are CC0 1.0, and the sentences are public domain in the United States or come from the
   Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative, compound, headings and

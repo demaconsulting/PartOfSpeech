@@ -1,4 +1,4 @@
-// cspell:ignore zorbulon zzqxj Cquoted
+// cspell:ignore zorbulon zzqxj Cquoted zzqxv Zzqxv
 using System.Xml.Linq;
 
 namespace DemaConsulting.PartOfSpeech.Tests;
@@ -576,6 +576,84 @@ public class PartOfSpeechTests
     }
 
     /// <summary>
+    ///     Proves that the word lookup section of the user guide has a C# example that compiles against the real API, that
+    ///     the results that the example claims are those of the embedded lexicon, and that the section has a paragraph for
+    ///     each rule (modes, result, forms, case, tags without an analysis, hyphenated words, phrases, glossary, exceptions,
+    ///     thread safety and allocation), the lookup guidance of the rule checker section and the entries of the API reference.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_RuleChecker_UserGuideLookupExample_Compiles()
+    {
+        // Arrange: the section of the user guide, its code block and the rule checker section
+        var guide = File.ReadAllText(DataFiles.Repository("docs/user_guide/introduction.md")).Replace("\r\n", "\n");
+        var sectionStart = guide.IndexOf("## Looking Up a Word\n", StringComparison.Ordinal);
+        Assert.True(sectionStart >= 0, "The user guide has no section 'Looking Up a Word'.");
+        var sectionEnd = guide.IndexOf("\n## ", sectionStart + 1, StringComparison.Ordinal);
+        var section = guide.Substring(sectionStart, sectionEnd - sectionStart);
+        var fence = section.IndexOf("```csharp\n", StringComparison.Ordinal);
+        Assert.True(fence >= 0, "The section has no C# example.");
+        var codeStart = fence + "```csharp\n".Length;
+        var code = section.Substring(codeStart, section.IndexOf("\n```", codeStart, StringComparison.Ordinal) - codeStart);
+        var ruleChecker = guide.Substring(
+            guide.IndexOf("## Using the Tagger in a Rule Checker\n", StringComparison.Ordinal),
+            sectionStart - guide.IndexOf("## Using the Tagger in a Rule Checker\n", StringComparison.Ordinal));
+        var tagger = Tagger.Default;
+
+        // Act: compile the example of the guide and run the lookups that it shows
+        XmlDocExampleVerifier.VerifySnippet("docs/user_guide/introduction.md", code, "DemaConsulting.PartOfSpeech");
+        var tests = tagger.GetPossibleTags("tests");
+        var unknown = tagger.GetPossibleTags("zorbulon");
+        var compound = tagger.GetPossibleTags("well-tested");
+        var allowed = tagger.GetPossibleTags("Valve", PossibleTagsMode.WithShapeRules);
+
+        // Assert: the example claims what the embedded lexicon answers
+        Assert.Equal((WordMatch.Spelling, UposSet.Of(Upos.Noun, Upos.Verb)), (tests.Match, tests.Tags));
+        Assert.Equal(
+            new[] { "test NOUN Number=Plur", "test VERB Person=3|Tense=Pres" },
+            tests.GetAnalyses().Select(a => $"{a.Lemma} {a.Tag.ToTagString()} {a.Features}"));
+        Assert.Equal((WordMatch.NotRecognized, true), (unknown.Match, unknown.Tags.IsEmpty));
+        Assert.True(tagger.IsFormOf("Went", "go", Upos.Verb));
+        Assert.False(tagger.IsFormOf("tests", "test", Upos.Adj));
+        Assert.Equal((WordMatch.CompoundHead, true, 2), (compound.Match, compound.Tags.IsEmpty, compound.GetAnalyses().Count));
+        Assert.Equal(("NOUN|PROPN|X", "PROPN|X"), (allowed.Tags.ToString(), allowed.TagsWithoutAnalysis.ToString()));
+
+        // The facts of the examples of the other paragraphs: tags that no analysis names, and the rules of the hyphenated word
+        var the = tagger.GetPossibleTags("the");
+        Assert.Equal("ADV|DET|PRON|PROPN", the.Tags.ToString());
+        Assert.Equal("ADV|PRON|PROPN", the.TagsWithoutAnalysis.ToString());
+        var went = tagger.GetPossibleTags("went");
+        Assert.Equal(("ADJ|VERB", "ADJ"), (went.Tags.ToString(), went.TagsWithoutAnalysis.ToString()));
+        Assert.True(tagger.IsFormOf("well-tested", "test", Upos.Verb));
+        Assert.All(new[] { "-ed", "well-", "a--b", "well\u2013tested", "well\u2014tested", "well\u2010tested" }, word => Assert.Equal(WordMatch.NotRecognized, tagger.GetPossibleTags(word).Match));
+        Assert.Equal(UposSet.All, tagger.GetPossibleTags("well-tested", PossibleTagsMode.WithShapeRules).Tags);
+        Assert.Throws<ArgumentException>(() => tagger.GetPossibleTags("manual override"));
+        Assert.Throws<ArgumentNullException>(() => tagger.GetPossibleTags((string)null!));
+        Assert.Throws<ArgumentOutOfRangeException>(() => tagger.GetPossibleTags("tests", (PossibleTagsMode)7));
+
+        // The section has a paragraph for each rule, with the statements that the plan of the lookup calls for
+        var prose = string.Join(" ", section.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        var requiredStatements = new[]
+        {
+            "**Two modes.**", "`PossibleTagsMode.LexiconOnly` (the default)", "**The result.**", "Test `Match` (or `IsKnownWord`)",
+            "never `Tags.IsEmpty`", "**Forms.**", "`Name=Value` pairs joined by `|` and sorted by name", "`Capitalization` feature is not reported",
+            "**Case and normalization.**", "Unicode NFC normalization", "lower-cased", "**Tags without an analysis.**", "`TagsWithoutAnalysis`",
+            "**Hyphenated words.**", "only its last part is looked up", "`CompoundHead`", "they never narrow `Tags` and never change the tagging",
+            "empty in the raw mode, all 17 tags with the shape rules", "122 UTF-8 bytes", "**Phrases.**", "`ArgumentException`", "use a `Glossary` for a multiword term",
+            "**Glossary.**", "The lookup ignores a glossary", "**Edge cases and exceptions.**", "`ArgumentNullException`", "`ArgumentOutOfRangeException`",
+            "**Thread safety.**", "**Allocation.**", "360 bytes", "32 bytes"
+        };
+        Assert.DoesNotContain(requiredStatements, statement => !prose.Contains(statement));
+
+        // The rule checker section points to the lookup, and the API reference lists the new members and types
+        var ruleCheckerProse = string.Join(" ", ruleChecker.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        Assert.Contains("Check the dictionary roles of the word with the lookup", ruleCheckerProse);
+        Assert.Contains("then use the tagger and the `Margin` for the word in its context", ruleCheckerProse);
+        Assert.All(
+            new[] { "`WordTags GetPossibleTags(string word, PossibleTagsMode mode = PossibleTagsMode.LexiconOnly)`", "`bool IsFormOf(string word, string lemma, Upos tag)`", "## WordTags\n", "## WordAnalysis\n", "## WordMatch\n", "## PossibleTagsMode\n" },
+            entry => Assert.Contains(entry, guide));
+    }
+
+    /// <summary>
     ///     Proves that a weights file can be loaded from a file stream and tags text.
     /// </summary>
     [Fact]
@@ -748,6 +826,41 @@ public class PartOfSpeechTests
         Assert.Empty(exposed);
         Assert.Contains(project.Descendants("EmbeddedResource"), r => ((string?)r.Attribute("Include") ?? string.Empty).Replace('\\', '/').EndsWith("Resources/lexicon.bin", StringComparison.Ordinal));
         Assert.Contains(project.Descendants("EmbeddedResource"), r => ((string?)r.Attribute("Include") ?? string.Empty).Replace('\\', '/').EndsWith("Resources/weights.bin", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    ///     Proves the word lookup with the embedded lexicon through the public API: known words with their tags and analyses, a
+    ///     capitalized word, an invented word, a compound, and agreement with the tagger for every kind of token.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Tagging_WordLookup_EmbeddedLexicon_AgreesWithTheTagger()
+    {
+        // Arrange: a tagger with the embedded lexicon that reports all alternatives, and words of every kind
+        var tagger = EmbeddedLexiconTagger(new TaggerOptions { MaxAlternatives = 16 });
+        var words = new[] { "valve", "Valve", "zzqxv", "Zzqxv", "42", "1st", ".", "--", "well-tested", "pre-flight", "tests", "CAFE\u0301", "n\u2019t", "The", "is" };
+
+        // Act: tag the words as one sentence and look every word up
+        var sentence = tagger.Tag(words);
+        var valve = tagger.GetPossibleTags("Valve");
+        var invented = tagger.GetPossibleTags("zzqxv");
+        var compound = tagger.GetPossibleTags("well-tested");
+        var tests = tagger.GetPossibleTags("tests");
+
+        // Assert: the shape-rule lookup is the set of tags that the tagger considered, and the known flag is the tagger's
+        for (var i = 0; i < words.Length; i++)
+        {
+            var token = sentence.Tokens[i];
+            var allowed = UposSet.Of(token.Tag).Union(UposSet.Of(token.Alternatives.Select(a => a.Tag).ToArray()));
+            var lookup = tagger.GetPossibleTags(words[i], PossibleTagsMode.WithShapeRules);
+            Assert.Equal(allowed, lookup.Tags);
+            Assert.Equal(token.IsKnownWord, lookup.IsKnownWord);
+        }
+
+        Assert.Equal(UposSet.Of(Upos.Noun), valve.Tags);
+        Assert.Equal(WordMatch.NotRecognized, invented.Match);
+        Assert.Equal(WordMatch.CompoundHead, compound.Match);
+        Assert.Equal(new[] { "test NOUN Number=Plur", "test VERB Person=3|Tense=Pres" }, tests.GetAnalyses().Select(a => a.ToString()));
+        Assert.True(tagger.IsFormOf("TESTS", "test", Upos.Verb));
     }
 
     /// <summary>

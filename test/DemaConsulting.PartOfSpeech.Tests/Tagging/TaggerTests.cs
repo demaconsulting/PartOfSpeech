@@ -1,4 +1,4 @@
-// cspell:ignore zorbulon zork Cquotes
+// cspell:ignore zorbulon zork Cquotes zzqxv Zzqxv zzqx ZZQXV
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -833,6 +833,1157 @@ public class TaggerTests
 
         // Assert: nothing is allocated per batch (reading through the alternatives would allocate a wrapper per read)
         Assert.Equal(0, bytes);
+        Assert.True(sink > 0);
+    }
+#endif
+
+    /// <summary>
+    ///     The analyses of a lookup result as text, one entry per analysis, for comparisons.
+    /// </summary>
+    private static string[] AnalysesOf(WordTags word) => word.GetAnalyses().Select(a => a.ToString()).ToArray();
+
+    /// <summary>
+    ///     Creates a tagger whose lexicon has analyses that cover some tags but not all, and non-ASCII and apostrophe base words.
+    /// </summary>
+    private static Tagger CreateWithAnalyses()
+    {
+        static KeyValuePair<string, UposSet> Entry(string spelling, params Upos[] tags) => new(spelling, UposSet.Of(tags));
+        static KeyValuePair<string, IReadOnlyList<DemaConsulting.PartOfSpeech.Lexicon.Analysis>> Readings(string spelling, params DemaConsulting.PartOfSpeech.Lexicon.Analysis[] analyses) => new(spelling, analyses);
+
+        var lexicon = TinyModels.CreateLexicon(
+            new[]
+            {
+                Entry("cats", Upos.Noun),
+                Entry("dogs", Upos.Noun, Upos.Verb),
+                Entry("caf\u00E9s", Upos.Noun),
+                Entry("o'clock", Upos.Noun),
+                Entry("birds", Upos.Noun),
+            },
+            analyses: new[]
+            {
+                Readings("cats", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("cat", Upos.Noun, "Number=Plur")),
+                Readings("dogs", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("dog", Upos.Noun, "Number=Plur")),
+                Readings("caf\u00E9s", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("caf\u00E9", Upos.Noun, "Number=Plur")),
+                Readings("o'clock", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("o'clock", Upos.Noun, "Number=Sing")),
+            });
+        return TinyModels.CreateTagger(Weights, lexicon);
+    }
+
+    /// <summary>
+    ///     Proves that the lookup of a spelling with two forms returns both analyses in the documented order, with the features in
+    ///     Universal Dependencies notation, using real data of the embedded lexicon.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_Tests_ReturnsBothAnalysesInDocumentedOrder()
+    {
+        // Arrange: the embedded lexicon lists tests as the plural of a noun and the third person of a verb
+        var tagger = Tagger.Default;
+
+        // Act: look up the word and read its analyses
+        var word = tagger.GetPossibleTags("tests");
+        var analyses = word.GetAnalyses();
+
+        // Assert: both tags, a spelling match, every tag explained, and the analyses in tag order with readable features
+        Assert.Equal(WordMatch.Spelling, word.Match);
+        Assert.True(word.IsKnownWord);
+        Assert.Equal(UposSet.Of(Upos.Noun, Upos.Verb), word.Tags);
+        Assert.True(word.TagsWithoutAnalysis.IsEmpty);
+        Assert.Equal(new[] { "test NOUN Number=Plur", "test VERB Person=3|Tense=Pres" }, analyses.Select(a => a.ToString()));
+        Assert.Equal("Plur", analyses[0].GetFeature("Number"));
+        Assert.Equal("3", analyses[1].GetFeature("Person"));
+        Assert.Equal("Pres", analyses[1].GetFeature("Tense"));
+        Assert.Null(analyses[1].GetFeature("Number"));
+        Assert.Null(analyses[0].GetFeature("number"));
+    }
+
+    /// <summary>
+    ///     Proves that the letter case of the word never changes the result.
+    /// </summary>
+    /// <param name="spelling">The word in another case.</param>
+    [Theory]
+    [InlineData("TESTS")]
+    [InlineData("Tests")]
+    [InlineData("tESTS")]
+    public void Tagger_GetPossibleTags_Case_IgnoresLetterCase(string spelling)
+    {
+        // Arrange: the lower-case result as the reference
+        var tagger = Tagger.Default;
+        var reference = tagger.GetPossibleTags("tests");
+
+        // Act: look up the other case
+        var word = tagger.GetPossibleTags(spelling);
+
+        // Assert: the same tags, match and analyses (the result is equal in every respect)
+        Assert.Equal(reference, word);
+        Assert.True(reference == word);
+        Assert.Equal(AnalysesOf(reference), AnalysesOf(word));
+    }
+
+    /// <summary>
+    ///     Proves that an unknown word is reported as not recognized, which differs from a word without tags, in both modes.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_UnknownWord_IsNotRecognizedNotEmptyKnown()
+    {
+        // Arrange: an invented word
+        var tagger = Tagger.Default;
+
+        // Act: look it up in both modes
+        var raw = tagger.GetPossibleTags("zzqxv");
+        var shape = tagger.GetPossibleTags("zzqxv", PossibleTagsMode.WithShapeRules);
+
+        // Assert: raw mode has no tags and shape mode has all 17, but both say plainly that the word is not recognized
+        Assert.Equal(WordMatch.NotRecognized, raw.Match);
+        Assert.False(raw.IsKnownWord);
+        Assert.True(raw.Tags.IsEmpty);
+        Assert.Empty(raw.GetAnalyses());
+        Assert.Equal(WordMatch.NotRecognized, shape.Match);
+        Assert.False(shape.IsKnownWord);
+        Assert.Equal(UposSet.All, shape.Tags);
+        Assert.Equal(UposSet.All, shape.TagsWithoutAnalysis);
+        Assert.Empty(shape.GetAnalyses());
+        Assert.Equal(default, raw);
+    }
+
+    /// <summary>
+    ///     Proves that the default mode is the raw lexicon lookup.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_DefaultMode_IsLexiconOnly()
+    {
+        // Arrange: a capitalized word, whose shape adds tags in the other mode
+        var tagger = Tagger.Default;
+
+        // Act: look it up without a mode, with each mode
+        var byDefault = tagger.GetPossibleTags("Valve");
+        var raw = tagger.GetPossibleTags("Valve", PossibleTagsMode.LexiconOnly);
+        var shape = tagger.GetPossibleTags("Valve", PossibleTagsMode.WithShapeRules);
+
+        // Assert: the default equals the raw lookup and differs from the shape-rule lookup
+        Assert.Equal(raw, byDefault);
+        Assert.NotEqual(shape, byDefault);
+        Assert.Equal(default, default(PossibleTagsMode));
+        Assert.Equal(PossibleTagsMode.LexiconOnly, default);
+    }
+
+    /// <summary>
+    ///     Proves that the shape rules add the tags of the decoder in the shape-rule mode and do not touch the raw mode.
+    /// </summary>
+    /// <param name="spelling">The word.</param>
+    /// <param name="raw">The lexicon tags, as a tag string.</param>
+    /// <param name="shape">The tags that the tagger allows, as a tag string.</param>
+    [Theory]
+    [InlineData("valve", "NOUN", "NOUN")]
+    [InlineData("Valve", "NOUN", "NOUN|PROPN|X")]
+    [InlineData("VALVE", "NOUN", "NOUN|PROPN|X")]
+    [InlineData("vALVE", "NOUN", "NOUN")]
+    [InlineData("1st", "ADJ", "ADJ|NOUN|NUM|PROPN|SYM|X")]
+    [InlineData("--", "PUNCT", "PUNCT|SYM|X")]
+    [InlineData("\u2014", "PUNCT", "PUNCT|SYM|X")]
+    [InlineData("n\u2019t", "PART", "PART")]
+    [InlineData("N\u2019T", "PART", "PART|PROPN|X")]
+    public void Tagger_GetPossibleTags_ShapeRules_ExtendTheLexiconTags(string spelling, string raw, string shape)
+    {
+        // Arrange: the embedded lexicon, which lists these spellings
+        var tagger = Tagger.Default;
+
+        // Act: look the word up in both modes
+        var lexiconOnly = tagger.GetPossibleTags(spelling, PossibleTagsMode.LexiconOnly);
+        var withShape = tagger.GetPossibleTags(spelling, PossibleTagsMode.WithShapeRules);
+
+        // Assert: the raw mode is the lexicon fact, the other mode adds what the shape of the token allows; both know the word
+        Assert.Equal(raw, lexiconOnly.Tags.ToString());
+        Assert.Equal(shape, withShape.Tags.ToString());
+        Assert.True(lexiconOnly.IsKnownWord);
+        Assert.True(withShape.IsKnownWord);
+    }
+
+    /// <summary>
+    ///     Proves that typographic quotes, dashes, the ellipsis and decomposed accents are folded like a token of the tagger.
+    /// </summary>
+    /// <param name="spelling">The word as written.</param>
+    /// <param name="expected">The lexicon tags, or an empty string for a spelling that is not listed.</param>
+    [Theory]
+    [InlineData("n't", "PART")]
+    [InlineData("n\u2019t", "PART")]
+    [InlineData("N\u2019T", "PART")]
+    [InlineData("\u2014", "PUNCT")]
+    [InlineData("\u2013", "PUNCT")]
+    [InlineData("\u2026", "PUNCT")]
+    [InlineData("caf\u00E9", "NOUN")]
+    [InlineData("CAFE\u0301", "NOUN")]
+    [InlineData("cafe", "NOUN|PROPN")]
+    [InlineData("zzqx\u00E9", "")]
+    public void Tagger_GetPossibleTags_FoldedSpelling_UsesTheTaggerLookup(string spelling, string expected)
+    {
+        // Arrange: the embedded lexicon lists n't, --, ..., café and cafe
+        var tagger = Tagger.Default;
+
+        // Act: look the spelling up
+        var word = tagger.GetPossibleTags(spelling);
+
+        // Assert: the folded, normalized, lower-cased spelling decides
+        Assert.Equal(expected, word.Tags.ToString());
+        Assert.Equal(expected.Length > 0, word.IsKnownWord);
+    }
+
+    /// <summary>
+    ///     Proves that tags that no analysis names are reported as attested without an analysis: closed-class noise, rule-added tags
+    ///     and proper nouns, using real data.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_TagsWithoutAnalysis_ReportsRuleAndAttestedTags()
+    {
+        // Arrange: the embedded lexicon lists the as DET (an analysis) next to ADV, PRON and PROPN (none), testing as noun and verb forms
+        // next to the adjective that a rule adds, ran as a verb form next to an adjective, and paris as a proper noun without any analysis
+        var tagger = Tagger.Default;
+
+        // Act: look the words up
+        var the = tagger.GetPossibleTags("the");
+        var testing = tagger.GetPossibleTags("testing");
+        var ran = tagger.GetPossibleTags("ran");
+        var paris = tagger.GetPossibleTags("paris");
+
+        // Assert: the tags without analysis are exactly the tags that no analysis names
+        Assert.Equal(UposSet.Of(Upos.Adv, Upos.Pron, Upos.Propn), the.TagsWithoutAnalysis);
+        Assert.Equal(new[] { "the DET" }, AnalysesOf(the));
+        Assert.Equal(UposSet.Of(Upos.Adj), testing.TagsWithoutAnalysis);
+        Assert.Equal(new[] { "testing NOUN Number=Sing", "test VERB VerbForm=Ger" }, AnalysesOf(testing));
+        Assert.Equal(UposSet.Of(Upos.Adj), ran.TagsWithoutAnalysis);
+        Assert.Equal(new[] { "run VERB Tense=Past" }, AnalysesOf(ran));
+        Assert.Equal(UposSet.Of(Upos.Propn), paris.TagsWithoutAnalysis);
+        Assert.Empty(paris.GetAnalyses());
+    }
+
+    /// <summary>
+    ///     Proves that the analyses carry the base word of closed-class and irregular forms from the data.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_ClosedClassAndIrregularForms_HaveTheBaseWord()
+    {
+        // Arrange: the embedded lexicon
+        var tagger = Tagger.Default;
+
+        // Act: look up closed-class words and irregular forms
+        var of = tagger.GetPossibleTags("of");
+        var be = tagger.GetPossibleTags("be");
+        var went = tagger.GetPossibleTags("went");
+        var @is = tagger.GetPossibleTags("is");
+
+        // Assert: a closed-class word is its own base word, the irregular forms point to their base word, and features may be empty
+        Assert.Equal(new[] { "of ADP" }, AnalysesOf(of));
+        Assert.Equal(new[] { "go VERB Tense=Past" }, AnalysesOf(went));
+        Assert.Equal(
+            new[] { "be AUX Person=3|Tense=Pres", "i NOUN Number=Plur", "be VERB Person=3|Tense=Pres" },
+            AnalysesOf(@is));
+        var aux = be.GetAnalyses().First(a => a.Tag == Upos.Aux);
+        Assert.Equal(string.Empty, aux.Features);
+        Assert.Null(aux.GetFeature("Number"));
+        Assert.Equal("be", aux.Lemma);
+    }
+
+    /// <summary>
+    ///     Proves that a lexicon built without an analyses table gives tags and matches but no analyses.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_CustomLexiconWithoutAnalyses_HasNoAnalyses()
+    {
+        // Arrange: a lexicon that lists cat and has no analyses, and the embedded lexicon that lists cat differently
+        var tagger = TinyModels.CreateTagger(Weights, TinyModels.CreateLexicon("cat ADJ VERB"));
+
+        // Act: look the word up in the two modes and ask for a form
+        var word = tagger.GetPossibleTags("cat");
+        var shape = tagger.GetPossibleTags("Cat", PossibleTagsMode.WithShapeRules);
+
+        // Assert: the custom lexicon decides, nothing is analyzed, and no tag is a form of anything
+        Assert.Equal(UposSet.Of(Upos.Adj, Upos.Verb), word.Tags);
+        Assert.Equal(WordMatch.Spelling, word.Match);
+        Assert.Empty(word.GetAnalyses());
+        Assert.Equal(word.Tags, word.TagsWithoutAnalysis);
+        Assert.Equal(shape.Tags, shape.TagsWithoutAnalysis);
+        Assert.False(tagger.IsFormOf("cat", "cat", Upos.Verb));
+    }
+
+    /// <summary>
+    ///     Proves that a custom lexicon with analyses reports its own analyses and the tags that they do not cover.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_CustomLexiconWithAnalyses_ReportsItsAnalyses()
+    {
+        // Arrange: a lexicon whose analysis of dogs covers the noun but not the verb
+        var tagger = CreateWithAnalyses();
+
+        // Act: look up cats and dogs
+        var cats = tagger.GetPossibleTags("cats");
+        var dogs = tagger.GetPossibleTags("Dogs");
+        var birds = tagger.GetPossibleTags("birds");
+
+        // Assert: the analyses of the custom lexicon, the verb attested without one, and a spelling without any analysis
+        Assert.Equal(new[] { "cat NOUN Number=Plur" }, AnalysesOf(cats));
+        Assert.True(cats.TagsWithoutAnalysis.IsEmpty);
+        Assert.Equal(new[] { "dog NOUN Number=Plur" }, AnalysesOf(dogs));
+        Assert.Equal(UposSet.Of(Upos.Verb), dogs.TagsWithoutAnalysis);
+        Assert.Empty(birds.GetAnalyses());
+        Assert.Equal(UposSet.Of(Upos.Noun), birds.TagsWithoutAnalysis);
+        Assert.True(tagger.IsFormOf("DOGS", "Dog", Upos.Noun));
+        Assert.False(tagger.IsFormOf("dogs", "dog", Upos.Verb));
+    }
+
+    /// <summary>
+    ///     Proves that the lookup of the embedded lexicon and the lookup of another tagger do not mix their lexicons.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_CustomLexicon_UsesItsOwnLexicon()
+    {
+        // Arrange: a lexicon that allows only ADJ for valve, next to the embedded lexicon that allows NOUN
+        var custom = TinyModels.CreateTagger(Weights, TinyModels.CreateLexicon("valve ADJ"));
+
+        // Act: look the word up with each tagger, alternating on this thread
+        var withCustom = custom.GetPossibleTags("valve");
+        var withDefault = Tagger.Default.GetPossibleTags("valve");
+        var withCustomAgain = custom.GetPossibleTags("valve");
+
+        // Assert: each tagger answers from its own lexicon
+        Assert.Equal(UposSet.Of(Upos.Adj), withCustom.Tags);
+        Assert.Equal(UposSet.Of(Upos.Noun), withDefault.Tags);
+        Assert.Equal(withCustom, withCustomAgain);
+        Assert.NotEqual(withCustom, withDefault);
+    }
+
+    /// <summary>
+    ///     Proves that a glossary changes the tags of a token in a sentence but never the lookup of the word.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_Glossary_DoesNotChangeTheResult()
+    {
+        // Arrange: a glossary that forces valve to be a verb, and the lookup before tagging
+        var tagger = Tagger.Default;
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("valve", Upos.Verb) });
+        var before = tagger.GetPossibleTags("valve", PossibleTagsMode.WithShapeRules);
+
+        // Act: tag a sentence with the glossary, then look the word up again
+        var token = tagger.Tag("Close the valve.", glossary).Single().Tokens[2];
+        var after = tagger.GetPossibleTags("valve", PossibleTagsMode.WithShapeRules);
+
+        // Assert: the glossary decided the token, and the lookup is still the lexicon fact
+        Assert.Equal(Upos.Verb, token.Tag);
+        Assert.True(token.IsConstrained);
+        Assert.Equal(UposSet.Of(Upos.Noun), after.Tags);
+        Assert.Equal(before, after);
+    }
+
+    /// <summary>
+    ///     Proves the compound rule for a hyphenated word that is not a spelling but whose last part is: the head's analyses, and the
+    ///     tags of the whole token.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_CompoundHead_UsesLastPartAndTagsStayTheWholeToken()
+    {
+        // Arrange: well-tested is not a spelling of the embedded lexicon, tested is
+        var tagger = Tagger.Default;
+
+        // Act: look it up in both modes
+        var raw = tagger.GetPossibleTags("well-tested");
+        var shape = tagger.GetPossibleTags("well-tested", PossibleTagsMode.WithShapeRules);
+
+        // Assert: the head adds analyses, but the tags are those of the whole token (as for an unknown word of the tagger)
+        Assert.Equal(WordMatch.CompoundHead, raw.Match);
+        Assert.False(raw.IsKnownWord);
+        Assert.True(raw.Tags.IsEmpty);
+        Assert.Equal(new[] { "tested ADJ Degree=Pos", "test VERB Tense=Past|VerbForm=Part" }, AnalysesOf(raw));
+        Assert.True(raw.TagsWithoutAnalysis.IsEmpty);
+        Assert.Equal(WordMatch.CompoundHead, shape.Match);
+        Assert.False(shape.IsKnownWord);
+        Assert.Equal(UposSet.All, shape.Tags);
+        Assert.Equal(15, shape.TagsWithoutAnalysis.Count);
+        Assert.False(shape.TagsWithoutAnalysis.Contains(Upos.Adj));
+        Assert.False(shape.TagsWithoutAnalysis.Contains(Upos.Verb));
+        Assert.Equal(AnalysesOf(raw), AnalysesOf(shape));
+    }
+
+    /// <summary>
+    ///     Proves which hyphenated words have the last part as head and which analyses it gives.
+    /// </summary>
+    /// <param name="word">The word as written.</param>
+    /// <param name="expected">The analyses of the head, joined by a semicolon.</param>
+    [Theory]
+    [InlineData("pre-flight", "flight NOUN Number=Sing; flight VERB VerbForm=Inf")]
+    [InlineData("WELL-Tested", "tested ADJ Degree=Pos; test VERB Tense=Past|VerbForm=Part")]
+    [InlineData("very-state-of-the-art", "art NOUN Number=Sing; art VERB VerbForm=Inf")]
+    [InlineData("zzqx-flight", "flight NOUN Number=Sing; flight VERB VerbForm=Inf")]
+    [InlineData("state-of-the-art-style", "style NOUN Number=Sing; style VERB VerbForm=Inf")]
+    public void Tagger_GetPossibleTags_CompoundHead_HeadIsTheLastPartOnly(string word, string expected)
+    {
+        // Arrange: the embedded lexicon, which lists the last part of each word but not the word itself
+        var tagger = Tagger.Default;
+
+        // Act: look the word up
+        var result = tagger.GetPossibleTags(word);
+
+        // Assert: a compound head with the analyses of the last part only (nothing is split further or looked up recursively)
+        Assert.Equal(WordMatch.CompoundHead, result.Match);
+        Assert.Equal(expected, string.Join("; ", AnalysesOf(result)));
+    }
+
+    /// <summary>
+    ///     Proves that a hyphenated word whose whole spelling is listed is a spelling with its own analyses, never the head's.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_CompoundWhole_PrefersTheSpelling()
+    {
+        // Arrange: built-in and user-friendly are spellings, and so are their last parts in and friendly
+        var tagger = Tagger.Default;
+
+        // Act: look the words up in both modes
+        var builtIn = tagger.GetPossibleTags("built-in");
+        var friendly = tagger.GetPossibleTags("User-Friendly", PossibleTagsMode.WithShapeRules);
+
+        // Assert: the whole spelling wins: its tags, its match, its analyses
+        Assert.Equal(WordMatch.Spelling, builtIn.Match);
+        Assert.True(builtIn.IsKnownWord);
+        Assert.Equal(UposSet.Of(Upos.Adj), builtIn.Tags);
+        Assert.Equal(new[] { "built-in ADJ Degree=Pos" }, AnalysesOf(builtIn));
+        Assert.Equal(WordMatch.Spelling, friendly.Match);
+        Assert.Equal("ADJ|PROPN|X", friendly.Tags.ToString());
+    }
+
+    /// <summary>
+    ///     Proves that words that are not hyphenated compounds, or whose last part is unknown, are not recognized.
+    /// </summary>
+    /// <param name="word">The word as written.</param>
+    [Theory]
+    [InlineData("-ed")]
+    [InlineData("well-")]
+    [InlineData("a--b")]
+    [InlineData("well--tested")]
+    [InlineData("-well-tested")]
+    [InlineData("well-tested-")]
+    [InlineData("well-zzqx")]
+    [InlineData("zzqx-well-zzqx")]
+    [InlineData("well\u2014tested")]
+    [InlineData("well\u2013tested")]
+    [InlineData("well\u2010tested")]
+    [InlineData("well\u2011tested")]
+    public void Tagger_GetPossibleTags_CompoundHead_Malformed_IsNotRecognized(string word)
+    {
+        // Arrange: the embedded lexicon lists ed, well and tested but not these words
+        var tagger = Tagger.Default;
+
+        // Act: look the word up in both modes
+        var raw = tagger.GetPossibleTags(word);
+        var shape = tagger.GetPossibleTags(word, PossibleTagsMode.WithShapeRules);
+
+        // Assert: not recognized, no analyses (a dash character is folded to two hyphens, and a typographic hyphen is not a hyphen-minus)
+        Assert.Equal(WordMatch.NotRecognized, raw.Match);
+        Assert.Equal(WordMatch.NotRecognized, shape.Match);
+        Assert.Empty(raw.GetAnalyses());
+        Assert.Empty(shape.GetAnalyses());
+    }
+
+    /// <summary>
+    ///     Proves that a word longer than the longest spelling is recognized only through the compound rule: a hyphenated word whose last
+    ///     part is a spelling has that head, however long the whole word is, and the limit is the length of the longest spelling.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_CompoundHead_TooLongWhole_UsesTheLastPart()
+    {
+        // Arrange: the longest spelling of the embedded lexicon, words that fit and words that are one character and a million characters too long
+        var tagger = Tagger.Default;
+        var longest = EmbeddedModel.Lexicon.MaxSpellingBytes;
+        var fits = new string('a', longest - "-tested".Length) + "-tested";
+        var tooLong = new string('a', longest - "-tested".Length + 1) + "-tested";
+        var huge = new string('a', 1_000_000) + "-tested";
+        var head = tagger.GetPossibleTags("tested");
+
+        // Act: look them up in both modes and ask for a form
+        var results = new[] { fits, tooLong, huge }
+            .Select(w => (Raw: tagger.GetPossibleTags(w), Shape: tagger.GetPossibleTags(w, PossibleTagsMode.WithShapeRules), Form: tagger.IsFormOf(w, "test", Upos.Verb)))
+            .ToList();
+
+        // Assert: the limit is 122 bytes; whether or not the whole word fits, the head is the last part and the tags are those of the whole word
+        Assert.Equal(122, longest);
+        Assert.All(
+            results,
+            r =>
+            {
+                Assert.Equal(WordMatch.CompoundHead, r.Raw.Match);
+                Assert.Equal(WordMatch.CompoundHead, r.Shape.Match);
+                Assert.False(r.Raw.IsKnownWord);
+                Assert.True(r.Raw.Tags.IsEmpty);
+                Assert.Equal(UposSet.All, r.Shape.Tags);
+                Assert.Equal(AnalysesOf(head), AnalysesOf(r.Raw));
+                Assert.NotEmpty(r.Raw.GetAnalyses());
+                Assert.True(r.Form);
+            });
+    }
+
+    /// <summary>
+    ///     Proves that a word longer than the longest spelling is not recognized when it is not a hyphenated compound with a known last part
+    ///     of a length that fits: no hyphen, an empty part, a dash character, an unknown last part, or a last part that is itself too long.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_CompoundHead_TooLongWhole_Otherwise_IsNotRecognized()
+    {
+        // Arrange: words that are longer than the longest spelling and fail the compound rule in different ways
+        var tagger = Tagger.Default;
+        var longest = EmbeddedModel.Lexicon.MaxSpellingBytes;
+        var prefix = new string('a', longest + 1);
+        var words = new[]
+        {
+            prefix,
+            prefix + "tested",
+            prefix + "-zzqxv",
+            prefix + "-" + new string('a', longest + 1),
+            prefix + "-" + new string('a', longest - 1) + "-",
+            "-" + prefix + "-tested",
+            prefix + "--tested",
+            prefix + "-",
+            prefix + "\u2013tested",
+            prefix + "-\u2014tested",
+            prefix + "\u2010tested",
+        };
+
+        // Act: look each up in both modes and ask for a form
+        var results = words
+            .Select(w => (Raw: tagger.GetPossibleTags(w), Shape: tagger.GetPossibleTags(w, PossibleTagsMode.WithShapeRules), Form: tagger.IsFormOf(w, "test", Upos.Verb)))
+            .ToList();
+
+        // Assert: nothing is recognized, nothing is analyzed, and the tags are those of any word that is not a spelling
+        Assert.All(
+            results,
+            r =>
+            {
+                Assert.Equal(WordMatch.NotRecognized, r.Raw.Match);
+                Assert.Equal(WordMatch.NotRecognized, r.Shape.Match);
+                Assert.True(r.Raw.Tags.IsEmpty);
+                Assert.Equal(UposSet.All, r.Shape.Tags);
+                Assert.Empty(r.Raw.GetAnalyses());
+                Assert.False(r.Form);
+            });
+    }
+
+    /// <summary>
+    ///     Proves that the answer for a word that is longer than the longest spelling is the answer that the same word gets from a lexicon
+    ///     whose longest spelling is long enough to look the whole word up: the over-long path applies the compound rule exactly as the
+    ///     normal path does, for words made of every kind of piece (hyphens, dash characters, ellipsis, case, accents).
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_TooLongWhole_EqualsTheAnswerOfTheNormalPath()
+    {
+        // Arrange: two lexicons with the same spellings; the second also lists a spelling of 200 characters, so no word below is too long for it
+        static KeyValuePair<string, UposSet> Entry(string spelling, params Upos[] tags) => new(spelling, UposSet.Of(tags));
+        static KeyValuePair<string, IReadOnlyList<DemaConsulting.PartOfSpeech.Lexicon.Analysis>> Readings(string spelling, params DemaConsulting.PartOfSpeech.Lexicon.Analysis[] analyses) => new(spelling, analyses);
+
+        var entries = new List<KeyValuePair<string, UposSet>>
+        {
+            Entry("ab", Upos.Noun),
+            Entry("well", Upos.Adv, Upos.Noun),
+            Entry("tested", Upos.Adj, Upos.Verb),
+            Entry("a-b", Upos.Noun),
+        };
+        var analyses = new[]
+        {
+            Readings("tested", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("tested", Upos.Adj, "Degree=Pos"), new DemaConsulting.PartOfSpeech.Lexicon.Analysis("test", Upos.Verb, "Tense=Past|VerbForm=Part")),
+            Readings("well", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("well", Upos.Noun, "Number=Sing")),
+        };
+        var shortLexicon = TinyModels.CreateTagger(Weights, TinyModels.CreateLexicon(entries, analyses: analyses));
+        var withLong = new List<KeyValuePair<string, UposSet>>(entries) { Entry(new string('q', 200), Upos.Noun) };
+        var longLexicon = TinyModels.CreateTagger(Weights, TinyModels.CreateLexicon(withLong, analyses: analyses));
+        var pieces = new[] { "ab", "well", "tested", "zz", "-", "--", "\u2013", "\u2026", "AB", "Well", "\u00E9", "\u2010" };
+        var words = new List<string>();
+        void Add(string prefix, int depth)
+        {
+            if (prefix.Length > 0)
+            {
+                words.Add(prefix);
+            }
+
+            if (depth == 0)
+            {
+                return;
+            }
+
+            foreach (var piece in pieces)
+            {
+                Add(prefix + piece, depth - 1);
+            }
+        }
+
+        Add(string.Empty, 4);
+        var plain = words.Where(w => w.Length <= 12).ToList();
+        words.AddRange(plain.SelectMany(w => new[] { "aaaaaaaa-" + w, "aaaaaaaa" + w, "aaaaaaaa-well-" + w }));
+
+        // Act / Assert: every word gets the same result and the same answers from both lexicons, in both modes
+        var overlong = 0;
+        foreach (var word in words)
+        {
+            // The longest spelling of the short lexicon is tested, six bytes
+            if (word.Length > 6)
+            {
+                overlong++;
+            }
+
+            foreach (var mode in new[] { PossibleTagsMode.LexiconOnly, PossibleTagsMode.WithShapeRules })
+            {
+                var expected = longLexicon.GetPossibleTags(word, mode);
+                var actual = shortLexicon.GetPossibleTags(word, mode);
+                Assert.True(expected.Match == actual.Match, $"{word}: {expected.Match} / {actual.Match}");
+                Assert.True(expected.Tags == actual.Tags, $"{word}: tags");
+                Assert.True(expected.TagsWithoutAnalysis == actual.TagsWithoutAnalysis, $"{word}: tags without analysis");
+                Assert.True(AnalysesOf(expected).SequenceEqual(AnalysesOf(actual)), $"{word}: analyses");
+            }
+
+            Assert.True(longLexicon.IsFormOf(word, "test", Upos.Verb) == shortLexicon.IsFormOf(word, "test", Upos.Verb), $"{word}: IsFormOf");
+            Assert.True(longLexicon.IsFormOf(word, "well", Upos.Noun) == shortLexicon.IsFormOf(word, "well", Upos.Noun), $"{word}: IsFormOf well");
+        }
+
+        Assert.True(overlong > 10_000);
+    }
+
+    /// <summary>
+    ///     Proves that a very long word is not recognized without an error, for text with and without non-ASCII characters, and that
+    ///     the tagger still works afterward.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_VeryLongWord_IsNotRecognizedWithoutError()
+    {
+        // Arrange: a million ASCII characters, a million non-ASCII characters, and a hyphenated word of a million characters
+        var tagger = Tagger.Default;
+        var ascii = new string('a', 1_000_000);
+        var accented = new string('\u00E9', 1_000_000);
+        var hyphenated = new string('a', 500_000) + "-" + new string('b', 499_999);
+
+        // Act: look them up in both modes, ask for a form, and look up an ordinary word afterward
+        var results = new[] { ascii, accented, hyphenated }
+            .SelectMany(w => new[] { tagger.GetPossibleTags(w), tagger.GetPossibleTags(w, PossibleTagsMode.WithShapeRules) })
+            .ToList();
+        var form = tagger.IsFormOf(ascii, "a", Upos.Noun) || tagger.IsFormOf("tests", ascii, Upos.Noun);
+        var after = tagger.GetPossibleTags("valve");
+
+        // Assert: nothing is recognized, nothing throws, and the next call is not affected
+        Assert.All(results, r => Assert.Equal(WordMatch.NotRecognized, r.Match));
+        Assert.False(form);
+        Assert.Equal(UposSet.Of(Upos.Noun), after.Tags);
+    }
+
+    /// <summary>
+    ///     Proves that the memory the word lookup uses is bounded by the longest spelling and not by the word: once a word with as
+    ///     many characters as the longest spelling has bytes has been folded (the most that is ever folded, whatever its characters are:
+    ///     they can take two UTF-8 bytes each, so that the word cannot be a spelling, and an ellipsis folds to three characters), no word of
+    ///     any length makes the character buffer of the thread's workspace grow further.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_WordsWithManyCharacters_NeverGrowTheWorkspaceBeyondTheLongestSpelling()
+    {
+        // Arrange: words that are not spellings; the first has 100 characters of 2 bytes each (200 bytes), the next ones have as many characters as the
+        // longest spelling has bytes (the ellipsis and the em dash fold to three and two characters), one more, and a million characters
+        var tagger = Tagger.Default;
+        var longest = EmbeddedModel.Lexicon.MaxSpellingBytes;
+        var words = new[]
+        {
+            new string('\u00E9', 100), new string('\u00E9', longest), new string('\u2014', longest), new string('\u2026', longest),
+            new string('\u00E9', longest + 1), new string('\u2026', longest + 1), new string('\u00E9', 1_000_000), new string('\u2026', 1_000_000),
+            new string('\u2014', 1_000_000), new string('a', 1_000_000)
+        };
+        var field = typeof(TagDecoder).GetField("_threadWorkspace", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(field);
+        var matches = new List<WordMatch>();
+        var forms = new List<bool>();
+        var capacities = new List<int>();
+
+        // Act: on a new thread (so the workspace is new), fold the words that need the most (an ellipsis for every byte of the longest spelling, as a
+        // word and as the word of IsFormOf, which folds a second token), then look up every word in both modes and as IsFormOf and read the buffer size
+        var thread = new Thread(() =>
+        {
+            int Capacity() => ((DecoderWorkspace)field.GetValue(null)!).Chars.Length;
+            _ = tagger.GetPossibleTags(new string('\u2026', longest), PossibleTagsMode.WithShapeRules);
+            _ = tagger.IsFormOf(new string('\u2026', longest), "test", Upos.Verb);
+            capacities.Add(Capacity());
+            foreach (var word in words)
+            {
+                matches.Add(tagger.GetPossibleTags(word).Match);
+                matches.Add(tagger.GetPossibleTags(word, PossibleTagsMode.WithShapeRules).Match);
+                forms.Add(tagger.IsFormOf(word, "test", Upos.Verb));
+                capacities.Add(Capacity());
+            }
+        });
+        thread.Start();
+        thread.Join();
+
+        // Assert: nothing is recognized; the buffer holds what the folded word needs (6 characters of room per character, two tokens) and never grew again
+        Assert.Equal(words.Length * 2, matches.Count);
+        Assert.All(matches, m => Assert.Equal(WordMatch.NotRecognized, m));
+        Assert.All(forms, Assert.False);
+        Assert.InRange(capacities[0], 6 * longest, 16 * longest);
+        Assert.All(capacities, capacity => Assert.Equal(capacities[0], capacity));
+    }
+    /// <summary>
+    ///     Proves that an unpaired surrogate does not throw and is looked up as U+FFFD, like a token of the tagger.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_UnpairedSurrogate_DoesNotThrow()
+    {
+        // Arrange: a word with a lone surrogate and its replacement twin
+        var tagger = Tagger.Default;
+
+        // Act: look both up in both modes
+        var lone = tagger.GetPossibleTags("a\uD800b", PossibleTagsMode.WithShapeRules);
+        var twin = tagger.GetPossibleTags("a\uFFFDb", PossibleTagsMode.WithShapeRules);
+
+        // Assert: the same result
+        Assert.Equal(twin, lone);
+    }
+
+    /// <summary>
+    ///     Proves that a null word is rejected by every overload that takes a string.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_NullWord_Throws()
+    {
+        // Arrange / Act / Assert: null for the word and for the base word
+        var tagger = Tagger.Default;
+        Assert.Throws<ArgumentNullException>(() => tagger.GetPossibleTags((string)null!));
+        Assert.Throws<ArgumentNullException>(() => tagger.IsFormOf(null!, "test", Upos.Verb));
+        Assert.Throws<ArgumentNullException>(() => tagger.IsFormOf("tests", null!, Upos.Verb));
+    }
+
+    /// <summary>
+    ///     Proves that an empty word, a word with white space and a phrase are rejected, not answered as unknown.
+    /// </summary>
+    /// <param name="word">The invalid word.</param>
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("\t")]
+    [InlineData("\u00A0")]
+    [InlineData("ice cream")]
+    [InlineData("a\nb")]
+    [InlineData("a\u2003b")]
+    public void Tagger_GetPossibleTags_EmptyOrWhiteSpace_Throws(string word)
+    {
+        // Arrange / Act / Assert: every lookup member refuses it, in both modes
+        var tagger = Tagger.Default;
+        Assert.Throws<ArgumentException>(() => tagger.GetPossibleTags(word));
+        Assert.Throws<ArgumentException>(() => tagger.GetPossibleTags(word, PossibleTagsMode.WithShapeRules));
+        Assert.Throws<ArgumentException>(() => tagger.IsFormOf(word, "test", Upos.Verb));
+        Assert.Throws<ArgumentException>(() => tagger.IsFormOf("tests", word, Upos.Verb));
+    }
+
+    /// <summary>
+    ///     Proves that the lookup refuses exactly the words that the tokenizer refuses as a token, for every UTF-16 code unit.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_WhiteSpaceRule_EqualsTokenizerRule()
+    {
+        // Arrange: a tagger and a word for every code unit
+        var tagger = Create();
+        var mismatches = new List<int>();
+
+        // Act: compare the two rules
+        for (var code = 0; code <= 0xFFFF; code++)
+        {
+            var word = "a" + (char)code;
+            var tokenizerRefuses = false;
+            try
+            {
+                Tokenizer.CreateSentence(new[] { word });
+            }
+            catch (ArgumentException)
+            {
+                tokenizerRefuses = true;
+            }
+
+            var lookupRefuses = false;
+            try
+            {
+                tagger.GetPossibleTags(word);
+            }
+            catch (ArgumentException)
+            {
+                lookupRefuses = true;
+            }
+
+            if (tokenizerRefuses != lookupRefuses)
+            {
+                mismatches.Add(code);
+            }
+        }
+
+        // Assert: no code unit is treated differently
+        Assert.Empty(mismatches);
+    }
+
+    /// <summary>
+    ///     Proves that an undefined mode or tag is rejected.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_UndefinedModeOrTag_Throws()
+    {
+        // Arrange / Act / Assert: values that were cast from a number
+        var tagger = Tagger.Default;
+        Assert.Throws<ArgumentOutOfRangeException>(() => tagger.GetPossibleTags("valve", (PossibleTagsMode)2));
+        Assert.Throws<ArgumentOutOfRangeException>(() => tagger.GetPossibleTags("valve", unchecked((PossibleTagsMode)(-1))));
+        Assert.Throws<ArgumentOutOfRangeException>(() => tagger.IsFormOf("tests", "test", (Upos)17));
+        Assert.Throws<ArgumentOutOfRangeException>(() => tagger.IsFormOf("tests", "test", unchecked((Upos)(-1))));
+    }
+
+    /// <summary>
+    ///     Proves that the form question is answered from the analyses, with the folding of the tagger, for true and false cases.
+    /// </summary>
+    /// <param name="word">The word.</param>
+    /// <param name="lemma">The base word.</param>
+    /// <param name="tag">The tag.</param>
+    /// <param name="expected">The expected answer.</param>
+    [Theory]
+    [InlineData("tests", "test", Upos.Verb, true)]
+    [InlineData("tests", "test", Upos.Noun, true)]
+    [InlineData("TESTS", "Test", Upos.Noun, true)]
+    [InlineData("went", "go", Upos.Verb, true)]
+    [InlineData("is", "be", Upos.Aux, true)]
+    [InlineData("tested", "tested", Upos.Adj, true)]
+    [InlineData("tested", "test", Upos.Verb, true)]
+    [InlineData("\u2019hood", "'hood", Upos.Noun, true)]
+    [InlineData("'HOOD", "\u2019Hood", Upos.Noun, true)]
+    [InlineData("well-tested", "test", Upos.Verb, true)]
+    [InlineData("WELL-Tested", "TEST", Upos.Verb, true)]
+    [InlineData("tests", "test", Upos.Adj, false)]
+    [InlineData("tests", "tests", Upos.Noun, false)]
+    [InlineData("tests", "testing", Upos.Verb, false)]
+    [InlineData("tests", "tes", Upos.Verb, false)]
+    [InlineData("went", "go", Upos.Noun, false)]
+    [InlineData("zzqxv", "zzqxv", Upos.Noun, false)]
+    [InlineData("paris", "paris", Upos.Propn, false)]
+    [InlineData("the", "the", Upos.Adv, false)]
+    [InlineData("the", "the", Upos.Det, true)]
+    [InlineData("built-in", "in", Upos.Adp, false)]
+    [InlineData("built-in", "built-in", Upos.Adj, true)]
+    [InlineData("well-zzqx", "well", Upos.Adv, false)]
+    [InlineData("a--b", "b", Upos.Noun, false)]
+    public void Tagger_IsFormOf_Analyses_AnswerTheQuestion(string word, string lemma, Upos tag, bool expected)
+    {
+        // Arrange: the embedded lexicon
+        var tagger = Tagger.Default;
+
+        // Act: ask
+        var result = tagger.IsFormOf(word, lemma, tag);
+
+        // Assert: true exactly when an analysis of the word (or of its compound head) has this base word and tag
+        Assert.Equal(expected, result);
+    }
+
+    /// <summary>
+    ///     Proves that the form question agrees with the analyses for every analysis of a sample of words, and that a decomposed
+    ///     non-ASCII word and base word are normalized.
+    /// </summary>
+    [Fact]
+    public void Tagger_IsFormOf_EveryAnalysisOfSampleWords_IsAForm()
+    {
+        // Arrange: words with analyses from the embedded lexicon, and a custom lexicon with a non-ASCII base word
+        var tagger = Tagger.Default;
+        var words = new[] { "tests", "is", "went", "testing", "tested", "flights", "valves", "well", "known", "WELL-Tested", "pre-flight" };
+        var custom = CreateWithAnalyses();
+
+        // Act / Assert: every analysis is a form of its own base word and tag, and of no other tag of the same word
+        foreach (var word in words)
+        {
+            foreach (var analysis in tagger.GetPossibleTags(word).GetAnalyses())
+            {
+                Assert.True(tagger.IsFormOf(word, analysis.Lemma, analysis.Tag), $"{word} {analysis}");
+            }
+        }
+
+        Assert.True(custom.IsFormOf("CAFE\u0301S", "cafe\u0301", Upos.Noun));
+        Assert.True(custom.IsFormOf("caf\u00E9s", "CAF\u00C9", Upos.Noun));
+        Assert.True(custom.IsFormOf("O\u2019Clock", "o'clock", Upos.Noun));
+        Assert.False(custom.IsFormOf("caf\u00E9s", "cafe", Upos.Noun));
+    }
+
+    /// <summary>
+    ///     Proves that a base word that a lower-case custom lexicon stores is returned as it is and is matched by the form question
+    ///     whatever the case of the question, while a base word with a capital cannot be compiled into such a lexicon.
+    /// </summary>
+    [Fact]
+    public void Tagger_IsFormOf_LowerCaseCustomBaseWord_MatchesAndUpperCaseCannotBeStored()
+    {
+        // Arrange: a custom lexicon with the base word run for running, and an attempt to store Run
+        static KeyValuePair<string, IReadOnlyList<DemaConsulting.PartOfSpeech.Lexicon.Analysis>> Readings(string spelling, params DemaConsulting.PartOfSpeech.Lexicon.Analysis[] analyses) => new(spelling, analyses);
+        var entries = new[] { new KeyValuePair<string, UposSet>("running", UposSet.Of(Upos.Verb)) };
+        var lexicon = TinyModels.CreateLexicon(entries, analyses: new[] { Readings("running", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("run", Upos.Verb, "VerbForm=Ger")) });
+        var tagger = TinyModels.CreateTagger(Weights, lexicon);
+
+        // Act: ask for the analyses and for the form in two cases
+        var analyses = tagger.GetPossibleTags("Running").GetAnalyses();
+        var refused = Assert.Throws<ArgumentException>(
+            () => TinyModels.CreateLexicon(entries, analyses: new[] { Readings("running", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("Run", Upos.Verb, "VerbForm=Ger")) }));
+
+        // Assert: the base word is the stored lower-case text and every case of the question matches; the capital one is refused
+        Assert.Equal("run", Assert.Single(analyses).Lemma);
+        Assert.True(tagger.IsFormOf("running", "run", Upos.Verb));
+        Assert.True(tagger.IsFormOf("RUNNING", "Run", Upos.Verb));
+        Assert.True(tagger.IsFormOf("Running", "RUN", Upos.Verb));
+        Assert.Contains("lower case", refused.Message);
+    }
+
+    /// <summary>
+    ///     Proves the equality, hash code and text of the result and analysis types, and the value of their defaults.
+    /// </summary>
+    [Fact]
+    public void WordTags_Equality_FollowsTheLookupResult()
+    {
+        // Arrange: results of two words and the default value
+        var tagger = Tagger.Default;
+        var valve = tagger.GetPossibleTags("valve");
+        var again = tagger.GetPossibleTags("VALVE");
+        var tests = tagger.GetPossibleTags("tests");
+
+        // Act / Assert: equal for the same entry, different for another, and the default is the empty not recognized result
+        Assert.True(valve.Equals(again));
+        Assert.True(valve.Equals((object)again));
+        Assert.Equal(valve.GetHashCode(), again.GetHashCode());
+        Assert.True(valve != tests);
+        Assert.False(valve.Equals("valve"));
+        Assert.Equal("Spelling NOUN", valve.ToString());
+        Assert.Equal("Spelling NOUN|VERB", tests.ToString());
+        WordTags none = default;
+        Assert.Equal(WordMatch.NotRecognized, none.Match);
+        Assert.False(none.IsKnownWord);
+        Assert.True(none.Tags.IsEmpty);
+        Assert.True(none.TagsWithoutAnalysis.IsEmpty);
+        Assert.Empty(none.GetAnalyses());
+        Assert.Equal("NotRecognized", none.ToString());
+        Assert.Equal(none, tagger.GetPossibleTags("zzqxv"));
+        Assert.NotEqual(none, tagger.GetPossibleTags("zzqxv", PossibleTagsMode.WithShapeRules));
+    }
+
+    /// <summary>
+    ///     Proves the members of a word analysis: equality, text, feature access and the default value.
+    /// </summary>
+    [Fact]
+    public void WordAnalysis_Members_WorkOnRealAndDefaultValues()
+    {
+        // Arrange: analyses of the embedded lexicon (one with features, one without) and the default value
+        var tagger = Tagger.Default;
+        var verb = tagger.GetPossibleTags("tests").GetAnalyses()[1];
+        var same = tagger.GetPossibleTags("TESTS").GetAnalyses()[1];
+        var interjection = tagger.GetPossibleTags("well").GetAnalyses().Single(a => a.Tag == Upos.Intj);
+        var gerund = tagger.GetPossibleTags("testing").GetAnalyses()[0];
+        WordAnalysis none = default;
+
+        // Act / Assert: value equality, UD text, feature lookup by exact name, and an empty default
+        Assert.True(verb == same);
+        Assert.True(verb.Equals((object)same));
+        Assert.Equal(verb.GetHashCode(), same.GetHashCode());
+        Assert.True(verb != gerund);
+        Assert.False(verb.Equals("test"));
+        Assert.Equal("test VERB Person=3|Tense=Pres", verb.ToString());
+        Assert.Equal("well INTJ", interjection.ToString());
+        Assert.Equal("Sing", gerund.GetFeature("Number"));
+        Assert.Null(gerund.GetFeature("Num"));
+        Assert.Null(gerund.GetFeature(string.Empty));
+        Assert.Throws<ArgumentNullException>(() => gerund.GetFeature(null!));
+        Assert.Equal(string.Empty, none.Lemma);
+        Assert.Equal(string.Empty, none.Features);
+        Assert.Null(none.GetFeature("Number"));
+        Assert.Equal(none, default);
+    }
+
+    /// <summary>
+    ///     Proves that many threads looking words up (and tagging text in between) all get the answers of one thread.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_ConcurrentCalls_GiveTheSameResultsAsOneThread()
+    {
+        // Arrange: words that cover spellings, compounds, unknown words and shapes, and the single-threaded answers
+        var tagger = Tagger.Default;
+        var words = new[] { "tests", "Valve", "well-tested", "zzqxv", "1st", "--", "went", "CAFE\u0301", "is" };
+        string Render(string word) => string.Join(
+            "|",
+            new[] { PossibleTagsMode.LexiconOnly, PossibleTagsMode.WithShapeRules }.Select(mode =>
+            {
+                var result = tagger.GetPossibleTags(word, mode);
+                return $"{result}/{result.TagsWithoutAnalysis}/{string.Join(";", AnalysesOf(result))}";
+            })) + "|" + tagger.IsFormOf(word, "test", Upos.Verb);
+        const string sentence = "The old valve was tested well . Close the valve .";
+        var expectedWords = words.Select(Render).ToArray();
+        var expectedTags = Describe(tagger.Tag(sentence));
+        var failures = new System.Collections.Concurrent.ConcurrentBag<string>();
+
+        // Act: run the same work from several threads at once, interleaved with tagging
+        Parallel.For(0, 400, new ParallelOptions { MaxDegreeOfParallelism = 8 }, i =>
+        {
+            var index = i % words.Length;
+            if (Render(words[index]) != expectedWords[index])
+            {
+                failures.Add($"lookup of {words[index]}");
+            }
+
+            if (i % 5 == 0 && Describe(tagger.Tag(sentence)) != expectedTags)
+            {
+                failures.Add("tagging");
+            }
+        });
+
+        // Assert: every answer equals the single-threaded one
+        Assert.Empty(failures);
+    }
+
+#if NET
+    /// <summary>
+    ///     Proves that the span overload gives the same result as the string overload, also for a slice of a longer text.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_Span_EqualsStringOverload()
+    {
+        // Arrange: words of every kind, and a text that holds a word between other characters
+        var tagger = Tagger.Default;
+        var words = new[] { "tests", "Valve", "well-tested", "zzqxv", "1st", "--", "CAFE\u0301", "n\u2019t", "a\uD800b" };
+        const string text = "xx tests yy";
+
+        // Act / Assert: the same result in both modes
+        foreach (var word in words)
+        {
+            foreach (var mode in new[] { PossibleTagsMode.LexiconOnly, PossibleTagsMode.WithShapeRules })
+            {
+                Assert.Equal(tagger.GetPossibleTags(word, mode), tagger.GetPossibleTags(word.AsSpan(), mode));
+            }
+        }
+
+        Assert.Equal(tagger.GetPossibleTags("tests"), tagger.GetPossibleTags(text.AsSpan(3, 5)));
+        Assert.Equal(tagger.GetPossibleTags("tests"), tagger.GetPossibleTags("tests".AsSpan()));
+    }
+
+    /// <summary>
+    ///     Proves that the span overload rejects an empty span, white space and an undefined mode.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_Span_InvalidInput_Throws()
+    {
+        // Arrange / Act / Assert: the same rules as for the string overload
+        var tagger = Tagger.Default;
+        Assert.Throws<ArgumentException>(() => tagger.GetPossibleTags(ReadOnlySpan<char>.Empty));
+        Assert.Throws<ArgumentException>(() => tagger.GetPossibleTags("ice cream".AsSpan()));
+        Assert.Throws<ArgumentException>(() => tagger.GetPossibleTags("a\u00A0b".AsSpan()));
+        Assert.Throws<ArgumentOutOfRangeException>(() => tagger.GetPossibleTags("valve".AsSpan(), (PossibleTagsMode)7));
+    }
+
+    /// <summary>
+    ///     The words of the allocation tests: known, capitalized, unknown, digit, punctuation, case variants, compounds, upper case, and
+    ///     words longer than the longest spelling (a compound with a known last part, and one without).
+    /// </summary>
+    private static readonly string[] AsciiWords =
+    {
+        "valve", "Valve", "zzqxv", "1st", "--", "TESTS", "tests", "well-tested", "built-in", "pre-flight", "-ed", "state-of-the-art-style",
+        new string('a', 300) + "-tested", new string('a', 300) + "-zzqxv",
+    };
+
+    /// <summary>
+    ///     Proves that the lookup allocates nothing for ASCII words in both modes, through the string and the span overload, and that
+    ///     asking for the tags without analysis allocates nothing either.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_DoesNotAllocate()
+    {
+        // Arrange: the embedded lexicon and a sink that keeps the work from being optimized away
+        var tagger = Tagger.Default;
+        var sink = 0;
+
+        // Act: one round looks up every word in both modes; measure the string overload and the span overload separately
+        var stringBytes = AllocationMeter.MinimumBatchBytes(
+            () =>
+            {
+                foreach (var word in AsciiWords)
+                {
+                    var raw = tagger.GetPossibleTags(word);
+                    var shape = tagger.GetPossibleTags(word, PossibleTagsMode.WithShapeRules);
+                    sink += raw.Tags.Count + shape.Tags.Count + shape.TagsWithoutAnalysis.Count + (int)raw.Match + (raw.IsKnownWord ? 1 : 0);
+                }
+            },
+            100);
+        var spanBytes = AllocationMeter.MinimumBatchBytes(
+            () =>
+            {
+                foreach (var word in AsciiWords)
+                {
+                    var raw = tagger.GetPossibleTags(word.AsSpan());
+                    var shape = tagger.GetPossibleTags(word.AsSpan(), PossibleTagsMode.WithShapeRules);
+                    sink += raw.Tags.Count + shape.Tags.Count + shape.TagsWithoutAnalysis.Count;
+                }
+            },
+            100);
+
+        // Assert: nothing is allocated per batch of 100 rounds
+        Assert.Equal(0, stringBytes);
+        Assert.Equal(0, spanBytes);
+        Assert.True(sink > 0);
+    }
+
+    /// <summary>
+    ///     A compound with a known last part that is longer than the longest spelling of the embedded lexicon.
+    /// </summary>
+    private static readonly string LongCompound = new string('a', 300) + "-tested";
+
+    /// <summary>
+    ///     Proves that the form question allocates nothing for ASCII words, for a whole spelling and for a compound head.
+    /// </summary>
+    [Fact]
+    public void Tagger_IsFormOf_DoesNotAllocate()
+    {
+        // Arrange: the embedded lexicon and cases that answer true and false
+        var tagger = Tagger.Default;
+        var sink = 0;
+
+        // Act: ask in many rounds
+        var bytes = AllocationMeter.MinimumBatchBytes(
+            () =>
+            {
+                sink += tagger.IsFormOf("tests", "test", Upos.Verb) ? 1 : 0;
+                sink += tagger.IsFormOf("TESTS", "Test", Upos.Noun) ? 1 : 0;
+                sink += tagger.IsFormOf("well-tested", "test", Upos.Verb) ? 1 : 0;
+                sink += tagger.IsFormOf(LongCompound, "test", Upos.Verb) ? 1 : 0;
+                sink += tagger.IsFormOf(LongCompound, "test", Upos.Noun) ? 1 : 0;
+                sink += tagger.IsFormOf("tests", "test", Upos.Adj) ? 1 : 0;
+                sink += tagger.IsFormOf("zzqxv", "zzqxv", Upos.Noun) ? 1 : 0;
+            },
+            100);
+
+        // Assert: nothing is allocated per batch
+        Assert.Equal(0, bytes);
+        Assert.True(sink > 0);
+    }
+
+    /// <summary>
+    ///     Measures (and reports, without a threshold on the numbers) what the cases that may allocate cost: other characters, a long
+    ///     input and the list of analyses; asserts only the properties that the documentation states.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_AllocationOfTheOtherCases_IsRecordedAndBounded()
+    {
+        // Arrange: the embedded lexicon; a word that is already normalized, one that is not, a long word and a span with a non-ASCII character
+        var tagger = Tagger.Default;
+        var nfc = "caf\u00E9";
+        var decomposed = "cafe\u0301";
+        var curly = "n\u2019t";
+        var huge = new string('a', 1_000_000);
+        var hugeAccented = new string('\u00E9', 1_000_000);
+        var sink = 0;
+
+        // Act: measure each case separately
+        var nfcBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(nfc).Tags.Count, 100) / 100;
+        var decomposedBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(decomposed).Tags.Count, 100) / 100;
+        var curlyBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(curly).Tags.Count, 100) / 100;
+        var spanNfcBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(nfc.AsSpan()).Tags.Count, 100) / 100;
+        var hugeBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(huge).Tags.Count, 10) / 10;
+        var hugeAccentedBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(hugeAccented).Tags.Count, 10) / 10;
+        var analysesBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags("tests").GetAnalyses().Count, 100) / 100;
+        var emptyAnalysesBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags("zzqxv").GetAnalyses().Count, 100) / 100;
+        TestContext.Current.SendDiagnosticMessage(
+            $"GetPossibleTags bytes per call: NFC non-ASCII {nfcBytes}, decomposed {decomposedBytes}, curly apostrophe {curlyBytes}, span NFC {spanNfcBytes}, " +
+            $"1,000,000 ASCII chars {hugeBytes}, 1,000,000 non-ASCII chars {hugeAccentedBytes}, GetAnalyses of tests {analysesBytes}, GetAnalyses of an unknown word {emptyAnalysesBytes}.");
+
+        // Assert: an ASCII input of any length allocates nothing and does not grow the buffers; the list of analyses allocates; an unknown word has none
+        Assert.Equal(0, hugeBytes);
+        Assert.True(analysesBytes > 0);
+        Assert.Equal(0, emptyAnalysesBytes);
         Assert.True(sink > 0);
     }
 #endif

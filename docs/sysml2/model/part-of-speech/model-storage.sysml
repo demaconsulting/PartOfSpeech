@@ -2,7 +2,7 @@ package PartOfSpeech {
     private import SoftwareItemMetadata::*;
 
     part def ModelStorage {
-        doc /* Holds the binary formats of the weights and the lexicon, their readers and writers, and the lexicon and the trained weights that are embedded in the package. */
+        doc /* Holds the binary formats of the weights and the lexicon (which also stores the analyses of the forms of its spellings), their readers and writers, and the lexicon and the trained weights that are embedded in the package. */
 
         metadata info : SoftwareInfo {
             testFiles = ("test/DemaConsulting.PartOfSpeech.Tests/ModelStorage/ModelStorageTests.cs");

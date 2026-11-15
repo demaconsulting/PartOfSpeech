@@ -7,7 +7,8 @@ This document describes the unit-level verification strategy for the `TagDecoder
 The unit is verified by unit tests in `Tagging/TagDecoderTests.cs` that construct a `TagDecoder` directly from a
 `PerceptronModel` and a `Lexicon`. The model and lexicon are small files written by the real writers (hand-set weights
 through `TinyModels.WeightsBuilder`, so every score and every analytic probability is known), except in the throughput
-test. Nothing is mocked. Four methods deserve a description:
+test and in the word lookup tests, which use the real embedded lexicon (the lookup of every spelling is compared with the
+decode of the same word, because a sample could miss a rule). Nothing is mocked. Four methods deserve a description:
 
 - **Analytic confidences.** With hand-set scores and a known temperature, the expected confidence is the softmax
   `exp(s_i / T) / sum(exp(s_j / T))` over the candidates, computed in the test, and the test compares to a tolerance of
@@ -49,7 +50,9 @@ All tests pass. A test fails when a tag outside the candidates is chosen, a tie 
 confidence differs from the softmax by more than the tolerance, an alternative list is unsorted, too long or does not
 sum with the confidence to one, a constraint does not have the specified effect, the throughput is 50,000 tokens per
 second or less (5,000 or less in a run with code coverage), the allocation bound is exceeded, the size of the result
-token grows beyond 48 bytes on a 64-bit process, or a token reports the known-word flag against the lexicon.
+token grows beyond 48 bytes on a 64-bit process, a token reports the known-word flag against the lexicon, or a word lookup
+differs from the decoder's allowed set or known flag for any spelling of the embedded lexicon or any sample shape, finds
+a hyphenated spelling or a compound head wrongly, disturbs a decode, or allocates for a huge input.
 
 #### Test Scenarios
 
@@ -105,3 +108,27 @@ token grows beyond 48 bytes on a 64-bit process, or a token reports the known-wo
   without the group ignores the weights), `TagDecoder_Decode_RightPreview_WithoutPreviewWeights_EqualsOnePass` (tags,
   confidences and alternatives equal the one-pass decode of the same weights, so the first pass is the plain decode) and
   `TagDecoder_Decode_RightPreview_IsDeterministic` (repeated and concurrent decodes give identical text).
+- **Word lookup** (`GetPossibleTags` and `IsFormOf` called on the decoder directly, with the real embedded lexicon and
+  with hand-set lexicons; the decoder and the lookup share one thread-static workspace, so several tests put them side
+  by side): `TagDecoder_GetPossibleTags_WithShapeRules_SampleTokens_EqualTheDecodeCandidates` (a theory over a model
+  without and one with all groups: for hand-picked tokens the tags of the lookup equal `{Tag} U Alternatives` of a
+  decode with 16 alternatives and no constraint, in the first, a middle and the last position, and the known flag
+  equals the token's), `TagDecoder_GetPossibleTags_LexiconOnly_EqualsLexiconTryGetTags` (the raw lookup is the lexicon
+  fact, which differs from the allowed set exactly by the shape rules),
+  `TagDecoder_GetPossibleTags_EmbeddedLexicon_HasNoWhiteSpaceSpellings` (no spelling is empty or has white space, so
+  refusing a phrase loses no answer, and the longest spelling is the length that the lookup guards),
+  `TagDecoder_GetPossibleTags_EmbeddedLexicon_EverySpellingEqualsTheDecoder` (a theory over a model without and one
+  with groups: every one of the 262,635 spellings, its Title-case form and 52 samples of other shapes give the
+  decoder's allowed set and known flag, and the raw lookup equals the lexicon, about 525,000 words per model; the raw
+  comparison covers the spellings that are stable under the fold),
+  `TagDecoder_GetPossibleTags_HyphenatedSpellings_SpellingWinsAndHeadsMatchTheirPart` (all 8,711 hyphenated spellings
+  are `Spelling`, never `CompoundHead`, and an unlisted prefix and a hyphen in front of the last part gives the analyses
+  of that part),
+  `TagDecoder_IsFormOf_EveryAnalysisOfEverySpelling_IsAForm` (all 290,365 analyses are forms, also with a Title-case
+  word and an upper-case base word, and a changed base word or a tag that the spelling's analyses lack is not),
+  `TagDecoder_GetPossibleTags_BetweenDecodes_DoesNotDisturbTheWorkspace` (decode, lookup, decode, with two decoders and
+  lexicons on one thread, one with cached lexicon facts: every result equals the one without interleaving) and, on
+  .NET 8 and later, `TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing` (a word of a million ASCII
+  characters, a compound with a prefix of 500,000 characters and a known last part, one with an unknown last part, and
+  the form question for both, allocate 0 bytes after the first call, so no per-thread buffer grew; the compound has
+  its head and the other words are not recognized).

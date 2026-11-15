@@ -499,14 +499,50 @@ internal static class FeatureExtractor
             }
         }
 
+        SetFolded(workspace, index, source);
+    }
+
+    /// <summary>
+    ///     Folds one token that is already NFC-normalized (or pure ASCII) into the workspace and records its facts and hashes.
+    /// </summary>
+    /// <remarks>
+    ///     This is the folding core of <see cref="SetToken"/>, split off so that the word lookup can fold a span without a copy
+    ///     and can normalize once itself (to decide on the length of the text before it touches the workspace). It does
+    ///     the same work for the same characters, so the lookup and the decoder see identical folded characters, flags and
+    ///     hashes. The parameter is a span on .NET 8 and later and a string on <c>netstandard2.0</c>, which has no span
+    ///     without an extra package; the body is the same.
+    /// </remarks>
+    /// <param name="workspace">The workspace.</param>
+    /// <param name="index">The index of the token.</param>
+    /// <param name="source">The token, NFC-normalized (or pure ASCII), with well-formed UTF-16.</param>
+#if NET
+    internal static void SetFolded(DecoderWorkspace workspace, int index, ReadOnlySpan<char> source)
+    {
+        const int offset = 0;
+        var count = source.Length;
+#else
+    internal static void SetFolded(DecoderWorkspace workspace, int index, string source) =>
+        SetFoldedPart(workspace, index, source, 0, source.Length);
+
+    /// <summary>
+    ///     Folds a part of an NFC-normalized (or pure ASCII) string as one token; the string twin of a span slice on <c>netstandard2.0</c>.
+    /// </summary>
+    /// <param name="workspace">The workspace.</param>
+    /// <param name="index">The index of the token.</param>
+    /// <param name="source">The text that holds the token, NFC-normalized (or pure ASCII), with well-formed UTF-16.</param>
+    /// <param name="offset">The index of the first character of the token in <paramref name="source"/>.</param>
+    /// <param name="count">The number of characters of the token.</param>
+    internal static void SetFoldedPart(DecoderWorkspace workspace, int index, string source, int offset, int count)
+    {
+#endif
         // Fold into the character buffer: every folded character takes at most three characters, plus the lower copy
-        workspace.EnsureChars(6 * source.Length);
+        workspace.EnsureChars(6 * count);
         var chars = workspace.Chars;
         var start = workspace.CharsUsed;
         var length = 0;
-        foreach (var c in source)
+        for (var k = 0; k < count; k++)
         {
-            length = AppendFolded(chars, start, length, c);
+            length = AppendFolded(chars, start, length, source[offset + k]);
         }
 
         // Lower-case copy right behind the folded form, with the facts that the shape and the allowed-tag rules need
@@ -1371,6 +1407,70 @@ internal static class FeatureExtractor
     }
 
     /// <summary>
+    ///     Tells whether folding and lower-casing leave a text unchanged: the form in which a base word is stored.
+    /// </summary>
+    /// <remarks>
+    ///     The lookup of a base word (<c>IsFormOf</c>) folds its argument (NFC, typographic marks to ASCII) and lower-cases it character by
+    ///     character with <see cref="char.ToLowerInvariant(char)"/>, which is the lower-casing of <see cref="SetFolded"/>; it can
+    ///     only match a stored base word that this fold leaves as it is. This is that test, made with the very same two steps:
+    ///     <see cref="Fold"/>, then <see cref="char.ToLowerInvariant(char)"/> of every character. Text that is not well-formed
+    ///     UTF-16 is never unchanged (<see cref="Fold"/> replaces an unpaired surrogate). Pure ASCII needs no folding and is
+    ///     tested without allocating.
+    /// </remarks>
+    /// <param name="text">The text.</param>
+    /// <returns><c>true</c> if the text equals its folded, lower-cased form.</returns>
+    internal static bool IsFoldFixedPoint(string text)
+    {
+        var ascii = true;
+        foreach (var c in text)
+        {
+            if (c >= 0x80)
+            {
+                ascii = false;
+            }
+            else if (c is >= 'A' and <= 'Z')
+            {
+                return false;
+            }
+        }
+
+        if (ascii)
+        {
+            return true;
+        }
+
+        var folded = Fold(text);
+        if (folded.Length != text.Length)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < folded.Length; i++)
+        {
+            if (char.ToLowerInvariant(folded[i]) != text[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    ///     Tells whether folding and lower-casing leave one character unchanged, apart from the Unicode normalization.
+    /// </summary>
+    /// <remarks>
+    ///     This restates the cases of <see cref="AppendFolded"/> and the lower-casing of <see cref="SetFolded"/> for one character, so that
+    ///     the loader of the lexicon can test the base words that it composes without creating strings; a test proves that it agrees
+    ///     with <see cref="IsFoldFixedPoint"/> for every character that is in NFC by itself.
+    /// </remarks>
+    /// <param name="c">The character.</param>
+    /// <returns><c>true</c> if neither the folding nor the lower-casing changes the character.</returns>
+    internal static bool IsFoldStable(char c) =>
+        char.ToLowerInvariant(c) == c
+        && c is not ('\u2018' or '\u2019' or '\u201B' or '\u02BC' or '\u201C' or '\u201D' or '\u201E' or '\u2013' or '\u2014' or '\u2015' or '\u2026');
+
+    /// <summary>
     ///     Normalizes a token to NFC without ever failing, even for text that is not well-formed UTF-16.
     /// </summary>
     /// <remarks>
@@ -1382,7 +1482,7 @@ internal static class FeatureExtractor
     /// </remarks>
     /// <param name="text">The token as written.</param>
     /// <returns>The normalized, well-formed text.</returns>
-    private static string NormalizeNonAscii(string text)
+    internal static string NormalizeNonAscii(string text)
     {
         var clean = ReplaceUnpairedSurrogates(text);
         try
@@ -2061,6 +2161,17 @@ internal static class FeatureExtractor
         hash = (hash << 13) | (hash >> 19);
         return (hash * 5) + 0xE6546B64u;
     }
+
+    /// <summary>
+    ///     Tells whether folding turns a character into two hyphen-minus characters (the en dash, the em dash and the horizontal bar).
+    /// </summary>
+    /// <remarks>
+    ///     This restates the dash cases of <see cref="AppendFolded"/> for the word lookup, which must decide whether a word that is
+    ///     too long to fold contains an empty part between hyphens; a test proves that the two agree for every UTF-16 code unit.
+    /// </remarks>
+    /// <param name="c">The character.</param>
+    /// <returns><c>true</c> if the folded form of the character is <c>--</c>.</returns>
+    internal static bool FoldsToDoubleHyphen(char c) => c is '\u2013' or '\u2014' or '\u2015';
 
     /// <summary>
     ///     Appends the folded form of one character to a buffer.

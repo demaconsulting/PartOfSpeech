@@ -169,6 +169,15 @@ internal sealed class DecoderWorkspace
     public byte[] LexiconScratch = new byte[0];
 
     /// <summary>
+    ///     The UTF-8 bytes of the base word that the word lookup compares with the base words of the analyses (see <see cref="TagDecoder"/>).
+    /// </summary>
+    /// <remarks>
+    ///     It has the size of the longest base word that the lexicon format allows, so it never grows and is filled for
+    ///     one lookup only.
+    /// </remarks>
+    public byte[] LemmaBytes = new byte[Lexicon.MaxLemmaBytes];
+
+    /// <summary>
     ///     Selects the groups of context features and the lexicon they read, before a sentence is prepared.
     /// </summary>
     /// <remarks>

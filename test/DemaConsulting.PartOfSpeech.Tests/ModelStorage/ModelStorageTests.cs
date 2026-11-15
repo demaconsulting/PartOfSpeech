@@ -29,41 +29,71 @@ public class ModelStorageTests
         var lexiconStart = System.Text.Encoding.ASCII.GetString(lexicon, 0, 4);
         var weightsStart = System.Text.Encoding.ASCII.GetString(weights, 0, 4);
 
-        // Assert: magic and version 2 (little endian), Deflate flag set; readers refuse any other version
+        // Assert: magic and version (little endian: lexicon 3, weights 2), Deflate flag set; readers refuse any other version
         Assert.Equal("POSL", lexiconStart);
         Assert.Equal("POSW", weightsStart);
-        Assert.Equal((ushort)2, BinaryFormat.ReadUInt16(lexicon, 4));
+        Assert.Equal((ushort)3, BinaryFormat.ReadUInt16(lexicon, 4));
         Assert.Equal((ushort)2, BinaryFormat.ReadUInt16(weights, 4));
         Assert.Equal((ushort)1, BinaryFormat.ReadUInt16(lexicon, 6));
         Assert.Equal((ushort)1, BinaryFormat.ReadUInt16(weights, 6));
-        BinaryFormat.WriteUInt16(lexicon, 4, 1);
+        BinaryFormat.WriteUInt16(lexicon, 4, 2);
         BinaryFormat.WriteUInt16(weights, 4, 3);
-        Assert.Throws<InvalidDataException>(() => Lexicon.Load(lexicon));
+        var lexiconMessage = Assert.Throws<InvalidDataException>(() => Lexicon.Load(lexicon)).Message;
+        Assert.Contains("lexicon file version 2;", lexiconMessage);
+        Assert.Contains($"reads version {Lexicon.FormatVersion}.", lexiconMessage);
         Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(weights, FeatureExtractor.FeatureSetVersion));
     }
 
     /// <summary>
     ///     Proves that the embedded lexicon holds exactly the spellings and tags of the source table, and that the committed
-    ///     binary is current (the same comparison the LexiconCompiler tool makes in its check mode).
+    ///     binary is the embedded resource.
     /// </summary>
     [Fact]
     public void ModelStorage_EmbeddedLexicon_EncodesLexiconTsv()
     {
-        // Arrange: the source table parsed by the writer, and the table read independently by the test helper
-        var entries = LexiconWriter.FromTsv(File.ReadLines(DataFiles.Data("lexicon/lexicon.tsv")));
+        // Arrange: the table read independently by the test helper, and the embedded lexicon
         var reference = DataFiles.ReadLexicon(DataFiles.Data("lexicon/lexicon.tsv"));
         var embedded = EmbeddedModel.Lexicon;
 
-        // Act: decode the embedded lexicon, compile the table afresh and read the committed binary file
+        // Act: decode the embedded lexicon and read the committed binary file
         var decoded = embedded.Enumerate().ToList();
-        var fresh = LexiconWriter.Compile(entries, false);
         var committed = File.ReadAllBytes(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin"));
 
         // Assert: same spellings in the same order with the same tags as the independent reading; the committed and the
-        // embedded file are the same bytes; a fresh compilation gives the same uncompressed image
+        // embedded file are the same bytes
         Assert.Equal(reference.Count, decoded.Count);
         Assert.All(decoded, pair => Assert.Equal(reference[pair.Key], pair.Value.Select(t => t.ToTagString()).ToArray()));
         Assert.Equal(committed, EmbeddedLexiconBytes());
+    }
+
+    /// <summary>
+    ///     Proves that the embedded lexicon holds exactly the analyses of <c>analyses.tsv</c>, and that the committed binary is
+    ///     current (the same comparison the LexiconCompiler tool makes in its check mode).
+    /// </summary>
+    [Fact]
+    public void ModelStorage_EmbeddedLexicon_EncodesAnalysesTsv()
+    {
+        // Arrange: both source tables parsed by the writer, and the embedded lexicon
+        var entries = LexiconWriter.FromTsv(File.ReadLines(DataFiles.Data("lexicon/lexicon.tsv")));
+        var analyses = LexiconWriter.AnalysesFromTsv(File.ReadLines(DataFiles.Data("lexicon/analyses.tsv")), entries);
+        var embedded = EmbeddedModel.Lexicon;
+
+        // Act: decode the analyses of the embedded lexicon, compile the tables afresh and read the committed binary file
+        var decoded = embedded.EnumerateAnalyses().ToList();
+        var fresh = LexiconWriter.Compile(entries, analyses, false);
+        var committed = File.ReadAllBytes(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin"));
+
+        // Assert: the same spellings with the same analyses in the same order, the counts of the table, and a fresh
+        // compilation gives the same uncompressed image as the committed file
+        Assert.Equal(analyses.Count, decoded.Count);
+        Assert.Equal(analyses.Sum(row => row.Value.Count), embedded.AnalysisCount);
+        Assert.Equal(analyses.Count, embedded.AnalyzedSpellingCount);
+        for (var i = 0; i < analyses.Count; i++)
+        {
+            Assert.Equal(analyses[i].Key, decoded[i].Key);
+            Assert.Equal(analyses[i].Value, decoded[i].Value);
+        }
+
         Assert.Equal(fresh, Lexicon.ToUncompressedImage(committed));
     }
 

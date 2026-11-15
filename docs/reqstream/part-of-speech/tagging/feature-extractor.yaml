@@ -66,6 +66,9 @@ sections:
                 tests:
                   - FeatureExtractor_Extract_Fold_MapsTypographicQuotesAndDashes
                   - FeatureExtractor_Extract_Fold_NfcNormalizesNonAscii
+                  - FeatureExtractor_SetFolded_NormalizedText_EqualsSetToken
+                  - FeatureExtractor_SetFolded_SpanSlice_EqualsTheSameTextAsAToken
+                  - FeatureExtractor_FoldsToDoubleHyphen_AgreesWithTheFoldingOfEveryCodeUnit
 
               - id: PartOfSpeech-Tagging-FeatureExtractor-MalformedText
                 title: >-

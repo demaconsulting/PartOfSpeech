@@ -99,6 +99,34 @@ tests:
       - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/TaggedToken/Margin.md"
         count: 1
 
+  - name: ApiMark_WordLookupDocumented
+    description: "The packed API reference carries the word lookup guidance and the pages of its members and types"
+    tags: [api-docs]
+    files:
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech.md"
+        count: 1
+        text:
+          - contains: "## Looking up a word"
+          - contains: "## Word lookup quick start"
+          - contains: "GetPossibleTags"
+          - contains: "IsFormOf"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/Tagger/GetPossibleTags.md"
+        count: 1
+        text:
+          - contains: "ArgumentNullException"
+          - contains: "Glossary"
+          - contains: "hyphen"
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/Tagger/IsFormOf.md"
+        count: 1
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/WordTags.md"
+        count: 1
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/WordAnalysis.md"
+        count: 1
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/WordMatch.md"
+        count: 1
+      - pattern: "src/DemaConsulting.PartOfSpeech/generated/api/DemaConsulting.PartOfSpeech/PossibleTagsMode.md"
+        count: 1
+
   - name: ApiMark_EntryPointDocumented
     description: "The tagger entry point is documented with thread safety, exceptions, examples and explanation links"
     tags: [api-docs]

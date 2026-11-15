@@ -35,7 +35,9 @@ alternative tag is outside the allowed set, the same word gets the same tag in c
 tags, a constraint does not change the following token through the history, a glossary entry does not decide the tag of
 its head word or does not change the following token, a match is not reported on its tokens or on the sentence, or two
 runs (or two taggers loaded from the same bytes) differ in any tag, confidence or alternative, or a token reports a
-known-word flag that differs from the lexicon or a margin that differs from its confidence minus the best alternative.
+known-word flag that differs from the lexicon or a margin that differs from its confidence minus the best alternative,
+or the lookup of a word reports tags or a known flag that differ from the tagger's token, or analyses that the form
+question does not confirm.
 
 ### Test Scenarios
 
@@ -65,6 +67,13 @@ known-word flag that differs from the lexicon or a margin that differs from its 
 - **Determinism**: `Tagging_Tag_SameInput_ProducesSameOutput` tags a text with an unknown word three times (twice with
   one tagger, once with a second tagger loaded from the same bytes) and asserts identical tags, offsets, confidences
   (round-trip format) and alternatives.
+- **Word lookup agrees with the tokens**: `Tagging_WordLookup_AgreesWithTheTokensOfTheSameWord` tags a sentence with a
+  capitalized word, a hyphenated word whose whole spelling is not listed but whose last part is, an invented word, a
+  digit token and a period (16 alternatives, a lexicon with analyses for some words), looks every token up in the shape
+  mode, and asserts that the tags of the lookup equal the token's tag together with its alternatives, that
+  `IsKnownWord` equals the token's flag, that every analysis of a lookup is a form according to `IsFormOf`, that the
+  hyphenated word is a compound head with the analyses of its last part and an unknown token, and that the invented word
+  is not recognized.
 - **Feature groups**: the subsystem scenarios above use models without groups, so that they prove the base behavior. The
   groups are verified where they are defined and used: per group against the string-based reference in _FeatureExtractor
   Verification_, in the decoder (also in two passes for the right preview group) in _TagDecoder Verification_, through

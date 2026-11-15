@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import build_lexicon
 import check_licenses
 import check_lexicon
 import common
@@ -83,6 +84,59 @@ class CommittedDataTests(unittest.TestCase):
             if previous is not None:
                 self.assertLess(previous.encode("utf-8"), spelling.encode("utf-8"))
             previous = spelling
+
+
+class CommittedAnalysesTests(unittest.TestCase):
+    """The committed data/lexicon/analyses.tsv: header, order, subset of lexicon.tsv, vocabulary, examples."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.lexicon = common.read_lexicon(os.path.join(common.DATA, "lexicon", "lexicon.tsv"))
+        cls.analyses, cls.declared = build_lexicon.read_analyses(os.path.join(common.DATA, "lexicon", "analyses.tsv"))
+
+    def test_header_counts_and_pinned_commit_match_the_table(self):
+        self.assertEqual((len(self.analyses), sum(len(items) for items in self.analyses.values())), self.declared)
+        header = [line for line in common.read_lines(os.path.join(common.DATA, "lexicon", "analyses.tsv")) if line.startswith("# ")]
+        self.assertTrue(any("pinned WordSense commit " + common.WORDSENSE_COMMIT in line for line in header))
+
+    def test_rows_ascend_by_utf8_bytes(self):
+        spellings = [s.encode("utf-8") for s in self.analyses]
+        self.assertEqual(spellings, sorted(spellings))
+        self.assertEqual(len(spellings), len(set(spellings)))
+
+    def test_spellings_and_tags_are_a_subset_of_the_lexicon(self):
+        for spelling, items in self.analyses.items():
+            self.assertIn(spelling, self.lexicon)
+            for tag, _, _ in items:
+                self.assertIn(tag, self.lexicon[spelling], spelling)
+
+    def test_each_list_is_distinct_ordered_and_follows_the_vocabulary(self):
+        for spelling, items in self.analyses.items():
+            keys = [(tag, lemma.encode("utf-8"), features.encode("utf-8")) for tag, lemma, features in items]
+            self.assertEqual(keys, sorted(set(keys)), spelling)
+            for _, lemma, features in items:
+                self.assertTrue(lemma and not any(ch.isspace() for ch in lemma) and common.nfc(lemma) == lemma, spelling)
+                self.assertEqual(features, build_lexicon.analysis_features(features.replace("|", "+")), spelling)
+
+    def test_examples_of_the_documentation(self):
+        self.assertEqual(self.analyses["tests"], [("NOUN", "test", "Number=Plur"), ("VERB", "test", "Person=3|Tense=Pres")])
+        self.assertEqual(self.analyses["the"], [("DET", "the", "")])
+        self.assertIn(("AUX", "be", "Person=3|Tense=Pres"), self.analyses["is"])
+        self.assertEqual(self.analyses["went"], [("VERB", "go", "Tense=Past")])
+        self.assertEqual(self.analyses["'hood"], [("NOUN", "'hood", "Number=Sing")])
+
+    def test_rebuild_from_the_form_tables_equals_the_committed_table_when_the_cache_exists(self):
+        # Arrange: the form tables are pinned by hash and cached by the build; without the cache this test is skipped
+        pins = common.read_pins("wordsense-form.manifest.tsv")
+        cache = os.path.join(common.CACHE, "wordsense", "data", "form")
+        if not all(os.path.exists(os.path.join(cache, name)) for name in pins):
+            self.skipTest("the form table cache is not populated (python tools/data/build_lexicon.py --analyses-only fills it)")
+        # Act
+        analyses = build_lexicon.build_analyses(build_lexicon.form_files(None), self.lexicon, build_lexicon.read_closed_class())
+        # Assert
+        differences = build_lexicon.analyses_differences(build_lexicon.analyses_lines(analyses),
+                                                         common.read_lines(os.path.join(common.DATA, "lexicon", "analyses.tsv")))
+        self.assertEqual([], differences)
 
     def test_license_check_accepts_the_committed_corrections(self):
         # Arrange and Act: run the license check of the staged corrections on the committed folder

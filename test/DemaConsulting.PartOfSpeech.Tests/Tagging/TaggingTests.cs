@@ -1,4 +1,4 @@
-// cspell:ignore zorbulon
+// cspell:ignore zorbulon Zzqx
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -227,6 +227,51 @@ public class TaggingTests
             Assert.Equal(expected, token.Margin, 12);
             Assert.InRange(token.Margin, 0.0, 1.0);
         }
+    }
+
+    /// <summary>
+    ///     Proves that the word lookup agrees with the tokens of the same words in a sentence: the tags and the known flag equal what the
+    ///     tagger considers, a compound is recognized by its head while the tagger sees an unknown token, and every analysis is a form.
+    /// </summary>
+    [Fact]
+    public void Tagging_WordLookup_AgreesWithTheTokensOfTheSameWord()
+    {
+        // Arrange: a tagger that reports all alternatives, over a lexicon with analyses for the words of the sentence
+        static KeyValuePair<string, UposSet> Entry(string spelling, params Upos[] tags) => new(spelling, UposSet.Of(tags));
+        static KeyValuePair<string, IReadOnlyList<Lexicon.Analysis>> Readings(string spelling, params Lexicon.Analysis[] analyses) => new(spelling, analyses);
+        var lexicon = TinyModels.CreateLexicon(
+            new[] { Entry("the", Upos.Det), Entry("valve", Upos.Noun), Entry("was", Upos.Aux, Upos.Verb), Entry("tested", Upos.Adj, Upos.Verb), Entry("and", Upos.Cconj), Entry("longest-spelling-of-the-lexicon", Upos.Adj) },
+            analyses: new[]
+            {
+                Readings("the", new Lexicon.Analysis("the", Upos.Det, string.Empty)),
+                Readings("valve", new Lexicon.Analysis("valve", Upos.Noun, "Number=Sing")),
+                Readings("was", new Lexicon.Analysis("be", Upos.Aux, "Tense=Past"), new Lexicon.Analysis("be", Upos.Verb, "Tense=Past")),
+                Readings("tested", new Lexicon.Analysis("tested", Upos.Adj, "Degree=Pos"), new Lexicon.Analysis("test", Upos.Verb, "Tense=Past|VerbForm=Part")),
+            });
+        var tagger = TinyModels.CreateTagger(new TinyModels.WeightsBuilder().Build(), lexicon, new TaggerOptions { MaxAlternatives = 16 });
+        var words = new[] { "The", "valve", "was", "well-tested", "and", "Zzqx", "1st", "." };
+
+        // Act: tag the sentence and look every token up
+        var sentence = tagger.Tag(words);
+        var lookups = sentence.Tokens.Select(t => tagger.GetPossibleTags(t.Text, PossibleTagsMode.WithShapeRules)).ToList();
+
+        // Assert: tags and flag agree with the token, and the analyses are consistent with the form question
+        for (var i = 0; i < words.Length; i++)
+        {
+            var token = sentence.Tokens[i];
+            Assert.Equal(UposSet.Of(token.Tag).Union(UposSet.Of(token.Alternatives.Select(a => a.Tag).ToArray())), lookups[i].Tags);
+            Assert.Equal(token.IsKnownWord, lookups[i].IsKnownWord);
+            foreach (var analysis in lookups[i].GetAnalyses())
+            {
+                Assert.True(tagger.IsFormOf(token.Text, analysis.Lemma, analysis.Tag), $"{token.Text} {analysis}");
+            }
+        }
+
+        Assert.Equal(WordMatch.CompoundHead, lookups[3].Match);
+        Assert.False(sentence.Tokens[3].IsKnownWord);
+        Assert.Equal(new[] { "tested ADJ Degree=Pos", "test VERB Tense=Past|VerbForm=Part" }, lookups[3].GetAnalyses().Select(a => a.ToString()));
+        Assert.Equal(WordMatch.NotRecognized, lookups[5].Match);
+        Assert.Equal(new[] { "be AUX Tense=Past", "be VERB Tense=Past" }, lookups[2].GetAnalyses().Select(a => a.ToString()));
     }
 
     /// <summary>

@@ -80,6 +80,42 @@ sections:
         tests:
           - PartOfSpeech_Tagging_Evidence_UnknownWordAndCloseCall_AreReported
 
+      - id: PartOfSpeech-Lib-PossibleTags
+        title: >-
+          A caller shall be able to look up one word, without a sentence, and get either the tags that the lexicon lists
+          for it or exactly the tags that the tagger allows for it as a token on its own, with the same normalization
+          as the tagger (letter case, typographic quotes and dashes and Unicode composition never matter).
+        tags: [system]
+        justification: |
+          A rule checker has to know which roles a word can have in the dictionary (may this word be a verb?) before
+          it looks at the tag that the tagger chose in context; asking the tagger to tag a one-word sentence gives the
+          tag of a sentence with no context, not the dictionary answer, and a caller that matches its own spellings
+          against the lexicon would have to copy the normalization of the tagger.
+        children:
+          - PartOfSpeech-Tagging-PossibleTags
+        tests:
+          - PartOfSpeech_Tagging_WordLookup_EmbeddedLexicon_AgreesWithTheTagger
+
+      - id: PartOfSpeech-Lib-WordAnalyses
+        title: >-
+          A caller shall be able to get, for a spelling, the base word, tag and features of every analysis that the
+          lexicon holds, to ask whether a word is a form of a base word with a tag, and to tell a word that the lexicon
+          recognizes from one that it does not, without mistaking an unrecognized word for a word with no tags;
+          hyphenated words shall follow one documented compound rule and multiword phrases shall be out of scope.
+        tags: [system]
+        justification: |
+          A rule checker that works with word forms (the third person of a verb, the plural of a noun, a participle
+          used as an adjective) needs the lemma and the form of each reading of a word, not only its tags. The
+          analyses come from the same word-form tables that the lexicon is built from, so they travel with the
+          embedded lexicon and need no second resource. An unrecognized word and a recognized word with no tags are
+          different facts and must be different values. The lexicon has no phrases, so a phrase is refused and the
+          caller uses a glossary for a term.
+        children:
+          - PartOfSpeech-Tagging-WordAnalyses
+          - PartOfSpeech-ModelStorage-LexiconAnalyses
+        tests:
+          - PartOfSpeech_Tagging_WordLookup_EmbeddedLexicon_AgreesWithTheTagger
+
       - id: PartOfSpeech-Lib-LexiconRestriction
         title: >-
           A word that the lexicon knows shall receive only a tag that the lexicon and the token-shape rules allow for
@@ -298,6 +334,20 @@ sections:
           notice that travels with the package must say that the weights are covered and where they come from.
         tests:
           - PartOfSpeech_ThirdPartyNotices_Weights_AreCovered
+
+      - id: PartOfSpeech-Licensing-NoticeCoversAnalyses
+        title: >-
+          The third-party notice and the package license shall state that the embedded lexicon carries an analyses table
+          (base word, tag and features of the forms of the spellings) that is derived from the same sources as the
+          lexicon, and shall state the change that was made.
+        tags: [system]
+        justification: |
+          The analyses are derived from the Open English WordNet word forms, whose Creative Commons Attribution 4.0
+          International license requires an indication of whether the material was modified, and from the other sources
+          of the lexicon, so the notices that travel with the package must say that the embedded resource also carries
+          this derived data, name its sources and say what was changed.
+        tests:
+          - PartOfSpeech_ThirdPartyNotices_Analyses_AreCovered
 
       - id: PartOfSpeech-Licensing-PackageLicenseFile
         title: >-
@@ -1367,16 +1417,34 @@ sections:
       - id: PartOfSpeech-Data-EmbeddedLexiconCurrent
         title: >-
           The lexicon that is embedded in the package shall encode exactly the spellings and tags of the lexicon
-          table.
+          table and exactly the analyses of the analyses table.
         tags: [system]
         justification: |
-          The tagger restricts known words with the embedded lexicon, not with the table. A committed binary that no
-          longer matches the table would silently apply stale restrictions, so the package must provably carry the
-          current data.
+          The tagger restricts known words with the embedded lexicon, not with the table, and the word lookup reads
+          the analyses from the same resource. A committed binary that no longer matches the tables would silently
+          apply stale restrictions or report stale base words, so the package must provably carry the current data.
         children:
           - PartOfSpeech-ModelStorage-LexiconCompiled
+          - PartOfSpeech-ModelStorage-LexiconAnalyses
         tests:
           - PartOfSpeech_Lexicon_Embedded_EncodesLexiconTsv
+          - PartOfSpeech_Data_EmbeddedLexicon_EncodesAnalysesTsv
+
+      - id: PartOfSpeech-Data-AnalysesWellFormed
+        title: >-
+          The analyses table shall consist of unique rows, sorted by the bytes of their UTF-8 spellings, whose
+          spellings are spellings of the lexicon table, whose analyses are distinct and ordered, whose tags are
+          alphabetical Universal POS tags that the lexicon lists for the spelling, whose base words are not empty and
+          contain no white space, and whose features use only the recorded feature names and values in ascending name
+          order, and its header shall state the number of analyses that its rows contain.
+        tags: [system]
+        justification: |
+          The compiler and the word lookup trust the table: an unsorted or duplicated row, an analysis for a tag that
+          the lexicon does not allow, or a feature that nobody reviewed would make the lookup report wrong base words
+          or forms, and a header that disagrees with the rows points to a truncated file or to tables from different
+          builds.
+        tests:
+          - PartOfSpeech_Data_Analyses_WellFormed
 
   - title: Embedded Model
     requirements:
@@ -1540,22 +1608,26 @@ sections:
           generated reference shall carry the margin and the known-word flag of a token. They shall give the strict
           threshold together with the margin, the known-word flag and a domain glossary or constraint as the recommended
           way to a low error rate, and the glossary rather than a higher threshold as the way to remove confident errors
-          on terms that the dictionary knows.
+          on terms that the dictionary knows. They shall also explain the word lookup (the possible tags, the base words
+          and the forms of a word, with a compiled example) as the way to check the dictionary roles of a word before
+          the tagger and the margin are read for context, and the generated reference shall carry the lookup pages.
         tags: [system]
         justification: |
           The signals only help a consumer that knows what they mean and in which order to read them; a consumer that
           reads the packed reference, or an agent that works for it, never sees the repository. The confidence 1.0 is
           no proof of a forced tag, so the documented test is the number of allowed tags, and a boundary test proves it
-          with an extreme boost. The documented examples are compiled by the test suite, and the example of the user
-          guide is compiled by a test that reads it, so that they give what the documentation claims; the build
-          asserts that the generated reference carries the guidance and the pages of both members.
+          with an extreme boost. The documented examples are compiled by the test suite, and the examples of the user
+          guide are compiled by tests that read them, so that they give what the documentation claims; the build
+          asserts that the generated reference carries the guidance and the pages of both members and of the lookup.
         tests:
           - PartOfSpeech_RuleChecker_DocumentedExample_GivesTheClaimedResults
           - PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced
           - PartOfSpeech_RuleChecker_ExtremeSoftBoost_IsNotClassifiedAsForced
           - PartOfSpeech_RuleChecker_UserGuideExample_UsesTheDocumentedCriterionAndCompiles
+          - PartOfSpeech_RuleChecker_UserGuideLookupExample_Compiles
           - PartOfSpeech_XmlDocExamples_Compile
           - ApiMark_RuleCheckerGuidanceDocumented
+          - ApiMark_WordLookupDocumented
 
       - id: PartOfSpeech-Lib-ApiDocsPackaged
         title: >-

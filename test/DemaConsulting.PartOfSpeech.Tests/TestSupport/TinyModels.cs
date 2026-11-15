@@ -46,16 +46,28 @@ internal static class TinyModels
     /// </summary>
     /// <param name="entries">The spellings and tags.</param>
     /// <param name="compress">Whether to Deflate the payload.</param>
+    /// <param name="analyses">The analyses of some spellings in any order, or <c>null</c> for a lexicon without analyses.</param>
     /// <returns>The lexicon file.</returns>
-    public static byte[] CreateLexicon(IEnumerable<KeyValuePair<string, UposSet>> entries, bool compress = false)
+    public static byte[] CreateLexicon(
+        IEnumerable<KeyValuePair<string, UposSet>> entries,
+        bool compress = false,
+        IEnumerable<KeyValuePair<string, IReadOnlyList<DemaConsulting.PartOfSpeech.Lexicon.Analysis>>>? analyses = null)
     {
         var sorted = entries
             .Select(e => new { e.Key, e.Value, Bytes = Encoding.UTF8.GetBytes(e.Key) })
-            .OrderBy(e => e.Bytes, Comparer<byte[]>.Create((x, y) => BinaryFormat.Compare(x, 0, x.Length, y, 0, y.Length)))
+            .OrderBy(e => e.Bytes, Utf8Comparer)
             .Select(e => new KeyValuePair<string, UposSet>(e.Key, e.Value))
             .ToList();
-        return LexiconWriter.Compile(sorted, compress);
+        var sortedAnalyses = (analyses ?? Array.Empty<KeyValuePair<string, IReadOnlyList<DemaConsulting.PartOfSpeech.Lexicon.Analysis>>>())
+            .OrderBy(a => Encoding.UTF8.GetBytes(a.Key), Utf8Comparer)
+            .ToList();
+        return LexiconWriter.Compile(sorted, sortedAnalyses, compress);
     }
+
+    /// <summary>
+    ///     The order of the lexicon: by UTF-8 bytes.
+    /// </summary>
+    private static readonly Comparer<byte[]> Utf8Comparer = Comparer<byte[]>.Create((x, y) => BinaryFormat.Compare(x, 0, x.Length, y, 0, y.Length));
 
     /// <summary>
     ///     Creates a tagger from in-memory model files.

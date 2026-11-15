@@ -21,8 +21,9 @@ contains five units:
   with their allowed tags, the matcher that finds them in a sentence and the compilation of a match into per-token
   constraints. `GlossaryIndex`, `GlossaryWorkspace`, `GlossaryInflector` and `GlossaryConstraints` are internal helpers
   of the unit.
-- **Tagger** (`Tagger.cs`, `TaggerOptions.cs`, `TaggedSentence.cs`, `TaggedToken.cs`, `TagScore.cs`): the public entry
-  point, its options and the immutable result types.
+- **Tagger** (`Tagger.cs`, `TaggerOptions.cs`, `TaggedSentence.cs`, `TaggedToken.cs`, `TagScore.cs`, `PossibleTagsMode.cs`,
+  `WordMatch.cs`, `WordAnalysis.cs`, `WordTags.cs`): the public entry point, its options, the word lookup and the
+  immutable result types.
 
 The subsystem uses Tokenization to split text, ModelStorage for the weights and the lexicon, and Upos for tags.
 
@@ -33,6 +34,8 @@ Exposed (public API, namespace `DemaConsulting.PartOfSpeech`):
 - `Tagger.Default`, `Tagger.Load(Stream, TaggerOptions?)`, `Tagger.Load(Stream, Stream, TaggerOptions?)`,
   `Tagger.Options`, and three `Tag` overloads: text, `Sentence`, and `IReadOnlyList<string>` tokens, the latter two with
   an optional constraint list, and the same three with a `Glossary` (the text overload without constraints).
+- `Tagger.GetPossibleTags(string, PossibleTagsMode)` (on .NET 8 and later also with a `ReadOnlySpan<char>`) and
+  `Tagger.IsFormOf(string, string, Upos)`, with the types `PossibleTagsMode`, `WordMatch`, `WordTags` and `WordAnalysis`.
 - `TaggerOptions` (`MaxAlternatives`, 0 to 16, default 3), `TaggedSentence` (also `GlossaryMatches`), `TaggedToken`
   (text, offsets, tag, confidence, margin, known-word flag, alternatives, `IsConstrained`, `GlossaryMatch`,
   `IsGlossaryHead`), `TagScore` (tag,
@@ -82,6 +85,19 @@ glossary in a `ConditionalWeakTable`; the glossary itself belongs to the call, s
 any number of glossaries and the options of a tagger stay a copy of what was loaded. A call without a match takes the
 plain decoding path.
 
+**Word lookup flow.** `Tagger.GetPossibleTags` and `Tagger.IsFormOf` are the second entry of the decoder: they take one
+word, not a sentence, and use no model, no glossary and no constraints. The decoder folds the word with the same
+`FeatureExtractor` code as a token, looks up the whole spelling with the same `Lexicon.TryFindKey` that its restriction
+uses, and builds the tags with the same `ApplyShapeRules` that its `AllowedTags` calls, so the tags of the lookup in the
+`WithShapeRules` mode are the allowed tags of the same token in a sentence, and `IsKnownWord` equals the token's flag. The
+one thing that the lookup adds is the compound rule: a hyphenated word that is not a spelling is looked up by its last
+part, which yields analyses (`WordMatch.CompoundHead`) and never changes the tags, because the tagger itself has no
+hyphen rule and looks only at the whole token. A word that has more characters than the longest spelling has bytes is not
+folded as a whole;
+only the lookup of the whole spelling is skipped, and the compound rule runs on its last part. The analyses are stored in
+the lexicon next to the tags (see _Lexicon Design_), so the same loaded lexicon serves the restriction and the lookup, a
+custom lexicon file serves both, and a lexicon without analyses still answers with tags.
+
 **Deviations from the averaged-perceptron spike** (all deliberate; the spike measured accuracy, this library productizes
 it):
 
@@ -127,7 +143,8 @@ set.
 
 **Thread safety.** `Tagger`, `TagDecoder`, `Lexicon` and `PerceptronModel` hold read-only data, and so does a
 `Glossary` after it was created. All per-call scratch
-memory is a `[ThreadStatic]` workspace (the decoder's and the glossary matcher's) that grows to the largest sentence and
+memory is a `[ThreadStatic]` workspace (the decoder's, used by tagging and by the word lookup, and the glossary matcher's)
+that grows to the largest sentence and
 is reused; the decoder resolves a
 caller-supplied constraint list before it takes the workspace and runs no caller code while it holds it, and the glossary
 copies its matches out of its workspace before it returns. The compiled constraints of a glossary are created once per

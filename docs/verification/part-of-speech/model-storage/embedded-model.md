@@ -30,6 +30,9 @@ concurrent access returns different instances.
 
 - **The lexicon is present and loads**: `EmbeddedModel_Lexicon_IsPresentAndLoads` (the resource is part of the assembly
   and loads with the documented counts).
+- **The lexicon carries the analyses**: `EmbeddedModel_Lexicon_CarriesTheAnalysesOfTheTable` (the lexicon has 290,365
+  analyses of 258,255 spellings; `tests` has the tags NOUN and VERB, both with an analysis, and `testing` has the tags ADJ,
+  NOUN and VERB of which only NOUN and VERB have an analysis, as the analyses table records).
 - **The weights are present and load**: `EmbeddedModel_Weights_IsPresentAndLoads` (the resource is part of the
   assembly and loads as a model with 19 hash bits, scale 1/8, a positive temperature and a large number of rows).
 - **One instance**: `EmbeddedModel_Lexicon_SecondAccess_ReturnsSameInstance`,

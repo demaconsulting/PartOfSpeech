@@ -5,7 +5,8 @@ package PartOfSpeech {
     /*
      * PartOfSpeech is a .NET library for part-of-speech analysis of English text: it splits text into sentences and
      * tokens and tags every token with one of the 17 Universal POS tags, with a calibrated confidence, ranked
-     * alternatives and optional per-token constraints. The package embeds a compiled lexicon and trained weights; the
+     * alternatives and optional per-token constraints, and looks up a single word (its possible tags and the base word, tag
+     * and features of its forms). The package embeds a compiled lexicon and trained weights; the
      * weights are produced by the build-time ModelTrainer unit, which also runs the one held-out evaluation of the frozen
      * model; its results, the selection of the two recommended confidence thresholds and their explanation are the
      * evaluation record in docs/evaluation, whose figures the packed API reference quotes. The repository also holds open

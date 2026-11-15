@@ -27,6 +27,56 @@ public class EmbeddedModelTests
     }
 
     /// <summary>
+    ///     Proves that the embedded lexicon carries the analyses of the table: their counts, and the tag sets they name.
+    /// </summary>
+    [Fact]
+    public void EmbeddedModel_Lexicon_CarriesTheAnalysesOfTheTable()
+    {
+        // Arrange / Act: access the lexicon and look up a spelling with two analyses and one with a rule-added tag
+        var lexicon = EmbeddedModel.Lexicon;
+        var scratch = new byte[lexicon.ScratchSize];
+        var tests = "tests".ToCharArray();
+        var testing = "testing".ToCharArray();
+        Assert.True(lexicon.TryFind(tests, 0, tests.Length, scratch, out var testsOrdinal, out var testsTags));
+        Assert.True(lexicon.TryFind(testing, 0, testing.Length, scratch, out var testingOrdinal, out var testingTags));
+
+        // Assert: the counts of analyses.tsv, and the tags that have an analysis (a subset of the lexicon tags)
+        Assert.Equal(290365, lexicon.AnalysisCount);
+        Assert.Equal(258255, lexicon.AnalyzedSpellingCount);
+        Assert.Equal(UposSet.Of(Upos.Noun, Upos.Verb), testsTags);
+        Assert.Equal(testsTags, lexicon.AnalyzedTags(testsOrdinal));
+        Assert.Equal(UposSet.Of(Upos.Adj, Upos.Noun, Upos.Verb), testingTags);
+        Assert.Equal(UposSet.Of(Upos.Noun, Upos.Verb), lexicon.AnalyzedTags(testingOrdinal));
+    }
+
+    /// <summary>
+    ///     Proves that every base word of the embedded lexicon is a fixed point of the fold of the tagger (NFC, lower case, no typographic
+    ///     marks), which is what <c>IsFormOf</c> needs to be able to match it, and that the count is that of the table.
+    /// </summary>
+    [Fact]
+    public void EmbeddedModel_Lexicon_EveryBaseWordIsAFixedPointOfTheFold()
+    {
+        // Arrange / Act: test the base word of every analysis of every spelling
+        var count = 0;
+        var failures = new List<string>();
+        foreach (var entry in EmbeddedModel.Lexicon.EnumerateAnalyses())
+        {
+            foreach (var analysis in entry.Value)
+            {
+                count++;
+                if (!FeatureExtractor.IsFoldFixedPoint(analysis.Lemma))
+                {
+                    failures.Add($"{entry.Key} {analysis.Lemma} {analysis.Tag}");
+                }
+            }
+        }
+
+        // Assert: all 290,365 analyses, none different
+        Assert.Equal(290365, count);
+        Assert.Empty(failures);
+    }
+
+    /// <summary>
     ///     Proves that repeated access returns the same instance.
     /// </summary>
     [Fact]

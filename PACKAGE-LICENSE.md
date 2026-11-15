@@ -44,7 +44,12 @@ License (CC BY 4.0, <https://creativecommons.org/licenses/by/4.0/>), and which i
 tags that the lexicon lists are attested in the Manually Annotated Sub-Corpus (MASC), which is licensed under the
 Creative Commons Attribution 3.0 United States License (CC BY 3.0 US,
 <https://creativecommons.org/licenses/by/3.0/us/>), and in the open corpus of this project (CC0 1.0). It also uses the
-Moby Part-of-Speech List, which is in the public domain.
+Moby Part-of-Speech List, which is in the public domain. The same file carries the analyses of the spellings: for most
+spellings the base word (lemma), the Universal POS tag and the morphological features of each of its forms. The analyses
+were derived from the same word forms of Open English WordNet and from the Moby Part-of-Speech List, from the additions
+of the WordSense project (MIT License) and from the closed-class list of this project (CC0 1.0), and they add no other
+source. DEMA Consulting changed the data by reducing each form to a lower-case base word, a tag and a subset of its
+features; the analyses are not the original data either, and they are licensed like the lexicon.
 
 ### The weights (`weights.bin`): CC BY 3.0 US
 

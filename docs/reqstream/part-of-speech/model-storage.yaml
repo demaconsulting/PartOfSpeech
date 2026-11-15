@@ -45,6 +45,26 @@ sections:
               - ModelStorage_EmbeddedLexicon_EncodesLexiconTsv
               - ModelStorage_EmbeddedLexicon_EveryTsvSpellingRoundTrips
 
+          - id: PartOfSpeech-ModelStorage-LexiconAnalyses
+            title: >-
+              The lexicon resource shall also store the analyses (base word, tag and features) of the spellings that
+              the analyses table lists, in the same file and under the same checksum as the tags; the reader shall
+              validate them against the spellings when it loads the file; and the embedded resource shall hold exactly
+              the analyses of the table.
+            justification: |
+              The word lookup reports base words and forms from the embedded lexicon. Keeping them in the one resource
+              lets one checksum cover tags and analyses and lets the reader check that no analysis names a tag that its
+              spelling does not have; a second resource could drift from the first without any check noticing. A
+              damaged or inconsistent analyses section must fail when the file is loaded, never later as a wrong base
+              word.
+            children:
+              - PartOfSpeech-ModelStorage-Lexicon-Analyses
+              - PartOfSpeech-ModelStorage-Lexicon-AnalysesValidation
+              - PartOfSpeech-ModelStorage-Lexicon-Writer
+              - PartOfSpeech-ModelStorage-EmbeddedModel-Lexicon
+            tests:
+              - ModelStorage_EmbeddedLexicon_EncodesAnalysesTsv
+
           - id: PartOfSpeech-ModelStorage-LazyThreadSafeLoading
             title: >-
               The embedded data shall be loaded when it is first needed, and threads that need it at the same time shall
