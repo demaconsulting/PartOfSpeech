@@ -33,7 +33,7 @@ written file does not load back with the same content.
 - **Versioned formats**: `ModelStorage_Formats_StartWithMagicAndVersion` writes one file of each format and asserts the
   magic (`POSL`, `POSW`), the version (lexicon 3, weights 2) and the Deflate flag, then changes the version (the lexicon
   file to 2, the weights file to 3) and asserts that both readers throw `InvalidDataException` and that the lexicon
-  message names version 2.
+  message names both the version found (2) and the version that the build reads (`Lexicon.FormatVersion`, 3).
 - **The embedded lexicon encodes the tables**: `ModelStorage_EmbeddedLexicon_EncodesLexiconTsv` asserts that the decoded
   embedded lexicon equals the independent reading of the table (spellings, order and tags) and that the committed file
   and the embedded resource are the same bytes; `ModelStorage_EmbeddedLexicon_EncodesAnalysesTsv` asserts that the

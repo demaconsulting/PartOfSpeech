@@ -38,7 +38,9 @@ public class ModelStorageTests
         Assert.Equal((ushort)1, BinaryFormat.ReadUInt16(weights, 6));
         BinaryFormat.WriteUInt16(lexicon, 4, 2);
         BinaryFormat.WriteUInt16(weights, 4, 3);
-        Assert.Contains("version 2", Assert.Throws<InvalidDataException>(() => Lexicon.Load(lexicon)).Message);
+        var lexiconMessage = Assert.Throws<InvalidDataException>(() => Lexicon.Load(lexicon)).Message;
+        Assert.Contains("lexicon file version 2;", lexiconMessage);
+        Assert.Contains($"reads version {Lexicon.FormatVersion}.", lexiconMessage);
         Assert.Throws<InvalidDataException>(() => PerceptronModel.Load(weights, FeatureExtractor.FeatureSetVersion));
     }
 

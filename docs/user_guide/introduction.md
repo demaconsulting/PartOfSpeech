@@ -627,8 +627,9 @@ the words of the general dictionary.
 **Edge cases and exceptions.** A `null` word, lemma or text throws `ArgumentNullException`; a word or lemma that is empty
 or contains white space throws `ArgumentException` (a base word that is a phrase, such as `give up`, is refused too); a
 mode or tag that is not a defined value throws `ArgumentOutOfRangeException`. A word of any length is accepted: a very
-long word is answered without an error, with one pass over its characters, and an ASCII word of a million characters
-allocates nothing. On .NET 8 and later `GetPossibleTags` also takes a `ReadOnlySpan<char>` with the same rules and
+long word is answered without an error and without growing the per-thread memory beyond what a word of the length of the
+longest spelling needs, and an ASCII word of a million characters allocates nothing. On .NET 8 and later
+`GetPossibleTags` also takes a `ReadOnlySpan<char>` with the same rules and
 results.
 
 **Thread safety.** The lookup is safe from any number of threads at the same time, also while other threads tag text; it
@@ -658,6 +659,18 @@ features, so a custom lexicon changes the features the model sees, not only the 
 The stream is read to its end and is not closed. `Load` throws `InvalidDataException` for a file that is damaged, is not
 a weights file, or is of a format or feature set version that this build does not read; `ArgumentNullException` for a
 `null` stream and `ArgumentOutOfRangeException` for options outside their range.
+
+**Custom lexicon compatibility.** The loader reads exactly lexicon format version 3 (`Lexicon.FormatVersion`). A custom
+lexicon file of version 2 is refused with an `InvalidDataException` whose message names both versions (`Unsupported
+lexicon file version 2; this build reads version 3.`). Regenerate such a file as version 3 with the lexicon compiler of
+the repository, from the lexicon table that the file was built from (`spelling`, a tab and the space-separated tags per
+line), and add the analyses table (`--analyses`) when the lexicon answers base words and forms:
+
+```text
+dotnet run --project tools/LexiconCompiler -- --input my-lexicon.tsv --analyses my-analyses.tsv --output my-lexicon.posl
+```
+
+Without `--analyses` the compiler writes a lexicon without analyses, which gives tags and no base words.
 
 ## The Default Tagger
 
@@ -720,7 +733,8 @@ The entry point. Immutable and thread-safe.
 - `static Tagger Default`: the shared tagger that uses the embedded model and lexicon; created on first use.
 - `static Tagger Load(Stream weights, TaggerOptions? options = null)`: creates a tagger from a weights stream with the
   embedded lexicon.
-- `static Tagger Load(Stream weights, Stream lexicon, TaggerOptions? options = null)`: with your own lexicon file.
+- `static Tagger Load(Stream weights, Stream lexicon, TaggerOptions? options = null)`: with your own lexicon file, which
+  must be of format version 3 (see _Loading a Weights File_).
 - `TaggerOptions Options`: a copy of the options the tagger was created with.
 - `IReadOnlyList<TaggedSentence> Tag(string text)`: tokenizes, splits into sentences and tags.
 - `TaggedSentence Tag(Sentence sentence, IReadOnlyList<TokenConstraint>? constraints = null)`: tags a sentence from

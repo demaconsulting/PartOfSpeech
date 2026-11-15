@@ -275,6 +275,12 @@ internal sealed class Lexicon
     /// <summary>
     ///     Loads and validates a lexicon file held in memory.
     /// </summary>
+    /// <remarks>
+    ///     The loader accepts exactly <see cref="FormatVersion"/>. A file of another version, such as a custom lexicon of
+    ///     version 2, is refused with a message that names the version found and the version read, and is regenerated as
+    ///     version 3 with the lexicon compiler (<c>dotnet run --project tools/LexiconCompiler -- --input my-lexicon.tsv
+    ///     --analyses my-analyses.tsv --output my-lexicon.posl</c>).
+    /// </remarks>
     /// <param name="file">The whole file.</param>
     /// <returns>The lexicon.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="file"/> is <c>null</c>.</exception>

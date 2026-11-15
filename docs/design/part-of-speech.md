@@ -170,7 +170,7 @@ The system exposes the following public API to external consumers (all in the na
 | Interface | Direction | Format | Constraints |
 | --- | --- | --- | --- |
 | `Tagger.Load(Stream, ...)` | Inbound | `POSW` weights file | Valid file of a supported version |
-| `Tagger.Load(Stream, Stream, ...)` | Inbound | `POSW` and `POSL` files | Both valid; streams read to the end |
+| `Tagger.Load(Stream, Stream, ...)` | Inbound | `POSW` and `POSL` files | Valid files; lexicon version 3; read fully |
 | `Tagger.Default` | Outbound | `Tagger` instance | Created on first use from the embedded data; one shared instance |
 | `Tagger.Tag(...)`, `Tokenizer.*` | Inbound/Outbound | `string` or tokens in, results out | Arguments not null |
 | `Tagger.GetPossibleTags(...)`, `IsFormOf(...)` | Inbound/Outbound | One word in, result out | Valid word, mode, tag |

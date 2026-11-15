@@ -570,7 +570,7 @@ internal sealed class TagDecoder
     ///         between hyphens, and the last part must be a spelling. Only the last part is folded into the workspace and only
     ///         when it does not have more characters than the longest spelling has bytes, so the per-thread buffers never grow
     ///         beyond what a word of that many characters needs, whatever the length of the whole word. Finding the last part
-    ///         costs one scan of the word and allocates nothing.
+    ///         reads the word a bounded number of times and allocates nothing for ASCII text.
     ///     </para>
     ///     <para>
     ///         The tags are those of the whole word, which is not a spelling: empty in the lexicon mode and all tags with

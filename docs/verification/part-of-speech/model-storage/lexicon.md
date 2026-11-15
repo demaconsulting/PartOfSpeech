@@ -120,8 +120,8 @@ below 99.9 percent.
   `Lexicon_Load_TemplateCountLargerThanThePayload_Throws` (a hostile count is refused before an array is sized from it)
   and `Lexicon_Load_InvalidAnalysesHeaderField_Throws` (a theory over header offsets and values: no feature set, no
   list, more lists than the format allows, a reserved field that is not zero). That a file of version 2 is refused with
-  a message
-  that names the version is asserted in `ModelStorage_Formats_StartWithMagicAndVersion` (_ModelStorage Verification_).
+  a message that names both the version found (2) and the version that the build reads (`Lexicon.FormatVersion`, 3) is
+  asserted in `ModelStorage_Formats_StartWithMagicAndVersion` (_ModelStorage Verification_).
 - **Allowed tags by rule**: `Lexicon_AllowedTags_UnknownWord_AllowsAllSeventeen`,
   `Lexicon_AllowedTags_KnownWord_AllowsLexiconTags`, `Lexicon_AllowedTags_NoLetterOrDigit_AddsPunctSymX`,
   `Lexicon_AllowedTags_Digit_AddsNumSymXNounPropnAdj` and `Lexicon_AllowedTags_FirstUpper_AddsPropnX`.

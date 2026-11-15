@@ -208,7 +208,7 @@ sections:
                   unpaired surrogate (which counts as U+FFFD, like in a token), and shall answer a word that has more
                   characters than the longest spelling of the lexicon has bytes, and therefore cannot be a spelling,
                   without an error, without growing the per-thread buffers beyond what a word of that many characters
-                  needs and in time linear in its length.
+                  needs, whatever the length of the word, and without allocation for a word of ASCII characters.
                 justification: |
                   The lexicon holds no phrases, so a text with white space can only be answered wrongly as unknown; the
                   caller must split the text into tokens (or use a glossary for a term). Text that a caller did not

@@ -114,8 +114,9 @@ adjustment`, a `double`. The integer sum is exact; only the final multiplication
   that spelling's analyses, otherwise `NotRecognized`; the tags are those of any word that is not a spelling. The
   workspace therefore grows at most to what a word of that many characters needs (`EnsureChars` asks for six characters
   of room per character: three for the folded form of an ellipsis and the same again for the lower-case copy; `IsFormOf`
-  folds a second token), whatever the length of the whole word, and the cost beyond a normal lookup is one scan of the
-  characters. The length test is on UTF-16 characters, which is sound because it only has to be a lower bound of the
+  folds a second token), whatever the length of the whole word, and the word is read a bounded number of times (the scan
+  of `OverlongHeadStart` and the fold of the last part; the tests do not measure the running time). The length test is
+  on UTF-16 characters, which is sound because it only has to be a lower bound of the
   UTF-8 length of the folded form. A word with fewer characters whose characters take more bytes (100 times `é` is 200
   bytes) is folded as a whole and not recognized, within the same bound; a test on bytes would add a scan to every
   lookup and change neither the answer nor the bound. A test looks up such words and words of a million characters on a

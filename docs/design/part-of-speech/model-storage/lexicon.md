@@ -88,8 +88,11 @@ in a cold process (.NET 10, measured), and about 25 ms for a warm in-process `Ta
 
 The checksum covers the stored bytes, so a file whose Deflate data was cut cannot pass it; see the strict Deflate
 validation in the `BinaryFormat` design. The reader accepts exactly version 3: any other version, including 2, is
-refused with `Unsupported lexicon file version 2; this build reads version 3.` (the text names the version found). The
-only tool that writes lexicon files, `LexiconCompiler`, is not shipped, so no released file has another version.
+refused with `Unsupported lexicon file version 2; this build reads version 3.` (the text names the version found and the
+version read). A custom file of version 2 is regenerated as version 3 with `LexiconCompiler`, from its lexicon table and,
+for base words and forms, its analyses table: `dotnet run --project tools/LexiconCompiler -- --input my-lexicon.tsv
+--analyses my-analyses.tsv --output my-lexicon.posl` (without `--analyses` the file has no analyses). The tool is not
+shipped in the package.
 
 #### Key Methods
 

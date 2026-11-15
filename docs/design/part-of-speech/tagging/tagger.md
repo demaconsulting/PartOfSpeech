@@ -131,8 +131,10 @@ files also hold the options and the result types: `Tagger.cs`, `TaggerOptions.cs
   beyond what a word of that many characters needs (a word with fewer characters is folded as a whole even if its
   characters take more bytes than the longest spelling has, for example 100 times `é`; that is bounded by the same size,
   so the length test is on characters, not on the UTF-8 length, which would need a further scan of every lookup), ASCII
-  input allocates nothing, and the cost beyond a normal lookup is one scan of
-  the characters. The result is the same as the result of a lexicon whose longest spelling is long enough to look the
+  input allocates nothing, and the word is read a bounded number of times (one scan for the compound structure, then
+  the fold of the last part). The tests verify the guarantees that they can observe: completion without an error, the
+  bound of the buffer and no allocation for ASCII; they do not measure the running time.
+  The result is the same as the result of a lexicon whose longest spelling is long enough to look the
   whole word up (a test compares both over generated words), and a test measures the buffer on a new thread after the
   worst folded word (an ellipsis for every byte of the longest spelling) and then looks up words of a million characters.
 - _Phrases._ The lexicon has no multiword spellings (a test proves it for every spelling), so text with white space is

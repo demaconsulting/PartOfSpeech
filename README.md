@@ -19,7 +19,7 @@
 - 🏷️ **Tagger** - 17 Universal POS tags from an averaged perceptron
 - 📊 **Confidences** - calibrated probabilities and ranked alternatives for every tag
 - 🚦 **Rule checker signals** - margin and known-word flag per token
-- 🔎 **Word lookup** - possible tags, base words and forms of a word
+- 🔎 **Word lookup** - possible tags, base words and forms
 - 🔒 **Constraints** - restrict or steer the tag of single tokens
 - 📚 **Glossaries** - tag domain terms correctly, in hard or soft mode
 - 🧩 **Pre-tokenized input** - tag tokens that you already have

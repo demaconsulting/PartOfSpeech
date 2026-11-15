@@ -306,6 +306,14 @@ namespace DemaConsulting.PartOfSpeech;
 ///     returned (the examples use <c>using</c>), and the tagger does not close it itself.
 ///     </para>
 ///     <para>
+///     A custom lexicon file must be of lexicon format version 3: the loader reads exactly that version and refuses a
+///     file of version 2 with an <see cref="InvalidDataException"/> that names both versions. Regenerate such a file as
+///     version 3 with the lexicon compiler of the repository, from its lexicon table, and add the analyses table when the
+///     lexicon answers base words and forms: <c>dotnet run --project tools/LexiconCompiler -- --input my-lexicon.tsv
+///     --analyses my-analyses.tsv --output my-lexicon.posl</c>. Without <c>--analyses</c> the compiler writes a lexicon
+///     without analyses.
+///     </para>
+///     <para>
 ///     ## Glossary
 ///     </para>
 ///     <para>
@@ -711,7 +719,7 @@ namespace DemaConsulting.PartOfSpeech;
 ///     **Cost.** After the first call on a thread, the lookup of an ASCII word allocates nothing in both modes,
 ///     and neither does <see cref="Tagger.IsFormOf(string, string, Upos)"/>; the same holds for a word with other characters
 ///     that is already in NFC (<c>café</c>, a typographic apostrophe) and for a word of a million ASCII characters, which is
-///     answered without an error after one pass over its characters. A word that is not in NFC allocates the normalized
+///     answered without an error. A word that is not in NFC allocates the normalized
 ///     string (32 bytes for <c>café</c> written with a combining acute accent). <see cref="WordTags.GetAnalyses"/> allocates its
 ///     list: 360 bytes for the two analyses of <c>tests</c>, 600 bytes for the five of <c>well</c>, 368 bytes for the
 ///     compound head <c>well-tested</c> and nothing for a word without analyses. These numbers were measured on .NET 10 on

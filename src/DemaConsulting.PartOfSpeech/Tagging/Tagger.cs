@@ -179,7 +179,11 @@ public sealed class Tagger
     ///     be disposed afterwards (see <see cref="Load(Stream, TaggerOptions?)"/>). The lexicon is loaded for this
     ///     tagger only; the embedded lexicon is not used. The lexicon also feeds the features of a weights file with
     ///     feature groups (the clause-cue, position and inflection features read it), so a lexicon that differs from
-    ///     the one the weights were trained with changes the features the model sees, not only the allowed tags.
+    ///     the one the weights were trained with changes the features the model sees, not only the allowed tags. The
+    ///     loader reads exactly lexicon format version 3: a lexicon file of version 2 is refused with an
+    ///     <see cref="InvalidDataException"/> that names both versions, and must be regenerated as version 3 with the lexicon
+    ///     compiler of the repository (<c>dotnet run --project tools/LexiconCompiler -- --input my-lexicon.tsv
+    ///     --analyses my-analyses.tsv --output my-lexicon.posl</c>; without <c>--analyses</c> the file has no analyses).
     /// </remarks>
     /// <param name="weights">A stream that holds a <c>POSW</c> weights file, read from its current position to its end; it is not closed and may be disposed after this method returns.</param>
     /// <param name="lexicon">A stream that holds a <c>POSL</c> lexicon file, read from its current position to its end; it is not closed and may be disposed after this method returns.</param>
@@ -539,7 +543,7 @@ public sealed class Tagger
     ///         embedded lexicon) cannot be a spelling as a whole, so only the compound rule can recognize it: it is
     ///         <see cref="WordMatch.CompoundHead"/> when it is a hyphenated compound whose last part is a spelling, and
     ///         <see cref="WordMatch.NotRecognized"/> otherwise (no hyphen, an empty part, or a last part that is not a spelling or has itself
-    ///         more characters than that). Such a word costs one pass over the text, folds at most its last part, and never
+    ///         more characters than that). Such a word is answered without an error, folds at most its last part, and never
     ///         grows a buffer beyond what a word of that many characters needs (a word with fewer characters is folded as a whole, even when its
     ///         characters take more bytes than the longest spelling has). A lexicon without an analyses table (a custom lexicon file) gives no analyses and
     ///         <see cref="WordTags.TagsWithoutAnalysis"/> equals <see cref="WordTags.Tags"/>. The lexicon has no phrases, so text with white
