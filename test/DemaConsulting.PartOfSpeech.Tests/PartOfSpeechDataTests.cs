@@ -3798,6 +3798,110 @@ public class PartOfSpeechDataTests
     }
 
     /// <summary>
+    ///     Proves that <c>data/lexicon/analyses.tsv</c> is well formed: its header counts are the counts of its rows, its rows ascend by
+    ///     UTF-8 bytes, every spelling and every tag is one of the lexicon, the analyses of a spelling are distinct and ordered by
+    ///     tag, base word and features, and the features use only the documented names and values in ascending name order.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Data_Analyses_WellFormed()
+    {
+        // Arrange: the lexicon, the analyses table as read independently of the compiler, and the documented feature vocabulary
+        var lexicon = DataFiles.ReadLexicon(DataFiles.Data("lexicon/lexicon.tsv"));
+        var lines = File.ReadLines(DataFiles.Data("lexicon/analyses.tsv")).ToList();
+        var header = Regex.Match(string.Join("\n", lines.Where(DataFiles.IsComment)), @"spellings=(\d+), analyses=(\d+)");
+        var vocabulary = new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            ["Degree"] = new[] { "Cmp", "Pos", "Sup" },
+            ["Number"] = new[] { "Plur", "Sing" },
+            ["Person"] = new[] { "3" },
+            ["Tense"] = new[] { "Past", "Pres" },
+            ["VerbForm"] = new[] { "Ger", "Inf", "Part" }
+        };
+        var problems = new List<string>();
+        string? previous = null;
+        var analyses = 0;
+
+        // Act: check every row
+        foreach (var line in lines.Where(l => l.Length > 0 && !DataFiles.IsComment(l)))
+        {
+            var cells = line.Split('\t');
+            if (!lexicon.TryGetValue(cells[0], out var tags) || cells.Length < 2 || (previous != null && CompareUtf8(previous, cells[0]) >= 0))
+            {
+                problems.Add("unknown, unsorted or empty row: " + cells[0]);
+            }
+
+            previous = cells[0];
+            string[]? last = null;
+            foreach (var cell in cells.Skip(1))
+            {
+                var parts = cell.Split(' ');
+                var features = parts.Length == 3 ? parts[2].Split('|') : Array.Empty<string>();
+                var pairs = features.Select(f => f.Split('=')).ToList();
+                var featuresValid = (parts.Length == 2 || parts.Length == 3) && pairs.All(p => p.Length == 2 && vocabulary.TryGetValue(p[0], out var values) && values.Contains(p[1]))
+                    && pairs.Select(p => p[0]).SequenceEqual(pairs.Select(p => p[0]).OrderBy(n => n, StringComparer.Ordinal).Distinct());
+                if (!featuresValid || parts[0].Length == 0 || parts[0].Any(char.IsWhiteSpace) || tags == null || !tags.Contains(parts[1]))
+                {
+                    problems.Add("invalid analysis '" + cell + "' of " + cells[0]);
+                }
+                else if (last != null && (string.CompareOrdinal(last[1], parts[1]) > 0 ||
+                    (last[1] == parts[1] && (CompareUtf8(last[0], parts[0]) > 0 || (last[0] == parts[0] && CompareUtf8(last.Length == 3 ? last[2] : string.Empty, parts.Length == 3 ? parts[2] : string.Empty) >= 0)))))
+                {
+                    problems.Add("analyses not strictly ascending: " + cells[0]);
+                }
+
+                last = parts;
+                analyses++;
+            }
+        }
+
+        // Assert: no problem, and the header states the counts of the rows
+        Assert.Empty(problems.Take(ShownProblems));
+        Assert.True(header.Success);
+        Assert.Equal(analyses, int.Parse(header.Groups[2].Value, CultureInfo.InvariantCulture));
+        Assert.True(analyses > 250000);
+    }
+
+    /// <summary>
+    ///     Proves that the lexicon that is embedded in the assembly encodes exactly the analyses of <c>data/lexicon/analyses.tsv</c>:
+    ///     every spelling of the lexicon has the analyses of its row, in the same order, or none when it has no row.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_Data_EmbeddedLexicon_EncodesAnalysesTsv()
+    {
+        // Arrange: the table as the data tests read it (rows by spelling) and the embedded lexicon
+        var rows = File.ReadLines(DataFiles.Data("lexicon/analyses.tsv"))
+            .Where(l => l.Length > 0 && !DataFiles.IsComment(l))
+            .Select(l => l.Split('\t'))
+            .ToDictionary(cells => cells[0], cells => cells.Skip(1).ToArray(), StringComparer.Ordinal);
+        var embedded = EmbeddedModel.Lexicon;
+        var scratch = new byte[embedded.ScratchSize];
+        var problems = new List<string>();
+
+        // Act: look every spelling of the lexicon up and compare the text of its analyses with the row
+        foreach (var spelling in DataFiles.ReadLexicon(DataFiles.Data("lexicon/lexicon.tsv")).Keys)
+        {
+            var key = spelling.ToCharArray();
+            if (!embedded.TryFind(key, 0, key.Length, scratch, out var ordinal, out _))
+            {
+                problems.Add("missing " + spelling);
+                continue;
+            }
+
+            var expected = rows.TryGetValue(spelling, out var row) ? row : Array.Empty<string>();
+            var actual = embedded.GetAnalyses(ordinal).Select(a => a.Features.Length == 0 ? a.Lemma + " " + a.Tag.ToTagString() : a.Lemma + " " + a.Tag.ToTagString() + " " + a.Features);
+            if (!actual.SequenceEqual(expected))
+            {
+                problems.Add(spelling);
+            }
+        }
+
+        // Assert: nothing is missing or different, and the counts are those of the table
+        Assert.Empty(problems.Take(ShownProblems));
+        Assert.Equal(rows.Count, embedded.AnalysedSpellingCount);
+        Assert.Equal(rows.Values.Sum(row => row.Length), embedded.AnalysisCount);
+    }
+
+    /// <summary>
     ///     Proves that the weights that are embedded in the assembly are exactly the model that the committed training
     ///     configuration describes: the same file as the committed one, the same hash bits, scale and temperature, and
     ///     the SHA-256 of the uncompressed image that the trainer recorded. A model that was edited or retrained

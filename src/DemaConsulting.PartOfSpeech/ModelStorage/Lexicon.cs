@@ -3,8 +3,9 @@ using System.Text;
 namespace DemaConsulting.PartOfSpeech;
 
 /// <summary>
-///     The compiled word lexicon (format <c>POSL</c> version 2): a read-only map from a lower-case spelling to the set
-///     of Universal POS tags that the spelling may carry.
+///     The compiled word lexicon (format <c>POSL</c> version 3): a read-only map from a lower-case spelling to the set
+///     of Universal POS tags that the spelling may carry, and, for most spellings, the analyses (base word, tag and
+///     features) of the forms that the spelling can be.
 /// </summary>
 /// <remarks>
 ///     <para>
@@ -15,9 +16,16 @@ namespace DemaConsulting.PartOfSpeech;
 ///         so it is exact (no hash false positives) and allocates nothing.
 ///     </para>
 ///     <para>
+///         Behind the data region the payload holds the analyses section: a table of feature sets, a palette of
+///         templates (a tag, a feature set and the edit that turns the spelling into its base word: drop <c>cut</c>
+///         bytes from the end, append a suffix), a palette of lists of templates, and one two-byte list index per
+///         spelling in the order of the spellings. The tag lookups never read this section.
+///     </para>
+///     <para>
 ///         The class is immutable after <see cref="Load(byte[])"/> and safe for concurrent lookups; each caller
 ///         supplies its own scratch buffer. <see cref="Load(byte[])"/> validates the whole file (header, checksum,
-///         order, bounds), so a successful load guarantees that lookups cannot fail on malformed data.
+///         order, bounds, and every analysis against its spelling), so a successful load guarantees that lookups
+///         cannot fail on malformed data.
 ///     </para>
 /// </remarks>
 internal sealed class Lexicon
@@ -30,17 +38,32 @@ internal sealed class Lexicon
     /// <summary>
     ///     The length of the fixed header in bytes.
     /// </summary>
-    public const int HeaderLength = 40;
+    public const int HeaderLength = 56;
 
     /// <summary>
     ///     The format version that this build reads and writes.
     /// </summary>
-    public const int FormatVersion = 2;
+    public const int FormatVersion = 3;
 
     /// <summary>
-    ///     The largest uncompressed payload length that is accepted (16 MiB; the compiled lexicon needs about 1.6 MB).
+    ///     The largest uncompressed payload length that is accepted (16 MiB; the compiled lexicon needs about 2.2 MB).
     /// </summary>
     public const int MaxPayloadLength = 16 * 1024 * 1024;
+
+    /// <summary>
+    ///     The largest number of analyses of one spelling.
+    /// </summary>
+    public const int MaxAnalysesPerSpelling = 255;
+
+    /// <summary>
+    ///     The largest length of a base word in UTF-8 bytes.
+    /// </summary>
+    public const int MaxLemmaBytes = 255;
+
+    /// <summary>
+    ///     The largest number of distinct lists of analysis templates (the list index of a spelling has 16 bits).
+    /// </summary>
+    public const int MaxLists = ushort.MaxValue;
 
     /// <summary>
     ///     The description of the file kind used in error messages.
@@ -63,7 +86,7 @@ internal sealed class Lexicon
     private static readonly UposSet FirstUpperTags = UposSet.Of(Upos.Propn, Upos.X);
 
     /// <summary>
-    ///     The decompressed payload: mask palette, block offsets and the data region.
+    ///     The decompressed payload: mask palette, block offsets, the data region and the analyses section.
     /// </summary>
     private readonly byte[] _payload;
 
@@ -78,14 +101,19 @@ internal sealed class Lexicon
     private readonly int[] _blockStarts;
 
     /// <summary>
-    ///     The exclusive end of the data region inside <see cref="_payload"/>.
-    /// </summary>
-    private readonly int _dataEnd;
-
-    /// <summary>
     ///     The log2 of the number of spellings per block.
     /// </summary>
     private readonly int _blockShift;
+
+    /// <summary>
+    ///     The exclusive end of the data region inside <see cref="_payload"/>; set once while loading, when the last block was walked.
+    /// </summary>
+    private int _dataEnd;
+
+    /// <summary>
+    ///     The validated analyses section; set once while loading.
+    /// </summary>
+    private AnalysisTables _analyses = AnalysisTables.Empty;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="Lexicon"/> class from validated parts.
@@ -135,9 +163,34 @@ internal sealed class Lexicon
     public int MaskCount => _masks.Length;
 
     /// <summary>
-    ///     Gets the size of the scratch buffer that <see cref="TryGetTags"/> needs.
+    ///     Gets the size of the scratch buffer that <see cref="TryGetTags"/> and <see cref="TryFind"/> need.
     /// </summary>
     public int ScratchSize => 2 * MaxSpellingBytes;
+
+    /// <summary>
+    ///     Gets the total number of analyses of all spellings.
+    /// </summary>
+    public int AnalysisCount { get; private set; }
+
+    /// <summary>
+    ///     Gets the number of distinct feature sets of the analyses (the empty set is always entry 0).
+    /// </summary>
+    public int FeatureSetCount => _analyses.FeatureSets.Length;
+
+    /// <summary>
+    ///     Gets the number of distinct analysis templates.
+    /// </summary>
+    public int TemplateCount => _analyses.TemplateTags.Length;
+
+    /// <summary>
+    ///     Gets the number of distinct lists of analysis templates (list 0, the empty list, is always present).
+    /// </summary>
+    public int ListCount => _analyses.ListTags.Length;
+
+    /// <summary>
+    ///     Gets the number of spellings that have at least one analysis.
+    /// </summary>
+    public int AnalysedSpellingCount { get; private set; }
 
     /// <summary>
     ///     Computes the tags that the lexicon and the token-shape rules allow for a token.
@@ -242,8 +295,13 @@ internal sealed class Lexicon
         var blockStarts = ReadBlockStarts(payload, header.MaskCount * 4, header.BlockCount, dataStart);
         var lexicon = new Lexicon(payload, masks, blockStarts, header.BlockShift, header.SpellingCount, header.EntryCount, header.MaxSpellingBytes);
 
+        // The data region ends where its last block ends; the analyses section follows and must fill the rest of the payload exactly
+        lexicon._dataEnd = lexicon.FindDataEnd(dataStart);
+        lexicon._analyses = ReadAnalysisTables(payload, lexicon._dataEnd, header);
+        lexicon.AnalysisCount = header.AnalysisCount;
+
         // Walk every entry once: this proves the structure so lookups never need to defend against it
-        lexicon.Validate();
+        lexicon.Validate(header.AnalysisCount);
         return lexicon;
     }
 
@@ -256,9 +314,27 @@ internal sealed class Lexicon
     /// <param name="scratch">A buffer of at least <see cref="ScratchSize"/> bytes that the caller owns exclusively for the call.</param>
     /// <param name="tags">Receives the tags of the spelling; the empty set when it is not in the lexicon.</param>
     /// <returns><c>true</c> if the spelling is in the lexicon.</returns>
-    public bool TryGetTags(char[] chars, int offset, int length, byte[] scratch, out UposSet tags)
+    public bool TryGetTags(char[] chars, int offset, int length, byte[] scratch, out UposSet tags) =>
+        TryFind(chars, offset, length, scratch, out _, out tags);
+
+    /// <summary>
+    ///     Looks up a lower-cased spelling and reports its position in the table.
+    /// </summary>
+    /// <remarks>
+    ///     This is the core of <see cref="TryGetTags"/>: the same search, the same allocation-free behavior, plus the
+    ///     ordinal that addresses the analyses of the spelling.
+    /// </remarks>
+    /// <param name="chars">The buffer that holds the characters of the key, already folded and lower-cased.</param>
+    /// <param name="offset">The index of the first key character in <paramref name="chars"/>.</param>
+    /// <param name="length">The number of characters of the key.</param>
+    /// <param name="scratch">A buffer of at least <see cref="ScratchSize"/> bytes that the caller owns exclusively for the call.</param>
+    /// <param name="ordinal">Receives the zero-based position of the spelling in ascending UTF-8 order; -1 when it is not in the lexicon.</param>
+    /// <param name="tags">Receives the tags of the spelling; the empty set when it is not in the lexicon.</param>
+    /// <returns><c>true</c> if the spelling is in the lexicon.</returns>
+    public bool TryFind(char[] chars, int offset, int length, byte[] scratch, out int ordinal, out UposSet tags)
     {
         tags = UposSet.Empty;
+        ordinal = -1;
         if (length == 0 || length > MaxSpellingBytes)
         {
             return false;
@@ -286,6 +362,7 @@ internal sealed class Lexicon
                 position += headLength;
                 var maskIndex = BinaryFormat.ReadVarintInt32(_payload, ref position, _dataEnd);
                 tags = UposSet.FromMask(_masks[maskIndex]);
+                ordinal = middle << _blockShift;
                 return true;
             }
 
@@ -306,7 +383,7 @@ internal sealed class Lexicon
         }
 
         // Scan the block from its second spelling; the spellings ascend, so stop at the first one that is greater
-        return ScanBlock(block, scratch, keyLength, out tags);
+        return ScanBlock(block, scratch, keyLength, out ordinal, out tags);
     }
 
     /// <summary>
@@ -327,6 +404,113 @@ internal sealed class Lexicon
                 yield return new KeyValuePair<string, UposSet>(
                     Encoding.UTF8.GetString(buffer, 0, length),
                     UposSet.FromMask(_masks[maskIndex]));
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Gets the tags that at least one analysis of a spelling names.
+    /// </summary>
+    /// <remarks>
+    ///     The result is a subset of the tags of the spelling (checked when the file is loaded). The tags of the spelling
+    ///     that are not in it are the tags that the lexicon lists without an analysis. The call reads two bytes and
+    ///     allocates nothing.
+    /// </remarks>
+    /// <param name="ordinal">The position of the spelling, as reported by <see cref="TryFind"/>.</param>
+    /// <returns>The tags of the analyses; the empty set when the spelling has none.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="ordinal"/> is not the position of a spelling.</exception>
+    public UposSet AnalysedTags(int ordinal) => UposSet.FromMask(_analyses.ListTags[ListOf(ordinal)]);
+
+    /// <summary>
+    ///     Gets the analyses of a spelling in their stored order (tag, then base word, then features).
+    /// </summary>
+    /// <remarks>
+    ///     This path allocates: it decodes the spelling of the block, composes one base word string per analysis and
+    ///     returns an array. The feature strings are shared with the table.
+    /// </remarks>
+    /// <param name="ordinal">The position of the spelling, as reported by <see cref="TryFind"/>.</param>
+    /// <returns>The analyses; an empty list when the spelling has none.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="ordinal"/> is not the position of a spelling.</exception>
+    public IReadOnlyList<Analysis> GetAnalyses(int ordinal)
+    {
+        var list = ListOf(ordinal);
+        var first = _analyses.ListStarts[list];
+        var count = _analyses.ListStarts[list + 1] - first;
+        if (count == 0)
+        {
+            return Array.Empty<Analysis>();
+        }
+
+        // Decode the spelling, then apply every template of the list to it
+        var spelling = DecodeSpelling(ordinal, out var spellingLength);
+        var result = new Analysis[count];
+        for (var i = 0; i < count; i++)
+        {
+            var template = _analyses.ListTemplates[first + i];
+            var keep = spellingLength - _analyses.TemplateCuts[template];
+            result[i] = new Analysis(
+                Encoding.UTF8.GetString(spelling, 0, keep) + _analyses.TemplateSuffixTexts[template],
+                (Upos)_analyses.TemplateTags[template],
+                _analyses.FeatureSets[_analyses.TemplateFeatureSets[template]]);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    ///     Tells whether a spelling has an analysis with a tag and a base word, without allocating.
+    /// </summary>
+    /// <param name="ordinal">The position of the spelling, as reported by <see cref="TryFind"/>.</param>
+    /// <param name="tag">The tag of the analysis.</param>
+    /// <param name="spelling">The buffer that holds the UTF-8 bytes of the spelling.</param>
+    /// <param name="spellingOffset">The index of the first spelling byte in <paramref name="spelling"/>.</param>
+    /// <param name="spellingLength">The number of spelling bytes.</param>
+    /// <param name="lemma">The buffer that holds the UTF-8 bytes of the base word.</param>
+    /// <param name="lemmaOffset">The index of the first base word byte in <paramref name="lemma"/>.</param>
+    /// <param name="lemmaLength">The number of base word bytes.</param>
+    /// <returns><c>true</c> if one analysis of the spelling has this tag and composes exactly this base word.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="ordinal"/> is not the position of a spelling.</exception>
+    public bool HasAnalysis(int ordinal, Upos tag, byte[] spelling, int spellingOffset, int spellingLength, byte[] lemma, int lemmaOffset, int lemmaLength)
+    {
+        var list = ListOf(ordinal);
+        var end = _analyses.ListStarts[list + 1];
+        for (var i = _analyses.ListStarts[list]; i < end; i++)
+        {
+            // Cheap tests first: the tag, then the length of the composed base word
+            var template = _analyses.ListTemplates[i];
+            if (_analyses.TemplateTags[template] != (byte)tag)
+            {
+                continue;
+            }
+
+            var suffix = _analyses.TemplateSuffixes[template];
+            var keep = spellingLength - _analyses.TemplateCuts[template];
+            if (keep + suffix.Length != lemmaLength
+                || BinaryFormat.Compare(spelling, spellingOffset, keep, lemma, lemmaOffset, keep) != 0
+                || BinaryFormat.Compare(suffix, 0, suffix.Length, lemma, lemmaOffset + keep, suffix.Length) != 0)
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    ///     Decodes every spelling that has analyses together with them, in the stored (ascending UTF-8) order.
+    /// </summary>
+    /// <returns>The spellings and their analyses; spellings without an analysis are skipped.</returns>
+    public IEnumerable<KeyValuePair<string, IReadOnlyList<Analysis>>> EnumerateAnalyses()
+    {
+        var ordinal = 0;
+        foreach (var entry in Enumerate())
+        {
+            var analyses = GetAnalyses(ordinal++);
+            if (analyses.Count > 0)
+            {
+                yield return new KeyValuePair<string, IReadOnlyList<Analysis>>(entry.Key, analyses);
             }
         }
     }
@@ -466,9 +650,20 @@ internal sealed class Lexicon
         var storedLength = BinaryFormat.ReadInt32Field(file, 28, "stored length");
         var checksum = BinaryFormat.ReadUInt32(file, 32);
         var maxSpellingBytes = BinaryFormat.ReadUInt16(file, 36);
-        if (BinaryFormat.ReadUInt16(file, 38) != 0)
+        if (BinaryFormat.ReadUInt16(file, 38) != 0 || BinaryFormat.ReadUInt16(file, 42) != 0)
         {
-            throw new InvalidDataException("Invalid lexicon file: the reserved field is not zero.");
+            throw new InvalidDataException("Invalid lexicon file: a reserved field is not zero.");
+        }
+
+        // The analyses section: one feature set (the empty one) and one list (the empty one) are always present
+        var featureSetCount = BinaryFormat.ReadUInt16(file, 40);
+        var templateCount = BinaryFormat.ReadInt32Field(file, 44, "template count");
+        var listCount = BinaryFormat.ReadInt32Field(file, 48, "list count");
+        var analysisCount = BinaryFormat.ReadInt32Field(file, 52, "analysis count");
+        if (featureSetCount == 0 || listCount == 0 || listCount > MaxLists)
+        {
+            throw new InvalidDataException(
+                $"Invalid lexicon file: {featureSetCount} feature sets and {listCount} lists are outside the range 1 to {MaxLists} (the empty feature set and the empty list are required).");
         }
 
         // The block count is fully determined by the spelling count and the block size
@@ -484,7 +679,312 @@ internal sealed class Lexicon
             throw new InvalidDataException("Invalid lexicon file: the maximum spelling length is zero.");
         }
 
-        return new HeaderFields(blockShift, maskCount, spellingCount, entryCount, blockCount, payloadLength, storedLength, checksum, maxSpellingBytes);
+        return new HeaderFields(
+            blockShift, maskCount, spellingCount, entryCount, blockCount, payloadLength, storedLength, checksum, maxSpellingBytes,
+            featureSetCount, templateCount, listCount, analysisCount);
+    }
+
+    /// <summary>
+    ///     Finds the end of the data region by walking its last block.
+    /// </summary>
+    /// <param name="dataStart">The position of the data region (after the palette and the block index).</param>
+    /// <returns>The exclusive end of the data region inside the payload.</returns>
+    /// <exception cref="InvalidDataException">The last block is malformed.</exception>
+    private int FindDataEnd(int dataStart)
+    {
+        if (_blockStarts.Length == 0)
+        {
+            return dataStart;
+        }
+
+        var last = _blockStarts.Length - 1;
+        var position = _blockStarts[last];
+        var count = BlockSpellingCount(last);
+        var buffer = new byte[MaxSpellingBytes];
+        var length = 0;
+        for (var entry = 0; entry < count; entry++)
+        {
+            ReadEntry(ref position, entry == 0, buffer, 0, ref length);
+        }
+
+        return position;
+    }
+
+    /// <summary>
+    ///     Reads and validates the analyses section that follows the data region.
+    /// </summary>
+    /// <param name="payload">The payload.</param>
+    /// <param name="start">The position of the section (the end of the data region).</param>
+    /// <param name="header">The header fields.</param>
+    /// <returns>The tables of the section.</returns>
+    /// <exception cref="InvalidDataException">A table is malformed or the regions do not fill the payload exactly.</exception>
+    private static AnalysisTables ReadAnalysisTables(byte[] payload, int start, HeaderFields header)
+    {
+        // The list index (two bytes per spelling) closes the payload; the three palettes sit between the data and the index
+        var indexBytes = (long)header.SpellingCount * 2;
+        if (start + indexBytes > payload.Length)
+        {
+            throw new InvalidDataException("The lexicon file is truncated: the analyses section does not fit the payload.");
+        }
+
+        var limit = payload.Length - (int)indexBytes;
+        var position = start;
+
+        // Feature sets: strictly ascending, entry 0 is the empty set; every entry takes at least one byte
+        if (header.FeatureSetCount > limit - position)
+        {
+            throw new InvalidDataException("The lexicon file is truncated: the feature set table does not fit the payload.");
+        }
+
+        var featureSets = new string[header.FeatureSetCount];
+        for (var i = 0; i < featureSets.Length; i++)
+        {
+            var length = BinaryFormat.ReadVarintInt32(payload, ref position, limit);
+            if (length > limit - position)
+            {
+                throw new InvalidDataException($"Invalid lexicon file: feature set {i} runs past the table.");
+            }
+
+            for (var k = 0; k < length; k++)
+            {
+                if (payload[position + k] >= 0x80)
+                {
+                    throw new InvalidDataException($"Invalid lexicon file: feature set {i} is not ASCII.");
+                }
+            }
+
+            var text = Encoding.ASCII.GetString(payload, position, length);
+            position += length;
+            var ordered = i == 0 ? text.Length == 0 : text.Length > 0 && string.CompareOrdinal(featureSets[i - 1], text) < 0;
+            if (!ordered || !IsValidFeatureSet(text))
+            {
+                throw new InvalidDataException($"Invalid lexicon file: feature set {i} is malformed, repeated or out of order.");
+            }
+
+            featureSets[i] = text;
+        }
+
+        // Templates: a template takes at least four bytes (tag, feature set, cut, suffix length), so the count is bounded by the payload
+        if ((long)header.TemplateCount * 4 > limit - position)
+        {
+            throw new InvalidDataException("The lexicon file is truncated: the template palette does not fit the payload.");
+        }
+
+        var templateTags = new byte[header.TemplateCount];
+        var templateFeatureSets = new int[header.TemplateCount];
+        var templateCuts = new int[header.TemplateCount];
+        var templateSuffixes = new byte[header.TemplateCount][];
+        var templateSuffixTexts = new string[header.TemplateCount];
+        var seenTemplates = new HashSet<string>(StringComparer.Ordinal);
+        for (var t = 0; t < header.TemplateCount; t++)
+        {
+            if (position >= limit)
+            {
+                throw new InvalidDataException($"The lexicon file is truncated: template {t} is missing.");
+            }
+
+            var tag = payload[position++];
+            var featureSet = BinaryFormat.ReadVarintInt32(payload, ref position, limit);
+            var cut = BinaryFormat.ReadVarintInt32(payload, ref position, limit);
+            var suffixLength = BinaryFormat.ReadVarintInt32(payload, ref position, limit);
+            if (tag >= UposExtensions.Count || featureSet >= featureSets.Length || cut > header.MaxSpellingBytes
+                || suffixLength > MaxLemmaBytes || suffixLength > limit - position)
+            {
+                throw new InvalidDataException($"Invalid lexicon file: template {t} has a tag, feature set, cut or suffix out of range.");
+            }
+
+            var suffix = new byte[suffixLength];
+            Buffer.BlockCopy(payload, position, suffix, 0, suffixLength);
+            position += suffixLength;
+            var text = TryDecodeUtf8(suffix);
+            if (text == null || (suffixLength > 0 && (suffix[0] & 0xC0) == 0x80))
+            {
+                throw new InvalidDataException($"Invalid lexicon file: the suffix of template {t} is not valid UTF-8 or starts inside a character.");
+            }
+
+            if (!seenTemplates.Add($"{tag}/{featureSet}/{cut}/{Convert.ToBase64String(suffix)}"))
+            {
+                throw new InvalidDataException($"Invalid lexicon file: template {t} repeats an earlier template.");
+            }
+
+            templateTags[t] = tag;
+            templateFeatureSets[t] = featureSet;
+            templateCuts[t] = cut;
+            templateSuffixes[t] = suffix;
+            templateSuffixTexts[t] = text;
+        }
+
+        // Lists: list 0 is empty, every other list is not; tags never decrease, a template appears once, lists are distinct
+        if (header.ListCount > limit - position)
+        {
+            throw new InvalidDataException("The lexicon file is truncated: the list palette does not fit the payload.");
+        }
+
+        var listStarts = new int[header.ListCount + 1];
+        var listTags = new int[header.ListCount];
+        var items = new List<int>();
+        var seenLists = new HashSet<string>(StringComparer.Ordinal);
+        var used = new bool[header.TemplateCount];
+        for (var l = 0; l < header.ListCount; l++)
+        {
+            listStarts[l] = items.Count;
+            var count = BinaryFormat.ReadVarintInt32(payload, ref position, limit);
+            if (count > MaxAnalysesPerSpelling || (count == 0) != (l == 0))
+            {
+                throw new InvalidDataException($"Invalid lexicon file: list {l} has {count} templates (list 0 must be empty, every other list not, at most {MaxAnalysesPerSpelling}).");
+            }
+
+            var key = new StringBuilder();
+            var lastTag = -1;
+            var mask = 0;
+            for (var k = 0; k < count; k++)
+            {
+                var template = BinaryFormat.ReadVarintInt32(payload, ref position, limit);
+                if (template >= header.TemplateCount || used[template] || templateTags[template] < lastTag)
+                {
+                    throw new InvalidDataException($"Invalid lexicon file: list {l} names a missing or repeated template or its tags decrease.");
+                }
+
+                used[template] = true;
+                lastTag = templateTags[template];
+                mask |= 1 << lastTag;
+                items.Add(template);
+                key.Append(template).Append(',');
+            }
+
+            for (var k = items.Count - count; k < items.Count; k++)
+            {
+                used[items[k]] = false;
+            }
+
+            if (!seenLists.Add(key.ToString()))
+            {
+                throw new InvalidDataException($"Invalid lexicon file: list {l} repeats an earlier list.");
+            }
+
+            listTags[l] = mask;
+        }
+
+        listStarts[header.ListCount] = items.Count;
+
+        // The three palettes must end exactly where the list index begins
+        if (position != limit)
+        {
+            throw new InvalidDataException("Invalid lexicon file: the analyses regions do not fill the payload exactly.");
+        }
+
+        return new AnalysisTables(featureSets, templateTags, templateFeatureSets, templateCuts, templateSuffixes, templateSuffixTexts, listStarts, items.ToArray(), listTags, limit);
+    }
+
+    /// <summary>
+    ///     Decodes bytes as strict UTF-8.
+    /// </summary>
+    /// <param name="bytes">The bytes.</param>
+    /// <returns>The text, or <c>null</c> if the bytes are not valid UTF-8.</returns>
+    private static string? TryDecodeUtf8(byte[] bytes)
+    {
+        try
+        {
+            return new UTF8Encoding(false, true).GetString(bytes);
+        }
+        catch (DecoderFallbackException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    ///     Tells whether a text is a well-formed feature set: <c>Name=Value</c> pairs joined by <c>|</c>, names ascending.
+    /// </summary>
+    /// <remarks>
+    ///     The empty text is the empty feature set. A name starts with an ASCII letter and continues with letters and
+    ///     digits, a value consists of ASCII letters and digits; nothing may be empty and no name may repeat.
+    /// </remarks>
+    /// <param name="text">The text.</param>
+    /// <returns><c>true</c> if the text is well formed.</returns>
+    internal static bool IsValidFeatureSet(string text)
+    {
+        if (text.Length == 0)
+        {
+            return true;
+        }
+
+        string? previousName = null;
+        foreach (var pair in text.Split('|'))
+        {
+            var equals = pair.IndexOf('=');
+            if (equals <= 0 || equals == pair.Length - 1)
+            {
+                return false;
+            }
+
+            var name = pair.Substring(0, equals);
+            if (!((name[0] >= 'A' && name[0] <= 'Z') || (name[0] >= 'a' && name[0] <= 'z')) || !IsAsciiAlphanumeric(name)
+                || !IsAsciiAlphanumeric(pair.Substring(equals + 1))
+                || (previousName != null && string.CompareOrdinal(previousName, name) >= 0))
+            {
+                return false;
+            }
+
+            previousName = name;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    ///     Tells whether a text is not empty and has only ASCII letters and digits.
+    /// </summary>
+    /// <param name="text">The text.</param>
+    /// <returns><c>true</c> if every character is an ASCII letter or digit.</returns>
+    private static bool IsAsciiAlphanumeric(string text)
+    {
+        foreach (var c in text)
+        {
+            if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')))
+            {
+                return false;
+            }
+        }
+
+        return text.Length > 0;
+    }
+
+    /// <summary>
+    ///     Gets the list index of a spelling.
+    /// </summary>
+    /// <param name="ordinal">The position of the spelling.</param>
+    /// <returns>The list index, below <see cref="ListCount"/>.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="ordinal"/> is not the position of a spelling.</exception>
+    private int ListOf(int ordinal)
+    {
+        if ((uint)ordinal >= (uint)SpellingCount)
+        {
+            throw new ArgumentOutOfRangeException(nameof(ordinal), ordinal, "The ordinal is not the position of a spelling.");
+        }
+
+        return BinaryFormat.ReadUInt16(_payload, _analyses.IndexStart + (ordinal * 2));
+    }
+
+    /// <summary>
+    ///     Decodes one spelling of the table into a new buffer.
+    /// </summary>
+    /// <param name="ordinal">The position of the spelling.</param>
+    /// <param name="length">Receives the length of the spelling in bytes.</param>
+    /// <returns>A buffer that holds the spelling at its start.</returns>
+    private byte[] DecodeSpelling(int ordinal, out int length)
+    {
+        var buffer = new byte[MaxSpellingBytes];
+        var block = ordinal >> _blockShift;
+        var target = ordinal & ((1 << _blockShift) - 1);
+        var position = _blockStarts[block];
+        length = 0;
+        for (var entry = 0; entry <= target; entry++)
+        {
+            ReadEntry(ref position, entry == 0, buffer, 0, ref length);
+        }
+
+        return buffer;
     }
 
     /// <summary>
@@ -600,11 +1100,13 @@ internal sealed class Lexicon
     /// <param name="block">The block index.</param>
     /// <param name="scratch">The scratch buffer; the key is in the first half, the second half is used for decoding.</param>
     /// <param name="keyLength">The length of the key in bytes.</param>
+    /// <param name="ordinal">Receives the position of the spelling when the key is found; -1 otherwise.</param>
     /// <param name="tags">Receives the tags when the key is found.</param>
     /// <returns><c>true</c> if the key is in the block.</returns>
-    private bool ScanBlock(int block, byte[] scratch, int keyLength, out UposSet tags)
+    private bool ScanBlock(int block, byte[] scratch, int keyLength, out int ordinal, out UposSet tags)
     {
         tags = UposSet.Empty;
+        ordinal = -1;
 
         // Decode into the second half of the scratch buffer; the first half keeps the key
         var position = _blockStarts[block];
@@ -624,6 +1126,7 @@ internal sealed class Lexicon
             if (comparison == 0)
             {
                 tags = UposSet.FromMask(_masks[maskIndex]);
+                ordinal = (block << _blockShift) + entry;
                 return true;
             }
 
@@ -637,10 +1140,12 @@ internal sealed class Lexicon
     }
 
     /// <summary>
-    ///     Walks every entry of the file once and checks the structure the lookups rely on.
+    ///     Walks every entry of the file once and checks the structure the lookups rely on, including every analysis
+    ///     against the spelling that it belongs to.
     /// </summary>
+    /// <param name="declaredAnalyses">The number of analyses that the header declares.</param>
     /// <exception cref="InvalidDataException">An entry is malformed, the order is violated or the counts do not match.</exception>
-    private void Validate()
+    private void Validate(int declaredAnalyses)
     {
         var current = new byte[MaxSpellingBytes];
         var previous = new byte[MaxSpellingBytes];
@@ -648,6 +1153,8 @@ internal sealed class Lexicon
         var length = 0;
         var spellings = 0;
         long entries = 0;
+        long analyses = 0;
+        var analysed = 0;
         var longest = 0;
         for (var block = 0; block < _blockStarts.Length; block++)
         {
@@ -668,6 +1175,9 @@ internal sealed class Lexicon
                     throw new InvalidDataException("Invalid lexicon file: the spellings are not strictly ascending.");
                 }
 
+                var listed = ValidateAnalyses(spellings, _masks[maskIndex], current, length);
+                analyses += listed;
+                analysed += listed > 0 ? 1 : 0;
                 spellings++;
                 entries += BinaryFormat.PopCount((ulong)_masks[maskIndex]);
                 longest = Math.Max(longest, length);
@@ -685,7 +1195,68 @@ internal sealed class Lexicon
         {
             throw new InvalidDataException("Invalid lexicon file: the counts in the header do not match the data.");
         }
+
+        if (analyses != declaredAnalyses)
+        {
+            throw new InvalidDataException($"Invalid lexicon file: the header declares {declaredAnalyses} analyses but the spellings have {analyses}.");
+        }
+
+        AnalysedSpellingCount = analysed;
     }
+
+    /// <summary>
+    ///     Checks the analyses of one spelling: the list exists, its tags are tags of the spelling and every template can be applied.
+    /// </summary>
+    /// <param name="ordinal">The position of the spelling.</param>
+    /// <param name="mask">The tag mask of the spelling.</param>
+    /// <param name="spelling">The buffer that holds the spelling.</param>
+    /// <param name="length">The length of the spelling in bytes.</param>
+    /// <returns>The number of analyses of the spelling.</returns>
+    /// <exception cref="InvalidDataException">The list index, a tag, a cut or a composed base word is invalid.</exception>
+    private int ValidateAnalyses(int ordinal, int mask, byte[] spelling, int length)
+    {
+        var list = BinaryFormat.ReadUInt16(_payload, _analyses.IndexStart + (ordinal * 2));
+        if (list >= _analyses.ListTags.Length)
+        {
+            throw new InvalidDataException($"Invalid lexicon file: spelling {ordinal} names the missing list {list}.");
+        }
+
+        // Join integrity: an analysis never names a tag that the spelling does not have
+        if ((_analyses.ListTags[list] & ~mask) != 0)
+        {
+            throw new InvalidDataException($"Invalid lexicon file: an analysis of spelling {ordinal} names a tag that the spelling does not have.");
+        }
+
+        // Each base word must be made of a whole-character prefix of the spelling and a valid suffix, and fit the length limit
+        var first = _analyses.ListStarts[list];
+        var end = _analyses.ListStarts[list + 1];
+        for (var i = first; i < end; i++)
+        {
+            var template = _analyses.ListTemplates[i];
+            var cut = _analyses.TemplateCuts[template];
+            if (cut > length)
+            {
+                throw new InvalidDataException($"Invalid lexicon file: an analysis of spelling {ordinal} cuts {cut} bytes from a spelling of {length}.");
+            }
+
+            var keep = length - cut;
+            var lemmaLength = keep + _analyses.TemplateSuffixes[template].Length;
+            if ((keep < length && (spelling[keep] & 0xC0) == 0x80) || lemmaLength < 1 || lemmaLength > MaxLemmaBytes)
+            {
+                throw new InvalidDataException($"Invalid lexicon file: an analysis of spelling {ordinal} cuts inside a character or has a base word of {lemmaLength} bytes.");
+            }
+        }
+
+        return end - first;
+    }
+
+    /// <summary>
+    ///     One analysis of a spelling: the base word, the tag and the features of one form that the spelling can be.
+    /// </summary>
+    /// <param name="Lemma">The base word.</param>
+    /// <param name="Tag">The tag of the form.</param>
+    /// <param name="Features">The features in UD notation (<c>Number=Plur</c>, names ascending, joined by <c>|</c>); empty when none are recorded.</param>
+    public readonly record struct Analysis(string Lemma, Upos Tag, string Features);
 
     /// <summary>
     ///     The validated numeric header fields.
@@ -699,6 +1270,10 @@ internal sealed class Lexicon
     /// <param name="StoredLength">The stored payload length.</param>
     /// <param name="Checksum">The FNV-1a checksum of the stored bytes.</param>
     /// <param name="MaxSpellingBytes">The longest spelling in bytes.</param>
+    /// <param name="FeatureSetCount">The number of feature sets.</param>
+    /// <param name="TemplateCount">The number of analysis templates.</param>
+    /// <param name="ListCount">The number of template lists.</param>
+    /// <param name="AnalysisCount">The number of analyses of all spellings.</param>
     private readonly record struct HeaderFields(
         int BlockShift,
         int MaskCount,
@@ -708,5 +1283,109 @@ internal sealed class Lexicon
         int PayloadLength,
         int StoredLength,
         uint Checksum,
-        int MaxSpellingBytes);
+        int MaxSpellingBytes,
+        int FeatureSetCount,
+        int TemplateCount,
+        int ListCount,
+        int AnalysisCount);
+
+    /// <summary>
+    ///     The tables of the analyses section after validation.
+    /// </summary>
+    private sealed class AnalysisTables
+    {
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="AnalysisTables"/> class.
+        /// </summary>
+        /// <param name="featureSets">The feature sets in UD notation; entry 0 is empty.</param>
+        /// <param name="templateTags">The tag index of every template.</param>
+        /// <param name="templateFeatureSets">The feature set index of every template.</param>
+        /// <param name="templateCuts">The number of bytes that every template drops from the end of the spelling.</param>
+        /// <param name="templateSuffixes">The UTF-8 suffix that every template appends.</param>
+        /// <param name="templateSuffixTexts">The suffix of every template as text.</param>
+        /// <param name="listStarts">The start of every list inside <paramref name="listTemplates"/>, plus the total as the last entry.</param>
+        /// <param name="listTemplates">The template indices of all lists, one list after the other.</param>
+        /// <param name="listTags">The mask of the tags of every list.</param>
+        /// <param name="indexStart">The position of the list index inside the payload.</param>
+        public AnalysisTables(
+            string[] featureSets,
+            byte[] templateTags,
+            int[] templateFeatureSets,
+            int[] templateCuts,
+            byte[][] templateSuffixes,
+            string[] templateSuffixTexts,
+            int[] listStarts,
+            int[] listTemplates,
+            int[] listTags,
+            int indexStart)
+        {
+            FeatureSets = featureSets;
+            TemplateTags = templateTags;
+            TemplateFeatureSets = templateFeatureSets;
+            TemplateCuts = templateCuts;
+            TemplateSuffixes = templateSuffixes;
+            TemplateSuffixTexts = templateSuffixTexts;
+            ListStarts = listStarts;
+            ListTemplates = listTemplates;
+            ListTags = listTags;
+            IndexStart = indexStart;
+        }
+
+        /// <summary>
+        ///     Gets the state of a lexicon before its analyses section is read: no spelling has an analysis.
+        /// </summary>
+        public static AnalysisTables Empty { get; } = new(
+            new[] { string.Empty }, Array.Empty<byte>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<byte[]>(), Array.Empty<string>(),
+            new[] { 0, 0 }, Array.Empty<int>(), new[] { 0 }, 0);
+
+        /// <summary>
+        ///     Gets the feature sets in UD notation; entry 0 is empty.
+        /// </summary>
+        public string[] FeatureSets { get; }
+
+        /// <summary>
+        ///     Gets the tag index of every template.
+        /// </summary>
+        public byte[] TemplateTags { get; }
+
+        /// <summary>
+        ///     Gets the feature set index of every template.
+        /// </summary>
+        public int[] TemplateFeatureSets { get; }
+
+        /// <summary>
+        ///     Gets the number of bytes that every template drops from the end of the spelling.
+        /// </summary>
+        public int[] TemplateCuts { get; }
+
+        /// <summary>
+        ///     Gets the UTF-8 suffix that every template appends.
+        /// </summary>
+        public byte[][] TemplateSuffixes { get; }
+
+        /// <summary>
+        ///     Gets the suffix of every template as text.
+        /// </summary>
+        public string[] TemplateSuffixTexts { get; }
+
+        /// <summary>
+        ///     Gets the start of every list inside <see cref="ListTemplates"/>, plus the total as the last entry.
+        /// </summary>
+        public int[] ListStarts { get; }
+
+        /// <summary>
+        ///     Gets the template indices of all lists, one list after the other.
+        /// </summary>
+        public int[] ListTemplates { get; }
+
+        /// <summary>
+        ///     Gets the mask of the tags of every list.
+        /// </summary>
+        public int[] ListTags { get; }
+
+        /// <summary>
+        ///     Gets the position of the list index (two bytes per spelling) inside the payload.
+        /// </summary>
+        public int IndexStart { get; }
+    }
 }
