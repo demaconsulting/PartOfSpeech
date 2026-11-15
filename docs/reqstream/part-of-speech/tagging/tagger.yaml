@@ -293,6 +293,7 @@ sections:
                 tests:
                   - Tagger_IsFormOf_Analyses_AnswerTheQuestion
                   - Tagger_IsFormOf_EveryAnalysisOfSampleWords_IsAForm
+                  - Tagger_IsFormOf_LowerCaseCustomBaseWord_MatchesAndUpperCaseCannotBeStored
                   - Tagger_GetPossibleTags_NullWord_Throws
                   - Tagger_GetPossibleTags_EmptyOrWhiteSpace_Throws
                   - Tagger_GetPossibleTags_UndefinedModeOrTag_Throws

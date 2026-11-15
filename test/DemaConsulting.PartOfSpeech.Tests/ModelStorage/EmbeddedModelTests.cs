@@ -50,6 +50,33 @@ public class EmbeddedModelTests
     }
 
     /// <summary>
+    ///     Proves that every base word of the embedded lexicon is a fixed point of the fold of the tagger (NFC, lower case, no typographic
+    ///     marks), which is what <c>IsFormOf</c> needs to be able to match it, and that the count is that of the table.
+    /// </summary>
+    [Fact]
+    public void EmbeddedModel_Lexicon_EveryBaseWordIsAFixedPointOfTheFold()
+    {
+        // Arrange / Act: test the base word of every analysis of every spelling
+        var count = 0;
+        var failures = new List<string>();
+        foreach (var entry in EmbeddedModel.Lexicon.EnumerateAnalyses())
+        {
+            foreach (var analysis in entry.Value)
+            {
+                count++;
+                if (!FeatureExtractor.IsFoldFixedPoint(analysis.Lemma))
+                {
+                    failures.Add($"{entry.Key} {analysis.Lemma} {analysis.Tag}");
+                }
+            }
+        }
+
+        // Assert: all 290,365 analyses, none different
+        Assert.Equal(290365, count);
+        Assert.Empty(failures);
+    }
+
+    /// <summary>
     ///     Proves that repeated access returns the same instance.
     /// </summary>
     [Fact]

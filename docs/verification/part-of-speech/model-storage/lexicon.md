@@ -55,10 +55,15 @@ below 99.9 percent.
   `LexiconWriter_AnalysesFromTsv_ParsesRowsAndChecksHeaderCounts` (rows, features and the header counts) and
   `LexiconWriter_AnalysesFromTsv_RejectsUnsortedUnknownOrInvalid` (a theory of rows that are unsorted or repeated, name
   a spelling or a tag that the lexicon lacks, have no analysis, a missing tag, an extra cell or a lower-case tag, list
-  the analyses of a spelling out of order, or have malformed or unordered features or a base word that is not NFC);
+  the analyses of a spelling out of order, or have malformed or unordered features or a base word that the fold of the
+  tagger would change: not NFC, with a capital letter or with a typographic quote);
   `LexiconWriter_Compile_InvalidAnalyses_Throws` (a theory of scenarios: unknown or unsorted spellings, a tag that the
   spelling lacks, unordered or duplicate analyses, an empty list, too many analyses, malformed or unordered features, an
-  empty, white-space, too long, not NFC or not well-formed (unpaired surrogate) base word);
+  empty, white-space, too long, not NFC, not well-formed (unpaired surrogate), upper-case (ASCII and non-ASCII) or
+  typographic (apostrophe, dash, ellipsis) base word);
+  `FeatureExtractor_IsFoldFixedPoint_AgreesWithTheFoldOfTheWorkspace` (the test for a stored base word equals "the
+  lower-cased folded form that the decoder's workspace holds is the text" for every UTF-16 code unit and for words that
+  mix the cases of the rule, so the writer applies the fold that `IsFormOf` uses);
   `LexiconWriter_Compile_MoreThanMaximumLists_Throws` (the largest accepted
   number of lists compiles and loads, one more is refused); `LexiconWriter_Compile_Analyses_IsDeterministic` (the same
   tables compile to the same bytes in any input order of the analyses, and the compressed and the plain file have the same
@@ -95,8 +100,21 @@ below 99.9 percent.
   reads back in the written order, and exchanging two neighbors of one tag in a list is refused in every list where that
   is possible, which ties the comparison of the loader to the one of the writer, including UTF-8 byte order against
   UTF-16 order), `Lexicon_Load_ComposedBaseWordNotNormalized_Throws` (a template patched to compose `cafe` and U+0301),
+  `Lexicon_Load_ComposedBaseWordNotFolded_Throws` (a theory: a suffix patched to an upper-case ASCII letter, an upper-case
+  letter of two bytes or U+02BC is refused, and the unpatched file loads),
+  `Lexicon_Load_LowerCaseTwoByteSuffixIsAcceptedAndKeptUpperCaseIsRefused` (a patched lower-case letter of two bytes is
+  accepted; a template that keeps a capital of the spelling is refused),
+  `Lexicon_Load_LowerCaseBaseWordsOfTwoBytes_AreAcceptedAndKeepTheirText` (base words with two-byte letters, kept or in
+  the suffix, load and read back as written),
+  `Lexicon_Load_UpperCaseLetterInAKeptPrefix_Throws` (a theory over the position of a capital in a 26-byte spelling,
+  including the edges of the eight-byte steps of the scan) and
+  `Lexicon_Load_CharactersNextToCapitalsInALongBaseWord_AreAccepted` (`@`, `[`, the grave accent, the brace, DEL and
+  non-ASCII lower-case letters in long base words are accepted),
   `Lexicon_Load_CharactersBelowU0300_AreStableUnderNormalizationFormC` (the premise of the fast path: every character
   below U+0300 and every pair of them is in form C, and `a` with U+0300 is not),
+  `FeatureExtractor_IsFoldStable_AgreesWithIsFoldFixedPointForEveryCharacter` (the character test of the scan equals the
+  test for a text, for every character that is in form C by itself),
+  `EmbeddedModel_Lexicon_EveryBaseWordIsAFixedPointOfTheFold` (all 290,365 base words of the embedded lexicon),
   `Lexicon_Load_ListZeroNotEmpty_Throws`, `Lexicon_Load_RepeatedTemplate_Throws`,
   `Lexicon_Load_AnalysesRegionsDoNotFillThePayload_Throws`, `Lexicon_Load_AnalysisCountMismatch_Throws`,
   `Lexicon_Load_TemplateCountLargerThanThePayload_Throws` (a hostile count is refused before an array is sized from it)

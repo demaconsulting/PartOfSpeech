@@ -72,8 +72,10 @@ The analyses section follows the data region (its start is found by walking the 
 
 A spelling with no analysis has list 0. A lexicon compiled without an analyses table is a version 3 file with one
 feature set (the empty one), no template, one list (the empty one) and every spelling on list 0. The base word of an
-analysis is lower case NFC text of 1 to 255 UTF-8 bytes; the features are the subset of UD features that the source
-tables record (`Degree`, `Number`, `Person`, `Tense`, `VerbForm`).
+analysis is text of 1 to 255 UTF-8 bytes that is stored as the tagger folds text: in NFC, lower case
+(`char.ToLowerInvariant` of every character) and without typographic quotes, dashes or ellipsis (a fixed point of the
+fold, so that `Tagger.IsFormOf`, which folds its base word argument, can match it); the features are the subset of UD
+features that the source tables record (`Degree`, `Number`, `Person`, `Tense`, `VerbForm`).
 
 For the committed lexicon the file is 762,836 bytes (262,635 spellings, 339,819 tag entries, 225 masks, 16 spellings
 per block, Deflate). Its inflated payload is 2,157,443 bytes (the `payloadLength` field); the uncompressed file image,
@@ -108,8 +110,10 @@ only tool that writes lexicon files, `LexiconCompiler`, is not shipped, so no re
   exactly. While walking the spellings `Validate` also checks that every list index is below `listCount`, that the tags
   of the spelling's list are a subset of the spelling's tags (the join of the two tables), that every cut is at most
   the spelling length and falls on a character boundary of the spelling (so the composed base word is valid UTF-8),
-  that the base word has 1 to 255 bytes, that the list sizes add up to `analysisCount`, that a composed base word is in
-  Unicode normalization form C, and that the analyses are in the documented order. The tag order is checked once per
+  that the base word has 1 to 255 bytes, that the list sizes add up to `analysisCount`, that a composed base word is a
+  fixed point of the fold of the tagger (Unicode normalization form C, lower case and no typographic quote, dash or
+  ellipsis; `FeatureExtractor.IsFoldFixedPoint`), and that the analyses are in the documented order. The tag order is
+  checked once per
   list when the palette is read; the order of two neighboring templates with one tag depends on the spelling (the base
   words are `spelling` without `cut` bytes plus the suffix, so the same two templates can be in order for one spelling
   and out of order for another), so it is checked for each spelling that uses such a list: the two composed base words
@@ -117,14 +121,19 @@ only tool that writes lexicon files, `LexiconCompiler`, is not shipped, so no re
   length) and, when they are equal, the feature-set indexes are compared, which is the order of the feature texts
   because the table is ascending. The comparison is the one of `LexiconWriter.CompareAnalyses`, which orders by tag,
   then base word bytes, then feature text bytes, and equal analyses are refused as well. Lists whose neighbors never
-  share a tag are not compared. The normalization test costs nothing for text without a character from U+0300 on
-  (every character below it is stable under form C, which a test proves for every pair of them): such a base word is
-  not composed as a string, so only the rare base word with another character is decoded and normalized. The two
-  checks (and `ValidateAnalyses`, which runs them for each of the 262,635 spellings) are compiled fully optimized at
-  their first call (`MethodImplOptions.AggressiveOptimization`), because the load runs too briefly for tiered
-  compilation to replace unoptimized code. Measured on .NET 10 (median of 21 cold processes each), the first access of
-  `Tagger.Default` takes the same time with the checks as without them (49.6 against 49.9 ms); compiled like the rest of
-  the load, the same checks added about 12 ms.
+  share a tag are not compared. The fold test costs nothing for the committed lexicon: a base word made of ASCII without
+  capitals and of characters below U+0300 that the fold keeps is a fixed point without being composed as a string (every
+  character below U+0300 is stable under form C, which a test proves for every pair of them, and the character test is the
+  one that `FeatureExtractor.IsFoldStable` makes for the fold, which a test proves for every character). The scan of the
+  spelling and of the suffixes runs on the bytes (eight ASCII bytes at a time, a two-byte character decoded to one
+  character), so only a base word with a capital, a typographic mark or another character is composed as a string and
+  tested with `IsFoldFixedPoint`; the committed lexicon has none of those. The two checks (and `ValidateAnalyses`, which
+  runs them for each of the 262,635 spellings) are compiled fully optimized at their first call
+  (`MethodImplOptions.AggressiveOptimization`), because the load runs too briefly for tiered compilation to replace
+  unoptimized code. Measured on .NET 10 (median of 41 interleaved cold processes each, two batches), the first access of
+  `Tagger.Default` takes the same time with the checks as without them (49.4 against 49.6 ms and 50.5 against 50.6 ms);
+  compiled like the rest of the load, the order and normalization checks added about 12 ms, and a byte-by-byte scan that
+  also looks for capitals added about 1 ms.
 - **`TryGetTags(char[] chars, int offset, int length, byte[] scratch, out UposSet tags)`**: looks up the folded,
   lower-cased spelling in a region of a character buffer (the decoder keeps all tokens of a sentence in one buffer, hence
   the `offset`). It calls `TryFindKey` and drops the ordinal and key length. Allocation-free.
@@ -167,12 +176,16 @@ only tool that writes lexicon files, `LexiconCompiler`, is not shipped, so no re
   omitted when empty); rows ascend strictly in UTF-8 byte order and name only spellings of the lexicon; the analyses
   of a row ascend by tag, base word and features, are distinct, and each tag is one of the spelling's tags; the header
   comment's `spellings=` and `analyses=` counts are checked. The syntax of a feature set is checked, the vocabulary of
-  names and values is not (the build script and the data test enforce it, so a custom lexicon may carry others).
+  names and values is not (the build script and the data test enforce it, so a custom lexicon may carry others). A base
+  word must be a fixed point of the fold of the tagger (NFC, lower case, no typographic quote, dash or ellipsis); the
+  parser refuses others with the line number, and `Compile` refuses them again for analyses that do not come from a table.
 - **`LexiconWriter.Compile(entries, analyses, compress, blockShift = 4)`, `Compile(entries, compress, blockShift)` and
   `Write`**: validates again (empty spelling or tag set, order, more than 65,535 masks or a longer spelling, and for the
   analyses a tag the spelling lacks, more than 255 analyses of a spelling, analyses that are not strictly ascending by tag,
-  base word and features, a base word that is empty, has white space, is not well-formed UTF-16 in normalization form C
-  or is longer than 255 bytes, malformed features, more than 65,535 feature sets or lists), builds the palette, the block
+  base word and features, a base word that is empty, has white space, is longer than 255 bytes or is not stored as the
+  tagger folds text (not well-formed UTF-16 in normalization form C, has a capital letter, or has a typographic quote,
+  dash or ellipsis; `FeatureExtractor.IsFoldFixedPoint`, the fold that `IsFormOf` applies to its base word argument),
+  malformed features, more than 65,535 feature sets or lists), builds the palette, the block
   index and the front-coded data, derives the templates (the longest common prefix of spelling and base word, moved back
   to a character boundary of both, gives the cut and the suffix) and lists, and writes the header and payload. The
   overload without analyses writes a version 3 file without analyses. The output is deterministic: feature sets

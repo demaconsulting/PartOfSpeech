@@ -162,7 +162,9 @@ is accepted, a parallel lookup differs from the sequential one, or a lookup of a
   a proper noun without analysis, a tag without analysis, the whole spelling `built-in` against its head, an unknown
   head and a malformed compound) and `Tagger_IsFormOf_EveryAnalysisOfSampleWords_IsAForm` (every analysis of a sample
   of words, compound heads included, is a form, and a decomposed non-ASCII word and base word and a curly apostrophe
-  are normalized in a custom lexicon).
+  are normalized in a custom lexicon) and `Tagger_IsFormOf_LowerCaseCustomBaseWord_MatchesAndUpperCaseCannotBeStored` (a
+  lower-case base word of a custom lexicon is returned as stored and matched in every case of the question, and a lexicon
+  with the base word `Run` cannot be compiled).
 - **Thread safety**: `Tagger_GetPossibleTags_ConcurrentCalls_GiveTheSameResultsAsOneThread` (eight threads look up words,
   ask the form question and tag text in between; every answer equals the one of a single thread).
 - **Span overload** (.NET 8 and later): `Tagger_GetPossibleTags_Span_EqualsStringOverload` (words of every kind, also

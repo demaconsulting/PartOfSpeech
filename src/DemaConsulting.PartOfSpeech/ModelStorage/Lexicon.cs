@@ -72,11 +72,6 @@ internal sealed class Lexicon
     private const string Kind = "lexicon file";
 
     /// <summary>
-    ///     The first UTF-8 lead byte of a character from U+0300 on; every character below it is stable under normalization form C.
-    /// </summary>
-    private const byte FirstUnstableByte = 0xCC;
-
-    /// <summary>
     ///     The value of <c>MethodImplOptions.AggressiveOptimization</c>, which <c>netstandard2.0</c> does not name: the method is compiled fully optimized at its first call.
     /// </summary>
     private const MethodImplOptions Optimized = (MethodImplOptions)512;
@@ -808,7 +803,7 @@ internal sealed class Lexicon
         var templateCuts = new int[header.TemplateCount];
         var templateSuffixes = new byte[header.TemplateCount][];
         var templateSuffixTexts = new string[header.TemplateCount];
-        var templateStable = new bool[header.TemplateCount];
+        var templateClean = new bool[header.TemplateCount];
         var seenTemplates = new HashSet<string>(StringComparer.Ordinal);
         for (var t = 0; t < header.TemplateCount; t++)
         {
@@ -846,7 +841,7 @@ internal sealed class Lexicon
             templateCuts[t] = cut;
             templateSuffixes[t] = suffix;
             templateSuffixTexts[t] = text;
-            templateStable[t] = LeadingStable(suffix, suffix.Length) == suffix.Length;
+            templateClean[t] = LeadingClean(suffix, suffix.Length) == suffix.Length;
         }
 
         // Lists: list 0 is empty, every other list is not; tags never decrease (the order within a tag needs the spelling and is checked per spelling), a template appears once, lists are distinct
@@ -912,7 +907,7 @@ internal sealed class Lexicon
         }
 
         return new AnalysisTables(
-            featureSets, templateTags, templateFeatureSets, templateCuts, templateSuffixes, templateSuffixTexts, templateStable, listStarts,
+            featureSets, templateTags, templateFeatureSets, templateCuts, templateSuffixes, templateSuffixTexts, templateClean, listStarts,
             items.ToArray(), listTags, listTied, limit);
     }
 
@@ -1246,7 +1241,8 @@ internal sealed class Lexicon
 
     /// <summary>
     ///     Checks the analyses of one spelling: the list exists, its tags are tags of the spelling, every template can be applied,
-    ///     every composed base word is NFC and the analyses are in the documented order (tag, base word, features).
+    ///     every composed base word is stored as the tagger folds text (NFC, lower case, no typographic marks) and the analyses are in the
+    ///     documented order (tag, base word, features).
     /// </summary>
     /// <param name="ordinal">The position of the spelling.</param>
     /// <param name="mask">The tag mask of the spelling.</param>
@@ -1272,7 +1268,7 @@ internal sealed class Lexicon
         // Each base word must be made of a whole-character prefix of the spelling and a valid suffix, and fit the length limit
         var first = _analyses.ListStarts[list];
         var end = _analyses.ListStarts[list + 1];
-        var leadingStable = -1;
+        var leadingClean = -1;
         for (var i = first; i < end; i++)
         {
             var template = _analyses.ListTemplates[i];
@@ -1289,17 +1285,18 @@ internal sealed class Lexicon
                 throw new InvalidDataException($"Invalid lexicon file: an analysis of spelling {ordinal} cuts inside a character or has a base word of {lemmaLength} bytes.");
             }
 
-            // A base word is NFC; text without a character from U+0300 on always is, so only a base word with one is composed and tested
-            if (!_analyses.TemplateStable[template])
+            // A base word is NFC, lower case and free of typographic marks (the fold of the tagger leaves it as it is); text made of
+            // ASCII without capitals and of characters below U+0300 that the fold keeps always is, so only another base word is composed and tested
+            if (!_analyses.TemplateClean[template])
             {
-                ValidateNormalized(ordinal, template, spelling, keep);
+                ValidateBaseWord(ordinal, template, spelling, keep);
             }
             else
             {
-                leadingStable = leadingStable >= 0 ? leadingStable : LeadingStable(spelling, length);
-                if (keep > leadingStable)
+                leadingClean = leadingClean >= 0 ? leadingClean : LeadingClean(spelling, length);
+                if (keep > leadingClean)
                 {
-                    ValidateNormalized(ordinal, template, spelling, keep);
+                    ValidateBaseWord(ordinal, template, spelling, keep);
                 }
             }
         }
@@ -1322,22 +1319,50 @@ internal sealed class Lexicon
     }
 
     /// <summary>
-    ///     Counts the bytes at the start of a buffer that come before the first byte that can start a character from U+0300 on.
+    ///     Counts the bytes at the start of a buffer that make up whole characters that no fold changes and that cannot combine: ASCII
+    ///     without capitals and characters below U+0300 that the fold of the tagger keeps.
     /// </summary>
     /// <remarks>
-    ///     Every character below U+0300 (UTF-8 lead bytes up to 0xCB) is stable under normalization form C: it has no
-    ///     decomposition that changes it, it is no combining mark and it never composes with a neighbor, so a text made of
-    ///     such characters is already in form C. A test proves this for every pair of characters below U+0300.
+    ///     <para>
+    ///         A text made only of such characters is a fixed point of the fold of the tagger (see
+    ///         <see cref="FeatureExtractor.IsFoldFixedPoint"/>): it is in normalization form C, because every character below U+0300 is
+    ///         stable under it (it has no decomposition that changes it, it is no combining mark and it never composes with a neighbor; a
+    ///         test proves it for every pair), and neither the typographic folding nor the lower-casing changes it. The test is made on
+    ///         the bytes: a capital letter of ASCII ends the count (eight bytes are tested at a time, then one by one), a two-byte character (U+0080 to U+02FF, lead bytes 0xC2 to
+    ///         0xCB) is decoded and asked <see cref="FeatureExtractor.IsFoldStable"/>, and any other byte ends the count, so no
+    ///         string is created for the committed lexicon. What follows the count is decided on the composed string.
+    ///     </para>
     /// </remarks>
     /// <param name="bytes">The buffer.</param>
     /// <param name="length">The number of bytes to test.</param>
-    /// <returns>The number of leading bytes below 0xCC.</returns>
+    /// <returns>The number of leading bytes that make up whole characters of this kind.</returns>
     [MethodImpl(Optimized)]
-    private static int LeadingStable(byte[] bytes, int length)
+    private static int LeadingClean(byte[] bytes, int length)
     {
+        // The common case, ASCII without capitals, is a tight loop (eight bytes at a time, then one by one); anything else is decided by the
+        // rest of the scan, which is rarely called. Per byte lane: below 0x80 (no carry between lanes), and not from 0x41 to 0x5A, because
+        // adding 0x3F sets the top bit from 0x41 on and adding 0x25 sets it from 0x5B on
         var count = 0;
-        while (count < length && bytes[count] < FirstUnstableByte)
+        while (count + 8 <= length)
         {
+            var word = BitConverter.ToUInt64(bytes, count);
+            if ((word & 0x8080808080808080UL) != 0
+                || ((word + 0x3F3F3F3F3F3F3F3FUL) & ~(word + 0x2525252525252525UL) & 0x8080808080808080UL) != 0)
+            {
+                break;
+            }
+
+            count += 8;
+        }
+
+        while (count < length)
+        {
+            var b = bytes[count];
+            if (b >= 0x80 || (uint)(b - 'A') <= 'Z' - 'A')
+            {
+                return LeadingCleanFrom(bytes, count, length);
+            }
+
             count++;
         }
 
@@ -1345,14 +1370,56 @@ internal sealed class Lexicon
     }
 
     /// <summary>
-    ///     Checks that the base word that a template composes from a spelling is well-formed UTF-8 in Unicode normalization form C.
+    ///     Continues <see cref="LeadingClean"/> at a byte that is not a plain lower-case ASCII byte.
     /// </summary>
+    /// <param name="bytes">The buffer.</param>
+    /// <param name="start">The index of the byte to start at, which is the start of a character.</param>
+    /// <param name="length">The number of bytes to test.</param>
+    /// <returns>The index after the last byte that belongs to a whole character of this kind, counted from the start of the buffer.</returns>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static int LeadingCleanFrom(byte[] bytes, int start, int length)
+    {
+        var count = start;
+        while (count < length)
+        {
+            var b = bytes[count];
+            if (b < 0x80)
+            {
+                if (b >= (byte)'A' && b <= (byte)'Z')
+                {
+                    break;
+                }
+
+                count++;
+            }
+            else if (b >= 0xC2 && b <= 0xCB && count + 1 < length && (bytes[count + 1] & 0xC0) == 0x80
+                && FeatureExtractor.IsFoldStable((char)(((b & 0x1F) << 6) | (bytes[count + 1] & 0x3F))))
+            {
+                count += 2;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    ///     Checks that the base word that a template composes from a spelling is well-formed UTF-8 and a fixed point of the fold of the tagger.
+    /// </summary>
+    /// <remarks>
+    ///     A stored base word is one that <c>IsFormOf</c> can match, which folds its argument first, so the base word must be in
+    ///     normalization form C, lower case (<see cref="char.ToLowerInvariant(char)"/> of every character) and without typographic quotes, dashes and
+    ///     ellipsis (<see cref="FeatureExtractor.IsFoldFixedPoint"/>).
+    /// </remarks>
     /// <param name="ordinal">The position of the spelling, for the message.</param>
     /// <param name="template">The template.</param>
     /// <param name="spelling">The buffer that holds the spelling.</param>
     /// <param name="keep">The number of leading spelling bytes that the base word keeps.</param>
-    /// <exception cref="InvalidDataException">The base word is not valid UTF-8 or not NFC.</exception>
-    private void ValidateNormalized(int ordinal, int template, byte[] spelling, int keep)
+    /// <exception cref="InvalidDataException">The base word is not valid UTF-8, not NFC, not lower case or has a typographic mark.</exception>
+    private void ValidateBaseWord(int ordinal, int template, byte[] spelling, int keep)
     {
         string? text;
         try
@@ -1364,9 +1431,10 @@ internal sealed class Lexicon
             text = null;
         }
 
-        if (text == null || !text.IsNormalized(NormalizationForm.FormC))
+        if (text == null || !FeatureExtractor.IsFoldFixedPoint(text))
         {
-            throw new InvalidDataException($"Invalid lexicon file: an analysis of spelling {ordinal} has a base word that is not valid UTF-8 in normalization form C.");
+            throw new InvalidDataException(
+                $"Invalid lexicon file: an analysis of spelling {ordinal} has a base word that is not valid UTF-8 in normalization form C, in lower case and without typographic quotes, dashes and ellipsis.");
         }
     }
 
@@ -1417,7 +1485,7 @@ internal sealed class Lexicon
     /// <summary>
     ///     One analysis of a spelling: the base word, the tag and the features of one form that the spelling can be.
     /// </summary>
-    /// <param name="Lemma">The base word.</param>
+    /// <param name="Lemma">The base word, as the tagger folds text: NFC, lower case, no typographic quote, dash or ellipsis.</param>
     /// <param name="Tag">The tag of the form.</param>
     /// <param name="Features">The features in UD notation (<c>Number=Plur</c>, names ascending, joined by <c>|</c>); empty when none are recorded.</param>
     public readonly record struct Analysis(string Lemma, Upos Tag, string Features);
@@ -1467,7 +1535,7 @@ internal sealed class Lexicon
         /// <param name="templateCuts">The number of bytes that every template drops from the end of the spelling.</param>
         /// <param name="templateSuffixes">The UTF-8 suffix that every template appends.</param>
         /// <param name="templateSuffixTexts">The suffix of every template as text.</param>
-        /// <param name="templateStable">Whether the suffix of every template has no character from U+0300 on.</param>
+        /// <param name="templateClean">Whether the suffix of every template is made of whole characters that the fold keeps (see <see cref="LeadingClean"/>).</param>
         /// <param name="listStarts">The start of every list inside <paramref name="listTemplates"/>, plus the total as the last entry.</param>
         /// <param name="listTemplates">The template indices of all lists, one list after the other.</param>
         /// <param name="listTags">The mask of the tags of every list.</param>
@@ -1480,7 +1548,7 @@ internal sealed class Lexicon
             int[] templateCuts,
             byte[][] templateSuffixes,
             string[] templateSuffixTexts,
-            bool[] templateStable,
+            bool[] templateClean,
             int[] listStarts,
             int[] listTemplates,
             int[] listTags,
@@ -1493,7 +1561,7 @@ internal sealed class Lexicon
             TemplateCuts = templateCuts;
             TemplateSuffixes = templateSuffixes;
             TemplateSuffixTexts = templateSuffixTexts;
-            TemplateStable = templateStable;
+            TemplateClean = templateClean;
             ListStarts = listStarts;
             ListTemplates = listTemplates;
             ListTags = listTags;
@@ -1539,9 +1607,9 @@ internal sealed class Lexicon
         public string[] TemplateSuffixTexts { get; }
 
         /// <summary>
-        ///     Gets whether the suffix of every template has no character from U+0300 on (see <see cref="LeadingStable"/>).
+        ///     Gets whether the suffix of every template is made of whole characters that the fold keeps (see <see cref="LeadingClean"/>).
         /// </summary>
-        public bool[] TemplateStable { get; }
+        public bool[] TemplateClean { get; }
 
         /// <summary>
         ///     Gets the start of every list inside <see cref="ListTemplates"/>, plus the total as the last entry.

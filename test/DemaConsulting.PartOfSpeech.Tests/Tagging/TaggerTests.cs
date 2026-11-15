@@ -1699,6 +1699,32 @@ public class TaggerTests
     }
 
     /// <summary>
+    ///     Proves that a base word that a lower-case custom lexicon stores is returned as it is and is matched by the form question
+    ///     whatever the case of the question, while a base word with a capital cannot be compiled into such a lexicon.
+    /// </summary>
+    [Fact]
+    public void Tagger_IsFormOf_LowerCaseCustomBaseWord_MatchesAndUpperCaseCannotBeStored()
+    {
+        // Arrange: a custom lexicon with the base word run for running, and an attempt to store Run
+        static KeyValuePair<string, IReadOnlyList<DemaConsulting.PartOfSpeech.Lexicon.Analysis>> Readings(string spelling, params DemaConsulting.PartOfSpeech.Lexicon.Analysis[] analyses) => new(spelling, analyses);
+        var entries = new[] { new KeyValuePair<string, UposSet>("running", UposSet.Of(Upos.Verb)) };
+        var lexicon = TinyModels.CreateLexicon(entries, analyses: new[] { Readings("running", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("run", Upos.Verb, "VerbForm=Ger")) });
+        var tagger = TinyModels.CreateTagger(Weights, lexicon);
+
+        // Act: ask for the analyses and for the form in two cases
+        var analyses = tagger.GetPossibleTags("Running").GetAnalyses();
+        var refused = Assert.Throws<ArgumentException>(
+            () => TinyModels.CreateLexicon(entries, analyses: new[] { Readings("running", new DemaConsulting.PartOfSpeech.Lexicon.Analysis("Run", Upos.Verb, "VerbForm=Ger")) }));
+
+        // Assert: the base word is the stored lower-case text and every case of the question matches; the capital one is refused
+        Assert.Equal("run", Assert.Single(analyses).Lemma);
+        Assert.True(tagger.IsFormOf("running", "run", Upos.Verb));
+        Assert.True(tagger.IsFormOf("RUNNING", "Run", Upos.Verb));
+        Assert.True(tagger.IsFormOf("Running", "RUN", Upos.Verb));
+        Assert.Contains("lower case", refused.Message);
+    }
+
+    /// <summary>
     ///     Proves the equality, hash code and text of the result and analysis types, and the value of their defaults.
     /// </summary>
     [Fact]

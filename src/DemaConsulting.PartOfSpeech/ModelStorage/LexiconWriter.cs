@@ -127,6 +127,9 @@ internal static class LexiconWriter
     /// <param name="analyses">
     ///     The analyses: spellings strictly ascending in UTF-8 byte order and all in <paramref name="entries"/>, each with at
     ///     least one and at most 255 analyses that are strictly ascending by tag, base word and features, with a tag of the spelling.
+    ///     A base word is 1 to 255 UTF-8 bytes without white space and is stored as the tagger folds text: well-formed UTF-16 in NFC,
+    ///     lower case (<see cref="char.ToLowerInvariant(char)"/> of every character), with no typographic quote, dash or ellipsis.
+    ///     This is what the lookup of a base word (<c>IsFormOf</c>) can match.
     /// </param>
     /// <param name="compress">Whether to store the payload as raw Deflate.</param>
     /// <param name="blockShift">The log2 of the number of spellings per block (1 to 8).</param>
@@ -407,7 +410,7 @@ internal static class LexiconWriter
 
         var lemma = parts[0];
         var features = parts.Length == 3 ? parts[2] : string.Empty;
-        if (lemma.Length == 0 || !lemma.IsNormalized(NormalizationForm.FormC) || lemma.Any(char.IsWhiteSpace)
+        if (lemma.Length == 0 || !FeatureExtractor.IsFoldFixedPoint(lemma) || lemma.Any(char.IsWhiteSpace)
             || Encoding.UTF8.GetByteCount(lemma) > Lexicon.MaxLemmaBytes || (parts.Length == 3 && (features.Length == 0 || !Lexicon.IsValidFeatureSet(features))))
         {
             throw new InvalidDataException($"Line {lineNumber}: the base word or the features of '{cell}' are invalid.");
@@ -572,9 +575,11 @@ internal static class LexiconWriter
     {
         var lemma = Encoding.UTF8.GetBytes(analysis.Lemma);
         if (lemma.Length == 0 || lemma.Length > Lexicon.MaxLemmaBytes || analysis.Lemma.Any(char.IsWhiteSpace)
-            || !IsNormalizedFormC(analysis.Lemma) || !Lexicon.IsValidFeatureSet(analysis.Features))
+            || !FeatureExtractor.IsFoldFixedPoint(analysis.Lemma) || !Lexicon.IsValidFeatureSet(analysis.Features))
         {
-            throw new ArgumentException($"An analysis of '{key}' has an empty, too long, white space or non-NFC base word or malformed features.", nameof(analysis));
+            throw new ArgumentException(
+                $"An analysis of '{key}' has an empty, too long or white space base word, a base word that is not stored as the tagger folds it (well-formed NFC, lower case, no typographic quote, dash or ellipsis) or malformed features.",
+                nameof(analysis));
         }
 
         // The longest shared prefix of the spelling and the base word, moved back to a character boundary of both
@@ -598,23 +603,6 @@ internal static class LexiconWriter
 
         template.Count++;
         return template;
-    }
-
-    /// <summary>
-    ///     Tells whether a text is well-formed UTF-16 in Unicode normalization form C.
-    /// </summary>
-    /// <param name="text">The text.</param>
-    /// <returns><c>true</c> if the text is normalized; <c>false</c> if it is not or has an unpaired surrogate.</returns>
-    private static bool IsNormalizedFormC(string text)
-    {
-        try
-        {
-            return text.IsNormalized(NormalizationForm.FormC);
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
     }
 
     /// <summary>

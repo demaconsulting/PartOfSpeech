@@ -1407,6 +1407,70 @@ internal static class FeatureExtractor
     }
 
     /// <summary>
+    ///     Tells whether folding and lower-casing leave a text unchanged: the form in which a base word is stored.
+    /// </summary>
+    /// <remarks>
+    ///     The lookup of a base word (<c>IsFormOf</c>) folds its argument (NFC, typographic marks to ASCII) and lower-cases it character by
+    ///     character with <see cref="char.ToLowerInvariant(char)"/>, which is the lower-casing of <see cref="SetFolded"/>; it can
+    ///     only match a stored base word that this fold leaves as it is. This is that test, made with the very same two steps:
+    ///     <see cref="Fold"/>, then <see cref="char.ToLowerInvariant(char)"/> of every character. Text that is not well-formed
+    ///     UTF-16 is never unchanged (<see cref="Fold"/> replaces an unpaired surrogate). Pure ASCII needs no folding and is
+    ///     tested without allocating.
+    /// </remarks>
+    /// <param name="text">The text.</param>
+    /// <returns><c>true</c> if the text equals its folded, lower-cased form.</returns>
+    internal static bool IsFoldFixedPoint(string text)
+    {
+        var ascii = true;
+        foreach (var c in text)
+        {
+            if (c >= 0x80)
+            {
+                ascii = false;
+            }
+            else if (c is >= 'A' and <= 'Z')
+            {
+                return false;
+            }
+        }
+
+        if (ascii)
+        {
+            return true;
+        }
+
+        var folded = Fold(text);
+        if (folded.Length != text.Length)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < folded.Length; i++)
+        {
+            if (char.ToLowerInvariant(folded[i]) != text[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    ///     Tells whether folding and lower-casing leave one character unchanged, apart from the Unicode normalization.
+    /// </summary>
+    /// <remarks>
+    ///     This restates the cases of <see cref="AppendFolded"/> and the lower-casing of <see cref="SetFolded"/> for one character, so that
+    ///     the loader of the lexicon can test the base words that it composes without creating strings; a test proves that it agrees
+    ///     with <see cref="IsFoldFixedPoint"/> for every character that is in NFC by itself.
+    /// </remarks>
+    /// <param name="c">The character.</param>
+    /// <returns><c>true</c> if neither the folding nor the lower-casing changes the character.</returns>
+    internal static bool IsFoldStable(char c) =>
+        char.ToLowerInvariant(c) == c
+        && c is not ('\u2018' or '\u2019' or '\u201B' or '\u02BC' or '\u201C' or '\u201D' or '\u201E' or '\u2013' or '\u2014' or '\u2015' or '\u2026');
+
+    /// <summary>
     ///     Normalizes a token to NFC without ever failing, even for text that is not well-formed UTF-16.
     /// </summary>
     /// <remarks>

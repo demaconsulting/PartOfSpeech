@@ -31,13 +31,17 @@ sections:
                   spellings and valid, and the compiled lexicon shall have the spelling and entry counts that the table
                   header states, with the same content whether it is stored compressed or not; an analyses table shall
                   be compiled only if its rows are unique, sorted, valid, name only spellings and tags of the lexicon
-                  rows, and fit the limits of the format, and the same tables shall always compile to the same bytes.
+                  rows, have base words that the fold of the tagger leaves unchanged (well-formed UTF-16 in
+                  normalization form C, lower case, without typographic quotes, dashes or ellipsis), and fit the
+                  limits of the format, and the same tables shall always compile to the same bytes.
                 justification: |
                   The compiled form is searched by binary search, which is only correct for sorted unique rows; a table
                   that breaks the rules must fail at compile time, not at lookup time. The analyses are joined to the
                   spellings by position, so an analysis for a spelling or a tag that the lexicon lacks must be refused
                   when the file is written, and a compiled file that changed without a change of the tables would make
-                  the check that compares the committed binary with its tables meaningless.
+                  the check that compares the committed binary with its tables meaningless. The form question folds its
+                  base word before it compares, so a stored base word that the fold would change could be returned by
+                  the lookup and never matched by the question.
                 tests:
                   - LexiconWriter_FromTsv_RejectsUnsortedDuplicateOrInvalid
                   - LexiconWriter_FromTsv_CountsMatchHeaderComment
@@ -47,6 +51,7 @@ sections:
                   - LexiconWriter_Compile_InvalidAnalyses_Throws
                   - LexiconWriter_Compile_MoreThanMaximumLists_Throws
                   - LexiconWriter_Compile_Analyses_IsDeterministic
+                  - FeatureExtractor_IsFoldFixedPoint_AgreesWithTheFoldOfTheWorkspace
 
               - id: PartOfSpeech-ModelStorage-Lexicon-Analyses
                 title: >-
@@ -74,8 +79,9 @@ sections:
                   feature-set index out of range, tags of a list that are not tags of the spelling, a cut that is longer
                   than the spelling or that falls inside a character, an invalid suffix, feature sets that are
                   malformed or not in ascending order, template tags that decrease, analyses of one tag that are not
-                  in ascending order of base word and features for the spelling, a base word that is not in
-                  normalization form C, a repeated template, a non-empty
+                  in ascending order of base word and features for the spelling, a base word that the fold of the
+                  tagger would change (not in normalization form C, not in lower case or with a typographic quote,
+                  dash or ellipsis), a repeated template, a non-empty
                   first list, regions that do not fill the payload, counts that disagree with the data or the payload,
                   or a header field out of range; and a file of the earlier format version shall be refused with a
                   message that names both versions.
@@ -98,7 +104,14 @@ sections:
                   - Lexicon_Load_ListInOrderForOneSpellingButNotForAnother_Throws
                   - Lexicon_Load_GeneratedAnalyses_AcceptsWriterOrderAndRefusesExchangedNeighbors
                   - Lexicon_Load_ComposedBaseWordNotNormalized_Throws
+                  - Lexicon_Load_ComposedBaseWordNotFolded_Throws
+                  - Lexicon_Load_LowerCaseTwoByteSuffixIsAcceptedAndKeptUpperCaseIsRefused
+                  - Lexicon_Load_LowerCaseBaseWordsOfTwoBytes_AreAcceptedAndKeepTheirText
+                  - Lexicon_Load_UpperCaseLetterInAKeptPrefix_Throws
+                  - Lexicon_Load_CharactersNextToCapitalsInALongBaseWord_AreAccepted
                   - Lexicon_Load_CharactersBelowU0300_AreStableUnderNormalizationFormC
+                  - FeatureExtractor_IsFoldStable_AgreesWithIsFoldFixedPointForEveryCharacter
+                  - EmbeddedModel_Lexicon_EveryBaseWordIsAFixedPointOfTheFold
                   - Lexicon_Load_ListZeroNotEmpty_Throws
                   - Lexicon_Load_RepeatedTemplate_Throws
                   - Lexicon_Load_AnalysesRegionsDoNotFillThePayload_Throws

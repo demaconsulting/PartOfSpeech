@@ -1,3 +1,4 @@
+// cspell:ignore Fcdefghijklmnopqrstuvwxyz mnopqrstuvwxyz jklmnopqrst uvwxyz
 using System.Globalization;
 using System.Text;
 
@@ -609,6 +610,11 @@ public class LexiconTests
     [InlineData("lemma-too-long")]
     [InlineData("lemma-not-nfc")]
     [InlineData("lemma-unpaired-surrogate")]
+    [InlineData("lemma-upper-case")]
+    [InlineData("lemma-upper-case-non-ascii")]
+    [InlineData("lemma-typographic-apostrophe")]
+    [InlineData("lemma-typographic-dash")]
+    [InlineData("lemma-ellipsis")]
     public void LexiconWriter_Compile_InvalidAnalyses_Throws(string scenario)
     {
         // Arrange: a lexicon of cat (noun) and cats (noun, verb), and analyses that break one rule
@@ -633,6 +639,11 @@ public class LexiconTests
             case "lemma-too-long": analyses.Add(Row("cat", A(new string('x', 256), Upos.Noun))); break;
             case "lemma-not-nfc": analyses.Add(Row("cat", A("cafe\u0301", Upos.Noun))); break;
             case "lemma-unpaired-surrogate": analyses.Add(Row("cat", A("ca\uD800", Upos.Noun))); break;
+            case "lemma-upper-case": analyses.Add(Row("cat", A("Cat", Upos.Noun))); break;
+            case "lemma-upper-case-non-ascii": analyses.Add(Row("cat", A("caf\u00C9", Upos.Noun))); break;
+            case "lemma-typographic-apostrophe": analyses.Add(Row("cat", A("cat\u2019s", Upos.Noun))); break;
+            case "lemma-typographic-dash": analyses.Add(Row("cat", A("cat\u2013s", Upos.Noun))); break;
+            case "lemma-ellipsis": analyses.Add(Row("cat", A("cat\u2026", Upos.Noun))); break;
             default: throw new InvalidOperationException(scenario);
         }
 
@@ -710,6 +721,8 @@ public class LexiconTests
     [InlineData("cat\tcat NOUN Number", "")]
     [InlineData("cat\tcat NOUN Tense=Pres|Number=Sing", "")]
     [InlineData("cat\tc\u0061\u0301t NOUN", "")]
+    [InlineData("cat\tCat NOUN", "")]
+    [InlineData("cat\tcat\u2019s NOUN", "")]
     public void LexiconWriter_AnalysesFromTsv_RejectsUnsortedUnknownOrInvalid(string line1, string line2)
     {
         // Arrange: a table with the offending rows
@@ -1041,6 +1054,146 @@ public class LexiconTests
 
         Assert.Equal(40, accepted);
         Assert.True(refused > 100, $"only {refused} exchanges were tested");
+    }
+
+    /// <summary>
+    ///     Proves that a base word that a template composes from a spelling must be a fixed point of the fold of the tagger, as the writer
+    ///     requires: a valid-checksum file whose suffix is patched to hold an upper-case letter, an upper-case letter of two bytes or a typographic
+    ///     apostrophe is refused, so that every base word of a loaded lexicon is one that <c>IsFormOf</c> can match.
+    /// </summary>
+    /// <param name="first">The first byte of the patched suffix (it replaces <c>g</c>).</param>
+    /// <param name="second">The second byte of the patched suffix (it replaces <c>o</c>).</param>
+    [Theory]
+    [InlineData(0x47, 0x6F)]
+    [InlineData(0x67, 0x4F)]
+    [InlineData(0xC3, 0x96)]
+    [InlineData(0xC3, 0x80)]
+    [InlineData(0xCA, 0xBC)]
+    public void Lexicon_Load_ComposedBaseWordNotFolded_Throws(int first, int second)
+    {
+        // Arrange: the base word go of went (template 4: tag, feature set, cut 4, suffix length 2, suffix go) with the suffix patched
+        var file = AnalyzedFile();
+        var layout = ReadLayout(file);
+        Assert.Equal(new byte[] { 4, 2, (byte)'g', (byte)'o' }, file.Skip(layout.Templates[4] + 2).Take(4).ToArray());
+        var changed = Patched(file, f =>
+        {
+            f[layout.Templates[4] + 4] = (byte)first;
+            f[layout.Templates[4] + 5] = (byte)second;
+        });
+
+        // Act / Assert: the base word is not lower case or not free of typographic marks (the unpatched file loads)
+        Assert.Equal("go", Lexicon.Load(file).GetAnalyses(3)[0].Lemma);
+        Assert.Contains("lower case", Assert.Throws<InvalidDataException>(() => Lexicon.Load(changed)).Message);
+    }
+
+    /// <summary>
+    ///     Proves that the same patch with a lower-case letter of two bytes is accepted, and that an upper-case letter in the part that a
+    ///     template keeps from the spelling is refused.
+    /// </summary>
+    [Fact]
+    public void Lexicon_Load_LowerCaseTwoByteSuffixIsAcceptedAndKeptUpperCaseIsRefused()
+    {
+        // Arrange: went with the suffix patched to the lower-case letter U+00F6; and a lexicon with the spelling Cats (the writer does not
+        // check spellings of the entries) whose base word cats shares nothing with it, patched to cut nothing so that the base word keeps Cats
+        var file = AnalyzedFile();
+        var layout = ReadLayout(file);
+        var lower = Patched(file, f =>
+        {
+            f[layout.Templates[4] + 4] = 0xC3;
+            f[layout.Templates[4] + 5] = 0xB6;
+        });
+        var capital = TinyModels.CreateLexicon(new[] { Entry("Cats", Upos.Noun) }, false, new[] { Row("Cats", A("cats", Upos.Noun)) });
+        var capitalLayout = ReadLayout(capital);
+        Assert.Equal(new byte[] { 4, 4, (byte)'c', (byte)'a', (byte)'t', (byte)'s' }, capital.Skip(capitalLayout.Templates[0] + 2).Take(6).ToArray());
+        var kept = Patched(capital, f => f[capitalLayout.Templates[0] + 2] = 0);
+
+        // Act / Assert: the patched suffix is the base word of went, and the base word that keeps an upper-case spelling is refused
+        Assert.True(Has(Lexicon.Load(lower), "went", Upos.Verb, "\u00F6"));
+        Assert.Contains("lower case", Assert.Throws<InvalidDataException>(() => Lexicon.Load(kept)).Message);
+    }
+
+    /// <summary>
+    ///     Proves that a lexicon that the writer compiles from lower-case base words is accepted by the loader and answers the form
+    ///     question for them, whatever the case of the question.
+    /// </summary>
+    [Fact]
+    public void Lexicon_Load_LowerCaseBaseWordsOfTwoBytes_AreAcceptedAndKeepTheirText()
+    {
+        // Arrange: spellings whose base words have two-byte letters (below U+0300) in the kept part and in the suffix
+        var entries = new[] { Entry("caf\u00E9s", Upos.Noun), Entry("se\u00F1ora", Upos.Noun), Entry("\u0111", Upos.Noun) };
+        var rows = new[]
+        {
+            Row("caf\u00E9s", A("caf\u00E9", Upos.Noun)),
+            Row("se\u00F1ora", A("se\u00F1or", Upos.Noun)),
+            Row("\u0111", A("\u0111\u00E9", Upos.Noun)),
+        };
+
+        // Act: compile and load (the loader tests every base word)
+        var lexicon = Lexicon.Load(TinyModels.CreateLexicon(entries, false, rows));
+
+        // Assert: every analysis is there with its own text
+        Assert.True(Has(lexicon, "caf\u00E9s", Upos.Noun, "caf\u00E9"));
+        Assert.True(Has(lexicon, "se\u00F1ora", Upos.Noun, "se\u00F1or"));
+        Assert.True(Has(lexicon, "\u0111", Upos.Noun, "\u0111\u00E9"));
+        Assert.Equal(3, lexicon.AnalysisCount);
+    }
+
+    /// <summary>
+    ///     Proves that a capital letter is found wherever it stands in the part that a template keeps from a long spelling, at the edges of
+    ///     the eight-byte steps of the scan too: the patched file keeps the whole spelling, and the unpatched file loads.
+    /// </summary>
+    /// <param name="position">The index of the capital letter in the spelling.</param>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(15)]
+    [InlineData(16)]
+    [InlineData(17)]
+    [InlineData(24)]
+    [InlineData(25)]
+    public void Lexicon_Load_UpperCaseLetterInAKeptPrefix_Throws(int position)
+    {
+        // Arrange: a spelling with one capital whose base word is the lower-case alphabet (it keeps the letters before the capital)
+        const string lower = "abcdefghijklmnopqrstuvwxyz";
+        var spelling = lower.Substring(0, position) + char.ToUpperInvariant(lower[position]) + lower.Substring(position + 1);
+        var file = TinyModels.CreateLexicon(new[] { Entry(spelling, Upos.Noun) }, false, new[] { Row(spelling, A(lower, Upos.Noun)) });
+        var layout = ReadLayout(file);
+        Assert.Equal(26 - position, file[layout.Templates[0] + 2]);
+        var changed = Patched(file, f => f[layout.Templates[0] + 2] = 0);
+
+        // Act / Assert: the file as written loads; with the cut changed to 0 the base word keeps the capital and is refused
+        Assert.True(Has(Lexicon.Load(file), spelling, Upos.Noun, lower));
+        Assert.Contains("lower case", Assert.Throws<InvalidDataException>(() => Lexicon.Load(changed)).Message);
+    }
+
+    /// <summary>
+    ///     Proves that the ASCII characters next to the capitals (<c>@</c>, <c>[</c>, the grave accent, the brace, DEL) and non-ASCII
+    ///     lower-case characters in a long base word that equals its spelling are accepted, wherever they stand.
+    /// </summary>
+    [Fact]
+    public void Lexicon_Load_CharactersNextToCapitalsInALongBaseWord_AreAccepted()
+    {
+        // Arrange: base words that are their spellings and have the characters just outside A to Z, in the first and the later steps of the scan
+        var texts = new[]
+        {
+            "a@[`{b\u007Fcdefghijklmnopqrstuvwxyz@[`{",
+            "abcdefghijk\u00E9mnopqrstuvwxyz\u00F1",
+            "\u00F1abcdefghijklmnopqrstuvwxyz",
+            "abcdefghi@jklmnopqrst[uvwxyz",
+        };
+        var entries = texts.Select(t => Entry(t, Upos.Noun)).ToArray();
+        var rows = texts.Select(t => Row(t, A(t, Upos.Noun))).ToArray();
+
+        // Act: compile and load
+        var lexicon = Lexicon.Load(TinyModels.CreateLexicon(entries, false, rows));
+
+        // Assert: every base word is there as written
+        Assert.Equal(texts.Length, lexicon.AnalysisCount);
+        Assert.All(texts, t => Assert.True(Has(lexicon, t, Upos.Noun, t), t));
     }
 
     /// <summary>

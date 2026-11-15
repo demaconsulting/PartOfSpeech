@@ -1,4 +1,4 @@
-// cspell:ignore FFFD zzyzx
+// cspell:ignore FFFD zzyzx Cclock Cquote
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -222,6 +222,89 @@ public class FeatureExtractorTests
             Assert.Equal(replacedBuckets[i], foldedBuckets[i]);
             Assert.Equal(FeatureExtractor.ReferenceBuckets(malformed, i, "-S-", "-S2-", Bits), foldedBuckets[i]);
         }
+    }
+
+    /// <summary>
+    ///     Proves that the test for a stored base word agrees with the fold of the tagger: a text is a fixed point exactly when the
+    ///     lower-cased folded form that the decoder's workspace holds for it equals the text, for every UTF-16 code unit alone and for
+    ///     words that mix the cases of the rule (capitals, typographic marks, composed and decomposed letters, unpaired surrogates).
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_IsFoldFixedPoint_AgreesWithTheFoldOfTheWorkspace()
+    {
+        // Arrange: every code unit alone, and words with the cases of the rule
+        var texts = Enumerable.Range(0, 0x10000).Select(c => ((char)c).ToString()).ToList();
+        texts.AddRange(new[]
+        {
+            string.Empty, "run", "Run", "RUN", "caf\u00E9", "caf\u00C9", "cafe\u0301", "o'clock", "o\u2019clock", "o\u02BCclock", "a\u2013b", "a-b", "a--b",
+            "etc\u2026", "etc...", "\u201Cquote\u201D", "\"quote\"", "ca\uD800", "\uDC00x", "\U0001F600", "\U00010400", "\u0130", "\u1E9E", "\u03A3", "se\u00F1or",
+            "\u01C5", "\u212A", "\u00DF",
+        });
+        var workspace = new DecoderWorkspace();
+        var disagree = new List<string>();
+
+        // Act: compare with the lower-cased copy that the workspace folds for the same text
+        foreach (var text in texts)
+        {
+            workspace.Begin(1);
+            FeatureExtractor.SetToken(workspace, 0, text);
+            var lower = new string(workspace.Chars, workspace.Start[0] + workspace.Length[0], workspace.Length[0]);
+            if ((lower == text) != FeatureExtractor.IsFoldFixedPoint(text))
+            {
+                disagree.Add($"{string.Join(" ", text.Select(c => ((int)c).ToString("X4", System.Globalization.CultureInfo.InvariantCulture)))}");
+            }
+        }
+
+        // Assert: no text differs, and the rule has the cases that the base words rely on
+        Assert.Empty(disagree);
+        Assert.True(FeatureExtractor.IsFoldFixedPoint("caf\u00E9"));
+        Assert.False(FeatureExtractor.IsFoldFixedPoint("Run"));
+        Assert.False(FeatureExtractor.IsFoldFixedPoint("caf\u00C9"));
+        Assert.False(FeatureExtractor.IsFoldFixedPoint("cafe\u0301"));
+        Assert.False(FeatureExtractor.IsFoldFixedPoint("o\u2019clock"));
+        Assert.False(FeatureExtractor.IsFoldFixedPoint("ca\uD800"));
+    }
+
+    /// <summary>
+    ///     Tells whether a text is in normalization form C; a text with an invalid code point (a non-character) is not.
+    /// </summary>
+    private static bool IsNormalizedText(string text)
+    {
+        try
+        {
+            return text.IsNormalized(System.Text.NormalizationForm.FormC);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     Proves that the character test that the loader of the lexicon uses to test base words without creating strings agrees with the
+    ///     test for a text, for every character that is in normalization form C by itself.
+    /// </summary>
+    [Fact]
+    public void FeatureExtractor_IsFoldStable_AgreesWithIsFoldFixedPointForEveryCharacter()
+    {
+        // Arrange / Act: compare for every non-surrogate character whose text is normalized
+        var disagree = new List<int>();
+        for (var c = 0; c < 0x10000; c++)
+        {
+            var character = (char)c;
+            if (char.IsSurrogate(character) || !IsNormalizedText(character.ToString()))
+            {
+                continue;
+            }
+
+            if (FeatureExtractor.IsFoldStable(character) != FeatureExtractor.IsFoldFixedPoint(character.ToString()))
+            {
+                disagree.Add(c);
+            }
+        }
+
+        // Assert: they never differ
+        Assert.Empty(disagree);
     }
 
     /// <summary>
