@@ -73,7 +73,9 @@ sections:
                   A lexicon file shall be refused when its analyses section is inconsistent: a list, template or
                   feature-set index out of range, tags of a list that are not tags of the spelling, a cut that is longer
                   than the spelling or that falls inside a character, an invalid suffix, feature sets that are
-                  malformed or not in ascending order, template tags that decrease, a repeated template, a non-empty
+                  malformed or not in ascending order, template tags that decrease, analyses of one tag that are not
+                  in ascending order of base word and features for the spelling, a base word that is not in
+                  normalization form C, a repeated template, a non-empty
                   first list, regions that do not fill the payload, counts that disagree with the data or the payload,
                   or a header field out of range; and a file of the earlier format version shall be refused with a
                   message that names both versions.
@@ -91,6 +93,12 @@ sections:
                   - Lexicon_Load_MalformedFeatureSet_Throws
                   - Lexicon_Load_TemplateIndexOutOfRange_Throws
                   - Lexicon_Load_ListTagsDecrease_Throws
+                  - Lexicon_Load_SameTagAnalysesInWrongBaseWordOrder_Throws
+                  - Lexicon_Load_SameTagAnalysesInWrongFeatureOrder_Throws
+                  - Lexicon_Load_ListInOrderForOneSpellingButNotForAnother_Throws
+                  - Lexicon_Load_GeneratedAnalyses_AcceptsWriterOrderAndRefusesExchangedNeighbors
+                  - Lexicon_Load_ComposedBaseWordNotNormalized_Throws
+                  - Lexicon_Load_CharactersBelowU0300_AreStableUnderNormalizationFormC
                   - Lexicon_Load_ListZeroNotEmpty_Throws
                   - Lexicon_Load_RepeatedTemplate_Throws
                   - Lexicon_Load_AnalysesRegionsDoNotFillThePayload_Throws

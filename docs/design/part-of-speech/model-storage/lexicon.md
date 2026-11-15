@@ -65,7 +65,8 @@ The analyses section follows the data region (its start is found by walking the 
   Templates are distinct.
 - (6) The list palette: `listCount` entries of `varint count, count x varint templateIndex`. List 0 is empty and no
   other list is; a list names at most 255 templates, each at most once, with tags that never decrease; lists are
-  distinct.
+  distinct. The analyses of a spelling are in the order (tag, base word, features): the base word and the features of
+  two templates with one tag decide their order for the spelling (see the validation below).
 - (7) The list index: `spellingCount` values of `uint16`, the list of spelling _i_ (in ascending order) at offset
   2 x _i_ from the start of the index, which closes the payload.
 
@@ -107,7 +108,23 @@ only tool that writes lexicon files, `LexiconCompiler`, is not shipped, so no re
   exactly. While walking the spellings `Validate` also checks that every list index is below `listCount`, that the tags
   of the spelling's list are a subset of the spelling's tags (the join of the two tables), that every cut is at most
   the spelling length and falls on a character boundary of the spelling (so the composed base word is valid UTF-8),
-  that the base word has 1 to 255 bytes, and that the list sizes add up to `analysisCount`.
+  that the base word has 1 to 255 bytes, that the list sizes add up to `analysisCount`, that a composed base word is in
+  Unicode normalization form C, and that the analyses are in the documented order. The tag order is checked once per
+  list when the palette is read; the order of two neighboring templates with one tag depends on the spelling (the base
+  words are `spelling` without `cut` bytes plus the suffix, so the same two templates can be in order for one spelling
+  and out of order for another), so it is checked for each spelling that uses such a list: the two composed base words
+  are compared as UTF-8 bytes without composing them (from the first byte after the shorter kept prefix, then by
+  length) and, when they are equal, the feature-set indexes are compared, which is the order of the feature texts
+  because the table is ascending. The comparison is the one of `LexiconWriter.CompareAnalyses`, which orders by tag,
+  then base word bytes, then feature text bytes, and equal analyses are refused as well. Lists whose neighbors never
+  share a tag are not compared. The normalization test costs nothing for text without a character from U+0300 on
+  (every character below it is stable under form C, which a test proves for every pair of them): such a base word is
+  not composed as a string, so only the rare base word with another character is decoded and normalized. The two
+  checks (and `ValidateAnalyses`, which runs them for each of the 262,635 spellings) are compiled fully optimized at
+  their first call (`MethodImplOptions.AggressiveOptimization`), because the load runs too briefly for tiered
+  compilation to replace unoptimized code. Measured on .NET 10 (median of 21 cold processes each), the first access of
+  `Tagger.Default` takes the same time with the checks as without them (49.6 against 49.9 ms); compiled like the rest of
+  the load, the same checks added about 12 ms.
 - **`TryGetTags(char[] chars, int offset, int length, byte[] scratch, out UposSet tags)`**: looks up the folded,
   lower-cased spelling in a region of a character buffer (the decoder keeps all tokens of a sentence in one buffer, hence
   the `offset`). It calls `TryFindKey` and drops the ordinal and key length. Allocation-free.
@@ -153,8 +170,9 @@ only tool that writes lexicon files, `LexiconCompiler`, is not shipped, so no re
   names and values is not (the build script and the data test enforce it, so a custom lexicon may carry others).
 - **`LexiconWriter.Compile(entries, analyses, compress, blockShift = 4)`, `Compile(entries, compress, blockShift)` and
   `Write`**: validates again (empty spelling or tag set, order, more than 65,535 masks or a longer spelling, and for the
-  analyses a tag the spelling lacks, more than 255 analyses of a spelling, a base word that is empty, has white space or
-  is longer than 255 bytes, malformed features, more than 65,535 feature sets or lists), builds the palette, the block
+  analyses a tag the spelling lacks, more than 255 analyses of a spelling, analyses that are not strictly ascending by tag,
+  base word and features, a base word that is empty, has white space, is not well-formed UTF-16 in normalization form C
+  or is longer than 255 bytes, malformed features, more than 65,535 feature sets or lists), builds the palette, the block
   index and the front-coded data, derives the templates (the longest common prefix of spelling and base word, moved back
   to a character boundary of both, gives the cut and the suffix) and lists, and writes the header and payload. The
   overload without analyses writes a version 3 file without analyses. The output is deterministic: feature sets

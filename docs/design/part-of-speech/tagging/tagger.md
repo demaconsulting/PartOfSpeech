@@ -122,14 +122,19 @@ files also hold the options and the result types: `Tagger.cs`, `TaggerOptions.cs
   model features. So for `CompoundHead` the `Tags` are the whole-token result (empty in `LexiconOnly`, all 17 in
   `WithShapeRules`), `IsKnownWord` is false, and the analyses are extra evidence that never narrows the tags and never
   changes the tagging. `TagsWithoutAnalysis` is `Tags` minus the head's tags. A whole spelling always wins over its head.
-- _Over-long words._ A word longer than the longest spelling of the lexicon (122 UTF-8 bytes in the embedded lexicon;
-  shorter for a small custom lexicon) cannot be a spelling as a whole, so only the whole-spelling lookup is skipped for
-  it; the compound rule applies unchanged to its last part. `TagDecoder` scans the word once, without folding it, for
+- _Over-long words._ A word with more characters than the longest spelling of the lexicon has bytes (122 in the embedded
+  lexicon; fewer for a small custom lexicon) cannot be a spelling as a whole (folding never shortens a word and a
+  character takes at least one byte), so only the whole-spelling lookup is skipped for it; the compound rule applies
+  unchanged to its last part. `TagDecoder` scans the word once, without folding it, for
   the compound structure (leading, doubled or trailing hyphen, a character that folds to `--`), and folds only the last
-  part, and only when that part is not longer than the longest spelling. The thread's workspace therefore never grows
-  beyond what a word that fits needs, ASCII input allocates nothing, and the cost beyond a normal lookup is one scan of
+  part, and only when that part does not have more characters than that. The thread's workspace therefore never grows
+  beyond what a word of that many characters needs (a word with fewer characters is folded as a whole even if its
+  characters take more bytes than the longest spelling has, for example 100 times `é`; that is bounded by the same size,
+  so the length test is on characters, not on the UTF-8 length, which would need a further scan of every lookup), ASCII
+  input allocates nothing, and the cost beyond a normal lookup is one scan of
   the characters. The result is the same as the result of a lexicon whose longest spelling is long enough to look the
-  whole word up (a test compares both over generated words).
+  whole word up (a test compares both over generated words), and a test measures the buffer on a new thread after the
+  worst folded word (an ellipsis for every byte of the longest spelling) and then looks up words of a million characters.
 - _Phrases._ The lexicon has no multiword spellings (a test proves it for every spelling), so text with white space is
   refused with `ArgumentException` instead of being answered "unknown"; phrases and terms belong in a `Glossary`.
 - _Custom lexicon._ A lexicon compiled without an analyses table gives tags and `Match` but no analyses;

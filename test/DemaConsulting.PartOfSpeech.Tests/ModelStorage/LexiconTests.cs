@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace DemaConsulting.PartOfSpeech.Tests.ModelStorage;
@@ -606,6 +607,8 @@ public class LexiconTests
     [InlineData("empty-lemma")]
     [InlineData("lemma-with-space")]
     [InlineData("lemma-too-long")]
+    [InlineData("lemma-not-nfc")]
+    [InlineData("lemma-unpaired-surrogate")]
     public void LexiconWriter_Compile_InvalidAnalyses_Throws(string scenario)
     {
         // Arrange: a lexicon of cat (noun) and cats (noun, verb), and analyses that break one rule
@@ -628,6 +631,8 @@ public class LexiconTests
             case "empty-lemma": analyses.Add(Row("cat", A(string.Empty, Upos.Noun))); break;
             case "lemma-with-space": analyses.Add(Row("cat", A("big cat", Upos.Noun))); break;
             case "lemma-too-long": analyses.Add(Row("cat", A(new string('x', 256), Upos.Noun))); break;
+            case "lemma-not-nfc": analyses.Add(Row("cat", A("cafe\u0301", Upos.Noun))); break;
+            case "lemma-unpaired-surrogate": analyses.Add(Row("cat", A("ca\uD800", Upos.Noun))); break;
             default: throw new InvalidOperationException(scenario);
         }
 
@@ -882,6 +887,209 @@ public class LexiconTests
 
         // Act / Assert: the order of the tags is checked
         Assert.Contains("tags decrease", Assert.Throws<InvalidDataException>(() => Lexicon.Load(changed)).Message);
+    }
+
+    /// <summary>
+    ///     Proves that two analyses with one tag must be in the order of their base words: the order that the documented
+    ///     (tag, base word, features) rule gives, not merely tags that do not decrease.
+    /// </summary>
+    [Fact]
+    public void Lexicon_Load_SameTagAnalysesInWrongBaseWordOrder_Throws()
+    {
+        // Arrange: cats with the noun analyses cat and cats (in that order), and the two templates of its list exchanged
+        var file = TinyModels.CreateLexicon(
+            new[] { Entry("cats", Upos.Noun) },
+            false,
+            new[] { Row("cats", A("cat", Upos.Noun, "Number=Sing"), A("cats", Upos.Noun, "Number=Plur")) });
+        var layout = ReadLayout(file);
+        Assert.Equal(new[] { A("cat", Upos.Noun, "Number=Sing"), A("cats", Upos.Noun, "Number=Plur") }, Lexicon.Load(file).GetAnalyses(0));
+        var changed = Patched(file, f => (f[layout.Lists[1] + 1], f[layout.Lists[1] + 2]) = (f[layout.Lists[1] + 2], f[layout.Lists[1] + 1]));
+
+        // Act / Assert: the order of the base words is checked although the tags are equal
+        Assert.Contains("strictly ascending by tag, base word and features", Assert.Throws<InvalidDataException>(() => Lexicon.Load(changed)).Message);
+    }
+
+    /// <summary>
+    ///     Proves that two analyses with one tag and one base word must be in the order of their features.
+    /// </summary>
+    [Fact]
+    public void Lexicon_Load_SameTagAnalysesInWrongFeatureOrder_Throws()
+    {
+        // Arrange: cat with the noun analyses Number=Plur and Number=Sing of the same base word, and the two templates of its list exchanged
+        var file = TinyModels.CreateLexicon(
+            new[] { Entry("cat", Upos.Noun) },
+            false,
+            new[] { Row("cat", A("cat", Upos.Noun, "Number=Plur"), A("cat", Upos.Noun, "Number=Sing")) });
+        var layout = ReadLayout(file);
+        Assert.Equal(2, Lexicon.Load(file).GetAnalyses(0).Count);
+        var changed = Patched(file, f => (f[layout.Lists[1] + 1], f[layout.Lists[1] + 2]) = (f[layout.Lists[1] + 2], f[layout.Lists[1] + 1]));
+
+        // Act / Assert: the order of the features is checked
+        Assert.Contains("strictly ascending by tag, base word and features", Assert.Throws<InvalidDataException>(() => Lexicon.Load(changed)).Message);
+    }
+
+    /// <summary>
+    ///     Proves that the order of a list is checked against each spelling that uses it, because the base words that the same two
+    ///     templates compose can be in a different order for another spelling.
+    /// </summary>
+    [Fact]
+    public void Lexicon_Load_ListInOrderForOneSpellingButNotForAnother_Throws()
+    {
+        // Arrange: ca and cc use the same two templates (cb with Number=Sing, and the spelling itself with Number=Plur), in the order of their
+        // base words: for ca the spelling comes first (ca before cb), for cc it comes second (cb before cc), so they have two different lists
+        var file = TinyModels.CreateLexicon(
+            new[] { Entry("ca", Upos.Noun), Entry("cc", Upos.Noun) },
+            false,
+            new[]
+            {
+                Row("ca", A("ca", Upos.Noun, "Number=Plur"), A("cb", Upos.Noun, "Number=Sing")),
+                Row("cc", A("cb", Upos.Noun, "Number=Sing"), A("cc", Upos.Noun, "Number=Plur"))
+            });
+        var layout = ReadLayout(file);
+        var lexicon = Lexicon.Load(file);
+        Assert.Equal(new[] { A("ca", Upos.Noun, "Number=Plur"), A("cb", Upos.Noun, "Number=Sing") }, lexicon.GetAnalyses(0));
+        Assert.Equal(new[] { A("cb", Upos.Noun, "Number=Sing"), A("cc", Upos.Noun, "Number=Plur") }, lexicon.GetAnalyses(1));
+
+        // Act: point ca at the list of cc, which is in order for cc but composes cb before ca for ca
+        var changed = Patched(file, f => BinaryFormat.WriteUInt16(f, layout.Index, BinaryFormat.ReadUInt16(f, layout.Index + 2)));
+
+        // Assert: the list is accepted for cc and refused for ca
+        Assert.Contains("spelling 0 are not strictly ascending", Assert.Throws<InvalidDataException>(() => Lexicon.Load(changed)).Message);
+    }
+
+    /// <summary>
+    ///     Proves that the loader accepts every analysis order that the writer produces and refuses the exchange of two neighboring analyses with one
+    ///     tag, for generated lexicons whose base words mix ASCII, two-byte, three-byte and four-byte characters (the writer orders by UTF-8 bytes,
+    ///     which is not the order of the UTF-16 characters of a surrogate pair against a character of the Basic Multilingual Plane).
+    /// </summary>
+    [Fact]
+    public void Lexicon_Load_GeneratedAnalyses_AcceptsWriterOrderAndRefusesExchangedNeighbors()
+    {
+        // Arrange: a fixed seed and an alphabet with one character of each UTF-8 length, the last two ordered differently as UTF-16 and as UTF-8
+        var random = new Random(20240607);
+        var alphabet = new[] { "a", "b", "c", "\u00E9", "\u00DF", "\uFF5E", "\uD83D\uDE00" };
+        var tags = new[] { Upos.Adj, Upos.Noun, Upos.Verb };
+        var featureSets = new[] { string.Empty, "Number=Plur", "Number=Sing", "Tense=Past" };
+        string Word(int minimum, int maximum) => string.Concat(Enumerable.Range(0, random.Next(minimum, maximum + 1)).Select(_ => alphabet[random.Next(alphabet.Length)]));
+        var refused = 0;
+        var accepted = 0;
+
+        for (var round = 0; round < 40; round++)
+        {
+            // Act: compile spellings with 1 to 5 analyses each, in the writer's order, and load
+            var spellings = Enumerable.Range(0, 30).Select(_ => Word(1, 4)).Distinct().ToList();
+            var entries = spellings.Select(s => Entry(s, tags)).ToList();
+            var rows = new List<KeyValuePair<string, IReadOnlyList<Lexicon.Analysis>>>();
+            foreach (var spelling in spellings)
+            {
+                var chosen = new List<Lexicon.Analysis>();
+                for (var k = random.Next(1, 6); k > 0; k--)
+                {
+                    var prefix = new StringInfo(spelling).SubstringByTextElements(0, random.Next(0, new StringInfo(spelling).LengthInTextElements + 1));
+                    var lemma = prefix + Word(prefix.Length == 0 ? 1 : 0, 2);
+                    chosen.Add(A(lemma, tags[random.Next(tags.Length)], featureSets[random.Next(featureSets.Length)]));
+                }
+
+                chosen.Sort(LexiconWriter.CompareAnalyses);
+                rows.Add(Row(spelling, chosen.Where((a, i) => i == 0 || LexiconWriter.CompareAnalyses(chosen[i - 1], a) != 0).ToArray()));
+            }
+
+            var file = TinyModels.CreateLexicon(entries, false, rows);
+            var lexicon = Lexicon.Load(file);
+            var layout = ReadLayout(file);
+            accepted++;
+
+            // Assert: every spelling reads back with its analyses in the order that was written
+            foreach (var row in rows)
+            {
+                var key = row.Key.ToCharArray();
+                Assert.True(lexicon.TryFind(key, 0, key.Length, new byte[lexicon.ScratchSize], out var ordinal, out _), row.Key);
+                Assert.Equal(row.Value, lexicon.GetAnalyses(ordinal));
+            }
+
+            // Act / Assert: exchanging two neighbors of one tag whose indices have the same length in one list makes the file refused
+            for (var l = 1; l < layout.Lists.Length; l++)
+            {
+                var position = layout.Lists[l];
+                var count = BinaryFormat.ReadVarintInt32(file, ref position, file.Length);
+                var items = new List<(int Position, int Length, int Template)>();
+                for (var k = 0; k < count; k++)
+                {
+                    var start = position;
+                    var template = BinaryFormat.ReadVarintInt32(file, ref position, file.Length);
+                    items.Add((start, position - start, template));
+                }
+
+                var pair = Enumerable.Range(1, count - 1).FirstOrDefault(
+                    k => file[layout.Templates[items[k - 1].Template]] == file[layout.Templates[items[k].Template]] && items[k - 1].Length == items[k].Length);
+                if (pair == 0)
+                {
+                    continue;
+                }
+
+                var changed = Patched(file, f =>
+                {
+                    for (var b = 0; b < items[pair].Length; b++)
+                    {
+                        (f[items[pair - 1].Position + b], f[items[pair].Position + b]) = (f[items[pair].Position + b], f[items[pair - 1].Position + b]);
+                    }
+                });
+                Assert.Contains("not strictly ascending", Assert.Throws<InvalidDataException>(() => Lexicon.Load(changed)).Message);
+                refused++;
+            }
+        }
+
+        Assert.Equal(40, accepted);
+        Assert.True(refused > 100, $"only {refused} exchanges were tested");
+    }
+
+    /// <summary>
+    ///     Proves that a base word that a template composes from a spelling must be in Unicode normalization form C, as the writer and
+    ///     the TSV parser require: a suffix that is a combining mark after a spelling that ends in a letter that it composes with is refused.
+    /// </summary>
+    [Fact]
+    public void Lexicon_Load_ComposedBaseWordNotNormalized_Throws()
+    {
+        // Arrange: cafe with the base word caf\u00E9 (keep caf, cut 1, suffix C3 A9), then the template changed to keep cafe and append U+0301 (CC 81)
+        var file = TinyModels.CreateLexicon(new[] { Entry("cafe", Upos.Noun) }, false, new[] { Row("cafe", A("caf\u00E9", Upos.Noun)) });
+        var layout = ReadLayout(file);
+        Assert.Equal("caf\u00E9", Lexicon.Load(file).GetAnalyses(0)[0].Lemma);
+        Assert.Equal(new byte[] { 0, 1, 2, 0xC3, 0xA9 }, file.Skip(layout.Templates[0] + 1).Take(5).ToArray());
+        var changed = Patched(file, f =>
+        {
+            f[layout.Templates[0] + 2] = 0;
+            f[layout.Templates[0] + 4] = 0xCC;
+            f[layout.Templates[0] + 5] = 0x81;
+        });
+
+        // Act / Assert: the base word cafe followed by U+0301 is not NFC (it composes to caf\u00E9)
+        Assert.Contains("normalization form C", Assert.Throws<InvalidDataException>(() => Lexicon.Load(changed)).Message);
+    }
+
+    /// <summary>
+    ///     Proves the premise of the fast path of the normalization check of the loader: a text made only of characters below U+0300 is
+    ///     in normalization form C (every such character is stable and no pair of them composes), and U+0300 is the first combining mark.
+    /// </summary>
+    [Fact]
+    public void Lexicon_Load_CharactersBelowU0300_AreStableUnderNormalizationFormC()
+    {
+        // Arrange / Act: test every character below U+0300 and every pair of them
+        var unstable = new List<string>();
+        for (var first = 0; first < 0x300; first++)
+        {
+            for (var second = 0; second < 0x300; second++)
+            {
+                var text = new string(new[] { (char)first, (char)second });
+                if (!text.IsNormalized(NormalizationForm.FormC))
+                {
+                    unstable.Add($"U+{first:X4} U+{second:X4}");
+                }
+            }
+        }
+
+        // Assert: none is unstable, and the first character that is is the combining grave accent (a followed by it composes)
+        Assert.Empty(unstable);
+        Assert.False("a\u0300".IsNormalized(NormalizationForm.FormC));
     }
 
     /// <summary>

@@ -609,9 +609,10 @@ The tagger treats a hyphenated token that is not a spelling as one unknown word,
 answer for the whole token (empty in the raw mode, all 17 tags with the shape rules) and `IsKnownWord` is false. The
 analyses of the head are extra evidence for a rule checker, for example that `well-tested` ends in a form of the verb
 `test`: they never narrow `Tags` and never change the tagging. `IsFormOf` follows the same rule, so
-`IsFormOf("well-tested", "test", Upos.Verb)` is true; check `Match` first when compounds must not count. A word that is
-longer than the longest spelling of the lexicon (122 UTF-8 bytes in the embedded lexicon) cannot be a spelling as a
-whole, so only the compound rule can recognize it, by a last part that itself fits that length.
+`IsFormOf("well-tested", "test", Upos.Verb)` is true; check `Match` first when compounds must not count. A word that has
+more characters than the longest spelling of the lexicon has UTF-8 bytes (122 UTF-8 bytes in the embedded lexicon)
+cannot be a spelling as a whole, so only the compound rule can recognize it, by a last part that does not itself have
+more characters than that.
 
 **Phrases.** The lexicon has no phrases: no spelling contains white space, and the lookup is for one word. A text with
 white space (`give up`, `manual override`) is refused with an `ArgumentException` and is not answered as unknown, so

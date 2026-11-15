@@ -572,9 +572,9 @@ internal static class LexiconWriter
     {
         var lemma = Encoding.UTF8.GetBytes(analysis.Lemma);
         if (lemma.Length == 0 || lemma.Length > Lexicon.MaxLemmaBytes || analysis.Lemma.Any(char.IsWhiteSpace)
-            || !Lexicon.IsValidFeatureSet(analysis.Features))
+            || !IsNormalizedFormC(analysis.Lemma) || !Lexicon.IsValidFeatureSet(analysis.Features))
         {
-            throw new ArgumentException($"An analysis of '{key}' has an empty, too long or white space base word or malformed features.", nameof(analysis));
+            throw new ArgumentException($"An analysis of '{key}' has an empty, too long, white space or non-NFC base word or malformed features.", nameof(analysis));
         }
 
         // The longest shared prefix of the spelling and the base word, moved back to a character boundary of both
@@ -598,6 +598,23 @@ internal static class LexiconWriter
 
         template.Count++;
         return template;
+    }
+
+    /// <summary>
+    ///     Tells whether a text is well-formed UTF-16 in Unicode normalization form C.
+    /// </summary>
+    /// <param name="text">The text.</param>
+    /// <returns><c>true</c> if the text is normalized; <c>false</c> if it is not or has an unpaired surrogate.</returns>
+    private static bool IsNormalizedFormC(string text)
+    {
+        try
+        {
+            return text.IsNormalized(NormalizationForm.FormC);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 
     /// <summary>

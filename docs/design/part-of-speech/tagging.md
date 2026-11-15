@@ -92,7 +92,8 @@ uses, and builds the tags with the same `ApplyShapeRules` that its `AllowedTags`
 `WithShapeRules` mode are the allowed tags of the same token in a sentence, and `IsKnownWord` equals the token's flag. The
 one thing that the lookup adds is the compound rule: a hyphenated word that is not a spelling is looked up by its last
 part, which yields analyses (`WordMatch.CompoundHead`) and never changes the tags, because the tagger itself has no
-hyphen rule and looks only at the whole token. A word that is longer than the longest spelling is not folded as a whole;
+hyphen rule and looks only at the whole token. A word that has more characters than the longest spelling has bytes is not
+folded as a whole;
 only the lookup of the whole spelling is skipped, and the compound rule runs on its last part. The analyses are stored in
 the lexicon next to the tags (see _Lexicon Design_), so the same loaded lexicon serves the restriction and the lookup, a
 custom lexicon file serves both, and a lexicon without analyses still answers with tags.

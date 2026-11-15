@@ -205,9 +205,10 @@ sections:
                 title: >-
                   A lookup shall refuse a null word, an empty word, a word that contains white space and a mode or tag
                   that is not a defined value, each with the documented exception, shall not fail for a word with an
-                  unpaired surrogate (which counts as U+FFFD, like in a token), and shall answer a word that is longer
-                  than any spelling of the lexicon without an error, without growing the per-thread buffers and in time
-                  linear in its length.
+                  unpaired surrogate (which counts as U+FFFD, like in a token), and shall answer a word that has more
+                  characters than the longest spelling of the lexicon has bytes, and therefore cannot be a spelling,
+                  without an error, without growing the per-thread buffers beyond what a word of that many characters
+                  needs and in time linear in its length.
                 justification: |
                   The lexicon holds no phrases, so a text with white space can only be answered wrongly as unknown; the
                   caller must split the text into tokens (or use a glossary for a term). Text that a caller did not
@@ -221,6 +222,7 @@ sections:
                   - Tagger_GetPossibleTags_Span_InvalidInput_Throws
                   - Tagger_GetPossibleTags_UnpairedSurrogate_DoesNotThrow
                   - Tagger_GetPossibleTags_VeryLongWord_IsNotRecognizedWithoutError
+                  - Tagger_GetPossibleTags_WordsWithManyCharacters_NeverGrowTheWorkspaceBeyondTheLongestSpelling
                   - TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing
 
               - id: PartOfSpeech-Tagging-Tagger-WordAnalyses
@@ -255,9 +257,10 @@ sections:
                   whole and nowhere else, is a spelling, and shall then carry the analyses of that last part; a word
                   that is a spelling shall always match as a spelling; a compound without a spelling as last part, a
                   word with an empty part and a word that contains a dash character (which folds to two hyphens)
-                  shall not be recognized; the same rule shall apply to a word that is longer than any spelling of
-                  the lexicon (only the lookup of the whole word is skipped, only the last part is folded, and the
-                  per-thread buffers do not grow); and the tags of the result shall always be those of the whole word
+                  shall not be recognized; the same rule shall apply to a word that has more characters than the
+                  longest spelling of the lexicon has bytes (only the lookup of the whole word is skipped, only the last
+                  part is folded, and the per-thread buffers do not grow beyond what a word of that many characters
+                  needs); and the tags of the result shall always be those of the whole word
                   as the tagger sees it, so that a compound head never narrows the tags or changes the known flag.
                 justification: |
                   Compound words (well-tested, pre-flight) are common in technical text and the lexicon lists few of

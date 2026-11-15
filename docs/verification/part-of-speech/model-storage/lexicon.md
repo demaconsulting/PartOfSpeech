@@ -58,7 +58,8 @@ below 99.9 percent.
   the analyses of a spelling out of order, or have malformed or unordered features or a base word that is not NFC);
   `LexiconWriter_Compile_InvalidAnalyses_Throws` (a theory of scenarios: unknown or unsorted spellings, a tag that the
   spelling lacks, unordered or duplicate analyses, an empty list, too many analyses, malformed or unordered features, an
-  empty, white-space or too long base word); `LexiconWriter_Compile_MoreThanMaximumLists_Throws` (the largest accepted
+  empty, white-space, too long, not NFC or not well-formed (unpaired surrogate) base word);
+  `LexiconWriter_Compile_MoreThanMaximumLists_Throws` (the largest accepted
   number of lists compiles and loads, one more is refused); `LexiconWriter_Compile_Analyses_IsDeterministic` (the same
   tables compile to the same bytes in any input order of the analyses, and the compressed and the plain file have the same
   uncompressed image).
@@ -84,6 +85,18 @@ below 99.9 percent.
   `Lexicon_Load_InvalidSuffix_Throws` (a theory: not UTF-8, and starting with a continuation byte),
   `Lexicon_Load_UnsortedFeatureSets_Throws`, `Lexicon_Load_MalformedFeatureSet_Throws`,
   `Lexicon_Load_TemplateIndexOutOfRange_Throws`, `Lexicon_Load_ListTagsDecrease_Throws`,
+  `Lexicon_Load_SameTagAnalysesInWrongBaseWordOrder_Throws` and `Lexicon_Load_SameTagAnalysesInWrongFeatureOrder_Throws`
+  (two templates of one tag exchanged in a list: tags that do not decrease are not enough, the base words and then the
+  features must ascend), `Lexicon_Load_ListInOrderForOneSpellingButNotForAnother_Throws` (two spellings that use the
+  same two templates in different orders; one is pointed at the list of the other, which composes the base words in the
+  wrong order for it, so the order is checked for each spelling),
+  `Lexicon_Load_GeneratedAnalyses_AcceptsWriterOrderAndRefusesExchangedNeighbors`
+  (40 generated lexicons with ASCII, two-, three- and four-byte characters: every file that the writer produces loads and
+  reads back in the written order, and exchanging two neighbors of one tag in a list is refused in every list where that
+  is possible, which ties the comparison of the loader to the one of the writer, including UTF-8 byte order against
+  UTF-16 order), `Lexicon_Load_ComposedBaseWordNotNormalized_Throws` (a template patched to compose `cafe` and U+0301),
+  `Lexicon_Load_CharactersBelowU0300_AreStableUnderNormalizationFormC` (the premise of the fast path: every character
+  below U+0300 and every pair of them is in form C, and `a` with U+0300 is not),
   `Lexicon_Load_ListZeroNotEmpty_Throws`, `Lexicon_Load_RepeatedTemplate_Throws`,
   `Lexicon_Load_AnalysesRegionsDoNotFillThePayload_Throws`, `Lexicon_Load_AnalysisCountMismatch_Throws`,
   `Lexicon_Load_TemplateCountLargerThanThePayload_Throws` (a hostile count is refused before an array is sized from it)

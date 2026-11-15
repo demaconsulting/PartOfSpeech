@@ -458,7 +458,7 @@ internal sealed class TagDecoder
             return false;
         }
 
-        // A word longer than the longest spelling is not a spelling; only the last part of a compound can match (nothing else is folded)
+        // A word with more characters than the longest spelling has bytes is not a spelling; only the last part of a compound can match (nothing else is folded)
         var head = 0;
         if (wordText.Length > _lexicon.MaxSpellingBytes)
         {
@@ -521,10 +521,13 @@ internal sealed class TagDecoder
     ///     Looks up a normalized word: folds it into the thread's workspace, finds it and builds the result.
     /// </summary>
     /// <remarks>
-    ///     A word longer than the longest spelling of the lexicon cannot be a spelling (folding and lower-casing never
-    ///     shorten it and a character takes at least one UTF-8 byte), so the whole-spelling lookup is skipped for it and
-    ///     it is never folded as a whole: a huge input never makes the per-thread buffers grow. Its last part can still be
-    ///     a spelling, so the compound rule runs on the last part alone (see <see cref="LookupOverlong"/>).
+    ///     A word that has more characters than the longest spelling has bytes cannot be a spelling (folding and lower-casing
+    ///     never shorten it and a character takes at least one UTF-8 byte), so the whole-spelling lookup is skipped for it and
+    ///     it is never folded as a whole: a huge input never makes the per-thread buffers grow. A word with fewer characters is
+    ///     folded as a whole even when its characters take more bytes than the longest spelling has, which cannot make a
+    ///     buffer larger than the folded word of that many characters needs (a test measures it, including the ellipsis that folds to
+    ///     three characters). Its last part can still be a spelling, so the compound rule runs on the last part alone (see
+    ///     <see cref="LookupOverlong"/>).
     /// </remarks>
     /// <param name="text">The word, NFC-normalized (or pure ASCII).</param>
     /// <param name="mode">Which tags to report.</param>
@@ -558,23 +561,23 @@ internal sealed class TagDecoder
     }
 
     /// <summary>
-    ///     Looks up a word that is longer than the longest spelling of the lexicon: it cannot be a spelling as a whole, but
-    ///     the last part of a hyphenated compound can be.
+    ///     Looks up a word that has more characters than the longest spelling of the lexicon has bytes: it cannot be a spelling as a
+    ///     whole, but the last part of a hyphenated compound can be.
     /// </summary>
     /// <remarks>
     ///     <para>
     ///         The compound rule is the one of <see cref="Find"/>: the word must contain the hyphen-minus and no empty part
     ///         between hyphens, and the last part must be a spelling. Only the last part is folded into the workspace and only
-    ///         when it is no longer than the longest spelling, so the per-thread buffers never grow beyond what a word that
-    ///         fits needs, whatever the length of the whole word. Finding the last part costs one scan of the word and
-    ///         allocates nothing.
+    ///         when it does not have more characters than the longest spelling has bytes, so the per-thread buffers never grow
+    ///         beyond what a word of that many characters needs, whatever the length of the whole word. Finding the last part
+    ///         costs one scan of the word and allocates nothing.
     ///     </para>
     ///     <para>
     ///         The tags are those of the whole word, which is not a spelling: empty in the lexicon mode and all tags with
     ///         the shape rules, as for any word that is not a spelling.
     ///     </para>
     /// </remarks>
-    /// <param name="text">The word, NFC-normalized (or pure ASCII), longer than the longest spelling.</param>
+    /// <param name="text">The word, NFC-normalized (or pure ASCII), with more characters than the longest spelling has bytes.</param>
     /// <param name="mode">Which tags to report.</param>
     /// <returns>The compound-head result, or the not-recognized result.</returns>
 #if NET

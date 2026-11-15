@@ -535,12 +535,13 @@ public sealed class Tagger
     ///         the head are extra evidence that never narrows the tags and never changes the tagging.
     ///     </para>
     ///     <para>
-    ///         <strong>Edge cases:</strong> a word that is longer than the longest spelling of the lexicon (122 UTF-8 bytes in the
+    ///         <strong>Edge cases:</strong> a word that has more characters than the longest spelling of the lexicon has UTF-8 bytes (122 in the
     ///         embedded lexicon) cannot be a spelling as a whole, so only the compound rule can recognize it: it is
     ///         <see cref="WordMatch.CompoundHead"/> when it is a hyphenated compound whose last part is a spelling, and
-    ///         <see cref="WordMatch.NotRecognized"/> otherwise (no hyphen, an empty part, or a last part that is not a spelling or is itself
-    ///         longer than the longest spelling). Such a word costs one pass over the text, folds at most its last part, and never
-    ///         grows a buffer beyond what a word that fits needs. A lexicon without an analyses table (a custom lexicon file) gives no analyses and
+    ///         <see cref="WordMatch.NotRecognized"/> otherwise (no hyphen, an empty part, or a last part that is not a spelling or has itself
+    ///         more characters than that). Such a word costs one pass over the text, folds at most its last part, and never
+    ///         grows a buffer beyond what a word of that many characters needs (a word with fewer characters is folded as a whole, even when its
+    ///         characters take more bytes than the longest spelling has). A lexicon without an analyses table (a custom lexicon file) gives no analyses and
     ///         <see cref="WordTags.TagsWithoutAnalysis"/> equals <see cref="WordTags.Tags"/>. The lexicon has no phrases, so text with white
     ///         space is refused rather than answered "unknown".
     ///     </para>

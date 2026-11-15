@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace DemaConsulting.PartOfSpeech;
@@ -69,6 +70,16 @@ internal sealed class Lexicon
     ///     The description of the file kind used in error messages.
     /// </summary>
     private const string Kind = "lexicon file";
+
+    /// <summary>
+    ///     The first UTF-8 lead byte of a character from U+0300 on; every character below it is stable under normalization form C.
+    /// </summary>
+    private const byte FirstUnstableByte = 0xCC;
+
+    /// <summary>
+    ///     The value of <c>MethodImplOptions.AggressiveOptimization</c>, which <c>netstandard2.0</c> does not name: the method is compiled fully optimized at its first call.
+    /// </summary>
+    private const MethodImplOptions Optimized = (MethodImplOptions)512;
 
     /// <summary>
     ///     The tags that a token without a letter or digit may take, in addition to its lexicon tags.
@@ -797,6 +808,7 @@ internal sealed class Lexicon
         var templateCuts = new int[header.TemplateCount];
         var templateSuffixes = new byte[header.TemplateCount][];
         var templateSuffixTexts = new string[header.TemplateCount];
+        var templateStable = new bool[header.TemplateCount];
         var seenTemplates = new HashSet<string>(StringComparer.Ordinal);
         for (var t = 0; t < header.TemplateCount; t++)
         {
@@ -834,9 +846,10 @@ internal sealed class Lexicon
             templateCuts[t] = cut;
             templateSuffixes[t] = suffix;
             templateSuffixTexts[t] = text;
+            templateStable[t] = LeadingStable(suffix, suffix.Length) == suffix.Length;
         }
 
-        // Lists: list 0 is empty, every other list is not; tags never decrease, a template appears once, lists are distinct
+        // Lists: list 0 is empty, every other list is not; tags never decrease (the order within a tag needs the spelling and is checked per spelling), a template appears once, lists are distinct
         if (header.ListCount > limit - position)
         {
             throw new InvalidDataException("The lexicon file is truncated: the list palette does not fit the payload.");
@@ -847,6 +860,7 @@ internal sealed class Lexicon
         var items = new List<int>();
         var seenLists = new HashSet<string>(StringComparer.Ordinal);
         var used = new bool[header.TemplateCount];
+        var listTied = new bool[header.ListCount];
         for (var l = 0; l < header.ListCount; l++)
         {
             listStarts[l] = items.Count;
@@ -867,6 +881,8 @@ internal sealed class Lexicon
                     throw new InvalidDataException($"Invalid lexicon file: list {l} names a missing or repeated template or its tags decrease.");
                 }
 
+                // Two neighbors with one tag are ordered by their base words and features, which only a spelling can tell
+                listTied[l] |= templateTags[template] == lastTag;
                 used[template] = true;
                 lastTag = templateTags[template];
                 mask |= 1 << lastTag;
@@ -895,7 +911,9 @@ internal sealed class Lexicon
             throw new InvalidDataException("Invalid lexicon file: the analyses regions do not fill the payload exactly.");
         }
 
-        return new AnalysisTables(featureSets, templateTags, templateFeatureSets, templateCuts, templateSuffixes, templateSuffixTexts, listStarts, items.ToArray(), listTags, limit);
+        return new AnalysisTables(
+            featureSets, templateTags, templateFeatureSets, templateCuts, templateSuffixes, templateSuffixTexts, templateStable, listStarts,
+            items.ToArray(), listTags, listTied, limit);
     }
 
     /// <summary>
@@ -1227,14 +1245,16 @@ internal sealed class Lexicon
     }
 
     /// <summary>
-    ///     Checks the analyses of one spelling: the list exists, its tags are tags of the spelling and every template can be applied.
+    ///     Checks the analyses of one spelling: the list exists, its tags are tags of the spelling, every template can be applied,
+    ///     every composed base word is NFC and the analyses are in the documented order (tag, base word, features).
     /// </summary>
     /// <param name="ordinal">The position of the spelling.</param>
     /// <param name="mask">The tag mask of the spelling.</param>
     /// <param name="spelling">The buffer that holds the spelling.</param>
     /// <param name="length">The length of the spelling in bytes.</param>
     /// <returns>The number of analyses of the spelling.</returns>
-    /// <exception cref="InvalidDataException">The list index, a tag, a cut or a composed base word is invalid.</exception>
+    /// <exception cref="InvalidDataException">The list index, a tag, a cut, a composed base word or the order of the analyses is invalid.</exception>
+    [MethodImpl(Optimized)]
     private int ValidateAnalyses(int ordinal, int mask, byte[] spelling, int length)
     {
         var list = BinaryFormat.ReadUInt16(_payload, _analyses.IndexStart + (ordinal * 2));
@@ -1252,6 +1272,7 @@ internal sealed class Lexicon
         // Each base word must be made of a whole-character prefix of the spelling and a valid suffix, and fit the length limit
         var first = _analyses.ListStarts[list];
         var end = _analyses.ListStarts[list + 1];
+        var leadingStable = -1;
         for (var i = first; i < end; i++)
         {
             var template = _analyses.ListTemplates[i];
@@ -1267,9 +1288,130 @@ internal sealed class Lexicon
             {
                 throw new InvalidDataException($"Invalid lexicon file: an analysis of spelling {ordinal} cuts inside a character or has a base word of {lemmaLength} bytes.");
             }
+
+            // A base word is NFC; text without a character from U+0300 on always is, so only a base word with one is composed and tested
+            if (!_analyses.TemplateStable[template])
+            {
+                ValidateNormalized(ordinal, template, spelling, keep);
+            }
+            else
+            {
+                leadingStable = leadingStable >= 0 ? leadingStable : LeadingStable(spelling, length);
+                if (keep > leadingStable)
+                {
+                    ValidateNormalized(ordinal, template, spelling, keep);
+                }
+            }
+        }
+
+        // The documented order of a list is (tag, base word, features); lists with one analysis per tag need no test
+        if (_analyses.ListTied[list])
+        {
+            for (var i = first + 1; i < end; i++)
+            {
+                var earlier = _analyses.ListTemplates[i - 1];
+                var later = _analyses.ListTemplates[i];
+                if (_analyses.TemplateTags[earlier] == _analyses.TemplateTags[later] && CompareAnalyses(spelling, length, earlier, later) >= 0)
+                {
+                    throw new InvalidDataException($"Invalid lexicon file: the analyses of spelling {ordinal} are not strictly ascending by tag, base word and features.");
+                }
+            }
         }
 
         return end - first;
+    }
+
+    /// <summary>
+    ///     Counts the bytes at the start of a buffer that come before the first byte that can start a character from U+0300 on.
+    /// </summary>
+    /// <remarks>
+    ///     Every character below U+0300 (UTF-8 lead bytes up to 0xCB) is stable under normalization form C: it has no
+    ///     decomposition that changes it, it is no combining mark and it never composes with a neighbor, so a text made of
+    ///     such characters is already in form C. A test proves this for every pair of characters below U+0300.
+    /// </remarks>
+    /// <param name="bytes">The buffer.</param>
+    /// <param name="length">The number of bytes to test.</param>
+    /// <returns>The number of leading bytes below 0xCC.</returns>
+    [MethodImpl(Optimized)]
+    private static int LeadingStable(byte[] bytes, int length)
+    {
+        var count = 0;
+        while (count < length && bytes[count] < FirstUnstableByte)
+        {
+            count++;
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    ///     Checks that the base word that a template composes from a spelling is well-formed UTF-8 in Unicode normalization form C.
+    /// </summary>
+    /// <param name="ordinal">The position of the spelling, for the message.</param>
+    /// <param name="template">The template.</param>
+    /// <param name="spelling">The buffer that holds the spelling.</param>
+    /// <param name="keep">The number of leading spelling bytes that the base word keeps.</param>
+    /// <exception cref="InvalidDataException">The base word is not valid UTF-8 or not NFC.</exception>
+    private void ValidateNormalized(int ordinal, int template, byte[] spelling, int keep)
+    {
+        string? text;
+        try
+        {
+            text = new UTF8Encoding(false, true).GetString(spelling, 0, keep) + _analyses.TemplateSuffixTexts[template];
+        }
+        catch (DecoderFallbackException)
+        {
+            text = null;
+        }
+
+        if (text == null || !text.IsNormalized(NormalizationForm.FormC))
+        {
+            throw new InvalidDataException($"Invalid lexicon file: an analysis of spelling {ordinal} has a base word that is not valid UTF-8 in normalization form C.");
+        }
+    }
+
+    /// <summary>
+    ///     Orders the base words and features of two templates that share a tag, applied to one spelling, the way the writer does.
+    /// </summary>
+    /// <remarks>
+    ///     The base word is the spelling without its last <c>cut</c> bytes followed by the suffix; the words are compared as
+    ///     UTF-8 bytes without composing them. The feature sets are numbered in ascending order of their text, so the
+    ///     order of the numbers is the order of the features.
+    /// </remarks>
+    /// <param name="spelling">The buffer that holds the spelling.</param>
+    /// <param name="length">The length of the spelling in bytes.</param>
+    /// <param name="left">The first template.</param>
+    /// <param name="right">The second template.</param>
+    /// <returns>A negative number, zero or a positive number as the analysis of <paramref name="left"/> is before, equal to or after that of <paramref name="right"/>.</returns>
+    [MethodImpl(Optimized)]
+    private int CompareAnalyses(byte[] spelling, int length, int left, int right)
+    {
+        var leftKeep = length - _analyses.TemplateCuts[left];
+        var rightKeep = length - _analyses.TemplateCuts[right];
+        var leftSuffix = _analyses.TemplateSuffixes[left];
+        var rightSuffix = _analyses.TemplateSuffixes[right];
+        var leftLength = leftKeep + leftSuffix.Length;
+        var rightLength = rightKeep + rightSuffix.Length;
+
+        // Both words start with the spelling up to the shorter of the two kept prefixes, so compare from there
+        var common = Math.Min(leftKeep, rightKeep);
+        var shorter = Math.Min(leftLength, rightLength);
+        for (var k = common; k < shorter; k++)
+        {
+            var a = k < leftKeep ? spelling[k] : leftSuffix[k - leftKeep];
+            var b = k < rightKeep ? spelling[k] : rightSuffix[k - rightKeep];
+            if (a != b)
+            {
+                return a.CompareTo(b);
+            }
+        }
+
+        if (leftLength != rightLength)
+        {
+            return leftLength.CompareTo(rightLength);
+        }
+
+        return _analyses.TemplateFeatureSets[left].CompareTo(_analyses.TemplateFeatureSets[right]);
     }
 
     /// <summary>
@@ -1325,9 +1467,11 @@ internal sealed class Lexicon
         /// <param name="templateCuts">The number of bytes that every template drops from the end of the spelling.</param>
         /// <param name="templateSuffixes">The UTF-8 suffix that every template appends.</param>
         /// <param name="templateSuffixTexts">The suffix of every template as text.</param>
+        /// <param name="templateStable">Whether the suffix of every template has no character from U+0300 on.</param>
         /// <param name="listStarts">The start of every list inside <paramref name="listTemplates"/>, plus the total as the last entry.</param>
         /// <param name="listTemplates">The template indices of all lists, one list after the other.</param>
         /// <param name="listTags">The mask of the tags of every list.</param>
+        /// <param name="listTied">Whether each list has two neighboring templates with the same tag.</param>
         /// <param name="indexStart">The position of the list index inside the payload.</param>
         public AnalysisTables(
             string[] featureSets,
@@ -1336,9 +1480,11 @@ internal sealed class Lexicon
             int[] templateCuts,
             byte[][] templateSuffixes,
             string[] templateSuffixTexts,
+            bool[] templateStable,
             int[] listStarts,
             int[] listTemplates,
             int[] listTags,
+            bool[] listTied,
             int indexStart)
         {
             FeatureSets = featureSets;
@@ -1347,9 +1493,11 @@ internal sealed class Lexicon
             TemplateCuts = templateCuts;
             TemplateSuffixes = templateSuffixes;
             TemplateSuffixTexts = templateSuffixTexts;
+            TemplateStable = templateStable;
             ListStarts = listStarts;
             ListTemplates = listTemplates;
             ListTags = listTags;
+            ListTied = listTied;
             IndexStart = indexStart;
         }
 
@@ -1358,7 +1506,7 @@ internal sealed class Lexicon
         /// </summary>
         public static AnalysisTables Empty { get; } = new(
             new[] { string.Empty }, Array.Empty<byte>(), Array.Empty<int>(), Array.Empty<int>(), Array.Empty<byte[]>(), Array.Empty<string>(),
-            new[] { 0, 0 }, Array.Empty<int>(), new[] { 0 }, 0);
+            Array.Empty<bool>(), new[] { 0, 0 }, Array.Empty<int>(), new[] { 0 }, new[] { false }, 0);
 
         /// <summary>
         ///     Gets the feature sets in UD notation; entry 0 is empty.
@@ -1391,6 +1539,11 @@ internal sealed class Lexicon
         public string[] TemplateSuffixTexts { get; }
 
         /// <summary>
+        ///     Gets whether the suffix of every template has no character from U+0300 on (see <see cref="LeadingStable"/>).
+        /// </summary>
+        public bool[] TemplateStable { get; }
+
+        /// <summary>
         ///     Gets the start of every list inside <see cref="ListTemplates"/>, plus the total as the last entry.
         /// </summary>
         public int[] ListStarts { get; }
@@ -1404,6 +1557,11 @@ internal sealed class Lexicon
         ///     Gets the mask of the tags of every list.
         /// </summary>
         public int[] ListTags { get; }
+
+        /// <summary>
+        ///     Gets whether each list has two neighboring templates with the same tag, so that the order of the list depends on the spelling.
+        /// </summary>
+        public bool[] ListTied { get; }
 
         /// <summary>
         ///     Gets the position of the list index (two bytes per spelling) inside the payload.

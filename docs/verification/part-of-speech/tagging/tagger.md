@@ -142,7 +142,13 @@ is accepted, a parallel lookup differs from the sequential one, or a lookup of a
   `TagsWithoutAnalysis`, the analyses and `IsFormOf` must be identical, and more than 10,000 of the words are too long
   for the first), `Tagger_GetPossibleTags_VeryLongWord_IsNotRecognizedWithoutError` (a million ASCII characters, a
   million non-ASCII characters and a hyphenated word with halves of 500,000 characters: `NotRecognized`, no
-  exception, and the next lookup of an ordinary word is right) and
+  exception, and the next lookup of an ordinary word is right),
+  `Tagger_GetPossibleTags_WordsWithManyCharacters_NeverGrowTheWorkspaceBeyondTheLongestSpelling` (on a new thread: after
+  the folding of the largest word that is folded, an ellipsis for every byte of the longest spelling, as a word and as
+  the word of `IsFormOf`, the lookups of 100 times `é` (200 bytes, so not a spelling, but folded as a whole), of words
+  with as many characters as the longest spelling has bytes, of words with one more and of words of a million characters
+  (`é`, ellipsis, em dash, `a`) are all `NotRecognized` and the character buffer of the thread's workspace, read by
+  reflection, keeps its size between 6 and 16 times the longest spelling) and
   `Tagger_GetPossibleTags_UnpairedSurrogate_DoesNotThrow`.
 - **Word lookup, arguments**: `Tagger_GetPossibleTags_NullWord_Throws` (also a null base word of `IsFormOf`),
   `Tagger_GetPossibleTags_EmptyOrWhiteSpace_Throws` (a theory over an empty word, a space, a tab, a no-break space, a

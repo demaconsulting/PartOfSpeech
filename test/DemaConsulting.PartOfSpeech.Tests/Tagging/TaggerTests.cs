@@ -1467,6 +1467,57 @@ public class TaggerTests
     }
 
     /// <summary>
+    ///     Proves that the memory the word lookup uses is bounded by the longest spelling and not by the word: once a word with as
+    ///     many characters as the longest spelling has bytes has been folded (the most that is ever folded, whatever its characters are:
+    ///     they can take two UTF-8 bytes each, so that the word cannot be a spelling, and an ellipsis folds to three characters), no word of
+    ///     any length makes the character buffer of the thread's workspace grow further.
+    /// </summary>
+    [Fact]
+    public void Tagger_GetPossibleTags_WordsWithManyCharacters_NeverGrowTheWorkspaceBeyondTheLongestSpelling()
+    {
+        // Arrange: words that are not spellings; the first has 100 characters of 2 bytes each (200 bytes), the next ones have as many characters as the
+        // longest spelling has bytes (the ellipsis and the em dash fold to three and two characters), one more, and a million characters
+        var tagger = Tagger.Default;
+        var longest = EmbeddedModel.Lexicon.MaxSpellingBytes;
+        var words = new[]
+        {
+            new string('\u00E9', 100), new string('\u00E9', longest), new string('\u2014', longest), new string('\u2026', longest),
+            new string('\u00E9', longest + 1), new string('\u2026', longest + 1), new string('\u00E9', 1_000_000), new string('\u2026', 1_000_000),
+            new string('\u2014', 1_000_000), new string('a', 1_000_000)
+        };
+        var field = typeof(TagDecoder).GetField("_threadWorkspace", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(field);
+        var matches = new List<WordMatch>();
+        var forms = new List<bool>();
+        var capacities = new List<int>();
+
+        // Act: on a new thread (so the workspace is new), fold the words that need the most (an ellipsis for every byte of the longest spelling, as a
+        // word and as the word of IsFormOf, which folds a second token), then look up every word in both modes and as IsFormOf and read the buffer size
+        var thread = new Thread(() =>
+        {
+            int Capacity() => ((DecoderWorkspace)field.GetValue(null)!).Chars.Length;
+            _ = tagger.GetPossibleTags(new string('\u2026', longest), PossibleTagsMode.WithShapeRules);
+            _ = tagger.IsFormOf(new string('\u2026', longest), "test", Upos.Verb);
+            capacities.Add(Capacity());
+            foreach (var word in words)
+            {
+                matches.Add(tagger.GetPossibleTags(word).Match);
+                matches.Add(tagger.GetPossibleTags(word, PossibleTagsMode.WithShapeRules).Match);
+                forms.Add(tagger.IsFormOf(word, "test", Upos.Verb));
+                capacities.Add(Capacity());
+            }
+        });
+        thread.Start();
+        thread.Join();
+
+        // Assert: nothing is recognized; the buffer holds what the folded word needs (6 characters of room per character, two tokens) and never grew again
+        Assert.Equal(words.Length * 2, matches.Count);
+        Assert.All(matches, m => Assert.Equal(WordMatch.NotRecognized, m));
+        Assert.All(forms, Assert.False);
+        Assert.InRange(capacities[0], 6 * longest, 16 * longest);
+        Assert.All(capacities, capacity => Assert.Equal(capacities[0], capacity));
+    }
+    /// <summary>
     ///     Proves that an unpaired surrogate does not throw and is looked up as U+FFFD, like a token of the tagger.
     /// </summary>
     [Fact]

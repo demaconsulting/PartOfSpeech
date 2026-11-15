@@ -690,9 +690,10 @@ namespace DemaConsulting.PartOfSpeech;
 ///     rules) and <see cref="WordTags.IsKnownWord"/> is <c>false</c>. The analyses of the head are extra evidence for a rule
 ///     checker, for example that <c>well-tested</c> ends in a form of the verb <c>test</c>: they never narrow
 ///     <see cref="WordTags.Tags"/> and never change the tagging. <see cref="Tagger.IsFormOf(string, string, Upos)"/> follows
-///     the same rule; check <see cref="WordTags.Match"/> first when compounds must not count. A word that is longer than the
-///     longest spelling of the lexicon (122 UTF-8 bytes in the embedded lexicon) cannot be a spelling as a whole, so only
-///     the compound rule can recognize it, by a last part that itself fits that length.
+///     the same rule; check <see cref="WordTags.Match"/> first when compounds must not count. A word that has more characters
+///     than the longest spelling of the lexicon has UTF-8 bytes (122 UTF-8 bytes in the embedded lexicon) cannot be a spelling
+///     as a whole, so only the compound rule can recognize it, by a last part that does not itself have more characters than
+///     that.
 ///     </para>
 ///     <para>
 ///     **Phrases.** The lexicon has no phrases: no spelling contains white space, and the lookup is for one

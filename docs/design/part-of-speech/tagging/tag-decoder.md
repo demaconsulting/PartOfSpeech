@@ -88,8 +88,9 @@ adjustment`, a `double`. The integer sum is exact; only the final multiplication
 - **`GetPossibleTags(string word, PossibleTagsMode mode)`** (and the `ReadOnlySpan<char>` twin on .NET 8 and later): the
   lookup of one word, called by `Tagger` after it validated the arguments. Non-ASCII text is NFC-normalized first
   (`NormalizeForLookup`, which returns an ASCII string as it is and otherwise calls `FeatureExtractor.NormalizeNonAscii`;
-  a span with a character above U+007F is copied to a string first) so that the length test sees the real length. A
-  word longer than the longest spelling goes to `LookupOverlong`; any other word is folded into the thread's workspace
+  a span with a character above U+007F is copied to a string first) so that the length test sees the real length. A word
+  with more characters than the longest spelling has bytes goes to `LookupOverlong`; any other word is folded into the
+  thread's workspace
   with `FeatureExtractor.SetFolded` (the folding core of `SetToken`, which takes a span or a string that is already
   normalized and gives identical characters, flags, shape and hashes), the scratch buffer is sized, and `Find` returns
   the match. The tags come from the whole word only: `LexiconOnly` gives the lexicon tags of the whole word (empty
@@ -101,17 +102,24 @@ adjustment`, a `double`. The integer sum is exact; only the final multiplication
   leading, doubled or trailing hyphen-minus (and for no hyphen at all), then `TryFindKey` of the last part only, at its
   offset in the same buffer and with the same scratch (no copy, no recursion). It returns `Spelling`, `CompoundHead` or
   `NotRecognized`; the key of the matched spelling stays UTF-8 encoded in the scratch buffer.
-- **`LookupOverlong(text, mode)` and `OverlongHeadStart(text)`**: the same compound rule for a word longer than the longest
-  spelling, which is never folded as a whole. `OverlongHeadStart` scans the normalized characters as written once (the
-  hyphen-minus is the only hyphen; `FeatureExtractor.FoldsToDoubleHyphen` marks the three dash characters that fold to
-  `--`, which leave an empty part exactly as in the folded word, and a test proves the helper agrees with the folding for
-  every UTF-16 code unit) and returns where the last part starts, or -1 when there is no hyphen, a part is empty, or the
-  last part is itself longer than the longest spelling (folding never shortens it, so it cannot be a spelling). Only
-  then `LookupOverlong` folds the last part alone into the workspace (`SetFolded` of a span slice on .NET 8 and later,
-  `SetFoldedPart` of the string and an offset on `netstandard2.0`, so nothing is copied) and looks it up as a whole with
-  `TryFindKey`: found gives `CompoundHead` with that spelling's analyses, otherwise `NotRecognized`; the tags are those
-  of any word that is not a spelling. The workspace therefore grows at most to what a word that fits needs, whatever the
-  length of the whole word, and the cost beyond a normal lookup is one scan of the characters. A differential test looks
+- **`LookupOverlong(text, mode)` and `OverlongHeadStart(text)`**: the same compound rule for a word with more characters
+  than the longest spelling has bytes, which is never folded as a whole. `OverlongHeadStart` scans the normalized
+  characters as written once (the hyphen-minus is the only hyphen; `FeatureExtractor.FoldsToDoubleHyphen` marks the three
+  dash characters that fold to `--`, which leave an empty part exactly as in the folded word, and a test proves the
+  helper agrees with the folding for every UTF-16 code unit) and returns where the last part starts, or -1 when there is
+  no hyphen, a part is empty, or the last part itself has more characters than that (folding never shortens it and a
+  character takes at least one byte, so it cannot be a spelling). Only then `LookupOverlong` folds the last part alone
+  into the workspace (`SetFolded` of a span slice on .NET 8 and later, `SetFoldedPart` of the string and an offset on
+  `netstandard2.0`, so nothing is copied) and looks it up as a whole with `TryFindKey`: found gives `CompoundHead` with
+  that spelling's analyses, otherwise `NotRecognized`; the tags are those of any word that is not a spelling. The
+  workspace therefore grows at most to what a word of that many characters needs (`EnsureChars` asks for six characters
+  of room per character: three for the folded form of an ellipsis and the same again for the lower-case copy; `IsFormOf`
+  folds a second token), whatever the length of the whole word, and the cost beyond a normal lookup is one scan of the
+  characters. The length test is on UTF-16 characters, which is sound because it only has to be a lower bound of the
+  UTF-8 length of the folded form. A word with fewer characters whose characters take more bytes (100 times `é` is 200
+  bytes) is folded as a whole and not recognized, within the same bound; a test on bytes would add a scan to every
+  lookup and change neither the answer nor the bound. A test looks up such words and words of a million characters on a
+  new thread after the worst folded word and requires the character buffer not to grow. A differential test looks
   up generated words (hyphens, doubled hyphens, dash characters, ellipsis, case, accents, prefixes that make the word
   too long) in a lexicon whose longest spelling is short and in one that also lists a 200-character spelling, and requires
   identical results.
