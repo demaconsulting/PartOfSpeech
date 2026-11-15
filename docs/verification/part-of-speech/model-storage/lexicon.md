@@ -39,11 +39,11 @@ below 99.9 percent.
   over block sizes: the ordinal of every spelling is its index in ascending order).
 - **Analyses**: `Lexicon_Compile_WithoutAnalyses_ReadsBackWithEmptyAnalyses` (a lexicon compiled without an analyses table
   is a version 3 file with the one empty feature set, no template and the one empty list; it has no analysis, its
-  `AnalysedTags` and `GetAnalyses` are empty and the tags enumerate as written),
+  `AnalyzedTags` and `GetAnalyses` are empty and the tags enumerate as written),
   `Lexicon_GetAnalyses_EveryShapeOfAnalysis_RoundTrips` (a theory over compressed and plain files: every shape of
   template (no cut, a cut inside the word, the whole word replaced, a suffix only, non-ASCII base words, a cut next to a
   multi-byte character, seven analyses on one spelling) reads back with its base word, tag and features in the given
-  order whatever the input order, `AnalysedTags` is the set of their tags and a subset of the tags of the spelling, the
+  order whatever the input order, `AnalyzedTags` is the set of their tags and a subset of the tags of the spelling, the
   tags themselves are unchanged, and the counts add up), `Lexicon_HasAnalysis_ComparesTagAndComposedBaseWord` (true only
   for an analysis that exists: a wrong tag, the spelling itself as the base word, a prefix of the base word or another
   word is refused, also for non-ASCII) and `Lexicon_GetAnalyses_EmbeddedTests_ReturnsNounAndVerbInOrder` (the embedded
@@ -97,7 +97,7 @@ below 99.9 percent.
 - **No allocation** (.NET targets only, where the per-thread allocation counter exists):
   `Lexicon_AllowedTags_KnownTokenShapes_DoNotAllocate` (lookups of a punctuation, a digit and an upper-case-first token
   and all four shape-rule combinations allocate zero bytes after warm-up, taken as the minimum over 10 batches of 1000
-  rounds by `TestSupport/AllocationMeter.cs`, and the same for `TryFind` and `AnalysedTags` of an upper-case key; it
+  rounds by `TestSupport/AllocationMeter.cs`, and the same for `TryFind` and `AnalyzedTags` of an upper-case key; it
   supports the decoder requirement
   `PartOfSpeech-Tagging-TagDecoder-NoAllocation`). `HasAnalysis` is proved allocation-free through
   `Tagger_IsFormOf_DoesNotAllocate` (_Tagger Verification_), which runs it with the real lexicon.

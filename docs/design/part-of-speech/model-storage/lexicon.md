@@ -97,7 +97,7 @@ only tool that writes lexicon files, `LexiconCompiler`, is not shipped, so no re
   feature set and one list, at most 65,535 lists), the palette and block index, the analyses section, and `Validate`,
   which walks every spelling once and checks that spellings ascend strictly, prefixes and lengths fit, mask indexes
   exist and the counts equal the header. A lexicon that loads cannot fail in `TryGetTags`, `TryFindKey`,
-  `AnalysedTags`, `GetAnalyses` or `HasAnalysis`. Counts are checked against the payload before any array is sized
+  `AnalyzedTags`, `GetAnalyses` or `HasAnalysis`. Counts are checked against the payload before any array is sized
   from them, so a hostile header cannot make the reader allocate more than the payload justifies.
 - **Analyses validation** (all `InvalidDataException`, with the failing table named): feature sets are ASCII, well
   formed (`Name=Value` pairs with non-empty ASCII alphanumeric names and values, names ascending) and strictly
@@ -118,7 +118,7 @@ only tool that writes lexicon files, `LexiconCompiler`, is not shipped, so no re
   following spelling in the scratch buffer and compares bytes. It also reports the ordinal of the spelling (its position
   in ascending order, which addresses its list in the index) and the number of UTF-8 bytes of the key, which stay at the
   start of `scratch`. Allocation-free.
-- **`AnalysedTags(ordinal)`**: the tags that the analyses of a spelling name, read through the list index from a
+- **`AnalyzedTags(ordinal)`**: the tags that the analyses of a spelling name, read through the list index from a
   precomputed mask per list (two bytes read, no allocation). It is a subset of the spelling's tags; the difference is the
   set of tags that the lexicon lists without an analysis.
 - **`GetAnalyses(ordinal)`**: decodes the spelling of its block into a new buffer and composes each analysis (the first
@@ -164,7 +164,7 @@ only tool that writes lexicon files, `LexiconCompiler`, is not shipped, so no re
 
 Loading reports every defect as `InvalidDataException` (through `BinaryFormat` for the shared checks, and directly for
 structure and analyses). `Load(Stream)` throws `ArgumentNullException` for `null`. `TryGetTags` and `TryFindKey` never
-throw on a loaded lexicon; a key that cannot be in the lexicon returns `false`. `AnalysedTags`, `GetAnalyses` and
+throw on a loaded lexicon; a key that cannot be in the lexicon returns `false`. `AnalyzedTags`, `GetAnalyses` and
 `HasAnalysis` throw `ArgumentOutOfRangeException` for an ordinal that is not the position of a spelling (the callers
 pass only ordinals that `TryFindKey` returned). `FromTsv`, `AnalysesFromTsv` and `Compile` throw
 `InvalidDataException`, `ArgumentException` or `ArgumentOutOfRangeException` for table and parameter errors, so that a
@@ -179,5 +179,5 @@ bad table fails at compile time and not at lookup time.
 #### Callers
 
 - **EmbeddedModel** (`Load`) and **Tagger** (`Load(Stream, Stream, ...)`).
-- **TagDecoder** (`TryGetTags`, `TryFindKey`, `AllowedTags`, `AnalysedTags`, `GetAnalyses`, `HasAnalysis`).
+- **TagDecoder** (`TryGetTags`, `TryFindKey`, `AllowedTags`, `AnalyzedTags`, `GetAnalyses`, `HasAnalysis`).
 - The tool `LexiconCompiler` (`FromTsv`, `AnalysesFromTsv`, `Compile`, `ToUncompressedImage`) and the test suite.

@@ -554,7 +554,7 @@ internal sealed class TagDecoder
             : wholeTags;
         return match == WordMatch.NotRecognized
             ? new WordTags(null, -1, tags, match, UposSet.Empty)
-            : new WordTags(_lexicon, ordinal, tags, match, _lexicon.AnalysedTags(ordinal));
+            : new WordTags(_lexicon, ordinal, tags, match, _lexicon.AnalyzedTags(ordinal));
     }
 
     /// <summary>
@@ -600,7 +600,7 @@ internal sealed class TagDecoder
             var length = workspace.Length[0];
             if (_lexicon.TryFindKey(workspace.Chars, workspace.Start[0] + length, length, workspace.LexiconScratch, out var ordinal, out _, out _))
             {
-                return new WordTags(_lexicon, ordinal, tags, WordMatch.CompoundHead, _lexicon.AnalysedTags(ordinal));
+                return new WordTags(_lexicon, ordinal, tags, WordMatch.CompoundHead, _lexicon.AnalyzedTags(ordinal));
             }
         }
 

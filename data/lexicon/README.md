@@ -8,8 +8,11 @@ License: CC-BY-3.0-US
 
 A lexicon that maps a lower-case spelling to the UPOS tags the spelling may carry: 262,635 spellings, 339,819
 spelling-tag entries (1.294 tags per spelling), 4.2 MiB as TSV. A tagger uses it to restrict the tags it considers for
-a known word. It is built reproducibly from open dictionary tables, a short list of closed-class words and the tags
-attested in the training corpora. The files carry attribution obligations (CC BY 4.0 for the Open English WordNet
+a known word. For 258,255 of the spellings an analyses table (`analyses.tsv`, 290,365 analyses, 10.3 MiB as TSV) adds
+the base word, the tag and the features of each form that the spelling can be; the library reports it as the analyses of
+a word. The lexicon is built reproducibly from open dictionary tables, a short list of closed-class words and the tags
+attested in the training corpora; the analyses come from the same dictionary tables and the closed-class list. The files
+carry attribution obligations (CC BY 4.0 for the Open English WordNet
 derived tables, CC BY 3.0 US for the MASC attestation); see [../../THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md).
 The other inputs are public domain (Moby Part-of-Speech II), MIT (project additions to the WordSense tables) or CC0 1.0
 (the closed-class list and the open corpus annotations).
@@ -19,6 +22,7 @@ The other inputs are public domain (Moby Part-of-Speech II), MIT (project additi
 | File | Content |
 | --- | --- |
 | `lexicon.tsv` | the lexicon: `spelling TAB TAG TAG ...` (tags alphabetical, rows sorted by UTF-8 bytes, comment lines start with a hash and a space); generated, do not edit |
+| `analyses.tsv` | the analyses: `spelling TAB analysis TAB analysis ...` where an analysis is `lemma TAG` or `lemma TAG features` (base word in lower-case NFC, features in Universal Dependencies notation: `Name=Value` pairs sorted by name and joined by `\|`, from `Degree`, `Number`, `Person`, `Tense` and `VerbForm`; `Capitalization` is dropped); only spellings and tags of `lexicon.tsv`, analyses ordered by tag, base word and features; generated, do not edit |
 | `closed-class.tsv` | input: function words, auxiliaries, number words and interjections with their tags and a mode (`exact` replaces the dictionary tags, `add` extends them) |
 | `overrides.tsv` | input: evidenced corrections (empty in this build) |
 | `coverage.tsv` | machine-readable coverage report (written by `check_lexicon.py`) |
@@ -34,7 +38,9 @@ The other inputs are public domain (Moby Part-of-Speech II), MIT (project additi
 | `../open/train.tsv` tokens whose status is not `disputed` | CC0 1.0 annotations | tags the dictionaries lack |
 | `../masc/masc.tsv` | CC BY 3.0 US (derived) | tags the dictionaries lack, attested at least twice |
 
-The SHA-256 of each form table is pinned in `tools/data/pins/wordsense-form.manifest.tsv`. The tables contain no UD,
+The SHA-256 of each form table is pinned in `tools/data/pins/wordsense-form.manifest.tsv`. The analyses use the same
+form tables, the closed-class list and the committed `lexicon.tsv` (the tags of each spelling) and no other input, so
+they carry the licenses of those inputs. The tables contain no UD,
 SemCor, Brown or Wiktionary data: the WordSense provenance values are `oewn_form`, `rule`, `rule_variant`,
 `moby_reverse`, `carried` (rows of the project's earlier reviewed table, frozen once before the generator existed), `llm`,
 `hand`, `irregular_list` and `contraction`, and WordSense used UD English-EWT only to measure the precision of a model,
@@ -72,6 +78,21 @@ The thresholds were chosen on the development split from the sweep below (train 
 Rules alone (K = 0, M = 0) reach 99.748 percent on dev (99.838 on non-disputed tokens); attestation is what lifts the
 non-disputed dev coverage above the 99.9 percent gate.
 
+### The Analyses
+
+`python tools/data/build_lexicon.py` writes `analyses.tsv` after `lexicon.tsv` from the same form rows. An analysis is
+the base word (lemma), the UPOS tag and the features of one form row: the base word is the entry id without its source
+prefix and part-of-speech suffix (`oewn-test-v` is `test`), the tag is the mapping of the entry's own part of speech, and
+the features are the source features without `Capitalization`, in Universal Dependencies notation (names ascending,
+joined by `|`). A tag that the dictionary part adds by rule or that the corpora attest has no analysis (`the` lists ADV,
+DET, PRON and PROPN and has one analysis, `the DET`); an analysis is kept only when its tag is a tag of the spelling in
+`lexicon.tsv`. 258,255 of the 262,635 spellings have at least one analysis (290,365 analyses in all). A new feature name
+or value is a build error, so that new vocabulary is a reviewed decision.
+
+- `python tools/data/build_lexicon.py --analyses-only` writes only `analyses.tsv`, from the committed `lexicon.tsv`.
+- `python tools/data/build_lexicon.py --check-analyses` rebuilds the analyses from the pinned form tables and exits with
+  code 1 when the committed file differs.
+
 ## Token-Shape Rules (normative)
 
 A spelling that is not in `lexicon.tsv` is unknown. The tags allowed for a token are:
@@ -87,25 +108,33 @@ data tests implement them identically. The comparison is by `lower()` of the tok
 
 ## Embedded Form
 
-The package does not contain `lexicon.tsv`; it embeds a compiled binary form, `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`
-(format `POSL`, version 2, little endian, raw Deflate payload; the header checksum covers the stored bytes and the reader
-requires the Deflate stream to be complete). It is 639,711 bytes for the committed lexicon (262,635
-spellings, 339,819 entries, 225 distinct tag masks) against 4,452,392 bytes of TSV. The spellings are stored sorted by
+The package does not contain `lexicon.tsv` or `analyses.tsv`; it embeds one compiled binary form of both,
+`src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin` (format `POSL`, version 3, little endian, raw Deflate payload; the
+header checksum covers the stored bytes and the reader requires the Deflate stream to be complete; a file of version 2 is
+refused). It is 762,836 bytes for the committed data (262,635 spellings, 339,819 entries, 225 distinct tag masks, 258,255
+spellings with analyses, 290,365 analyses in 414 templates and 804 lists, 14 feature sets) and 2,157,499 bytes
+uncompressed, against 4,452,392 bytes of TSV for the lexicon and 10,830,924 bytes for the analyses. The spellings are
+stored sorted by
 UTF-8 bytes in blocks of 16: the first spelling of a block whole and the others front-coded against their predecessor,
-each with the index of its tag mask in a palette. A lookup is exact (no hash collisions), searches the block heads by
-binary search and scans one block; it allocates nothing. The assembly contains the resource once per target framework,
-so the NuGet package is about 3.2 MB. The byte layout is specified in the design document of the `Lexicon` unit
-(`docs/design/part-of-speech/model-storage/lexicon.md`).
+each with the index of its tag mask in a palette. The analyses are stored as palettes: an analysis is a template (tag,
+feature set, the number of bytes cut from the end of the spelling and the suffix that completes the base word), a list is
+a sequence of templates, and each spelling has the index of its list. A lookup is exact (no hash collisions), searches
+the block heads by binary search and scans one block; it allocates nothing, and reading the analyses of a spelling
+allocates only its result. The assembly contains the resource once per target framework, so the NuGet package is about
+8.0 MB (five assemblies of 1.4 to 1.5 MB stored). The byte layout is specified in the design document of the `Lexicon`
+unit (`docs/design/part-of-speech/model-storage/lexicon.md`).
 
 The binary is generated and committed, so that a clean checkout builds with nothing to run:
 
-- Regenerate it after any change of `lexicon.tsv`: `dotnet run --project tools/LexiconCompiler`
-  (options `--input` and `--output` select other files).
+- Regenerate it after any change of `lexicon.tsv` or `analyses.tsv`: `dotnet run --project tools/LexiconCompiler`
+  (options `--input`, `--analyses` and `--output` select other files; an explicit `--input` without `--analyses` compiles
+  a lexicon without analyses).
 - Check that it is current: `dotnet run --project tools/LexiconCompiler -- --check`. `build.ps1` runs this step, and a
   unit test makes the same comparison, so a stale binary fails the build and the tests. The check compares the
-  uncompressed payloads because the Deflate bytes depend on the runtime.
+  uncompressed payloads, the analyses included, because the Deflate bytes depend on the runtime.
 - The compiler refuses a table that breaks a format rule (unsorted or duplicate spellings, a space in a spelling, an
-  unknown or unordered tag) and a header whose counts do not match the rows, and names the line.
+  unknown or unordered tag, an analysis for a tag that the spelling lacks) and a header whose counts do not match the
+  rows, and names the line.
 
 The C# decoder applies the Token-Shape Rules above to the tags that it reads from the embedded lexicon.
 

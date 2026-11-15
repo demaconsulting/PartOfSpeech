@@ -374,8 +374,9 @@ in `build.ps1` and in the CI build, immediately after the API reference is gener
 **Tests**: `PartOfSpeech_RuleChecker_DocumentedExample_GivesTheClaimedResults`,
 `PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced`,
 `PartOfSpeech_RuleChecker_ExtremeSoftBoost_IsNotClassifiedAsForced`,
-`PartOfSpeech_RuleChecker_UserGuideExample_UsesTheDocumentedCriterionAndCompiles` and the FileAssert test
-`ApiMark_RuleCheckerGuidanceDocumented`
+`PartOfSpeech_RuleChecker_UserGuideExample_UsesTheDocumentedCriterionAndCompiles`,
+`PartOfSpeech_RuleChecker_UserGuideLookupExample_Compiles` and the FileAssert tests
+`ApiMark_RuleCheckerGuidanceDocumented` and `ApiMark_WordLookupDocumented`
 
 `PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced` tags an invented word with a soft glossary
 entry, a hard glossary entry, a `Prefer` constraint and a
@@ -411,6 +412,23 @@ namespace page carries the headings of the rule checker section and the example,
 known-word flag, and that the pages of `TaggedToken.IsKnownWord` and `TaggedToken.Margin` exist, which proves the
 generated result and not only the source comment. The compilation of the two example blocks is proved by
 `PartOfSpeech_XmlDocExamples_Compile`.
+
+`PartOfSpeech_RuleChecker_UserGuideLookupExample_Compiles` reads the section "Looking Up a Word" of the user guide and
+compiles its C# example with the same compiler. It runs the lookups that the example shows against `Tagger.Default` and
+asserts the results that the example claims (`tests` is a spelling with the tags NOUN and VERB and the analyses
+`test NOUN Number=Plur` and `test VERB Person=3|Tense=Pres`; an invented word is not recognized and has no tags; `Went`
+is a verb form of `go` and `tests` is no adjective form of `test`; `well-tested` is a compound head with no tags in the
+raw mode and two analyses; `Valve` with the shape rules has the tags NOUN, PROPN and X, of which PROPN and X have no
+analysis). It asserts the facts of the other paragraphs against the same lexicon (the tags of `the` and `went` that no
+analysis names, the malformed and dash-separated words that are not compounds, the 17 tags of a compound with the shape
+rules, the three exceptions), that the section has the paragraph of each rule (modes, result, forms, case, tags without
+an analysis, hyphenated words, phrases, glossary, exceptions, thread safety and allocation) with its key statements,
+that the rule checker section points from the dictionary roles of a word to the tagger and the margin, and that the API
+reference of the guide lists the lookup members and types. The FileAssert test `ApiMark_WordLookupDocumented` opens the
+generated API reference after the build and asserts that the namespace page carries the headings of the lookup section
+and its quick start and that the pages of `Tagger.GetPossibleTags` (with its exception, the glossary and the hyphen
+rule), `Tagger.IsFormOf`, `WordTags`, `WordAnalysis`, `WordMatch` and `PossibleTagsMode` exist. The namespace examples,
+among them the word lookup quick start, are compiled by `PartOfSpeech_XmlDocExamples_Compile`.
 
 ### Root README Tables Equal the Record
 
@@ -503,15 +521,19 @@ _ApiMark Verification_.
 ### Package License
 
 **Tests**: `PartOfSpeech_PackageLicense_ProjectFile_NamesLicenseFileAtPackageRoot`,
-`PartOfSpeech_PackageLicense_File_CoversCodeAndEmbeddedData`, `PartOfSpeech_ThirdPartyNotices_Weights_AreCovered` and the
+`PartOfSpeech_PackageLicense_File_CoversCodeAndEmbeddedData`, `PartOfSpeech_ThirdPartyNotices_Weights_AreCovered`,
+`PartOfSpeech_ThirdPartyNotices_Analyses_AreCovered` and the
 FileAssert test `Package_LicenseFilesPackaged`
 
 The first asserts that the project file names `PACKAGE-LICENSE.md` as the license file, has no license expression (a
 package has one or the other), packs the existing file at the package root. The second asserts that the file starts
 with the SPDX expression `MIT AND CC-BY-4.0 AND CC-BY-3.0-US`, contains the MIT text of the repository `LICENSE` file,
 names the two embedded files with their Creative Commons licenses and links, and points to the notice. The third
-asserts that the
-notice covers the weights (the MASC section and the section on the embedded weights). The FileAssert test opens the
+asserts that the notice covers the weights (the MASC section and the section on the embedded weights). The fourth asserts
+that the introduction and the Open English WordNet section of the notice and the package license cover the analyses table
+of the embedded lexicon: its content (base word, tag and features of the forms of the spellings), that it is derived from
+the same sources as the lexicon and adds no other source, and the change made (each form reduced to a lower-case base
+word, a tag and a subset of its features, all other columns left out). The FileAssert test opens the
 built package after `dotnet pack` and asserts that `PACKAGE-LICENSE.md` and `THIRD-PARTY-NOTICES.md` are at the root with
 their key statements and that the nuspec names the license file (`<license type="file">`), which proves the packed result
 and not just the project file. The reasons for a license file instead of an expression are in the requirement.

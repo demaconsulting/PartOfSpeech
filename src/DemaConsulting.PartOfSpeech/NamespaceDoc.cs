@@ -1,4 +1,4 @@
-// cspell:ignore Contoso
+// cspell:ignore Contoso zorbulon
 namespace DemaConsulting.PartOfSpeech;
 
 /// <summary>
@@ -290,8 +290,9 @@ namespace DemaConsulting.PartOfSpeech;
 ///     </para>
 ///     <para>
 ///     The embedded weights file (<c>weights.bin</c>) is 553,641 bytes compressed and 1,234,530 bytes uncompressed (about
-///     0.6 MB and 1.2 MB); it holds 129,882 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 639,711
-///     bytes compressed and 1,626,269 bytes uncompressed and holds 262,635 spellings. Both files are stored as resources
+///     0.6 MB and 1.2 MB); it holds 129,882 rows of weights. The embedded lexicon (the file <c>lexicon.bin</c>) is 762,836
+///     bytes compressed and 2,157,499 bytes uncompressed, holds 262,635 spellings and carries the analyses (base word, tag
+///     and features) of 258,255 of them. Both files are stored as resources
 ///     of the assembly, so the package grows by their compressed sizes for each target framework. The first read of
 ///     <see cref="Tagger.Default"/> inflates and validates both files once in the process (tens of milliseconds on a
 ///     current machine); every later read, and every later tagger that uses the embedded
@@ -616,12 +617,116 @@ namespace DemaConsulting.PartOfSpeech;
 ///     glossary, not with a higher threshold. No threshold above the strict one is recommended.
 ///     </para>
 ///     <para>
+///     A rule checker can also ask the dictionary about a single word before it reads a tagged sentence. Check the
+///     dictionary roles of the word with the lookup (<see cref="Tagger.GetPossibleTags(string, PossibleTagsMode)"/>, its
+///     <see cref="WordTags.Match"/> and <see cref="Tagger.IsFormOf(string, string, Upos)"/>, see
+///     [Looking up a word](#looking-up-a-word)), then use the tagger and the <see cref="TaggedToken.Margin"/> for the word
+///     in its context: the lookup says which parts of speech the lexicon allows for the word, and only the tagger says
+///     which one the sentence uses.
+///     </para>
+///     <para>
+///     ## Looking up a word
+///     </para>
+///     <para>
+///     A rule checker sometimes needs the dictionary role of one word, for example whether it may be a verb, what its base
+///     word is, or whether it is a form of a given verb. <see cref="Tagger.GetPossibleTags(string, PossibleTagsMode)"/> and
+///     <see cref="Tagger.IsFormOf(string, string, Upos)"/> answer from the lexicon of the tagger. They use no sentence, no
+///     model and no glossary, so the answer for a word is always the same. The quick start at the end of this page has an
+///     example.
+///     </para>
+///     <list type="bullet">
+///     <item><description>
+///     **Two modes** (<see cref="PossibleTagsMode"/>). <see cref="PossibleTagsMode.LexiconOnly"/> (the default) is the raw
+///     answer: the tags that the lexicon lists for the spelling, and the empty set when the word is not a spelling.
+///     <see cref="PossibleTagsMode.WithShapeRules"/> is the set of tags that the tagger itself may choose for the token on
+///     its own: the tags of the lexicon plus what the token-shape rules add (a leading capital letter allows <c>PROPN</c>
+///     and <c>X</c>, a digit allows <c>NUM</c> and others), and all 17 tags when the word is not a spelling.
+///     </description></item>
+///     <item><description>
+///     **The result** (<see cref="WordTags"/>). <see cref="WordTags.Match"/> is a <see cref="WordMatch"/>:
+///     <c>Spelling</c> (the folded, lower-case word is a spelling of the lexicon), <c>CompoundHead</c> (a hyphenated word
+///     that is not a spelling whose last part is one) or <c>NotRecognized</c>. <see cref="WordTags.IsKnownWord"/> is
+///     <c>Match == Spelling</c> and equals <see cref="TaggedToken.IsKnownWord"/> of the same word as a token. Test
+///     <c>Match</c> (or <c>IsKnownWord</c>) to learn whether the lexicon knows a word and never whether
+///     <see cref="WordTags.Tags"/> is empty: with the shape rules a word that is not recognized has all 17 tags, and in the
+///     raw mode a <c>CompoundHead</c> has an empty tag set. A <c>default(WordTags)</c> is <c>NotRecognized</c> with no tags.
+///     </description></item>
+///     <item><description>
+///     **Forms** (<see cref="WordTags.GetAnalyses"/>). Each <see cref="WordAnalysis"/> is one reading of the matched
+///     spelling: the base word <see cref="WordAnalysis.Lemma"/> (lower case, NFC; <c>went</c> has the base word <c>go</c>), the
+///     <see cref="WordAnalysis.Tag"/> and the <see cref="WordAnalysis.Features"/>. One spelling can have several readings:
+///     <c>tests</c> is the plural of the noun <c>test</c> and the third person of the verb <c>test</c>. Features use the
+///     Universal Dependencies notation: <c>Name=Value</c> pairs joined by <c>|</c> and sorted by name
+///     (<c>Person=3|Tense=Pres</c>), empty when a reading has none; the lexicon uses <c>Degree</c>, <c>Number</c>,
+///     <c>Person</c>, <c>Tense</c> and <c>VerbForm</c>, and the project's <c>Capitalization</c> feature is not reported.
+///     <see cref="Tagger.IsFormOf(string, string, Upos)"/> is true when an analysis of the word has this base word and tag;
+///     letter case never matters. A lexicon file of your own without an analyses table has no analyses.
+///     </description></item>
+///     <item><description>
+///     **Case and normalization.** The word is folded exactly like a token of the tagger (Unicode NFC normalization;
+///     typographic quotes, dashes and the ellipsis mapped to ASCII) and lower-cased, so <c>Valve</c>, <c>VALVE</c> and
+///     <c>valve</c> have the same lexicon answer and the same analyses; only the shape rules add <c>PROPN</c> and <c>X</c>
+///     for a capital letter. An unpaired surrogate counts as U+FFFD and never fails.
+///     </description></item>
+///     <item><description>
+///     **Tags without an analysis** (<see cref="WordTags.TagsWithoutAnalysis"/>). The lexicon is a restriction list, not a
+///     gold dictionary, and not every tag that it lists has a reading behind it. <c>the</c> lists <c>ADV</c>, <c>DET</c>,
+///     <c>PRON</c> and <c>PROPN</c> and has one analysis, <c>the DET</c>: the other three tags come from the corpora that
+///     attest them (annotation noise included). <c>went</c> lists <c>ADJ</c> and <c>VERB</c> and has the analysis
+///     <c>go VERB Tense=Past</c>: the <c>ADJ</c> comes from the rule that gives a past tense form an adjective reading. With
+///     the shape rules the tags that the rules add have no analysis either.
+///     </description></item>
+///     </list>
+///     <para>
+///     **Hyphenated words.** A word is looked up as a whole first: when the folded, lower-case word is a lexicon
+///     spelling, the result is <c>Spelling</c> with the analyses of that spelling (<c>built-in</c> has its own analyses, not
+///     those of <c>in</c>). Otherwise, when the word contains the hyphen-minus and every part between hyphens is not empty
+///     (<c>well-tested</c>, not <c>-ed</c>, <c>well-</c> or <c>a--b</c>), only its last part is looked up, as a whole, and
+///     nothing is split further, stripped or tried again. When the last part is a spelling the result is
+///     <c>CompoundHead</c> with the analyses of that part (<c>well-tested</c> has those of <c>tested</c>); otherwise it is
+///     <c>NotRecognized</c>. Only the hyphen-minus counts: an en dash, an em dash and U+2010 do not make a compound. The
+///     tagger treats a hyphenated token that is not a spelling as one unknown word, so for a <c>CompoundHead</c>
+///     <see cref="WordTags.Tags"/> is the answer for the whole token (empty in the raw mode, all 17 tags with the shape
+///     rules) and <see cref="WordTags.IsKnownWord"/> is <c>false</c>. The analyses of the head are extra evidence for a rule
+///     checker, for example that <c>well-tested</c> ends in a form of the verb <c>test</c>: they never narrow
+///     <see cref="WordTags.Tags"/> and never change the tagging. <see cref="Tagger.IsFormOf(string, string, Upos)"/> follows
+///     the same rule; check <see cref="WordTags.Match"/> first when compounds must not count. A word that is longer than the
+///     longest spelling of the lexicon (122 UTF-8 bytes in the embedded lexicon) cannot be a spelling as a whole, so only
+///     the compound rule can recognize it, by a last part that itself fits that length.
+///     </para>
+///     <para>
+///     **Phrases.** The lexicon has no phrases: no spelling contains white space, and the lookup is for one
+///     word. A text with white space (<c>give up</c>, <c>manual override</c>) is refused with an
+///     <see cref="ArgumentException"/> and is not answered as unknown, so that "not recognized" never hides a phrase. Split
+///     a text into words with <see cref="Tokenizer"/> first, and use a <see cref="Glossary"/> for a multiword term.
+///     </para>
+///     <para>
+///     **Glossary.** The lookup ignores a glossary: it has no glossary parameter, and a term that you gave to a
+///     <see cref="Glossary"/> is not found by the lookup and does not change its answer. A glossary belongs to a
+///     <c>Tag</c> call and sets the tag of a term in a sentence. Give the domain terms of your checker to a
+///     <see cref="Glossary"/>, and use the lookup for the words of the general dictionary.
+///     </para>
+///     <para>
+///     **Cost.** After the first call on a thread, the lookup of an ASCII word allocates nothing in both modes,
+///     and neither does <see cref="Tagger.IsFormOf(string, string, Upos)"/>; the same holds for a word with other characters
+///     that is already in NFC (<c>café</c>, a typographic apostrophe) and for a word of a million ASCII characters, which is
+///     answered without an error after one pass over its characters. A word that is not in NFC allocates the normalized
+///     string (32 bytes for an <c>e</c> with a combining acute accent). <see cref="WordTags.GetAnalyses"/> allocates its
+///     list: 360 bytes for the two analyses of <c>tests</c>, 600 bytes for the five of <c>well</c>, 368 bytes for the
+///     compound head <c>well-tested</c> and nothing for a word without analyses. These numbers were measured on .NET 10 on
+///     Windows x64 (the smallest of ten batches after warm-up); the allocation tests run on .NET 8 and later and assert
+///     the zero cases. On .NET 8 and later <see cref="Tagger.GetPossibleTags(string, PossibleTagsMode)"/> also takes a
+///     <c>ReadOnlySpan&lt;char&gt;</c> with the same rules and results.
+///     </para>
+///     <para>
 ///     ## Thread safety
 ///     </para>
 ///     <para>
 ///     A <see cref="Tagger"/> is immutable after creation and may be used from any number of threads at once; share one
 ///     instance. A <see cref="Glossary"/> and all result types are immutable too, and <see cref="Tokenizer"/> is stateless, so
-///     they are also safe to share. A <see cref="GlossaryBuilder"/> is not thread-safe.
+///     they are also safe to share. A <see cref="GlossaryBuilder"/> is not thread-safe. The word lookup
+///     (<see cref="Tagger.GetPossibleTags(string, PossibleTagsMode)"/> and <see cref="Tagger.IsFormOf(string, string, Upos)"/>)
+///     is safe from any number of threads at the same time, also while other threads tag text.
 ///     </para>
 ///     <para>
 ///     ## Errors
@@ -629,11 +734,12 @@ namespace DemaConsulting.PartOfSpeech;
 ///     <para>
 ///     The same rules apply to every member, and each member page lists its own exceptions. A <c>null</c> argument
 ///     throws <see cref="ArgumentNullException"/>. A value of the wrong kind throws <see cref="ArgumentException"/>: a
-///     token that is empty or contains white space, a constraint list that does not have one element per token, an
+///     token that is empty or contains white space, a word or base word of the word lookup that is empty or contains white
+///     space (a phrase), a constraint list that does not have one element per token, an
 ///     empty tag set for <see cref="TokenConstraint.Only(UposSet)"/>, a glossary term without a letter or a digit or two
 ///     entries for the same term. A number or enum value out of range throws
 ///     <see cref="ArgumentOutOfRangeException"/> (a <see cref="TaggerOptions.MaxAlternatives"/> outside 0 to 16, a tag
-///     that is not one of the 17 defined values, a boost or penalty that is not finite and greater than zero). A
+///     that is not one of the 17 defined values, a <see cref="PossibleTagsMode"/> that is not defined, a boost or penalty that is not finite and greater than zero). A
 ///     weights or lexicon file that is damaged, of an unsupported version or built for another feature set throws
 ///     <see cref="InvalidDataException"/> when the tagger is created; a stream that cannot be read throws the exception
 ///     of the stream (for example <see cref="NotSupportedException"/> or <see cref="ObjectDisposedException"/>). Reading
@@ -809,5 +915,38 @@ namespace DemaConsulting.PartOfSpeech;
 ///     model can still choose another tag, so those tokens list their alternatives, keep their confidence and margin and
 ///     need all the checks.
 ///     </para>
+///     <para>
+///     ## Word lookup quick start
+///     </para>
+///     <para>
+///     The dictionary roles of single words, as in [Looking up a word](#looking-up-a-word): the raw answer and its
+///     <see cref="WordMatch"/>, the forms behind the tags, a form test, a hyphenated word and the answer with the shape rules.
+///     </para>
+///     <code>
+///     // The raw dictionary answer: test Match, not Tags.IsEmpty, to learn whether the lexicon knows the word
+///     WordTags tests = tagger.GetPossibleTags("tests");
+///     Console.WriteLine($"{tests.Match} {tests.Tags}");                 // Spelling NOUN|VERB
+///
+///     WordTags unknown = tagger.GetPossibleTags("zorbulon");
+///     Console.WriteLine($"{unknown.Match} {unknown.Tags.IsEmpty}");     // NotRecognized True
+///
+///     // The forms behind the tags: base word, tag and features of each analysis
+///     foreach (WordAnalysis analysis in tests.GetAnalyses())
+///     {
+///         Console.WriteLine($"{analysis.Lemma} {analysis.Tag.ToTagString()} {analysis.Features}");
+///         // test NOUN Number=Plur, then test VERB Person=3|Tense=Pres
+///     }
+///
+///     // Is the word a form of a base word with a tag? Letter case never matters.
+///     Console.WriteLine(tagger.IsFormOf("Went", "go", Upos.Verb));      // True
+///
+///     // A hyphenated word that is not a spelling is recognized by its last part; its tags stay those of the whole token
+///     WordTags compound = tagger.GetPossibleTags("well-tested");
+///     Console.WriteLine($"{compound.Match} {compound.Tags.IsEmpty} {compound.GetAnalyses().Count}");   // CompoundHead True 2
+///
+///     // With the shape rules: the tags that the tagger may give the token on its own
+///     WordTags allowed = tagger.GetPossibleTags("Valve", PossibleTagsMode.WithShapeRules);
+///     Console.WriteLine($"{allowed.Tags} {allowed.TagsWithoutAnalysis}");   // NOUN|PROPN|X PROPN|X
+///     </code>
 /// </example>
 internal static class NamespaceDoc;

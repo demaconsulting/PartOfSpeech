@@ -429,7 +429,7 @@ internal static class LexiconWriter
         byte[][] encoded,
         IReadOnlyList<KeyValuePair<string, IReadOnlyList<Lexicon.Analysis>>> analyses)
     {
-        // Place every analysed spelling in the lexicon and check its analyses; the template of each is its edit of the spelling
+        // Place every analyzed spelling in the lexicon and check its analyses; the template of each is its edit of the spelling
         var ordinals = new Dictionary<string, int>(entries.Count, StringComparer.Ordinal);
         for (var i = 0; i < entries.Count; i++)
         {

@@ -1095,7 +1095,7 @@ public class TaggerTests
         var word = tagger.GetPossibleTags("cat");
         var shape = tagger.GetPossibleTags("Cat", PossibleTagsMode.WithShapeRules);
 
-        // Assert: the custom lexicon decides, nothing is analysed, and no tag is a form of anything
+        // Assert: the custom lexicon decides, nothing is analyzed, and no tag is a form of anything
         Assert.Equal(UposSet.Of(Upos.Adj, Upos.Verb), word.Tags);
         Assert.Equal(WordMatch.Spelling, word.Match);
         Assert.Empty(word.GetAnalyses());

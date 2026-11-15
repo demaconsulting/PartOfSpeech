@@ -1,4 +1,4 @@
-// cspell:ignore zorbulon zork unknownword zzqxv Zzqxv zzqx ZZQXV
+// cspell:ignore zorbulon zork unknownword zzqxv Zzqxv zzqx ZZQXV FFFD
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>

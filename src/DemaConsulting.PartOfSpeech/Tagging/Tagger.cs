@@ -1,3 +1,4 @@
+// cspell:ignore zzqxv
 using System.Runtime.CompilerServices;
 
 namespace DemaConsulting.PartOfSpeech;

@@ -85,7 +85,7 @@ public class ModelStorageTests
         // compilation gives the same uncompressed image as the committed file
         Assert.Equal(analyses.Count, decoded.Count);
         Assert.Equal(analyses.Sum(row => row.Value.Count), embedded.AnalysisCount);
-        Assert.Equal(analyses.Count, embedded.AnalysedSpellingCount);
+        Assert.Equal(analyses.Count, embedded.AnalyzedSpellingCount);
         for (var i = 0; i < analyses.Count; i++)
         {
             Assert.Equal(analyses[i].Key, decoded[i].Key);

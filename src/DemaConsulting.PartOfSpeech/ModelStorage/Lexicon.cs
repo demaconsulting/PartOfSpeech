@@ -190,7 +190,7 @@ internal sealed class Lexicon
     /// <summary>
     ///     Gets the number of spellings that have at least one analysis.
     /// </summary>
-    public int AnalysedSpellingCount { get; private set; }
+    public int AnalyzedSpellingCount { get; private set; }
 
     /// <summary>
     ///     Computes the tags that the lexicon and the token-shape rules allow for a token.
@@ -441,7 +441,7 @@ internal sealed class Lexicon
     /// <param name="ordinal">The position of the spelling, as reported by <see cref="TryFind"/>.</param>
     /// <returns>The tags of the analyses; the empty set when the spelling has none.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="ordinal"/> is not the position of a spelling.</exception>
-    public UposSet AnalysedTags(int ordinal) => UposSet.FromMask(_analyses.ListTags[ListOf(ordinal)]);
+    public UposSet AnalyzedTags(int ordinal) => UposSet.FromMask(_analyses.ListTags[ListOf(ordinal)]);
 
     /// <summary>
     ///     Gets the analyses of a spelling in their stored order (tag, then base word, then features).
@@ -1176,7 +1176,7 @@ internal sealed class Lexicon
         var spellings = 0;
         long entries = 0;
         long analyses = 0;
-        var analysed = 0;
+        var analyzed = 0;
         var longest = 0;
         for (var block = 0; block < _blockStarts.Length; block++)
         {
@@ -1199,7 +1199,7 @@ internal sealed class Lexicon
 
                 var listed = ValidateAnalyses(spellings, _masks[maskIndex], current, length);
                 analyses += listed;
-                analysed += listed > 0 ? 1 : 0;
+                analyzed += listed > 0 ? 1 : 0;
                 spellings++;
                 entries += BinaryFormat.PopCount((ulong)_masks[maskIndex]);
                 longest = Math.Max(longest, length);
@@ -1223,7 +1223,7 @@ internal sealed class Lexicon
             throw new InvalidDataException($"Invalid lexicon file: the header declares {declaredAnalyses} analyses but the spellings have {analyses}.");
         }
 
-        AnalysedSpellingCount = analysed;
+        AnalyzedSpellingCount = analyzed;
     }
 
     /// <summary>

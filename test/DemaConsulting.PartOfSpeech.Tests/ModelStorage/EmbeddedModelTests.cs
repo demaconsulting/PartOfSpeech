@@ -42,11 +42,11 @@ public class EmbeddedModelTests
 
         // Assert: the counts of analyses.tsv, and the tags that have an analysis (a subset of the lexicon tags)
         Assert.Equal(290365, lexicon.AnalysisCount);
-        Assert.Equal(258255, lexicon.AnalysedSpellingCount);
+        Assert.Equal(258255, lexicon.AnalyzedSpellingCount);
         Assert.Equal(UposSet.Of(Upos.Noun, Upos.Verb), testsTags);
-        Assert.Equal(testsTags, lexicon.AnalysedTags(testsOrdinal));
+        Assert.Equal(testsTags, lexicon.AnalyzedTags(testsOrdinal));
         Assert.Equal(UposSet.Of(Upos.Adj, Upos.Noun, Upos.Verb), testingTags);
-        Assert.Equal(UposSet.Of(Upos.Noun, Upos.Verb), lexicon.AnalysedTags(testingOrdinal));
+        Assert.Equal(UposSet.Of(Upos.Noun, Upos.Verb), lexicon.AnalyzedTags(testingOrdinal));
     }
 
     /// <summary>

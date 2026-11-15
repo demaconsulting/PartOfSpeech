@@ -335,6 +335,20 @@ sections:
         tests:
           - PartOfSpeech_ThirdPartyNotices_Weights_AreCovered
 
+      - id: PartOfSpeech-Licensing-NoticeCoversAnalyses
+        title: >-
+          The third-party notice and the package license shall state that the embedded lexicon carries an analyses table
+          (base word, tag and features of the forms of the spellings) that is derived from the same sources as the
+          lexicon, and shall state the change that was made.
+        tags: [system]
+        justification: |
+          The analyses are derived from the Open English WordNet word forms, whose Creative Commons Attribution 4.0
+          International license requires an indication of whether the material was modified, and from the other sources
+          of the lexicon, so the notices that travel with the package must say that the embedded resource also carries
+          this derived data, name its sources and say what was changed.
+        tests:
+          - PartOfSpeech_ThirdPartyNotices_Analyses_AreCovered
+
       - id: PartOfSpeech-Licensing-PackageLicenseFile
         title: >-
           The package shall name a combined license file instead of a license expression; the file shall start with the
@@ -1594,22 +1608,26 @@ sections:
           generated reference shall carry the margin and the known-word flag of a token. They shall give the strict
           threshold together with the margin, the known-word flag and a domain glossary or constraint as the recommended
           way to a low error rate, and the glossary rather than a higher threshold as the way to remove confident errors
-          on terms that the dictionary knows.
+          on terms that the dictionary knows. They shall also explain the word lookup (the possible tags, the base words
+          and the forms of a word, with a compiled example) as the way to check the dictionary roles of a word before
+          the tagger and the margin are read for context, and the generated reference shall carry the lookup pages.
         tags: [system]
         justification: |
           The signals only help a consumer that knows what they mean and in which order to read them; a consumer that
           reads the packed reference, or an agent that works for it, never sees the repository. The confidence 1.0 is
           no proof of a forced tag, so the documented test is the number of allowed tags, and a boundary test proves it
-          with an extreme boost. The documented examples are compiled by the test suite, and the example of the user
-          guide is compiled by a test that reads it, so that they give what the documentation claims; the build
-          asserts that the generated reference carries the guidance and the pages of both members.
+          with an extreme boost. The documented examples are compiled by the test suite, and the examples of the user
+          guide are compiled by tests that read them, so that they give what the documentation claims; the build
+          asserts that the generated reference carries the guidance and the pages of both members and of the lookup.
         tests:
           - PartOfSpeech_RuleChecker_DocumentedExample_GivesTheClaimedResults
           - PartOfSpeech_RuleChecker_SoftAndPreferConstraints_AreConstrainedButNotForced
           - PartOfSpeech_RuleChecker_ExtremeSoftBoost_IsNotClassifiedAsForced
           - PartOfSpeech_RuleChecker_UserGuideExample_UsesTheDocumentedCriterionAndCompiles
+          - PartOfSpeech_RuleChecker_UserGuideLookupExample_Compiles
           - PartOfSpeech_XmlDocExamples_Compile
           - ApiMark_RuleCheckerGuidanceDocumented
+          - ApiMark_WordLookupDocumented
 
       - id: PartOfSpeech-Lib-ApiDocsPackaged
         title: >-

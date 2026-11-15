@@ -3897,7 +3897,7 @@ public class PartOfSpeechDataTests
 
         // Assert: nothing is missing or different, and the counts are those of the table
         Assert.Empty(problems.Take(ShownProblems));
-        Assert.Equal(rows.Count, embedded.AnalysedSpellingCount);
+        Assert.Equal(rows.Count, embedded.AnalyzedSpellingCount);
         Assert.Equal(rows.Values.Sum(row => row.Length), embedded.AnalysisCount);
     }
 
@@ -4143,6 +4143,44 @@ public class PartOfSpeechDataTests
         // Act: find the statements that the sections lack
         var missing = MissingFragments(masc, new[] { "weights of the tagger (`weights.bin`) were learned in part from the converted data", "provided under the terms of this license" })
             .Concat(MissingFragments(weights, new[] { "Resources/weights.bin", "tools/DemaConsulting.PartOfSpeech.Trainer", "`training.json`", "`RUN-LOG.md`", "the attribution of MASC applies to the weights" }))
+            .ToList();
+
+        // Assert: nothing is missing
+        Assert.Empty(missing);
+    }
+
+    /// <summary>
+    ///     Proves that the third-party notice and the package license cover the analyses table that the embedded lexicon
+    ///     carries: both say that it is derived from the same sources as the lexicon and adds no other source, name its
+    ///     content, and state the change that was made.
+    /// </summary>
+    [Fact]
+    public void PartOfSpeech_ThirdPartyNotices_Analyses_AreCovered()
+    {
+        // Arrange: the introduction and the Open English WordNet section of the notice, and the whole package license
+        var noticeText = File.ReadAllText(DataFiles.Repository("THIRD-PARTY-NOTICES.md")).Replace("\r\n", "\n");
+        var introduction = Collapse(noticeText.Substring(0, noticeText.IndexOf("\n## ", StringComparison.Ordinal)));
+        var wordNet = NoticeSection("## Open English WordNet");
+        var license = Collapse(File.ReadAllText(DataFiles.Repository(PackageLicenseName)));
+
+        // Act: find the statements that each document lacks
+        var missing = MissingFragments(introduction, new[] { "the analyses table `data/lexicon/analyses.tsv` (the base word, tag and features of the forms of the spellings, derived from the same sources)" })
+            .Select(fragment => "introduction: " + fragment)
+            .Concat(MissingFragments(wordNet, new[]
+            {
+                "The analyses table (`data/lexicon/analyses.tsv`), which the same embedded resource carries, was derived from the same word forms",
+                "adds no other source",
+                "the lower-case base word (lemma), the UPOS tag and a subset of the morphological features of each form",
+                "all other columns of the word forms were left out, so the table is not the original data either"
+            }).Select(fragment => "Open English WordNet section: " + fragment))
+            .Concat(MissingFragments(license, new[]
+            {
+                "The same file carries the analyses of the spellings",
+                "the base word (lemma), the Universal POS tag and the morphological features of each of its forms",
+                "derived from the same word forms of Open English WordNet",
+                "they add no other source",
+                "DEMA Consulting changed the data by reducing each form to a lower-case base word, a tag and a subset of its features"
+            }).Select(fragment => "package license: " + fragment))
             .ToList();
 
         // Assert: nothing is missing

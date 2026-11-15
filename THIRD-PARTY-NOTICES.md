@@ -6,8 +6,10 @@ this file is packed at the root of the NuGet package so that the notices travel 
 data and the files derived from it are kept in the `data/` folder of the repository; compiled forms of them are embedded
 in the package. The package embeds a compiled form of the lexicon `data/lexicon/lexicon.tsv` (derived from Open
 English WordNet and the Moby Part-of-Speech List, with tags attested in MASC and the open corpus) as the binary resource
-that restricts the tags of known words, and the trained weights of the tagger (`Resources/weights.bin`), which the
-Trainer tool learned from the corpora in `data/open/`, `data/masc/` and `data/silver/`. The file `PACKAGE-LICENSE.md`,
+that restricts the tags of known words, together with the analyses table `data/lexicon/analyses.tsv` (the base word,
+tag and features of the forms of the spellings, derived from the same sources), and the trained weights of the tagger
+(`Resources/weights.bin`), which the Trainer tool learned from the corpora in `data/open/`, `data/masc/` and
+`data/silver/`. The file `PACKAGE-LICENSE.md`,
 also packed at the root of the package, is the license of the package and states which license covers which part.
 
 No Creative Commons Attribution-ShareAlike (CC BY-SA), NonCommercial or NoDerivatives material is part of this
@@ -50,7 +52,13 @@ The spelling-to-UPOS lexicon in `data/lexicon/` is derived from the word forms o
 - **License:** Creative Commons Attribution 4.0 International (CC BY 4.0), <https://creativecommons.org/licenses/by/4.0/>
 - **Changes:** only the spellings of the entries and their inflected forms were used. They were combined with other
   sources and reduced to a table that maps a lower-case spelling to the UPOS tags it may carry. The lexicon is not the
-  original Open English WordNet data, and the glosses, examples and relations are not part of it. Open English WordNet
+  original Open English WordNet data, and the glosses, examples and relations are not part of it. The analyses table
+  (`data/lexicon/analyses.tsv`), which the same embedded resource carries, was derived from the same word forms
+  (Open English WordNet and its rule-generated inflections, the Moby Part-of-Speech reverse forms, the additions of the
+  WordSense project under the MIT License and the closed-class list under CC0 1.0) and adds no other source. For
+  most spellings it records the lower-case base word (lemma), the UPOS tag and a subset of the morphological features of
+  each form (Degree, Number, Person, Tense and VerbForm, written as `Name=Value` pairs joined by `|`); all other columns
+  of the word forms were left out, so the table is not the original data either. Open English WordNet
   and its contributors do not endorse this project.
 
 ### Princeton WordNet

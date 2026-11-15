@@ -487,9 +487,9 @@ public class LexiconTests
         Assert.Equal(0, lexicon.TemplateCount);
         Assert.Equal(1, lexicon.ListCount);
         Assert.Equal(0, lexicon.AnalysisCount);
-        Assert.Equal(0, lexicon.AnalysedSpellingCount);
+        Assert.Equal(0, lexicon.AnalyzedSpellingCount);
         Assert.Empty(lexicon.GetAnalyses(ordinal));
-        Assert.True(lexicon.AnalysedTags(ordinal).IsEmpty);
+        Assert.True(lexicon.AnalyzedTags(ordinal).IsEmpty);
         Assert.Empty(lexicon.EnumerateAnalyses());
         Assert.Equal(entries, lexicon.Enumerate().ToList());
     }
@@ -534,9 +534,9 @@ public class LexiconTests
             var key = row.Key.ToCharArray();
             Assert.True(lexicon.TryFind(key, 0, key.Length, scratch, out var ordinal, out var tags), row.Key);
             Assert.Equal(row.Value, lexicon.GetAnalyses(ordinal));
-            Assert.Equal(UposSet.Of(row.Value.Select(a => a.Tag).ToArray()), lexicon.AnalysedTags(ordinal));
+            Assert.Equal(UposSet.Of(row.Value.Select(a => a.Tag).ToArray()), lexicon.AnalyzedTags(ordinal));
             Assert.Equal(entries.Single(e => e.Key == row.Key).Value, tags);
-            Assert.True(lexicon.AnalysedTags(ordinal).Union(tags).Equals(tags));
+            Assert.True(lexicon.AnalyzedTags(ordinal).Union(tags).Equals(tags));
         }
 
         var none = "zzz".ToCharArray();
@@ -544,7 +544,7 @@ public class LexiconTests
         Assert.Empty(lexicon.GetAnalyses(zzz));
         Assert.Equal(analyses.Select(a => a.Key).OrderBy(k => k, Comparer<string>.Create(Utf8Order)), lexicon.EnumerateAnalyses().Select(a => a.Key));
         Assert.Equal(analyses.Sum(a => a.Value.Count), lexicon.AnalysisCount);
-        Assert.Equal(analyses.Length, lexicon.AnalysedSpellingCount);
+        Assert.Equal(analyses.Length, lexicon.AnalyzedSpellingCount);
         Assert.Equal(7, analyses.Max(a => a.Value.Count));
     }
 
@@ -556,7 +556,7 @@ public class LexiconTests
     public void Lexicon_HasAnalysis_ComparesTagAndComposedBaseWord()
     {
         // Arrange: the fixture lexicon with cats (noun and verb of cat), went (go) and caf\u00E9 (cafe)
-        var lexicon = Lexicon.Load(AnalysedFile());
+        var lexicon = Lexicon.Load(AnalyzedFile());
 
         // Act / Assert: the analyses that exist are found, nothing else is
         Assert.True(Has(lexicon, "cats", Upos.Noun, "cat"));
@@ -579,9 +579,9 @@ public class LexiconTests
     public void LexiconWriter_Compile_Analyses_IsDeterministic()
     {
         // Arrange / Act: compile the fixture twice uncompressed and once compressed
-        var first = AnalysedFile();
-        var second = AnalysedFile();
-        var packed = AnalysedFile(true);
+        var first = AnalyzedFile();
+        var second = AnalyzedFile();
+        var packed = AnalyzedFile(true);
 
         // Assert: byte-identical, and the same image after inflation
         Assert.Equal(first, second);
@@ -657,7 +657,7 @@ public class LexiconTests
 
         // Assert: the list count is the maximum and the message names it
         Assert.Equal(Lexicon.MaxLists, loaded.ListCount);
-        Assert.Equal(largest, loaded.AnalysedSpellingCount);
+        Assert.Equal(largest, loaded.AnalyzedSpellingCount);
         Assert.Contains("65535", ex.Message);
     }
 
@@ -747,7 +747,7 @@ public class LexiconTests
     public void Lexicon_Load_ListIndexOutOfRange_Throws()
     {
         // Arrange: the fixture with the list index of the first spelling set to the list count
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         var changed = Patched(file, f => BinaryFormat.WriteUInt16(f, layout.Index, (ushort)layout.Lists.Length));
 
@@ -762,7 +762,7 @@ public class LexiconTests
     public void Lexicon_Load_ListTagsNotASubsetOfTheSpellingTags_Throws()
     {
         // Arrange: cat (noun only, the second spelling) pointed at the list of cats, which has a verb analysis
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         var changed = Patched(file, f => BinaryFormat.WriteUInt16(f, layout.Index + 2, 3));
 
@@ -777,7 +777,7 @@ public class LexiconTests
     public void Lexicon_Load_CutLongerThanSpelling_Throws()
     {
         // Arrange: the template of cat (cut 0) changed to cut 4, and cat has three bytes
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         var changed = Patched(file, f => f[layout.Templates[2] + 2] = 4);
 
@@ -792,7 +792,7 @@ public class LexiconTests
     public void Lexicon_Load_CutInsideACharacter_Throws()
     {
         // Arrange: the template of caf\u00E9 (cut 2, the whole \u00E9) changed to cut 1, which leaves half of the character
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         Assert.Equal(2, file[layout.Templates[0] + 2]);
         var changed = Patched(file, f => f[layout.Templates[0] + 2] = 1);
@@ -811,7 +811,7 @@ public class LexiconTests
     public void Lexicon_Load_InvalidSuffix_Throws(int value)
     {
         // Arrange: the suffix go of the template of went with its first byte replaced
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         Assert.Equal((byte)'g', file[layout.Templates[4] + 4]);
         var changed = Patched(file, f => f[layout.Templates[4] + 4] = (byte)value);
@@ -827,7 +827,7 @@ public class LexiconTests
     public void Lexicon_Load_UnsortedFeatureSets_Throws()
     {
         // Arrange: Number=Plur and Number=Sing exchanged
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         var changed = Patched(file, f =>
         {
@@ -846,7 +846,7 @@ public class LexiconTests
     public void Lexicon_Load_MalformedFeatureSet_Throws()
     {
         // Arrange: the equals sign of Number=Plur replaced by a comma
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         var changed = Patched(file, f => f[layout.FeatureSets[1] + 1 + 6] = (byte)',');
 
@@ -861,7 +861,7 @@ public class LexiconTests
     public void Lexicon_Load_TemplateIndexOutOfRange_Throws()
     {
         // Arrange: the first template of the list of cats changed to the template count
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         var changed = Patched(file, f => f[layout.Lists[3] + 1] = (byte)layout.Templates.Length);
 
@@ -876,7 +876,7 @@ public class LexiconTests
     public void Lexicon_Load_ListTagsDecrease_Throws()
     {
         // Arrange: the two templates of the list of cats exchanged (the verb template first)
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         var changed = Patched(file, f => (f[layout.Lists[3] + 1], f[layout.Lists[3] + 2]) = (f[layout.Lists[3] + 2], f[layout.Lists[3] + 1]));
 
@@ -891,7 +891,7 @@ public class LexiconTests
     public void Lexicon_Load_ListZeroNotEmpty_Throws()
     {
         // Arrange: the count of list 0 changed to 1
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         var changed = Patched(file, f => f[layout.Lists[0]] = 1);
 
@@ -906,7 +906,7 @@ public class LexiconTests
     public void Lexicon_Load_RepeatedTemplate_Throws()
     {
         // Arrange: the bytes of template 1 copied over template 2 (both take four bytes)
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var layout = ReadLayout(file);
         var changed = Patched(file, f => Array.Copy(f, layout.Templates[1], f, layout.Templates[2], 4));
 
@@ -921,11 +921,11 @@ public class LexiconTests
     public void Lexicon_Load_AnalysesRegionsDoNotFillThePayload_Throws()
     {
         // Arrange: one extra byte appended to the payload, with the stored length, the payload length and the checksum adjusted
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var changed = file.Concat(new byte[] { 0 }).ToArray();
         BinaryFormat.WriteUInt32(changed, 24, (uint)(changed.Length - Lexicon.HeaderLength));
         BinaryFormat.WriteUInt32(changed, 28, (uint)(changed.Length - Lexicon.HeaderLength));
-        Rechecksum(changed);
+        RecomputeChecksum(changed);
 
         // Act / Assert: the section must end exactly where the list index begins
         Assert.Contains("fill the payload exactly", Assert.Throws<InvalidDataException>(() => Lexicon.Load(changed)).Message);
@@ -938,7 +938,7 @@ public class LexiconTests
     public void Lexicon_Load_AnalysisCountMismatch_Throws()
     {
         // Arrange: the declared number of analyses raised by one
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var changed = Patched(file, f => BinaryFormat.WriteUInt32(f, 52, BinaryFormat.ReadUInt32(f, 52) + 1));
 
         // Act / Assert: the count is checked against the data
@@ -952,7 +952,7 @@ public class LexiconTests
     public void Lexicon_Load_TemplateCountLargerThanThePayload_Throws()
     {
         // Arrange: the declared number of templates set to the largest value the field allows
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var changed = Patched(file, f => BinaryFormat.WriteUInt32(f, 44, int.MaxValue));
 
         // Act / Assert: an InvalidDataException, not an out-of-memory error
@@ -972,7 +972,7 @@ public class LexiconTests
     public void Lexicon_Load_InvalidAnalysesHeaderField_Throws(int offset, int value)
     {
         // Arrange: the fixture with one header field changed
-        var file = AnalysedFile();
+        var file = AnalyzedFile();
         var changed = Patched(file, f =>
         {
             if (offset == 48)
@@ -1011,7 +1011,7 @@ public class LexiconTests
     ///     Template 0 is caf\u00E9 to cafe (cut 2), template 1 cats to cat (noun, cut 1), template 2 cat to cat (cut 0), template 3 cats to cat
     ///     (verb, cut 1) and template 4 went to go (cut 4, suffix go); the lists are 0 (empty), then one list per spelling in the order of the spellings.
     /// </remarks>
-    private static byte[] AnalysedFile(bool compress = false) =>
+    private static byte[] AnalyzedFile(bool compress = false) =>
         TinyModels.CreateLexicon(
             new[] { Entry("cat", Upos.Noun), Entry("cats", Upos.Noun, Upos.Verb), Entry("caf\u00E9", Upos.Noun), Entry("went", Upos.Verb) },
             compress,
@@ -1038,7 +1038,7 @@ public class LexiconTests
     /// <summary>
     ///     Recomputes the checksum of an uncompressed file after its payload was changed.
     /// </summary>
-    private static void Rechecksum(byte[] file) =>
+    private static void RecomputeChecksum(byte[] file) =>
         BinaryFormat.WriteUInt32(file, 32, BinaryFormat.Fnv1a(file, Lexicon.HeaderLength, file.Length - Lexicon.HeaderLength));
 
     /// <summary>
@@ -1048,7 +1048,7 @@ public class LexiconTests
     {
         var copy = (byte[])file.Clone();
         change(copy);
-        Rechecksum(copy);
+        RecomputeChecksum(copy);
         return copy;
     }
 
@@ -1229,7 +1229,7 @@ public class LexiconTests
         count += lexicon.TryGetTags(punctuation, 0, punctuation.Length, scratch, out var p) ? p.Count : 0;
         count += lexicon.TryGetTags(digit, 0, digit.Length, scratch, out var d) ? d.Count : 0;
         count += lexicon.TryGetTags(upper, 0, upper.Length, scratch, out var u) ? u.Count : 0;
-        count += lexicon.TryFind(upper, 0, upper.Length, scratch, out var ordinal, out _) ? lexicon.AnalysedTags(ordinal).Count : 0;
+        count += lexicon.TryFind(upper, 0, upper.Length, scratch, out var ordinal, out _) ? lexicon.AnalyzedTags(ordinal).Count : 0;
         count += Lexicon.AllowedTags(true, lexiconTags, false, false, false).Count;
         count += Lexicon.AllowedTags(true, lexiconTags, true, true, false).Count;
         count += Lexicon.AllowedTags(true, lexiconTags, true, false, true).Count;

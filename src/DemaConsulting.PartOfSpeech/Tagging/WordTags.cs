@@ -1,3 +1,4 @@
+// cspell:ignore zzqxv
 namespace DemaConsulting.PartOfSpeech;
 
 /// <summary>
@@ -58,7 +59,7 @@ public readonly struct WordTags : IEquatable<WordTags>
     /// <summary>
     ///     The tags that at least one analysis of the matched spelling names.
     /// </summary>
-    private readonly UposSet _analysedTags;
+    private readonly UposSet _analyzedTags;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="WordTags"/> struct.
@@ -71,14 +72,14 @@ public readonly struct WordTags : IEquatable<WordTags>
     /// <param name="ordinal">The position of the matched spelling in <paramref name="lexicon"/>, or -1.</param>
     /// <param name="tags">The tags of the result.</param>
     /// <param name="match">How the word was found.</param>
-    /// <param name="analysedTags">The tags that an analysis of the matched spelling names.</param>
-    internal WordTags(Lexicon? lexicon, int ordinal, UposSet tags, WordMatch match, UposSet analysedTags)
+    /// <param name="analyzedTags">The tags that an analysis of the matched spelling names.</param>
+    internal WordTags(Lexicon? lexicon, int ordinal, UposSet tags, WordMatch match, UposSet analyzedTags)
     {
         _lexicon = lexicon;
         _ordinal = lexicon == null ? 0 : ordinal;
         Tags = tags;
         Match = match;
-        _analysedTags = analysedTags;
+        _analyzedTags = analyzedTags;
     }
 
     /// <summary>
@@ -121,7 +122,7 @@ public readonly struct WordTags : IEquatable<WordTags>
     ///     a word that is not recognized, all 17 tags. For a word of a lexicon without an analyses table this equals
     ///     <see cref="Tags"/>. The set is empty when every tag has an analysis.
     /// </remarks>
-    public UposSet TagsWithoutAnalysis => UposSet.FromMask(Tags.Mask & ~_analysedTags.Mask);
+    public UposSet TagsWithoutAnalysis => UposSet.FromMask(Tags.Mask & ~_analyzedTags.Mask);
 
     /// <summary>
     ///     Determines whether two results are equal.
@@ -190,7 +191,7 @@ public readonly struct WordTags : IEquatable<WordTags>
     public bool Equals(WordTags other) =>
         Match == other.Match
         && Tags == other.Tags
-        && _analysedTags == other._analysedTags
+        && _analyzedTags == other._analyzedTags
         && _ordinal == other._ordinal
         && ReferenceEquals(_lexicon, other._lexicon);
 
@@ -211,7 +212,7 @@ public readonly struct WordTags : IEquatable<WordTags>
         {
             var hash = (int)Match;
             hash = (hash * 397) ^ Tags.GetHashCode();
-            hash = (hash * 397) ^ _analysedTags.GetHashCode();
+            hash = (hash * 397) ^ _analyzedTags.GetHashCode();
             return (hash * 397) ^ _ordinal;
         }
     }

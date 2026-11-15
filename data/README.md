@@ -7,7 +7,7 @@ Training data, evaluation data and the lexicon of `DemaConsulting.PartOfSpeech`:
 that produce and check it are in [`tools/data/`](../tools/data/README.md); the tag set, the annotation conventions, the file
 formats and every mapping table are in [CONVENTIONS.md](CONVENTIONS.md) (normative). At run time the library uses only the
 lexicon and the trained weights, which are embedded in the package in compact binary forms: the lexicon is generated from
-`lexicon/lexicon.tsv` (see [lexicon/README.md](lexicon/README.md), "Embedded Form"), and the weights
+`lexicon/lexicon.tsv` and `lexicon/analyses.tsv` (see [lexicon/README.md](lexicon/README.md), "Embedded Form"), and the weights
 (`src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, 553,641 bytes compressed, 1,234,530 bytes uncompressed) are
 trained by the [Trainer tool](../tools/DemaConsulting.PartOfSpeech.Trainer/README.md) from the open train, MASC, silver,
 imperative, compound and technical corpora with settings that are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard, hard and the nine single-shape tranches) and UD-EWT dev (the run log is
@@ -32,13 +32,13 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 | [eval/gold-v2/](eval/gold-v2/README.md) | single-target gold tokens (evaluation) | 5,072 | | 2.4 MB | CC0-1.0 labels; PD sentences |
 | [eval/ste-challenge/](eval/ste-challenge/README.md) | simplified-technical-English challenge set (evaluation) | 32 | 272 | 0.01 MB | CC0-1.0 |
 | [eval/ud-ewt/](eval/ud-ewt/README.md) | UD English-EWT: fetch documentation only, **no data** | | | | CC BY-SA 4.0, never committed |
-| [lexicon/](lexicon/README.md) | spelling to UPOS tags lexicon, closed-class list, coverage report | | | 4.5 MB | CC-BY-4.0 and CC-BY-3.0-US (attribution), others |
+| [lexicon/](lexicon/README.md) | spelling to UPOS tags lexicon, analyses (base word, tag and features of each form), closed-class list, coverage report | | | 15.3 MB | CC-BY-4.0 and CC-BY-3.0-US (attribution), others |
 | [corrections/](corrections/README.md) | label corrections for open, MASC and silver (mechanical rows, adjudicated rows, candidates, exceptions); **applied** to the corpora | | | 2.7 MB | CC0-1.0 labels; MASC token forms and excerpts CC-BY-3.0-US |
 
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
 masked); the fourth training source, `imperative/`, holds 11,946 tokens and is configured with weight 1, so it is part of the
 mix that trained the shipped weights. The fifth and seventh, `compound/` (`compound.tsv`, 14,692 tokens) and `compound-2.tsv` (20,745 tokens), are configured with weight 1 too. The sixth and eighth, `headings/` (`headings.tsv`, 1,664 tokens) and `headings-2.tsv` (1,160 tokens), are configured
-with weight 0: they are committed training data that are not part of the shipped mix. The ninth to twelfth, `technical/` (`deverbal.tsv` 12,007 tokens, `terms.tsv` 7,472, `steps.tsv` 4,894 and `clauses.tsv` 5,870), are configured with weight 1: they are part of the shipped mix. Total size of `data/`: 48.6 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
+with weight 0: they are committed training data that are not part of the shipped mix. The ninth to twelfth, `technical/` (`deverbal.tsv` 12,007 tokens, `terms.tsv` 7,472, `steps.tsv` 4,894 and `clauses.tsv` 5,870), are configured with weight 1: they are part of the shipped mix. Total size of `data/`: 59.4 MB; the largest file is `masc/masc.tsv` (11.6 MB). Attribution for MASC and the Open English
 WordNet lexicon sources is in `masc/ATTRIBUTION.md` and in `THIRD-PARTY-NOTICES.md` at the repository root.
 
 ## Rules of This Folder
@@ -170,6 +170,7 @@ by design; the UD check applies only when the cache is present, so a run without
 - The tokenizer of the library emits the corpus tokenization (clitics split: `do` + `n't`, `John` + `'s`); its rules are
   in the "Tokenizer Rules" section of [CONVENTIONS.md](CONVENTIONS.md) and the test suite checks them against the open
   corpus.
-- The lexicon is 4.5 MB of text; the package embeds a front-coded, Deflate-compressed binary form of about 0.64 MB
-  instead (`src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`, built by `tools/LexiconCompiler`).
+- The lexicon is 4.5 MB of text and its analyses table 10.8 MB; the package embeds a front-coded, Deflate-compressed binary
+  form of both of about 0.76 MB instead (`src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin`, built by
+  `tools/LexiconCompiler`).
 - Data statistics above describe the committed files; `MANIFEST.tsv` is the authority.

@@ -95,7 +95,7 @@ adjustment`, a `double`. The integer sum is exact; only the final multiplication
   the match. The tags come from the whole word only: `LexiconOnly` gives the lexicon tags of the whole word (empty
   unless it is a spelling), `WithShapeRules` gives `ApplyShapeRules` of the whole word with `known` true only for a
   spelling (so all 17 tags for a not-recognized word or a compound head). The result (`WordTags`) keeps the lexicon, the
-  ordinal of the matched spelling and `Lexicon.AnalysedTags` of it, so that no analysis is decoded unless asked for.
+  ordinal of the matched spelling and `Lexicon.AnalyzedTags` of it, so that no analysis is decoded unless asked for.
 - **`Find(workspace, index, out ordinal, out keyLength, out wholeTags)`**: the whole spelling with `Lexicon.TryFindKey`;
   if it is not one, the compound rule on the folded, lower-cased characters: one scan that returns not recognized for a
   leading, doubled or trailing hyphen-minus (and for no hyphen at all), then `TryFindKey` of the last part only, at its
@@ -166,7 +166,7 @@ are answered.
 #### Dependencies
 
 - **PerceptronModel** (`AddScores`, `HashBits`, `Temperature`, `Scale`, `FeatureGroups`) and **Lexicon** (`TryGetTags`,
-  `TryFindKey`, `AllowedTags`, `AnalysedTags`, `HasAnalysis`, `ScratchSize`, `MaxSpellingBytes`) from ModelStorage.
+  `TryFindKey`, `AllowedTags`, `AnalyzedTags`, `HasAnalysis`, `ScratchSize`, `MaxSpellingBytes`) from ModelStorage.
 - **FeatureExtractor** (including `Advance`, `StartPass`, `SetFolded`, `SetFoldedPart`, `NormalizeNonAscii` and
   `FoldsToDoubleHyphen`), **TokenConstraint**, the result types (`TaggedToken`, `TagScore`, `WordTags`, `WordMatch`,
   `PossibleTagsMode`) and **Token** (Tokenization).

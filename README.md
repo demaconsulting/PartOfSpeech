@@ -19,6 +19,7 @@
 - 🏷️ **Tagger** - 17 Universal POS tags from an averaged perceptron
 - 📊 **Confidences** - calibrated probabilities and ranked alternatives for every tag
 - 🚦 **Rule checker signals** - margin and known-word flag per token
+- 🔎 **Word lookup** - possible tags, base words and forms of a word
 - 🔒 **Constraints** - restrict or steer the tag of single tokens
 - 📚 **Glossaries** - tag domain terms correctly, in hard or soft mode
 - 🧩 **Pre-tokenized input** - tag tokens that you already have
@@ -128,7 +129,7 @@ NuGet package.
   ([CC BY 3.0 US][link-cc-by-3]), converted to Universal POS tags; the lexicon and the trained weights were derived in
   part from the converted data.
 - **Open English WordNet** ([CC BY 4.0][link-cc-by-4]), which carries the Princeton WordNet notice: its word forms were
-  reduced to the lexicon.
+  reduced to the lexicon and to the base word, tag and features of each form that the lexicon carries.
 - **The open part-of-speech corpus** of the [WordSense][link-wordsense] project (a related project with taggers of its
   own): annotations and selection are CC0 1.0, and the sentences are public domain in the United States or come from the
   Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative, compound, headings and

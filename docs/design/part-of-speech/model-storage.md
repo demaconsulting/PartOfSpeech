@@ -31,7 +31,7 @@ feature set number and a feature group mask that the caller interprets (the deco
 Exposed (internal to the library and its friends):
 
 - `Lexicon.Load`, `Lexicon.TryGetTags`, `Lexicon.TryFindKey` (the search with the position of the spelling),
-  `Lexicon.AnalysedTags`, `Lexicon.GetAnalyses`, `Lexicon.HasAnalysis`, `Lexicon.AllowedTags`, `LexiconWriter.FromTsv`,
+  `Lexicon.AnalyzedTags`, `Lexicon.GetAnalyses`, `Lexicon.HasAnalysis`, `Lexicon.AllowedTags`, `LexiconWriter.FromTsv`,
   `LexiconWriter.AnalysesFromTsv`, `LexiconWriter.Compile`.
 - `PerceptronModel.Load`, `PerceptronModel.ToUncompressedImage`, `PerceptronModel.AddScores`, the properties `HashBits`,
   `Temperature`, `Scale` and `FeatureGroups`, `PerceptronModelWriter.Compile`.
