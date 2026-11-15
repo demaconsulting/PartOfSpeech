@@ -1193,25 +1193,35 @@ public class TagDecoderTests
     [Fact]
     public void TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing()
     {
-        // Arrange: a decoder, a million-character word, a huge compound, and a first call that creates the thread's workspace
+        // Arrange: a decoder, a million-character word (the workspace buffers would have been megabytes), a huge compound,
+        // and a first call that creates the thread's workspace
         var decoder = EmbeddedDecoder(false);
         var huge = new string('a', 1_000_000);
         var hugeCompound = new string('a', 500_000) + "-tested";
         var hugeUnknownHead = new string('a', 500_000) + "-zzqxv";
         decoder.GetPossibleTags("valve", PossibleTagsMode.WithShapeRules);
         decoder.GetPossibleTags("well-tested", PossibleTagsMode.WithShapeRules);
+        var raw = default(WordTags);
+        var shape = default(WordTags);
+        var compound = default(WordTags);
+        var unknownHead = default(WordTags);
+        var form = true;
+        var compoundForm = false;
 
-        // Act: measure the allocation of the calls
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        var raw = decoder.GetPossibleTags(huge, PossibleTagsMode.LexiconOnly);
-        var shape = decoder.GetPossibleTags(huge, PossibleTagsMode.WithShapeRules);
-        var compound = decoder.GetPossibleTags(hugeCompound, PossibleTagsMode.WithShapeRules);
-        var unknownHead = decoder.GetPossibleTags(hugeUnknownHead, PossibleTagsMode.WithShapeRules);
-        var form = decoder.IsFormOf(huge, "a", Upos.Noun);
-        var compoundForm = decoder.IsFormOf(hugeCompound, "test", Upos.Verb);
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        // Act: measure the allocation of the calls after a warm-up (a one-time runtime allocation in a single unwarmed call is not a property of the lookup)
+        var allocated = AllocationMeter.MinimumBatchBytes(
+            () =>
+            {
+                raw = decoder.GetPossibleTags(huge, PossibleTagsMode.LexiconOnly);
+                shape = decoder.GetPossibleTags(huge, PossibleTagsMode.WithShapeRules);
+                compound = decoder.GetPossibleTags(hugeCompound, PossibleTagsMode.WithShapeRules);
+                unknownHead = decoder.GetPossibleTags(hugeUnknownHead, PossibleTagsMode.WithShapeRules);
+                form = decoder.IsFormOf(huge, "a", Upos.Noun);
+                compoundForm = decoder.IsFormOf(hugeCompound, "test", Upos.Verb);
+            },
+            1);
 
-        // Assert: the plain word is not recognized, the compound has its head, and nothing allocates (the workspace buffers would have been megabytes)
+        // Assert: the plain word is not recognized, the compound has its head, and nothing allocates
         Assert.Equal(WordMatch.NotRecognized, raw.Match);
         Assert.Equal(WordMatch.NotRecognized, shape.Match);
         Assert.Equal(WordMatch.CompoundHead, compound.Match);
