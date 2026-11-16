@@ -117,7 +117,8 @@ The [evaluation report][link-evaluation] has the details.
 
 The [user guide][link-user-guide] is in the repository. The [GitHub releases][link-releases] attach the generated
 documents as PDFs, including build notes, the user guide, the code quality report, requirements with justifications and
-the requirements trace matrix.
+the requirements trace matrix. The [Technical Overview][link-technical-overview] explains how the tagger works:
+tokenization, hashed features, the averaged perceptron, decoding, confidence calibration and the evaluation method.
 
 ## Data
 
@@ -194,6 +195,7 @@ By contributing to this project, you agree that your contributions will be licen
 [link-contributing]: https://github.com/demaconsulting/PartOfSpeech/blob/main/CONTRIBUTING.md
 [link-data]: https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md
 [link-user-guide]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/user_guide/introduction.md
+[link-technical-overview]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/technical_overview/introduction.md
 [link-evaluation]: https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md
 [link-notices]: https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md
 [link-package-license]: https://github.com/demaconsulting/PartOfSpeech/blob/main/PACKAGE-LICENSE.md
