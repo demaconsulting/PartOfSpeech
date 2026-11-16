@@ -9,8 +9,8 @@
 
   <!-- Example token -->
   <rect x="50" y="62" width="800" height="52" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
-  <text x="450" y="85" font-size="14" font-weight="600" fill="#92400e" text-anchor="middle">Example token: "book" in "Please book a table."</text>
-  <text x="450" y="104" font-size="13" fill="#92400e" text-anchor="middle">the lexicon lists the lower-cased spelling "book" with the tags NOUN and VERB; no capital letter, no digit</text>
+  <text x="450" y="85" font-size="14" font-weight="600" fill="#92400e" text-anchor="middle">Example token: "bleed" in "Close the bleed valve."</text>
+  <text x="450" y="104" font-size="13" fill="#92400e" text-anchor="middle">the lexicon lists the lower-cased spelling "bleed" with the tags NOUN and VERB; no capital letter, no digit</text>
   <line x1="450" y1="114" x2="450" y2="136" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
 
   <text x="50" y="154" font-size="13" font-weight="600" fill="#334155">The 17 tags. Solid filled chip: candidate. Dashed empty chip: excluded, whatever its score.</text>

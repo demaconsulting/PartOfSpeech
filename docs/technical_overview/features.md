@@ -10,7 +10,7 @@ and the switchable groups of extra features.
 A feature is a named fact that is either present or absent for a token. The name has two parts: a template that says
 what kind of fact it is, and a value. For the token `valves` in the sentence `Close the bleed valves .` the template
 *Suffix of 3* has the value `ves`, the template *Previous word* has the value `bleed`, and the template *Previous tag*
-has the value of the tag that the decoder has just chosen for `bleed`. Each present feature carries one weight for each
+has the value of the tag that the decoder has just chosen for `bleed`. Each present feature can hold a weight for each
 of the 17 tags. The score of a tag is the sum of the weights that the present features hold for that tag (see the
 Averaged Perceptron section).
 
@@ -23,13 +23,15 @@ There are 22 base templates, which fall into a few families:
 | Shape | one shape code | Capitalization, all capitals, digits, hyphens, apostrophes, punctuation only |
 | Prefixes | the first 1, 2, 3 and 4 characters | Derivational morphology (`un-`, `re-`) |
 | Suffixes | the last 1, 2, 3 and 4 characters | Inflection and derivation (`-ing`, `-ed`, `-s`, `-ly`) |
-| Position | whether this is the first word or number of the sentence | Sentence-initial behavior |
-| Neighbors | the words two before and two after, and the pair of the nearest two | The local context |
+| Initial | present only on the first token with a letter or a digit | Sentence-initial behavior |
+| Neighbors | the lower-cased words two before and two after, and the nearest pair | The local context |
 | Tag history | each of the two previous tags, the pair, and the previous tag with the word | What may follow what |
 
-A prefix or a suffix exists only when the token has at least that many characters, so a token has between 15 and 22
-base features. Before the first and after the last token the neighbors are fixed marker words, so the model can learn
-the behavior of the first and last word of a sentence.
+A prefix or a suffix exists only when the token has at least that many characters, and the initial feature exists only
+for one token of the sentence, so a token has between 15 and 22 base features. Before the first and after the last token
+the neighbors are fixed marker words, so the model can learn the behavior of the first and last word of a sentence.
+Features of the position of a token, its index in the sentence or the length of the sentence are not among the base
+templates; they belong to an optional group (see Feature Groups below).
 
 Each family exists for a reason. Spelling features let the model memorize the tags of frequent words. Suffix and shape
 features let it guess the tag of a word that it has never seen, because most English words with the suffix `-ing` or
@@ -76,8 +78,8 @@ Hashing has clear advantages:
 
 It also has a cost. Two different features can land on the same bucket, a collision, and then they share their weights.
 The perceptron cannot tell them apart, so it learns one compromise weight for both. When the table is large compared
-with the number of features that matter, collisions are rare, and most of them involve a rare feature whose weight is
-close to zero anyway. The size of the table is a measured trade-off: on the development data, 19 bits was statistically
+with the number of features that matter, collisions are few, and the damage of a collision is limited to the weights of
+the two features that share a row. The size of the table is a measured trade-off: on the development data, 19 bits was statistically
 tied with the largest size that was tested (22 bits), while 18 bits was borderline, so the trainer configuration uses
 19 bits. A second cost is that the weights cannot be read by name. For debugging, the library keeps a slow, readable
 reference implementation of the features, which the tests use as the oracle for the fast one.
@@ -93,9 +95,9 @@ computes exactly those features.
 
 - **Position cues** add where the token sits: its position in the sentence, the first content word, the way the
   sentence ends and the length of the sentence. Where a word sits changes what it is likely to be.
-- **Clause cues** add the word classes of the two neighbors, the distance to the nearest preceding determiner or number,
-  the distance to the nearest preceding modal or `to`, and a clause state. They separate a noun from a verb by the
-  structure around the word.
+- **Clause cues** add the word classes of the previous and the next token and of the pair, the distance to the nearest
+  preceding determiner or number (`DetDist`), the distance to the nearest preceding modal or `to` (`ModalDist`), and a
+  clause state. They separate a noun from a verb by the structure around the word.
 - **Right preview** adds the tags that a first pass chose for the next two tokens. It gives the model a look at the
   right-hand context in tags and not only in words.
 - **Inflection** adds whether the stem of a word that ends in `-ing`, `-ed` or `-s` is a verb or a noun in the lexicon.
@@ -103,13 +105,15 @@ computes exactly those features.
 - **Title Case line** adds whether the sentence looks like a heading, together with the capitalization of the token. A
   capital letter in a heading is not a sign of a name.
 
-The word classes of the clause cues come from the lexicon: a token is classed as a punctuation mark, a modal, `to`, a
+The word classes of the clause cues come from the spelling of the token and from the lexicon: a token is classed as a
+punctuation mark, a modal, `to`, a
 number, a determiner, a pronoun, a preposition, a conjunction, a word that is a noun and a verb, a noun only, a verb
 only, an adjective or adverb, or other. The clause state is a small piece of memory that the decoder updates after
-every decision: whether a subject-like tag and whether a verb tag have been decided since the last clause boundary such
-as a comma or a conjunction. These cues help with the distinction that matters most in practice, the noun and verb
-readings of the same spelling. In the imperative `Check the valve`, for example, the class of the next word (a
-determiner) is a strong sign that `Check` is a verb.
+every decision: whether a subject-like tag and whether a verb tag have been decided since the last clause boundary, which
+is a comma, semicolon, colon, opening parenthesis or double hyphen, or a conjunction that was just decided. These cues
+help with the distinction that matters most in practice, the noun and verb readings of the same spelling. In the
+imperative `Check the valve`, for example, the class of the next word (a determiner) is a sign that `Check` is a
+verb.
 
 The embedded model enables the clause cues only. The groups were chosen by a rule that was written before the
 experiment: each of the first four groups alone, all four together and all four minus one were trained with five seeds

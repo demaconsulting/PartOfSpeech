@@ -27,12 +27,18 @@ a short table of it.
 The tokenizer cuts the text at white space and then peels punctuation from the edges of each chunk. The rules are
 ordinary code, not a trained model, so the result is deterministic and the cost is small. The main conventions are:
 
-- Opening brackets, quotes and currency signs are separate tokens, and so are closing brackets, quotes and the commas,
-  colons, question marks and similar marks at the end of a chunk.
+- Opening brackets, quotes and currency signs are separate tokens (a leading apostrophe stays with the word when it
+  begins a clitic such as `'s` or `'em`), and so are closing brackets, quotes and the commas, colons, question marks
+  and similar marks at the end of a chunk.
 - A contraction is split into a stem and a clitic: `John's` becomes `John` and `'s`, `we're` becomes `we` and `'re`,
   and `can't` becomes `ca` and `n't`. Words that merely look similar, such as `o'clock` or `gonna`, stay whole.
-- A final period stays attached only where it belongs to the word: a dotted acronym such as `U.S.`, a title such as
-  `Mr.`, an abbreviation from a fixed list, or a single letter. Otherwise the period is its own token.
+- A single final period stays attached only where it belongs to the word: a dotted acronym such as `U.S.`, a title
+  such as `Mr.` (only when it is written with a capital letter), an abbreviation from a fixed list such as `etc.` or
+  `Inc.`, or a single-letter initial such as `J.`. Any other final period is its own token.
+- The end of the text is an exception. In the last chunk of the text a title, a listed abbreviation and an initial lose
+  their period, because there it is far more likely a full stop: a final `Mr.` becomes `Mr` and `.`. A dotted acronym
+  keeps its period even there, and a single letter inside a closing quote or bracket (`"a."`) keeps it too. The pronoun
+  `I` never keeps a period, unless a closing quote or bracket follows it.
 - A single hyphen stays inside a word (`well-known`), while a double hyphen or a dash character is a separate token.
 - Web addresses, e-mail addresses and numbers with internal punctuation (`1,000`, `7:00`) are single tokens.
 
@@ -48,8 +54,11 @@ or an opening quote. A closing quote or bracket that touches the terminal mark s
 always ends a sentence, and a single line break does not.
 
 Abbreviations are the hard part, because a period after `Dr` and a period after `home` look the same. The splitter
-therefore uses two small fixed lists: titles that are always followed by a name or a number and never end a sentence,
-and a list of capitalized words that commonly start a sentence, which decides whether a dotted acronym ends one.
+handles them with rules and two small fixed lists. A title such as `Dr.` is on a list of words that are always followed
+by a name or a number, so it never ends a sentence. A single-letter initial does not end a sentence either, except that
+a quoted initial before a capitalized word does. A dotted acronym such as `U.S.` ends a sentence only before a word on
+a list of capitalized words that commonly start a sentence. Any other abbreviation, such as `etc.`, ends a sentence
+before a capitalized word.
 
 The splitter is a rule set, not a learned model, for three reasons. It needs no data and no weights, so the tokenization
 subsystem has no dependency on the model. It is fast and deterministic. And its mistakes are easy to explain. The price

@@ -40,9 +40,9 @@ embedded in the package. The restriction uses it like this:
   and the probability is spread over many tags. The known-word flag of a token reports which case applied.
 
 The restriction is valuable for three reasons. It removes mistakes that no dictionary supports. It concentrates the
-confidence on the tags that remain, so the confidences are more meaningful. And it makes the decoder faster and
-easier to understand, because most known words have one or two candidates. Its cost is that the lexicon is not
-perfect: it contains some annotation noise, so a tag that is in the allowed set is not necessarily right, and a word
+confidence on the tags that remain, so the confidences are more meaningful. And it makes the decoder easier to
+understand, because a known word has only the few tags that the lexicon lists for it. Its cost is that the lexicon is
+not perfect: it contains some annotation noise, so a tag that is in the allowed set is not necessarily right, and a word
 that the lexicon misses a tag for cannot receive that tag. The trainer measures the share of gold tags that fall outside
 the candidates, and the evaluation record reports it.
 
@@ -57,8 +57,9 @@ rules apply only to known words; an unknown word already has all tags.
 | Contains a digit | NUM, SYM, X, NOUN, PROPN, ADJ |
 | Starts with an upper-case letter | PROPN, X |
 
-So a capitalized word that the lexicon knows only as a noun can also be a proper noun, and a token such as `3rd` can
-be a number or an adjective whatever the lexicon says. The rules are code, in one place, and the word lookup of the
+So a capitalized word that the lexicon knows only as a noun can also be a proper noun, and a known token that contains a
+digit, such as `3rd`, can be a number or a noun whatever the lexicon lists for it. The rules are code, in one place, and
+the word lookup of the
 library uses the same code, so the tags that it reports for a word are the tags that the decoder would allow.
 
 ## Constraints
@@ -83,7 +84,7 @@ reasons below are the properties of the design and not the result of a measureme
   history needs a larger state, and the training would have to change as well.
 - **Speed and simplicity.** The decoder does one feature extraction and one scoring per token, reuses its working
   memory between calls and is deterministic, which matters for a library that is embedded in other programs. The lexicon
-  restriction already removes most of the choice, so the search that greedy decoding gives up is small for most tokens.
+  restriction already removes part of the choice for known words, so the search that greedy decoding gives up is smaller.
 - **A local confidence.** A greedy decoder gives a clean per-token distribution: the softmax over the candidates, given
   the tags chosen so far.
 

@@ -24,7 +24,7 @@ scale is 1/8, so an integer score of 24 is a real score of 3.
 
 ## Training: the Perceptron Update
 
-The perceptron learns from mistakes. Training reads sentences in which every token has a gold tag, and it processes the
+The perceptron learns from mistakes. Training reads sentences in which the tokens carry gold tags, and it processes the
 tokens in order. For each token it computes the scores with the current weights, takes the best tag as its guess and
 compares it with the gold tag. If the guess is right, nothing changes. If the guess is wrong, the weights of the present
 features are corrected:
@@ -42,7 +42,8 @@ those of the guessed tag and records the update time; at the end the weights are
 pruned](technical-overview-training.svg)
 
 A small example shows why this works. Suppose that the token `book` has three present features, and that earlier
-training taught all three of them to favor the noun reading: each has the weight 1 for NOUN and 0 for VERB. The scores
+training taught all three of them to favor the noun reading: each has the weight 1 for NOUN and 0 for VERB (the other
+tags are left out of this example). The scores
 are 3 for NOUN and 0 for VERB. The gold tag in this sentence is VERB, so the guess is wrong, and the update changes
 each of the three features: NOUN goes from 1 to 0 and VERB goes from 0 to 1. The scores are now 0 for NOUN and 3 for
 VERB. The same context would now be tagged correctly, and the update was exactly large enough to do it. Features that
@@ -96,9 +97,10 @@ and the file records the scale `1/S` so that the decoder can undo it. The same e
 round(8 * 0.8) = round(6.4) = 6, which is a real weight of 0.75. The sums are checked for overflow, so a run that is
 too long for 64 bits fails with a message instead of silently writing wrong weights.
 
-After the quantization the trainer prunes the weights of small magnitude: a weight is dropped when its stored value is
-at most the pruning threshold, which in the current configuration is 8 units of 1/8, that is a real weight of 1.0 or
-less. The example weight of 6 is therefore dropped. Pruning makes the file much smaller, because most weights are small
+After the quantization the trainer prunes the weights of small magnitude: a weight is dropped when its absolute value,
+whether the weight is positive or negative, is at most the pruning threshold, which in the current configuration is 8
+units of 1/8, that is a real weight of 1.0 or less in magnitude. The example weight of 6 is therefore dropped. Pruning
+makes the file much smaller, because most weights are small
 and rows that end up empty are not stored. On the development data, a pruning threshold of 1.0 in real units was
 statistically tied with no pruning, and the trainer configuration uses the largest threshold that was tied. Larger
 thresholds lost accuracy. The same selection chose the quantization factor: a factor of 4 lost accuracy, and larger
