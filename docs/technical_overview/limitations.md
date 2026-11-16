@@ -54,9 +54,10 @@ the weakness.
 
 ## Limits of the Evidence
 
-- **The labels are written by models.** Agreement with the reference tags is not the same as accuracy against a human
-  reference. Only one evaluation set has human labels, and it follows other conventions, so its results are lower after
-  the conventions are mapped.
+- **Most labels are written by models.** The labels of MASC come from manually annotated trees, but the other training
+  sources and the evaluation sets other than the treebank carry model-written labels. Agreement with those reference
+  tags is not the same as accuracy against a human reference. Only one evaluation set has human labels, and it follows
+  other conventions, so its results are lower after the conventions are mapped.
 - **The held-out sets have been seen before.** Several models of the family have been scored on them. Nothing is
   selected on those results, but the sets are no longer unseen, and the record states how many looks there have been.
 - **One run and one seed.** The held-out figures come from one training run. The intervals describe the noise of the

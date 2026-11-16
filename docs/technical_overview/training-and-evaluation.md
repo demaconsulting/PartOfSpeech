@@ -25,10 +25,12 @@ still have weight 0, which keeps it out of the mix; the configuration of the tra
 the embedded model. The lexicon is built separately, from dictionary tables and from the tags that appear in the
 training corpora.
 
-Most labels in the data were written by language models, not by people, and no human reviewed them. The corpora went
-through a conventions linter and a correction process in which two blind taggers adjudicate the disputed cases. This
-makes the labels consistent, but it also means that the model learns the habits of its labelers, and that agreement with
-those labels is not the same as accuracy against a human reference. The only evaluation set with human labels is the
+The labels of the silver, open, imperative, compound and technical sources were written by language models, not by
+people, and no human reviewed them. The labels of MASC are different: they come from manually annotated and validated
+Penn Treebank trees that are mapped to the tag set. The corpora went through a conventions linter and a correction
+process in which two blind taggers adjudicate the disputed cases. This makes the labels consistent, but it also means
+that the model learns the habits of its labelers, and that agreement with the model-written labels is not the same as
+accuracy against a human reference. The only evaluation set with human labels is the
 external UD English-EWT treebank, which follows other conventions; it is fetched on demand and never stored in the
 repository.
 

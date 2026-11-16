@@ -93,8 +93,9 @@ computes exactly those features.
 
 - **Position cues** add where the token sits: its position in the sentence, the first content word, the way the
   sentence ends and the length of the sentence. Where a word sits changes what it is likely to be.
-- **Clause cues** add the word classes of the two neighbors, the distance to the nearest determiner or modal and a
-  clause state. They separate a noun from a verb by the structure around the word.
+- **Clause cues** add the word classes of the two neighbors, the distance to the nearest preceding determiner or number,
+  the distance to the nearest preceding modal or `to`, and a clause state. They separate a noun from a verb by the
+  structure around the word.
 - **Right preview** adds the tags that a first pass chose for the next two tokens. It gives the model a look at the
   right-hand context in tags and not only in words.
 - **Inflection** adds whether the stem of a word that ends in `-ing`, `-ed` or `-s` is a verb or a noun in the lexicon.
