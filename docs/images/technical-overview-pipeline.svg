@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="690" viewBox="0 0 900 690" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <!-- Rounded white card keeps the figure readable on any page background -->
+  <rect x="10" y="10" width="880" height="670" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="450" y="44" font-size="18" font-weight="600" fill="#0f172a" text-anchor="middle">From text to tags: the path of one sentence</text>
+
+  <!-- 0 Input -->
+  <rect x="50" y="64" width="560" height="52" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="330" y="86" font-size="15" font-weight="600" fill="#92400e" text-anchor="middle">Input: English text</text>
+  <text x="330" y="106" font-size="13" fill="#92400e" text-anchor="middle">for example: Close the bleed valve.</text>
+  <line x1="330" y1="116" x2="330" y2="140" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 1 Tokenization -->
+  <rect x="50" y="142" width="560" height="68" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <circle cx="80" cy="176" r="15" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <text x="80" y="182" font-size="15" font-weight="700" fill="#166534" text-anchor="middle">1</text>
+  <text x="108" y="168" font-size="15" font-weight="600" fill="#166534">Split into sentences and tokens</text>
+  <text x="108" y="190" font-size="13" fill="#166534">fixed rules that follow the convention of the training data</text>
+  <line x1="330" y1="210" x2="330" y2="236" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 2 Features -->
+  <rect x="50" y="238" width="560" height="68" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <circle cx="80" cy="272" r="15" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
+  <text x="80" y="278" font-size="15" font-weight="700" fill="#1e3a8a" text-anchor="middle">2</text>
+  <text x="108" y="264" font-size="15" font-weight="600" fill="#1e3a8a">Extract hashed features of each token</text>
+  <text x="108" y="286" font-size="13" fill="#1e40af">spelling, prefixes, suffixes, shape, neighbors, previous two tags</text>
+  <line x1="330" y1="306" x2="330" y2="332" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 3 Scoring -->
+  <rect x="50" y="334" width="560" height="68" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <circle cx="80" cy="368" r="15" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
+  <text x="80" y="374" font-size="15" font-weight="700" fill="#1e3a8a" text-anchor="middle">3</text>
+  <text x="108" y="360" font-size="15" font-weight="600" fill="#1e3a8a">Score: add up the weights of the features per tag</text>
+  <text x="108" y="382" font-size="13" fill="#1e40af">one integer score for each of the 17 Universal POS tags</text>
+  <line x1="330" y1="402" x2="330" y2="428" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 4 Restriction -->
+  <rect x="50" y="430" width="560" height="68" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <circle cx="80" cy="464" r="15" fill="#ffffff" stroke="#7c3aed" stroke-width="2"/>
+  <text x="80" y="470" font-size="15" font-weight="700" fill="#5b21b6" text-anchor="middle">4</text>
+  <text x="108" y="456" font-size="15" font-weight="600" fill="#5b21b6">Restrict the candidates</text>
+  <text x="108" y="478" font-size="13" fill="#5b21b6">lexicon, token-shape rules, constraints and glossary entries</text>
+  <line x1="330" y1="498" x2="330" y2="524" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 5 Decision -->
+  <rect x="50" y="526" width="560" height="68" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <circle cx="80" cy="560" r="15" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
+  <text x="80" y="566" font-size="15" font-weight="700" fill="#1e3a8a" text-anchor="middle">5</text>
+  <text x="108" y="552" font-size="15" font-weight="600" fill="#1e3a8a">Decide: best candidate, softmax at the model temperature</text>
+  <text x="108" y="574" font-size="13" fill="#1e40af">the tag, its confidence and the ranked alternatives</text>
+  <line x1="330" y1="594" x2="330" y2="620" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- Output -->
+  <rect x="50" y="622" width="560" height="44" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="330" y="650" font-size="15" font-weight="600" fill="#92400e" text-anchor="middle">Output: tag, confidence and alternatives for every token</text>
+
+  <!-- Feedback: the chosen tag is history for the next token -->
+  <path d="M610,560 L690,560 L690,272 L612,272" fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="7 4" marker-end="url(#a)"/>
+  <text x="702" y="352" font-size="13" font-weight="600" fill="#334155">Left to right:</text>
+  <text x="702" y="372" font-size="13" fill="#334155">the chosen tag</text>
+  <text x="702" y="390" font-size="13" fill="#334155">becomes the</text>
+  <text x="702" y="408" font-size="13" fill="#334155">previous-tag</text>
+  <text x="702" y="426" font-size="13" fill="#334155">feature of the</text>
+  <text x="702" y="444" font-size="13" fill="#334155">next token</text>
+</svg>

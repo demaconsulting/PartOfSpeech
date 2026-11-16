@@ -1,0 +1,13 @@
+---
+title: Part Of Speech Technical Overview
+subtitle: How the Part Of Speech Tagger Works
+author: DEMA Consulting
+description: Technical overview of the theory behind the Part Of Speech tagger
+lang: en-US
+keywords:
+  - Part Of Speech
+  - .NET
+  - Library
+  - Technical Overview
+  - Averaged Perceptron
+---
