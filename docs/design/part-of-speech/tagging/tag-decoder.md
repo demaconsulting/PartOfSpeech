@@ -31,10 +31,12 @@ decoded in two passes (see `Decode`). It also answers the context-free lookup of
   earlier on the thread) and `Begin`, so a lookup between two decodes leaves no state behind that a decode reads.
   `Clear` erases everything that a request left in it: it zeroes the used part of the character buffer (up to
   `CharsUsed`, or `CharsHigh` when the inflection lookups wrote candidate spellings behind it), of the per-token arrays
-  (up to `Count`) and of the small buffers (the scores, the bucket array, the lexicon scratch buffer that holds the
-  UTF-8 key, and `LemmaBytes`), and resets the counters and flags. The arrays keep their capacity, `Clear` allocates
-  nothing and does not throw, and its cost is proportional to the request and not to the largest sentence the thread has
-  seen.
+  (up to `Count`) and of the small buffers (the scores, the bucket array and `LemmaBytes`), and resets the counters and
+  flags. The lexicon scratch buffer, which is sized for two of the longest spellings the file format allows, is zeroed
+  only up to `LexiconHigh`, the number of bytes the request's lookups wrote (the UTF-8 key and the spellings decoded
+  while a block was scanned); every lookup goes through `TryFindKey` or `TryGetTags` of the workspace, which raise
+  that mark. The arrays keep their capacity, `Clear` allocates nothing and does not throw, and its cost is
+  proportional to the request and not to the largest sentence the thread has seen.
 - **`ScoreSlice`** (internal, sealed): an `IReadOnlyList<TagScore>` over a segment of the flat result array
   (`ArraySegment<T>` was not used because it exposes a writable `IList<T>` indexer). It is the type behind
   `TaggedToken.Alternatives`.

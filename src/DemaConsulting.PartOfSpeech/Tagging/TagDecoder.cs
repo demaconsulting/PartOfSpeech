@@ -377,7 +377,7 @@ internal sealed class TagDecoder
             // The lexicon key is the lower-cased folded token, which follows the folded form in the character buffer
             var length = workspace.Length[index];
             var lowerStart = workspace.Start[index] + length;
-            known = _lexicon.TryGetTags(workspace.Chars, lowerStart, length, workspace.LexiconScratch, out tags);
+            known = workspace.TryGetTags(_lexicon, lowerStart, length, out tags);
         }
 
         return ApplyShapeRules(flags, known, tags);
@@ -500,7 +500,7 @@ internal sealed class TagDecoder
             var ordinal = -1;
             var keyLength = 0;
             var found = head > 0
-                ? _lexicon.TryFindKey(workspace.Chars, workspace.Start[0] + workspace.Length[0], workspace.Length[0], workspace.LexiconScratch, out ordinal, out _, out keyLength)
+                ? workspace.TryFindKey(_lexicon, workspace.Start[0] + workspace.Length[0], workspace.Length[0], out ordinal, out _, out keyLength)
                 : Find(workspace, 0, out ordinal, out keyLength, out _) != WordMatch.NotRecognized;
             if (!found)
             {
@@ -631,7 +631,7 @@ internal sealed class TagDecoder
 #endif
                 workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
                 var length = workspace.Length[0];
-                if (_lexicon.TryFindKey(workspace.Chars, workspace.Start[0] + length, length, workspace.LexiconScratch, out var ordinal, out _, out _))
+                if (workspace.TryFindKey(_lexicon, workspace.Start[0] + length, length, out var ordinal, out _, out _))
                 {
                     return new WordTags(_lexicon, ordinal, tags, WordMatch.CompoundHead, _lexicon.AnalyzedTags(ordinal));
                 }
@@ -710,8 +710,7 @@ internal sealed class TagDecoder
         var length = workspace.Length[index];
         var lowerStart = workspace.Start[index] + length;
         var chars = workspace.Chars;
-        var scratch = workspace.LexiconScratch;
-        if (_lexicon.TryFindKey(chars, lowerStart, length, scratch, out ordinal, out wholeTags, out keyLength))
+        if (workspace.TryFindKey(_lexicon, lowerStart, length, out ordinal, out wholeTags, out keyLength))
         {
             return WordMatch.Spelling;
         }
@@ -739,7 +738,7 @@ internal sealed class TagDecoder
         }
 
         // Look up the last part as it is (no recursion); ordinal is -1 again when it is not a spelling
-        return _lexicon.TryFindKey(chars, lowerStart + lastHyphen + 1, length - lastHyphen - 1, scratch, out ordinal, out _, out keyLength)
+        return workspace.TryFindKey(_lexicon, lowerStart + lastHyphen + 1, length - lastHyphen - 1, out ordinal, out _, out keyLength)
             ? WordMatch.CompoundHead
             : WordMatch.NotRecognized;
     }

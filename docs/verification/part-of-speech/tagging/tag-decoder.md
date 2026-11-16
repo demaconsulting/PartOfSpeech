@@ -143,4 +143,6 @@ a hyphenated spelling or a compound head wrongly, disturbs a decode, or allocate
   `TagDecoder_GetPossibleTags_And_IsFormOf_LeaveNoRequestTextInTheWorkspace` (a plain word, a hyphenated word, an
   over-long compound with and without a known last part, and the form question answered yes and no, each followed by the
   check) and `DecoderWorkspace_Clear_ErasesAPreparedSentence` (a prepared sentence with a lexicon key in the scratch
-  buffer holds more than 50 non-zero elements and `Clear` leaves none, so the checks above are not vacuous).
+  buffer holds more than 50 non-zero elements and `Clear` leaves none, so the checks above are not vacuous; the lookup
+  of an unlisted word also decoded spellings into the second half of the scratch buffer, the written mark lies beyond
+  the first half but below the capacity of the buffer, and `Clear` leaves no byte of either half and resets the mark).

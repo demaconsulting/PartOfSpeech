@@ -1310,14 +1310,22 @@ public class TagDecoderTests
         workspace.Configure(GroupsFor(true), EmbeddedModel.Lexicon);
         FeatureExtractor.Prepare(workspace, new[] { "Zqxjvkwbplm", "qzvxkjbwmping", "Hi" }, 18);
         workspace.EnsureLexiconScratch(EmbeddedModel.Lexicon.ScratchSize);
-        EmbeddedModel.Lexicon.TryGetTags(workspace.Chars, workspace.Start[0] + workspace.Length[0], workspace.Length[0], workspace.LexiconScratch, out _);
+        workspace.TryFindKey(EmbeddedModel.Lexicon, workspace.Start[0] + workspace.Length[0], workspace.Length[0], out _, out _, out _);
+        var maxSpelling = EmbeddedModel.Lexicon.MaxSpellingBytes;
+        var decodedBefore = workspace.LexiconScratch.Skip(maxSpelling).Count(b => b != 0);
+        var highBefore = workspace.LexiconHigh;
         var before = Residue(workspace.Chars) + Residue(workspace.LowerHash) + Residue(workspace.StaticBuckets) + Residue(workspace.LexiconScratch);
 
         // Act
         workspace.Clear();
 
-        // Assert: there was something to erase, and nothing is left
+        // Assert: there was something to erase (also in the second half of the scratch, where a block scan decodes spellings, which the mark covered),
+        // the mark stayed far below the capacity of the buffer, and nothing is left
         Assert.True(before > 50);
+        Assert.True(decodedBefore > 0);
+        Assert.True(highBefore > maxSpelling);
+        Assert.True(highBefore < workspace.LexiconScratch.Length);
+        Assert.Equal(0, workspace.LexiconHigh);
         Assert.Equal(0, Residue(workspace.Chars));
         Assert.Equal(0, Residue(workspace.Start));
         Assert.Equal(0, Residue(workspace.LowerHash));

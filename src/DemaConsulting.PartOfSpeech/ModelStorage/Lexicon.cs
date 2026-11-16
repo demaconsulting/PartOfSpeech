@@ -333,7 +333,7 @@ internal sealed class Lexicon
     ///     Looks up a lower-cased spelling and reports its position in the table.
     /// </summary>
     /// <remarks>
-    ///     The same search as <see cref="TryFindKey"/>, for callers
+    ///     The same search as <see cref="TryFindKey(char[], int, int, byte[], out int, out UposSet, out int)"/>, for callers
     ///     that do not need the length of the key.
     /// </remarks>
     /// <param name="chars">The buffer that holds the characters of the key, already folded and lower-cased.</param>
@@ -365,6 +365,32 @@ internal sealed class Lexicon
     /// <returns><c>true</c> if the spelling is in the lexicon.</returns>
     public bool TryFindKey(char[] chars, int offset, int length, byte[] scratch, out int ordinal, out UposSet tags, out int keyLength)
     {
+        var scratchHigh = 0;
+        return TryFindKey(chars, offset, length, scratch, ref scratchHigh, out ordinal, out tags, out keyLength);
+    }
+
+    /// <summary>
+    ///     Looks up a lower-cased spelling like <see cref="TryFindKey(char[], int, int, byte[], out int, out UposSet, out int)"/>
+    ///     and reports how far into <paramref name="scratch"/> the lookup wrote, so that the caller can erase exactly that part.
+    /// </summary>
+    /// <remarks>
+    ///     The scratch buffer has the size of two spellings of the longest length the file format allows, but a lookup
+    ///     writes only the key (first half) and the spellings it decodes while it scans one block (second half). A caller that
+    ///     must erase the buffer after a request passes the same variable to every lookup of the request and clears
+    ///     only that many bytes, so the cost of erasing follows the request and not the capacity of the buffer.
+    ///     The mark is raised before an exception can leave a scan, so a corrupt file cannot hide a write from the caller.
+    /// </remarks>
+    /// <param name="chars">The buffer that holds the characters of the key, already folded and lower-cased.</param>
+    /// <param name="offset">The index of the first key character in <paramref name="chars"/>.</param>
+    /// <param name="length">The number of characters of the key.</param>
+    /// <param name="scratch">A buffer of at least <see cref="ScratchSize"/> bytes that the caller owns exclusively for the call.</param>
+    /// <param name="scratchHigh">The number of bytes at the start of <paramref name="scratch"/> that may have been written; only ever raised.</param>
+    /// <param name="ordinal">Receives the zero-based position of the spelling in ascending UTF-8 order; -1 when it is not in the lexicon.</param>
+    /// <param name="tags">Receives the tags of the spelling; the empty set when it is not in the lexicon.</param>
+    /// <param name="keyLength">Receives the number of UTF-8 bytes of the key at the start of <paramref name="scratch"/>; meaningful only when the result is <c>true</c>.</param>
+    /// <returns><c>true</c> if the spelling is in the lexicon.</returns>
+    internal bool TryFindKey(char[] chars, int offset, int length, byte[] scratch, ref int scratchHigh, out int ordinal, out UposSet tags, out int keyLength)
+    {
         tags = UposSet.Empty;
         ordinal = -1;
         keyLength = 0;
@@ -375,6 +401,9 @@ internal sealed class Lexicon
 
         // Encode the key as UTF-8 into the first half of the scratch buffer; a longer key cannot be present
         keyLength = EncodeUtf8(chars, offset, length, scratch, MaxSpellingBytes);
+
+        // A key that does not fit may have been written up to the limit before the encoder gave up
+        scratchHigh = Math.Max(scratchHigh, keyLength < 0 ? MaxSpellingBytes : keyLength);
         if (keyLength < 0)
         {
             keyLength = 0;
@@ -417,7 +446,7 @@ internal sealed class Lexicon
         }
 
         // Scan the block from its second spelling; the spellings ascend, so stop at the first one that is greater
-        return ScanBlock(block, scratch, keyLength, out ordinal, out tags);
+        return ScanBlock(block, scratch, keyLength, ref scratchHigh, out ordinal, out tags);
     }
 
     /// <summary>
@@ -1141,10 +1170,11 @@ internal sealed class Lexicon
     /// <param name="block">The block index.</param>
     /// <param name="scratch">The scratch buffer; the key is in the first half, the second half is used for decoding.</param>
     /// <param name="keyLength">The length of the key in bytes.</param>
+    /// <param name="scratchHigh">Raised to the end of the part of <paramref name="scratch"/> that the decoding wrote.</param>
     /// <param name="ordinal">Receives the position of the spelling when the key is found; -1 otherwise.</param>
     /// <param name="tags">Receives the tags when the key is found.</param>
     /// <returns><c>true</c> if the key is in the block.</returns>
-    private bool ScanBlock(int block, byte[] scratch, int keyLength, out int ordinal, out UposSet tags)
+    private bool ScanBlock(int block, byte[] scratch, int keyLength, ref int scratchHigh, out int ordinal, out UposSet tags)
     {
         tags = UposSet.Empty;
         ordinal = -1;
@@ -1153,31 +1183,41 @@ internal sealed class Lexicon
         var position = _blockStarts[block];
         var count = BlockSpellingCount(block);
         var length = 0;
-        for (var entry = 0; entry < count; entry++)
+        var longest = 0;
+        try
         {
-            var maskIndex = ReadEntry(ref position, entry == 0, scratch, MaxSpellingBytes, ref length);
-
-            // The head was already compared by the binary search
-            if (entry == 0)
+            for (var entry = 0; entry < count; entry++)
             {
-                continue;
+                var maskIndex = ReadEntry(ref position, entry == 0, scratch, MaxSpellingBytes, ref length);
+                longest = Math.Max(longest, length);
+
+                // The head was already compared by the binary search
+                if (entry == 0)
+                {
+                    continue;
+                }
+
+                var comparison = BinaryFormat.Compare(scratch, MaxSpellingBytes, length, scratch, 0, keyLength);
+                if (comparison == 0)
+                {
+                    tags = UposSet.FromMask(_masks[maskIndex]);
+                    ordinal = (block << _blockShift) + entry;
+                    return true;
+                }
+
+                if (comparison > 0)
+                {
+                    return false;
+                }
             }
 
-            var comparison = BinaryFormat.Compare(scratch, MaxSpellingBytes, length, scratch, 0, keyLength);
-            if (comparison == 0)
-            {
-                tags = UposSet.FromMask(_masks[maskIndex]);
-                ordinal = (block << _blockShift) + entry;
-                return true;
-            }
-
-            if (comparison > 0)
-            {
-                return false;
-            }
+            return false;
         }
-
-        return false;
+        finally
+        {
+            // Report the decoded part even when a malformed entry throws half way (the length is already set then)
+            scratchHigh = Math.Max(scratchHigh, MaxSpellingBytes + Math.Max(longest, length));
+        }
     }
 
     /// <summary>
