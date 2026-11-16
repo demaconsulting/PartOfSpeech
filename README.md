@@ -52,9 +52,9 @@ foreach (TaggedSentence sentence in Tagger.Default.Tag("The cat sat on the mat. 
 ```
 
 `Tagger.Default` is a shared, thread-safe tagger that uses the model and the lexicon that are embedded in the package,
-so it needs no file and no download. The first read inflates and validates the embedded files once. To use other weights,
-create a tagger with `Tagger.Load(stream)`. The [user guide][link-user-guide] explains confidences and alternatives,
-constraints, glossaries and the tokenization conventions.
+so it needs no file and no download. The first read inflates and validates the embedded files once. To use other
+weights, create a tagger with `Tagger.Load(stream)`. The [user guide][link-user-guide] explains confidences and
+alternatives, constraints, glossaries and the tokenization conventions.
 
 To tag domain terms correctly, give the tagger a glossary. The general model reads `bleed` in `bleed valve` as a verb;
 the glossary says that the term is a noun, also in the plural and at the start of a sentence:
@@ -78,8 +78,15 @@ curated lists and soft mode for lists that may contain errors.
 
 ## Accuracy
 
-Held-out results of the embedded model. A harmful error is a noun tagged as a verb or a verb tagged as a noun; the rate
-is per 1,000 noun-verb decisions. `shape-probe` and `challenge-set` are small sets of hard sentences.
+Held-out results of the embedded model, measured on text that it was not trained on. The sets are:
+
+- `open-test`: the test split of the open corpus.
+- `gold-v2-test`: the test split of gold v2, with one labeled target word per sentence.
+- `shape-probe`: 560 short sentences in seven noun and verb shapes, a stress test for technical and imperative text.
+- `challenge-set`: 32 simplified-technical-English sentences, a smoke test.
+- `ud-test-mapped`: the UD English-EWT test treebank, which has human labels, mapped to the library conventions.
+
+A harmful error is a noun tagged as a verb or a verb tagged as a noun. The rate is per 1,000 noun-verb decisions.
 
 | Set | Accuracy (%) | Harmful per 1,000 |
 | --- | ---: | ---: |
@@ -89,41 +96,46 @@ is per 1,000 noun-verb decisions. `shape-probe` and `challenge-set` are small se
 | `challenge-set` | 92.28 | 0.0 |
 | `ud-test-mapped` | 93.17 | 17.9 |
 
-Recommended confidence thresholds, with the share of the noun-verb decisions that they answer and the harmful errors per
-1,000 answered decisions on the open test split:
+Recommended confidence thresholds, with the share of the noun-verb decisions that they answer (coverage) and the
+harmful errors per 1,000 answered decisions on the open test split:
 
 | Threshold | Value | Coverage (%) | Harmful per 1,000 answered |
 | --- | ---: | ---: | ---: |
 | `strict` | 0.90 | 89.7 | 4.6 |
 | `balanced` | 0.75 | 94.9 | 9.1 |
 
-Rule checkers should use `strict` together with `Margin`, `IsKnownWord` and a domain `Glossary` or `TokenConstraint`;
-treat tokens below the threshold as unknown, and also the tokens of words that the
-lexicon does not know (`IsKnownWord`) when their tag is a noun, a verb or a proper noun. A confident error on a term that
-the dictionary knows is best removed with the glossary, not with a higher threshold.
+Rule checkers should use `strict` together with `Margin`, `IsKnownWord` and a domain `Glossary` or `TokenConstraint`:
+
+- Treat tokens whose confidence is below the threshold as unknown.
+- Also treat as unknown the tokens of words that the lexicon does not know (`IsKnownWord`) when their tag is a noun,
+  a verb or a proper noun.
+- Remove a confident error on a term that the dictionary knows with the glossary, not with a higher threshold.
 
 The [evaluation report][link-evaluation] has the details.
 
 ## Documentation
 
-Generated documentation includes build notes, the user guide, the code quality report, requirements with
-justifications and the requirements trace matrix.
+The [user guide][link-user-guide] is in the repository. The [GitHub releases][link-releases] attach the generated
+documents as PDFs, including build notes, the user guide, the code quality report, requirements with justifications and
+the requirements trace matrix.
 
 ## Data
 
 The repository holds the open training data, the evaluation data and a part-of-speech lexicon for the 17 Universal POS
-tags in the [data folder][link-data], each source with its origin, license and recipe, verified against checksums. At run
-time the library uses only the lexicon and the trained weights, both embedded in the assembly. The trainer in
+tags in the [data folder][link-data], each source with its origin, license and recipe, verified against checksums. At
+run time the library uses only the lexicon and the trained weights, both embedded in the assembly. The trainer in
 `tools/DemaConsulting.PartOfSpeech.Trainer` reproduces the weights from the committed data. The corpora and the
 evaluation sets are not shipped.
 
 ## Credits and Licenses
 
 PartOfSpeech is MIT licensed. The package also embeds a lexicon and trained weights that are derived from third-party
-data, so its license is the file [PACKAGE-LICENSE.md][link-package-license] (it starts with the SPDX expression
+data, so its license is the file [PACKAGE-LICENSE.md][link-package-license]. It starts with the SPDX expression
 `MIT AND CC-BY-4.0 AND CC-BY-3.0-US`; nuget.org accepts only expressions of OSI or FSF approved licenses, and CC BY 3.0
-US is neither). The attribution notices are in [THIRD-PARTY-NOTICES.md][link-notices]; both files are packed in the
+US is neither. The attribution notices are in [THIRD-PARTY-NOTICES.md][link-notices]. Both files are packed in the
 NuGet package.
+
+Third-party sources:
 
 - **MASC**: the Manually Annotated Sub-Corpus of the Open American National Corpus
   ([CC BY 3.0 US][link-cc-by-3]), converted to Universal POS tags; the lexicon and the trained weights were derived in
@@ -131,18 +143,21 @@ NuGet package.
 - **Open English WordNet** ([CC BY 4.0][link-cc-by-4]), which carries the Princeton WordNet notice: its word forms were
   reduced to the lexicon and to the base word, tag and features of each form that the lexicon carries.
 - **The open part-of-speech corpus** of the [WordSense][link-wordsense] project (a related project with taggers of its
-  own): annotations and selection are CC0 1.0, and the sentences are public domain in the United States or come from the
-  Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative, compound, headings and
-  technical-text training sources (text of US federal government documents; 17 U.S.C. 105) and the evaluation sets follow
-  the same terms.
+  own): annotations and selection are CC0 1.0, and the sentences are public domain in the United States or come from
+  the Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative, compound, headings and
+  technical-text training sources (text of US federal government documents; 17 U.S.C. 105) and the evaluation sets
+  follow the same terms.
 - **UD English-EWT** (CC BY-SA 4.0) is used for **evaluation only**: it is not distributed, nothing is trained on it,
   and the repository ignores its files.
 
-No CC BY-SA or NonCommercial data is committed to this repository or included in the package. Language models wrote the
-tags of the open corpus, of the silver data and of the imperative, compound, headings and technical-text sources, and no
-human has reviewed them. In the owner's
-position, GitHub claims no ownership of model outputs, so the repository owner holds the rights in them and dedicates
-them to the public domain under CC0 1.0. That is the owner's position, not legal advice or a warranty.
+No CC BY-SA or NonCommercial data is committed to this repository or included in the package.
+
+**AI-generated annotations:** language models wrote the tags of the open corpus, of the silver data and of the
+imperative, compound, headings and technical-text sources, and no human has reviewed them.
+
+**Rights in the annotations:** in the owner's position, GitHub claims no ownership of model outputs, so the repository
+owner holds the rights in them and dedicates them to the public domain under CC0 1.0. That is the owner's position, not
+legal advice or a warranty.
 
 ## Contributing
 
@@ -183,6 +198,7 @@ By contributing to this project, you agree that your contributions will be licen
 [link-notices]: https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md
 [link-package-license]: https://github.com/demaconsulting/PartOfSpeech/blob/main/PACKAGE-LICENSE.md
 [link-wordsense]: https://github.com/demaconsulting/WordSense
+[link-releases]: https://github.com/demaconsulting/PartOfSpeech/releases
 [link-cc-by-3]: https://creativecommons.org/licenses/by/3.0/us/
 [link-cc-by-4]: https://creativecommons.org/licenses/by/4.0/
 [architecture]: https://raw.githubusercontent.com/demaconsulting/PartOfSpeech/main/docs/images/architecture.png
