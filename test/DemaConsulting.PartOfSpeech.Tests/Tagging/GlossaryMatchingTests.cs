@@ -1,4 +1,4 @@
-// cspell:ignore bleeds resume sume ecole Ecole straße nai valx stra precomposed Brien Cquoted stanbul buse
+// cspell:ignore bleeds resume sume ecole Ecole straße nai valx stra precomposed Brien Cquoted stanbul buse zqxjvkwbplm Zqxjvkwbplm Qzvxkjbwmp Xjqzkvwbpl Wkvbzqxjpl
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -364,6 +364,50 @@ public class GlossaryMatchingTests
         Assert.Equal(GlossaryIndex.FoldToString(token, false), exact);
         Assert.Equal(GlossaryIndex.FoldToString(token, true), lower);
     }
+
+    /// <summary>
+    ///     Proves that matching leaves no text of the sentence in the thread's glossary workspace, whether or not a term matched and also
+    ///     when a shorter sentence follows a longer one.
+    /// </summary>
+    [Fact]
+    public void Glossary_FindMatches_LeavesNoSentenceTextInTheWorkspace()
+    {
+        // Arrange: a glossary with a distinctive term, a long sentence that contains it, a long one that does not, and a short one
+        var glossary = Nouns("zqxjvkwbplm valve", "Qzvxkjbwmp");
+        var matching = S("Close the Zqxjvkwbplm valve and the O\u2019Brien \u00C9COLE gate and the Xjqzkvwbpl now.");
+        var plain = S("Close the Xjqzkvwbpl gate and the Zqxjvkwbplm tap and the Wkvbzqxjpl now.");
+        var shortSentence = S("Hi.");
+
+        // Act: match each; the first has a match whose text is copied out before the workspace is erased
+        var found = glossary.FindMatches(matching).Select(m => m.Text).ToArray();
+        var afterMatching = Residue(GlossaryIndex.GetThreadWorkspace());
+        var none = glossary.FindMatches(plain);
+        var afterPlain = Residue(GlossaryIndex.GetThreadWorkspace());
+        var shortFound = glossary.FindMatches(shortSentence);
+
+        // Assert: the matches are intact and the workspace is empty after each call
+        Assert.Equal(new[] { "Zqxjvkwbplm valve" }, found);
+        Assert.Empty(none);
+        Assert.Empty(shortFound);
+        Assert.Equal(0, afterMatching);
+        Assert.Equal(0, afterPlain);
+        Assert.Equal(0, Residue(GlossaryIndex.GetThreadWorkspace()));
+    }
+
+    /// <summary>
+    ///     Counts what a glossary workspace holds: the characters, token facts and matches, in the whole of every buffer.
+    /// </summary>
+    private static int Residue(GlossaryWorkspace workspace) =>
+        workspace.Chars.Count(c => c != '\0')
+        + workspace.Start.Count(i => i != 0)
+        + workspace.Length.Count(i => i != 0)
+        + workspace.Hash.Count(h => h != 0)
+        + workspace.MatchForm.Count(i => i != 0)
+        + workspace.MatchFirst.Count(i => i != 0)
+        + workspace.MatchCount.Count(i => i != 0)
+        + workspace.MatchTotal
+        + workspace.Count
+        + workspace.CharsUsed;
 
     /// <summary>
     ///     Proves that an empty sentence and an empty glossary give no matches.

@@ -222,6 +222,10 @@ allocates per token, a parallel result differs from the sequential one, or match
 - **Thread safety**: `Glossary_FindMatches_ParallelUse_MatchesSequentialResults`,
   `Glossary_Tag_ParallelUse_MatchesSequentialResults` (eight threads, hard and soft, the default tagger) and
   `Glossary_Tag_SoftFirstUseRace_CompilesCorrectly` (twenty rounds of eight threads that use a fresh soft glossary together).
+- **No retention of request text**: `Glossary_FindMatches_LeavesNoSentenceTextInTheWorkspace` (a sentence with a match
+  and non-ASCII tokens, one without a match and a short one, in this order on one thread: after every call every buffer
+  of the thread's glossary workspace, the whole of it and not only the part the sentence used, holds zeros only, and the
+  matches that were copied out are intact).
 - **No allocation**: `GlossaryIndex_Find_DoesNotAllocate`, `Glossary_Match_SentenceWithoutMatch_DoesNotAllocate`,
   `Tagger_TagWithGlossary_SentenceWithoutMatch_AddsNoAllocation` (a sentence without a match allocates no more with a
   glossary than without),

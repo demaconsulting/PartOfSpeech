@@ -405,39 +405,47 @@ public sealed class Glossary
             return NoMatches;
         }
 
+        // Copy the matches out and erase the workspace on every way out, so that the text of the sentence does not stay in the memory of the thread
         var workspace = GlossaryIndex.GetThreadWorkspace();
-        var found = Index.Find(tokens, workspace);
-        if (found == 0)
+        try
         {
-            return NoMatches;
-        }
+            var found = Index.Find(tokens, workspace);
+            if (found == 0)
+            {
+                return NoMatches;
+            }
 
-        var result = new GlossaryMatch[found];
-        for (var m = 0; m < found; m++)
+            var result = new GlossaryMatch[found];
+            for (var m = 0; m < found; m++)
+            {
+                var form = Index.GetForm(workspace.MatchForm[m]);
+                var first = workspace.MatchFirst[m];
+                var count = workspace.MatchCount[m];
+                var entry = _entries[form.EntryIndex];
+                var last = tokens[first + count - 1];
+                var start = tokens[first].Start;
+                var length = last.Start + last.Length - start;
+                var head = first + form.HeadOffset;
+                result[m] = new GlossaryMatch(
+                    entry,
+                    form.EntryIndex,
+                    form.TagSetId,
+                    first,
+                    count,
+                    head,
+                    start,
+                    length,
+                    sentence.Text.Substring(start - sentence.Start, length),
+                    entry.Mode ?? _options.Mode,
+                    form.IsVariant,
+                    tokens[head].Start);
+            }
+
+            return Array.AsReadOnly(result);
+        }
+        finally
         {
-            var form = Index.GetForm(workspace.MatchForm[m]);
-            var first = workspace.MatchFirst[m];
-            var count = workspace.MatchCount[m];
-            var entry = _entries[form.EntryIndex];
-            var last = tokens[first + count - 1];
-            var start = tokens[first].Start;
-            var length = last.Start + last.Length - start;
-            var head = first + form.HeadOffset;
-            result[m] = new GlossaryMatch(
-                entry,
-                form.EntryIndex,
-                form.TagSetId,
-                first,
-                count,
-                head,
-                start,
-                length,
-                sentence.Text.Substring(start - sentence.Start, length),
-                entry.Mode ?? _options.Mode,
-                form.IsVariant,
-                tokens[head].Start);
+            workspace.Clear();
         }
-
-        return Array.AsReadOnly(result);
     }
 }

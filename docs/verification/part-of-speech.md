@@ -473,6 +473,15 @@ tokens are flagged.
 
 Method described under Verification Approach.
 
+### No Retention of Request Text
+
+**Tests**: `Tagger_EveryEntryPoint_LeavesNoRequestTextInTheWorkspaces` (through the requirements of the tagger, the
+decoder and the glossary matcher)
+
+Method described under Verification Approach of the Tagging subsystem: after every public entry point has returned, the
+per-thread scratch buffers hold zeros only, also after a shorter request that follows a longer one and after a decode
+that fails.
+
 ### Throughput
 
 **Tests**: `PartOfSpeech_Performance_SingleThread_ExceedsFiftyThousandTokensPerSecond`,

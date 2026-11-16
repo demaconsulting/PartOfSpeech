@@ -147,7 +147,10 @@ memory is a `[ThreadStatic]` workspace (the decoder's, used by tagging and by th
 that grows to the largest sentence and
 is reused; the decoder resolves a
 caller-supplied constraint list before it takes the workspace and runs no caller code while it holds it, and the glossary
-copies its matches out of its workspace before it returns. The compiled constraints of a glossary are created once per
+copies its matches out of its workspace before it returns. Both erase the part of their workspace that the request used
+(`Clear`, in a `finally` block, so also when the call fails) before they return, so no text of a request, and nothing
+derived from it, stays in a thread's memory after the call; the arrays keep their capacity, so erasing costs time
+proportional to the request and allocates nothing. The compiled constraints of a glossary are created once per
 tagger by a thread-safe lazy table. The results are
 allocated once per sentence (one `TaggedToken` array and one flat `TagScore`
 array whose slices back the alternatives, and with a glossary the match objects and the constraint array of the sentence)

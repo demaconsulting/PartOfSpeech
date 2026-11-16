@@ -996,7 +996,7 @@ internal static class FeatureExtractor
             if (lexicon != null)
             {
                 var length = workspace.Length[i];
-                known = lexicon.TryGetTags(workspace.Chars, workspace.Start[i] + length, length, workspace.LexiconScratch, out tags);
+                known = workspace.TryGetTags(lexicon, workspace.Start[i] + length, length, out tags);
             }
 
             workspace.LexKnown[i] = known ? (byte)1 : (byte)0;
@@ -1268,7 +1268,7 @@ internal static class FeatureExtractor
             return 0;
         }
 
-        return lexicon.TryGetTags(workspace.Chars, offset, length, workspace.LexiconScratch, out var tags) ? tags.Mask : 0;
+        return workspace.TryGetTags(lexicon, offset, length, out var tags) ? tags.Mask : 0;
     }
 
     /// <summary>
@@ -1290,6 +1290,7 @@ internal static class FeatureExtractor
         var scratch = workspace.CharsUsed;
         Array.Copy(workspace.Chars, offset, workspace.Chars, scratch, length);
         workspace.Chars[scratch + length] = extra;
+        workspace.CharsHigh = Math.Max(workspace.CharsHigh, scratch + length + 1);
         return LookupTags(workspace, scratch, length + 1);
     }
 

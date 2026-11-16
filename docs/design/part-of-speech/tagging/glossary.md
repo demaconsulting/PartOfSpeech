@@ -39,7 +39,9 @@ not to a tagger. The unit consists of `Glossary`, `GlossaryBuilder`, `GlossaryEn
   case rule and the exact and lower-case tokens. Equal spellings collapse into one form: the better rank wins, then the
   earlier entry, and the generated forms of the same entry unite their tags.
 - **`GlossaryWorkspace`**: per-thread scratch memory (the folded characters of the sentence, token hashes and offsets,
-  and the matches as integer arrays) that grows to the largest sentence and is reused.
+  and the matches as integer arrays) that grows to the largest sentence and is reused. `Clear` zeroes the part of it that
+  the sentence used (the characters up to `CharsUsed`, which `FoldToken` advances, the token facts and the matches) and
+  resets the counters.
 - **`GlossaryConstraints`**: the constraints of a glossary compiled for one tagger: the head constraint of every distinct
   tag set in both modes, and the constraints of the non-head tokens of every entry. It is built once per glossary and
   tagger, because the soft boost is `SoftStrength` times the temperature of the tagger's model, and it is immutable.
@@ -92,7 +94,9 @@ tokens under the same effective case rule; the index and the compiled constraint
   takes a slower path through `FeatureExtractor.Fold` that allocates.
 - **`Glossary.FindMatches(sentence)`** and the internal `Match`: run `Find` with the workspace of the current thread and
   copy the result into `GlossaryMatch` objects before returning, so no caller code runs while the workspace holds
-  results. A glossary without entries and a sentence without tokens give a shared empty list.
+  results. They erase the workspace (`GlossaryWorkspace.Clear`) in a `finally` block before they return or fail, so no
+  folded text of the sentence stays in the thread's memory. A glossary without entries and a sentence without tokens give
+  a shared empty list.
 - **`GlossaryConstraints.Compile(glossary, temperature)`**: for every distinct head tag set builds the hard head
   constraint (`TokenConstraint.Only(tags)`) and the soft head constraint (`Prefer` of every tag with the boost, combined
   with `And`); for every entry builds the non-head table in the effective mode of the entry. The rules for a non-head

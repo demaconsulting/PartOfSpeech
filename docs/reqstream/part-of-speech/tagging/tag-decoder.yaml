@@ -182,3 +182,18 @@ sections:
                   - FeatureExtractor_SetFolded_NormalizedText_EqualsSetToken
                   - FeatureExtractor_SetFolded_SpanSlice_EqualsTheSameTextAsAToken
                   - FeatureExtractor_FoldsToDoubleHyphen_AgreesWithTheFoldingOfEveryCodeUnit
+
+              - id: PartOfSpeech-Tagging-TagDecoder-NoRetention
+                title: >-
+                  A decode and a word lookup shall leave no text of their request, nor anything derived from it (the
+                  folded characters, the hashes, the lexicon key bytes), in the thread's decoder workspace when they
+                  return or fail, also when a shorter request follows a longer one.
+                justification: |
+                  The workspace lives as long as the thread; text that stayed in it would outlive the request in
+                  process memory, where a memory dump or a later defect could expose it. Erasing only the part that the
+                  request used keeps the cost proportional to the request.
+                tests:
+                  - TagDecoder_Decode_LeavesNoRequestTextInTheWorkspace
+                  - TagDecoder_Decode_Exception_LeavesNoRequestTextInTheWorkspace
+                  - TagDecoder_GetPossibleTags_And_IsFormOf_LeaveNoRequestTextInTheWorkspace
+                  - DecoderWorkspace_Clear_ErasesAPreparedSentence

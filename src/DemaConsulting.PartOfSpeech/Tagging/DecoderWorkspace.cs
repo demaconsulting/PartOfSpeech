@@ -9,7 +9,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///         Tagging a sentence needs a handful of arrays whose size depends on the sentence. Allocating them per call
 ///         would dominate the cost of a short sentence, so one workspace per thread grows to the largest sentence seen
 ///         and is then reused for ever (the decoder keeps it in a thread-static field). The decoder resolves caller-supplied lists
-///         before it takes the workspace and runs no caller code while it holds it, so nested use cannot corrupt it.
+///         before it takes the workspace and runs no caller code while it holds it, so nested use cannot corrupt it. It erases
+///         the workspace (<see cref="Clear"/>) before it returns or lets an exception go, so no text of a request stays in it.
 ///     </para>
 ///     <para>
 ///         The class is plain data for <see cref="FeatureExtractor"/> and <see cref="TagDecoder"/>; it is not
@@ -99,6 +100,16 @@ internal sealed class DecoderWorkspace
     public int CharsUsed;
 
     /// <summary>
+    ///     The end of the area of <see cref="Chars"/> that was written behind <see cref="CharsUsed"/> (the candidate spellings of the inflection lookups), so that <see cref="Clear"/> reaches it.
+    /// </summary>
+    public int CharsHigh;
+
+    /// <summary>
+    ///     The number of bytes of <see cref="LemmaBytes"/> in use.
+    /// </summary>
+    public int LemmaUsed;
+
+    /// <summary>
     ///     The number of tokens of the current sentence.
     /// </summary>
     public int Count;
@@ -167,6 +178,15 @@ internal sealed class DecoderWorkspace
     ///     The buffer for lexicon lookups; it is sized for the lexicon on first use.
     /// </summary>
     public byte[] LexiconScratch = new byte[0];
+
+    /// <summary>
+    ///     The number of bytes at the start of <see cref="LexiconScratch"/> that the lookups of the current request may have written (the key
+    ///     and the spellings decoded while scanning a block), so that <see cref="Clear"/> reaches all of it and no more.
+    /// </summary>
+    /// <remarks>
+    ///     Every lookup in the scratch buffer must go through <see cref="TryFindKey"/> or <see cref="TryGetTags"/>, which raise this mark.
+    /// </remarks>
+    public int LexiconHigh;
 
     /// <summary>
     ///     The UTF-8 bytes of the base word that the word lookup compares with the base words of the analyses (see <see cref="TagDecoder"/>).
@@ -253,6 +273,7 @@ internal sealed class DecoderWorkspace
     {
         Count = count;
         CharsUsed = 0;
+        CharsHigh = 0;
         FirstAlphanumeric = -1;
 
         // Grow geometrically so a long run of larger sentences does not reallocate every time
@@ -269,6 +290,83 @@ internal sealed class DecoderWorkspace
             StaticCount = new int[size];
         }
     }
+
+    /// <summary>
+    ///     Erases everything that the current request left in the workspace, so that no text of it (nor anything derived from the text) stays in memory.
+    /// </summary>
+    /// <remarks>
+    ///     The decoder calls this in a <c>finally</c> block before it returns or lets an exception go, so it must not throw and must not
+    ///     allocate. It zeroes only the part of every array that the request used (the arrays keep their capacity), so its cost is proportional to the
+    ///     sentence and not to the largest sentence the thread has seen. That includes the lexicon scratch buffer, which can be far larger than one
+    ///     lookup needs: only the range up to <see cref="LexiconHigh"/> is zeroed. The few small arrays of fixed size (buckets and scores) are zeroed in full.
+    ///     The workspace is configured again before the next use.
+    /// </remarks>
+    public void Clear()
+    {
+        Array.Clear(Chars, 0, Math.Min(Chars.Length, Math.Max(CharsUsed, CharsHigh)));
+        var tokens = Math.Min(Count, Start.Length);
+        Array.Clear(Start, 0, tokens);
+        Array.Clear(Length, 0, tokens);
+        Array.Clear(Flags, 0, tokens);
+        Array.Clear(LowerHash, 0, tokens);
+        Array.Clear(WordHash, 0, tokens);
+        Array.Clear(Shape, 0, tokens);
+        Array.Clear(StaticCount, 0, tokens);
+        Array.Clear(StaticBuckets, 0, Math.Min(tokens * StaticStride, StaticBuckets.Length));
+
+        var grouped = Math.Min(Count, Classes.Length);
+        Array.Clear(LexKnown, 0, grouped);
+        Array.Clear(LexMask, 0, grouped);
+        Array.Clear(Classes, 0, grouped);
+        Array.Clear(ClauseBoundary, 0, grouped);
+        Array.Clear(StemValue, 0, grouped);
+        Array.Clear(Preview, 0, grouped);
+
+        Array.Clear(Buckets, 0, Buckets.Length);
+        Array.Clear(Scores, 0, Scores.Length);
+        Array.Clear(Real, 0, Real.Length);
+        Array.Clear(LexiconScratch, 0, Math.Min(LexiconHigh, LexiconScratch.Length));
+        Array.Clear(LemmaBytes, 0, Math.Min(LemmaUsed, LemmaBytes.Length));
+
+        Count = 0;
+        CharsUsed = 0;
+        CharsHigh = 0;
+        LexiconHigh = 0;
+        LemmaUsed = 0;
+        FirstAlphanumeric = -1;
+        FirstContent = 0;
+        LexCached = false;
+        PreviewActive = false;
+        ClauseState = 0;
+    }
+
+    /// <summary>
+    ///     Looks up a lower-cased key of <see cref="Chars"/> in a lexicon and records what the lookup wrote to <see cref="LexiconScratch"/>.
+    /// </summary>
+    /// <remarks>
+    ///     This is the one door to the lexicon scratch buffer, so that <see cref="LexiconHigh"/> always covers what <see cref="Clear"/> must erase.
+    ///     The scratch buffer must already be large enough (see <see cref="EnsureLexiconScratch"/>).
+    /// </remarks>
+    /// <param name="lexicon">The lexicon.</param>
+    /// <param name="offset">The index in <see cref="Chars"/> of the first key character.</param>
+    /// <param name="length">The number of key characters.</param>
+    /// <param name="ordinal">Receives the position of the spelling, -1 when it is not in the lexicon.</param>
+    /// <param name="tags">Receives the tags of the spelling; the empty set when it is not in the lexicon.</param>
+    /// <param name="keyLength">Receives the number of UTF-8 bytes of the key, which stays at the start of <see cref="LexiconScratch"/> when the result is <c>true</c>.</param>
+    /// <returns><c>true</c> if the spelling is in the lexicon.</returns>
+    public bool TryFindKey(Lexicon lexicon, int offset, int length, out int ordinal, out UposSet tags, out int keyLength) =>
+        lexicon.TryFindKey(Chars, offset, length, LexiconScratch, ref LexiconHigh, out ordinal, out tags, out keyLength);
+
+    /// <summary>
+    ///     Looks up a lower-cased key of <see cref="Chars"/> in a lexicon for its tags only (see <see cref="TryFindKey"/>).
+    /// </summary>
+    /// <param name="lexicon">The lexicon.</param>
+    /// <param name="offset">The index in <see cref="Chars"/> of the first key character.</param>
+    /// <param name="length">The number of key characters.</param>
+    /// <param name="tags">Receives the tags of the spelling; the empty set when it is not in the lexicon.</param>
+    /// <returns><c>true</c> if the spelling is in the lexicon.</returns>
+    public bool TryGetTags(Lexicon lexicon, int offset, int length, out UposSet tags) =>
+        TryFindKey(lexicon, offset, length, out _, out tags, out _);
 
     /// <summary>
     ///     Makes sure that <see cref="Chars"/> can take more characters.

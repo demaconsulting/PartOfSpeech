@@ -560,6 +560,7 @@ internal sealed class GlossaryIndex
         workspace.Start[index] = position;
         workspace.Length[index] = length;
         workspace.Hash[index] = Finish(hash);
+        workspace.CharsUsed = position + (2 * length);
         return position + (2 * length);
     }
 

@@ -35,6 +35,11 @@ internal sealed class TagDecoder
     private static DecoderWorkspace? _threadWorkspace;
 
     /// <summary>
+    ///     Gets the scratch memory of the current thread without creating it (for tests that prove that no request text stays in it).
+    /// </summary>
+    internal static DecoderWorkspace? CurrentThreadWorkspace => _threadWorkspace;
+
+    /// <summary>
     ///     The perceptron weights.
     /// </summary>
     private readonly PerceptronModel _model;
@@ -108,44 +113,52 @@ internal sealed class TagDecoder
             return result;
         }
 
-        // Fold and hash all tokens once; the features that do not depend on tags are ready after this
+        // The workspace is erased on every way out, so that the text of the request does not stay in the memory of the thread
         var workspace = GetWorkspace();
-        workspace.Configure(_groups, _lexicon);
-        workspace.Begin(count);
-        for (var i = 0; i < count; i++)
+        try
         {
-            FeatureExtractor.SetToken(workspace, i, tokens[i].Text);
+            // Fold and hash all tokens once; the features that do not depend on tags are ready after this
+            workspace.Configure(_groups, _lexicon);
+            workspace.Begin(count);
+            for (var i = 0; i < count; i++)
+            {
+                FeatureExtractor.SetToken(workspace, i, tokens[i].Text);
+            }
+
+            FeatureExtractor.Finish(workspace, _model.HashBits);
+            workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
+
+            // One flat array holds the alternatives of all tokens, a fixed number of slots per token
+            var slots = Math.Min(maxAlternatives, UposExtensions.Count - 1);
+            var alternatives = slots > 0 ? new TagScore[count * slots] : null;
+
+            // With the right preview group the sentence is decoded twice: the first pass (without the preview features) only
+            // chooses tags, the second pass sees them for the two tokens ahead and produces the result
+            if ((_groups & FeatureGroups.RightPreview) != 0)
+            {
+                PreviewPass(workspace, count, snapshot);
+            }
+
+            var previous1 = FeatureExtractor.StartTag1;
+            var previous2 = FeatureExtractor.StartTag2;
+            for (var i = 0; i < count; i++)
+            {
+                var constraint = snapshot == null ? default : snapshot[i];
+                var best = DecodeToken(workspace, i, previous1, previous2, constraint, slots, alternatives, false, out var confidence, out var alternativeCount, out var known);
+                result[i] = new TaggedToken(tokens[i].Text, tokens[i].Start, (Upos)best, confidence, alternatives, i * slots, alternativeCount, !constraint.IsNone, known);
+
+                // The decision becomes history for the next two tokens, like any other decision
+                FeatureExtractor.Advance(workspace, i, best);
+                previous2 = previous1;
+                previous1 = best;
+            }
+
+            return result;
         }
-
-        FeatureExtractor.Finish(workspace, _model.HashBits);
-        workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
-
-        // One flat array holds the alternatives of all tokens, a fixed number of slots per token
-        var slots = Math.Min(maxAlternatives, UposExtensions.Count - 1);
-        var alternatives = slots > 0 ? new TagScore[count * slots] : null;
-
-        // With the right preview group the sentence is decoded twice: the first pass (without the preview features) only
-        // chooses tags, the second pass sees them for the two tokens ahead and produces the result
-        if ((_groups & FeatureGroups.RightPreview) != 0)
+        finally
         {
-            PreviewPass(workspace, count, snapshot);
+            workspace.Clear();
         }
-
-        var previous1 = FeatureExtractor.StartTag1;
-        var previous2 = FeatureExtractor.StartTag2;
-        for (var i = 0; i < count; i++)
-        {
-            var constraint = snapshot == null ? default : snapshot[i];
-            var best = DecodeToken(workspace, i, previous1, previous2, constraint, slots, alternatives, false, out var confidence, out var alternativeCount, out var known);
-            result[i] = new TaggedToken(tokens[i].Text, tokens[i].Start, (Upos)best, confidence, alternatives, i * slots, alternativeCount, !constraint.IsNone, known);
-
-            // The decision becomes history for the next two tokens, like any other decision
-            FeatureExtractor.Advance(workspace, i, best);
-            previous2 = previous1;
-            previous1 = best;
-        }
-
-        return result;
     }
 
     /// <summary>
@@ -364,7 +377,7 @@ internal sealed class TagDecoder
             // The lexicon key is the lower-cased folded token, which follows the folded form in the character buffer
             var length = workspace.Length[index];
             var lowerStart = workspace.Start[index] + length;
-            known = _lexicon.TryGetTags(workspace.Chars, lowerStart, length, workspace.LexiconScratch, out tags);
+            known = workspace.TryGetTags(_lexicon, lowerStart, length, out tags);
         }
 
         return ApplyShapeRules(flags, known, tags);
@@ -469,34 +482,42 @@ internal sealed class TagDecoder
             }
         }
 
-        // Fold both into the workspace: token 0 is the word (or its last part), token 1 the base word
+        // Fold both into the workspace: token 0 is the word (or its last part), token 1 the base word; the workspace is erased on every way out
         var workspace = GetWorkspace();
-        workspace.Configure(_groups, _lexicon);
-        workspace.Begin(2);
-#if NET
-        FeatureExtractor.SetFolded(workspace, 0, wordText.AsSpan(head));
-#else
-        FeatureExtractor.SetFoldedPart(workspace, 0, wordText, head, wordText.Length - head);
-#endif
-        FeatureExtractor.SetFolded(workspace, 1, lemmaText);
-        workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
-
-        // Find the spelling whose analyses count (the key stays UTF-8 encoded in the scratch buffer)
-        var ordinal = -1;
-        var keyLength = 0;
-        var found = head > 0
-            ? _lexicon.TryFindKey(workspace.Chars, workspace.Start[0] + workspace.Length[0], workspace.Length[0], workspace.LexiconScratch, out ordinal, out _, out keyLength)
-            : Find(workspace, 0, out ordinal, out keyLength, out _) != WordMatch.NotRecognized;
-        if (!found)
+        try
         {
-            return false;
-        }
+            workspace.Configure(_groups, _lexicon);
+            workspace.Begin(2);
+#if NET
+            FeatureExtractor.SetFolded(workspace, 0, wordText.AsSpan(head));
+#else
+            FeatureExtractor.SetFoldedPart(workspace, 0, wordText, head, wordText.Length - head);
+#endif
+            FeatureExtractor.SetFolded(workspace, 1, lemmaText);
+            workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
 
-        // Encode the lower-cased base word and compare it with the base word that each analysis of the right tag composes
-        var lemmaLength = workspace.Length[1];
-        var lemmaBytes = Lexicon.EncodeUtf8(workspace.Chars, workspace.Start[1] + lemmaLength, lemmaLength, workspace.LemmaBytes, Lexicon.MaxLemmaBytes);
-        return lemmaBytes >= 0
-            && _lexicon.HasAnalysis(ordinal, tag, workspace.LexiconScratch, 0, keyLength, workspace.LemmaBytes, 0, lemmaBytes);
+            // Find the spelling whose analyses count (the key stays UTF-8 encoded in the scratch buffer)
+            var ordinal = -1;
+            var keyLength = 0;
+            var found = head > 0
+                ? workspace.TryFindKey(_lexicon, workspace.Start[0] + workspace.Length[0], workspace.Length[0], out ordinal, out _, out keyLength)
+                : Find(workspace, 0, out ordinal, out keyLength, out _) != WordMatch.NotRecognized;
+            if (!found)
+            {
+                return false;
+            }
+
+            // Encode the lower-cased base word and compare it with the base word that each analysis of the right tag composes
+            var lemmaLength = workspace.Length[1];
+            var lemmaBytes = Lexicon.EncodeUtf8(workspace.Chars, workspace.Start[1] + lemmaLength, lemmaLength, workspace.LemmaBytes, Lexicon.MaxLemmaBytes);
+            workspace.LemmaUsed = Lexicon.MaxLemmaBytes;
+            return lemmaBytes >= 0
+                && _lexicon.HasAnalysis(ordinal, tag, workspace.LexiconScratch, 0, keyLength, workspace.LemmaBytes, 0, lemmaBytes);
+        }
+        finally
+        {
+            workspace.Clear();
+        }
     }
 
     /// <summary>
@@ -544,20 +565,27 @@ internal sealed class TagDecoder
         }
         // Prepare the workspace for one token; Configure first, because it clears the lexicon facts of an earlier sentence
         var workspace = GetWorkspace();
-        workspace.Configure(_groups, _lexicon);
-        workspace.Begin(1);
-        FeatureExtractor.SetFolded(workspace, 0, text);
-        workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
+        try
+        {
+            workspace.Configure(_groups, _lexicon);
+            workspace.Begin(1);
+            FeatureExtractor.SetFolded(workspace, 0, text);
+            workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
 
-        // The tags are those of the whole token only, as the decoder sees it; a compound head adds analyses but never tags
-        var match = Find(workspace, 0, out var ordinal, out _, out var wholeTags);
-        var known = match == WordMatch.Spelling;
-        var tags = mode == PossibleTagsMode.WithShapeRules
-            ? ApplyShapeRules(workspace.Flags[0], known, wholeTags)
-            : wholeTags;
-        return match == WordMatch.NotRecognized
-            ? new WordTags(null, -1, tags, match, UposSet.Empty)
-            : new WordTags(_lexicon, ordinal, tags, match, _lexicon.AnalyzedTags(ordinal));
+            // The tags are those of the whole token only, as the decoder sees it; a compound head adds analyses but never tags
+            var match = Find(workspace, 0, out var ordinal, out _, out var wholeTags);
+            var known = match == WordMatch.Spelling;
+            var tags = mode == PossibleTagsMode.WithShapeRules
+                ? ApplyShapeRules(workspace.Flags[0], known, wholeTags)
+                : wholeTags;
+            return match == WordMatch.NotRecognized
+                ? new WordTags(null, -1, tags, match, UposSet.Empty)
+                : new WordTags(_lexicon, ordinal, tags, match, _lexicon.AnalyzedTags(ordinal));
+        }
+        finally
+        {
+            workspace.Clear();
+        }
     }
 
     /// <summary>
@@ -592,18 +620,25 @@ internal sealed class TagDecoder
         {
             // Fold the last part alone and look it up as a whole
             var workspace = GetWorkspace();
-            workspace.Configure(_groups, _lexicon);
-            workspace.Begin(1);
-#if NET
-            FeatureExtractor.SetFolded(workspace, 0, text.Slice(head));
-#else
-            FeatureExtractor.SetFoldedPart(workspace, 0, text, head, text.Length - head);
-#endif
-            workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
-            var length = workspace.Length[0];
-            if (_lexicon.TryFindKey(workspace.Chars, workspace.Start[0] + length, length, workspace.LexiconScratch, out var ordinal, out _, out _))
+            try
             {
-                return new WordTags(_lexicon, ordinal, tags, WordMatch.CompoundHead, _lexicon.AnalyzedTags(ordinal));
+                workspace.Configure(_groups, _lexicon);
+                workspace.Begin(1);
+#if NET
+                FeatureExtractor.SetFolded(workspace, 0, text.Slice(head));
+#else
+                FeatureExtractor.SetFoldedPart(workspace, 0, text, head, text.Length - head);
+#endif
+                workspace.EnsureLexiconScratch(_lexicon.ScratchSize);
+                var length = workspace.Length[0];
+                if (workspace.TryFindKey(_lexicon, workspace.Start[0] + length, length, out var ordinal, out _, out _))
+                {
+                    return new WordTags(_lexicon, ordinal, tags, WordMatch.CompoundHead, _lexicon.AnalyzedTags(ordinal));
+                }
+            }
+            finally
+            {
+                workspace.Clear();
             }
         }
 
@@ -675,8 +710,7 @@ internal sealed class TagDecoder
         var length = workspace.Length[index];
         var lowerStart = workspace.Start[index] + length;
         var chars = workspace.Chars;
-        var scratch = workspace.LexiconScratch;
-        if (_lexicon.TryFindKey(chars, lowerStart, length, scratch, out ordinal, out wholeTags, out keyLength))
+        if (workspace.TryFindKey(_lexicon, lowerStart, length, out ordinal, out wholeTags, out keyLength))
         {
             return WordMatch.Spelling;
         }
@@ -704,7 +738,7 @@ internal sealed class TagDecoder
         }
 
         // Look up the last part as it is (no recursion); ordinal is -1 again when it is not a spelling
-        return _lexicon.TryFindKey(chars, lowerStart + lastHyphen + 1, length - lastHyphen - 1, scratch, out ordinal, out _, out keyLength)
+        return workspace.TryFindKey(_lexicon, lowerStart + lastHyphen + 1, length - lastHyphen - 1, out ordinal, out _, out keyLength)
             ? WordMatch.CompoundHead
             : WordMatch.NotRecognized;
     }

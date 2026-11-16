@@ -29,6 +29,14 @@ decoded in two passes (see `Decode`). It also answers the context-free lookup of
   that tags other text from its indexer (a nested call) cannot corrupt it. The word lookup uses the same workspace as a
   one- or two-token sentence: it calls `Configure` first (which clears the cached lexicon facts of a sentence decoded
   earlier on the thread) and `Begin`, so a lookup between two decodes leaves no state behind that a decode reads.
+  `Clear` erases everything that a request left in it: it zeroes the used part of the character buffer (up to
+  `CharsUsed`, or `CharsHigh` when the inflection lookups wrote candidate spellings behind it), of the per-token arrays
+  (up to `Count`) and of the small buffers (the scores, the bucket array and `LemmaBytes`), and resets the counters and
+  flags. The lexicon scratch buffer, which is sized for two of the longest spellings the file format allows, is zeroed
+  only up to `LexiconHigh`, the number of bytes the request's lookups wrote (the UTF-8 key and the spellings decoded
+  while a block was scanned); every lookup goes through `TryFindKey` or `TryGetTags` of the workspace, which raise
+  that mark. The arrays keep their capacity, `Clear` allocates nothing and does not throw, and its cost is
+  proportional to the request and not to the largest sentence the thread has seen.
 - **`ScoreSlice`** (internal, sealed): an `IReadOnlyList<TagScore>` over a segment of the flat result array
   (`ArraySegment<T>` was not used because it exposes a writable `IList<T>` indexer). It is the type behind
   `TaggedToken.Alternatives`.
@@ -61,6 +69,9 @@ adjustment`, a `double`. The integer sum is exact; only the final multiplication
   6. Creates each `TaggedToken` with the original token text and offset, the tag, the confidence, a window of the flat
      array, `IsConstrained` (the constraint is not `None`) and `IsKnownWord` (the lexicon fact that `DecodeToken`
      returned).
+  7. Whatever happens from step 3 on (a normal return or an exception), a `finally` block calls
+     `DecoderWorkspace.Clear`, so no text of the request stays in the thread's workspace. `GetPossibleTags` (both
+     overloads, through `Lookup` and `LookupOverlong`) and `IsFormOf` do the same around their use of the workspace.
 - **`DecodeToken`**: the work for one token.
   1. Clears the 17 integer scores, calls `FeatureExtractor.Extract`, and adds the weights of every bucket with
      `PerceptronModel.AddScores`.

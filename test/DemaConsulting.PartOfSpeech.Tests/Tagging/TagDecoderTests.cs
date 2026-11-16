@@ -1,4 +1,4 @@
-// cspell:ignore zorbulon zork unknownword zzqxv Zzqxv zzqx ZZQXV FFFD
+// cspell:ignore zorbulon zork unknownword zzqxv Zzqxv zzqx ZZQXV FFFD Zqxjvkwbplm Qzvxkjbwmp qzvxkjbwmp zqxjvkwbplming qzvxkjbwmped Xjqzkvwbpl Zqxjvkwbplms qzvxkjbwmping Qzvxkjbwmping zqxjvkwbplm
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -1183,6 +1183,157 @@ public class TagDecoderTests
         Assert.Equal(UposSet.Of(Upos.Adj), catSecond.Tags);
         Assert.Equal(UposSet.All, dogFirst.Tags);
         Assert.Equal(catFirst, catFirstAgain);
+    }
+
+    /// <summary>
+    ///     Counts the elements of a buffer that are not the default value.
+    /// </summary>
+    private static int Residue<T>(T[] buffer)
+        where T : IEquatable<T> =>
+        buffer.Count(item => !item.Equals(default!));
+
+    /// <summary>
+    ///     Asserts that nothing of a request is left in the thread's decoder workspace: every buffer is zero in full, not only in the part a request used.
+    /// </summary>
+    private static void AssertWorkspaceErased()
+    {
+        var workspace = TagDecoder.CurrentThreadWorkspace;
+        Assert.NotNull(workspace);
+        Assert.Equal(0, Residue(workspace.Chars));
+        Assert.Equal(0, Residue(workspace.Start));
+        Assert.Equal(0, Residue(workspace.Length));
+        Assert.Equal(0, Residue(workspace.Flags));
+        Assert.Equal(0, Residue(workspace.LowerHash));
+        Assert.Equal(0, Residue(workspace.WordHash));
+        Assert.Equal(0, Residue(workspace.Shape));
+        Assert.Equal(0, Residue(workspace.StaticBuckets));
+        Assert.Equal(0, Residue(workspace.StaticCount));
+        Assert.Equal(0, Residue(workspace.Buckets));
+        Assert.Equal(0, Residue(workspace.LexiconScratch));
+        Assert.Equal(0, Residue(workspace.LemmaBytes));
+        Assert.Equal(0, Residue(workspace.LexKnown));
+        Assert.Equal(0, Residue(workspace.LexMask));
+        Assert.Equal(0, Residue(workspace.Classes));
+        Assert.Equal(0, Residue(workspace.ClauseBoundary));
+        Assert.Equal(0, Residue(workspace.StemValue));
+        Assert.Equal(0, Residue(workspace.Preview));
+        Assert.Equal(0, workspace.Count);
+        Assert.Equal(0, workspace.CharsUsed);
+    }
+
+    /// <summary>
+    ///     Proves that a decode leaves no text of its request in the thread's workspace, also when a shorter request follows a longer one
+    ///     (the tail of the character buffer must not keep the earlier text), with and without feature groups.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TagDecoder_Decode_LeavesNoRequestTextInTheWorkspace(bool withGroups)
+    {
+        // Arrange: a decoder, a long request of distinctive words (one with the suffix that makes the inflection group build candidate spellings) and a short one
+        var decoder = EmbeddedDecoder(withGroups);
+        var longRequest = Tokens("Zqxjvkwbplm", "Qzvxkjbwmp", "zqxjvkwbplming", "qzvxkjbwmped", "Xjqzkvwbpl", "Zqxjvkwbplms", ".");
+        var shortRequest = Tokens("Hi", ".");
+
+        // Act: decode the long request, then the short one
+        var longResult = decoder.Decode(longRequest, null, 3);
+        var afterLong = Residue(TagDecoder.CurrentThreadWorkspace!.Chars);
+        var shortResult = decoder.Decode(shortRequest, null, 3);
+
+        // Assert: the results keep their text, and the workspace is empty after each request
+        Assert.Equal(0, afterLong);
+        Assert.Equal(longRequest.Select(t => t.Text), longResult.Select(t => t.Text));
+        Assert.Equal(shortRequest.Select(t => t.Text), shortResult.Select(t => t.Text));
+        AssertWorkspaceErased();
+    }
+
+    /// <summary>
+    ///     Proves that a decode that fails half way leaves no text of its request in the thread's workspace and that the next decode is correct.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TagDecoder_Decode_Exception_LeavesNoRequestTextInTheWorkspace(bool withGroups)
+    {
+        // Arrange: a request whose last token has no text (the default token), so that the decode fails after it folded the tokens before it
+        var decoder = EmbeddedDecoder(withGroups);
+        var broken = new[] { new Token("Zqxjvkwbplm", 0), new Token("Qzvxkjbwmping", 12), default };
+        var good = Tokens("The", "valve", "closes", ".");
+        var expected = decoder.Decode(good, null, 3).Select(t => t.Tag).ToArray();
+
+        // Act: decode the broken request, then a good one
+        Assert.ThrowsAny<Exception>(() => decoder.Decode(broken, null, 3));
+        var afterException = Residue(TagDecoder.CurrentThreadWorkspace!.Chars);
+        var after = decoder.Decode(good, null, 3).Select(t => t.Tag).ToArray();
+
+        // Assert: nothing stayed after the exception, and the decoder still gives the same tags
+        Assert.Equal(0, afterException);
+        Assert.Equal(expected, after);
+        AssertWorkspaceErased();
+    }
+
+    /// <summary>
+    ///     Proves that the word lookups (the whole word, the last part of an over-long compound and the form question) leave no text of
+    ///     their request in the thread's workspace.
+    /// </summary>
+    [Fact]
+    public void TagDecoder_GetPossibleTags_And_IsFormOf_LeaveNoRequestTextInTheWorkspace()
+    {
+        // Arrange: a decoder with the lexicon and words that are not spellings, an over-long compound whose last part is a spelling, and a form question that is answered yes
+        var decoder = EmbeddedDecoder(true);
+        var overlong = new string('a', EmbeddedModel.Lexicon.MaxSpellingBytes + 5) + "-zqxjvkwbplm";
+        var overlongHead = new string('a', EmbeddedModel.Lexicon.MaxSpellingBytes + 5) + "-tested";
+
+        // Act / Assert: every kind of call leaves the workspace empty
+        decoder.GetPossibleTags("Zqxjvkwbplm", PossibleTagsMode.LexiconOnly);
+        AssertWorkspaceErased();
+        decoder.GetPossibleTags("Zqxjvkwbplm-Qzvxkjbwmp", PossibleTagsMode.WithShapeRules);
+        AssertWorkspaceErased();
+        Assert.Equal(WordMatch.CompoundHead, decoder.GetPossibleTags(overlongHead, PossibleTagsMode.LexiconOnly).Match);
+        AssertWorkspaceErased();
+        decoder.GetPossibleTags(overlong, PossibleTagsMode.LexiconOnly);
+        AssertWorkspaceErased();
+        Assert.True(decoder.IsFormOf("tests", "test", Upos.Noun));
+        AssertWorkspaceErased();
+        Assert.False(decoder.IsFormOf("Zqxjvkwbplm", "Qzvxkjbwmp", Upos.Verb));
+        AssertWorkspaceErased();
+    }
+
+    /// <summary>
+    ///     Proves that <see cref="DecoderWorkspace.Clear"/> erases a prepared sentence (and so that the checks above would see a request that stayed behind).
+    /// </summary>
+    [Fact]
+    public void DecoderWorkspace_Clear_ErasesAPreparedSentence()
+    {
+        // Arrange: a workspace that holds a prepared request, with the lexicon-reading groups and an inflection candidate
+        var workspace = new DecoderWorkspace();
+        workspace.Configure(GroupsFor(true), EmbeddedModel.Lexicon);
+        FeatureExtractor.Prepare(workspace, new[] { "Zqxjvkwbplm", "qzvxkjbwmping", "Hi" }, 18);
+        workspace.EnsureLexiconScratch(EmbeddedModel.Lexicon.ScratchSize);
+        workspace.TryFindKey(EmbeddedModel.Lexicon, workspace.Start[0] + workspace.Length[0], workspace.Length[0], out _, out _, out _);
+        var maxSpelling = EmbeddedModel.Lexicon.MaxSpellingBytes;
+        var decodedBefore = workspace.LexiconScratch.Skip(maxSpelling).Count(b => b != 0);
+        var highBefore = workspace.LexiconHigh;
+        var before = Residue(workspace.Chars) + Residue(workspace.LowerHash) + Residue(workspace.StaticBuckets) + Residue(workspace.LexiconScratch);
+
+        // Act
+        workspace.Clear();
+
+        // Assert: there was something to erase (also in the second half of the scratch, where a block scan decodes spellings, which the mark covered),
+        // the mark stayed far below the capacity of the buffer, and nothing is left
+        Assert.True(before > 50);
+        Assert.True(decodedBefore > 0);
+        Assert.True(highBefore > maxSpelling);
+        Assert.True(highBefore < workspace.LexiconScratch.Length);
+        Assert.Equal(0, workspace.LexiconHigh);
+        Assert.Equal(0, Residue(workspace.Chars));
+        Assert.Equal(0, Residue(workspace.Start));
+        Assert.Equal(0, Residue(workspace.LowerHash));
+        Assert.Equal(0, Residue(workspace.WordHash));
+        Assert.Equal(0, Residue(workspace.StaticBuckets));
+        Assert.Equal(0, Residue(workspace.LexiconScratch));
+        Assert.Equal(0, Residue(workspace.StemValue));
+        Assert.Equal(0, workspace.Count);
     }
 
 #if NET

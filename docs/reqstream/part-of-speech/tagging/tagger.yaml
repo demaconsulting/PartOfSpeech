@@ -298,3 +298,16 @@ sections:
                   - Tagger_GetPossibleTags_EmptyOrWhiteSpace_Throws
                   - Tagger_GetPossibleTags_UndefinedModeOrTag_Throws
                   - Tagger_IsFormOf_DoesNotAllocate
+
+              - id: PartOfSpeech-Tagging-Tagger-NoRetention
+                title: >-
+                  No call that tags text, a sentence or a token list (with or without a glossary) and no word lookup
+                  shall leave text of its request in the thread's decoder or glossary workspace after it returns.
+                justification: |
+                  A service tags the text of its users with long-lived threads; the tagger must not keep that text in
+                  memory after the call, whichever entry point was used.
+                children:
+                  - PartOfSpeech-Tagging-TagDecoder-NoRetention
+                  - PartOfSpeech-Tagging-Glossary-NoRetention
+                tests:
+                  - Tagger_EveryEntryPoint_LeavesNoRequestTextInTheWorkspaces

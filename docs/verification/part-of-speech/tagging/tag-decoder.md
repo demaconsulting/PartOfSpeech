@@ -132,3 +132,17 @@ a hyphenated spelling or a compound head wrongly, disturbs a decode, or allocate
   characters, a compound with a prefix of 500,000 characters and a known last part, one with an unknown last part, and
   the form question for both, allocate 0 bytes after the first call, so no per-thread buffer grew; the compound has
   its head and the other words are not recognized).
+- **No retention of request text** (the tests read the thread's workspace through `TagDecoder.CurrentThreadWorkspace` and
+  count the elements that are not zero in the whole of every buffer, so a trace of an earlier, longer request would
+  show): `TagDecoder_Decode_LeavesNoRequestTextInTheWorkspace` (a theory over a model without and one with all groups: a
+  long request of invented words, among them tokens with the suffixes that make the inflection group build candidate
+  spellings behind the last token, then a short request; the buffers are empty after each, and the results keep their
+  text), `TagDecoder_Decode_Exception_LeavesNoRequestTextInTheWorkspace` (the same theory with a request whose last
+  token is the default token, which has no text: the decode fails after it folded the tokens before it, nothing stays
+  in the workspace and the next decode gives the tags it gave before),
+  `TagDecoder_GetPossibleTags_And_IsFormOf_LeaveNoRequestTextInTheWorkspace` (a plain word, a hyphenated word, an
+  over-long compound with and without a known last part, and the form question answered yes and no, each followed by the
+  check) and `DecoderWorkspace_Clear_ErasesAPreparedSentence` (a prepared sentence with a lexicon key in the scratch
+  buffer holds more than 50 non-zero elements and `Clear` leaves none, so the checks above are not vacuous; the lookup
+  of an unlisted word also decoded spellings into the second half of the scratch buffer, the written mark lies beyond
+  the first half but below the capacity of the buffer, and `Clear` leaves no byte of either half and resets the mark).

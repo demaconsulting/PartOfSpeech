@@ -182,3 +182,7 @@ is accepted, a parallel lookup differs from the sequential one, or a lookup of a
   word 32, span with an NFC non-ASCII character 32, with a decomposed one 64, a million non-ASCII characters that are
   already NFC 0, `GetAnalyses` of `tests` 360, of `well` (five analyses) 600, of the head of `well-tested` 368, of an
   unknown word 0. The tests do not run for `net481` (no per-thread allocation counter).
+- **No retention of request text**: `Tagger_EveryEntryPoint_LeavesNoRequestTextInTheWorkspaces` (every entry point that
+  tags, with and without a glossary and constraints, the word lookup and the form question, each with distinctive words
+  and followed by a short text: after every call the character, hash, lexicon-scratch and base-word buffers of the
+  thread's decoder workspace and the character and hash buffers of its glossary workspace hold zeros only).
