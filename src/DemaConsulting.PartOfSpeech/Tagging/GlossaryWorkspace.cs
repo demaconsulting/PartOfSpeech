@@ -55,9 +55,42 @@ internal sealed class GlossaryWorkspace
     public int[] MatchCount = new int[32];
 
     /// <summary>
+    ///     The number of tokens of the current sentence.
+    /// </summary>
+    public int Count;
+
+    /// <summary>
+    ///     The end of the area of <see cref="Chars"/> that the current sentence has written.
+    /// </summary>
+    public int CharsUsed;
+
+    /// <summary>
     ///     The number of matches found.
     /// </summary>
     public int MatchTotal;
+
+    /// <summary>
+    ///     Erases everything that the current sentence left in the workspace, so that no text of it (nor anything derived from the text) stays in memory.
+    /// </summary>
+    /// <remarks>
+    ///     The matcher's caller runs this in a <c>finally</c> block before it returns or lets an exception go. It zeroes only
+    ///     the part of every array that the sentence used (the arrays keep their capacity), does not allocate and does not throw.
+    /// </remarks>
+    public void Clear()
+    {
+        Array.Clear(Chars, 0, Math.Min(CharsUsed, Chars.Length));
+        var tokens = Math.Min(Count, Start.Length);
+        Array.Clear(Start, 0, tokens);
+        Array.Clear(Length, 0, tokens);
+        Array.Clear(Hash, 0, tokens);
+        var matches = Math.Min(MatchTotal, MatchForm.Length);
+        Array.Clear(MatchForm, 0, matches);
+        Array.Clear(MatchFirst, 0, matches);
+        Array.Clear(MatchCount, 0, matches);
+        Count = 0;
+        CharsUsed = 0;
+        MatchTotal = 0;
+    }
 
     /// <summary>
     ///     Prepares the workspace for a sentence: grows the token arrays when needed and clears the matches.
@@ -77,6 +110,8 @@ internal sealed class GlossaryWorkspace
         }
 
         MatchTotal = 0;
+        Count = tokenCount;
+        CharsUsed = 0;
     }
 
     /// <summary>

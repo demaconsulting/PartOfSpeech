@@ -1,4 +1,4 @@
-// cspell:ignore zorbulon zork Cquotes zzqxv Zzqxv zzqx ZZQXV
+// cspell:ignore zorbulon zork Cquotes zzqxv Zzqxv zzqx ZZQXV zqxjvkwbplm Zqxjvkwbplm Qzvxkjbwmp Qzvxkjbwmping Xjqzkvwbpl Wkvbzqxjpl
 namespace DemaConsulting.PartOfSpeech.Tests.Tagging;
 
 /// <summary>
@@ -1517,6 +1517,55 @@ public class TaggerTests
         Assert.InRange(capacities[0], 6 * longest, 16 * longest);
         Assert.All(capacities, capacity => Assert.Equal(capacities[0], capacity));
     }
+    /// <summary>
+    ///     Proves that no public tagging entry point leaves text of its request in the thread's decoder or glossary workspace, including a
+    ///     shorter request after a longer one.
+    /// </summary>
+    [Fact]
+    public void Tagger_EveryEntryPoint_LeavesNoRequestTextInTheWorkspaces()
+    {
+        // Arrange: a tagger, a glossary with a term of the request, a long distinctive text and a short one
+        var tagger = Tagger.Default;
+        var glossary = Glossary.Create(new[] { new GlossaryEntry("zqxjvkwbplm valve", Upos.Noun) });
+        const string longText = "Close the Zqxjvkwbplm valve and the Qzvxkjbwmping Xjqzkvwbpl now. Then wait for Wkvbzqxjpl.";
+        var sentence = Tokenizer.Tokenize(longText)[0];
+        var tokens = new[] { "Close", "the", "Zqxjvkwbplm", "valve", "Qzvxkjbwmping", "." };
+        var constraints = tokens.Select(_ => TokenConstraint.None).ToArray();
+
+        // Act / Assert: after every call the workspaces hold nothing
+        void AssertErased()
+        {
+            var decoder = TagDecoder.CurrentThreadWorkspace;
+            Assert.NotNull(decoder);
+            Assert.Equal(0, decoder.Chars.Count(c => c != '\0'));
+            Assert.Equal(0, decoder.LowerHash.Count(h => h != 0));
+            Assert.Equal(0, decoder.LexiconScratch.Count(b => b != 0));
+            Assert.Equal(0, decoder.LemmaBytes.Count(b => b != 0));
+            var glossaryWorkspace = GlossaryIndex.GetThreadWorkspace();
+            Assert.Equal(0, glossaryWorkspace.Chars.Count(c => c != '\0'));
+            Assert.Equal(0, glossaryWorkspace.Hash.Count(h => h != 0));
+        }
+
+        Assert.NotEmpty(tagger.Tag(longText));
+        AssertErased();
+        Assert.NotEmpty(tagger.Tag(longText, glossary));
+        AssertErased();
+        tagger.Tag(sentence);
+        AssertErased();
+        tagger.Tag(sentence, glossary);
+        AssertErased();
+        tagger.Tag(tokens, constraints);
+        AssertErased();
+        tagger.Tag(tokens, glossary, constraints);
+        AssertErased();
+        tagger.GetPossibleTags("Zqxjvkwbplm");
+        AssertErased();
+        tagger.IsFormOf("Zqxjvkwbplm", "Qzvxkjbwmp", Upos.Noun);
+        AssertErased();
+        tagger.Tag("Hi.");
+        AssertErased();
+    }
+
     /// <summary>
     ///     Proves that an unpaired surrogate does not throw and is looked up as U+FFFD, like a token of the tagger.
     /// </summary>

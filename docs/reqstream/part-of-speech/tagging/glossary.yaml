@@ -397,3 +397,13 @@ sections:
                   verification document).
                 tests:
                   - Glossary_FindMatches_TenThousandEntries_ExceedsTenTimesTheTaggingGate
+
+              - id: PartOfSpeech-Tagging-Glossary-NoRetention
+                title: >-
+                  Finding the terms in a sentence shall leave no text of the sentence, nor anything derived from it, in
+                  the thread's glossary workspace when it returns, also when a shorter sentence follows a longer one.
+                justification: |
+                  The workspace lives as long as the thread; the folded text of a request must not outlive it in
+                  process memory.
+                tests:
+                  - Glossary_FindMatches_LeavesNoSentenceTextInTheWorkspace

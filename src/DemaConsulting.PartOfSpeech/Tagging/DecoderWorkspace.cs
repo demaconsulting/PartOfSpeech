@@ -9,7 +9,8 @@ namespace DemaConsulting.PartOfSpeech;
 ///         Tagging a sentence needs a handful of arrays whose size depends on the sentence. Allocating them per call
 ///         would dominate the cost of a short sentence, so one workspace per thread grows to the largest sentence seen
 ///         and is then reused for ever (the decoder keeps it in a thread-static field). The decoder resolves caller-supplied lists
-///         before it takes the workspace and runs no caller code while it holds it, so nested use cannot corrupt it.
+///         before it takes the workspace and runs no caller code while it holds it, so nested use cannot corrupt it. It erases
+///         the workspace (<see cref="Clear"/>) before it returns or lets an exception go, so no text of a request stays in it.
 ///     </para>
 ///     <para>
 ///         The class is plain data for <see cref="FeatureExtractor"/> and <see cref="TagDecoder"/>; it is not
@@ -97,6 +98,16 @@ internal sealed class DecoderWorkspace
     ///     The number of characters of <see cref="Chars"/> in use.
     /// </summary>
     public int CharsUsed;
+
+    /// <summary>
+    ///     The end of the area of <see cref="Chars"/> that was written behind <see cref="CharsUsed"/> (the candidate spellings of the inflection lookups), so that <see cref="Clear"/> reaches it.
+    /// </summary>
+    public int CharsHigh;
+
+    /// <summary>
+    ///     The number of bytes of <see cref="LemmaBytes"/> in use.
+    /// </summary>
+    public int LemmaUsed;
 
     /// <summary>
     ///     The number of tokens of the current sentence.
@@ -253,6 +264,7 @@ internal sealed class DecoderWorkspace
     {
         Count = count;
         CharsUsed = 0;
+        CharsHigh = 0;
         FirstAlphanumeric = -1;
 
         // Grow geometrically so a long run of larger sentences does not reallocate every time
@@ -268,6 +280,52 @@ internal sealed class DecoderWorkspace
             StaticBuckets = new int[size * StaticStride];
             StaticCount = new int[size];
         }
+    }
+
+    /// <summary>
+    ///     Erases everything that the current request left in the workspace, so that no text of it (nor anything derived from the text) stays in memory.
+    /// </summary>
+    /// <remarks>
+    ///     The decoder calls this in a <c>finally</c> block before it returns or lets an exception go, so it must not throw and must not
+    ///     allocate. It zeroes only the part of every array that the request used (the arrays keep their capacity), so its cost is proportional to the
+    ///     sentence and not to the largest sentence the thread has seen. The workspace is configured again before the next use.
+    /// </remarks>
+    public void Clear()
+    {
+        Array.Clear(Chars, 0, Math.Min(Chars.Length, Math.Max(CharsUsed, CharsHigh)));
+        var tokens = Math.Min(Count, Start.Length);
+        Array.Clear(Start, 0, tokens);
+        Array.Clear(Length, 0, tokens);
+        Array.Clear(Flags, 0, tokens);
+        Array.Clear(LowerHash, 0, tokens);
+        Array.Clear(WordHash, 0, tokens);
+        Array.Clear(Shape, 0, tokens);
+        Array.Clear(StaticCount, 0, tokens);
+        Array.Clear(StaticBuckets, 0, Math.Min(tokens * StaticStride, StaticBuckets.Length));
+
+        var grouped = Math.Min(Count, Classes.Length);
+        Array.Clear(LexKnown, 0, grouped);
+        Array.Clear(LexMask, 0, grouped);
+        Array.Clear(Classes, 0, grouped);
+        Array.Clear(ClauseBoundary, 0, grouped);
+        Array.Clear(StemValue, 0, grouped);
+        Array.Clear(Preview, 0, grouped);
+
+        Array.Clear(Buckets, 0, Buckets.Length);
+        Array.Clear(Scores, 0, Scores.Length);
+        Array.Clear(Real, 0, Real.Length);
+        Array.Clear(LexiconScratch, 0, LexiconScratch.Length);
+        Array.Clear(LemmaBytes, 0, Math.Min(LemmaUsed, LemmaBytes.Length));
+
+        Count = 0;
+        CharsUsed = 0;
+        CharsHigh = 0;
+        LemmaUsed = 0;
+        FirstAlphanumeric = -1;
+        FirstContent = 0;
+        LexCached = false;
+        PreviewActive = false;
+        ClauseState = 0;
     }
 
     /// <summary>

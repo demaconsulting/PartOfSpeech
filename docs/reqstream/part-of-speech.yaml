@@ -226,6 +226,16 @@ sections:
           - PartOfSpeech_Concurrency_ParallelTagging_MatchesSequential
           - PartOfSpeech_Concurrency_GlossaryTagging_MatchesSequential
 
+      - id: PartOfSpeech-Lib-NoRetention
+        title: >-
+          The library shall not keep the text of a tagging request in memory after the call returns or fails.
+        tags: [system]
+        justification: |
+          Services tag the text of their users on long-lived threads; the text must not outlive the request in process
+          memory.
+        children:
+          - PartOfSpeech-Tagging-NoRetention
+
       - id: PartOfSpeech-Lib-Throughput
         title: Tagging pre-tokenized text shall exceed 50,000 tokens per second on one thread.
         tags: [system, performance]

@@ -74,6 +74,9 @@ question does not confirm.
   `IsKnownWord` equals the token's flag, that every analysis of a lookup is a form according to `IsFormOf`, that the
   hyphenated word is a compound head with the analyses of its last part and an unknown token, and that the invented word
   is not recognized.
+- **No retention of request text**: `Tagger_EveryEntryPoint_LeavesNoRequestTextInTheWorkspaces` (see _Tagger
+  Verification_) is the subsystem proof; the decoder and the glossary matcher prove it for their own workspaces in
+  _TagDecoder Verification_ and _Glossary Verification_.
 - **Feature groups**: the subsystem scenarios above use models without groups, so that they prove the base behavior. The
   groups are verified where they are defined and used: per group against the string-based reference in _FeatureExtractor
   Verification_, in the decoder (also in two passes for the right preview group) in _TagDecoder Verification_, through

@@ -1290,6 +1290,7 @@ internal static class FeatureExtractor
         var scratch = workspace.CharsUsed;
         Array.Copy(workspace.Chars, offset, workspace.Chars, scratch, length);
         workspace.Chars[scratch + length] = extra;
+        workspace.CharsHigh = Math.Max(workspace.CharsHigh, scratch + length + 1);
         return LookupTags(workspace, scratch, length + 1);
     }
 

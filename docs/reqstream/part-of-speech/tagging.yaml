@@ -204,3 +204,12 @@ sections:
               - PartOfSpeech-Tagging-Tagger-ThreadSafe
             tests:
               - Tagging_Tag_SameInput_ProducesSameOutput
+
+          - id: PartOfSpeech-Tagging-NoRetention
+            title: >-
+              Tagging shall not keep the text of a request in memory after the call returns or fails.
+            justification: |
+              The tagger reuses per-thread scratch memory for speed; that memory must not become a store of the texts
+              of earlier requests.
+            children:
+              - PartOfSpeech-Tagging-Tagger-NoRetention

@@ -146,6 +146,9 @@ files also hold the options and the result types: `Tagger.cs`, `TaggerOptions.cs
   (which also clears cached lexicon facts of a sentence that was decoded before), so the interleaving of lookups and
   decodes, also of two taggers with different lexicons on one thread, does not leak state (tests interleave them, and run
   eight threads).
+- _No retention._ The decoder erases its workspace (`DecoderWorkspace.Clear`) in a `finally` block at the end of
+  every lookup and form question, so the folded word, its hashes, the lexicon key and the encoded base word do not
+  stay in the thread's memory.
 - _Allocation._ After the first call on a thread `GetPossibleTags` (both overloads, both modes) and `IsFormOf`
   allocate 0 bytes for ASCII words, including compounds, malformed compounds, over-long words and a
   1,000,000-character word
