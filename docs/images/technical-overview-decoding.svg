@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="570" viewBox="0 0 900 570" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="10" y="10" width="880" height="550" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="450" y="44" font-size="18" font-weight="600" fill="#0f172a" text-anchor="middle">One decoding step: restrict the candidates, then decide</text>
+
+  <!-- Example token -->
+  <rect x="50" y="62" width="800" height="52" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="450" y="85" font-size="14" font-weight="600" fill="#92400e" text-anchor="middle">Example token: "book" in "Please book a table."</text>
+  <text x="450" y="104" font-size="13" fill="#92400e" text-anchor="middle">the lexicon lists the lower-cased spelling "book" with the tags NOUN and VERB; no capital letter, no digit</text>
+  <line x1="450" y1="114" x2="450" y2="136" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <text x="50" y="154" font-size="13" font-weight="600" fill="#334155">The 17 tags. Solid filled chip: candidate. Dashed empty chip: excluded, whatever its score.</text>
+
+  <!-- Chips row 1 -->
+  <rect x="50" y="164" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="90" y="186" font-size="13" fill="#64748b" text-anchor="middle">ADJ</text>
+  <rect x="140" y="164" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="180" y="186" font-size="13" fill="#64748b" text-anchor="middle">ADP</text>
+  <rect x="230" y="164" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="270" y="186" font-size="13" fill="#64748b" text-anchor="middle">ADV</text>
+  <rect x="320" y="164" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="360" y="186" font-size="13" fill="#64748b" text-anchor="middle">AUX</text>
+  <rect x="410" y="164" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="450" y="186" font-size="13" fill="#64748b" text-anchor="middle">CCONJ</text>
+  <rect x="500" y="164" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="540" y="186" font-size="13" fill="#64748b" text-anchor="middle">DET</text>
+  <rect x="590" y="164" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="630" y="186" font-size="13" fill="#64748b" text-anchor="middle">INTJ</text>
+  <rect x="680" y="164" width="80" height="34" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="720" y="186" font-size="13" font-weight="700" fill="#1e3a8a" text-anchor="middle">NOUN</text>
+  <rect x="770" y="164" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="810" y="186" font-size="13" fill="#64748b" text-anchor="middle">NUM</text>
+
+  <!-- Chips row 2 -->
+  <rect x="50" y="208" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="90" y="230" font-size="13" fill="#64748b" text-anchor="middle">PART</text>
+  <rect x="140" y="208" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="180" y="230" font-size="13" fill="#64748b" text-anchor="middle">PRON</text>
+  <rect x="230" y="208" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="270" y="230" font-size="13" fill="#64748b" text-anchor="middle">PROPN</text>
+  <rect x="320" y="208" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="360" y="230" font-size="13" fill="#64748b" text-anchor="middle">PUNCT</text>
+  <rect x="410" y="208" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="450" y="230" font-size="13" fill="#64748b" text-anchor="middle">SCONJ</text>
+  <rect x="500" y="208" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="540" y="230" font-size="13" fill="#64748b" text-anchor="middle">SYM</text>
+  <rect x="590" y="208" width="80" height="34" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="630" y="230" font-size="13" font-weight="700" fill="#1e3a8a" text-anchor="middle">VERB</text>
+  <rect x="680" y="208" width="80" height="34" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="720" y="230" font-size="13" fill="#64748b" text-anchor="middle">X</text>
+
+  <line x1="450" y1="248" x2="450" y2="272" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- Decision -->
+  <rect x="50" y="274" width="800" height="78" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="450" y="298" font-size="14" font-weight="600" fill="#1e3a8a" text-anchor="middle">Decide among the candidates only</text>
+  <text x="450" y="320" font-size="13" fill="#1e40af" text-anchor="middle">tag = the candidate with the highest real score (the lowest tag number wins a tie)</text>
+  <text x="450" y="340" font-size="13" fill="#1e40af" text-anchor="middle">softmax over the candidates: confidence = the share of the tag; alternatives = the other candidates, ranked</text>
+
+  <!-- Candidate rules -->
+  <text x="50" y="378" font-size="14" font-weight="600" fill="#0f172a">Which tags are candidates?</text>
+
+  <rect x="50" y="388" width="256" height="156" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="178" y="412" font-size="14" font-weight="600" fill="#5b21b6" text-anchor="middle">Known word</text>
+  <text x="64" y="436" font-size="12" fill="#5b21b6">the tags of the lexicon, plus</text>
+  <text x="64" y="456" font-size="12" fill="#5b21b6">+ PUNCT, SYM, X: no letter or digit</text>
+  <text x="64" y="476" font-size="12" fill="#5b21b6">+ NUM, SYM, X, NOUN, PROPN, ADJ:</text>
+  <text x="76" y="494" font-size="12" fill="#5b21b6">the token has a digit</text>
+  <text x="64" y="514" font-size="12" fill="#5b21b6">+ PROPN, X: first letter is a capital</text>
+
+  <rect x="322" y="388" width="256" height="156" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="450" y="412" font-size="14" font-weight="600" fill="#5b21b6" text-anchor="middle">Unknown word</text>
+  <text x="336" y="440" font-size="12" fill="#5b21b6">All 17 tags are candidates: the</text>
+  <text x="336" y="460" font-size="12" fill="#5b21b6">lexicon has no evidence either</text>
+  <text x="336" y="480" font-size="12" fill="#5b21b6">way, so the model alone decides</text>
+  <text x="336" y="500" font-size="12" fill="#5b21b6">and its confidence is spread</text>
+  <text x="336" y="520" font-size="12" fill="#5b21b6">over many tags.</text>
+
+  <rect x="594" y="388" width="256" height="156" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="722" y="412" font-size="14" font-weight="600" fill="#5b21b6" text-anchor="middle">Constraint or glossary entry</text>
+  <text x="608" y="440" font-size="12" fill="#5b21b6">A hard constraint intersects the</text>
+  <text x="608" y="460" font-size="12" fill="#5b21b6">candidates; if nothing is left, the</text>
+  <text x="608" y="480" font-size="12" fill="#5b21b6">constraint alone applies. A soft</text>
+  <text x="608" y="500" font-size="12" fill="#5b21b6">constraint adds to or subtracts</text>
+  <text x="608" y="520" font-size="12" fill="#5b21b6">from the scores of tags.</text>
+</svg>
