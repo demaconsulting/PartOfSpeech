@@ -38,14 +38,26 @@ them and states what they do not show.
 > technical-mix model with the mixed held-out result and the fired shape-probe stop condition disclosed, and to keep the
 > balanced threshold at 0.75 (see *Owner Decision* below).
 
-| File | What it is |
-| --- | --- |
-| [confidence-thresholds.md](confidence-thresholds.md) | Selection of the two recommended thresholds on development data only: curves, reliability table, the rule, the bootstrap intervals. It reads no held-out file, so it cannot show the held-out outcome: the strict point meets its target of 5.0 by the point estimates on the open test split (4.6; the 95% interval [2.4, 7.2] includes 5.0) and on gold v2 test (2.4), and exceeds it on the shape probe (9.3; see _Reading the Results_ below and [test-results.md](test-results.md)). |
-| [operating-points.json](operating-points.json) | The selection as data. The `evaluate` command refuses to read a held-out file without it. |
-| [technical-operating-points.json](technical-operating-points.json) | The technical operating point of the embedded model (rule `nv-technical-dev-v1`: the first threshold with at most 10 wrong answers in 1,000 answers and at least 25% of the judged words answered on the four technical development tranches) with the whole curve and the caveats, as data; the same table is the section "Technical text" of `confidence-thresholds.md`. Development data only; no held-out set carries these shapes, and `evaluate` does not read it. The point (0.99) is a measured fact that rests on a single wrong answer, not a recommended gate. |
-| [test-results.md](test-results.md) | The one held-out run of the embedded model, every set and view, and the hashes of the inputs. |
-| [test-results.json](test-results.json) | The same results as data; it is also the marker that the run was done. |
-| [disclosure.md](disclosure.md) | The one paragraph that both generated reports carry after their introduction (here: the disclosed sixth look). The `thresholds` and `evaluate` commands read it; a missing or blank file means no notice. It describes the embedded model and this evaluation only, so it must be revised or removed before an evaluation of a different model is rendered. |
+- [confidence-thresholds.md](confidence-thresholds.md): Selection of the two recommended thresholds on development data
+  only: curves, reliability table, the rule, the bootstrap intervals. It reads no held-out file, so it cannot show the
+  held-out outcome: the strict point meets its target of 5.0 by the point estimates on the open test split (4.6; the 95%
+  interval [2.4, 7.2] includes 5.0) and on gold v2 test (2.4), and exceeds it on the shape probe (9.3; see *Reading the
+  Results* below and [test-results.md](test-results.md)).
+- [operating-points.json](operating-points.json): The selection as data. The `evaluate` command refuses to read a
+  held-out file without it.
+- [technical-operating-points.json](technical-operating-points.json): The technical operating point of the embedded
+  model (rule `nv-technical-dev-v1`: the first threshold with at most 10 wrong answers in 1,000 answers and at least 25%
+  of the judged words answered on the four technical development tranches) with the whole curve and the caveats, as
+  data; the same table is the section "Technical text" of `confidence-thresholds.md`. Development data only; no held-out
+  set carries these shapes, and `evaluate` does not read it. The point (0.99) is a measured fact that rests on a single
+  wrong answer, not a recommended gate.
+- [test-results.md](test-results.md): The one held-out run of the embedded model, every set and view, and the hashes of
+  the inputs.
+- [test-results.json](test-results.json): The same results as data; it is also the marker that the run was done.
+- [disclosure.md](disclosure.md): The one paragraph that both generated reports carry after their introduction (here:
+  the disclosed sixth look). The `thresholds` and `evaluate` commands read it; a missing or blank file means no notice.
+  It describes the embedded model and this evaluation only, so it must be revised or removed before an evaluation of a
+  different model is rendered.
 
 ## How the Evaluation Was Done
 

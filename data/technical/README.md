@@ -14,12 +14,17 @@ reading. They are disjoint from every evaluation set and from every other traini
 four sources have weight 1 in the trainer configuration (`training.json`): they are part of the shipped mix (1,851 of its 65,373 training
 sentences), and `--source deverbal:0` (and so on) leaves one out of an experimental run.
 
-| Source | File | Sentences | Tokens | Lemmas | Documents | Strata (sentences) |
-| --- | --- | ---: | ---: | ---: | ---: | --- |
-| `deverbal` | `deverbal.tsv` | 637 | 12,007 | 376 | 173 | `pred` 136, `num` 160, `ing` 146, `other` 100, contrast `verb` 95 |
-| `terms` | `terms.tsv` | 373 | 7,472 | 241 | 102 | `noun` 226, `adj` 54, contrast `proper` 93 |
-| `steps` | `steps.tsv` | 531 | 4,894 | 292 | 130 | `imperative` 372, contrast `noun-initial` 159 |
-| `clauses` | `clauses.tsv` | 310 | 5,870 | 190 | 112 | `main` 187, `sub` 61, contrast `noun` 34, `adj` 28 |
+| Source | File | Sentences | Tokens | Lemmas | Documents |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `deverbal` | `deverbal.tsv` | 637 | 12,007 | 376 | 173 |
+| `terms` | `terms.tsv` | 373 | 7,472 | 241 | 102 |
+| `steps` | `steps.tsv` | 531 | 4,894 | 292 | 130 |
+| `clauses` | `clauses.tsv` | 310 | 5,870 | 190 | 112 |
+
+- `deverbal`: `pred` 136, `num` 160, `ing` 146, `other` 100, contrast `verb` 95
+- `terms`: `noun` 226, `adj` 54, contrast `proper` 93
+- `steps`: `imperative` 372, contrast `noun-initial` 159
+- `clauses`: `main` 187, `sub` 61, contrast `noun` 34, `adj` 28
 
 The four files hold 1,851 sentences and 30,243 tokens. The sizes are the sizes of the files: the sentence counts above are what each source
 contains. The record of the builds is in the trainer run log (sections "beta.3 phase 1").
@@ -65,13 +70,11 @@ contains. The record of the builds is in the trainer run log (sections "beta.3 p
 
 ## Files
 
-| File | Content |
-| --- | --- |
-| `deverbal.tsv`, `terms.tsv`, `steps.tsv`, `clauses.tsv` | the sentences of the four sources in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md) ("Other Formats" describes the header and the extra comments); ids `deverbal-NNNN`, `terms-NNNN`, `steps-NNNN`, `clauses-NNNN` |
-| `deverbal-sources.tsv`, `terms-sources.tsv`, `steps-sources.tsv`, `clauses-sources.tsv` | the documents that the sentences of each source come from (only used documents): family, title, URL, author, year, license basis, terms URL, retrieval date, hashes, sentences used |
-| `deverbal-dropped-sentences.tsv`, `terms-dropped-sentences.tsv`, `steps-dropped-sentences.tsv`, `clauses-dropped-sentences.tsv` | counts of candidate sentences dropped alone because they equal, or nearly equal, a sentence of a training or evaluation set, or share a word 5-gram with the shape probe (counts only, no text): `deverbal` 1 (5-gram), `terms` 1 (5-gram), `steps` 98 equal to a set sentence, 33 equal to a shapes development sentence and 1 (5-gram), `clauses` 1 (5-gram) |
-| `excluded-documents.tsv` | documents left out of the four builds: none (header only) |
-| `term-conflict-ids.tsv` | ids only of conflicting capitalized runs in the older sources (see "Divergence from UD Practice") |
+- `deverbal.tsv`, `terms.tsv`, `steps.tsv`, `clauses.tsv`: the sentences of the four sources in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md) ("Other Formats" describes the header and the extra comments); ids `deverbal-NNNN`, `terms-NNNN`, `steps-NNNN`, `clauses-NNNN`
+- `deverbal-sources.tsv`, `terms-sources.tsv`, `steps-sources.tsv`, `clauses-sources.tsv`: the documents that the sentences of each source come from (only used documents): family, title, URL, author, year, license basis, terms URL, retrieval date, hashes, sentences used
+- `deverbal-dropped-sentences.tsv`, `terms-dropped-sentences.tsv`, `steps-dropped-sentences.tsv`, `clauses-dropped-sentences.tsv`: counts of candidate sentences dropped alone because they equal, or nearly equal, a sentence of a training or evaluation set, or share a word 5-gram with the shape probe (counts only, no text): `deverbal` 1 (5-gram), `terms` 1 (5-gram), `steps` 98 equal to a set sentence, 33 equal to a shapes development sentence and 1 (5-gram), `clauses` 1 (5-gram)
+- `excluded-documents.tsv`: documents left out of the four builds: none (header only)
+- `term-conflict-ids.tsv`: ids only of conflicting capitalized runs in the older sources (see "Divergence from UD Practice")
 
 Each sentence block has the comments `sent_id`, `source_id`, `text`, `word`, `lemma` and `stratum`, then one row `form`, `upos`, `status`
 for each token. `word` is the zero-based token index of the judged word, `lemma` its lower-case form and `stratum` the stratum below.
@@ -174,12 +177,19 @@ its application.
 
 Numbers of the builds (items with a decision that the build read, and what it dropped; counts only):
 
-| Source | Items read | Dropped: class mismatch | disputed token | target disagreement | frame mismatch | caps (total or stratum, lemma, term, document) | **Sentences** |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `deverbal` | 1,115 | 291 | 113 | 8 | 21 | 8 + 33 + 4 = 45 | **637** |
-| `terms` | 808 | 153 | 98 | 57 | 0 | 111 + 5 + 11 = 127 | **373** |
-| `steps` | 1,500 | 828 | 41 | 31 | 0 | 17 + 52 = 69 | **531** |
-| `clauses` | 860 | 385 | 66 | 6 | 7 | 68 + 18 = 86 | **310** |
+| Source | Items read | Dropped: class mismatch | disputed token | target disagreement | frame mismatch |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `deverbal` | 1,115 | 291 | 113 | 8 | 21 |
+| `terms` | 808 | 153 | 98 | 57 | 0 |
+| `steps` | 1,500 | 828 | 41 | 31 | 0 |
+| `clauses` | 860 | 385 | 66 | 6 | 7 |
+
+| Source | Dropped: caps (total or stratum, lemma, term, document) | **Sentences** |
+| --- | ---: | ---: |
+| `deverbal` | 8 + 33 + 4 = 45 | **637** |
+| `terms` | 111 + 5 + 11 = 127 | **373** |
+| `steps` | 17 + 52 = 69 | **531** |
+| `clauses` | 68 + 18 = 86 | **310** |
 
 The trainer run log, section "beta.3 phase 1: labels decided", has the decisions per round.
 
@@ -191,16 +201,27 @@ and its tag and judges the marked word (and marks any other wrong token). This i
 independent of the labelers' shared blind spots. The gate is a marked-word precision of at least 95 percent (3 incorrect of 60 passes, 4 fail)
 and at most 1 of 4 swapped-tag control items accepted.
 
-| Measure | `deverbal` | `terms` | `steps` | `clauses` |
-| --- | ---: | ---: | ---: | ---: |
-| items reviewed | 60 | 60 | 60 | 60 |
-| marked word correct / incorrect / unclear | 59 / 0 / 1 | 59 / 0 / 1 | 60 / 0 / 0 | 59 / 0 / 1 |
-| marked-word precision (gate at least 95%) | 100.0% | 100.0% | 100.0% | 100.0% |
-| whole item correct (no other token marked wrong) | 98.3% | 96.7% | 100.0% | 98.3% |
-| token precision (reported, not gated) | 100.00% (0 of 1,104 tokens wrong) | 99.92% (1 of 1,247) | 100.00% (0 of 515) | 100.00% (0 of 1,184) |
-| swapped-tag controls accepted (gate: at most 1 of 4) | 0 of 4 | 0 of 4 | 0 of 4 | 0 of 4 |
-| unanswered items | 0 | 0 | 0 | 0 |
-| gate | passed | passed | passed | passed |
+| Measure | `deverbal` | `terms` | `steps` |
+| --- | ---: | ---: | ---: |
+| items reviewed | 60 | 60 | 60 |
+| marked word correct / incorrect / unclear | 59 / 0 / 1 | 59 / 0 / 1 | 60 / 0 / 0 |
+| marked-word precision (gate at least 95%) | 100.0% | 100.0% | 100.0% |
+| whole item correct (no other token marked wrong) | 98.3% | 96.7% | 100.0% |
+| token precision (reported, not gated) | 100.00% (0 of 1,104 tokens wrong) | 99.92% (1 of 1,247) | 100.00% (0 of 515) |
+| swapped-tag controls accepted (gate: at most 1 of 4) | 0 of 4 | 0 of 4 | 0 of 4 |
+| unanswered items | 0 | 0 | 0 |
+| gate | passed | passed | passed |
+
+| Measure | `clauses` |
+| --- | ---: |
+| items reviewed | 60 |
+| marked word correct / incorrect / unclear | 59 / 0 / 1 |
+| marked-word precision (gate at least 95%) | 100.0% |
+| whole item correct (no other token marked wrong) | 98.3% |
+| token precision (reported, not gated) | 100.00% (0 of 1,184) |
+| swapped-tag controls accepted (gate: at most 1 of 4) | 0 of 4 |
+| unanswered items | 0 |
+| gate | passed |
 
 ## Capitalized Defined Terms (the `terms` Convention)
 
@@ -280,16 +301,27 @@ other runs of two or more words. For each run the tag of its last word is counte
 
 **Training sources** (`python tools/data/term_divergence.py count-training`; the counts are of runs, not of sentences):
 
-| Source | Sentences | A runs | A PROPN | A NOUN | A ADJ | A other | B runs | B PROPN | B NOUN | B ADJ | B other | Org-like runs | Org-like PROPN |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `open` (train) | 11,990 | 26 | 21 | 2 | 3 | 0 | 858 | 796 | 44 | 16 | 2 | 263 | 261 |
-| `masc` | 22,829 | 41 | 20 | 14 | 7 | 0 | 1,710 | 1,107 | 538 | 44 | 21 | 395 | 353 |
-| `silver` | 13,971 | 14 | 0 | 0 | 8 | 6 | 405 | 1 | 0 | 9 | 395 | 86 | 0 |
-| `imperative` | 900 | 1 | 0 | 0 | 0 | 1 | 2 | 1 | 1 | 0 | 0 | 3 | 3 |
-| `compound` | 742 | 5 | 3 | 1 | 1 | 0 | 40 | 37 | 3 | 0 | 0 | 10 | 10 |
-| `compound2` | 1,100 | 5 | 2 | 3 | 0 | 0 | 33 | 31 | 2 | 0 | 0 | 19 | 19 |
-| `headings` | 374 | 3 | 0 | 3 | 0 | 0 | 101 | 6 | 94 | 0 | 1 | 8 | 7 |
-| `headings2` | 247 | 7 | 0 | 7 | 0 | 0 | 82 | 2 | 78 | 0 | 2 | 2 | 0 |
+| Source | Sentences | A runs | A PROPN | A NOUN | A ADJ | A other | B runs | B PROPN | B NOUN | B ADJ | B other |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `open` (train) | 11,990 | 26 | 21 | 2 | 3 | 0 | 858 | 796 | 44 | 16 | 2 |
+| `masc` | 22,829 | 41 | 20 | 14 | 7 | 0 | 1,710 | 1,107 | 538 | 44 | 21 |
+| `silver` | 13,971 | 14 | 0 | 0 | 8 | 6 | 405 | 1 | 0 | 9 | 395 |
+| `imperative` | 900 | 1 | 0 | 0 | 0 | 1 | 2 | 1 | 1 | 0 | 0 |
+| `compound` | 742 | 5 | 3 | 1 | 1 | 0 | 40 | 37 | 3 | 0 | 0 |
+| `compound2` | 1,100 | 5 | 2 | 3 | 0 | 0 | 33 | 31 | 2 | 0 | 0 |
+| `headings` | 374 | 3 | 0 | 3 | 0 | 0 | 101 | 6 | 94 | 0 | 1 |
+| `headings2` | 247 | 7 | 0 | 7 | 0 | 0 | 82 | 2 | 78 | 0 | 2 |
+
+| Source | Org-like runs | Org-like PROPN |
+| --- | ---: | ---: |
+| `open` (train) | 263 | 261 |
+| `masc` | 395 | 353 |
+| `silver` | 86 | 0 |
+| `imperative` | 3 | 3 |
+| `compound` | 10 | 10 |
+| `compound2` | 19 | 19 |
+| `headings` | 8 | 7 |
+| `headings2` | 2 | 0 |
 
 The `silver` rows are almost all `_`: the silver derivation masks a token for which the two off-the-shelf taggers gave no usable answer
 (`data/silver/README.md`), so most capitalized runs there carry no training signal.
@@ -303,12 +335,19 @@ are `source`, `class`, `sent_id` and the zero-based `token_index` of the last wo
 **Held-out sets** (`python tools/data/term_divergence.py count-held-out`, the only command of this tool that opens a held-out file; it prints
 integers only and has no option that lists a sentence, an id or a token):
 
-| Set | Sentences | A runs | A PROPN | A NOUN | A ADJ | A other | B runs | B PROPN | B NOUN | B ADJ | B other | Org-like runs | Org-like PROPN |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `open/dev.tsv` | 1,489 | 1 | 0 | 1 | 0 | 0 | 101 | 93 | 8 | 0 | 0 | 27 | 27 |
-| `open/test.tsv` | 1,501 | 2 | 2 | 0 | 0 | 0 | 117 | 102 | 8 | 7 | 0 | 29 | 29 |
-| UD English-EWT dev (raw UPOS) | 2,001 | 3 | 1 | 0 | 2 | 0 | 114 | 84 | 24 | 5 | 1 | 29 | 23 |
-| UD English-EWT test (raw UPOS) | 2,077 | 8 | 4 | 3 | 1 | 0 | 148 | 100 | 41 | 5 | 2 | 13 | 11 |
+| Set | Sentences | A runs | A PROPN | A NOUN | A ADJ | A other | B runs | B PROPN | B NOUN | B ADJ | B other |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `open/dev.tsv` | 1,489 | 1 | 0 | 1 | 0 | 0 | 101 | 93 | 8 | 0 | 0 |
+| `open/test.tsv` | 1,501 | 2 | 2 | 0 | 0 | 0 | 117 | 102 | 8 | 7 | 0 |
+| UD English-EWT dev (raw UPOS) | 2,001 | 3 | 1 | 0 | 2 | 0 | 114 | 84 | 24 | 5 | 1 |
+| UD English-EWT test (raw UPOS) | 2,077 | 8 | 4 | 3 | 1 | 0 | 148 | 100 | 41 | 5 | 2 |
+
+| Set | Org-like runs | Org-like PROPN |
+| --- | ---: | ---: |
+| `open/dev.tsv` | 27 | 27 |
+| `open/test.tsv` | 29 | 29 |
+| UD English-EWT dev (raw UPOS) | 29 | 23 |
+| UD English-EWT test (raw UPOS) | 13 | 11 |
 
 **What the numbers mean.** The rule is rare in running text: the cue-based class A has between 1 and 41 runs per source, and class B
 holds about 7 runs per 100 sentences in `open` and `masc` and 6 to 8 per 100 sentences in the held-out sets. Where such a run exists,

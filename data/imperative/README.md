@@ -42,12 +42,10 @@ counts of every file of this folder.
 
 ## Files
 
-| File | Content |
-| --- | --- |
-| `imperative.tsv` | the 900 sentences in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md) ("Other Formats" describes the header); ids `imperative-NNNN` |
-| `sources.tsv` | the 122 documents that the sentences come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used |
-| `excluded-documents.tsv` | documents left out because they reprint or share sentences with another set (header only: none was found) |
-| `dropped-sentences.tsv` | counts of candidate sentences dropped alone because they equal, or nearly equal, a sentence of a training or evaluation set (counts only, no text) |
+- `imperative.tsv`: the 900 sentences in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md) ("Other Formats" describes the header); ids `imperative-NNNN`
+- `sources.tsv`: the 122 documents that the sentences come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used
+- `excluded-documents.tsv`: documents left out because they reprint or share sentences with another set (header only: none was found)
+- `dropped-sentences.tsv`: counts of candidate sentences dropped alone because they equal, or nearly equal, a sentence of a training or evaluation set (counts only, no text)
 
 Each sentence block has the comments `sent_id`, `source_id` and `text`, then one row `form`, `upos`, `status` for each token. Every status
 is `unanimous` (no token is `disputed` or masked, and no flag is set). The tokens are the library tokenizer's: they come from
@@ -132,14 +130,21 @@ One sample was drawn and reviewed once; it was not drawn again.
 
 ## Sources
 
-| Family | Documents | Sentences | Basis and origin |
-| --- | ---: | ---: | --- |
-| `army` | 69 | 643 | War Department and Department of the Army field and technical manuals (scans and electronic copies on the Internet Archive); 17 U.S.C. 105 |
-| `usda` | 36 | 166 | Department of Agriculture farm, home and food bulletins and leaflets (Internet Archive); 17 U.S.C. 105 |
-| `navy` | 12 | 68 | Navy training and drill manuals and handbooks (Internet Archive); 17 U.S.C. 105 |
-| `usfs` | 3 | 11 | Forest Service publications (Internet Archive); 17 U.S.C. 105 |
-| `usbm` | 1 | 7 | Bureau of Mines ground-control instructions (Internet Archive); 17 U.S.C. 105 |
-| `phs` | 1 | 5 | Public Health Service handbook (Internet Archive); 17 U.S.C. 105 |
+| Family | Documents | Sentences |
+| --- | ---: | ---: |
+| `army` | 69 | 643 |
+| `usda` | 36 | 166 |
+| `navy` | 12 | 68 |
+| `usfs` | 3 | 11 |
+| `usbm` | 1 | 7 |
+| `phs` | 1 | 5 |
+
+- `army`: War Department and Department of the Army field and technical manuals (scans and electronic copies on the Internet Archive); 17 U.S.C. 105
+- `usda`: Department of Agriculture farm, home and food bulletins and leaflets (Internet Archive); 17 U.S.C. 105
+- `navy`: Navy training and drill manuals and handbooks (Internet Archive); 17 U.S.C. 105
+- `usfs`: Forest Service publications (Internet Archive); 17 U.S.C. 105
+- `usbm`: Bureau of Mines ground-control instructions (Internet Archive); 17 U.S.C. 105
+- `phs`: Public Health Service handbook (Internet Archive); 17 U.S.C. 105
 
 `sources.tsv` lists only these used documents. Publication years are 1889 to 2011 (most are from 1940 to 1969); every document is
 hashed (`raw_sha256` of the download, `text_sha256` of the extracted sentences) and carries its retrieval date in `sources.tsv`.
@@ -158,10 +163,8 @@ violation, which the lint run enforces, and the check tier reports none.
 The lexicon is not built from this source, and the file does not change it (`lexicon/lexicon.tsv` is unchanged). Measured against
 `lexicon/lexicon.tsv` (`python tools/data/imperative_data.py --work <work-folder> report` prints the figures):
 
-| Measure | Listed | Of | Share |
-| --- | ---: | ---: | ---: |
-| word tokens whose gold tag the lexicon lists for the spelling (tokens without a letter or digit are not counted) | 10,394 | 10,621 | 97.86 percent |
-| distinct (lower-cased spelling, tag) pairs the lexicon lists | 2,679 | 2,836 | 94.46 percent |
+- word tokens whose gold tag the lexicon lists for the spelling (tokens without a letter or digit are not counted): **Listed**: 10,394; **Of**: 10,621; **Share**: 97.86 percent
+- distinct (lower-cased spelling, tag) pairs the lexicon lists: **Listed**: 2,679; **Of**: 2,836; **Share**: 94.46 percent
 
 All 900 first words are listed with VERB. Of the 157 unlisted pairs, 141 are spellings that the lexicon does not contain at all and 16 are
 spellings that the lexicon lists with other tags (for example `facts/PROPN`). 96 of the 157 contain a digit (numerals such as `1,000`

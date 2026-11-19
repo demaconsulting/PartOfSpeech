@@ -24,11 +24,9 @@ tagger accuracy on real text. **Evaluation only**; the test split is reported, n
 
 ## Files
 
-| File | Content |
-| --- | --- |
-| `dev.tsv` | 2,025 labeled tokens of the development split (586 documents) |
-| `test.tsv` | 3,047 labeled tokens of the test split (856 documents); the two splits share no document |
-| `sources.tsv` | the 1,442 documents: family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes |
+- `dev.tsv`: 2,025 labeled tokens of the development split (586 documents)
+- `test.tsv`: 3,047 labeled tokens of the test split (856 documents); the two splits share no document
+- `sources.tsv`: the 1,442 documents: family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes
 
 A row of `dev.tsv` and `test.tsv` has 16 tab-separated columns (named in the `# columns` comment line):
 `id doc_id source terms_url sent_id target form strata pos lemma features tense sense status agreement sentence`.

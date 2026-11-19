@@ -36,12 +36,10 @@ signal; the tag is `_`). Tokens are counted after the contraction split of the c
 
 ## Files
 
-| File | Content |
-| --- | --- |
-| `silver.tsv` | the sentences in the shared corpus format: `form`, `upos`, `status`, `source_tag`; `# text` is the tokens joined by single spaces |
-| `sources.tsv` | one row per document: id, family, title, author, URL, license basis, sentences |
-| `excluded-documents.tsv` | documents left out because of overlap with evaluation sets or the open training split (ids only) |
-| `dropped-sentences.tsv` | the 2 short sentences (key shorter than 25 characters) left out because the sentence equals an evaluation sentence (ids only) |
+- `silver.tsv`: the sentences in the shared corpus format: `form`, `upos`, `status`, `source_tag`; `# text` is the tokens joined by single spaces
+- `sources.tsv`: one row per document: id, family, title, author, URL, license basis, sentences
+- `excluded-documents.tsv`: documents left out because of overlap with evaluation sets or the open training split (ids only)
+- `dropped-sentences.tsv`: the 2 short sentences (key shorter than 25 characters) left out because the sentence equals an evaluation sentence (ids only)
 
 ## How It Was Produced
 

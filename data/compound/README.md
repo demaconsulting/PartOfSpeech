@@ -48,13 +48,11 @@ counts of every file of this folder.
 
 ## Files
 
-| File | Content |
-| --- | --- |
-| `compound.tsv` | the 742 sentences in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md) ("Other Formats" describes the header and the extra comments); ids `compound-NNNN` |
-| `sources.tsv` | the 154 documents that the sentences come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used |
-| `excluded-documents.tsv` | documents left out: the 7 whose record lists a state or local government body as an author (the rule 1 check after the build) |
-| `dropped-sentences.tsv` | counts of candidate sentences dropped alone because they equal, or nearly equal, a sentence of a training or evaluation set (counts only, no text) |
-| `compound-2.tsv`, `compound-2-sources.tsv`, `compound-2-excluded-documents.tsv`, `compound-2-dropped-sentences.tsv` | the same four files for the second source `compound2` (see [Second Source](#second-source-compound-2tsv)); ids `compound2-NNNN` |
+- `compound.tsv`: the 742 sentences in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md) ("Other Formats" describes the header and the extra comments); ids `compound-NNNN`
+- `sources.tsv`: the 154 documents that the sentences come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used
+- `excluded-documents.tsv`: documents left out: the 7 whose record lists a state or local government body as an author (the rule 1 check after the build)
+- `dropped-sentences.tsv`: counts of candidate sentences dropped alone because they equal, or nearly equal, a sentence of a training or evaluation set (counts only, no text)
+- `compound-2.tsv`, `compound-2-sources.tsv`, `compound-2-excluded-documents.tsv`, `compound-2-dropped-sentences.tsv`: the same four files for the second source `compound2` (see [Second Source](#second-source-compound-2tsv)); ids `compound2-NNNN`
 
 Each sentence block has the comments `sent_id`, `source_id`, `text`, `head`, `lemma` and `kind`, then one row `form`, `upos`, `status` for
 each token. `head` is the zero-based token index of the head of the compound, `lemma` its lower-case form, and `kind` is `noun` (the head is
@@ -142,19 +140,31 @@ One sample was drawn and reviewed once; it was not drawn again.
 
 ## Sources
 
-| Family | Documents | Sentences | Basis and origin |
-| --- | ---: | ---: | --- |
-| `usda` | 38 | 139 | Department of Agriculture bulletins, circulars, leaflets and reports (Internet Archive); 17 U.S.C. 105 |
-| `usfs` | 21 | 128 | Forest Service publications (Internet Archive); 17 U.S.C. 105 |
-| `army` | 14 | 86 | War Department and Department of the Army manuals, bulletins and reports (Internet Archive); 17 U.S.C. 105 |
-| `usgs` | 19 | 80 | Geological Survey bulletins, papers and reports (Internet Archive); 17 U.S.C. 105 |
-| `usbr` | 12 | 70 | Bureau of Reclamation and related Interior study reports (Internet Archive); 17 U.S.C. 105 |
-| `other` | 10 | 69 | Bureau of Land Management, Bureau of Fisheries, Office of Education, Bureau of Education and National Park Service publications (Internet Archive); 17 U.S.C. 105 |
-| `navy` | 13 | 54 | Navy and Marine Corps manuals and reports (Internet Archive); 17 U.S.C. 105 |
-| `phs` | 11 | 39 | Public Health Service and Children's Bureau publications (Internet Archive); 17 U.S.C. 105 |
-| `usbm` | 5 | 36 | Bureau of Mines publications (Internet Archive); 17 U.S.C. 105 |
-| `wxb` | 7 | 22 | Weather Bureau publications (Internet Archive); 17 U.S.C. 105 |
-| `nbs` | 4 | 19 | National Bureau of Standards publications (Internet Archive); 17 U.S.C. 105 |
+| Family | Documents | Sentences |
+| --- | ---: | ---: |
+| `usda` | 38 | 139 |
+| `usfs` | 21 | 128 |
+| `army` | 14 | 86 |
+| `usgs` | 19 | 80 |
+| `usbr` | 12 | 70 |
+| `other` | 10 | 69 |
+| `navy` | 13 | 54 |
+| `phs` | 11 | 39 |
+| `usbm` | 5 | 36 |
+| `wxb` | 7 | 22 |
+| `nbs` | 4 | 19 |
+
+- `usda`: Department of Agriculture bulletins, circulars, leaflets and reports (Internet Archive); 17 U.S.C. 105
+- `usfs`: Forest Service publications (Internet Archive); 17 U.S.C. 105
+- `army`: War Department and Department of the Army manuals, bulletins and reports (Internet Archive); 17 U.S.C. 105
+- `usgs`: Geological Survey bulletins, papers and reports (Internet Archive); 17 U.S.C. 105
+- `usbr`: Bureau of Reclamation and related Interior study reports (Internet Archive); 17 U.S.C. 105
+- `other`: Bureau of Land Management, Bureau of Fisheries, Office of Education, Bureau of Education and National Park Service publications (Internet Archive); 17 U.S.C. 105
+- `navy`: Navy and Marine Corps manuals and reports (Internet Archive); 17 U.S.C. 105
+- `phs`: Public Health Service and Children's Bureau publications (Internet Archive); 17 U.S.C. 105
+- `usbm`: Bureau of Mines publications (Internet Archive); 17 U.S.C. 105
+- `wxb`: Weather Bureau publications (Internet Archive); 17 U.S.C. 105
+- `nbs`: National Bureau of Standards publications (Internet Archive); 17 U.S.C. 105
 
 `sources.tsv` lists only these used documents. Publication years are 1862 to 2008 (115 of the documents are from 1940 or later); every
 document is hashed (`raw_sha256` of the download, `text_sha256` of the extracted sentences) and carries its retrieval date in `sources.tsv`. The same pool of
@@ -177,10 +187,8 @@ finds no violation, which the lint run enforces, and the check tier reports 2 (o
 The lexicon is not built from this source, and the file does not change it (`lexicon/lexicon.tsv` is unchanged). Measured against
 `lexicon/lexicon.tsv` (`python tools/data/compound_heading_data.py --work <work-folder> report --source compound` prints the figures):
 
-| Measure | Listed | Of | Share |
-| --- | ---: | ---: | ---: |
-| word tokens whose gold tag the lexicon lists for the spelling (tokens without a letter or digit are not counted) | 12,823 | 13,265 | 96.67 percent |
-| distinct (lower-cased spelling, tag) pairs the lexicon lists | 3,971 | 4,332 | 91.67 percent |
+- word tokens whose gold tag the lexicon lists for the spelling (tokens without a letter or digit are not counted): **Listed**: 12,823; **Of**: 13,265; **Share**: 96.67 percent
+- distinct (lower-cased spelling, tag) pairs the lexicon lists: **Listed**: 3,971; **Of**: 4,332; **Share**: 91.67 percent
 
 All 742 heads are listed with the tag they have here. Of the 361 unlisted pairs, 295 are spellings that the lexicon does not contain at all
 and 66 are spellings that the lexicon lists with other tags. 158 of the 361 contain a digit (numerals such as `2.05` and measure compounds); the
@@ -228,12 +236,10 @@ head lemma and at most 20 per document.
 
 **Files.**
 
-| File | Content |
-| --- | --- |
-| `compound-2.tsv` | the 1,100 sentences in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md); ids `compound2-NNNN` |
-| `compound-2-sources.tsv` | the 209 documents that the sentences come from: family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used |
-| `compound-2-excluded-documents.tsv` | documents left out after the build: none (header only) |
-| `compound-2-dropped-sentences.tsv` | counts of candidate sentences dropped alone because of an overlap with a set (2 near duplicates of a shapes development sentence, 1 shared word 5-gram with the shape probe; counts only, no text) |
+- `compound-2.tsv`: the 1,100 sentences in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md); ids `compound2-NNNN`
+- `compound-2-sources.tsv`: the 209 documents that the sentences come from: family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used
+- `compound-2-excluded-documents.tsv`: documents left out after the build: none (header only)
+- `compound-2-dropped-sentences.tsv`: counts of candidate sentences dropped alone because of an overlap with a set (2 near duplicates of a shapes development sentence, 1 shared word 5-gram with the shape probe; counts only, no text)
 
 `compound-2.tsv` has SHA-256 `2a9a98492afb1248623b50111ca62d8abd57e4569b1a5e52b3cff544bc0746cc` and `compound-2-sources.tsv`
 `c979850dd60921d209b7d918d953b53bee7af05f736a77896637665ace823cf4`; [MANIFEST.tsv](../MANIFEST.tsv) lists the size, hash and record counts of every

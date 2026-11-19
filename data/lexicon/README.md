@@ -19,24 +19,20 @@ The other inputs are public domain (Moby Part-of-Speech II), MIT (project additi
 
 ## Files
 
-| File | Content |
-| --- | --- |
-| `lexicon.tsv` | the lexicon: `spelling TAB TAG TAG ...` (tags alphabetical, rows sorted by UTF-8 bytes, comment lines start with a hash and a space); generated, do not edit |
-| `analyses.tsv` | the analyses: `spelling TAB analysis TAB analysis ...` where an analysis is `lemma TAG` or `lemma TAG features` (base word in lower-case NFC, features in Universal Dependencies notation: `Name=Value` pairs sorted by name and joined by `\|`, from `Degree`, `Number`, `Person`, `Tense` and `VerbForm`; `Capitalization` is dropped); only spellings and tags of `lexicon.tsv`, analyses ordered by tag, base word and features; generated, do not edit |
-| `closed-class.tsv` | input: function words, auxiliaries, number words and interjections with their tags and a mode (`exact` replaces the dictionary tags, `add` extends them) |
-| `overrides.tsv` | input: evidenced corrections (empty in this build) |
-| `coverage.tsv` | machine-readable coverage report (written by `check_lexicon.py`) |
-| `COVERAGE.md` | readable coverage report including every miss on open dev and open test |
-| `sweep.tsv` | the attestation threshold sweep on train and dev (`check_lexicon.py --sweep`) |
+- `lexicon.tsv`: the lexicon: `spelling TAB TAG TAG ...` (tags alphabetical, rows sorted by UTF-8 bytes, comment lines start with a hash and a space); generated, do not edit
+- `analyses.tsv`: the analyses: `spelling TAB analysis TAB analysis ...` where an analysis is `lemma TAG` or `lemma TAG features` (base word in lower-case NFC, features in Universal Dependencies notation: `Name=Value` pairs sorted by name and joined by `|`, from `Degree`, `Number`, `Person`, `Tense` and `VerbForm`; `Capitalization` is dropped); only spellings and tags of `lexicon.tsv`, analyses ordered by tag, base word and features; generated, do not edit
+- `closed-class.tsv`: input: function words, auxiliaries, number words and interjections with their tags and a mode (`exact` replaces the dictionary tags, `add` extends them)
+- `overrides.tsv`: input: evidenced corrections (empty in this build)
+- `coverage.tsv`: machine-readable coverage report (written by `check_lexicon.py`)
+- `COVERAGE.md`: readable coverage report including every miss on open dev and open test
+- `sweep.tsv`: the attestation threshold sweep on train and dev (`check_lexicon.py --sweep`)
 
 ## Sources
 
-| Input | License | Used for |
-| --- | --- | --- |
-| WordSense `data/form/*.tsv` (151 files) at commit `6530de1928baf30f9a14446a54bfb5dd5f67b41c`: Open English WordNet 2025 forms and rule-generated inflections, Moby Part-of-Speech II reverse forms, project additions | Open English WordNet CC BY 4.0 (with the Princeton WordNet notice), Moby public domain (Grady Ward), project additions MIT, authored inflections CC0 1.0 | open-class spellings |
-| `closed-class.tsv` (project-authored from general knowledge of English) | CC0 1.0 | function words, auxiliaries, numbers, interjections |
-| `../open/train.tsv` tokens whose status is not `disputed` | CC0 1.0 annotations | tags the dictionaries lack |
-| `../masc/masc.tsv` | CC BY 3.0 US (derived) | tags the dictionaries lack, attested at least twice |
+- WordSense `data/form/*.tsv` (151 files) at commit `6530de1928baf30f9a14446a54bfb5dd5f67b41c`: Open English WordNet 2025 forms and rule-generated inflections, Moby Part-of-Speech II reverse forms, project additions: **License**: Open English WordNet CC BY 4.0 (with the Princeton WordNet notice), Moby public domain (Grady Ward), project additions MIT, authored inflections CC0 1.0; **Used for**: open-class spellings
+- `closed-class.tsv` (project-authored from general knowledge of English): **License**: CC0 1.0; **Used for**: function words, auxiliaries, numbers, interjections
+- `../open/train.tsv` tokens whose status is not `disputed`: **License**: CC0 1.0 annotations; **Used for**: tags the dictionaries lack
+- `../masc/masc.tsv`: **License**: CC BY 3.0 US (derived); **Used for**: tags the dictionaries lack, attested at least twice
 
 The SHA-256 of each form table is pinned in `tools/data/pins/wordsense-form.manifest.tsv`. The analyses use the same
 form tables, the closed-class list and the committed `lexicon.tsv` (the tags of each spelling) and no other input, so
@@ -65,7 +61,7 @@ never as lexicon data.
 
 The thresholds were chosen on the development split from the sweep below (train and dev only; test was never used).
 
-| K (open train) | M (MASC) | Spellings | Tags per spelling | Dev coverage, all tokens % | Dev coverage, non-disputed % |
+| K (open train) | M (MASC) | Spellings | Tags per spelling | Dev cov. %, all tokens | Dev cov. %, non-disputed |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 0 | 0 | 258,278 | 1.290 | 99.748 | 99.838 |
 | 1 | 0 | 261,236 | 1.292 | 99.836 | 99.893 |

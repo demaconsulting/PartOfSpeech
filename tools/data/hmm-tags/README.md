@@ -63,13 +63,11 @@ the SHA-256 of the DLL that ran, and the SHA-256 of the input.
 
 ## Pinned build used for the hard tranche
 
-| Item | Value |
-| --- | --- |
-| WordSense repository | `github.com/DemaConsulting/WordSense` (read only) |
-| Commit | `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (2026-11-01, "s3 infrastructure ...") |
-| DLL | `src/DemaConsulting.WordSense/bin/Debug/net10.0/DemaConsulting.WordSense.dll`, built 2026-11-05 from that commit (no tracked change in the tree) |
-| DLL SHA-256 | `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
-| Class | `BasicWordSenseModel` (no model files; embedded image), call `ClassifyAsync(IEnumerable<string>)` |
+- WordSense repository: `github.com/DemaConsulting/WordSense` (read only)
+- Commit: `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (2026-11-01, "s3 infrastructure ...")
+- DLL: `src/DemaConsulting.WordSense/bin/Debug/net10.0/DemaConsulting.WordSense.dll`, built 2026-11-05 from that commit (no tracked change in the tree)
+- DLL SHA-256: `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf`
+- Class: `BasicWordSenseModel` (no model files; embedded image), call `ClassifyAsync(IEnumerable<string>)`
 
 The binary is never committed. The class needs no model download, runs offline, and tags about 24,000 sentences in a few
 seconds.

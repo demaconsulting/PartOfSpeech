@@ -54,13 +54,11 @@ counts of every file of this folder.
 
 ## Files
 
-| File | Content |
-| --- | --- |
-| `headings.tsv` | the 374 lines in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md) ("Other Formats" describes the header and the extra comments); ids `headings-NNNN` |
-| `sources.tsv` | the 89 documents that the lines come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, lines used |
-| `excluded-documents.tsv` | documents left out: the 7 whose record lists a state or local government body as an author, and 1 with a private non-profit co-author and an uncertain public-domain basis (removed by the project owner; the rule 1 check after the build) |
-| `dropped-sentences.tsv` | counts of candidate lines dropped alone because they equal a sentence of a training or evaluation set or of the shapes development set (counts only, no text) |
-| `headings-2.tsv`, `headings-2-sources.tsv`, `headings-2-excluded-documents.tsv`, `headings-2-dropped-sentences.tsv` | the same four files for the second source `headings2` (see [Second Source](#second-source-headings-2tsv)); ids `headings2-NNNN` |
+- `headings.tsv`: the 374 lines in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md) ("Other Formats" describes the header and the extra comments); ids `headings-NNNN`
+- `sources.tsv`: the 89 documents that the lines come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, lines used
+- `excluded-documents.tsv`: documents left out: the 7 whose record lists a state or local government body as an author, and 1 with a private non-profit co-author and an uncertain public-domain basis (removed by the project owner; the rule 1 check after the build)
+- `dropped-sentences.tsv`: counts of candidate lines dropped alone because they equal a sentence of a training or evaluation set or of the shapes development set (counts only, no text)
+- `headings-2.tsv`, `headings-2-sources.tsv`, `headings-2-excluded-documents.tsv`, `headings-2-dropped-sentences.tsv`: the same four files for the second source `headings2` (see [Second Source](#second-source-headings-2tsv)); ids `headings2-NNNN`
 
 Each block has the comments `sent_id`, `source_id`, `text`, `word`, `lemma` and `stratum`, then one row `form`, `upos`, `status` for each
 token. `word` is the zero-based token index of the judged word, `lemma` its lower-case form, and `stratum` is `noun`, `imperative` or
@@ -120,18 +118,16 @@ The docstring of `tools/data/compound_heading_data.py` is the normative text of 
 
 Numbers of the run:
 
-| Stage | Lines |
-| --- | ---: |
-| stand-alone lines of the OCR text found by `heading_lines` (224 documents of the shared pool) | 195,739 |
-| clean heading lines kept for the frame | 2,976 |
-| frame hits: noun 1,424, imperative 505, proper 100 | 2,029 |
-| candidates after the lemma, document and total caps, 560 lemmas in 124 documents: noun 560, imperative 356, proper 96 | 1,012 |
-| dropped: judged word read as another class by both labelers (class mismatch) | 427 |
-| dropped: the labelers disagree on the judged word (target disagreement) | 12 |
-| dropped: a disputed token elsewhere in the line | 31 |
-| dropped by the caps: noun 108, proper 26 | 134 |
-| removed with the 8 documents (rule 7) | 34 |
-| **in `headings.tsv`** | **374** |
+- stand-alone lines of the OCR text found by `heading_lines` (224 documents of the shared pool): 195,739
+- clean heading lines kept for the frame: 2,976
+- frame hits: noun 1,424, imperative 505, proper 100: 2,029
+- candidates after the lemma, document and total caps, 560 lemmas in 124 documents: noun 560, imperative 356, proper 96: 1,012
+- dropped: judged word read as another class by both labelers (class mismatch): 427
+- dropped: the labelers disagree on the judged word (target disagreement): 12
+- dropped: a disputed token elsewhere in the line: 31
+- dropped by the caps: noun 108, proper 26: 134
+- removed with the 8 documents (rule 7): 34
+- **in `headings.tsv`**: **374**
 
 The class mismatches are 346 imperative lines (the first word read as NOUN by both 275 times, as ADJ 44 and as PROPN 27), 80 noun lines (the
 noun word read as PROPN 65 times, VERB 9, ADJ 4 and ADV 2) and 1 proper line. Candidate lines dropped alone because of an overlap
@@ -158,19 +154,31 @@ One sample was drawn and reviewed once; it was not drawn again.
 
 ## Sources
 
-| Family | Documents | Lines | Basis and origin |
-| --- | ---: | ---: | --- |
-| `usda` | 25 | 105 | Department of Agriculture bulletins, circulars and reports (Internet Archive); 17 U.S.C. 105 |
-| `usfs` | 15 | 84 | Forest Service publications (Internet Archive); 17 U.S.C. 105 |
-| `usbr` | 10 | 52 | Bureau of Reclamation and related Interior study reports (Internet Archive); 17 U.S.C. 105 |
-| `other` | 7 | 29 | Bureau of Land Management, Bureau of Fisheries and National Park Service publications (Internet Archive); 17 U.S.C. 105 |
-| `phs` | 12 | 25 | Public Health Service and Children's Bureau publications (Internet Archive); 17 U.S.C. 105 |
-| `usbm` | 3 | 24 | Bureau of Mines publications (Internet Archive); 17 U.S.C. 105 |
-| `army` | 5 | 18 | War Department and Department of the Army publications (Internet Archive); 17 U.S.C. 105 |
-| `usgs` | 6 | 17 | Geological Survey publications (Internet Archive); 17 U.S.C. 105 |
-| `navy` | 4 | 14 | Navy and Marine Corps publications (Internet Archive); 17 U.S.C. 105 |
-| `nbs` | 1 | 5 | National Bureau of Standards publications (Internet Archive); 17 U.S.C. 105 |
-| `wxb` | 1 | 1 | Weather Bureau publication (Internet Archive); 17 U.S.C. 105 |
+| Family | Documents | Lines |
+| --- | ---: | ---: |
+| `usda` | 25 | 105 |
+| `usfs` | 15 | 84 |
+| `usbr` | 10 | 52 |
+| `other` | 7 | 29 |
+| `phs` | 12 | 25 |
+| `usbm` | 3 | 24 |
+| `army` | 5 | 18 |
+| `usgs` | 6 | 17 |
+| `navy` | 4 | 14 |
+| `nbs` | 1 | 5 |
+| `wxb` | 1 | 1 |
+
+- `usda`: Department of Agriculture bulletins, circulars and reports (Internet Archive); 17 U.S.C. 105
+- `usfs`: Forest Service publications (Internet Archive); 17 U.S.C. 105
+- `usbr`: Bureau of Reclamation and related Interior study reports (Internet Archive); 17 U.S.C. 105
+- `other`: Bureau of Land Management, Bureau of Fisheries and National Park Service publications (Internet Archive); 17 U.S.C. 105
+- `phs`: Public Health Service and Children's Bureau publications (Internet Archive); 17 U.S.C. 105
+- `usbm`: Bureau of Mines publications (Internet Archive); 17 U.S.C. 105
+- `army`: War Department and Department of the Army publications (Internet Archive); 17 U.S.C. 105
+- `usgs`: Geological Survey publications (Internet Archive); 17 U.S.C. 105
+- `navy`: Navy and Marine Corps publications (Internet Archive); 17 U.S.C. 105
+- `nbs`: National Bureau of Standards publications (Internet Archive); 17 U.S.C. 105
+- `wxb`: Weather Bureau publication (Internet Archive); 17 U.S.C. 105
 
 `sources.tsv` lists only these used documents. Publication years are 1890 to 2008 (83 of the documents are from 1940 or later; older scans hold
 few stand-alone heading lines); every document is hashed (`raw_sha256` of the download, `text_sha256` of the
@@ -195,10 +203,8 @@ reports none.
 The lexicon is not built from this source, and the file does not change it (`lexicon/lexicon.tsv` is unchanged). Measured against
 `lexicon/lexicon.tsv` (`python tools/data/compound_heading_data.py --work <work-folder> report --source headings` prints the figures):
 
-| Measure | Listed | Of | Share |
-| --- | ---: | ---: | ---: |
-| word tokens whose gold tag the lexicon lists for the spelling (tokens without a letter or digit are not counted) | 1,508 | 1,565 | 96.36 percent |
-| distinct (lower-cased spelling, tag) pairs the lexicon lists | 895 | 948 | 94.41 percent |
+- word tokens whose gold tag the lexicon lists for the spelling (tokens without a letter or digit are not counted): **Listed**: 1,508; **Of**: 1,565; **Share**: 96.36 percent
+- distinct (lower-cased spelling, tag) pairs the lexicon lists: **Listed**: 895; **Of**: 948; **Share**: 94.41 percent
 
 Of the 53 unlisted pairs, 29 are spellings that the lexicon does not contain at all and 24 are spellings that the lexicon lists with other tags
 (for example `forests/PROPN`). 15 of the 53 contain a digit (numbers, ZIP codes, report numbers); the other 38 are hyphenated compounds
@@ -237,10 +243,13 @@ a frame and labeled by models, so a score on them says nothing about held-out te
 **What it is.** `headings2` has 247 real Title Case lines (1,160 tokens, 2 to 10 tokens each) from 59 US federal-government documents, in two
 strata, every token tagged by two blind model labelers who agree on it (every status is `unanimous`):
 
-| Stratum | Lines | Judged word (token 0 of the line) |
-| --- | ---: | --- |
-| `imperative` | 165 | the first word of an instruction line, a base verb: VERB (`Splint A Suspected Fracture`, `Locate a Target by Shift from a Known Point`) |
-| `initial-noun` | 82 | the first word of a noun-phrase heading whose first word can also be a verb: NOUN (the contrast stratum: the same kind of first word as a noun) |
+| Stratum | Lines |
+| --- | ---: |
+| `imperative` | 165 |
+| `initial-noun` | 82 |
+
+- `imperative`: the first word of an instruction line, a base verb: VERB (`Splint A Suspected Fracture`, `Locate a Target by Shift from a Known Point`)
+- `initial-noun`: the first word of a noun-phrase heading whose first word can also be a verb: NOUN (the contrast stratum: the same kind of first word as a noun)
 
 There are 144 distinct lemmas of the judged word (76 in the imperative stratum, 69 in the initial-noun stratum), at most 6 lines per lemma
 and at most 24 per document (the cap is 25); the imperative lines come from 30 of the 59 documents. The block format is that of `headings.tsv`
@@ -262,12 +271,10 @@ lines (82); 235 further lines were dropped at that cap.
 
 **Files.**
 
-| File | Content |
-| --- | --- |
-| `headings-2.tsv` | the 247 lines in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md); ids `headings2-NNNN` |
-| `headings-2-sources.tsv` | the 59 documents that the lines come from: family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, lines used |
-| `headings-2-excluded-documents.tsv` | documents left out after the build: none (header only) |
-| `headings-2-dropped-sentences.tsv` | counts of candidate lines dropped alone because of an overlap with a set (3 equal a set sentence, 20 equal a shapes development sentence, 1 is a near duplicate of one; counts only, no text) |
+- `headings-2.tsv`: the 247 lines in the corpus block format of [CONVENTIONS.md](../CONVENTIONS.md); ids `headings2-NNNN`
+- `headings-2-sources.tsv`: the 59 documents that the lines come from: family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, lines used
+- `headings-2-excluded-documents.tsv`: documents left out after the build: none (header only)
+- `headings-2-dropped-sentences.tsv`: counts of candidate lines dropped alone because of an overlap with a set (3 equal a set sentence, 20 equal a shapes development sentence, 1 is a near duplicate of one; counts only, no text)
 
 **Source and basis.** The lines are text of 59 documents that are US federal government works (17 U.S.C. 105), one `license_basis` cell per
 document in `headings-2-sources.tsv`, from the Internet Archive and hashed (the retrieval date is in the sources table); publication years are 1923 to 2025 (57 of the
@@ -277,18 +284,29 @@ Dependencies text, no sentence supplied by any consumer, no document with a non-
 of used sources or in either excluded-sources record. The same pool of training-side documents feeds `compound2`: 57 documents contribute to
 both, and no line is a sentence of the other.
 
-| Family | Documents | Lines | Origin |
-| --- | ---: | ---: | --- |
-| `army` | 37 | 192 | War Department and Department of the Army manuals (soldier's manuals, field manuals, training publications) |
-| `usda` | 8 | 23 | Department of Agriculture publications |
-| `phs` | 2 | 11 | Public Health Service publications |
-| `airforce` | 1 | 5 | Air Force manuals |
-| `navy` | 3 | 5 | Navy publications |
-| `marine` | 2 | 3 | Marine Corps publications |
-| `usfs` | 3 | 3 | Forest Service publications |
-| `other` | 1 | 3 | other federal bodies |
-| `coastguard` | 1 | 1 | Coast Guard publication |
-| `usbr` | 1 | 1 | Bureau of Reclamation publications |
+| Family | Documents | Lines |
+| --- | ---: | ---: |
+| `army` | 37 | 192 |
+| `usda` | 8 | 23 |
+| `phs` | 2 | 11 |
+| `airforce` | 1 | 5 |
+| `navy` | 3 | 5 |
+| `marine` | 2 | 3 |
+| `usfs` | 3 | 3 |
+| `other` | 1 | 3 |
+| `coastguard` | 1 | 1 |
+| `usbr` | 1 | 1 |
+
+- `army`: War Department and Department of the Army manuals (soldier's manuals, field manuals, training publications)
+- `usda`: Department of Agriculture publications
+- `phs`: Public Health Service publications
+- `airforce`: Air Force manuals
+- `navy`: Navy publications
+- `marine`: Marine Corps publications
+- `usfs`: Forest Service publications
+- `other`: other federal bodies
+- `coastguard`: Coast Guard publication
+- `usbr`: Bureau of Reclamation publications
 
 **Selection and labeling rule.** The normative text is the docstring of `tools/data/followup_data.py` (the trainer run log, section
 "Follow-up", records the rule, its pins and its amendments). In short:

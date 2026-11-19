@@ -68,27 +68,25 @@ describes the standard tranche (`dev.tsv`) unless it says otherwise.
 
 ## Files
 
-| File | Content |
-| --- | --- |
-| `dev.tsv` | the 700 sentences in the corpus block format of [CONVENTIONS.md](../../CONVENTIONS.md) ("Other Formats" describes the extra comments) |
-| `sources.tsv` | the 62 documents that the sentences come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used |
-| `excluded-sources.tsv` | the documents that are excluded from the set: `source_id`, `url`, `reason`, `decided` (see [Excluded Sources](#excluded-sources)) |
-| `leakage-report.tsv` | counts of the set against every other evaluation set (documents, exact sentences, near duplicates, shared probe word 5-grams); no sentence text |
-| `hard.tsv` | the 460 sentences of the hard tranche, same block format (see [Hard Tranche](#hard-tranche)); ids `shapes-dev-hard-NNNN` |
-| `hard-sources.tsv` | the 99 documents of the hard tranche, same columns as `sources.tsv` |
-| `hard-leakage-report.tsv` | counts of the hard tranche against every other evaluation set, the standard tranche included (shared documents are reported, not gated) |
-| `compound-head.tsv` | the 120 items of the `compound-head` tranche (100 targets, 20 controls), same block format; ids `shapes-dev-compound-head-NNNN` |
-| `headings.tsv` | the 115 heading lines of the `headings` tranche (95 targets, 20 controls), same block format plus `# kind`; ids `shapes-dev-headings-NNNN` |
-| `named-state.tsv` | the 112 sentences of the `named-state` tranche (100 targets, 12 controls), same block format; ids `shapes-dev-named-state-NNNN` |
-| `<tranche>-sources.tsv` | the documents of a new tranche (74, 51 and 59), same columns as `sources.tsv` |
-| `<tranche>-leakage-report.tsv` | counts of a new tranche against every other evaluation set, the standard and the hard tranche included, and against the other new tranches (shared documents among the tranches of one generation are reported, not gated; a document shared between the first generation and the follow-up fails) |
-| `compound-head-2.tsv` | the 255 items of the `compound-head-2` tranche (210 targets, 45 controls), same block format as `compound-head.tsv`; ids `shapes-dev-compound-head-2-NNNN` |
-| `headings-2.tsv` | the 129 heading lines of the `headings-2` tranche (109 targets, 20 controls), same block format plus `# kind` as `headings.tsv`; ids `shapes-dev-headings-2-NNNN` |
-| `compound-head-2-sources.tsv`, `headings-2-sources.tsv` | the documents of the follow-up tranches (89 and 35), same columns as `sources.tsv` |
-| `compound-head-2-leakage-report.tsv`, `headings-2-leakage-report.tsv` | counts of a follow-up tranche against every other evaluation set; a shared document is allowed only with the other follow-up tranche (none with the first-generation tranches) |
-| `deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv`, `clause-verbs.tsv` | the 450, 285, 236 and 446 sentences of the four technical tranches, same block format as `compound-head.tsv` (comments `shape`, `role`, `target`, `lemma`, `origin`, `kind`, and where the shape has them `term`, `frame` and `unit`); ids `shapes-dev-deverbal-heads-NNNN`, `shapes-dev-defined-terms-NNNN`, `shapes-dev-step-lines-NNNN`, `shapes-dev-clause-verbs-NNNN` |
-| `deverbal-heads-sources.tsv`, `defined-terms-sources.tsv`, `step-lines-sources.tsv`, `clause-verbs-sources.tsv` | the documents of the technical tranches (156, 95, 97 and 139), same columns as `sources.tsv` |
-| `deverbal-heads-leakage-report.tsv`, `defined-terms-leakage-report.tsv`, `step-lines-leakage-report.tsv`, `clause-verbs-leakage-report.tsv` | counts of a technical tranche against every other evaluation set; a shared document is allowed only with another technical tranche (none with any earlier tranche) |
+- `dev.tsv`: the 700 sentences in the corpus block format of [CONVENTIONS.md](../../CONVENTIONS.md) ("Other Formats" describes the extra comments)
+- `sources.tsv`: the 62 documents that the sentences come from (only used documents): family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes, sentences used
+- `excluded-sources.tsv`: the documents that are excluded from the set: `source_id`, `url`, `reason`, `decided` (see [Excluded Sources](#excluded-sources))
+- `leakage-report.tsv`: counts of the set against every other evaluation set (documents, exact sentences, near duplicates, shared probe word 5-grams); no sentence text
+- `hard.tsv`: the 460 sentences of the hard tranche, same block format (see [Hard Tranche](#hard-tranche)); ids `shapes-dev-hard-NNNN`
+- `hard-sources.tsv`: the 99 documents of the hard tranche, same columns as `sources.tsv`
+- `hard-leakage-report.tsv`: counts of the hard tranche against every other evaluation set, the standard tranche included (shared documents are reported, not gated)
+- `compound-head.tsv`: the 120 items of the `compound-head` tranche (100 targets, 20 controls), same block format; ids `shapes-dev-compound-head-NNNN`
+- `headings.tsv`: the 115 heading lines of the `headings` tranche (95 targets, 20 controls), same block format plus `# kind`; ids `shapes-dev-headings-NNNN`
+- `named-state.tsv`: the 112 sentences of the `named-state` tranche (100 targets, 12 controls), same block format; ids `shapes-dev-named-state-NNNN`
+- `<tranche>-sources.tsv`: the documents of a new tranche (74, 51 and 59), same columns as `sources.tsv`
+- `<tranche>-leakage-report.tsv`: counts of a new tranche against every other evaluation set, the standard and the hard tranche included, and against the other new tranches (shared documents among the tranches of one generation are reported, not gated; a document shared between the first generation and the follow-up fails)
+- `compound-head-2.tsv`: the 255 items of the `compound-head-2` tranche (210 targets, 45 controls), same block format as `compound-head.tsv`; ids `shapes-dev-compound-head-2-NNNN`
+- `headings-2.tsv`: the 129 heading lines of the `headings-2` tranche (109 targets, 20 controls), same block format plus `# kind` as `headings.tsv`; ids `shapes-dev-headings-2-NNNN`
+- `compound-head-2-sources.tsv`, `headings-2-sources.tsv`: the documents of the follow-up tranches (89 and 35), same columns as `sources.tsv`
+- `compound-head-2-leakage-report.tsv`, `headings-2-leakage-report.tsv`: counts of a follow-up tranche against every other evaluation set; a shared document is allowed only with the other follow-up tranche (none with the first-generation tranches)
+- `deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv`, `clause-verbs.tsv`: the 450, 285, 236 and 446 sentences of the four technical tranches, same block format as `compound-head.tsv` (comments `shape`, `role`, `target`, `lemma`, `origin`, `kind`, and where the shape has them `term`, `frame` and `unit`); ids `shapes-dev-deverbal-heads-NNNN`, `shapes-dev-defined-terms-NNNN`, `shapes-dev-step-lines-NNNN`, `shapes-dev-clause-verbs-NNNN`
+- `deverbal-heads-sources.tsv`, `defined-terms-sources.tsv`, `step-lines-sources.tsv`, `clause-verbs-sources.tsv`: the documents of the technical tranches (156, 95, 97 and 139), same columns as `sources.tsv`
+- `deverbal-heads-leakage-report.tsv`, `defined-terms-leakage-report.tsv`, `step-lines-leakage-report.tsv`, `clause-verbs-leakage-report.tsv`: counts of a technical tranche against every other evaluation set; a shared document is allowed only with another technical tranche (none with any earlier tranche)
 
 Each sentence block has the comments `sent_id`, `source_id`, `text`, `shape`, `role` (`target` or `control`), `target` (the
 zero-based index of the judged word), `lemma` and `origin` (`real` or `authored`), then one row `form`, `upos`, `status`
@@ -215,14 +213,21 @@ all 25 rows in every source table and every sentence of `data/technical/` and of
 
 ## Sources
 
-| Family | Documents | Sentences | Basis and origin |
-| --- | ---: | ---: | --- |
-| `usda` | 27 | 174 | Department of Agriculture farm, home and garden publications (scans on the Internet Archive); 17 U.S.C. 105 |
-| `army` | 9 | 194 | War Department and Department of the Army field manuals (scans on the Internet Archive); 17 U.S.C. 105 |
-| `nasa` | 13 | 104 | NASA handbooks and Apollo experience reports (NASA Technical Reports Server); 17 U.S.C. 105 and the NASA media usage statement |
-| `usfs` | 8 | 97 | Forest Service bulletins and handbooks (scans on the Internet Archive); 17 U.S.C. 105 |
-| `navy` | 3 | 81 | Navy training and medical manuals (scans on the Internet Archive); 17 U.S.C. 105 |
-| `usbm` | 2 | 50 | Bureau of Mines first-aid instructions (scans on the Internet Archive); 17 U.S.C. 105 |
+| Family | Documents | Sentences |
+| --- | ---: | ---: |
+| `usda` | 27 | 174 |
+| `army` | 9 | 194 |
+| `nasa` | 13 | 104 |
+| `usfs` | 8 | 97 |
+| `navy` | 3 | 81 |
+| `usbm` | 2 | 50 |
+
+- `usda`: Department of Agriculture farm, home and garden publications (scans on the Internet Archive); 17 U.S.C. 105
+- `army`: War Department and Department of the Army field manuals (scans on the Internet Archive); 17 U.S.C. 105
+- `nasa`: NASA handbooks and Apollo experience reports (NASA Technical Reports Server); 17 U.S.C. 105 and the NASA media usage statement
+- `usfs`: Forest Service bulletins and handbooks (scans on the Internet Archive); 17 U.S.C. 105
+- `navy`: Navy training and medical manuals (scans on the Internet Archive); 17 U.S.C. 105
+- `usbm`: Bureau of Mines first-aid instructions (scans on the Internet Archive); 17 U.S.C. 105
 
 `sources.tsv` lists only these used documents. Publication years are 1917 to 2007; every document is hashed
 (`raw_sha256` of the download, `text_sha256` of the extracted sentences) and carries its retrieval date in `sources.tsv`.
@@ -269,14 +274,12 @@ order, the commits and the round sizes are in the run log.
 
 Inputs of the selection:
 
-| Input | Value |
-| --- | --- |
-| Text | 123 federal documents, 60,297 sentences (63 documents of the standard tranche's work folder without the two excluded NIST handbooks, plus 60 newly sourced documents) |
-| Classifier of the selection signal | the WordSense Basic classifier (HMM tagger plus cue model), a different model family from another project |
-| WordSense commit | `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (read only; never modified) |
-| `DemaConsulting.WordSense.dll` SHA-256 | `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
-| `hmm.tsv` SHA-256 (the classifier's noun and verb mass for every token of the text) | `3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c` |
-| `tokens.tsv` SHA-256 (the harness input) | `197d68f161bb1e05357caa74ed0a53a85c38a675e491c82f2365450b9294c328` |
+- Text: 123 federal documents, 60,297 sentences (63 documents of the standard tranche's work folder without the two excluded NIST handbooks, plus 60 newly sourced documents)
+- Classifier of the selection signal: the WordSense Basic classifier (HMM tagger plus cue model), a different model family from another project
+- WordSense commit: `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (read only; never modified)
+- `DemaConsulting.WordSense.dll` SHA-256: `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf`
+- `hmm.tsv` SHA-256 (the classifier's noun and verb mass for every token of the text): `3014efd2044702c82c02c3557bb47f56ed985537f0d3154393455b110b176a8c`
+- `tokens.tsv` SHA-256 (the harness input): `197d68f161bb1e05357caa74ed0a53a85c38a675e491c82f2365450b9294c328`
 
 The rule (`python tools/data/shapes_dev.py --tranche hard`; the docstring of the tool has the same text):
 
@@ -430,11 +433,15 @@ rule is stated once below ("The Rule"), as applied to the committed data.
 - **Top-up rounds:** two exist: round `h2` (more `headings` imperative candidates) and round `h3` (more `compound-head` controls; no
   target).
 
-| Tranche | File | Shape id | The judged word is | Gold |
-| --- | --- | --- | --- | --- |
-| `compound-head` | `compound-head.tsv` | `n-compound-head-ambiguous` | the head (the last noun) of a noun compound, in a spelling that the lexicon lists as noun and verb, in the cases that the frame of `n-compound-head` does not hold | Noun (NOUN or PROPN); controls: the same lemma as a verb |
-| `headings` | `headings.tsv` | `heading-titlecase` | a capitalized word of a Title Case heading line: a common noun (kind `noun`), the initial imperative (kind `imperative`) or a true name (kind `proper`, a control) | exactly NOUN, VERB and PROPN |
-| `named-state` | `named-state.tsv` | `n-named-state` | a capitalized or ALL-CAPS state, position or setting name after a preposition (`set to OFF`, `moved to STANDBY`) | Noun (NOUN or PROPN); controls: the same lemma as a verb |
+| Tranche | File | Shape id |
+| --- | --- | --- |
+| `compound-head` | `compound-head.tsv` | `n-compound-head-ambiguous` |
+| `headings` | `headings.tsv` | `heading-titlecase` |
+| `named-state` | `named-state.tsv` | `n-named-state` |
+
+- `compound-head`: **The judged word is**: the head (the last noun) of a noun compound, in a spelling that the lexicon lists as noun and verb, in the cases that the frame of `n-compound-head` does not hold; **Gold**: Noun (NOUN or PROPN); controls: the same lemma as a verb
+- `headings`: **The judged word is**: a capitalized word of a Title Case heading line: a common noun (kind `noun`), the initial imperative (kind `imperative`) or a true name (kind `proper`, a control); **Gold**: exactly NOUN, VERB and PROPN
+- `named-state`: **The judged word is**: a capitalized or ALL-CAPS state, position or setting name after a preposition (`set to OFF`, `moved to STANDBY`); **Gold**: Noun (NOUN or PROPN); controls: the same lemma as a verb
 
 ### The Shape of `compound-head`
 
@@ -485,14 +492,12 @@ There is no band: the pool of real frames is thin and a band would shrink it fur
 
 ### Inputs of the Selection
 
-| Input | Value |
-| --- | --- |
-| Text | 288 US federal documents (Army and Army Air Forces 123, Department of Agriculture 104, Forest Service 48, Navy 11, NASA 2), 163,727 sentences and 139,208 candidate heading lines, none of them in a training source or in any evaluation set other than these tranches (`dev.tsv`, `hard.tsv` and `imperative.tsv` included), and none by id, URL or archive.org identifier in the source table of any of those; the documents that the three new tranches use come from this pool and may be shared among those tranches (see "Documents") |
-| Selection signal of `compound-head` | the WordSense Basic classifier (HMM tagger plus cue model), as in the hard tranche; no signal for the other two tranches |
-| WordSense commit | `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (read only) |
-| `DemaConsulting.WordSense.dll` SHA-256 | `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
-| `hmm.tsv` SHA-256 | `f20d0952ab09b838c32fa56d4c14f45743db60d74db0fefaabea5150499ed6f1` |
-| `tokens.tsv` SHA-256 (harness input, 289,335 units) | `5b800937b439b53a54c76d270c23ca510a26967716c45f748aa31cd658a8b055` |
+- Text: 288 US federal documents (Army and Army Air Forces 123, Department of Agriculture 104, Forest Service 48, Navy 11, NASA 2), 163,727 sentences and 139,208 candidate heading lines, none of them in a training source or in any evaluation set other than these tranches (`dev.tsv`, `hard.tsv` and `imperative.tsv` included), and none by id, URL or archive.org identifier in the source table of any of those; the documents that the three new tranches use come from this pool and may be shared among those tranches (see "Documents")
+- Selection signal of `compound-head`: the WordSense Basic classifier (HMM tagger plus cue model), as in the hard tranche; no signal for the other two tranches
+- WordSense commit: `6530de1928baf30f9a14446a54bfb5dd5f67b41c` (read only)
+- `DemaConsulting.WordSense.dll` SHA-256: `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf`
+- `hmm.tsv` SHA-256: `f20d0952ab09b838c32fa56d4c14f45743db60d74db0fefaabea5150499ed6f1`
+- `tokens.tsv` SHA-256 (harness input, 289,335 units): `5b800937b439b53a54c76d270c23ca510a26967716c45f748aa31cd658a8b055`
 
 The tool refuses any `hmm.tsv` or `tokens.tsv` whose bytes differ from the two pinned values, so edited mass cells cannot enter a selection.
 
@@ -610,10 +615,13 @@ and each gold tag is the agreement of two blind model labelers. They have the sh
 `shape`, `role`, `target`, `lemma`, `origin` and, for headings, `kind`). They are built by `python tools/data/followup_data.py` (the normative text of the rule is
 its docstring; the trainer run log, section "Follow-up", records the rule, its pins and its amendments) and no PartOfSpeech model takes part in the selection.
 
-| Tranche | File | Items | Targets | Controls | Documents | Head or word lemmas | Tokens |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `compound-head-2` | `compound-head-2.tsv` | 255 | 210 (gold NOUN) | 45 (the same lemma as a verb, gold VERB) | 89 | 157 | 4,576 |
-| `headings-2` | `headings-2.tsv` | 129 | 109: `imperative` 59 (gold VERB), `noun` 50 (gold NOUN) | 20: `proper` (gold PROPN) | 35 | 85 | 678 |
+| Tranche | File | Items | Controls | Documents | Head or word lemmas | Tokens |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `compound-head-2` | `compound-head-2.tsv` | 255 | 45 (the same lemma as a verb, gold VERB) | 89 | 157 | 4,576 |
+| `headings-2` | `headings-2.tsv` | 129 | 20: `proper` (gold PROPN) | 35 | 85 | 678 |
+
+- `compound-head-2`: 210 (gold NOUN)
+- `headings-2`: 109: `imperative` 59 (gold VERB), `noun` 50 (gold NOUN)
 
 `compound-head.tsv` and `compound-head-2.tsv` together have 310 targets and 65 controls; `headings.tsv` and `headings-2.tsv` together have 204 targets
 (`imperative` 104 with the 45 of `headings.tsv`, `noun` 100 with its 50) and 40 controls. The two follow-up tranches share 30 documents and no sentence;
@@ -689,12 +697,10 @@ no Universal Dependencies text, no sentence supplied by any consumer, and no doc
 
 ### Inputs of the Follow-up Selection
 
-| Input | Value |
-| --- | --- |
-| Documents | 416 US federal documents of the follow-up (147 on the development side, 269 on the training side; whole title families are on one side); `sources-draft.tsv` SHA-256 `77e6a5250877694ae67e36a5a133d6cff6f8e245864ed1434f9fab6114d2f2c2` |
-| `tokens.tsv` SHA-256 (the units of the draft: 767,460) | `4387679a975ee8ca005f8d9267ab38e2bc414ee888d907701e25cff2cd406e98` |
-| WordSense commit and `DemaConsulting.WordSense.dll` SHA-256 | `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
-| `hmm.tsv` SHA-256 (the Basic classifier's noun and verb mass for every token of the text; `compound-head-2` only) | `42c7588b9c01632a96749a1a14248e8bdf2cb1be64999e177bd657f288276edb` |
+- Documents: 416 US federal documents of the follow-up (147 on the development side, 269 on the training side; whole title families are on one side); `sources-draft.tsv` SHA-256 `77e6a5250877694ae67e36a5a133d6cff6f8e245864ed1434f9fab6114d2f2c2`
+- `tokens.tsv` SHA-256 (the units of the draft: 767,460): `4387679a975ee8ca005f8d9267ab38e2bc414ee888d907701e25cff2cd406e98`
+- WordSense commit and `DemaConsulting.WordSense.dll` SHA-256: `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf`
+- `hmm.tsv` SHA-256 (the Basic classifier's noun and verb mass for every token of the text; `compound-head-2` only): `42c7588b9c01632a96749a1a14248e8bdf2cb1be64999e177bd657f288276edb`
 
 ### Hand Check of the Follow-up Tranches
 
@@ -738,12 +744,24 @@ rule and its application), and no PartOfSpeech model takes part in
 the selection. The four training sources of the same shapes are in [`data/technical/`](../../technical/README.md), cut from the other side of
 one partition of title families; no document is on both sides.
 
-| Tranche | File | Sentences | Targets | Controls | Scoring | Documents | Lemmas | Tokens |
-| --- | --- | ---: | --- | --- | --- | ---: | ---: | ---: |
-| `deverbal-heads` | `deverbal-heads.tsv` | 450 | 360 (gold NOUN): `pred` 62, `num` 60, `ing` 140, `other` 98 | 90: `verb` (the same lemma as a verb, gold VERB) | class (Noun or Verb) | 156 | 246 | 8,762 |
-| `defined-terms` | `defined-terms.tsv` | 285 | 215: `noun` 174 (gold NOUN), `adj` 41 (gold ADJ) | 70: `proper` (gold PROPN) | exact tag | 95 | 200 | 5,580 |
-| `step-lines` | `step-lines.tsv` | 236 | 166: `imperative` (gold VERB) | 70: `noun` (gold NOUN) | exact tag | 97 | 164 | 1,906 |
-| `clause-verbs` | `clause-verbs.tsv` | 446 | 356: `main` 288, `sub` 68 (gold VERB) | 90: `noun` 60 (gold NOUN), `adj` 30 (gold ADJ) | exact tag | 139 | 264 | 7,947 |
+| Tranche | File | Sentences | Controls |
+| --- | --- | ---: | --- |
+| `deverbal-heads` | `deverbal-heads.tsv` | 450 | 90: `verb` (the same lemma as a verb, gold VERB) |
+| `defined-terms` | `defined-terms.tsv` | 285 | 70: `proper` (gold PROPN) |
+| `step-lines` | `step-lines.tsv` | 236 | 70: `noun` (gold NOUN) |
+| `clause-verbs` | `clause-verbs.tsv` | 446 | 90: `noun` 60 (gold NOUN), `adj` 30 (gold ADJ) |
+
+| Tranche | Scoring | Documents | Lemmas | Tokens |
+| --- | --- | ---: | ---: | ---: |
+| `deverbal-heads` | class (Noun or Verb) | 156 | 246 | 8,762 |
+| `defined-terms` | exact tag | 95 | 200 | 5,580 |
+| `step-lines` | exact tag | 97 | 164 | 1,906 |
+| `clause-verbs` | exact tag | 139 | 264 | 7,947 |
+
+- `deverbal-heads`: 360 (gold NOUN): `pred` 62, `num` 60, `ing` 140, `other` 98
+- `defined-terms`: 215: `noun` 174 (gold NOUN), `adj` 41 (gold ADJ)
+- `step-lines`: 166: `imperative` (gold VERB)
+- `clause-verbs`: 356: `main` 288, `sub` 68 (gold VERB)
 
 The four tranches have 1,417 sentences and 24,195 tokens: 1,097 targets and 320 controls, in 217 distinct documents. Each tranche IS the size in the
 table (for example, `step-lines.tsv` has 166 imperative targets and 70 noun controls). The judged word of an item is never `disputed`. The scoring
@@ -816,13 +834,11 @@ text, no sentence supplied by any consumer, and no document with a non-federal c
 
 ### Inputs of the Technical Selection
 
-| Input | Value |
-| --- | --- |
-| Documents | 572 US federal documents sourced for the technical-text data (303 on the development side, 269 on the training side; whole title families are on one side); `sources-draft.tsv` SHA-256 `b48d463364275182f4e704625d069b9c9ef06f48ca068405925c06ab0be142ae`; the tranches use 217 of the development documents |
-| `tokens.tsv` SHA-256 (the units of the draft: 459,396, with the step units) | `dfe0ba191496d53727c1dcea8d2d5e0841a7885a4ad9c489e7f8b81f6f7ef4aa` |
-| WordSense commit and `DemaConsulting.WordSense.dll` SHA-256 | `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf` |
-| `hmm.tsv` SHA-256 (the Basic classifier's noun and verb mass for every token of the text; `deverbal-heads`, `step-lines`, `clause-verbs`) | `43432b1a2522bf6e85b7a6e380dfaa4d94a5b26a066e94fa0b8c127c9bf602f7` |
-| `data/CONVENTIONS.md` SHA-256 as the labelers read it | `42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2` |
+- Documents: 572 US federal documents sourced for the technical-text data (303 on the development side, 269 on the training side; whole title families are on one side); `sources-draft.tsv` SHA-256 `b48d463364275182f4e704625d069b9c9ef06f48ca068405925c06ab0be142ae`; the tranches use 217 of the development documents
+- `tokens.tsv` SHA-256 (the units of the draft: 459,396, with the step units): `dfe0ba191496d53727c1dcea8d2d5e0841a7885a4ad9c489e7f8b81f6f7ef4aa`
+- WordSense commit and `DemaConsulting.WordSense.dll` SHA-256: `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, `b96e0055664896983e311f626d41e5251a2dcf1a236d86f6ec50beaae6a746bf`
+- `hmm.tsv` SHA-256 (the Basic classifier's noun and verb mass for every token of the text; `deverbal-heads`, `step-lines`, `clause-verbs`): `43432b1a2522bf6e85b7a6e380dfaa4d94a5b26a066e94fa0b8c127c9bf602f7`
+- `data/CONVENTIONS.md` SHA-256 as the labelers read it: `42da154c60272dc9a105c5496fa3c8797cffa81cfb55d34505497b33520e5bb2`
 
 ### Hand Check of the Technical Tranches
 
@@ -831,14 +847,12 @@ purpose (the samples are drawn with the fixed seeds `deverbal-heads` 20261201, `
 20261204; one blind reviewer per tranche). The judged word agrees with the label for 100% of the judged items in every tranche; the trainer run log,
 section "beta.3 phase 1: hand checks and registration", has the record.
 
-| Measure | `deverbal-heads` | `defined-terms` | `step-lines` | `clause-verbs` |
-| --- | ---: | ---: | ---: | ---: |
-| judged word correct / incorrect / unclear | 60 / 0 / 0 | 60 / 0 / 0 | 57 / 0 / 3 | 60 / 0 / 0 |
-| marked-word precision (gate at least 95%) | 100.0% | 100.0% | 100.0% | 100.0% |
-| whole item correct (no other token marked wrong) | 96.7% | 95.0% | 93.3% | 98.3% |
-| token precision (reported, not gated) | 99.83% (2 wrong of 1,160) | 99.74% (3 of 1,157) | 99.63% (2 of 539) | 99.91% (1 of 1,147) |
-| controls accepted | 0 of 4 | 0 of 4 | 0 of 4 | 0 of 4 |
-| gate (judged word at least 95%, at most 1 control accepted, no unanswered item) | passed | passed | passed | passed |
+- judged word correct / incorrect / unclear: **`deverbal-heads`**: 60 / 0 / 0; **`defined-terms`**: 60 / 0 / 0; **`step-lines`**: 57 / 0 / 3; **`clause-verbs`**: 60 / 0 / 0
+- marked-word precision (gate at least 95%): **`deverbal-heads`**: 100.0%; **`defined-terms`**: 100.0%; **`step-lines`**: 100.0%; **`clause-verbs`**: 100.0%
+- whole item correct (no other token marked wrong): **`deverbal-heads`**: 96.7%; **`defined-terms`**: 95.0%; **`step-lines`**: 93.3%; **`clause-verbs`**: 98.3%
+- token precision (reported, not gated): **`deverbal-heads`**: 99.83% (2 wrong of 1,160); **`defined-terms`**: 99.74% (3 of 1,157); **`step-lines`**: 99.63% (2 of 539); **`clause-verbs`**: 99.91% (1 of 1,147)
+- controls accepted: **`deverbal-heads`**: 0 of 4; **`defined-terms`**: 0 of 4; **`step-lines`**: 0 of 4; **`clause-verbs`**: 0 of 4
+- gate (judged word at least 95%, at most 1 control accepted, no unanswered item): **`deverbal-heads`**: passed; **`defined-terms`**: passed; **`step-lines`**: passed; **`clause-verbs`**: passed
 
 ### Leakage and License Checks of the Technical Tranches
 

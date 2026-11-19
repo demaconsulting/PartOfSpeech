@@ -31,13 +31,19 @@ training and evaluation corpus of this library.
 
 ## Files
 
-| File | Sentences | Tokens | Documents | Content |
-| --- | ---: | ---: | ---: | --- |
-| `train.tsv` | 11,990 | 209,224 | 4,291 | training split (hash buckets 0 to 79 of the document id) |
-| `dev.tsv` | 1,489 | 26,232 | 502 | development split (buckets 80 to 89) |
-| `test.tsv` | 1,501 | 26,185 | 517 | test split (buckets 90 to 99); report only, never tune on it |
-| `sources.tsv` | | | 5,311 | one row per source document: family, title, URL, author, year, license basis, terms URL, hashes (the 5,310 documents of the splits plus the project-written STE challenge document) |
-| `LICENSE` | | | | CC0 1.0 Universal legal code |
+| File | Sentences | Tokens | Documents |
+| --- | ---: | ---: | ---: |
+| `train.tsv` | 11,990 | 209,224 | 4,291 |
+| `dev.tsv` | 1,489 | 26,232 | 502 |
+| `test.tsv` | 1,501 | 26,185 | 517 |
+| `sources.tsv` |  |  | 5,311 |
+| `LICENSE` |  |  |  |
+
+- `train.tsv`: training split (hash buckets 0 to 79 of the document id)
+- `dev.tsv`: development split (buckets 80 to 89)
+- `test.tsv`: test split (buckets 90 to 99); report only, never tune on it
+- `sources.tsv`: one row per source document: family, title, URL, author, year, license basis, terms URL, hashes (the 5,310 documents of the splits plus the project-written STE challenge document)
+- `LICENSE`: CC0 1.0 Universal legal code
 
 The split rule is `int(SHA-256(source_id)[:8], 16) % 100`, so a document is on one side only. Documents by source
 family (train, dev, test): Tatoeba 3,035 / 357 / 358 sentences (one document each), Project Gutenberg 136 / 21 / 18 books,

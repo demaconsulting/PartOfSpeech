@@ -18,22 +18,37 @@ sets, and how to reproduce the evaluation (including the local UD English-EWT ru
 
 ## Contents
 
-| Folder | What | Sentences | Tokens | Size | License |
-| --- | --- | ---: | ---: | ---: | --- |
-| [open/](open/README.md) | open corpus, train/dev/test, UPOS | 14,980 | 261,641 | 10.3 MB | CC0-1.0 annotations; PD/CC0 sentences |
-| [masc/](masc/README.md) | MASC written genres, Penn trees mapped to UPOS | 22,829 | 386,445 | 11.6 MB | CC-BY-3.0-US |
-| [silver/](silver/README.md) | BERT silver: Tatoeba and Gutenberg text, model labels mapped to UPOS | 13,971 | 242,699 | 8.5 MB | CC0-1.0 labels; CC0/PD sentences |
-| [imperative/](imperative/README.md) | imperative-initial sentences from US federal instructional text, two-labeler agreement (training; weight 1 in `training.json`) | 900 | 11,946 | 0.5 MB | CC0-1.0 labels; US federal-work sentences |
-| [compound/](compound/README.md) | sentences with a noun compound whose head can also be a verb, from US federal text, two-labeler agreement: two sources, `compound.tsv` (742 sentences, 14,692 tokens) and `compound-2.tsv` (1,100 sentences, 20,745 tokens) (training; weight 1 in `training.json`) | 1,842 | 35,437 | 1.6 MB | CC0-1.0 labels; US federal-work sentences |
-| [headings/](headings/README.md) | Title Case heading, caption and step-title lines from US federal text, two-labeler agreement: two sources, `headings.tsv` (374 lines, 1,664 tokens) and `headings-2.tsv` (247 lines, 1,160 tokens; strata `imperative` 165 and `initial-noun` 82) (training; weight 0 in `training.json`) | 621 | 2,824 | 0.4 MB | CC0-1.0 labels; US federal-work lines |
-| [technical/](technical/README.md) | technical-text sentences from US federal text, two-labeler agreement, four sources: `deverbal.tsv` (637 sentences, 12,007 tokens; deverbal compound heads), `terms.tsv` (373 sentences, 7,472 tokens; capitalized defined terms), `steps.tsv` (531 sentences, 4,894 tokens; step-line imperatives) and `clauses.tsv` (310 sentences, 5,870 tokens; base-form ambiguity in a clause) (training; weight 1 in `training.json`) | 1,851 | 30,243 | 1.7 MB | CC0-1.0 labels; US federal-work sentences |
-| [eval/shapes/](eval/shapes/README.md) | noun/verb shape probe (evaluation) | 560 | | 0.06 MB | CC0-1.0 |
-| [eval/shapes-dev/](eval/shapes-dev/README.md) | hard-shape development set from US federal-government text (development only): standard tranche `dev.tsv` (700 sentences, 12,279 tokens), hard tranche `hard.tsv` (460 sentences, 7,936 tokens), three single-shape tranches `compound-head.tsv` (120 sentences, 2,148 tokens), `headings.tsv` (115 heading lines, 507 tokens) and `named-state.tsv` (112 sentences, 1,970 tokens), two follow-up tranches `compound-head-2.tsv` (255 sentences, 4,576 tokens) and `headings-2.tsv` (129 heading lines, 678 tokens), and four technical tranches `deverbal-heads.tsv` (450 sentences, 8,762 tokens), `defined-terms.tsv` (285 sentences, 5,580 tokens), `step-lines.tsv` (236 sentences, 1,906 tokens) and `clause-verbs.tsv` (446 sentences, 7,947 tokens) | 3,308 | 54,289 | 3.2 MB | CC0-1.0 labels; US federal-work sentences |
-| [eval/gold-v2/](eval/gold-v2/README.md) | single-target gold tokens (evaluation) | 5,072 | | 2.4 MB | CC0-1.0 labels; PD sentences |
-| [eval/ste-challenge/](eval/ste-challenge/README.md) | simplified-technical-English challenge set (evaluation) | 32 | 272 | 0.01 MB | CC0-1.0 |
-| [eval/ud-ewt/](eval/ud-ewt/README.md) | UD English-EWT: fetch documentation only, **no data** | | | | CC BY-SA 4.0, never committed |
-| [lexicon/](lexicon/README.md) | spelling to UPOS tags lexicon, analyses (base word, tag and features of each form), closed-class list, coverage report | | | 15.3 MB | CC-BY-4.0 and CC-BY-3.0-US (attribution), others |
-| [corrections/](corrections/README.md) | label corrections for open, MASC and silver (mechanical rows, adjudicated rows, candidates, exceptions); **applied** to the corpora | | | 2.7 MB | CC0-1.0 labels; MASC token forms and excerpts CC-BY-3.0-US |
+| Folder | Sentences | Tokens | Size |
+| --- | ---: | ---: | ---: |
+| [open/](open/README.md) | 14,980 | 261,641 | 10.3 MB |
+| [masc/](masc/README.md) | 22,829 | 386,445 | 11.6 MB |
+| [silver/](silver/README.md) | 13,971 | 242,699 | 8.5 MB |
+| [imperative/](imperative/README.md) | 900 | 11,946 | 0.5 MB |
+| [compound/](compound/README.md) | 1,842 | 35,437 | 1.6 MB |
+| [headings/](headings/README.md) | 621 | 2,824 | 0.4 MB |
+| [technical/](technical/README.md) | 1,851 | 30,243 | 1.7 MB |
+| [eval/shapes/](eval/shapes/README.md) | 560 |  | 0.06 MB |
+| [eval/shapes-dev/](eval/shapes-dev/README.md) | 3,308 | 54,289 | 3.2 MB |
+| [eval/gold-v2/](eval/gold-v2/README.md) | 5,072 |  | 2.4 MB |
+| [eval/ste-challenge/](eval/ste-challenge/README.md) | 32 | 272 | 0.01 MB |
+| [eval/ud-ewt/](eval/ud-ewt/README.md) |  |  |  |
+| [lexicon/](lexicon/README.md) |  |  | 15.3 MB |
+| [corrections/](corrections/README.md) |  |  | 2.7 MB |
+
+- [open/](open/README.md): **What**: open corpus, train/dev/test, UPOS; **License**: CC0-1.0 annotations; PD/CC0 sentences
+- [masc/](masc/README.md): **What**: MASC written genres, Penn trees mapped to UPOS; **License**: CC-BY-3.0-US
+- [silver/](silver/README.md): **What**: BERT silver: Tatoeba and Gutenberg text, model labels mapped to UPOS; **License**: CC0-1.0 labels; CC0/PD sentences
+- [imperative/](imperative/README.md): **What**: imperative-initial sentences from US federal instructional text, two-labeler agreement (training; weight 1 in `training.json`); **License**: CC0-1.0 labels; US federal-work sentences
+- [compound/](compound/README.md): **What**: sentences with a noun compound whose head can also be a verb, from US federal text, two-labeler agreement: two sources, `compound.tsv` (742 sentences, 14,692 tokens) and `compound-2.tsv` (1,100 sentences, 20,745 tokens) (training; weight 1 in `training.json`); **License**: CC0-1.0 labels; US federal-work sentences
+- [headings/](headings/README.md): **What**: Title Case heading, caption and step-title lines from US federal text, two-labeler agreement: two sources, `headings.tsv` (374 lines, 1,664 tokens) and `headings-2.tsv` (247 lines, 1,160 tokens; strata `imperative` 165 and `initial-noun` 82) (training; weight 0 in `training.json`); **License**: CC0-1.0 labels; US federal-work lines
+- [technical/](technical/README.md): **What**: technical-text sentences from US federal text, two-labeler agreement, four sources: `deverbal.tsv` (637 sentences, 12,007 tokens; deverbal compound heads), `terms.tsv` (373 sentences, 7,472 tokens; capitalized defined terms), `steps.tsv` (531 sentences, 4,894 tokens; step-line imperatives) and `clauses.tsv` (310 sentences, 5,870 tokens; base-form ambiguity in a clause) (training; weight 1 in `training.json`); **License**: CC0-1.0 labels; US federal-work sentences
+- [eval/shapes/](eval/shapes/README.md): **What**: noun/verb shape probe (evaluation); **License**: CC0-1.0
+- [eval/shapes-dev/](eval/shapes-dev/README.md): **What**: hard-shape development set from US federal-government text (development only): standard tranche `dev.tsv` (700 sentences, 12,279 tokens), hard tranche `hard.tsv` (460 sentences, 7,936 tokens), three single-shape tranches `compound-head.tsv` (120 sentences, 2,148 tokens), `headings.tsv` (115 heading lines, 507 tokens) and `named-state.tsv` (112 sentences, 1,970 tokens), two follow-up tranches `compound-head-2.tsv` (255 sentences, 4,576 tokens) and `headings-2.tsv` (129 heading lines, 678 tokens), and four technical tranches `deverbal-heads.tsv` (450 sentences, 8,762 tokens), `defined-terms.tsv` (285 sentences, 5,580 tokens), `step-lines.tsv` (236 sentences, 1,906 tokens) and `clause-verbs.tsv` (446 sentences, 7,947 tokens); **License**: CC0-1.0 labels; US federal-work sentences
+- [eval/gold-v2/](eval/gold-v2/README.md): **What**: single-target gold tokens (evaluation); **License**: CC0-1.0 labels; PD sentences
+- [eval/ste-challenge/](eval/ste-challenge/README.md): **What**: simplified-technical-English challenge set (evaluation); **License**: CC0-1.0
+- [eval/ud-ewt/](eval/ud-ewt/README.md): **What**: UD English-EWT: fetch documentation only, **no data**; **License**: CC BY-SA 4.0, never committed
+- [lexicon/](lexicon/README.md): **What**: spelling to UPOS tags lexicon, analyses (base word, tag and features of each form), closed-class list, coverage report; **License**: CC-BY-4.0 and CC-BY-3.0-US (attribution), others
+- [corrections/](corrections/README.md): **What**: label corrections for open, MASC and silver (mechanical rows, adjudicated rows, candidates, exceptions); **applied** to the corpora; **License**: CC0-1.0 labels; MASC token forms and excerpts CC-BY-3.0-US
 
 The training corpora (open train, MASC, silver) hold 209,224 + 386,445 + 242,699 tokens (silver: 232,307 labeled, 10,392
 masked); the fourth training source, `imperative/`, holds 11,946 tokens and is configured with weight 1, so it is part of the
