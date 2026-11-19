@@ -6,7 +6,7 @@ package PartOfSpeech {
 
         metadata info : SoftwareInfo {
             sourceFiles = ("src/DemaConsulting.PartOfSpeech/Tagging/Glossary.cs", "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryBuilder.cs", "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryEntry.cs", "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryOptions.cs", "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryMatch.cs", "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryIndex.cs", "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryWorkspace.cs", "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryInflector.cs", "src/DemaConsulting.PartOfSpeech/Tagging/GlossaryConstraints.cs");
-            testFiles = ("test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryTests.cs", "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryMatchingTests.cs", "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryThroughputTests.cs");
+            testFiles = ("test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryTests.cs", "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryMatchingTests.cs");
             designFiles = ("docs/design/part-of-speech/tagging/glossary.md");
             verificationFiles = ("docs/verification/part-of-speech/tagging/glossary.md");
             requirementFiles = ("docs/reqstream/part-of-speech/tagging/glossary.yaml");

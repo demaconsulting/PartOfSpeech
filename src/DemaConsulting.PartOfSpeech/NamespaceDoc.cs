@@ -723,8 +723,7 @@ namespace DemaConsulting.PartOfSpeech;
 ///     string (32 bytes for <c>café</c> written with a combining acute accent). <see cref="WordTags.GetAnalyses"/> allocates its
 ///     list: 360 bytes for the two analyses of <c>tests</c>, 600 bytes for the five of <c>well</c>, 368 bytes for the
 ///     compound head <c>well-tested</c> and nothing for a word without analyses. These numbers were measured on .NET 10 on
-///     Windows x64 (the smallest of ten batches after warm-up); the allocation tests run on .NET 8 and later and assert
-///     the zero cases. On .NET 8 and later <see cref="Tagger.GetPossibleTags(string, PossibleTagsMode)"/> also takes a
+///     Windows x64 during development; the opt-in benchmarks of the repository measure the zero cases. On .NET 8 and later <see cref="Tagger.GetPossibleTags(string, PossibleTagsMode)"/> also takes a
 ///     <c>ReadOnlySpan&lt;char&gt;</c> with the same rules and results.
 ///     </para>
 ///     <para>

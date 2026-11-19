@@ -165,12 +165,20 @@ requires it and the modification preserves the documented design intent:
 
 # Repository-Specific Standards Exceptions
 
-- **`testing-principles.md` "Assert Observable Behavior"**: the existing allocation, throughput, and
-  workspace checks (`AllocationMeter`, `ThroughputMeter`, and the `CurrentThreadWorkspace` assertions in the
-  tagging and lexicon tests) predate this rule and remain requirement-linked evidence for the library's
-  documented performance and allocation properties. Keep them as they are; do not add new tests of this kind.
-  Moving them to opt-in benchmarks (and the matching requirements and verification documents) is a separate,
-  maintainer-approved change.
+- **`testing-principles.md` "Assert Observable Behavior"**: the no-retention tests
+  (`TagDecoder_Decode_LeavesNoRequestTextInTheWorkspace`,
+  `TagDecoder_Decode_Exception_LeavesNoRequestTextInTheWorkspace`,
+  `TagDecoder_GetPossibleTags_And_IsFormOf_LeaveNoRequestTextInTheWorkspace`,
+  `Tagger_EveryEntryPoint_LeavesNoRequestTextInTheWorkspaces` and
+  `Glossary_FindMatches_LeavesNoSentenceTextInTheWorkspace`) and the buffer-bound tests of the word lookup
+  (`Tagger_GetPossibleTags_WordsWithManyCharacters_NeverGrowTheWorkspaceBeyondTheLongestSpelling` and
+  `TagDecoder_GetPossibleTags_HugeAsciiInput_AnswersWithoutGrowingTheWorkspace`) read the per-thread scratch buffers
+  through the internal accessors `TagDecoder.CurrentThreadWorkspace` and `GlossaryIndex.GetThreadWorkspace()`.
+  Here the internals are the contract: `PartOfSpeech-Tagging-TagDecoder-NoRetention`,
+  `PartOfSpeech-Tagging-Tagger-NoRetention`, `PartOfSpeech-Tagging-Glossary-NoRetention` and
+  `PartOfSpeech-Tagging-Tagger-PossibleTagsInput` promise what those buffers hold after a call and how large they grow,
+  which no public API can show. Do not add tests of this kind for
+  anything else; performance and memory properties are measured by the opt-in benchmarks in `benchmarks/`.
 
 # Continuous Compliance Overview
 

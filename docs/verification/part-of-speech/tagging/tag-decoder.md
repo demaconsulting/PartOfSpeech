@@ -6,9 +6,9 @@ This document describes the unit-level verification strategy for the `TagDecoder
 
 The unit is verified by unit tests in `Tagging/TagDecoderTests.cs` that construct a `TagDecoder` directly from a
 `PerceptronModel` and a `Lexicon`. The model and lexicon are small files written by the real writers (hand-set weights
-through `TinyModels.WeightsBuilder`, so every score and every analytic probability is known), except in the throughput
-test and in the word lookup tests, which use the real embedded lexicon (the lookup of every spelling is compared with
-the decode of the same word, because a sample could miss a rule). Nothing is mocked. Four methods deserve a description:
+through `TinyModels.WeightsBuilder`, so every score and every analytic probability is known), except in the word
+lookup tests, which use the real embedded lexicon (the lookup of every spelling is compared with
+the decode of the same word, because a sample could miss a rule). Nothing is mocked. Two methods deserve a description:
 
 - **Analytic confidences.** With hand-set scores and a known temperature, the expected confidence is the softmax
   `exp(s_i / T) / sum(exp(s_j / T))` over the candidates, computed in the test, and the test compares to a tolerance of
@@ -16,43 +16,23 @@ the decode of the same word, because a sample could miss a rule). Nothing is moc
   asserts that the tag is unchanged while the distribution sharpens or flattens.
 - **Platform-independent ties.** Equal scores are given to several tags and the test asserts that the lowest tag number
   wins, which is what makes results the same on every platform.
-- **Throughput.** A synthetic weights file of 150,000 rows in 2^21 buckets (`TestSupport/SyntheticModel.cs`, random
-  weights from a seeded generator, with the occupied buckets taken from the features of real sentences) is loaded with
-  the real embedded lexicon; the real development sentences are decoded on one thread by
-  `Tagging/TagDecoderThroughputTests.cs`, using the capability-based method of `TestSupport/ThroughputMeter.cs`: a
-  warm-up of at least two runs and 0.5 seconds, then timed windows with `Stopwatch`, each window repeating the run over
-  all sentences for at least 0.25 seconds. The first window above the gate ends the measurement and passes; after a
-  window below the gate (possibly slowed by other processes) the meter sleeps for 200 milliseconds and takes another
-  window, until 30 seconds or 60 windows are used up, and then the best rate is compared with the gate. The test class
-  is in the xUnit collection `Throughput` (`DisableParallelization = true`), so that it runs alone in its test host
-  after the parallel test classes. The gate is 50,000 tokens per second in every run without code coverage
-  (`build.ps1`), where the best measured rate (written to the test output together with the number of windows) is
-  several hundred thousand, usually in the first window. In a run with code coverage, as in CI, coverlet's
-  instrumentation slows the decoder by a factor of 20 or more (24,000 to 64,000 tokens per second measured), so the
-  meter detects it (see *System Verification*, Throughput) and applies a relaxed gate of 5,000 tokens per second; that
-  run proves that the decoder is sane, not the 50,000 requirement, which only the non-instrumented run proves.
-- **Allocation.** On .NET 8 and later, the noise-robust method of `TestSupport/AllocationMeter.cs` (warm-up of at least
-  500 decodes and 0.3 seconds, then the minimum over 10 batches) reads `GC.GetAllocatedBytesForCurrentThread` before and
-  after 100 decodes of a
-  50-token sentence with 3 alternatives per token, and the bytes per call must not exceed
-  `50 * 64 + 150 * 16 + 256` (the result array of tokens, the flat array of alternatives and a small allowance), so
-  any per-sentence scratch allocation would fail the test.
+
+The speed and the allocation of the decoder are design properties that no test asserts; the opt-in benchmarks measure
+them through the tagger (see *System Verification*).
 
 #### Test Environment
 
-No setup beyond the standard test runner; the throughput test and the allowed-set test read corpus and lexicon files of
-`data/` through `DataFiles.cs`. The throughput test (`Tagging/TagDecoderThroughputTests.cs`) is meaningful in Release
-configuration. The allocation test is not compiled for `net481`.
+No setup beyond the standard test runner; the allowed-set test reads corpus and lexicon files of `data/` through
+`DataFiles.cs`.
 
 #### Acceptance Criteria
 
 All tests pass. A test fails when a tag outside the candidates is chosen, a tie is not resolved to the lowest tag, a
 confidence differs from the softmax by more than the tolerance, an alternative list is unsorted, too long or does not
-sum with the confidence to one, a constraint does not have the specified effect, the throughput is 50,000 tokens per
-second or less (5,000 or less in a run with code coverage), the allocation bound is exceeded, the size of the result
-token grows beyond 48 bytes on a 64-bit process, a token reports the known-word flag against the lexicon, or a word
-lookup differs from the decoder's allowed set or known flag for any spelling of the embedded lexicon or any sample
-shape, finds a hyphenated spelling or a compound head wrongly, disturbs a decode, or allocates for a huge input.
+sum with the confidence to one, a constraint does not have the specified effect, a token reports the known-word flag
+against the lexicon, or a word lookup differs from the decoder's allowed set or known flag for any spelling of the
+embedded lexicon or any sample shape, finds a hyphenated spelling or a compound head wrongly, disturbs a decode, or
+grows a per-thread buffer for a huge input.
 
 #### Test Scenarios
 
@@ -72,13 +52,6 @@ shape, finds a hyphenated spelling or a compound head wrongly, disturbs a decode
   sentence on the same thread must not change the outer result, which equals the result with a plain array).
 - **Empty input and arguments**: `TagDecoder_Decode_EmptySentence_ReturnsEmpty` (also that invalid arguments are
   rejected).
-- **Throughput**: `TagDecoder_Decode_SyntheticModel_ExceedsFiftyThousandTokensPerSecond`.
-- **No allocation**: `TagDecoder_Decode_DoesNotAllocateInHotPath` (.NET 8 and later) and
-  `TagDecoder_Decode_AllGroups_DoesNotAllocateInHotPath` (the same bound for a model with all groups, which decodes in
-  two passes), `TagDecoder_Decode_ResultToken_KeepsItsSize` (the size of `TaggedToken` is at most 48 bytes on a 64-bit
-  process, which the per-token part of the allocation bound counts on) and, for the lexicon shape rules that the decoder
-  applies to every known token, `Lexicon_AllowedTags_KnownTokenShapes_DoNotAllocate` (described in the Lexicon
-  verification document).
 - **Known word**: `TagDecoder_Decode_KnownWord_ReportsLexiconMembership` (a word of one tag, a word of two tags and an
   absent word), `TagDecoder_Decode_KnownWord_IgnoresLetterCase` (`cat`, `Cat`, `CAT` and `cAt` are known, an unlisted
   spelling is not, and a typographic apostrophe variant of `don't` finds the entry),
@@ -129,11 +102,12 @@ shape, finds a hyphenated spelling or a compound head wrongly, disturbs a decode
   `TagDecoder_IsFormOf_EveryAnalysisOfEverySpelling_IsAForm` (all 290,365 analyses are forms, also with a Title-case
   word and an upper-case base word, and a changed base word or a tag that the spelling's analyses lack is not),
   `TagDecoder_GetPossibleTags_BetweenDecodes_DoesNotDisturbTheWorkspace` (decode, lookup, decode, with two decoders and
-  lexicons on one thread, one with cached lexicon facts: every result equals the one without interleaving) and, on
-  .NET 8 and later, `TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing` (a word of a million ASCII
-  characters, a compound with a prefix of 500,000 characters and a known last part, one with an unknown last part, and
-  the form question for both, allocate 0 bytes after the first call, so no per-thread buffer grew; the compound has
-  its head and the other words are not recognized).
+  lexicons on one thread, one with cached lexicon facts: every result equals the one without interleaving) and
+  `TagDecoder_GetPossibleTags_HugeAsciiInput_AnswersWithoutGrowingTheWorkspace` (on a new thread, after short words
+  have sized the buffers, a word of a million ASCII characters, a compound with a prefix of 500,000 characters and a
+  known last part, one with an unknown last part, and the form question for both leave the size of every buffer of
+  the thread's workspace, read through `TagDecoder.CurrentThreadWorkspace`, unchanged; the compound has its head and
+  the other words are not recognized).
 - **No retention of request text** (the tests read the thread's workspace through `TagDecoder.CurrentThreadWorkspace`
   and count the elements that are not zero in the whole of every buffer, so a trace of an earlier, longer request would
   show): `TagDecoder_Decode_LeavesNoRequestTextInTheWorkspace` (a theory over a model without and one with all groups: a

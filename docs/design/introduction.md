@@ -101,7 +101,11 @@ the runtime: it uses `Tagging` (the feature extractor, the decoder), `ModelStora
 lexicon) and `Upos` through `InternalsVisibleTo`, and nothing in the library uses it. Each unit is one class or a few
 tightly coupled files, as listed in the folder layout below. The Trainer is a software unit although it is a build-time
 tool (unlike `tools/LexiconCompiler`), because its headline claims (determinism, no drift from the runtime definitions,
-development-only selection, provenance of the embedded model) need requirement-level evidence.
+development-only selection, provenance of the embedded model) need requirement-level evidence. The opt-in benchmarks
+in `benchmarks/DemaConsulting.PartOfSpeech.Benchmarks` are developer tooling, not a software item: they measure the
+performance and memory properties of *Design Constraints* in `part-of-speech.md` through the public API. The project
+is part of the solution, so `build.ps1` and the CI pipeline compile it, but nothing runs its benchmarks, and no test
+run, requirement or review-set includes them.
 
 ## Folder Layout
 
@@ -261,10 +265,9 @@ Test files follow the same tree as the sources: the subsystem tests are `Tokeniz
 `ModelStorage/ModelStorageTests.cs` and `Tagging/TaggingTests.cs`, the unit tests are named `{Unit}Tests.cs` in the
 folder of their subsystem (`UposTests.cs` for the unit directly under the system, and
 `ModelTrainer/ModelTrainerTests.cs` for the trainer; the unit `Glossary` has `GlossaryTests.cs`,
-`GlossaryMatchingTests.cs` and `GlossaryThroughputTests.cs`), and the system tests are `PartOfSpeechTests.cs`,
-`PartOfSpeechDataTests.cs` and `PartOfSpeechEvaluationTests.cs`. The helpers `TestSupport/TinyModels.cs`,
-`TinyTrainer.cs` and `SyntheticModel.cs` build small and synthetic models for the tests and belong to the `Tagging`
-review-set.
+`GlossaryMatchingTests.cs` and `GlossaryDocumentationTests.cs`), and the system tests are `PartOfSpeechTests.cs`,
+`PartOfSpeechDataTests.cs` and `PartOfSpeechEvaluationTests.cs`. The helpers `TestSupport/TinyModels.cs` and
+`TinyTrainer.cs` build small models for the tests and belong to the `Tagging` review-set.
 
 ## References
 

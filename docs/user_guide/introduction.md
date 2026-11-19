@@ -640,8 +640,8 @@ apostrophe). A word that is not in NFC allocates the normalized string (32 bytes
 acute accent). A span of ASCII characters allocates nothing; a span with another character is copied to a string first
 (24 bytes for one NFC character). `GetAnalyses()` allocates its list: 360 bytes for the two analyses of `tests`, 600
 bytes for the five of `well`, 368 bytes for the compound head `well-tested` and nothing for a word without analyses.
-These numbers were measured on .NET 10 on Windows x64 (the smallest of ten batches after warm-up). The allocation tests
-run on .NET 8 and later and assert the zero cases; the others are only bounded.
+These numbers were measured on .NET 10 on Windows x64 during development; the opt-in benchmarks of the repository
+measure the zero cases.
 
 ## Loading a Weights File
 

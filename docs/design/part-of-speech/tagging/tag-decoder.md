@@ -148,7 +148,7 @@ confidence to 1.0 (the alternatives then have the probability 0), so with `MaxAl
 alternatives, not the confidence, tells a token with one allowed tag. A token's
 `IsKnownWord` is exactly the lexicon membership of its folded, lower-cased spelling: letter case, shape rules, a
 constraint and the feature groups do not change it. The `TaggedToken` struct has the size of 48 bytes on a 64-bit
-process, with and without the flag (the flag sits in the padding), so the allocation budget of the result array holds.
+process, with and without the flag (the flag sits in the padding).
 
 Complexity: 22 bucket lookups per token without groups (a bit test and about 2.7 additions each on a realistic model)
 and one lexicon lookup (about 14 block-head comparisons and at most 15 decoded spellings). The groups add up to 18
@@ -169,8 +169,7 @@ U+02BC, which folds to `'`): no input reaches them, because every word is folded
 check applies to the fold-stable spellings only. All 8,711 hyphenated spellings are found as `Spelling` and never as a
 compound head, and an unlisted prefix and a hyphen in front of the last part of each give a compound head with that last
 part's analyses. The decode's hot path is the same code as without the lookup (`SetToken` normalizes and calls
-`SetFolded`; the allocation tests and the throughput gates of the decoder, the tagger and the glossary pass unchanged on
-every target framework).
+`SetFolded`; the benchmarks of tagging and of the glossary are unchanged by the lookup).
 
 #### Error Handling
 

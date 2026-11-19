@@ -159,11 +159,11 @@ sections:
                   A tagged token shall report a margin that is its confidence minus the probability of its best
                   alternative; when the token has no alternative the margin shall be the smallest value that the
                   confidence allows, which is 1 for a token with one allowed tag, and a default token shall have a
-                  margin of 0; reading the margin and the known-word flag shall not allocate.
+                  margin of 0.
                 justification: |
                   A rule checker needs to tell a close call from a clear decision with one number; the margin must be
                   exact when an alternative is listed and never larger than the true value when it is not, so that it
-                  cannot make a guess look safe, and a value that is read for every token must be free.
+                  cannot make a guess look safe.
                 tests:
                   - Tagger_Tag_Margin_SeveralAlternatives_IsConfidenceMinusRunnerUp
                   - Tagger_Tag_Margin_OneAlternative_IsConfidenceMinusRunnerUp
@@ -171,7 +171,6 @@ sections:
                   - Tagger_Tag_Margin_SingleAllowedTag_IsOne
                   - Tagger_Tag_Margin_TiedTags_IsZero
                   - Tagger_Tag_DefaultToken_HasNoMarginAndIsNotKnown
-                  - Tagger_Tag_Margin_DoesNotAllocate
 
               - id: PartOfSpeech-Tagging-Tagger-PossibleTags
                 title: >-
@@ -181,14 +180,13 @@ sections:
                   as a token on its own (all 17 tags when the word is not a spelling); the word shall be folded like a
                   token of the tagger, so that letter case, typographic quotes and dashes and the Unicode composition
                   of the word never change the result; the known flag of the result shall equal that of the token; and
-                  the lookup shall be safe from any number of threads, also while other threads tag, and allocate
-                  nothing for a word of ASCII characters.
+                  the lookup shall be safe from any number of threads, also while other threads tag.
                 justification: |
                   A rule checker that asks whether a word may be a verb needs the dictionary answer for the word alone,
                   and needs it to agree with what the tagger would allow for the same spelling in a sentence, or its
                   conclusions contradict the tagger. The lexicon of the tagger is the one that decides, so a tagger
                   with a custom lexicon answers from its own. The lookup runs for many words of a text, so it must be
-                  free of allocation for ASCII and safe for the parallel use that tagging already supports.
+                  safe for the parallel use that tagging already supports.
                 tests:
                   - Tagger_GetPossibleTags_DefaultMode_IsLexiconOnly
                   - Tagger_GetPossibleTags_Case_IgnoresLetterCase
@@ -198,8 +196,7 @@ sections:
                   - Tagger_GetPossibleTags_Glossary_DoesNotChangeTheResult
                   - Tagger_GetPossibleTags_ConcurrentCalls_GiveTheSameResultsAsOneThread
                   - Tagger_GetPossibleTags_Span_EqualsStringOverload
-                  - Tagger_GetPossibleTags_DoesNotAllocate
-                  - Tagger_GetPossibleTags_AllocationOfTheOtherCases_IsRecordedAndBounded
+                  - Tagger_GetPossibleTags_Analyses_KnownWordHasThemAndUnknownOrHugeWordsHaveNone
 
               - id: PartOfSpeech-Tagging-Tagger-PossibleTagsInput
                 title: >-
@@ -207,13 +204,13 @@ sections:
                   that is not a defined value, each with the documented exception, shall not fail for a word with an
                   unpaired surrogate (which counts as U+FFFD, like in a token), and shall answer a word that has more
                   characters than the longest spelling of the lexicon has bytes, and therefore cannot be a spelling,
-                  without an error, without growing the per-thread buffers beyond what a word of that many characters
-                  needs, whatever the length of the word, and without allocation for a word of ASCII characters.
+                  without an error and without growing the per-thread buffers beyond what a word of that many
+                  characters needs, whatever the length of the word.
                 justification: |
                   The lexicon holds no phrases, so a text with white space can only be answered wrongly as unknown; the
                   caller must split the text into tokens (or use a glossary for a term). Text that a caller did not
-                  validate, including a very long string, must neither crash the lookup nor make a service allocate
-                  megabytes per thread.
+                  validate, including a very long string, must neither crash the lookup nor make a service keep
+                  megabytes of buffers per thread.
                 tests:
                   - Tagger_GetPossibleTags_NullWord_Throws
                   - Tagger_GetPossibleTags_EmptyOrWhiteSpace_Throws
@@ -223,7 +220,7 @@ sections:
                   - Tagger_GetPossibleTags_UnpairedSurrogate_DoesNotThrow
                   - Tagger_GetPossibleTags_VeryLongWord_IsNotRecognizedWithoutError
                   - Tagger_GetPossibleTags_WordsWithManyCharacters_NeverGrowTheWorkspaceBeyondTheLongestSpelling
-                  - TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing
+                  - TagDecoder_GetPossibleTags_HugeAsciiInput_AnswersWithoutGrowingTheWorkspace
 
               - id: PartOfSpeech-Tagging-Tagger-WordAnalyses
                 title: >-
@@ -276,7 +273,7 @@ sections:
                   - Tagger_GetPossibleTags_CompoundHead_TooLongWhole_UsesTheLastPart
                   - Tagger_GetPossibleTags_CompoundHead_TooLongWhole_Otherwise_IsNotRecognized
                   - Tagger_GetPossibleTags_TooLongWhole_EqualsTheAnswerOfTheNormalPath
-                  - TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing
+                  - TagDecoder_GetPossibleTags_HugeAsciiInput_AnswersWithoutGrowingTheWorkspace
 
               - id: PartOfSpeech-Tagging-Tagger-IsFormOf
                 title: >-
@@ -284,12 +281,10 @@ sections:
                   analysis of the word (found with the rule of the lookup, compound heads included) has that base word
                   and that tag; word and base word shall be folded like a token of the tagger; the call shall be false
                   for an unrecognized word, a tag without analysis and a lexicon without analyses; it shall refuse
-                  null, empty and white-space arguments and an undefined tag; and it shall allocate nothing for ASCII
-                  text.
+                  null, empty and white-space arguments and an undefined tag.
                 justification: |
                   Whether "tests" is a form of the verb "test" is the question that a rule checker really asks; the
-                  answer must follow from the same analyses that the lookup lists, so that the two cannot disagree, and
-                  it must not cost an allocation per question.
+                  answer must follow from the same analyses that the lookup lists, so that the two cannot disagree.
                 tests:
                   - Tagger_IsFormOf_Analyses_AnswerTheQuestion
                   - Tagger_IsFormOf_EveryAnalysisOfSampleWords_IsAForm
@@ -297,7 +292,7 @@ sections:
                   - Tagger_GetPossibleTags_NullWord_Throws
                   - Tagger_GetPossibleTags_EmptyOrWhiteSpace_Throws
                   - Tagger_GetPossibleTags_UndefinedModeOrTag_Throws
-                  - Tagger_IsFormOf_DoesNotAllocate
+                  - Tagger_IsFormOf_CaseVariantsAndCompounds_AnswerFromTheAnalyses
 
               - id: PartOfSpeech-Tagging-Tagger-NoRetention
                 title: >-

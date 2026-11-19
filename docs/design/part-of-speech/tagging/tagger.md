@@ -136,11 +136,11 @@ files also hold the options and the result types: `Tagger.cs`, `TaggerOptions.cs
   longest spelling has, for example 100 times `é`; that is bounded by the same size, so the length test is on
   characters, not on the UTF-8 length, which would need a further scan of every lookup), ASCII input allocates nothing,
   and the word is read a bounded number of times (one scan for the compound structure, then the fold of the last part).
-  The tests verify the guarantees that they can observe: completion without an error, the bound of the buffer and no
-  allocation for ASCII; they do not measure the running time. The result is the same as the result of a lexicon whose
-  longest spelling is long enough to look the whole word up (a test compares both over generated words), and a test
-  measures the buffer on a new thread after the worst folded word (an ellipsis for every byte of the longest spelling)
-  and then looks up words of a million characters.
+  The tests verify the guarantees that they can observe: completion without an error and the bound of the buffer; they
+  do not measure the running time or the allocated bytes, which the opt-in benchmarks measure. The result is the same as
+  the result of a lexicon whose longest spelling is long enough to look the whole word up (a test compares both over
+  generated words), and a test measures the buffer on a new thread after the worst folded word (an ellipsis for every
+  byte of the longest spelling) and then looks up words of a million characters.
 - *Phrases.* The lexicon has no multiword spellings (a test proves it for every spelling), so text with white space is
   refused with `ArgumentException` instead of being answered "unknown"; phrases and terms belong in a `Glossary`.
 - *Custom lexicon.* A lexicon compiled without an analyses table gives tags and `Match` but no analyses;
@@ -153,16 +153,15 @@ files also hold the options and the result types: `Tagger.cs`, `TaggerOptions.cs
 - *No retention.* The decoder erases its workspace (`DecoderWorkspace.Clear`) in a `finally` block at the end of
   every lookup and form question, so the folded word, its hashes, the lexicon key and the encoded base word do not
   stay in the thread's memory.
-- *Allocation.* After the first call on a thread `GetPossibleTags` (both overloads, both modes) and `IsFormOf`
-  allocate 0 bytes for ASCII words, including compounds, malformed compounds, over-long words and a
-  1,000,000-character word
-  (asserted by tests on .NET 8 and later). A word with a non-ASCII character that is already NFC allocates nothing; a
-  decomposed word allocates the normalized string (32 bytes for `cafe` plus U+0301); a span with an NFC non-ASCII
-  word allocates its `ToString` (32 bytes for `café`), a decomposed one 64 bytes. `GetAnalyses()` allocates its array
-  and the
-  base word strings (measured per call: 360 bytes for `tests`, 600 for `well` with five analyses, 368 for the head of
-  `well-tested`, 0 for a word without analyses). Measured on .NET 10, Windows x64, minimum of ten batches after warm-up;
-  `Tag(...)` of a 25-token sentence allocates 4,872 bytes (the result arrays), which the lookup does not change.
+- *Allocation.* After the first call on a thread `GetPossibleTags` (both overloads, both modes) and `IsFormOf` allocate
+  0 bytes for ASCII words, including compounds, malformed compounds, over-long words and a 1,000,000-character word
+  (measured by the opt-in benchmarks, not asserted by tests). A word with a non-ASCII character that is already NFC
+  allocates nothing; a decomposed word allocates the normalized string (32 bytes for `cafe` plus U+0301); a span with an
+  NFC non-ASCII word allocates its `ToString` (32 bytes for `café`), a decomposed one 64 bytes. `GetAnalyses()`
+  allocates its array and the base word strings (measured per call: 360 bytes for `tests`, 600 for `well` with five
+  analyses, 368 for the head of `well-tested`, 0 for a word without analyses). Measured on .NET 10, Windows x64, during
+  development; `Tag(...)` of a 25-token sentence allocates 4,872 bytes (the result arrays), which the lookup does not
+  change.
 
 #### Error Handling
 

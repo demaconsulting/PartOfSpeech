@@ -1552,53 +1552,6 @@ public class LexiconTests
         Assert.Equal(UposSet.Of(Upos.Det, Upos.Propn, Upos.X), allowed);
     }
 
-#if NET
-    /// <summary>
-    ///     Proves that the shape rules and the lookup of a known token allocate nothing: punctuation, digit and
-    ///     upper-case tokens take the rule paths that used to build a set per call.
-    /// </summary>
-    [Fact]
-    public void Lexicon_AllowedTags_KnownTokenShapes_DoNotAllocate()
-    {
-        // Arrange: the embedded lexicon, a scratch buffer, and one known token for each shape rule
-        var lexicon = EmbeddedModel.Lexicon;
-        var scratch = new byte[lexicon.ScratchSize];
-        var punctuation = ".".ToCharArray();
-        var digit = "7".ToCharArray();
-        var upper = "the".ToCharArray();
-        var lexiconTags = UposSet.Of(Upos.Det);
-
-        var checksum = 0;
-
-        // Act: warm up thoroughly (static initialization, JIT, tiered compilation), then take the minimum over several
-        // batches of the bytes that this thread allocates for 1000 rounds over all shape paths
-        var allocated = AllocationMeter.MinimumBatchBytes(
-            () => checksum += Run(lexicon, scratch, punctuation, digit, upper, lexiconTags),
-            1000);
-
-        // Assert: nothing was allocated, and the work was not optimized away
-        Assert.Equal(0, allocated);
-        Assert.True(checksum > 0);
-    }
-
-    /// <summary>
-    ///     Runs the lookup and every shape rule once, without allocating.
-    /// </summary>
-    private static int Run(Lexicon lexicon, byte[] scratch, char[] punctuation, char[] digit, char[] upper, UposSet lexiconTags)
-    {
-        var count = 0;
-        count += lexicon.TryGetTags(punctuation, 0, punctuation.Length, scratch, out var p) ? p.Count : 0;
-        count += lexicon.TryGetTags(digit, 0, digit.Length, scratch, out var d) ? d.Count : 0;
-        count += lexicon.TryGetTags(upper, 0, upper.Length, scratch, out var u) ? u.Count : 0;
-        count += lexicon.TryFind(upper, 0, upper.Length, scratch, out var ordinal, out _) ? lexicon.AnalyzedTags(ordinal).Count : 0;
-        count += Lexicon.AllowedTags(true, lexiconTags, false, false, false).Count;
-        count += Lexicon.AllowedTags(true, lexiconTags, true, true, false).Count;
-        count += Lexicon.AllowedTags(true, lexiconTags, true, false, true).Count;
-        count += Lexicon.AllowedTags(true, lexiconTags, false, true, true).Count;
-        return count;
-    }
-#endif
-
     /// <summary>
     ///     Proves that the compiled rules agree with the reference implementation of the data tests for every lexicon spelling and shape variants.
     /// </summary>

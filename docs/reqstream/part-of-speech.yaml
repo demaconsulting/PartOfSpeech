@@ -236,39 +236,6 @@ sections:
         children:
           - PartOfSpeech-Tagging-NoRetention
 
-      - id: PartOfSpeech-Lib-Throughput
-        title: Tagging pre-tokenized text shall exceed 50,000 tokens per second on one thread.
-        tags: [system, performance]
-        justification: |
-          Callers tag large collections of text; a tagger that is orders of magnitude slower than this bound would make
-          that impractical. The bound is far below the measured speed so that a loaded build machine does not make the
-          test fail. The bound is enforced in runs without code coverage; in a run with code coverage (the CI
-          pipeline), whose instrumentation slows the hot loops by a factor of 20 or more, the tests apply a relaxed
-          bound of 5,000 tokens per second, and the verification document states that only the run without coverage
-          proves the 50,000 figure.
-        children:
-          - PartOfSpeech-Tagging-TagDecoder-Throughput
-          - PartOfSpeech-Tagging-TagDecoder-NoAllocation
-          - PartOfSpeech-Tagging-FeatureExtractor-NoAllocation
-        tests:
-          - PartOfSpeech_Performance_SingleThread_ExceedsFiftyThousandTokensPerSecond
-
-      - id: PartOfSpeech-Lib-GlossaryThroughput
-        title: >-
-          Tagging pre-tokenized text with a glossary of 10,000 entries shall exceed 50,000 tokens per second on one
-          thread.
-        tags: [system, performance]
-        justification: |
-          A glossary must not make tagging impractically slow, whatever its size. The bound is the one of tagging
-          without a glossary, enforced in runs without code coverage and relaxed in a run with code coverage in the same
-          way (see the verification document); the unit requirements prove that matching itself is far faster and
-          allocates nothing per token.
-        children:
-          - PartOfSpeech-Tagging-Glossary-Throughput
-          - PartOfSpeech-Tagging-Glossary-NoAllocation
-        tests:
-          - PartOfSpeech_Performance_GlossaryTagging_ExceedsFiftyThousandTokensPerSecond
-
       - id: PartOfSpeech-Lib-NoRuntimeDependencies
         title: The package shall have no runtime package dependency.
         tags: [system]

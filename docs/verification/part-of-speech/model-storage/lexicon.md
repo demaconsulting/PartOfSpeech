@@ -122,13 +122,6 @@ below 99.9 percent.
 - **Allowed tags by rule**: `Lexicon_AllowedTags_UnknownWord_AllowsAllSeventeen`,
   `Lexicon_AllowedTags_KnownWord_AllowsLexiconTags`, `Lexicon_AllowedTags_NoLetterOrDigit_AddsPunctSymX`,
   `Lexicon_AllowedTags_Digit_AddsNumSymXNounPropnAdj` and `Lexicon_AllowedTags_FirstUpper_AddsPropnX`.
-- **No allocation** (.NET targets only, where the per-thread allocation counter exists):
-  `Lexicon_AllowedTags_KnownTokenShapes_DoNotAllocate` (lookups of a punctuation, a digit and an upper-case-first token
-  and all four shape-rule combinations allocate zero bytes after warm-up, taken as the minimum over 10 batches of 1000
-  rounds by `TestSupport/AllocationMeter.cs`, and the same for `TryFind` and `AnalyzedTags` of an upper-case key; it
-  supports the decoder requirement
-  `PartOfSpeech-Tagging-TagDecoder-NoAllocation`). `HasAnalysis` is proved allocation-free through
-  `Tagger_IsFormOf_DoesNotAllocate` (*Tagger Verification*), which runs it with the real lexicon.
 - **Allowed tags against the reference rule**: `Lexicon_AllowedTags_MatchesDataFilesRuleForEveryLexiconSpelling` (the
   compiled rules agree with the reference implementation for every lexicon spelling and shape variants).
 - **Coverage**: `Lexicon_AllowedTags_Dev_MeetsCoverageThreshold` (the binary lexicon with the shape rules allows the

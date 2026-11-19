@@ -31,12 +31,13 @@ rejected with the specified exception, the default tagger is not one shared inst
 differs from the sequential one, a result can be modified after it is returned, or an alternative list violates its
 invariants (excludes the tag, sorted, limited, sums with the confidence to at most one), the known-word flag differs
 from the lexicon membership of the folded, lower-cased spelling or changes with a glossary, or a margin differs from the
-confidence minus the best alternative (or from the smallest value that the confidence allows when there is none), is
-negative, or allocates; or a word lookup differs from the documented rule: a word that is not recognized is reported
+confidence minus the best alternative (or from the smallest value that the confidence allows when there is none) or is
+negative; or a word lookup differs from the documented rule: a word that is not recognized is reported
 as a word with no tags, a tag, analysis or match differs from the lexicon, a hyphenated word is matched against
 anything but its whole spelling or its last part (whatever the length of the word), the tags of a compound head are
 not those of the whole word, the answer to the form question disagrees with the analyses, an invalid word, mode or tag
-is accepted, a parallel lookup differs from the sequential one, or a lookup of an ASCII word allocates.
+is accepted, a parallel lookup differs from the sequential one, or a lookup of a long word grows the thread's buffers
+beyond what its folded text needs.
 
 #### Test Scenarios
 
@@ -88,10 +89,8 @@ is accepted, a parallel lookup differs from the sequential one, or a lookup of a
   `Tagger_Tag_Margin_NoAlternativesRequested_IsTheSmallestMarginTheConfidenceAllows` (with 0 alternatives the margin is
   `2c - 1`, below the exact margin, and 0 for a confidence below one half), `Tagger_Tag_Margin_SingleAllowedTag_IsOne`
   (a single-tag lexicon entry, a hard constraint on a listed word and on an unlisted word, with 0, 1 and 3
-  alternatives), `Tagger_Tag_Margin_TiedTags_IsZero` (with and without alternatives),
-  `Tagger_Tag_DefaultToken_HasNoMarginAndIsNotKnown` and `Tagger_Tag_Margin_DoesNotAllocate` (.NET 8 and later: reading
-  the margin and the flag of a token with alternatives allocates 0 bytes per batch of 100 reads, which fails when the
-  margin is read through `Alternatives`).
+  alternatives), `Tagger_Tag_Margin_TiedTags_IsZero` (with and without alternatives) and
+  `Tagger_Tag_DefaultToken_HasNoMarginAndIsNotKnown`.
 - **Feature groups**: `Tagger_Load_ModelWithFeatureGroups_TagsWithTheGroups` (a toy model trained with all four groups
   loads through the public loader, its header names all four groups, and the tagger, which decodes the right preview
   group in two passes, tags at least 90% of the fixture tokens right; what each group does is verified in
@@ -148,8 +147,8 @@ is accepted, a parallel lookup differs from the sequential one, or a lookup of a
   the folding of the largest word that is folded, an ellipsis for every byte of the longest spelling, as a word and as
   the word of `IsFormOf`, the lookups of 100 times `é` (200 bytes, so not a spelling, but folded as a whole), of words
   with as many characters as the longest spelling has bytes, of words with one more and of words of a million characters
-  (`é`, ellipsis, em dash, `a`) are all `NotRecognized` and the character buffer of the thread's workspace, read by
-  reflection, keeps its size between 6 and 16 times the longest spelling) and
+  (`é`, ellipsis, em dash, `a`) are all `NotRecognized` and the character buffer of the thread's workspace, read through
+  `TagDecoder.CurrentThreadWorkspace`, keeps its size between 6 and 16 times the longest spelling) and
   `Tagger_GetPossibleTags_UnpairedSurrogate_DoesNotThrow`.
 - **Word lookup, arguments**: `Tagger_GetPossibleTags_NullWord_Throws` (also a null base word of `IsFormOf`),
   `Tagger_GetPossibleTags_EmptyOrWhiteSpace_Throws` (a theory over an empty word, a space, a tab, a no-break space, a
@@ -171,18 +170,13 @@ is accepted, a parallel lookup differs from the sequential one, or a lookup of a
 - **Span overload** (.NET 8 and later): `Tagger_GetPossibleTags_Span_EqualsStringOverload` (words of every kind, also
   a slice of a longer text, give the result of the string overload in both modes) and
   `Tagger_GetPossibleTags_Span_InvalidInput_Throws`.
-- **Allocation** (.NET 8 and later, where the per-thread allocation counter exists; `TestSupport/AllocationMeter.cs`,
-  the minimum of the batches after warm-up): `Tagger_GetPossibleTags_DoesNotAllocate` (14 ASCII words in both modes
-  through the string and the span overload: known, capitalized, unknown, digit, punctuation, case variants, compounds,
-  malformed compounds and two words of 307 characters, one with a known last part, allocate 0 bytes per batch of 100
-  rounds, including reading `TagsWithoutAnalysis`), `Tagger_IsFormOf_DoesNotAllocate` (true and false cases, a compound
-  head and an over-long compound: 0 bytes) and `Tagger_GetPossibleTags_AllocationOfTheOtherCases_IsRecordedAndBounded`
-  (records, without a threshold, what the cases that may allocate cost, and asserts only the statements of the
-  documentation: a million ASCII characters allocate 0 bytes and `GetAnalyses` allocates, except for a word without
-  analyses). Measured values (.NET 10, Windows x64, bytes per call): non-ASCII word that is already NFC 0, curly
-  apostrophe 0, decomposed word 32, span with an NFC non-ASCII character 32, with a decomposed one 64, a million
-  non-ASCII characters that are already NFC 0, `GetAnalyses` of `tests` 360, of `well` (five analyses) 600, of the head
-  of `well-tested` 368, of an unknown word 0. The tests do not run for `net481` (no per-thread allocation counter).
+- **Analyses and the form question**: `Tagger_GetPossibleTags_Analyses_KnownWordHasThemAndUnknownOrHugeWordsHaveNone`
+  (`tests` lists its analyses of the base word `test`; an unknown word and words of a million ASCII and non-ASCII
+  characters are `NotRecognized` and have no analyses) and
+  `Tagger_IsFormOf_CaseVariantsAndCompounds_AnswerFromTheAnalyses` (`tests` and `TESTS` are forms of `test`, as are
+  `well-tested` and a compound of 307 characters with the last part `tested` as a verb; a tag without analysis and an
+  unknown word are not). The allocation of the lookup, the form question and the margin is a design property that the
+  opt-in benchmarks measure (see *System Verification*).
 - **No retention of request text**: `Tagger_EveryEntryPoint_LeavesNoRequestTextInTheWorkspaces` (every entry point that
   tags, with and without a glossary and constraints, the word lookup and the form question, each with distinctive words
   and followed by a short text: after every call the character, hash, lexicon-scratch and base-word buffers of the

@@ -416,47 +416,6 @@ public class FeatureExtractorTests
         Assert.NotEqual(a[21], b[21]);
     }
 
-#if NET
-    /// <summary>
-    ///     Proves that extracting buckets does not allocate once the workspace has grown.
-    /// </summary>
-    [Fact]
-    public void FeatureExtractor_Extract_DoesNotAllocateAfterWarmUp()
-    {
-        // Arrange: a sentence, a workspace and a bucket buffer, warmed up once
-        var tokens = new[] { "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog", "." };
-        var workspace = new DecoderWorkspace();
-        var buckets = new int[FeatureExtractor.MaxFeatures];
-        FeatureExtractor.Prepare(workspace, tokens, Bits);
-        for (var i = 0; i < tokens.Length; i++)
-        {
-            FeatureExtractor.Extract(workspace, i, 3, 4, Bits, buckets);
-        }
-
-        // Act: prepare and extract again; warm up thoroughly, then take the minimum over several batches of the bytes
-        // allocated by this thread for 100 rounds
-        var allocated = AllocationMeter.MinimumBatchBytes(
-            () =>
-            {
-                workspace.Begin(tokens.Length);
-                for (var i = 0; i < tokens.Length; i++)
-                {
-                    FeatureExtractor.SetToken(workspace, i, tokens[i]);
-                }
-
-                FeatureExtractor.Finish(workspace, Bits);
-                for (var i = 0; i < tokens.Length; i++)
-                {
-                    FeatureExtractor.Extract(workspace, i, 3, 4, Bits, buckets);
-                }
-            },
-            100);
-
-        // Assert: nothing was allocated
-        Assert.Equal(0, allocated);
-    }
-#endif
-
     /// <summary>
     ///     The lexicon of the group tests: function words, ambiguous words and the stems that the inflection examples need.
     /// </summary>
@@ -1188,51 +1147,6 @@ public class FeatureExtractorTests
         Assert.Equal(alone.Shape[0], sliced.Shape[0]);
         Assert.Equal(alone.WordHash[0], sliced.WordHash[0]);
         Assert.Equal(alone.LowerHash[0], sliced.LowerHash[0]);
-    }
-
-
-    /// <summary>
-    ///     Proves that extracting the buckets of all groups, with a stem lookup and both passes, does not allocate once the workspace has grown.
-    /// </summary>
-    [Fact]
-    public void FeatureExtractor_Extract_AllGroups_DoesNotAllocateAfterWarmUp()
-    {
-        // Arrange: a sentence with inflected words, a workspace configured for all groups and a bucket buffer, warmed up once
-        var all = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine;
-        var tokens = new[] { "Check", "the", "Running", "Valves", "And", "Avoiding", "Boxes", "." };
-        var preview = new[] { 7, 5, 15, 7, 4, 15, 7, 12 };
-        var workspace = new DecoderWorkspace();
-        var buckets = new int[FeatureExtractor.BucketCapacity];
-
-        void Run()
-        {
-            workspace.Configure(all, GroupLexicon);
-            workspace.Begin(tokens.Length);
-            for (var i = 0; i < tokens.Length; i++)
-            {
-                FeatureExtractor.SetToken(workspace, i, tokens[i]);
-            }
-
-            FeatureExtractor.Finish(workspace, Bits);
-            workspace.SetPreview(preview);
-            for (var pass = 0; pass < 2; pass++)
-            {
-                FeatureExtractor.StartPass(workspace, pass == 1);
-                for (var i = 0; i < tokens.Length; i++)
-                {
-                    FeatureExtractor.Extract(workspace, i, 3, 4, Bits, buckets);
-                    FeatureExtractor.Advance(workspace, i, preview[i]);
-                }
-            }
-        }
-
-        Run();
-
-        // Act: take the minimum over several batches of the bytes allocated by this thread for 100 rounds
-        var allocated = AllocationMeter.MinimumBatchBytes(Run, 100);
-
-        // Assert: nothing was allocated
-        Assert.Equal(0, allocated);
     }
 #endif
 

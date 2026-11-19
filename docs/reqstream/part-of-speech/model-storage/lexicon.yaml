@@ -57,10 +57,10 @@ sections:
                 title: >-
                   A lexicon shall return the analyses (base word, tag and features) of every spelling that has some, in
                   a fixed order and for every shape of base word that the format stores (the spelling itself, a cut of
-                  it with a suffix, a different word, non-ASCII text), shall tell the tags that its analyses name
-                  without allocating, shall tell whether a spelling has an analysis with a given tag and base word
-                  without allocating, shall report the position of every spelling that it finds, and a lexicon compiled
-                  without an analyses table shall read back with no analyses.
+                  it with a suffix, a different word, non-ASCII text), shall tell the tags that its analyses name,
+                  shall tell whether a spelling has an analysis with a given tag and base word, shall report the
+                  position of every spelling that it finds, and a lexicon compiled without an analyses table shall read
+                  back with no analyses.
                 justification: |
                   The word lookup reports the base words and forms from these calls; a base word composed wrongly from
                   its template would be wrong for the words that use it, and a lexicon that is built from tags alone,
@@ -71,8 +71,6 @@ sections:
                   - Lexicon_GetAnalyses_EveryShapeOfAnalysis_RoundTrips
                   - Lexicon_HasAnalysis_ComparesTagAndComposedBaseWord
                   - Lexicon_GetAnalyses_EmbeddedTests_ReturnsNounAndVerbInOrder
-                  - Lexicon_AllowedTags_KnownTokenShapes_DoNotAllocate
-                  - Tagger_IsFormOf_DoesNotAllocate
               - id: PartOfSpeech-ModelStorage-Lexicon-AnalysesValidation
                 title: >-
                   A lexicon file shall be refused when its analyses section is inconsistent: a list, template or

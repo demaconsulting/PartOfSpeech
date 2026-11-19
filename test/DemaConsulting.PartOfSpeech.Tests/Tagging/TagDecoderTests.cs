@@ -600,68 +600,6 @@ public class TagDecoderTests
         Assert.Equal(expected, grouped.Select(t => t.IsKnownWord));
     }
 
-#if NET
-    /// <summary>
-    ///     Proves that the result token keeps its size, which the allocation budget of the decoder counts on.
-    /// </summary>
-    [Fact]
-    public void TagDecoder_Decode_ResultToken_KeepsItsSize()
-    {
-        // Arrange: the budget of the allocation tests counts 64 bytes per token, which holds for a struct of 48 bytes on 64-bit
-
-        // Act: measure the real type
-        var size = System.Runtime.CompilerServices.Unsafe.SizeOf<TaggedToken>();
-
-        // Assert: it is at most 48 bytes on a 64-bit process
-        if (IntPtr.Size == 8)
-        {
-            Assert.True(size <= 48, $"TaggedToken is {size} bytes");
-        }
-    }
-
-    /// <summary>
-    ///     Proves that decoding allocates only its result arrays: the bytes allocated per sentence are bounded by the size of the results.
-    /// </summary>
-    [Fact]
-    public void TagDecoder_Decode_DoesNotAllocateInHotPath()
-    {
-        // Arrange: a decoder with the cat model and the real lexicon, and a 50-token ASCII sentence
-        var decoder = TinyModels.CreateDecoder(CatWeights().Build(), File.ReadAllBytes(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin")));
-        var tokens = Tokens(Enumerable.Range(0, 50).Select(i => i % 2 == 0 ? "cat" : "Running").ToArray());
-
-        // Act: warm up thoroughly, then take the minimum over several batches of the bytes allocated by this thread for 100 decodes
-        var perCall = AllocationMeter.MinimumBatchBytes(() => decoder.Decode(tokens, null, 3), 100) / 100;
-
-        // Assert: a result array of 50 tokens (about 56 bytes each) and 150 alternatives (16 bytes each) plus headers, nothing per token otherwise
-        var bound = (50 * 64) + (150 * 16) + 256;
-        Assert.True(perCall <= bound, $"{perCall} bytes per call, bound {bound}");
-    }
-
-    /// <summary>
-    ///     The mask of all groups.
-    /// </summary>
-    private const FeatureGroups AllGroups = FeatureGroups.PositionCues | FeatureGroups.ClauseCues | FeatureGroups.RightPreview | FeatureGroups.Inflection | FeatureGroups.TitleCaseLine;
-
-    /// <summary>
-    ///     Proves that decoding with all groups on (both passes, stem lookups) allocates only its result arrays.
-    /// </summary>
-    [Fact]
-    public void TagDecoder_Decode_AllGroups_DoesNotAllocateInHotPath()
-    {
-        // Arrange: a decoder whose weights say all groups, the real lexicon and a 50-token ASCII sentence
-        var weights = CatWeights().Build(groups: AllGroups);
-        var decoder = TinyModels.CreateDecoder(weights, File.ReadAllBytes(DataFiles.Repository("src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin")));
-        var tokens = Tokens(Enumerable.Range(0, 50).Select(i => i % 2 == 0 ? "cat" : "Running").ToArray());
-
-        // Act: warm up thoroughly, then take the minimum over several batches of the bytes allocated by this thread for 100 decodes
-        var perCall = AllocationMeter.MinimumBatchBytes(() => decoder.Decode(tokens, null, 3), 100) / 100;
-
-        // Assert: the same bound as without groups
-        var bound = (50 * 64) + (150 * 16) + 256;
-        Assert.True(perCall <= bound, $"{perCall} bytes per call, bound {bound}");
-    }
-#endif
-
     /// <summary>
     ///     Proves that a model with the clause cues turns an imperative around: the ambiguous first word before a determiner becomes a
     ///     verb, and the same weights without the group in the header do nothing.
@@ -1336,52 +1274,58 @@ public class TagDecoderTests
         Assert.Equal(0, workspace.Count);
     }
 
-#if NET
     /// <summary>
-    ///     Proves that a huge input is answered without growing the thread's buffers: a call with a million ASCII characters allocates nothing,
-    ///     also when the word is a compound with a known last part (only that last part is folded).
+    ///     Proves that a huge input is answered without growing the thread's buffers: after the buffers have the size that
+    ///     short words need, calls with a million ASCII characters leave every buffer at that size, also when the word is a
+    ///     compound with a known last part (only that last part is folded).
     /// </summary>
     [Fact]
-    public void TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing()
+    public void TagDecoder_GetPossibleTags_HugeAsciiInput_AnswersWithoutGrowingTheWorkspace()
     {
-        // Arrange: a decoder, a million-character word (the workspace buffers would have been megabytes), a huge compound,
-        // and a first call that creates the thread's workspace
+        // Arrange: a decoder, a million-character word (the workspace buffers would have been megabytes) and huge compounds
         var decoder = EmbeddedDecoder(false);
         var huge = new string('a', 1_000_000);
         var hugeCompound = new string('a', 500_000) + "-tested";
         var hugeUnknownHead = new string('a', 500_000) + "-zzqxv";
-        decoder.GetPossibleTags("valve", PossibleTagsMode.WithShapeRules);
-        decoder.GetPossibleTags("well-tested", PossibleTagsMode.WithShapeRules);
         var raw = default(WordTags);
         var shape = default(WordTags);
         var compound = default(WordTags);
         var unknownHead = default(WordTags);
         var form = true;
         var compoundForm = false;
+        var before = string.Empty;
+        var after = string.Empty;
+        static string Sizes(DecoderWorkspace workspace) =>
+            $"{workspace.Chars.Length}/{workspace.Start.Length}/{workspace.LowerHash.Length}/{workspace.LexiconScratch.Length}/{workspace.LemmaBytes.Length}";
 
-        // Act: measure the allocation of the calls after a warm-up (a one-time runtime allocation in a single unwarmed call is not a property of the lookup)
-        var allocated = AllocationMeter.MinimumBatchBytes(
-            () =>
-            {
-                raw = decoder.GetPossibleTags(huge, PossibleTagsMode.LexiconOnly);
-                shape = decoder.GetPossibleTags(huge, PossibleTagsMode.WithShapeRules);
-                compound = decoder.GetPossibleTags(hugeCompound, PossibleTagsMode.WithShapeRules);
-                unknownHead = decoder.GetPossibleTags(hugeUnknownHead, PossibleTagsMode.WithShapeRules);
-                form = decoder.IsFormOf(huge, "a", Upos.Noun);
-                compoundForm = decoder.IsFormOf(hugeCompound, "test", Upos.Verb);
-            },
-            1);
+        // Act: on a new thread (so that its workspace is new), size the buffers with short words, then ask about the huge ones
+        var thread = new Thread(() =>
+        {
+            decoder.GetPossibleTags("valve", PossibleTagsMode.WithShapeRules);
+            decoder.GetPossibleTags("well-tested", PossibleTagsMode.WithShapeRules);
+            decoder.IsFormOf("well-tested", "test", Upos.Verb);
+            before = Sizes(TagDecoder.CurrentThreadWorkspace!);
+            raw = decoder.GetPossibleTags(huge, PossibleTagsMode.LexiconOnly);
+            shape = decoder.GetPossibleTags(huge, PossibleTagsMode.WithShapeRules);
+            compound = decoder.GetPossibleTags(hugeCompound, PossibleTagsMode.WithShapeRules);
+            unknownHead = decoder.GetPossibleTags(hugeUnknownHead, PossibleTagsMode.WithShapeRules);
+            form = decoder.IsFormOf(huge, "a", Upos.Noun);
+            compoundForm = decoder.IsFormOf(hugeCompound, "test", Upos.Verb);
+            after = Sizes(TagDecoder.CurrentThreadWorkspace!);
+        });
+        thread.Start();
+        thread.Join();
 
-        // Assert: the plain word is not recognized, the compound has its head, and nothing allocates
+        // Assert: the plain word is not recognized, the compound has its head, and no buffer grew
         Assert.Equal(WordMatch.NotRecognized, raw.Match);
         Assert.Equal(WordMatch.NotRecognized, shape.Match);
         Assert.Equal(WordMatch.CompoundHead, compound.Match);
         Assert.Equal(WordMatch.NotRecognized, unknownHead.Match);
         Assert.False(form);
         Assert.True(compoundForm);
-        Assert.Equal(0, allocated);
+        Assert.NotEmpty(before);
+        Assert.Equal(before, after);
     }
-#endif
 
     /// <summary>
     ///     Decodes with the string-based reference features and the plain rules of the decoder (lexicon restriction, lowest tag wins a tie),

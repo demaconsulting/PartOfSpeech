@@ -810,33 +810,6 @@ public class TaggerTests
         Assert.False(known);
     }
 
-#if NET
-    /// <summary>
-    ///     Proves that reading the margin and the known-word flag allocates nothing, also for a token with alternatives.
-    /// </summary>
-    [Fact]
-    public void Tagger_Tag_Margin_DoesNotAllocate()
-    {
-        // Arrange: a token that has three alternatives
-        var weights = new TinyModels.WeightsBuilder().Word("cat", Upos.Noun, 3).Word("cat", Upos.Verb, 1);
-        var token = CreateHandSet(weights, new[] { "cat NOUN VERB ADJ" }).Tag(new[] { "cat" }).Tokens[0];
-        var sink = 0.0;
-
-        // Act: read both members in many rounds
-        var bytes = AllocationMeter.MinimumBatchBytes(
-            () =>
-            {
-                sink += token.Margin;
-                sink += token.IsKnownWord ? 1 : 0;
-            },
-            100);
-
-        // Assert: nothing is allocated per batch (reading through the alternatives would allocate a wrapper per read)
-        Assert.Equal(0, bytes);
-        Assert.True(sink > 0);
-    }
-#endif
-
     /// <summary>
     ///     The analyses of a lookup result as text, one entry per analysis, for comparisons.
     /// </summary>
@@ -1485,8 +1458,6 @@ public class TaggerTests
             new string('\u00E9', longest + 1), new string('\u2026', longest + 1), new string('\u00E9', 1_000_000), new string('\u2026', 1_000_000),
             new string('\u2014', 1_000_000), new string('a', 1_000_000)
         };
-        var field = typeof(TagDecoder).GetField("_threadWorkspace", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        Assert.NotNull(field);
         var matches = new List<WordMatch>();
         var forms = new List<bool>();
         var capacities = new List<int>();
@@ -1495,7 +1466,7 @@ public class TaggerTests
         // word and as the word of IsFormOf, which folds a second token), then look up every word in both modes and as IsFormOf and read the buffer size
         var thread = new Thread(() =>
         {
-            int Capacity() => ((DecoderWorkspace)field.GetValue(null)!).Chars.Length;
+            static int Capacity() => TagDecoder.CurrentThreadWorkspace!.Chars.Length;
             _ = tagger.GetPossibleTags(new string('\u2026', longest), PossibleTagsMode.WithShapeRules);
             _ = tagger.IsFormOf(new string('\u2026', longest), "test", Upos.Verb);
             capacities.Add(Capacity());
@@ -1914,128 +1885,56 @@ public class TaggerTests
         Assert.Throws<ArgumentException>(() => tagger.GetPossibleTags("a\u00A0b".AsSpan()));
         Assert.Throws<ArgumentOutOfRangeException>(() => tagger.GetPossibleTags("valve".AsSpan(), (PossibleTagsMode)7));
     }
+#endif
 
     /// <summary>
-    ///     The words of the allocation tests: known, capitalized, unknown, digit, punctuation, case variants, compounds, upper case, and
-    ///     words longer than the longest spelling (a compound with a known last part, and one without).
-    /// </summary>
-    private static readonly string[] AsciiWords =
-    {
-        "valve", "Valve", "zzqxv", "1st", "--", "TESTS", "tests", "well-tested", "built-in", "pre-flight", "-ed", "state-of-the-art-style",
-        new string('a', 300) + "-tested", new string('a', 300) + "-zzqxv",
-    };
-
-    /// <summary>
-    ///     Proves that the lookup allocates nothing for ASCII words in both modes, through the string and the span overload, and that
-    ///     asking for the tags without analysis allocates nothing either.
+    ///     Proves that the form question answers from the analyses for an ASCII word in every letter case, for a hyphenated
+    ///     compound and for a compound that is longer than the longest spelling of the lexicon.
     /// </summary>
     [Fact]
-    public void Tagger_GetPossibleTags_DoesNotAllocate()
+    public void Tagger_IsFormOf_CaseVariantsAndCompounds_AnswerFromTheAnalyses()
     {
-        // Arrange: the embedded lexicon and a sink that keeps the work from being optimized away
+        // Arrange: the embedded lexicon and a compound whose whole is longer than any spelling and whose last part is "tested"
         var tagger = Tagger.Default;
-        var sink = 0;
+        var longCompound = new string('a', 300) + "-tested";
 
-        // Act: one round looks up every word in both modes; measure the string overload and the span overload separately
-        var stringBytes = AllocationMeter.MinimumBatchBytes(
-            () =>
-            {
-                foreach (var word in AsciiWords)
-                {
-                    var raw = tagger.GetPossibleTags(word);
-                    var shape = tagger.GetPossibleTags(word, PossibleTagsMode.WithShapeRules);
-                    sink += raw.Tags.Count + shape.Tags.Count + shape.TagsWithoutAnalysis.Count + (int)raw.Match + (raw.IsKnownWord ? 1 : 0);
-                }
-            },
-            100);
-        var spanBytes = AllocationMeter.MinimumBatchBytes(
-            () =>
-            {
-                foreach (var word in AsciiWords)
-                {
-                    var raw = tagger.GetPossibleTags(word.AsSpan());
-                    var shape = tagger.GetPossibleTags(word.AsSpan(), PossibleTagsMode.WithShapeRules);
-                    sink += raw.Tags.Count + shape.Tags.Count + shape.TagsWithoutAnalysis.Count;
-                }
-            },
-            100);
-
-        // Assert: nothing is allocated per batch of 100 rounds
-        Assert.Equal(0, stringBytes);
-        Assert.Equal(0, spanBytes);
-        Assert.True(sink > 0);
+        // Act / Assert: true for the analyses that the words have, false for a tag without analysis and an unknown word
+        Assert.True(tagger.IsFormOf("tests", "test", Upos.Verb));
+        Assert.True(tagger.IsFormOf("TESTS", "Test", Upos.Noun));
+        Assert.True(tagger.IsFormOf("well-tested", "test", Upos.Verb));
+        Assert.True(tagger.IsFormOf(longCompound, "test", Upos.Verb));
+        Assert.False(tagger.IsFormOf(longCompound, "test", Upos.Noun));
+        Assert.False(tagger.IsFormOf("tests", "test", Upos.Adj));
+        Assert.False(tagger.IsFormOf("zzqxv", "zzqxv", Upos.Noun));
     }
 
     /// <summary>
-    ///     A compound with a known last part that is longer than the longest spelling of the embedded lexicon.
-    /// </summary>
-    private static readonly string LongCompound = new string('a', 300) + "-tested";
-
-    /// <summary>
-    ///     Proves that the form question allocates nothing for ASCII words, for a whole spelling and for a compound head.
+    ///     Proves that a known word lists its analyses, and that an unknown word and words of a million characters (ASCII and
+    ///     non-ASCII) are answered without error, are not recognized and have no analyses.
     /// </summary>
     [Fact]
-    public void Tagger_IsFormOf_DoesNotAllocate()
+    public void Tagger_GetPossibleTags_Analyses_KnownWordHasThemAndUnknownOrHugeWordsHaveNone()
     {
-        // Arrange: the embedded lexicon and cases that answer true and false
+        // Arrange: the embedded lexicon, a known word, an unknown word and two words of a million characters
         var tagger = Tagger.Default;
-        var sink = 0;
-
-        // Act: ask in many rounds
-        var bytes = AllocationMeter.MinimumBatchBytes(
-            () =>
-            {
-                sink += tagger.IsFormOf("tests", "test", Upos.Verb) ? 1 : 0;
-                sink += tagger.IsFormOf("TESTS", "Test", Upos.Noun) ? 1 : 0;
-                sink += tagger.IsFormOf("well-tested", "test", Upos.Verb) ? 1 : 0;
-                sink += tagger.IsFormOf(LongCompound, "test", Upos.Verb) ? 1 : 0;
-                sink += tagger.IsFormOf(LongCompound, "test", Upos.Noun) ? 1 : 0;
-                sink += tagger.IsFormOf("tests", "test", Upos.Adj) ? 1 : 0;
-                sink += tagger.IsFormOf("zzqxv", "zzqxv", Upos.Noun) ? 1 : 0;
-            },
-            100);
-
-        // Assert: nothing is allocated per batch
-        Assert.Equal(0, bytes);
-        Assert.True(sink > 0);
-    }
-
-    /// <summary>
-    ///     Measures (and reports, without a threshold on the numbers) what the cases that may allocate cost: other characters, a long
-    ///     input and the list of analyses; asserts only the properties that the documentation states.
-    /// </summary>
-    [Fact]
-    public void Tagger_GetPossibleTags_AllocationOfTheOtherCases_IsRecordedAndBounded()
-    {
-        // Arrange: the embedded lexicon; a word that is already normalized, one that is not, a long word and a span with a non-ASCII character
-        var tagger = Tagger.Default;
-        var nfc = "caf\u00E9";
-        var decomposed = "cafe\u0301";
-        var curly = "n\u2019t";
         var huge = new string('a', 1_000_000);
         var hugeAccented = new string('\u00E9', 1_000_000);
-        var sink = 0;
 
-        // Act: measure each case separately
-        var nfcBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(nfc).Tags.Count, 100) / 100;
-        var decomposedBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(decomposed).Tags.Count, 100) / 100;
-        var curlyBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(curly).Tags.Count, 100) / 100;
-        var spanNfcBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(nfc.AsSpan()).Tags.Count, 100) / 100;
-        var hugeBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(huge).Tags.Count, 10) / 10;
-        var hugeAccentedBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags(hugeAccented).Tags.Count, 10) / 10;
-        var analysesBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags("tests").GetAnalyses().Count, 100) / 100;
-        var emptyAnalysesBytes = AllocationMeter.MinimumBatchBytes(() => sink += tagger.GetPossibleTags("zzqxv").GetAnalyses().Count, 100) / 100;
-        TestContext.Current.SendDiagnosticMessage(
-            $"GetPossibleTags bytes per call: NFC non-ASCII {nfcBytes}, decomposed {decomposedBytes}, curly apostrophe {curlyBytes}, span NFC {spanNfcBytes}, " +
-            $"1,000,000 ASCII chars {hugeBytes}, 1,000,000 non-ASCII chars {hugeAccentedBytes}, GetAnalyses of tests {analysesBytes}, GetAnalyses of an unknown word {emptyAnalysesBytes}.");
+        // Act
+        var known = tagger.GetPossibleTags("tests");
+        var unknown = tagger.GetPossibleTags("zzqxv");
+        var hugeResult = tagger.GetPossibleTags(huge);
+        var hugeAccentedResult = tagger.GetPossibleTags(hugeAccented);
 
-        // Assert: an ASCII input of any length allocates nothing and does not grow the buffers; the list of analyses allocates; an unknown word has none
-        Assert.Equal(0, hugeBytes);
-        Assert.True(analysesBytes > 0);
-        Assert.Equal(0, emptyAnalysesBytes);
-        Assert.True(sink > 0);
+        // Assert: "tests" has the analyses of the base word "test"; the others have none and are not recognized
+        Assert.NotEmpty(known.GetAnalyses());
+        Assert.All(known.GetAnalyses(), analysis => Assert.Equal("test", analysis.Lemma));
+        Assert.Empty(unknown.GetAnalyses());
+        Assert.Equal(WordMatch.NotRecognized, hugeResult.Match);
+        Assert.Empty(hugeResult.GetAnalyses());
+        Assert.Equal(WordMatch.NotRecognized, hugeAccentedResult.Match);
+        Assert.Empty(hugeAccentedResult.GetAnalyses());
     }
-#endif
 
     /// <summary>
     ///     Describes a tagged text with tags, confidences and alternatives, for equality comparisons.
