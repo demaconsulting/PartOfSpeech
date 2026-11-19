@@ -1,0 +1,295 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="640" viewBox="0 0 1600 640">
+  <!-- The README hero banner. English text, the embedded lexicon and trained weights, and your glossaries flow into
+       the Tagger of the PartOfSpeech .NET library and come out as tagged tokens with UPOS tags and confidences,
+       ranked alternatives, word lookups, and rule checker signals.
+       The definitions and the left panel follow the shared DEMA Consulting hero (CanvasNet and BuildMark).
+       This file is docs/images/hero.svg, beside its rendered docs/images/hero.png (matching base names, per the
+       diagram documentation standard); the files it embeds are in docs/images/hero/. -->
+  <defs>
+    <style>
+      .word { font: bold 92px sans-serif; fill: #ffffff; }
+      .eyebrow { font: bold 25px sans-serif; fill: #a5b4fc; }
+      .tag { font: bold 40px sans-serif; fill: #f8fafc; }
+      .body { font: 25px sans-serif; fill: #cbd5e1; }
+      .cmd { font: 25px monospace; fill: #e2e8f0; }
+      .prompt { fill: #5eead4; }
+      .file { fill: #f9a8d4; }
+      .brandText { fill: url(#brand); }
+      .note { font: italic 25px sans-serif; fill: #94a3b8; }
+      .label { font: bold 25px sans-serif; fill: #f1f5f9; text-anchor: middle; }
+      .engine { font: bold 32px monospace; fill: #ffffff; }
+      .api { font: bold 25px sans-serif; fill: #c4b5fd; }
+      .card { fill: url(#glass); stroke: url(#rim); stroke-width: 1.5; filter: url(#shadow); }
+      .panel { fill: #0a1022; stroke: #ffffff; stroke-opacity: 0.06; }
+      .flow { fill: none; stroke-width: 3; stroke-linecap: round; }
+      .page { fill: #ffffff; filter: url(#paper); }
+    </style>
+
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070b1f"/>
+      <stop offset="0.55" stop-color="#130f3b"/>
+      <stop offset="1" stop-color="#071a2e"/>
+    </linearGradient>
+    <radialGradient id="glowViolet" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7c3aed" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowCyan" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#06b6d4" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#06b6d4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowPink" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#db2777" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#db2777" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="1.2" fill="#a5b4fc" fill-opacity="0.16"/>
+    </pattern>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="0.5" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="engineFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e1b4b"/>
+      <stop offset="1" stop-color="#0b1022"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+    <filter id="paper" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+    <filter id="blur" x="-30%" y="-150%" width="160%" height="400%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <filter id="heat" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+
+    <marker id="headPink" viewBox="0 0 10 10" refX="2.5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L2.5,5 z" fill="#f472b6"/>
+    </marker>
+    <marker id="headAmber" viewBox="0 0 10 10" refX="2.5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L2.5,5 z" fill="#fbbf24"/>
+    </marker>
+    <marker id="headCyan" viewBox="0 0 10 10" refX="2.5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L2.5,5 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="headViolet" viewBox="0 0 10 10" refX="2.5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L2.5,5 z" fill="#a78bfa"/>
+    </marker>
+    <marker id="headBlue" viewBox="0 0 10 10" refX="2.5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L2.5,5 z" fill="#60a5fa"/>
+    </marker>
+    <marker id="headMint" viewBox="0 0 10 10" refX="2.5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M0,0 L10,5 L0,10 L2.5,5 z" fill="#5eead4"/>
+    </marker>
+
+    <!-- The text and shapes inside the mini illustrations -->
+    <style>
+      .mini { font: bold 22px sans-serif; }
+      .miniMono { font: bold 22px monospace; }
+      .bar { fill: #cbd5e1; }
+      .ink { fill: #1e293b; }
+      .chip { font: bold 22px sans-serif; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Background: deep gradient, soft glows, and a dot grid -->
+  <rect width="1600" height="640" fill="url(#bg)"/>
+  <ellipse cx="250" cy="170" rx="420" ry="300" fill="url(#glowViolet)"/>
+  <ellipse cx="1070" cy="294" rx="420" ry="220" fill="url(#glowCyan)"/>
+  <ellipse cx="1480" cy="620" rx="380" ry="260" fill="url(#glowPink)"/>
+  <rect width="1600" height="640" fill="url(#dots)"/>
+
+  <!-- Wordmark and tagline -->
+  <image href="hero/dc-logo-dark.svg" x="46" y="54" width="50" height="50"/>
+  <text class="eyebrow" x="100" y="90">DEMA Consulting</text>
+  <!-- "PartOfSpeech" is 6613 units wide: size = floor(488000 / 6613) = 73, second word at 52 + 0.073 * 1945 -->
+  <text class="word" x="52" y="176" style="font-size:73px">Part</text>
+  <text class="word brandText" x="194" y="176" style="font-size:73px">OfSpeech</text>
+  <rect x="58" y="200" width="132" height="6" rx="3" fill="url(#brand)"/>
+  <text class="tag" x="56" y="266">Every word, tagged.</text>
+  <text class="tag brandText" x="56" y="316">Every tag, scored.</text>
+  <text class="body" x="58" y="368">Tags English text with the 17 UPOS</text>
+  <text class="body" x="58" y="402">tags, calibrated confidences, and</text>
+  <text class="body" x="58" y="436">glossaries for your domain terms.</text>
+  <rect x="56" y="468" width="480" height="54" rx="12" fill="#0a1022" fill-opacity="0.8" stroke="#a78bfa" stroke-opacity="0.45" stroke-width="1.5"/>
+  <text class="cmd" x="78" y="503">Tagger.Default.Tag(</text>
+  <text class="cmd file" x="363" y="503">"I run."</text>
+  <text class="cmd" x="483" y="503">);</text>
+  <text class="note" x="58" y="568">Lexicon and weights embedded.</text>
+
+  <!-- Input cards -->
+  <g>
+    <!-- Input one: English text -->
+    <rect class="card" x="580" y="40" width="236" height="160" rx="16"/>
+    <rect x="642" y="40" width="112" height="3" rx="1.5" fill="#fbbf24"/>
+    <rect class="panel" x="588" y="48" width="220" height="112" rx="10"/>
+    <g transform="translate(588 48)">
+      <rect x="14" y="20" width="5" height="72" rx="2.5" fill="#fbbf24"/>
+      <text class="miniMono" x="32" y="46" fill="#f8fafc">The cat sat</text>
+      <text class="miniMono" x="32" y="82" fill="#f8fafc">on the mat.</text>
+    </g>
+    <text class="label" x="698" y="190">English text</text>
+
+    <!-- Input two: the embedded lexicon, a word and the tags it allows -->
+    <rect class="card" x="828" y="40" width="236" height="160" rx="16"/>
+    <rect x="890" y="40" width="112" height="3" rx="1.5" fill="#22d3ee"/>
+    <rect class="panel" x="836" y="48" width="220" height="112" rx="10"/>
+    <g transform="translate(836 48)">
+      <text class="miniMono" x="110" y="42" fill="#f8fafc" text-anchor="middle">run</text>
+      <rect x="26" y="64" width="80" height="30" rx="8" fill="#22d3ee" fill-opacity="0.18" stroke="#22d3ee" stroke-width="1.5"/>
+      <text class="chip" x="66" y="86" fill="#a5f3fc">NOUN</text>
+      <rect x="114" y="64" width="80" height="30" rx="8" fill="#22d3ee" fill-opacity="0.18" stroke="#22d3ee" stroke-width="1.5"/>
+      <text class="chip" x="154" y="86" fill="#a5f3fc">VERB</text>
+    </g>
+    <text class="label" x="946" y="190">Lexicon</text>
+
+    <!-- Input three: the trained weights, a grid of weight cells -->
+    <rect class="card" x="1076" y="40" width="236" height="160" rx="16"/>
+    <rect x="1138" y="40" width="112" height="3" rx="1.5" fill="#f472b6"/>
+    <rect class="panel" x="1084" y="48" width="220" height="112" rx="10"/>
+    <g transform="translate(1084 48)">
+      <rect x="14" y="14" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.55"/>
+      <rect x="36" y="14" width="18" height="18" rx="4" fill="#22d3ee" fill-opacity="0.75"/>
+      <rect x="58" y="14" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.25"/>
+      <rect x="80" y="14" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.95"/>
+      <rect x="102" y="14" width="18" height="18" rx="4" fill="#22d3ee" fill-opacity="0.55"/>
+      <rect x="14" y="36" width="18" height="18" rx="4" fill="#22d3ee" fill-opacity="0.25"/>
+      <rect x="36" y="36" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.4"/>
+      <rect x="58" y="36" width="18" height="18" rx="4" fill="#a78bfa" fill-opacity="0.25"/>
+      <rect x="80" y="36" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.75"/>
+      <rect x="102" y="36" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.4"/>
+      <rect x="14" y="58" width="18" height="18" rx="4" fill="#a78bfa" fill-opacity="0.95"/>
+      <rect x="36" y="58" width="18" height="18" rx="4" fill="#22d3ee" fill-opacity="0.25"/>
+      <rect x="58" y="58" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.25"/>
+      <rect x="80" y="58" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.95"/>
+      <rect x="102" y="58" width="18" height="18" rx="4" fill="#22d3ee" fill-opacity="0.95"/>
+      <rect x="14" y="80" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.75"/>
+      <rect x="36" y="80" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.4"/>
+      <rect x="58" y="80" width="18" height="18" rx="4" fill="#f472b6" fill-opacity="0.95"/>
+      <rect x="80" y="80" width="18" height="18" rx="4" fill="#a78bfa" fill-opacity="0.55"/>
+      <rect x="102" y="80" width="18" height="18" rx="4" fill="#22d3ee" fill-opacity="0.4"/>
+      <rect x="132" y="40" width="74" height="32" rx="7" fill="#f472b6" fill-opacity="0.16" stroke="#f472b6" stroke-width="1.5"/>
+      <text class="mini" x="169" y="64" fill="#fbcfe8" text-anchor="middle">.bin</text>
+    </g>
+    <text class="label" x="1194" y="190">Model weights</text>
+
+    <!-- Input four: a glossary entry for a domain term -->
+    <rect class="card" x="1324" y="40" width="236" height="160" rx="16"/>
+    <rect x="1386" y="40" width="112" height="3" rx="1.5" fill="#60a5fa"/>
+    <rect class="panel" x="1332" y="48" width="220" height="112" rx="10"/>
+    <g transform="translate(1332 48)">
+      <text class="miniMono" x="110" y="42" fill="#f8fafc" text-anchor="middle">bleed valve</text>
+      <path d="M58 76 L84 76" stroke="#60a5fa" stroke-width="3" stroke-linecap="round" marker-end="url(#headBlue)"/>
+      <rect x="96" y="64" width="80" height="30" rx="8" fill="#60a5fa" fill-opacity="0.18" stroke="#60a5fa" stroke-width="1.5"/>
+      <text class="chip" x="136" y="86" fill="#bfdbfe">NOUN</text>
+    </g>
+    <text class="label" x="1442" y="190">Glossaries</text>
+  </g>
+
+  <!-- Flows into the engine -->
+  <g class="flow">
+    <path d="M698,206 C698,236 950,226 950,253" stroke="#fbbf24" marker-end="url(#headAmber)"/>
+    <path d="M946,206 C946,236 1030,226 1030,253" stroke="#22d3ee" marker-end="url(#headCyan)"/>
+    <path d="M1194,206 C1194,236 1110,226 1110,253" stroke="#f472b6" marker-end="url(#headPink)"/>
+    <path d="M1442,206 C1442,236 1190,226 1190,253" stroke="#60a5fa" marker-end="url(#headBlue)"/>
+  </g>
+  <g stroke="#0a1022" stroke-width="2">
+    <circle cx="698" cy="206" r="5" fill="#fbbf24"/>
+    <circle cx="946" cy="206" r="5" fill="#22d3ee"/>
+    <circle cx="1194" cy="206" r="5" fill="#f472b6"/>
+    <circle cx="1442" cy="206" r="5" fill="#60a5fa"/>
+  </g>
+  <!-- The engine: the Tagger type; "Tagger" is 6 characters, so the divider is at 936 + 19.2 * 6 + 12 -->
+  <rect x="860" y="262" width="420" height="64" rx="32" fill="url(#brand)" opacity="0.55" filter="url(#blur)"/>
+  <rect x="860" y="262" width="420" height="64" rx="32" fill="url(#engineFill)" stroke="url(#brand)" stroke-width="2.5"/>
+  <rect x="884" y="276" width="36" height="36" rx="9" fill="url(#brand)"/>
+  <path d="M893 282 L906 282 L912 288 L912 306 L893 306 Z" fill="#ffffff"/>
+  <g fill="#7c3aed">
+    <rect x="897" y="290" width="11" height="2.5" rx="1.2"/>
+    <rect x="897" y="295" width="11" height="2.5" rx="1.2"/>
+    <rect x="897" y="300" width="7" height="2.5" rx="1.2"/>
+  </g>
+  <text class="engine" x="936" y="305">Tagger</text>
+  <line x1="1063" y1="278" x2="1063" y2="310" stroke="#ffffff" stroke-opacity="0.25" stroke-width="1.5"/>
+  <text class="api" x="1083" y="303">.NET library</text>
+
+  <!-- Flows out of the engine -->
+  <g class="flow" stroke="#5eead4">
+    <path d="M980,330 C980,356 728,356 728,381" marker-end="url(#headMint)"/>
+    <path d="M1040,330 C1040,356 999,356 999,381" marker-end="url(#headMint)"/>
+    <path d="M1100,330 C1100,356 1232,356 1232,381" marker-end="url(#headMint)"/>
+    <path d="M1160,330 C1160,356 1457,356 1457,381" marker-end="url(#headMint)"/>
+  </g>
+  <g fill="#5eead4" stroke="#0a1022" stroke-width="2">
+    <circle cx="980" cy="330" r="5"/>
+    <circle cx="1040" cy="330" r="5"/>
+    <circle cx="1100" cy="330" r="5"/>
+    <circle cx="1160" cy="330" r="5"/>
+  </g>
+
+  <!-- Output tiles -->
+  <g>
+    <!-- Output one: tagged tokens, each with its UPOS tag and confidence -->
+    <rect class="card" x="580" y="390" width="296" height="210" rx="16"/>
+    <rect class="panel" x="588" y="398" width="280" height="152" rx="10"/>
+    <text class="miniMono" x="606" y="436" fill="#f8fafc">The</text>
+    <rect x="666" y="414" width="84" height="30" rx="8" fill="#fbbf24" fill-opacity="0.18" stroke="#fbbf24" stroke-width="1.5"/>
+    <text class="chip" x="708" y="436" fill="#fde68a">DET</text>
+    <text class="miniMono" x="850" y="436" fill="#5eead4" text-anchor="end">0.99</text>
+    <text class="miniMono" x="606" y="480" fill="#f8fafc">cat</text>
+    <rect x="666" y="458" width="84" height="30" rx="8" fill="#22d3ee" fill-opacity="0.18" stroke="#22d3ee" stroke-width="1.5"/>
+    <text class="chip" x="708" y="480" fill="#a5f3fc">NOUN</text>
+    <text class="miniMono" x="850" y="480" fill="#5eead4" text-anchor="end">0.98</text>
+    <text class="miniMono" x="606" y="524" fill="#f8fafc">sat</text>
+    <rect x="666" y="502" width="84" height="30" rx="8" fill="#4ade80" fill-opacity="0.18" stroke="#4ade80" stroke-width="1.5"/>
+    <text class="chip" x="708" y="524" fill="#bbf7d0">VERB</text>
+    <text class="miniMono" x="850" y="524" fill="#5eead4" text-anchor="end">0.97</text>
+    <text class="label" x="728" y="585">Tagged tokens</text>
+
+    <!-- Output two: confidences of the ranked alternatives of one token -->
+    <rect class="card" x="889" y="390" width="220" height="210" rx="16"/>
+    <rect class="panel" x="897" y="398" width="204" height="152" rx="10"/>
+    <text class="miniMono" x="999" y="432" fill="#f8fafc" text-anchor="middle">run</text>
+    <text class="mini" x="911" y="472" fill="#bbf7d0">VERB</text>
+    <rect x="986" y="458" width="100" height="16" rx="5" fill="#4ade80"/>
+    <text class="mini" x="911" y="506" fill="#fde68a">NOUN</text>
+    <rect x="986" y="492" width="24" height="16" rx="5" fill="#fbbf24"/>
+    <text class="mini" x="911" y="540" fill="#cbd5e1">ADJ</text>
+    <rect x="986" y="526" width="6" height="16" rx="3" fill="#94a3b8"/>
+    <text class="label" x="999" y="585">Confidences</text>
+
+    <!-- Output three: word lookup, the base word and the possible tags of a form -->
+    <rect class="card" x="1122" y="390" width="220" height="210" rx="16"/>
+    <rect class="panel" x="1130" y="398" width="204" height="152" rx="10"/>
+    <text class="miniMono" x="1148" y="438" fill="#f8fafc">ran</text>
+    <path d="M1196 430 L1222 430" stroke="#a78bfa" stroke-width="3" stroke-linecap="round" marker-end="url(#headViolet)"/>
+    <text class="miniMono" x="1240" y="438" fill="#c4b5fd">run</text>
+    <line x1="1146" y1="458" x2="1318" y2="458" stroke="#ffffff" stroke-opacity="0.15"/>
+    <rect x="1190" y="490" width="84" height="30" rx="8" fill="#a78bfa" fill-opacity="0.18" stroke="#a78bfa" stroke-width="1.5"/>
+      <text class="chip" x="1232" y="512" fill="#ddd6fe">VERB</text>
+    <text class="label" x="1232" y="585">Word lookup</text>
+
+    <!-- Output four: rule checker signals, the margin and the known-word flag -->
+    <rect class="card" x="1355" y="390" width="205" height="210" rx="16"/>
+    <rect class="panel" x="1363" y="398" width="189" height="152" rx="10"/>
+    <text class="miniMono" x="1379" y="448" fill="#e2e8f0">margin</text>
+    <text class="miniMono" x="1536" y="448" fill="#5eead4" text-anchor="end">0.62</text>
+    <line x1="1377" y1="472" x2="1538" y2="472" stroke="#ffffff" stroke-opacity="0.15"/>
+    <text class="miniMono" x="1379" y="512" fill="#e2e8f0">known</text>
+    <circle cx="1518" cy="504" r="15" fill="#4ade80" fill-opacity="0.2" stroke="#4ade80" stroke-width="1.5"/>
+    <path d="M1510 504 L1516 510 L1527 498" fill="none" stroke="#bbf7d0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text class="label" x="1457" y="585">Rule signals</text>
+  </g>
+</svg>

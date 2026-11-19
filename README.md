@@ -9,6 +9,8 @@
 [![Security][badge-security]][link-security]
 [![NuGet][badge-nuget]][link-nuget]
 
+![PartOfSpeech banner: the PartOfSpeech name with the tagline 'Every word, tagged. Every tag, scored.' and the C# call 'Tagger.Default.Tag("I run.");'. English text, the embedded lexicon with the tags each word allows, the embedded trained model weights, and glossaries of domain terms flow on curved arrows into the Tagger of the .NET library, and arrows lead out to what it returns: tagged tokens with a UPOS tag and a confidence each, the confidences of the ranked alternatives, word lookups with the base word and possible tags, and rule checker signals such as the margin and the known-word flag][hero]
+
 .NET library for part-of-speech tagging of English text, with calibrated confidences.
 
 ![Architecture: an application calls the Tagger, which uses tokenization, the model and Upos][architecture]
@@ -204,3 +206,4 @@ By contributing to this project, you agree that your contributions will be licen
 [link-cc-by-3]: https://creativecommons.org/licenses/by/3.0/us/
 [link-cc-by-4]: https://creativecommons.org/licenses/by/4.0/
 [architecture]: https://raw.githubusercontent.com/demaconsulting/PartOfSpeech/main/docs/images/architecture.png
+[hero]: https://raw.githubusercontent.com/demaconsulting/PartOfSpeech/main/docs/images/hero.png
