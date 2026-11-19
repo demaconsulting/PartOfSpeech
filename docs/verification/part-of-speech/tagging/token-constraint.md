@@ -5,9 +5,9 @@ This document describes the unit-level verification strategy for the `TokenConst
 #### Verification Approach
 
 The unit is verified by unit tests in `Tagging/TokenConstraintTests.cs` that call the public factories and operators
-directly. The struct has no dependencies except `UposSet`, which is real, so nothing is mocked. The effect of a constraint
-on tags is verified in the `TagDecoder` unit tests and in the Tagging and system tests; the tests here prove the value
-semantics: creation rules, neutrality of the default value, combination, immutability and equality.
+directly. The struct has no dependencies except `UposSet`, which is real, so nothing is mocked. The effect of a
+constraint on tags is verified in the `TagDecoder` unit tests and in the Tagging and system tests; the tests here prove
+the value semantics: creation rules, neutrality of the default value, combination, immutability and equality.
 
 #### Test Environment
 

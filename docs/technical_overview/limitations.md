@@ -31,8 +31,8 @@ the design and findings that the evaluation record reports; the figures are in t
 
 ## Limits of the Confidence
 
-- **A single temperature.** One number calibrates every tag, word and genre. Text that differs from the development split
-  can be more or less overconfident than the measurement suggests.
+- **A single temperature.** One number calibrates every tag, word and genre. Text that differs from the development
+  split can be more or less overconfident than the measurement suggests.
 - **Confident errors exist.** The model gives a confidence of 0.95 or more to some wrong answers, in particular for
   technical text. A threshold removes many errors, but a threshold of 0.90 does not make the remaining answers
   correct.
@@ -77,8 +77,8 @@ the weakness.
 - **Tokenization and sentence splitting are rules.** They follow the training convention and are tuned on one corpus.
   Unusual abbreviations or formatting can split sentences in the wrong place, and tokens from another convention are
   less familiar to the model.
-- **Glossaries need care.** In hard mode a wrong entry is wrong everywhere and with full confidence. Terms are matched by
-  tokens, so spellings that are tokenized differently (`bleed-valve` and `bleed valve`) need separate entries. Only the
-  regular forms of the head word are inflected, and the head word of an unusual term may need to be set by hand.
+- **Glossaries need care.** In hard mode a wrong entry is wrong everywhere and with full confidence. Terms are matched
+  by tokens, so spellings that are tokenized differently (`bleed-valve` and `bleed valve`) need separate entries. Only
+  the regular forms of the head word are inflected, and the head word of an unusual term may need to be set by hand.
 - **The tagger tags; it does not parse or reduce words to base forms.** The word lookup reports the base words and
   forms that the lexicon lists for a spelling, but the tagger does not use them to disambiguate.

@@ -7,17 +7,17 @@ This document describes the unit-level verification strategy for the `Tagger` un
 
 The unit is verified by unit tests in `Tagging/TaggerTests.cs` that use the public API with tiny models: the tiny
 trained model of `TinyTrainer` (which learns the fixture sentences) with the embedded lexicon or with a lexicon of the
-fixture words, and hand-set models from `TinyModels` where a test needs exact scores. The decoder, extractor, readers and
-tokenizer are real, so these tests also prove that the facade connects them correctly; nothing is mocked. The
+fixture words, and hand-set models from `TinyModels` where a test needs exact scores. The decoder, extractor, readers
+and tokenizer are real, so these tests also prove that the facade connects them correctly; nothing is mocked. The
 thread-safety test shares one tagger between 8 threads and compares every result with a sequential run; the immutability
 test tries to modify results and options through the interfaces that they expose. The tests of `Tagger.Default` use the
 shipped model, but only for properties that do not depend on its accuracy (it exists, it is one shared instance, and it
-tags four hand-written sentences whose tags are unmistakable; the sentences were written once and are not tuned, and
-the accuracy of the model is measured by the trainer's evaluation, never by these tests). The word lookup is verified on
-the real embedded lexicon (its `tests`, `the`, `is`, `went`, `well-tested` and similar entries are real data) and,
-where a test needs exact control of the analyses or of the longest spelling, on small custom lexicons that `TinyModels`
-compiles with the real writer; the tests for a word that is longer than the longest spelling compare the answer with
-the answer of a lexicon that can look the whole word up.
+tags four hand-written sentences whose tags are unmistakable; the sentences were written once and are not tuned, and the
+accuracy of the model is measured by the trainer's evaluation, never by these tests). The word lookup is verified on the
+real embedded lexicon (its `tests`, `the`, `is`, `went`, `well-tested` and similar entries are real data) and, where a
+test needs exact control of the analyses or of the longest spelling, on small custom lexicons that `TinyModels` compiles
+with the real writer; the tests for a word that is longer than the longest spelling compare the answer with the answer
+of a lexicon that can look the whole word up.
 
 #### Test Environment
 
@@ -62,11 +62,12 @@ is accepted, a parallel lookup differs from the sequential one, or a lookup of a
   stays one token with the right offsets).
 - **Options**: `Tagger_Options_MaxAlternativesLimitsAlternatives`.
 - **Glossary overloads**: `Tagger_Tag_Glossary_NullArguments_Throw` (a null glossary, text, sentence or token list is
-  refused by every overload that takes a glossary), `Tagger_Tag_Glossary_ConstraintLengthMismatch_Throws` (with and without
-  a match), `Tagger_Tag_Glossary_EmptyGlossary_GivesTheResultWithoutGlossary` (the three overloads give the tags,
-  confidences and alternatives of the calls without a glossary, and no match) and `Tagger_Tag_Glossary_Match_IsAppliedAndReported`
-  (a hard entry decides the tag of its head word with certainty, and the match is reported on the token and on the
-  sentence with its offset and definition). What a glossary does to the tags is verified in _Glossary Verification_.
+  refused by every overload that takes a glossary), `Tagger_Tag_Glossary_ConstraintLengthMismatch_Throws` (with and
+  without a match), `Tagger_Tag_Glossary_EmptyGlossary_GivesTheResultWithoutGlossary` (the three overloads give the
+  tags, confidences and alternatives of the calls without a glossary, and no match) and
+  `Tagger_Tag_Glossary_Match_IsAppliedAndReported` (a hard entry decides the tag of its head word with certainty, and
+  the match is reported on the token and on the sentence with its offset and definition). What a glossary does to the
+  tags is verified in *Glossary Verification*.
 - **Alternatives**: `Tagger_Tag_Alternatives_ExcludeBestAndSumWithConfidence`.
 - **Known word**: tests with hand-set weights and a lexicon of chosen rows (`CreateHandSet`).
   `Tagger_Tag_KnownWord_LexiconSpelling_IsTrueAndUnlistedSpellingIsFalse` (text input: listed words are known; an
@@ -81,20 +82,20 @@ is accepted, a parallel lookup differs from the sequential one, or a lookup of a
   known and constrained; every flag equals the one of the text tagged without the glossary). The glossary check of
   `Tagger_Tag_Glossary_EmptyGlossary_GivesTheResultWithoutGlossary` also includes the flag, because the helper
   `Describe` writes it.
-- **Margin**: `Tagger_Tag_Margin_SeveralAlternatives_IsConfidenceMinusRunnerUp` (a theory over 3 and 16 alternatives
-  for a
-  word with three allowed tags, against the analytic value to 1e-9),
+- **Margin**: `Tagger_Tag_Margin_SeveralAlternatives_IsConfidenceMinusRunnerUp` (a theory over 3 and 16 alternatives for
+  a word with three allowed tags, against the analytic value to 1e-9),
   `Tagger_Tag_Margin_OneAlternative_IsConfidenceMinusRunnerUp` (one alternative gives the value that 16 give),
   `Tagger_Tag_Margin_NoAlternativesRequested_IsTheSmallestMarginTheConfidenceAllows` (with 0 alternatives the margin is
   `2c - 1`, below the exact margin, and 0 for a confidence below one half), `Tagger_Tag_Margin_SingleAllowedTag_IsOne`
-  (a single-tag lexicon entry, a hard constraint on a listed word and on an unlisted word, with 0, 1 and 3 alternatives),
-  `Tagger_Tag_Margin_TiedTags_IsZero` (with and without alternatives), `Tagger_Tag_DefaultToken_HasNoMarginAndIsNotKnown`
-  and `Tagger_Tag_Margin_DoesNotAllocate` (.NET 8 and later: reading the margin and the flag of a token with alternatives
-  allocates 0 bytes per batch of 100 reads, which fails when the margin is read through `Alternatives`).
+  (a single-tag lexicon entry, a hard constraint on a listed word and on an unlisted word, with 0, 1 and 3
+  alternatives), `Tagger_Tag_Margin_TiedTags_IsZero` (with and without alternatives),
+  `Tagger_Tag_DefaultToken_HasNoMarginAndIsNotKnown` and `Tagger_Tag_Margin_DoesNotAllocate` (.NET 8 and later: reading
+  the margin and the flag of a token with alternatives allocates 0 bytes per batch of 100 reads, which fails when the
+  margin is read through `Alternatives`).
 - **Feature groups**: `Tagger_Load_ModelWithFeatureGroups_TagsWithTheGroups` (a toy model trained with all four groups
   loads through the public loader, its header names all four groups, and the tagger, which decodes the right preview
   group in two passes, tags at least 90% of the fixture tokens right; what each group does is verified in
-  _FeatureExtractor Verification_ and _TagDecoder Verification_).
+  *FeatureExtractor Verification* and *TagDecoder Verification*).
 - **Word lookup, tags and modes** (embedded lexicon unless a custom lexicon is named; real data, no mock):
   `Tagger_GetPossibleTags_DefaultMode_IsLexiconOnly`, `Tagger_GetPossibleTags_Case_IgnoresLetterCase` (a theory:
   `TESTS`, `Tests` and `tESTS` give a result equal to the one of `tests`, analyses included),
@@ -158,30 +159,30 @@ is accepted, a parallel lookup differs from the sequential one, or a lookup of a
   `Tagger_GetPossibleTags_UndefinedModeOrTag_Throws`.
 - **Form question**: `Tagger_IsFormOf_Analyses_AnswerTheQuestion` (a theory of true and false cases: `tests` of `test`
   as noun and as verb, `TESTS` of `Test`, `went` of `go`, `is` of `be`, an apostrophe base word with typographic
-  apostrophe and case, compound heads in any case, a wrong tag, a base word that is not an analysis, an unknown word,
-  a proper noun without analysis, a tag without analysis, the whole spelling `built-in` against its head, an unknown
-  head and a malformed compound) and `Tagger_IsFormOf_EveryAnalysisOfSampleWords_IsAForm` (every analysis of a sample
-  of words, compound heads included, is a form, and a decomposed non-ASCII word and base word and a curly apostrophe
-  are normalized in a custom lexicon) and `Tagger_IsFormOf_LowerCaseCustomBaseWord_MatchesAndUpperCaseCannotBeStored` (a
-  lower-case base word of a custom lexicon is returned as stored and matched in every case of the question, and a lexicon
-  with the base word `Run` cannot be compiled).
-- **Thread safety**: `Tagger_GetPossibleTags_ConcurrentCalls_GiveTheSameResultsAsOneThread` (eight threads look up words,
-  ask the form question and tag text in between; every answer equals the one of a single thread).
+  apostrophe and case, compound heads in any case, a wrong tag, a base word that is not an analysis, an unknown word, a
+  proper noun without analysis, a tag without analysis, the whole spelling `built-in` against its head, an unknown head
+  and a malformed compound) and `Tagger_IsFormOf_EveryAnalysisOfSampleWords_IsAForm` (every analysis of a sample of
+  words, compound heads included, is a form, and a decomposed non-ASCII word and base word and a curly apostrophe are
+  normalized in a custom lexicon) and `Tagger_IsFormOf_LowerCaseCustomBaseWord_MatchesAndUpperCaseCannotBeStored` (a
+  lower-case base word of a custom lexicon is returned as stored and matched in every case of the question, and a
+  lexicon with the base word `Run` cannot be compiled).
+- **Thread safety**: `Tagger_GetPossibleTags_ConcurrentCalls_GiveTheSameResultsAsOneThread` (eight threads look up
+  words, ask the form question and tag text in between; every answer equals the one of a single thread).
 - **Span overload** (.NET 8 and later): `Tagger_GetPossibleTags_Span_EqualsStringOverload` (words of every kind, also
   a slice of a longer text, give the result of the string overload in both modes) and
   `Tagger_GetPossibleTags_Span_InvalidInput_Throws`.
-- **Allocation** (.NET 8 and later, where the per-thread allocation counter exists; `TestSupport/AllocationMeter.cs`, the
-  minimum of the batches after warm-up): `Tagger_GetPossibleTags_DoesNotAllocate` (14 ASCII words in both modes through
-  the string and the span overload: known, capitalized, unknown, digit, punctuation, case variants, compounds, malformed
-  compounds and two words of 307 characters, one with a known last part, allocate 0 bytes per batch of 100 rounds,
-  including reading `TagsWithoutAnalysis`), `Tagger_IsFormOf_DoesNotAllocate` (true and false cases, a compound head and
-  an over-long compound: 0 bytes) and `Tagger_GetPossibleTags_AllocationOfTheOtherCases_IsRecordedAndBounded` (records,
-  without a threshold, what the cases that may allocate cost, and asserts only the statements of the documentation: a
-  million ASCII characters allocate 0 bytes and `GetAnalyses` allocates, except for a word without analyses). Measured
-  values (.NET 10, Windows x64, bytes per call): non-ASCII word that is already NFC 0, curly apostrophe 0, decomposed
-  word 32, span with an NFC non-ASCII character 32, with a decomposed one 64, a million non-ASCII characters that are
-  already NFC 0, `GetAnalyses` of `tests` 360, of `well` (five analyses) 600, of the head of `well-tested` 368, of an
-  unknown word 0. The tests do not run for `net481` (no per-thread allocation counter).
+- **Allocation** (.NET 8 and later, where the per-thread allocation counter exists; `TestSupport/AllocationMeter.cs`,
+  the minimum of the batches after warm-up): `Tagger_GetPossibleTags_DoesNotAllocate` (14 ASCII words in both modes
+  through the string and the span overload: known, capitalized, unknown, digit, punctuation, case variants, compounds,
+  malformed compounds and two words of 307 characters, one with a known last part, allocate 0 bytes per batch of 100
+  rounds, including reading `TagsWithoutAnalysis`), `Tagger_IsFormOf_DoesNotAllocate` (true and false cases, a compound
+  head and an over-long compound: 0 bytes) and `Tagger_GetPossibleTags_AllocationOfTheOtherCases_IsRecordedAndBounded`
+  (records, without a threshold, what the cases that may allocate cost, and asserts only the statements of the
+  documentation: a million ASCII characters allocate 0 bytes and `GetAnalyses` allocates, except for a word without
+  analyses). Measured values (.NET 10, Windows x64, bytes per call): non-ASCII word that is already NFC 0, curly
+  apostrophe 0, decomposed word 32, span with an NFC non-ASCII character 32, with a decomposed one 64, a million
+  non-ASCII characters that are already NFC 0, `GetAnalyses` of `tests` 360, of `well` (five analyses) 600, of the head
+  of `well-tested` 368, of an unknown word 0. The tests do not run for `net481` (no per-thread allocation counter).
 - **No retention of request text**: `Tagger_EveryEntryPoint_LeavesNoRequestTextInTheWorkspaces` (every entry point that
   tags, with and without a glossary and constraints, the word lookup and the form question, each with distinctive words
   and followed by a short text: after every call the character, hash, lexicon-scratch and base-word buffers of the

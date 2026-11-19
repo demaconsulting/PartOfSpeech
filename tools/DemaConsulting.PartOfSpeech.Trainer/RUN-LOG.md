@@ -1,4 +1,3 @@
-<!-- markdownlint-disable MD013 MD060 -->
 <!-- cspell:ignore gamify mkabl mkarm worktree worktrees isalpha scorings numpy scipy selftest nltk allimp Satterthwaite montanafinalstat unitrich usfs safehandlingofbo NCRP airforce antiarmor atsc ccceeee cexclude coastguard fmtv FOUO haandbook hacc hcands hemtt hexclude hfinal hget Jaccard OPFOR Readex unfetched usbm usbr deverbal dvhc dtmc stpc clvc djvu nvlpubs osti govinfo memoranda bacc emphasised -->
 
 # Trainer Run Log

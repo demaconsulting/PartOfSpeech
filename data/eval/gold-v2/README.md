@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD013 MD060 -->
-
 # Gold v2
 
 License: CC0-1.0
@@ -14,21 +12,21 @@ tagger accuracy on real text. **Evaluation only**; the test split is reported, n
   `6530de1928baf30f9a14446a54bfb5dd5f67b41c`), files `dev.tsv`, `test.tsv` and `sources.tsv` copied unchanged by
   `python tools/data/import_eval.py`, with the SHA-256 of each input pinned in `tools/data/pins/wordsense-inputs.tsv`.
   The raw labeler answers (`labels.tsv`) and the sampling manifest are not imported.
-- **Labels:** written by two language models, with a third adjudicating every disagreement. **No human reviewed a label**
-  and no token was dropped. The project owner dedicates the labels and the selection to the public domain under CC0 1.0.
+- **Labels:** written by two language models, with a third adjudicating every disagreement. **No human reviewed a
+  label** and no token was dropped. The project owner dedicates the labels and the selection to the public domain under
+  CC0 1.0.
 - **Sentences:** public domain in the United States only. They come from documents that appear nowhere else in the
   WordSense repository: VOA Learning English, USGS, National Park Service and NOAA National Weather Service pages (US
   federal works or explicit public-domain statements, quoted per document in `sources.tsv`) and 97 Project Gutenberg
-  books (author dead by 1930, landing page "Public domain in the USA"). There is no FAA, NASA or NOS text, no Tatoeba, no
-  CC BY or CC BY-SA text and no Universal Dependencies text (a scan of `sources.tsv` finds no such license row).
+  books (author dead by 1930, landing page "Public domain in the USA"). There is no FAA, NASA or NOS text, no Tatoeba,
+  no CC BY or CC BY-SA text and no Universal Dependencies text (a scan of `sources.tsv` finds no such license row).
 
 ## Files
 
-| File | Content |
-| --- | --- |
-| `dev.tsv` | 2,025 labeled tokens of the development split (586 documents) |
-| `test.tsv` | 3,047 labeled tokens of the test split (856 documents); the two splits share no document |
-| `sources.tsv` | the 1,442 documents: family, title, URL, author, year, license basis (the quoted statement), terms URL, retrieval date, hashes |
+- `dev.tsv`: 2,025 labeled tokens of the development split (586 documents)
+- `test.tsv`: 3,047 labeled tokens of the test split (856 documents); the two splits share no document
+- `sources.tsv`: the 1,442 documents: family, title, URL, author, year, license basis (the quoted statement), terms URL,
+  retrieval date, hashes
 
 A row of `dev.tsv` and `test.tsv` has 16 tab-separated columns (named in the `# columns` comment line):
 `id doc_id source terms_url sent_id target form strata pos lemma features tense sense status agreement sentence`.

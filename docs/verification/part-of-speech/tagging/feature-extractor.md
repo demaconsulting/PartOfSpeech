@@ -33,26 +33,27 @@ or the shape bits differ, or extraction allocates after warm-up.
 #### Test Scenarios
 
 - **Feature set**: `FeatureExtractor_Extract_EmitsTwentyTwoTemplates` (a long first word has all 22 templates, a later
-  word 21 because only the first word has the initial flag), `FeatureExtractor_Extract_ShortToken_OmitsLongPrefixesAndSuffixes`
-  and `FeatureExtractor_Extract_TagHistory_ChangesOnlyTagFeatures`.
+  word 21 because only the first word has the initial flag),
+  `FeatureExtractor_Extract_ShortToken_OmitsLongPrefixesAndSuffixes` and
+  `FeatureExtractor_Extract_TagHistory_ChangesOnlyTagFeatures`.
 - **Shape**: `FeatureExtractor_Shape_FollowsSpikeBits` (shape letters and bits of the spike for typical tokens).
 - **Initial flag**: `FeatureExtractor_Extract_InitialFlag_SkipsLeadingPunctuation`.
 - **Context**: `FeatureExtractor_Extract_Neighbors_UseSentinelsAtBoundaries`.
 - **Fold**: `FeatureExtractor_Extract_Fold_MapsTypographicQuotesAndDashes` and
   `FeatureExtractor_Extract_Fold_NfcNormalizesNonAscii` (decomposed and composed spellings give the same features);
-  `FeatureExtractor_SetFolded_NormalizedText_EqualsSetToken` (the folding core, given the normalized text, records the same
-  characters, flags, shape and hashes as `SetToken` for the raw text, for ASCII, capitalized, typographic, decomposed,
-  malformed, supplementary and hyphenated tokens, which makes the word lookup and the decoder see identical tokens),
-  `FeatureExtractor_SetFolded_SpanSlice_EqualsTheSameTextAsAToken` (.NET 8 and later: a slice of a longer text folds as
-  the same text alone) and `FeatureExtractor_FoldsToDoubleHyphen_AgreesWithTheFoldingOfEveryCodeUnit` (for each of the
-  65,536 UTF-16 code units the helper is true exactly when folding the unit gives `--`). The string-and-offset form of
-  the core
-  (`SetFoldedPart`, `netstandard2.0` only) is exercised by the word lookup tests that run on `net481`.
+  `FeatureExtractor_SetFolded_NormalizedText_EqualsSetToken` (the folding core, given the normalized text, records the
+  same characters, flags, shape and hashes as `SetToken` for the raw text, for ASCII, capitalized, typographic,
+  decomposed, malformed, supplementary and hyphenated tokens, which makes the word lookup and the decoder see identical
+  tokens), `FeatureExtractor_SetFolded_SpanSlice_EqualsTheSameTextAsAToken` (.NET 8 and later: a slice of a longer text
+  folds as the same text alone) and `FeatureExtractor_FoldsToDoubleHyphen_AgreesWithTheFoldingOfEveryCodeUnit` (for each
+  of the 65,536 UTF-16 code units the helper is true exactly when folding the unit gives `--`). The string-and-offset
+  form of the core (`SetFoldedPart`, `netstandard2.0` only) is exercised by the word lookup tests that run on `net481`.
 - **Malformed text**: `FeatureExtractor_Extract_Fold_UnpairedSurrogate_UsesReplacementCharacter` (a lone high, a lone
   low and a reversed pair give the features of the same token with U+FFFD, the rest is still normalized, a valid pair is
   kept, and the fast path equals the reference).
 - **Reference equivalence**: `FeatureExtractor_Extract_MatchesReferenceStringHashing`.
-- **Buckets**: `FeatureExtractor_Buckets_AreInRangeAndStable` and `FeatureExtractor_Hash_IsCaseSensitiveWhereTemplatesAre`.
+- **Buckets**: `FeatureExtractor_Buckets_AreInRangeAndStable` and
+  `FeatureExtractor_Hash_IsCaseSensitiveWhereTemplatesAre`.
 - **No allocation**: `FeatureExtractor_Extract_DoesNotAllocateAfterWarmUp` (zero bytes after the workspace has grown;
   .NET 8 and later) and `FeatureExtractor_Extract_AllGroups_DoesNotAllocateAfterWarmUp` (the same with all five groups,
   both
@@ -61,19 +62,19 @@ or the shape bits differ, or extraction allocates after warm-up.
   and is configured for none gives the base stride, at most 22 buckets and the buckets of a fresh workspace and of the
   reference, so the switch-off feature stream is that of the 22 templates),
   `FeatureExtractor_Extract_GroupsMatchReference` (all 32 sets of groups against the reference on 60 corpus sentences
-  with the embedded lexicon, gold tags as history and preview) and `FeatureExtractor_Extract_AllGroups_FillsBucketCapacity`
-  (42 buckets for a token with every feature).
-- **Position cues**: `FeatureExtractor_Extract_PositionCues_FollowTheDefinition` (first content token with function words,
-  unknown spellings and an all-function sentence; the terminals `?`, `.` behind a closing quote and none; position cap)
-  and `FeatureExtractor_Extract_PositionCues_LengthBuckets` (both ends of every length range).
+  with the embedded lexicon, gold tags as history and preview) and
+  `FeatureExtractor_Extract_AllGroups_FillsBucketCapacity` (42 buckets for a token with every feature).
+- **Position cues**: `FeatureExtractor_Extract_PositionCues_FollowTheDefinition` (first content token with function
+  words, unknown spellings and an all-function sentence; the terminals `?`, `.` behind a closing quote and none;
+  position cap) and `FeatureExtractor_Extract_PositionCues_LengthBuckets` (both ends of every length range).
 - **Clause cues**: `FeatureExtractor_Extract_ClauseCues_ClassifiesTokens` (each of the 13 classes, the fast path and the
   reference), `FeatureExtractor_Extract_ClauseCues_ImperativeFollowedByDeterminer` (`Check the valve`, a modal and
   `to` before a verb, the distances), `FeatureExtractor_Advance_ClauseState_TracksSubjectVerbAndBoundaries` (the state
   before each token and the reset by `StartPass`) and `FeatureExtractor_Advance_ClauseState_BoundaryTokens` (the tokens
   that start a clause and those that do not).
 - **Inflection**: `FeatureExtractor_Extract_Inflection_StemFacts` (the restored `e` of `making`, the undoubled consonant
-  of `running` and `stopped`, `ied` and `ies` to `y`, `es`, no candidate for `pass`, `is`, `ing` and `red`, no feature for
-  a word without suffix) and `FeatureExtractor_Extract_Inflection_SeparatesAvoidingFromBringAndThing`.
+  of `running` and `stopped`, `ied` and `ies` to `y`, `es`, no candidate for `pass`, `is`, `ing` and `red`, no feature
+  for a word without suffix) and `FeatureExtractor_Extract_Inflection_SeparatesAvoidingFromBringAndThing`.
 - **Title-case line**: `FeatureExtractor_Extract_TitleCaseLine_FlagArithmetic` (the boundary of the 60 percent test,
   59 and 60 of 100 and the small counts, with fewer than two words after the first one never marked),
   `FeatureExtractor_Extract_TitleCaseLine_WordTokensAndFinalMark` (the first word token is left out, also after

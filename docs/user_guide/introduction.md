@@ -41,7 +41,7 @@ compliance evidence is generated automatically on every CI run.
 
 - **Requirements Traceability**: Every requirement is linked to passing tests, and a trace matrix is
   auto-generated on each release
-- **Linting Enforcement**: markdownlint, TextLint, and yamllint are enforced before any build proceeds
+- **Linting Enforcement**: LintMark, TextLint, and yamllint are enforced before any build proceeds
 - **Automated Audit Documentation**: Each release ships with generated requirements, justifications,
   trace matrix, and quality reports
 - **CodeQL and SonarCloud**: Security and quality analysis runs on every build
@@ -62,17 +62,17 @@ of the public API under its `api/` folder, generated from the XML documentation 
 compiled word lexicon with the analyses of its spellings (762,836 bytes compressed) and the trained averaged-perceptron
 weights (553,641 bytes compressed, 1,234,530 bytes uncompressed, about 0.6 MB and 1.2 MB). `Tagger.Default` returns a
 shared tagger that uses them, so the
-samples below need no file and no download. You can still create a tagger from your own weights file (see _Loading a
-Weights File_).
+samples below need no file and no download. You can still create a tagger from your own weights file (see *Loading a
+Weights File*).
 
 The tagger decides token by token from left to right. For each token it scores the allowed tags from the word and its
 ending, the words around it, the tags it chose before and, in the embedded model, clause cues: the kind of the
 neighboring words (for example a determiner or a modal), the distance to the nearest determiner or modal, and whether
-the current clause already has a subject-like tag and a verb tag. The cues were designed for words that are both noun and
-verb, such as the first word of an instruction. The embedded model does not use tags of the words to its right.
+the current clause already has a subject-like tag and a verb tag. The cues were designed for words that are both noun
+and verb, such as the first word of an instruction. The embedded model does not use tags of the words to its right.
 
 The [evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md) has the
-results and the limits of the measurement, and the section _Choosing a Confidence Threshold_ says which confidence to
+results and the limits of the measurement, and the section *Choosing a Confidence Threshold* says which confidence to
 trust.
 
 # Usage
@@ -95,7 +95,7 @@ foreach (TaggedSentence sentence in tagger.Tag("The cat sat on the mat. It didn'
 
 `Tag(string)` tokenizes the text, splits it into sentences and tags every token. `Tagger.Default` is created on first
 use and is shared by every caller; you can also create your own tagger and share it: it is immutable and safe for
-concurrent use (see _Thread Safety_).
+concurrent use (see *Thread Safety*).
 
 ## Offsets
 
@@ -115,7 +115,7 @@ to its last token character.
 ## Pre-Tokenized Input
 
 If you already have tokens, pass them to the tagger. They should follow the conventions of the library (see
-_Tokenization Conventions_), because the model was trained on them:
+*Tokenization Conventions*), because the model was trained on them:
 
 ```csharp
 TaggedSentence sentence = tagger.Tag(new[] { "She", "does", "n't", "know", "." });
@@ -158,20 +158,20 @@ Read the numbers with these points in mind:
   is correct by construction, but it says nothing about the model. To judge the model, look at tokens with several
   allowed tags, for example both NOUN and VERB.
 - **Known words are restricted, unknown words are not.** A word that is in the lexicon receives only a tag that the
-  lexicon and the token-shape rules allow (a capitalized word can also be PROPN or X, a token with a digit can also be NUM,
-  SYM, X, NOUN, PROPN or ADJ, a token without a letter or digit can also be PUNCT, SYM or X). A word that is not in the
-  lexicon can receive any of the 17 tags, so its confidence is spread over all of them. `TaggedToken.IsKnownWord` reports
-  which case a token is: it is true when the lexicon has an entry for the spelling after the tagger folds it (Unicode
-  NFC normalization; typographic quotes, dashes and the ellipsis mapped to ASCII) and lower-cases it, so `Cat` and `cat`
-  are the same word, whatever a glossary or a constraint did to the tag.
-- **The margin shows a close call.** `TaggedToken.Margin` is the confidence minus the probability of the best alternative,
-  from 0 to 1. It is exact when at least one alternative is reported (the default is 3); with `MaxAlternatives` 0 it is
-  the smallest value that the confidence allows, and for a token with one allowed tag it is 1. See _Using the Tagger
-  in a Rule Checker_.
+  lexicon and the token-shape rules allow (a capitalized word can also be PROPN or X, a token with a digit can also be
+  NUM, SYM, X, NOUN, PROPN or ADJ, a token without a letter or digit can also be PUNCT, SYM or X). A word that is not in
+  the lexicon can receive any of the 17 tags, so its confidence is spread over all of them. `TaggedToken.IsKnownWord`
+  reports which case a token is: it is true when the lexicon has an entry for the spelling after the tagger folds it
+  (Unicode NFC normalization; typographic quotes, dashes and the ellipsis mapped to ASCII) and lower-cases it, so `Cat`
+  and `cat` are the same word, whatever a glossary or a constraint did to the tag.
+- **The margin shows a close call.** `TaggedToken.Margin` is the confidence minus the probability of the best
+  alternative, from 0 to 1. It is exact when at least one alternative is reported (the default is 3); with
+  `MaxAlternatives` 0 it is the smallest value that the confidence allows, and for a token with one allowed tag it is 1.
+  See *Using the Tagger in a Rule Checker*.
 - **The lexicon is not a gold standard.** It records which tags a word is attested with, including some annotation noise
   (for example `the` also appears as PROPN), so a tag in the allowed set is not necessarily correct.
-- **A low confidence is a reason to look.** Which confidence is low enough is measured: see _Choosing a Confidence
-  Threshold_ below. Look at the alternatives to see what the competing readings are.
+- **A low confidence is a reason to look.** Which confidence is low enough is measured: see *Choosing a Confidence
+  Threshold* below. Look at the alternatives to see what the competing readings are.
 
 ### Choosing a Confidence Threshold
 
@@ -185,13 +185,13 @@ noun-verb decisions that is answered.
 | strict | 0.90 | 89.7% | 4.6 |
 | balanced | 0.75 | 94.9% | 9.1 |
 
-On the development data the same thresholds answered 87.9% (strict, 4.3 harmful errors in 1,000) and 94.1% (balanced, 8.8)
-of the decisions. The strict target of at most 5 in 1,000 was met by the point estimates on the open test split (4.6; its
-95% interval is 2.4 to 7.2 and so includes 5) and on the held-out gold v2 test split (2 harmful errors in 821 answered
-decisions) and is exceeded on the shape probe of short technical and imperative sentences (9.3 in 1,000 answered, four
-errors in 429). The balanced target of at most 10 in 1,000 was met on the open test split (9.1; its interval is 6.1 to
-12.2 and so includes 10) and exceeded on the gold v2 test split (10.2, 9 errors in 881 answered decisions) and on the
-shape probe (20.2, 10 errors in 495).
+On the development data the same thresholds answered 87.9% (strict, 4.3 harmful errors in 1,000) and 94.1% (balanced,
+8.8) of the decisions. The strict target of at most 5 in 1,000 was met by the point estimates on the open test split
+(4.6; its 95% interval is 2.4 to 7.2 and so includes 5) and on the held-out gold v2 test split (2 harmful errors in 821
+answered decisions) and is exceeded on the shape probe of short technical and imperative sentences (9.3 in 1,000
+answered, four errors in 429). The balanced target of at most 10 in 1,000 was met on the open test split (9.1; its
+interval is 6.1 to 12.2 and so includes 10) and exceeded on the gold v2 test split (10.2, 9 errors in 881 answered
+decisions) and on the shape probe (20.2, 10 errors in 495).
 
 Without a threshold, 19.1 of 1,000 noun-verb decisions of the open test split are harmful errors, and the rate is higher
 on short technical and imperative text. Use these rules:
@@ -220,9 +220,9 @@ guidance is in the API reference that is packed with the library.
 ### Technical Text
 
 The thresholds above are chosen on ordinary text. Technical text is harder for the model: a noun that is spelled like a
-verb (the head of a compound such as _the pressure check_ or a gerund such as _the shutdown testing_), a Capitalized
-Defined Term (_Safe Mode_), the first word of a step line (_Close the valve._) and a base-form word in a clause
-(_The pumps run._) are the words where a confident wrong tag is most likely, and the held-out evaluation does not
+verb (the head of a compound such as *the pressure check* or a gerund such as *the shutdown testing*), a Capitalized
+Defined Term (*Safe Mode*), the first word of a step line (*Close the valve.*) and a base-form word in a clause
+(*The pumps run.*) are the words where a confident wrong tag is most likely, and the held-out evaluation does not
 measure them. The model was therefore measured on four development tranches of such words (1,417 judged words, targets
 and controls, from US federal technical documents; development data only, chosen from the contested words of another
 classifier, so not the error rate of ordinary technical prose). At the strict threshold of the development selection
@@ -244,7 +244,7 @@ and in the section "Technical text" of the
 
 The recommended way for a rule checker to reach a low error rate, on technical text as on any other, is the strict
 threshold together with `TaggedToken.Margin`, `TaggedToken.IsKnownWord` and a domain `Glossary` or `TokenConstraint`
-(see _Using the Tagger in a Rule Checker_). A confident error on a term that the dictionary knows is best removed with
+(see *Using the Tagger in a Rule Checker*). A confident error on a term that the dictionary knows is best removed with
 the glossary, which fixes the term wherever it occurs, and not with a higher threshold.
 
 ## Constraints
@@ -274,16 +274,16 @@ Console.WriteLine(tagged.Tokens[1].IsConstrained);   // True
 - The tag that is chosen becomes the history of the following tokens, so a constraint also influences its neighbors.
 - `TaggedToken.IsConstrained` is true for every token whose constraint was not `None`. A constraint that allows a single
   tag gives confidence 1.
-- The list must have exactly one constraint per token, otherwise `ArgumentException` is thrown. `default(TokenConstraint)`
-  is `None`.
+- The list must have exactly one constraint per token, otherwise `ArgumentException` is thrown.
+  `default(TokenConstraint)` is `None`.
 
 ## Glossary
 
 A `Glossary` is a list of domain terms with the tags that they take. A general model reads `bleed valve` as a verb and a
 noun, because `bleed` is also a verb; a glossary tells the tagger once that the term is a noun, and the tagger applies
 that to every occurrence. Entries are single words or several words, each with the tags of its head word and an optional
-definition. Pass the glossary to a `Tag` call; it belongs to the call, so the shared `Tagger.Default` can serve any number
-of glossaries.
+definition. Pass the glossary to a `Tag` call; it belongs to the call, so the shared `Tagger.Default` can serve any
+number of glossaries.
 
 ### A list of technical names
 
@@ -342,8 +342,9 @@ Console.WriteLine(glossary.FindMatches(Tokenizer.Tokenize("Call IT now.")[0]).Co
 Console.WriteLine(glossary.FindMatches(Tokenizer.Tokenize("Call it now.")[0]).Count);   // 0
 ```
 
-`GlossaryOptions.CaseSensitive` changes the default for the whole glossary and `WithCaseSensitive` overrides it per entry.
-A case-sensitive and a case-insensitive entry for the same term may coexist; where both match, the case-sensitive one wins.
+`GlossaryOptions.CaseSensitive` changes the default for the whole glossary and `WithCaseSensitive` overrides it per
+entry. A case-sensitive and a case-insensitive entry for the same term may coexist; where both match, the case-sensitive
+one wins.
 
 ### Hard mode and soft mode
 
@@ -362,69 +363,68 @@ foreach (TaggedToken token in sentence.Tokens)
 ```
 
 Hard mode (the default) trusts the entries completely: **a wrong entry forces a wrong tag**, because the glossary
-overrules the model, also where the model was right, and the tag is given with full confidence. That fits a curated list,
-such as the technical names and verbs of ASD-STE100: every right entry helps and nothing disagrees. Soft mode is for a
-list that is not curated or may be wrong (for example one that was extracted automatically): the model keeps its tag
-when it is clearly sure, so a wrong entry costs much less. `GlossaryEntry.WithMode` sets the mode of one entry, and
+overrules the model, also where the model was right, and the tag is given with full confidence. That fits a curated
+list, such as the technical names and verbs of ASD-STE100: every right entry helps and nothing disagrees. Soft mode is
+for a list that is not curated or may be wrong (for example one that was extracted automatically): the model keeps its
+tag when it is clearly sure, so a wrong entry costs much less. `GlossaryEntry.WithMode` sets the mode of one entry, and
 `GlossaryOptions.SoftStrength` the strength (greater than zero; the default is `GlossaryOptions.DefaultSoftStrength`).
 
 ### Reading the results
 
-- `TaggedToken.GlossaryMatch` is the match whose span contains the token, or `null`; `TaggedToken.IsGlossaryHead` is true
-  for the head word of its match; `TaggedToken.IsConstrained` is true for every token of a match that the glossary
+- `TaggedToken.GlossaryMatch` is the match whose span contains the token, or `null`; `TaggedToken.IsGlossaryHead` is
+  true for the head word of its match; `TaggedToken.IsConstrained` is true for every token of a match that the glossary
   constrained.
 - `TaggedSentence.GlossaryMatches` lists the matches in text order. A `GlossaryMatch` has the `Entry` (and so the
-  definition), `FirstToken`, `TokenCount` and `HeadToken` (indexes into the tokens of the sentence), `Start` and `Length`
-  (offsets into the string that you passed in) and `Text` (the span as written), the effective `Mode`, and `IsVariant`
-  (an inflected form or a listed variant was matched, not the term as written).
-- **Confidence.** A head word that a hard entry limits to one tag has the confidence exactly 1.0 and no alternatives: there
-  was no choice, so the value does not say that the model is sure. An entry with several tags, or soft mode, gives the
-  softmax over the tags that remain, so a soft preference shows in the confidence.
-- The chosen tag becomes the history of the following tokens like any other tag, so the neighbors after a match can change;
-  the tokens before the first match are tagged exactly as without a glossary.
+  definition), `FirstToken`, `TokenCount` and `HeadToken` (indexes into the tokens of the sentence), `Start` and
+  `Length` (offsets into the string that you passed in) and `Text` (the span as written), the effective `Mode`, and
+  `IsVariant` (an inflected form or a listed variant was matched, not the term as written).
+- **Confidence.** A head word that a hard entry limits to one tag has the confidence exactly 1.0 and no alternatives:
+  there was no choice, so the value does not say that the model is sure. An entry with several tags, or soft mode, gives
+  the softmax over the tags that remain, so a soft preference shows in the confidence.
+- The chosen tag becomes the history of the following tokens like any other tag, so the neighbors after a match can
+  change; the tokens before the first match are tagged exactly as without a glossary.
 
 ### Inflection
 
-A glossary lists lemmas and text has plurals and verb forms, so the regular English forms of the head word match as well,
-with the tags that fit the form:
+A glossary lists lemmas and text has plurals and verb forms, so the regular English forms of the head word match as
+well, with the tags that fit the form:
 
-- A noun entry matches its plural: `s`, `x`, `z`, `ch` and `sh` take `es` (`box`, `boxes`), a consonant and `y` become `ies`
-  (`battery`, `batteries`), otherwise `s`; an acronym of capitals takes a lower-case `s` (`LRU`, `LRUs`).
+- A noun entry matches its plural: `s`, `x`, `z`, `ch` and `sh` take `es` (`box`, `boxes`), a consonant and `y` become
+  `ies` (`battery`, `batteries`), otherwise `s`; an acronym of capitals takes a lower-case `s` (`LRU`, `LRUs`).
 - A verb entry matches the third person (the same rule as the plural), the past form (`isolated`, `carried`, `stopped`
   for a short word that ends in consonant, vowel, consonant) and the present participle (`isolating`, `carrying`,
   `stopping`, `tying`). A past form may be a verb or an adjective, a present participle a verb, an adjective or a noun.
-- Only the head word is inflected: `bleed valve` matches `bleed valves`, not `bleeds valve`. Proper nouns, adjectives and
-  other tags are not inflected.
+- Only the head word is inflected: `bleed valve` matches `bleed valves`, not `bleeds valve`. Proper nouns, adjectives
+  and other tags are not inflected.
 - Irregular forms (`bled`, `leaves`) and the doubling of longer words (`permitted`) are not generated: list them with
   `WithVariants`, which takes whole-term spellings with the same number of tokens. A term as written wins over a listed
   variant, and a variant over a generated form. An irregular form that is identical to the lemma (`set`, `cut`) needs no
-  variant, because the term already matches it, and a variant that repeats the term or another variant is ignored without
-  an error.
+  variant, because the term already matches it, and a variant that repeats the term or another variant is ignored
+  without an error.
 - `GlossaryOptions.Inflect` and `GlossaryEntry.WithInflection` switch it off.
 
 ### Caveats
 
-- **Tokenization.** A term is split into tokens like running text. `bleed-valve` is one token and does not match the text
-  `bleed valve` (add both spellings as two entries; a variant cannot help, because it must have the same number of
-  tokens as the term). A contraction in a term is split (`don't` becomes `do` and
-  `n't`), so give such a term a head with `WithHead`. Punctuation inside a word (`3.5`, `R&D`, `and/or`) behaves as in text.
-  A term never matches across two sentences, and a pre-tokenized token with punctuation stuck to it (`valve.`) does not
-  match `valve`.
+- **Tokenization.** A term is split into tokens like running text. `bleed-valve` is one token and does not match the
+  text `bleed valve` (add both spellings as two entries; a variant cannot help, because it must have the same number of
+  tokens as the term). A contraction in a term is split (`don't` becomes `do` and `n't`), so give such a term a head
+  with `WithHead`. Punctuation inside a word (`3.5`, `R&D`, `and/or`) behaves as in text. A term never matches across
+  two sentences, and a pre-tokenized token with punctuation stuck to it (`valve.`) does not match `valve`.
 - **The head word.** The head word is the last word of the term, which is right for noun compounds (`bleed valve`),
   except for a phrasal verb: when the entry's tags include `VERB`, the term has at least two words, and every word after
   the first is one of a small closed list of particle words that the lexicon of the library also allows as adposition,
   adverb or particle, the head is the first word. The list is `about`, `across`, `ahead`, `along`, `apart`, `around`,
   `aside`, `away`, `back`, `by`, `down`, `forth`, `forward`, `in`, `off`, `on`, `onto`, `out`, `over`, `through`,
-  `together`, `up`, `upon` and `within`. So `shut down`, `carry out`, `set up` and `switch off` are inferred with the head
-  on the first word, while `take care`, `make sense` and `shut down valve` keep the last word. `WithHead` always
-  overrides the default, in both directions, also `WithHead` with the last word, and a phrasal verb with a particle outside
-  the list needs it. The verb tags then go to the head word
-  (`shut`); `shuts` and `shutting` match as forms of the verb, and the particle `down` is
-  limited to adposition, adverb and particle. That limit applies only to a verb term of exactly two words whose head is
-  the first word; every other word of a term that is not a noun term (for example `it` in `take it apart`, the words in
-  front of the head, and the words of an adjective phrase) is left to the model, and `WithTokenTags` sets the tags of one
-  word explicitly. The inference looks the words up in the lexicon that is embedded in the library, also when your
-  tagger was loaded with its own lexicon file; `GlossaryEntry.HeadIndex` tells which word was chosen.
+  `together`, `up`, `upon` and `within`. So `shut down`, `carry out`, `set up` and `switch off` are inferred with the
+  head on the first word, while `take care`, `make sense` and `shut down valve` keep the last word. `WithHead` always
+  overrides the default, in both directions, also `WithHead` with the last word, and a phrasal verb with a particle
+  outside the list needs it. The verb tags then go to the head word (`shut`); `shuts` and `shutting` match as forms of
+  the verb, and the particle `down` is limited to adposition, adverb and particle. That limit applies only to a verb
+  term of exactly two words whose head is the first word; every other word of a term that is not a noun term (for
+  example `it` in `take it apart`, the words in front of the head, and the words of an adjective phrase) is left to the
+  model, and `WithTokenTags` sets the tags of one word explicitly. The inference looks the words up in the lexicon that
+  is embedded in the library, also when your tagger was loaded with its own lexicon file; `GlossaryEntry.HeadIndex`
+  tells which word was chosen.
 - **Duplicates.** Two entries for the same tokens under the same case rule are refused; merge their tags into one entry.
 - **Wrong entries.** See the hard and soft modes above. A hard entry with a wrong tag is tagged wrongly everywhere it
   occurs, with confidence 1.0.
@@ -442,34 +442,34 @@ error. Four things help:
 - **The dictionary.** Give the terms that your domain knows to a `Glossary` (hard mode for a list that you trust
   completely, soft mode for a list that may contain errors; a wrong hard entry forces a wrong tag with the confidence
   1.0), or give a token that your checker already knows a constraint such as `TokenConstraint.Only(Upos.Noun)`.
-- **The confidence**, read against the `strict` threshold of _Choosing a Confidence Threshold_.
+- **The confidence**, read against the `strict` threshold of *Choosing a Confidence Threshold*.
 - **The margin** and the runner-up `Alternatives[0]`: a margin near 0 is a close call. Keep `MaxAlternatives` at 1 or
   more (the default is 3) so that the margin is exact; with 0 it is the smallest value that the confidence allows. The
   margin is at least `2 * Confidence - 1`, so a token above the `strict` threshold has a large margin, and the margin
   adds information for the tokens below the threshold or as a stricter filter that you choose. No margin limit is
   measured and none is recommended: measure the limit on your own text.
 - **The known-word flag.** `IsKnownWord` is false when the lexicon has no entry for the word. All 17 tags were then
-  allowed (also for capitalized words, numbers and punctuation that the lexicon does not list), so a noun, verb or proper
-  noun tag on such a word is a guess. The flag is about the lexicon, not about being a word: punctuation and numbers that
-  the lexicon lists are known, and a capital letter never makes a word known.
+  allowed (also for capitalized words, numbers and punctuation that the lexicon does not list), so a noun, verb or
+  proper noun tag on such a word is a guess. The flag is about the lexicon, not about being a word: punctuation and
+  numbers that the lexicon lists are known, and a capital letter never makes a word known.
 
 The recommended way for a rule checker to reach a low error rate is the strict threshold together with the margin, the
 known-word flag and a domain `Glossary` or `TokenConstraint`. A confident error on a term that the dictionary knows is
 best removed with the glossary, not with a higher threshold: a glossary entry fixes the term wherever it occurs, while a
-higher threshold gives up coverage on every token. No threshold above `strict` is recommended (see _Technical Text_ for
+higher threshold gives up coverage on every token. No threshold above `strict` is recommended (see *Technical Text* for
 the measured point at 0.99).
 
-A dictionary decides a token only when it leaves a single tag: a hard glossary entry or a `TokenConstraint.Only` with one
-tag. That token has `IsConstrained` set, the confidence 1.0 and no `Alternatives`; the head word of an entry that the
-lexicon does not list has `IsKnownWord` false, the tag of the entry and the confidence 1.0, and it is not inconclusive,
-because the dictionary decided it (its confidence and margin are no measurement). `IsConstrained` alone is not enough: a
-soft glossary entry, a `TokenConstraint.Prefer` or `Penalize`, and a constraint that allows several tags set it too, and
-the model can still disagree, so those tokens go through the same checks as every other token. The confidence cannot
-tell the cases apart, because a soft boost that is large enough rounds the confidence to exactly 1.0 while the other
-tags are still allowed. The number of allowed tags can: a token with one allowed tag has no alternatives, and a token
-with several allowed tags lists every other one (up to `MaxAlternatives`), also with the probability 0. So with
-`MaxAlternatives` of 1 or more, `IsConstrained && Alternatives.Count == 0` is the test that the dictionary decided the
-token; with `MaxAlternatives` 0 no token has alternatives and the test cannot be made.
+A dictionary decides a token only when it leaves a single tag: a hard glossary entry or a `TokenConstraint.Only` with
+one tag. That token has `IsConstrained` set, the confidence 1.0 and no `Alternatives`; the head word of an entry that
+the lexicon does not list has `IsKnownWord` false, the tag of the entry and the confidence 1.0, and it is not
+inconclusive, because the dictionary decided it (its confidence and margin are no measurement). `IsConstrained` alone is
+not enough: a soft glossary entry, a `TokenConstraint.Prefer` or `Penalize`, and a constraint that allows several tags
+set it too, and the model can still disagree, so those tokens go through the same checks as every other token. The
+confidence cannot tell the cases apart, because a soft boost that is large enough rounds the confidence to exactly 1.0
+while the other tags are still allowed. The number of allowed tags can: a token with one allowed tag has no
+alternatives, and a token with several allowed tags lists every other one (up to `MaxAlternatives`), also with the
+probability 0. So with `MaxAlternatives` of 1 or more, `IsConstrained && Alternatives.Count == 0` is the test that the
+dictionary decided the token; with `MaxAlternatives` 0 no token has alternatives and the test cannot be made.
 
 ```csharp
 Glossary dictionary = new GlossaryBuilder
@@ -515,14 +515,14 @@ foreach (TaggedSentence sentence in Tagger.Default.Tag("Select the manual overri
 }
 ```
 
-The order of the checks is: the dictionary left one tag, the confidence is below `strict`, the word is unknown and
-the tag is a noun, verb or proper noun, the margin is below your limit; otherwise the tag is conclusive. When the checker
-already knows the terms of each token, pass a `TokenConstraint.Only(Upos.Noun)` for those tokens to `Tag(sentence,
-constraints)` instead of a glossary (see _Constraints_); those tokens report `IsConstrained`, the confidence 1.0 and no
-alternatives.
+The order of the checks is: the dictionary left one tag, the confidence is below `strict`, the word is unknown and the
+tag is a noun, verb or proper noun, the margin is below your limit; otherwise the tag is conclusive. When the checker
+already knows the terms of each token, pass a `TokenConstraint.Only(Upos.Noun)` for those tokens to
+`Tag(sentence, constraints)` instead of a glossary (see *Constraints*); those tokens report `IsConstrained`, the
+confidence 1.0 and no alternatives.
 
 A rule checker can also ask the dictionary about one word before it reads a tagged sentence. Check the dictionary roles
-of the word with the lookup (`GetPossibleTags`, its `Match` and `IsFormOf`, see _Looking Up a Word_), then use the
+of the word with the lookup (`GetPossibleTags`, its `Match` and `IsFormOf`, see *Looking Up a Word*), then use the
 tagger and the `Margin` for the word in its context: the lookup says which parts of speech the lexicon allows for the
 word, and only the tagger says which one the sentence uses.
 
@@ -574,15 +574,15 @@ return for the word.
 `WordMatch`: `Spelling` (the folded, lower-case word is a spelling of the lexicon), `CompoundHead` (a hyphenated word
 that is not a spelling whose last part is one) or `NotRecognized`. `IsKnownWord` is `Match == Spelling` and equals
 `TaggedToken.IsKnownWord` of the same word as a token. Test `Match` (or `IsKnownWord`) to learn whether the lexicon
-knows a word and never `Tags.IsEmpty`: with the shape rules a word that is not recognized has all 17 tags, and in the raw
-mode a `CompoundHead` has an empty tag set. A `default(WordTags)` is `NotRecognized` with no tags.
+knows a word and never `Tags.IsEmpty`: with the shape rules a word that is not recognized has all 17 tags, and in the
+raw mode a `CompoundHead` has an empty tag set. A `default(WordTags)` is `NotRecognized` with no tags.
 
 **Forms.** `GetAnalyses()` lists the readings of the matched spelling as `WordAnalysis` values: `Lemma` (the base word,
-lower case and in NFC: `went` has the base word `go`), `Tag` (an `Upos`), `Features` and `GetFeature(name)` (the value of
-one feature, or `null`). One spelling can have several readings: `tests` is the plural of the noun `test` and the third
-person of the verb `test`. The analyses are in the order of their tag, then base word, then features. Features use the
-Universal Dependencies notation: `Name=Value` pairs joined by `|` and sorted by name (`Person=3|Tense=Pres`), empty when
-a reading has none; the lexicon uses `Degree`, `Number`, `Person`, `Tense` and `VerbForm`, and the project's
+lower case and in NFC: `went` has the base word `go`), `Tag` (an `Upos`), `Features` and `GetFeature(name)` (the value
+of one feature, or `null`). One spelling can have several readings: `tests` is the plural of the noun `test` and the
+third person of the verb `test`. The analyses are in the order of their tag, then base word, then features. Features use
+the Universal Dependencies notation: `Name=Value` pairs joined by `|` and sorted by name (`Person=3|Tense=Pres`), empty
+when a reading has none; the lexicon uses `Degree`, `Number`, `Person`, `Tense` and `VerbForm`, and the project's
 `Capitalization` feature is not reported. `IsFormOf(word, lemma, tag)` is true when an analysis of the word has this
 base word and tag; it ignores letter case and, for an ASCII word, allocates nothing. A lexicon file of your own without
 an analyses table has no analyses: `GetAnalyses()` is empty and `IsFormOf` is false.
@@ -594,21 +594,21 @@ letter. An unpaired surrogate counts as U+FFFD and never fails.
 
 **Tags without an analysis.** The lexicon is a restriction list, not a gold dictionary, and not every tag that it lists
 has a reading behind it. `TagsWithoutAnalysis` is `Tags` minus the tags that an analysis names, so it shows how much of
-an answer is only attested. For example `the` lists `ADV`, `DET`, `PRON` and `PROPN` and has one analysis, `the DET`: the
-other three tags come from the corpora that attest them (annotation noise included). `went` lists `ADJ` and `VERB` and
-has the analysis `go VERB Tense=Past`: the `ADJ` comes from the rule that gives a past tense form an adjective reading.
-With the shape rules the tags that the rules add have no analysis either (`PROPN` and `X` of `Valve` above).
+an answer is only attested. For example `the` lists `ADV`, `DET`, `PRON` and `PROPN` and has one analysis, `the DET`:
+the other three tags come from the corpora that attest them (annotation noise included). `went` lists `ADJ` and `VERB`
+and has the analysis `go VERB Tense=Past`: the `ADJ` comes from the rule that gives a past tense form an adjective
+reading. With the shape rules the tags that the rules add have no analysis either (`PROPN` and `X` of `Valve` above).
 
 **Hyphenated words.** A word is looked up as a whole first: when the folded, lower-case word is a lexicon spelling, the
 result is `Spelling` with the analyses of that spelling (`built-in` has its own analyses, not those of `in`). Otherwise,
-when the word contains the hyphen-minus and every part between hyphens is not empty (`well-tested`, not `-ed`, `well-` or
-`a--b`), only its last part is looked up, as a whole, and nothing is split further, stripped or tried again. When the last
-part is a spelling the result is `CompoundHead` with the analyses of that part (`well-tested` has those of `tested`);
-otherwise it is `NotRecognized`. Only the hyphen-minus counts: an en dash, an em dash and U+2010 do not make a compound.
-The tagger treats a hyphenated token that is not a spelling as one unknown word, so for a `CompoundHead` `Tags` is the
-answer for the whole token (empty in the raw mode, all 17 tags with the shape rules) and `IsKnownWord` is false. The
-analyses of the head are extra evidence for a rule checker, for example that `well-tested` ends in a form of the verb
-`test`: they never narrow `Tags` and never change the tagging. `IsFormOf` follows the same rule, so
+when the word contains the hyphen-minus and every part between hyphens is not empty (`well-tested`, not `-ed`, `well-`
+or `a--b`), only its last part is looked up, as a whole, and nothing is split further, stripped or tried again. When the
+last part is a spelling the result is `CompoundHead` with the analyses of that part (`well-tested` has those of
+`tested`); otherwise it is `NotRecognized`. Only the hyphen-minus counts: an en dash, an em dash and U+2010 do not make
+a compound. The tagger treats a hyphenated token that is not a spelling as one unknown word, so for a `CompoundHead`
+`Tags` is the answer for the whole token (empty in the raw mode, all 17 tags with the shape rules) and `IsKnownWord` is
+false. The analyses of the head are extra evidence for a rule checker, for example that `well-tested` ends in a form of
+the verb `test`: they never narrow `Tags` and never change the tagging. `IsFormOf` follows the same rule, so
 `IsFormOf("well-tested", "test", Upos.Verb)` is true; check `Match` first when compounds must not count. A word that has
 more characters than the longest spelling of the lexicon has UTF-8 bytes (122 UTF-8 bytes in the embedded lexicon)
 cannot be a spelling as a whole, so only the compound rule can recognize it, by a last part that does not itself have
@@ -620,17 +620,16 @@ that "not recognized" never hides a phrase. Split a text into words with `Tokeni
 multiword term.
 
 **Glossary.** The lookup ignores a glossary: `GetPossibleTags` has no glossary parameter, and a term that you gave to a
-`Glossary` is not found by the lookup and does not change its answer. A glossary belongs to a `Tag` call and sets the tag
-of a term in a sentence (see _Glossary_). Give the domain terms of your checker to a `Glossary`, and use the lookup for
-the words of the general dictionary.
+`Glossary` is not found by the lookup and does not change its answer. A glossary belongs to a `Tag` call and sets the
+tag of a term in a sentence (see *Glossary*). Give the domain terms of your checker to a `Glossary`, and use the lookup
+for the words of the general dictionary.
 
-**Edge cases and exceptions.** A `null` word, lemma or text throws `ArgumentNullException`; a word or lemma that is empty
-or contains white space throws `ArgumentException` (a base word that is a phrase, such as `give up`, is refused too); a
-mode or tag that is not a defined value throws `ArgumentOutOfRangeException`. A word of any length is accepted: a very
-long word is answered without an error and without growing the per-thread memory beyond what a word of the length of the
-longest spelling needs, and an ASCII word of a million characters allocates nothing. On .NET 8 and later
-`GetPossibleTags` also takes a `ReadOnlySpan<char>` with the same rules and
-results.
+**Edge cases and exceptions.** A `null` word, lemma or text throws `ArgumentNullException`; a word or lemma that is
+empty or contains white space throws `ArgumentException` (a base word that is a phrase, such as `give up`, is refused
+too); a mode or tag that is not a defined value throws `ArgumentOutOfRangeException`. A word of any length is accepted:
+a very long word is answered without an error and without growing the per-thread memory beyond what a word of the length
+of the longest spelling needs, and an ASCII word of a million characters allocates nothing. On .NET 8 and later
+`GetPossibleTags` also takes a `ReadOnlySpan<char>` with the same rules and results.
 
 **Thread safety.** The lookup is safe from any number of threads at the same time, also while other threads tag text; it
 uses the same per-thread scratch memory as tagging. `WordTags` and `WordAnalysis` are immutable values.
@@ -688,11 +687,10 @@ same thread-safe instance. A read does not fail in a released package; an `Inval
 
 ## Thread Safety
 
-`Tagger`, `Tokenizer`, `TokenConstraint`, `Glossary`, `GlossaryEntry` and all result types are immutable and safe for use
-from any number of threads
-at the same time. A tagger uses per-thread scratch memory internally, so sharing one tagger between threads is cheap and
-recommended. Tagging more than 50,000 tokens per second on one thread is a tested requirement of the library; typical
-speed on a modern machine is several hundred thousand tokens per second.
+`Tagger`, `Tokenizer`, `TokenConstraint`, `Glossary`, `GlossaryEntry` and all result types are immutable and safe for
+use from any number of threads at the same time. A tagger uses per-thread scratch memory internally, so sharing one
+tagger between threads is cheap and recommended. Tagging more than 50,000 tokens per second on one thread is a tested
+requirement of the library; typical speed on a modern machine is several hundred thousand tokens per second.
 
 # Tokenization Conventions
 
@@ -718,8 +716,8 @@ specified in `data/CONVENTIONS.md` of the repository; in short:
 Sentence boundaries follow terminal punctuation (`.`, `!`, `?`, `...`) before a capitalized word, a digit or an opening
 quote; abbreviations, initials and an ellipsis before a lower-case word do not end a sentence; closing quotes stay with
 their sentence; a blank line always ends a sentence and a single line break does not. Where the library tags, it folds
-typographic quotes, dashes and the ellipsis to their ASCII forms and normalizes the text (NFC) for its features, but your
-tokens and offsets are never changed.
+typographic quotes, dashes and the ellipsis to their ASCII forms and normalizes the text (NFC) for its features, but
+your tokens and offsets are never changed.
 
 # API Reference
 
@@ -734,7 +732,7 @@ The entry point. Immutable and thread-safe.
 - `static Tagger Load(Stream weights, TaggerOptions? options = null)`: creates a tagger from a weights stream with the
   embedded lexicon.
 - `static Tagger Load(Stream weights, Stream lexicon, TaggerOptions? options = null)`: with your own lexicon file, which
-  must be of format version 3 (see _Loading a Weights File_).
+  must be of format version 3 (see *Loading a Weights File*).
 - `TaggerOptions Options`: a copy of the options the tagger was created with.
 - `IReadOnlyList<TaggedSentence> Tag(string text)`: tokenizes, splits into sentences and tags.
 - `TaggedSentence Tag(Sentence sentence, IReadOnlyList<TokenConstraint>? constraints = null)`: tags a sentence from
@@ -748,7 +746,7 @@ The entry point. Immutable and thread-safe.
   as the overloads without a glossary; your constraints are combined with those of the glossary and win where the two
   allow no tag in common. A `null` glossary throws `ArgumentNullException` (use `Glossary.Empty` for none).
 - `WordTags GetPossibleTags(string word, PossibleTagsMode mode = PossibleTagsMode.LexiconOnly)`: looks up one word in
-  the lexicon of the tagger, without a sentence, the model or a glossary (see _Looking Up a Word_). A `null` word throws
+  the lexicon of the tagger, without a sentence, the model or a glossary (see *Looking Up a Word*). A `null` word throws
   `ArgumentNullException`, an empty word or one with white space throws `ArgumentException` and a mode that is not
   defined throws `ArgumentOutOfRangeException`. On .NET 8 and later an overload takes a `ReadOnlySpan<char>` with the
   same rules.
@@ -881,8 +879,8 @@ One found term; immutable. `GlossaryEntry Entry`, `int FirstToken`, `int TokenCo
 
 ## Tokenizer
 
-- `static IReadOnlyList<Sentence> Tokenize(string text)`: sentences with tokens; an empty or white-space text gives none;
-  `null` throws `ArgumentNullException`.
+- `static IReadOnlyList<Sentence> Tokenize(string text)`: sentences with tokens; an empty or white-space text gives
+  none; `null` throws `ArgumentNullException`.
 - `static Sentence CreateSentence(IReadOnlyList<string> tokens)`: a sentence from tokens that you provide.
 
 ## Sentence and Token
@@ -913,19 +911,17 @@ An immutable set of tags: `Empty`, `All`, `Of(params Upos[])`, `Count`, `IsEmpty
 
 The code is MIT licensed. The package also embeds a lexicon and trained weights that are derived from third-party data,
 so its license is the file
-[PACKAGE-LICENSE.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/PACKAGE-LICENSE.md), which is packed at the
-root of the NuGet package. It starts with the SPDX expression `MIT AND CC-BY-4.0 AND CC-BY-3.0-US`, states which license
-covers which part, and is used instead of a license expression because nuget.org accepts only expressions of licenses
-that the Open Source Initiative or the Free Software Foundation approve, which CC BY 3.0 US is not. The repository also
-holds open data for the 17 Universal POS tags: training corpora, a part-of-speech lexicon and evaluation sets, described
-in the [data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md). The parts of the data that
-the library uses at run time are the lexicon, which is compiled into a binary file that is embedded in the assembly,
-restricts the tags of known words and carries the base word, tag and features of the forms of its spellings, and the
-weights, which the trainer tool of the repository learned from the open
-corpus, MASC, the silver corpus, the imperative source, the compound sources and the technical-text sources and which
-are embedded as a binary file
-too. The attribution
-and license notices of the third-party data are in
+[PACKAGE-LICENSE.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/PACKAGE-LICENSE.md), which is packed at
+the root of the NuGet package. It starts with the SPDX expression `MIT AND CC-BY-4.0 AND CC-BY-3.0-US`, states which
+license covers which part, and is used instead of a license expression because nuget.org accepts only expressions of
+licenses that the Open Source Initiative or the Free Software Foundation approve, which CC BY 3.0 US is not. The
+repository also holds open data for the 17 Universal POS tags: training corpora, a part-of-speech lexicon and evaluation
+sets, described in the [data folder](https://github.com/demaconsulting/PartOfSpeech/blob/main/data/README.md). The parts
+of the data that the library uses at run time are the lexicon, which is compiled into a binary file that is embedded in
+the assembly, restricts the tags of known words and carries the base word, tag and features of the forms of its
+spellings, and the weights, which the trainer tool of the repository learned from the open corpus, MASC, the silver
+corpus, the imperative source, the compound sources and the technical-text sources and which are embedded as a binary
+file too. The attribution and license notices of the third-party data are in
 [THIRD-PARTY-NOTICES.md](https://github.com/demaconsulting/PartOfSpeech/blob/main/THIRD-PARTY-NOTICES.md), which is also
 packed at the root of the NuGet package.
 
@@ -942,14 +938,14 @@ packed at the root of the NuGet package.
 - **The open part-of-speech corpus** of the WordSense project (<https://github.com/demaconsulting/WordSense>): the
   annotations and the selection are CC0 1.0, and the sentences are public domain in the United States or come from the
   Tatoeba CC0 export. The silver data (Tatoeba and Project Gutenberg text), the imperative, compound, headings and
-  technical-text training sources (text of US federal government documents; 17 U.S.C. 105) and the evaluation sets follow
-  the same terms.
+  technical-text training sources (text of US federal government documents; 17 U.S.C. 105) and the evaluation sets
+  follow the same terms.
 
 ## Evaluation-Only Data
 
 The UD English-EWT treebank (CC BY-SA 4.0) is used for evaluation only. It is not distributed, nothing is trained on it,
-and the repository ignores its files. No CC BY-SA or NonCommercial data is committed to the repository or included in the
-package. The evaluation is run on it locally from a git-ignored cache; the recipe is in the
+and the repository ignores its files. No CC BY-SA or NonCommercial data is committed to the repository or included in
+the package. The evaluation is run on it locally from a git-ignored cache; the recipe is in the
 [evaluation record](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/README.md), and the results
 of every evaluation set are in its
 [held-out report](https://github.com/demaconsulting/PartOfSpeech/blob/main/docs/evaluation/test-results.md).

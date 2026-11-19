@@ -76,10 +76,10 @@ XML summary: with severity `Error`, a green build cannot coexist with an undocum
 **Scenario**: The pages of the glossary types are generated.
 
 **Expected**: The `Glossary` page contains a fenced `csharp` example, the thread safety, the technical-name example
-(`bleed valve`) and the head-word rule for phrasal verbs (`WithHead`); the `GlossaryBuilder` page contains an example and
-the thread safety, and its `Add` member page exists; the `GlossaryEntry` page contains an example and `WithHead`; the
-`GlossaryOptions` and `GlossaryMatch` pages contain an example; the `GlossaryMode` page lists the modes; the `Tagger.Tag`
-member page mentions the glossary overloads; and the `TaggedToken.GlossaryMatch` member page exists.
+(`bleed valve`) and the head-word rule for phrasal verbs (`WithHead`); the `GlossaryBuilder` page contains an example
+and the thread safety, and its `Add` member page exists; the `GlossaryEntry` page contains an example and `WithHead`;
+the `GlossaryOptions` and `GlossaryMatch` pages contain an example; the `GlossaryMode` page lists the modes; the
+`Tagger.Tag` member page mentions the glossary overloads; and the `TaggedToken.GlossaryMatch` member page exists.
 
 **Requirement coverage**: `PartOfSpeech-OTS-ApiMark-EnforceDocs`.
 

@@ -18,8 +18,8 @@ state that the model alone reads `bleed` as a verb by a known margin, that the g
 strength of a given size flips a close decision but not a decisive one, without depending on the quality of a trained
 model. One test runs the documented examples against the shipped model, but only for what the constraints guarantee (the
 head tag, the forbidden tags, the unchanged pronoun), never for a prediction of the model. The default head of a phrasal
-verb is decided by the lexicon that is embedded in the library, not by the lexicon of the tiny tagger, so the tests of the
-head default use words whose embedded-lexicon tags are fixed by the data (`shut down`, `carry out`, `take care`).
+verb is decided by the lexicon that is embedded in the library, not by the lexicon of the tiny tagger, so the tests of
+the head default use words whose embedded-lexicon tags are fixed by the data (`shut down`, `carry out`, `take care`).
 
 Three methods go beyond an ordinary assertion:
 
@@ -56,12 +56,11 @@ rule says, a hash collision gives a wrong match, a tokenization convention is no
 is wrong or is generated for the wrong word, a hard head word leaves its tags or has a confidence other than 1 with one
 tag, a word in front of the head of a noun term can be a verb, the head of an entry is not the first token for a verb
 term whose later words are all listed particle words that the lexicon confirms or is not the last token otherwise, an
-explicit head does not override the inferred
-one, the particle rule applies to another shape of term than a
-two-token verb term with its head first, a
-soft strength does not equal the strength times the temperature, the caller's constraint does not win over a contradicting
-glossary constraint, the tokens before the first match change, a match is not reported on its tokens or sentence, matching
-allocates per token, a parallel result differs from the sequential one, or matching is slower than the bound.
+explicit head does not override the inferred one, the particle rule applies to another shape of term than a two-token
+verb term with its head first, a soft strength does not equal the strength times the temperature, the caller's
+constraint does not win over a contradicting glossary constraint, the tokens before the first match change, a match is
+not reported on its tokens or sentence, matching allocates per token, a parallel result differs from the sequential one,
+or matching is slower than the bound.
 
 #### Test Scenarios
 
@@ -81,8 +80,8 @@ allocates per token, a parallel result differs from the sequential one, or match
   `GlossaryEntry_Definition_IsCarriedUnchanged`, `GlossaryEntry_WithVariants_Valid_ReplacesEarlierVariants`,
   `GlossaryEntry_WithVariants_VariantEqualToTermOrDuplicate_IsIgnoredWithoutError` (a variant that spells the term, or
   that is listed twice, is dropped without an error and the list shows each extra spelling once; a variant that differs
-  only in letter case stays; an invalid variant still throws), `GlossaryEntry_MethodExamples_GiveTheDocumentedValues` (the
-  values that the examples of `WithHead`, `WithTokenTags`, `WithInflection` and `WithVariants` print),
+  only in letter case stays; an invalid variant still throws), `GlossaryEntry_MethodExamples_GiveTheDocumentedValues`
+  (the values that the examples of `WithHead`, `WithTokenTags`, `WithInflection` and `WithVariants` print),
   `GlossaryEntry_GetTokenTags_ReturnsOverrideOrNull` and `GlossaryEntry_GetTokenTags_TokenBecomesHead_ReturnsNull`.
 - **Head default**: `GlossaryEntry_HeadIndex_DefaultsToLastToken` (noun compounds and single words),
   `GlossaryEntry_HeadIndex_PhrasalVerbWithParticleWords_IsFirstToken` (`shut down`, `carry out`, `set up` and
@@ -92,17 +91,16 @@ allocates per token, a parallel result differs from the sequential one, or match
   `GlossaryEntry_HeadIndex_VerbTermWithAnotherLaterWord_IsLastToken` (`take care`, `make sense`, `go home`,
   `take it apart`, `shut down valve`, and a term with a later word that is not in the lexicon),
   `GlossaryEntry_HeadIndex_NoVerbTagOrSingleToken_IsLastToken` (`bleed valve` and `torque wrench` as noun terms,
-  `shut down` without a verb tag, a single verb),
-  `GlossaryEntry_HeadIndex_NounOrVerbTags_FollowTheParticleRule` (`bleed valve` keeps the last token and `shut down`
-  takes the first with the same noun-or-verb tags), `GlossaryEntry_WithHead_OverridesInferredHeadBothWays`
-  (an explicit head wins over the inference in both directions, also `WithHead` with the last token, and other settings
-  keep it), `GlossaryEntry_HeadIndex_Inference_IsDeterministicAcrossThreads` (entries created on four threads, the first
-  use of the embedded lexicon included), `Glossary_FindMatches_InferredPhrasalHead_IsReportedAndInflected` (the head word
-  of the match and the inflected word are the first token, so `shuts down` and `shutting down` match; an explicit last head
-  reports the last token),
-  `GlossaryConstraints_Compile_InferredPhrasalHead_GetsParticleRule` and
-  `Tagger_TagWithGlossary_InferredPhrasalHead_VerbHeadAndParticleLimited` (no `WithHead`: for `shut down` and `carry out`
-  the head is a verb with confidence 1.0, also in `shuts down`, and the particle is limited to particle
+  `shut down` without a verb tag, a single verb), `GlossaryEntry_HeadIndex_NounOrVerbTags_FollowTheParticleRule`
+  (`bleed valve` keeps the last token and `shut down` takes the first with the same noun-or-verb tags),
+  `GlossaryEntry_WithHead_OverridesInferredHeadBothWays` (an explicit head wins over the inference in both directions,
+  also `WithHead` with the last token, and other settings keep it),
+  `GlossaryEntry_HeadIndex_Inference_IsDeterministicAcrossThreads` (entries created on four threads, the first use of
+  the embedded lexicon included), `Glossary_FindMatches_InferredPhrasalHead_IsReportedAndInflected` (the head word of
+  the match and the inflected word are the first token, so `shuts down` and `shutting down` match; an explicit last head
+  reports the last token), `GlossaryConstraints_Compile_InferredPhrasalHead_GetsParticleRule` and
+  `Tagger_TagWithGlossary_InferredPhrasalHead_VerbHeadAndParticleLimited` (no `WithHead`: for `shut down` and
+  `carry out` the head is a verb with confidence 1.0, also in `shuts down`, and the particle is limited to particle
   tags, and the head of `shutting down` is the first token; an explicit last head and `take care` keep the last token),
   `GlossaryEntry_HeadIndex_UnknownParticleAndLongerPhrasalVerbs_FollowTheDocumentedRule` (`look after` and
   `look forward to` keep the last token until `WithHead(0)` says otherwise, `get back together` takes the first) and
@@ -120,7 +118,8 @@ allocates per token, a parallel result differs from the sequential one, or match
 - **Duplicates**: `GlossaryBuilder_Add_DuplicateSameCase_ThrowsArgumentException`,
   `GlossaryBuilder_Add_CaseSensitiveAndInsensitiveSameTerm_Allowed`,
   `GlossaryBuilder_Add_CaseSensitiveEntries_DuplicateOnlyWhenExactlyEqual`,
-  `GlossaryBuilder_Add_GlossaryWideCaseSensitive_DecidesDuplicates` and `Glossary_Create_Duplicate_ThrowsArgumentException`.
+  `GlossaryBuilder_Add_GlossaryWideCaseSensitive_DecidesDuplicates` and
+  `Glossary_Create_Duplicate_ThrowsArgumentException`.
 - **Immutability**: `Glossary_Options_ReturnsCopy`, `Glossary_Empty_HasNoEntries`,
   `Glossary_Create_SourceChangedAfterwards_DoesNotChangeGlossary`, `Glossary_Immutable_EntriesAreReadOnly` (no cast back
   to a writable list) and `Glossary_FindMatches_ResultList_IsReadOnly`.
@@ -128,12 +127,14 @@ allocates per token, a parallel result differs from the sequential one, or match
   `Glossary_FindMatches_CaseSensitiveEntry_ExactCaseOnly` (`IT` against `it`),
   `Glossary_FindMatches_CaseSensitiveWinsOverInsensitiveAtSameLength` and
   `Glossary_FindMatches_GlossaryWideCaseSensitive_CanBeOverriddenPerEntry`.
-- **Matching**: `Glossary_FindMatches_LongestFirst_PrefersLongerTerm`, `Glossary_FindMatches_LeftToRight_DoesNotOverlap`,
-  `Glossary_FindMatches_AdjacentMatches_AreAllFound`, `Glossary_FindMatches_PrefixOfLongerTerm_NoMatchWhenIncomplete`,
+- **Matching**: `Glossary_FindMatches_LongestFirst_PrefersLongerTerm`,
+  `Glossary_FindMatches_LeftToRight_DoesNotOverlap`, `Glossary_FindMatches_AdjacentMatches_AreAllFound`,
+  `Glossary_FindMatches_PrefixOfLongerTerm_NoMatchWhenIncomplete`,
   `Glossary_FindMatches_LongerWalkWithoutTerm_FallsBackToShorterTerm`,
   `Glossary_FindMatches_TermSplitAcrossSentences_NoMatch`,
-  `Glossary_FindMatches_EmptySentenceOrEmptyGlossary_NoMatches`, `Glossary_FindMatches_NullSentence_ThrowsArgumentNullException`
-  and `Glossary_FindMatches_HashCollision_ResolvedByComparison` (every token forced onto one hash value);
+  `Glossary_FindMatches_EmptySentenceOrEmptyGlossary_NoMatches`,
+  `Glossary_FindMatches_NullSentence_ThrowsArgumentNullException` and
+  `Glossary_FindMatches_HashCollision_ResolvedByComparison` (every token forced onto one hash value);
   `Glossary_FindMatches_DocumentedEdgeCases_BehaveAsDocumented` (the longest of overlapping entries, punctuation in
   front of and behind a term, a hyphen that joins the next word, and a term that is not contiguous) and
   `Glossary_EdgeCaseExample_ReportsTheDocumentedMatchesAndHeads` (the matches and heads that the edge-case example of
@@ -141,16 +142,17 @@ allocates per token, a parallel result differs from the sequential one, or match
 - **Term tokenization**: `GlossaryEntry_Tokens_FollowTokenizer`,
   `GlossaryEntry_EndTokens_TermEndingInKeptPeriod_DiffersAtEndOfText`,
   `Glossary_FindMatches_HyphenatedTermIsOneToken_DoesNotMatchSpaced`,
-  `Glossary_HyphenatedVerb_IsOneTokenAndMatchesItsFormsButNotOtherSpellings` (`re-sync` is one token, its generated forms
-  match, `resync` and `re sync` do not unless listed),
+  `Glossary_HyphenatedVerb_IsOneTokenAndMatchesItsFormsButNotOtherSpellings` (`re-sync` is one token, its generated
+  forms match, `resync` and `re sync` do not unless listed),
   `Glossary_FindMatches_ContractionInTerm_SplitsLikeTokenizer`,
   `Glossary_FindMatches_AbbreviationPeriod_MidTextAndEndOfText`, `Glossary_FindMatches_CurlyApostropheEqualsStraight`,
   `Glossary_FindMatches_PreTokenizedPunctuationStuckToWord_DoesNotMatch`,
   `Glossary_FindMatches_NonAsciiToken_SlowPathMatches` and `GlossaryIndex_FoldWithWorkspace_AgreesWithFoldToString` (the
   allocation-free fold agrees with the string fold).
 - **Inflection and variants**: the table tests `GlossaryInflector_Plural_FollowsRegularRules`,
-  `GlossaryInflector_Past_FollowsRegularRules` and `GlossaryInflector_PresentParticiple_FollowsRegularRules`; the tags of
-  the forms in `GlossaryInflector_Inflect_Noun_GivesPluralNoun`, `GlossaryInflector_Inflect_Verb_GivesThreeFormsWithDerivedTags`,
+  `GlossaryInflector_Past_FollowsRegularRules` and `GlossaryInflector_PresentParticiple_FollowsRegularRules`; the tags
+  of the forms in `GlossaryInflector_Inflect_Noun_GivesPluralNoun`,
+  `GlossaryInflector_Inflect_Verb_GivesThreeFormsWithDerivedTags`,
   `GlossaryInflector_Inflect_NounAndVerb_UnitesTagsOfEqualSpelling` and
   `GlossaryInflector_Inflect_NounAndProperNoun_PluralHasBothTags`; no forms in
   `GlossaryInflector_Inflect_OtherTags_GivesNothing` and `GlossaryInflector_Inflect_NotInflectableWord_GivesNothing`;
@@ -158,8 +160,9 @@ allocates per token, a parallel result differs from the sequential one, or match
   `Glossary_FindMatches_OnlyHeadWordIsInflected` and `Glossary_FindMatches_HeadWordMovedByWithHead_IsTheOneInflected`;
   the switches in `Glossary_Create_InflectionSwitches_ControlGeneratedForms` and
   `Glossary_FindMatches_InflectionSwitches_AreHonored`; forms and variants found and reported in
-  `Glossary_FindMatches_InflectedForms_AreFoundAndReportedAsVariants` and `Glossary_FindMatches_ExplicitVariants_AreMatched`;
-  and the precedence in `Glossary_FindMatches_TermBeatsVariantBeatsGeneratedForm` and
+  `Glossary_FindMatches_InflectedForms_AreFoundAndReportedAsVariants` and
+  `Glossary_FindMatches_ExplicitVariants_AreMatched`; and the precedence in
+  `Glossary_FindMatches_TermBeatsVariantBeatsGeneratedForm` and
   `Glossary_FindMatches_VariantBeatsGeneratedForm_EarlierEntryWinsOtherwise`; a variant that repeats the term or another
   variant changes nothing, and a form that is identical to the lemma (`set`) needs no variant, in
   `Glossary_FindMatches_RedundantVariantsAndLemmaEqualForms_NeedNoVariant`.
@@ -174,39 +177,41 @@ allocates per token, a parallel result differs from the sequential one, or match
   `GlossaryConstraints_Compile_ParticleRule_AppliesToTwoTokenVerbTermsWithHeadFirstOnly` (a two-token verb term with its
   head first gets the particle rule on its second token; a verb term with its head last, an adjective term with either
   head and a noun term do not; explicit tags still win),
-  `GlossaryConstraints_Compile_ThreeTokenVerbTerm_NonHeadTokensAreUnconstrained` (no non-head token of a three-token verb
-  term is constrained, whichever token is the head, unless explicit tags say so),
-  `Tagger_TagWithGlossary_VerbTermWithHeadFirst_NonHeadIsLimitedToParticles` (the phrasal verb `shut down`, whose
-  head is inferred, without `WithHead`; explicit overrides are tested separately),
-  `Tagger_TagWithGlossary_ThreeTokenVerbTerm_NonHeadTokensAreLeftToTheModel` (the middle and last words
-  of `shut it down` keep the model's tags and report no constraint) and
+  `GlossaryConstraints_Compile_ThreeTokenVerbTerm_NonHeadTokensAreUnconstrained` (no non-head token of a three-token
+  verb term is constrained, whichever token is the head, unless explicit tags say so),
+  `Tagger_TagWithGlossary_VerbTermWithHeadFirst_NonHeadIsLimitedToParticles` (the phrasal verb `shut down`, whose head
+  is inferred, without `WithHead`; explicit overrides are tested separately),
+  `Tagger_TagWithGlossary_ThreeTokenVerbTerm_NonHeadTokensAreLeftToTheModel` (the middle and last words of
+  `shut it down` keep the model's tags and report no constraint) and
   `Tagger_TagWithGlossary_NonVerbTermOrWordBeforeTheHead_IsLeftToTheModel`.
 - **Soft constraints**: `Tagger_TagWithGlossary_SoftMode_FlipsCloseDecisionButNotDecisiveOne`,
   `Tagger_TagWithGlossary_SoftMode_AdjustmentEqualsStrengthTimesTemperature` (compared with a hand-built
   `TokenConstraint.Prefer` on the same tagger, at a temperature other than 1),
   `Tagger_TagWithGlossary_SoftMode_TinyBoost_DoesNotThrowAndChangesNothing` and
-  `Tagger_TagWithGlossary_SoftMode_HugeBoost_DoesNotThrowAndIsDecisive` (a valid strength whose boost
-  falls to zero or grows to infinity is limited to a finite positive range and never throws at tagging time),
-  `Tagger_TagWithGlossary_SoftMode_RaisesConfidenceOfPreferredTag`, `Tagger_TagWithGlossary_PerEntryMode_OverridesGlossaryMode`
-  and `GlossaryMatch_Mode_IsEntryModeOrGlossaryMode`; the strength validation is in the builder scenario.
+  `Tagger_TagWithGlossary_SoftMode_HugeBoost_DoesNotThrowAndIsDecisive` (a valid strength whose boost falls to zero or
+  grows to infinity is limited to a finite positive range and never throws at tagging time),
+  `Tagger_TagWithGlossary_SoftMode_RaisesConfidenceOfPreferredTag`,
+  `Tagger_TagWithGlossary_PerEntryMode_OverridesGlossaryMode` and `GlossaryMatch_Mode_IsEntryModeOrGlossaryMode`; the
+  strength validation is in the builder scenario.
 - **Caller constraints**: `GlossaryConstraints_Merge_NoneIntersectionAndContradiction`,
   `Tagger_TagWithGlossary_CallerConstraints_AreMergedAndCallerWinsWhenDisjoint`,
   `Tagger_TagWithGlossary_CallerConstraintContradictingHardEntry_CallerWins` (the example of the sentence overload: a
   caller constraint that contradicts a hard entry wins for its token, and the glossary decides without it),
   `Tagger_TagWithGlossary_CallerSoftConstraint_AddsToGlossaryAdjustment` and
   `Tagger_TagWithGlossary_ConstraintListOfWrongLength_ThrowsArgumentException`.
-- **Tagging overloads**: `Tagger_TagWithGlossary_ThreeOverloads_Agree` (text, sentence and token list give the same tags),
-  `Tagger_Tag_NullSecondArgument_StillBindsToConstraintsOverload` (an existing call `Tag(sentence, null)` still
+- **Tagging overloads**: `Tagger_TagWithGlossary_ThreeOverloads_Agree` (text, sentence and token list give the same
+  tags), `Tagger_Tag_NullSecondArgument_StillBindsToConstraintsOverload` (an existing call `Tag(sentence, null)` still
   compiles and binds to the overload without a glossary) and
   `Tagger_TagWithGlossary_TokensBeforeFirstMatch_AreUnchanged` (the tokens in front of the first match equal the result
-  without a glossary; the tokens after a match may differ through the history).
-  The empty glossary (`Glossary_Empty_TagsLikeNoGlossary`: same tags and no match as without a glossary) and the null
-  arguments of the three overloads (`Tagger_TagWithGlossary_NullArguments_ThrowArgumentNullException`) are verified here
-  at the unit level and again, with the tagger as the unit under test, in _Tagger Verification_.
-- **Results**: `GlossaryMatch_Properties_DescribeTheMatchedSpan` (first token, token count, head token, offset, length and
-  text compared with the source, the entry and its definition),
-  `GlossaryMatch_Start_InLaterSentence_IndexesWholeText`, `Tagger_TagWithGlossary_Results_ReportMatchesOnTokensAndSentences`
-  (the match on every token of the span, `IsGlossaryHead` on the head only, `null` outside, the sentence list in text order),
+  without a glossary; the tokens after a match may differ through the history). The empty glossary
+  (`Glossary_Empty_TagsLikeNoGlossary`: same tags and no match as without a glossary) and the null arguments of the
+  three overloads (`Tagger_TagWithGlossary_NullArguments_ThrowArgumentNullException`) are verified here at the unit
+  level and again, with the tagger as the unit under test, in *Tagger Verification*.
+- **Results**: `GlossaryMatch_Properties_DescribeTheMatchedSpan` (first token, token count, head token, offset, length
+  and text compared with the source, the entry and its definition),
+  `GlossaryMatch_Start_InLaterSentence_IndexesWholeText`,
+  `Tagger_TagWithGlossary_Results_ReportMatchesOnTokensAndSentences` (the match on every token of the span,
+  `IsGlossaryHead` on the head only, `null` outside, the sentence list in text order),
   `Glossary_QuickStart_FindsTheFourKindsOfTermAndReportsTheirHeads` (the quick start of the namespace documentation with
   the embedded model: the four matches with span, head and certain head tags, the variant, and the pronoun left alone)
   and `Tagger_TagWithGlossary_MatchList_IsReadOnly`.
@@ -214,14 +219,15 @@ allocates per token, a parallel result differs from the sequential one, or match
   `Tagger_TagWithGlossary_HardHeadWithSeveralTags_SoftmaxOverRemainingTags` (the exact softmax, the other tag as the one
   alternative, and a sum of one), `Tagger_TagWithGlossary_SoftMode_RaisesConfidenceOfPreferredTag` and
   `Tagger_TagWithGlossary_WrongHardEntry_HeadConfidenceIsStillOne` (a wrong hard entry also gives confidence 1 and no
-  alternatives, so the confidence is no evidence for the entry, while soft mode keeps a choice). A word of a match
-  that has no constraint of its own is a member of the match without being constrained: the middle and last words of
+  alternatives, so the confidence is no evidence for the entry, while soft mode keeps a choice). A word of a match that
+  has no constraint of its own is a member of the match without being constrained: the middle and last words of
   `shut it down` in `Tagger_TagWithGlossary_ThreeTokenVerbTerm_NonHeadTokensAreLeftToTheModel` report the match and no
-  constraint, as does the closing period of a term such as `etc.` at the end of a text, so the constrained flag marks the
-  words that the glossary decided and the match marks every word of the span.
+  constraint, as does the closing period of a term such as `etc.` at the end of a text, so the constrained flag marks
+  the words that the glossary decided and the match marks every word of the span.
 - **Thread safety**: `Glossary_FindMatches_ParallelUse_MatchesSequentialResults`,
   `Glossary_Tag_ParallelUse_MatchesSequentialResults` (eight threads, hard and soft, the default tagger) and
-  `Glossary_Tag_SoftFirstUseRace_CompilesCorrectly` (twenty rounds of eight threads that use a fresh soft glossary together).
+  `Glossary_Tag_SoftFirstUseRace_CompilesCorrectly` (twenty rounds of eight threads that use a fresh soft glossary
+  together).
 - **No retention of request text**: `Glossary_FindMatches_LeavesNoSentenceTextInTheWorkspace` (a sentence with a match
   and non-ASCII tokens, one without a match and a short one, in this order on one thread: after every call every buffer
   of the thread's glossary workspace, the whole of it and not only the part the sentence used, holds zeros only, and the

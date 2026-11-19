@@ -1,0 +1,38 @@
+---
+# Markdown Linting and Formatting Configuration (LintMark)
+#
+# PURPOSE:
+# - Checks and formats all Markdown files with 'dotnet lintmark' (lint.ps1) and
+#   'dotnet lintmark --fix' (fix.ps1)
+#
+# DO NOT MODIFY: These settings represent coding standards. If files fail linting,
+# fix the files rather than relaxing the rules.
+#
+# FRAGMENT MARKDOWN: This project uses the "fragment markdown" method where subsystem,
+# unit, OTS, and shared-package files intentionally start with ## or ### (not #) because
+# they are assembled by Pandoc into a single document via definition.yaml. LintMark does
+# not require a top-level heading on the first line, so no exception is needed here.
+
+# The configured list replaces LintMark's built-in default ignores.
+ignore:
+  - '**/.git/**'
+  - '**/node_modules/**'
+  - '**/.venv/**'
+  - '**/thirdparty/**'
+  - '**/third-party/**'
+  - '**/3rd-party/**'
+  - '**/generated/**'
+  - '**/.agent-logs/**'
+  # PartOfSpeech-specific: agent report files (carried over from .markdownlint-cli2.yaml)
+  - '**/AGENT_REPORT_*.md'
+  # PartOfSpeech-specific: machine-written reports, rewritten by their generators (the trainer writes the two
+  # evaluation reports, check_lexicon.py writes COVERAGE.md); their wide result tables cannot be reshaped by hand
+  - 'docs/evaluation/confidence-thresholds.md'
+  - 'docs/evaluation/test-results.md'
+  - 'data/lexicon/COVERAGE.md'
+  # PartOfSpeech-specific: the trainer appends a run-table row to RUN-LOG.md (--log), and the file is the frozen
+  # pre-registered record of the model selection
+  - 'tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md'
+  # PartOfSpeech-specific: the SHA-256 of CONVENTIONS.md is pinned by tools/data/check_conventions.py, so the file
+  # changes only with a new conventions version
+  - 'data/CONVENTIONS.md'

@@ -65,9 +65,9 @@ library uses the same code, so the tags that it reports for a word are the tags 
 ## Constraints
 
 A caller or a glossary can add a constraint to a token. The decoder intersects the allowed tags with the allowed set of
-the constraint, and when nothing is left, the constraint alone applies, because a curated list is more authoritative than
-a dictionary. A soft constraint adds an amount to the score of a tag before the choice. The Glossaries and Constraints
-section describes the interaction in detail.
+the constraint, and when nothing is left, the constraint alone applies, because a curated list is more authoritative
+than a dictionary. A soft constraint adds an amount to the score of a tag before the choice. The Glossaries and
+Constraints section describes the interaction in detail.
 
 ## Why Greedy
 
@@ -82,9 +82,10 @@ reasons below are the properties of the design and not the result of a measureme
 - **The history is richer than two tags.** The clause cues keep a state that depends on the tags decided since the last
   clause boundary, and the optional right preview uses the result of a first pass. Exact dynamic programming over such a
   history needs a larger state, and the training would have to change as well.
-- **Speed and simplicity.** The decoder does one feature extraction and one scoring per token, reuses its working
-  memory between calls and is deterministic, which matters for a library that is embedded in other programs. The lexicon
-  restriction already removes part of the choice for known words, so the search that greedy decoding gives up is smaller.
+- **Speed and simplicity.** The decoder does one feature extraction and one scoring per token, reuses its working memory
+  between calls and is deterministic, which matters for a library that is embedded in other programs. The lexicon
+  restriction already removes part of the choice for known words, so the search that greedy decoding gives up is
+  smaller.
 - **A local confidence.** A greedy decoder gives a clean per-token distribution: the softmax over the candidates, given
   the tags chosen so far.
 

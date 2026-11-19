@@ -10,9 +10,9 @@ trainer therefore trains for exactly the features that the decoder scores), beca
 feature set it was trained with. The 22 base templates can be extended by five switchable **feature groups** (context
 features, `FeatureGroups`); the groups of a model are stored in its weights file and, with no group, the extractor
 produces exactly the 22 base templates. The embedded model enables one group, `ClauseCues` (the choice is described in
-the system design under _Context Features_). It is an internal static class (with the internal enumerations `FeatureKind`,
-`FeatureGroups` and `TokenClass`) and has no state of its own; the state that the groups need lives in the caller's
-`DecoderWorkspace`.
+the system design under *Context Features*). It is an internal static class (with the internal enumerations
+`FeatureKind`, `FeatureGroups` and `TokenClass`) and has no state of its own; the state that the groups need lives in
+the caller's `DecoderWorkspace`.
 
 #### Data Model
 
@@ -41,7 +41,7 @@ the system design under _Context Features_). It is an internal static class (wit
 - **Shape** of a folded token: upper bit when the first character is an upper-case letter; all-upper when the token has
   more than one character, an upper-case letter and no lower-case letter; digit, hyphen and apostrophe bits when it
   contains them; punctuation bit when it has no letter and no digit; none of these is the plain lower shape.
-- **Prefixes and suffixes** exist only when the token has at least _k_ characters, so a token has 15 to 22 features
+- **Prefixes and suffixes** exist only when the token has at least *k* characters, so a token has 15 to 22 features
   without groups.
 - **Neighbor markers**: the lower-cased neighbors before the first and after the last token are the fixed words `-S-`,
   `-S2-`, `-E-` and `-E2-`.
@@ -63,13 +63,13 @@ ones; the order of the buckets is: the base buckets that do not depend on tags, 
 and `Inflection`, then those of `RightPreview`. With the 22 base templates, at most 18 + 5 + 5 + 1 + 2 tag-independent
 and 4 + 2 + 1 + 4 tag-dependent features give the capacity of 42.
 
-- **Token class** (position and clause cues): the first matching rule, from the lexicon tag set _T_ of the token (empty
+- **Token class** (position and clause cues): the first matching rule, from the lexicon tag set *T* of the token (empty
   for a spelling that is not in the lexicon) and its lower-cased folded form, gives `Punct` (no letter and no digit),
   `Modal` (can, could, may, might, must, shall, should, will, would, cannot), `To` (`to`), `Num` (only digits, or NUM in
-  _T_), `Det`, `Pron`, `Adp` and `Conj` (the tag DET, PRON, ADP or CCONJ or SCONJ in _T_ and none of NOUN, VERB, ADJ),
+  *T*), `Det`, `Pron`, `Adp` and `Conj` (the tag DET, PRON, ADP or CCONJ or SCONJ in *T* and none of NOUN, VERB, ADJ),
   `NounVerb` (NOUN and VERB), `NounOnly`, `VerbOnly`, `AdjAdv` (ADJ or ADV) and `Other` (everything else, including
   unknown spellings). The possessive words are determiners in the lexicon (`my`, `his`), so they are `Det`. A token is
-  **function-only** when _T_ is not empty and lists only DET, PRON, ADP, CCONJ, SCONJ, PART, AUX, PUNCT or SYM.
+  **function-only** when *T* is not empty and lists only DET, PRON, ADP, CCONJ, SCONJ, PART, AUX, PUNCT or SYM.
 - **`PositionCues`** (5 static features): `PosIdx` (the token index capped at 3), `FirstContent` (the index of the
   first token that is not function-only, capped at 2, with whether this token is it; unknown spellings count as
   content), `EndPos` (the sentence terminal `.`, `!`, `?`, `:` or another token or none, a single final closing quote

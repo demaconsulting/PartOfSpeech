@@ -37,8 +37,8 @@ below 99.9 percent.
   misses), `Lexicon_TryGetTags_NonAsciiSpelling_IsFound` (and a surrogate pair) and
   `Lexicon_TryGetTags_LongerThanMaxSpelling_ReturnsFalse`; `Lexicon_TryFind_ReportsThePositionOfEverySpelling` (a theory
   over block sizes: the ordinal of every spelling is its index in ascending order).
-- **Analyses**: `Lexicon_Compile_WithoutAnalyses_ReadsBackWithEmptyAnalyses` (a lexicon compiled without an analyses table
-  is a version 3 file with the one empty feature set, no template and the one empty list; it has no analysis, its
+- **Analyses**: `Lexicon_Compile_WithoutAnalyses_ReadsBackWithEmptyAnalyses` (a lexicon compiled without an analyses
+  table is a version 3 file with the one empty feature set, no template and the one empty list; it has no analysis, its
   `AnalyzedTags` and `GetAnalyses` are empty and the tags enumerate as written),
   `Lexicon_GetAnalyses_EveryShapeOfAnalysis_RoundTrips` (a theory over compressed and plain files: every shape of
   template (no cut, a cut inside the word, the whole word replaced, a suffix only, non-ASCII base words, a cut next to a
@@ -64,26 +64,24 @@ below 99.9 percent.
   `FeatureExtractor_IsFoldFixedPoint_AgreesWithTheFoldOfTheWorkspace` (the test for a stored base word equals "the
   lower-cased folded form that the decoder's workspace holds is the text" for every UTF-16 code unit and for words that
   mix the cases of the rule, so the writer applies the fold that `IsFormOf` uses);
-  `LexiconWriter_Compile_MoreThanMaximumLists_Throws` (the largest accepted
-  number of lists compiles and loads, one more is refused); `LexiconWriter_Compile_Analyses_IsDeterministic` (the same
-  tables compile to the same bytes in any input order of the analyses, and the compressed and the plain file have the same
-  uncompressed image).
-- **Validation on load**: `Lexicon_Load_CorruptChecksum_Throws` (a flipped payload byte), `Lexicon_Load_Truncated_Throws`
-  (truncation and trailing bytes), `Lexicon_Load_TagCountMismatch_Throws` and
+  `LexiconWriter_Compile_MoreThanMaximumLists_Throws` (the largest accepted number of lists compiles and loads, one more
+  is refused); `LexiconWriter_Compile_Analyses_IsDeterministic` (the same tables compile to the same bytes in any input
+  order of the analyses, and the compressed and the plain file have the same uncompressed image).
+- **Validation on load**: `Lexicon_Load_CorruptChecksum_Throws` (a flipped payload byte),
+  `Lexicon_Load_Truncated_Throws` (truncation and trailing bytes), `Lexicon_Load_TagCountMismatch_Throws` and
   `Lexicon_Load_InvalidStructureWithValidChecksum_Throws` (a block index that does not start at zero),
   `Lexicon_Load_OversizedVarintWithValidChecksum_Throws` (a varint above 2^31-1 at each length or index site, with the
   header lengths and the checksum fixed, must give `InvalidDataException` and no other exception type),
-  `Lexicon_Load_DeflateTrailingBytesInStoredRegion_Throws` (a compressed file with bytes appended after the Deflate
-  data and the stored length raised to match is refused: with the old checksum by the checksum of the stored bytes, and
-  with a recomputed checksum by the strict inflation),
-  `Lexicon_Load_DeflateLastByteRemoved_Throws` (the last compressed byte removed and the stored length adjusted: refused
-  by the checksum when it is left alone, and with a "cut off" message when it is recomputed, so that only the strict
-  inflation can catch it),
-  `Lexicon_Load_DeflateCutAtAnyPoint_Throws` (every proper prefix of the compressed region, with the stored length and the
-  checksum adjusted, gives `InvalidDataException` and no other exception type),
-  `Lexicon_Load_DeflatePayloadLengthTooLarge_Throws` and `Lexicon_Load_DeflatePayloadLengthTooSmall_Throws` (a declared
-  payload length that is too large or too small, with intact stored bytes, is "shorter" or "longer than declared") and
-  `Lexicon_Load_PayloadLengthAboveMaximum_Throws` (a declared payload length above 16 MiB is refused before inflation).
+  `Lexicon_Load_DeflateTrailingBytesInStoredRegion_Throws` (a compressed file with bytes appended after the Deflate data
+  and the stored length raised to match is refused: with the old checksum by the checksum of the stored bytes, and with
+  a recomputed checksum by the strict inflation), `Lexicon_Load_DeflateLastByteRemoved_Throws` (the last compressed byte
+  removed and the stored length adjusted: refused by the checksum when it is left alone, and with a "cut off" message
+  when it is recomputed, so that only the strict inflation can catch it), `Lexicon_Load_DeflateCutAtAnyPoint_Throws`
+  (every proper prefix of the compressed region, with the stored length and the checksum adjusted, gives
+  `InvalidDataException` and no other exception type), `Lexicon_Load_DeflatePayloadLengthTooLarge_Throws` and
+  `Lexicon_Load_DeflatePayloadLengthTooSmall_Throws` (a declared payload length that is too large or too small, with
+  intact stored bytes, is "shorter" or "longer than declared") and `Lexicon_Load_PayloadLengthAboveMaximum_Throws` (a
+  declared payload length above 16 MiB is refused before inflation).
 - **Validation of the analyses section on load** (each corruption patches a valid file and recomputes the checksum):
   `Lexicon_Load_ListIndexOutOfRange_Throws`, `Lexicon_Load_ListTagsNotASubsetOfTheSpellingTags_Throws`,
   `Lexicon_Load_CutLongerThanSpelling_Throws`, `Lexicon_Load_CutInsideACharacter_Throws`,
@@ -95,19 +93,18 @@ below 99.9 percent.
   features must ascend), `Lexicon_Load_ListInOrderForOneSpellingButNotForAnother_Throws` (two spellings that use the
   same two templates in different orders; one is pointed at the list of the other, which composes the base words in the
   wrong order for it, so the order is checked for each spelling),
-  `Lexicon_Load_GeneratedAnalyses_AcceptsWriterOrderAndRefusesExchangedNeighbors`
-  (40 generated lexicons with ASCII, two-, three- and four-byte characters: every file that the writer produces loads and
-  reads back in the written order, and exchanging two neighbors of one tag in a list is refused in every list where that
-  is possible, which ties the comparison of the loader to the one of the writer, including UTF-8 byte order against
-  UTF-16 order), `Lexicon_Load_ComposedBaseWordNotNormalized_Throws` (a template patched to compose `cafe` and U+0301),
-  `Lexicon_Load_ComposedBaseWordNotFolded_Throws` (a theory: a suffix patched to an upper-case ASCII letter, an upper-case
-  letter of two bytes or U+02BC is refused, and the unpatched file loads),
+  `Lexicon_Load_GeneratedAnalyses_AcceptsWriterOrderAndRefusesExchangedNeighbors` (40 generated lexicons with ASCII,
+  two-, three- and four-byte characters: every file that the writer produces loads and reads back in the written order,
+  and exchanging two neighbors of one tag in a list is refused in every list where that is possible, which ties the
+  comparison of the loader to the one of the writer, including UTF-8 byte order against UTF-16 order),
+  `Lexicon_Load_ComposedBaseWordNotNormalized_Throws` (a template patched to compose `cafe` and U+0301),
+  `Lexicon_Load_ComposedBaseWordNotFolded_Throws` (a theory: a suffix patched to an upper-case ASCII letter, an
+  upper-case letter of two bytes or U+02BC is refused, and the unpatched file loads),
   `Lexicon_Load_LowerCaseTwoByteSuffixIsAcceptedAndKeptUpperCaseIsRefused` (a patched lower-case letter of two bytes is
   accepted; a template that keeps a capital of the spelling is refused),
   `Lexicon_Load_LowerCaseBaseWordsOfTwoBytes_AreAcceptedAndKeepTheirText` (base words with two-byte letters, kept or in
-  the suffix, load and read back as written),
-  `Lexicon_Load_UpperCaseLetterInAKeptPrefix_Throws` (a theory over the position of a capital in a 26-byte spelling,
-  including the edges of the eight-byte steps of the scan) and
+  the suffix, load and read back as written), `Lexicon_Load_UpperCaseLetterInAKeptPrefix_Throws` (a theory over the
+  position of a capital in a 26-byte spelling, including the edges of the eight-byte steps of the scan) and
   `Lexicon_Load_CharactersNextToCapitalsInALongBaseWord_AreAccepted` (`@`, `[`, the grave accent, the brace, DEL and
   non-ASCII lower-case letters in long base words are accepted),
   `Lexicon_Load_CharactersBelowU0300_AreStableUnderNormalizationFormC` (the premise of the fast path: every character
@@ -121,7 +118,7 @@ below 99.9 percent.
   and `Lexicon_Load_InvalidAnalysesHeaderField_Throws` (a theory over header offsets and values: no feature set, no
   list, more lists than the format allows, a reserved field that is not zero). That a file of version 2 is refused with
   a message that names both the version found (2) and the version that the build reads (`Lexicon.FormatVersion`, 3) is
-  asserted in `ModelStorage_Formats_StartWithMagicAndVersion` (_ModelStorage Verification_).
+  asserted in `ModelStorage_Formats_StartWithMagicAndVersion` (*ModelStorage Verification*).
 - **Allowed tags by rule**: `Lexicon_AllowedTags_UnknownWord_AllowsAllSeventeen`,
   `Lexicon_AllowedTags_KnownWord_AllowsLexiconTags`, `Lexicon_AllowedTags_NoLetterOrDigit_AddsPunctSymX`,
   `Lexicon_AllowedTags_Digit_AddsNumSymXNounPropnAdj` and `Lexicon_AllowedTags_FirstUpper_AddsPropnX`.
@@ -131,8 +128,8 @@ below 99.9 percent.
   rounds by `TestSupport/AllocationMeter.cs`, and the same for `TryFind` and `AnalyzedTags` of an upper-case key; it
   supports the decoder requirement
   `PartOfSpeech-Tagging-TagDecoder-NoAllocation`). `HasAnalysis` is proved allocation-free through
-  `Tagger_IsFormOf_DoesNotAllocate` (_Tagger Verification_), which runs it with the real lexicon.
+  `Tagger_IsFormOf_DoesNotAllocate` (*Tagger Verification*), which runs it with the real lexicon.
 - **Allowed tags against the reference rule**: `Lexicon_AllowedTags_MatchesDataFilesRuleForEveryLexiconSpelling` (the
   compiled rules agree with the reference implementation for every lexicon spelling and shape variants).
-- **Coverage**: `Lexicon_AllowedTags_Dev_MeetsCoverageThreshold` (the binary lexicon with the shape rules allows the gold
-  tag of at least 99.9 percent of the non-disputed development tokens).
+- **Coverage**: `Lexicon_AllowedTags_Dev_MeetsCoverageThreshold` (the binary lexicon with the shape rules allows the
+  gold tag of at least 99.9 percent of the non-disputed development tokens).

@@ -11,99 +11,93 @@ of the 17 Universal POS tags, with a calibrated confidence, ranked alternatives 
 has zero runtime package dependencies and ships as one NuGet package. The system consists of two units and three
 subsystems:
 
-- **Upos** (unit): the tag vocabulary, its text forms and sets of tags; see _Upos Design_.
+- **Upos** (unit): the tag vocabulary, its text forms and sets of tags; see *Upos Design*.
 - **ModelTrainer** (unit): the build-time tool that trains the embedded weights from the committed corpora with the
   library's own feature extractor, lexicon restriction and weights writer, selects every setting on development data
   only, and checks that the committed weights are current; it is not shipped and not part of the runtime; see
-  _ModelTrainer Design_.
+  *ModelTrainer Design*.
 - **Tokenization** (subsystem): the tokenizer and the sentence splitter, which follow the tokenization convention of the
-  training data; see _Tokenization Design_.
+  training data; see *Tokenization Design*.
 - **ModelStorage** (subsystem): the binary formats of the weights (`POSW`) and the lexicon (`POSL`), their readers and
-  writers, and the lexicon and the weights that are embedded in the package; see _ModelStorage Design_.
+  writers, and the lexicon and the weights that are embedded in the package; see *ModelStorage Design*.
 - **Tagging** (subsystem): the feature extractor, the greedy decoder, the token constraints, the glossary and the public
-  `Tagger`; see _Tagging Design_.
+  `Tagger`; see *Tagging Design*.
 
 Relationships (the unit-level call graph has no cycle): `Tagger` uses `Tokenizer`, `TagDecoder`, `EmbeddedModel`,
 `TokenConstraint` and `Glossary`; `Glossary` uses `Tokenizer`, `FeatureExtractor`, `TokenConstraint` and `UposSet`;
-`TagDecoder`
-uses `FeatureExtractor`, `PerceptronModel`, `Lexicon` and `UposSet`; `FeatureExtractor` uses `Upos`, `UposSet` and
-`Lexicon` (the lookups of the feature groups); `Lexicon` and
-`PerceptronModel` use `BinaryFormat` and `UposSet`; `PerceptronModel` and `PerceptronModelWriter` also use the constants
-and the group type of `FeatureExtractor` (the feature set versions and the known groups); `EmbeddedModel` uses `Lexicon`
-and `PerceptronModel`; `Tokenizer` uses `SentenceSplitter`; and `ModelTrainer` uses `FeatureExtractor`,
-`Lexicon`, `PerceptronModel`, `PerceptronModelWriter`, `BinaryFormat` and `Upos` to train, and `Tagger`, `TagDecoder`
-and `TokenConstraint` to score a weights file and to run the glossary experiment through the real decoder, and `Glossary`
-to run the glossary evaluation through the real tagger, while nothing
-in the library uses `ModelTrainer`.
+`TagDecoder` uses `FeatureExtractor`, `PerceptronModel`, `Lexicon` and `UposSet`; `FeatureExtractor` uses `Upos`,
+`UposSet` and `Lexicon` (the lookups of the feature groups); `Lexicon` and `PerceptronModel` use `BinaryFormat` and
+`UposSet`; `PerceptronModel` and `PerceptronModelWriter` also use the constants and the group type of `FeatureExtractor`
+(the feature set versions and the known groups); `EmbeddedModel` uses `Lexicon` and `PerceptronModel`; `Tokenizer` uses
+`SentenceSplitter`; and `ModelTrainer` uses `FeatureExtractor`, `Lexicon`, `PerceptronModel`, `PerceptronModelWriter`,
+`BinaryFormat` and `Upos` to train, and `Tagger`, `TagDecoder` and `TokenConstraint` to score a weights file and to run
+the glossary experiment through the real decoder, and `Glossary` to run the glossary evaluation through the real tagger,
+while nothing in the library uses `ModelTrainer`.
 
 All public types live in the one namespace `DemaConsulting.PartOfSpeech`; the folders `Tokenization`, `ModelStorage` and
-`Tagging` mirror the subsystems but are not namespaces. The `ModelStorage` and most `Tagging` classes are internal and are
-visible to the test project, to the tool `tools/LexiconCompiler` and to the trainer through `InternalsVisibleTo`.
+`Tagging` mirror the subsystems but are not namespaces. The `ModelStorage` and most `Tagging` classes are internal and
+are visible to the test project, to the tool `tools/LexiconCompiler` and to the trainer through `InternalsVisibleTo`.
 
 ### Data Assets
 
 The repository also holds data assets: training corpora, evaluation sets and the lexicon. They are files, not software
-items, so they have no unit design, and the system requirements in the _Data and Licensing_ section of the system
+items, so they have no unit design, and the system requirements in the *Data and Licensing* section of the system
 requirements cover them. Two compiled forms are consumed at run time: the lexicon (the spelling-to-tags table and the
 analyses table), which `tools/LexiconCompiler` compiles
 into the binary resource `src/DemaConsulting.PartOfSpeech/Resources/lexicon.bin` that the package embeds, and the
 weights, which the unit `ModelTrainer` trains into `src/DemaConsulting.PartOfSpeech/Resources/weights.bin`, which the
-package embeds as well (the _Embedded Model_ system requirements cover it).
+package embeds as well (the *Embedded Model* system requirements cover it).
 
-- **Training corpora**: sentences labeled with the 17 Universal POS tags, from the sources listed in `training.json`: the
-  open corpus, MASC, a
-  silver corpus whose labels were written by a model and mapped by documented rules, a small imperative source
-  (`data/imperative/`: 900 sentences that start with an imperative verb, from US federal-government instructional
-  text, tagged by two blind models that agree on every token, a model review of a sample, selected by position and
-  lexicon frame and never by the PartOfSpeech model, and kept disjoint from every evaluation set), and two targeted
-  sources built the same way: `data/compound/` (742 sentences with a noun compound whose head can also be a verb) and
-  `data/headings/` (374 Title Case heading, caption and step-title lines). The weights are
-  trained from the sources that have a positive weight in `training.json`: the open corpus, MASC, silver, the
-  imperative source, the compound sources and the four technical sources (weight 1, so they are in the mix of the
-  embedded weights; `--source imperative:0` or `--source compound:0` leaves one out of an experimental run). The
-  headings source has weight 0: it is committed training data that is not part of the mix (`--source headings:1` adds
-  it to an experimental run).
-  Two more sources of the same kind are `data/compound/compound-2.tsv` (1,100 sentences, source `compound2`,
-  weight 1, so it is in the mix of the embedded weights) and `data/headings/headings-2.tsv` (247 Title Case lines, source
-  `headings2`: imperative step titles and a contrast stratum of nouns, weight 0), from US federal
-  documents that no other set uses. Four more technical-text sources, `data/technical/deverbal.tsv` (637 sentences with
-  a noun compound whose head is spelled like a verb), `terms.tsv` (373 sentences with a capitalized defined term inside
-  the sentence), `steps.tsv` (531 step lines and short instructions that start with a capitalized word) and `clauses.tsv`
-  (310 sentences with a base-form word after a plural or coordinated subject), are built the same way from further US
-  federal documents (NASA, USGS and military and agency manuals) that no other set uses; they have weight 1, so they are
-  part of the mix of the embedded weights (65,373 training sentences in all)
+- **Training corpora**: sentences labeled with the 17 Universal POS tags, from the sources listed in `training.json`:
+  the open corpus, MASC, a silver corpus whose labels were written by a model and mapped by documented rules, a small
+  imperative source (`data/imperative/`: 900 sentences that start with an imperative verb, from US federal-government
+  instructional text, tagged by two blind models that agree on every token, a model review of a sample, selected by
+  position and lexicon frame and never by the PartOfSpeech model, and kept disjoint from every evaluation set), and two
+  targeted sources built the same way: `data/compound/` (742 sentences with a noun compound whose head can also be a
+  verb) and `data/headings/` (374 Title Case heading, caption and step-title lines). The weights are trained from the
+  sources that have a positive weight in `training.json`: the open corpus, MASC, silver, the imperative source, the
+  compound sources and the four technical sources (weight 1, so they are in the mix of the embedded weights;
+  `--source imperative:0` or `--source compound:0` leaves one out of an experimental run). The headings source has
+  weight 0: it is committed training data that is not part of the mix (`--source headings:1` adds it to an experimental
+  run). Two more sources of the same kind are `data/compound/compound-2.tsv` (1,100 sentences, source `compound2`,
+  weight 1, so it is in the mix of the embedded weights) and `data/headings/headings-2.tsv` (247 Title Case lines,
+  source `headings2`: imperative step titles and a contrast stratum of nouns, weight 0), from US federal documents that
+  no other set uses. Four more technical-text sources, `data/technical/deverbal.tsv` (637 sentences with a noun compound
+  whose head is spelled like a verb), `terms.tsv` (373 sentences with a capitalized defined term inside the sentence),
+  `steps.tsv` (531 step lines and short instructions that start with a capitalized word) and `clauses.tsv` (310
+  sentences with a base-form word after a plural or coordinated subject), are built the same way from further US federal
+  documents (NASA, USGS and military and agency manuals) that no other set uses; they have weight 1, so they are part of
+  the mix of the embedded weights (65,373 training sentences in all)
 - **Evaluation sets**: a split of the open corpus, a single-target gold set, a probe of difficult noun and verb shapes
   and a challenge set; the UD English-EWT treebank is evaluation-only and is fetched on demand, never stored. Model
   configuration and thresholds are chosen on development data only: open dev, gold v2 dev, shapes-dev (standard and hard
-  tranches) and UD-EWT dev; the other sets are evaluated once for each frozen model by the trainer (see _ModelTrainer
-  Design_). The hard-shape
-  development set (`data/eval/shapes-dev/`: real US federal-government sentences, five shapes, controls, labeled blind
-  by two models; a standard tranche and a harder second tranche whose items a rule selects from the contested
-  cases of another model family, never from the PartOfSpeech model) is development only, read by the trainer
-  through a guard of its own, never trained on, kept disjoint from the training sets and from every other evaluation set
-  (the two tranches share documents but no sentence), and never reported as a held-out figure. Nine more development
-  files extend it: three single-shape tranches (`compound-head`, `headings`, `named-state`), a follow-up pair
-  (`compound-head-2`, `headings-2`) with more items of the shapes of `compound-head` and `headings`, from other documents,
-  that make the compound and heading measure bigger, and four technical tranches (`deverbal-heads`, `defined-terms`,
-  `step-lines`, `clause-verbs`, one shape each, from documents that no other set uses; the four tranches share documents
-  with each other and with no other set)
+  tranches) and UD-EWT dev; the other sets are evaluated once for each frozen model by the trainer (see *ModelTrainer
+  Design*). The hard-shape development set (`data/eval/shapes-dev/`: real US federal-government sentences, five shapes,
+  controls, labeled blind by two models; a standard tranche and a harder second tranche whose items a rule selects from
+  the contested cases of another model family, never from the PartOfSpeech model) is development only, read by the
+  trainer through a guard of its own, never trained on, kept disjoint from the training sets and from every other
+  evaluation set (the two tranches share documents but no sentence), and never reported as a held-out figure. Nine more
+  development files extend it: three single-shape tranches (`compound-head`, `headings`, `named-state`), a follow-up
+  pair (`compound-head-2`, `headings-2`) with more items of the shapes of `compound-head` and `headings`, from other
+  documents, that make the compound and heading measure bigger, and four technical tranches (`deverbal-heads`,
+  `defined-terms`, `step-lines`, `clause-verbs`, one shape each, from documents that no other set uses; the four
+  tranches share documents with each other and with no other set)
 - **Evaluation record**: `docs/evaluation/` holds the selection of the two recommended confidence thresholds
   (`operating-points.json`, `confidence-thresholds.md`), the technical operating point
   (`technical-operating-points.json`, also a section of `confidence-thresholds.md`) and the results of the one held-out
   run (`test-results.json`, `test-results.md`), all generated by the trainer (the technical operating point by a script
-  from a trainer result), and a `README.md` that explains how to read and reproduce them and
-  what they do not show. It is plain Markdown and JSON read on GitHub, not a generated document, and no treebank text is
-  in it. The packed API reference and the user guide quote a few of its figures; tests compare
-  those copies with the generated files. The record describes the embedded model: the corrected corpora minus the
-  withdrawn `prenominal-ing` corrections, the clause-cue feature group (see _Context Features_ in the Data Flow section),
-  the imperative training source, the two compound training sources and the four technical training sources. The
-  held-out sets are evaluated once per model.
+  from a trainer result), and a `README.md` that explains how to read and reproduce them and what they do not show. It
+  is plain Markdown and JSON read on GitHub, not a generated document, and no treebank text is in it. The packed API
+  reference and the user guide quote a few of its figures; tests compare those copies with the generated files. The
+  record describes the embedded model: the corrected corpora minus the withdrawn `prenominal-ing` corrections, the
+  clause-cue feature group (see *Context Features* in the Data Flow section), the imperative training source, the two
+  compound training sources and the four technical training sources. The held-out sets are evaluated once per model.
   Both generated reports carry the notice in `docs/evaluation/disclosure.md`, and the record stands as the record of its
-  own model alone. Comparisons with other models and the protocols are kept
-  in the evaluation `README.md` and in the run log `RUN-LOG.md`, not in this document
+  own model alone. Comparisons with other models and the protocols are kept in the evaluation `README.md` and in the run
+  log `RUN-LOG.md`, not in this document
 - **Lexicon**: a table that maps a lower-case spelling to the Universal POS tags it may carry, with a coverage report,
-  and the analyses table `data/lexicon/analyses.tsv` that lists, for 258,255 of its 262,635 spellings, the base word, tag
-  and features of each form that the spelling can be (290,365 analyses, from the same word-form tables); both are
+  and the analyses table `data/lexicon/analyses.tsv` that lists, for 258,255 of its 262,635 spellings, the base word,
+  tag and features of each form that the spelling can be (290,365 analyses, from the same word-form tables); both are
   compiled into the embedded `POSL` file, 762,836 bytes compressed and 2,157,499 bytes uncompressed
 - **Weights**: the trained `POSW` file, 553,641 bytes compressed and 1,234,530 bytes uncompressed, with the training
   configuration `training.json` (which records the SHA-256 of the uncompressed image) and the run log `RUN-LOG.md` next
@@ -111,26 +105,23 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
 - **Checks**: the checksum manifest and the leakage reports (which cover the training sources of `training.json` against
   the evaluation
   sets, and the compound, headings and technical sources against the other training sources)
-- **Corrections overlay**: `data/corrections/` holds the label corrections for the three correctable training corpora (the
-  imperative, compound, headings and technical sources are linted by the conventions linter but never corrected) as
-  tables, and
-  the rows are applied to the corpus files (`corrections.py apply --write`). `mechanical.tsv` holds the rows that the
-  mechanical rules of the conventions linter write
-  (the rule knows the tag), `adjudicated.tsv` the decisions of two independent blind taggers (a tag, a flag or a
-  `disputed` mark; produced by `adjudicate.py`, never by the generator), `candidates.tsv` the cases that need a judgment,
-  and `exceptions.tsv` the reviewed cases that stay as they are. A row addresses one token (source, split, sentence id,
-  token index) and carries the old and the new tag and status and its provenance; the key is unique in each table, and
-  an adjudicated row replaces the mechanical row of the same token (the mechanical row stays in its file and is ignored
-  by the validator and by the application). Adjudicated rows that are withdrawn on purpose (`corrections.py withdraw`:
-  the 878 rows of the detector `prenominal-ing`, withdrawn so that the open train, dev and test splits follow one
-  convention for `-ing` words) stay in
-  `withdrawn-<detector>.tsv` as provenance; that table is never applied, the validator checks its header and its `# input`
-  lines as those of `adjudicated.tsv`, and requires the old value in the
-  corpora for every row of it, in both states. A table is valid against the corpora when all of its rows in effect match
-  them before the application or all after it (a mixture is an error, and a second application is refused). The
-  corpora, the lexicon and the weights are built from the corrected files, and the tables stay as the provenance of the
-  change; the generator check reverses the applied rows in a temporary copy to prove that the tables are still its
-  output.
+- **Corrections overlay**: `data/corrections/` holds the label corrections for the three correctable training corpora
+  (the imperative, compound, headings and technical sources are linted by the conventions linter but never corrected) as
+  tables, and the rows are applied to the corpus files (`corrections.py apply --write`). `mechanical.tsv` holds the rows
+  that the mechanical rules of the conventions linter write (the rule knows the tag), `adjudicated.tsv` the decisions of
+  two independent blind taggers (a tag, a flag or a `disputed` mark; produced by `adjudicate.py`, never by the
+  generator), `candidates.tsv` the cases that need a judgment, and `exceptions.tsv` the reviewed cases that stay as they
+  are. A row addresses one token (source, split, sentence id, token index) and carries the old and the new tag and
+  status and its provenance; the key is unique in each table, and an adjudicated row replaces the mechanical row of the
+  same token (the mechanical row stays in its file and is ignored by the validator and by the application). Adjudicated
+  rows that are withdrawn on purpose (`corrections.py withdraw`: the 878 rows of the detector `prenominal-ing`,
+  withdrawn so that the open train, dev and test splits follow one convention for `-ing` words) stay in
+  `withdrawn-<detector>.tsv` as provenance; that table is never applied, the validator checks its header and its
+  `# input` lines as those of `adjudicated.tsv`, and requires the old value in the corpora for every row of it, in both
+  states. A table is valid against the corpora when all of its rows in effect match them before the application or all
+  after it (a mixture is an error, and a second application is refused). The corpora, the lexicon and the weights are
+  built from the corrected files, and the tables stay as the provenance of the change; the generator check reverses the
+  applied rows in a temporary copy to prove that the tables are still its output.
 - **Package license and third-party notice**: `PACKAGE-LICENSE.md` (the license of the package: the MIT code and the
   CC BY data) and `THIRD-PARTY-NOTICES.md` (attribution and change statements, also for the weights), both packed at
   the package root
@@ -147,13 +138,14 @@ package embeds as well (the _Embedded Model_ system requirements cover it).
 
 The system exposes the following public API to external consumers (all in the namespace `DemaConsulting.PartOfSpeech`):
 
-- **Tagger**: `Tagger.Load(Stream weights, TaggerOptions?)` and `Tagger.Load(Stream weights, Stream lexicon,
-  TaggerOptions?)` create a tagger; `Tagger.Default` returns the one shared tagger that uses the embedded weights and
-  lexicon (created on first use, thread-safe, no file needed); `Tag(string)`,
+- **Tagger**: `Tagger.Load(Stream weights, TaggerOptions?)` and
+  `Tagger.Load(Stream weights, Stream lexicon, TaggerOptions?)` create a tagger; `Tagger.Default` returns the one shared
+  tagger that uses the embedded weights and lexicon (created on first use, thread-safe, no file needed); `Tag(string)`,
   `Tag(Sentence, constraints)` and `Tag(IReadOnlyList<string>, constraints)` tag text, a sentence or tokens, and the
-  same three with a `Glossary` tag them with the terms of a glossary applied. `GetPossibleTags(string, PossibleTagsMode)`
-  (and on .NET 8 and later a `ReadOnlySpan<char>` overload) looks up one word on its own, without a sentence, and
-  `IsFormOf(string word, string lemma, Upos tag)` asks whether a word is a form of a base word with a tag.
+  same three with a `Glossary` tag them with the terms of a glossary applied.
+  `GetPossibleTags(string, PossibleTagsMode)` (and on .NET 8 and later a `ReadOnlySpan<char>` overload) looks up one
+  word on its own, without a sentence, and `IsFormOf(string word, string lemma, Upos tag)` asks whether a word is a form
+  of a base word with a tag.
 - **Tokenizer**: `Tokenize(string)` returns sentences with tokens; `CreateSentence(IReadOnlyList<string>)` builds a
   sentence from tokens.
 - **Results**: `TaggedSentence`, `TaggedToken`, `TagScore`, `Sentence` and `Token`, all immutable; a tagged token and a
@@ -183,36 +175,37 @@ The system exposes the following public API to external consumers (all in the na
 | NuGet package `api/` folder | Outbound | Markdown API reference | Generated by ApiMark at build |
 | Confidence guidance | Outbound | Namespace reference section, `TaggedToken` link | Equals `docs/evaluation/*.json` |
 
-The binary formats are interfaces too. The weights file is the interface between the trainer and the library (the trainer
-writes it with `PerceptronModelWriter`, the tagger reads it with `PerceptronModel`) and to callers who train their own
-models; both formats are specified byte by byte in _ModelStorage Design_. The Trainer's command line (_ModelTrainer
-Design_) is an interface of the build only.
+The binary formats are interfaces too. The weights file is the interface between the trainer and the library (the
+trainer writes it with `PerceptronModelWriter`, the tagger reads it with `PerceptronModel`) and to callers who train
+their own models; both formats are specified byte by byte in *ModelStorage Design*. The Trainer's command line
+(*ModelTrainer Design*) is an interface of the build only.
 
 ## Dependencies
 
 The Part Of Speech has zero runtime NuGet dependencies — it is implemented exclusively
 against the .NET Base Class Library (including `System.IO.Compression.DeflateStream`). The following OTS items are used
-for building and verifying this system (not consumed at runtime); see _OTS Integration Design_ (`docs/design/ots.md`)
+for building and verifying this system (not consumed at runtime); see *OTS Integration Design* (`docs/design/ots.md`)
 and each item's dedicated design document for details:
 
-- **ApiMark** — generates the Markdown API reference that is packed with the library; see _ApiMark Design_
-- **BuildMark** — generates build-notes documentation; see _BuildMark Design_
+- **ApiMark** — generates the Markdown API reference that is packed with the library; see *ApiMark Design*
+- **BuildMark** — generates build-notes documentation; see *BuildMark Design*
 - **FileAssert** — validates generated documents against acceptance criteria; see
-  _FileAssert Design_
-- **Pandoc** — converts Markdown documentation to HTML; see _Pandoc Design_
-- **ReqStream** — enforces requirements-to-test traceability; see _ReqStream Design_
-- **ReviewMark** — enforces file review coverage and currency; see _ReviewMark Design_
-- **SarifMark** — converts CodeQL SARIF results to markdown; see _SarifMark Design_
-- **SonarMark** — generates SonarCloud quality reports; see _SonarMark Design_
-- **SysML2Tools** — lints the architecture model and renders its diagrams; see _SysML2Tools Design_
-- **VersionMark** — captures and publishes tool-version information; see _VersionMark Design_
-- **WeasyPrint** — converts HTML documentation to PDF; see _WeasyPrint Design_
-- **xUnit** — executes unit and integration tests; see _xUnit Design_
+  *FileAssert Design*
+- **Pandoc** — converts Markdown documentation to HTML; see *Pandoc Design*
+- **ReqStream** — enforces requirements-to-test traceability; see *ReqStream Design*
+- **ReviewMark** — enforces file review coverage and currency; see *ReviewMark Design*
+- **SarifMark** — converts CodeQL SARIF results to markdown; see *SarifMark Design*
+- **SonarMark** — generates SonarCloud quality reports; see *SonarMark Design*
+- **SysML2Tools** — lints the architecture model and renders its diagrams; see *SysML2Tools Design*
+- **VersionMark** — captures and publishes tool-version information; see *VersionMark Design*
+- **WeasyPrint** — converts HTML documentation to PDF; see *WeasyPrint Design*
+- **xUnit** — executes unit and integration tests; see *xUnit Design*
 
 The following third-party data sets are used to build the data assets. They are data, not software, so they are not OTS
 items and have no OTS design document. Their attribution and license notices are in `THIRD-PARTY-NOTICES.md`, and each
-source is recorded with its origin, license and production recipe in the `README.md` of its folder under `data/`, and every
-source document of the corpora in a per-document `sources.tsv` (for MASC: genre, the corpus-wide license and the counts):
+source is recorded with its origin, license and production recipe in the `README.md` of its folder under `data/`, and
+every source document of the corpora in a per-document `sources.tsv` (for MASC: genre, the corpus-wide license and the
+counts):
 
 - **MASC** (CC BY 3.0 US): Penn Treebank trees converted to Universal POS tags for training data; the lexicon tags and
   the weights are derived in part from them
@@ -231,7 +224,7 @@ The build-time data tools are Python scripts that use only the Python standard l
 are not part of the build, the tests or the package. The lexicon compiler is a small C# console program that references
 the library; `build.ps1` runs it with `--check` so that a stale embedded lexicon fails the build. The trainer is the
 unit `ModelTrainer`; `build.ps1` and the CI build run `train --check` so that stale embedded weights fail the build.
-The files and tests of the tools are covered by review-sets (see _Design Introduction_, Companion Artifact Structure).
+The files and tests of the tools are covered by review-sets (see *Design Introduction*, Companion Artifact Structure).
 
 ## Risk Control Measures
 
@@ -255,7 +248,7 @@ integrity of what the library ships:
 - **Development-only selection**: no setting of the model or of the confidence thresholds is chosen on the data that
   measures it. The trainer opens a held-out evaluation set only in the `evaluate` command, only with a selection of the
   thresholds that is valid for the frozen model and is committed first, and only once; the other commands have no code
-  path to a held-out file (see _ModelTrainer Design_). The hard-shape development set is a development file with a guard
+  path to a held-out file (see *ModelTrainer Design*). The hard-shape development set is a development file with a guard
   of its own (`eval-shapes` only; both tranches): it may select settings, it is never trained on and the shape probe
   stays held-out.
 - **Guidance consistency**: the thresholds and the figures that the packed documentation, the user guide and the root
@@ -271,11 +264,10 @@ The data assets are protected by two release gates, which the data tests of the 
   `PACKAGE-LICENSE.md` names every license that covers part of the package, because nuget.org accepts only license
   expressions of licenses that the OSI or the FSF approve and `CC-BY-3.0-US` (MASC, which the weights and the lexicon
   tags derive from) is neither.
-- **Isolation gate**: no training document and no training sentence, of any length, appears in an evaluation set, so that
-  measured accuracy is not inflated by training data. The data tools enforce it on the training side: a long match
-  (a key of 25 or more letters and numbers) shows shared source text and excludes the whole training document; a
-  shorter exact match is a sentence that recurs in unrelated texts and is dropped alone. The evaluation sets are never
-  changed.
+- **Isolation gate**: no training document and no training sentence, of any length, appears in an evaluation set, so
+  that measured accuracy is not inflated by training data. The data tools enforce it on the training side: a long match
+  (a key of 25 or more letters and numbers) shows shared source text and excludes the whole training document; a shorter
+  exact match is a sentence that recurs in unrelated texts and is dropped alone. The evaluation sets are never changed.
 
 ## Data Flow
 
@@ -284,25 +276,24 @@ The data assets are protected by two release gates, which the data tests of the 
 1. **Input**: a text, or a list of tokens, and optionally one `TokenConstraint` per token and a `Glossary`. A weights
    stream is loaded
    once by `Tagger.Load`: the reader verifies the file and builds the sparse weight rows.
-2. **Tokenization**: `Tokenizer` splits the text into tokens by the convention of the training data and groups them
-   into sentences; tokens are slices of the input with offsets. A token list becomes one sentence.
-   With a glossary, the terms are then found in each sentence and turned into constraints, which are merged with those of
-   the caller.
+2. **Tokenization**: `Tokenizer` splits the text into tokens by the convention of the training data and groups them into
+   sentences; tokens are slices of the input with offsets. A token list becomes one sentence. With a glossary, the terms
+   are then found in each sentence and turned into constraints, which are merged with those of the caller.
 3. **Features**: for each sentence `FeatureExtractor` folds the tokens (NFC, typographic quotes and dashes mapped to
    ASCII) and computes the hashed feature buckets of every token: the 22 base templates (four of them use the two
-   previous tags) and the features of the feature groups that the weights file names (see _Context Features_ below).
+   previous tags) and the features of the feature groups that the weights file names (see *Context Features* below).
 4. **Scoring**: the decoder sums the integer weights of the buckets for each tag.
-5. **Restriction**: the lexicon lookup gives the tags that a known word can carry (and the known-word flag of the token);
-   token-shape rules extend them; a constraint narrows them or adds to the scores.
+5. **Restriction**: the lexicon lookup gives the tags that a known word can carry (and the known-word flag of the
+   token); token-shape rules extend them; a constraint narrows them or adds to the scores.
 6. **Decision**: the best candidate becomes the tag and the next token's history; a softmax at the model temperature
    turns the candidate scores into the confidence and the ranked alternatives, from which the margin follows.
-7. **Output**: immutable `TaggedSentence` objects with `TaggedToken` values that carry the original text and offsets, and,
-   with a glossary, the matches that were found.
+7. **Output**: immutable `TaggedSentence` objects with `TaggedToken` values that carry the original text and offsets,
+   and, with a glossary, the matches that were found.
 
 **Word lookup path** (runtime, on request): `Tagger.GetPossibleTags` validates one word, `TagDecoder` folds it with the
 same code as a token (NFC, quotes, dashes, ellipsis, lower case), looks up the whole spelling in the lexicon, and for a
-hyphenated word that is not a spelling looks up its last part; the result carries the tags (the lexicon tags, or the tags
-that the shape rules allow as for a token), the match kind and a reference to the matched spelling, from which
+hyphenated word that is not a spelling looks up its last part; the result carries the tags (the lexicon tags, or the
+tags that the shape rules allow as for a token), the match kind and a reference to the matched spelling, from which
 `GetAnalyses()` reads the analyses on demand. No sentence, model or glossary is involved, and the same per-thread
 workspace as tagging is used.
 
@@ -312,28 +303,27 @@ workspace as tagging is used.
    pinned inputs whose SHA-256 values are recorded
 2. **Import**: the tools convert every source to the shared corpus format with the 17 Universal POS tags, remove
    training documents or sentences that overlap evaluation data, and write sorted UTF-8 files with LF line endings
-3. **Corrections**: the conventions linter finds the tokens whose label breaks a rule of `data/CONVENTIONS.md`;
-   the generator writes the fixes of the mechanical rules and the cases that need a judgment to `data/corrections/`,
-   the adjudication tool selects sentences from those cases and from the disagreements of off-the-shelf taggers, has two
+3. **Corrections**: the conventions linter finds the tokens whose label breaks a rule of `data/CONVENTIONS.md`; the
+   generator writes the fixes of the mechanical rules and the cases that need a judgment to `data/corrections/`, the
+   adjudication tool selects sentences from those cases and from the disagreements of off-the-shelf taggers, has two
    models tag them blind (without the labels) and writes the agreed corrections and the `disputed` marks to
-   `adjudicated.tsv`, a validator checks all rows against the corpora, and `corrections.py apply --write` applies the rows
-   in effect to the corpus files once. The steps below read the corrected files; `lint.ps1` enforces that the fix tier
-   of the linter finds nothing left
+   `adjudicated.tsv`, a validator checks all rows against the corpora, and `corrections.py apply --write` applies the
+   rows in effect to the corpus files once. The steps below read the corrected files; `lint.ps1` enforces that the fix
+   tier of the linter finds nothing left
 4. **Lexicon**: the tools build the spelling-to-tags lexicon from the dictionary tables and the tags attested in the
    training corpora, then measure its coverage of the open training and development sets; `build_lexicon.py` then
    derives the analyses table from the form rows of the same dictionary tables (each form row's own part of speech, base
    word and features, kept when its tag is a tag of the spelling in the committed lexicon)
-5. **Compilation**: `tools/LexiconCompiler` compiles the lexicon table and the analyses table into `Resources/lexicon.bin`,
-   which is committed and embedded in the assembly
+5. **Compilation**: `tools/LexiconCompiler` compiles the lexicon table and the analyses table into
+   `Resources/lexicon.bin`, which is committed and embedded in the assembly
 6. **Training**: the unit `ModelTrainer` reads the training corpora named in `training.json` that have a positive weight
-   (the open corpus, MASC, silver, the imperative source, the compound sources and the four technical sources; the headings
-   sources have weight 0),
-   extracts features with
-   the same `FeatureExtractor`, restricts the tags with the same lexicon code, trains an averaged perceptron in integer
-   arithmetic, quantizes and prunes the weights and writes the `POSW` file with `PerceptronModelWriter`; the file is
-   committed as `Resources/weights.bin` and embedded, and `training.json` records the SHA-256 of its uncompressed image.
-   Every setting is chosen on development data only (open dev, gold v2 dev, shapes-dev and UD-EWT dev; the run log is
-   `RUN-LOG.md` next to the trainer); `train --check` retrains and compares in the build
+   (the open corpus, MASC, silver, the imperative source, the compound sources and the four technical sources; the
+   headings sources have weight 0), extracts features with the same `FeatureExtractor`, restricts the tags with the same
+   lexicon code, trains an averaged perceptron in integer arithmetic, quantizes and prunes the weights and writes the
+   `POSW` file with `PerceptronModelWriter`; the file is committed as `Resources/weights.bin` and embedded, and
+   `training.json` records the SHA-256 of its uncompressed image. Every setting is chosen on development data only (open
+   dev, gold v2 dev, shapes-dev and UD-EWT dev; the run log is `RUN-LOG.md` next to the trainer); `train --check`
+   retrains and compares in the build
 7. **Checks**: the tools write the leakage report and the checksum manifest
 8. **Notices**: `THIRD-PARTY-NOTICES.md` carries the attributions of the sources (the weights included), and
    `PACKAGE-LICENSE.md` is the license of the package; the NuGet package includes both
@@ -341,14 +331,14 @@ workspace as tagging is used.
 **Glossary support**: a `Glossary` is an immutable set of domain terms that a caller passes to a `Tag` call. The tagger
 finds the terms and gives their tokens hard (`TokenConstraint.Only`) or soft (`TokenConstraint.Prefer`) constraints, so
 the decoder is unchanged and the feature set is not extended for it: a trained "glossary says X" feature was measured on
-development data only and rejected in favor of score boosts (see _ModelTrainer Design_, _Glossary Decision_). The
+development data only and rejected in favor of score boosts (see *ModelTrainer Design*, *Glossary Decision*). The
 default soft strength and the rule for the other words of a term are chosen on development data with the glossary
 evaluation of the trainer; the protocol and the measured effect, including the cost of wrong entries, are in section E9
-of `RUN-LOG.md` next to the trainer and are not repeated here. See _Glossary Design_ for the data model and algorithms.
+of `RUN-LOG.md` next to the trainer and are not repeated here. See *Glossary Design* for the data model and algorithms.
 
 **Context Features**: the 22 base templates look at the token and its spelling, its two neighbors on each side and the
 two previous tags. `FeatureExtractor` can add five switchable feature groups, and a weights file names the groups it
-was trained with in its header, so the decoder always scores with the features of the model (_FeatureExtractor Design_
+was trained with in its header, so the decoder always scores with the features of the model (*FeatureExtractor Design*
 has the definitions):
 
 - **Position cues** (`PositionCues`, F1): the position in the sentence, the first content word, the sentence end and
@@ -378,7 +368,7 @@ development evidence from one set that the groups were designed against; the pro
 caveats are in `RUN-LOG.md`, "Context-feature experiment". At run time the clause cues cost
 seven more buckets per token, the lexicon lookup that the decoder already does for the restriction, and a clause state
 that the decoder carries from token to token; the speed is measured by the throughput requirement and by the trainer,
-and the size of the weights is stated under _Data Assets_.
+and the size of the weights is stated under *Data Assets*.
 
 ## Design Constraints
 
@@ -391,12 +381,11 @@ and the size of the weights is stated under _Data Assets_.
 - **Determinism**: the same input gives the same tags on every platform; scores are exact integers up to the choice of
   the tag
 - **Performance**: more than 50,000 tokens per second on one thread, with no allocation in the feature extraction and
-  only the result arrays per sentence in the decoder; tagging with a glossary of 10,000 entries keeps the same bound, and
-  finding the terms allocates nothing per token for ordinary text. The throughput is enforced in runs without code
-  coverage; coverage
-  instrumentation slows the hot loops too much to prove it, so a run with coverage (CI) applies a relaxed gate (see the
-  verification document)
-- **Package size**: the lexicon resource is 762,836 bytes and the weights resource is stated under _Data Assets_ (both
+  only the result arrays per sentence in the decoder; tagging with a glossary of 10,000 entries keeps the same bound,
+  and finding the terms allocates nothing per token for ordinary text. The throughput is enforced in runs without code
+  coverage; coverage instrumentation slows the hot loops too much to prove it, so a run with coverage (CI) applies a
+  relaxed gate (see the verification document)
+- **Package size**: the lexicon resource is 762,836 bytes and the weights resource is stated under *Data Assets* (both
   already compressed), embedded once per target framework, so the five assemblies are 1.4 to 1.5 MB each as stored in
   the package and the package (with the API reference and the XML documentation files) is about 8.0 MB, measured with
   `dotnet pack` of the Release build (the exact size is not stated because it
@@ -443,5 +432,5 @@ count on .NET 6 and later) are guarded by conditional compilation and have a por
 
 The decoder is derived from an averaged-perceptron spike. The deviations from it (hash, integer scoring, folding, the
 17-tag set, the extra pair features) and the contract with the trainer (feature set version, writer, byte
-layouts, temperature and scale) are recorded in _Tagging Design_ and _ModelStorage Design_, and the trainer's side of
-the contract is in _ModelTrainer Design_.
+layouts, temperature and scale) are recorded in *Tagging Design* and *ModelStorage Design*, and the trainer's side of
+the contract is in *ModelTrainer Design*.

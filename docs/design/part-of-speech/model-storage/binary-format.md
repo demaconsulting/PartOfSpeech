@@ -22,7 +22,7 @@ Deflate stream pass; version 2 checksums the stored bytes and the reader inflate
 files are refused as an unsupported version. The fields after byte 8 belong to the format and are checked by its reader,
 not here; for the weights format they include the feature set number and, at offset 40, the feature group mask, which
 took four of the eight bytes that were reserved and zero, so adding it did not change the format version or move any
-other field (see _PerceptronModel Design_).
+other field (see *PerceptronModel Design*).
 
 #### Key Methods
 

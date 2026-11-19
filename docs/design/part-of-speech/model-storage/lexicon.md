@@ -43,13 +43,13 @@ rebuilt spelling).
 | 48 | 4 | listCount | template lists, 1 to 65,535 (list 0 is the empty list) |
 | 52 | 4 | analysisCount | number of analyses of all spellings (the sum of the list sizes over the spellings) |
 
-The payload has seven parts. (1) The mask palette: `maskCount` values of `uint32`, bit _i_ for tag _i_, only the low
-17 bits, non-zero, distinct, sorted ascending. (2) The block index: `blockCount` values of `uint32`, byte offsets into the
+The payload has seven parts. (1) The mask palette: `maskCount` values of `uint32`, bit *i* for tag *i*, only the low 17
+bits, non-zero, distinct, sorted ascending. (2) The block index: `blockCount` values of `uint32`, byte offsets into the
 data region, ascending, the first 0. (3) The data region. The first spelling of a block is stored whole:
 `varint length, UTF-8 bytes, varint maskIndex`. Every other spelling is front-coded against the one before it:
-`varint sharedPrefixBytes, varint suffixLength, suffix bytes, varint maskIndex`. Spellings are strictly ascending in UTF-8
-byte order (the sort order of the source table), unique, lower case, NFC and without space or tab. Every varint that is
-used as a length or an index (`sharedPrefixBytes`, `suffixLength`, `maskIndex` and the head length) is read with
+`varint sharedPrefixBytes, varint suffixLength, suffix bytes, varint maskIndex`. Spellings are strictly ascending in
+UTF-8 byte order (the sort order of the source table), unique, lower case, NFC and without space or tab. Every varint
+that is used as a length or an index (`sharedPrefixBytes`, `suffixLength`, `maskIndex` and the head length) is read with
 `BinaryFormat.ReadVarintInt32`, so a value above 2^31-1 is reported as `InvalidDataException` and never wraps to a
 negative number. Parts (1) to (3) are byte for byte what the tag lookup reads; it never reads parts (4) to (7).
 
@@ -67,8 +67,8 @@ The analyses section follows the data region (its start is found by walking the 
   other list is; a list names at most 255 templates, each at most once, with tags that never decrease; lists are
   distinct. The analyses of a spelling are in the order (tag, base word, features): the base word and the features of
   two templates with one tag decide their order for the spelling (see the validation below).
-- (7) The list index: `spellingCount` values of `uint16`, the list of spelling _i_ (in ascending order) at offset
-  2 x _i_ from the start of the index, which closes the payload.
+- (7) The list index: `spellingCount` values of `uint16`, the list of spelling *i* (in ascending order) at offset
+  2 x *i* from the start of the index, which closes the payload.
 
 A spelling with no analysis has list 0. A lexicon compiled without an analyses table is a version 3 file with one
 feature set (the empty one), no template, one list (the empty one) and every spelling on list 0. The base word of an
@@ -89,10 +89,10 @@ in a cold process (.NET 10, measured), and about 25 ms for a warm in-process `Ta
 The checksum covers the stored bytes, so a file whose Deflate data was cut cannot pass it; see the strict Deflate
 validation in the `BinaryFormat` design. The reader accepts exactly version 3: any other version, including 2, is
 refused with `Unsupported lexicon file version 2; this build reads version 3.` (the text names the version found and the
-version read). A custom file of version 2 is regenerated as version 3 with `LexiconCompiler`, from its lexicon table and,
-for base words and forms, its analyses table: `dotnet run --project tools/LexiconCompiler -- --input my-lexicon.tsv
---analyses my-analyses.tsv --output my-lexicon.posl` (without `--analyses` the file has no analyses). The tool is not
-shipped in the package.
+version read). A custom file of version 2 is regenerated as version 3 with `LexiconCompiler`, from its lexicon table
+and, for base words and forms, its analyses table:
+`dotnet run --project tools/LexiconCompiler -- --input my-lexicon.tsv --analyses my-analyses.tsv --output my-lexicon.posl`
+(without `--analyses` the file has no analyses). The tool is not shipped in the package.
 
 #### Key Methods
 
@@ -111,24 +111,23 @@ shipped in the package.
   `maxSpellingBytes`, a suffix of at most 255 bytes that is strict UTF-8 and does not begin with a continuation byte,
   and no template repeats; lists follow the rules above; the three palettes and the list index must fill the payload
   exactly. While walking the spellings `Validate` also checks that every list index is below `listCount`, that the tags
-  of the spelling's list are a subset of the spelling's tags (the join of the two tables), that every cut is at most
-  the spelling length and falls on a character boundary of the spelling (so the composed base word is valid UTF-8),
-  that the base word has 1 to 255 bytes, that the list sizes add up to `analysisCount`, that a composed base word is a
-  fixed point of the fold of the tagger (Unicode normalization form C, lower case and no typographic quote, dash or
-  ellipsis; `FeatureExtractor.IsFoldFixedPoint`), and that the analyses are in the documented order. The tag order is
-  checked once per
-  list when the palette is read; the order of two neighboring templates with one tag depends on the spelling (the base
-  words are `spelling` without `cut` bytes plus the suffix, so the same two templates can be in order for one spelling
-  and out of order for another), so it is checked for each spelling that uses such a list: the two composed base words
-  are compared as UTF-8 bytes without composing them (from the first byte after the shorter kept prefix, then by
-  length) and, when they are equal, the feature-set indexes are compared, which is the order of the feature texts
+  of the spelling's list are a subset of the spelling's tags (the join of the two tables), that every cut is at most the
+  spelling length and falls on a character boundary of the spelling (so the composed base word is valid UTF-8), that the
+  base word has 1 to 255 bytes, that the list sizes add up to `analysisCount`, that a composed base word is a fixed
+  point of the fold of the tagger (Unicode normalization form C, lower case and no typographic quote, dash or ellipsis;
+  `FeatureExtractor.IsFoldFixedPoint`), and that the analyses are in the documented order. The tag order is checked once
+  per list when the palette is read; the order of two neighboring templates with one tag depends on the spelling (the
+  base words are `spelling` without `cut` bytes plus the suffix, so the same two templates can be in order for one
+  spelling and out of order for another), so it is checked for each spelling that uses such a list: the two composed
+  base words are compared as UTF-8 bytes without composing them (from the first byte after the shorter kept prefix, then
+  by length) and, when they are equal, the feature-set indexes are compared, which is the order of the feature texts
   because the table is ascending. The comparison is the one of `LexiconWriter.CompareAnalyses`, which orders by tag,
   then base word bytes, then feature text bytes, and equal analyses are refused as well. Lists whose neighbors never
   share a tag are not compared. The fold test costs nothing for the committed lexicon: a base word made of ASCII without
   capitals and of characters below U+0300 that the fold keeps is a fixed point without being composed as a string (every
-  character below U+0300 is stable under form C, which a test proves for every pair of them, and the character test is the
-  one that `FeatureExtractor.IsFoldStable` makes for the fold, which a test proves for every character). The scan of the
-  spelling and of the suffixes runs on the bytes (eight ASCII bytes at a time, a two-byte character decoded to one
+  character below U+0300 is stable under form C, which a test proves for every pair of them, and the character test is
+  the one that `FeatureExtractor.IsFoldStable` makes for the fold, which a test proves for every character). The scan of
+  the spelling and of the suffixes runs on the bytes (eight ASCII bytes at a time, a two-byte character decoded to one
   character), so only a base word with a capital, a typographic mark or another character is composed as a string and
   tested with `IsFoldFixedPoint`; the committed lexicon has none of those. The two checks (and `ValidateAnalyses`, which
   runs them for each of the 262,635 spellings) are compiled fully optimized at their first call
@@ -138,8 +137,8 @@ shipped in the package.
   compiled like the rest of the load, the order and normalization checks added about 12 ms, and a byte-by-byte scan that
   also looks for capitals added about 1 ms.
 - **`TryGetTags(char[] chars, int offset, int length, byte[] scratch, out UposSet tags)`**: looks up the folded,
-  lower-cased spelling in a region of a character buffer (the decoder keeps all tokens of a sentence in one buffer, hence
-  the `offset`). It calls `TryFindKey` and drops the ordinal and key length. Allocation-free.
+  lower-cased spelling in a region of a character buffer (the decoder keeps all tokens of a sentence in one buffer,
+  hence the `offset`). It calls `TryFindKey` and drops the ordinal and key length. Allocation-free.
 - **`TryFindKey(chars, offset, length, scratch, out ordinal, out tags, out keyLength)`** (and `TryFind`, the same
   without the key length): the search itself. The key is encoded to UTF-8 in `scratch` (a key longer than
   `MaxSpellingBytes` characters or bytes returns `false` at once); a binary search over the block heads (stored whole,
@@ -148,20 +147,20 @@ shipped in the package.
   in ascending order, which addresses its list in the index) and the number of UTF-8 bytes of the key, which stay at the
   start of `scratch`. Allocation-free.
 - **`AnalyzedTags(ordinal)`**: the tags that the analyses of a spelling name, read through the list index from a
-  precomputed mask per list (two bytes read, no allocation). It is a subset of the spelling's tags; the difference is the
-  set of tags that the lexicon lists without an analysis.
+  precomputed mask per list (two bytes read, no allocation). It is a subset of the spelling's tags; the difference is
+  the set of tags that the lexicon lists without an analysis.
 - **`GetAnalyses(ordinal)`**: decodes the spelling of its block into a new buffer and composes each analysis (the first
-  `n - cut` bytes plus the suffix, as a string; the feature string is shared with the table). It allocates and is the only
-  allocating path of the analyses.
+  `n - cut` bytes plus the suffix, as a string; the feature string is shared with the table). It allocates and is the
+  only allocating path of the analyses.
 - **`HasAnalysis(ordinal, tag, spelling..., lemma...)`**: tells whether one analysis of the spelling has this tag and
-  composes exactly this base word, comparing UTF-8 bytes without composing a string (tag first, then the length, then the
-  prefix and the suffix). Allocation-free; `IsFormOf` uses it.
+  composes exactly this base word, comparing UTF-8 bytes without composing a string (tag first, then the length, then
+  the prefix and the suffix). Allocation-free; `IsFormOf` uses it.
 - **`AllowedTags(bool known, UposSet lexiconTags, bool hasLetterOrDigit, bool hasDigit, bool firstUpper)`**: the
-  token-shape rules of `data/lexicon/README.md`. An unknown spelling allows all 17 tags. Otherwise start from the lexicon
-  tags and add PUNCT, SYM and X when the token has no letter or digit; NUM, SYM, X, NOUN, PROPN and ADJ when it has a
-  digit; PROPN and X when its first character is an upper-case letter. The result is never empty. The three shape sets
-  are precomputed `static readonly` `UposSet` values (not built with `UposSet.Of(params ...)` per call), so this path
-  allocates nothing; it runs for every known token of a sentence.
+  token-shape rules of `data/lexicon/README.md`. An unknown spelling allows all 17 tags. Otherwise start from the
+  lexicon tags and add PUNCT, SYM and X when the token has no letter or digit; NUM, SYM, X, NOUN, PROPN and ADJ when it
+  has a digit; PROPN and X when its first character is an upper-case letter. The result is never empty. The three shape
+  sets are precomputed `static readonly` `UposSet` values (not built with `UposSet.Of(params ...)` per call), so this
+  path allocates nothing; it runs for every known token of a sentence.
 - **`AllowedTags(string token, Lexicon lexicon)`**: computes the shape facts with `char.IsLetterOrDigit`,
   `char.IsDigit` and `char.IsUpper` and applies the rules; used by tests so that the decoder's allowed set can be
   compared with an independent reading of the rules.
@@ -176,23 +175,24 @@ shipped in the package.
   the counts. Throws `InvalidDataException` naming the line.
 - **`LexiconWriter.AnalysesFromTsv(IEnumerable<string>, entries)`**: parses `data/lexicon/analyses.tsv` against the
   lexicon entries: a row is a spelling, a tab, and one or more tab-separated analyses `lemma TAG features` (the features
-  omitted when empty); rows ascend strictly in UTF-8 byte order and name only spellings of the lexicon; the analyses
-  of a row ascend by tag, base word and features, are distinct, and each tag is one of the spelling's tags; the header
+  omitted when empty); rows ascend strictly in UTF-8 byte order and name only spellings of the lexicon; the analyses of
+  a row ascend by tag, base word and features, are distinct, and each tag is one of the spelling's tags; the header
   comment's `spellings=` and `analyses=` counts are checked. The syntax of a feature set is checked, the vocabulary of
   names and values is not (the build script and the data test enforce it, so a custom lexicon may carry others). A base
   word must be a fixed point of the fold of the tagger (NFC, lower case, no typographic quote, dash or ellipsis); the
-  parser refuses others with the line number, and `Compile` refuses them again for analyses that do not come from a table.
+  parser refuses others with the line number, and `Compile` refuses them again for analyses that do not come from a
+  table.
 - **`LexiconWriter.Compile(entries, analyses, compress, blockShift = 4)`, `Compile(entries, compress, blockShift)` and
   `Write`**: validates again (empty spelling or tag set, order, more than 65,535 masks or a longer spelling, and for the
-  analyses a tag the spelling lacks, more than 255 analyses of a spelling, analyses that are not strictly ascending by tag,
-  base word and features, a base word that is empty, has white space, is longer than 255 bytes or is not stored as the
-  tagger folds text (not well-formed UTF-16 in normalization form C, has a capital letter, or has a typographic quote,
-  dash or ellipsis; `FeatureExtractor.IsFoldFixedPoint`, the fold that `IsFormOf` applies to its base word argument),
-  malformed features, more than 65,535 feature sets or lists), builds the palette, the block
-  index and the front-coded data, derives the templates (the longest common prefix of spelling and base word, moved back
-  to a character boundary of both, gives the cut and the suffix) and lists, and writes the header and payload. The
-  overload without analyses writes a version 3 file without analyses. The output is deterministic: feature sets
-  ascend, templates are ordered by descending use and then by their content, lists by first use.
+  analyses a tag the spelling lacks, more than 255 analyses of a spelling, analyses that are not strictly ascending by
+  tag, base word and features, a base word that is empty, has white space, is longer than 255 bytes or is not stored as
+  the tagger folds text (not well-formed UTF-16 in normalization form C, has a capital letter, or has a typographic
+  quote, dash or ellipsis; `FeatureExtractor.IsFoldFixedPoint`, the fold that `IsFormOf` applies to its base word
+  argument), malformed features, more than 65,535 feature sets or lists), builds the palette, the block index and the
+  front-coded data, derives the templates (the longest common prefix of spelling and base word, moved back to a
+  character boundary of both, gives the cut and the suffix) and lists, and writes the header and payload. The overload
+  without analyses writes a version 3 file without analyses. The output is deterministic: feature sets ascend, templates
+  are ordered by descending use and then by their content, lists by first use.
 
 #### Error Handling
 

@@ -1,24 +1,23 @@
-<!-- markdownlint-disable MD013 MD060 -->
-
 # Shape Probe
 
 License: CC0-1.0
 
-560 sentences in which a word that is both a noun and a verb has one of seven common sentence shapes. It measures how well
-a tagger tells a noun use from a verb use of the same spelling where the sentence is short, technical or imperative
-(`Make a quick repair.`, `Close the valve.`). **Evaluation only**: no training step reads it and no setting is chosen on it.
+560 sentences in which a word that is both a noun and a verb has one of seven common sentence shapes. It measures how
+well a tagger tells a noun use from a verb use of the same spelling where the sentence is short, technical or imperative
+(`Make a quick repair.`, `Close the valve.`). **Evaluation only**: no training step reads it and no setting is chosen on
+it.
 
 ## Source and Provenance
 
 - **Source:** the shape probe of the WordSense project (`corpus/shapes/probe.tsv`, commit
-  `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, SHA-256 `5d1ebe3a7fd64c20aeb1388c95c2fff2d97792f9761375bed8b52740e0d89105`),
-  copied unchanged by `python tools/data/import_eval.py`.
+  `6530de1928baf30f9a14446a54bfb5dd5f67b41c`, SHA-256
+  `5d1ebe3a7fd64c20aeb1388c95c2fff2d97792f9761375bed8b52740e0d89105`), copied unchanged by
+  `python tools/data/import_eval.py`.
 - **How produced (by the WordSense project):** the sentences are project-authored: a language model (`gpt-5.6-luna`)
-  wrote one sentence for a requested lemma, part of speech and shape. Two independent
-  labelers (`gpt-6.1-sol` and `claude-sonnet-5.5`) labeled the part of speech of the braced word without seeing the
-  intended one. A sentence was kept only when both gave the same part of speech with high confidence, and that is the gold
-  of the row. The set was drawn from the kept sentences with a fixed seed: 80 for each shape, at most one for each lemma
-  and shape.
+  wrote one sentence for a requested lemma, part of speech and shape. Two independent labelers (`gpt-6.1-sol` and
+  `claude-sonnet-5.5`) labeled the part of speech of the braced word without seeing the intended one. A sentence was
+  kept only when both gave the same part of speech with high confidence, and that is the gold of the row. The set was
+  drawn from the kept sentences with a fixed seed: 80 for each shape, at most one for each lemma and shape.
 - **License:** the sentences are project-authored content dedicated to the public domain under CC0 1.0 by the project
   owner. The labels are model-written and **not human-reviewed**; the owner's position on the rights in model outputs is
   stated in the repository README and is not legal advice.

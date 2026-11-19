@@ -6,13 +6,14 @@ This document describes the subsystem-level verification strategy for the Tokeni
 ### Verification Approach
 
 The subsystem is verified by integration tests in `Tokenization/TokenizationTests.cs` that call the public
-`Tokenizer.Tokenize` and the internal `Tokenizer.TokenizeWords` with real data. Nothing is mocked: both units are real and
-the only input is text. The decisive evidence is the open corpus (`data/open/`), the only committed corpus that has both
-the original text of each sentence and its gold tokens, so that the convention of the training data can be measured:
+`Tokenizer.Tokenize` and the internal `Tokenizer.TokenizeWords` with real data. Nothing is mocked: both units are real
+and the only input is text. The decisive evidence is the open corpus (`data/open/`), the only committed corpus that has
+both the original text of each sentence and its gold tokens, so that the convention of the training data can be
+measured:
 
 - **Conformance**: for each of the 14,980 sentences of the open corpus the tokens from `TokenizeWords` are compared with
   the gold tokens; the share of sentences that match exactly must reach the gate of 99.8 percent. The measured value is
-  99.907 percent (14,966 sentences); the 14 differences are documented in _Tokenizer Verification_.
+  99.907 percent (14,966 sentences); the 14 differences are documented in *Tokenizer Verification*.
 - **Offsets**: for every open-corpus text, the tokens must be exactly the source slices at their offsets, and
   concatenating them must give the text without white space.
 - **Sentence boundaries**: consecutive sentences of the same development and test documents are joined with a space,
@@ -40,7 +41,7 @@ precision is below 98.5 percent or when the sample has fewer than 1,000 boundari
   sentences ("Mr. Smith didn't go." and a quoted question) and asserts the sentence texts and the tokens of each.
 - **Gold tokenization is reproduced**: `Tokenization_OpenCorpus_ReproducesGoldTokenization` asserts 14,980 sentences and
   at least 99.8 percent exact matches (the percentage is written to the test output on failure).
-- **Offsets round trip on the whole corpus**: `Tokenization_OpenCorpus_OffsetsRoundTrip` asserts, for every sentence, that
-  tokens index the text and rejoin to it, with no exceptions allowed.
+- **Offsets round trip on the whole corpus**: `Tokenization_OpenCorpus_OffsetsRoundTrip` asserts, for every sentence,
+  that tokens index the text and rejoin to it, with no exceptions allowed.
 - **Sentence boundaries are recovered**: `Tokenization_JoinedDocuments_RecoverSentenceBoundaries` asserts recall and
   precision of at least 98.5 percent on the joined documents.
