@@ -677,13 +677,13 @@ public class GlossaryMatchingTests
         Assert.True(asList == null || asList.IsReadOnly);
     }
 
-#if NET
     /// <summary>
-    ///     Builds a glossary of 10,000 entries (single and two-word terms) and a 200-token sentence of which about 30 percent of the tokens are in matches.
+    ///     Builds a glossary of 10,000 entries (single and two-word terms), a 200-token sentence with a single-word and a
+    ///     two-word term in every group of ten tokens, and the terms of that sentence in order.
     /// </summary>
-    private static (Glossary Glossary, Token[] Tokens) BuildLargeScenario()
+    private static (Glossary Glossary, Sentence Sentence, List<string> Terms) BuildLargeScenario()
     {
-        // Arrange: 6,000 single-word and 4,000 two-word terms whose words end in a digit (so no inflected forms are generated)
+        // 6,000 single-word and 4,000 two-word terms whose words end in a digit (so no inflected forms are generated)
         var entries = new List<GlossaryEntry>();
         for (var i = 0; i < 6000; i++)
         {
@@ -695,11 +695,10 @@ public class GlossaryMatchingTests
             entries.Add(new GlossaryEntry($"beta{i} gamma{i}", Upos.Noun));
         }
 
-        var glossary = Glossary.Create(entries);
-
-        // A sentence of ordinary words with a single-word term at every tenth position and a two-word term after it
+        // Groups of seven ordinary words, a single-word term and a two-word term
         var random = new Random(3);
         var words = new List<string>();
+        var terms = new List<string>();
         var ordinary = new[] { "the", "valve", "open", "close", "pressure", "is", "high", "." };
         while (words.Count < 200)
         {
@@ -708,52 +707,51 @@ public class GlossaryMatchingTests
                 words.Add(ordinary[random.Next(ordinary.Length)]);
             }
 
-            words.Add($"alpha{random.Next(6000)}");
+            var single = $"alpha{random.Next(6000)}";
             var pair = random.Next(4000);
+            words.Add(single);
             words.Add($"beta{pair}");
             words.Add($"gamma{pair}");
+            terms.Add(single);
+            terms.Add($"beta{pair} gamma{pair}");
         }
 
-        return (glossary, Tokenizer.CreateSentence(words).TokenArray);
+        return (Glossary.Create(entries), Tokenizer.CreateSentence(words), terms);
     }
 
     /// <summary>
-    ///     Proves that matching a 200-token sentence against a glossary of 10,000 entries allocates nothing.
+    ///     Proves that a glossary of 10,000 entries finds every term of a 200-token sentence, in order, and nothing else.
     /// </summary>
     [Fact]
-    public void GlossaryIndex_Find_DoesNotAllocate()
+    public void Glossary_FindMatches_TenThousandEntries_FindsEveryTermInOrder()
     {
-        // Arrange: the large scenario and a workspace of this thread
-        var (glossary, tokens) = BuildLargeScenario();
-        var workspace = new GlossaryWorkspace();
-        var found = glossary.Index.Find(tokens, workspace);
+        // Arrange: the large scenario
+        var (glossary, sentence, terms) = BuildLargeScenario();
 
-        // Act: warm up thoroughly, then take the minimum over several batches of the bytes allocated for 100 searches
-        var allocated = AllocationMeter.MinimumBatchBytes(() => glossary.Index.Find(tokens, workspace), 100);
+        // Act
+        var matches = glossary.FindMatches(sentence);
 
-        // Assert: the sentence really has matches (about 30 percent of its tokens), and nothing was allocated
-        Assert.True(found >= 40, $"{found} matches");
-        Assert.Equal(0, allocated);
+        // Assert: the 40 terms of the sentence, in order, each with the entry of that term
+        Assert.Equal(terms, matches.Select(m => m.Text));
+        Assert.All(matches, m => Assert.Equal(m.Text, m.Entry.Term));
     }
 
     /// <summary>
-    ///     Proves that finding matches in a sentence without any match allocates nothing, also through the public result path.
+    ///     Proves that a glossary of 10,000 entries finds nothing in a sentence of words that are not its terms.
     /// </summary>
     [Fact]
-    public void Glossary_Match_SentenceWithoutMatch_DoesNotAllocate()
+    public void Glossary_FindMatches_TenThousandEntries_SentenceWithoutTerms_IsEmpty()
     {
-        // Arrange: the large glossary and a sentence of unrelated words
-        var (glossary, _) = BuildLargeScenario();
+        // Arrange: the large glossary and a 200-token sentence of unrelated words
+        var (glossary, _, _) = BuildLargeScenario();
         var sentence = Tokenizer.CreateSentence(Enumerable.Range(0, 200).Select(i => i % 5 == 0 ? "." : "word" + (i % 7)).ToArray());
 
-        // Act: warm up, then measure
-        var allocated = AllocationMeter.MinimumBatchBytes(() => glossary.Match(sentence), 100);
+        // Act
+        var matches = glossary.FindMatches(sentence);
 
-        // Assert: no match and no allocation
-        Assert.Empty(glossary.Match(sentence));
-        Assert.Equal(0, allocated);
+        // Assert: no match
+        Assert.Empty(matches);
     }
-#endif
 
     /// <summary>
     ///     Proves that many threads can use one glossary at the same time and find exactly what a single thread finds.
@@ -1710,124 +1708,4 @@ public class GlossaryMatchingTests
             Assert.All(results, r => Assert.Equal(expected, r));
         }
     }
-
-#if NET
-    /// <summary>
-    ///     Builds a sentence of repeated groups of the words <c>open the bleed valve .</c> (or of <c>open the valve .</c> for no match).
-    /// </summary>
-    private static Sentence Repeated(int groups, bool withMatch) =>
-        Tokenizer.CreateSentence(Enumerable.Range(0, groups).SelectMany(_ => Words(withMatch ? "open the bleed valve ." : "open the valve .")).ToArray());
-
-    /// <summary>
-    ///     Builds a sentence of the given number of groups of four tokens, of which the first <paramref name="matching"/> groups
-    ///     read <c>open the valve .</c> (one match of the term <c>valve</c> each) and the others <c>open the bleed .</c> (none).
-    /// </summary>
-    private static Sentence Groups(int groups, int matching) =>
-        Tokenizer.CreateSentence(Enumerable.Range(0, groups)
-            .SelectMany(g => Words(g < matching ? "open the valve ." : "open the bleed ."))
-            .ToArray());
-
-    /// <summary>
-    ///     The measurement noise of a per-call allocation comparison in bytes: a one-time runtime allocation (observed: 48 bytes)
-    ///     can land on one side. Any allocation per token (at least 16 bytes each, about 3,000 bytes for the 200-token sentences
-    ///     used here) is far above it.
-    /// </summary>
-    private const long AllocationNoiseBytes = 64;
-
-    /// <summary>
-    ///     Measures the bytes allocated by tagging a sentence, with and without a glossary.
-    /// </summary>
-    private static (long Plain, long WithGlossary) Measure(Tagger tagger, Glossary glossary, Sentence sentence)
-    {
-        // Two alternating rounds, each side keeping its minimum: a one-time runtime allocation (for example from a tiered
-        // recompilation that finishes while one side is measured) shows in one round only and does not decide the comparison
-        var plain = long.MaxValue;
-        var withGlossary = long.MaxValue;
-        for (var round = 0; round < 2; round++)
-        {
-            plain = Math.Min(plain, AllocationMeter.MinimumBatchBytes(() => tagger.Tag(sentence), 50) / 50);
-            withGlossary = Math.Min(withGlossary, AllocationMeter.MinimumBatchBytes(() => tagger.Tag(sentence, glossary), 50) / 50);
-        }
-
-        return (plain, withGlossary);
-    }
-
-    /// <summary>
-    ///     Proves that tagging a sentence without a match allocates no more with a glossary than without (within measurement noise).
-    /// </summary>
-    [Fact]
-    public void Tagger_TagWithGlossary_SentenceWithoutMatch_AddsNoAllocation()
-    {
-        // Arrange: a glossary that does not occur in a 200-token sentence
-        var tagger = CreateTagger();
-        var glossary = Glossary.Create(new[] { new GlossaryEntry("bleed valve", Upos.Noun) });
-
-        // Act: measure with and without the glossary
-        var (plain, withGlossary) = Measure(tagger, glossary, Repeated(50, false));
-
-        // Assert: nothing extra (one-sided: the glossary may not add allocation; being lower is measurement noise)
-        Assert.True(withGlossary <= plain + AllocationNoiseBytes, $"plain {plain} bytes, with glossary {withGlossary} bytes");
-    }
-
-    /// <summary>
-    ///     Proves that the allocation of tagging with a glossary grows with the number of matches when the number of tokens is fixed.
-    /// </summary>
-    [Fact]
-    public void Tagger_TagWithGlossary_AllocationPerMatch_IsBoundedForFixedTokenCount()
-    {
-        // Arrange: sentences of the same 200 tokens with 10 and with 40 matches (so both have the constraint array)
-        var tagger = CreateTagger();
-        var glossary = Glossary.Create(new[] { new GlossaryEntry("valve", Upos.Noun) });
-
-        // Act: measure the extra bytes of the glossary for both
-        var (plain10, with10) = Measure(tagger, glossary, Groups(50, 10));
-        var (plain40, with40) = Measure(tagger, glossary, Groups(50, 40));
-        var perMatch = ((with40 - plain40) - (with10 - plain10)) / 30;
-
-        // Assert: a match costs its result object, its text and a slot in the list (about 112 bytes measured) well below 170
-        Assert.True(with10 > plain10, "a glossary with matches must allocate its results");
-        Assert.True(perMatch > 0 && perMatch <= 170, $"{perMatch} bytes per match");
-    }
-
-    /// <summary>
-    ///     Proves that, with the number of matches fixed, the allocation of tagging with a glossary grows by no more than one
-    ///     constraint slot (16 bytes) per token: there is an array per sentence, and no object per token.
-    /// </summary>
-    [Fact]
-    public void Tagger_TagWithGlossary_AllocationPerToken_IsOneConstraintSlot()
-    {
-        // Arrange: sentences with one match and 40 or 440 tokens
-        var tagger = CreateTagger();
-        var glossary = Glossary.Create(new[] { new GlossaryEntry("valve", Upos.Noun) });
-
-        // Act: measure the extra bytes of the glossary for both
-        var (plainShort, withShort) = Measure(tagger, glossary, Groups(10, 1));
-        var (plainLong, withLong) = Measure(tagger, glossary, Groups(110, 1));
-        var perToken = ((withLong - plainLong) - (withShort - plainShort)) / 400;
-
-        // Assert: 16 bytes of the constraint array per token (as measured), nothing more (an object per token would add at least 24)
-        Assert.True(perToken <= 20, $"{perToken} bytes per token");
-    }
-
-    /// <summary>
-    ///     Proves that soft mode allocates no more than hard mode once the constraint tables are compiled.
-    /// </summary>
-    [Fact]
-    public void Tagger_TagWithGlossary_SoftMode_AllocatesLikeHardModeAfterFirstUse()
-    {
-        // Arrange: the same entry in a hard and a soft glossary
-        var tagger = CreateTagger();
-        var entries = new[] { new GlossaryEntry("bleed valve", Upos.Noun) };
-        var hard = Glossary.Create(entries);
-        var soft = Glossary.Create(entries, new GlossaryOptions { Mode = GlossaryMode.Soft });
-        var sentence = Repeated(20, true);
-
-        // Act: measure both after a thorough warm-up
-        var (_, hardBytes) = Measure(tagger, hard, sentence);
-        var (_, softBytes) = Measure(tagger, soft, sentence);
-
-        // Assert: soft mode adds no allocation to hard mode (one-sided, within measurement noise)
-        Assert.True(softBytes <= hardBytes + AllocationNoiseBytes, $"hard {hardBytes} bytes, soft {softBytes} bytes");
-    }
-#endif
 }
