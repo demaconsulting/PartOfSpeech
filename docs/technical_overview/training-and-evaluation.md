@@ -21,8 +21,8 @@ ordinary text and the kinds of text that the library is meant for:
   sentence without seeing each other's labels, and the sentences were kept where their labels agreed.
 
 Each source has an integer weight, the number of times its sentences enter every epoch. A source can be committed and
-still have weight 0, which keeps it out of the mix; the configuration of the trainer says which sources are in the mix of
-the embedded model. The lexicon is built separately, from dictionary tables and from the tags that appear in the
+still have weight 0, which keeps it out of the mix; the configuration of the trainer says which sources are in the mix
+of the embedded model. The lexicon is built separately, from dictionary tables and from the tags that appear in the
 training corpora.
 
 The labels of the silver, open, imperative, compound and technical sources were written by language models, not by
@@ -59,19 +59,19 @@ The selection follows a discipline that is meant to prevent fooling oneself:
   number of epochs, the table size, the pruning, the quantization factor and the temperature. The interactions between
   the steps were not explored, and the run log says so.
 
-Some development sets were built for the weak spots of the model and are therefore optimistic by construction: a
-figure from them is never reported as a held-out result. The items of the harder tranches were selected by pre-registered
-rules that use the output of another model family and never the output of this tagger, so that the set does not simply
-reflect the mistakes that this tagger already makes.
+Some development sets were built for the weak spots of the model and are therefore optimistic by construction: a figure
+from them is never reported as a held-out result. The items of the harder tranches were selected by pre-registered rules
+that use the output of another model family and never the output of this tagger, so that the set does not simply reflect
+the mistakes that this tagger already makes.
 
 ![Data flow: training data train the model, development data select and freeze it, and held-out data evaluate it once
 through a gate; leakage checks cover all three](technical-overview-evaluation.svg)
 
 ## The Held-Out Gate
 
-The held-out sets are the open test split, the test split of the single-target gold set, a shape probe of short sentences
-in seven noun and verb shapes, a small challenge set of simplified technical English, and the treebank test split. They
-are opened by exactly one command of the trainer, which has no option for weights, data path or threshold.
+The held-out sets are the open test split, the test split of the single-target gold set, a shape probe of short
+sentences in seven noun and verb shapes, a small challenge set of simplified technical English, and the treebank test
+split. They are opened by exactly one command of the trainer, which has no option for weights, data path or threshold.
 
 The command enforces the discipline by construction. It refuses to read a held-out file unless a selection artifact is
 committed that was made for the hash of the exact model that is about to be scored, and unless the development files of
@@ -103,12 +103,12 @@ Accuracy treats all mistakes alike, but a consumer such as a rule checker does n
 usually changes nothing for a rule that asks whether a word is a verb; tagging a noun as a verb, or the reverse, changes
 the reading of the sentence. The harmful error is defined for this purpose:
 
-- A **decision** is a token whose correct tag is a noun or a verb and for which both of those tags were candidates of the
-  tagger.
-- A **harmful error** is a decision in which the tagger chose the other of the two tags. At a threshold, only the answered
-  decisions count.
-- The **rate** is expressed per 1,000 decisions, or per 1,000 answered decisions at a threshold. Without a threshold, the
-  reports use a reference point of 0.45, where nearly all decisions are answered.
+- A **decision** is a token whose correct tag is a noun or a verb and for which both of those tags were candidates of
+  the tagger.
+- A **harmful error** is a decision in which the tagger chose the other of the two tags. At a threshold, only the
+  answered decisions count.
+- The **rate** is expressed per 1,000 decisions, or per 1,000 answered decisions at a threshold. Without a threshold,
+  the reports use a reference point of 0.45, where nearly all decisions are answered.
 
 The metric is deliberately narrow, and the evaluation record reports the usual measures as well: accuracy, the
 log-likelihood, the expected calibration error and the precision and recall of every tag, with 95% intervals. Because

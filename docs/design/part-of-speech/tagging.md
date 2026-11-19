@@ -21,9 +21,9 @@ contains five units:
   with their allowed tags, the matcher that finds them in a sentence and the compilation of a match into per-token
   constraints. `GlossaryIndex`, `GlossaryWorkspace`, `GlossaryInflector` and `GlossaryConstraints` are internal helpers
   of the unit.
-- **Tagger** (`Tagger.cs`, `TaggerOptions.cs`, `TaggedSentence.cs`, `TaggedToken.cs`, `TagScore.cs`, `PossibleTagsMode.cs`,
-  `WordMatch.cs`, `WordAnalysis.cs`, `WordTags.cs`): the public entry point, its options, the word lookup and the
-  immutable result types.
+- **Tagger** (`Tagger.cs`, `TaggerOptions.cs`, `TaggedSentence.cs`, `TaggedToken.cs`, `TagScore.cs`,
+  `PossibleTagsMode.cs`, `WordMatch.cs`, `WordAnalysis.cs`, `WordTags.cs`): the public entry point, its options, the
+  word lookup and the immutable result types.
 
 The subsystem uses Tokenization to split text, ModelStorage for the weights and the lexicon, and Upos for tags.
 
@@ -35,7 +35,8 @@ Exposed (public API, namespace `DemaConsulting.PartOfSpeech`):
   `Tagger.Options`, and three `Tag` overloads: text, `Sentence`, and `IReadOnlyList<string>` tokens, the latter two with
   an optional constraint list, and the same three with a `Glossary` (the text overload without constraints).
 - `Tagger.GetPossibleTags(string, PossibleTagsMode)` (on .NET 8 and later also with a `ReadOnlySpan<char>`) and
-  `Tagger.IsFormOf(string, string, Upos)`, with the types `PossibleTagsMode`, `WordMatch`, `WordTags` and `WordAnalysis`.
+  `Tagger.IsFormOf(string, string, Upos)`, with the types `PossibleTagsMode`, `WordMatch`, `WordTags` and
+  `WordAnalysis`.
 - `TaggerOptions` (`MaxAlternatives`, 0 to 16, default 3), `TaggedSentence` (also `GlossaryMatches`), `TaggedToken`
   (text, offsets, tag, confidence, margin, known-word flag, alternatives, `IsConstrained`, `GlossaryMatch`,
   `IsGlossaryHead`), `TagScore` (tag,
@@ -55,11 +56,11 @@ passes the sentence tokens to the decoder; `Tag(IReadOnlyList<string>, constrain
 once, thread-safe, never fails in a released package; a missing or damaged resource would be a broken package and is
 reported as `InvalidOperationException` or `InvalidDataException`).
 
-For each sentence the decoder performs these steps (the detail is in _TagDecoder Design_):
+For each sentence the decoder performs these steps (the detail is in *TagDecoder Design*):
 
 1. `FeatureExtractor` folds every token once into the per-thread workspace and computes everything that does not depend
    on tags (18 of the 22 base feature buckets, plus the buckets of the feature groups that the model names).
-2. For token _i_ the extractor adds the four features that use the two previous tags (and the history features of the
+2. For token *i* the extractor adds the four features that use the two previous tags (and the history features of the
    groups), the weights of all buckets are summed per tag as integers, and the lexicon lookup gives the tags that the
    token may take.
 3. The candidates are the tags that the lexicon and the shape rules allow, intersected with the allowed set of the
@@ -89,22 +90,21 @@ plain decoding path.
 word, not a sentence, and use no model, no glossary and no constraints. The decoder folds the word with the same
 `FeatureExtractor` code as a token, looks up the whole spelling with the same `Lexicon.TryFindKey` that its restriction
 uses, and builds the tags with the same `ApplyShapeRules` that its `AllowedTags` calls, so the tags of the lookup in the
-`WithShapeRules` mode are the allowed tags of the same token in a sentence, and `IsKnownWord` equals the token's flag. The
-one thing that the lookup adds is the compound rule: a hyphenated word that is not a spelling is looked up by its last
-part, which yields analyses (`WordMatch.CompoundHead`) and never changes the tags, because the tagger itself has no
-hyphen rule and looks only at the whole token. A word that has more characters than the longest spelling has bytes is not
-folded as a whole;
-only the lookup of the whole spelling is skipped, and the compound rule runs on its last part. The analyses are stored in
-the lexicon next to the tags (see _Lexicon Design_), so the same loaded lexicon serves the restriction and the lookup, a
-custom lexicon file serves both, and a lexicon without analyses still answers with tags.
+`WithShapeRules` mode are the allowed tags of the same token in a sentence, and `IsKnownWord` equals the token's flag.
+The one thing that the lookup adds is the compound rule: a hyphenated word that is not a spelling is looked up by its
+last part, which yields analyses (`WordMatch.CompoundHead`) and never changes the tags, because the tagger itself has no
+hyphen rule and looks only at the whole token. A word that has more characters than the longest spelling has bytes is
+not folded as a whole; only the lookup of the whole spelling is skipped, and the compound rule runs on its last part.
+The analyses are stored in the lexicon next to the tags (see *Lexicon Design*), so the same loaded lexicon serves the
+restriction and the lookup, a custom lexicon file serves both, and a lexicon without analyses still answers with tags.
 
 **Deviations from the averaged-perceptron spike** (all deliberate; the spike measured accuracy, this library productizes
 it):
 
-- **Hash instead of CRC-32.** The spike hashed a formatted feature string with CRC-32 and a bit mask. Here each string is
-  hashed with FNV-1a over its UTF-16 code units and the template number and up to two values are combined with a Murmur3
-  mixing step; no strings are built per token. Weights trained with the spike are therefore not interchangeable; the
-  feature set version number pins the extractor and the hash.
+- **Hash instead of CRC-32.** The spike hashed a formatted feature string with CRC-32 and a bit mask. Here each string
+  is hashed with FNV-1a over its UTF-16 code units and the template number and up to two values are combined with a
+  Murmur3 mixing step; no strings are built per token. Weights trained with the spike are therefore not interchangeable;
+  the feature set version number pins the extractor and the hash.
 - **Integer scoring.** Scores are the exact integer sum of `int16` weights, scaled once. Platform-independent tags
   follow, because no floating-point summation order is involved; only the probabilities, which use `Math.Exp`, can
   differ in the last bits between platforms.
@@ -136,22 +136,19 @@ the weights file, so a model is always scored with the features it was trained w
 the hash, the fold or a group requires a new feature set version; readers refuse a weights file of an unknown version or
 mask. The trainer also chooses `hashBits` (18 to 24; the shipped model uses 19), the
 temperature (fitted for 17 tags) and the weight scale (the shipped model uses 1/8). The byte layouts are in
-_ModelStorage_ (`POSW` and `POSL`). The feature set has no glossary feature: a trained "glossary says X"
+*ModelStorage* (`POSW` and `POSL`). The feature set has no glossary feature: a trained "glossary says X"
 feature was measured on development data and rejected in favor of score boosts of
-`TokenConstraint.Prefer` (see _ModelTrainer Design_, _Glossary Decision_), so the glossary does not change the feature
+`TokenConstraint.Prefer` (see *ModelTrainer Design*, *Glossary Decision*), so the glossary does not change the feature
 set.
 
-**Thread safety.** `Tagger`, `TagDecoder`, `Lexicon` and `PerceptronModel` hold read-only data, and so does a
-`Glossary` after it was created. All per-call scratch
-memory is a `[ThreadStatic]` workspace (the decoder's, used by tagging and by the word lookup, and the glossary matcher's)
-that grows to the largest sentence and
-is reused; the decoder resolves a
-caller-supplied constraint list before it takes the workspace and runs no caller code while it holds it, and the glossary
-copies its matches out of its workspace before it returns. Both erase the part of their workspace that the request used
-(`Clear`, in a `finally` block, so also when the call fails) before they return, so no text of a request, and nothing
-derived from it, stays in a thread's memory after the call; the arrays keep their capacity, so erasing costs time
-proportional to the request and allocates nothing. The compiled constraints of a glossary are created once per
-tagger by a thread-safe lazy table. The results are
-allocated once per sentence (one `TaggedToken` array and one flat `TagScore`
-array whose slices back the alternatives, and with a glossary the match objects and the constraint array of the sentence)
-and are immutable.
+**Thread safety.** `Tagger`, `TagDecoder`, `Lexicon` and `PerceptronModel` hold read-only data, and so does a `Glossary`
+after it was created. All per-call scratch memory is a `[ThreadStatic]` workspace (the decoder's, used by tagging and by
+the word lookup, and the glossary matcher's) that grows to the largest sentence and is reused; the decoder resolves a
+caller-supplied constraint list before it takes the workspace and runs no caller code while it holds it, and the
+glossary copies its matches out of its workspace before it returns. Both erase the part of their workspace that the
+request used (`Clear`, in a `finally` block, so also when the call fails) before they return, so no text of a request,
+and nothing derived from it, stays in a thread's memory after the call; the arrays keep their capacity, so erasing costs
+time proportional to the request and allocates nothing. The compiled constraints of a glossary are created once per
+tagger by a thread-safe lazy table. The results are allocated once per sentence (one `TaggedToken` array and one flat
+`TagScore` array whose slices back the alternatives, and with a glossary the match objects and the constraint array of
+the sentence) and are immutable.

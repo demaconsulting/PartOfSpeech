@@ -91,14 +91,13 @@ build-time tools `LexiconCompiler` and `ModelTrainer` produce the embedded lexic
 the embedded lexicon and weights](architecture.svg)
 
 The system has two units directly under it (`Upos`, the tag vocabulary that every part uses, and `ModelTrainer`, the
-build-time tool that trains the embedded weights) and three subsystems:
-`Tokenization` (text to sentences and tokens), `ModelStorage` (the binary formats of the weights and the lexicon and the
-embedded lexicon and weights) and `Tagging` (features, decoding, constraints, glossaries and the public `Tagger`). The dependencies
-between them have no unit-level call cycle, but the subsystem graph is not acyclic: `Tagging` uses `Tokenization`,
-`ModelStorage` and `Upos`; `ModelStorage` uses `Upos` and, for constants (`PerceptronModel` and its writer read the
-feature set versions and the known feature groups of `FeatureExtractor`), `Tagging`; `Tokenization` uses nothing else.
-`ModelTrainer` is not part of the
-runtime: it uses `Tagging` (the feature extractor, the decoder), `ModelStorage` (the weights writer and reader, the
+build-time tool that trains the embedded weights) and three subsystems: `Tokenization` (text to sentences and tokens),
+`ModelStorage` (the binary formats of the weights and the lexicon and the embedded lexicon and weights) and `Tagging`
+(features, decoding, constraints, glossaries and the public `Tagger`). The dependencies between them have no unit-level
+call cycle, but the subsystem graph is not acyclic: `Tagging` uses `Tokenization`, `ModelStorage` and `Upos`;
+`ModelStorage` uses `Upos` and, for constants (`PerceptronModel` and its writer read the feature set versions and the
+known feature groups of `FeatureExtractor`), `Tagging`; `Tokenization` uses nothing else. `ModelTrainer` is not part of
+the runtime: it uses `Tagging` (the feature extractor, the decoder), `ModelStorage` (the weights writer and reader, the
 lexicon) and `Upos` through `InternalsVisibleTo`, and nothing in the library uses it. Each unit is one class or a few
 tightly coupled files, as listed in the folder layout below. The Trainer is a software unit although it is a build-time
 tool (unlike `tools/LexiconCompiler`), because its headline claims (determinism, no drift from the runtime definitions,
@@ -226,20 +225,19 @@ Each software item has corresponding artifacts in parallel directory trees:
 - Review-sets: defined in `.reviewmark.yaml`
 
 The data assets are not software items and have no parallel design or verification files. Their system-level
-requirements are in the _Data and Licensing_ section of `docs/reqstream/{system}.yaml` (and the package license and the
-embedded model requirements in the same file), their tests are in
-`test/{System}.Tests/{System}DataTests.cs`, and the data folders carry their own `README.md` files. The evaluation record
-`docs/evaluation/` is not a software item either: its generated files are produced by the unit `ModelTrainer`, its
-`README.md` and the copies of its figures in the package documentation are covered by the system requirements
-`PartOfSpeech-Model-EvaluationReported` and `PartOfSpeech-Lib-ConfidenceGuidance`, and their consistency tests are in
-`test/{System}.Tests/{System}EvaluationTests.cs`. The build-time
-tools have developer unit tests in `tools/data/tests/`, which are not requirements evidence. The Python files of the
-tools and their tests are reviewed in three review-sets of `.reviewmark.yaml`: `PartOfSpeech-DataConversion` (the tools
-that import and convert data and build the lexicon), `PartOfSpeech-DataChecks` (the tools that check, record and
-verify it) and `PartOfSpeech-DataCorrections` (the conventions linter, the generator and validator of the
-corrections in `data/corrections/` and the adjudication tool, with their tests and fixtures); the system design and the
-system requirements are
-their context. The five frozen analysis scripts of the Trainer experiments,
+requirements are in the *Data and Licensing* section of `docs/reqstream/{system}.yaml` (and the package license and the
+embedded model requirements in the same file), their tests are in `test/{System}.Tests/{System}DataTests.cs`, and the
+data folders carry their own `README.md` files. The evaluation record `docs/evaluation/` is not a software item either:
+its generated files are produced by the unit `ModelTrainer`, its `README.md` and the copies of its figures in the
+package documentation are covered by the system requirements `PartOfSpeech-Model-EvaluationReported` and
+`PartOfSpeech-Lib-ConfidenceGuidance`, and their consistency tests are in
+`test/{System}.Tests/{System}EvaluationTests.cs`. The build-time tools have developer unit tests in `tools/data/tests/`,
+which are not requirements evidence. The Python files of the tools and their tests are reviewed in three review-sets of
+`.reviewmark.yaml`: `PartOfSpeech-DataConversion` (the tools that import and convert data and build the lexicon),
+`PartOfSpeech-DataChecks` (the tools that check, record and verify it) and `PartOfSpeech-DataCorrections` (the
+conventions linter, the generator and validator of the corrections in `data/corrections/` and the adjudication tool,
+with their tests and fixtures); the system design and the system requirements are their context. The five frozen
+analysis scripts of the Trainer experiments,
 `tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py`,
 `tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py`,
 `tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py`,
@@ -248,25 +246,25 @@ their context. The five frozen analysis scripts of the Trainer experiments,
 `tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py`), and the independent audit script
 `tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py` (not frozen), are reviewed in the review-set
 `PartOfSpeech-ModelTrainer`. The data tools run in two places: `lint.ps1` runs the unit tests of the correction tools,
-the validation
-and the state-aware regeneration check of the correction tables, the fix tier of the linter with `--enforce` and a
-report-only pass of the check tier (the quality-checks job of the workflow runs
-`lint.ps1`, and it is the only workflow entry that can host Python checks), while the C# tests of the system read the
-committed tables and corpora and are the requirements evidence. The C# tool `tools/LexiconCompiler` has
-its own review-set, `PartOfSpeech-LexiconCompiler`; it has no requirements of its own because its result is proven by
-the system requirement `PartOfSpeech-Data-EmbeddedLexiconCurrent`. The Trainer, in contrast, is the unit `ModelTrainer`
-with the full set of artifacts: `docs/reqstream/{system}/model-trainer.yaml`, `docs/design/{system}/model-trainer.md`,
+the validation and the state-aware regeneration check of the correction tables, the fix tier of the linter with
+`--enforce` and a report-only pass of the check tier (the quality-checks job of the workflow runs `lint.ps1`, and it is
+the only workflow entry that can host Python checks), while the C# tests of the system read the committed tables and
+corpora and are the requirements evidence. The C# tool `tools/LexiconCompiler` has its own review-set,
+`PartOfSpeech-LexiconCompiler`; it has no requirements of its own because its result is proven by the system requirement
+`PartOfSpeech-Data-EmbeddedLexiconCurrent`. The Trainer, in contrast, is the unit `ModelTrainer` with the full set of
+artifacts: `docs/reqstream/{system}/model-trainer.yaml`, `docs/design/{system}/model-trainer.md`,
 `docs/verification/{system}/model-trainer.md`, `docs/sysml2/model/{system}/model-trainer.sysml`, the tests in
 `test/{System}.Tests/ModelTrainer/ModelTrainerTests.cs` (the engine files of the tool are compiled into the test
 project, so the tests run the real code on every target framework) and the review-set `PartOfSpeech-ModelTrainer`.
 
 Test files follow the same tree as the sources: the subsystem tests are `Tokenization/TokenizationTests.cs`,
 `ModelStorage/ModelStorageTests.cs` and `Tagging/TaggingTests.cs`, the unit tests are named `{Unit}Tests.cs` in the
-folder of their subsystem (`UposTests.cs` for the unit directly under the system, and `ModelTrainer/ModelTrainerTests.cs`
-for the trainer; the unit `Glossary` has `GlossaryTests.cs`, `GlossaryMatchingTests.cs` and `GlossaryThroughputTests.cs`),
-and the system tests are `PartOfSpeechTests.cs`, `PartOfSpeechDataTests.cs` and `PartOfSpeechEvaluationTests.cs`. The
-helpers `TestSupport/TinyModels.cs`, `TinyTrainer.cs` and
-`SyntheticModel.cs` build small and synthetic models for the tests and belong to the `Tagging` review-set.
+folder of their subsystem (`UposTests.cs` for the unit directly under the system, and
+`ModelTrainer/ModelTrainerTests.cs` for the trainer; the unit `Glossary` has `GlossaryTests.cs`,
+`GlossaryMatchingTests.cs` and `GlossaryThroughputTests.cs`), and the system tests are `PartOfSpeechTests.cs`,
+`PartOfSpeechDataTests.cs` and `PartOfSpeechEvaluationTests.cs`. The helpers `TestSupport/TinyModels.cs`,
+`TinyTrainer.cs` and `SyntheticModel.cs` build small and synthetic models for the tests and belong to the `Tagging`
+review-set.
 
 ## References
 

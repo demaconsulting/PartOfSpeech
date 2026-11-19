@@ -4,10 +4,10 @@ This document describes the unit-level verification strategy for the `Upos` unit
 
 ### Verification Approach
 
-The unit is verified by unit tests in `UposTests.cs` that call the public members directly. The unit has no dependencies,
-so nothing is mocked or stubbed. The tests check the numbering and order of the 17 tags (because the binary formats depend
-on them), the conversion to and from the Universal POS names, and the set operations with their boundary values (the empty
-set, the full set, an undefined enumeration value).
+The unit is verified by unit tests in `UposTests.cs` that call the public members directly. The unit has no
+dependencies, so nothing is mocked or stubbed. The tests check the numbering and order of the 17 tags (because the
+binary formats depend on them), the conversion to and from the Universal POS names, and the set operations with their
+boundary values (the empty set, the full set, an undefined enumeration value).
 
 ### Test Environment
 

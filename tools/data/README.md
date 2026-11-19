@@ -5,7 +5,7 @@
 
 Python 3.10 or later scripts (standard library only) that produce and check the files under [`data/`](../../data/README.md).
 They are development-time tooling: nothing here is shipped in the NuGet package. One part runs in CI: the correction tools
-and their tests are a gate of `lint.ps1`, which the quality-checks job of the workflow runs (see _Tests_ below); the
+and their tests are a gate of `lint.ps1`, which the quality-checks job of the workflow runs (see *Tests* below); the
 importers and the other checks are not run in CI.
 
 ## Why Python

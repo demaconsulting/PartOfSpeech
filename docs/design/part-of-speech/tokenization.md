@@ -5,7 +5,7 @@
 ### Overview
 
 Tokenization turns a string of English text into sentences and tokens, and it is the only way text enters the tagger.
-It reproduces the tokenization convention of the training data (the _Tokenization Convention_ of
+It reproduces the tokenization convention of the training data (the *Tokenization Convention* of
 `data/CONVENTIONS.md`), because the tagger learned from text tokenized that way and a different convention would show
 it tokens it has never seen.
 
@@ -44,5 +44,5 @@ string; its sentence starts at 0 and its token offsets index that string.
 
 The rules of the two units, the corpus conformance gate (at least 99.8 percent of the 14,980 open-corpus sentences
 tokenized exactly like their gold tokens) and the boundary gate (at least 98.5 percent recall and precision on joined
-consecutive sentences) are described in _Tokenizer Design_, _SentenceSplitter Design_ and the Tokenization verification
+consecutive sentences) are described in *Tokenizer Design*, *SentenceSplitter Design* and the Tokenization verification
 design.

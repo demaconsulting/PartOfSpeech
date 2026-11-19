@@ -31,12 +31,12 @@ them and states what they do not show.
 > and, for the first time since the records before the imperative model, **the shape probe: 30 harmful errors at 0.45
 > against a limit of 28** (the previous model had 27). Against the previous model the technical-mix model has fewer
 > harmful errors on the open test split and gold v2, more on the shape probe and the treebank, and a higher
-> harmful rate at its balanced point (see _Earlier Models_ below); the pre-registered primary measure (the technical
+> harmful rate at its balanced point (see *Earlier Models* below); the pre-registered primary measure (the technical
 > development tranches) favors the technical sources on the eight-seed means, which is development evidence on the
 > frames the data were built from and is not measured by any held-out set. The trainer run log has the complete
 > side-by-side tables, the gates and the decisions. **Owner decision (2026-11-13):** the owner decided to ship the
 > technical-mix model with the mixed held-out result and the fired shape-probe stop condition disclosed, and to keep the
-> balanced threshold at 0.75 (see _Owner Decision_ below).
+> balanced threshold at 0.75 (see *Owner Decision* below).
 
 | File | What it is |
 | --- | --- |
@@ -50,22 +50,20 @@ them and states what they do not show.
 ## How the Evaluation Was Done
 
 1. **The model was frozen first.** Every setting of the model was chosen on development data only: open dev, gold v2
-   dev, shapes-dev (standard and hard tranches) and UD-EWT dev. After the labels of the corpora were corrected, the model
-   was trained again with those settings unchanged and only the softmax temperature was refit on development data; a
-   pre-registered follow-up then removed the `prenominal-ing` corrections from the training data on the strength of
-   development data alone, a second pre-registered experiment then added the clause-cue feature group on the strength
-   of development data alone (the shapes development set, open and gold v2 development, UD English-EWT development; five
+   dev, shapes-dev (standard and hard tranches) and UD-EWT dev. After the labels of the corpora were corrected, the
+   model was trained again with those settings unchanged and only the softmax temperature was refit on development data;
+   a pre-registered follow-up then removed the `prenominal-ing` corrections from the training data on the strength of
+   development data alone, a second pre-registered experiment then added the clause-cue feature group on the strength of
+   development data alone (the shapes development set, open and gold v2 development, UD English-EWT development; five
    seeds per variant), a third added the imperative training source in the same way, and the follow-up re-test (eight
    seeds per arm on an enlarged development measure) added the two compound training sources, and a last pre-registered
    experiment (eight seeds per arm on the technical development tranches) added the four technical sources. Each time
-   the model was trained
-   again with the same seed and the temperature refit (it did not change in the last step either). An earlier
-   pre-registered experiment had tested compound heads and Title Case headings as training sources and one more feature
-   group (title-case line) on development data only; its rule selected no arm, so nothing changed and it read no held-out
-   set (it adds no look). The
-   weights, the configuration and the temperature did not change afterwards. The run log of the trainer,
-   [RUN-LOG.md](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md), has the experiments, the gates of the
-   retraining, the follow-ups and the decisions.
+   the model was trained again with the same seed and the temperature refit (it did not change in the last step either).
+   An earlier pre-registered experiment had tested compound heads and Title Case headings as training sources and one
+   more feature group (title-case line) on development data only; its rule selected no arm, so nothing changed and it
+   read no held-out set (it adds no look). The weights, the configuration and the temperature did not change afterwards.
+   The run log of the trainer, [RUN-LOG.md](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md), has the
+   experiments, the gates of the retraining, the follow-ups and the decisions.
 2. **The protocol was written before any number existed.** The section "Phase 5 protocol" of the run log fixes the
    definitions, the grid of thresholds, the rule that selects them, the sets and the stop conditions. It was committed
    before the first curve was computed, and it applied unchanged to every later model.
@@ -84,17 +82,18 @@ The evaluation sets are described in [data/eval](../../data/eval/README.md). In 
 
 - **Open test split** and **gold v2 test split** are the general measures. Gold v2 has one labeled target word per
   sentence, from documents that no training set shares.
-- **Shape probe** is 560 short sentences in seven noun and verb shapes (for example the first word of an instruction, the
-  head of a noun compound). It is a stress test for short, technical and imperative text, not a sample of ordinary text.
+- **Shape probe** is 560 short sentences in seven noun and verb shapes (for example the first word of an instruction,
+  the head of a noun compound). It is a stress test for short, technical and imperative text, not a sample of ordinary
+  text.
 - **Challenge set** is 32 simplified-technical-English sentences. It is a smoke test and never part of a headline
   number.
 - **UD English-EWT test** is an external treebank with human labels. It is evaluated locally only and none of its text
-  is stored in this repository (see _Reproduce the Results_).
+  is stored in this repository (see *Reproduce the Results*).
 
 The tags of the open corpus, gold v2, the shape probe and the challenge set were written by language models and no human
 reviewed them. A set that shares the labelers' habits with the training labels measures agreement with those habits.
-The UD treebank is the only set with human labels, and it follows other conventions (see _Mapping to the Library
-Conventions_).
+The UD treebank is the only set with human labels, and it follows other conventions (see *Mapping to the Library
+Conventions*).
 
 ## Definitions
 
@@ -162,16 +161,16 @@ These are findings of the run. They are reported and the model was not changed i
    forecast for ordinary text, but short technical and imperative text is a use that the library targets: use the strict
    threshold there, or give the tagger a glossary or constraints for the words that matter. It is a limitation of the
    model, and the thresholds and the model were not tuned on it. The owner decided on 2026-11-13 to ship the model with
-   this finding disclosed (see _Owner Decision_ below).
-2. **The two candidate-limit stop conditions are views, not model defects.** The protocol limits the share of tokens whose
-   correct tag is outside the tagger's candidates to 1%. It fired for the eight `to` and `not` targets of gold v2 and for
-   the raw view of the treebank. In both the cause is a convention difference, not an error of the tagger: see the next
-   two points. The protocol text applies the limit to every view and was not changed after the result; the run log
-   records all three findings (these two and the shape probe) as fired.
-3. **Gold v2 `to` and `not`.** The WordSense class set of gold v2 has no particle class, so it labels `not` as Adverb and
-   the infinitive `to` as Preposition or Other, while this library tags `not` and the infinitive marker `to` as PART.
-   Half of the eight targets fall outside the candidates for that reason. They are reported separately and are not in
-   the gold v2 headline row, as in the development evaluation.
+   this finding disclosed (see *Owner Decision* below).
+2. **The two candidate-limit stop conditions are views, not model defects.** The protocol limits the share of tokens
+   whose correct tag is outside the tagger's candidates to 1%. It fired for the eight `to` and `not` targets of gold v2
+   and for the raw view of the treebank. In both the cause is a convention difference, not an error of the tagger: see
+   the next two points. The protocol text applies the limit to every view and was not changed after the result; the run
+   log records all three findings (these two and the shape probe) as fired.
+3. **Gold v2 `to` and `not`.** The WordSense class set of gold v2 has no particle class, so it labels `not` as Adverb
+   and the infinitive `to` as Preposition or Other, while this library tags `not` and the infinitive marker `to` as
+   PART. Half of the eight targets fall outside the candidates for that reason. They are reported separately and are not
+   in the gold v2 headline row, as in the development evaluation.
 4. **The challenge set is a smoke test.** It has 32 sentences. The tagger made no harmful error on it. Its misses are
    mostly capitalized component names (`Theta Arm`, `Gantry Robot`) that the model tags PROPN, where the set's guideline
    says NOUN or ADJ by function, and a few single tokens (`is`, `cracked`, `robot`, and symbols). A glossary that lists
@@ -181,11 +180,11 @@ These are findings of the run. They are reported and the model was not changed i
    two wrote the reference tags. The agreement of the tagger with them is not the same as accuracy against a human
    reference, which only the treebank offers. The gold v2 development split is small, and the thresholds were chosen
    mostly on the open development split (see the intervals in [confidence-thresholds.md](confidence-thresholds.md)).
-6. **One run.** Every figure comes from one run on one corpus of each kind. The bootstrap intervals describe the noise of
-   the sample, not a change of genre. The throughput line of the report is a timing of the machine of the run, not a
+6. **One run.** Every figure comes from one run on one corpus of each kind. The bootstrap intervals describe the noise
+   of the sample, not a change of genre. The throughput line of the report is a timing of the machine of the run, not a
    result of the model.
-7. **Tokens that a glossary constrains** are not measured here. A hard glossary entry gives confidence 1.0 whether or not
-   the entry is right.
+7. **Tokens that a glossary constrains** are not measured here. A hard glossary entry gives confidence 1.0 whether or
+   not the entry is right.
 
 The earlier model was also compared with earlier WordSense taggers outside this repository; that comparison is not part
 of this record, was not repeated for the embedded model and no figure of it is published here.
@@ -203,40 +202,38 @@ changes no figure, rule, threshold or weight of this record; the held-out record
    interval between the models was computed, and the figures come from one training seed, so no set establishes a
    difference. **The shape-probe stop condition fired: 30 harmful errors at 0.45 against a limit of 28** (the previous
    model had 27); the verb that starts an instruction went from 1 to 3 harmful errors and the noun in a measurement from
-   4 to 6. No rollback condition was registered and none was applied; the model was not tuned or reverted because of this
-   result. The owner also reviewed an off-repository regression check on consumer-supplied sentences. That check is kept
-   outside the repository; it was not used for selection, training or any rule, and neither its sentences nor its figures
-   are in this repository.
+   4 to 6. No rollback condition was registered and none was applied; the model was not tuned or reverted because of
+   this result. The owner also reviewed an off-repository regression check on consumer-supplied sentences. That check is
+   kept outside the repository; it was not used for selection, training or any rule, and neither its sentences nor its
+   figures are in this repository.
 2. **The balanced threshold stays at 0.75**, the value that the pre-registered procedure produced. On held-out data it
    exceeds its target of 10 in 1,000 answered decisions on gold v2 (10.2, 9 harmful errors of 881 answered decisions;
-   interval [3.9, 17.5]) and on the shape probe (20.2, 10 of 495; interval [8.1, 32.3]); on the open test split it is 9.1
-   (interval [6.1, 12.2]). The strict threshold 0.90 also exceeds its target of 5 on the shape probe (9.3).
+   interval [3.9, 17.5]) and on the shape probe (20.2, 10 of 495; interval [8.1, 32.3]); on the open test split it is
+   9.1 (interval [6.1, 12.2]). The strict threshold 0.90 also exceeds its target of 5 on the shape probe (9.3).
 3. **The technical operating point 0.99 is published as a measured fact, not as a recommended gate.** On the four
    technical development tranches it is 1 wrong answer in 357 (2.8 in 1,000; 95% interval [0.5, 15.7] in 1,000) at a
    coverage of 25.19%, and it rests on a single wrong answer. No held-out set carries those shapes. The recommended way
-   for a rule checker to reach a low error rate is the strict threshold together with `Margin`, `IsKnownWord` and a domain
-   glossary or `TokenConstraint`; a confident error on a term that the dictionary knows is best removed with the
+   for a rule checker to reach a low error rate is the strict threshold together with `Margin`, `IsKnownWord` and a
+   domain glossary or `TokenConstraint`; a confident error on a term that the dictionary knows is best removed with the
    glossary, not with a higher threshold.
 
 ## Earlier Models
 
-The embedded model is the seventh model with a held-out record: a model trained before the labels of the training corpora
-were corrected (the earlier model), the first model after the corrections (the first cleanup model, which kept the
-`prenominal-ing` corrections), the same data without them (the NO-ING model), the NO-ING model plus the clause-cue
+The embedded model is the seventh model with a held-out record: a model trained before the labels of the training
+corpora were corrected (the earlier model), the first model after the corrections (the first cleanup model, which kept
+the `prenominal-ing` corrections), the same data without them (the NO-ING model), the NO-ING model plus the clause-cue
 feature group (the clause-cue model), that model plus the imperative source (the imperative model), that model plus the
 two compound sources (the compound model, the previous model) and the embedded one (the previous model's data and
-settings plus the four technical sources). The first six have their
-records in the git history, and the trainer run log has every figure side by side, sections "Corpus cleanup C",
-"Context-feature experiment", "Imperative training data", "Follow-up" and "beta.3 phase 2". The open
-test split is not a fair comparison with the two oldest records, because its labels changed twice (the corrections, and
-then 17 withdrawn test rows); the other four held-out sets have the same labels in all records, and the open test split
-has the same labels in the last five. Key figures (accuracy in percent and harmful errors in 1,000 decisions at the
-reference point 0.45; "earl." is the earlier model, "first" the first cleanup model, "NO-ING" the NO-ING model, "cue"
-the clause-cue model, "imp." the imperative model, "cmp." the compound (previous) model and "emb." the embedded one; the
-thresholds were 0.95 and 0.80 for the earlier and the NO-ING model, 0.90 and 0.85 for the first cleanup model, 0.95 and
-0.75 for the clause-cue and the imperative model, 0.90 and 0.80 for the compound model and **0.90 and 0.75 for the
-embedded model**).
-Accuracy in percent:
+settings plus the four technical sources). The first six have their records in the git history, and the trainer run log
+has every figure side by side, sections "Corpus cleanup C", "Context-feature experiment", "Imperative training data",
+"Follow-up" and "beta.3 phase 2". The open test split is not a fair comparison with the two oldest records, because its
+labels changed twice (the corrections, and then 17 withdrawn test rows); the other four held-out sets have the same
+labels in all records, and the open test split has the same labels in the last five. Key figures (accuracy in percent
+and harmful errors in 1,000 decisions at the reference point 0.45; "earl." is the earlier model, "first" the first
+cleanup model, "NO-ING" the NO-ING model, "cue" the clause-cue model, "imp." the imperative model, "cmp." the compound
+(previous) model and "emb." the embedded one; the thresholds were 0.95 and 0.80 for the earlier and the NO-ING model,
+0.90 and 0.85 for the first cleanup model, 0.95 and 0.75 for the clause-cue and the imperative model, 0.90 and 0.80 for
+the compound model and **0.90 and 0.75 for the embedded model**). Accuracy in percent:
 
 | Set | earl. | first | NO-ING | cue | imp. | cmp. | emb. |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -319,21 +316,21 @@ visible.
 
 ## Development versus Held-Out Sets
 
-The sets above are held-out evaluation sets: nothing was chosen on them. One more set exists for the opposite purpose, the
-[shapes development set](../../data/eval/shapes-dev/README.md): 700 real sentences from US federal-government documents,
-labeled by two blind models, with a judged word in each (600 target items, 120 for each of five hard shapes, and 100
-controls). It is the set on which variants of the tagger are compared and settings are selected (the clause cues of the
-embedded model were selected on its hard tranche; see the section "Context-feature experiment" of the run log), so a
-figure from it is optimistic by construction and is never reported as a held-out result.
+The sets above are held-out evaluation sets: nothing was chosen on them. One more set exists for the opposite purpose,
+the [shapes development set](../../data/eval/shapes-dev/README.md): 700 real sentences from US federal-government
+documents, labeled by two blind models, with a judged word in each (600 target items, 120 for each of five hard shapes,
+and 100 controls). It is the set on which variants of the tagger are compared and settings are selected (the clause cues
+of the embedded model were selected on its hard tranche; see the section "Context-feature experiment" of the run log),
+so a figure from it is optimistic by construction and is never reported as a held-out result.
 
-- **Five shapes, not seven.** The shape probe has seven shape ids. The development set uses the four that the limitations
-  above name as the weak ones (`n-compound-head`, `n-subject-initial`, `v-imperative-initial`, `n-measure`) and a fifth,
-  `v-after-modal` (a base verb after a modal or `to`), which is frequent in manuals and procedures. `n-obj-light` and
-  `n-modifier` are not covered. The definitions are the probe's; no probe sentence is used or imitated, and a leakage check
-  keeps the two sets apart.
-- **Selection only here.** The trainer reads the file only through its own development guard (`eval-shapes`). It is never
-  trained on, and the shape probe stays held-out evaluation only: it is not tuned on, and a variant is judged on it only
-  after the settings were fixed on the development sets.
+- **Five shapes, not seven.** The shape probe has seven shape ids. The development set uses the four that the
+  limitations above name as the weak ones (`n-compound-head`, `n-subject-initial`, `v-imperative-initial`, `n-measure`)
+  and a fifth, `v-after-modal` (a base verb after a modal or `to`), which is frequent in manuals and procedures.
+  `n-obj-light` and `n-modifier` are not covered. The definitions are the probe's; no probe sentence is used or
+  imitated, and a leakage check keeps the two sets apart.
+- **Selection only here.** The trainer reads the file only through its own development guard (`eval-shapes`). It is
+  never trained on, and the shape probe stays held-out evaluation only: it is not tuned on, and a variant is judged on
+  it only after the settings were fixed on the development sets.
 - **The baseline** of the model before the clause cues, on the development set and per shape, is in the
   [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: baseline of
   the shipped model"), and the section "Context-feature experiment" has every variant, the embedded model among them,
@@ -354,17 +351,16 @@ figure from it is optimistic by construction and is never reported as a held-out
   [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Shapes development set: new tranches
   baseline of the shipped model").
 - **Two follow-up tranches** (`compound-head-2.tsv`, `headings-2.tsv`,
-  [README](../../data/eval/shapes-dev/README.md#follow-up-tranches)) add 255 and 129 items of the shapes of `compound-head`
-  and `headings` from other documents, so that the compound and heading measure is bigger (310 compound targets and
-  204 heading targets in all). They are for development only, were built by a pre-registered rule that uses no
-  PartOfSpeech output, and have
-  a shipped-model baseline in the
+  [README](../../data/eval/shapes-dev/README.md#follow-up-tranches)) add 255 and 129 items of the shapes of
+  `compound-head` and `headings` from other documents, so that the compound and heading measure is bigger (310 compound
+  targets and 204 heading targets in all). They are for development only, were built by a pre-registered rule that uses
+  no PartOfSpeech output, and have a shipped-model baseline in the
   [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (section "Follow-up: baseline of the shipped
   model on the new tranches"). They are not held-out figures.
 - **Four technical tranches** (`deverbal-heads.tsv`, `defined-terms.tsv`, `step-lines.tsv`, `clause-verbs.tsv`,
-  [README](../../data/eval/shapes-dev/README.md#technical-tranches)) add 1,097 target items and 320 control items of four
-  shapes of technical writing: the head of a deverbal compound, Capitalized Defined Terms, imperative step lines and
-  base-form verbs in a clause. They are for development only, were built by a pre-registered rule that uses no
+  [README](../../data/eval/shapes-dev/README.md#technical-tranches)) add 1,097 target items and 320 control items of
+  four shapes of technical writing: the head of a deverbal compound, Capitalized Defined Terms, imperative step lines
+  and base-form verbs in a clause. They are for development only, were built by a pre-registered rule that uses no
   PartOfSpeech output, and have a shipped-model baseline and a calibration measurement (errors per 1,000 answers at the
   confidences 0.90 and 0.95, and a reliability table) in the
   [run log](../../tools/DemaConsulting.PartOfSpeech.Trainer/RUN-LOG.md) (sections "beta.3 phase 1: baseline of the
@@ -402,9 +398,9 @@ python tools/data/fetch_ud_ewt.py map
 
 `fetch` downloads the pinned files (commit `4a4d77f599ea53cc405f85d0cec4b2f14f81d42b` of
 `UniversalDependencies/UD_English-EWT`) into `tools/data/cache/ud-ewt/` and refuses any file whose SHA-256 differs from
-[the pins](../../tools/data/pins/ud-ewt.tsv). `map` applies the four rules above and writes the mapped tables next to the
-files. The cache never leaves your machine; see [data/eval/ud-ewt](../../data/eval/ud-ewt/README.md). `--ud-cache DIR` of
-`evaluate` names another cache folder.
+[the pins](../../tools/data/pins/ud-ewt.tsv). `map` applies the four rules above and writes the mapped tables next to
+the files. The cache never leaves your machine; see [data/eval/ud-ewt](../../data/eval/ud-ewt/README.md).
+`--ud-cache DIR` of `evaluate` names another cache folder.
 
 The held-out run checks every input and then runs. The committed tree already contains `test-results.json`, and
 `evaluate` refuses to run when it exists (and while its lock file `test-results.json.running` exists), so reproduce in a

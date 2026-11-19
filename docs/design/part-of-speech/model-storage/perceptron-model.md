@@ -57,14 +57,13 @@ Version 2 replaced version 1 (never released) because a version 1 file could pas
 inflated payload, with the last byte of its Deflate data removed and the stored length adjusted; see the strict
 Deflate validation in the `BinaryFormat` design.
 
-**Feature group mask and compatibility.** The mask (bit 0 position cues, bit 1 clause cues, bit 2 right preview,
-bit 3 inflection, bit 4 title-case line; bit 5 and every higher bit are reserved for later groups) occupies the first
-four of the eight reserved bytes (zero in a file without groups), so the format version stays 2 and
-the layout is unchanged. The feature set number
-follows from the mask: 1 if and only if the mask is 0, otherwise 2. A file without groups therefore keeps all eight reserved
-bytes at zero and feature set 1, and this build reads it (backward compatible). A reader that does not know the
-mask fails loudly on a file with groups, twice over: it expects feature set 1 and finds 2, and it finds
-non-zero reserved bytes; so it never tags with the wrong features (not forward compatible by design).
+**Feature group mask and compatibility.** The mask (bit 0 position cues, bit 1 clause cues, bit 2 right preview, bit 3
+inflection, bit 4 title-case line; bit 5 and every higher bit are reserved for later groups) occupies the first four of
+the eight reserved bytes (zero in a file without groups), so the format version stays 2 and the layout is unchanged. The
+feature set number follows from the mask: 1 if and only if the mask is 0, otherwise 2. A file without groups therefore
+keeps all eight reserved bytes at zero and feature set 1, and this build reads it (backward compatible). A reader that
+does not know the mask fails loudly on a file with groups, twice over: it expects feature set 1 and finds 2, and it
+finds non-zero reserved bytes; so it never tags with the wrong features (not forward compatible by design).
 
 #### Key Methods
 
@@ -97,16 +96,16 @@ non-zero reserved bytes; so it never tags with the wrong features (not forward c
   committed file is current. Postcondition: the compressed and the plain form of the same weights give the same image.
   An invalid file throws `InvalidDataException`.
 
-Size note: the shipped model (selected on development data, see _ModelTrainer Design_) has 129,882 rows and 324,906
+Size note: the shipped model (selected on development data, see *ModelTrainer Design*) has 129,882 rows and 324,906
 weights at 19 hash bits and scale 1/8, which is 1,234,530 bytes uncompressed and 553,641 bytes with Deflate.
 
 #### Error Handling
 
 All structural defects (wrong magic, unsupported version, feature set mismatch or a feature set other than 1 or 2, a
-group mask with an unknown bit or one that disagrees with the feature set, wrong tag count, `hashBits` outside 18 to
-24, non-positive or non-finite temperature or scale, non-zero reserved bytes, inconsistent counts, checksum, truncation,
-trailing bytes (after the file or inside the stored region), a Deflate stream that is cut off or inflates to a size other
-than declared, zero gap, out-of-range bucket, row size 0 or above 17, tags out of order, weight 0 or -32768) throw
+group mask with an unknown bit or one that disagrees with the feature set, wrong tag count, `hashBits` outside 18 to 24,
+non-positive or non-finite temperature or scale, non-zero reserved bytes, inconsistent counts, checksum, truncation,
+trailing bytes (after the file or inside the stored region), a Deflate stream that is cut off or inflates to a size
+other than declared, zero gap, out-of-range bucket, row size 0 or above 17, tags out of order, weight 0 or -32768) throw
 `InvalidDataException` when the file is loaded. `Load` throws `ArgumentNullException` for `null`. The writer throws
 `ArgumentNullException`, `ArgumentOutOfRangeException` (numeric parameters, bucket out of range, feature set above 16
 bits, unknown group bit) or `ArgumentException` (wrong vector length, weight -32768, repeated bucket).

@@ -1,17 +1,19 @@
 ### Tokenizer Verification
 
-This document describes the unit-level verification strategy for the `Tokenizer` unit (`Tokenizer`, `Token`, `Sentence`).
+This document describes the unit-level verification strategy for the `Tokenizer` unit (`Tokenizer`, `Token`,
+`Sentence`).
 
 #### Verification Approach
 
 The unit is verified by unit tests in `Tokenization/TokenizerTests.cs` that call `Tokenizer.Tokenize` and
 `Tokenizer.CreateSentence` with small texts, one fixture per rule of the tokenization convention (each rule of
 `data/CONVENTIONS.md`), and assert the exact token texts and offsets. The unit is stateless and has one internal
-dependency, `SentenceSplitter`; it is not mocked, because the tests check tokens, not sentence boundaries. Rules with many
-cases are theories. The corpus-wide evidence (99.8 percent gate on 14,980 sentences) is at subsystem level; the corpus
-residue that the rules deliberately do not reproduce is: the period of a sentence-final "no." (3 sentences, kept split
-because it is a common sentence end), "CO." (1), "I." before a capitalized word or as a Roman numeral (3), `£9` and `£70`
-(2, gold keeps the currency symbol attached, the rule splits it like `$`) and U+2015 inside words (5, gold keeps it whole).
+dependency, `SentenceSplitter`; it is not mocked, because the tests check tokens, not sentence boundaries. Rules with
+many cases are theories. The corpus-wide evidence (99.8 percent gate on 14,980 sentences) is at subsystem level; the
+corpus residue that the rules deliberately do not reproduce is: the period of a sentence-final "no." (3 sentences, kept
+split because it is a common sentence end), "CO." (1), "I." before a capitalized word or as a Roman numeral (3), `£9`
+and `£70` (2, gold keeps the currency symbol attached, the rule splits it like `$`) and U+2015 inside words (5, gold
+keeps it whole).
 
 #### Test Environment
 

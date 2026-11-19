@@ -31,8 +31,8 @@ candidates, NOUN and VERB, have the real scores 14 and 11. The terms are 1 for N
 VERB, so the confidence of NOUN is 1 / 1.73, about 58%, and VERB has 42% as the alternative. To reach a confidence of
 90% between two candidates the gap must be T times ln 9, about 21 score units, which is 167 integer units at the scale
 of 1/8. With a temperature of 1 the same gap of 3 would give 95%. The temperature is therefore the exchange rate between
-the units of the perceptron and the probabilities of the output, and the value that is stored in the weights file is what
-makes the confidences comparable to the observed accuracy.
+the units of the perceptron and the probabilities of the output, and the value that is stored in the weights file is
+what makes the confidences comparable to the observed accuracy.
 
 ## Choosing the Temperature
 
@@ -40,10 +40,10 @@ The perceptron is trained to get the best tag right, not to give calibrated prob
 whatever scale the training produced. The library calibrates after the training with temperature scaling, a method with
 one parameter that is known to work well for classifiers (see the third reference of this document). The trainer uses
 the real decoder to score the open development split at each candidate temperature and chooses the temperature that
-minimizes the negative log-likelihood, the mean of minus the logarithm of the probability that the model gave to the gold
-tag among its candidates. A coarse grid in steps of a quarter octave from 0.125 to 16 finds the basin, and a fine grid
-in steps of a thirty-second of an octave refines it. The result is rounded to three decimals and written to the header
-of the weights file.
+minimizes the negative log-likelihood, the mean of minus the logarithm of the probability that the model gave to the
+gold tag among its candidates. A coarse grid in steps of a quarter octave from 0.125 to 16 finds the basin, and a fine
+grid in steps of a thirty-second of an octave refines it. The result is rounded to three decimals and written to the
+header of the weights file.
 
 Minimizing the log-likelihood rewards probabilities that match the observed frequencies, and it punishes confident
 mistakes heavily. The trainer also reports the expected calibration error, which groups the tokens into 15 equal-width
@@ -86,11 +86,11 @@ Three quantities are used:
 - The **harmful rate** at a threshold is the number of harmful errors among the answered decisions, per 1,000 answered.
 - The **targets** are a limit on the harmful rate and a floor on the coverage.
 
-The rule scans a fixed grid of thresholds from 0.45 up to 0.99 in ascending order and takes the first one that meets both
-the limit and the floor on the pooled development decisions. The **strict** point has the harmful-rate limit of 5 in
-1,000 and a coverage floor of 60%; the **balanced** point has the limit 10 in 1,000 and a floor of 85%. For the current
-embedded model the selected thresholds are 0.90 for strict and 0.75 for balanced. Scanning in ascending order picks the
-lowest threshold, and so the highest coverage, that still meets the target.
+The rule scans a fixed grid of thresholds from 0.45 up to 0.99 in ascending order and takes the first one that meets
+both the limit and the floor on the pooled development decisions. The **strict** point has the harmful-rate limit of 5
+in 1,000 and a coverage floor of 60%; the **balanced** point has the limit 10 in 1,000 and a floor of 85%. For the
+current embedded model the selected thresholds are 0.90 for strict and 0.75 for balanced. Scanning in ascending order
+picks the lowest threshold, and so the highest coverage, that still meets the target.
 
 How to read a threshold:
 
@@ -103,8 +103,8 @@ How to read a threshold:
   evaluation then measured the same thresholds on other sets. The held-out rate can be above the target. The evaluation
   record has the numbers with their intervals, and they must be quoted from there.
 - **The thresholds belong to the model.** Weights that you train or load need their own selection.
-- **A confidence of 1 from a single candidate is not a measurement**, and neither is the confidence of a token that a hard
-  glossary entry limits to one tag.
+- **A confidence of 1 from a single candidate is not a measurement**, and neither is the confidence of a token that a
+  hard glossary entry limits to one tag.
 
 Technical text is harder. The evaluation record contains a development-only measurement on tokens of technical
 documents, and a technical operating point derived from it. It is published as a measured fact with its caveats and not

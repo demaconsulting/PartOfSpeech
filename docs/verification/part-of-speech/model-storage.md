@@ -38,15 +38,14 @@ written file does not load back with the same content.
   embedded lexicon equals the independent reading of the table (spellings, order and tags) and that the committed file
   and the embedded resource are the same bytes; `ModelStorage_EmbeddedLexicon_EncodesAnalysesTsv` asserts that the
   analyses of the embedded lexicon equal the rows of `analyses.tsv` (every spelling, in order, and none for a spelling
-  without a row)
-  and that a fresh compilation of both tables equals the uncompressed image of the committed file, which is the comparison
-  that `LexiconCompiler --check` makes.
-- **Every spelling round trips**: `ModelStorage_EmbeddedLexicon_EveryTsvSpellingRoundTrips` looks every one of the 262,635
-  spellings up and asserts its tags, and probes spellings that are not in the table (near misses and an over-long
-  key) for false positives.
+  without a row) and that a fresh compilation of both tables equals the uncompressed image of the committed file, which
+  is the comparison that `LexiconCompiler --check` makes.
+- **Every spelling round trips**: `ModelStorage_EmbeddedLexicon_EveryTsvSpellingRoundTrips` looks every one of the
+  262,635 spellings up and asserts its tags, and probes spellings that are not in the table (near misses and an
+  over-long key) for false positives.
 - **Loaded once under parallel first access**: `ModelStorage_EmbeddedLexicon_ParallelFirstAccess_LoadsOnce` releases 16
-  threads together and asserts that all receive the same instance. The static cannot be reset, so the test proves a shared
-  instance under parallel access, not literally the first access.
+  threads together and asserts that all receive the same instance. The static cannot be reset, so the test proves a
+  shared instance under parallel access, not literally the first access.
 - **Weights writer and reader round trip**: `ModelStorage_WeightsWriterAndReader_RoundTrip` loads a Deflate weights file
   and a tiny lexicon from streams and asserts the summed weights of a feature bucket, the temperature, the scale and the
   spelling and entry counts; `ModelStorage_WeightsWriterAndReader_FeatureGroupsRoundTrip` does the same for a weights

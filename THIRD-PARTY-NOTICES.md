@@ -1,16 +1,16 @@
 # Third-Party Notices
 
 PartOfSpeech is Copyright (c) DEMA Consulting and is licensed under the MIT License (see `LICENSE`). The code and the
-data of this project build on the third-party works below. Their attribution and license notices are reproduced here, and
-this file is packed at the root of the NuGet package so that the notices travel with every copy of the package. The
+data of this project build on the third-party works below. Their attribution and license notices are reproduced here,
+and this file is packed at the root of the NuGet package so that the notices travel with every copy of the package. The
 data and the files derived from it are kept in the `data/` folder of the repository; compiled forms of them are embedded
-in the package. The package embeds a compiled form of the lexicon `data/lexicon/lexicon.tsv` (derived from Open
-English WordNet and the Moby Part-of-Speech List, with tags attested in MASC and the open corpus) as the binary resource
-that restricts the tags of known words, together with the analyses table `data/lexicon/analyses.tsv` (the base word,
-tag and features of the forms of the spellings, derived from the same sources), and the trained weights of the tagger
+in the package. The package embeds a compiled form of the lexicon `data/lexicon/lexicon.tsv` (derived from Open English
+WordNet and the Moby Part-of-Speech List, with tags attested in MASC and the open corpus) as the binary resource that
+restricts the tags of known words, together with the analyses table `data/lexicon/analyses.tsv` (the base word, tag and
+features of the forms of the spellings, derived from the same sources), and the trained weights of the tagger
 (`Resources/weights.bin`), which the Trainer tool learned from the corpora in `data/open/`, `data/masc/` and
-`data/silver/`. The file `PACKAGE-LICENSE.md`,
-also packed at the root of the package, is the license of the package and states which license covers which part.
+`data/silver/`. The file `PACKAGE-LICENSE.md`, also packed at the root of the package, is the license of the package and
+states which license covers which part.
 
 No Creative Commons Attribution-ShareAlike (CC BY-SA), NonCommercial or NoDerivatives material is part of this
 repository or package. The one CC BY-SA corpus that the project evaluates against is described in the last section and
@@ -18,8 +18,8 @@ is never distributed.
 
 ## The Manually Annotated Sub-Corpus (MASC)
 
-Part-of-speech training data in `data/masc/`, the lexicon in `data/lexicon/` and the trained weights that are embedded in
-the package are adapted from MASC.
+Part-of-speech training data in `data/masc/`, the lexicon in `data/lexicon/` and the trained weights that are embedded
+in the package are adapted from MASC.
 
 - **Title:** The Manually Annotated Sub-Corpus (MASC), Penn Treebank syntax annotations of the written texts (release of
   2026-09-25)
@@ -33,14 +33,14 @@ the package are adapted from MASC.
 - **Citation:** Nancy Ide, Collin Baker, Christiane Fellbaum, Charles Fillmore and Rebecca Passonneau, "MASC: the
   Manually Annotated Sub-Corpus of American English", Proceedings of the Sixth International Conference on Language
   Resources and Evaluation (LREC 2008), <https://aclanthology.org/L08-1105/>
-- **Changes:** the work was adapted by DEMA Consulting. The Penn Treebank part-of-speech tags and tree positions of every
-  token were converted to Universal POS (UPOS) tags; the empty-category traces were removed, quotation marks and dashes
-  were normalized, the sentences were reduced to those of 3 to 70 tokens, and the spoken genre and a few documents and
-  sentences that overlap evaluation data were left out. The converted data is not the original MASC data. The trained
-  weights of the tagger (`weights.bin`) were learned in part from the converted data: they are numbers that a training
-  program computed from the tags and the text of the converted sentences, and they contain no MASC text. The weights are
-  provided under the terms of this license. The authors of
-  MASC do not endorse this project or the converted data. The full statement is `data/masc/ATTRIBUTION.md`.
+- **Changes:** the work was adapted by DEMA Consulting. The Penn Treebank part-of-speech tags and tree positions of
+  every token were converted to Universal POS (UPOS) tags; the empty-category traces were removed, quotation marks and
+  dashes were normalized, the sentences were reduced to those of 3 to 70 tokens, and the spoken genre and a few
+  documents and sentences that overlap evaluation data were left out. The converted data is not the original MASC data.
+  The trained weights of the tagger (`weights.bin`) were learned in part from the converted data: they are numbers that
+  a training program computed from the tags and the text of the converted sentences, and they contain no MASC text. The
+  weights are provided under the terms of this license. The authors of MASC do not endorse this project or the converted
+  data. The full statement is `data/masc/ATTRIBUTION.md`.
 
 ## Open English WordNet
 
@@ -49,7 +49,8 @@ The spelling-to-UPOS lexicon in `data/lexicon/` is derived from the word forms o
 - **Title:** Open English WordNet 2025 Edition
 - **Creators:** the Open English WordNet team and contributors (John P. McCrae and others)
 - **Source:** <https://en-word.net> and <https://github.com/globalwordnet/english-wordnet>
-- **License:** Creative Commons Attribution 4.0 International (CC BY 4.0), <https://creativecommons.org/licenses/by/4.0/>
+- **License:** Creative Commons Attribution 4.0 International (CC BY 4.0),
+  <https://creativecommons.org/licenses/by/4.0/>
 - **Changes:** only the spellings of the entries and their inflected forms were used. They were combined with other
   sources and reduced to a table that maps a lower-case spelling to the UPOS tags it may carry. The lexicon is not the
   original Open English WordNet data, and the glosses, examples and relations are not part of it. The analyses table
@@ -137,23 +138,22 @@ the license basis of every document is quoted in `data/eval/shapes-dev/sources.t
 first were dropped because their text is not clearly authored by the US government
 (`data/eval/shapes-dev/excluded-sources.tsv`); none of their text is in the set.
 
-The hard tranche of that set (`data/eval/shapes-dev/hard.tsv`) uses the same kind of text: 99 documents of the
-federal families Army, Navy, Bureau of Mines, Department of Agriculture, Forest Service and NASA, plus Bureau of Standards
+The hard tranche of that set (`data/eval/shapes-dev/hard.tsv`) uses the same kind of text: 99 documents of the federal
+families Army, Navy, Bureau of Mines, Department of Agriculture, Forest Service and NASA, plus Bureau of Standards
 (NIST), Bureau of Reclamation, Federal Civil Defense Administration, Public Health Service and NOAA publications (17
 U.S.C. 105; 43 documents are also in the standard tranche). The license basis of every document is quoted in
 `data/eval/shapes-dev/hard-sources.tsv`. Numeric output of the WordSense Basic classifier (same owner, run unmodified)
 helped to choose which sentences to label; no WordSense text, label or data is copied.
 
 The three single-shape tranches of that set (`compound-head.tsv`, `headings.tsv` and `named-state.tsv` in
-`data/eval/shapes-dev/`) are cut from new documents: 74, 51 and 59 documents of the federal families War
-Department, Army and Army Air Forces, Navy, Department of Agriculture and Forest Service, plus one NASA handbook
-(17 U.S.C. 105; scans on the Internet Archive whose records carry the Public Domain Mark or a statement that the
-item is not in copyright, and a NASA Technical Reports Server record with the determination
-`GOV_PUBLIC_USE_PERMITTED` and no third-party material). No document is in a training source or in any other evaluation
-set; the three tranches may share documents among themselves, but no sentence. The license basis of every document is quoted
-in `data/eval/shapes-dev/<tranche>-sources.tsv`. Numeric output
-of the WordSense Basic classifier (same owner, run unmodified) helped to choose the `compound-head` sentences; no
-WordSense text, label or data is copied.
+`data/eval/shapes-dev/`) are cut from new documents: 74, 51 and 59 documents of the federal families War Department,
+Army and Army Air Forces, Navy, Department of Agriculture and Forest Service, plus one NASA handbook (17 U.S.C. 105;
+scans on the Internet Archive whose records carry the Public Domain Mark or a statement that the item is not in
+copyright, and a NASA Technical Reports Server record with the determination `GOV_PUBLIC_USE_PERMITTED` and no
+third-party material). No document is in a training source or in any other evaluation set; the three tranches may share
+documents among themselves, but no sentence. The license basis of every document is quoted in
+`data/eval/shapes-dev/<tranche>-sources.tsv`. Numeric output of the WordSense Basic classifier (same owner, run
+unmodified) helped to choose the `compound-head` sentences; no WordSense text, label or data is copied.
 
 The training source `data/imperative/` is built the same way from instructional text of US federal government
 documents: 122 documents of the federal families War Department and Army, Navy, Department of Agriculture, Forest
@@ -165,16 +165,16 @@ in the training configuration with weight 1, so the embedded weights were learne
 The two training sources `data/compound/` (sentences with a noun compound whose head can also be a verb) and
 `data/headings/` (Title Case heading, caption and step-title lines) are built the same way from text of US federal
 government documents: 154 and 89 documents of the federal families Department of Agriculture, Forest Service, Geological
-Survey, War Department and Army, Navy, Bureau of Reclamation, Public Health Service, Bureau of Land Management, Bureau of
-Mines, Weather Bureau and Bureau of Standards (17 U.S.C. 105; scans and electronic copies on the Internet Archive whose
-records carry the Public Domain Mark or a statement that the item is not in copyright). A document whose record lists a
-state or local government body as an author is not used, and neither is a document with a private non-profit
+Survey, War Department and Army, Navy, Bureau of Reclamation, Public Health Service, Bureau of Land Management, Bureau
+of Mines, Weather Bureau and Bureau of Standards (17 U.S.C. 105; scans and electronic copies on the Internet Archive
+whose records carry the Public Domain Mark or a statement that the item is not in copyright). A document whose record
+lists a state or local government body as an author is not used, and neither is a document with a private non-profit
 co-author whose public-domain basis is uncertain (`data/eval/shapes-dev/excluded-sources.tsv`). Their annotations and
-their selection are dedicated to the
-public domain under CC0 1.0, and the license basis of every document is quoted in `data/compound/sources.tsv` and
-`data/headings/sources.tsv`. The compound source is registered in the training configuration with weight 1, so the
-embedded weights were learned from it; the headings source is registered with weight 0: it is committed data, it is not
-part of the mix that trained the embedded weights, and the weights were not learned from it.
+their selection are dedicated to the public domain under CC0 1.0, and the license basis of every document is quoted in
+`data/compound/sources.tsv` and `data/headings/sources.tsv`. The compound source is registered in the training
+configuration with weight 1, so the embedded weights were learned from it; the headings source is registered with weight
+0: it is committed data, it is not part of the mix that trained the embedded weights, and the weights were not learned
+from it.
 
 The two follow-up tranches of that set (`compound-head-2.tsv` and `headings-2.tsv` in `data/eval/shapes-dev/`) and
 the two follow-up training sources (`data/compound/compound-2.tsv` and `data/headings/headings-2.tsv`) are cut from
@@ -231,7 +231,7 @@ statement about the United States only.
 
 ## Evaluation-Only Data That Is Not Distributed
 
-The Universal Dependencies English Web Treebank (UD English-EWT, <https://github.com/UniversalDependencies/UD_English-EWT>)
-is licensed under CC BY-SA 4.0. The project uses it only to measure the accuracy of taggers and to check that no training
-sentence appears in it. It is downloaded on demand into a git-ignored cache and is never committed, redistributed or
-packaged, and nothing is trained on it.
+The Universal Dependencies English Web Treebank (UD English-EWT,
+<https://github.com/UniversalDependencies/UD_English-EWT>) is licensed under CC BY-SA 4.0. The project uses it only to
+measure the accuracy of taggers and to check that no training sentence appears in it. It is downloaded on demand into a
+git-ignored cache and is never committed, redistributed or packaged, and nothing is trained on it.

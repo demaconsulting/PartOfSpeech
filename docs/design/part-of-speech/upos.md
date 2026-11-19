@@ -16,7 +16,7 @@ subsystem. Its source files are `Upos.cs` (the enumeration), `UposExtensions.cs`
   `Sconj`, `Sym`, `Verb`, `X`. The order is part of the binary formats: the tag number is the column of the weights
   and the bit of the lexicon masks, so the order never changes without a new format version.
 - **`UposExtensions.Count`** is the constant 17.
-- **`UposSet`** is a read-only struct over one `int` mask. Bit _i_ is set when the tag with value _i_ is in the set;
+- **`UposSet`** is a read-only struct over one `int` mask. Bit *i* is set when the tag with value *i* is in the set;
   only the low 17 bits are ever set. Invariants: the default value is the empty set; two sets are equal exactly when
   their masks are equal; enumeration is in ascending tag order. `UposSet.All` has all 17 bits set. The mask is
   exposed to the library through an internal property and an internal `FromMask` factory.
@@ -48,6 +48,6 @@ None. `Upos` uses only the base class library.
 
 ### Callers
 
-Every other unit: `Lexicon` (masks and allowed tags), `PerceptronModel` (tag columns), `FeatureExtractor` (previous tags),
-`TagDecoder` (candidates), `TokenConstraint` (allowed set and adjustments), `Tagger` and the result types, and the
-library consumers.
+Every other unit: `Lexicon` (masks and allowed tags), `PerceptronModel` (tag columns), `FeatureExtractor` (previous
+tags), `TagDecoder` (candidates), `TokenConstraint` (allowed set and adjustments), `Tagger` and the result types, and
+the library consumers.

@@ -75,7 +75,8 @@ phrasal verb is limited to adposition, adverb and particle. Every other word is 
 
 Text has plurals and verb forms and a glossary lists base forms, so the regular forms of the head word match too, with
 the tags that fit the form: a plural is a noun, a past form can be a verb or an adjective, and a present participle can
-be a verb, an adjective or a noun. Irregular forms are listed by the caller as variants. Only the head word is inflected.
+be a verb, an adjective or a noun. Irregular forms are listed by the caller as variants. Only the head word is
+inflected.
 
 ## Interaction with the Model
 
@@ -84,8 +85,8 @@ worth stating.
 
 - **The known-word flag does not change.** A glossary changes no lexicon fact, so a token that the lexicon does not
   know is still reported as unknown even when a glossary entry tags it with confidence 1.
-- **The caller wins a conflict.** When a caller passes its own constraints as well as a glossary, the two are combined per
-  token, and where their allowed sets have no tag in common, the caller's constraint is used.
+- **The caller wins a conflict.** When a caller passes its own constraints as well as a glossary, the two are combined
+  per token, and where their allowed sets have no tag in common, the caller's constraint is used.
 - **Wrong entries are the main risk.** In hard mode, a wrong entry is tagged wrongly wherever it occurs and with full
   confidence. A glossary should be curated, or used in soft mode.
 - **A glossary is better than a threshold for a known term.** A confident error on a term that the dictionary lists with

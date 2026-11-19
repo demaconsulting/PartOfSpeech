@@ -293,7 +293,7 @@ written before any number existed. The order is fixed by code:
    run and record the deletion and its reason in `RUN-LOG.md`. The model, the configuration, the temperature and the
    thresholds never change in a repeat.
 
-Run the commands at below-normal priority, one process at a time (see _Machine limits_). `build.ps1` and CI do not run
+Run the commands at below-normal priority, one process at a time (see *Machine limits*). `build.ps1` and CI do not run
 `thresholds` or `evaluate`.
 
 ## Current model

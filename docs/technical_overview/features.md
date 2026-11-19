@@ -79,10 +79,10 @@ Hashing has clear advantages:
 It also has a cost. Two different features can land on the same bucket, a collision, and then they share their weights.
 The perceptron cannot tell them apart, so it learns one compromise weight for both. When the table is large compared
 with the number of features that matter, collisions are few, and the damage of a collision is limited to the weights of
-the two features that share a row. The size of the table is a measured trade-off: on the development data, 19 bits was statistically
-tied with the largest size that was tested (22 bits), while 18 bits was borderline, so the trainer configuration uses
-19 bits. A second cost is that the weights cannot be read by name. For debugging, the library keeps a slow, readable
-reference implementation of the features, which the tests use as the oracle for the fast one.
+the two features that share a row. The size of the table is a measured trade-off: on the development data, 19 bits was
+statistically tied with the largest size that was tested (22 bits), while 18 bits was borderline, so the trainer
+configuration uses 19 bits. A second cost is that the weights cannot be read by name. For debugging, the library keeps a
+slow, readable reference implementation of the features, which the tests use as the oracle for the fast one.
 
 The consequence of hashing for compatibility is strict. A weights file is valid only for the exact features and hash
 that it was trained with. The file header records the feature set and the feature groups, and the decoder follows them.
@@ -106,14 +106,13 @@ computes exactly those features.
   capital letter in a heading is not a sign of a name.
 
 The word classes of the clause cues come from the spelling of the token and from the lexicon: a token is classed as a
-punctuation mark, a modal, `to`, a
-number, a determiner, a pronoun, a preposition, a conjunction, a word that is a noun and a verb, a noun only, a verb
-only, an adjective or adverb, or other. The clause state is a small piece of memory that the decoder updates after
-every decision: whether a subject-like tag and whether a verb tag have been decided since the last clause boundary, which
-is a comma, semicolon, colon, opening parenthesis or double hyphen, or a conjunction that was just decided. These cues
-help with the distinction that matters most in practice, the noun and verb readings of the same spelling. In the
-imperative `Check the valve`, for example, the class of the next word (a determiner) is a sign that `Check` is a
-verb.
+punctuation mark, a modal, `to`, a number, a determiner, a pronoun, a preposition, a conjunction, a word that is a noun
+and a verb, a noun only, a verb only, an adjective or adverb, or other. The clause state is a small piece of memory that
+the decoder updates after every decision: whether a subject-like tag and whether a verb tag have been decided since the
+last clause boundary, which is a comma, semicolon, colon, opening parenthesis or double hyphen, or a conjunction that
+was just decided. These cues help with the distinction that matters most in practice, the noun and verb readings of the
+same spelling. In the imperative `Check the valve`, for example, the class of the next word (a determiner) is a sign
+that `Check` is a verb.
 
 The embedded model enables the clause cues only. The groups were chosen by a rule that was written before the
 experiment: each of the first four groups alone, all four together and all four minus one were trained with five seeds

@@ -11,7 +11,7 @@ tagged by a deterministic averaged perceptron (the algorithm of the spike: left 
 with the previous predicted tags as history, +1 for the gold tag and -1 for the guess on a mistake, weights averaged
 over all steps, a fixed-seed shuffle). It uses only `FeatureExtractor` and `PerceptronModelWriter`, which is also the
 proof that the trainer can reuse the extractor and the writer unchanged (the real trainer does, and its parity tests are
-in _ModelTrainer Verification_). A lexicon of the fixture
+in *ModelTrainer Verification*). A lexicon of the fixture
 words is compiled by `LexiconWriter`. **Hand-set tiny models** (`TestSupport/TinyModels.cs`, class `WeightsBuilder`)
 say "the lower-case word `a` adds 5 to DET" through `FeatureExtractor.ReferenceBucket`, so a test controls every score
 without knowing a hash. Nothing is mocked; every unit is real.
@@ -43,9 +43,9 @@ question does not confirm.
 
 - **End to end on the training sentences**: `Tagging_TinyTrainedModel_TagsTrainingSentences` tags every fixture sentence
   from its tokens (more than 250 tokens) and asserts that no token receives a tag other than gold.
-- **Lexicon restriction on unseen input**: `Tagging_TinyTrainedModel_LexiconRestrictionHolds` tags every fixture sentence
-  in reverse word order with 16 alternatives, and asserts that the chosen tag together with the alternatives equals
-  exactly the set of tags that the lexicon and the shape rules allow for the token.
+- **Lexicon restriction on unseen input**: `Tagging_TinyTrainedModel_LexiconRestrictionHolds` tags every fixture
+  sentence in reverse word order with 16 alternatives, and asserts that the chosen tag together with the alternatives
+  equals exactly the set of tags that the lexicon and the shape rules allow for the token.
 - **History changes later tags**: `Tagging_Context_PrecedingTags_ChangeTagOfAmbiguousWord` tags "run" after a
   determiner (NOUN) and after a pronoun and a modal (VERB) and asserts that both have alternatives.
 - **Constraints propagate**: `Tagging_Constraints_FirstTokenOnly_ChangesNextTokenTag` uses hand-set weights under
@@ -55,9 +55,10 @@ question does not confirm.
   hand-set weights idea with a glossary entry that says that the word is ADJ, and asserts DET NOUN without the glossary
   and ADJ VERB with it, the head with confidence 1 and the `IsConstrained` flags.
 - **Glossary results**: `Tagging_Glossary_Results_ReportMatchesOnTokensAndSentence` uses hand-set weights under which
-  the model alone reads the first word of the noun term `run mat` as a verb, and asserts that with the glossary both words
-  are nouns, that the sentence has one match with the first token, the token count, the head token, the text and the
-  definition, that only the head token is flagged as head, and that exactly the two tokens of the span carry the match.
+  the model alone reads the first word of the noun term `run mat` as a verb, and asserts that with the glossary both
+  words are nouns, that the sentence has one match with the first token, the token count, the head token, the text and
+  the definition, that only the head token is flagged as head, and that exactly the two tokens of the span carry the
+  match.
 - **Evidence for a rule checker**: `Tagging_Evidence_UnknownWordAndCloseCall_AreReported` tags a sentence with an
   invented word with the tiny trained model, its fixture lexicon and 16 alternatives, and asserts that every token
   reports the lexicon
@@ -74,10 +75,10 @@ question does not confirm.
   `IsKnownWord` equals the token's flag, that every analysis of a lookup is a form according to `IsFormOf`, that the
   hyphenated word is a compound head with the analyses of its last part and an unknown token, and that the invented word
   is not recognized.
-- **No retention of request text**: `Tagger_EveryEntryPoint_LeavesNoRequestTextInTheWorkspaces` (see _Tagger
-  Verification_) is the subsystem proof; the decoder and the glossary matcher prove it for their own workspaces in
-  _TagDecoder Verification_ and _Glossary Verification_.
+- **No retention of request text**: `Tagger_EveryEntryPoint_LeavesNoRequestTextInTheWorkspaces` (see *Tagger
+  Verification*) is the subsystem proof; the decoder and the glossary matcher prove it for their own workspaces in
+  *TagDecoder Verification* and *Glossary Verification*.
 - **Feature groups**: the subsystem scenarios above use models without groups, so that they prove the base behavior. The
-  groups are verified where they are defined and used: per group against the string-based reference in _FeatureExtractor
-  Verification_, in the decoder (also in two passes for the right preview group) in _TagDecoder Verification_, through
-  the public loader in _Tagger Verification_, and against the trainer's predictor in _ModelTrainer Verification_.
+  groups are verified where they are defined and used: per group against the string-based reference in *FeatureExtractor
+  Verification*, in the decoder (also in two passes for the right preview group) in *TagDecoder Verification*, through
+  the public loader in *Tagger Verification*, and against the trainer's predictor in *ModelTrainer Verification*.

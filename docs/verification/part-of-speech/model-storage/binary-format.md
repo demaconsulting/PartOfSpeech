@@ -31,8 +31,8 @@ differs from the reference.
   `BinaryFormat_Varint_OverlongOrTruncated_Throws`.
 - **Checksum**: `BinaryFormat_Fnv1a_MatchesKnownVectors` (published FNV-1a 32-bit test vectors).
 - **Header**: `BinaryFormat_ReadHeader_BadMagic_Throws` (reported as the wrong kind of file),
-  `BinaryFormat_ReadHeader_UnsupportedVersion_Throws` (another version and unknown flag bits, with a version message) and
-  `BinaryFormat_ReadHeader_Truncated_Throws`.
+  `BinaryFormat_ReadHeader_UnsupportedVersion_Throws` (another version and unknown flag bits, with a version message)
+  and `BinaryFormat_ReadHeader_Truncated_Throws`.
 - **Compression**: `BinaryFormat_Deflate_RoundTrips` (round trip, and a wrong declared size is rejected),
   `BinaryFormat_Decompress_TrailingBytesInStoredRegion_Throws` (for repetitive and incompressible data of several
   sizes, the exact region is accepted and one to 9000 extra bytes of several values behind the Deflate data, inside the
