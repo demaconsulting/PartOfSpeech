@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD013 MD060 -->
-
 # BERT Silver
 
 License: CC0-1.0
@@ -24,8 +22,8 @@ signal; the tag is `_`). Tokens are counted after the contraction split of the c
 - **Sentences:** CC0 (Tatoeba) or public domain in the United States (Gutenberg) per `sources.tsv`. The Gutenberg
   selection rule: English, a single named author born 1790 or later and dead by 1930, no translator, a landing page that
   states "Public domain in the USA", no year after 1930 in the front matter, header, footer and every paragraph that
-  mentions Gutenberg, an e-book or a transcriber removed, and a book that no other part of the WordSense repository uses.
-  Only the book text is used, with no Project Gutenberg license text or trademark. Public-domain status is a US
+  mentions Gutenberg, an e-book or a transcriber removed, and a book that no other part of the WordSense repository
+  uses. Only the book text is used, with no Project Gutenberg license text or trademark. Public-domain status is a US
   statement only.
 - **Labels and selection:** CC0 1.0 (project owner). The labels are model output; the owner's position on the rights in
   model outputs is stated in the repository README and is not legal advice.
@@ -36,10 +34,13 @@ signal; the tag is `_`). Tokens are counted after the contraction split of the c
 
 ## Files
 
-- `silver.tsv`: the sentences in the shared corpus format: `form`, `upos`, `status`, `source_tag`; `# text` is the tokens joined by single spaces
+- `silver.tsv`: the sentences in the shared corpus format: `form`, `upos`, `status`, `source_tag`; `# text` is the
+  tokens joined by single spaces
 - `sources.tsv`: one row per document: id, family, title, author, URL, license basis, sentences
-- `excluded-documents.tsv`: documents left out because of overlap with evaluation sets or the open training split (ids only)
-- `dropped-sentences.tsv`: the 2 short sentences (key shorter than 25 characters) left out because the sentence equals an evaluation sentence (ids only)
+- `excluded-documents.tsv`: documents left out because of overlap with evaluation sets or the open training split (ids
+  only)
+- `dropped-sentences.tsv`: the 2 short sentences (key shorter than 25 characters) left out because the sentence equals
+  an evaluation sentence (ids only)
 
 ## How It Was Produced
 
@@ -48,27 +49,27 @@ signal; the tag is `_`). Tokens are counted after the contraction split of the c
    at most 20 percent digits, no URLs or markup, and no abbreviation periods inside the sentence. Duplicates and
    sentences that match the evaluation data of the WordSense repository were removed (1,840 documents; listed as
    `spike-selection` in `excluded-documents.tsv`, informational).
-2. **Model labels (one-off, not reproducible here):** every token was labeled by the `BertBaseCased` model of the WordSense
-   project (BERT base cased, Apache-2.0, int8 ONNX export, model file SHA-256
+2. **Model labels (one-off, not reproducible here):** every token was labeled by the `BertBaseCased` model of the
+   WordSense project (BERT base cased, Apache-2.0, int8 ONNX export, model file SHA-256
    `dcc10a647f1520c00e07fd2ee2b3ad383db94657bc97cba3e1915d27e98a962d`, with a frozen part-of-speech head fused with the
    Basic tagger; WordSense commit `6530de1928baf30f9a14446a54bfb5dd5f67b41c`). The model assigns one of the 13 WordSense
-   classes and a probability. The labeling stage needs WordSense and its model, so it cannot be rerun in this repository;
-   the committed `source_tag` column (class letter and probability) makes everything after it reproducible. The model
-   labels were read from the committed per-token output of the earlier spike; BERT was not rerun.
+   classes and a probability. The labeling stage needs WordSense and its model, so it cannot be rerun in this
+   repository; the committed `source_tag` column (class letter and probability) makes everything after it reproducible.
+   The model labels were read from the committed per-token output of the earlier spike; BERT was not rerun.
 3. **Contraction split and UPOS derivation:** `python tools/data/import_silver.py export-spike --spike-dir SPIKE_DIR`
    (one-off) re-splits the contractions with the corpus tokenization (`can't` becomes `ca` and `n't`) and applies the
    table in [../CONVENTIONS.md](../CONVENTIONS.md); `python tools/data/import_silver.py derive` recomputes `upos` and
-   `status` from `source_tag` and the lexicon (deterministic, bit-identical); `verify` checks the file against the rules.
-   The committed file is the derivation **plus** the staged corrections (`../corrections/README.md`), so `verify` reports
-   the corrected labels as problems on it (1,339 at the time of the application). It describes the derivation: it passes
-   after `python tools/data/corrections.py apply --write --reverse` (byte for byte the pre-correction file; run
-   `apply --write` again afterwards to restore the committed state).
-   `verify-sources` (needs network, optional) checks the Tatoeba ids against the CC0 export and the Gutenberg landing pages.
-4. **Leakage:** no silver sentence equals a sentence of an evaluation set (open dev and test, gold v2, the shape probe, the
-   STE challenge set, UD English-EWT), whatever its length, and no silver document id is an evaluation document id. A
-   document that shares a sentence of 25 or more key characters or a document id with an evaluation set was removed: 27
-   Tatoeba sentences have the id of an open dev or test sentence. A shorter equal sentence is dropped alone (the sentences of
-   a book are independent): 2 Gutenberg sentences equal to a UD English-EWT sentence, 11 tokens
+   `status` from `source_tag` and the lexicon (deterministic, bit-identical); `verify` checks the file against the
+   rules. The committed file is the derivation **plus** the staged corrections (`../corrections/README.md`), so `verify`
+   reports the corrected labels as problems on it (1,339 at the time of the application). It describes the derivation:
+   it passes after `python tools/data/corrections.py apply --write --reverse` (byte for byte the pre-correction file;
+   run `apply --write` again afterwards to restore the committed state). `verify-sources` (needs network, optional)
+   checks the Tatoeba ids against the CC0 export and the Gutenberg landing pages.
+4. **Leakage:** no silver sentence equals a sentence of an evaluation set (open dev and test, gold v2, the shape probe,
+   the STE challenge set, UD English-EWT), whatever its length, and no silver document id is an evaluation document id.
+   A document that shares a sentence of 25 or more key characters or a document id with an evaluation set was removed:
+   27 Tatoeba sentences have the id of an open dev or test sentence. A shorter equal sentence is dropped alone (the
+   sentences of a book are independent): 2 Gutenberg sentences equal to a UD English-EWT sentence, 11 tokens
    (`dropped-sentences.tsv`). No silver sentence equals an open training sentence. See `excluded-documents.tsv` and the
    Leakage section of [../README.md](../README.md).
 

@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD013 MD060 -->
-
 # UD English-EWT (Fetch Only, No Data)
 
 **No UD English-EWT data is committed anywhere in this repository.** This folder holds only this documentation. The
@@ -18,12 +16,13 @@ python tools/data/fetch_ud_ewt.py map                        # write the convent
 - **Source:** <https://github.com/UniversalDependencies/UD_English-EWT>, pinned to commit
   `4a4d77f599ea53cc405f85d0cec4b2f14f81d42b` (the same files WordSense pins).
 - **Cache:** `tools/data/cache/ud-ewt/` (git-ignored). The script verifies the SHA-256 of every file and refuses a
-  mismatch: `en_ewt-ud-dev.conllu` `39239e0a...90f8`, `en_ewt-ud-test.conllu` `fa024f43...494a`, `en_ewt-ud-train.conllu`
-  `d68e0612...2143` (full hashes in `tools/data/pins/ud-ewt.tsv`). The train file is fetched only for the leakage check.
-- **Convention map:** the corpus conventions differ from UD in four documented ways (possessive determiners, copula `be`,
-  phrasal-verb particles, prepositions before gerunds), so the reference tags are mapped before scoring a tagger. The
-  rules are in [../../CONVENTIONS.md](../../CONVENTIONS.md); the mapped tables (`ud_dev.tsv`, `ud_test.tsv`) keep the raw
-  tag and the rule next to the mapped tag and never leave the cache.
+  mismatch: `en_ewt-ud-dev.conllu` `39239e0a...90f8`, `en_ewt-ud-test.conllu` `fa024f43...494a`,
+  `en_ewt-ud-train.conllu` `d68e0612...2143` (full hashes in `tools/data/pins/ud-ewt.tsv`). The train file is fetched
+  only for the leakage check.
+- **Convention map:** the corpus conventions differ from UD in four documented ways (possessive determiners, copula
+  `be`, phrasal-verb particles, prepositions before gerunds), so the reference tags are mapped before scoring a tagger.
+  The rules are in [../../CONVENTIONS.md](../../CONVENTIONS.md); the mapped tables (`ud_dev.tsv`, `ud_test.tsv`) keep
+  the raw tag and the rule next to the mapped tag and never leave the cache.
 
 ## Use in This Project
 

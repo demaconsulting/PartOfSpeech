@@ -1,22 +1,30 @@
-<!-- markdownlint-disable MD013 MD060 -->
-
 # Evaluation Data
 
 Evaluation sets that no training step reads. Each folder has its own README with source, license, provenance and how it
 was produced.
 
-- `shapes/`: **What**: noun versus verb shape probe; **Size**: 560 sentences; **License**: CC0-1.0 (labels model-written)
-- `shapes-dev/`: **What**: hard-shape **development** set: real US federal-government sentences, five shapes, controls; standard tranche `dev.tsv` and hard tranche `hard.tsv` (four shapes, contested cases, same federal documents and families), three single-shape tranches from new documents: `compound-head.tsv`, `headings.tsv` (heading lines, exact tags) and `named-state.tsv`, two follow-up tranches from further new documents: `compound-head-2.tsv` and `headings-2.tsv`, and four technical tranches from further new documents: `deverbal-heads.tsv` (class scoring), `defined-terms.tsv`, `step-lines.tsv` and `clause-verbs.tsv` (exact tags); **Size**: 700 + 460 + 120 + 115 + 112 + 255 + 129 + 450 + 285 + 236 + 446 sentences; **License**: CC0-1.0 labels (model-written), US federal-work sentences
-- `gold-v2/`: **What**: single-target gold tokens from public-domain documents; **Size**: 5,072 tokens; **License**: CC0-1.0 labels, public-domain sentences
-- `ste-challenge/`: **What**: simplified-technical-English challenge set; **Size**: 32 sentences, 272 tokens; **License**: CC0-1.0
-- `ud-ewt/`: **What**: UD English-EWT: **fetch script and documentation only, no data**; **License**: CC BY-SA 4.0, never committed
+- `shapes/`: **What**: noun versus verb shape probe; **Size**: 560 sentences; **License**: CC0-1.0 (labels
+  model-written)
+- `shapes-dev/`: **What**: hard-shape **development** set: real US federal-government sentences, five shapes, controls;
+  standard tranche `dev.tsv` and hard tranche `hard.tsv` (four shapes, contested cases, same federal documents and
+  families), three single-shape tranches from new documents: `compound-head.tsv`, `headings.tsv` (heading lines, exact
+  tags) and `named-state.tsv`, two follow-up tranches from further new documents: `compound-head-2.tsv` and
+  `headings-2.tsv`, and four technical tranches from further new documents: `deverbal-heads.tsv` (class scoring),
+  `defined-terms.tsv`, `step-lines.tsv` and `clause-verbs.tsv` (exact tags); **Size**: 700 + 460 + 120 + 115 + 112 +
+  255 + 129 + 450 + 285 + 236 + 446 sentences; **License**: CC0-1.0 labels (model-written), US federal-work sentences
+- `gold-v2/`: **What**: single-target gold tokens from public-domain documents; **Size**: 5,072 tokens; **License**:
+  CC0-1.0 labels, public-domain sentences
+- `ste-challenge/`: **What**: simplified-technical-English challenge set; **Size**: 32 sentences, 272 tokens;
+  **License**: CC0-1.0
+- `ud-ewt/`: **What**: UD English-EWT: **fetch script and documentation only, no data**; **License**: CC BY-SA 4.0,
+  never committed
 
 The open corpus dev and test splits (`../open/`) are also evaluation data. The leakage rules that keep every training
 document and sentence out of these sets are in [../README.md](../README.md).
 
-**Development versus held-out.** `shapes-dev/` is the one set here that is for selection: variants of the tagger are compared
-on it, so a figure from it is never a held-out result. The shape probe (`shapes/`) and the other sets stay evaluation only.
-Nothing is trained on any of them.
+**Development versus held-out.** `shapes-dev/` is the one set here that is for selection: variants of the tagger are
+compared on it, so a figure from it is never a held-out result. The shape probe (`shapes/`) and the other sets stay
+evaluation only. Nothing is trained on any of them.
 
 ## Results and Reproduction
 

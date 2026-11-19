@@ -1,4 +1,3 @@
-<!-- markdownlint-disable MD013 MD060 -->
 <!-- cspell:ignore selftest allimp -->
 
 # Trainer
@@ -17,48 +16,119 @@ Run every command from the repository root:
 dotnet run -c Release --project tools/DemaConsulting.PartOfSpeech.Trainer -- <command> [options]
 ```
 
-- `train`: Train with `training.json` (plus experiment overrides) and write the weights file (default: the embedded resource).
-- `train --check`: Retrain with the committed configuration and compare the **uncompressed image** with the committed file and with `imageSha256`. Exit code 1 if stale.
+- `train`: Train with `training.json` (plus experiment overrides) and write the weights file (default: the embedded
+  resource).
+- `train --check`: Retrain with the committed configuration and compare the **uncompressed image** with the committed
+  file and with `imageSha256`. Exit code 1 if stale.
 - `eval --weights FILE`: Score a weights file on the two development sets through the real decoder (`Tagger.Load`).
-- `eval-shapes [--weights FILE] [--label TEXT] [--tranche standard|hard|both|compound-head|headings|named-state|new|compound-head-2|headings-2|followup|deverbal-heads|defined-terms|step-lines|clause-verbs|technical|all-single] [--calibration]`: Score a weights file (default: the embedded model) on the hard-shape development set through the real decoder and print Markdown: per shape the target-token accuracy (with a 95% Wilson interval), harmful errors and harmful errors per 1,000 noun-verb decisions, and the control accuracy (the same spelling in the other class), plus a pooled row. The standard tranche `data/eval/shapes-dev/dev.tsv` (section unchanged), the hard tranche `hard.tsv` and the two pooled each get a section (default `both`; a missing hard file is noted, `--tranche hard` needs it). The single-shape tranches `compound-head.tsv` (shape `n-compound-head-ambiguous`), `headings.tsv` (shape `heading-titlecase`, scored by exact tag with rows for the noun targets, the imperative targets and the PROPN controls) and `named-state.tsv` (shape `n-named-state`) each get a section of their own that adds the target items that are wrong at a confidence of at least 0.95; `--tranche NAME` scores one of them (a missing file is an error), `--tranche new` scores all three (a missing file is noted). The follow-up tranches `compound-head-2.tsv` and `headings-2.tsv` have the shapes and scoring of the first two and sections of their own (`--tranche compound-head-2`, `--tranche headings-2`, or `--tranche followup` for both; a missing file is noted under `followup`); `new` does not include them. The four technical tranches `deverbal-heads.tsv` (shape `n-deverbal-head`, scored by class), `defined-terms.tsv` (shape `term-capitalized`), `step-lines.tsv` (shape `step-line`) and `clause-verbs.tsv` (shape `v-clause-ambiguous`), all scored by exact tag with a row per kind, have sections of their own (`--tranche NAME`, `--tranche technical` for the four, or `--tranche all-single` for all nine single-shape tranches; a missing file is noted under a group); a selection with a technical tranche ends with a counts table (harmful errors at a confidence of at least 0.45 and the items wrong at 0.90 and at 0.95, per tranche and kind), and `new` and `followup` print what they always printed. `--calibration` (single-shape selections only) appends the calibration measurement: the errors per 1,000 answers at the confidences 0.90 and 0.95 with a Wilson interval and a reliability table, pooled and per tranche; it chooses and changes no threshold. Reads the shapes development files only (their own guard); appends no run-log row.
-- `eval-arm --weights FILE --label TEXT --json FILE`: Dev-only scoring of a trained arm of the context-feature experiment (see *Context-feature experiment* below): the standard and the hard tranche of the shapes development set (per shape and pooled, with per-item outcomes of the target items), the compound-head, headings and named-state tranches (block `shapesNew`: the row of each shape with its confident wrong answers, the heading kinds, and the pooled primary counts of the compound-head and headings tranches), the follow-up measure (block `shapesFollowup`, after `shapesNew`: the rows of `compound-head`, `compound-head-2`, `headings` and `headings-2`, `pooledPrimary` over the enlarged compound dev and all heading dev items with the counts it is derived from and the wrong answers at a confidence of at least 0.95 summed over the four tranches, `imperativeHeadings` pooled over both headings tranches, and `compoundControls`; the two new file hashes are appended to `inputs`), open dev, gold v2 dev, the mapped development part of the external treebank (local cache `tools/data/cache/ud-ewt/ud_dev.tsv`, SHA-256 pinned; missing cache: exit 2 with the fetch recipe), the file sizes, the groups of the weights header and the single-thread throughput of the default tagger (one warm-up pass and five timed passes over the open dev and treebank dev tokens, median tokens per second). Writes one JSON result (schema 1) to `--json`. It has no data option and refuses a weights or result file inside `data/` or `tools/data/`; it cannot read a held-out set.
-- `shapes-tokenize --in FILE --out FILE`: Tokenize a text file, one sentence per line, with the library tokenizer: each output line is `sentence TAB sentences found TAB tokens` (tokens separated by single spaces). Reads and writes only the two files, and refuses a path inside the repository's `data/` folder (links resolved), so it cannot read training, development or held-out data; it is the tokenizer of `tools/data/shapes_dev.py`, so the development set follows the corpus tokenization by construction.
-- `calibrate --weights FILE`: Choose the softmax temperature that minimizes the log-likelihood on the open development split.
-- `compare --a FILE --b FILE`: Paired bootstrap by document (1,000 resamples, fixed seed) of the difference between two weights files.
-- `glossary-probe --weights FILE`: Simulated glossaries on the open development split: score boost versus hard constraint.
-- `glossary-experiment`: Dev-only glossary decision: trains the configured model and a model with trained glossary features, compares them with score boosts and prints the pre-registered decision (outcome: boost only, see `RUN-LOG.md`).
-- `glossary-eval [--seed N] [--resamples N]`: Dev-only evaluation of the `Glossary` API (section E9 of `RUN-LOG.md`): simulated glossaries (noun compounds, single words, inflection, acronym case, gold v2 head effect, history effect after a match, non-head rule) tagged through `Tagger.Tag(tokens, glossary)` with the embedded model; hard and soft mode against no glossary with 0, 10 and 30% wrong entries, paired bootstrap by document (default 1,000 resamples, seed 1). Prints Markdown tables, the parity check against the phase-3 path, the invariant that nothing before a match changes, and the two decisions: the soft strength by the wrong-entry rule that fixes the shipped default (the first-run rule that it replaced is printed after it as the historical decision) and the non-head rule. Reads the two development files only and takes no path; it appends no run-log row.
-- `thresholds [--seed N] [--resamples N]`: Dev-only confidence curve of the embedded model and the pre-registered operating points (`strict`, `balanced`; the protocol section of `RUN-LOG.md`). Writes `docs/evaluation/operating-points.json` and `docs/evaluation/confidence-thresholds.md`; refuses to write when the 0.45 row does not reproduce the frozen development figures. Reads the two development files only.
-- `evaluate [--preflight] [--dump-dir DIR] [--ud-cache DIR] [--seed N] [--resamples N]`: The **one** held-out evaluation of the embedded model, behind the committed `operating-points.json`; see *Held-out evaluation* below. It has no weights, data path or threshold option.
+- `eval-shapes [--weights FILE] [--label TEXT] [--tranche NAME] [--calibration]`, where `NAME` is one of `standard`,
+  `hard`, `both`, `compound-head`, `headings`, `named-state`, `new`, `compound-head-2`, `headings-2`, `followup`,
+  `deverbal-heads`, `defined-terms`, `step-lines`, `clause-verbs`, `technical` or `all-single`: Score a weights file
+  (default: the embedded model) on the hard-shape development set through the real decoder and print Markdown: per shape
+  the target-token accuracy (with a 95% Wilson interval), harmful errors and harmful errors per 1,000 noun-verb
+  decisions, and the control accuracy (the same spelling in the other class), plus a pooled row. The standard tranche
+  `data/eval/shapes-dev/dev.tsv` (section unchanged), the hard tranche `hard.tsv` and the two pooled each get a section
+  (default `both`; a missing hard file is noted, `--tranche hard` needs it). The single-shape tranches
+  `compound-head.tsv` (shape `n-compound-head-ambiguous`), `headings.tsv` (shape `heading-titlecase`, scored by exact
+  tag with rows for the noun targets, the imperative targets and the PROPN controls) and `named-state.tsv` (shape
+  `n-named-state`) each get a section of their own that adds the target items that are wrong at a confidence of at least
+  0.95; `--tranche NAME` scores one of them (a missing file is an error), `--tranche new` scores all three (a missing
+  file is noted). The follow-up tranches `compound-head-2.tsv` and `headings-2.tsv` have the shapes and scoring of the
+  first two and sections of their own (`--tranche compound-head-2`, `--tranche headings-2`, or `--tranche followup` for
+  both; a missing file is noted under `followup`); `new` does not include them. The four technical tranches
+  `deverbal-heads.tsv` (shape `n-deverbal-head`, scored by class), `defined-terms.tsv` (shape `term-capitalized`),
+  `step-lines.tsv` (shape `step-line`) and `clause-verbs.tsv` (shape `v-clause-ambiguous`), all scored by exact tag with
+  a row per kind, have sections of their own (`--tranche NAME`, `--tranche technical` for the four, or
+  `--tranche all-single` for all nine single-shape tranches; a missing file is noted under a group); a selection with a
+  technical tranche ends with a counts table (harmful errors at a confidence of at least 0.45 and the items wrong at
+  0.90 and at 0.95, per tranche and kind), and `new` and `followup` print what they always printed. `--calibration`
+  (single-shape selections only) appends the calibration measurement: the errors per 1,000 answers at the confidences
+  0.90 and 0.95 with a Wilson interval and a reliability table, pooled and per tranche; it chooses and changes no
+  threshold. Reads the shapes development files only (their own guard); appends no run-log row.
+- `eval-arm --weights FILE --label TEXT --json FILE`: Dev-only scoring of a trained arm of the context-feature
+  experiment (see *Context-feature experiment* below): the standard and the hard tranche of the shapes development set
+  (per shape and pooled, with per-item outcomes of the target items), the compound-head, headings and named-state
+  tranches (block `shapesNew`: the row of each shape with its confident wrong answers, the heading kinds, and the pooled
+  primary counts of the compound-head and headings tranches), the follow-up measure (block `shapesFollowup`, after
+  `shapesNew`: the rows of `compound-head`, `compound-head-2`, `headings` and `headings-2`, `pooledPrimary` over the
+  enlarged compound dev and all heading dev items with the counts it is derived from and the wrong answers at a
+  confidence of at least 0.95 summed over the four tranches, `imperativeHeadings` pooled over both headings tranches,
+  and `compoundControls`; the two new file hashes are appended to `inputs`), open dev, gold v2 dev, the mapped
+  development part of the external treebank (local cache `tools/data/cache/ud-ewt/ud_dev.tsv`, SHA-256 pinned; missing
+  cache: exit 2 with the fetch recipe), the file sizes, the groups of the weights header and the single-thread
+  throughput of the default tagger (one warm-up pass and five timed passes over the open dev and treebank dev tokens,
+  median tokens per second). Writes one JSON result (schema 1) to `--json`. It has no data option and refuses a weights
+  or result file inside `data/` or `tools/data/`; it cannot read a held-out set.
+- `shapes-tokenize --in FILE --out FILE`: Tokenize a text file, one sentence per line, with the library tokenizer: each
+  output line is `sentence TAB sentences found TAB tokens` (tokens separated by single spaces). Reads and writes only
+  the two files, and refuses a path inside the repository's `data/` folder (links resolved), so it cannot read training,
+  development or held-out data; it is the tokenizer of `tools/data/shapes_dev.py`, so the development set follows the
+  corpus tokenization by construction.
+- `calibrate --weights FILE`: Choose the softmax temperature that minimizes the log-likelihood on the open development
+  split.
+- `compare --a FILE --b FILE`: Paired bootstrap by document (1,000 resamples, fixed seed) of the difference between two
+  weights files.
+- `glossary-probe --weights FILE`: Simulated glossaries on the open development split: score boost versus hard
+  constraint.
+- `glossary-experiment`: Dev-only glossary decision: trains the configured model and a model with trained glossary
+  features, compares them with score boosts and prints the pre-registered decision (outcome: boost only, see
+  `RUN-LOG.md`).
+- `glossary-eval [--seed N] [--resamples N]`: Dev-only evaluation of the `Glossary` API (section E9 of `RUN-LOG.md`):
+  simulated glossaries (noun compounds, single words, inflection, acronym case, gold v2 head effect, history effect
+  after a match, non-head rule) tagged through `Tagger.Tag(tokens, glossary)` with the embedded model; hard and soft
+  mode against no glossary with 0, 10 and 30% wrong entries, paired bootstrap by document (default 1,000 resamples, seed
+  1). Prints Markdown tables, the parity check against the phase-3 path, the invariant that nothing before a match
+  changes, and the two decisions: the soft strength by the wrong-entry rule that fixes the shipped default (the
+  first-run rule that it replaced is printed after it as the historical decision) and the non-head rule. Reads the two
+  development files only and takes no path; it appends no run-log row.
+- `thresholds [--seed N] [--resamples N]`: Dev-only confidence curve of the embedded model and the pre-registered
+  operating points (`strict`, `balanced`; the protocol section of `RUN-LOG.md`). Writes
+  `docs/evaluation/operating-points.json` and `docs/evaluation/confidence-thresholds.md`; refuses to write when the 0.45
+  row does not reproduce the frozen development figures. Reads the two development files only.
+- `evaluate [--preflight] [--dump-dir DIR] [--ud-cache DIR] [--seed N] [--resamples N]`: The **one** held-out evaluation
+  of the embedded model, behind the committed `operating-points.json`; see *Held-out evaluation* below. It has no
+  weights, data path or threshold option.
 
 Exit codes: 0 success, 1 stale weights (`train --check`) or a stop condition fired (`evaluate`), 2 usage or data error.
 
 ### Options of `train`
 
 - `--config FILE`: Configuration file (default `tools/DemaConsulting.PartOfSpeech.Trainer/training.json`).
-- `--output FILE`: Where to write the (compressed) weights file. Required with experiment overrides and `--calibrate`, so that the shipped weights are never overwritten by an experiment.
+- `--output FILE`: Where to write the (compressed) weights file. Required with experiment overrides and `--calibrate`,
+  so that the shipped weights are never overwritten by an experiment.
 - `--update-config`: Record the SHA-256 of the uncompressed image in the configuration file.
-- `--check` / `--weights FILE`: Verify instead of write; `--weights` names the committed file when it is not the embedded resource.
-- `--eval`, `--label TEXT`, `--log FILE`: Evaluate the result on the development sets; label the run; append a row to a run-log table.
-- `--calibrate`: Experiments only: fit the softmax temperature of the run on the open development split before scoring and writing, so confidence-based metrics compare fairly.
+- `--check` / `--weights FILE`: Verify instead of write; `--weights` names the committed file when it is not the
+  embedded resource.
+- `--eval`, `--label TEXT`, `--log FILE`: Evaluate the result on the development sets; label the run; append a row to a
+  run-log table.
+- `--calibrate`: Experiments only: fit the softmax temperature of the run on the open development split before scoring
+  and writing, so confidence-based metrics compare fairly.
 - `--checkpoints 4,6,8`: Also evaluate the averaged weights after these epochs (one run gives the epoch curve).
 - `--epochs --hash-bits --min-count --prune --scale --seed --temperature`: Override one setting of the configuration.
 - `--restrict none|history|full`, `--history predicted|gold`: Restriction mode (A, B, C) and history mode.
-- `--features none|F1,F2,F3,F4,F5|positionCues,clauseCues,rightPreview,inflection,titleCaseLine`: Context feature groups of the model (experiment override; the groups are stored as a mask in the weights header; `none` is the base feature set, the one before the groups existed, and trains as it did then; `titleCaseLine` (F5) marks a Title Case line, a heading or caption, and conjoins that with the capitalization of the token; the embedded model uses `clauseCues`). Names are accepted in any order and case, short or long.
+- `--features none|F1,F2,F3,F4,F5|positionCues,clauseCues,rightPreview,inflection,titleCaseLine`: Context feature groups
+  of the model (experiment override; the groups are stored as a mask in the weights header; `none` is the base feature
+  set, the one before the groups existed, and trains as it did then; `titleCaseLine` (F5) marks a Title Case line, a
+  heading or caption, and conjoins that with the capitalization of the token; the embedded model uses `clauseCues`).
+  Names are accepted in any order and case, short or long.
 - `--preview-folds N`: Number of jackknife folds of the `rightPreview` group (2 to 10, default 5; experiment override).
 - `--source NAME:WEIGHT`: Set the weight of a source (0 leaves it out); repeatable.
 - `--max-sentences N`, `--sample-permille N`: Limit or subsample every source (deterministic by sentence id).
 - `--mask-disputed true|false`, `--silver-min N`: Masking of `disputed` tokens and of silver tokens below N percent.
 
-Overrides and `--calibrate` are for experiments: they require `--output` (the run is refused with exit code 2 otherwise),
-and they are rejected together with `--check` and `--update-config`.
+Overrides and `--calibrate` are for experiments: they require `--output` (the run is refused with exit code 2
+otherwise), and they are rejected together with `--check` and `--update-config`.
 
 ## Configuration
 
-`training.json` names the corpora (`open`, `masc`, `silver`, `imperative`, `compound`, `headings`, `compound2`, `headings2`, `deverbal`, `terms`, `steps` and `clauses`; each with an integer `weight`, the number of times its
-sentences enter every epoch; open, MASC, silver, imperative, `compound`, `compound2` and the four technical sources `deverbal`, `terms`, `steps` and `clauses` have a positive weight, `--source imperative:0` or `--source terms:0` leaves one of them out of a run, and the two headings sources have weight 0, so `--source headings:1` and `--source headings2:1` add them to a run) and every training setting. It contains no floating-point training setting except the
-softmax `temperature`, which is chosen once by `calibrate` and only written into the file header. The weight scale is
-`1 / quantScale` with `quantScale` a power of two, so it is exact in the file.
+`training.json` names the corpora (`open`, `masc`, `silver`, `imperative`, `compound`, `headings`, `compound2`,
+`headings2`, `deverbal`, `terms`, `steps` and `clauses`; each with an integer `weight`, the number of times its
+sentences enter every epoch; open, MASC, silver, imperative, `compound`, `compound2` and the four technical sources
+`deverbal`, `terms`, `steps` and `clauses` have a positive weight, `--source imperative:0` or `--source terms:0` leaves
+one of them out of a run, and the two headings sources have weight 0, so `--source headings:1` and
+`--source headings2:1` add them to a run) and every training setting. It contains no floating-point training setting
+except the softmax `temperature`, which is chosen once by `calibrate` and only written into the file header. The weight
+scale is `1 / quantScale` with `quantScale` a power of two, so it is exact in the file.
 
 ## Determinism contract
 
@@ -73,70 +143,73 @@ SHA-256 of the image with a pinned value on every target framework.
 
 Every setting is chosen on development data only: open dev (`data/open/dev.tsv`), gold v2 dev
 (`data/eval/gold-v2/dev.tsv`), shapes-dev (standard and hard tranches) and UD-EWT dev (the last two are read by
-`eval-shapes` and `eval-arm`; below). Every command
-except `evaluate`, `eval-shapes` and `eval-arm` reads those two files and nothing else: evaluation accepts exactly those two paths, and
-training accepts only files below the repository's `data` folder (after the path is made absolute and links are resolved) and refuses
-held-out and development files there (`Evaluation/DevSets.cs`, tested). The held-out sets are read by `evaluate` only, and
-only with a committed selection artifact that is valid for the frozen model.
+`eval-shapes` and `eval-arm`; below). Every command except `evaluate`, `eval-shapes` and `eval-arm` reads those two
+files and nothing else: evaluation accepts exactly those two paths, and training accepts only files below the
+repository's `data` folder (after the path is made absolute and links are resolved) and refuses held-out and development
+files there (`Evaluation/DevSets.cs`, tested). The held-out sets are read by `evaluate` only, and only with a committed
+selection artifact that is valid for the frozen model.
 
 The hard-shape development set has eleven files: the standard tranche (`data/eval/shapes-dev/dev.tsv`), the hard tranche
-(`data/eval/shapes-dev/hard.tsv`), the single-shape tranches `compound-head.tsv`, `headings.tsv` and `named-state.tsv`, the
-follow-up tranches `compound-head-2.tsv` and `headings-2.tsv`, and the technical tranches `deverbal-heads.tsv`, `defined-terms.tsv`,
-`step-lines.tsv` and `clause-verbs.tsv` (the last nine may be absent). They are development files with a guard of their own:
-`eval-shapes` reads them through `DataGuard.EnsureShapesDevelopmentFile` (an allow-list of exactly those paths, links refused; the
-sources files and leakage reports of the folder are refused by name)
-and a header that announces a `dev split`; the tranche of an item is the file it was read from, never a comment. The reader also
-checks that the corpus header and the sentence ids belong to the tranche of the file (a tranche other than the standard one says
-`<tranche> tranche`, for example `hard tranche`, and its ids start with `shapes-dev-<tranche>-`; the standard tranche has no marker and no such
-prefix), so a copy of one file at the path of another is refused. They are not in
-the two-file allow-list, so no other command can read them, they are not held-out files, so `evaluate` never reads them, and
-training refuses them like every other development file (all lie below the `eval` folder). They are for selecting settings (for example the context-feature work),
-never a held-out figure; the shape probe stays evaluation only.
+(`data/eval/shapes-dev/hard.tsv`), the single-shape tranches `compound-head.tsv`, `headings.tsv` and `named-state.tsv`,
+the follow-up tranches `compound-head-2.tsv` and `headings-2.tsv`, and the technical tranches `deverbal-heads.tsv`,
+`defined-terms.tsv`, `step-lines.tsv` and `clause-verbs.tsv` (the last nine may be absent). They are development files
+with a guard of their own: `eval-shapes` reads them through `DataGuard.EnsureShapesDevelopmentFile` (an allow-list of
+exactly those paths, links refused; the sources files and leakage reports of the folder are refused by name) and a
+header that announces a `dev split`; the tranche of an item is the file it was read from, never a comment. The reader
+also checks that the corpus header and the sentence ids belong to the tranche of the file (a tranche other than the
+standard one says `<tranche> tranche`, for example `hard tranche`, and its ids start with `shapes-dev-<tranche>-`; the
+standard tranche has no marker and no such prefix), so a copy of one file at the path of another is refused. They are
+not in the two-file allow-list, so no other command can read them, they are not held-out files, so `evaluate` never
+reads them, and training refuses them like every other development file (all lie below the `eval` folder). They are for
+selecting settings (for example the context-feature work), never a held-out figure; the shape probe stays evaluation
+only.
 
 ### Context-feature experiment
 
 The experiment on sentence-level context features (the groups F1 position cues, F2 clause cues, F3 right preview and F4
-inflection of the shared feature extractor; the title-case line group F5 is not part of that experiment) is pre-registered in `RUN-LOG.md` and run by the harness in
-`context-features/`: `arms.json` (the ten arms and the five seeds), `run_arms.ps1` (resumable and sequential: per arm and
-seed `train --seed S --features G [--preview-folds 5] --calibrate --output FILE`, then `eval-arm`; below-normal priority,
-at most 8 threads, at least 6 GB free on C:; the interface contract and the schema of the per-run JSON are at the top of
-the script) and `analyze_arms.py` (the table, the guards and the selection rule; it checks its own logic on synthetic runs).
-All three files are frozen by
-the hashes in the run log. The rule selected F2, which the embedded model enables through `training.json`; the other
-groups stay switches that are off (`RUN-LOG.md` has the results and the caveats, and `docs/design/part-of-speech/model-trainer.md`
-the design). On a machine whose cores are saturated by other processes the below-normal priority can starve a run;
-`-Runner FILE` replaces the `dotnet` command with a wrapper of your own (for example one that starts it at normal priority).
-To run everything (writes below the given folder, which must be on C:):
+inflection of the shared feature extractor; the title-case line group F5 is not part of that experiment) is
+pre-registered in `RUN-LOG.md` and run by the harness in `context-features/`: `arms.json` (the ten arms and the five
+seeds), `run_arms.ps1` (resumable and sequential: per arm and seed
+`train --seed S --features G [--preview-folds 5] --calibrate --output FILE`, then `eval-arm`; below-normal priority, at
+most 8 threads, at least 6 GB free on C:; the interface contract and the schema of the per-run JSON are at the top of
+the script) and `analyze_arms.py` (the table, the guards and the selection rule; it checks its own logic on synthetic
+runs). All three files are frozen by the hashes in the run log. The rule selected F2, which the embedded model enables
+through `training.json`; the other groups stay switches that are off (`RUN-LOG.md` has the results and the caveats, and
+`docs/design/part-of-speech/model-trainer.md` the design). On a machine whose cores are saturated by other processes the
+below-normal priority can starve a run; `-Runner FILE` replaces the `dotnet` command with a wrapper of your own (for
+example one that starts it at normal priority). To run everything (writes below the given folder, which must be on C:):
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <folder> -PyCache <your-cache-dir>
 python tools/DemaConsulting.PartOfSpeech.Trainer/context-features/analyze_arms.py --runs <folder> --out <report.md>
 ```
 
-The treebank development table that `eval-arm` reads comes from `python tools/data/fetch_ud_ewt.py fetch` and `map`.
-A model that is trained with the `rightPreview` group first trains one model per fold (without that group, with the other
+The treebank development table that `eval-arm` reads comes from `python tools/data/fetch_ud_ewt.py fetch` and `map`. A
+model that is trained with the `rightPreview` group first trains one model per fold (without that group, with the other
 groups of the arm), decodes the held-out fold with each, and then trains once on both decoding modes; its `train` output
-prints one line per fold and the time of the jackknife, and the `Trained ... in X s` line is the time of the final training
-alone.
+prints one line per fold and the time of the jackknife, and the `Trained ... in X s` line is the time of the final
+training alone.
 
 ### Imperative-data experiment
 
-The harness for the training source `imperative` (900 imperative-initial sentences, `data/imperative/`) reuses the driver
-`context-features/run_arms.ps1` unchanged, with one folder per arm and the `-Runner` option. `imperative-data/runner-base.cmd`
-starts `dotnet` at normal priority; `imperative-data/runner-imp.cmd` does the same and appends `--source imperative:1` to the
-`train` command (the arms F2+IMP and ALL+IMP). `imperative-data/analyze_imperative.py` runs the acceptance tests (F2 at the shipped
-seed equals the shipped weights, the imperative runs trained on exactly 900 more sentences, every run scored the frozen development
-files), prints the tables and the guards (size 1.5 x F2) and applies the selection rule; it takes only `welch_diff` from
-`analyze_arms.py` and checks its own logic on synthetic runs with `--selftest`. The runners and the script are frozen by the hashes
-in the run log. The runners, the driver and the analysis encode the **pre-registered state**, in which `training.json` carries the
-source `imperative` at weight 0: there the base runner trains the arm F2 (the runner passes `train` unchanged, so the weight in
-`training.json` decides) and the imperative runner trains F2+IMP (`--source imperative:1`). **To reproduce the published comparison,
-check out the pre-registration commit `ca0c2d4`** (its `training.json` is the registered one, and the analysis script checks its
-hash). At the adopted state (the current `training.json`, weight 1) the base runner also trains F2+IMP, so base and imperative runs
-train on the same 900 sentences, the comparison is no longer an F2 against F2+IMP comparison, and the acceptance test "F2 equals the
-shipped weights" does not hold. To train the F2 arm at the adopted state, add `--source imperative:0` to a direct `train` command
-(the frozen runners do not add it). The registration, the results and the decision are in `RUN-LOG.md` ("Imperative training
-data"); the provenance of the data, including the refusals and retries of one labeler, is in `data/imperative/README.md`.
+The harness for the training source `imperative` (900 imperative-initial sentences, `data/imperative/`) reuses the
+driver `context-features/run_arms.ps1` unchanged, with one folder per arm and the `-Runner` option.
+`imperative-data/runner-base.cmd` starts `dotnet` at normal priority; `imperative-data/runner-imp.cmd` does the same and
+appends `--source imperative:1` to the `train` command (the arms F2+IMP and ALL+IMP).
+`imperative-data/analyze_imperative.py` runs the acceptance tests (F2 at the shipped seed equals the shipped weights,
+the imperative runs trained on exactly 900 more sentences, every run scored the frozen development files), prints the
+tables and the guards (size 1.5 x F2) and applies the selection rule; it takes only `welch_diff` from `analyze_arms.py`
+and checks its own logic on synthetic runs with `--selftest`. The runners and the script are frozen by the hashes in the
+run log. The runners, the driver and the analysis encode the **pre-registered state**, in which `training.json` carries
+the source `imperative` at weight 0: there the base runner trains the arm F2 (the runner passes `train` unchanged, so
+the weight in `training.json` decides) and the imperative runner trains F2+IMP (`--source imperative:1`). **To reproduce
+the published comparison, check out the pre-registration commit `ca0c2d4`** (its `training.json` is the registered one,
+and the analysis script checks its hash). At the adopted state (the current `training.json`, weight 1) the base runner
+also trains F2+IMP, so base and imperative runs train on the same 900 sentences, the comparison is no longer an F2
+against F2+IMP comparison, and the acceptance test "F2 equals the shipped weights" does not hold. To train the F2 arm at
+the adopted state, add `--source imperative:0` to a direct `train` command (the frozen runners do not add it). The
+registration, the results and the decision are in `RUN-LOG.md` ("Imperative training data"); the provenance of the data,
+including the refusals and retries of one labeler, is in `data/imperative/README.md`.
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/context-features/run_arms.ps1 -Out <runs>\f2imp -Arms F2 -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-imp.cmd -PyCache <your-cache-dir>
@@ -145,58 +218,63 @@ python tools/DemaConsulting.PartOfSpeech.Trainer/imperative-data/analyze_imperat
 
 ### Compound-head and heading experiment
 
-The harness for the training sources `compound` (ambiguous-head noun compounds, `data/compound/`) and `headings` (Title Case
-heading lines, `data/headings/`) and for the feature group `titleCaseLine` (F5) is in `compound-heading/`. `arms.json` has the
-arms BASE (the shipped configuration), CMP (`compound`), CMP-HDG (`compound` and `headings`) and CMP-HDG-F5 (both sources and the
-group `titleCaseLine`), with the five seeds of the earlier experiments. `run_arms.ps1` is the driver of the context-feature
-experiment with its own `arms.json`: it appends `--source <name>:1` for each source of an arm, and it stops cleanly (exit code 4,
-`resume.txt` in the output folder) when the PAUSE file of the session folder exists. It is used with
-`imperative-data/runner-base.cmd`, which passes `train` unchanged, so the sources of `training.json` at weight 0 stay out of BASE.
-`analyze_compound_heading.py` runs the acceptance tests (BASE at the shipped seed equals the shipped weights, the added sentence
-counts, the feature groups of every arm, the frozen development files), prints a Markdown table of the primary metric (pooled
-harmful per 1,000 decisions on the compound-head and the headings tranche), the co-primary (answers wrong at confidence 0.95 or
-more), every guard and the verdict, and applies the selection rule; it takes only `welch_diff` from `analyze_arms.py` and checks
-its own logic on synthetic runs with `--selftest`. The files are frozen by the hashes in the run log ("Compound and heading
-training data: pre-registered retrain"); the results and the decision (the rule selected no arm; the sources stay at weight 0)
-are in the section "Compound and heading training data: results". The script describes the experiment as it was run: the frozen hashes and
-the line count of the two heading files are those of the data of the retrain (375 lines), so against the current `data/headings/` (one line
-fewer; see "Amendment after the result" in the run log) the frozen-file check of the analysis and the two corresponding checks of `--selftest`
-fail by design, and everything else in `--selftest` passes. `eval-arm` writes the tranches of this experiment under `shapesNew`.
+The harness for the training sources `compound` (ambiguous-head noun compounds, `data/compound/`) and `headings` (Title
+Case heading lines, `data/headings/`) and for the feature group `titleCaseLine` (F5) is in `compound-heading/`.
+`arms.json` has the arms BASE (the shipped configuration), CMP (`compound`), CMP-HDG (`compound` and `headings`) and
+CMP-HDG-F5 (both sources and the group `titleCaseLine`), with the five seeds of the earlier experiments. `run_arms.ps1`
+is the driver of the context-feature experiment with its own `arms.json`: it appends `--source <name>:1` for each source
+of an arm, and it stops cleanly (exit code 4, `resume.txt` in the output folder) when the PAUSE file of the session
+folder exists. It is used with `imperative-data/runner-base.cmd`, which passes `train` unchanged, so the sources of
+`training.json` at weight 0 stay out of BASE. `analyze_compound_heading.py` runs the acceptance tests (BASE at the
+shipped seed equals the shipped weights, the added sentence counts, the feature groups of every arm, the frozen
+development files), prints a Markdown table of the primary metric (pooled harmful per 1,000 decisions on the
+compound-head and the headings tranche), the co-primary (answers wrong at confidence 0.95 or more), every guard and the
+verdict, and applies the selection rule; it takes only `welch_diff` from `analyze_arms.py` and checks its own logic on
+synthetic runs with `--selftest`. The files are frozen by the hashes in the run log ("Compound and heading training
+data: pre-registered retrain"); the results and the decision (the rule selected no arm; the sources stay at weight 0)
+are in the section "Compound and heading training data: results". The script describes the experiment as it was run: the
+frozen hashes and the line count of the two heading files are those of the data of the retrain (375 lines), so against
+the current `data/headings/` (one line fewer; see "Amendment after the result" in the run log) the frozen-file check of
+the analysis and the two corresponding checks of `--selftest` fail by design, and everything else in `--selftest`
+passes. `eval-arm` writes the tranches of this experiment under `shapesNew`.
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/run_arms.ps1 -Out <runs> -Arms CMP -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <pycache> -PauseFile <pause-file>
 python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading/analyze_compound_heading.py --runs <runs> --out report.md --decision decision.json
 ```
 
-`-PyCache` and `-PauseFile` are local paths on drive C: that the caller chooses; the defaults inside the frozen driver are not meant for reuse.
+`-PyCache` and `-PauseFile` are local paths on drive C: that the caller chooses; the defaults inside the frozen driver
+are not meant for reuse.
 
 ### Compound and heading follow-up experiment
 
-The re-test of the follow-up (the enlarged compound development tranche `compound-head-2`, the new real-text imperative headings
-`headings-2`, and the training sources `compound2` and `headings2`) is in `compound-heading-2/`. `arms.json` has five arms with
-eight seeds (`20260101` and `11` to `17`): BASE (the shipped configuration), CMP2 (`compound` and `compound2`), CMP2-F5 (the same
-sources and the group `titleCaseLine`), CMP2-HDG2 (all four sources) and CMP2-HDG2-F5 (all four sources and `titleCaseLine`).
-`run_arms.ps1` is the driver of the compound-heading experiment (resumable, PAUSE-file check with exit code 4, at least 6 GB free
-on C:, at most 8 threads, `-PyCache` and `-PauseFile` with the defaults of the session folder) with its own `arms.json`; it is
-used with `imperative-data/runner-base.cmd`, unchanged. `analyze_followup.py` runs the acceptance tests (BASE at the shipped seed
-equals the shipped weights and the figures measured for the shipped model, the added sentence counts, the feature groups of
-every arm, the frozen development files), prints the primary metric (`shapesFollowup.pooledPrimary.harmfulPer1k`), the
-co-primary, every guard (the imperative-heading guard is new) and the verdict, and applies selection rule B of the run log
-("Follow-up: pre-registered re-test (E1)"); it takes only `welch_diff` from `analyze_arms.py` and checks its own logic on
-synthetic runs with `--selftest`. The files are frozen by the hashes in that section. The experiment was run after the
-pre-registration commit (`0f0b595`); the results and the decision (rule B selected CMP2, the compound sources at weight 1) are in the section "Follow-up: re-test
-results" of the run log, and the adoption of CMP2 in "Follow-up: adoption of the CMP2 model". The harness encodes the **pre-registered state**,
-in which `training.json` carries `compound` and `compound2` at weight 0: there the base runner trains BASE (the shipped model at that
-time, the runner passes `train` unchanged, so the weights of `training.json` decide). **To reproduce the published comparison, check
-out the pre-registration commit `0f0b595`** (its `training.json` is the registered one, and the analysis script checks its hash). At the
-adopted state (weight 1) the base runner also trains CMP2, so BASE and CMP2 runs train on the same sentences and the acceptance test
-"BASE equals the shipped weights" does not hold; to train the BASE arm at the adopted state, add `--source compound:0 --source compound2:0`
-to a direct `train` command (the frozen runners do not add them). The frozen compound-heading experiment of the previous section has the
-same property.
+The re-test of the follow-up (the enlarged compound development tranche `compound-head-2`, the new real-text imperative
+headings `headings-2`, and the training sources `compound2` and `headings2`) is in `compound-heading-2/`. `arms.json`
+has five arms with eight seeds (`20260101` and `11` to `17`): BASE (the shipped configuration), CMP2 (`compound` and
+`compound2`), CMP2-F5 (the same sources and the group `titleCaseLine`), CMP2-HDG2 (all four sources) and CMP2-HDG2-F5
+(all four sources and `titleCaseLine`). `run_arms.ps1` is the driver of the compound-heading experiment (resumable,
+PAUSE-file check with exit code 4, at least 6 GB free on C:, at most 8 threads, `-PyCache` and `-PauseFile` with the
+defaults of the session folder) with its own `arms.json`; it is used with `imperative-data/runner-base.cmd`, unchanged.
+`analyze_followup.py` runs the acceptance tests (BASE at the shipped seed equals the shipped weights and the figures
+measured for the shipped model, the added sentence counts, the feature groups of every arm, the frozen development
+files), prints the primary metric (`shapesFollowup.pooledPrimary.harmfulPer1k`), the co-primary, every guard (the
+imperative-heading guard is new) and the verdict, and applies selection rule B of the run log ("Follow-up:
+pre-registered re-test (E1)"); it takes only `welch_diff` from `analyze_arms.py` and checks its own logic on synthetic
+runs with `--selftest`. The files are frozen by the hashes in that section. The experiment was run after the
+pre-registration commit (`0f0b595`); the results and the decision (rule B selected CMP2, the compound sources at
+weight 1) are in the section "Follow-up: re-test results" of the run log, and the adoption of CMP2 in "Follow-up:
+adoption of the CMP2 model". The harness encodes the **pre-registered state**, in which `training.json` carries
+`compound` and `compound2` at weight 0: there the base runner trains BASE (the shipped model at that time, the runner
+passes `train` unchanged, so the weights of `training.json` decide). **To reproduce the published comparison, check out
+the pre-registration commit `0f0b595`** (its `training.json` is the registered one, and the analysis script checks its
+hash). At the adopted state (weight 1) the base runner also trains CMP2, so BASE and CMP2 runs train on the same
+sentences and the acceptance test "BASE equals the shipped weights" does not hold; to train the BASE arm at the adopted
+state, add `--source compound:0 --source compound2:0` to a direct `train` command (the frozen runners do not add them).
+The frozen compound-heading experiment of the previous section has the same property.
 
-The analyzer needs all five arms (BASE, CMP2, CMP2-F5, CMP2-HDG2, CMP2-HDG2-F5) at all eight seeds (the seeds of `arms.json`, the
-default of the driver) in one `<runs>` folder, so run the driver once per arm (it is resumable and writes one `<label>.json` per arm
-and seed), then the analyzer. Do this at the pre-registration commit `0f0b595`:
+The analyzer needs all five arms (BASE, CMP2, CMP2-F5, CMP2-HDG2, CMP2-HDG2-F5) at all eight seeds (the seeds of
+`arms.json`, the default of the driver) in one `<runs>` folder, so run the driver once per arm (it is resumable and
+writes one `<label>.json` per arm and seed), then the analyzer. Do this at the pre-registration commit `0f0b595`:
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -Out <runs> -Arms BASE -Runner <repo>\tools\DemaConsulting.PartOfSpeech.Trainer\imperative-data\runner-base.cmd -PyCache <your-cache-dir> -PauseFile <your-pause-file>
@@ -207,33 +285,36 @@ pwsh tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/run_arms.ps1 -
 python tools/DemaConsulting.PartOfSpeech.Trainer/compound-heading-2/analyze_followup.py --runs <runs> --out <runs>\report.md --decision <runs>\decision.json
 ```
 
-`-PyCache` and `-PauseFile` are local paths on drive C: that the caller chooses (a cache folder that the caller may write to, and
-the path of a pause file that the caller controls: the driver stops with exit code 4 while that file exists); the defaults inside
-the frozen drivers belong to another user's session and are not meant for reuse. The earlier drivers take the same
-caller-chosen paths in their commands above (the `context-features` driver has `-PyCache` only).
+`-PyCache` and `-PauseFile` are local paths on drive C: that the caller chooses (a cache folder that the caller may
+write to, and the path of a pause file that the caller controls: the driver stops with exit code 4 while that file
+exists); the defaults inside the frozen drivers belong to another user's session and are not meant for reuse. The
+earlier drivers take the same caller-chosen paths in their commands above (the `context-features` driver has `-PyCache`
+only).
 
-The BASE acceptance test ("BASE equals the shipped weights") holds only at commit `0f0b595`; at the adopted state it does not
-hold, as described above.
+The BASE acceptance test ("BASE equals the shipped weights") holds only at commit `0f0b595`; at the adopted state it
+does not hold, as described above.
 
 ### Technical-mix experiment (beta.3 phase 2)
 
-The pre-registered experiment on the four technical training sources (`deverbal`, `terms`, `steps`,
-`clauses`) is in `beta3-tech/`; its rules, arms, guards, hashes and decision rule are the section
-"beta.3 phase 2 (E2)" of `RUN-LOG.md`, and its winner, TECH (all four sources at weight 1), is the shipped model. `arms.json` has six arms with eight seeds (`20260101` and `11` to `17`): BASE (the
-configuration without the four technical sources, no option), TECH (all four sources at weight 1), TECH-NT (without `terms`; attribution only, it cannot be
-selected), TECH-ND (without `deverbal`), TECH-T2 (`terms` at weight 2) and TECH-W2 (all four at weight 2); a source of an arm is a
-member `NAME: WEIGHT` and is passed as `--source NAME:WEIGHT`. `run_arms.ps1` is the driver of the follow-up with its own
-`arms.json`: resumable (a run is complete when its JSON exists), it **waits** while the PAUSE file exists (polling every 60 s;
-`-PollSeconds`), needs at least 6 GB free on C:, uses at most 8 threads and the priority `-Priority` (`BelowNormal`, or `Normal`
-when BelowNormal is starved), and writes only outside the repository (`-Out`, `-PyCache` and `-PauseFile` are the caller's own
-local paths on drive C:, see the commands below). `analyze_tech.py` runs the acceptance tests (BASE at the shipped
-seed equals the shipped weights and the 208 figures of `shipped_figures.json`, the eight BASE seeds equal the eight CMP2 weights of
-the follow-up, the training logs, the frozen development files and trainer commit, the frozen files, and that the sources share
-no document or sentence with the development tranches), then applies rule T (20 guards, a Welch interval below 0 on the
-pooled harmful rate and above 0 on the defined-terms accuracy, the fewest weighted added sentences within 10% of the best); it takes
-only `welch_diff` from `analyze_arms.py` and checks its own logic on synthetic runs with `--selftest`. `technical_points.py` turns
-the `eval-arm` result of the shipped weights into the technical operating point (rule `nv-technical-dev-v1`) and has its own
-`--selftest`. `eval-arm` writes the confidence curve of the technical calibration (`shapesTechnical.calibration`) that both read.
+The pre-registered experiment on the four technical training sources (`deverbal`, `terms`, `steps`, `clauses`) is in
+`beta3-tech/`; its rules, arms, guards, hashes and decision rule are the section "beta.3 phase 2 (E2)" of `RUN-LOG.md`,
+and its winner, TECH (all four sources at weight 1), is the shipped model. `arms.json` has six arms with eight seeds
+(`20260101` and `11` to `17`): BASE (the configuration without the four technical sources, no option), TECH (all four
+sources at weight 1), TECH-NT (without `terms`; attribution only, it cannot be selected), TECH-ND (without `deverbal`),
+TECH-T2 (`terms` at weight 2) and TECH-W2 (all four at weight 2); a source of an arm is a member `NAME: WEIGHT` and is
+passed as `--source NAME:WEIGHT`. `run_arms.ps1` is the driver of the follow-up with its own `arms.json`: resumable (a
+run is complete when its JSON exists), it **waits** while the PAUSE file exists (polling every 60 s; `-PollSeconds`),
+needs at least 6 GB free on C:, uses at most 8 threads and the priority `-Priority` (`BelowNormal`, or `Normal` when
+BelowNormal is starved), and writes only outside the repository (`-Out`, `-PyCache` and `-PauseFile` are the caller's
+own local paths on drive C:, see the commands below). `analyze_tech.py` runs the acceptance tests (BASE at the shipped
+seed equals the shipped weights and the 208 figures of `shipped_figures.json`, the eight BASE seeds equal the eight CMP2
+weights of the follow-up, the training logs, the frozen development files and trainer commit, the frozen files, and that
+the sources share no document or sentence with the development tranches), then applies rule T (20 guards, a Welch
+interval below 0 on the pooled harmful rate and above 0 on the defined-terms accuracy, the fewest weighted added
+sentences within 10% of the best); it takes only `welch_diff` from `analyze_arms.py` and checks its own logic on
+synthetic runs with `--selftest`. `technical_points.py` turns the `eval-arm` result of the shipped weights into the
+technical operating point (rule `nv-technical-dev-v1`) and has its own `--selftest`. `eval-arm` writes the confidence
+curve of the technical calibration (`shapesTechnical.calibration`) that both read.
 
 ```text
 pwsh tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/run_arms.ps1 -Out <runs> -Arms BASE -PyCache <your-cache-dir> -PauseFile <your-pause-file>
@@ -246,21 +327,22 @@ python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/analyze_tech.py --ru
 python tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech/technical_points.py --arm-json <eval-arm result of the shipped weights> --out <output-folder>\technical-operating-points.json
 ```
 
-`-Out` (the folder of the run results and weights), `-PyCache` (a Python cache folder the caller may write to) and `-PauseFile`
-(the path of a pause file the caller controls; the driver waits while it exists) are local paths on drive C: that the caller
-chooses. The defaults inside the frozen driver are folders of the session of the machine that ran the experiment and are not
-meant for reuse. The other two path parameters of the driver, `-Repo` and `-Dll`, default to the checkout that contains the
-driver and to its Release build of the trainer, and are normally not passed.
+`-Out` (the folder of the run results and weights), `-PyCache` (a Python cache folder the caller may write to) and
+`-PauseFile` (the path of a pause file the caller controls; the driver waits while it exists) are local paths on drive
+C: that the caller chooses. The defaults inside the frozen driver are folders of the session of the machine that ran the
+experiment and are not meant for reuse. The other two path parameters of the driver, `-Repo` and `-Dll`, default to the
+checkout that contains the driver and to its Release build of the trainer, and are normally not passed.
 
-The analyzer needs all six arms at all eight seeds in one `<runs>` folder, and the working tree must be clean and at one commit
-while the runs are made (the result files record the commit and a dirty flag). The acceptance test "BASE equals the shipped
-weights" compares BASE at the shipped seed with the `weights.bin` given by `--shipped-weights` and checks the `training.json` of the
-checkout; both must be those of BASE (the configuration without the four technical sources). The shipped model is TECH, so the test
-cannot hold in a checkout of the shipped state: the analyzer runs in a checkout of commit `c56e091`, whose `training.json` and
-`weights.bin` are BASE's, with `--shipped-weights` naming that checkout's `weights.bin`.
+The analyzer needs all six arms at all eight seeds in one `<runs>` folder, and the working tree must be clean and at one
+commit while the runs are made (the result files record the commit and a dirty flag). The acceptance test "BASE equals
+the shipped weights" compares BASE at the shipped seed with the `weights.bin` given by `--shipped-weights` and checks
+the `training.json` of the checkout; both must be those of BASE (the configuration without the four technical sources).
+The shipped model is TECH, so the test cannot hold in a checkout of the shipped state: the analyzer runs in a checkout
+of commit `c56e091`, whose `training.json` and `weights.bin` are BASE's, with `--shipped-weights` naming that checkout's
+`weights.bin`.
 
-The independent audit `beta3-tech-audit/audit_runs.py` (not part of the frozen set; see its `README.md`) checks the run inputs
-fail-closed:
+The independent audit `beta3-tech-audit/audit_runs.py` (not part of the frozen set; see its `README.md`) checks the run
+inputs fail-closed:
 
 ```text
 python -B tools/DemaConsulting.PartOfSpeech.Trainer/beta3-tech-audit/audit_runs.py --runs <runs>
@@ -277,34 +359,36 @@ written before any number existed. The order is fixed by code:
 2. **Fetch the external treebank (local only, never committed).** `python tools/data/fetch_ud_ewt.py fetch`, then
    `python tools/data/fetch_ud_ewt.py map` (pinned hashes are enforced; the cache is git-ignored). `evaluate` converts
    nothing itself: it reads the mapped table (the four convention rules of `data/CONVENTIONS.md`) from the cache and
-   verifies the pinned source file and the pinned hash of the mapped table first. `--ud-cache DIR` names another cache folder.
+   verifies the pinned source file and the pinned hash of the mapped table first. `--ud-cache DIR` names another cache
+   folder.
 3. **Pre-flight.** `evaluate --preflight` reads and parses every held-out input (verifying the hashes and headers) and
    prints counts only, next to the documented counts; no tag, prediction or metric. A difference stops the work.
-4. **The one run.** `evaluate --dump-dir DIR` (a folder outside the repository, which also receives the per-token records
-   of the run) writes `docs/evaluation/test-results.md` and `test-results.json`. It refuses to run when
+4. **The one run.** `evaluate --dump-dir DIR` (a folder outside the repository, which also receives the per-token
+   records of the run) writes `docs/evaluation/test-results.md` and `test-results.json`. It refuses to run when
    `test-results.json` exists; a repeat needs that committed file to be deleted on purpose and the reason recorded in
    `RUN-LOG.md`. The run is claimed atomically: immediately before scoring `evaluate` creates the lock file
-   `docs/evaluation/test-results.json.running` exclusively (a second run is refused) and removes it once the results file
-   is written. After an aborted run the lock stays and blocks every later run; delete it by hand only after an aborted
-   run and record the deletion and its reason in `RUN-LOG.md`. The model, the configuration, the temperature and the
-   thresholds never change in a repeat.
+   `docs/evaluation/test-results.json.running` exclusively (a second run is refused) and removes it once the results
+   file is written. After an aborted run the lock stays and blocks every later run; delete it by hand only after an
+   aborted run and record the deletion and its reason in `RUN-LOG.md`. The model, the configuration, the temperature and
+   the thresholds never change in a repeat.
 
 Run the commands at below-normal priority, one process at a time (see *Machine limits*). `build.ps1` and CI do not run
 `thresholds` or `evaluate`.
 
 ## Current model
 
-`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%), imperative (x1), the two compound sources `compound` and `compound2` (x1 each) and the four technical sources `deverbal`, `terms`, `steps` and `clauses` (x1 each; 65,373 training sentences); restriction
-mode `history` with predicted history; 6 epochs; 19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8;
-the feature group `clauseCues`; temperature 9.514. The file `weights.bin` has 129,882 rows and 324,906 weights, is
-1,234,530 bytes uncompressed and 553,641 bytes compressed, and the library embeds it (`Tagger.Default`). `train --check`
-takes about 15 seconds and runs
-in `build.ps1` and in the CI build on all three operating systems. The glossary decision (boost only, no trained
-feature) and every experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and
+`training.json` selects: sources open (x2), MASC, silver (labeled tokens with probability of at least 80%), imperative
+(x1), the two compound sources `compound` and `compound2` (x1 each) and the four technical sources `deverbal`, `terms`,
+`steps` and `clauses` (x1 each; 65,373 training sentences); restriction mode `history` with predicted history; 6 epochs;
+19 hash bits; magnitude pruning at 8 quantized units; `quantScale` 8; the feature group `clauseCues`; temperature 9.514.
+The file `weights.bin` has 129,882 rows and 324,906 weights, is 1,234,530 bytes uncompressed and 553,641 bytes
+compressed, and the library embeds it (`Tagger.Default`). `train --check` takes about 15 seconds and runs in `build.ps1`
+and in the CI build on all three operating systems. The glossary decision (boost only, no trained feature) and every
+experiment are in `RUN-LOG.md`; `docs/design/part-of-speech/model-trainer.md` is the design and
 `docs/verification/part-of-speech/model-trainer.md` the verification. To change the model: edit `training.json` (or run
-experiments with the overrides), run `train --update-config`, then `train --check`, run the tests, and note the change in
-`RUN-LOG.md`; the committed corpora, the lexicon and the extractor are inputs, so changing any of them also requires a new
-training run and new pinned hashes in the tests.
+experiments with the overrides), run `train --update-config`, then `train --check`, run the tests, and note the change
+in `RUN-LOG.md`; the committed corpora, the lexicon and the extractor are inputs, so changing any of them also requires
+a new training run and new pinned hashes in the tests.
 
 ## Machine limits
 
