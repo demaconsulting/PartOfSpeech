@@ -6,8 +6,8 @@ This document describes the unit-level verification strategy for the `TagDecoder
 
 The unit is verified by unit tests in `Tagging/TagDecoderTests.cs` that construct a `TagDecoder` directly from a
 `PerceptronModel` and a `Lexicon`. The model and lexicon are small files written by the real writers (hand-set weights
-through `TinyModels.WeightsBuilder`, so every score and every analytic probability is known), except in the throughput
-test and in the word lookup tests, which use the real embedded lexicon (the lookup of every spelling is compared with
+through `TinyModels.WeightsBuilder`, so every score and every analytic probability is known), except in the word
+lookup tests, which use the real embedded lexicon (the lookup of every spelling is compared with
 the decode of the same word, because a sample could miss a rule). Nothing is mocked. Two methods deserve a description:
 
 - **Analytic confidences.** With hand-set scores and a known temperature, the expected confidence is the softmax
