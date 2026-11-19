@@ -35,7 +35,7 @@ internal sealed class TagDecoder
     private static DecoderWorkspace? _threadWorkspace;
 
     /// <summary>
-    ///     Gets the scratch memory of the current thread without creating it (for tests that prove that no request text stays in it).
+    ///     Gets the scratch memory of the current thread without creating it (for tests that prove that no request text stays in it and that a lookup does not grow its buffers).
     /// </summary>
     internal static DecoderWorkspace? CurrentThreadWorkspace => _threadWorkspace;
 

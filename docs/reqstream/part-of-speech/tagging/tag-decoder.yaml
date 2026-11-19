@@ -67,31 +67,6 @@ sections:
                   - TagDecoder_Decode_Constraint_PropagatesToNextToken
                   - TagDecoder_Decode_ReentrantConstraintList_DoesNotCorruptResult
 
-              - id: PartOfSpeech-Tagging-TagDecoder-Throughput
-                title: >-
-                  The decoder shall tag more than 50,000 tokens per second on one thread with a model of realistic size.
-                justification: |
-                  The decoder is the hot path of the library; the bound is the unit-level proof of the system throughput
-                  requirement with a model that has the size of a trained one. The bound is enforced in runs without
-                  code coverage and relaxed to 5,000 tokens per second in a run with code coverage (see the
-                  verification document).
-                tests:
-                  - TagDecoder_Decode_SyntheticModel_ExceedsFiftyThousandTokensPerSecond
-
-              - id: PartOfSpeech-Tagging-TagDecoder-NoAllocation
-                title: >-
-                  Decoding a sentence shall allocate only the memory of its results, in an amount proportional to the
-                  number of tokens, also for a model with feature groups.
-                justification: |
-                  Scratch memory that is allocated per sentence adds garbage collection to every request; only the
-                  result
-                  that the caller keeps needs new memory.
-                tests:
-                  - TagDecoder_Decode_DoesNotAllocateInHotPath
-                  - TagDecoder_Decode_AllGroups_DoesNotAllocateInHotPath
-                  - TagDecoder_Decode_ResultToken_KeepsItsSize
-                  - Lexicon_AllowedTags_KnownTokenShapes_DoNotAllocate
-
               - id: PartOfSpeech-Tagging-TagDecoder-KnownWord
                 title: >-
                   A token shall report that it is a known word when its folded, lower-cased spelling has an entry in the
@@ -178,7 +153,7 @@ sections:
                   - TagDecoder_GetPossibleTags_HyphenatedSpellings_SpellingWinsAndHeadsMatchTheirPart
                   - TagDecoder_IsFormOf_EveryAnalysisOfEverySpelling_IsAForm
                   - TagDecoder_GetPossibleTags_BetweenDecodes_DoesNotDisturbTheWorkspace
-                  - TagDecoder_GetPossibleTags_HugeAsciiInput_AllocatesNothing
+                  - TagDecoder_GetPossibleTags_HugeAsciiInput_AnswersWithoutGrowingTheWorkspace
                   - FeatureExtractor_SetFolded_NormalizedText_EqualsSetToken
                   - FeatureExtractor_SetFolded_SpanSlice_EqualsTheSameTextAsAToken
                   - FeatureExtractor_FoldsToDoubleHyphen_AgreesWithTheFoldingOfEveryCodeUnit

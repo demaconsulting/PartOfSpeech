@@ -48,6 +48,7 @@ needs-review:
   - "!**/.venv/**"                # Exclude Python virtual environment
   - "!tools/data/cache/**"       # Exclude the git-ignored download cache of the data tools
   - "!**/__pycache__/**"         # Exclude compiled Python files
+  - "!benchmarks/**"              # Exclude the opt-in benchmarks (developer tooling, not evidence)
 
 # Evidence source: review data and index.json are located in the 'reviews' branch
 # of this repository, accessed through the GitHub public HTTPS raw content access.
@@ -100,7 +101,6 @@ reviews:
       - "docs/verification/introduction.md"                                    # verification introduction
       - "docs/verification/part-of-speech.md"                        # system verification
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechTests.cs"  # integration tests
-      - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechThroughputTests.cs"  # throughput test
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechDataTests.cs"  # data and licensing tests
       - "test/DemaConsulting.PartOfSpeech.Tests/PartOfSpeechEvaluationTests.cs"  # evaluation record and guidance tests
       - "test/DemaConsulting.PartOfSpeech.Tests/DataFiles.cs"          # data file helpers of the data tests
@@ -320,9 +320,6 @@ reviews:
       - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/TaggingTests.cs"  # subsystem tests
       - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/TinyModels.cs"      # tiny model builder of the tests
       - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/TinyTrainer.cs"     # tiny trainer of the tests
-      - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/SyntheticModel.cs"  # synthetic model of the throughput
-      - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/ThroughputMeter.cs"  # best-of-N throughput method
-      - "test/DemaConsulting.PartOfSpeech.Tests/TestSupport/AllocationMeter.cs"  # minimum-of-N allocation method
 
   # PartOfSpeech-Tagging-FeatureExtractor Review (one per unit)
   - id: PartOfSpeech-Tagging-FeatureExtractor
@@ -355,7 +352,6 @@ reviews:
       - "src/DemaConsulting.PartOfSpeech/Tagging/DecoderWorkspace.cs"  # unit source (scratch memory)
       - "src/DemaConsulting.PartOfSpeech/Tagging/ScoreSlice.cs"   # unit source (alternatives list)
       - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/TagDecoderTests.cs"  # unit tests
-      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/TagDecoderThroughputTests.cs"  # throughput test
 
   # PartOfSpeech-Tagging-TokenConstraint Review (one per unit)
   - id: PartOfSpeech-Tagging-TokenConstraint
@@ -396,7 +392,6 @@ reviews:
       - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryTests.cs"            # unit tests
       - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryMatchingTests.cs"    # unit tests
       - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryDocumentationTests.cs"  # unit tests (doc examples)
-      - "test/DemaConsulting.PartOfSpeech.Tests/Tagging/GlossaryThroughputTests.cs"  # throughput test
 
   # PartOfSpeech-Tagging-Tagger Review (one per unit)
   - id: PartOfSpeech-Tagging-Tagger

@@ -367,7 +367,7 @@ thresholds and a new held-out record. The title-case line group (F5) is off in t
 development evidence from one set that the groups were designed against; the protocol and the results with their
 caveats are in `RUN-LOG.md`, "Context-feature experiment". At run time the clause cues cost
 seven more buckets per token, the lexicon lookup that the decoder already does for the restriction, and a clause state
-that the decoder carries from token to token; the speed is measured by the throughput requirement and by the trainer,
+that the decoder carries from token to token; the speed is measured by the opt-in benchmarks and by the trainer,
 and the size of the weights is stated under *Data Assets*.
 
 ## Design Constraints
@@ -380,11 +380,18 @@ and the size of the weights is stated under *Data Assets*.
 - **No runtime dependencies**: the base class library only
 - **Determinism**: the same input gives the same tags on every platform; scores are exact integers up to the choice of
   the tag
-- **Performance**: more than 50,000 tokens per second on one thread, with no allocation in the feature extraction and
-  only the result arrays per sentence in the decoder; tagging with a glossary of 10,000 entries keeps the same bound,
-  and finding the terms allocates nothing per token for ordinary text. The throughput is enforced in runs without code
-  coverage; coverage instrumentation slows the hot loops too much to prove it, so a run with coverage (CI) applies a
-  relaxed gate (see the verification document)
+- **Performance**: the design targets more than 50,000 tokens per second for tagging pre-tokenized text on one
+  thread, also with a glossary of 10,000 entries, and more than ten times that for finding the terms of such a glossary.
+  These are design properties, not requirements: they depend on the machine, so they are measured with the opt-in
+  BenchmarkDotNet project `benchmarks/DemaConsulting.PartOfSpeech.Benchmarks` (`CONTRIBUTING.md` describes how to run
+  it) and not asserted by tests; the measured values are in the verification document
+- **Memory**: the hot path allocates no scratch memory per call: the feature extraction allocates nothing once the
+  per-thread workspace has grown, the decoder allocates only the result arrays of a sentence (one `TaggedToken` array
+  and one flat array of alternatives), finding the terms of a glossary allocates nothing per token for ordinary text and
+  tagging with a glossary adds only one constraint array per sentence with matches and the match results, and the word
+  lookup, the form question and reading the margin of a token allocate nothing for ASCII text. The benchmarks report the
+  allocated bytes (`MemoryDiagnoser`); what the tests assert about memory is observable through the interface: a lookup
+  of any length leaves the per-thread buffers at the size that its folded text needs, and no request leaves text in them
 - **Package size**: the lexicon resource is 762,836 bytes and the weights resource is stated under *Data Assets* (both
   already compressed), embedded once per target framework, so the five assemblies are 1.4 to 1.5 MB each as stored in
   the package and the package (with the API reference and the XML documentation files) is about 8.0 MB, measured with

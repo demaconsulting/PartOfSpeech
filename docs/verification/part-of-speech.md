@@ -42,67 +42,30 @@ quality-checks job of the workflow runs (standard library only, about one minute
 The linter fails on a violation of the fix tier; the 298 violations of the check tier that need a judgment are reported
 and do not fail the run.
 
-Two groups of requirements need methods beyond an ordinary assertion:
+One group of requirements needs a method beyond an ordinary assertion:
 
-- **Throughput** (`PartOfSpeech-Lib-Throughput`). The test (`PartOfSpeechThroughputTests.cs`) builds a synthetic weights
-  file of the shape of a real model
-  (150,000 occupied buckets in a bucket space of 2^21, random weights from a seeded generator, with the occupied
-  buckets taken from the features of the first 4,000 sentences of the open training set so that the lookups hit as in
-  production), loads it with the real embedded lexicon, and tags the pre-tokenized sentences of the open development set
-  on one thread. The measurement (`TestSupport/ThroughputMeter.cs`) is capability-based and noise-robust: a warm-up of
-  at least two runs over all sentences and 0.5 seconds (so that tiered compilation is finished), then timed windows
-  with `Stopwatch`, each window repeating the run over all sentences until at least 0.25 seconds have elapsed. The
-  first window whose rate exceeds the gate ends the measurement and proves the capability. A window below the gate may
-  have been slowed by other processes, so the meter sleeps for 200 milliseconds, which lets the contention clear, and
-  takes the next window; it gives up only when 30 seconds of windows are used up or 60 windows were taken, and then
-  the best rate of all windows is compared with the gate. One fast window is enough to pass, because CPU time stolen
-  by other processes can only slow a window and cannot make it faster, while a slow implementation is slow in every
-  window and fails. The test class is in the xUnit collection `Throughput`, defined with
-  `DisableParallelization = true`, so that it runs alone in its test host, after the parallel test classes have
-  finished. The test hosts of the different target frameworks are separate processes that `dotnet test` may run at the
-  same time; xUnit cannot serialize them, and the retry with backoff is the protection against that, also on a runner
-  with few cores. The gate is 50,000 tokens per second; the measured rate is far higher (see Measured Results). The
-  best rate and the number of windows are written to the test output.
-
-  **Where the 50,000 figure is proven.** The 50,000 gate is enforced in every run in which the library is not
-  instrumented: `build.ps1` and any local `dotnet test`. The CI pipeline runs the tests with code coverage
-  (`--coverlet`), and coverlet rewrites the library to count the execution of every line, which slows the hot loops by a
-  factor of 20 or more (a run on the CI runner measured 49,000 tokens per second with coverage, against several hundred
-  thousand without). In an instrumented run the 50,000 gate cannot be proven, so the meter detects the instrumentation
-  (the library assembly contains coverlet's tracker type, `Coverlet.Core.Instrumentation.Tracker`, or the environment
-  variable `CORECLR_ENABLE_PROFILING` or `COR_ENABLE_PROFILING` is `1`) and applies a relaxed gate of 5,000 tokens per
-  second instead: one tenth of the requirement and about five times below the slowest instrumented rate measured (23,800
-  tokens per second), so that the test still proves that the loop is sane and fails for a loop that is an order of
-  magnitude too slow or broken. The relaxed gate is not evidence of the requirement; the evidence of the requirement is
-  the non-instrumented run. A failing assertion states the rate, whether the run was instrumented and which gate
-  applied. The same method at the unit level is in *TagDecoder Verification*. The glossary throughput requirement
-  (`PartOfSpeech-Lib-GlossaryThroughput`) uses the same meter and the same two gates for tagging the development
-  sentences with the embedded model and a glossary of 10,000 word pairs taken from the training text (the glossary
-  overhead is written to the test output as well); its unit-level counterpart, the speed of the matching alone, is in
-  *Glossary Verification*.
 - **Thread safety** (`PartOfSpeech-Lib-ThreadSafe`). One tagger is shared by 8 tasks that each tag the fixture texts
   (and a text with non-ASCII characters) 200 times in different orders; every result is compared with the result of a
   sequential run (text, offsets, tags, confidences and alternatives), so that shared scratch memory, a race in a lazy
   initializer or a mutable result would show as a difference. A second test does the same with one shared glossary, hard
   and soft, and compares the matches as well.
 
-The allocation behavior (no allocation in the feature extraction after warm-up, only result arrays in the decoder, no
-allocation in the lexicon shape rules) is verified at the unit level with `GC.GetAllocatedBytesForCurrentThread`, which
-exists on .NET 8 and later; those three tests, and the allocation tests of the glossary (see *Glossary Verification*),
-are not compiled for .NET Framework. The measurement
-(`TestSupport/AllocationMeter.cs`) is robust against the runtime's own background activity: a warm-up of at least 500
-rounds and 0.3 seconds, so that JIT compilation and tiered compilation are finished, then the minimum of the bytes
-allocated over 10 measured batches. An operation that allocates on every round allocates in every batch and so still
-fails; only a one-time or sporadic runtime allocation is filtered out.
+The throughput and the allocation behavior of the library are design properties (see *Design Constraints* in the
+design document `part-of-speech.md`), not requirements, and no test asserts them: elapsed time and allocated bytes
+depend on the machine, its load, the runtime and its tiered compilation, and on code coverage instrumentation, so a
+test that asserts them is either flaky or too loose to prove the property. They are measured with the opt-in
+BenchmarkDotNet project `benchmarks/DemaConsulting.PartOfSpeech.Benchmarks`, which no test run executes
+(`CONTRIBUTING.md` describes how to run it). What the tests do assert about memory is observable through the
+interface of the items: a word lookup of any length leaves the per-thread buffers at the size that its folded text
+needs (*Tagger Verification* and *TagDecoder Verification*), and no request leaves text in them (*Tagging
+Verification*).
 
 ## Test Environment
 
 - **Framework**: xUnit v3 running under the .NET SDK, on the target frameworks `net8.0`, `net9.0`, `net10.0`,
   `net11.0` and `net481` (which stands for `netstandard2.0`)
-- **Configuration**: the throughput tests are meaningful in Release configuration, which `build.ps1` and the CI pipeline
-  use; in Debug the gate may fail on a slow machine. The 50,000 tokens per second gate applies to runs without code
-  coverage (`build.ps1`); the CI pipeline runs with coverage and the tests then apply the relaxed gate of 5,000 tokens
-  per second (see the Throughput method above)
+- **Configuration**: Release, which `build.ps1` and the CI pipeline use; no test depends on the speed of the machine
+  or on code coverage instrumentation
 - **Execution**: `dotnet test` invoked by `build.ps1` and the CI pipeline
 - **Dependencies**: No external services, databases, or network access required
 - **Isolation**: Each test method creates its own tagger and models; the embedded lexicon is a shared, immutable,
@@ -126,8 +89,7 @@ fails; only a one-time or sporadic runtime allocation is filtered out.
 The system passes when every system test passes on every platform and target framework of the CI matrix, the unit and
 subsystem tests of all software items pass, and the ReqStream trace matrix shows every requirement covered by a passing
 test. A system test fails if any observable result differs from the expected one: a wrong or missing tag, a wrong
-offset, an exception of another type than specified, a result that differs between a sequential and a parallel run, or a
-throughput of 50,000 tokens per second or less (5,000 tokens per second or less in a run with code coverage).
+offset, an exception of another type than specified, or a result that differs between a sequential and a parallel run.
 
 ## External Interface Simulation
 
@@ -138,19 +100,16 @@ The data and licensing tests read repository files only; they simulate nothing a
 
 ## Measured Results
 
-Recorded from the development of this release (Release configuration, one thread, 26,232 tokens of the open development
-set, synthetic model of 150,000 rows in 2^21 buckets, real embedded lexicon, best window after a warm-up); they
-are information for reviewers, not acceptance values:
+Recorded from the development of this release; they are information for reviewers, not acceptance values:
 
-- `Tagger.Tag(IReadOnlyList<string>)`: about 350,000 to 760,000 tokens per second.
-- `TagDecoder.Decode`: about 410,000 to 900,000 tokens per second.
-- The values vary with the framework and with other test classes running in parallel; the lowest observed value is seven
-  times the gate. Both throughput tests write their measured rate to the test output.
-- With code coverage (`dotnet test --coverlet`, as in CI), the same tests measured 24,000 to 64,000 tokens per second
-  on the development machine and 49,000 tokens per second on the CI runner (Linux, .NET 8 and .NET 9); this is why an
-  instrumented run applies the relaxed gate of 5,000 tokens per second and not the requirement of 50,000.
-- The synthetic weights file is about 0.9 MB with Deflate (random weights compress poorly); a trained model is expected
-  to be smaller.
+- The opt-in benchmarks (`benchmarks/DemaConsulting.PartOfSpeech.Benchmarks`, BenchmarkDotNet 0.15.8, short job,
+  .NET 10, Windows x64, one thread, the 26,232 tokens of the open development set with the embedded model) measured
+  about 425,000 tokens per second for `Tagger.Tag(IReadOnlyList<string>)`, about 450,000 with a glossary of 10,000 word
+  pairs, and about 8.4 million tokens per second for `Glossary.FindMatches` with that glossary, which meets the design
+  targets of more than 50,000 and more than ten times that. The word lookup, the form question and reading the margin
+  allocated nothing (the `Allocated` column shows `-`). The values vary with the machine and its load.
+- Code coverage instrumentation slows the hot loops by a factor of 20 or more (24,000 to 64,000 tokens per second were
+  measured with `dotnet test --coverlet` before this release), which is one reason why no test asserts a speed.
 - The embedded weights are 553,641 bytes (1,234,530 uncompressed) and the embedded lexicon 762,836 bytes (2,157,499
   uncompressed, of which the analyses of the forms are 531,214 bytes); the package is larger because both resources are
   embedded once per target framework (the package size
@@ -158,8 +117,6 @@ are information for reviewers, not acceptance values:
 - The first access of `Tagger.Default` (inflating and validating the lexicon, including every analysis, and loading the
   weights) takes about 50 ms in a cold process, and loading a tagger from streams in a warm process about 25 ms
   (.NET 10, median of repeated runs on the development machine); these are information, not acceptance values.
-- The word lookup (`Tagger.GetPossibleTags`, ASCII words, shape mode, one thread) runs at about 1.3 to 1.4 million calls
-  per second on .NET 10; the tests assert only that it allocates nothing for ASCII input.
 - Tokenizer conformance on the 14,980 sentences of the open corpus: 99.907 percent exact; sentence boundaries on joined
   consecutive sentences: recall 100.00 percent and precision 99.95 percent (the splitter lists were tuned while looking
   at these documents, so these two values are optimistic).
@@ -228,8 +185,8 @@ and 16 alternatives, looks every word up with `GetPossibleTags` in the shape mod
 lookup equal the tag of the token together with its alternatives and that `IsKnownWord` equals the token's flag. It
 asserts that `valve` has only the tag NOUN, that an invented word is `NotRecognized`, that `well-tested` is a
 `CompoundHead`, that `tests` has the analyses `test NOUN Number=Plur` and `test VERB Person=3|Tense=Pres`, and that
-`IsFormOf("TESTS", "test", Upos.Verb)` is true. The word-by-word rules (modes, compound rule, long words, arguments,
-allocation) are verified at unit level in *Tagger Verification* and *TagDecoder Verification*, and the lookup of every
+`IsFormOf("TESTS", "test", Upos.Verb)` is true. The word-by-word rules (modes, compound rule, long words, arguments)
+are verified at unit level in *Tagger Verification* and *TagDecoder Verification*, and the lookup of every
 spelling of the lexicon against the decoder in *TagDecoder Verification*.
 
 ### Lexicon Restriction: Known and Unknown Words
@@ -478,13 +435,6 @@ decoder and the glossary matcher)
 Method described under Verification Approach of the Tagging subsystem: after every public entry point has returned, the
 per-thread scratch buffers hold zeros only, also after a shorter request that follows a longer one and after a decode
 that fails.
-
-### Throughput
-
-**Tests**: `PartOfSpeech_Performance_SingleThread_ExceedsFiftyThousandTokensPerSecond`,
-`PartOfSpeech_Performance_GlossaryTagging_ExceedsFiftyThousandTokensPerSecond`
-
-Method described under Verification Approach; the measured rate is written to the test output.
 
 ### No Runtime Dependencies
 

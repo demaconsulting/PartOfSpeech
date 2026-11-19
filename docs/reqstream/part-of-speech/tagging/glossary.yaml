@@ -169,6 +169,8 @@ sections:
                   - Glossary_FindMatches_HashCollision_ResolvedByComparison
                   - Glossary_FindMatches_DocumentedEdgeCases_BehaveAsDocumented
                   - Glossary_EdgeCaseExample_ReportsTheDocumentedMatchesAndHeads
+                  - Glossary_FindMatches_TenThousandEntries_FindsEveryTermInOrder
+                  - Glossary_FindMatches_TenThousandEntries_SentenceWithoutTerms_IsEmpty
 
               - id: PartOfSpeech-Tagging-Glossary-TermTokenization
                 title: >-
@@ -368,35 +370,6 @@ sections:
                   - Glossary_FindMatches_ParallelUse_MatchesSequentialResults
                   - Glossary_Tag_ParallelUse_MatchesSequentialResults
                   - Glossary_Tag_SoftFirstUseRace_CompilesCorrectly
-
-              - id: PartOfSpeech-Tagging-Glossary-NoAllocation
-                title: >-
-                  Finding the terms in a sentence of ordinary text shall allocate no memory per token, and tagging with
-                  a glossary shall allocate nothing extra for a sentence without a match and, for a sentence with
-                  matches, only one array sized by the token count and a bounded amount per match, also after the
-                  first use of a soft glossary.
-                justification: |
-                  Matching runs for every token of every text; memory per token object would add garbage collection to
-                  every request, whatever the size of the glossary.
-                tests:
-                  - GlossaryIndex_Find_DoesNotAllocate
-                  - Glossary_Match_SentenceWithoutMatch_DoesNotAllocate
-                  - Tagger_TagWithGlossary_SentenceWithoutMatch_AddsNoAllocation
-                  - Tagger_TagWithGlossary_AllocationPerMatch_IsBoundedForFixedTokenCount
-                  - Tagger_TagWithGlossary_AllocationPerToken_IsOneConstraintSlot
-                  - Tagger_TagWithGlossary_SoftMode_AllocatesLikeHardModeAfterFirstUse
-
-              - id: PartOfSpeech-Tagging-Glossary-Throughput
-                title: >-
-                  Finding the terms of a glossary of 10,000 entries in running text shall exceed ten times the
-                  throughput bound of the tagger on one thread.
-                justification: |
-                  Matching must stay a small part of the cost of tagging however large the glossary is; the bound is
-                  far below the measured speed so that a loaded build machine does not make the test fail, and it is
-                  relaxed in the same way as the throughput bound of the tagger in a run with code coverage (see the
-                  verification document).
-                tests:
-                  - Glossary_FindMatches_TenThousandEntries_ExceedsTenTimesTheTaggingGate
 
               - id: PartOfSpeech-Tagging-Glossary-NoRetention
                 title: >-

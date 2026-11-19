@@ -9,7 +9,7 @@ This document describes the unit-level verification strategy for the `Glossary` 
 
 The unit is verified by unit tests in `Tagging/GlossaryTests.cs` (entries, builder, options, immutability and the
 inflection rules), `Tagging/GlossaryMatchingTests.cs` (matching, tokenization conventions, constraints, tagging with a
-glossary, results, allocation and thread safety) and `Tagging/GlossaryThroughputTests.cs` (matching speed). The pure
+glossary, results and thread safety). The pure
 parts (entry validation, the inflection tables, the matcher, the constraint rules and their merge) are tested directly,
 through the public API and through the internal helpers that the test project can see; nothing is mocked. What a
 glossary does to tags needs a tagger, so the constraint, confidence and result tests use a **hand-set tiny model**
@@ -21,21 +21,14 @@ head tag, the forbidden tags, the unchanged pronoun), never for a prediction of 
 verb is decided by the lexicon that is embedded in the library, not by the lexicon of the tiny tagger, so the tests of
 the head default use words whose embedded-lexicon tags are fixed by the data (`shut down`, `carry out`, `take care`).
 
-Three methods go beyond an ordinary assertion:
+One method goes beyond an ordinary assertion:
 
 - **Hash collisions.** The index takes a hash mask as a test hook, so that a test can force every token of a glossary
   onto one hash value and prove that matching still compares the characters and gives the same matches.
-- **Allocation** (`TestSupport/AllocationMeter.cs`, as for the decoder; compiled for .NET 8 and later only, because
-  `GC.GetAllocatedBytesForCurrentThread` does not exist elsewhere). The matcher is measured on a long sentence of
-  ordinary text against a large glossary with many matches, and must allocate nothing per call; tagging with a glossary
-  is measured against tagging without one: a sentence without a match must allocate no more, the extra bytes for a
-  fixed number of tokens must be bounded per match, and the extra bytes for a fixed number of matches must grow by no
-  more than one constraint slot per token; a soft glossary must allocate like a hard one after its first use. All
-  comparisons are one-sided with a small tolerance for measurement noise.
-- **Throughput** (`TestSupport/ThroughputMeter.cs`, the best-of-N method that is described in the system verification
-  document). The test class is in the non-parallel throughput collection. A glossary of 10,000 word pairs from the open
-  training text is matched against the development sentences, and the rate must exceed ten times the tagging gate, on a
-  glossary that really matches; the instrumented-run relaxation is the one of the tagging gate.
+
+The speed and the allocation of the matching are design properties that no test asserts; the opt-in benchmarks
+measure them (see *System Verification*). The tests prove instead that a glossary of 10,000 entries finds every term of
+a long sentence in order and nothing in a sentence without terms.
 
 Thread safety is verified with eight threads that share one glossary and the shared default tagger, hard and soft, and
 compare every result with a sequential run, and with a race in which eight threads use a fresh soft glossary for the
@@ -44,12 +37,11 @@ first time at the same moment (the compiled constraint tables are created lazily
 #### Test Environment
 
 No setup beyond the standard test runner: the models are built in memory, the lexicon of the test words is compiled in
-memory, the throughput test reads the open training and development corpora from the working copy through
-`DataFiles.cs`, and the shipped default tagger is used by the parallel test and the documented examples. No network.
+memory, and the shipped default tagger is used by the parallel test and the documented examples. No network.
 
 #### Acceptance Criteria
 
-All tests pass on every target framework (the allocation tests on .NET 8 and later). A test fails when an invalid entry,
+All tests pass on every target framework. A test fails when an invalid entry,
 option or glossary is accepted, an entry changes when a copy is made, a glossary or its match list can be changed, the
 longest term does not win or matches overlap, a term matches across sentences or with a different letter case than its
 rule says, a hash collision gives a wrong match, a tokenization convention is not followed, a generated inflected form
@@ -59,8 +51,8 @@ term whose later words are all listed particle words that the lexicon confirms o
 explicit head does not override the inferred one, the particle rule applies to another shape of term than a two-token
 verb term with its head first, a soft strength does not equal the strength times the temperature, the caller's
 constraint does not win over a contradicting glossary constraint, the tokens before the first match change, a match is
-not reported on its tokens or sentence, matching allocates per token, a parallel result differs from the sequential one,
-or matching is slower than the bound.
+not reported on its tokens or sentence, a term of a large glossary is missed or found where there is none, or a
+parallel result differs from the sequential one.
 
 #### Test Scenarios
 
@@ -138,7 +130,10 @@ or matching is slower than the bound.
   `Glossary_FindMatches_DocumentedEdgeCases_BehaveAsDocumented` (the longest of overlapping entries, punctuation in
   front of and behind a term, a hyphen that joins the next word, and a term that is not contiguous) and
   `Glossary_EdgeCaseExample_ReportsTheDocumentedMatchesAndHeads` (the matches and heads that the edge-case example of
-  `Glossary` prints).
+  `Glossary` prints); `Glossary_FindMatches_TenThousandEntries_FindsEveryTermInOrder` (a glossary of 6,000 single-word
+  and 4,000 two-word terms finds exactly the 40 terms of a 200-token sentence, in order, each with its own entry) and
+  `Glossary_FindMatches_TenThousandEntries_SentenceWithoutTerms_IsEmpty` (the same glossary finds nothing in 200 tokens
+  of other words).
 - **Term tokenization**: `GlossaryEntry_Tokens_FollowTokenizer`,
   `GlossaryEntry_EndTokens_TermEndingInKeptPeriod_DiffersAtEndOfText`,
   `Glossary_FindMatches_HyphenatedTermIsOneToken_DoesNotMatchSpaced`,
@@ -232,14 +227,3 @@ or matching is slower than the bound.
   and non-ASCII tokens, one without a match and a short one, in this order on one thread: after every call every buffer
   of the thread's glossary workspace, the whole of it and not only the part the sentence used, holds zeros only, and the
   matches that were copied out are intact).
-- **No allocation**: `GlossaryIndex_Find_DoesNotAllocate`, `Glossary_Match_SentenceWithoutMatch_DoesNotAllocate`,
-  `Tagger_TagWithGlossary_SentenceWithoutMatch_AddsNoAllocation` (a sentence without a match allocates no more with a
-  glossary than without),
-  `Tagger_TagWithGlossary_AllocationPerMatch_IsBoundedForFixedTokenCount` (with the tokens fixed, the extra bytes per
-  match are positive and bounded),
-  `Tagger_TagWithGlossary_AllocationPerToken_IsOneConstraintSlot` (with the matches fixed, the extra bytes per token do
-  not exceed one constraint slot) and
-  `Tagger_TagWithGlossary_SoftMode_AllocatesLikeHardModeAfterFirstUse` (soft allocates no more than hard). The
-  comparisons allow a noise of 64 bytes per call.
-- **Throughput**: `Glossary_FindMatches_TenThousandEntries_ExceedsTenTimesTheTaggingGate` (method described under
-  Verification Approach; the measured rate is written to the test output).

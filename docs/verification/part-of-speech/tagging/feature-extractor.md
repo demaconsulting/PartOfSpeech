@@ -14,21 +14,20 @@ code of the fast path), and a theory compares both paths for every set of groups
 lexicon and gold tags as history and as preview; hand-picked sentences with a tiny lexicon pin the definitions
 (`Check the valve`, `avoiding` against `bring` and `thing`, the clause boundaries). Single behaviors (shape bits, the
 initial flag, the boundary markers, the fold) are checked
-by asserting which buckets are produced for small hand-picked tokens. The allocation test uses
-`GC.GetAllocatedBytesForCurrentThread` through `TestSupport/AllocationMeter.cs` (a thorough warm-up, then the minimum
-over 10 batches of 100 rounds), which exists on .NET 8 and later; it is compiled only there.
-Nothing is mocked.
+by asserting which buckets are produced for small hand-picked tokens. Nothing is mocked. That the fast path allocates
+nothing is a design property that no test asserts; the opt-in benchmarks measure the allocation of tagging (see *System
+Verification*).
 
 #### Test Environment
 
 No setup beyond the standard test runner; the reference-equivalence test reads corpus files of `data/open/`
-through `DataFiles.cs`. The allocation test is not compiled for `net481`.
+through `DataFiles.cs`.
 
 #### Acceptance Criteria
 
 All tests pass. A test fails when the fast path and the reference give different buckets, a bucket is outside the bucket
 space or depends on earlier use of the workspace, the number or kind of features differs from the definition, the fold
-or the shape bits differ, or extraction allocates after warm-up.
+or the shape bits differ.
 
 #### Test Scenarios
 
@@ -54,10 +53,6 @@ or the shape bits differ, or extraction allocates after warm-up.
 - **Reference equivalence**: `FeatureExtractor_Extract_MatchesReferenceStringHashing`.
 - **Buckets**: `FeatureExtractor_Buckets_AreInRangeAndStable` and
   `FeatureExtractor_Hash_IsCaseSensitiveWhereTemplatesAre`.
-- **No allocation**: `FeatureExtractor_Extract_DoesNotAllocateAfterWarmUp` (zero bytes after the workspace has grown;
-  .NET 8 and later) and `FeatureExtractor_Extract_AllGroups_DoesNotAllocateAfterWarmUp` (the same with all five groups,
-  both
-  decoding passes and stem lookups).
 - **Feature groups**: `FeatureExtractor_Extract_NoGroups_ProducesOnlyBaseTemplates` (a workspace that served all groups
   and is configured for none gives the base stride, at most 22 buckets and the buckets of a fresh workspace and of the
   reference, so the switch-off feature stream is that of the 22 templates),
@@ -87,6 +82,6 @@ or the shape bits differ, or extraction allocates after warm-up.
   `FeatureExtractor_Extract_TitleCaseLine_MatchesReference` (the fast path equals the string-based reference for lines
   with digits, marks, an all-upper word and a non-ASCII capital) and
   `FeatureExtractor_Extract_TitleCaseLine_IsDeterministicAndStateless` (the same line gives the same buckets, and the
-  line before does not leak into the next). The no-allocation test above includes the group.
+  line before does not leak into the next).
 - **Right preview**: `FeatureExtractor_Extract_RightPreview_UsesFirstPassTagsOfNextTwoTokens` (absent in the first pass,
   four more buckets in the second with the end and beyond markers, inactive without the group).

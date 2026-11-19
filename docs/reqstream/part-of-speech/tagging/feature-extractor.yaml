@@ -103,15 +103,6 @@ sections:
                   - FeatureExtractor_Buckets_AreInRangeAndStable
                   - FeatureExtractor_Hash_IsCaseSensitiveWhereTemplatesAre
 
-              - id: PartOfSpeech-Tagging-FeatureExtractor-NoAllocation
-                title: Extracting the features of a sentence shall not allocate memory once the extractor has been used.
-                justification: |
-                  Extraction runs for every token; allocation there would add garbage collection to every request and
-                  lower throughput.
-                tests:
-                  - FeatureExtractor_Extract_DoesNotAllocateAfterWarmUp
-                  - FeatureExtractor_Extract_AllGroups_DoesNotAllocateAfterWarmUp
-
               - id: PartOfSpeech-Tagging-FeatureExtractor-FeatureGroups
                 title: >-
                   The extractor shall extend the 22 base templates only by the feature groups that its workspace is
