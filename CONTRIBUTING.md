@@ -165,6 +165,25 @@ dotnet test --filter "FullyQualifiedName~YourTestName"
 dotnet test --collect "XPlat Code Coverage"
 ```
 
+#### Benchmarks
+
+The throughput and the allocation of the library are design properties, not requirements, so no test asserts them.
+They are measured by the opt-in BenchmarkDotNet project in `benchmarks/DemaConsulting.PartOfSpeech.Benchmarks`, which
+neither `dotnet test`, `build.ps1` nor the CI pipeline runs. Run it from the repository root in Release configuration
+when a change may affect the speed or the memory of the hot path:
+
+```bash
+# Run every benchmark
+dotnet run -c Release --project benchmarks/DemaConsulting.PartOfSpeech.Benchmarks -- --filter "*"
+
+# Run one class, with the quicker short job
+dotnet run -c Release --project benchmarks/DemaConsulting.PartOfSpeech.Benchmarks -- --filter "*Tagging*" --job short
+```
+
+Compare the results with the targets of *Design Constraints* in `docs/design/part-of-speech.md`: more than 50,000
+tokens per second for `Tag` and `TagWithGlossary` (the `Tokens/s` column), more than ten times that for `FindMatches`,
+and no allocation (`-` in the `Allocated` column) for `GetPossibleTags`, `IsFormOf` and `Margin`.
+
 ## Documentation
 
 ### Markdown Guidelines
