@@ -29,6 +29,20 @@ public class WordLookupBenchmarks
     private static readonly string LongCompound = new string('a', 300) + "-tested";
 
     /// <summary>
+    ///     A line of text whose words the span benchmark looks up as slices.
+    /// </summary>
+    private const string SliceText = "Check the Valve and the well-tested pre-flight list, then close 1st valve.";
+
+    /// <summary>
+    ///     The start and length of every word of <see cref="SliceText"/>.
+    /// </summary>
+    private static readonly (int Start, int Length)[] SliceRanges = SliceText
+        .Split(' ')
+        .Select(word => word.TrimEnd(',', '.'))
+        .Select(word => (SliceText.IndexOf(word, StringComparison.Ordinal), word.Length))
+        .ToArray();
+
+    /// <summary>
     ///     The tagger with the embedded model.
     /// </summary>
     private readonly Tagger _tagger = Tagger.Default;
@@ -46,7 +60,7 @@ public class WordLookupBenchmarks
         _tokens = _tagger.Tag(["Check", "the", "bleed", "valve", "before", "the", "test", "."]).Tokens;
 
     /// <summary>
-    ///     Looks up every word in both modes.
+    ///     Looks up every word in both modes through the string overload.
     /// </summary>
     /// <returns>A checksum of the results, so that the work is not optimized away.</returns>
     [Benchmark]
@@ -57,6 +71,32 @@ public class WordLookupBenchmarks
         {
             sum += _tagger.GetPossibleTags(word).Tags.Count;
             sum += _tagger.GetPossibleTags(word, PossibleTagsMode.WithShapeRules).Tags.Count;
+        }
+
+        return sum;
+    }
+
+    /// <summary>
+    ///     Looks up every word in both modes through the <see cref="ReadOnlySpan{T}"/> overload, for the words themselves and
+    ///     for the same words as slices of a longer text (the ASCII fast path, which reads the span without copying it).
+    /// </summary>
+    /// <returns>A checksum of the results, so that the work is not optimized away.</returns>
+    [Benchmark]
+    public int GetPossibleTagsSpan()
+    {
+        var sum = 0;
+        foreach (var word in AsciiWords)
+        {
+            sum += _tagger.GetPossibleTags(word.AsSpan()).Tags.Count;
+            sum += _tagger.GetPossibleTags(word.AsSpan(), PossibleTagsMode.WithShapeRules).Tags.Count;
+        }
+
+        var text = SliceText.AsSpan();
+        foreach (var (start, length) in SliceRanges)
+        {
+            var slice = text.Slice(start, length);
+            sum += _tagger.GetPossibleTags(slice).Tags.Count;
+            sum += _tagger.GetPossibleTags(slice, PossibleTagsMode.WithShapeRules).Tags.Count;
         }
 
         return sum;

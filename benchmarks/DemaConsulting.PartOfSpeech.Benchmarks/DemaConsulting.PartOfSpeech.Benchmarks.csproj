@@ -2,7 +2,7 @@
 
   <!-- Benchmarks: an opt-in BenchmarkDotNet console application that measures the throughput and the allocation of the
        library (the performance and memory properties of the design document). It is developer tooling: it is not part
-       of the package and not a test project, and neither the tests, build.ps1 nor the CI pipeline run it;
+       of the package and not a test project; build.ps1 and the CI pipeline compile it with the solution but never run it;
        CONTRIBUTING.md describes how to run it. It uses the public API of the library only. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>

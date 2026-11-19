@@ -54,7 +54,7 @@ The throughput and the allocation behavior of the library are design properties 
 design document `part-of-speech.md`), not requirements, and no test asserts them: elapsed time and allocated bytes
 depend on the machine, its load, the runtime and its tiered compilation, and on code coverage instrumentation, so a
 test that asserts them is either flaky or too loose to prove the property. They are measured with the opt-in
-BenchmarkDotNet project `benchmarks/DemaConsulting.PartOfSpeech.Benchmarks`, which no test run executes
+BenchmarkDotNet project `benchmarks/DemaConsulting.PartOfSpeech.Benchmarks`, which the build compiles but never runs
 (`CONTRIBUTING.md` describes how to run it). What the tests do assert about memory is observable through the
 interface of the items: a word lookup of any length leaves the per-thread buffers at the size that its folded text
 needs (*Tagger Verification* and *TagDecoder Verification*), and no request leaves text in them (*Tagging
@@ -106,8 +106,9 @@ Recorded from the development of this release; they are information for reviewer
   .NET 10, Windows x64, one thread, the 26,232 tokens of the open development set with the embedded model) measured
   about 425,000 tokens per second for `Tagger.Tag(IReadOnlyList<string>)`, about 450,000 with a glossary of 10,000 word
   pairs, and about 8.4 million tokens per second for `Glossary.FindMatches` with that glossary, which meets the design
-  targets of more than 50,000 and more than ten times that. The word lookup, the form question and reading the margin
-  allocated nothing (the `Allocated` column shows `-`). The values vary with the machine and its load.
+  targets of more than 50,000 and more than ten times that. The word lookup (string and `ReadOnlySpan<char>` overloads,
+  both modes, also for slices of a longer text), the form question and reading the margin allocated nothing (the
+  `Allocated` column shows `-`). The values vary with the machine and its load.
 - Code coverage instrumentation slows the hot loops by a factor of 20 or more (24,000 to 64,000 tokens per second were
   measured with `dotnet test --coverlet` before this release), which is one reason why no test asserts a speed.
 - The embedded weights are 553,641 bytes (1,234,530 uncompressed) and the embedded lexicon 762,836 bytes (2,157,499

@@ -389,7 +389,8 @@ and the size of the weights is stated under *Data Assets*.
   per-thread workspace has grown, the decoder allocates only the result arrays of a sentence (one `TaggedToken` array
   and one flat array of alternatives), finding the terms of a glossary allocates nothing per token for ordinary text and
   tagging with a glossary adds only one constraint array per sentence with matches and the match results, and the word
-  lookup, the form question and reading the margin of a token allocate nothing for ASCII text. The benchmarks report the
+  lookup (the string and the `ReadOnlySpan<char>` overload, both modes), the form question and reading the margin of a
+  token allocate nothing for ASCII text. The benchmarks report the
   allocated bytes (`MemoryDiagnoser`); what the tests assert about memory is observable through the interface: a lookup
   of any length leaves the per-thread buffers at the size that its folded text needs, and no request leaves text in them
 - **Package size**: the lexicon resource is 762,836 bytes and the weights resource is stated under *Data Assets* (both

@@ -103,8 +103,9 @@ tightly coupled files, as listed in the folder layout below. The Trainer is a so
 tool (unlike `tools/LexiconCompiler`), because its headline claims (determinism, no drift from the runtime definitions,
 development-only selection, provenance of the embedded model) need requirement-level evidence. The opt-in benchmarks
 in `benchmarks/DemaConsulting.PartOfSpeech.Benchmarks` are developer tooling, not a software item: they measure the
-performance and memory properties of *Design Constraints* in `part-of-speech.md` through the public API, and no test
-run, build script, requirement or review-set includes them.
+performance and memory properties of *Design Constraints* in `part-of-speech.md` through the public API. The project
+is part of the solution, so `build.ps1` and the CI pipeline compile it, but nothing runs its benchmarks, and no test
+run, requirement or review-set includes them.
 
 ## Folder Layout
 
