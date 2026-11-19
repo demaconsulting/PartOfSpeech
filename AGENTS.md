@@ -163,6 +163,15 @@ requires it and the modification preserves the documented design intent:
 - `.lintmark.yaml`, `.yamllint.yaml`
 - `requirements.yaml`, `fix.ps1`, `lint.ps1`
 
+# Repository-Specific Standards Exceptions
+
+- **`testing-principles.md` "Assert Observable Behavior"**: the existing allocation, throughput, and
+  workspace checks (`AllocationMeter`, `ThroughputMeter`, and the `CurrentThreadWorkspace` assertions in the
+  tagging and lexicon tests) predate this rule and remain requirement-linked evidence for the library's
+  documented performance and allocation properties. Keep them as they are; do not add new tests of this kind.
+  Moving them to opt-in benchmarks (and the matching requirements and verification documents) is a separate,
+  maintainer-approved change.
+
 # Continuous Compliance Overview
 
 This repository follows the [Continuous Compliance](https://github.com/demaconsulting/ContinuousCompliance)
