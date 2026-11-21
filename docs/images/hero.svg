@@ -9,7 +9,7 @@
     <style>
       .word { font: bold 92px sans-serif; fill: #ffffff; }
       .eyebrow { font: bold 25px sans-serif; fill: #a5b4fc; }
-      .tag { font: bold 40px sans-serif; fill: #f8fafc; }
+      .tag { font: bold 36px sans-serif; fill: #f8fafc; }
       .body { font: 25px sans-serif; fill: #cbd5e1; }
       .cmd { font: 25px monospace; fill: #e2e8f0; }
       .prompt { fill: #5eead4; }
@@ -118,16 +118,16 @@
   <text class="word" x="52" y="176" style="font-size:73px">Part</text>
   <text class="word brandText" x="194" y="176" style="font-size:73px">OfSpeech</text>
   <rect x="58" y="200" width="132" height="6" rx="3" fill="url(#brand)"/>
-  <text class="tag" x="56" y="266">Every word, tagged.</text>
-  <text class="tag brandText" x="56" y="316">Every tag, scored.</text>
-  <text class="body" x="58" y="368">Tags English text with the 17 UPOS</text>
-  <text class="body" x="58" y="402">tags, calibrated confidences, and</text>
-  <text class="body" x="58" y="436">glossaries for your domain terms.</text>
+  <text class="tag" x="56" y="266">A part-of-speech tagger</text>
+  <text class="tag" x="56" y="314" style="fill: #a5b4fc">for English text.</text>
+  <text class="body" x="58" y="368">Splits text into tokens and returns a</text>
+  <text class="body" x="58" y="402">UPOS tag and a confidence for each;</text>
+  <text class="body" x="58" y="436">glossaries steer the tags of terms.</text>
   <rect x="56" y="468" width="480" height="54" rx="12" fill="#0a1022" fill-opacity="0.8" stroke="#a78bfa" stroke-opacity="0.45" stroke-width="1.5"/>
   <text class="cmd" x="78" y="503">Tagger.Default.Tag(</text>
   <text class="cmd file" x="363" y="503">"I run."</text>
   <text class="cmd" x="483" y="503">);</text>
-  <text class="note" x="58" y="568">Lexicon and weights embedded.</text>
+  <text class="note" x="58" y="568">.NET Standard 2.0 and .NET 8 to 11</text>
 
   <!-- Input cards -->
   <g>
