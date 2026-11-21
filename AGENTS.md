@@ -193,7 +193,7 @@ multi-library repository, or headless tests without GUI automation). Two rules k
 ## SysML2 package structure (legacy layout, migration pending)
 
 The model under `docs/sysml2/` predates the `sysml2-modeling.md` Package Structure rules: package `PartOfSpeech`
-is reopened across 19 files (the system file, 17 subsystem/unit files under `model/part-of-speech/`, and
+is reopened across 18 files (the system file, 16 subsystem/unit files under `model/part-of-speech/`, and
 `views/design-views.sysml`, which uses `PartOfSpeech` instead of `PartOfSpeechDesignViews`). The Package Structure
 rules and the `sysml2tools-query` qualified-name examples apply once the model is migrated in a dedicated PR; until
 then agents use the existing package names and must not partially restructure the model.
