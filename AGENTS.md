@@ -161,7 +161,17 @@ requires it and the modification preserves the documented design intent:
 
 - `.reviewmark.yaml`, `.textlint.yaml`, `.editorconfig`
 - `.lintmark.yaml`, `.yamllint.yaml`
-- `requirements.yaml`, `fix.ps1`, `lint.ps1`
+- `requirements.yaml`
+
+# Project Scripts
+
+`build.ps1`, `lint.ps1`, and `fix.ps1` belong to the project: extend them as it grows. Add project-specific
+steps, update tool versions, and add optional parameters that focus a run (for example one library in a
+multi-library repository, or headless tests without GUI automation). Two rules keep them trustworthy:
+
+- Run with no arguments, each script still does its full job (CI and the agents rely on that); slow or
+  environment-dependent test tiers may be opt-in switches of `build.ps1`.
+- Never remove or weaken a check to make lint or tests pass.
 
 # Repository-Specific Standards Exceptions
 
@@ -179,6 +189,14 @@ requires it and the modification preserves the documented design intent:
   `PartOfSpeech-Tagging-Tagger-PossibleTagsInput` promise what those buffers hold after a call and how large they grow,
   which no public API can show. Do not add tests of this kind for
   anything else; performance and memory properties are measured by the opt-in benchmarks in `benchmarks/`.
+
+## SysML2 package structure (legacy layout, migration pending)
+
+The model under `docs/sysml2/` predates the `sysml2-modeling.md` Package Structure rules: package `PartOfSpeech`
+is reopened across 19 files (the system file, 17 subsystem/unit files under `model/part-of-speech/`, and
+`views/design-views.sysml`, which uses `PartOfSpeech` instead of `PartOfSpeechDesignViews`). The Package Structure
+rules and the `sysml2tools-query` qualified-name examples apply once the model is migrated in a dedicated PR; until
+then agents use the existing package names and must not partially restructure the model.
 
 # Continuous Compliance Overview
 
