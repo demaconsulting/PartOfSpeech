@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_Glossary {
     private import SoftwareItemMetadata::*;
 
     part def Glossary {

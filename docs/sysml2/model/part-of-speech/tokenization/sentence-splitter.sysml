@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_SentenceSplitter {
     private import SoftwareItemMetadata::*;
 
     part def SentenceSplitter {

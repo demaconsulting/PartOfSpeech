@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_EmbeddedModel {
     private import SoftwareItemMetadata::*;
 
     part def EmbeddedModel {

@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_FeatureExtractor {
     private import SoftwareItemMetadata::*;
 
     part def FeatureExtractor {

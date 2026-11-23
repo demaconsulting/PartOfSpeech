@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_TagDecoder {
     private import SoftwareItemMetadata::*;
 
     part def TagDecoder {

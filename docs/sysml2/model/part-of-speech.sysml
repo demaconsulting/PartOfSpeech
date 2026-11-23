@@ -1,4 +1,9 @@
 package PartOfSpeech {
+    public import PartOfSpeech_Upos::*;
+    public import PartOfSpeech_ModelTrainer::*;
+    public import PartOfSpeech_Tokenization::*;
+    public import PartOfSpeech_ModelStorage::*;
+    public import PartOfSpeech_Tagging::*;
     private import SoftwareItemMetadata::*;
 
     doc

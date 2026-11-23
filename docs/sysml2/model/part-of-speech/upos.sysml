@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_Upos {
     private import SoftwareItemMetadata::*;
 
     part def Upos {

@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_ModelTrainer {
     private import SoftwareItemMetadata::*;
 
     part def ModelTrainer {
