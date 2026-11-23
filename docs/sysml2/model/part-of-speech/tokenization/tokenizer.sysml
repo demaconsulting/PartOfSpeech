@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_Tokenizer {
     private import SoftwareItemMetadata::*;
 
     part def Tokenizer {

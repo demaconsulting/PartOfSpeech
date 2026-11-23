@@ -1,4 +1,6 @@
-package PartOfSpeech {
+package PartOfSpeech_Tokenization {
+    public import PartOfSpeech_SentenceSplitter::*;
+    public import PartOfSpeech_Tokenizer::*;
     private import SoftwareItemMetadata::*;
 
     part def Tokenization {

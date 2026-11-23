@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_TokenConstraint {
     private import SoftwareItemMetadata::*;
 
     part def TokenConstraint {

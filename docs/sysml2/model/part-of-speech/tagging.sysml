@@ -1,4 +1,9 @@
-package PartOfSpeech {
+package PartOfSpeech_Tagging {
+    public import PartOfSpeech_FeatureExtractor::*;
+    public import PartOfSpeech_Glossary::*;
+    public import PartOfSpeech_TagDecoder::*;
+    public import PartOfSpeech_Tagger::*;
+    public import PartOfSpeech_TokenConstraint::*;
     private import SoftwareItemMetadata::*;
 
     part def Tagging {

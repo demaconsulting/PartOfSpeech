@@ -43,6 +43,9 @@ enableGlobDot: true
 
 # Project-specific technical terms and tool names
 words:
+  - distinguishability
+  - Sensmetry
+  - Syside
   - ADJP
   - Adlam
   - adposition

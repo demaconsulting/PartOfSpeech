@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_Tagger {
     private import SoftwareItemMetadata::*;
 
     part def Tagger {

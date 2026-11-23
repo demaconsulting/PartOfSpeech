@@ -1,4 +1,8 @@
-package PartOfSpeech {
+package PartOfSpeech_ModelStorage {
+    public import PartOfSpeech_BinaryFormat::*;
+    public import PartOfSpeech_EmbeddedModel::*;
+    public import PartOfSpeech_Lexicon::*;
+    public import PartOfSpeech_PerceptronModel::*;
     private import SoftwareItemMetadata::*;
 
     part def ModelStorage {

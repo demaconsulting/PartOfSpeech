@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_PerceptronModel {
     private import SoftwareItemMetadata::*;
 
     part def PerceptronModel {

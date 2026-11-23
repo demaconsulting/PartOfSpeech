@@ -1,4 +1,4 @@
-package PartOfSpeech {
+package PartOfSpeech_BinaryFormat {
     private import SoftwareItemMetadata::*;
 
     part def BinaryFormat {
