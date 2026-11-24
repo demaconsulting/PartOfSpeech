@@ -62,13 +62,15 @@ Import-Module (Join-Path $PSScriptRoot 'scripts/ProjectScripts.psm1') -Force
 # project item), mapped to the project that reads them. Keep in step with the tests. The keys are regular
 # expressions, so each must be a distinct string; two keys may match the same file to select two projects.
 #   - The test project reads the data, the data tools, the evaluation records, the user guide and design/verification
-#     documents of the library, and the package documents.
+#     documents of the library, the package and license documents at the repository root, every file of the trainer
+#     folder (training.json, README.md, and sources it inspects), and lists the whole repository for CoNLL-U files.
 #   - LexiconCompiler (--check) reads data/lexicon; the trainer (train --check) reads the corpora under data/.
 $RuntimeReads = [ordered]@{
     '^(data|tools/data)/'                                                                                 = 'DemaConsulting.PartOfSpeech.Tests'
     '^docs/(evaluation/|user_guide/introduction\.md$|verification/part-of-speech\.md$|design/part-of-speech(\.md$|/))' = 'DemaConsulting.PartOfSpeech.Tests'
-    '^(README|PACKAGE-LICENSE|THIRD-PARTY-NOTICES)\.md$'                                                  = 'DemaConsulting.PartOfSpeech.Tests'
-    '^tools/DemaConsulting\.PartOfSpeech\.Trainer/README\.md$'                                            = 'DemaConsulting.PartOfSpeech.Tests'
+    '^(README|PACKAGE-LICENSE|THIRD-PARTY-NOTICES)\.md$|^LICENSE$'                                        = 'DemaConsulting.PartOfSpeech.Tests'
+    '^tools/DemaConsulting\.PartOfSpeech\.Trainer/'                                                       = 'DemaConsulting.PartOfSpeech.Tests'
+    '\.conllu$'                                                                                           = 'DemaConsulting.PartOfSpeech.Tests'
     '^data/lexicon/'                                                                                      = 'LexiconCompiler'
     '^(data/|tools/data/)'                                                                                = 'DemaConsulting.PartOfSpeech.Trainer'
     '^\.fileassert\.yaml$'                                                                                = 'DemaConsulting.PartOfSpeech'
