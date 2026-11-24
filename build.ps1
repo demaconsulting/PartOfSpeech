@@ -14,8 +14,8 @@
 #   With no arguments the usage text is printed and the script exits 1 (a scope must be chosen).
 #
 #   A changed project selects every project that references it, directly or transitively, from the
-#   ProjectReference graph, and files linked into another project (Compile/None/EmbeddedResource items
-#   that point outside the project folder) select that project too. Changes that affect the whole
+#   ProjectReference graph, and files linked into another project (any item or file property that
+#   points outside the project folder) select that project too. Changes that affect the whole
 #   build (solution, project, props/targets, global.json, .editorconfig, nuget.config, tool manifest,
 #   this script, scripts/ProjectScripts.psm1) fall back to the full build; repository files tests read
 #   at run time select their test projects through $RuntimeReads; other changes the build does not
@@ -24,6 +24,10 @@
 #   PartOfSpeech has one library, one test project, two build-time tools (LexiconCompiler and the
 #   model trainer), and a benchmarks project that is only built, so there is no -Project switch:
 #   -Changed selects the test projects through the project reference graph.
+#
+#   The test platform is detected from global.json: "test": { "runner": "Microsoft.Testing.Platform" } runs
+#   'dotnet test --project <path> --report-trx', anything else runs VSTest 'dotnet test <path> --logger trx';
+#   results go to artifacts/tests either way. Do not customize the arguments per repository.
 #
 # EXTENSION POINTS:
 #   Search for "[PROJECT-SPECIFIC]" comments to find the designated locations
@@ -80,6 +84,28 @@ $RuntimeReads = [ordered]@{
 # run), and the two build-time tools. tools/data/hmm-tags is a standalone harness outside the solution that no script
 # builds, so it is left out of the scan.
 $ProjectRoots = @('src', 'test', 'benchmarks', 'tools/DemaConsulting.PartOfSpeech.Trainer', 'tools/LexiconCompiler')
+
+# Test platform: global.json selects Microsoft.Testing.Platform with "test": { "runner": "Microsoft.Testing.Platform" };
+# otherwise VSTest is used. The platform decides the 'dotnet test' arguments (see Invoke-DotnetTest).
+$UseTestingPlatform = $false
+if (Test-Path global.json) {
+    try { $UseTestingPlatform = (Get-Content -Raw global.json | ConvertFrom-Json).test.runner -eq 'Microsoft.Testing.Platform' }
+    catch { Write-Host "Warning: global.json could not be read; assuming VSTest." }
+}
+
+function Invoke-DotnetTest {
+    # Runs the tests of one project, or of the whole solution when no path is given, against the existing build
+    param([string]$Path)
+
+    # @(...) keeps a one-element list an array, so the splat passes the path whole and not character by character
+    if ($UseTestingPlatform) {
+        $target = @(if ($Path) { '--project'; $Path })
+        dotnet test @target --no-build --configuration Release --report-trx --results-directory artifacts/tests
+    } else {
+        $target = @(if ($Path) { $Path })
+        dotnet test @target --no-build --configuration Release --logger trx --results-directory artifacts/tests
+    }
+}
 
 # ==============================================================================
 # USAGE AND SCOPE VALIDATION
@@ -211,7 +237,7 @@ if (-not $All) {
         if (-not $buildError) {
             foreach ($entry in $tests) {
                 Write-Host "Running unit tests: $($entry.Name)..."
-                dotnet test --project $entry.Path --configuration Release --report-trx
+                Invoke-DotnetTest $entry.Path
                 if ($LASTEXITCODE -ne 0) { $buildError = $true }
             }
         } else {
@@ -228,17 +254,29 @@ if ($DryRun -and -not $scoped) { Write-Host "Dry run: would run the full build a
 
 if (-not $scoped) {
     # Each step runs only if the steps before it succeeded, so tests never run against stale binaries
-    Write-Host "Building project..."
-    dotnet build --configuration Release
-    if ($LASTEXITCODE -ne 0) { $buildError = $true }
+    $failedStep = $null   # the step that failed first, so the skip message names the real cause
+    Write-Host "Restoring dependencies..."
+    dotnet restore
+    if ($LASTEXITCODE -ne 0) { $buildError = $true; $failedStep = 'restore' }
+
+    if (-not $buildError) {
+        Write-Host "Building project..."
+        dotnet build --no-restore --configuration Release
+        if ($LASTEXITCODE -ne 0) { $buildError = $true; $failedStep = 'build' }
+    }
 
     # [PROJECT-SPECIFIC] Add additional build steps here.
-    if (-not $buildError) { Invoke-DerivedArtifactChecks }
+    if (-not $buildError) {
+        Invoke-DerivedArtifactChecks
+        if ($buildError) { $failedStep = 'derived-artifact check' }
+    }
 
     if (-not $buildError) {
         Write-Host "Running unit tests..."
-        dotnet test --configuration Release --report-trx
+        Invoke-DotnetTest
         if ($LASTEXITCODE -ne 0) { $buildError = $true }
+    } elseif ($failedStep -eq 'restore') {
+        Write-Host "Skipping build and tests: restore failed."
     } else {
         Write-Host "Skipping tests: the build or a derived-artifact check failed."
     }
